@@ -22,7 +22,7 @@ author:
     - Ryan Conway (@rylon)
 version_added: "2.7"
 requirements:
-    - C(op) 1Password command line utility (v0.5.1). See U(https://support.1password.com/command-line/)
+    - C(op) 1Password command line utility (v0.5.5). See U(https://support.1password.com/command-line/)
 notes:
     - "Based on the C(onepassword) lookup plugin by Scott Buchanan <sbuchanan@ri.pn>."
 short_description: Fetch facts from 1Password items
@@ -146,6 +146,9 @@ class AnsibleModuleError(Exception):
     def __init__(self, results):
         self.results = results
 
+    def __str__(self):
+        return self.results
+
     def __repr__(self):
         return self.results
 
@@ -155,16 +158,22 @@ class OnePasswordFacts(object):
     def __init__(self):
         self.cli_path = module.params.get('cli_path')
         self.auto_login = module.params.get('auto_login')
-        self.token = {}
+        self.token = None
 
         terms = module.params.get('search_terms')
         self.terms = self.parse_search_terms(terms)
 
     def _run(self, args, expected_rc=0, command_input=None, ignore_errors=False):
+        if self.token:
+            # Adds the session token to all commands if we're logged in.
+            args += [to_bytes('--session=') + self.token]
+
         command = [self.cli_path] + args
+
         p = Popen(command, stdout=PIPE, stderr=PIPE, stdin=PIPE)
         out, err = p.communicate(input=command_input)
         rc = p.wait()
+
         if not ignore_errors and rc != expected_rc:
             raise AnsibleModuleError(to_native(err))
         return rc, out, err
@@ -174,8 +183,8 @@ class OnePasswordFacts(object):
 
         if ('documentAttributes' in data['details']):
             # This is actually a document, let's fetch the document data instead!
-            document = self._run(["get", "document", data['overview']['title']])
-            return {'document': document[0].strip()}
+            rc, output, error = self._run(["get", "document", data['overview']['title']])
+            return {'document': output.strip()}
 
         else:
             # This is not a document, let's try to find the requested field
@@ -259,15 +268,14 @@ class OnePasswordFacts(object):
             if re.search(".*You are not currently signed in.*", str(e)) is not None:
                 if (self.auto_login is not None):
                     try:
-                        token = self._run([
+                        rc, out, err = self._run([
                             "signin", "%s.1password.com" % self.auto_login['account'],
                             self.auto_login['username'],
                             self.auto_login['secretkey'],
-                            self.auto_login['masterpassword'],
                             "--shorthand=ansible_%s" % self.auto_login['account'],
                             "--output=raw"
-                        ])
-                        self.token = {'OP_SESSION_ansible_%s' % self.auto_login['account']: token[0].strip()}
+                        ], command_input=self.auto_login['masterpassword'])
+                        self.token = out.strip()
 
                     except Exception as e:
                         module.fail_json(msg="Unable to automatically login to 1Password: %s " % e)
@@ -282,7 +290,7 @@ class OnePasswordFacts(object):
             args = ["get", "item", item_id]
             if vault is not None:
                 args += ['--vault={0}'.format(vault)]
-            output, dummy = self._run(args)
+            rc, output, err = self._run(args)
             return output
 
         except Exception as e:
@@ -294,52 +302,6 @@ class OnePasswordFacts(object):
     def get_field(self, item_id, field, section=None, vault=None):
         output = self.get_raw(item_id, vault)
         return self._parse_field(output, item_id, field, section) if output != '' else ''
-
-    def _run(self, args, expected_rc=0):
-        # Duplicates the current shell environment before running 'op', so we get the same PATH the user has,
-        # but we merge in the auth token dictionary, allowing the auto-login functionality to work (if enabled).
-        env = {}
-        env.update(os.environ.copy())
-        env.update(self.token)
-
-        p = Popen([self.cli_path] + args, stdout=PIPE, stderr=PIPE, stdin=PIPE, env=env)
-        out, err = p.communicate()
-
-        rc = p.wait()
-
-        if rc != expected_rc:
-            raise Exception(err)
-
-        return out, err
-
-    def _parse_field(self, data_json, item_id, field_name, section_title=None):
-        data = json.loads(data_json)
-
-        if ('documentAttributes' in data['details']):
-            # This is actually a document, let's fetch the document data instead!
-            document = self._run(["get", "document", data['overview']['title']])
-            return {'document': document[0].strip()}
-
-        else:
-            # This is not a document, let's try to find the requested field
-            if section_title is None:
-                for field_data in data['details'].get('fields', []):
-                    if field_data.get('name').lower() == field_name.lower():
-                        return {field_name: field_data.get('value', '')}
-
-            # Not found it yet, so now lets see if there are any sections defined
-            # and search through those for the field. If a section was given, we skip
-            # any non-matching sections, otherwise we search them all until we find the field.
-            for section_data in data['details'].get('sections', []):
-                if section_title is not None and section_title.lower() != section_data['title'].lower():
-                    continue
-                for field_data in section_data.get('fields', []):
-                    if field_data.get('t').lower() == field_name.lower():
-                        return {field_name: field_data.get('v', '')}
-
-        # We will get here if the field could not be found in any section and the item wasn't a document to be downloaded.
-        optional_section_title = '' if section_title is None else " in the section '%s'" % section_title
-        module.fail_json(msg="Unable to find an item in 1Password named '%s' with the field '%s'%s." % (item_id, field_name, optional_section_title))
 
 
 def main():
