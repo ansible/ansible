@@ -84,11 +84,11 @@ options:
             - "NOTE that removing keys is I(not idempotent). Trying to remove
               a key which no longer exists results in an error."
             - "NOTE that to remove the last key from a LUKS container, the
-              I(allow_to_remove_last_key) option must be set to C(yes)."
+              I(force_remove_last_key) option must be set to C(yes)."
             - "BEWARE that working with keyfiles in plaintext is dangerous.
               Make sure that they are protected."
         type: path
-    allow_to_remove_last_key:
+    force_remove_last_key:
         description:
             - "If set to C(yes), allows removing the last key from a container."
             - "BEWARE that when the last key has been removed from a container,
@@ -295,11 +295,11 @@ class CryptHandler(Handler):
             raise ValueError('Error while adding new LUKS key to %s: %s'
                              % (device, result[STDERR]))
 
-    def run_luks_remove_key(self, device, keyfile, allow_to_remove_last_key=False):
+    def run_luks_remove_key(self, device, keyfile, force_remove_last_key=False):
         ''' Remove key from given device
             Raises ValueError when command fails
         '''
-        if not allow_to_remove_last_key:
+        if not force_remove_last_key:
             result = self._run_command([self._cryptsetup_bin, 'luksDump', device])
             if result[RETURN_CODE] != 0:
                 raise ValueError('Error while dumping LUKS header from %s'
@@ -327,7 +327,7 @@ class CryptHandler(Handler):
             if keyslot_count < 2:
                 self._module.fail_json(msg="LUKS device %s has less than two active keyslots. "
                                            "To be able to remove a key, please set "
-                                           "`allow_to_remove_last_key` to `yes`." % device)
+                                           "`force_remove_last_key` to `yes`." % device)
 
         result = self._run_command([self._cryptsetup_bin, 'luksRemoveKey', device,
                                     '-q', '--key-file', keyfile])
@@ -454,7 +454,7 @@ def run_module():
         keyfile=dict(type='path'),
         new_keyfile=dict(type='path'),
         remove_keyfile=dict(type='path'),
-        allow_to_remove_last_key=dict(type='bool', default=False),
+        force_remove_last_key=dict(type='bool', default=False),
     )
 
     # seed the result dict in the object
@@ -534,7 +534,7 @@ def run_module():
         try:
             crypt.run_luks_remove_key(module.params['device'],
                                       module.params['remove_keyfile'],
-                                      allow_to_remove_last_key=module.params['allow_to_remove_last_key'])
+                                      force_remove_last_key=module.params['force_remove_last_key'])
         except ValueError as e:
             module.fail_json(msg="luks_device error: %s" % e)
         result['changed'] = True

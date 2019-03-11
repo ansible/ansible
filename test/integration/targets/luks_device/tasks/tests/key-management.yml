@@ -118,7 +118,7 @@
 - assert:
     that:
     - remove_last_key is failed
-    - "'allow_to_remove_last_key' in remove_last_key.msg"
+    - "'force_remove_last_key' in remove_last_key.msg"
 
 # Access: keyfile2
 
@@ -144,7 +144,7 @@
     state: closed
     keyfile: "{{ role_path }}/files/keyfile2"
     remove_keyfile: "{{ role_path }}/files/keyfile2"
-    allow_to_remove_last_key: yes
+    force_remove_last_key: yes
   become: yes
 
 # Access: none
