@@ -230,6 +230,9 @@ class ModuleValidator(Validator):
         'slurp.ps1',
         'setup.ps1'
     ))
+    PS_ARG_VALIDATE_BLACKLIST = frozenset((
+        'win_dsc.ps1',  # win_dsc is a dynamic arg spec, the docs won't ever match
+    ))
 
     WHITELIST_FUTURE_IMPORTS = frozenset(('absolute_import', 'division', 'print_function'))
 
@@ -773,6 +776,7 @@ class ModuleValidator(Validator):
                 code=503,
                 msg='Missing python documentation file'
             )
+        return py_path
 
     def _get_docs(self):
         docs = {
@@ -1531,7 +1535,14 @@ class ModuleValidator(Validator):
 
         if self._powershell_module():
             self._validate_ps_replacers()
-            self._find_ps_docs_py_file()
+            docs_path = self._find_ps_docs_py_file()
+
+            # We can only validate PowerShell arg spec if it is using the new Ansible.Basic.AnsibleModule util
+            pattern = r'(?im)^#\s*ansiblerequires\s+\-csharputil\s*Ansible\.Basic'
+            if re.search(pattern, self.text) and self.object_name not in self.PS_ARG_VALIDATE_BLACKLIST:
+                with ModuleValidator(docs_path, base_branch=self.base_branch, git_cache=self.git_cache) as docs_mv:
+                    docs = docs_mv._validate_docs()[1]
+                    self._validate_ansible_module_call(docs)
 
         self._check_gpl3_header()
         if not self._just_docs() and not end_of_deprecation_should_be_removed_only:
