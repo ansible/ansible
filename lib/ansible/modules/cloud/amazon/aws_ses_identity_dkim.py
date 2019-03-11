@@ -41,7 +41,7 @@ EXAMPLES = '''
 - name: Enable DKIM setting for identity example.com
   aws_ses_identity_dkim:
     identity: example.com
-  register: dkim_attributes
+  register: dkim_results
 
 - name: Example how to aws_ses_identity_dkim results to set DNS records for validation (if you use Route53 service for DNS)
   route53:
@@ -49,7 +49,7 @@ EXAMPLES = '''
     value: "{{ item }}"
     type: CNAME
     zone: example.com
-  with_items: "{{ dkim_attributes.dkim_tokens }}"
+  with_items: "{{ dkim_results.dkim_attributes.dkim_tokens }}"
 
 - name: Disable DKIM setting for identity example.com
   aws_ses_identity_dkim:
@@ -85,7 +85,7 @@ except ImportError:
     pass  # caught by imported HAS_BOTO3
 
 
-def get_identity_dkim_settings(client, identity):
+def get_identity_dkim_settings(module, client, identity):
     try:
         response = client.get_identity_dkim_attributes(Identities=[identity])
     except (BotoCoreError, ClientError) as e:
@@ -95,7 +95,7 @@ def get_identity_dkim_settings(client, identity):
     return dkim_attributes[identity]
 
 
-def ses_verify_dkim_domain(client, identity):
+def ses_verify_dkim_domain(module, client, identity):
     domain = identity.split('@')[-1]
     try:
         response = client.verify_domain_dkim(Domain=domain)
@@ -105,18 +105,17 @@ def ses_verify_dkim_domain(client, identity):
     return dkim_tokens
 
 
-def enable_identity_dkim_settings(client, identity):
+def enable_identity_dkim_settings(module, client, identity):
     try:
         response = client.set_identity_dkim_enabled(DkimEnabled=True, Identity=identity)
-    except (BotoCoreError, ClientError) as e:
+        return response
+    except (BotoCoreError) as e:
         module.fail_json_aws(e, msg='Failed to enable DKIM for {identity}.'.format(identity=identity))
     except (ClientError) as e:
         pass # The enable call will always return a ClientError, complaining about missing DNS record, but still changes setting to 'enabled'.
         # So once DNS validation goes through it should work already, hence we ignore errors here.
-    return response
 
-
-def disable_identity_dkim_settings(client, identity):
+def disable_identity_dkim_settings(module, client, identity):
     try:
         response = client.set_identity_dkim_enabled(DkimEnabled=False, Identity=identity)
     except (BotoCoreError, ClientError) as e:
@@ -144,17 +143,16 @@ def main():
     changed = False
 
     if state == 'enabled':
-        ses_verify_dkim_domain(client, identity)
-        enable_identity_dkim_settings(client, identity)
+        ses_verify_dkim_domain(module, client, identity)
+        enable_identity_dkim_settings(module, client, identity)
         # TODO: find a way to easily detect changes (updates to identity)
         changed = True
     else:
-        disable_identity_dkim_settings(client, identity)
+        disable_identity_dkim_settings(module, client, identity)
 
-    attributes = get_identity_dkim_attributes(client, identity)
-    module.exit_json(
-        changed=changed,
-        dkim_attributes=camel_dict_to_snake_dict(attributes)
+    attributes = get_identity_dkim_settings(module, client, identity)
+
+    module.exit_json(changed=changed, dkim_attributes=camel_dict_to_snake_dict(attributes))
 
 
 if __name__ == '__main__':
