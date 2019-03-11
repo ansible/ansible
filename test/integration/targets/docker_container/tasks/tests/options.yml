@@ -100,7 +100,7 @@
 - assert:
     that:
     - blkio_weight_1 is changed
-    - blkio_weight_2 is not changed
+    - "blkio_weight_2 is not changed or 'Docker warning: Your kernel does not support Block I/O weight or the cgroup is not mounted. Weight discarded.' in blkio_weight_2.warnings"
     - blkio_weight_3 is changed
 
 ####################################################################
@@ -350,7 +350,7 @@
     image: alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
-    cpuset_cpus: 0
+    cpuset_cpus: "0"
     state: started
   register: cpuset_cpus_1
 
@@ -359,7 +359,7 @@
     image: alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
-    cpuset_cpus: 0
+    cpuset_cpus: "0"
     state: started
   register: cpuset_cpus_2
 
@@ -368,7 +368,7 @@
     image: alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
-    cpuset_cpus: 1
+    cpuset_cpus: "1"
     state: started
     stop_timeout: 1
   # This will fail if the system the test is run on doesn't have
@@ -397,7 +397,7 @@
     image: alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
-    cpuset_mems: 0
+    cpuset_mems: "0"
     state: started
   register: cpuset_mems_1
 
@@ -406,7 +406,7 @@
     image: alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
-    cpuset_mems: 0
+    cpuset_mems: "0"
     state: started
   register: cpuset_mems_2
 
@@ -415,7 +415,7 @@
     image: alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
-    cpuset_mems: 1
+    cpuset_mems: "1"
     state: started
     stop_timeout: 1
   # This will fail if the system the test is run on doesn't have
@@ -872,7 +872,7 @@
     state: started
   register: entrypoint_2
 
-- name: entrypoint (change order idempotency)
+- name: entrypoint (change order, should not be idempotent)
   docker_container:
     image: alpine:3.8
     entrypoint:
@@ -882,6 +882,7 @@
     - "-v"
     name: "{{ cname }}"
     state: started
+    force_kill: yes
   register: entrypoint_3
 
 - name: entrypoint (less parameters)
@@ -1108,8 +1109,8 @@
     name: "{{ cname }}"
     state: started
     exposed_ports:
-    - 1234
-    - 5678
+    - "1234"
+    - "5678"
   register: exposed_ports_1
 
 - name: exposed_ports (idempotency)
@@ -1119,8 +1120,8 @@
     name: "{{ cname }}"
     state: started
     exposed_ports:
-    - 5678
-    - 1234
+    - "5678"
+    - "1234"
   register: exposed_ports_2
 
 - name: exposed_ports (less ports)
@@ -1130,7 +1131,7 @@
     name: "{{ cname }}"
     state: started
     exposed_ports:
-    - 1234
+    - "1234"
   register: exposed_ports_3
 
 - name: exposed_ports (more ports)
@@ -1140,8 +1141,8 @@
     name: "{{ cname }}"
     state: started
     exposed_ports:
-    - 1234
-    - 1235
+    - "1234"
+    - "1235"
     stop_timeout: 1
   register: exposed_ports_4
 
@@ -1175,8 +1176,8 @@
     name: "{{ cname }}"
     state: started
     groups:
-    - 1234
-    - 5678
+    - "1234"
+    - "5678"
   register: groups_1
 
 - name: groups (idempotency)
@@ -1186,8 +1187,8 @@
     name: "{{ cname }}"
     state: started
     groups:
-    - 5678
-    - 1234
+    - "5678"
+    - "1234"
   register: groups_2
 
 - name: groups (less groups)
@@ -1197,7 +1198,7 @@
     name: "{{ cname }}"
     state: started
     groups:
-    - 1234
+    - "1234"
   register: groups_3
 
 - name: groups (more groups)
@@ -1207,8 +1208,8 @@
     name: "{{ cname }}"
     state: started
     groups:
-    - 1234
-    - 2345
+    - "1234"
+    - "2345"
     stop_timeout: 1
   register: groups_4
 
@@ -2897,7 +2898,7 @@
     image: alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
-    stop_signal: 30
+    stop_signal: "30"
     state: started
   register: stop_signal_1
 
@@ -2906,7 +2907,7 @@
     image: alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
-    stop_signal: 30
+    stop_signal: "30"
     state: started
   register: stop_signal_2
 
@@ -2915,7 +2916,7 @@
     image: alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
-    stop_signal: 9
+    stop_signal: "9"
     state: started
     stop_timeout: 1
   register: stop_signal_3

@@ -2030,6 +2030,7 @@ class ContainerManager(DockerBaseClass):
         if not self.check_mode:
             try:
                 new_container = self.client.create_container(image, **create_parameters)
+                self.client.report_warnings(new_container)
             except Exception as exc:
                 self.fail("Error creating container: %s" % str(exc))
             return self._get_container(new_container['Id'])
@@ -2122,7 +2123,8 @@ class ContainerManager(DockerBaseClass):
             self.results['changed'] = True
             if not self.check_mode and callable(getattr(self.client, 'update_container')):
                 try:
-                    self.client.update_container(container_id, **update_parameters)
+                    result = self.client.update_container(container_id, **update_parameters)
+                    self.client.report_warnings(result)
                 except Exception as exc:
                     self.fail("Error updating container %s: %s" % (container_id, str(exc)))
         return self._get_container(container_id)
