@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
-
-ansible-playbook -c local aws_ssm_integration_test_setup_teardown.yml --tags setup_infra
 set -eux
+ansible-playbook -c local aws_ssm_integration_test_setup_teardown.yml --tags setup_infra
 
 cd ../connection
 
