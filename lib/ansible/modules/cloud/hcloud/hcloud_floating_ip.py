@@ -199,7 +199,7 @@ class AnsibleHcloudFloatingIP(Hcloud):
             self._mark_as_changed()
 
         labels = self.module.params.get("labels")
-        if labels is not None:
+        if labels is not None and labels != self.hcloud_floating_ip.labels:
             if not self.module.check_mode:
                 self.hcloud_floating_ip.update(labels=labels)
             self._mark_as_changed()

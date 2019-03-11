@@ -1,4 +1,4 @@
- Copyright: (c) 2019, Hetzner Cloud GmbH <info@hetzner-cloud.de>
+# Copyright: (c) 2019, Hetzner Cloud GmbH <info@hetzner-cloud.de>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 ---
 - name: setup server
@@ -96,12 +96,55 @@
     description: "changed-description"
     type: ipv4
     home_location: "fsn1"
+    labels:
+      key: value
   register: floatingIP
-- name: verify test create Floating IP
+- name: verify test update Floating IP
   assert:
     that:
       - floatingIP is success
       - floatingIP.hcloud_floating_ip.description == "changed-description"
+
+- name: test update Floating IP with same labels
+  hcloud_floating_ip:
+    id: "{{ floatingIP.hcloud_floating_ip.id }}"
+    type: ipv4
+    home_location: "fsn1"
+    labels:
+      key: value
+  register: floatingIP
+- name: verify test update Floating IP with same labels
+  assert:
+    that:
+      - floatingIP is not changed
+
+- name: test update Floating IP with other labels
+  hcloud_floating_ip:
+    id: "{{ floatingIP.hcloud_floating_ip.id }}"
+    type: ipv4
+    home_location: "fsn1"
+    labels:
+      key: value
+      other: label
+  register: floatingIP
+- name: verify test update Floating IP with other labels
+  assert:
+    that:
+      - floatingIP is changed
+
+- name: test update Floating IP with other labels in different order
+  hcloud_floating_ip:
+    id: "{{ floatingIP.hcloud_floating_ip.id }}"
+    type: ipv4
+    home_location: "fsn1"
+    labels:
+      other: label
+      key: value
+  register: floatingIP
+- name: verify test update Floating IP with other labels in different order
+  assert:
+    that:
+      - floatingIP is not changed
 
 - name: test assign Floating IP with checkmode
   hcloud_floating_ip:
