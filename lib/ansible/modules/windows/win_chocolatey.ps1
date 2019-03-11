@@ -24,7 +24,7 @@ $spec = @{
         ignore_dependencies = @{ type = "bool"; default = $false }
         force = @{ type = "bool"; default = $false }
         name = @{ type = "list"; elements = "str"; required = $true }
-        package_params = @{ type = "str"; aliases = "params" }
+        package_params = @{ type = "str"; aliases = @("params") }
         pinned = @{ type = "bool" }
         proxy_url = @{ type = "str" }
         proxy_username = @{ type = "str" }
@@ -34,7 +34,7 @@ $spec = @{
         source_username = @{ type = "str" }
         source_password = @{ type = "str"; no_log = $true }
         state = @{ type = "str"; default = "present"; choices = "absent", "downgrade", "latest", "present", "reinstalled" }
-        timeout = @{ type = "int"; default = 2700; aliases = "execution_timeout" }
+        timeout = @{ type = "int"; default = 2700; aliases = @("execution_timeout") }
         validate_certs = @{ type = "bool"; default = $true }
         version = @{ type = "str" }
     }

@@ -29,6 +29,7 @@ options:
       - If path is not specified default system temporary directory (%TEMP%) will be used.
     type: path
     default: '%TEMP%'
+    aliases: [ dest ]
   prefix:
     description:
       - Prefix of file/directory name created by module.

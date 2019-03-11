@@ -17,6 +17,8 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import imp
+import json
+import subprocess
 import sys
 
 from contextlib import contextmanager
@@ -75,7 +77,26 @@ def setup_env(filename):
                 del sys.modules[k]
 
 
-def get_argument_spec(filename):
+def get_ps_argument_spec(filename):
+    # This uses a very small skeleton of Ansible.Basic.AnsibleModule to return the argspec defined by the module. This
+    # is pretty rudimentary and will probably require something better going forward.
+    cmd = ['test/sanity/validate-modules/ps_argspec.ps1', filename]
+
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
+    stdout, stderr = proc.communicate()
+
+    if proc.returncode != 0:
+        raise AnsibleModuleImportError(stderr.decode('utf-8'))
+
+    kwargs = json.loads(stdout)
+
+    # the validate-modules code expects the options spec to be under the argument_spec key not options as set in PS
+    kwargs['argument_spec'] = kwargs.pop('options', {})
+
+    return kwargs['argument_spec'], (), kwargs
+
+
+def get_py_argument_spec(filename):
     with setup_env(filename) as fake:
         try:
             # We use ``module`` here instead of ``__main__``
@@ -91,8 +112,16 @@ def get_argument_spec(filename):
 
     try:
         try:
+            # for ping kwargs == {'argument_spec':{'data':{'type':'str','default':'pong'}}, 'supports_check_mode':True}
             return fake.kwargs['argument_spec'], fake.args, fake.kwargs
         except KeyError:
             return fake.args[0], fake.args, fake.kwargs
     except TypeError:
         return {}, (), {}
+
+
+def get_argument_spec(filename):
+    if filename.endswith('.py'):
+        return get_py_argument_spec(filename)
+    else:
+        return get_ps_argument_spec(filename)
