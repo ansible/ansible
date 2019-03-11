@@ -355,7 +355,7 @@ class AzureRMVirtualNetworkGateway(AzureRMModuleBase):
             else:
                 results = self.delete_vgw()
 
-        if self.state == 'present':            
+        if self.state == 'present':
             self.results['id'] = results.get('id')
         return self.results
 
