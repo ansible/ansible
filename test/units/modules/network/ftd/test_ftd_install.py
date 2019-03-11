@@ -45,7 +45,7 @@ DEFAULT_MODULE_PARAMS = dict(
     image_file_location="http://10.0.0.1/Release/ftd-6.2.3-83.pkg",
     image_version="6.2.3-83",
     search_domains="cisco.com",
-    force_reinstall=False
+    force_install=False
 )
 
 
@@ -60,24 +60,24 @@ class TestFtdInstall(object):
 
     @pytest.fixture(autouse=True)
     def connection_mock(self, mocker):
-        connection_class_mock = mocker.patch('library.ftd_install.Connection')
+        connection_class_mock = mocker.patch('ansible.modules.network.ftd.ftd_install.Connection')
         return connection_class_mock.return_value
 
     @pytest.fixture
     def config_resource_mock(self, mocker):
-        resource_class_mock = mocker.patch('library.ftd_install.BaseConfigurationResource')
+        resource_class_mock = mocker.patch('ansible.modules.network.ftd.ftd_install.BaseConfigurationResource')
         return resource_class_mock.return_value
 
     @pytest.fixture(autouse=True)
     def ftd_factory_mock(self, mocker):
-        return mocker.patch('library.ftd_install.FtdPlatformFactory')
+        return mocker.patch('ansible.modules.network.ftd.ftd_install.FtdPlatformFactory')
 
     @pytest.fixture(autouse=True)
     def has_kick_mock(self, mocker):
-        return mocker.patch('library.ftd_install.HAS_KICK', True)
+        return mocker.patch('ansible.modules.network.ftd.ftd_install.HAS_KICK', True)
 
     def test_module_should_fail_when_kick_is_not_installed(self, mocker):
-        mocker.patch('library.ftd_install.HAS_KICK', False)
+        mocker.patch('ansible.modules.network.ftd.ftd_install.HAS_KICK', False)
 
         set_module_args(dict(DEFAULT_MODULE_PARAMS))
         with pytest.raises(AnsibleFailJson) as ex:
@@ -155,7 +155,7 @@ class TestFtdInstall(object):
         }
         module_params = dict(DEFAULT_MODULE_PARAMS)
         module_params['image_version'] = '6.3.0-11'
-        module_params['force_reinstall'] = True
+        module_params['force_install'] = True
 
         set_module_args(module_params)
         with pytest.raises(AnsibleExitJson) as ex:

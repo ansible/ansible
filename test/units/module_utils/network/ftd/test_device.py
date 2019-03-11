@@ -40,8 +40,8 @@ class TestFtdPlatformFactory(object):
 
     @pytest.fixture(autouse=True)
     def mock_devices(self, mocker):
-        mocker.patch('module_utils.device.Kp')
-        mocker.patch('module_utils.device.Ftd5500x')
+        mocker.patch('ansible.module_utils.network.ftd.device.Kp')
+        mocker.patch('ansible.module_utils.network.ftd.device.Ftd5500x')
 
     def test_factory_should_return_corresponding_platform(self):
         ftd_platform = FtdPlatformFactory.create(FtdModel.FTD_ASA5508_X, dict(DEFAULT_MODULE_PARAMS))
@@ -85,7 +85,7 @@ class TestFtd2100Platform(object):
 
     @pytest.fixture
     def kp_mock(self, mocker):
-        return mocker.patch('module_utils.device.Kp')
+        return mocker.patch('ansible.module_utils.network.ftd.device.Kp')
 
     @pytest.fixture
     def module_params(self):
@@ -117,7 +117,7 @@ class TestFtdAsa5500xPlatform(object):
 
     @pytest.fixture
     def asa5500x_mock(self, mocker):
-        return mocker.patch('module_utils.device.Ftd5500x')
+        return mocker.patch('ansible.module_utils.network.ftd.device.Ftd5500x')
 
     @pytest.fixture
     def module_params(self):
