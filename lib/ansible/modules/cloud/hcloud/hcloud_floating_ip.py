@@ -25,7 +25,7 @@ description:
     - "Create, update and manage Floating IPss on the Hetzner Cloud."
 
 author:
-    - Lukas Kaemmerling (@lkaemmerling)
+    - Lukas Kaemmerling (@LKaemmerling)
 
 options:
     id:
