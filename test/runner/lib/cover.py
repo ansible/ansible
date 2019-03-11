@@ -55,7 +55,28 @@ def command_coverage_combine(args):
         sources = []
 
     if args.stub:
-        groups['=stub'] = dict((source, set()) for source in sources)
+        stub_group = []
+        stub_groups = [stub_group]
+        stub_line_limit = 500000
+        stub_line_count = 0
+
+        for source in sources:
+            with open(source, 'r') as source_fd:
+                source_line_count = len(source_fd.read().splitlines())
+
+            stub_group.append(source)
+            stub_line_count += source_line_count
+
+            if stub_line_count > stub_line_limit:
+                stub_line_count = 0
+                stub_group = []
+                stub_groups.append(stub_group)
+
+        for stub_index, stub_group in enumerate(stub_groups):
+            if not stub_group:
+                continue
+
+            groups['=stub-%02d' % (stub_index + 1)] = dict((source, set()) for source in stub_group)
 
     for coverage_file in coverage_files:
         counter += 1
