@@ -282,7 +282,7 @@ options:
               - Hardware type.
       licenses:
         description:
-          - An array of license types 
+          - An array of license types.
   state:
     description:
       - Configures the intended state of the instance of the object on
