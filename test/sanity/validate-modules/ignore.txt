@@ -99,7 +99,6 @@ lib/ansible/modules/cloud/centurylink/clc_server_snapshot.py E335
 lib/ansible/modules/cloud/cloudstack/cs_cluster.py E326
 lib/ansible/modules/cloud/cloudstack/cs_host.py E326
 lib/ansible/modules/cloud/cloudstack/cs_iso.py E323
-lib/ansible/modules/cloud/cloudstack/cs_loadbalancer_rule.py E309
 lib/ansible/modules/cloud/cloudstack/cs_network.py E324
 lib/ansible/modules/cloud/cloudstack/cs_network_offering.py E322
 lib/ansible/modules/cloud/cloudstack/cs_network_offering.py E326
