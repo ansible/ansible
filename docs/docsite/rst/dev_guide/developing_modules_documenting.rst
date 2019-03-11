@@ -34,7 +34,7 @@ This is immediately followed by ``# -*- coding: utf-8 -*-`` to clarify that the 
 Copyright and license
 =====================
 
-After the shebang and coding, there should be a `copyright line <https://www.gnu.org/licenses/gpl-howto.en.html>`_ with the original copyright holder and a license declaration. The license declaration should be ONLY one line, not the full GPL prefix.:
+After the shebang and UTF-8 coding, there should be a `copyright line <https://www.gnu.org/licenses/gpl-howto.en.html>`_ with the original copyright holder and a license declaration. The license declaration should be ONLY one line, not the full GPL prefix.:
 
 .. code-block:: python
 
