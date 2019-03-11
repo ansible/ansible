@@ -138,7 +138,9 @@ class RabbitMqUser(object):
         self.username = username
         self.password = password
         self.node = node
-        if not tags:
+        if tags:
+            self.tags = tags
+        else:
             self.tags = list()
 
         self.permissions = permissions
