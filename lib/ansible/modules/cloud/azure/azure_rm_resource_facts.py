@@ -183,18 +183,25 @@ class AzureRMResourceFacts(AzureRMModuleBase):
 
         header_parameters = {}
         header_parameters['Content-Type'] = 'application/json; charset=utf-8'
+        skiptoken = None
 
-        response = self.mgmt_client.query(self.url, "GET", query_parameters, header_parameters, None, [200, 404], 0, 0)
+        while True:
+            if skiptoken:
+                query_parameters['skiptoken'] = skiptoken
+            response = self.mgmt_client.query(self.url, "GET", query_parameters, header_parameters, None, [200, 404], 0, 0)
 
-        try:
-            response = json.loads(response.text)
-            if response is list:
-                self.results['response'] = response
-            else:
-                self.results['response'] = [response]
-        except Exception:
-            self.results['response'] = []
-
+            try:
+                response = json.loads(response.text)
+                if isinstance(response, dict):
+                    if response.get('value'):
+                        self.results['response'] = self.results['response'] + response['value']
+                        skiptoken = response.get('nextLink')
+                    else:
+                        self.results['response'] = self.results['response'] + [response]
+            except Exception:
+                self.results['response'] = []
+            if not skiptoken:
+                break
         return self.results
 
 
