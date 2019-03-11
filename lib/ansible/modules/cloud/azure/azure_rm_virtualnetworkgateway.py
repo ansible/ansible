@@ -13,7 +13,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_virtualnetworkgateway
 
-version_added: "2.7"
+version_added: "2.8"
 
 short_description: Manage Azure virtual network gateways.
 
@@ -66,9 +66,9 @@ options:
                 description:
                     - private ip allocation method.
                 choices:
-                    - Dynamic
-                    - Static
-                default: Dynamic
+                    - dynamic
+                    - static
+                default: dynamic
             public_ip_address_name:
                 description:
                     - Name of the public ip address. None for disable ip address.
@@ -79,17 +79,17 @@ options:
     gateway_type:
         description:
             - The type of this virtual network gateway
-        default: Vpn
+        default: vpn
         choices:
-            - Vpn
-            - ExpressRoute
+            - vpn
+            - express_route
     vpn_type:
         description:
             - The type of this virtual network gateway
-        default: RouteBased
+        default: route_based
         choices:
-            - RouteBased
-            - PolicyBased
+            - route_based
+            - policy_based
     enable_bgp:
         description:
             - Whether BGP is enabled for this virtual network gateway or not
@@ -122,92 +122,48 @@ author:
 EXAMPLES = '''
     - name: Create virtual network gateway without bgp settings
       azure_rm_virtualnetworkgateway:
-        resource_group: testrg
-        name: testvpngw
+        resource_group: myResourceGroup
+        name: myVirtualNetworkGateway
         ip_configurations:
           - name: testipconfig
             private_ip_allocation_method: Dynamic
             public_ip_address_name: testipaddr
-        virtual_network: testvnet
+        virtual_network: myVirtualNetwork
         tags:
           common: "xyz"
-      register: vgw_without_bgp
 
     - name: Create virtual network gateway with bgp
       azure_rm_virtualnetworkgateway:
-        resource_group: testrg
-        name: testvpngw
-        sku: VpnGw1
+        resource_group: myResourceGroup
+        name: myVirtualNetworkGateway
+        sku: vpn_gw1
         ip_configurations:
           - name: testipconfig
             private_ip_allocation_method: Dynamic
             public_ip_address_name: testipaddr
         enable_bgp: yes
-        virtual_network: testvnet
+        virtual_network: myVirtualNetwork
         bgp_settings:
           asn: 65515
           bgp_peering_address: "169.254.54.209"
         tags:
           common: "xyz"
-      register: vgw_with_bgp
 
-    - name: Create virtual network gateway with bgp
+    - name: Delete instance of virtual network gateway
       azure_rm_virtualnetworkgateway:
-        resource_group: testrg
-        name: testvpngw
+        resource_group: myResourceGroup
+        name: myVirtualNetworkGateway
         state: absent
 '''
 
 RETURN = '''
-state:
-    description: The current state of the virtual network gateway.
+id:
+    description:
+        - Virtual Network Gateway resource ID
     returned: always
-    type: dict
-    sample: {
-        "etag": "W/\"35a9a0db-2c8d-41b1-9ab6-fcc7c3000887\"",
-        "id": "/subscriptions/xyz/resourceGroups/testrg/providers/Microsoft.Network/virtualNetworkGateways/testvpngw",
-        "location": "centralindia",
-        "name": "testvpngw",
-        "properties": {
-            "activeActive": false,
-            "bgpSettings": {
-                "asn": 65515,
-                "bgpPeeringAddress": "10.107.1.254",
-                "peerWeight": 0
-            },
-            "enableBgp": false,
-            "gatewayType": "Vpn",
-            "ipConfigurations": [
-                {
-                    "etag": "W/\"35a9a0db-2c8d-41b1-9ab6-fcc7c3000887\"",
-                    "id": "/subscriptions/xyz/resourceGroups/testrg/providers/Microsoft.Network/virtualNetworkGateways/testvpngw/ipConfigurations/default",
-                    "name": "default",
-                    "properties": {
-                        "privateIPAllocationMethod": "Dynamic",
-                        "provisioningState": "Succeeded",
-                        "publicIPAddress": {
-                            "id": "/subscriptions/xyz/resourceGroups/testrg/providers/Microsoft.Network/publicIPAddresses/testipaddr"
-                        },
-                        "subnet": {
-                            "id": "/subscriptions/xyz/resourceGroups/testrg/providers/Microsoft.Network/virtualNetworks/testvnet/subnets/GatewaySubnet"
-                        }
-                    }
-                }
-            ],
-            "provisioningState": "Succeeded",
-            "resourceGuid": "57166743-7371-44a8-a8be-ff3ba579a2f2",
-            "sku": {
-                "capacity": 2,
-                "name": "VpnGw1",
-                "tier": "VpnGw1"
-            },
-            "vpnType": "RouteBased"
-        },
-        "tags": {
-            "common": "xyz"
-        },
-        "type": "Microsoft.Network/virtualNetworkGateways"
-    }
+    type: str
+    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworkGateways/myV
+             irtualNetworkGateway"
 '''
 
 try:
@@ -217,6 +173,7 @@ except ImportError:
     pass
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, CIDR_PATTERN
+from ansible.module_utils.common.dict_transformations import _snake_to_camel
 
 
 AZURE_VPN_GATEWAY_OBJECT_CLASS = 'VirtualNetworkGateway'
@@ -260,8 +217,7 @@ def vgw_to_dict(vgw):
             bgp_peering_address=vgw.bgp_settings.bgp_peering_address,
             peer_weight=vgw.bgp_settings.peer_weight
         ) if vgw.bgp_settings else None,
-        etag=vgw.etag,
-        active_active=vgw.active_active
+        etag=vgw.etag
     )
     return results
 
@@ -276,15 +232,12 @@ class AzureRMVirtualNetworkGateway(AzureRMModuleBase):
             state=dict(type='str', default='present', choices=['present', 'absent']),
             location=dict(type='str'),
             ip_configurations=dict(type='list', default=None, elements='dict', options=ip_configuration_spec),
-            gateway_type=dict(type='str', default='Vpn'),
-            vpn_type=dict(type='str', default='RouteBased'),
+            gateway_type=dict(type='str', default='vpn', choices=['vpn', 'express_route']),
+            vpn_type=dict(type='str', default='route_based', choices=['route_based', 'policy_based']),
             enable_bgp=dict(type='bool', default=False),
-            gateway_default_site=dict(),
-            sku=dict(default='VpnGw1'),
-            vpn_client_configuration=dict(),
+            sku=dict(default='VpnGw1', choices=['VpnGw1', 'VpnGw2', 'VpnGw3']),
             bgp_settings=dict(type='dict', options=bgp_spec),
-            virtual_network=dict(type='raw', aliases=['virtual_network_name']),
-            active_active=dict(type='bool', default=False)
+            virtual_network=dict(type='raw', aliases=['virtual_network_name'])
         )
 
         self.resource_group = None
@@ -295,11 +248,8 @@ class AzureRMVirtualNetworkGateway(AzureRMModuleBase):
         self.gateway_type = None
         self.vpn_type = None
         self.enable_bgp = None
-        self.gateway_default_site = None
         self.sku = None
-        self.vpn_client_configuration = None
         self.bgp_settings = None
-        self.active_active = None
 
         self.results = dict(
             changed=False,
@@ -316,6 +266,7 @@ class AzureRMVirtualNetworkGateway(AzureRMModuleBase):
 
         changed = False
         results = dict()
+        vgw = None
 
         resource_group = self.get_resource_group(self.resource_group)
         if not self.location:
@@ -326,23 +277,7 @@ class AzureRMVirtualNetworkGateway(AzureRMModuleBase):
 
         try:
             vgw = self.network_client.virtual_network_gateways.get(self.resource_group, self.name)
-            self.check_provisioning_state(vgw, self.state)
-            results = vgw_to_dict(vgw)
-            if self.state == 'present':
-                update_tags, results['tags'] = self.update_tags(results['tags'])
-                if update_tags:
-                    changed = True
-                    fh.write('changed in tags\n')
-                sku = dict(name=self.sku, tier=self.sku)
-                if sku != results['sku']:
-                    changed = True
-                if self.enable_bgp != results['enable_bgp']:
-                    changed = True
-                if self.bgp_settings and self.bgp_settings['asn'] != results['bgp_settings']['asn']:
-                    changed = True
-                if self.active_active != results['active_active']:
-                    changed = True
-            elif self.state == 'absent':
+            if self.state == 'absent':
                 self.log("CHANGED: vnet exists but requested state is 'absent'")
                 changed = True
         except CloudError:
@@ -350,8 +285,22 @@ class AzureRMVirtualNetworkGateway(AzureRMModuleBase):
                 self.log("CHANGED: VPN Gateway {0} does not exist but requested state is 'present'".format(self.name))
                 changed = True
 
+        if vgw:
+            results = vgw_to_dict(vgw)
+            if self.state == 'present':
+                update_tags, results['tags'] = self.update_tags(results['tags'])
+                if update_tags:
+                    changed = True
+                sku = dict(name=self.sku, tier=self.sku)
+                if sku != results['sku']:
+                    changed = True
+                if self.enable_bgp != results['enable_bgp']:
+                    changed = True
+                if self.bgp_settings and self.bgp_settings['asn'] != results['bgp_settings']['asn']:
+                    changed = True
+
         self.results['changed'] = changed
-        self.results['state'] = results
+        self.results['id'] = results.get('id')
 
         if self.check_mode:
             return self.results
@@ -362,13 +311,13 @@ class AzureRMVirtualNetworkGateway(AzureRMModuleBase):
                 if not self.ip_configurations:
                     self.fail('Parameter error: ip_configurations required when creating a vpn gateway')
                 subnet = self.network_models.SubResource(
-                    '/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/virtualNetworks/{2}/subnets/GatewaySubnet'.format(
+                    id='/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/virtualNetworks/{2}/subnets/GatewaySubnet'.format(
                         self.virtual_network['subscription_id'],
                         self.virtual_network['resource_group'],
                         self.virtual_network['name']))
 
                 public_ip_address = self.network_models.SubResource(
-                    '/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/publicIPAddresses/{2}'.format(
+                    id='/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/publicIPAddresses/{2}'.format(
                         self.virtual_network['subscription_id'],
                         self.virtual_network['resource_group'],
                         self.ip_configurations[0]['public_ip_address_name']))
@@ -393,17 +342,21 @@ class AzureRMVirtualNetworkGateway(AzureRMModuleBase):
                 vgw = self.network_models.VirtualNetworkGateway(
                     location=self.location,
                     ip_configurations=vgw_ip_configurations,
-                    gateway_type=self.gateway_type,
-                    vpn_type=self.vpn_type,
+                    gateway_type=_snake_to_camel(self.gateway_type, True),
+                    vpn_type=_snake_to_camel(self.vpn_type, True),
                     enable_bgp=self.enable_bgp,
                     sku=vgw_sku,
                     bgp_settings=vgw_bgp_settings
                 )
                 if self.tags:
                     vgw.tags = self.tags
-                self.results['state'] = self.create_or_update_vgw(vgw)
+                results = self.create_or_update_vgw(vgw)
+
             else:
-                self.results['state'] = self.delete_vgw()
+                results = self.delete_vgw()
+
+        if self.state == 'present':
+            self.results['id'] = results.get('id')
         return self.results
 
     def create_or_update_vgw(self, vgw):
