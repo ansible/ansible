@@ -579,7 +579,7 @@ class AzureNic(object):
 
         self.public_ips = {}
 
-        if nic_model.get('properties') and nic_model.get('properties').get('ipConfigurations'):
+        if nic_model.get('properties', {}).get('ipConfigurations'):
             for ipc in nic_model['properties']['ipConfigurations']:
                 pip = ipc['properties'].get('publicIPAddress')
                 if pip:
