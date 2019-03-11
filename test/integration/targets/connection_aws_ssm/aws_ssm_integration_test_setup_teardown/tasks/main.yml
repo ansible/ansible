@@ -19,7 +19,7 @@
   tags: setup_infra
 
 - pause:
-    seconds: 10
+    seconds: 30
   tags: setup_infra
 
 - name: Create ec2 instance
@@ -51,7 +51,7 @@
 
 - name: Create hosts file
   template:
-    dest: /tmp/inventory.aws_ssm
+    dest: "{{playbook_dir}}/inventory.aws_ssm"
     src: inventory.aws_ssm.j2
   tags: setup_infra
   
