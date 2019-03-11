@@ -106,13 +106,13 @@ def reconcile_candidate(module, candidate, prefix, want):
         parents = []
         flags = " | include '^ip route'"
     else:
-        parents = ['vrf context {}'.format(vrf)]
-        flags = " | section '{}' | include '^  ip route'".format(parents[0])
+        parents = ['vrf context {0}'.format(vrf)]
+        flags = " | section '{0}' | include '^  ip route'".format(parents[0])
 
     netcfg = CustomNetworkConfig(indent=2, contents=get_config(module, flags=[flags]))
     routes = str(netcfg).split('\n')
 
-    prefix_and_nh = 'ip route {} {}'.format(prefix, want['next_hop'])
+    prefix_and_nh = 'ip route {0} {1}'.format(prefix, want['next_hop'])
     existing = [i for i in routes if i.startswith(prefix_and_nh)]
     proposed = set_route_command(prefix, want, module)
 
