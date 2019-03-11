@@ -174,7 +174,15 @@ import json
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-from ansible.module_utils.net_tools.netbox.netbox_utils import find_ids, normalize_data, DEVICE_STATUS, FACE_ID
+from ansible.module_utils.net_tools.netbox.netbox_utils import (
+    find_ids,
+    normalize_data,
+    create_netbox_object,
+    delete_netbox_object,
+    update_netbox_object,
+    DEVICE_STATUS,
+    FACE_ID
+)
 
 PYNETBOX_IMP_ERR = None
 try:
@@ -252,7 +260,7 @@ def _find_ids(nb, data):
 
 def ensure_device_present(nb, nb_endpoint, normalized_data):
     '''
-    :returns dict(device, msg, changed): dictionary resulting of the request,
+    :returns dict(device, msg, changed, diff): dictionary resulting of the request,
         where `device` is the serialized device fetched or newly created in
         Netbox
     '''
@@ -260,59 +268,44 @@ def ensure_device_present(nb, nb_endpoint, normalized_data):
     nb_device = nb_endpoint.get(name=data["name"])
     result = {}
     if not nb_device:
-        if module.check_mode:
-            device = data
-        else:
-            device = nb_endpoint.create(data).serialize()
+        device, diff = create_netbox_object(nb_endpoint, data, module.check_mode)
         msg = "Device %s created" % (data["name"])
         changed = True
-        result["diff"] = {"before": {"state": "absent"}, "after": {"state": "present"}}
+        result["diff"] = diff
     else:
-        device = nb_device.serialize()
-        updated_device = device.copy()
-        updated_device.update(data)
-        if device == updated_device:
-            msg = "Device %s already exists" % (data["name"])
-            changed = False
-        else:
-            changed_keys = [k for k in data.keys() if device[k] != updated_device[k]]
-            data_before, data_after = {}, {}
-            for key in changed_keys:
-                data_before[key] = device[key]
-                data_after[key] = updated_device[key]
-
-            device = updated_device
-            if not module.check_mode:
-                if not nb_device.update(data):
-                    module.fail_json(
-                        msg="Request failed, couldn't update device: %s" % data["name"]
-                    )
-                device = nb_device.serialize()
+        device, diff = update_netbox_object(nb_device, data, module.check_mode)
+        if device is False:
+            module.fail_json(
+                msg="Request failed, couldn't update device: %s" % data["name"]
+            )
+        if diff:
             msg = "Device %s updated" % (data["name"])
             changed = True
-            result["diff"] = {"before": data_before, "after": data_after}
-
-    result.update({"device": device, "msg": msg, "changed": changed})
+            result["diff"] = diff
+        else:
+            msg = "Device %s already exists" % (data["name"])
+            changed = False
+    result.update({"device": device, "changed": changed, "msg": msg})
     return result
 
 
 def ensure_device_absent(nb_endpoint, data):
     '''
-    :returns dict(msg, changed)
+    :returns dict(msg, changed, diff)
     '''
-    device = nb_endpoint.get(name=data["name"])
+    nb_device = nb_endpoint.get(name=data["name"])
     result = {}
-    if device:
-        if not module.check_mode:
-            device.delete()
+    if nb_device:
+        dummy, diff = delete_netbox_object(nb_device, module.check_mode)
         msg = 'Device %s deleted' % (data["name"])
         changed = True
-        result["diff"] = {"before": {"state": "present"}, "after": {"state": "absent"}}
+        result["diff"] = diff
     else:
         msg = 'Device %s already absent' % (data["name"])
         changed = False
 
-    return {"msg": msg, "changed": changed}
+    result.update({"changed": changed, "msg": msg})
+    return result
 
 
 if __name__ == "__main__":

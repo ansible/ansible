@@ -237,7 +237,7 @@ def update_netbox_object(nb_obj, data, check_mode):
 
         if not check_mode:
             nb_obj.update(data)
-            udpated_obj = nb_obj.serialize()
+            updated_obj = nb_obj.serialize()
 
         diff = _build_diff(before=data_before, after=data_after)
         return updated_obj, diff
