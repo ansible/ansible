@@ -35,7 +35,7 @@ $spec = @{
         source_password = @{ type = "str"; no_log = $true }
         state = @{ type = "str"; default = "present"; choices = "absent", "downgrade", "latest", "present", "reinstalled" }
         timeout = @{ type = "int"; default = 2700; aliases = "execution_timeout" }
-        validate_certs = @{ type = "bool"; default = $false }
+        validate_certs = @{ type = "bool"; default = $true }
         version = @{ type = "str" }
     }
     supports_check_mode = $true
