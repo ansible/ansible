@@ -29,6 +29,11 @@ options:
             - Enable or disable DKIM on the identity
         default: enabled
         choices: [ 'enabled', 'disabled']
+requirements: [ 'botocore', 'boto3' ]
+extends_documentation_fragment:
+    - aws
+    - ec2
+
 '''
 
 EXAMPLES = '''
@@ -61,6 +66,12 @@ RETURN = '''
 dkim_attributes:
     description: Dictionary with DKIM information
     type: complex
+    returned: always
+    sample: {
+        "dkim_tokens": [],
+        "dkim_enabled": "True",
+        "dkim_verification_status": "Pending"
+    }
     contains:
         dkim_tokens:
             descritpion: Array of the 3 DKIM verification tokens needed for DNS records
@@ -112,8 +123,10 @@ def enable_identity_dkim_settings(module, client, identity):
     except (BotoCoreError) as e:
         module.fail_json_aws(e, msg='Failed to enable DKIM for {identity}.'.format(identity=identity))
     except (ClientError) as e:
-        pass # The enable call will always return a ClientError, complaining about missing DNS record, but still changes setting to 'enabled'.
+        pass
+        # The enable call will always return a ClientError, complaining about missing DNS record, but still changes setting to 'enabled'.
         # So once DNS validation goes through it should work already, hence we ignore errors here.
+
 
 def disable_identity_dkim_settings(module, client, identity):
     try:
