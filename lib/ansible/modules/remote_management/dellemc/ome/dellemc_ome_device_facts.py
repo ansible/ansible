@@ -409,8 +409,7 @@ def main():
         if 200 in resp_status:
             module.exit_json(ansible_facts={module.params["hostname"]: device_facts})
         else:
-            module.fail_json(msg="Failed to fetch the device facts",
-                             ansible_facts={module.params["hostname"]: device_facts})
+            module.fail_json(msg="Failed to fetch the device facts")
     except (URLError, HTTPError, SSLValidationError, ConnectionError, TypeError, ValueError) as err:
         module.fail_json(msg=str(err))
 
