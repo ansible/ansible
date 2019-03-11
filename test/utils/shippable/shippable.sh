@@ -90,6 +90,8 @@ function cleanup
             for file in test/results/reports/coverage=*.xml; do
                 flags="${file##*/coverage=}"
                 flags="${flags%.xml}"
+                # remove numbered component from stub files when converting to tags
+                flags="${flags//stub-[0-9]*/stub}"
                 flags="${flags//=/,}"
                 flags="${flags//[^a-zA-Z0-9_,]/_}"
 
