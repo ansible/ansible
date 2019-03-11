@@ -283,6 +283,7 @@ options:
       licenses:
         description:
           - An array of license types the pre-provisioned member should have in order to join the Grid, or the licenses that must be allocated to the member when it joins the Grid.
+  state:
     description:
       - Configures the intended state of the instance of the object on
         the NIOS server.  When this value is set to C(present), the object
