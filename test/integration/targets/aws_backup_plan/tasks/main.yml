@@ -1,0 +1,39 @@
+- block:
+
+  - name: set connection information for all tasks
+    set_fact:
+      aws_connection_info: &aws_connection_info
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+        region: "{{ aws_region }}"
+    no_log: yes
+
+  - name: create aws backup plan
+    aws_backup_plan:
+      state: present
+      name: "test weekly backup plan"
+      tags:
+        note: "Backup tagged resources weekly"
+      rules:
+        - rule_name: Weekly
+          target_backup_vault_name: Default
+          schedule_expression: "cron(15 22 ? * 7 *)"
+          start_window_minutes: 60
+          completion_window_minutes: 120
+          lifecycle:
+            delete_after_days: 7
+          recovery_point_tags:
+            key: "weekly"
+    register: weekly_backup_plan
+
+
+  - assert:
+      that:
+        - weekly_backup_plan.changed
+
+  always:
+    - name: Clean up backup plan
+      aws_backup_plan:
+        state: absent
+        name: "test weekly backup plan"
