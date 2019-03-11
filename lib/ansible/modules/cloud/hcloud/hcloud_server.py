@@ -274,7 +274,7 @@ class AnsibleHcloudServer(Hcloud):
             self._mark_as_changed()
 
         labels = self.module.params.get("labels")
-        if labels is not None:
+        if labels is not None and labels != self.hcloud_server.labels:
             if not self.module.check_mode:
                 self.hcloud_server.update(labels=labels)
             self._mark_as_changed()
