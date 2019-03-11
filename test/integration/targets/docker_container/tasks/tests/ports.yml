@@ -14,8 +14,8 @@
     name: "{{ cname }}"
     state: started
     exposed_ports:
-    - 8080
-    - 8081
+    - "8080"
+    - "8081"
     published_ports:
     - all
     stop_timeout: 1
@@ -28,8 +28,8 @@
     name: "{{ cname }}"
     state: started
     exposed_ports:
-    - 8080
-    - 8081
+    - "8080"
+    - "8081"
     published_ports:
     - all
     stop_timeout: 1
@@ -42,11 +42,11 @@
     name: "{{ cname }}"
     state: started
     exposed_ports:
-    - 8080
-    - 8081
+    - "8080"
+    - "8081"
     published_ports:
-    - 8080
-    - 8081
+    - "8080"
+    - "8081"
     stop_timeout: 1
   register: published_ports_3
 
@@ -57,11 +57,11 @@
     name: "{{ cname }}"
     state: started
     exposed_ports:
-    - 8080
-    - 8081
+    - "8080"
+    - "8081"
     published_ports:
-    - 8080
-    - 8081
+    - "8080"
+    - "8081"
     stop_timeout: 1
   register: published_ports_4
 
@@ -72,8 +72,8 @@
     name: "{{ cname }}"
     state: started
     exposed_ports:
-    - 8080
-    - 8081
+    - "8080"
+    - "8081"
     published_ports:
     - all
     stop_timeout: 1
