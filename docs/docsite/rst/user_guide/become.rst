@@ -31,7 +31,7 @@ become_user
     set to user with desired privileges — the user you `become`, NOT the user you login as. Does NOT imply ``become: yes``, to allow it to be set at host level.
 
 become_method
-    (at play or task level) overrides the default method set in ansible.cfg, set to `sudo`/`su`/`pbrun`/`pfexec`/`doas`/`dzdo`/`ksu`/`runas`/`machinectl`
+    (at play or task level) overrides the default method set in ansible.cfg, set to use any of the :ref:`become_plugins`.
 
 become_flags
     (at play or task level) permit the use of specific flags for the tasks or role. One common use is to change the user to nobody when the shell is set to no login. Added in Ansible 2.2.
@@ -700,4 +700,3 @@ Be aware of the following limitations with ``become`` on Windows:
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `webchat.freenode.net <https://webchat.freenode.net>`_
        #ansible IRC chat channel
-
