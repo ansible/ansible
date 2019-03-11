@@ -364,7 +364,7 @@ Here are two example ``RETURN`` sections, one with three simple fields and one w
         type: str
         sample: /home/httpd/.ansible/tmp/ansible-tmp-1423796390.97-147729857856000/source
     md5sum:
-        description: MD5 checksum of the file after running copy
+        description: MD5 checksum of the file after running copy.
         returned: when supported
         type: str
         sample: 2a5aeecc61dc98c4d780b14b330e3282
