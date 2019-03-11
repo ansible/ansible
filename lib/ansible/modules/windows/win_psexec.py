@@ -32,6 +32,8 @@ options:
   extra_opts:
     description:
     - Specify additional options to add onto the PsExec invocation.
+    - This module was undocumented in older releases and will be removed in
+      Ansible 2.10.
     type: list
   hostnames:
     description:
