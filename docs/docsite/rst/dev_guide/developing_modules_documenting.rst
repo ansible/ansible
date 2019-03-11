@@ -288,7 +288,7 @@ If you're writing multiple related modules, they may share common documentation,
 
 .. versionadded:: 2.8
 
-Since Ansible 2.8, you can have user supplied doc_fragments by using a ``doc_fragments`` directory adjacent to play or role, just like any other plugin.
+Since Ansible 2.8, you can have user-supplied doc_fragments by using a ``doc_fragments`` directory adjacent to play or role, just like any other plugin.
 
 For example, all AWS modules should include:
 
