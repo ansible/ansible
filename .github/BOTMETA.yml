@@ -269,7 +269,7 @@ files:
   $modules/net_tools/netbox/: fragmentedpacket
   $modules/network/a10/: ericchou1 mischapeters
   $modules/network/aci/: &aci
-    keywords: [ ACI, Cisco MSC, Cisco MSO, MultiSite, Multi-Site ]
+    keywords: [ aci, cisco msc, cisco mso, multisite, multi-site ]
     labels: [ aci, cisco, networking ]
     maintainers: $team_aci
     notified: koladiya
@@ -300,6 +300,11 @@ files:
   $modules/network/files/: $team_networking
   $modules/network/fortios/: bjolivot
   $modules/network/fortimanager/: $team_fortimanager
+  $modules/network/ftd/: &ftd
+    keywords: [ firepower, ftd ]
+    labels: [ cisco, ftd, networking ]
+    maintainers: $team_ftd
+    support: community
   $modules/network/illumos/: *solaris
   $modules/network/interface/: $team_networking
   $modules/network/ios/: &ios
@@ -741,6 +746,7 @@ files:
     labels:
       - fortimanager
       - networking
+  $module_utils/network/ftd: *ftd
   $module_utils/network/ios:
     <<: *ios
     maintainers: $team_networking $team_ios
@@ -1114,9 +1120,7 @@ files:
     support: network
     maintainers: $team_networking
     labels: networking
-  $plugins/httpapi/ftd.py:
-    support: community
-    maintainers: annikulin $team_networking
+  $plugins/httpapi/ftd.py: *ftd
 ###############################
 # plugins/inventory
   $plugins/inventory/__init__.py:
@@ -1313,14 +1317,8 @@ files:
   docs/docsite/rst/user_guide/intro_bsd.rst: *bsd
 ###############################
 # 'test' is a component path, then 'test' label will be automatically added
-  test/runner/:
-    notified: mattclay
-  test/runner/lib/cloud/acme.py: *crypto
-  test/sanity/:
-    notified: mattclay
-  test/utils/shippable/:
-    notified: mattclay
-  test/integration/targets/aci: *aci
+  test/integration/targets/aci_: *aci
+  test/integration/targets/asa_: *asa
   test/integration/targets/acme: *crypto
   test/integration/targets/aix: *aix
   test/integration/targets/cloudscale:
@@ -1338,10 +1336,12 @@ files:
     <<: *docker
     maintainers: $team_docker morph027
   test/integration/targets/intersight: *intersight
-  test/integration/targets/meraki: *meraki
-  test/integration/targets/mso: *aci
+  test/integration/targets/ios_: *ios
+  test/integration/targets/iosxr_: *ios
+  test/integration/targets/meraki_: *meraki
+  test/integration/targets/mso_: *aci
   test/integration/targets/mysql: *mysql
-  test/integration/targets/nxos: *nxos
+  test/integration/targets/nxos_: *nxos
   test/integration/targets/openssl: *crypto
   test/integration/targets/postgresql: *postgresql
   test/integration/targets/setup_acme: *crypto
@@ -1350,13 +1350,20 @@ files:
   test/integration/targets/setup_mysql_db: *mysql
   test/integration/targets/setup_zabbix:
     maintainers: eikef D3DeFi
-  test/integration/targets/ucs: *ucs
+  test/integration/targets/ucs_: *ucs
   test/integration/targets/vultr: *vultr
   test/legacy/:
     notified: mattclay
   test/legacy/scaleway:
     <<: *scaleway
     support: community
+  test/runner/:
+    notified: mattclay
+  test/runner/lib/cloud/acme.py: *crypto
+  test/sanity/:
+    notified: mattclay
+  test/sanity/pep8/legacy-files.txt:
+    notified: mattclay
   test/units/module_utils/docker/:
     <<: *docker
     support: community
@@ -1366,13 +1373,18 @@ files:
   test/units/modules/cloud/docker:
     <<: *docker
     support: community
+  test/units/modules/cloud/xenserver/: bvitnik
   test/units/modules/network:
     maintainers: $team_networking
     labels: networking
+  test/units/modules/network/aireos: *aireos
+  test/units/modules/network/ftd: *ftd
+  test/units/modules/network/ios: *ios
+  test/units/modules/network/iosxr: *iosxr
+  test/units/modules/network/nso: *nso
   test/units/modules/network/nxos: *nxos
-  test/units/modules/cloud/xenserver/: bvitnik
   test/units/modules/storage/hpe3par: *hpe3par
-  test/sanity/pep8/legacy-files.txt:
+  test/utils/shippable/:
     notified: mattclay
   hacking/report.py:
     notified: mattclay
@@ -1402,6 +1414,7 @@ macros:
   team_e_spirit: MatrixCrawler getjack
   team_extreme: bigmstone LindsayHill
   team_fortimanager: Ghilli3 lweighall p4r4n0y1ng Ftntcorecse
+  team_ftd: annikulin
   team_gitlab: dj-wasabi Lunik marwatk Shaps waheedi
   team_google: rambleraptor erjohnso
   team_hcloud: cschmitt-hcloud LKaemmerling
