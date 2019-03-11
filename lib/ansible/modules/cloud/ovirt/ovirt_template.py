@@ -184,6 +184,12 @@ options:
             - Name for importing Template from storage domain.
             - If not defined, C(name) will be used.
         version_added: "2.8"
+    version:
+        description:
+            - "C(name) - The name of this version."
+            - "C(base_template) - References the template that this version is associated with."
+            - "C(number) - The index of this version in the versions hierarchy of the template."
+        version_added: "2.8"
 extends_documentation_fragment: ovirt
 '''
 
@@ -342,6 +348,13 @@ class TemplatesModule(BaseModule):
             memory=convert_to_bytes(
                 self.param('memory')
             ) if self.param('memory') else None,
+            version=otypes.TemplateVersion(
+                base_template=otypes.Template(
+                    name=self._module.params['version']['base_template']
+                ) if self._module.params['version'].get('base_template') else None,
+                version_number=self._module.params['version']['number'],
+                version_name=self._module.params['version']['name'] if self._module.params['version'].get('name') else None,
+            )if self._module.params['version'] else None,
             memory_policy=otypes.MemoryPolicy(
                 guaranteed=convert_to_bytes(self.param('memory_guaranteed')),
                 max=convert_to_bytes(self.param('memory_max')),
@@ -486,6 +499,7 @@ def main():
         image_disk=dict(default=None, aliases=['glance_image_disk_name']),
         io_threads=dict(type='int', default=None),
         template_image_disk_name=dict(default=None),
+        version=dict(default=None,type='dict'),
         seal=dict(type='bool'),
         vnic_profile_mappings=dict(default=[], type='list'),
         cluster_mappings=dict(default=[], type='list'),
