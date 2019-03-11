@@ -158,7 +158,7 @@ class OnyxInterfaceModule(BaseOnyxModule):
         IF_TYPE_ETH: ('absent',),
         IF_TYPE_VLAN: (),
         IF_TYPE_LOOPBACK: ('up', 'down'),
-        IF_TYPE_PO: (),
+        IF_TYPE_PO: ('absent'),
     }
 
     IF_MODIFIABLE_ATTRS = ('speed', 'description', 'mtu')
