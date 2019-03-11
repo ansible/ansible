@@ -689,13 +689,14 @@ def main():
                 ret['changed'] = ret['changed'] or downloaded
 
             # Disk sparsify, only if disk is of image type:
-            disk = disks_service.disk_service(module.params['id']).get()
-            if disk.storage_type == otypes.DiskStorageType.IMAGE:
-                ret = disks_module.action(
-                    action='sparsify',
-                    action_condition=lambda d: module.params['sparsify'],
-                    wait_condition=lambda d: d.status == otypes.DiskStatus.OK,
-                )
+            if not module.check_mode:
+                disk = disks_service.disk_service(module.params['id']).get()
+                if disk.storage_type == otypes.DiskStorageType.IMAGE:
+                    ret = disks_module.action(
+                        action='sparsify',
+                        action_condition=lambda d: module.params['sparsify'],
+                        wait_condition=lambda d: d.status == otypes.DiskStatus.OK,
+                    )
 
         # Export disk as image to glance domain
         elif state == 'exported':
