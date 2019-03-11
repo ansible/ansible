@@ -33,4 +33,56 @@
     virtual_network: "{{ vnetname }}"
     tags:
       common: "xyz"
-  register: vgw_without_bgp
+  register: output
+
+- assert:
+    that: output.changed
+
+- name: Create virtual network gateway without bgp settings - idempotent
+  azure_rm_virtualnetworkgateway:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vngname }}"
+    ip_configurations:
+      - name: testipconfig
+        private_ip_allocation_method: Dynamic
+        public_ip_address_name: testPublicIP
+    virtual_network: "{{ vnetname }}"
+    tags:
+      common: "xyz"
+  register: output
+
+- assert:
+    that: not output.changed
+
+- name: Create virtual network gateway without bgp settings - idempotent
+  azure_rm_virtualnetworkgateway:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vngname }}"
+    ip_configurations:
+      - name: testipconfig
+        private_ip_allocation_method: Dynamic
+        public_ip_address_name: testPublicIP
+    virtual_network: "{{ vnetname }}"
+    tags:
+      common: "mno"
+  register: output
+- assert:
+    that: output.changed
+
+- name: Delete virtual network gateway
+  azure_rm_virtualnetworkgateway:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vngname }}"
+    state: absent
+  register: output
+- assert:
+    that: output.changed
+
+- name: Delete virtual network gateway - idempotent
+  azure_rm_virtualnetworkgateway:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vngname }}"
+    state: absent
+  register: output
+- assert:
+    that: not output.changed

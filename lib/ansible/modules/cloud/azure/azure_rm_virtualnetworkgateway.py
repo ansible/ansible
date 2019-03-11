@@ -79,7 +79,7 @@ options:
     gateway_type:
         description:
             - The type of this virtual network gateway
-        default: Vpn
+        default: vpn
         choices:
             - vpn
             - express_route
@@ -97,11 +97,11 @@ options:
     sku:
         description:
             - The reference of the VirtualNetworkGatewaySku resource which represents the SKU selected for Virtual network gateway.
-        default: vpn_gw1
+        default: VpnGw1
         choices:
-            - vpn_gw1
-            - vpn_gw2
-            - vpn_gw3
+            - VpnGw1
+            - VpnGw2
+            - VpnGw3
     bgp_settings:
         description:
             - Virtual network gateway's BGP speaker settings.
@@ -233,9 +233,9 @@ class AzureRMVirtualNetworkGateway(AzureRMModuleBase):
             location=dict(type='str'),
             ip_configurations=dict(type='list', default=None, elements='dict', options=ip_configuration_spec),
             gateway_type=dict(type='str', default='vpn', choices=['vpn', 'express_route']),
-            vpn_type=dict(type='str', default='RouteBased'),
+            vpn_type=dict(type='str', default='route_based', choices=['route_based', 'policy_based']),
             enable_bgp=dict(type='bool', default=False),
-            sku=dict(default='VpnGw1'),
+            sku=dict(default='VpnGw1', choices=['VpnGw1', 'VpnGw2', 'VpnGw3']),
             bgp_settings=dict(type='dict', options=bgp_spec),
             virtual_network=dict(type='raw', aliases=['virtual_network_name'])
         )
