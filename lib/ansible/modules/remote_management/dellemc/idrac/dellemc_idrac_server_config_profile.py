@@ -119,7 +119,7 @@ EXAMPLES = r'''
     share_name: "192.168.0.2:/share"
     share_user: "share_user_name"
     share_pwd: "share_user_pwd"
-    scp_file:   "scp_filename.xml"
+    scp_file: "scp_filename.xml"
     scp_components: "ALL"
     job_wait: True
 
@@ -132,7 +132,7 @@ EXAMPLES = r'''
     share_name: "/scp_folder"
     share_user: "share_user_name"
     share_pwd: "share_user_pwd"
-    scp_file:   "scp_filename.xml"
+    scp_file: "scp_filename.xml"
     scp_components: "ALL"
     job_wait: True
 
@@ -223,11 +223,9 @@ def run_import_server_config_profile(idrac, module):
 
 def run_export_server_config_profile(idrac, module):
     """Export Server Configuration Profile to a network share."""
-    file_format = module.params['export_format'].lower()
     export_format = ExportFormatEnum[module.params['export_format']]
-    scp_file_name_format = "%ip_%Y%m%d_%H%M%S_scp.{0}".format(file_format)
+    scp_file_name_format = "%ip_%Y%m%d_%H%M%S_scp.{0}".format(module.params['export_format'].lower())
     target = SCPTargetEnum[module.params['scp_components']]
-    job_wait = module.params['job_wait']
     export_use = ExportUseEnum[module.params['export_use']]
     idrac.use_redfish = True
 
@@ -241,7 +239,7 @@ def run_export_server_config_profile(idrac, module):
                                                     target=target,
                                                     export_format=export_format,
                                                     export_use=export_use,
-                                                    job_wait=job_wait)
+                                                    job_wait=module.params['job_wait'])
         if not export_status or export_status.get('Status') != "Success":
             module.fail_json(msg='Failed to export scp.', scp_status=export_status)
     except RuntimeError as e:
