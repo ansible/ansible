@@ -80,9 +80,9 @@ class Cliconf(CliconfBase):
             if match_sys_ver:
                 device_info['network_os_version'] = match_sys_ver.group(1)
 
-        match_chassis_id = re.search(r'Hardware\n\s+cisco\s*(\S+\s+\S+)', reply, re.M)
+        match_chassis_id = re.search(r'Hardware\n\s+cisco(.+)$', reply, re.M)
         if match_chassis_id:
-            device_info['network_os_model'] = match_chassis_id.group(1)
+            device_info['network_os_model'] = match_chassis_id.group(1).strip()
 
         match_host_name = re.search(r'\s+Device name:\s*(\S+)', reply, re.M)
         if match_host_name:
