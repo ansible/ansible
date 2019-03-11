@@ -43,6 +43,11 @@ options:
             - The amount of memory to be requested by virtual machine.
             - For example 1024Mi.
         type: str
+    memory_limit:
+        description:
+            - The maximum memory to be used by virtual machine.
+            - For example 1024Mi.
+        type: str
     machine_type:
         description:
             - QEMU machine type is the actual chipset of the virtual machine.
@@ -61,9 +66,56 @@ options:
               is simply C(strategic-merge).
         type: list
         choices: [ json, merge, strategic-merge ]
+    cpu_shares:
+        description:
+            - "Specify CPU shares."
+        type: int
+    cpu_limit:
+        description:
+            - "Is converted to its millicore value and multiplied by 100. The resulting value is the total amount of CPU time that a container can use
+               every 100ms. A virtual machine cannot use more than its share of CPU time during this interval."
+        type: int
     cpu_cores:
         description:
             - "Number of CPU cores."
+        type: int
+    cpu_model:
+        description:
+            - "CPU model."
+            - "You can check list of available models here: U(https://github.com/libvirt/libvirt/blob/master/src/cpu_map/index.xml)."
+            - "I(Note:) User can define default CPU model via as I(default-cpu-model) in I(kubevirt-config) I(ConfigMap), if not set I(host-model) is used."
+            - "I(Note:) Be sure that node CPU model where you run a VM, has the same or higher CPU family."
+            - "I(Note:) If CPU model wasn't defined, the VM will have CPU model closest to one that used on the node where the VM is running."
+        type: str
+    bootloader:
+        description:
+            - "Specify the bootloader of the virtual machine."
+            - "All virtual machines use BIOS by default for booting."
+        type: str
+    smbios_uuid:
+        description:
+            - "In order to provide a consistent view on the virtualized hardware for the guest OS, the SMBIOS UUID can be set."
+        type: str
+    cpu_features:
+        description:
+            - "List of dictionary to fine-tune features provided by the selected CPU model."
+            - "I(Note): Policy attribute can either be omitted or contain one of the following policies: force, require, optional, disable, forbid."
+            - "I(Note): In case a policy is omitted for a feature, it will default to require."
+            - "More information about policies: U(https://libvirt.org/formatdomain.html#elementsCPU)"
+        type: list
+    headless:
+        description:
+            - "Specify if the virtual machine should have attached a  minimal Video and Graphics device configuration."
+            - "By default a minimal Video and Graphics device configuration will be applied to the VirtualMachineInstance. The video device is vga
+               compatible and comes with a memory size of 16 MB."
+    hugepage_size:
+        description:
+            - "Specify huge page size."
+        type: str
+    tablets:
+        description:
+            - "Specify tablets to be used as input devices"
+        type: list
 requirements:
     - python >= 2.7
     - openshift >= 0.8.2

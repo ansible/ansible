@@ -86,8 +86,18 @@ EXAMPLES = '''
       state: running
       name: myvm
       namespace: vms
-      memory: 64M
+      memory: 64Mi
       cpu_cores: 1
+      bootloader: efi
+      smbios_uuid: 5d307ca9-b3ef-428c-8861-06e72d69f223
+      cpu_model: Conroe
+      headless: true
+      hugepage_size: 2Mi
+      tablets:
+        - bus: virtio
+          name: tablet1
+      cpu_limit: 3
+      cpu_shares: 2
       disks:
         - name: containerdisk
           volume:
