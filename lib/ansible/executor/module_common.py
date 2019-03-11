@@ -339,7 +339,12 @@ ANSIBALLZ_COVERAGE_TEMPLATE = '''
         os.environ['COVERAGE_FILE'] = '%(coverage_output)s'
 
         import atexit
-        import coverage
+
+        try:
+            import coverage
+        except ImportError:
+            print('{"msg": "Could not import `coverage` module.", "failed": true}')
+            sys.exit(1)
 
         cov = coverage.Coverage(config_file='%(coverage_config)s')
 
@@ -353,7 +358,11 @@ ANSIBALLZ_COVERAGE_TEMPLATE = '''
 '''
 
 ANSIBALLZ_COVERAGE_CHECK_TEMPLATE = '''
-        imp.find_module('coverage')
+        try:
+            imp.find_module('coverage')
+        except ImportError:
+            print('{"msg": "Could not find `coverage` module.", "failed": true}')
+            sys.exit(1)
 '''
 
 ANSIBALLZ_RLIMIT_TEMPLATE = '''
