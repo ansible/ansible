@@ -171,21 +171,7 @@ class PlayContext(Base):
                     setattr(self, flag, self.connection.get_option(flag))
 
     def set_attributes_from_play(self, play):
-        # From ansible.playbook.Become
-        self.become = play.become
-        self.become_method = play.become_method
-        self.become_user = play.become_user
-
-        # From ansible.playbook.Base
-        self.check_mode = play.check_mode
-        self.diff = play.diff
-        self.connection = play.connection
-        self.remote_user = play.remote_user
-
-        # from ansible.playbook.Play
         self.force_handlers = play.force_handlers
-        self.only_tags = play.only_tags
-        self.skip_tags = play.skip_tags
 
     def set_attributes_from_cli(self):
         '''
@@ -358,6 +344,13 @@ class PlayContext(Base):
 
     def set_become_plugin(self, plugin):
         self._become_plugin = plugin
+
+    def _get_attr_force_handlers(self):
+        display.deprecated(
+            "PlayContext.force_handlers should not be used, the calling code should be using play itself instead",
+            version="2.19"
+        )
+        return self._attributes.get('force_handlers', None)
 
     def make_become_cmd(self, cmd, executable=None):
         """ helper function to create privilege escalation commands """
