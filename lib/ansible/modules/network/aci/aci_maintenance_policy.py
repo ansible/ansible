@@ -42,7 +42,7 @@ options:
     required: true
   upgrade:
     description:
-    - will trigger an immediate upgrade for nodes if adminst is set to triggered.
+    - Will trigger an immediate upgrade for nodes if adminst is set to triggered.
     choices: [ triggered, untriggered ]
     default: untriggered
   state:
