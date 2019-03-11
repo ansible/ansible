@@ -585,12 +585,17 @@ def generate_host_dict(array):
     hosts = array.list_hosts()
     for host in range(0, len(hosts)):
         hostname = hosts[host]['name']
+        tports = []
+        host_all_info = array.get_host(hostname, all=True)
+        if host_all_info:
+            tports = host_all_info[0]['target_port']
         host_facts[hostname] = {
             'hgroup': hosts[host]['hgroup'],
             'iqn': hosts[host]['iqn'],
             'wwn': hosts[host]['wwn'],
             'personality': array.get_host(hostname,
-                                          personality=True)['personality']
+                                          personality=True)['personality'],
+            'target_port': tports
         }
         if NVME_API_VERSION in api_version:
             host_facts[hostname]['nqn'] = hosts[host]['nqn']
