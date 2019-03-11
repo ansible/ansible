@@ -25,7 +25,7 @@ options:
     description:
     - Limit collected facts by comma separated string or YAML list.
     - Allowable values are C(version),
-      C(databases), C(settings), C(tablespaces), C(roles), 
+      C(databases), C(settings), C(tablespaces), C(roles),
       C(replications), C(repl_slots).
     - By default, collects all subsets.
     - You can use shell-style (fnmatch) wildcard to pass groups of values (see Examples).
