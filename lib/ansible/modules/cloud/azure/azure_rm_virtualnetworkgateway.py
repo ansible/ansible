@@ -203,8 +203,8 @@ def vgw_to_dict(vgw):
         id=vgw.id,
         name=vgw.name,
         location=vgw.location,
-        gateway_type=_snake_to_camel(vgw.gateway_type, True),
-        vpn_type=_snake_to_camel(vgw.vpn_type, True),
+        gateway_type=vgw.gateway_type,
+        vpn_type=vgw.vpn_type,
         enable_bgp=vgw.enable_bgp,
         tags=vgw.tags,
         provisioning_state=vgw.provisioning_state,
@@ -346,8 +346,8 @@ class AzureRMVirtualNetworkGateway(AzureRMModuleBase):
                 vgw = self.network_models.VirtualNetworkGateway(
                     location=self.location,
                     ip_configurations=vgw_ip_configurations,
-                    gateway_type=self.gateway_type,
-                    vpn_type=self.vpn_type,
+                    gateway_type=_snake_to_camel(self.gateway_type, True),
+                    vpn_type=_snake_to_camel(self.vpn_type, True),
                     enable_bgp=self.enable_bgp,
                     sku=vgw_sku,
                     bgp_settings=vgw_bgp_settings
