@@ -1,6 +1,7 @@
 - name: Prepare random number
   set_fact:
     vnetname: "vnet{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    vngname: "vng{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
 
 - name: Create virtual network
   azure_rm_virtualnetwork:
@@ -24,12 +25,12 @@
 - name: Create virtual network gateway without bgp settings
   azure_rm_virtualnetworkgateway:
     resource_group: "{{ resource_group }}"
-    name: testvpngw
+    name: "{{ vngname }}"
     ip_configurations:
       - name: testipconfig
         private_ip_allocation_method: Dynamic
         public_ip_address_name: testPublicIP
-    virtual_network: testVnet
+    virtual_network: "{{ vnetname }}"
     tags:
       common: "xyz"
   register: vgw_without_bgp
