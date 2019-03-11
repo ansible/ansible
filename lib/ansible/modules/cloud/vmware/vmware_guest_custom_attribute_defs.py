@@ -97,7 +97,7 @@ class VmAttributeDefManager(PyVmomi):
         changed = False
         f = dict()
         for x in self.custom_field_mgr:
-            if x.name == field:
+            if x.name == field and x.managedObjectType == vim.VirtualMachine:
                 changed = True
                 if not self.module.check_mode:
                     self.content.customFieldsManager.RemoveCustomFieldDef(key=x.key)
