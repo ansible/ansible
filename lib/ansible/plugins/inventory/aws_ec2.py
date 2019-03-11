@@ -69,11 +69,11 @@ DOCUMENTATION = '''
               False in the inventory config file which will allow 403 errors to be gracefully skipped.
           type: bool
           default: True
-        use_legacy_script_group_name_sanitization:
+        use_contrib_script_compatible_sanitization:
           description:
             - By default this plugin is using a general group name sanitization to create safe and usable group names for use in Ansible.
-              This option allows you to override that, in efforts to allow migration from the old ec2.py and matches the sanitization
-              of groups when the script's ``replace_dash_in_groups`` option is set to ``False``.
+              This option allows you to override that, in efforts to allow migration from the old inventory script and
+              matches the sanitization of groups when the script's ``replace_dash_in_groups`` option is set to ``False``.
               To replicate behavior of ``replace_dash_in_groups = True`` with constructed groups,
               you will need to replace hyphens with underscores via the regex_replace filter for those entries.
             - For this to work you should also turn off the TRANSFORM_INVALID_GROUP_CHARS setting,
@@ -82,6 +82,7 @@ DOCUMENTATION = '''
               which group names end up being used as.
           type: bool
           default: False
+          version_added: '2.8'
 '''
 
 EXAMPLES = '''
@@ -535,9 +536,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         super(InventoryModule, self).parse(inventory, loader, path)
 
-        config_data = self._read_config_data(path)
+        self._read_config_data(path)
 
-        if self.get_option('use_legacy_script_group_name_sanitization'):
+        if self.get_option('use_contrib_script_compatible_sanitization:'):
             self._sanitize_group_name = self._legacy_script_compatible_group_sanitization
 
         self._set_credentials()
