@@ -1074,6 +1074,10 @@ files:
   $plugins/doc_fragments/docker.py:
     <<: *docker
     support: community
+  $plugins/doc_fragments/gcp.py:
+    support: community
+    supershipit: $team_google
+    maintainers: $team_google
   $plugins/doc_fragments/mso.py: *aci
   $plugins/doc_fragments/mysql.py: *mysql
   $plugins/doc_fragments/postgres.py: *postgresql
