@@ -1,0 +1,99 @@
+---
+
+- name: Registering service name
+  set_fact:
+    service_name: "{{ name_prefix ~ '-update_current' }}"
+
+- name: Registering service name
+  set_fact:
+    service_names: "{{ service_names }} + [service_name]"
+
+####################################################################
+## state - updated #################################################
+####################################################################
+
+- name: update_current
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    replicas: 2
+    logging:
+      driver: json-file
+    env:
+      ENVVAR1: envvar1
+      ENVVAR2: envvar2
+  register: update_current_1
+  ignore_errors: yes
+
+- name: update_current (update)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    state: updated
+    replicas: 1
+  register: update_current_2
+  ignore_errors: yes
+
+- name: update_current (update_current idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    state: updated
+    replicas: 1
+  register: update_current_3
+  ignore_errors: yes
+
+- name: update_current (update_current replicas default)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    state: updated
+    reservations:
+      cpus: 0.25
+  register: update_current_4
+  ignore_errors: yes
+
+- name: update_current (no update_current idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    state: present
+    replicas: 1
+    logging:
+      driver: json-file
+    env:
+      ENVVAR1: envvar1
+      ENVVAR2: envvar2
+  register: update_current_5
+  ignore_errors: yes
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+      - update_current_1 is changed
+      - update_current_2 is changed
+      - update_current_3 is not changed
+      - update_current_4 is changed
+      - update_current_5 is not changed
+  when: docker_py_version is version('2.7.0', '>=')
+
+- assert:
+    that:
+      - update_current_2 is failed
+      - "'Minimum version required' in update_current_2.msg"
+  when: docker_py_version is version('2.7.0', '<')

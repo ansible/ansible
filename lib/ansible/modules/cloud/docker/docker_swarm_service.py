@@ -622,13 +622,19 @@ options:
         type: int
   state:
     description:
-      - Service state.
+      - I(absent) - A service matching the specified name will be removed and have its tasks stopped.
+      - I(present) - Asserts the existence of a service matching the name and provided configuration parameters.
+        Unspecified configuration parameters will be set to docker defaults.
+      - I(updated) - Will update a service matching the name with provided configuration parameters.
+        Unspecified configuration parameters already set on the service will be untouched. This option only
+        works on already created services. Added in Ansible 2.8.
     type: str
     required: yes
     default: present
     choices:
       - present
       - absent
+      - updated
   stop_grace_period:
     description:
       - Time to wait before force killing a container.
@@ -1034,6 +1040,12 @@ EXAMPLES = '''
     limits:
       cpus: 0.50
       memory: 50M
+
+- name: Deploy new image to existing service
+  docker_swarm_service:
+    name: myservice
+    image: alpine:edge
+    state: updated
 
 - name: Remove service
   docker_swarm_service:
@@ -2284,10 +2296,12 @@ class DockerServiceManager(object):
 
     def update_service(self, name, old_service, new_service):
         service_data = new_service.build_docker_service(self.get_networks_names_ids())
+        fetch_current_spec = self.client.module.params['state'] == 'updated'
         result = self.client.update_service(
             old_service.service_id,
             old_service.service_version,
             name=name,
+            fetch_current_spec=fetch_current_spec,
             **service_data
         )
         # Prior to Docker SDK 4.0.0 no warnings were returned and will thus be ignored.
@@ -2470,7 +2484,11 @@ def main():
     argument_spec = dict(
         name=dict(type='str', required=True),
         image=dict(type='str'),
-        state=dict(type='str', default='present', choices=['present', 'absent']),
+        state=dict(
+            type='str',
+            default='present',
+            choices=['present', 'absent', 'updated']
+        ),
         mounts=dict(type='list', elements='dict', options=dict(
             source=dict(type='str', required=True),
             target=dict(type='str', required=True),
@@ -2724,6 +2742,10 @@ def main():
             ) is not None,
             usage_msg='set rollback_config.order'
         ),
+        state_updated=dict(
+            docker_py_version='2.7.0',
+            detect_usage=lambda c: c.module.params['state'] == 'updated'
+        )
     )
     required_if = [
         ('state', 'present', ['image'])
