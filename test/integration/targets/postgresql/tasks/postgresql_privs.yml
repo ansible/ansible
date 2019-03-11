@@ -27,6 +27,10 @@
     db: "{{ db_name }}"
     login_user: "{{ pg_user }}"
 
+######################################################
+# Test foreign data wrapper and foreign server privs #
+######################################################
+
 # Foreign data wrapper setup
 - name: Create foreign data wrapper extension
   become: yes
@@ -263,6 +267,10 @@
   become_user: "{{ pg_user }}"
   shell: echo "DROP EXTENSION postgres_fdw" | psql -d "{{ db_name }}"
 
+##########################################
+# Test ALL_IN_SCHEMA for 'function' type #
+##########################################
+
 # Function ALL_IN_SCHEMA Setup
 - name: Create function for test
   postgresql_query:
@@ -284,6 +292,7 @@
     login_user: "{{ db_user3 }}"
     login_password: password
   register: result
+  ignore_errors: yes
 
 # Checks
 - assert:
@@ -311,6 +320,7 @@
     login_user: "{{ db_user3 }}"
     login_password: password
   register: result
+  ignore_errors: yes
 
 # Checks
 - assert:
@@ -329,6 +339,7 @@
     login_user: "{{ db_user3 }}"
     login_password: password
   register: result
+  ignore_errors: yes
 
 # Checks
 - assert:
@@ -347,6 +358,7 @@
     login_user: "{{ db_user3 }}"
     login_password: password
   register: result
+  ignore_errors: yes
 
 - assert:
     that: result.changed == false
