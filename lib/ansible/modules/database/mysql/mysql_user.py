@@ -238,6 +238,7 @@ VALID_PRIVS = frozenset(('CREATE', 'DROP', 'GRANT', 'GRANT OPTION',
                          'SESSION VARIABLES ADMIN', 'SYSTEM VARIABLES ADMIN',
                          'VERSION TOKEN ADMIN', 'XA RECOVER ADMIN'))
 
+isMysql = 1
 
 class InvalidPrivsError(Exception):
     pass
@@ -302,7 +303,7 @@ def user_add(cursor, user, host, host_all, password, encrypted, new_priv, check_
         cursor.execute("CREATE USER %s@%s", (user, host))
     if new_priv is not None:
         for db_table, priv in iteritems(new_priv):
-            if "REQUIRE" in "".join(new_priv[db_table]):
+            if isMysql and "REQUIRE" in "".join(new_priv[db_table]):
                 privileges_alter(cursor, user, host, db_table, new_priv[db_table])
             else:
                 privileges_grant(cursor, user, host, db_table, new_priv[db_table])
@@ -389,7 +390,7 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
                 if db_table not in curr_priv:
                     if module.check_mode:
                         return True
-                    if "REQUIRE" in "".join(new_priv[db_table]):
+                    if isMysql and "REQUIRE" in "".join(new_priv[db_table]):
                         privileges_alter(cursor, user, host, db_table, new_priv[db_table])
                     else:
                         privileges_grant(cursor, user, host, db_table, new_priv[db_table])
@@ -406,7 +407,7 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
                     if not append_privs:
                         privileges_revoke(cursor, user, host, db_table, curr_priv[db_table], grant_option)
                     priv = "".join(new_priv[db_table])
-                    if "REQUIRE" in priv:
+                    if isMysql and "REQUIRE" in priv:
                         privileges_alter(cursor, user, host, db_table, new_priv[db_table])
                     else:
                         privileges_grant(cursor, user, host, db_table, new_priv[db_table])
@@ -549,6 +550,7 @@ def privileges_revoke(cursor, user, host, db_table, priv, grant_option):
     cursor.execute(query, (user, host))
 
 
+# in mysql version 8.0 > we need call alter user REQUIRE SSL;
 def privileges_alter(cursor, user, host, db_table, priv):
     db_table = db_table.replace('%', '%%')
     priv_string = ",".join([p for p in priv if p not in ('GRANT', 'REQUIRESSL', 'REQUIRENONE')])
@@ -559,15 +561,20 @@ def privileges_alter(cursor, user, host, db_table, priv):
         query = query + "REQUIRE NONE"
     cursor.execute(query, (user, host))
 
+
 def privileges_grant(cursor, user, host, db_table, priv):
     # Escape '%' since mysql db.execute uses a format string and the
     # specification of db and table often use a % (SQL wildcard)
     db_table = db_table.replace('%', '%%')
-    priv_string = ",".join([p for p in priv if p not in 'GRANT'])
+    priv_string = ",".join([p for p in priv if p not in ('GRANT', 'REQUIRESSL', 'REQUIRENONE')])
     query = ["GRANT %s ON %s" % (priv_string, db_table)]
     query.append("TO %s@%s")
     if 'GRANT' in priv:
         query.append("WITH GRANT OPTION")
+    if 'REQUIRESSL' in priv:
+        query.append("REQUIRE SSL")
+    if 'REQUIRENONE' in priv:
+        query.append("REQUIRE NONE")
     query = ' '.join(query)
     cursor.execute(query, (user, host))
 
@@ -641,7 +648,11 @@ def main():
     except Exception as e:
         module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or %s has the credentials. "
                              "Exception message: %s" % (config_file, to_native(e)))
-
+    #check if mysql or mariadb
+    cursor.execute("SHOW VARIABLES like \"%version_comment%\";");
+    for record in cursor:
+        if "mysql" not in record[1].lower():
+            isMysql = 0
     if not sql_log_bin:
         cursor.execute("SET SQL_LOG_BIN=0;")
 
