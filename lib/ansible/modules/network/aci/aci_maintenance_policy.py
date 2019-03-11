@@ -21,16 +21,16 @@ description:
     - Creates a maintenance policy that defines behavior during an ACI upgrade.
 
 notes:
-    - A scheduler is required for this module, which could have been created via the UI or the aci_scheduler module
+    - A scheduler is required for this module, which could have been created via the UI or the aci_scheduler module.
 options:
     name:
         description:
-            - This is the message to send to the sample module
+            - name for maintenance policy
         required: true
         aliases: [ maintenancepolicy ]
     runmode:
         description:
-            - This specifies if the system pauses on error or just continues through it.
+            - specifies if the system pauses on error or just continues through it.
             - The default is "pause"
         type: bool
         default: True
@@ -42,9 +42,14 @@ options:
         required: false
     scheduler:
         description:
-            - The name of scheduler that is applied to the policy.
+            - name of scheduler that is applied to the policy.
         type: str
         required: true
+    upgrade:
+        description:
+            - will trigger an immediate upgrade for nodes if adminst is set to triggered.
+        default: untriggered
+        choices: [ 'untriggered', 'triggered' ]
     state:
         description:
             - Use C(present) or C(absent) for adding or removing.
@@ -188,6 +193,7 @@ def main():
         runmode=dict(type='bool', default='true'),
         graceful=dict(type=bool),
         scheduler=dict(type='str'),
+        upgrade=dict(type='str', default='untriggered', choices=['untriggered', 'triggered']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
 
@@ -204,6 +210,7 @@ def main():
     name = module.params['name']
     runmode = module.params['runmode']
     scheduler = module.params['scheduler']
+    adminst = module.params['upgrade']
     graceful = module.params['graceful']
 
     if runmode:
@@ -237,6 +244,7 @@ def main():
                 name=name,
                 runMode=mode,
                 graceful=graceful_maint,
+                adminSt=adminst,
             ),
             child_configs=[
                 dict(
