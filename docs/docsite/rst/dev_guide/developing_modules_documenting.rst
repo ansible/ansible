@@ -359,7 +359,7 @@ Here are two example ``RETURN`` sections, one with three simple fields and one w
         type: str
         sample: /path/to/file.txt
     src:
-        description: Source file used for the copy on the target machine
+        description: Source file used for the copy on the target machine.
         returned: changed
         type: str
         sample: /home/httpd/.ansible/tmp/ansible-tmp-1423796390.97-147729857856000/source
