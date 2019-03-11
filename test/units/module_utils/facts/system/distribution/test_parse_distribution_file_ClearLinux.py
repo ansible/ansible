@@ -6,7 +6,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-from units.compat.mock import Mock
+from ansible.compat.tests.mock import Mock
 from ansible.module_utils.facts.system.distribution import DistributionFiles
 
 
