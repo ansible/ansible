@@ -106,9 +106,24 @@ EXAMPLES = '''
 RETURN = '''
 domain:
   description:
-    - "The domain the challenge is for."
+    - "The domain the challenge is for. The certificate should be provided if
+       this is specified in the request's the C(Host) header."
   returned: always
   type: str
+identifier_type:
+  description:
+    - "The identifier type for the actual resource identifier. Will be C(dns)
+       or C(ip)."
+  returned: always
+  type: str
+  version_added: "2.8"
+identifier:
+  description:
+    - "The identifier for the actual resource. Will be a domain name if the
+       type is C(dns), or an IP address if the type is C(ip)."
+  returned: always
+  type: str
+  version_added: "2.8"
 challenge_certificate:
   description:
     - "The challenge certificate in PEM format."
@@ -149,6 +164,7 @@ try:
     import cryptography.hazmat.primitives.asymmetric.utils
     import cryptography.x509
     import cryptography.x509.oid
+    import ipaddress
     from distutils.version import LooseVersion
     HAS_CRYPTOGRAPHY = (LooseVersion(cryptography.__version__) >= LooseVersion('1.3'))
     _cryptography_backend = cryptography.hazmat.backends.default_backend()
@@ -206,11 +222,16 @@ def main():
 
         # Some common attributes
         domain = to_text(challenge_data['resource'])
-        subject = issuer = cryptography.x509.Name([
-            cryptography.x509.NameAttribute(cryptography.x509.oid.NameOID.COMMON_NAME, domain),
-        ])
+        type, identifier = to_text(challenge_data.get('resource_original', 'dns:' + challenge_data['resource'])).split(':', 1)
+        subject = issuer = cryptography.x509.Name([])
         not_valid_before = datetime.datetime.utcnow()
         not_valid_after = datetime.datetime.utcnow() + datetime.timedelta(days=10)
+        if type == 'dns':
+            san = cryptography.x509.DNSName(identifier)
+        elif type == 'ip':
+            san = cryptography.x509.IPAddress(ipaddress.ip_address(identifier))
+        else:
+            raise ModuleFailException('Unsupported identifier type "{0}"'.format(type))
 
         # Generate regular self-signed certificate
         regular_certificate = cryptography.x509.CertificateBuilder().subject_name(
@@ -226,7 +247,7 @@ def main():
         ).not_valid_after(
             not_valid_after
         ).add_extension(
-            cryptography.x509.SubjectAlternativeName([cryptography.x509.DNSName(domain)]),
+            cryptography.x509.SubjectAlternativeName([san]),
             critical=False,
         ).sign(
             private_key,
@@ -250,7 +271,7 @@ def main():
             ).not_valid_after(
                 not_valid_after
             ).add_extension(
-                cryptography.x509.SubjectAlternativeName([cryptography.x509.DNSName(domain)]),
+                cryptography.x509.SubjectAlternativeName([san]),
                 critical=False,
             ).add_extension(
                 cryptography.x509.UnrecognizedExtension(
@@ -267,6 +288,8 @@ def main():
         module.exit_json(
             changed=True,
             domain=domain,
+            identifier_type=type,
+            identifier=identifier,
             challenge_certificate=challenge_certificate.public_bytes(cryptography.hazmat.primitives.serialization.Encoding.PEM),
             regular_certificate=regular_certificate.public_bytes(cryptography.hazmat.primitives.serialization.Encoding.PEM)
         )
