@@ -28,12 +28,12 @@ from units.modules.network.ftd.test_ftd_install import DEFAULT_MODULE_PARAMS
 class TestFtdModel(object):
 
     def test_has_value_should_return_true_for_existing_models(self):
-        assert FtdModel.has_value(FtdModel.FTD_2120.value)
-        assert FtdModel.has_value(FtdModel.FTD_ASA5516_X.value)
+        assert FtdModel.FTD_2120 in FtdModel.supported_models()
+        assert FtdModel.FTD_ASA5516_X in FtdModel.supported_models()
 
     def test_has_value_should_return_false_for_non_existing_models(self):
-        assert not FtdModel.has_value('nonExistingModel')
-        assert not FtdModel.has_value(None)
+        assert 'nonExistingModel' not in FtdModel.supported_models()
+        assert None not in FtdModel.supported_models()
 
 
 class TestFtdPlatformFactory(object):
@@ -44,9 +44,9 @@ class TestFtdPlatformFactory(object):
         mocker.patch('module_utils.device.Ftd5500x')
 
     def test_factory_should_return_corresponding_platform(self):
-        ftd_platform = FtdPlatformFactory.create(FtdModel.FTD_ASA5508_X.value, dict(DEFAULT_MODULE_PARAMS))
+        ftd_platform = FtdPlatformFactory.create(FtdModel.FTD_ASA5508_X, dict(DEFAULT_MODULE_PARAMS))
         assert type(ftd_platform) is FtdAsa5500xPlatform
-        ftd_platform = FtdPlatformFactory.create(FtdModel.FTD_2130.value, dict(DEFAULT_MODULE_PARAMS))
+        ftd_platform = FtdPlatformFactory.create(FtdModel.FTD_2130, dict(DEFAULT_MODULE_PARAMS))
         assert type(ftd_platform) is Ftd2100Platform
 
     def test_factory_should_raise_error_with_not_supported_model(self):
@@ -62,13 +62,13 @@ class TestAbstractFtdPlatform(object):
             AbstractFtdPlatform().install_ftd_image(dict(DEFAULT_MODULE_PARAMS))
 
     def test_supports_ftd_model_should_return_true_for_supported_models(self):
-        assert Ftd2100Platform.supports_ftd_model(FtdModel.FTD_2120.value)
-        assert FtdAsa5500xPlatform.supports_ftd_model(FtdModel.FTD_ASA5516_X.value)
+        assert Ftd2100Platform.supports_ftd_model(FtdModel.FTD_2120)
+        assert FtdAsa5500xPlatform.supports_ftd_model(FtdModel.FTD_ASA5516_X)
 
     def test_supports_ftd_model_should_return_false_for_non_supported_models(self):
-        assert not AbstractFtdPlatform.supports_ftd_model(FtdModel.FTD_2120.value)
-        assert not Ftd2100Platform.supports_ftd_model(FtdModel.FTD_ASA5508_X.value)
-        assert not FtdAsa5500xPlatform.supports_ftd_model(FtdModel.FTD_2120.value)
+        assert not AbstractFtdPlatform.supports_ftd_model(FtdModel.FTD_2120)
+        assert not Ftd2100Platform.supports_ftd_model(FtdModel.FTD_ASA5508_X)
+        assert not FtdAsa5500xPlatform.supports_ftd_model(FtdModel.FTD_2120)
 
     def test_parse_rommon_file_location(self):
         server, path = AbstractFtdPlatform.parse_rommon_file_location('tftp://1.2.3.4/boot/rommon-boot.foo')
@@ -92,7 +92,7 @@ class TestFtd2100Platform(object):
         return dict(DEFAULT_MODULE_PARAMS)
 
     def test_install_ftd_image_should_call_kp_module(self, kp_mock, module_params):
-        ftd = FtdPlatformFactory.create(FtdModel.FTD_2110.value, module_params)
+        ftd = FtdPlatformFactory.create(FtdModel.FTD_2110, module_params)
         ftd.install_ftd_image(module_params)
 
         assert kp_mock.called
@@ -105,7 +105,7 @@ class TestFtd2100Platform(object):
         ftd_line = kp_mock.return_value.ssh_console.return_value
         ftd_line.baseline_fp2k_ftd.side_effect = Exception('Something went wrong')
 
-        ftd = FtdPlatformFactory.create(FtdModel.FTD_2120.value, module_params)
+        ftd = FtdPlatformFactory.create(FtdModel.FTD_2120, module_params)
         with pytest.raises(Exception):
             ftd.install_ftd_image(module_params)
 
@@ -124,7 +124,7 @@ class TestFtdAsa5500xPlatform(object):
         return dict(DEFAULT_MODULE_PARAMS)
 
     def test_install_ftd_image_should_call_kp_module(self, asa5500x_mock, module_params):
-        ftd = FtdPlatformFactory.create(FtdModel.FTD_ASA5508_X.value, module_params)
+        ftd = FtdPlatformFactory.create(FtdModel.FTD_ASA5508_X, module_params)
         ftd.install_ftd_image(module_params)
 
         assert asa5500x_mock.called
@@ -137,7 +137,7 @@ class TestFtdAsa5500xPlatform(object):
         ftd_line = asa5500x_mock.return_value.ssh_console.return_value
         ftd_line.rommon_to_new_image.side_effect = Exception('Something went wrong')
 
-        ftd = FtdPlatformFactory.create(FtdModel.FTD_ASA5516_X.value, module_params)
+        ftd = FtdPlatformFactory.create(FtdModel.FTD_ASA5516_X, module_params)
         with pytest.raises(Exception):
             ftd.install_ftd_image(module_params)
 

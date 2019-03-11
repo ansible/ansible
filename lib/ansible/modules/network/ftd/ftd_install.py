@@ -187,7 +187,6 @@ msg:
 """
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import Connection
-from enum import Enum
 from ansible.module_utils.six import iteritems
 
 from ansible.module_utils.network.ftd.configuration import BaseConfigurationResource, ParamName, \
@@ -197,7 +196,7 @@ from ansible.module_utils.network.ftd.device import HAS_KICK, FtdPlatformFactory
 REQUIRED_PARAMS_FOR_LOCAL_CONNECTION = ['device_ip', 'device_netmask', 'device_gateway', 'device_model', 'dns_server']
 
 
-class FtdOperations(Enum):
+class FtdOperations:
     GET_SYSTEM_INFO = 'getSystemInformation'
     GET_MANAGEMENT_IP_LIST = 'getManagementIPList'
     GET_DNS_SETTING_LIST = 'getDeviceDNSSettingsList'
@@ -214,7 +213,7 @@ def main():
         device_ip=dict(type='str', required=False),
         device_netmask=dict(type='str', required=False),
         device_gateway=dict(type='str', required=False),
-        device_model=dict(type='str', required=False, choices=[e.value for e in FtdModel]),
+        device_model=dict(type='str', required=False, choices=FtdModel.supported_models()),
         dns_server=dict(type='str', required=False),
         search_domains=dict(type='str', required=False, default='cisco.com'),
 
@@ -258,19 +257,19 @@ def main():
 def check_required_params_for_local_connection(module, params):
     missing_params = [k for k, v in iteritems(params) if k in REQUIRED_PARAMS_FOR_LOCAL_CONNECTION and v is None]
     if missing_params:
-        message = "The following parameters are mandatory when the module is used with 'local' connection: %s." %\
+        message = "The following parameters are mandatory when the module is used with 'local' connection: %s." % \
                   ', '.join(sorted(missing_params))
         module.fail_json(msg=message)
 
 
 def get_system_info(resource):
     path_params = {ParamName.PATH_PARAMS: PATH_PARAMS_FOR_DEFAULT_OBJ}
-    system_info = resource.execute_operation(FtdOperations.GET_SYSTEM_INFO.value, path_params)
+    system_info = resource.execute_operation(FtdOperations.GET_SYSTEM_INFO, path_params)
     return system_info
 
 
 def check_that_model_is_supported(module, platform_model):
-    if not FtdModel.has_value(platform_model):
+    if platform_model not in FtdModel.supported_models():
         module.fail_json(msg="Platform model '%s' is not supported by this module." % platform_model)
 
 
@@ -282,14 +281,14 @@ def check_that_update_is_needed(module, system_info):
 
 def check_management_and_dns_params(resource, params):
     if not all([params['device_ip'], params['device_netmask'], params['device_gateway']]):
-        management_ip = resource.execute_operation(FtdOperations.GET_MANAGEMENT_IP_LIST.value, {})['items'][0]
+        management_ip = resource.execute_operation(FtdOperations.GET_MANAGEMENT_IP_LIST, {})['items'][0]
         params['device_ip'] = params['device_ip'] or management_ip['ipv4Address']
         params['device_netmask'] = params['device_netmask'] or management_ip['ipv4NetMask']
         params['device_gateway'] = params['device_gateway'] or management_ip['ipv4Gateway']
     if not params['dns_server']:
-        dns_setting = resource.execute_operation(FtdOperations.GET_DNS_SETTING_LIST.value, {})['items'][0]
+        dns_setting = resource.execute_operation(FtdOperations.GET_DNS_SETTING_LIST, {})['items'][0]
         dns_server_group_id = dns_setting['dnsServerGroup']['id']
-        dns_server_group = resource.execute_operation(FtdOperations.GET_DNS_SERVER_GROUP.value,
+        dns_server_group = resource.execute_operation(FtdOperations.GET_DNS_SERVER_GROUP,
                                                       {ParamName.PATH_PARAMS: {'objId': dns_server_group_id}})
         params['dns_server'] = dns_server_group['dnsServers'][0]['ipAddress']
 

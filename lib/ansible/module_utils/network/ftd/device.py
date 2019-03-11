@@ -16,7 +16,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from enum import Enum
 from ansible.module_utils.six.moves.urllib.parse import urlparse
 
 try:
@@ -28,7 +27,7 @@ except ImportError:
     HAS_KICK = False
 
 
-class FtdModel(Enum):
+class FtdModel:
     FTD_ASA5506_X = 'Cisco ASA5506-X Threat Defense'
     FTD_ASA5508_X = 'Cisco ASA5508-X Threat Defense'
     FTD_ASA5516_X = 'Cisco ASA5516-X Threat Defense'
@@ -39,8 +38,8 @@ class FtdModel(Enum):
     FTD_2140 = 'Cisco Firepower 2140 Threat Defense'
 
     @classmethod
-    def has_value(cls, value):
-        return any(value == item.value for item in cls)
+    def supported_models(cls):
+        return [getattr(cls, item) for item in dir(cls) if not item.startswith('__')]
 
 
 class FtdPlatformFactory(object):
@@ -61,7 +60,7 @@ class AbstractFtdPlatform(object):
 
     @classmethod
     def supports_ftd_model(cls, model):
-        return any(model == item.value for item in cls.PLATFORM_MODELS)
+        return model in cls.PLATFORM_MODELS
 
     @staticmethod
     def parse_rommon_file_location(rommon_file_location):
