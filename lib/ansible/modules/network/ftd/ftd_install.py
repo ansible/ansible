@@ -156,7 +156,7 @@ options:
       - Forces the FTD image to be installed even when the same version is already installed on the firewall.
       - By default, the module stops execution when the target version is installed in the device.
     required: false
-    type: boolean
+    type: bool
     default: false
   search_domains:
     description:
