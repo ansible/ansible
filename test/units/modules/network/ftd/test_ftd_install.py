@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 # Copyright (c) 2019 Cisco and/or its affiliates.
 #
 # This file is part of Ansible
