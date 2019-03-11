@@ -601,7 +601,7 @@ def set_vm_power_state(module, vm_ref, power_state, timeout=300):
                             if task_result:
                                 module.fail_json(msg="Guest shutdown task failed: '%s'!" % task_result)
                 else:
-                    module.fail_json(msg="Cannot shutdown guest when VM is in state '%s'." % vm_power_state_current)
+                    module.fail_json(msg="Cannot shutdown guest when VM is in state '%s'!" % vm_power_state_current)
             elif power_state == "rebootguest":
                 # running state is required for guest reboot.
                 if vm_power_state_current == "poweredon":
@@ -615,7 +615,7 @@ def set_vm_power_state(module, vm_ref, power_state, timeout=300):
                             if task_result:
                                 module.fail_json(msg="Guest reboot task failed: '%s'!" % task_result)
                 else:
-                    module.fail_json(msg="Cannot reboot guest when VM is in state '%s'." % vm_power_state_current)
+                    module.fail_json(msg="Cannot reboot guest when VM is in state '%s'!" % vm_power_state_current)
             else:
                 module.fail_json(msg="Requested VM power state '%s' is unsupported!" % power_state)
 
@@ -807,10 +807,11 @@ class XAPI(object):
                 hostname = "http://%s" % hostname
 
             try:
-                # ignore_ssl is supported in XenAPI.py 7.2 onward but there
-                # is no way to tell which version we are using. TypeError will
-                # be raised if ignore_ssl is not supported. Additionally,
-                # ignore_ssl requires Python 2.7.9 or newer.
+                # ignore_ssl is supported in XenAPI library from XenServer 7.2
+                # SDK onward but there is no way to tell which version we
+                # are using. TypeError will be raised if ignore_ssl is not
+                # supported. Additionally, ignore_ssl requires Python 2.7.9
+                # or newer.
                 cls._xapi_session = XenAPI.Session(hostname, ignore_ssl=ignore_ssl)
             except TypeError:
                 # Try without ignore_ssl.
@@ -827,6 +828,7 @@ class XAPI(object):
         # Disabling atexit should be used in special cases only.
         if disconnect_atexit:
             atexit.register(cls._xapi_session.logout)
+
         return cls._xapi_session
 
 
@@ -854,7 +856,9 @@ class XenServerObject(object):
             module: Reference to Ansible module object.
         """
         if not HAS_XENAPI:
-            module.fail_json(changed=False, msg="XenAPI.py required for this module! Please download XenServer SDK and copy XenAPI.py to your site-packages.")
+            module.fail_json(changed=False, msg=("XenAPI Python library is required for this module! "
+                                                 "Please download XenServer SDK and copy XenAPI.py to your Python site-packages. "
+                                                 "Check Notes section in module documentation for more info."))
 
         if module:
             self.module = module
