@@ -60,7 +60,7 @@ Major additions to the module (for instance, rewrites) may add additional copyri
 ANSIBLE_METADATA block
 ======================
 
-After the shebang, the coding, the copyright, and the license, your module file should contain an ``ANSIBLE_METADATA`` section. This section provides information about the module for use by other tools. For new modules, the following block can be simply added into your module:
+After the shebang, the UTF-8 coding, the copyright, and the license, your module file should contain an ``ANSIBLE_METADATA`` section. This section provides information about the module for use by other tools. For new modules, the following block can be simply added into your module:
 
 .. code-block:: python
 
