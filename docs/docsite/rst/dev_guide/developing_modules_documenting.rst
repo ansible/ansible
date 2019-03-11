@@ -354,7 +354,7 @@ Here are two example ``RETURN`` sections, one with three simple fields and one w
 
     RETURN = r'''
     dest:
-        description: Destination file/path
+        description: Destination file/path.
         returned: success
         type: str
         sample: /path/to/file.txt
