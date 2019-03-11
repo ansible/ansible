@@ -1518,7 +1518,7 @@ class PyVmomiHelper(PyVmomi):
     def configure_vapp_ovfEnvironmentTransport(self, vm_obj):
         if 'vapp_ovf_environment_transport' in self.params:
             new_vmconfig_spec = vim.vApp.VmConfigSpec()
-            #orig_spec = vm_obj.config.vAppConfig if vm_obj.config.vAppConfig else new_vmconfig_spec
+            # orig_spec = vm_obj.config.vAppConfig if vm_obj.config.vAppConfig else new_vmconfig_spec
             vmconfig_spec = self.configspec.vAppConfig if self.configspec.vAppConfig else new_vmconfig_spec
             vmconfig_spec.ovfEnvironmentTransport = [self.params['vapp_ovf_environment_transport']]
             self.configspec.vAppConfig = vmconfig_spec
@@ -1551,7 +1551,7 @@ class PyVmomiHelper(PyVmomi):
             else:
                 # this is 'edit' branch
                 new_vapp_product_spec.operation = 'edit'
-                #new_vapp_product_spec.info = vapp_products_current[product_name]
+                # new_vapp_product_spec.info = vapp_products_current[product_name]
                 new_vapp_product_spec.info = vapp_products_current.values()[0]
 
                 try:
