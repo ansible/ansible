@@ -358,6 +358,7 @@ options:
     description:
     - Set OVF Transport mode
     - 'For value, refer to: U(https://www.vmware.com/support/developer/converter-sdk/conv61_apireference/vim.vApp.VmConfigSpec.html)'
+    default: com.vmware.guestInfo
     version_added: '2.8'
   customization_spec:
     description:
@@ -2242,6 +2243,7 @@ class PyVmomiHelper(PyVmomi):
         self.configure_disks(vm_obj=vm_obj)
         self.configure_network(vm_obj=vm_obj)
         self.configure_cdrom(vm_obj=vm_obj)
+        self.configure_vapp_ovfEnvironmentTransport(vm_obj=vm_obj)
 
         # Find if we need network customizations (find keys in dictionary that requires customizations)
         network_changes = False
@@ -2644,7 +2646,7 @@ def main():
         wait_for_customization=dict(type='bool', default=False),
         vapp_properties=dict(type='list', default=[]),
         vapp_product=dict(type='dict', default={}),
-        vapp_ovf_environment_transport=dict(type='str'),
+        vapp_ovf_environment_transport=dict(type='str', default='com.vmware.guestInfo'),
         datastore=dict(type='str'),
         convert=dict(type='str', choices=['thin', 'thick', 'eagerzeroedthick']),
     )
