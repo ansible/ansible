@@ -103,6 +103,14 @@ ansible_net_stacked_serialnums:
   description: The serial numbers of each device in the stack
   returned: when multiple devices are configured in a stack
   type: list
+ansible_net_api:
+  description: The name of the transport
+  returned: always
+  type: str
+ansible_net_python_version:
+  description: The Python version Ansible controller is using
+  returned: always
+  type: str
 
 # hardware
 ansible_net_filesystems:
@@ -148,9 +156,10 @@ ansible_net_neighbors:
   returned: when interfaces is configured
   type: dict
 """
+import platform
 import re
 
-from ansible.module_utils.network.ios.ios import run_commands
+from ansible.module_utils.network.ios.ios import run_commands, get_capabilities
 from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
 from ansible.module_utils.network.ios.ios import normalize_interface
 from ansible.module_utils.basic import AnsibleModule
@@ -180,20 +189,12 @@ class Default(FactsBase):
 
     def populate(self):
         super(Default, self).populate()
+        self.facts.update(self.platform_facts())
         data = self.responses[0]
         if data:
-            self.facts['version'] = self.parse_version(data)
             self.facts['iostype'] = self.parse_iostype(data)
             self.facts['serialnum'] = self.parse_serialnum(data)
-            self.facts['model'] = self.parse_model(data)
-            self.facts['image'] = self.parse_image(data)
-            self.facts['hostname'] = self.parse_hostname(data)
             self.parse_stacks(data)
-
-    def parse_version(self, data):
-        match = re.search(r'Version (\S+?)(?:,\s|\s)', data)
-        if match:
-            return match.group(1)
 
     def parse_iostype(self, data):
         match = re.search(r'\S+(X86_64_LINUX_IOSD-UNIVERSALK9-M)(\S+)', data)
@@ -201,21 +202,6 @@ class Default(FactsBase):
             return "IOS-XE"
         else:
             return "IOS"
-
-    def parse_hostname(self, data):
-        match = re.search(r'^(.+) uptime', data, re.M)
-        if match:
-            return match.group(1)
-
-    def parse_model(self, data):
-        match = re.search(r'^[Cc]isco (\S+).+bytes of .*memory', data, re.M)
-        if match:
-            return match.group(1)
-
-    def parse_image(self, data):
-        match = re.search(r'image file is "(.+)"', data)
-        if match:
-            return match.group(1)
 
     def parse_serialnum(self, data):
         match = re.search(r'board ID (\S+)', data)
@@ -230,6 +216,24 @@ class Default(FactsBase):
         match = re.findall(r'^System [Ss]erial [Nn]umber\s+: (\S+)', data, re.M)
         if match:
             self.facts['stacked_serialnums'] = match
+
+    def platform_facts(self):
+        platform_facts = {}
+
+        resp = get_capabilities(self.module)
+        device_info = resp['device_info']
+
+        platform_facts['system'] = device_info['network_os']
+
+        for item in ('model', 'image', 'version', 'platform', 'hostname'):
+            val = device_info.get('network_os_%s' % item)
+            if val:
+                platform_facts[item] = val
+
+        platform_facts['api'] = resp['network_api']
+        platform_facts['python_version'] = platform.python_version()
+
+        return platform_facts
 
 
 class Hardware(FactsBase):

@@ -185,6 +185,20 @@ class Cli:
             self._module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
         return diff
 
+    def get_capabilities(self):
+        """Returns platform info of the remove device
+        """
+        if hasattr(self._module, '_capabilities'):
+            return self._module._capabilities
+
+        connection = self._get_connection()
+        try:
+            capabilities = connection.get_capabilities()
+        except ConnectionError as exc:
+            self._module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+        self._module._capabilities = json.loads(capabilities)
+        return self._module._capabilities
+
 
 class LocalEapi:
 
@@ -617,3 +631,8 @@ def load_config(module, config, commit=False, replace=False):
 def get_diff(self, candidate=None, running=None, diff_match='line', diff_ignore_lines=None, path=None, diff_replace='line'):
     conn = self.get_connection()
     return conn.get_diff(candidate=candidate, running=running, diff_match=diff_match, diff_ignore_lines=diff_ignore_lines, path=path, diff_replace=diff_replace)
+
+
+def get_capabilities(module):
+    conn = get_connection(module)
+    return conn.get_capabilities()
