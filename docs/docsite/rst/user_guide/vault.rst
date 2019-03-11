@@ -180,6 +180,10 @@ To encrypt a string read from stdin and name it 'db_password':
 
     echo -n 'letmein' | ansible-vault encrypt_string --vault-id dev@a_password_file --stdin-name 'db_password'
 
+.. warning::
+
+   This method leaves the string in your shell history. Do not use it outside of testing.
+
 Result::
 
     Reading plaintext input from stdin. (ctrl-d to end input)
@@ -203,6 +207,10 @@ Output::
     Reading plaintext input from stdin. (ctrl-d to end input)
 
 User enters 'hunter2' and hits ctrl-d.
+
+.. warning::
+
+   Do not press Enter after supplying the string. That will add a newline to the encrypted value.
 
 Result::
 
