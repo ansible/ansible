@@ -379,7 +379,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 reservations = paginator.paginate(Filters=filters).build_full_result().get('Reservations')
                 instances = []
                 for r in reservations:
-                    instances.extend(r.get('Instances'))
+                    new_instances = r['Instances']
+                    for instance in new_instances:
+                        instance.update(self._get_reservation_details(r))
+                        instance.update(self._get_event_set_and_persistence(connection, instance['InstanceId'], instance.get('SpotInstanceRequestId')))
+                    instances.extend(new_instances)
             except botocore.exceptions.ClientError as e:
                 if e.response['ResponseMetadata']['HTTPStatusCode'] == 403 and not strict_permissions:
                     instances = []
@@ -391,6 +395,30 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             all_instances.extend(instances)
 
         return sorted(all_instances, key=lambda x: x['InstanceId'])
+
+    def _get_reservation_details(self, reservation):
+        return {
+            'OwnerId': reservation['OwnerId'],
+            'RequesterId': reservation.get('RequesterId', ''),
+            'ReservationId': reservation['ReservationId']
+        }
+
+    def _get_event_set_and_persistence(self, connection, instance_id, spot_instance):
+        host_vars = {'Events': '', 'Persistent': False}
+        try:
+            kwargs = {'InstanceIds': [instance_id]}
+            host_vars['Events'] = connection.describe_instance_status(**kwargs)['InstanceStatuses'][0].get('Events', '')
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError):
+            pass
+        if spot_instance:
+            try:
+                kwargs = {'SpotInstanceRequestIds': [spot_instance]}
+                host_vars['Persistent'] = bool(
+                    connection.describe_spot_instance_requests(**kwargs)['SpotInstanceRequests'][0].get('Type') == 'persistent'
+                )
+            except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError):
+                pass
+        return host_vars
 
     def _get_tag_hostname(self, preference, instance):
         tag_hostnames = preference.split('tag:', 1)[1]
