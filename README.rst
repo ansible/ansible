@@ -5,20 +5,21 @@ Ansible
 *******
 
 Ansible is a radically simple IT automation system. It handles
-configuration-management, application deployment, cloud provisioning,
-ad-hoc task-execution, and multinode orchestration -- including
-trivializing things like zero-downtime rolling updates with load
-balancers. More information at https://ansible.com/
+configuration management, application deployment, cloud provisioning,
+ad-hoc task execution, and multi-node orchestration. Ansible makes complex
+changes like zero-downtime rolling updates with load balancers easy. More information on `the Ansible website <https://ansible.com/>`_.
 
-Most users should probably install a released version of Ansible from ``pip``, a package manager or
-our `release repository <https://releases.ansible.com/ansible/>`_. The official documentation lists
-`installation instructions <https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html>`_
-for a variety of platforms.
+You can install a released version of Ansible via ``pip``, a package manager, or
+our `release repository <https://releases.ansible.com/ansible/>`_. See our
+`installation guide <https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html>`_ for details on installing Ansible
+on a variety of platforms.
 
-`Officially supported <https://www.ansible.com/ansible-engine>`_ builds of Ansible are also available.
-Some power users run directly from the development branch - while significant efforts are made to ensure
-that ``devel`` is reasonably stable, you are more likely to encounter breaking changes when running
-Ansible this way.
+Red Hat offers supported builds of `Ansible Engine <https://www.ansible.com/ansible-engine>`_.
+
+Power users and developers can run the development
+branch directly. It is reasonably stable, but you are more likely to encounter
+breaking changes when running the ``devel`` branch. We recommend participating
+in the Ansible community if you want to run the development branch - see Get Involved below.
 
 Design Principles
 =================
@@ -44,11 +45,10 @@ Get Involved
    kinds of ways to contribute to and interact with the project,
    including mailing list information and how to submit bug reports and
    code to Ansible.
-*  Contributors collaborate on modules through `Working Groups
-   <https://github.com/ansible/community/wiki>`_ which are organized around
-   specific technology domains and platforms.
-*  All code submissions are done through pull requests to the ``devel`` branch.
-*  Feel free to talk to us before making larger changes
+*  Join a `Working Group
+   <https://github.com/ansible/community/wiki>`_, an organized community devoted to a specific technology domain or platform.
+*  Submit proposed a code update through a pull request to the ``devel`` branch.
+*  Talk to us before making larger changes
    to avoid duplicate efforts. This not only helps everyone
    know what is going on, it also helps save time and effort if we decide
    some changes are needed.
@@ -59,12 +59,9 @@ Branch Info
 ===========
 
 *  The ``devel`` branch corresponds to the release actively under development.
-*  The ``stable-2.X`` branches exist for current releases.
+*  The ``stable-2.X`` branches correspond to stable releases.
 *  For information about the active branches see the
    `Ansible release and maintenance <https://docs.ansible.com/ansible/latest/reference_appendices/release_and_maintenance.html>`_ page.
-*  We would love to have your contributions, read the `Community
-   Guide <https://docs.ansible.com/ansible/latest/community>`_ for notes on
-   how to get started.
 
 Roadmap
 =======
