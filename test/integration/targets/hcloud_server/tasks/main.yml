@@ -312,6 +312,24 @@
       - main_server.hcloud_server.labels.key == "other"
       - main_server.hcloud_server.labels.mylabel == 123
 
+
+- name: test update server with labels in other order
+  hcloud_server:
+    name: "{{ hcloud_server_name}}"
+    server_type: cx11
+    image: "ubuntu-18.04"
+    ssh_keys:
+      - ci@ansible.hetzner.cloud
+    labels:
+      mylabel: 123
+      key: other
+    state: started
+  register: main_server
+- name: verify update server with labels in other order
+  assert:
+    that:
+      - main_server is not changed
+
 - name: cleanup with labels
   hcloud_server:
     name: "{{ hcloud_server_name }}"
