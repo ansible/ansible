@@ -191,7 +191,7 @@ def main():
     argument_spec.update(
         name=dict(type='str', aliases=['maintenancepolicy']),  # Not required for querying all objects
         runmode=dict(type='bool', default='true'),
-        graceful=dict(type=bool),
+        graceful=dict(type='bool'),
         scheduler=dict(type='str'),
         upgrade=dict(type='str', default='untriggered', choices=['untriggered', 'triggered']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
