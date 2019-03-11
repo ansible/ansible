@@ -21,37 +21,42 @@ version_added: '2.8'
 author:
 - Bojan Vitnik (@bvitnik) <bvitnik@mainstream.rs>
 notes:
-- Minimal supported version of XenServer is 5.6
-- Module was tested with XenServer 6.5, 7.1 and 7.2
+- Minimal supported version of XenServer is 5.6.
+- Module was tested with XenServer 6.5, 7.1 and 7.2.
+- 'XenAPI Python library can be acquired from XenServer SDK (downloadable from Citrix website) or by running C(pip install XenAPI) (possibly very old
+   version, not compatible with Python 3.x). Latest version can also be acquired from GitHub:
+   https://raw.githubusercontent.com/xapi-project/xen-api/master/scripts/examples/python/XenAPI.py'
 - 'If no scheme is specified in C(hostname), module defaults to C(http://) because C(https://) is problematic in most setups. Make sure you are
    accessing XenServer host in trusted environment or use C(https://) scheme explicitly.'
 - 'To use C(https://) scheme for C(hostname) you have to either import host certificate to your OS certificate store or use C(validate_certs: no)
-   which requires XenAPI.py from XenServer 7.2 SDK or newer and Python 2.7.9 or newer.'
+   which requires XenAPI library from XenServer 7.2 SDK or newer and Python 2.7.9 or newer.'
 requirements:
 - python >= 2.6
 - XenAPI
 options:
   name:
     description:
-    - Name of the VM to gather fact.
+    - Name of the VM to gather facts from.
     - VMs running on XenServer do not necessarily have unique names. The module will fail if multiple VMs with same name are found.
     - In case of multiple VMs with same name, use C(uuid) to uniquely specify VM to manage.
     - This parameter is case sensitive.
+    type: str
     required: yes
-    aliases: [ 'name_label' ]
+    aliases: [ name_label ]
   uuid:
     description:
-    - UUID of the VM to gather fact of, this is XenServer's unique identifier.
+    - UUID of the VM to gather fact of. This is XenServer's unique identifier.
     - It is required if name is not unique.
+    type: str
 extends_documentation_fragment: xenserver.documentation
 '''
 
 EXAMPLES = r'''
 - name: Gather facts
   xenserver_guest_facts:
-    hostname: 192.168.1.209
-    username: root
-    password: xenserver
+    hostname: "{{ xenserver_hostname }}"
+    username: "{{ xenserver_username }}"
+    password: "{{ xenserver_password }}"
     name: testvm_11
   delegate_to: localhost
   register: facts
@@ -203,6 +208,7 @@ def main():
 
     result = {'failed': False, 'changed': False}
 
+    # Module will exit with an error message if no VM is found.
     vm = XenServerVM(module)
 
     # Gather facts.
