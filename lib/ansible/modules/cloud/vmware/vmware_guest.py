@@ -353,13 +353,13 @@ options:
     - ' - C(productUrl) (string): Product URL.'
     - ' - C(version) (string): Product short version.'
     - ' - C(fullVersion) (string): Product full version.'
-    version_added: '2.7.8'
+    version_added: '2.8'
   vapp_ovf_environment_transport:
     description:
     - Set OVF Transport mode
     - 'For value, refer to: U(https://www.vmware.com/support/developer/converter-sdk/conv61_apireference/vim.vApp.VmConfigSpec.html)'
     default: com.vmware.guestInfo
-    version_added: '2.7.8'
+    version_added: '2.8'
   customization_spec:
     description:
     - Unique name identifying the requested customization specification.
@@ -1517,24 +1517,24 @@ class PyVmomiHelper(PyVmomi):
     # to Set vApp ovfEnvironmentTransport mode in VM.
     def configure_vapp_ovfEnvironmentTransport(self, vm_obj):
         if 'vapp_ovf_environment_transport' in self.params:
-             new_vmconfig_spec = vim.vApp.VmConfigSpec()
-             #orig_spec = vm_obj.config.vAppConfig if vm_obj.config.vAppConfig else new_vmconfig_spec
-             vmconfig_spec =  self.configspec.vAppConfig if self.configspec.vAppConfig else new_vmconfig_spec
-             vmconfig_spec.ovfEnvironmentTransport = [self.params['vapp_ovf_environment_transport']]
-             self.configspec.vAppConfig = vmconfig_spec
-             self.change_detected = True
+            new_vmconfig_spec = vim.vApp.VmConfigSpec()
+            #orig_spec = vm_obj.config.vAppConfig if vm_obj.config.vAppConfig else new_vmconfig_spec
+            vmconfig_spec = self.configspec.vAppConfig if self.configspec.vAppConfig else new_vmconfig_spec
+            vmconfig_spec.ovfEnvironmentTransport = [self.params['vapp_ovf_environment_transport']]
+            self.configspec.vAppConfig = vmconfig_spec
+            self.change_detected = True
 
     # March 2019, Added by chaitra kurdekar
     # To Set vApp Product Information in VM.
     def configure_vapp_product(self, vm_obj):
-        if 'vapp_product' not in self.params:   
+        if 'vapp_product' not in self.params:
             return
 
         new_vmconfig_spec = vim.vApp.VmConfigSpec()
 
         # This is primarily for vcsim/integration tests, unset vAppConfig was not seen on my deployments
         orig_spec = vm_obj.config.vAppConfig if vm_obj.config.vAppConfig else new_vmconfig_spec
-        vmconfig_spec =  self.configspec.vAppConfig if self.configspec.vAppConfig else orig_spec
+        vmconfig_spec = self.configspec.vAppConfig if self.configspec.vAppConfig else orig_spec
 
         vapp_products_current = dict((x.name, x) for x in orig_spec.product)
         product_spec = self.params['vapp_product']
@@ -1557,16 +1557,16 @@ class PyVmomiHelper(PyVmomi):
                 try:
                     for objectKey, objectValue in product_spec.items():
                         if objectKey == 'operation':
-                           # operation is not an info object property
-                           # if set to anything other than 'remove' we don't fail
-                           continue
+                            # operation is not an info object property
+                            # if set to anything other than 'remove' we don't fail
+                            continue
                         # Updating attributes only if needed
                         if getattr(new_vapp_product_spec.info, objectKey) != objectValue:
                             setattr(new_vapp_product_spec.info, objectKey, objectValue)
                             is_property_changed = True
                 except Exception as e:
                     self.module.fail_json(msg="Failed to set vApp product field='%s' and value='%s'. Error: %s"
-                                         % (objectKey, product_spec, to_text(e)))
+                                              % (objectKey, product_spec, to_text(e)))
         else:
             # this is add new product branch
             new_vapp_product_spec.operation = 'add'
