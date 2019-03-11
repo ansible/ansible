@@ -160,8 +160,6 @@ try:
 except ImportError:
     pass
 
-
-
 RULES_TYPE_MAP = {
     'completion_window_minutes': 'int',
     'start_window_minutes': 'int'
