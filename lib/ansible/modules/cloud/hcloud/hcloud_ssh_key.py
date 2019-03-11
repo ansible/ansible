@@ -156,13 +156,13 @@ class AnsibleHcloudSSHKey(Hcloud):
                 required_params=["id"]
             )
             if not self.module.check_mode:
-                self.hcloud_ssh_key.update(name)
+                self.hcloud_ssh_key.update(name=name)
             self._mark_as_changed()
 
         labels = self.module.params.get("labels")
-        if labels is not None:
+        if labels is not None and self.hcloud_ssh_key.labels != labels:
             if not self.module.check_mode:
-                self.hcloud_ssh_key.update(labels)
+                self.hcloud_ssh_key.update(labels=labels)
             self._mark_as_changed()
 
         self._get_ssh_key()

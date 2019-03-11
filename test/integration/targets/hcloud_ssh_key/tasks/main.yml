@@ -70,17 +70,41 @@
     that:
       - result is changed
 
-
 - name: test update ssh key
   hcloud_ssh_key:
     id: "{{ sshKey.hcloud_ssh_key.id }}"
     name: "changed-ssh-key-name"
+    labels:
+      key: value
   register: result
 - name: test update ssh key
   assert:
     that:
       - result is changed
       - result.hcloud_ssh_key.name == "changed-ssh-key-name"
+
+- name: test update ssh key with same labels
+  hcloud_ssh_key:
+    id: "{{ sshKey.hcloud_ssh_key.id }}"
+    labels:
+      key: value
+  register: result
+- name: test update ssh key  with same labels
+  assert:
+    that:
+      - result is not changed
+
+- name: test update ssh key with other labels
+  hcloud_ssh_key:
+    id: "{{ sshKey.hcloud_ssh_key.id }}"
+    labels:
+      key: value
+      test: 123
+  register: result
+- name: test update ssh key  with other labels
+  assert:
+    that:
+      - result is changed
 
 - name: test rename ssh key
   hcloud_ssh_key:
