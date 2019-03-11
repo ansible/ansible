@@ -28,7 +28,7 @@
     image: "{{ami_id}}"
     wait: "yes"
     count: 1
-    region: us-east-2
+    region: "{{region_name}}"
     instance_profile_name: "{{iam_role_name}}"
     instance_tags:
       name: aws_ssm_integration_test
@@ -69,7 +69,7 @@
 ## S3 Deletion
 - name: S3 bucket Deletion
   aws_s3:
-    bucket: "{{ bucket_name }}"
+    bucket: "{{bucket_name}}"
     mode: delete
   register: s3_delete_status
   tags: delete_infra
@@ -78,7 +78,7 @@
 - name: Terminate instances that were previously launched
   ec2:
     state: 'absent'
-    instance_ids: "{{ instance_id }}"
+    instance_ids: "{{instance_id}}"
     region: us-east-2
   register: ec2_terminate_status
   tags: delete_infra  
@@ -87,8 +87,8 @@
 - name: Delete IAM policy
   iam_policy:
     iam_type: role
-    iam_name: "{{ iam_role_name }}"
-    policy_name: "{{ iam_policy_name }}"
+    iam_name: "{{iam_role_name}}"
+    policy_name: "{{iam_policy_name}}"
     state: absent
   tags: delete_infra
   register: iam_policy_deletion_status
