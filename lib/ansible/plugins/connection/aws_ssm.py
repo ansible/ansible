@@ -55,7 +55,10 @@ import os
 import boto3
 import getpass
 import json
+import os
+import pty
 import random
+import re
 import select
 import string
 import subprocess
@@ -123,17 +126,19 @@ class Connection(ConnectionBase):
     ''' AWS SSM based connections '''
 
     transport = 'aws_ssm'
+    allow_executable = False
+    allow_extras = True
     has_pipelining = False
     _client = None
     _session = None
+    _stdout = None
     _session_id = ''
     _timeout = False
     MARK_LENGTH = 26
-    SESSION_START = 'Starting session with SessionId:'
 
     def __init__(self, *args, **kwargs):
-        super(Connection, self).__init__(*args, **kwargs)
 
+        super(Connection, self).__init__(*args, **kwargs)
         self.host = self._play_context.remote_addr
 
     def _connect(self):
@@ -174,24 +179,26 @@ class Connection(ConnectionBase):
             client.meta.endpoint_url
         ]
 
-        display.vvv(u"SSM COMMAND: {0}".format(to_text(cmd)), host=self.host)
+        display.vvvv(u"SSM COMMAND: {0}".format(to_text(cmd)), host=self.host)
 
+        stdout_r, stdout_w = pty.openpty()
         session = subprocess.Popen(
             cmd,
             stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
+            stdout=stdout_w,
             stderr=subprocess.PIPE,
             close_fds=True,
             bufsize=0,
         )
 
-        # Disable command echo and prompt.
-        session.stdin.write("stty -echo\n")
-        session.stdin.write("PS1=''\n")
-
+        os.close(stdout_w)
+        self._stdout = os.fdopen(stdout_r, 'rb', 0)
         self._session = session
         self._poll_stdout = select.poll()
-        self._poll_stdout.register(session.stdout, select.POLLIN)
+        self._poll_stdout.register(self._stdout, select.POLLIN)
+
+        # Disable command echo and prompt.
+        self._prepare_terminal()
 
         display.vvv(u"SSM CONNECTION ID: {0}".format(self._session_id), host=self.host)
 
@@ -210,23 +217,16 @@ class Connection(ConnectionBase):
         mark_start = "".join([random.choice(string.letters) for i in xrange(self.MARK_LENGTH)])
         mark_end = "".join([random.choice(string.letters) for i in xrange(self.MARK_LENGTH)])
 
-        # Echo start marker.
-        session.stdin.write("echo '" + mark_start + "'\n")
+        # Wrap command in markers accordingly for the shell used
+        cmd = self._wrap_command(cmd, sudoable, mark_start, mark_end)
+
         self._flush_stderr(session)
 
-        # Send the command
-        if sudoable:
-            cmd = "sudo " + cmd
-
         # Handle the back-end throttling
+        display.vvvvv(u"EXEC write: '{0}'".format(to_text(cmd)), host=self.host)
         for c in cmd:
             session.stdin.write(c)
             time.sleep(10 / 1000.0)
-        session.stdin.write("\n")
-
-        # echo command status and end marker
-        session.stdin.write("echo $'\\n'$?\n")
-        session.stdin.write("echo '" + mark_end + "'\n")
 
         # Read stdout between the markers
         stdout = ''
@@ -240,7 +240,7 @@ class Connection(ConnectionBase):
                 raise AnsibleConnectionFailure("SSM exec_command timeout on host: %s"
                                                % self.get_option('instance_id'))
             if self._poll_stdout.poll(1000):
-                line = self._session.stdout.readline()
+                line = self._filter_ansi(self._stdout.readline())
                 display.vvvv(u"EXEC stdout line: {0}".format(to_text(line)), host=self.host)
             else:
                 display.vvvv(u"EXEC remaining: {0}".format(remaining), host=self.host)
@@ -248,20 +248,52 @@ class Connection(ConnectionBase):
 
             if mark_start in line:
                 begin = True
+                if not line.startswith(mark_start):
+                    stdout = ''
                 continue
             if begin:
                 if mark_end in line:
-                    # Get command return code and throw away ending lines
-                    returncode = stdout.splitlines()[-1]
-                    for x in range(0, 3):
-                        stdout = stdout[:stdout.rfind('\n')]
+                    for line in stdout.splitlines():
+                        display.vvvvv(u"POST_PROCESS powershell: {0}".format(to_text(line)), host=self.host)
+                    returncode, stdout = self._post_process(stdout)
                     break
                 else:
                     stdout = stdout + line
 
         stderr = self._flush_stderr(session)
 
-        return (int(returncode), stdout, stderr)
+        return (returncode, stdout, stderr)
+
+    def _prepare_terminal(self):
+        ''' perform any one-time terminal settings '''
+
+        self._session.stdin.write("stty -echo\n")
+        self._session.stdin.write("PS1=''\n")
+
+    def _wrap_command(self, cmd, sudoable, mark_start, mark_end):
+        ''' wrap commad so stdout and status can be extracted '''
+
+        if sudoable:
+            cmd = "sudo " + cmd
+        return "echo '" + mark_start + "'\n" + cmd + "\necho $'\\n'$?\n" + "echo '" + mark_end + "'\n"
+
+    def _post_process(self, stdout):
+        ''' extract command status and strip unwanted lines '''
+
+        # Get command return code
+        returncode = int(stdout.splitlines()[-2])
+
+        # Throw away ending lines
+        for x in range(0, 3):
+            stdout = stdout[:stdout.rfind('\n')]
+
+        return (returncode, stdout)
+
+    def _filter_ansi(self, line):
+        ''' remove any ANSI terminal control codes '''
+
+        ansi_filter = re.compile(r'(\x9B|\x1B\[)[0-?]*[ -/]*[@-~]')
+        return ansi_filter.sub('', line)
 
     def _flush_stderr(self, subprocess):
         ''' read and return stderr with minimal blocking '''
@@ -283,25 +315,25 @@ class Connection(ConnectionBase):
     def _get_url(self, client_method, bucket_name, out_path, http_method):
         ''' Generate URL for get_object / put_object '''
         client = boto3.client('s3')
-        url = client.generate_presigned_url(client_method, Params={'Bucket': bucket_name, 'Key': out_path}, ExpiresIn=3600, HttpMethod=http_method)
-        return (url.encode())
+        return client.generate_presigned_url(client_method, Params={'Bucket': bucket_name, 'Key': out_path}, ExpiresIn=3600, HttpMethod=http_method)
 
     @_ssm_retry
     def _file_transport_command(self, in_path, out_path, ssm_action):
         ''' transfer a file from using an intermediate S3 bucket '''
 
-        bucket_url = 's3://%s/%s' % (self.get_option('bucket_name'), out_path)
-        put_command = 'curl --request PUT --upload-file %s "%s"' % (in_path, self._get_url('put_object', self.get_option('bucket_name'), out_path, 'PUT'))
-        get_command = 'curl -v "%s" -o %s' % (self._get_url('get_object', self.get_option('bucket_name'), out_path, 'GET'), out_path)
+        s3_path = out_path.replace('\\', '/')
+        bucket_url = 's3://%s/%s' % (self.get_option('bucket_name'), s3_path)
+        put_command = "curl --request PUT --upload-file '%s' '%s'" % (in_path, self._get_url('put_object', self.get_option('bucket_name'), s3_path, 'PUT'))
+        get_command = "curl '%s' -o '%s'" % (self._get_url('get_object', self.get_option('bucket_name'), s3_path, 'GET'), out_path)
 
         client = boto3.client('s3')
         if ssm_action == 'get':
             (returncode, stdout, stderr) = self.exec_command(put_command, in_data=None, sudoable=False)
             with open(out_path, 'wb') as data:
-                client.download_fileobj(self.get_option('bucket_name'), out_path, data)
+                client.download_fileobj(self.get_option('bucket_name'), s3_path, data)
         else:
             with open(in_path, 'rb') as data:
-                client.upload_fileobj(data, self.get_option('bucket_name'), out_path)
+                client.upload_fileobj(data, self.get_option('bucket_name'), s3_path)
             (returncode, stdout, stderr) = self.exec_command(get_command, in_data=None, sudoable=False)
 
         # Check the return code
