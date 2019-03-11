@@ -51,7 +51,7 @@
 
 - name: Create hosts file
   template:
-    dest: inventory.aws_ssm
+    dest: /tmp/inventory.aws_ssm
     src: inventory.aws_ssm.j2
   tags: setup_infra
   
