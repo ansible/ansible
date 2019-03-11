@@ -93,7 +93,6 @@
   tags: delete_infra
   register: iam_policy_deletion_status
 
-
 ## IAM Role Deletion
 - name: Delete IAM role
   iam:
