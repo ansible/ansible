@@ -46,7 +46,7 @@ EXAMPLES = '''
 - name: Example how to aws_ses_identity_dkim results to set DNS records for validation (if you use Route53 service for DNS)
   route53:
     record: "{{ item }}._domainkey.example.com"
-    value: "{{ item }}"
+    value: "{{ item }}.dkim.amazonses.com"
     type: CNAME
     zone: example.com
   with_items: "{{ dkim_results.dkim_attributes.dkim_tokens }}"
@@ -100,7 +100,7 @@ def ses_verify_dkim_domain(module, client, identity):
     try:
         response = client.verify_domain_dkim(Domain=domain)
     except (BotoCoreError, ClientError) as e:
-        module.fail_json_aws(e, msg='Failed to start DKIM verification for {domain}.'.format(identity=identity))
+        module.fail_json_aws(e, msg='Failed to start DKIM verification for {domain}.'.format(domain=domain))
     dkim_tokens = response['DkimTokens']
     return dkim_tokens
 
