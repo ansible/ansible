@@ -666,7 +666,7 @@ class Connection(ConnectionBase):
 
         return b_command
 
-    def _send_initial_data(self, fh, in_data):
+    def _send_initial_data(self, fh, in_data, ssh_process):
         '''
         Writes initial data to the stdin filehandle of the subprocess and closes
         it. (The handle must be closed; otherwise, for example, "sftp -b -" will
@@ -679,7 +679,15 @@ class Connection(ConnectionBase):
             fh.write(to_bytes(in_data))
             fh.close()
         except (OSError, IOError):
-            raise AnsibleConnectionFailure('SSH Error: data could not be sent to remote host "%s". Make sure this host can be reached over ssh' % self.host)
+            # The ssh connection may have already terminated at this point, with a more useful error
+            # Only raise AnsibleConnectionFailure if the ssh process is still alive
+            time.sleep(0.001)
+            ssh_process.poll()
+            if getattr(ssh_process, 'returncode', None) is None:
+                raise AnsibleConnectionFailure(
+                    'SSH Error: data could not be sent to remote host "%s". Make sure this host can be reached '
+                    'over ssh' % self.host
+                )
 
         display.debug('Sent initial data (%d bytes)' % len(in_data))
 
@@ -855,7 +863,7 @@ class Connection(ConnectionBase):
         # If we can send initial data without waiting for anything, we do so
         # before we start polling
         if states[state] == 'ready_to_send' and in_data:
-            self._send_initial_data(stdin, in_data)
+            self._send_initial_data(stdin, in_data, p)
             state += 1
 
         try:
@@ -969,7 +977,7 @@ class Connection(ConnectionBase):
 
                 if states[state] == 'ready_to_send':
                     if in_data:
-                        self._send_initial_data(stdin, in_data)
+                        self._send_initial_data(stdin, in_data, p)
                     state += 1
 
                 # Now we're awaiting_exit: has the child process exited? If it has,
