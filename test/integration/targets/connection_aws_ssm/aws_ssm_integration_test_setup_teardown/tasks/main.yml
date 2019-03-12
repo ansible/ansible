@@ -14,18 +14,28 @@
 - name: Create IAM role
   iam:
     iam_type: role
-    name: "{{iam_role_name}}"
+    name: "{{iam_role_name}}{{ 600 | random }}"
     state: present
   register: role_output
+  tags: setup_infra
+
+- name: setting fact for role name
+  set_fact:
+     random_role_name: "{{role_output.role_result.role_name}}"
   tags: setup_infra
 
 - name: Assign a policy called SSM and S3 to the "{{iam_role_name}}"
   iam_policy:
     iam_type: role
-    iam_name: "{{iam_role_name}}"
-    policy_name: "{{iam_policy_name}}"
+    iam_name: "{{randome_role_name}}"
+    policy_name: "{{iam_policy_name}}{{ 600 | random }}"
     policy_document:  aws_ssm_integration_test_setup_teardown/files/custom_role.json
     state: present
+  tags: setup_infra
+
+- name: setting fact for bucket name using instance-id
+  set_fact:
+    random_policy_name: "{{policy_name.policies}}"
   tags: setup_infra
 
 - pause:
@@ -39,7 +49,7 @@
     wait: "yes"
     count: 1
     region: "{{region_name}}"
-    instance_profile_name: "{{iam_role_name}}"
+    instance_profile_name: "{{random_role_name}}"
     instance_tags:
       name: aws_ssm_integration_test
     state: present
