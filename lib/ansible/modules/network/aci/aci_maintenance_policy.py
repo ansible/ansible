@@ -28,23 +28,28 @@ options:
   runmode:
     description:
     - Whether the system pauses on error or just continues through it.
-    - The default is C(yes), i.e. to pause.
-    type: bool
-    default: yes
+    choices: ['pauseOnlyOnFailures', 'pauseNever']
+    default: pauseOnlyOnFailures
   graceful:
     description:
     - Whether the system will bring down the nodes gracefully during an upgrade, which reduces traffic lost.
+    - The APIC defaults to C(no) when unset during creation.
     type: bool
   scheduler:
     description:
     - The name of scheduler that is applied to the policy.
     type: str
     required: true
-  upgrade:
+  adminst:
     description:
     - Will trigger an immediate upgrade for nodes if adminst is set to triggered.
     choices: [ triggered, untriggered ]
     default: untriggered
+  ignoreCompat:
+    description:
+    - To check whether compatibility checks should be ignored
+    - The APIC defaults to C(no) when unset during creation.
+    type: bool
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -186,10 +191,11 @@ def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
         name=dict(type='str', aliases=['maintenance_policy']),  # Not required for querying all objects
-        runmode=dict(type='bool', default=True),
+        runmode=dict(type='str', default='pauseOnlyOnFailures', choices=['pauseOnlyOnFailures', 'pauseNever']),
         graceful=dict(type='bool'),
         scheduler=dict(type='str'),
-        upgrade=dict(type='str', default='untriggered', choices=['triggered', 'untriggered']),
+        ignoreCompat=dict(type='bool'),
+        adminst=dict(type='str', default='untriggered', choices=['triggered', 'untriggered']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
 
@@ -204,10 +210,11 @@ def main():
 
     state = module.params['state']
     name = module.params['name']
-    runmode = aci.boolean(module.params['runmode'], 'pauseOnlyOnFailures', 'pauseNever')
+    runmode = module.params['runmode']
     scheduler = module.params['scheduler']
-    adminst = module.params['upgrade']
-    graceful = aci.boolean(module.params['graceful'], 'yes', 'no')
+    adminst = module.params['adminst']
+    graceful = aci.boolean(module.params['graceful'])
+    ignoreCompat = aci.boolean(module.params['ignoreCompat'])
 
     aci = ACIModule(module)
     aci.construct_url(
@@ -231,6 +238,7 @@ def main():
                 runMode=runmode,
                 graceful=graceful,
                 adminSt=adminst,
+                ignoreCompat=ignoreCompat,
             ),
             child_configs=[
                 dict(
