@@ -182,6 +182,7 @@ from ansible.module_utils.common.validation import (
     check_required_one_of,
     check_required_together,
     count_terms,
+    check_type_list,
     check_type_str,
 )
 from ansible.module_utils._text import to_native, to_bytes, to_text
@@ -1781,15 +1782,7 @@ class AnsibleModule(object):
                 return to_native(value, errors='surrogate_or_strict')
 
     def _check_type_list(self, value):
-        if isinstance(value, list):
-            return value
-
-        if isinstance(value, string_types):
-            return value.split(",")
-        elif isinstance(value, int) or isinstance(value, float):
-            return [str(value)]
-
-        raise TypeError('%s cannot be converted to a list' % type(value))
+        return check_type_list(value)
 
     def _check_type_dict(self, value):
         if isinstance(value, dict):
