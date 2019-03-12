@@ -1535,6 +1535,23 @@ class YumModule(YumDnf):
                         if self.installroot != '/':
                             repoquery.extend(['--installroot', self.installroot])
 
+                        if self.disable_excludes:
+                            # repoquery does not support --disableexcludes,
+                            # so make a temp copy of yum.conf and get rid of the 'exclude=' line there
+                            try:
+                                with open('/etc/yum.conf', 'r') as f:
+                                    content = f.readlines()
+
+                                tmp_conf_file = tempfile.NamedTemporaryFile(dir=self.module.tmpdir, delete=False)
+                                self.module.add_cleanup_file(tmp_conf_file.name)
+
+                                tmp_conf_file.writelines([c for c in content if not c.startswith("exclude=")])
+                                tmp_conf_file.close()
+                            except Exception as e:
+                                self.module.fail_json(msg="Failure setting up repoquery: %s" % to_native(e))
+
+                            repoquery.extend(['-c', tmp_conf_file.name])
+
             results = self.ensure(repoquery)
             if repoquery:
                 results['msg'] = '%s %s' % (
