@@ -203,7 +203,9 @@ notes:
   see U(https://support.microsoft.com/en-us/help/951016/description-of-user-account-control-and-remote-restrictions-in-windows).
 - For more information on this module and the various host requirements, see
   U(https://github.com/jborean93/pypsexec).
-- Warning for use on hosts running Windows 7, Server 2008, or Server 2008 R2. Due to the use of SMB encryption which was added in the SMB 3.x, the data for this connection will not work with encryption. Meaning Network sniffers can see transmited credentials. Updated Windows 2012 machines and newer using Psexec 2.1 and SMB 3.x do have their traffic encrypted. 
+- Warning for use on hosts running Windows 7, Server 2008, or Server 2008 R2. 
+  Due to the use of SMB encryption which was added in the SMB 3.x, the data for this connection will not work with encryption. 
+  Meaning Network sniffers can see transmited credentials. Updated Windows 2012 machines and newer using Psexec 2.1 and SMB 3.x do have their traffic encrypted. 
 seealso:
 - module: raw
 - module: win_command
