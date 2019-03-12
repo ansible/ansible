@@ -358,6 +358,7 @@ options:
     description:
     - Set OVF Transport mode
     - 'For value, refer to: U(https://www.vmware.com/support/developer/converter-sdk/conv61_apireference/vim.vApp.VmConfigSpec.html)'
+    default: com.vmware.guestInfo
     version_added: '2.8'
   customization_spec:
     description:
@@ -1512,6 +1513,23 @@ class PyVmomiHelper(PyVmomi):
             self.configspec.vAppConfig = new_vmconfig_spec
             self.change_detected = True
 
+    def areEqual(arr1, arr2):
+        n = len(arr1); 
+        m = len(arr2); 
+        # If lengths of array are not  
+        # equal means array are not equal 
+        if (n != m): 
+            return False; 
+        # Sort both arrays 
+        arr1.sort(); 
+        arr2.sort(); 
+        # Linearly compare elements 
+        for i in range(0, n - 1): 
+            if (arr1[i] != arr2[i]): 
+                return False; 
+        # If all elements were same. 
+        return True; 
+
     # March 2019, Added by chaitra kurdekar
     # to Set vApp ovfEnvironmentTransport mode in VM.
     def configure_vapp_ovfEnvironmentTransport(self, vm_obj):
@@ -1519,9 +1537,12 @@ class PyVmomiHelper(PyVmomi):
             new_vmconfig_spec = vim.vApp.VmConfigSpec()
             # orig_spec = vm_obj.config.vAppConfig if vm_obj.config.vAppConfig else new_vmconfig_spec
             vmconfig_spec = self.configspec.vAppConfig if self.configspec.vAppConfig else new_vmconfig_spec
-            vmconfig_spec.ovfEnvironmentTransport = [self.params['vapp_ovf_environment_transport']]
-            self.configspec.vAppConfig = vmconfig_spec
-            self.change_detected = True
+            old_value = vmconfig_spec.ovfEnvironmentTransport
+            new_value = [self.params['vapp_ovf_environment_transport']]
+            if not areEqual(old_value, new_value):
+                vmconfig_spec.ovfEnvironmentTransport = [self.params['vapp_ovf_environment_transport']]
+                self.configspec.vAppConfig = vmconfig_spec
+                self.change_detected = True
 
     # March 2019, Added by chaitra kurdekar
     # To Set vApp Product Information in VM.
@@ -2645,7 +2666,7 @@ def main():
         wait_for_customization=dict(type='bool', default=False),
         vapp_properties=dict(type='list', default=[]),
         vapp_product=dict(type='dict', default={}),
-        vapp_ovf_environment_transport=dict(type='str', default=''),
+        vapp_ovf_environment_transport=dict(type='str', default='com.vmware.guestInfo'),
         datastore=dict(type='str'),
         convert=dict(type='str', choices=['thin', 'thick', 'eagerzeroedthick']),
     )
