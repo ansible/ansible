@@ -1513,7 +1513,8 @@ class PyVmomiHelper(PyVmomi):
             self.configspec.vAppConfig = new_vmconfig_spec
             self.change_detected = True
 
-    def areEqual(arr1, arr2):
+    # function to compare array values
+    def areEqual(self, arr1, arr2):
         n = len(arr1)
         m = len(arr2)
         # If lengths of array are not
@@ -1539,7 +1540,7 @@ class PyVmomiHelper(PyVmomi):
             vmconfig_spec = self.configspec.vAppConfig if self.configspec.vAppConfig else new_vmconfig_spec
             old_value = vmconfig_spec.ovfEnvironmentTransport
             new_value = [self.params['vapp_ovf_environment_transport']]
-            if not areEqual(old_value, new_value):
+            if not self.areEqual(old_value, new_value):
                 vmconfig_spec.ovfEnvironmentTransport = [self.params['vapp_ovf_environment_transport']]
                 self.configspec.vAppConfig = vmconfig_spec
                 self.change_detected = True
