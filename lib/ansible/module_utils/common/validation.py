@@ -470,3 +470,7 @@ def check_type_float(value):
 def check_type_path(value, string_conversion_action):
     value = check_type_str(value, string_conversion_action)
     return os.path.expanduser(os.path.expandvars(value))
+
+
+def check_type_raw(value):
+    return value

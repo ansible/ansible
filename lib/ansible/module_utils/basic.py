@@ -184,6 +184,7 @@ from ansible.module_utils.common.validation import (
     check_type_list,
     check_type_dict,
     check_type_path,
+    check_type_raw,
     check_type_str,
     safe_eval,
 )
@@ -1785,7 +1786,7 @@ class AnsibleModule(object):
         raise TypeError('%s cannot be converted to a json string' % type(value))
 
     def _check_type_raw(self, value):
-        return value
+        return check_type_raw(value)
 
     def _check_type_bytes(self, value):
         try:
