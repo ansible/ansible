@@ -1522,7 +1522,7 @@ class PyVmomiHelper(PyVmomi):
             vmconfig_spec = self.configspec.vAppConfig if self.configspec.vAppConfig else new_vmconfig_spec
             old_value = vmconfig_spec.ovfEnvironmentTransport
             new_value = [self.params['vapp_ovf_environment_transport']]
-            if not old_value==new_value:
+            if not old_value == new_value:
                 vmconfig_spec.ovfEnvironmentTransport = [self.params['vapp_ovf_environment_transport']]
                 self.configspec.vAppConfig = vmconfig_spec
                 self.change_detected = True
