@@ -26,8 +26,7 @@ class ActionModule(RebootActionModule, ActionBase):
         'reboot_timeout', 'reboot_timeout_sec', 'shutdown_timeout', 'shutdown_timeout_sec', 'test_command',
     ))
 
-    DEFAULT_BOOT_TIME_COMMAND = "(Get-CimInstance -ClassName Win32_OperatingSystem -Property LastBootUpTime)" \
-                                ".LastBootUpTime.ToFileTimeUtc()"
+    DEFAULT_BOOT_TIME_COMMAND = "(Get-WmiObject -ClassName Win32_OperatingSystem).LastBootUpTime"
     DEFAULT_CONNECT_TIMEOUT = 5
     DEFAULT_PRE_REBOOT_DELAY = 2
     DEFAULT_SUDOABLE = False
