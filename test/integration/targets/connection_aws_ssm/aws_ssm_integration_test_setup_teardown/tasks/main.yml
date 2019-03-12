@@ -32,10 +32,10 @@
     seconds: 10
   tags: setup_infra
 
-- name: Create ec2 instance
+- name: Create Linux ec2 instance
   ec2:
     instance_type: "{{instance_type}}"
-    image: "{{ami_id}}"
+    image: "{{linux_ami_id}}"
     wait: "yes"
     count: 1
     region: "{{region_name}}"
@@ -44,7 +44,21 @@
       name: aws_ssm_integration_test
     state: present
   register: output
-  tags: setup_infra
+  tags: setup_infra and linux
+
+- name: Create Windows ec2 instance
+  ec2:
+    instance_type: "{{ instance_type }}"
+    image: "{{ windows_ami_id }}"
+    wait: "yes"
+    count: 1
+    region: "{{ region_name }}"
+    instance_profile_name: "{{ iam_role_name }}"
+    instance_tags:
+      name: aws_ssm_integration_test
+    state: present
+  register: output
+  tags: setup_infra and windows
 
 - name: setting fact for bucket name using instance-id
   set_fact:
@@ -64,7 +78,7 @@
     dest: "{{playbook_dir}}/inventory.aws_ssm"
     src: inventory.aws_ssm.j2
   tags: setup_infra
-  
+
 - name: create bucket with instance id and rolename
   s3_bucket:
     name: "{{ bucket_name }}"
@@ -91,7 +105,7 @@
     instance_ids: "{{instance_id}}"
     region: us-east-2
   register: ec2_terminate_status
-  tags: delete_infra  
+  tags: delete_infra
 
   ## IAM Policy Deletion
 - name: Delete IAM policy
