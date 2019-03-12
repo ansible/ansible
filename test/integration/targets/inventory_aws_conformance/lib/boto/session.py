@@ -1,12 +1,6 @@
 #!/usr/bin/env python
 # boto3
 
-'''
-try:
-    from mocks.instances import Boto3Instance
-except ModuleNotFoundError:
-    from boto.mocks.instances import Boto3Instance
-'''
 from boto.mocks.instances import Boto3Instance
 
 
@@ -35,7 +29,7 @@ class Client(object):
 
     def get_paginator(self, method):
         if method == 'describe_instances':
-            return Paginator([Boto3Instance(id=100, region=self.region)])
+            return Paginator([Boto3Instance(instance_id='i-0678e70402c0b434c', owner_id='123456789012', region=self.region)])
 
 
 class Session(object):
@@ -46,7 +40,6 @@ class Session(object):
         for k, v in kwargs.items():
             if hasattr(self, k):
                 setattr(self, k, v)
-        # self.client = Client(*args, **kwargs)
 
     def client(self, *args, **kwargs):
         return Client(*args, **kwargs)
@@ -56,7 +49,6 @@ class Session(object):
             return getattr(self, key)
 
     def get_available_regions(self, *args):
-        # args[0] == 'ec2'
         return ['us-east-1']
 
     def get_credentials(self, *args, **kwargs):

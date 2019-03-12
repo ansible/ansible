@@ -46,29 +46,32 @@ export ANSIBLE_INVENTORY_ENABLED=aws_ec2
 export ANSIBLE_INVENTORY=test.aws_ec2.yml
 export AWS_ACCESS_KEY_ID=FOO
 export AWS_SECRET_ACCESS_KEY=BAR
+export ANSIBLE_TRANSFORM_INVALID_GROUP_CHARS=never
 
 cat << EOF > $OUTPUT_DIR/test.aws_ec2.yml
 plugin: aws_ec2
 cache: False
+use_contrib_script_compatible_sanitization: True
 regions:
     - us-east-1
 hostnames:
+  - network-interface.addresses.association.public-ip
   - dns-name
 compose:
-  # vars that don't exist
-  ansible_host: public_dns_name
-  ec2_item: backwardscompat | default("")  # boto anomaly, always appears to be u'\n', don't see a reason to keep it around
-  ec2_monitoring: backwardscompat | default("") # boto anomaly, always appears to be u'\n', don't see a reason to keep it around
-  ec2_previous_state: backwardscompat | default("")  # This is only returned with boto3 when starting, stopping, and terminating instances, not applicable
-  ec2_previous_state_code: backwardscompat | default(0)  # This is only returned with boto3 when starting, stopping, and terminating instances
-  ec2__in_monitoring_element: backwardscompat | default(false)  # double underscore not a typo. Trying to figure out wth this was.
-  ec2_requester_id: backwardscompat | default("") # FIXME not an attribute returned anymore on instances in boto3, will need code change
-  ec2_account_id: backwardscompat | default("") # FIXME not an attribute returned anymore on instances in boto3, will need code change
-  ec2_eventsSet: backwardscompat | default("")  # FIXME would need to add a describe_instance_status API call for instances to be able to add an events hostvar
-  ec2_persistent: backwardscompat | default(false)  # FIXME would need to add a describe_spot_instance_requests API call for any instances that have the SpotInstanceRequestId variable
+  # vars that don't exist anymore in any meaningful way
+  ec2_item: undefined | default("")
+  ec2_monitoring: undefined | default("")
+  ec2_previous_state: undefined | default("")
+  ec2_previous_state_code: undefined | default(0)
+  ec2__in_monitoring_element: undefined | default(false)
+  # the following three will be accessible again after #53645
+  ec2_requester_id: undefined | default("")
+  ec2_eventsSet: undefined | default("")
+  ec2_persistent: undefined | default(false)
 
   # vars that change
-  ec2_block_devices: dict(block_device_mappings | map(attribute='device_name') | list | zip(block_device_mappings | map(attribute='ebs.volume_id') | list))
+  ansible_host: public_ip_address
+  ec2_block_devices: dict(block_device_mappings | map(attribute='device_name') | map('basename') | list | zip(block_device_mappings | map(attribute='ebs.volume_id') | list))
   ec2_dns_name: public_dns_name
   ec2_group_name: placement.group_name
   ec2_id: instance_id
@@ -77,12 +80,12 @@ compose:
   ec2_kernel: kernel_id | default("")
   ec2_monitored:  monitoring.state in ['enabled', 'pending']
   ec2_monitoring_state: monitoring.state
-  ec2_owner_id: account_id
+  ec2_account_id: network_interfaces | json_query("[0].owner_id")
   ec2_placement: placement.availability_zone
   ec2_ramdisk: ramdisk_id | default("")
   ec2_reason: state_transition_reason
   ec2_security_group_ids: security_groups | map(attribute='group_id') | list |  join(',')
-  ec2_security_group_names: security_groups | map(attribute='name') | list |  join(',')
+  ec2_security_group_names: security_groups | map(attribute='group_name') | list |  join(',')
   ec2_state: state.name
   ec2_state_code: state.code
   ec2_state_reason: state_reason.message if state_reason is defined else ""
@@ -105,7 +108,7 @@ compose:
   ec2_region: placement.region
   ec2_root_device_name: root_device_name
   ec2_root_device_type: root_device_type
-  ec2_spot_instance_request_id: spot_instance_request_id
+  ec2_spot_instance_request_id: spot_instance_request_id | default("")
   ec2_subnet_id: subnet_id
   ec2_virtualization_type: virtualization_type
   ec2_vpc_id: vpc_id
@@ -118,21 +121,21 @@ keyed_groups:
     separator: ""
   - key: tags
     prefix: tag
-  - key: key_name
+  - key: key_name | regex_replace('-', '_')
     prefix: key
   - key: placement.region
     separator: ""
   - key: placement.availability_zone
     separator: ""
-  - key: platform
+  - key: platform | default('undefined')
     prefix: platform
-  - key: vpc_id
+  - key: vpc_id | regex_replace('-', '_')
     prefix: vpc_id
   - key: instance_type
     prefix: type
-  - key: image_id
+  - key: "image_id | regex_replace('-', '_')"
     separator: ""
-  - key: 'security_groups | json_query("[].name")'
+  - key: 'security_groups | json_query("[].group_name") | map("regex_replace", "-", "_") | list'
     prefix: security_group
 EOF
 

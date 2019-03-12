@@ -1,6 +1,6 @@
 # boto2
 
-from boto.mocks.instances import BotoInstance
+from boto.mocks.instances import BotoInstance, Reservation
 
 
 class Region(object):
@@ -15,16 +15,12 @@ class Connection(object):
     instances = None
 
     def __init__(self, **kwargs):
-        self.instances = [
-            BotoInstance(id=100, region=kwargs['region'])
+        self.reservations = [
+            Reservation(instance_id='i-0678e70402c0b434c', owner_id='123456789012', region=kwargs['region'])
         ]
-        if 'region' in kwargs:
-            self.region = kwargs['region']
-            for x in self.instances:
-                x.region = self.region
 
     def get_all_instances(self, *args, **kwargs):
-        return self.instances
+        return self.reservations
 
     def describe_cache_clusters(self, *args, **kwargs):
         return {}
@@ -32,7 +28,7 @@ class Connection(object):
     def get_all_tags(self, *args, **kwargs):
         tags = []
         resid = kwargs['filters']['resource-id'][0]
-        for instance in self.instances:
+        for instance in self.reservations[0].instances:
             if instance.id == resid:
                 tags = instance._tags[:]
                 break
