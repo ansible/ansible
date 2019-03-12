@@ -133,7 +133,7 @@ class TestNiosMemberModule(TestNiosModule):
                 "config_addr_type": "IPV4",
                 "host_name": "member01.ansible-dev.com",
                 "platform": "VNIOS",
-                "service_type_configuration": "ALL_V4"
+                "service_type_configuration": "ALL_V4",
                 "vip_setting":
                     {
                         "address": "192.168.1.100",
