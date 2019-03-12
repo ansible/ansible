@@ -499,7 +499,7 @@ def main():
         image_disk=dict(default=None, aliases=['glance_image_disk_name']),
         io_threads=dict(type='int', default=None),
         template_image_disk_name=dict(default=None),
-        version=dict(default=None,type='dict'),
+        version=dict(default=None, type='dict'),
         seal=dict(type='bool'),
         vnic_profile_mappings=dict(default=[], type='list'),
         cluster_mappings=dict(default=[], type='list'),
