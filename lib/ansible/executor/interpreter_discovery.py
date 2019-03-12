@@ -10,7 +10,7 @@ import pkgutil
 import re
 
 from ansible import constants as C
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.distro import LinuxDistribution
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import get_versioned_doclink
@@ -50,7 +50,7 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
     host = task_vars.get('inventory_hostname', 'unknown')
     res = None
     platform_type = 'unknown'
-    found_interpreters = ['/usr/bin/python']  # fallback value
+    found_interpreters = [u'/usr/bin/python']  # fallback value
     is_auto_legacy = discovery_mode.startswith('auto_legacy')
     is_silent = discovery_mode.endswith('_silent')
 
@@ -58,7 +58,7 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
         platform_python_map = C.config.get_config_value('INTERPRETER_PYTHON_DISTRO_MAP', variables=task_vars)
         bootstrap_python_list = C.config.get_config_value('INTERPRETER_PYTHON_FALLBACK', variables=task_vars)
 
-        display.vvv(msg="Attempting {0} interpreter discovery".format(interpreter_name), host=host)
+        display.vvv(msg=u"Attempting {0} interpreter discovery".format(interpreter_name), host=host)
 
         # not all command -v impls accept a list of commands, so we have to call it once per python
         command_list = ["command -v '%s'" % py for py in bootstrap_python_list]
@@ -67,27 +67,27 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
         # FUTURE: in most cases we probably don't want to use become, but maybe sometimes we do?
         res = action._low_level_execute_command(shell_bootstrap, sudoable=False)
 
-        raw_stdout = res.get('stdout', '')
+        raw_stdout = res.get('stdout', u'')
 
         match = foundre.match(raw_stdout)
 
         if not match:
-            display.debug('raw interpreter discovery output: {0}'.format(raw_stdout), host=host)
+            display.debug(u'raw interpreter discovery output: {0}'.format(raw_stdout), host=host)
             raise ValueError('unexpected output from Python interpreter discovery')
 
         platform_type = match.groups()[0].lower().strip()
 
         found_interpreters = [interp.strip() for interp in match.groups()[1].splitlines() if interp.startswith('/')]
 
-        display.debug("found interpreters: {0}".format(found_interpreters), host=host)
+        display.debug(u"found interpreters: {0}".format(found_interpreters), host=host)
 
         if not found_interpreters:
-            action._discovery_warnings.append('No python interpreters found for host {0} (tried {1})'.format(host, bootstrap_python_list))
+            action._discovery_warnings.append(u'No python interpreters found for host {0} (tried {1})'.format(host, bootstrap_python_list))
             # this is lame, but returning None or throwing an exception is uglier
-            return '/usr/bin/python'
+            return u'/usr/bin/python'
 
         if platform_type != 'linux':
-            raise NotImplementedError('unsupported platform for extended discovery: {0}'.format(platform_type))
+            raise NotImplementedError('unsupported platform for extended discovery: {0}'.format(to_native(platform_type)))
 
         platform_script = pkgutil.get_data('ansible.executor.discovery', 'python_target.py')
 
@@ -109,55 +109,55 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
         if not version_map:
             raise NotImplementedError('unsupported Linux distribution: {0}'.format(distro))
 
-        platform_interpreter = _version_fuzzy_match(version, version_map)
+        platform_interpreter = to_text(_version_fuzzy_match(version, version_map), errors='surrogate_or_strict')
 
         # provide a transition period for hosts that were using /usr/bin/python previously (but shouldn't have been)
         if is_auto_legacy:
-            if platform_interpreter != '/usr/bin/python' and '/usr/bin/python' in found_interpreters:
+            if platform_interpreter != u'/usr/bin/python' and u'/usr/bin/python' in found_interpreters:
                 # FIXME: support comments in sivel's deprecation scanner so we can get reminded on this
                 if not is_silent:
                     action._discovery_deprecation_warnings.append(dict(
-                        msg="Distribution {0} {1} on host {2} should use {3}, but is using "
-                            "/usr/bin/python for backward compatibility with prior Ansible releases. "
-                            "A future Ansible release will default to using the discovered platform "
-                            "python for this host. See {4} for more information"
+                        msg=u"Distribution {0} {1} on host {2} should use {3}, but is using "
+                            u"/usr/bin/python for backward compatibility with prior Ansible releases. "
+                            u"A future Ansible release will default to using the discovered platform "
+                            u"python for this host. See {4} for more information"
                             .format(distro, version, host, platform_interpreter,
                                     get_versioned_doclink('reference_appendices/interpreter_discovery.html')),
                         version='2.12'))
-                return '/usr/bin/python'
+                return u'/usr/bin/python'
 
         if platform_interpreter not in found_interpreters:
             if platform_interpreter not in bootstrap_python_list:
                 # sanity check to make sure we looked for it
                 if not is_silent:
                     action._discovery_warnings \
-                        .append("Platform interpreter {0} on host {1} is missing from bootstrap list"
+                        .append(u"Platform interpreter {0} on host {1} is missing from bootstrap list"
                                 .format(platform_interpreter, host))
 
             if not is_silent:
                 action._discovery_warnings \
-                    .append("Distribution {0} {1} on host {2} should use {3}, but is using {4}, since the "
-                            "discovered platform python interpreter was not present. See {5} "
-                            "for more information."
+                    .append(u"Distribution {0} {1} on host {2} should use {3}, but is using {4}, since the "
+                            u"discovered platform python interpreter was not present. See {5} "
+                            u"for more information."
                             .format(distro, version, host, platform_interpreter, found_interpreters[0],
                                     get_versioned_doclink('reference_appendices/interpreter_discovery.html')))
             return found_interpreters[0]
 
         return platform_interpreter
     except NotImplementedError as ex:
-        display.vvv(msg='Python interpreter discovery fallback ({0})'.format(to_text(ex)), host=host)
+        display.vvv(msg=u'Python interpreter discovery fallback ({0})'.format(to_text(ex)), host=host)
     except Exception as ex:
         if not is_silent:
-            display.warning(msg='Unhandled error in Python interpreter discovery for host {0}: {1}'.format(host, to_text(ex)))
-            display.debug(msg='Interpreter discovery traceback:\n{0}'.format(to_text(format_exc())), host=host)
+            display.warning(msg=u'Unhandled error in Python interpreter discovery for host {0}: {1}'.format(host, to_text(ex)))
+            display.debug(msg=u'Interpreter discovery traceback:\n{0}'.format(to_text(format_exc())), host=host)
             if res and res.get('stderr'):
-                display.vvv(msg='Interpreter discovery remote stderr:\n{0}'.format(to_text(res.get('stderr'))), host=host)
+                display.vvv(msg=u'Interpreter discovery remote stderr:\n{0}'.format(to_text(res.get('stderr'))), host=host)
 
     if not is_silent:
         action._discovery_warnings \
-            .append("Platform {0} on host {1} is using the discovered Python interpreter at {2}, but future installation of "
-                    "another Python interpreter could change this. See {3} "
-                    "for more information."
+            .append(u"Platform {0} on host {1} is using the discovered Python interpreter at {2}, but future installation of "
+                    u"another Python interpreter could change this. See {3} "
+                    u"for more information."
                     .format(platform_type, host, found_interpreters[0],
                             get_versioned_doclink('reference_appendices/interpreter_discovery.html')))
     return found_interpreters[0]
@@ -172,11 +172,11 @@ def _get_linux_distro(platform_info):
     osrelease_content = platform_info.get('osrelease_content')
 
     if not osrelease_content:
-        return '', ''
+        return u'', u''
 
     osr = LinuxDistribution._parse_os_release_content(osrelease_content)
 
-    return osr.get('id', ''), osr.get('version_id', '')
+    return osr.get('id', u''), osr.get('version_id', u'')
 
 
 def _version_fuzzy_match(version, version_map):
