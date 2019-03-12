@@ -109,55 +109,56 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
         if not version_map:
             raise NotImplementedError('unsupported Linux distribution: {0}'.format(distro))
 
-        platform_interpreter = _version_fuzzy_match(version, version_map)
+        platform_interpreter = to_text(_version_fuzzy_match(version, version_map), encoding='utf-8',
+                                       errors='surrogate_or_strict')
 
         # provide a transition period for hosts that were using /usr/bin/python previously (but shouldn't have been)
         if is_auto_legacy:
-            if platform_interpreter != '/usr/bin/python' and '/usr/bin/python' in found_interpreters:
+            if platform_interpreter != u'/usr/bin/python' and u'/usr/bin/python' in found_interpreters:
                 # FIXME: support comments in sivel's deprecation scanner so we can get reminded on this
                 if not is_silent:
                     action._discovery_deprecation_warnings.append(dict(
-                        msg="Distribution {0} {1} on host {2} should use {3}, but is using "
-                            "/usr/bin/python for backward compatibility with prior Ansible releases. "
-                            "A future Ansible release will default to using the discovered platform "
-                            "python for this host. See {4} for more information"
+                        msg=u"Distribution {0} {1} on host {2} should use {3}, but is using "
+                            u"/usr/bin/python for backward compatibility with prior Ansible releases. "
+                            u"A future Ansible release will default to using the discovered platform "
+                            u"python for this host. See {4} for more information"
                             .format(distro, version, host, platform_interpreter,
                                     get_versioned_doclink('reference_appendices/interpreter_discovery.html')),
                         version='2.12'))
-                return '/usr/bin/python'
+                return u'/usr/bin/python'
 
         if platform_interpreter not in found_interpreters:
             if platform_interpreter not in bootstrap_python_list:
                 # sanity check to make sure we looked for it
                 if not is_silent:
                     action._discovery_warnings \
-                        .append("Platform interpreter {0} on host {1} is missing from bootstrap list"
+                        .append(u"Platform interpreter {0} on host {1} is missing from bootstrap list"
                                 .format(platform_interpreter, host))
 
             if not is_silent:
                 action._discovery_warnings \
-                    .append("Distribution {0} {1} on host {2} should use {3}, but is using {4}, since the "
-                            "discovered platform python interpreter was not present. See {5} "
-                            "for more information."
+                    .append(u"Distribution {0} {1} on host {2} should use {3}, but is using {4}, since the "
+                            u"discovered platform python interpreter was not present. See {5} "
+                            u"for more information."
                             .format(distro, version, host, platform_interpreter, found_interpreters[0],
                                     get_versioned_doclink('reference_appendices/interpreter_discovery.html')))
             return found_interpreters[0]
 
         return platform_interpreter
     except NotImplementedError as ex:
-        display.vvv(msg='Python interpreter discovery fallback ({0})'.format(to_text(ex)), host=host)
+        display.vvv(msg=u'Python interpreter discovery fallback ({0})'.format(to_text(ex)), host=host)
     except Exception as ex:
         if not is_silent:
-            display.warning(msg='Unhandled error in Python interpreter discovery for host {0}: {1}'.format(host, to_text(ex)))
-            display.debug(msg='Interpreter discovery traceback:\n{0}'.format(to_text(format_exc())), host=host)
+            display.warning(msg=u'Unhandled error in Python interpreter discovery for host {0}: {1}'.format(host, to_text(ex)))
+            display.debug(msg=u'Interpreter discovery traceback:\n{0}'.format(to_text(format_exc())), host=host)
             if res and res.get('stderr'):
-                display.vvv(msg='Interpreter discovery remote stderr:\n{0}'.format(to_text(res.get('stderr'))), host=host)
+                display.vvv(msg=u'Interpreter discovery remote stderr:\n{0}'.format(to_text(res.get('stderr'))), host=host)
 
     if not is_silent:
         action._discovery_warnings \
-            .append("Platform {0} on host {1} is using the discovered Python interpreter at {2}, but future installation of "
-                    "another Python interpreter could change this. See {3} "
-                    "for more information."
+            .append(u"Platform {0} on host {1} is using the discovered Python interpreter at {2}, but future installation of "
+                    u"another Python interpreter could change this. See {3} "
+                    u"for more information."
                     .format(platform_type, host, found_interpreters[0],
                             get_versioned_doclink('reference_appendices/interpreter_discovery.html')))
     return found_interpreters[0]
