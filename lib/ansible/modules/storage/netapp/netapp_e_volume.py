@@ -158,6 +158,12 @@ options:
         type: dict
         required: false
         version_added: 2.8
+    wait_for_initialization:
+        description:
+            - Forces the module to wait for expansion operations to complete before continuing.
+        type: bool
+        default: false
+        version_added: 2.8
 """
 EXAMPLES = """
 - name: Create simple volume with workload tags (volume meta data)
@@ -268,7 +274,8 @@ class NetAppESeriesVolume(NetAppESeriesModule):
             read_ahead_enable=dict(type="bool", default=False),
             write_cache_enable=dict(type="bool", default=False),
             workload_name=dict(type="str", required=False),
-            metadata=dict(type="dict", require=False))
+            metadata=dict(type="dict", require=False),
+            wait_for_initialization=dict(type="bool", default=False))
 
         required_if = [
             ["state", "present", ["storage_pool_name", "size"]],
@@ -300,6 +307,7 @@ class NetAppESeriesVolume(NetAppESeriesModule):
         self.thin_volume_growth_alert_threshold = int(args["thin_volume_growth_alert_threshold"])
         self.thin_volume_repo_size_b = None
         self.thin_volume_max_repo_size_b = None
+
         if args["thin_volume_repo_size"]:
             self.thin_volume_repo_size_b = args["thin_volume_repo_size"] * self.SIZE_UNIT_MAP[self.size_unit]
         if args["thin_volume_max_repo_size"]:
@@ -308,6 +316,7 @@ class NetAppESeriesVolume(NetAppESeriesModule):
 
         self.workload_name = args["workload_name"]
         self.metadata = args["metadata"]
+        self.wait_for_initialization = args["wait_for_initialization"]
 
         # convert metadata to a list of dictionaries containing the keys "key" and "value" corresponding to
         #   each of the workload attributes dictionary entries
@@ -374,6 +383,36 @@ class NetAppESeriesVolume(NetAppESeriesModule):
         if not self.get_volume():
             time.sleep(5)
             self.wait_for_volume_availability(retries=retries - 1)
+
+    def wait_for_volume_action(self, timeout=None):
+        """Waits until volume action is complete is complete.
+        :param: int timeout: Wait duration measured in seconds. Waits indefinitely when None.
+        """
+        action = None
+        percent_complete = None
+
+        while action != 'none':
+            time.sleep(5)
+
+            try:
+                rc, expansion = self.request("storage-systems/%s/volumes/%s/expand"
+                                             % (self.ssid, self.volume_detail["id"]))
+                action = expansion["action"]
+                percent_complete = expansion["percentComplete"]
+            except Exception as err:
+                self.module.fail_json(msg="Failed to get volume expansion progress. Volume [%s]. Array Id [%s]."
+                                          " Error[%s]." % (self.name, self.ssid, to_native(err)))
+
+            if timeout <= 0:
+                self.module.warn("Expansion action, %s, failed to complete during the allotted time. Time remaining"
+                                 " [%s]. Array Id [%s]." % (action, percent_complete, self.ssid))
+                self.module.fail_json(msg="Expansion action failed to complete. Time remaining [%s]. Array Id [%s]."
+                                          % (percent_complete, self.ssid))
+            if timeout:
+                timeout -= 5
+            self.module.log("Expansion action, %s, is %s complete." % (action, percent_complete))
+
+        self.module.log("Expansion action is complete.")
 
     def get_storage_pool(self):
         """Retrieve storage pool details from the storage array."""
@@ -665,6 +704,10 @@ class NetAppESeriesVolume(NetAppESeriesModule):
                 except Exception as err:
                     self.module.fail_json(msg="Failed to expand volume.  Volume [%s].  Array Id [%s]. Error[%s]."
                                               % (self.name, self.ssid, to_native(err)))
+
+                if self.wait_for_initialization:
+                    self.module.log("Waiting for expansion operation to complete.")
+                    self.wait_for_volume_action()
 
                 self.module.log("Volume storage capacities have been expanded.")
 
