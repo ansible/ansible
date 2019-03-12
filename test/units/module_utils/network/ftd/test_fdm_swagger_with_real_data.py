@@ -58,7 +58,7 @@ class TestFdmSwagger(unittest.TestCase):
         expected_operations_counter = 0
         for key in self.base_data['paths']:
             operation = self.base_data['paths'][key]
-            for _ in operation:
+            for dummy in operation:
                 expected_operations_counter += 1
 
         for key in operations:

@@ -274,7 +274,7 @@ class BaseConfigurationResource(object):
                     return False
             return True
 
-        _, query_params, path_params = _get_user_params(params)
+        dummy, query_params, path_params = _get_user_params(params)
         # copy required params to avoid mutation of passed `params` dict
         url_params = {ParamName.QUERY_PARAMS: dict(query_params), ParamName.PATH_PARAMS: dict(path_params)}
 
@@ -366,7 +366,7 @@ class BaseConfigurationResource(object):
                 raise e
 
     def edit_object(self, operation_name, params):
-        data, _, path_params = _get_user_params(params)
+        data, dummy, path_params = _get_user_params(params)
 
         model_name = self.get_operation_spec(operation_name)[OperationField.MODEL_NAME]
         get_operation = self._find_get_operation(model_name)
