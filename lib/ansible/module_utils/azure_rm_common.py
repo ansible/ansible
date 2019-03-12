@@ -164,6 +164,8 @@ try:
     from azure.mgmt.rdbms.mysql import MySQLManagementClient
     from azure.mgmt.containerregistry import ContainerRegistryManagementClient
     from azure.mgmt.containerinstance import ContainerInstanceManagementClient
+    from azure.mgmt.loganalytics import LogAnalyticsManagementClient
+    import azure.mgmt.loganalytics.models as LogAnalyticsModels
 except ImportError as exc:
     HAS_AZURE_EXC = traceback.format_exc()
     HAS_AZURE = False
@@ -299,6 +301,7 @@ class AzureRMModuleBase(object):
         self._traffic_manager_management_client = None
         self._monitor_client = None
         self._resource = None
+        self._log_analytics_client = None
 
         self.check_mode = self.module.check_mode
         self.api_profile = self.module.params.get('api_profile')
@@ -963,6 +966,17 @@ class AzureRMModuleBase(object):
                                                             base_url=self._cloud_environment.endpoints.resource_manager)
         return self._monitor_client
 
+    @property
+    def log_analytics_client(self):
+        self.log('Getting log analytics client')
+        if not self._log_analytics_client:
+            self._log_analytics_client = self.get_mgmt_svc_client(LogAnalyticsManagementClient,
+                                                                  base_url=self._cloud_environment.endpoints.resource_manager)
+
+    @property
+    def log_analytics_models(self):
+        self.log('Getting log analytics models')
+        return LogAnalyticsModels
 
 class AzureRMAuthException(Exception):
     pass
