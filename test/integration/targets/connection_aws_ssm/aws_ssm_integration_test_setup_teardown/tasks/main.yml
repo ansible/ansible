@@ -27,10 +27,11 @@
 - name: Assign a policy called SSM and S3 to the "{{iam_role_name}}"
   iam_policy:
     iam_type: role
-    iam_name: "{{randome_role_name}}"
+    iam_name: "{{random_role_name}}"
     policy_name: "{{iam_policy_name}}{{ 600 | random }}"
     policy_document:  aws_ssm_integration_test_setup_teardown/files/custom_role.json
     state: present
+  register: policy_name
   tags: setup_infra
 
 - name: setting fact for bucket name using instance-id
