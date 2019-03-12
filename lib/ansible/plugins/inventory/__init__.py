@@ -150,6 +150,7 @@ class BaseInventoryPlugin(AnsiblePlugin):
     """ Parses an Inventory Source"""
 
     TYPE = 'generator'
+    _sanitize_group_name = staticmethod(to_safe_group_name)
 
     def __init__(self):
 
@@ -371,7 +372,7 @@ class Constructable(object):
             self.templar.set_available_variables(variables)
             for group_name in groups:
                 conditional = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % groups[group_name]
-                group_name = to_safe_group_name(group_name)
+                group_name = self._sanitize_group_name(group_name)
                 try:
                     result = boolean(self.templar.template(conditional))
                 except Exception as e:
@@ -380,7 +381,7 @@ class Constructable(object):
                     continue
 
                 if result:
-                    # ensure group exists, use sanatized name
+                    # ensure group exists, use sanitized name
                     group_name = self.inventory.add_group(group_name)
                     # add host to group
                     self.inventory.add_child(group_name, host)
@@ -418,12 +419,12 @@ class Constructable(object):
                             raise AnsibleParserError("Invalid group name format, expected a string or a list of them or dictionary, got: %s" % type(key))
 
                         for bare_name in new_raw_group_names:
-                            gname = to_safe_group_name('%s%s%s' % (prefix, sep, bare_name))
+                            gname = self._sanitize_group_name('%s%s%s' % (prefix, sep, bare_name))
                             self.inventory.add_group(gname)
                             self.inventory.add_child(gname, host)
 
                             if raw_parent_name:
-                                parent_name = to_safe_group_name(raw_parent_name)
+                                parent_name = self._sanitize_group_name(raw_parent_name)
                                 self.inventory.add_group(parent_name)
                                 self.inventory.add_child(parent_name, gname)
 
