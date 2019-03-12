@@ -1,37 +1,35 @@
-aws_ssm_integration_test_setup_teardown
-=========
+# AWS SSM Integration Test Setup
+## aws_ssm_integration_test_setup_teardown
+An Ansible role was created to perform integration test across aws_ssm connection plugin. The role performs the following actions.
 
-This role will create infrastructure for aws_ssm connection plugin, after integration test will get completed it will tear down infrastructure.
+  - Create AWS Resources in user specified region.
+  - Perform integration Test across aws_ssm connection plugin.
+  - TearDown/Remove AWS Resources that are created for testing plugin.
 
-Requirements
-------------
+### Prerequisites
 
-Ansible machine shoould AWS permission for all the resources used for aws_ssm connection plugin intrgration testing.
+ - Make sure the machine used for testing already has Ansible repo with ssm connection plugin.
+ - AWS CLI/IAM-Role configured to the machine which has permissions to spin-up AWS resources.
 
-Role Variables
---------------
+### Variables referred in Ansible Role
+The following table provide details about variables referred within Ansible Role.
 
-instance_type: Instace type which will created for testing
-ami_id: AMI Id for the instance
-iam_role_name: IAM role name, which will be atteched to the instance
-iam_policy_name: IAM policy name, which is will be atteched to the role
-region_name: AWS region id for resource creation
-instance_id: It will created after EC2 instance is created.
-bucket_name: Bucket name will be based on instance ID.
+| Variable Name | Datails |
+| ------ | ------ |
+| region_name | Name of AWS-region |
+| iam_role_name | Name of IAM Role which will be attached to newly-created EC2-Instance |
+| iam_policy_name | Name of IAM Policy which will be attached to the IAM role referred above |
+| instance_type | Instance type user for creating EC2-Instance |
+| instance_id | AWS EC2 Instance-Id (This gets populated by role) |
+| bucket_name | Name of S3 buckted used by SSM (This gets populated by role) |
 
-
-Example Playbook
-----------------
-
-Example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
+### Example Playbook
+A sample example to demonstrate the usage of role within Ansible-playbook.(Make sure the respective variables are passed as parameters.) 
 
    - hosts: localhost
      roles:
        - aws_ssm_integration_test_setup_teardown
 
-
-Author Information
-------------------
-
-krishna nand choudhary
-Nikhil Araga
+#### Author's Information
+Krishna Nand Choudhary (krishnanandchoudhary)
+Nikhil Araga (araganik)
