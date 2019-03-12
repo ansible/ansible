@@ -54,7 +54,7 @@ options:
     type: bool
     choices: [ true, false ]
     default: false
-    version_added: "2.7"
+    version_added: "2.8"
 seealso:
 - module: win_domain
 - module: win_domain_controller
