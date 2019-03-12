@@ -1262,10 +1262,8 @@ version:
 
 from ansible.module_utils.basic import AnsibleModule
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
@@ -1365,8 +1363,9 @@ def flatten_multilists_attributes(data):
 def system_global(data, fos):
     vdom = data['vdom']
     system_global_data = data['system_global']
-    flattened_data = flatten_multilists_attributes(system_global_data)
-    filtered_data = filter_system_global_data(flattened_data)
+    system_global_data = flatten_multilists_attributes(system_global_data)
+    filtered_data = filter_system_global_data(system_global_data)
+
     return fos.set('system',
                    'global',
                    data=filtered_data,
@@ -1374,7 +1373,7 @@ def system_global(data, fos):
 
 
 def fortios_system(data, fos):
-    login(data)
+    login(data, fos)
 
     if data['system_global']:
         resp = system_global(data, fos)
@@ -1707,7 +1706,6 @@ def main():
     except ImportError:
         module.fail_json(msg="fortiosapi module is required")
 
-    global fos
     fos = FortiOSAPI()
 
     is_error, has_changed, result = fortios_system(module.params, fos)
