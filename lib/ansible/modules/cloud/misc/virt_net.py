@@ -133,6 +133,7 @@ EXAMPLES = '''
 # Add a new host in the dhcp pool
 - virt_net:
     name: br_nat
+    command: modify
     xml: "<host mac='FC:C2:33:00:6c:3c' name='my_vm' ip='192.168.122.30'/>"
 '''
 
