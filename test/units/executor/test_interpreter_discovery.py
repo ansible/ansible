@@ -9,12 +9,14 @@ __metaclass__ = type
 from units.compat.mock import MagicMock
 
 from ansible.executor.interpreter_discovery import discover_interpreter
+from ansible.module_utils._text import to_text
 
-mock_ubuntu_platform_res = \
-    ur'{"osrelease_content": "NAME=\"Ubuntu\"\nVERSION=\"16.04.5 LTS (Xenial Xerus)\"\nID=ubuntu\nID_LIKE=debian\n' \
-    ur'PRETTY_NAME=\"Ubuntu 16.04.5 LTS\"\nVERSION_ID=\"16.04\"\nHOME_URL=\"http://www.ubuntu.com/\"\n' \
-    ur'SUPPORT_URL=\"http://help.ubuntu.com/\"\nBUG_REPORT_URL=\"http://bugs.launchpad.net/ubunut/\"\n' \
-    ur'VERSION_CODENAME=xenial\nUBUNTU_CODENAME=xenial\n", "platform_dist_result": ["Ubuntu", "16.04", "xenial"]}'
+mock_ubuntu_platform_res = to_text(
+    r'{"osrelease_content": "NAME=\"Ubuntu\"\nVERSION=\"16.04.5 LTS (Xenial Xerus)\"\nID=ubuntu\nID_LIKE=debian\n'
+    r'PRETTY_NAME=\"Ubuntu 16.04.5 LTS\"\nVERSION_ID=\"16.04\"\nHOME_URL=\"http://www.ubuntu.com/\"\n'
+    r'SUPPORT_URL=\"http://help.ubuntu.com/\"\nBUG_REPORT_URL=\"http://bugs.launchpad.net/ubuntu/\"\n'
+    r'VERSION_CODENAME=xenial\nUBUNTU_CODENAME=xenial\n", "platform_dist_result": ["Ubuntu", "16.04", "xenial"]}'
+)
 
 
 def test_discovery_interpreter_linux_auto_legacy():
