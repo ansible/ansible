@@ -822,6 +822,47 @@ class ACMEAccount(object):
         return True, account_data
 
 
+def _normalize_ip(ip):
+    if ':' not in ip:
+        # For IPv4 addresses: remove trailing zeros per nibble
+        ip = '.'.join([nibble.lstrip('0') or '0' for nibble in ip.split('.')])
+        return ip
+    # For IPv6 addresses:
+    # 1. Make them lowercase and split
+    ip = ip.lower()
+    i = ip.find('::')
+    if i >= 0:
+        front = ip[:i].split(':') or []
+        back = ip[i + 2:].split(':') or []
+        ip = front + ['0'] * (8 - len(front) - len(back)) + back
+    else:
+        ip = ip.split(':')
+    # 2. Remove trailing zeros per nibble
+    ip = [nibble.lstrip('0') or '0' for nibble in ip]
+    # 3. Find longest consecutive sequence of zeros
+    zeros_start = -1
+    zeros_length = -1
+    current_start = -1
+    for i, nibble in enumerate(ip):
+        if nibble == '0':
+            if current_start < 0:
+                current_start = i
+        elif current_start >= 0:
+            if i - current_start > zeros_length:
+                zeros_start = current_start
+                zeros_length = i - current_start
+            current_start = -1
+    if current_start >= 0:
+        if 8 - current_start > zeros_length:
+            zeros_start = current_start
+            zeros_length = 8 - current_start
+    # 4. If the sequence has at least two elements, contract
+    if zeros_length >= 2:
+        return ':'.join(ip[:zeros_start]) + '::' + ':'.join(ip[zeros_start + zeros_length:])
+    # 5. If not, return full IP
+    return ':'.join(ip)
+
+
 def openssl_get_csr_identifiers(openssl_binary, module, csr_filename):
     '''
     Return a set of requested identifiers (CN and SANs) for the CSR.
@@ -843,9 +884,9 @@ def openssl_get_csr_identifiers(openssl_binary, module, csr_filename):
             if san.lower().startswith("dns:"):
                 identifiers.add(('dns', san[4:]))
             elif san.lower().startswith("ip:"):
-                identifiers.add(('ip', san[3:]))
+                identifiers.add(('ip', _normalize_ip(san[3:])))
             elif san.lower().startswith("ip address:"):
-                identifiers.add(('ip', san[11:]))
+                identifiers.add(('ip', _normalize_ip(san[11:])))
             else:
                 raise ModuleFailException('Found unsupported SAN identifier "{0}"'.format(san))
     return identifiers
@@ -868,7 +909,7 @@ def cryptography_get_csr_identifiers(module, csr_filename):
                 if isinstance(name, cryptography.x509.DNSName):
                     identifiers.add(('dns', name.value))
                 elif isinstance(name, cryptography.x509.IPAddress):
-                    identifiers.add(('ip', str(name.value)))
+                    identifiers.add(('ip', _normalize_ip(str(name.value))))
                 else:
                     raise ModuleFailException('Found unsupported SAN identifier {0}'.format(name))
     return identifiers

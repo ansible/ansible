@@ -15,6 +15,7 @@ from ansible.module_utils.acme import (
     # _sign_request_openssl,
     _parse_key_cryptography,
     # _sign_request_cryptography,
+    _normalize_ip,
     cryptography_get_csr_identifiers,
     cryptography_get_cert_days,
 )
@@ -142,6 +143,26 @@ if HAS_CURRENT_CRYPTOGRAPHY:
         assert error is None
         key.pop('key_obj')
         assert key == result
+
+
+################################################
+
+TEST_IPS = [
+    ("0:0:0:0:0:0:0:1", "::1"),
+    ("1::0:2", "1::2"),
+    ("0000:0001:0000:0000:0000:0000:0000:0001", "0:1::1"),
+    ("0000:0001:0000:0000:0001:0000:0000:0001", "0:1::1:0:0:1"),
+    ("0000:0001:0000:0001:0000:0001:0000:0001", "0:1:0:1:0:1:0:1"),
+    ("0.0.0.0", "0.0.0.0"),
+    ("000.001.000.000", "0.1.0.0"),
+    ("2001:d88:ac10:fe01:0:0:0:0", "2001:d88:ac10:fe01::"),
+    ("0000:0000:0000:0000:0000:0000:0000:0000", "::"),
+]
+
+
+@pytest.mark.parametrize("ip, result", TEST_IPS)
+def test_normalize_ip(ip, result):
+    assert _normalize_ip(ip) == result
 
 
 ################################################
