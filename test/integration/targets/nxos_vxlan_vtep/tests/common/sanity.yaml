@@ -31,7 +31,7 @@
   - block:
     - set_fact: global_suppress_arp="true"
     - set_fact: def_global_suppress_arp="false"
-    when: tcam_state.stdout[0] != 0
+    when: "tcam_state.stdout[0]|int > 0"
 
   when:  platform is search('N9K') and (major_version is version('9.2', 'ge'))
 
