@@ -518,7 +518,11 @@ def main():
         # Unicode zero-width space
         checksum = re.sub(r'\W+', '', checksum).lower()
         # Ensure the checksum portion is a hexdigest
-        int(checksum, 16)
+        try:
+            int(checksum, 16)
+        except ValueError:
+            module.fail_json(msg='The checksum format is invalid', **result)
+        
 
     if not dest_is_dir and os.path.exists(dest):
         checksum_mismatch = False
