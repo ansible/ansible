@@ -1,0 +1,17 @@
+---
+- name: List all servers
+  uri:
+    url: 'https://api.cloudscale.ch/v1/servers'
+    headers:
+      Authorization: 'Bearer {{ cloudscale_api_token }}'
+    status_code: 200
+  register: server_list
+
+- name: Remove all servers created by this test run
+  cloudscale_server:
+    uuid: '{{ item.uuid }}'
+    state: 'absent'
+  when: cloudscale_resource_prefix in item.name
+  with_items: '{{ server_list.json }}'
+  loop_control:
+    label: '{{ item.name }} ({{ item.uuid }})'

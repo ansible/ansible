@@ -1,0 +1,17 @@
+---
+- name: List all volumes
+  uri:
+    url: 'https://api.cloudscale.ch/v1/volumes'
+    headers:
+      Authorization: 'Bearer {{ cloudscale_api_token }}'
+    status_code: 200
+  register: volume_list
+
+- name: Remove all volumes created by this test run
+  cloudscale_volume:
+    uuid: '{{ item.uuid }}'
+    state: 'absent'
+  when: cloudscale_resource_prefix in item.name
+  with_items: '{{ volume_list.json }}'
+  loop_control:
+    label: '{{ item.name }} ({{ item.uuid }})'
