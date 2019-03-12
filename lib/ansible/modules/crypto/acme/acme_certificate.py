@@ -392,7 +392,7 @@ import time
 from datetime import datetime
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_text, to_bytes
+from ansible.module_utils._text import to_bytes
 
 
 def get_cert_days(module, cert_file):
