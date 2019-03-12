@@ -26,8 +26,8 @@ platforms, products, and technologies. They explore particular use cases in grea
    :caption: Network Integration Guides
 
    guide_aci
-   guide_infoblox
    guide_meraki
+   guide_infoblox
 
 .. toctree::
    :maxdepth: 1
