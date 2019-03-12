@@ -3,3 +3,4 @@ destructive
 shippable/azure/group2
 azure_rm_keyvaultkey
 azure_rm_keyvaultsecret
+disabled
