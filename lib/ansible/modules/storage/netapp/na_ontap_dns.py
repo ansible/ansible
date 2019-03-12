@@ -43,7 +43,9 @@ options:
   skip_validation:
     type: bool
     description:
-    - If set to 'true', this option bypass the DNS check on the ONTAP.
+    - By default, all nameservers are checked to validate they are available to resolve.
+    - If you DNS servers are not yet installed or momentarily not available, you can set this option to 'true'
+    - to bypass the check for all servers specified in nameservers field.
     version_added: '2.8'
 '''
 
