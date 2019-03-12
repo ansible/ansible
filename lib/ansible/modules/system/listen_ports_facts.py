@@ -1,4 +1,6 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
+#
 # (c) 2017, Nathan Davison <ndavison85@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -16,10 +18,11 @@ module: listen_ports_facts
 author:
     - Nathan Davison (@ndavison)
 
-version_added: "2.6"
+version_added: "2.8"
 
 description:
-    - Gather facts on processes listening on TCP and UDP ports. Optionally provide whitelists to gather facts on violations of the whitelist.
+    - Gather facts on processes listening on TCP and UDP ports.
+    - Optionally provide whitelists to gather facts on violations of the whitelist.
 
 short_description: Gather facts on processes listening on TCP and UDP ports.
 
@@ -35,7 +38,7 @@ options:
 '''
 
 EXAMPLES = '''
-- name: gather facts on listening ports, and populate the tcp_listen_violations fact with processes listening on TCP ports that are not 22, 80, or 443.
+- name: Gather facts on listening ports, and populate the tcp_listen_violations fact with processes listening on TCP ports that are not 22, 80, or 443.
   listen_ports_facts:
     whitelist_tcp:
       - 22
@@ -44,7 +47,7 @@ EXAMPLES = '''
 
 - name: TCP whitelist violation
   debug:
-    msg: "TCP port {{item.port}} by pid {{item.pid}} violates the whitelist"
+    msg: TCP port {{ item.port }} by pid {{ item.pid }} violates the whitelist
   with_items: "{{ tcp_listen_violations }}"
   when: tcp_listen_violations
 '''
@@ -186,10 +189,10 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            whitelist_tcp=dict(required=False, type='list', default=list()),
-            whitelist_udp=dict(required=False, type='list', default=list())
+            whitelist_tcp=dict(type='list', default=list()),
+            whitelist_udp=dict(type='list', default=list()),
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     if platform.system() != 'Linux':
@@ -215,9 +218,15 @@ def main():
                     user = line
         return user
 
-    result = {}
-    result['changed'] = False
-    result['ansible_facts'] = dict(tcp_listen_violations=list(), udp_listen_violations=list(), tcp_listen=list(), udp_listen=list())
+    result = dict(
+        changed=False,
+        ansible_facts=dict(
+            tcp_listen_violations=list(),
+            udp_listen_violations=list(),
+            tcp_listen=list(),
+            udp_listen=list(),
+        )
+    )
 
     try:
         netstat_cmd = module.get_bin_path('netstat', True)
