@@ -18,13 +18,7 @@
                 "ssm:UpdateAssociationStatus",
                 "ssm:UpdateInstanceAssociationStatus",
                 "ssm:UpdateInstanceInformation",
-                "ssm:StartSession",
-                "ssm:UpdateInstanceAssociation",
-                "ssm:StartAssociationsOnce",
-                "ssm:StartAutomationExecution",
-                "ssm:ResumeSession",
-                "ssm:DescribeSessions",
-                "ssm:GetConnectionStatus"
+                "ssm:StartSession"
                 
             ],
             "Resource": "*"
@@ -114,12 +108,7 @@
         {
             "Effect": "Allow",
             "Action": "iam:CreateServiceLinkedRole",
-            "Resource": "arn:aws:iam::*:role/aws-service-role/ssm.amazonaws.com/AWSServiceRoleForAmazonSSM*",
-            "Condition": {
-                "StringLike": {
-                    "iam:AWSServiceName": "ssm.amazonaws.com"
-                }
-            }
+            "Resource": "arn:aws:iam::*:role/aws-service-role/ssm.amazonaws.com/AWSServiceRoleForAmazonSSM*"
         },
         {
             "Effect": "Allow",
@@ -130,4 +119,4 @@
             "Resource": "arn:aws:iam::*:role/aws-service-role/ssm.amazonaws.com/AWSServiceRoleForAmazonSSM*"
         }
     ]
-}   
+}
