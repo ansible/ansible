@@ -1,3 +1,6 @@
 shippable/posix/group1
 posix/ci/group2
 destructive
+skip/osx
+skip/freebsd
+skip/opensuse

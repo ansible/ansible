@@ -16,19 +16,41 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- name: install netcat
-  package:
-    name: netcat
-    state: present
+- name: install netstat and netcat on deb
+  apt:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - net-tools
+    - netcat
+  when: ansible_os_family == 'Debian'
 
-- name: start UDP server on port 55555
-  shell: nc -u -l 55555 &
+- name: install netstat and netcat on rh < 7
+  yum:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - net-tools
+    - nc.x86_64
+  when: ansible_os_family == "RedHat" and ansible_distribution_major_version|int < 7
 
-- name: start UDP server on port 55556
-  shell: nc -u -l 55556 &
+- name: install netstat and netcat on rh >= 7
+  yum:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - net-tools
+    - nmap-ncat
+  when: ansible_os_family == "RedHat" and ansible_distribution_major_version|int >= 7
 
-- name: start TCP server on port 55557
-  shell: nc -l 55557 &
+- name: start UDP server on port 5555
+  shell: nc -u -l 5555 &
+
+- name: start UDP server on port 5556
+  shell: nc -u -l 5556 &
+
+- name: start TCP server on port 5557
+  shell: nc -l 5557 &
 
 - name: Gather listening ports facts with whitelists
   listen_ports_facts:
@@ -59,7 +81,7 @@
 
 - name: check UDP violations
   assert:
-    that: ansible_facts.udp_listen_violations|length == 1
+    that: ansible_facts.udp_listen_violations|length > 0
 
 - name: check TCP listening ports
   assert:
@@ -67,4 +89,4 @@
 
 - name: check UDP listening ports
   assert:
-    that: ansible_facts.udp_listen|length == 2
+    that: ansible_facts.udp_listen|length > 0
