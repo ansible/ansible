@@ -53,6 +53,9 @@
     instance_profile_name: "{{random_role_name}}"
     instance_tags:
       name: aws_ssm_integration_test
+    user_data: |
+                 #!/bin/sh
+                 sudo systemctl start amazon-ssm-agent
     state: present
   register: output
   tags: setup_infra and linux
