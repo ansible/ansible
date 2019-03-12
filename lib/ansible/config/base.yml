@@ -1608,6 +1608,14 @@ INJECT_FACTS_AS_VARS:
   - {key: inject_facts_as_vars, section: defaults}
   type: boolean
   version_added: "2.5"
+OLD_PLUGIN_CACHE_CLEARING:
+  description: Previouslly Ansible would only clear some of the plugin loading caches when loading new roles, this led to some behaviours in which a plugin loaded in prevoius plays would be unexpectedly 'sticky'. This setting allows to return to that behaviour.
+  env: [{name: ANSIBLE_OLD_PLUGIN_CACHE_CLEAR}]
+  ini:
+  - {key: old_plugin_cache_clear, section: defaults}
+  type: boolean
+  default: False
+  version_added: "2.8"
 PARAMIKO_HOST_KEY_AUTO_ADD:
   # TODO: move to plugin
   default: False
