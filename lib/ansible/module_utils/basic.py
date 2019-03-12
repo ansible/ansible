@@ -183,6 +183,7 @@ from ansible.module_utils.common.validation import (
     check_type_int,
     check_type_list,
     check_type_dict,
+    check_type_path,
     check_type_str,
     safe_eval,
 )
@@ -1771,8 +1772,7 @@ class AnsibleModule(object):
         return check_type_float(value)
 
     def _check_type_path(self, value):
-        value = self._check_type_str(value)
-        return os.path.expanduser(os.path.expandvars(value))
+        return check_type_path(value, self._string_conversion_action)
 
     def _check_type_jsonarg(self, value):
         # Return a jsonified string.  Sometimes the controller turns a json

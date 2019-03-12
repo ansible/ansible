@@ -5,6 +5,7 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+import os
 import re
 
 from ansible.module_utils._text import to_native
@@ -464,3 +465,8 @@ def check_type_float(value):
         return float(value)
 
     raise TypeError('%s cannot be converted to a float' % type(value))
+
+
+def check_type_path(value, string_conversion_action):
+    value = check_type_str(value, string_conversion_action)
+    return os.path.expanduser(os.path.expandvars(value))
