@@ -69,6 +69,11 @@ options:
        - List of SSH public keys.
        - Use the full content of your .pub file here.
     type: list
+  password:
+    description:
+       - Password for the server.
+    type: str
+    version_added: '2.8'
   use_public_network:
     description:
       - Attach a public network interface to the server.
@@ -375,8 +380,6 @@ class AnsibleCloudscaleServer(AnsibleCloudscaleBase):
 
     def _create_server(self, server_info):
         self._result['changed'] = True
-        required_params = ('name', 'ssh_keys', 'image', 'flavor')
-        self._module.fail_on_missing_params(required_params)
 
         data = deepcopy(self._module.params)
         for i in ('uuid', 'state', 'force', 'api_timeout', 'api_token'):
@@ -443,6 +446,7 @@ def main():
         volume_size_gb=dict(type='int', default=10),
         bulk_volume_size_gb=dict(type='int'),
         ssh_keys=dict(type='list'),
+        password=dict(no_log=True),
         use_public_network=dict(type='bool', default=True),
         use_private_network=dict(type='bool', default=False),
         use_ipv6=dict(type='bool', default=True),
