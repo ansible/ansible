@@ -403,6 +403,13 @@ class Constructable(object):
                         prefix = keyed.get('prefix', '')
                         sep = keyed.get('separator', '_')
                         raw_parent_name = keyed.get('parent_group', None)
+                        if raw_parent_name:
+                            try:
+                                raw_parent_name = self.templar.template(raw_parent_name)
+                            except AnsibleError as e:
+                                if strict:
+                                    raise AnsibleParserError("Could not generate parent group %s for group %s: %s" % (raw_parent_name, key, to_native(e)))
+                                continue
 
                         new_raw_group_names = []
                         if isinstance(key, string_types):
@@ -423,12 +430,6 @@ class Constructable(object):
                             self.inventory.add_child(gname, host)
 
                             if raw_parent_name:
-                                try:
-                                    raw_parent_name = self.templar.template(raw_parent_name)
-                                except AnsibleError as e:
-                                    if strict:
-                                        raise AnsibleParserError("Could not generate parent group %s for group %s: %s" % (raw_parent_name, gname, to_native(e)))
-                                    continue
                                 parent_name = to_safe_group_name(raw_parent_name)
                                 self.inventory.add_group(parent_name)
                                 self.inventory.add_child(parent_name, gname)

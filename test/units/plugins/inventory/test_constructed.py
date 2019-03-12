@@ -161,9 +161,9 @@ def test_parent_group_templating_error(inventory_module):
             keyed_groups, host.vars, host.name, strict=True
         )
         assert 'Could not generate parent group' in err_message
+    # invalid parent group did not raise an exception with strict=False
     inventory_module._add_host_to_keyed_groups(
         keyed_groups, host.vars, host.name, strict=False
     )
-    # assert group was added and invalid parent group was bypassed with strict=False
-    assert [h.name for h in inventory_module.inventory.groups['betsy'].hosts] == [host.name]
-    assert set(group for group in inventory_module.inventory.groups) == set(['all', 'ungrouped', 'betsy'])
+    # assert group was never added with invalid parent
+    assert 'betsy' not in inventory_module.inventory.groups
