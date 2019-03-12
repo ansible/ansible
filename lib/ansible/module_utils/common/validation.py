@@ -12,7 +12,7 @@ from ansible.module_utils.common._json_compat import json
 from ansible.module_utils.common.collections import is_iterable
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.pycompat24 import literal_eval
-from ansible.module_utils.six import string_types
+from ansible.module_utils.six import integer_types, string_types
 
 
 def count_terms(terms, module_parameters):
@@ -426,3 +426,20 @@ def check_type_bool(value):
         return boolean(value)
 
     raise TypeError('%s cannot be converted to a bool' % type(value))
+
+
+def check_type_int(value):
+    """Verify that the value is an integer and return it or convert the value
+    to an integer and return it
+
+    :arg value: String or int to convert of verify
+
+    :return: Int of given value
+    """
+    if isinstance(value, integer_types):
+        return value
+
+    if isinstance(value, string_types):
+        return int(value)
+
+    raise TypeError('%s cannot be converted to an int' % type(value))
