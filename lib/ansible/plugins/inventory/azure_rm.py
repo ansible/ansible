@@ -60,6 +60,20 @@ DOCUMENTATION = r'''
                 C(exclude_host_filters) to exclude powered-off and not-fully-provisioned hosts. Set this to a different
                 value or empty list if you need to include hosts in these states.
             default: ['powerstate != "running"', 'provisioning_state != "succeeded"']
+        use_contrib_script_compatible_sanitization:
+          description:
+            - By default this plugin is using a general group name sanitization to create safe and usable group names for use in Ansible.
+              This option allows you to override that, in efforts to allow migration from the old inventory script and
+              matches the sanitization of groups when the script's ``replace_dash_in_groups`` option is set to ``False``.
+              To replicate behavior of ``replace_dash_in_groups = True`` with constructed groups,
+              you will need to replace hyphens with underscores via the regex_replace filter for those entries.
+            - For this to work you should also turn off the TRANSFORM_INVALID_GROUP_CHARS setting,
+              otherwise the core engine will just use the standard sanitization on top.
+            - This is not the default as such names break certain functionality as not all characters are valid Python identifiers
+              which group names end up being used as.
+          type: bool
+          default: False
+          version_added: '2.8'
 '''
 
 EXAMPLES = '''
@@ -152,7 +166,7 @@ except ImportError:
 
 from collections import namedtuple
 from ansible import release
-from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
+from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.azure_rm_common import AzureRMAuth
 from ansible.errors import AnsibleParserError, AnsibleError
@@ -227,6 +241,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         super(InventoryModule, self).parse(inventory, loader, path)
 
         self._read_config_data(path)
+
+        if self.get_option('use_contrib_script_compatible_sanitization'):
+            self._sanitize_group_name = self._legacy_script_compatible_group_sanitization
+
         self._batch_fetch = self.get_option('batch_fetch')
 
         self._filters = self.get_option('exclude_host_filters') + self.get_option('default_host_filters')
@@ -234,7 +252,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         try:
             self._credential_setup()
             self._get_hosts()
-        except Exception as ex:
+        except Exception:
             raise
 
     def _credential_setup(self):
@@ -446,9 +464,17 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
         return json.loads(content)
 
+    @staticmethod
+    def _legacy_script_compatible_group_sanitization(name):
+
+        # note that while this mirrors what the script used to do, it has many issues with unicode and usability in python
+        regex = re.compile(r"[^A-Za-z0-9\_\-]")
+
+        return regex.sub('_', name)
 
 # VM list (all, N resource groups): VM -> InstanceView, N NICs, N PublicIPAddress)
 # VMSS VMs (all SS, N specific SS, N resource groups?): SS -> VM -> InstanceView, N NICs, N PublicIPAddress)
+
 
 class AzureHost(object):
     _powerstate_regex = re.compile('^PowerState/(?P<powerstate>.+)$')

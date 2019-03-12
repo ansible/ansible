@@ -51,6 +51,17 @@ DOCUMENTATION = '''
         vars_prefix:
             description: prefix to apply to host variables, does not include facts nor params
             default: ''
+        use_contrib_script_compatible_sanitization:
+          description:
+            - By default this plugin is using a general group name sanitization to create safe and usable group names for use in Ansible.
+              This option allows you to override that, in efforts to allow migration from the old inventory script.
+            - For this to work you should also turn off the TRANSFORM_INVALID_GROUP_CHARS setting,
+              otherwise the core engine will just use the standard sanitization on top.
+            - This is not the default as such names break certain functionality as not all characters are valid Python identifiers
+              which group names end up being used as.
+          type: bool
+          default: False
+          version_added: '2.8'
 '''
 
 EXAMPLES = '''
@@ -81,10 +92,9 @@ compose:
 '''
 
 from ansible.errors import AnsibleError, AnsibleParserError
-from ansible.module_utils._text import to_native, to_text
-from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_native
 from ansible.module_utils.gcp_utils import GcpSession, navigate_hash, GcpRequestException
-from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable, to_safe_group_name
+from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
 import json
 
 
@@ -325,6 +335,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         config_data = {}
         config_data = self._read_config_data(path)
 
+        if self.get_option('use_contrib_script_compatible_sanitization'):
+            self._sanitize_group_name = self._legacy_script_compatible_group_sanitization
+
         # get user specifications
         if 'zones' in config_data:
             if not isinstance(config_data['zones'], list):
@@ -380,3 +393,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         if cache_needs_update:
             self.cache.set(cache_key, cached_data)
+
+    @staticmethod
+    def _legacy_script_compatible_group_sanitization(name):
+
+        return name
