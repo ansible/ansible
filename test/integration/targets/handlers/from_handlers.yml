@@ -1,7 +1,6 @@
 - name: verify handlers_from on include_role
   hosts: A
   gather_facts: False
-  connection: local
   tags: ['scenario1']
   tasks:
     - name: test include_role
@@ -21,7 +20,6 @@
 - name: verify handlers_from on import_role
   hosts: A
   gather_facts: False
-  connection: local
   tasks:
     - name: set facts to false
       set_fact:
