@@ -477,7 +477,7 @@ def main():
         try:
             int(checksum, 16)
         except ValueError:
-            module.fail_json(msg='The checksum format is invalid', **result)
+            module.fail_json(msg='The checksum format is invalid')
 
     if not dest_is_dir and os.path.exists(dest):
         checksum_mismatch = False
