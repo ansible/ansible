@@ -339,7 +339,6 @@ class StrategyModule(StrategyBase):
                     variable_manager=self._variable_manager
                 )
 
-                include_failure = False
                 if len(included_files) > 0:
                     display.debug("we have included files to process")
 
@@ -385,11 +384,13 @@ class StrategyModule(StrategyBase):
                         except AnsibleParserError:
                             raise
                         except AnsibleError as e:
+                            for r in included_file._results:
+                                r._result['failed'] = True
+
                             for host in included_file._hosts:
                                 self._tqm._failed_hosts[host.name] = True
                                 iterator.mark_host_failed(host)
                             display.error(to_text(e), wrap_text=False)
-                            include_failure = True
                             continue
 
                     # finally go through all of the hosts and append the
