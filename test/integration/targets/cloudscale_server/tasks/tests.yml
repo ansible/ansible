@@ -255,7 +255,8 @@
   assert:
     that:
       - server_failed is failed
-      - "'missing required arguments' in server_failed.msg"
+      - "'Failure while calling the cloudscale.ch API with POST for \"servers\".' in server_failed.msg"
+      - "'This field is required.' in server_failed.fetch_url_info.body"
 
 - name: Test stop running server in check mode
   cloudscale_server:

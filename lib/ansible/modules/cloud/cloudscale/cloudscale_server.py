@@ -375,8 +375,6 @@ class AnsibleCloudscaleServer(AnsibleCloudscaleBase):
 
     def _create_server(self, server_info):
         self._result['changed'] = True
-        required_params = ('name', 'ssh_keys', 'image', 'flavor')
-        self._module.fail_on_missing_params(required_params)
 
         data = deepcopy(self._module.params)
         for i in ('uuid', 'state', 'force', 'api_timeout', 'api_token'):
