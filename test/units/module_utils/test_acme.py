@@ -15,7 +15,7 @@ from ansible.module_utils.acme import (
     # _sign_request_openssl,
     _parse_key_cryptography,
     # _sign_request_cryptography,
-    cryptography_get_csr_domains,
+    cryptography_get_csr_identifiers,
     cryptography_get_cert_days,
 )
 
@@ -164,8 +164,8 @@ if HAS_CURRENT_CRYPTOGRAPHY:
         fn = tmpdir / 'test.csr'
         fn.write(TEST_CSR)
         module = MagicMock()
-        domains = cryptography_get_csr_domains(module, str(fn))
-        assert domains == set(['ansible.com', 'example.com', 'example.org'])
+        domains = cryptography_get_csr_identifiers(module, str(fn))
+        assert domains == set([('dns', 'ansible.com'), ('dns', 'example.com'), ('dns', 'example.org')])
 
 
 ################################################
