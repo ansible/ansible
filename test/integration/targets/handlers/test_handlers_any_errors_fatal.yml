@@ -3,7 +3,6 @@
     - B
   gather_facts: no
   any_errors_fatal: yes
-  connection: local
   vars:
     output_dir: /tmp
   tasks:

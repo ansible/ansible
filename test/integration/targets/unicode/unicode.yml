@@ -1,7 +1,6 @@
 ---
 - name: 'A play with unicode: ¢ £ ¤ ¥'
   hosts: localhost
-  connection: local
   vars:
     test_var: 'Ī ī Ĭ ĭ Į į İ ı Ĳ ĳ Ĵ ĵ Ķ ķ ĸ Ĺ ĺ Ļ ļ Ľ ľ Ŀ ŀ Ł ł Ń ń Ņ ņ Ň ň ŉ Ŋ ŋ Ō ō Ŏ ŏ Ő ő Œ'
     hostnames:
@@ -32,6 +31,7 @@
         groups: 'ĪīĬĭ'
         ansible_ssh_host: 127.0.0.1
         ansible_connection: local
+        ansible_python_interpreter: "{{ ansible_playbook_python }}"
       with_items: "{{ hostnames }}"
 
     - name: 'A task with unicode extra vars'
