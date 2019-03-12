@@ -1,0 +1,70 @@
+# Test playbook for the listen_ports_facts module
+# (c) 2019, Nathan Davison <ndavison85@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: install netcat
+  package:
+    name: netcat
+    state: present
+
+- name: start UDP server on port 55555
+  shell: nc -u -l 55555 &
+
+- name: start UDP server on port 55556
+  shell: nc -u -l 55556 &
+
+- name: start TCP server on port 55557
+  shell: nc -l 55557 &
+
+- name: Gather listening ports facts with whitelists
+  listen_ports_facts:
+    whitelist_tcp:
+      - 22
+    whitelist_udp:
+      - 55556
+
+- name: check for ansible_facts.tcp_listen_violations exists
+  assert:
+    that: ansible_facts.tcp_listen_violations is defined
+
+- name: check for ansible_facts.udp_listen_violations exists
+  assert:
+    that: ansible_facts.udp_listen_violations is defined
+
+- name: check for ansible_facts.udp_listen exists
+  assert:
+    that: ansible_facts.udp_listen is defined
+
+- name: check for ansible_facts.tcp_listen exists
+  assert:
+    that: ansible_facts.tcp_listen is defined
+
+- name: check TCP violations
+  assert:
+    that: ansible_facts.tcp_listen_violations|length > 0
+
+- name: check UDP violations
+  assert:
+    that: ansible_facts.udp_listen_violations|length == 1
+
+- name: check TCP listening ports
+  assert:
+    that: ansible_facts.tcp_listen|length > 0
+
+- name: check UDP listening ports
+  assert:
+    that: ansible_facts.udp_listen|length == 2
