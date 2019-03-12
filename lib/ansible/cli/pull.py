@@ -162,6 +162,8 @@ class PullCLI(CLI):
         host = socket.getfqdn()
         limit_opts = 'localhost,%s,127.0.0.1' % ','.join(set([host, node, host.split('.')[0], node.split('.')[0]]))
         base_opts = '-c local '
+        # avoid interpreter discovery since we already know which interpreter to use on localhost
+        base_opts += '-e %s ' % shlex_quote('ansible_python_interpreter=%s' % sys.executable)
         if context.CLIARGS['verbosity'] > 0:
             base_opts += ' -%s' % ''.join(["v" for x in range(0, context.CLIARGS['verbosity'])])
 
