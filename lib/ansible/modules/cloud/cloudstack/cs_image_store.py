@@ -1,10 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 
 # Copyright: (c) 2019, Patryk Cichy @PatTheSilent
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.cloudstack import AnsibleCloudStack, cs_argument_spec, cs_required_together
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -26,7 +23,7 @@ description:
 options:
     url:
         description:
-            - The URL for the Image Store. 
+            - The URL for the Image Store.
         required: true
     name:
         description:
@@ -39,6 +36,8 @@ options:
     state:
         description:
             - Stage of the Image Store
+        choices: ['present', 'absent']
+        default: present
     provider:
         description:
             - The image store provider name. Required when creating a new Image Store
@@ -61,26 +60,36 @@ RETURN = '''
 id:
     description: the ID of the image store
     type: str
+    returned: success
 name:
     description: the name of the image store
     type: str
+    returned: success
 protocol:
     description: the protocol of the image store
     type: str
+    returned: success
 provider_name:
     description: the provider name of the image store
     type: str
+    returned: success
 scope:
     description: the scope of the image store
     type: str
+    returned: success
 url:
     description: the url of the image store
     type: str
+    returned: success
 zone:
     description: the Zone name of the image store
     type: str
+    returned: success
 
 '''
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.cloudstack import AnsibleCloudStack, cs_argument_spec, cs_required_together
 
 
 class AnsibleCloudstackImageStore(AnsibleCloudStack):
