@@ -31,11 +31,11 @@
     that:
       - set_wm.name == 'work_mem'
       - set_wm.changed == true
-      - set_wm.cur_val == '12MB'
-      - set_wm.cur_val != set_wm.prev_val
+      - set_wm.value_pretty == '12MB'
+      - set_wm.value_pretty != set_wm.prev_val_pretty
       - set_wm.restart_required == false
-      - set_wm.setting.value == 12582912
-      - set_wm.setting.unit == 'b'
+      - set_wm.value.value == 12582912
+      - set_wm.value.unit == 'b'
   when: ansible_distribution != "Ubuntu" and ansible_distribution_major_version != '16' and ansible_distribution != "FreeBSD"
 
 - assert:
@@ -60,9 +60,9 @@
     that:
       - reset_wm.name == 'work_mem'
       - reset_wm.changed == true
-      - reset_wm.cur_val != reset_wm.prev_val
+      - reset_wm.value_pretty != reset_wm.prev_val_pretty
       - reset_wm.restart_required == false
-      - reset_wm.setting.value != '12582912' 
+      - reset_wm.value.value != '12582912' 
   when: ansible_distribution != "Ubuntu" and ansible_distribution_major_version != '16' and ansible_distribution != "FreeBSD"
 
 - assert:
@@ -87,7 +87,7 @@
     that:
       - reset_wm2.name == 'work_mem'
       - reset_wm2.changed == false
-      - reset_wm2.cur_val == reset_wm2.prev_val
+      - reset_wm2.value_pretty == reset_wm2.prev_val_pretty
       - reset_wm2.restart_required == false
   when: ansible_distribution != "Ubuntu" and ansible_distribution_major_version != '16'
 
@@ -123,9 +123,9 @@
     that:
       - def_wm.name == 'work_mem'
       - def_wm.changed == true
-      - def_wm.cur_val != def_wm.prev_val
+      - def_wm.value_pretty != def_wm.prev_val_pretty
       - def_wm.restart_required == false
-      - def_wm.setting.value != '14680064' 
+      - def_wm.value.value != '14680064' 
   when: ansible_distribution != "Ubuntu" and ansible_distribution_major_version != '16' and ansible_distribution != 'FreeBSD'
 
 - assert:
@@ -152,7 +152,7 @@
       - set_shb.changed == true
       - set_shb.restart_required == true
 
-# We don't check setting.utin because it is none
+# We don't check value.utin because it is none
 - name: postgresql_set - set autovacuum (enabled by default, restart is not required)
   become_user: "{{ pg_user }}"
   become: yes
@@ -169,4 +169,4 @@
       - set_aut.name == 'autovacuum'
       - set_aut.changed == true
       - set_aut.restart_required == false
-      - set_aut.setting.value == 'off'
+      - set_aut.value.value == 'off'

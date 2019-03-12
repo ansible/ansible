@@ -99,8 +99,6 @@ options:
       verified to be signed by one of these authorities.
     type: str
 notes:
-- Check_mode is not supported because ALTER SYSTEM can't be run inside a transaction block
-  U(https://www.postgresql.org/docs/current/sql-altersystem.html).
 - Supported version of PostgreSQL is 9.4 and later.
 - Pay attention, change setting with 'postmaster' context can return changed is true
   when actually nothing changes because the same value may be presented in
@@ -131,16 +129,17 @@ EXAMPLES = r'''
 
 # Set work_mem parameter to 32MB and show what's been changed and restart is required or not
 # (output example: "msg": "work_mem 4MB >> 64MB restart_req: False")
-- postgresql_set:
+- name: Set work mem parameter
+  postgresql_set:
     name: work_mem
     value: 32mb
-    register: set_value
+    register: set
 
 - debug:
-    msg: "{{ set_value.name }} {{ set_value.prev_val }} >> {{ set_value.cur_value }} restart_req: {{ set_value.restart_required }}"
-  when: set_value.changed
+    msg: "{{ set.name }} {{ set.prev_val_pretty }} >> {{ set.value_pretty }} restart_req: {{ set.restart_required }}"
+  when: set.changed
 # Ensure that the restart of PostgreSQL serever must be required for some parameters.
-# In this situation you see the same parameter in prev_val and cur_value, but 'changed=True'
+# In this situation you see the same parameter in prev_val and value_prettyue, but 'changed=True'
 # (If you passed the value that was different from the current server setting).
 
 - name: Set log_min_duration_statement parameter to 1 second
@@ -165,20 +164,21 @@ restart_required:
   returned: always
   type: bool
   sample: true
-prev_val:
+prev_val_pretty:
   description: Information about previous state of the parameter.
   returned: always
   type: str
   sample: '4MB'
-cur_val:
+value_pretty:
   description: Information about current state of the parameter.
   returned: always
   type: str
   sample: '64MB'
-setting:
+value:
   description:
   - Dictionary that contains the current parameter value (at the time of playbook finish).
   - Pay attention that for real change some parameters restart of PostgreSQL server is required.
+  - Returns the current value in the check mode.
   returned: always
   type: dict
   sample: { "value": 67108864, "unit": "b" }
@@ -209,7 +209,6 @@ from ansible.module_utils._text import to_native
 
 # To allow to set value like 1mb instead of 1MB, etc:
 POSSIBLE_SIZE_UNITS = ("mb", "gb", "tb")
-
 
 # ===========================================
 # PostgreSQL module specific support methods.
@@ -249,6 +248,39 @@ def param_get(cursor, module, name):
         unit = 'b'
 
     return (val[0], raw_val, unit, boot_val, context)
+
+
+def pretty_to_bytes(pretty_val):
+    # The function returns a value in bytes
+    # if the value contains 'B', 'kB', 'MB', 'GB', 'TB'.
+    # Otherwise it returns the passed argument.
+
+    val_in_bytes = None
+
+    if 'kB' in pretty_val:
+        num_part = int(''.join(d for d in pretty_val if d.isdigit()))
+        val_in_bytes = num_part * 1024
+
+    elif 'MB' in pretty_val.upper():
+        num_part = int(''.join(d for d in pretty_val if d.isdigit()))
+        val_in_bytes = num_part * 1024 * 1024
+
+    elif 'GB' in pretty_val.upper():
+        num_part = int(''.join(d for d in pretty_val if d.isdigit()))
+        val_in_bytes = num_part * 1024 * 1024 * 1024
+
+    elif 'TB' in pretty_val.upper():
+        num_part = int(''.join(d for d in pretty_val if d.isdigit()))
+        val_in_bytes = num_part * 1024 * 1024 * 1024 * 1024
+
+    elif 'B' in pretty_val.upper():
+        num_part = int(''.join(d for d in pretty_val if d.isdigit()))
+        val_in_bytes = num_part
+
+    else:
+        return pretty_val
+
+    return val_in_bytes
 
 
 def param_set(cursor, module, name, value):
@@ -296,12 +328,9 @@ def main():
         reset=dict(type='bool'),
         session_role=dict(type='str'),
     )
-    # This module doesn't support check mode
-    # because ALTER SYSTEM SET command can't be used
-    # in transaction mode https://www.postgresql.org/docs/current/sql-altersystem.html.
     module = AnsibleModule(
         argument_spec=argument_spec,
-        supports_check_mode=False,
+        supports_check_mode=True,
     )
 
     name = module.params["name"]
@@ -341,7 +370,7 @@ def main():
               if k in params_map and v != '' and v is not None)
 
     # Store connection parameters for the final check:
-    kw2 = deepcopy(kw)
+    con_params = deepcopy(kw)
 
     # If a login_unix_socket is specified, incorporate it here.
     is_localhost = "host" not in kw or kw["host"] is None or kw["host"] == "localhost"
@@ -364,9 +393,9 @@ def main():
         kw = dict(
             changed=False,
             restart_required=False,
-            cur_val="",
-            prev_val="",
-            setting={"value": "", "unit": ""},
+            value_pretty="",
+            prev_val_pretty="",
+            value={"value": "", "unit": ""},
         )
         kw['name'] = name
         db_connection.close()
@@ -398,8 +427,8 @@ def main():
     elif value == 'False':
         value = 'off'
 
-    kw['prev_val'] = current_value
-    kw['cur_val'] = deepcopy(kw['prev_val'])
+    kw['prev_val_pretty'] = current_value
+    kw['value_pretty'] = deepcopy(kw['prev_val_pretty'])
     kw['context'] = context
 
     # Do job
@@ -409,17 +438,34 @@ def main():
     if context == "postmaster":
         restart_required = True
 
+    # If check_mode, just compare and exit:
+    if module.check_mode:
+        if pretty_to_bytes(value) == pretty_to_bytes(current_value):
+            kw['changed'] = False
+
+        else:
+            kw['value_pretty'] = value
+            kw['changed'] = True
+
+        # Anyway returns current value in the check_mode:
+        kw['value'] = dict(
+            value=raw_val,
+            unit=unit,
+        )
+        kw['restart_required'] = restart_required
+        module.exit_json(**kw)
+
     # Set param:
     if value and value != current_value:
         changed = param_set(cursor, module, name, value)
 
-        kw['cur_val'] = value
+        kw['value_pretty'] = value
 
     # Reset param:
     elif reset:
         if raw_val == boot_val:
             # nothing to change, exit:
-            kw['setting'] = dict(
+            kw['value'] = dict(
                 value=raw_val,
                 unit=unit,
             )
@@ -435,7 +481,7 @@ def main():
 
     # Reconnect and recheck current value:
     if context in ('sighup', 'superuser-backend', 'backend', 'superuser', 'user'):
-        db_connection = connect_to_db(module, kw2, autocommit=True)
+        db_connection = connect_to_db(module, con_params, autocommit=True)
         cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
         res = param_get(cursor, module, name)
@@ -449,8 +495,8 @@ def main():
         else:
             changed = True
 
-        kw['cur_val'] = f_value
-        kw['setting'] = dict(
+        kw['value_pretty'] = f_value
+        kw['value'] = dict(
             value=f_raw_val,
             unit=unit,
         )
