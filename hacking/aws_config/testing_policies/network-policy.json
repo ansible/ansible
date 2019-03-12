@@ -12,6 +12,16 @@
                 "route53:UpdateHostedZoneComment"
             ],
             "Resource": "*"
+        },
+        {
+            "Sid": "AllowTransitGatewayManagement",
+            "Effect": "Allow",
+            "Action": [
+                "ec2:CreateTransitGateway",
+                "ec2:DeleteTransitGateway",
+                "ec2:DescribeTransitGateways"
+            ],
+            "Resource": "*"
         }
     ]
 }
