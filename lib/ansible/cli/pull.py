@@ -170,6 +170,8 @@ class PullCLI(CLI):
         inv_opts = self._get_inv_cli()
         if not inv_opts:
             inv_opts = " -i localhost, "
+            # avoid interpreter discovery since we already know which interpreter to use on localhost
+            inv_opts += '-e %s ' % shlex_quote('ansible_python_interpreter=%s' % sys.executable)
 
         # SCM specific options
         if context.CLIARGS['module_name'] == 'git':
