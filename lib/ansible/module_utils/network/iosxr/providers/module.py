@@ -30,8 +30,6 @@ class NetworkModule(AnsibleModule):
 
             if network_api == 'cliconf':
                 connection_type = 'network_cli'
-            elif network_api == 'netconf':
-                connection_type = 'netconf'
 
             cls = providers.get(network_os, self._name, connection_type)
 
