@@ -179,6 +179,7 @@ from ansible.module_utils.common.validation import (
     check_required_together,
     count_terms,
     check_type_bool,
+    check_type_float,
     check_type_int,
     check_type_list,
     check_type_dict,
@@ -1767,13 +1768,7 @@ class AnsibleModule(object):
         return check_type_int(value)
 
     def _check_type_float(self, value):
-        if isinstance(value, float):
-            return value
-
-        if isinstance(value, (binary_type, text_type, int)):
-            return float(value)
-
-        raise TypeError('%s cannot be converted to a float' % type(value))
+        return check_type_float(value)
 
     def _check_type_path(self, value):
         value = self._check_type_str(value)

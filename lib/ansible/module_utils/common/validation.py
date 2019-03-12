@@ -12,7 +12,12 @@ from ansible.module_utils.common._json_compat import json
 from ansible.module_utils.common.collections import is_iterable
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.pycompat24 import literal_eval
-from ansible.module_utils.six import integer_types, string_types
+from ansible.module_utils.six import (
+    binary_type,
+    integer_types,
+    string_types,
+    text_type,
+)
 
 
 def count_terms(terms, module_parameters):
@@ -443,3 +448,19 @@ def check_type_int(value):
         return int(value)
 
     raise TypeError('%s cannot be converted to an int' % type(value))
+
+
+def check_type_float(value):
+    """Verify that value is a float on convert it to a float and return it.
+
+    :arg value: Float, int, str, or bytes to verify or convert and return.
+
+    :returns: Float of given value.
+    """
+    if isinstance(value, float):
+        return value
+
+    if isinstance(value, (binary_type, text_type, int)):
+        return float(value)
+
+    raise TypeError('%s cannot be converted to a float' % type(value))
