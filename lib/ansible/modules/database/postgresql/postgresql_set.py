@@ -326,7 +326,7 @@ def main():
     argument_spec.update(
         name=dict(type='str', required=True),
         db=dict(type='str', aliases=['login_db']),
-        port=dict(type=int, default=5432, aliases=['login_port']),
+        port=dict(type='int', default=5432, aliases=['login_port']),
         ssl_mode=dict(type='str', default='prefer', choices=['allow', 'disable', 'prefer', 'require', 'verify-ca', 'verify-full']),
         ssl_rootcert=dict(type='str'),
         value=dict(type='str'),
