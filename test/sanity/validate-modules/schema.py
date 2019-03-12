@@ -66,8 +66,8 @@ seealso_schema = Schema(
 )
 
 
-argument_spec_types = ['str', 'list', 'dict', 'bool', 'int', 'float', 'path', 'raw', 'jsonarg',
-                       'json', 'bytes', 'bits']
+argument_spec_types = ['bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw',
+                       'sid', 'str']
 
 
 argument_spec_modifiers = {
