@@ -273,8 +273,8 @@ class LibvirtConnection(object):
                         res = 0
                     if res == 0:
                         return True
-            #  command, section, parentIndex, xml, flags=0
-            self.module.fail_json(msg='updating this is not supported yet %s' % to_native(xml))
+        #  command, section, parentIndex, xml, flags=0
+        self.module.fail_json(msg='updating this is not supported yet %s' % to_native(xml))
 
     def destroy(self, entryid):
         if not self.module.check_mode:
