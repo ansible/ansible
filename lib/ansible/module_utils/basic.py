@@ -93,16 +93,12 @@ except ImportError:
 # Python2 & 3 way to get NoneType
 NoneType = type(None)
 
+from ansible.module_utils._text import to_native, to_bytes, to_text
+
 try:
-    import json
-    # Detect the python-json library which is incompatible
-    try:
-        if not isinstance(json.loads, types.FunctionType) or not isinstance(json.dumps, types.FunctionType):
-            raise ImportError
-    except AttributeError:
-        raise ImportError
-except ImportError:
-    print('\n{"msg": "Error: ansible requires the stdlib json and was not found!", "failed": true}')
+    from ansible.module_utils.common._json_compat import json
+except ImportError as e:
+    print('\n{{"msg": "Error: ansible requires the stdlib json: {0}", "failed": true}}'.format(to_native(e)))
     sys.exit(1)
 
 AVAILABLE_HASH_ALGORITHMS = dict()
@@ -186,10 +182,8 @@ from ansible.module_utils.common.validation import (
     check_type_str,
     safe_eval,
 )
-from ansible.module_utils._text import to_native, to_bytes, to_text
 from ansible.module_utils.common._utils import get_all_subclasses as _get_all_subclasses
 from ansible.module_utils.parsing.convert_bool import BOOLEANS, BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
-
 
 # Note: When getting Sequence from collections, it matches with strings. If
 # this matters, make sure to check for strings before checking for sequencetype

@@ -8,6 +8,7 @@ __metaclass__ = type
 import re
 
 from ansible.module_utils._text import to_native
+from ansible.module_utils.common._json_compat import json
 from ansible.module_utils.common.collections import is_iterable
 from ansible.module_utils.pycompat24 import literal_eval
 from ansible.module_utils.six import string_types
