@@ -1003,7 +1003,10 @@ def main():
                         if module.params['deactivate_authzs']:
                             client.deactivate_authzs()
                 data, data_dns = client.get_challenges_data()
-                auths = {k.split(':', 1)[1]: v for k, v in client.authorizations.items()}
+                auths = dict()
+                for k, v in client.authorizations.items():
+                    # Remove "type:" from key
+                    auths[k.split(':', 1)[1]] = v
                 module.exit_json(
                     changed=client.changed,
                     authorizations=auths,
