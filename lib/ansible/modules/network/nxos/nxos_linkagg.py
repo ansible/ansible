@@ -135,7 +135,7 @@ from ansible.module_utils.network.common.utils import remove_default_spec
 
 def search_obj_in_list(group, lst):
     for o in lst:
-        if str(o['group']) == str(group):
+        if o['group'] == group:
             return o
 
 
@@ -334,7 +334,7 @@ def parse_channel_options(module, output, channel):
     obj = {}
 
     group = channel['group']
-    obj['group'] = group
+    obj['group'] = str(group)
     obj['min_links'] = parse_min_links(module, group)
     members = parse_members(output, group)
     obj['members'] = members
@@ -372,7 +372,7 @@ def main():
     """ main entry point for module execution
     """
     element_spec = dict(
-        group=dict(type='int'),
+        group=dict(type='str'),
         mode=dict(required=False, choices=['on', 'active', 'passive'], default='on', type='str'),
         min_links=dict(required=False, default=None, type='int'),
         members=dict(required=False, default=None, type='list'),
