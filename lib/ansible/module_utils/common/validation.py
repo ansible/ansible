@@ -281,3 +281,23 @@ def check_missing_parameters(module_parameters, required_parameters=None):
         raise TypeError(to_native(msg))
 
     return missing_params
+
+def check_type_str(value, string_conversion_action=None):
+    if isinstance(value, string_types):
+        return value
+
+    # Ignore, warn, or error when converting to a string.
+    # The current default is to warn. Change this in Anisble 2.12 to error.
+    if string_conversion_action is None:
+        string_conversion_action = 'warn'
+
+    common_msg = 'quote the entire value to ensure it does not change.'
+    if string_conversion_action == 'error':
+        msg = common_msg.capitalize()
+        raise TypeError(to_native(msg))
+    elif string_conversion_action == 'warn':
+        msg = ('The value {0!r} (type {0.__class__.__name__}) in a string field was converted to {1!r} (type string). '
+               'If this does not look like what you expect, {2}').format(value, to_text(value), common_msg)
+        raise TypeError(to_native(msg))
+
+    return to_native(value, errors='surrogate_or_strict')

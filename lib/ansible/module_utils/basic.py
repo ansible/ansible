@@ -182,6 +182,7 @@ from ansible.module_utils.common.validation import (
     check_required_one_of,
     check_required_together,
     count_terms,
+    check_type_str,
 )
 from ansible.module_utils._text import to_native, to_bytes, to_text
 from ansible.module_utils.common._utils import get_all_subclasses as _get_all_subclasses
@@ -1768,20 +1769,16 @@ class AnsibleModule(object):
             return value
 
     def _check_type_str(self, value):
-        if isinstance(value, string_types):
-            return value
-
-        # Ignore, warn, or error when converting to a string.
-        # The current default is to warn. Change this in Anisble 2.12 to error.
-        common_msg = 'quote the entire value to ensure it does not change.'
-        if self._string_conversion_action == 'error':
-            msg = common_msg.capitalize()
-            raise TypeError(msg)
-        elif self._string_conversion_action == 'warn':
-            msg = ('The value {0!r} (type {0.__class__.__name__}) in a string field was converted to {1!r} (type string). '
-                   'If this does not look like what you expect, {2}').format(value, to_text(value), common_msg)
-            self.warn(msg)
-        return to_native(value, errors='surrogate_or_strict')
+        try:
+            return check_type_str(value, self._string_conversion_action)
+        except TypeError as e:
+            # Ignore, warn, or error when converting to a string.
+            # The current default is to warn. Change this in Anisble 2.12 to error.
+            if self._string_conversion_action == 'error':
+                raise
+            elif self._string_conversion_action == 'warn':
+                self.warn(to_native(e))
+                return to_native(value, errors='surrogate_or_strict')
 
     def _check_type_list(self, value):
         if isinstance(value, list):
