@@ -61,6 +61,7 @@ NIOS_IPV6_FIXED_ADDRESS = 'ipv6fixedaddress'
 NIOS_NEXT_AVAILABLE_IP = 'func:nextavailableip'
 NIOS_IPV4_NETWORK_CONTAINER = 'networkcontainer'
 NIOS_IPV6_NETWORK_CONTAINER = 'ipv6networkcontainer'
+NIOS_MEMBER = 'member'
 
 NIOS_PROVIDER_SPEC = {
     'host': dict(fallback=(env_fallback, ['INFOBLOX_HOST'])),
@@ -134,6 +135,29 @@ def flatten_extattrs(value):
         }
     '''
     return dict([(k, v['value']) for k, v in iteritems(value)])
+
+
+def member_normalize(member_spec):
+    ''' Transforms the member module arguments into a valid WAPI struct
+    This function will transform the arguments into a structure that
+    is a valid WAPI structure in the format of:
+        {
+            key: <value>,
+        }
+    It will remove any arguments that are set to None since WAPI will error on
+    that condition.
+    The remainder of the value validation is performed by WAPI
+    '''
+    for key in member_spec.keys():
+        if isinstance(member_spec[key], dict):
+            member_spec[key] = member_normalize(member_spec[key])
+        elif isinstance(member_spec[key], list):
+            for x in member_spec[key]:
+                if isinstance(x, dict):
+                    x = member_normalize(x)
+        elif member_spec[key] is None:
+            del member_spec[key]
+    return member_spec
 
 
 class WapiBase(object):
@@ -244,6 +268,10 @@ class WapiModule(WapiBase):
         else:
             current_object = obj_filter
             ref = None
+
+        # checks if the object type is member to normalize the attributes being passed
+        if (ib_obj_type == NIOS_MEMBER):
+            proposed_object = member_normalize(proposed_object)
 
         # checks if the name's field has been updated
         if update and new_name:
