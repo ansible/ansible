@@ -136,7 +136,7 @@
 - name: Delete IAM role
   iam:
     iam_type: role
-    name: "{{ iam_role_name }}"
+    name: "{{ random_role_name }}"
     state: absent
   register: iam_role_deletion_status
   tags: delete_infra
