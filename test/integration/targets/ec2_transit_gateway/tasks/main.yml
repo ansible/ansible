@@ -8,7 +8,7 @@
       aws_secret_key: "{{ aws_secret_key }}"
       security_token: "{{ security_token }}"
       region: "{{ aws_region }}"
-#  no_log: yes
+  no_log: yes
 
 - block:
     - name: test create transit gateway without permissions
