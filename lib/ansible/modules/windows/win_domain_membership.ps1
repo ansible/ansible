@@ -132,7 +132,7 @@ Function Join-Domain {
         if(Get-ADObject $new_hostname -eq $null -or (Get-ADObject $new_hostname -ne $null -and $force_replace_host)) {
             $add_result = Add-Computer @add_args
         } else {
-            Fail-Json -obj $result -message "failed to join domain: hostname already exists in AD and `force_replace_host` isn't `true`"
+            Fail-Json -obj $result -message "failed to join domain: hostname already exists in AD and `$force_replace_host isn't set to true"
         }
     } catch {
         Fail-Json -obj $result -message "failed to join domain: $($_.Exception.Message)"
