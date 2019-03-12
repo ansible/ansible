@@ -69,7 +69,7 @@ options:
         - index-pattern
         - config
         - timelion-sheet
-    src:
+    content:
       type: path
       description:
         - Path of the attributes file.
@@ -94,16 +94,15 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 
 
-def get_request_params(module, object_id, object_type, kibana_url, timeout,
-                       username=None, password=None, tenant=None, proxy=None,
-                       overwrite=False,src=None):
+def get_request_params(module, object_id, object_type, kibana_url, 
+                       timeout, content={}, overwrite=False,
+                       username=None, password=None, tenant=None, proxy=None):
 
     url = "{}/api/saved_objects/{}/{}".format(kibana_url, object_type, object_id)
     headers = {'kbn-xsrf': 'true'}
     auth = ()
     proxies = {}
     query_params = {}
-    payload = None
     if any(item is not None for item in [username, password]):
         auth = (username, password)
     if tenant is not None:
@@ -113,33 +112,21 @@ def get_request_params(module, object_id, object_type, kibana_url, timeout,
         proxies['https'] = proxy
     if overwrite:
         query_params['overwrite'] = True
-    if src is not None:
-        try:
-            with open(src, 'r') as json_file:
-                payload = json.load(json_file)
-        except Exception as e:
-            module.fail_json(msg="could not read the file '{}'.{}".format(src, to_native(e)))
-
     return {
         'url': url,
         'headers': headers,
         'auth': auth,
         'proxies': proxies,
         'query_params': query_params,
-        'data': payload
+        'data': content
     }
 
 
-def are_different(module, existing_object, object_id, object_type, src):
+def are_different(module, existing_object, object_id, object_type, content):
     object_json = existing_object.json()
-    try:
-        with open(src, 'r') as json_file:
-            payload = json.load(json_file)
-    except Exception as e:
-        module.fail_json(msg="could not read the file '{}'.{}".format(src, to_native(e)))
     if object_json['id'] == object_id and object_json['type'] == object_type \
-       and object_json.get('attributes') == payload.get('attributes') \
-       and object_json.get('references') == payload.get('references'):
+       and object_json.get('attributes') == content.get('attributes') \
+       and object_json.get('references') == content.get('references'):
         return False
     else:
         return True
@@ -168,7 +155,7 @@ def get_object(module, object_id, object_type, kibana_url, timeout,
         module.fail_json(msg="An error occured while trying to get the object '{}'. {}".format(object_id, to_native(e)))
 
 
-def create_object(module, object_id, object_type, kibana_url, src, timeout,
+def create_object(module, object_id, object_type, kibana_url, content, timeout,
                   username=None, password=None, tenant=None, proxy=None,
                   overwrite=False):
 
@@ -177,7 +164,7 @@ def create_object(module, object_id, object_type, kibana_url, src, timeout,
         object_id=object_id,
         object_type=object_type,
         kibana_url=kibana_url,
-        src=src,
+        content=content,
         username=username,
         password=password,
         tenant=tenant,
@@ -197,7 +184,7 @@ def create_object(module, object_id, object_type, kibana_url, src, timeout,
         module.fail_json(msg="An error occured while trying to get the object '{}'. {}".format(object_id, to_native(e)))
 
 
-def update_object(module, object_id, object_type, kibana_url, src, timeout,
+def update_object(module, object_id, object_type, kibana_url, content, timeout,
                   username=None, password=None, tenant=None, proxy=None):
 
     request_params = get_request_params(
@@ -205,7 +192,7 @@ def update_object(module, object_id, object_type, kibana_url, src, timeout,
         object_id=object_id,
         object_type=object_type,
         kibana_url=kibana_url,
-        src=src,
+        content=content,
         username=username,
         password=password,
         tenant=tenant,
@@ -286,7 +273,7 @@ def main():
                           'timelion-sheet'
                       ]),
             state=dict(type='str', default='present', choices=['present', 'absent']),
-            src=dict(type='path', required=True),
+            content=dict(type='dict', required=True),
             kibana_url=dict(type='str', required=True),
             timeout=dict(type='float', default="30"),
             overwrite=dict(type='bool', default=False),
@@ -301,7 +288,7 @@ def main():
     object_id = module.params['id']
     object_type = module.params['type']
     state = module.params['state']
-    src = module.params['src']
+    content = module.params['content']
     kibana_url = module.params['kibana_url']
     timeout = module.params['timeout']
     overwrite = module.params['overwrite']
@@ -309,8 +296,6 @@ def main():
     password = module.params['password']
     searchguard_tenant = module.params['searchguard_tenant']
     proxy = module.params['proxy']
-
-    src = os.path.basename(src)
 
      
     present, existing_object = is_object_present(
@@ -331,14 +316,14 @@ def main():
                              existing_object=existing_object,
                              object_id=object_id,
                              object_type=object_type,
-                             src=src):
+                             content=content):
                 # Update object
                 r = update_object(
                     module=module,
                     object_id=object_id,
                     object_type=object_type,
                     kibana_url=kibana_url,
-                    src=src,
+                    content=content,
                     username=user,
                     password=password,
                     tenant=searchguard_tenant,
@@ -355,7 +340,7 @@ def main():
                 object_id=object_id,
                 object_type=object_type,
                 kibana_url=kibana_url,
-                src=src,
+                content=content,
                 username=user,
                 password=password,
                 tenant=searchguard_tenant,
@@ -371,7 +356,7 @@ def main():
                 object_id=object_id,
                 object_type=object_type,
                 kibana_url=kibana_url,
-                src=src,
+                content=content,
                 username=user,
                 password=password,
                 tenant=searchguard_tenant,
