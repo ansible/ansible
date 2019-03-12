@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """Provides an entry point for python scripts and python modules on the controller with the current python interpreter and optional code coverage collection."""
 
+import imp
 import os
 import sys
 
@@ -11,9 +12,16 @@ def main():
     args = [sys.executable]
 
     coverage_config = os.environ.get('_ANSIBLE_COVERAGE_CONFIG')
+    coverage_output = os.environ.get('_ANSIBLE_COVERAGE_OUTPUT')
 
     if coverage_config:
-        args += ['-m', 'coverage.__main__', 'run', '--rcfile', coverage_config]
+        if coverage_output:
+            args += ['-m', 'coverage.__main__', 'run', '--rcfile', coverage_config]
+        else:
+            try:
+                imp.find_module('coverage')
+            except ImportError:
+                exit('ERROR: Could not find `coverage` module. Did you use a virtualenv created without --system-site-packages or with the wrong interpreter?')
 
     if name == 'python.py':
         if sys.argv[1] == '-c':

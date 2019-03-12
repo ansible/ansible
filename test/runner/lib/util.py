@@ -186,6 +186,9 @@ def get_coverage_environment(args, target_name, version, temp_path):
     coverage_file = os.path.join(coverage_output_base_path, COVERAGE_OUTPUT_PATH, '%s=%s=%s=%s=coverage' % (
         args.command, target_name, args.coverage_label or 'local-%s' % version, 'python-%s' % version))
 
+    if args.coverage_check:
+        coverage_file = ''
+
     env = dict(
         # both AnsiballZ and the ansible-test coverage injector rely on this
         _ANSIBLE_COVERAGE_CONFIG=config_file,
@@ -305,9 +308,6 @@ def intercept_command(args, cmd, target_name, env, capture=False, data=None, cwd
         # otherwise scripts may find the wrong interpreter or possibly no interpreter
         python_path = get_python_path(args, interpreter)
         inject_path = python_path + os.path.pathsep + inject_path
-
-    if args.coverage_check:
-        coverage_file = ''
 
     env['PATH'] = inject_path + os.path.pathsep + env['PATH']
     env['ANSIBLE_TEST_PYTHON_VERSION'] = version
