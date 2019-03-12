@@ -208,6 +208,8 @@ def main():
         ],
     )
 
+    aci = ACIModule(module)
+
     state = module.params['state']
     name = module.params['name']
     runmode = module.params['runmode']
@@ -216,7 +218,6 @@ def main():
     graceful = aci.boolean(module.params['graceful'])
     ignoreCompat = aci.boolean(module.params['ignoreCompat'])
 
-    aci = ACIModule(module)
     aci.construct_url(
         root_class=dict(
             aci_class='maintMaintP',
