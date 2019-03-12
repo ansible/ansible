@@ -733,10 +733,8 @@ version:
 
 from ansible.module_utils.basic import AnsibleModule
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
@@ -763,26 +761,11 @@ def filter_system_virtual_wan_link_data(json):
     return dictionary
 
 
-def flatten_multilists_attributes(data):
-    multilist_attrs = []
-
-    for attr in multilist_attrs:
-        try:
-            path = "data['" + "']['".join(elem for elem in attr) + "']"
-            current_val = eval(path)
-            flattened_val = ' '.join(elem for elem in current_val)
-            exec(path + '= flattened_val')
-        except BaseException:
-            pass
-
-    return data
-
-
 def system_virtual_wan_link(data, fos):
     vdom = data['vdom']
     system_virtual_wan_link_data = data['system_virtual_wan_link']
-    flattened_data = flatten_multilists_attributes(system_virtual_wan_link_data)
-    filtered_data = filter_system_virtual_wan_link_data(flattened_data)
+    filtered_data = filter_system_virtual_wan_link_data(system_virtual_wan_link_data)
+
     return fos.set('system',
                    'virtual-wan-link',
                    data=filtered_data,
@@ -790,7 +773,7 @@ def system_virtual_wan_link(data, fos):
 
 
 def fortios_system(data, fos):
-    login(data)
+    login(data, fos)
 
     if data['system_virtual_wan_link']:
         resp = system_virtual_wan_link(data, fos)
@@ -998,7 +981,6 @@ def main():
     except ImportError:
         module.fail_json(msg="fortiosapi module is required")
 
-    global fos
     fos = FortiOSAPI()
 
     is_error, has_changed, result = fortios_system(module.params, fos)
