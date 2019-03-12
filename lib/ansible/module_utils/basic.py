@@ -179,6 +179,7 @@ from ansible.module_utils.common.validation import (
     check_required_together,
     count_terms,
     check_type_list,
+    check_type_dict,
     check_type_str,
     safe_eval,
 )
@@ -1755,49 +1756,7 @@ class AnsibleModule(object):
         return check_type_list(value)
 
     def _check_type_dict(self, value):
-        if isinstance(value, dict):
-            return value
-
-        if isinstance(value, string_types):
-            if value.startswith("{"):
-                try:
-                    return json.loads(value)
-                except Exception:
-                    (result, exc) = self.safe_eval(value, dict(), include_exceptions=True)
-                    if exc is not None:
-                        raise TypeError('unable to evaluate string as dictionary')
-                    return result
-            elif '=' in value:
-                fields = []
-                field_buffer = []
-                in_quote = False
-                in_escape = False
-                for c in value.strip():
-                    if in_escape:
-                        field_buffer.append(c)
-                        in_escape = False
-                    elif c == '\\':
-                        in_escape = True
-                    elif not in_quote and c in ('\'', '"'):
-                        in_quote = c
-                    elif in_quote and in_quote == c:
-                        in_quote = False
-                    elif not in_quote and c in (',', ' '):
-                        field = ''.join(field_buffer)
-                        if field:
-                            fields.append(field)
-                        field_buffer = []
-                    else:
-                        field_buffer.append(c)
-
-                field = ''.join(field_buffer)
-                if field:
-                    fields.append(field)
-                return dict(x.split("=", 1) for x in fields)
-            else:
-                raise TypeError("dictionary requested, could not parse JSON or key=value")
-
-        raise TypeError('%s cannot be converted to a dict' % type(value))
+        return check_type_dict(value)
 
     def _check_type_bool(self, value):
         if isinstance(value, bool):
