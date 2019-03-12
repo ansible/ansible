@@ -77,6 +77,16 @@
     that:
       - "multi_org_cred_project is changed"
 
+- name: Update project
+  tower_project:
+    name: TestProject
+    state: updated
+  register: project_update
+
+- assert:
+    that:
+      - "project_update is changed"
+
 - name: Check module fails with correct msg
   tower_project:
     name: TestProject
@@ -104,3 +114,15 @@
 - assert:
     that:
       - "result.msg =='Failed to update project, credential not found: Non Existing Credential'"
+
+- name: Chcek module fails with correct msg
+  tower_project:
+     name: Non Existing Org
+     state: updated
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      - "result is failed"
+      - "'could not be found' in result.msg"

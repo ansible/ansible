@@ -32,3 +32,27 @@
 - assert:
     that:
       - "result is changed"
+
+- name: Update a source inventory
+  tower_inventory_source:
+    name: source-test-inventory
+    inventory: openstack-test-inventory
+    state: updated
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Update a nonexistent inventory
+  tower_inventory_source:
+    name: source-does-not-exist
+    inventory: inventory-does-not-exist-either
+    state: updated
+  register: result
+  ignore_errors: True
+
+- assert:
+    that:
+      - "result is failed"
+      - "'could not be found' in result.msg"

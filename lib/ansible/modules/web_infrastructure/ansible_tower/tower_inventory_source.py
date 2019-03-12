@@ -51,7 +51,6 @@ options:
         - rhv
         - tower
         - custom
-      required: True
     credential:
       description:
         - Credential to use to retrieve the inventory from.
@@ -137,7 +136,7 @@ options:
       description:
         - Desired state of the resource.
       default: "present"
-      choices: ["present", "absent"]
+      choices: ["present", "absent", "updated"]
     tower_verify_ssl:
       description:
         - Tower option to avoid certificates check.
@@ -159,6 +158,12 @@ EXAMPLES = '''
     source_vars: '{ private: false }'
     state: present
     tower_verify_ssl: false
+
+- name: Update tower inventory source
+  tower_inventory_source:
+    name: Inventory source
+    inventory: My inventory
+    state: updated
 '''
 
 
@@ -197,7 +202,7 @@ def main():
         name=dict(required=True),
         description=dict(required=False),
         inventory=dict(required=True),
-        source=dict(required=True,
+        source=dict(required=False,
                     choices=SOURCE_CHOICES.keys()),
         credential=dict(required=False),
         source_vars=dict(required=False),
@@ -213,7 +218,7 @@ def main():
         overwrite_vars=dict(type='bool', required=False),
         update_on_launch=dict(type='bool', required=False),
         update_cache_timeout=dict(type='int', required=False),
-        state=dict(choices=['present', 'absent'], default='present'),
+        state=dict(choices=['present', 'absent', 'updated'], default='present'),
     )
 
     module = TowerModule(argument_spec=argument_spec, supports_check_mode=True)
@@ -301,8 +306,13 @@ def main():
             elif state == 'absent':
                 params['fail_on_missing'] = False
                 result = inventory_source.delete(**params)
+            elif state == 'updated':
+                result = inventory_source.get(**params)
+                params['wait'] = True
+                params['monitor'] = False
+                result = inventory_source.update(result['id'], **params)
 
-        except (exc.ConnectionError, exc.BadRequest, exc.AuthError) as excinfo:
+        except (exc.ConnectionError, exc.BadRequest, exc.NotFound, exc.AuthError) as excinfo:
             module.fail_json(msg='Failed to update inventory source: \
                     {0}'.format(excinfo), changed=False)
 

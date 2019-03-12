@@ -84,7 +84,7 @@ options:
       description:
         - Desired state of the resource.
       default: "present"
-      choices: ["present", "absent"]
+      choices: ["present", "absent", "updated"]
 extends_documentation_fragment: tower
 '''
 
@@ -108,6 +108,11 @@ EXAMPLES = '''
     custom_virtualenv: "/var/lib/awx/venv/ansible-2.2"
     state: present
     tower_config_file: "~/tower_cli.cfg"
+
+- name: Update tower project
+  tower_project:
+    name: "Foo"
+    state: updated
 '''
 
 from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, tower_check_mode
@@ -137,7 +142,7 @@ def main():
         job_timeout=dict(type='int', default=0),
         custom_virtualenv=dict(),
         local_path=dict(),
-        state=dict(choices=['present', 'absent'], default='present'),
+        state=dict(choices=['present', 'absent', 'updated'], default='present'),
     )
 
     module = TowerModule(argument_spec=argument_spec, supports_check_mode=True)
@@ -202,7 +207,9 @@ def main():
                 json_output['id'] = result['id']
             elif state == 'absent':
                 result = project.delete(name=name)
-        except (exc.ConnectionError, exc.BadRequest, exc.AuthError) as excinfo:
+            elif state == 'updated':
+                result = project.update(name=name, wait=True)
+        except (exc.ConnectionError, exc.BadRequest, exc.AuthError, exc.NotFound) as excinfo:
             module.fail_json(msg='Failed to update project: {0}'.format(excinfo), changed=False)
 
     json_output['changed'] = result['changed']
