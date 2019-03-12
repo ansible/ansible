@@ -8,7 +8,7 @@
 
 - name: Install Session Manager Plugin for RedHat
   include_tasks: redhat.yml
-  when: ansible_distribution == "CentOS" or ansible_distribution == "Red Hat Enterprise Linux"
+  when: ansible_distribution == "CentOS" or ansible_distribution == "RedHat" or ansible_distribution == "Amazon"
   tags: setup_infra
 
 - name: Create IAM role
