@@ -1,7 +1,7 @@
 .. _nios_guide:
 
 ************************
- Infoblox Guide
+ Infoblox Ansible Guide
 ************************
 
 .. contents:: Topics

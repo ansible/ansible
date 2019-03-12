@@ -1,5 +1,5 @@
-Vagrant Guide
-=============
+Vagrant Ansible Guide
+=====================
 
 .. _vagrant_intro:
 

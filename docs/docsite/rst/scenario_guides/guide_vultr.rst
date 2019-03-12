@@ -1,5 +1,5 @@
-Vultr Guide
-===========
+Vultr Ansible Guide
+===================
 
 Ansible offers a set of modules to interact with `Vultr <https://www.vultr.com>`_ cloud platform.
 

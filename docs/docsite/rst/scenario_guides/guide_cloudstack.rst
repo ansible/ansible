@@ -1,5 +1,5 @@
-CloudStack Cloud Guide
-======================
+CloudStack Cloud Ansible Guide
+==============================
 
 .. _cloudstack_introduction:
 

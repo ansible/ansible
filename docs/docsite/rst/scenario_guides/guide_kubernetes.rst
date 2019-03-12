@@ -1,5 +1,5 @@
-Kubernetes and OpenShift Guide
-==============================
+Kubernetes and OpenShift Ansible Guide
+======================================
 
 Modules for interacting with the Kubernetes (K8s) and OpenShift API are under development, and can be used in preview mode. To use them, review the requirements, and then follow the installation and use instructions.
 

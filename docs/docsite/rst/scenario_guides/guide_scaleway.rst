@@ -1,8 +1,8 @@
 .. _guide_scaleway:
 
-**************
-Scaleway Guide
-**************
+**********************
+Scaleway Ansible Guide
+**********************
 
 .. _scaleway_introduction:
 
