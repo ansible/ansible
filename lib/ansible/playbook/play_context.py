@@ -127,9 +127,12 @@ class PlayContext(Base):
     _verbosity = FieldAttribute(isa='int', default=0)
     _only_tags = FieldAttribute(isa='set', default=set)
     _skip_tags = FieldAttribute(isa='set', default=set)
-    _force_handlers = FieldAttribute(isa='bool', default=False)
+
     _start_at_task = FieldAttribute(isa='string')
     _step = FieldAttribute(isa='bool', default=False)
+
+     # "PlayContext.force_handlers should not be used, the calling code should be using play itself instead"
+     _force_handlers = FieldAttribute(isa='bool', default=False)
 
     def __init__(self, play=None, passwords=None, connection_lockfd=None):
         # Note: play is really not optional.  The only time it could be omitted is when we create
@@ -344,13 +347,6 @@ class PlayContext(Base):
 
     def set_become_plugin(self, plugin):
         self._become_plugin = plugin
-
-    def _get_attr_force_handlers(self):
-        display.deprecated(
-            "PlayContext.force_handlers should not be used, the calling code should be using play itself instead",
-            version="2.19"
-        )
-        return self._attributes.get('force_handlers', None)
 
     def make_become_cmd(self, cmd, executable=None):
         """ helper function to create privilege escalation commands """
