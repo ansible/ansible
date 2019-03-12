@@ -34,9 +34,9 @@
   register: policy_name
   tags: setup_infra
 
-- name: setting fact for bucket name using instance-id
+- name: setting fact for policy name
   set_fact:
-    random_policy_name: "{{policy_name.policies}}"
+    random_policy_name: "{{policy_name.policies[0]}}"
   tags: setup_infra
 
 - pause:
