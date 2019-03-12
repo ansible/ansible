@@ -1513,24 +1513,6 @@ class PyVmomiHelper(PyVmomi):
             self.configspec.vAppConfig = new_vmconfig_spec
             self.change_detected = True
 
-    # function to compare array values
-    def areEqual(self, arr1, arr2):
-        n = len(arr1)
-        m = len(arr2)
-        # If lengths of array are not
-        # equal means array are not equal
-        if (n != m):
-            return False
-        # Sort both arrays
-        arr1.sort()
-        arr2.sort()
-        # Linearly compare elements
-        for i in range(0, n - 1):
-            if (arr1[i] != arr2[i]):
-                return False
-        # If all elements were same
-        return True
-
     # March 2019, Added by chaitra kurdekar
     # to Set vApp ovfEnvironmentTransport mode in VM.
     def configure_vapp_ovfEnvironmentTransport(self, vm_obj):
@@ -1540,7 +1522,7 @@ class PyVmomiHelper(PyVmomi):
             vmconfig_spec = self.configspec.vAppConfig if self.configspec.vAppConfig else new_vmconfig_spec
             old_value = vmconfig_spec.ovfEnvironmentTransport
             new_value = [self.params['vapp_ovf_environment_transport']]
-            if not self.areEqual(old_value, new_value):
+            if not old_value==new_value:
                 vmconfig_spec.ovfEnvironmentTransport = [self.params['vapp_ovf_environment_transport']]
                 self.configspec.vAppConfig = vmconfig_spec
                 self.change_detected = True
