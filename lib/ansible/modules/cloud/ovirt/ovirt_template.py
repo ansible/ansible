@@ -350,11 +350,11 @@ class TemplatesModule(BaseModule):
             ) if self.param('memory') else None,
             version=otypes.TemplateVersion(
                 base_template=otypes.Template(
-                    name=self._module.params['version']['base_template']
-                ) if self._module.params['version'].get('base_template') else None,
-                version_number=self._module.params['version']['number'],
-                version_name=self._module.params['version']['name'] if self._module.params['version'].get('name') else None,
-            )if self._module.params['version'] else None,
+                    name=self.param('version').get('base_template')
+                ) if self.param('version').get('base_template') else None,
+                version_number=self.param('version').get('number'),
+                version_name=self.param('version').get('name'),
+            ) if self.param('version') else None,
             memory_policy=otypes.MemoryPolicy(
                 guaranteed=convert_to_bytes(self.param('memory_guaranteed')),
                 max=convert_to_bytes(self.param('memory_max')),
