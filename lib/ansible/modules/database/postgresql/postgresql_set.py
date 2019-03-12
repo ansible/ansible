@@ -447,7 +447,7 @@ def main():
             kw['value_pretty'] = value
             kw['changed'] = True
 
-        # Anyway returns current value in the check_mode:
+        # Anyway returns current raw value in the check_mode:
         kw['value'] = dict(
             value=raw_val,
             unit=unit,
