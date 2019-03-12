@@ -28,7 +28,7 @@ import sys
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.six import string_types
 from ansible.parsing.yaml.dumper import AnsibleDumper
-from ansible.plugins.callback import CallbackBase, strip_internal_keys
+from ansible.plugins.callback import CallbackBase, strip_internal_keys, module_response_deepcopy
 from ansible.plugins.callback.default import CallbackModule as Default
 
 
@@ -85,7 +85,7 @@ class CallbackModule(Default):
             return json.dumps(dict(censored="The output has been hidden due to the fact that 'no_log: true' was specified for this result"))
 
         # All result keys stating with _ansible_ are internal, so remove them from the result before we output anything.
-        abridged_result = strip_internal_keys(result)
+        abridged_result = strip_internal_keys(module_response_deepcopy(result))
 
         # remove invocation unless specifically wanting it
         if not keep_invocation and self._display.verbosity < 3 and 'invocation' in result:
