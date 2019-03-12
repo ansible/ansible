@@ -4,37 +4,37 @@
 EXOS Platform Options
 ***************************************
 
-Extreme EXOS Ansible modules only support CLI connections today. This page offers details on how to
-use ``network_cli`` on EXOS in Ansible.
+Extreme EXOS Ansible modules support multiple connections. This page offers details on how each connection works in Ansible and how to use it.
 
 .. contents:: Topics
 
 Connections Available
 ================================================================================
 
-+---------------------------+-----------------------------------------------+
-|..                         | CLI                                           |
-+===========================+===============================================+
-| **Protocol**              |  SSH                                          |
-+---------------------------+-----------------------------------------------+
-| | **Credentials**         | | uses SSH keys / SSH-agent if present        |
-| |                         | | accepts ``-u myuser -k`` if using password  |
-+---------------------------+-----------------------------------------------+
-| **Indirect Access**       | via a bastion (jump host)                     |
-+---------------------------+-----------------------------------------------+
-| | **Connection Settings** | | ``ansible_connection: network_cli``         |
-| |                         | |                                             |
-| |                         | |                                             |
-| |                         | |                                             |
-| |                         | |                                             |
-+---------------------------+-----------------------------------------------+
-| | **Enable Mode**         | | not supported by EXOS                       |
-| | (Privilege Escalation)  | |                                             |
-+---------------------------+-----------------------------------------------+
-| **Returned Data Format**  | ``stdout[0].``                                |
-+---------------------------+-----------------------------------------------+
++---------------------------+-----------------------------------------------+-----------------------------------------+
+|..                         | CLI                                           | EXOS-API                                |
++===========================+===============================================+=========================================+
+| **Protocol**              |  SSH                                          | HTTP(S)                                 |
++---------------------------+-----------------------------------------------+-----------------------------------------+
+| | **Credentials**         | | uses SSH keys / SSH-agent if present        | | uses HTTPS certificates if present    |
+| |                         | | accepts ``-u myuser -k`` if using password  | |                                       |
++---------------------------+-----------------------------------------------+-----------------------------------------+
+| **Indirect Access**       | via a bastion (jump host)                     | via a web proxy                         |
++---------------------------+-----------------------------------------------+-----------------------------------------+
+| | **Connection Settings** | | ``ansible_connection: network_cli``         | | ``ansible_connection: httpapi``       |
+| |                         | |                                             | |                                       |
+| |                         | |                                             | |                                       |
+| |                         | |                                             | |                                       |
+| |                         | |                                             | |                                       |
++---------------------------+-----------------------------------------------+-----------------------------------------+
+| | **Enable Mode**         | | not supported by EXOS                       | | not supported by EXOS                 |
+| | (Privilege Escalation)  | |                                             | |                                       |
+| |                         | |                                             | |                                       |
++---------------------------+-----------------------------------------------+-----------------------------------------+
+| **Returned Data Format**  | ``stdout[0].``                                | ``stdout[0].messages[0].``              |
++---------------------------+-----------------------------------------------+-----------------------------------------+
 
-EXOS does not support ``ansible_connection: local``. You must use ``ansible_connection: network_cli``.
+EXOS does not support ``ansible_connection: local``. You must use ``ansible_connection: network_cli`` or ``ansible_connection: httpapi``
 
 Using CLI in Ansible
 ====================
@@ -64,5 +64,40 @@ Example CLI Task
      exos_command:
        commands: show version
      when: ansible_network_os == 'exos'
+
+
+
+Using EXOS-API in Ansible
+=========================
+
+Example EXOS-API ``group_vars/exos.yml``
+----------------------------------------
+
+.. code-block:: yaml
+
+   ansible_connection: httpapi
+   ansible_network_os: exos
+   ansible_user: myuser
+   ansible_password: !vault...
+   proxy_env:
+     http_proxy: http://proxy.example.com:8080
+
+- If you are accessing your host directly (not through a web proxy) you can remove the ``proxy_env`` configuration.
+- If you are accessing your host through a web proxy using ``https``, change ``http_proxy`` to ``https_proxy``.
+
+
+Example EXOS-API Task
+---------------------
+
+.. code-block:: yaml
+
+   - name: Create VLAN 100
+     exos_vlan:
+       vlan_id: 100
+       name: test-vlan
+       state: present
+     when: ansible_network_os == 'exos'
+
+In this example the ``proxy_env`` variable defined in ``group_vars`` gets passed to the ``environment`` option of the module used in the task.
 
 .. include:: shared_snippets/SSH_warning.txt
