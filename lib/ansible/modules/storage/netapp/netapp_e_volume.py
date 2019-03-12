@@ -100,6 +100,7 @@ EXAMPLES = '''
         api_username: "{{ netapp_api_username }}"
         api_password: "{{ netapp_api_password }}"
         validate_certs: "{{ netapp_api_validate_certs }}"
+        wait_for_volume_init: "{{ wait_for_volume_init }}"
       when: check_volume
 '''
 RETURN = '''
@@ -202,6 +203,9 @@ class NetAppESeriesVolume(object):
             self.thin_volume_max_repo_size = self.size
 
         self.validate_certs = p['validate_certs']
+        self.wait_init = True
+        if not p['thin_provision']:
+            self.wait_init = p['wait_for_volume_init']
 
         try:
             self.api_usr = p['api_username']
@@ -421,28 +425,29 @@ class NetAppESeriesVolume(object):
 
             self.debug('polling for completion...')
 
-            while True:
-                try:
-                    (rc, resp) = request(self.api_url + "/storage-systems/%s/volumes/%s/expand" % (self.ssid,
-                                                                                                   self.volume_detail[
-                                                                                                       'id']),
-                                         method='GET', url_username=self.api_usr, url_password=self.api_pwd,
-                                         validate_certs=self.validate_certs)
-                except Exception as err:
-                    self.module.fail_json(
-                        msg="Failed to get volume expansion progress.  Volume [%s].  Array Id [%s]. Error[%s]." % (
-                            self.name, self.ssid, to_native(err)))
+            if self.wait_init:
+                while True:
+                    try:
+                        (rc, resp) = request(self.api_url + "/storage-systems/%s/volumes/%s/expand" % (self.ssid,
+                                                                                                       self.volume_detail[
+                                                                                                           'id']),
+                                             method='GET', url_username=self.api_usr, url_password=self.api_pwd,
+                                             validate_certs=self.validate_certs)
+                    except Exception as err:
+                        self.module.fail_json(
+                            msg="Failed to get volume expansion progress.  Volume [%s].  Array Id [%s]. Error[%s]." % (
+                                self.name, self.ssid, to_native(err)))
 
-                action = resp['action']
-                percent_complete = resp['percentComplete']
+                    action = resp['action']
+                    percent_complete = resp['percentComplete']
 
-                self.debug('expand action %s, %s complete...', action, percent_complete)
+                    self.debug('expand action %s, %s complete...', action, percent_complete)
 
-                if action == 'none':
-                    self.debug('expand complete')
-                    break
-                else:
-                    time.sleep(5)
+                    if action == 'none':
+                        self.debug('expand complete')
+                        break
+                    else:
+                        time.sleep(5)
 
     def apply(self):
         changed = False
