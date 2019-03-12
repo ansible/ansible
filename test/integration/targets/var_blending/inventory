@@ -1,6 +1,6 @@
 [local]
-testhost ansible_connection=local
-testhost2 ansible_connection=local
+testhost ansible_connection=local ansible_python_interpreter="{{ ansible_playbook_python }}"
+testhost2 ansible_connection=local  # connections are never made to this host, only host vars are accessed
 
 # the following inline declarations are accompanied
 # by (preferred) group_vars/ and host_vars/ variables
