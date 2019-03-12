@@ -131,8 +131,8 @@ class PlayContext(Base):
     _start_at_task = FieldAttribute(isa='string')
     _step = FieldAttribute(isa='bool', default=False)
 
-     # "PlayContext.force_handlers should not be used, the calling code should be using play itself instead"
-     _force_handlers = FieldAttribute(isa='bool', default=False)
+    # "PlayContext.force_handlers should not be used, the calling code should be using play itself instead"
+    _force_handlers = FieldAttribute(isa='bool', default=False)
 
     def __init__(self, play=None, passwords=None, connection_lockfd=None):
         # Note: play is really not optional.  The only time it could be omitted is when we create
