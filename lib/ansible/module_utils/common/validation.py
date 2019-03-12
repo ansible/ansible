@@ -10,6 +10,7 @@ import re
 from ansible.module_utils._text import to_native
 from ansible.module_utils.common._json_compat import json
 from ansible.module_utils.common.collections import is_iterable
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.pycompat24 import literal_eval
 from ansible.module_utils.six import string_types
 
@@ -286,6 +287,7 @@ def check_missing_parameters(module_parameters, required_parameters=None):
 
     return missing_params
 
+
 def safe_eval(value, locals=None, include_exceptions=False):
     # do not allow method calls to modules
     if not isinstance(value, string_types):
@@ -313,6 +315,7 @@ def safe_eval(value, locals=None, include_exceptions=False):
             return (value, e)
         return value
 
+
 def check_type_str(value, string_conversion_action=None):
     if isinstance(value, string_types):
         return value
@@ -332,6 +335,7 @@ def check_type_str(value, string_conversion_action=None):
         raise TypeError(to_native(msg))
 
     return to_native(value, errors='surrogate_or_strict')
+
 
 def check_type_list(value):
     """Verify that the value is a list or convert to a list. A comma separated
@@ -405,3 +409,20 @@ def check_type_dict(value):
             raise TypeError("dictionary requested, could not parse JSON or key=value")
 
     raise TypeError('%s cannot be converted to a dict' % type(value))
+
+
+def check_type_bool(value):
+    """Verify that the value is a bool or convert it to a bool and return it.
+
+    :arg value: String, int, or float to convert to bool. Valid booleans include:
+         '1', 'on', 1, '0', 0, 'n', 'f', 'false', 'true', 'y', 't', 'yes', 'no', 'off'
+
+    :returns: Boolean True or False
+    """
+    if isinstance(value, bool):
+        return value
+
+    if isinstance(value, string_types) or isinstance(value, (int, float)):
+        return boolean(value)
+
+    raise TypeError('%s cannot be converted to a bool' % type(value))

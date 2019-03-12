@@ -178,6 +178,7 @@ from ansible.module_utils.common.validation import (
     check_required_one_of,
     check_required_together,
     count_terms,
+    check_type_bool,
     check_type_list,
     check_type_dict,
     check_type_str,
@@ -1759,13 +1760,7 @@ class AnsibleModule(object):
         return check_type_dict(value)
 
     def _check_type_bool(self, value):
-        if isinstance(value, bool):
-            return value
-
-        if isinstance(value, string_types) or isinstance(value, int):
-            return self.boolean(value)
-
-        raise TypeError('%s cannot be converted to a bool' % type(value))
+        return check_type_bool(value)
 
     def _check_type_int(self, value):
         if isinstance(value, integer_types):
