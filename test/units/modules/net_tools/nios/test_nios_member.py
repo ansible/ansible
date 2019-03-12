@@ -76,7 +76,8 @@ class TestNiosMemberModule(TestNiosModule):
 
         self.assertTrue(res['changed'])
         wapi.create_object.assert_called_once_with('testobject', {'host_name': 'test_member',
-                                                                  'vip_setting': {'address': '192.168.1.110', 'subnet_mask': '255.255.255.0', 'gateway': '192.168.1.1'},
+                                                                  'vip_setting': {'address': '192.168.1.110', 'subnet_mask': '255.255.255.0',
+                                                                                  'gateway': '192.168.1.1'},
                                                                   'config_addr_type': 'IPV4', 'platform': 'VNIOS'})
 
     def test_nios_member_update(self):
