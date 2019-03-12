@@ -20,14 +20,14 @@ short_description: Change a PostgreSQL server configuration parameter
 description:
    - Allows to change a PostgreSQL server configuration parameter.
    - The module uses ALTER SYSTEM command U(https://www.postgresql.org/docs/current/sql-altersystem.html)
-     and apply changes by reload server configuration.
+     and applys changes by reload server configuration.
    - ALTER SYSTEM is used for changing server configuration parameters across the entire database cluster.
-   - It can be more convenient than the traditional method of manually editing the postgresql.conf file.
+   - It can be more convenient and safe than the traditional method of manually editing the postgresql.conf file.
    - ALTER SYSTEM writes the given parameter setting to the $PGDATA/postgresql.auto.conf file,
      which is read in addition to postgresql.conf U(https://www.postgresql.org/docs/current/sql-altersystem.html).
    - The module allows to reset parameter to boot_val (cluster initial value) by I(reset=yes) or remove parameter
      string from postgresql.auto.conf and reload I(value=default).
-   - After change you can see in ansible output the previous and
+   - After change you can see in the ansible output the previous and
      the new parameter value and other information using returned values and M(debug) module.
 version_added: "2.8"
 options:
@@ -59,11 +59,15 @@ options:
     description:
     - Name of database to connect.
     type: str
+    aliases:
+    - login_db
   port:
     description:
     - Database port to connect.
     type: int
     default: 5432
+    aliases:
+    - login_port
   login_user:
     description:
     - User (role) used to authenticate with PostgreSQL.
@@ -321,7 +325,8 @@ def main():
     argument_spec = postgres_common_argument_spec()
     argument_spec.update(
         name=dict(type='str', required=True),
-        db=dict(type='str'),
+        db=dict(type='str', aliases=['login_db']),
+        port=dict(type=int, aliases=['login_port']),
         ssl_mode=dict(type='str', default='prefer', choices=['allow', 'disable', 'prefer', 'require', 'verify-ca', 'verify-full']),
         ssl_rootcert=dict(type='str'),
         value=dict(type='str'),

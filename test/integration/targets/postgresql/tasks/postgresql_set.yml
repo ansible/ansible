@@ -211,7 +211,7 @@
       - set_aut.restart_required == false
       - set_aut.value.value == 'off'
 
-# Test check_mode, step 3. It is different from the prev test - it runs withou check_mode: yes
+# Test check_mode, step 3. It is different from the prev test - it runs without check_mode: yes
 # Before the check_mode tests autovacuum was off
 - name: postgresql - check that autovacuum wasn't actually changed after change in check_mode
   become_user: "{{ pg_user }}"
