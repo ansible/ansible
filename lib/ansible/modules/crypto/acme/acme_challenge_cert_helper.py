@@ -222,16 +222,16 @@ def main():
 
         # Some common attributes
         domain = to_text(challenge_data['resource'])
-        type, identifier = to_text(challenge_data.get('resource_original', 'dns:' + challenge_data['resource'])).split(':', 1)
+        identifier_type, identifier = to_text(challenge_data.get('resource_original', 'dns:' + challenge_data['resource'])).split(':', 1)
         subject = issuer = cryptography.x509.Name([])
         not_valid_before = datetime.datetime.utcnow()
         not_valid_after = datetime.datetime.utcnow() + datetime.timedelta(days=10)
-        if type == 'dns':
+        if identifier_type == 'dns':
             san = cryptography.x509.DNSName(identifier)
-        elif type == 'ip':
+        elif identifier_type == 'ip':
             san = cryptography.x509.IPAddress(ipaddress.ip_address(identifier))
         else:
-            raise ModuleFailException('Unsupported identifier type "{0}"'.format(type))
+            raise ModuleFailException('Unsupported identifier type "{0}"'.format(identifier_type))
 
         # Generate regular self-signed certificate
         regular_certificate = cryptography.x509.CertificateBuilder().subject_name(
@@ -288,7 +288,7 @@ def main():
         module.exit_json(
             changed=True,
             domain=domain,
-            identifier_type=type,
+            identifier_type=identifier_type,
             identifier=identifier,
             challenge_certificate=challenge_certificate.public_bytes(cryptography.hazmat.primitives.serialization.Encoding.PEM),
             regular_certificate=regular_certificate.public_bytes(cryptography.hazmat.primitives.serialization.Encoding.PEM)
