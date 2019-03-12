@@ -129,8 +129,9 @@
 - name: Delete IAM policy
   iam_policy:
     iam_type: role
-    iam_name: "{{role_name}}"
+    iam_name: "{{role_name_random}}"
     policy_name: "{{policy_name}}"
+    policy_document:  aws_ssm_integration_test_setup_teardown/files/custom_role.json
     state: absent
   tags: delete_infra
   register: iam_policy_deletion_status
@@ -139,7 +140,7 @@
 - name: Delete IAM role
   iam:
     iam_type: role
-    name: "{{role_name}}"
+    name: "{{role_name_random}}"
     state: absent
   register: iam_role_deletion_status
   tags: delete_infra
