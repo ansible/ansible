@@ -1669,7 +1669,7 @@ class AnsibleModule(object):
     def _check_type_bits(self, value):
         return check_type_bits(value)
 
-    def _handle_options(self, argument_spec=None, params=None, alias_warnings=None):
+    def _handle_options(self, argument_spec=None, params=None, prefix='', alias_warnings=None):
         ''' deal with options to create sub spec '''
         if argument_spec is None:
             argument_spec = self.argument_spec
@@ -1696,12 +1696,20 @@ class AnsibleModule(object):
                 else:
                     elements = params[k]
 
-                for param in elements:
+                for idx, param in enumerate(elements):
                     if not isinstance(param, dict):
                         self.fail_json(msg="value of %s must be of type dict or list of dict" % k)
 
+                    new_prefix = prefix + k
+                    if wanted == 'list':
+                        new_prefix += '[%d]' % idx
+                    new_prefix += '.'
+
                     self._set_fallbacks(spec, param)
-                    options_aliases = self._handle_aliases(spec, param, alias_warnings=alias_warnings)
+                    alias_warnings_ = []
+                    options_aliases = self._handle_aliases(spec, param, alias_warnings=alias_warnings_)
+                    for option, alias in alias_warnings_:
+                        alias_warnings.append((new_prefix + option, new_prefix + alias))
 
                     self._handle_no_log_values(spec, param)
                     options_legal_inputs = list(spec.keys()) + list(options_aliases.keys())
@@ -1727,7 +1735,7 @@ class AnsibleModule(object):
                     self._set_defaults(pre=False, spec=spec, param=param)
 
                     # handle multi level options (sub argspec)
-                    self._handle_options(spec, param, alias_warnings)
+                    self._handle_options(spec, param, new_prefix, alias_warnings)
                 self._options_context.pop()
 
     def _get_wanted_type(self, wanted, k):
