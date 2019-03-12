@@ -98,9 +98,9 @@ class TestNiosMemberModule(TestNiosModule):
                         "address": "192.168.1.100",
                         "dscp": 0,
                         "gateway": "192.168.1.1",
-                        "primary": true,
+                        "primary": True,
                         "subnet_mask": "255.255.255.0",
-                        "use_dscp": false
+                        "use_dscp": False
                     }
             }
         ]
@@ -139,9 +139,9 @@ class TestNiosMemberModule(TestNiosModule):
                         "address": "192.168.1.100",
                         "dscp": 0,
                         "gateway": "192.168.1.1",
-                        "primary": true,
+                        "primary": True,
                         "subnet_mask": "255.255.255.0",
-                        "use_dscp": false
+                        "use_dscp": False
                     }
             }
         ]
