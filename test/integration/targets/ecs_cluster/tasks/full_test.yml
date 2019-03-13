@@ -759,18 +759,29 @@
         <<: *aws_connection_info
       register: fargate_run_task_output
 
-    - name: disable taskLongArnFormat
-      shell:
-        aws ecs put-account-setting --name taskLongArnFormat --value disabled
+      # aws cli not installed in docker container; make sure it's installed.
+    - name: install awscli
+      pip:
+        state: present
+        name: awscli
 
-    - name: create fargate ECS task with run task and tags (LF disabled) (sould fail)
+    - name: disable taskLongArnFormat
+      shell: |
+        AWS_ACCESS_KEY_ID="{{ aws_access_key }}" \
+        AWS_SECRET_ACCESS_KEY="{{ aws_secret_key }}" \
+        AWS_SESSION_TOKEN="{{ security_token }}" \
+        AWS_DEFAULT_REGION="{{ aws_region }}" \
+        aws ecs put-account-setting --name taskLongArnFormat --value disabled --region "{{ aws_region }}"
+      no_log: yes
+
+    - name: create fargate ECS task with run task and tags (LF disabled) (should fail)
       ecs_task:
         operation: run
         cluster: "{{ ecs_cluster_name }}"
         task_definition: "{{ ecs_task_name }}-vpc"
         launch_type: FARGATE
         count: 1
-        task_tags:
+        tags:
           tag_key: tag_value
           tag_key2: tag_value2
         network_configuration:
@@ -784,9 +795,13 @@
       ignore_errors: yes
 
     - name: enable taskLongArnFormat
-      shell:
-        aws ecs put-account-setting --name taskLongArnFormat --value enabled
-
+      shell: |
+        AWS_ACCESS_KEY_ID="{{ aws_access_key }}" \
+        AWS_SECRET_ACCESS_KEY="{{ aws_secret_key }}" \
+        AWS_SESSION_TOKEN="{{ security_token }}" \
+        AWS_DEFAULT_REGION="{{ aws_region }}" \
+        aws ecs put-account-setting --name taskLongArnFormat --value enabled --region "{{ aws_region }}"
+      no_log: yes
 
     - name: create fargate ECS task with run task and tags
       ecs_task:
@@ -795,7 +810,7 @@
         task_definition: "{{ ecs_task_name }}-vpc"
         launch_type: FARGATE
         count: 1
-        task_tags:
+        tags:
           tag_key: tag_value
           tag_key2: tag_value2
         network_configuration:

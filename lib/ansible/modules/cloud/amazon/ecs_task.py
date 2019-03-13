@@ -84,7 +84,7 @@ options:
         version_added: 2.8
         choices: ["EC2", "FARGATE"]
         type: str
-    task_tags:
+    tags:
         description:
           - Tags that will be added to ecs tasks on start and run
         required: false
@@ -113,7 +113,7 @@ EXAMPLES = '''
       cluster: console-sample-app-static-cluster
       task_definition: console-sample-app-static-taskdef
       task: "arn:aws:ecs:us-west-2:172139249013:task/3f8353d1-29a8-4689-bbf6-ad79937ffe8a"
-      task_tags:
+      tags:
         resourceName: a_task_for_ansible_to_run
         type: long_running_task
         network: internal
@@ -274,10 +274,7 @@ class EcsExecManager:
         if launch_type:
             params['launchType'] = launch_type
         if tags:
-            if (self.ecs_task_long_format_enabled()):
-                params['tags'] = ansible_dict_to_boto3_tag_list(tags, 'key', 'value')
-            else:
-                self.module.fail_json(msg="Account does not support long format task arns")
+            params['tags'] = ansible_dict_to_boto3_tag_list(tags, 'key', 'value')
 
             # TODO: need to check if long arn format enabled.
         try:
@@ -353,7 +350,7 @@ def main():
         started_by=dict(required=False, type='str'),  # R S
         network_configuration=dict(required=False, type='dict'),
         launch_type=dict(required=False, choices=['EC2', 'FARGATE']),
-        task_tags=dict(required=False, type='dict')
+        tags=dict(required=False, type='dict')
     ))
 
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True,
@@ -390,8 +387,11 @@ def main():
     if module.params['launch_type'] and not service_mgr.ecs_api_handles_launch_type():
         module.fail_json(msg='botocore needs to be version 1.8.4 or higher to use launch type')
 
-    if module.params['task_tags'] and not service_mgr.ecs_api_handles_tags():
-        module.fail_json(msg='botocore needs to be version 1.12.46 or higher to use tags')
+    if module.params['tags']:
+        if not service_mgr.ecs_api_handles_tags():
+            module.fail_json(msg=missing_required_lib("botocore >= 1.12.46", reason="to use tags"))
+        if not service_mgr.ecs_task_long_format_enabled():
+            module.fail_json(msg="Cannot set task tags: long format task arns are required to set tags")
 
     existing = service_mgr.list_tasks(module.params['cluster'], task_to_list, status_type)
 
@@ -409,7 +409,7 @@ def main():
                     module.params['count'],
                     module.params['started_by'],
                     module.params['launch_type'],
-                    module.params['task_tags'],
+                    module.params['tags'],
                 )
             results['changed'] = True
 
@@ -425,7 +425,7 @@ def main():
                     module.params['overrides'],
                     module.params['container_instances'],
                     module.params['started_by'],
-                    module.params['task_tags'],
+                    module.params['tags'],
                 )
             results['changed'] = True
 
