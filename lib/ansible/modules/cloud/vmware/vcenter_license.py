@@ -41,6 +41,7 @@ options:
     description:
     - The hostname of the ESXi server to which the specified license will be assigned.
     - This parameter is optional.
+    version_added: '2.8'
 notes:
 - This module will also auto-assign the current vCenter to the license key
   if the product matches the license key, and vCenter us currently assigned
@@ -195,9 +196,8 @@ def main():
                     try:
                         lam.UpdateAssignedLicense(entity=esxi_host._moId, licenseKey=license)
                     except Exception as e:
-                        module.warn('Could not assign "%s" (%s) to ESXi host %s, due to %s.' % (license, key.name,
-                                                                                               esxi_host._moId,
-                                                                                               to_native(e)))
+                        module.warn('Could not assign "%s" (%s) to ESXi host %s, due to %s.'
+                                    % (license, key.name, esxi_host._moId, to_native(e)))
                     result['changed'] = True
                 else:
                     module.warn('License key "%s" edition "%s" is not suitable for ESXi server' % (license, key.editionKey))
