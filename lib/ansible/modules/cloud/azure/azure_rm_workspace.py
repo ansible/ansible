@@ -39,14 +39,36 @@ options:
     location:
         description:
             - Resource location.
-
+    sku:
+        description:
+            - The SKU of the workspace
+        choices:
+            - free
+            - standard
+            - premium
+            - unlimited
+            - per_node
+            - per_gb2018
+            - standalone
+        default: per_gb2018
+    retention_in_days:
+        description:
+            - The workspace data retention in days.
+            - -1 means Unlimited retention for the C(unlimited) C(sku).
+            - 730 days is the maximum allowed for all other C(sku)s.
+    intelligence_packs:
+        description:
+            - Manage intelligence packs possible for this workspace.
+            - "Enable one pack by setting it to C(true). E.g. {'Backup': true}".
+            - "Disable one pack by setting it to C(false). E.g. {'Backup': false}".
+            - Other intelligence packs not list in this property will not be changed.
+        type: dict
 extends_documentation_fragment:
     - azure
     - azure_tags
 
 author:
     - "Yuwei Zhou (@yuwzho)"
-
 '''
 
 EXAMPLES = '''
@@ -61,7 +83,7 @@ id:
 '''  # NOQA
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, format_resource_id
-from ansible.module_utils.common.dict_transformations import _snake_to_camel
+from ansible.module_utils.common.dict_transformations import _snake_to_camel, _camel_to_snake
 
 try:
     from msrestazure.tools import parse_resource_id
@@ -80,8 +102,9 @@ class AzureRMWorkspace(AzureRMModuleBase):
             name=dict(type='str', required=True),
             state=dict(type='str', default='present', choices=['present', 'absent']),
             location=dict(type='str'),
-            sku=dict(type='str', default='per_gb_2018', choices=['free', 'standard', 'premium', 'unlimited', 'per_node', 'per_gb_2018', 'standalone']),
-            retention_in_days=dict(type='int')
+            sku=dict(type='str', default='per_gb2018', choices=['free', 'standard', 'premium', 'unlimited', 'per_node', 'per_gb2018', 'standalone']),
+            retention_in_days=dict(type='int'),
+            intelligence_packs=dict(type='dict')
         )
 
         self.results = dict(
@@ -95,6 +118,7 @@ class AzureRMWorkspace(AzureRMModuleBase):
         self.location = None
         self.sku = None
         self.retention_in_days = None
+        self.intelligence_packs = None
 
         super(AzureRMWorkspace, self).__init__(self.module_arg_spec, supports_check_mode=True)
 
@@ -110,7 +134,7 @@ class AzureRMWorkspace(AzureRMModuleBase):
             resource_group = self.get_resource_group(self.resource_group)
             self.location = resource_group.location
 
-        if self.sku == 'per_gb_2018':
+        if self.sku == 'per_gb2018':
             self.sku = 'PerGB2018'
         else:
             self.sku = _snake_to_camel(self.sku)
@@ -118,7 +142,8 @@ class AzureRMWorkspace(AzureRMModuleBase):
         if not workspace and self.state == 'present':
             changed = True
             workspace = self.log_analytics_models.Workspace(sku=self.log_analytics_models.Sku(name=self.sku),
-                                                            retention_in_days=self.retention_in_days)
+                                                            retention_in_days=self.retention_in_days,
+                                                            location=self.location)
             if not self.check_mode:
                 workspace = self.create_workspace(workspace)
         elif workspace and self.state == 'absent':
@@ -126,8 +151,25 @@ class AzureRMWorkspace(AzureRMModuleBase):
             workspace = None
             if not self.check_mode:
                 self.delete_workspace()
+
+        # handle the intelligence pack
+        intelligence_packs = self.list_intelligence_packs()
+        if workspace and self.intelligence_packs:
+            for key in self.intelligence_packs.keys():
+                enabled = self.intelligence_packs[key]
+                for x in enumerate(intelligence_packs):
+                    if x.name.lower() == key.lower() or x.displayname.lower() == key.lower():
+                        if x.enabled != enabled:
+                            changed = True
+                            self.change_intelligence(x.name, enabled)
+                            x.enabled = enabled
+                        break
         if workspace:
             self.results = self.to_dict(workspace)
+            self.results['intelligence_packs'] = intelligence_packs
+            self.results['management_groups'] = self.list_management_groups()
+            self.results['usages'] = self.list_usages()
+            self.results['shared_keys'] = self.get_shared_keys()
         self.results['changed'] = changed
         return self.results
 
@@ -151,7 +193,42 @@ class AzureRMWorkspace(AzureRMModuleBase):
             self.fail('Error when deleting workspace {0} - {1}'.format(self.name, exc.message or str(exc)))
 
     def to_dict(self, workspace):
-        return workspace.as_dict()
+        result = workspace.as_dict()
+        result['sku'] = _camel_to_snake(workspace.sku.name)
+        return result
+
+    def list_intelligence_packs(self):
+        try:
+            return self.log_analytics_client.workspaces.list_intelligence_packs(self.resource_group, self.name)
+        except CloudError as exc:
+            self.fail('Error when listing intelligence packs {0}'.format(exc.message or str(exc)))
+
+    def change_intelligence(self, key, value):
+        try:
+            if value:
+                self.log_analytics_client.workspaces.enable_intelligence_pack(self.resource_group, self.name, key)
+            else:
+                self.log_analytics_client.workspaces.disable_intelligence_pack(self.resource_group, self.name, key)
+        except CloudError as exc:
+            self.fail('Error when changing intelligence pack {0} - {1}'.format(key, exc.message or str(exc)))
+
+    def list_management_groups(self):
+        try:
+            return self.log_analytics_client.workspaces.list_management_groups(self.resource_group, self.name)
+        except CloudError as exc:
+            self.fail('Error when listing management groups {0}'.format(exc.message or str(exc)))
+
+    def list_usages(self):
+        try:
+            return self.log_analytics_client.workspaces.list_usages(self.resource_group, self.name)
+        except CloudError as exc:
+            self.fail('Error when listing usages {0}'.format(exc.message or str(exc)))
+
+    def get_shared_keys(self):
+        try:
+            return self.log_analytics_client.workspaces.get_shared_keys(self.resource_group, self.name)
+        except CloudError as exc:
+            self.fail('Error when getting shared key {0}'.format(exc.message or str(exc)))
 
 
 def main():
