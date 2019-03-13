@@ -78,7 +78,7 @@
         ansible_password: '{{standard_pass}}'
         ansible_winrm_transport: ntlm
       register: fail_shutdown
-      failed_when: "fail_shutdown.msg != 'Reboot command failed, error was:  Access is denied.(5)'"
+      failed_when: "'Reboot command failed, error was:  Access is denied.(5)' not in fail_shutdown.msg"
 
   always:
     - name: set the original SDDL to the WinRM listener
