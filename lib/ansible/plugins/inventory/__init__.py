@@ -429,7 +429,9 @@ class Constructable(object):
                                 self.inventory.add_child(parent_name, gname)
 
                     else:
-                        if strict:
-                            raise AnsibleParserError("No key or key resulted empty, invalid entry")
+                        # exclude case of empty list and dictionary, because these are valid constructions
+                        # simply no groups need to be constructed, but are still falsy
+                        if strict and key not in ([], {}):
+                            raise AnsibleParserError("No key or key resulted empty for %s in host %s, invalid entry" % (keyed.get('key'), host))
                 else:
                     raise AnsibleParserError("Invalid keyed group entry, it must be a dictionary: %s " % keyed)
