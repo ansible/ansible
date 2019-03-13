@@ -1,202 +1,91 @@
 ---
-- name: create src file
-  win_copy:
-    dest: '{{ remote_http_path }}\27617.txt'
-    content: 'ptux'
+# These files are pre formatted and we want to get the base64 value so we can use it for httpbin
+# dynamic content in checksum_url
+- name: set base64 values for checksum files
+  set_fact:
+    sha1sum: '{{ lookup("file", "ftp/anon/sha1sum.txt") | b64encode }}'
+    sha256sum: '{{ lookup("file", "ftp/anon/sha256sum.txt") | b64encode }}'
+    sha256sum_dot: '{{ lookup("file", "ftp/anon/sha256sum_with_dot.txt") | b64encode }}'
 
-- name: create sha1 checksum file of src
-  win_copy:
-    dest: '{{ remote_http_path }}\sha1sum.txt'
-    content: 'a97e6837f60cec6da4491bab387296bbcd72bdba  27617.txt'
-
-- name: add sha1 checksum not going to be downloaded
-  win_lineinfile:
-    dest: '{{ remote_http_path }}\sha1sum.txt'
-    line: '{{ item }}'
-  loop:
-    - '3911340502960ca33aece01129234460bfeb2791  not_target1.txt'
-    - '1b4b6adf30992cedb0f6edefd6478ff0a593b2e4  not_target2.txt'
-
-- name: create sha256 checksum file of src
-  win_copy:
-    dest: '{{ remote_http_path }}\sha256sum.txt'
-    content: 'b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.  27617.txt'
-
-- name: add sha256 checksum not going to be downloaded
-  win_lineinfile:
-    dest: '{{ remote_http_path }}\sha256sum.txt'
-    line: '{{ item }}'
-  loop:
-    - '30949cc401e30ac494d695ab8764a9f76aae17c5d73c67f65e9b558f47eff892  not_target1.txt'
-    - 'd0dbfc1945bc83bf6606b770e442035f2c4e15c886ee0c22fb3901ba19900b5b  not_target2.txt'
-
-- name: create sha256 checksum file of src with a dot leading path
-  win_copy:
-    dest: '{{ remote_http_path }}\sha256sum_with_dot.txt'
-    content: 'b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.  ./27617.txt'
-
-- name: add sha256 checksums with dot leading path not going to be downloaded
-  win_lineinfile:
-    dest: '{{ remote_http_path }}\sha256sum_with_dot.txt'
-    line: '{{ item }}'
-  loop:
-    - '30949cc401e30ac494d695ab8764a9f76aae17c5d73c67f65e9b558f47eff892  ./not_target1.txt'
-    - 'd0dbfc1945bc83bf6606b770e442035f2c4e15c886ee0c22fb3901ba19900b5b  ./not_target2.txt'
-
-- name: copy files to ftp
-  win_copy:
-    src: '{{ remote_http_path }}\'
-    dest: '{{ test_win_get_url_path }}\ftp\{{ item }}\'
-    remote_src: yes
-  loop: '{{ dest_folders }}'
-  vars:
-    dest_folders:
-      - anon
-      - user
-      - user-pass
-
-- name: download src with sha1 checksum url
+- name: download file with sha1 checksum url
   win_get_url:
-    url: 'ftp://localhost/anon/27617.txt'
-    dest: '{{ remote_tmp_path }}'
-    checksum_url: 'ftp://localhost/anon/sha1sum.txt'
+    url: https://{{ httpbin_host }}/base64/cHR1eA==
+    dest: '{{ remote_tmp_dir }}\sha1.txt'
+    checksum_url: https://{{ httpbin_host }}/base64/{{ sha1sum }}
     force: True
-  register: result_sha1
+  register: download_sha1_url
 
-- name: download src with sha1 checksum value
+- name: download file with sha1 checksum value
   win_get_url:
-    url: 'ftp://localhost/anon/27617.txt'
-    dest: '{{ remote_tmp_path }}'
-    checksum: 'a97e6837f60cec6da4491bab387296bbcd72bdba'
+    url: https://{{ httpbin_host }}/base64/cHR1eA==
+    dest: '{{ remote_tmp_dir }}\sha1.txt'
+    checksum: a97e6837f60cec6da4491bab387296bbcd72bdba
     force: True
-  register: result_sha1_alt
+  register: download_sha1_value
 
-- win_stat:
-    path: '{{ remote_tmp_path }}\27617.txt'
-  register: stat_result_sha1
-
-- name: download src with sha256 checksum url
-  win_get_url:
-    url: 'ftp://localhost/anon/27617.txt'
-    dest: '{{ remote_tmp_path }}\27617sha256.txt'
-    checksum_url: 'ftp://localhost/anon/sha256sum.txt'
-    checksum_algorithm: sha256
-    force: True
-  register: result_sha256
-
-- win_stat:
-    path: '{{ remote_tmp_path }}\27617.txt'
-  register: stat_result_sha256
-
-- name: download src with sha256 checksum url with dot leading paths
-  win_get_url:
-    url: 'ftp://localhost/anon/27617.txt'
-    dest: '{{ remote_tmp_path }}\27617sha256_with_dot.txt'
-    checksum_url: 'ftp://localhost/anon/sha256sum_with_dot.txt'
-    checksum_algorithm: sha256
-    force: True
-  register: result_sha256_with_dot
-
-- win_stat:
-    path: '{{ remote_tmp_path }}\27617sha256_with_dot.txt'
-  register: stat_result_sha256_with_dot
-
-- name: Assert that the file was downloaded
+- name: assert download file with sha1 checksum
   assert:
     that:
-      - result_sha1 is changed
-      - result_sha1.checksum_dest == 'a97e6837f60cec6da4491bab387296bbcd72bdba'
-      - result_sha1_alt is succeeded
-      - not result_sha1_alt is changed
-      - result_sha1_alt.checksum_dest == 'a97e6837f60cec6da4491bab387296bbcd72bdba'
-      - result_sha256 is changed
-      - result_sha256_with_dot is changed
-      - stat_result_sha1.stat.exists | bool
-      - stat_result_sha256.stat.exists | bool
-      - stat_result_sha256_with_dot.stat.exists | bool
+    - download_sha1_url is changed
+    - download_sha1_url.status_code == 200
+    - download_sha1_url.checksum_dest == 'a97e6837f60cec6da4491bab387296bbcd72bdba'
+    - not download_sha1_value is changed
+    - download_sha1_value.status_code == 200
+    - download_sha1_value.checksum_dest == 'a97e6837f60cec6da4491bab387296bbcd72bdba'
 
-# Check download with force: False
-
-- name: download src with sha1 checksum url
+- name: download file with sha256 checksum ftp
   win_get_url:
-    url: 'ftp://localhost/anon/27617.txt'
-    dest: '{{ remote_tmp_path }}'
-    checksum_url: 'ftp://localhost/anon/sha1sum.txt'
-    checksum_algorithm: sha1
-    force: False
-  register: result_sha1_no_force
-
-- name: download src with sha256 checksum url
-  win_get_url:
-    url: 'ftp://localhost/anon/27617.txt'
-    dest: '{{ remote_tmp_path }}/27617sha256.txt'
-    checksum_url: 'ftp://localhost/anon/sha256sum.txt'
+    url: https://{{ httpbin_host }}/base64/cHR1eA==
+    dest: '{{ remote_tmp_dir }}\sha256.txt'
+    checksum_url: ftp://localhost/anon/sha256sum.txt  # tests that a checksum can be from an FTP URI
     checksum_algorithm: sha256
-    force: False
-  register: result_sha256_no_force
+    force: True
+  register: download_sha256_ftp
 
-- name: assert download single file with force no
+- name: download file with sha256 checksum dot leading source as file
+  win_get_url:
+    url: https://{{ httpbin_host }}/base64/cHR1eA==
+    dest: '{{ remote_tmp_dir }}\sha256.txt'
+    checksum_url: '{{ remote_tmp_dir }}\ftp\anon\sha256sum_with_dot.txt'
+    checksum_algorithm: sha256
+    force: True
+  register: download_sha256_file
+
+- name: download file with sha256 checksum value
+  win_get_url:
+    url: https://{{ httpbin_host }}/base64/cHR1eA==
+    dest: '{{ remote_tmp_dir }}\sha256.txt'
+    checksum: b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006
+    checksum_algorithm: sha256
+  register: download_sha256_value
+
+- name: assert download file with sha256 checksum
   assert:
     that:
-      - result_sha1_no_force is not changed
-      - result_sha256_no_force is not changed
+    - download_sha256_ftp is changed
+    - download_sha256_ftp.status_code == 200
+    - download_sha256_ftp.checksum_dest == 'b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006'
+    - not download_sha256_file is changed
+    - download_sha256_file.status_code == 200
+    - download_sha256_file.checksum_dest == 'b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006'
+    - not download_sha256_value is changed
+    - download_sha256_value.status_code == 200
+    - download_sha256_value.checksum_dest == 'b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006'
 
-# Check download with check_mode: True
-
-- name: download src with sha1 checksum url | checkmode
+- name: fail download with invalid checksum and force=no
   win_get_url:
-    url: 'ftp://localhost/anon/27617.txt'
-    dest: '{{ remote_tmp_path }}'
-    checksum_url: 'ftp://localhost/anon/sha1sum.txt'
-    checksum_algorithm: sha1
-  check_mode: True
-  register: result_sha1_check_mode
+    url: https://{{ httpbin_host }}/base64/cHR1eA==
+    dest: '{{ remote_tmp_dir }}\fail.txt'
+    checksum: invalid
+    force: no
+  register: fail_checksum_force_no
+  failed_when: fail_checksum_force_no.msg != "The checksum for https://" + httpbin_host + "/base64/cHR1eA== did not match 'invalid', it was 'a97e6837f60cec6da4491bab387296bbcd72bdba'"
 
-- name: download src with sha256 checksum url | checkmode
+- name: fail download with invalid checksum and force=yes
   win_get_url:
-    url: 'ftp://localhost/anon/27617.txt'
-    dest: '{{ remote_tmp_path }}\27617sha256.txt'
-    checksum_url: 'ftp://localhost/anon/sha256sum.txt'
-    checksum_algorithm: sha256
-  check_mode: True
-  register: result_sha256_check_mode
-
-- name: assert download single file with force no
-  assert:
-    that:
-      - result_sha1_check_mode.checksum_dest == 'a97e6837f60cec6da4491bab387296bbcd72bdba'
-      - result_sha256_check_mode.checksum_dest == 'b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006'
-      - result_sha1_check_mode.checksum_src | length
-      - result_sha256_check_mode.checksum_src | length
-
-# Check download with wrong checksum
-
-- name: download src with sha1 checksum value | fail
-  win_get_url:
-    url: 'ftp://localhost/anon/27617.txt'
-    dest: '{{ remote_tmp_path }}'
-    checksum: 'redacted'
-    checksum_algorithm: sha1
-  failed_when:
-    - '"did not match" not in result_sha1_failed.msg'
-    - '"The checksum" not in result_sha1_failed.msg'
-    - '"Unknown error downloading" not in result_sha1_failed.msg'
-  register: result_sha1_failed
-
-- name: download src with sha256 checksum value | fail
-  win_get_url:
-    url: 'ftp://localhost/anon/27617.txt'
-    dest: '{{ remote_tmp_path }}\27617sha256.txt'
-    checksum: 'redacted'
-    checksum_algorithm: sha256
-  failed_when:
-    - '"did not match" not in result_sha256_failed.msg'
-    - '"The checksum" not in result_sha256_failed.msg'
-    - '"Unknown error downloading" not in result_sha256_failed.msg'
-  register: result_sha256_failed
-
-- name: assert failed downloads
-  assert:
-    that:
-      - result_sha1_failed is succeeded
-      - result_sha256_failed is succeeded
+    url: https://{{ httpbin_host }}/base64/cHR1eA==
+    dest: '{{ remote_tmp_dir }}\fail.txt'
+    checksum: invalid
+    force: yes
+  register: fail_checksum_force_yes
+  failed_when: fail_checksum_force_yes.msg != "The checksum for https://" + httpbin_host + "/base64/cHR1eA== did not match 'invalid', it was 'a97e6837f60cec6da4491bab387296bbcd72bdba'"
