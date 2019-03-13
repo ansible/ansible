@@ -197,7 +197,7 @@ class AzureRMResourceFacts(AzureRMModuleBase):
                         skiptoken = response.get('nextLink')
                     else:
                         self.results['response'] = self.results.get('response', []) + [response]
-            except Exception e:
+            except Exception as e:
                 self.results['response'] = ['exception: ' + str(e)]
             if not skiptoken:
                 break
