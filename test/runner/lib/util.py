@@ -277,7 +277,7 @@ def generate_pip_command(python):
     return [python, '-m', 'pip.__main__']
 
 
-def intercept_command(args, cmd, target_name, env, capture=False, data=None, cwd=None, python_version=None, temp_path=None, coverage=None, virtualenv=False):
+def intercept_command(args, cmd, target_name, env, capture=False, data=None, cwd=None, python_version=None, temp_path=None, coverage=None, virtualenv=None):
     """
     :type args: TestConfig
     :type cmd: collections.Iterable[str]
@@ -289,7 +289,7 @@ def intercept_command(args, cmd, target_name, env, capture=False, data=None, cwd
     :type python_version: str | None
     :type temp_path: str | None
     :type coverage: bool | None
-    :type virtualenv: bool
+    :type virtualenv: str | None
     :rtype: str | None, str | None
     """
     if not env:
@@ -300,7 +300,7 @@ def intercept_command(args, cmd, target_name, env, capture=False, data=None, cwd
 
     cmd = list(cmd)
     version = python_version or args.python_version
-    interpreter = find_python(version, env['PATH'])
+    interpreter = virtualenv or find_python(version)
     inject_path = os.path.abspath('test/runner/injector')
 
     if not virtualenv:
