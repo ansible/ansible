@@ -1,0 +1,28 @@
+Certificate Request:
+    Data:
+        Version: 1 (0x0)
+        Subject: CN = ansible.com
+        Subject Public Key Info:
+            Public Key Algorithm: id-ecPublicKey
+                Public-Key: (256 bit)
+                pub:
+                    04:00:9c:f4:c8:00:17:03:01:26:3a:14:d1:92:35:
+                    f1:c2:07:9d:6d:63:ba:82:86:d8:33:79:56:b3:3a:
+                    d2:eb:c1:bc:41:2c:e1:5d:1e:80:99:0d:c8:cd:90:
+                    e2:9a:74:d3:5c:ee:d7:85:5c:a5:0d:3f:12:2f:31:
+                    38:e3:f1:29:9b
+                ASN1 OID: prime256v1
+                NIST CURVE: P-256
+        Attributes:
+        Requested Extensions:
+            X509v3 Subject Alternative Name: 
+                DNS:example.com, DNS:example.org
+            X509v3 Basic Constraints: critical
+                CA:FALSE
+            X509v3 Key Usage: critical
+                Digital Signature
+    Signature Algorithm: ecdsa-with-SHA256
+         30:44:02:20:70:3c:a8:46:6c:05:54:10:e5:16:f6:c5:66:d8:
+         92:77:9c:26:25:4d:65:b4:ce:89:b5:c7:e7:2d:69:e3:63:9e:
+         02:20:2a:ee:38:1c:ab:ae:8a:45:52:43:8a:29:be:31:5c:e6:
+         2c:81:a0:d3:f7:75:ab:51:19:c2:25:f4:cb:af:64:f7

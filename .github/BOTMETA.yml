@@ -1345,7 +1345,7 @@ files:
     <<: *docker
     support: community
   test/units/module_utils/facts/network/test_generic_bsd.py: *bsd
-  test/units/module_utils/test_acme.py: *crypto
+  test/units/module_utils/acme: *crypto
   test/units/module_utils/xenserver/: bvitnik
   test/units/modules/cloud/docker:
     <<: *docker
