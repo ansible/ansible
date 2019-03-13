@@ -61,6 +61,9 @@ options:
 notes:
 - If a shutdown was already scheduled on the system, C(win_reboot) will abort the scheduled shutdown and enforce its own shutdown.
 - For non-Windows targets, use the M(reboot) module instead.
+- The connection user must have the C(SeRemoteShutdownPrivilege) privilege enabled, see
+  U(https://docs.microsoft.com/en-us/windows/security/threat-protection/security-policy-settings/force-shutdown-from-a-remote-system)
+  for more information.
 author:
     - Matt Davis (@nitzmahone)
 '''
