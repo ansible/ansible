@@ -69,7 +69,7 @@
   assert:
     that:
       - not output.changed
-      - output.response[0]['name'] is not None
+      - output.response[0]['name'] != None
       - output.response | length == 1
 
 - name: Try to query a list
@@ -83,7 +83,7 @@
   assert:
     that:
       - not output.changed
-      - output.response[0]['name'] is not None
+      - output.response[0]['name'] != None
       - output.response | length > 1
 
 - name: Create storage account that requires LRO polling
