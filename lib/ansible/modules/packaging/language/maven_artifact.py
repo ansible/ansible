@@ -61,6 +61,11 @@ options:
         description:
             - The password to authenticate with to the Maven Repository. Use AWS secret access key of the repository is hosted on S3
         aliases: [ "aws_secret_access_key" ]
+    headers:
+        description:
+            - Add custom HTTP headers to a request in hash/dict format.
+        type: dict
+        version_added: "2.8"
     dest:
         description:
             - The path where the artifact should be written to
@@ -278,12 +283,13 @@ class Artifact(object):
 
 
 class MavenDownloader:
-    def __init__(self, module, base="http://repo1.maven.org/maven2", local=False):
+    def __init__(self, module, base="http://repo1.maven.org/maven2", local=False, headers=None):
         self.module = module
         if base.endswith("/"):
             base = base.rstrip("/")
         self.base = base
         self.local = local
+        self.headers = headers
         self.user_agent = "Maven Artifact Downloader/1.0"
         self.latest_version_found = None
         self.metadata_file_name = "maven-metadata-local.xml" if local else "maven-metadata.xml"
@@ -369,7 +375,7 @@ class MavenDownloader:
         self.module.params['url_password'] = self.module.params.get('password', '')
         self.module.params['http_agent'] = self.module.params.get('user_agent', None)
 
-        response, info = fetch_url(self.module, url_to_use, timeout=req_timeout)
+        response, info = fetch_url(self.module, url_to_use, timeout=req_timeout, headers=self.headers)
         if info['status'] == 200:
             return response
         if force:
@@ -457,6 +463,7 @@ def main():
             repository_url=dict(default=None),
             username=dict(default=None, aliases=['aws_secret_key']),
             password=dict(default=None, no_log=True, aliases=['aws_secret_access_key']),
+            headers=dict(type='dict'),
             state=dict(default="present", choices=["present", "absent"]),  # TODO - Implement a "latest" state
             timeout=dict(default=10, type='int'),
             dest=dict(type="path", required=True),
@@ -489,6 +496,7 @@ def main():
     version = module.params["version"]
     classifier = module.params["classifier"]
     extension = module.params["extension"]
+    headers = module.params['headers']
     state = module.params["state"]
     dest = module.params["dest"]
     b_dest = to_bytes(dest, errors='surrogate_or_strict')
@@ -497,7 +505,7 @@ def main():
     verify_download = verify_checksum in ['download', 'always']
     verify_change = verify_checksum in ['change', 'always']
 
-    downloader = MavenDownloader(module, repository_url, local)
+    downloader = MavenDownloader(module, repository_url, local, headers)
 
     try:
         artifact = Artifact(group_id, artifact_id, version, classifier, extension)
