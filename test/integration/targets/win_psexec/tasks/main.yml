@@ -41,12 +41,10 @@
     system: yes
     nobanner: true
   register: whoami_as_system
-
-- name: Test whoami as SYSTEM
-  assert:
-    that:
-    - whoami_as_system.rc == 0
-    - whoami_as_system.stdout == 'nt authority\system'
+  # Seems to be a bug with PsExec where the stdout can be empty, just retry the task to make this test a bit more stable
+  until: whoami_as_system.rc == 0 and whoami_as_system.stdout == 'nt authority\system'
+  retries: 3
+  delay: 2
 
 # FIXME: Behaviour is not consistent on all Windows systems
 #- name: Run whoami as ELEVATED
