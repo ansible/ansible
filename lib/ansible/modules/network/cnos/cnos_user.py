@@ -62,7 +62,7 @@ options:
     description:
       - Defines the username without assigning a password.
         The options include yes or no in string format.
-    default: no
+    default: 'no'
     choice: ['no', 'yes']
   update_password:
     description:
@@ -79,6 +79,7 @@ options:
         device running configuration.  The argument accepts a integer value
         ranging from 1-15.  This argument does not check if the privilege
         has been configured on the device.
+    aliases: ['privilege']
   purge:
     description:
       - The C(purge) argument instructs the module to consider the
