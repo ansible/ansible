@@ -124,7 +124,7 @@
   ec2:
     state: 'absent'
     instance_ids: "{{instance_id}}"
-    region: us-east-2
+    region: "{{region_name}}"
   register: ec2_terminate_status
   tags: delete_infra
 
