@@ -31,9 +31,10 @@ ASCII2MAN = rst2man.py $< $@
 else
 ASCII2MAN = @echo "ERROR: rst2man from docutils command is not installed but is required to build $(MANPAGES)" && exit 1
 endif
-GENERATE_CLI = docs/bin/generate_man.py
 
 PYTHON=python
+GENERATE_CLI = $(PYTHON) docs/bin/generate_man.py
+
 SITELIB = $(shell $(PYTHON) -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
 
 # fetch version from project release.py as single source-of-truth
@@ -238,7 +239,14 @@ sdist_check:
 
 .PHONY: sdist
 sdist: sdist_check clean docs
-	$(PYTHON) setup.py sdist
+	_ANSIBLE_SDIST_FROM_MAKEFILE=1 $(PYTHON) setup.py sdist
+
+# Official releases generate the changelog as the last commit before the release.
+# Snapshots shouldn't result in new checkins so the changelog is generated as
+# part of creating the tarball.
+.PHONY: snapshot
+sdist: sdist_check clean docs changelog
+	_ANSIBLE_SDIST_FROM_MAKEFILE=1 $(PYTHON) setup.py sdist
 
 .PHONY: sdist_upload
 sdist_upload: clean docs
@@ -246,7 +254,7 @@ sdist_upload: clean docs
 
 .PHONY: changelog
 changelog:
-	packaging/release/changelogs/changelog.py release -vv && packaging/release/changelogs/changelog.py generate -vv
+	PYTHONPATH=./lib packaging/release/changelogs/changelog.py release -vv && PYTHONPATH=./lib packaging/release/changelogs/changelog.py generate -vv
 
 .PHONY: rpmcommon
 rpmcommon: sdist

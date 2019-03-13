@@ -136,6 +136,15 @@ class SDistCommand(SDist):
 
         SDist.run(self)
 
+        # Print warnings at the end because no one will see warnings before all the normal status
+        # output
+        if os.environ.get('_ANSIBLE_SDIST_FROM_MAKEFILE', False) != 1:
+            warnings.warn('When setup.py sdist is run from outside of the Makefile,'
+                          ' the generated tarball may be incomplete.  Use `make snapshot`'
+                          ' to create a tarball from an arbitrary checkout or use'
+                          ' `cd packaging/release && make release version=[..]` for official builds.',
+                          RuntimeWarning)
+
 
 def read_file(file_name):
     """Read file and return its contents."""
