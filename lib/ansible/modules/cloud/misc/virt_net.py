@@ -259,7 +259,7 @@ class LibvirtConnection(object):
                 if not self.module.check_mode:
                     res = network.update(libvirt.VIR_NETWORK_UPDATE_COMMAND_ADD_LAST,
                                          libvirt.VIR_NETWORK_SECTION_IP_DHCP_HOST,
-                                         -1, xml, libvirt.VIR_DOMAIN_AFFECT_LIVE|libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+                                         -1, xml, libvirt.VIR_DOMAIN_AFFECT_LIVE | libvirt.VIR_DOMAIN_AFFECT_CONFIG)
                 else:
                     # pretend there was a change
                     res = 0
@@ -300,8 +300,10 @@ class LibvirtConnection(object):
                 if res == 0:
                     return True
             else:
+                new_hostnames = map(lambda hostname: hostname.text, new_data.findall('hostname'))
+                old_hostnames = map(lambda hostname: hostname.text, host.findall('hostname'))
                 # change the host
-                if new_data.findtext('hostname') == host.findtext('hostname'):
+                if len(new_hostnames) == len(old_hostnames) and list(set(new_hostnames) - set(old_hostnames)) == []:
                     return False
                 else:
                     if not self.module.check_mode:
