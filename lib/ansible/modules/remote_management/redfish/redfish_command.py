@@ -231,6 +231,20 @@ def main():
             elif command == "SetOneTimeBoot":
                 result = rf_utils.set_one_time_boot_device(module.params['bootdevice'])
 
+    elif category == "Chassis":
+        result = rf_utils._find_chassis_resource(rf_uri)
+        if result['ret'] is False:
+            module.fail_json(msg=to_native(result['msg']))
+
+        led_commands = ["IndicatorLedOn", "IndicatorLedOff", "IndicatorLedBlink"]
+
+        # Check if more than one led_command is present
+        num_led_commands = sum([command in led_commands for command in command_list])
+        if num_led_commands > 1:
+            result = {'ret': False, 'msg': "Only one IndicatorLed command should be sent at a time."}
+        elif num_led_commands == 1:
+            result = rf_utils.manage_indicator_led(command)
+
     elif category == "Manager":
         MANAGER_COMMANDS = {
             "GracefulRestart": rf_utils.restart_manager_gracefully,
