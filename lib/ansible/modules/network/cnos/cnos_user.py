@@ -62,8 +62,8 @@ options:
     description:
       - Defines the username without assigning a password.
         The options include yes or no in string format.
-    default: 'no'
-    choice: ['no', 'yes']
+    default: no
+    choices: ['no', 'yes']
   update_password:
     description:
       - Since passwords are encrypted in the device running config, this
