@@ -301,16 +301,17 @@ class LibvirtConnection(object):
                     return True
             else:
                 # change the host
-                if new_data.findtext('hostname') == old_data.findtext('hostname'):
+                if new_data.findtext('hostname') == host.findtext('hostname'):
                     return False
                 else:
                     if not self.module.check_mode:
-                        network.update(libvirt.VIR_NETWORK_UPDATE_COMMAND_DELETE,
-                                             libvirt.VIR_NETWORK_SECTION_DNS_HOST,
-                                             -1, xml, libvirt.VIR_NETWORK_UPDATE_AFFECT_CURRENT)
-                        res = network.update(libvirt.VIR_NETWORK_UPDATE_COMMAND_ADD_LAST,
-                                             libvirt.VIR_NETWORK_SECTION_DNS_HOST,
-                                             -1, xml, libvirt.VIR_NETWORK_UPDATE_AFFECT_CURRENT)
+                        res = 0
+                        res += network.update(libvirt.VIR_NETWORK_UPDATE_COMMAND_DELETE,
+                                              libvirt.VIR_NETWORK_SECTION_DNS_HOST,
+                                              -1, xml, libvirt.VIR_NETWORK_UPDATE_AFFECT_CURRENT)
+                        res += network.update(libvirt.VIR_NETWORK_UPDATE_COMMAND_ADD_LAST,
+                                              libvirt.VIR_NETWORK_SECTION_DNS_HOST,
+                                              -1, xml, libvirt.VIR_NETWORK_UPDATE_AFFECT_CURRENT)
                     else:
                         # pretend there was a change
                         res = 0
