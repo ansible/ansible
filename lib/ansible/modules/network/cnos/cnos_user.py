@@ -314,7 +314,7 @@ def main():
         configured_password=dict(no_log=True),
         update_password=dict(default='always', choices=['on_create', 'always']),
         privileges=dict(type='list', aliases=['privilege']),
-        sshkey=dict(),
+        no_password=dict(no_log=True),
         state=dict(default='present', choices=['present', 'absent'])
     )
 
@@ -377,4 +377,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
