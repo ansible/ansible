@@ -138,12 +138,13 @@ udp_listen_violations:
 
 import re
 import platform
+from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
 
 
 def netStatParse(raw):
     results = list()
-    for line in iter(raw.splitlines()):
+    for line in raw.splitlines():
         listening_search = re.search('[^ ]+:[0-9]+', line)
         if listening_search:
             splitted = line.split()
@@ -227,7 +228,7 @@ def main():
             udp_listen_violations=list(),
             tcp_listen=list(),
             udp_listen=list(),
-        )
+        ),
     )
 
     try:
@@ -237,15 +238,15 @@ def main():
         rc, stdout, stderr = module.run_command([netstat_cmd, '-plunt'])
         if rc == 0:
             netstatOut = netStatParse(stdout)
-            for i, p in enumerate(netstatOut):
+            for p in netstatOut:
                 p['stime'] = getPidSTime(p['pid'])
                 p['user'] = getPidUser(p['pid'])
                 if p['protocol'] == 'tcp':
                     result['ansible_facts']['tcp_listen'].append(p)
                 elif p['protocol'] == 'udp':
                     result['ansible_facts']['udp_listen'].append(p)
-    except Exception as e:
-        module.fail_json(msg=str(e))
+    except KeyError as e:
+        module.fail_json(msg=to_native(e))
 
     # if a TCP whitelist was supplied, determine which if any pids violate it
     if module.params['whitelist_tcp'] and result['ansible_facts']['tcp_listen']:
