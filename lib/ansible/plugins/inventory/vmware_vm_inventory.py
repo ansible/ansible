@@ -28,7 +28,10 @@ DOCUMENTATION = '''
       - "vCloud Suite SDK - For tag feature"
     options:
         datacenter:
-            description: Datacenter name. Required if `search_folder` or `with_folders` are set, otherwise ignored.
+            description:
+              - Datacenter name. 
+              - Required if C(search_folder) or C(with_folders) are set, otherwise ignored.
+            version_added: "2.8"
             required: False
         hostname:
             description: Name of vCenter or ESXi server.
@@ -53,6 +56,8 @@ DOCUMENTATION = '''
         search_folder:
             description: Inventory path for the root folder of the VM search. Requires `datacenter` to be set.
             required: False
+            type: str
+            version_added: "2.8"
         validate_certs:
             description:
             - Allows connection when SSL certificates are not valid. Set to C(false) when certificates are not trusted.
@@ -62,6 +67,7 @@ DOCUMENTATION = '''
             description: Create groups based on the folder hierarchy of the VCenter Inventory. Requires  `datacenter` to be set.
             default: False
             type: boolean
+            version_added: "2.8"
         with_tags:
             description:
             - Include tags and associated virtual machines.
