@@ -130,10 +130,16 @@ EXAMPLES = '''
     autostart: no
     name: br_nat
 
-# Add a new host in the dhcp pool
+# Add/update host in the dhcp pool
 - virt_net:
     name: br_nat
     xml: "<host mac='FC:C2:33:00:6c:3c' name='my_vm' ip='192.168.122.30'/>"
+
+# Add/update host dns
+- virt_net:
+    name: br_nat
+    command: modify
+    xml: "<host ip='192.168.122.30'><hostname>my_vm</hostname></host>"
 '''
 
 try:
@@ -239,7 +245,7 @@ class LibvirtConnection(object):
         # identify what type of entry is given in the xml
         new_data = etree.fromstring(xml)
         old_data = etree.fromstring(network.XMLDesc(0))
-        if new_data.tag == 'host':
+        if new_data.tag == 'host' and new_data.get('mac', False):
             mac_addr = new_data.get('mac')
             hosts = old_data.xpath('/network/ip/dhcp/host')
             # find the one mac we're looking for
@@ -273,8 +279,45 @@ class LibvirtConnection(object):
                         res = 0
                     if res == 0:
                         return True
-            #  command, section, parentIndex, xml, flags=0
-            self.module.fail_json(msg='updating this is not supported yet %s' % to_native(xml))
+        if new_data.tag == 'host' and new_data.findtext('hostname'):
+            ip = new_data.get('ip')
+            hosts = old_data.xpath('/network/dns/host')
+            # find the one mac we're looking for
+            host = None
+            for h in hosts:
+                if h.get('ip') == ip:
+                    host = h
+                    break
+            if host is None:
+                # add the host
+                if not self.module.check_mode:
+                    res = network.update(libvirt.VIR_NETWORK_UPDATE_COMMAND_ADD_LAST,
+                                         libvirt.VIR_NETWORK_SECTION_DNS_HOST,
+                                         -1, xml, libvirt.VIR_NETWORK_UPDATE_AFFECT_CURRENT)
+                else:
+                    # pretend there was a change
+                    res = 0
+                if res == 0:
+                    return True
+            else:
+                # change the host
+                if new_data.findtext('hostname') == old_data.findtext('hostname'):
+                    return False
+                else:
+                    if not self.module.check_mode:
+                        network.update(libvirt.VIR_NETWORK_UPDATE_COMMAND_DELETE,
+                                             libvirt.VIR_NETWORK_SECTION_DNS_HOST,
+                                             -1, xml, libvirt.VIR_NETWORK_UPDATE_AFFECT_CURRENT)
+                        res = network.update(libvirt.VIR_NETWORK_UPDATE_COMMAND_ADD_LAST,
+                                             libvirt.VIR_NETWORK_SECTION_DNS_HOST,
+                                             -1, xml, libvirt.VIR_NETWORK_UPDATE_AFFECT_CURRENT)
+                    else:
+                        # pretend there was a change
+                        res = 0
+                    if res == 0:
+                        return True
+        #  command, section, parentIndex, xml, flags=0
+        self.module.fail_json(msg='updating this is not supported yet %s' % to_native(xml))
 
     def destroy(self, entryid):
         if not self.module.check_mode:
