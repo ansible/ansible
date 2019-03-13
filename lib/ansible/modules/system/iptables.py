@@ -156,6 +156,14 @@ options:
       - Specifies a log text for the rule. Only make sense with a LOG jump.
     type: str
     version_added: "2.5"
+  log_level:
+    description:
+      - Logging level according to the syslogd-defined priorities.
+      - The value can be strings or numbers from 1-8.
+      - This parameter is only applicable if C(jump) is set to C(LOG).
+    type: str
+    version_added: "2.8"
+    choices: [ '0', '1', '2', '3', '4', '5', '6', '7', 'emerg', 'alert', 'crit', 'error', 'warning', 'notice', 'info', 'debug' ]
   goto:
     description:
       - This specifies that the processing should continue in a user specified chain.
@@ -413,6 +421,16 @@ EXAMPLES = r'''
     chain: '{{ item }}'
     flush: yes
   with_items: [ 'INPUT', 'OUTPUT', 'PREROUTING', 'POSTROUTING' ]
+
+- name: Log packets arriving into an user-defined chain
+  iptables:
+    chain: LOGGING
+    action: append
+    state: present
+    limit: 2/second
+    limit_burst: 20
+    log_prefix: "IPTABLES:INFO: "
+    log_level: info
 '''
 
 import re
@@ -482,6 +500,7 @@ def construct_rule(params):
     if params.get('jump') and params['jump'].lower() == 'tee':
         append_param(rule, params['gateway'], '--gateway', False)
     append_param(rule, params['log_prefix'], '--log-prefix', False)
+    append_param(rule, params['log_level'], '--log-level', False)
     append_param(rule, params['to_destination'], '--to-destination', False)
     append_param(rule, params['to_source'], '--to-source', False)
     append_param(rule, params['goto'], '-g', False)
@@ -602,6 +621,12 @@ def main():
             jump=dict(type='str'),
             gateway=dict(type='str'),
             log_prefix=dict(type='str'),
+            log_level=dict(type='str',
+                           choices=['0', '1', '2', '3', '4', '5', '6', '7',
+                                    'emerg', 'alert', 'crit', 'error',
+                                    'warning', 'notice', 'info', 'debug'],
+                           default=None,
+                           ),
             goto=dict(type='str'),
             in_interface=dict(type='str'),
             out_interface=dict(type='str'),
@@ -649,6 +674,12 @@ def main():
     # Check if chain option is required
     if args['flush'] is False and args['chain'] is None:
         module.fail_json(msg="Either chain or flush parameter must be specified.")
+
+    if module.params.get('log_prefix', None) or module.params.get('log_level', None):
+        if module.params['jump'] is None:
+            module.params['jump'] = 'LOG'
+        elif module.params['jump'] != 'LOG':
+            module.fail_json(msg="Logging options can only be used with the LOG jump target.")
 
     # Flush the table
     if args['flush'] is True:
