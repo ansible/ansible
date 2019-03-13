@@ -604,5 +604,15 @@ groupings:
   - k8s
   k8s_scale:
   - k8s
+  kubevirt_cdi_upload:
+  - k8s
+  kubevirt_preset:
+  - k8s
+  kubevirt_pvc:
+  - k8s
+  kubevirt_rs:
+  - k8s
+  kubevirt_template:
+  - k8s
   kubevirt_vm:
   - k8s
