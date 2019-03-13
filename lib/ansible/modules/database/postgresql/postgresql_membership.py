@@ -79,6 +79,13 @@ options:
     - User (role) used to authenticate with PostgreSQL.
     type: str
     default: postgres
+  session_role:
+    description:
+    - Switch to session_role after connecting.
+      The specified session_role must be a role that the current login_user is a member of.
+    - Permissions checking for SQL commands is carried out as though
+      the session_role were the one that had logged in originally.
+    type: str
   login_password:
     description:
     - Password used to authenticate with PostgreSQL.
@@ -296,7 +303,7 @@ class PgMembership(object):
                     self.non_existent_roles.append(role)
 
                 else:
-                    if fail_on_role:
+                    if self.fail_on_role:
                         self.module.exit_json(msg="Role role '%s' is a member of role '%s'" % (role, role))
                     else:
                         self.module.warn("Role role '%s' is a member of role '%s', pass" % (role, role))
