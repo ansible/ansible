@@ -126,6 +126,21 @@ options:
       - "This uses the DataVolume source syntax:
         U(https://github.com/kubevirt/containerized-data-importer/blob/master/doc/datavolumes.md#https3registry-source)"
     type: dict
+  wait:
+    description:
+      - "If set, this module will wait for the PVC to become bound and CDI (if enabled) to finish its operation
+        before returning."
+      - "Used only if I(state) set to C(present)."
+      - "Unless used in conjuction with I(cdi_source), this might result in a timeout, as clusters may be configured
+        to not bind PVCs until first usage."
+    default: false
+    type: bool
+  wait_timeout:
+    description:
+      - Specifies how much time in seconds to wait for PVC creation to complete if I(wait) option is enabled.
+      - Default value is reasonably high due to an expectation that CDI might take a while to finish its operation.
+    type: int
+    default: 300
 
 extends_documentation_fragment:
   - k8s_auth_options
@@ -277,8 +292,20 @@ PVC_ARG_SPEC = {
     'storage_class_name': {'type': 'str'},
     'volume_mode': {'type': 'str'},
     'volume_name': {'type': 'str'},
-    'cdi_source': {'type': 'dict'}
+    'cdi_source': {'type': 'dict'},
+    'wait': {
+        'type': 'bool',
+        'default': False
+    },
+    'wait_timeout': {
+        'type': 'int',
+        'default': 300
+    }
 }
+
+
+class CreatePVCFailed(Exception):
+    pass
 
 
 class KubevirtPVC(KubernetesRawModule):
@@ -290,6 +317,12 @@ class KubevirtPVC(KubernetesRawModule):
         argument_spec = copy.deepcopy(AUTH_ARG_SPEC)
         argument_spec.update(PVC_ARG_SPEC)
         return argument_spec
+
+    @staticmethod
+    def fix_serialization(obj):
+        if obj and hasattr(obj, 'to_dict'):
+            return obj.to_dict()
+        return obj
 
     def _parse_cdi_source(self, _cdi_src, metadata):
         cdi_src = copy.deepcopy(_cdi_src)
@@ -340,6 +373,35 @@ class KubevirtPVC(KubernetesRawModule):
             if 'certConfigMap' in src_spec:
                 annotations['cdi.kubevirt.io/storage.import.certConfigMap'] = src_spec['certConfigMap']
 
+    def _wait_for_creation(self, resource, uid):
+        return_obj = None
+        desired_cdi_status = 'Succeeded'
+        use_cdi = True if self.params.get('cdi_source') else False
+        if use_cdi and 'upload' in self.params['cdi_source']:
+            desired_cdi_status = 'Running'
+
+        for event in resource.watch(namespace=self.namespace, timeout=self.params.get('wait_timeout')):
+            entity = event['object']
+            metadata = entity.metadata
+            if not hasattr(metadata, 'uid') or metadata.uid != uid:
+                continue
+            if entity.status.phase == 'Bound':
+                if use_cdi and hasattr(metadata, 'annotations'):
+                    import_status = metadata.annotations.get('cdi.kubevirt.io/storage.pod.phase')
+                    if import_status == desired_cdi_status:
+                        return_obj = entity
+                        break
+                else:
+                    return_obj = entity
+                    break
+            elif entity.status.phase == 'Failed':
+                raise CreatePVCFailed("PVC creation failed")
+
+        if not return_obj:
+            raise CreatePVCFailed("PVC creation timed out")
+
+        return self.fix_serialization(return_obj)
+
     def execute_module(self):
         KIND = 'PersistentVolumeClaim'
         API = 'v1'
@@ -379,6 +441,8 @@ class KubevirtPVC(KubernetesRawModule):
         resource = self.find_resource(KIND, API, fail=True)
         definition = self.set_defaults(resource, definition)
         result = self.perform_action(resource, definition)
+        if self.params.get('wait') and self.params.get('state') == 'present':
+            result['result'] = self._wait_for_creation(resource, result['result']['metadata']['uid'])
 
         self.exit_json(**result)
 
