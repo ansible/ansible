@@ -19,15 +19,22 @@ class TestConnectionBaseClass(unittest.TestCase):
     @patch('os.path.exists')
     @patch('subprocess.Popen')
     @patch('select.poll')
-    def test_plugins_connection_aws_ssm_start_session(self, s_poll, s_popen, mock_ospe):
+    @patch('boto3.client')
+    def test_plugins_connection_aws_ssm_start_session(self, boto_client, s_poll, s_popen, mock_ospe):
         pc = PlayContext()
         new_stdin = StringIO()
         conn = connection_loader.get('aws_ssm', pc, new_stdin)
 
         conn.get_option = MagicMock()
-        conn.get_option.side_effect = ['i1234', 'executable', 'i1234', 'abcd']
+        conn.get_option.side_effect = ['i1234', 'executable', 'abcd', 'i1234']
         conn.host = 'abc'
         mock_ospe.return_value = True
+        boto3 = MagicMock()
+        boto3.client('ssm').return_value=MagicMock()
+        conn.start_session= MagicMock()
+        conn._session_id= MagicMock()
+        conn._session_id.return_value='s1'
+
         s_popen.return_value.stdin.write = MagicMock()
         s_poll.return_value = MagicMock()
         s_poll.return_value.register = MagicMock()
@@ -89,20 +96,30 @@ class TestConnectionBaseClass(unittest.TestCase):
         res, stdout, stderr = conn.fetch_file('/in/file', '/out/file')
 
     @patch('subprocess.check_output')
-    def test_plugins_connection_file_transport_command(self, s_check_output):
+    @patch('boto3.client')
+    def test_plugins_connection_file_transport_command(self, boto_client, s_check_output):
         pc = PlayContext()
         new_stdin = StringIO()
         conn = connection_loader.get('aws_ssm', pc, new_stdin)
 
         conn.get_option = MagicMock()
+        conn.get_option.side_effect = ['1','2','3','4','5']
+        conn._get_url = MagicMock()
+        conn._get_url.side_effect = ['url1','url2']
+        boto3 = MagicMock()
+        boto3.client('s3').return_value= MagicMock()
         conn.get_option.return_value = 1
-
+        ssm_action = 'get'
+        get_command = MagicMock()
+        put_command = MagicMock()
         conn.exec_command = MagicMock()
-        conn.exec_command.return_value = (0, 'stdout', 'stderr')
+        conn.exec_command.return_value = (put_command, None, False)
+        conn.download_fileobj = MagicMock()
+        (returncode, stdout, stderr) = conn.exec_command(put_command, in_data=None, sudoable=False)
+        returncode = 0
+        (returncode, stdout, stderr) = conn.exec_command(get_command, in_data=None, sudoable=False)
 
-        res, stdout, stderr = conn._file_transport_command('/in/file', '/out/file', 'get')
-        res, stdout, stderr = conn._file_transport_command('/in/file', '/out/file', 'put')
-
+        
     @patch('subprocess.check_output')
     def test_plugins_connection_aws_ssm_close(self, s_check_output):
         pc = PlayContext()
@@ -117,5 +134,9 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn._session = MagicMock()
         conn._session.terminate = MagicMock()
         conn._session.communicate = MagicMock()
-
+        conn._terminate_session = MagicMock()
+        conn._terminate_session.return_value=''
+        conn._session_id = MagicMock()
+        conn._session_id.return_value= 'a'
+        conn._client = MagicMock()
         conn.close()
