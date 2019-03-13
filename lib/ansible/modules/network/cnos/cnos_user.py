@@ -73,7 +73,7 @@ options:
         the username is created.
     default: always
     choices: ['on_create', 'always']
-  privilege:
+  privileges:
     description:
       - The C(privilege) argument configures the privilege for the username in
         device running configuration.  The argument accepts a integer value
@@ -90,7 +90,7 @@ options:
   view:
     description:
       - configures the view for the username in the device running configuration
-    type: string
+    type: str
   state:
     description:
       - The C(state) argument configures the state of the username definition
@@ -314,7 +314,8 @@ def main():
         configured_password=dict(no_log=True),
         update_password=dict(default='always', choices=['on_create', 'always']),
         privileges=dict(type='list', aliases=['privilege']),
-        no_password=dict(no_log=True),
+        no_password=dict(default='no', choices=['no', 'yes']),
+        view=dict(type='str')
         state=dict(default='present', choices=['present', 'absent'])
     )
 
@@ -330,7 +331,6 @@ def main():
     )
 
     argument_spec.update(element_spec)
-    
     mutually_exclusive = [('name', 'aggregate')]
 
     module = AnsibleModule(argument_spec=argument_spec,
