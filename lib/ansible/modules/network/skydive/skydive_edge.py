@@ -64,20 +64,35 @@ EXAMPLES = """
   skydive_node:
     name: 'TOR'
     node_type: "fabric"
+    seed: TOR
     metadata:
       Model: Cisco xxxx
+    provider:
+      endpoint: localhost:8082
+      username: admin
+      password: admin
   register: tor_result
 
 - name: create port 1
   skydive_node:
     name: 'PORT1'
     node_type: 'fabric'
+    seed: PORT1
+    provider:
+      endpoint: localhost:8082
+      username: admin
+      password: admin
   register: port1_result
 
 - name: create port 2
   skydive_node:
     name: 'PORT2'
     node_type: 'fabric'
+    seed: PORT2
+    provider:
+      endpoint: localhost:8082
+      username: admin
+      password: admin
   register: port2_result
 
 - name: link node tor and port 1
@@ -86,6 +101,10 @@ EXAMPLES = """
     child_node: "{{ port1_result.UUID }}"
     relation_type: ownership
     state: present
+    provider:
+      endpoint: localhost:8082
+      username: admin
+      password: admin
 
 - name: link node tor and port 2
   skydive_edge:
@@ -93,6 +112,10 @@ EXAMPLES = """
     child_node: "{{ port2_result.UUID }}"
     relation_type: ownership
     state: present
+    provider:
+      endpoint: localhost:8082
+      username: admin
+      password: admin
 
 - name: update link node tor and port 1 relation
   skydive_edge:
@@ -100,6 +123,10 @@ EXAMPLES = """
     child_node: "{{ port2_result.UUID }}"
     relation_type: layer2
     state: upadte
+    provider:
+      endpoint: localhost:8082
+      username: admin
+      password: admin
 
 - name: Unlink tor and port 2
   skydive_edge:
@@ -107,6 +134,32 @@ EXAMPLES = """
     child_node: "{{ port2_result.UUID }}"
     relation_type: ownership
     state: absent
+    provider:
+      endpoint: localhost:8082
+      username: admin
+      password: admin
+
+- name: link tor and port 2 via Gremlin expression
+  skydive_edge:
+    parent_node: G.V().Has('Name', 'TOR')
+    child_node: G.V().Has('Name', 'PORT2')
+    relation_type: ownership
+    state: present
+    provider:
+      endpoint: localhost:8082
+      username: admin
+      password: admin
+
+- name: Unlink tor and port 2 via Gremlin expression
+  skydive_edge:
+    parent_node: G.V().Has('Name', 'TOR')
+    child_node: G.V().Has('Name', 'PORT2')
+    relation_type: ownership
+    state: absent
+    provider:
+      endpoint: localhost:8082
+      username: admin
+      password: admin
 """
 
 RETURN = """ # """
