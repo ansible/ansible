@@ -22,21 +22,6 @@ class TestBucketPipelinesVariableModule(ModuleTestCase):
 
         self.assertEqual(exec_info.exception.args[0]['msg'], BitbucketHelper.error_messages['required_client_id'])
 
-    def test_value_with_absent_state(self):
-        with self.assertRaises(AnsibleFailJson) as exec_info:
-            set_module_args({
-                'client_id': 'ABC',
-                'client_secret': 'XXX',
-                'username': 'name',
-                'repository': 'repo',
-                'key': 'PIPELINE_VAR_NAME',
-                'value': '42',
-                'state': 'absent',
-            })
-            self.module.main()
-
-        self.assertEqual(exec_info.exception.args[0]['msg'], self.module.error_messages['invalid_state'])
-
     def test_missing_value_with_present_state(self):
         with self.assertRaises(AnsibleFailJson) as exec_info:
             set_module_args({

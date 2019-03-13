@@ -90,7 +90,6 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.bitbucket import BitbucketHelper
 
 error_messages = {
-    'invalid_state': '`value` is not required when the `state` is `absent`',
     'required_value': '`value` is required when the `state` is `present`',
 }
 
@@ -230,9 +229,6 @@ def main():
     secured = module.params['secured']
 
     # Check parameters
-    if (value is not None) and (state == 'absent'):
-        module.fail_json(msg=error_messages['invalid_state'])
-
     if (value is None) and (state == 'present'):
         module.fail_json(msg=error_messages['required_value'])
 
