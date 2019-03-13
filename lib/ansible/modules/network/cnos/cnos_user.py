@@ -330,8 +330,7 @@ def main():
     )
 
     argument_spec.update(element_spec)
-    argument_spec.update(cnos_argument_spec)
-
+    
     mutually_exclusive = [('name', 'aggregate')]
 
     module = AnsibleModule(argument_spec=argument_spec,
