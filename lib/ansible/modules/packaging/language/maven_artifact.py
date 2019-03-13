@@ -64,7 +64,6 @@ options:
     headers:
         description:
             - Add custom HTTP headers to a request in hash/dict format.
-            - Can be used to SSO Authentication.
         type: dict
         version_added: "2.8"
     dest:
