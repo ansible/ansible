@@ -1,5 +1,6 @@
 import base64
 import datetime
+import os.path
 import pytest
 
 from mock import MagicMock
@@ -15,9 +16,17 @@ from ansible.module_utils.acme import (
     # _sign_request_openssl,
     _parse_key_cryptography,
     # _sign_request_cryptography,
-    cryptography_get_csr_domains,
+    _normalize_ip,
+    openssl_get_csr_identifiers,
+    cryptography_get_csr_identifiers,
     cryptography_get_cert_days,
 )
+
+
+def load_fixture(name):
+    with open(os.path.join(os.path.dirname(__file__), 'fixtures', name)) as f:
+        return f.read()
+
 
 ################################################
 
@@ -58,13 +67,7 @@ def test_write_file(tmpdir):
 
 TEST_PEM_DERS = [
     (
-        r"""
------BEGIN EC PRIVATE KEY-----
-MHcCAQEEIDWajU0PyhYKeulfy/luNtkAve7DkwQ01bXJ97zbxB66oAoGCCqGSM49
-AwEHoUQDQgAEAJz0yAAXAwEmOhTRkjXxwgedbWO6gobYM3lWszrS68G8QSzhXR6A
-mQ3IzZDimnTTXO7XhVylDT8SLzE44/Epmw==
------END EC PRIVATE KEY-----
-""",
+        load_fixture('privatekey_1.pem'),
         base64.b64decode('MHcCAQEEIDWajU0PyhYKeulfy/luNtkAve7DkwQ01bXJ97zbxB66oAo'
                          'GCCqGSM49AwEHoUQDQgAEAJz0yAAXAwEmOhTRkjXxwgedbWO6gobYM3'
                          'lWszrS68G8QSzhXR6AmQ3IzZDimnTTXO7XhVylDT8SLzE44/Epmw==')
@@ -83,13 +86,7 @@ def test_pem_to_der(pem, der, tmpdir):
 
 TEST_KEYS = [
     (
-        r"""
------BEGIN EC PRIVATE KEY-----
-MHcCAQEEIDWajU0PyhYKeulfy/luNtkAve7DkwQ01bXJ97zbxB66oAoGCCqGSM49
-AwEHoUQDQgAEAJz0yAAXAwEmOhTRkjXxwgedbWO6gobYM3lWszrS68G8QSzhXR6A
-mQ3IzZDimnTTXO7XhVylDT8SLzE44/Epmw==
------END EC PRIVATE KEY-----
-""",
+        load_fixture('privatekey_1.pem'),
         {
             'alg': 'ES256',
             'hash': 'sha256',
@@ -102,22 +99,7 @@ mQ3IzZDimnTTXO7XhVylDT8SLzE44/Epmw==
             'point_size': 32,
             'type': 'ec',
         },
-        r"""
-read EC key
-Private-Key: (256 bit)
-priv:
-    35:9a:8d:4d:0f:ca:16:0a:7a:e9:5f:cb:f9:6e:36:
-    d9:00:bd:ee:c3:93:04:34:d5:b5:c9:f7:bc:db:c4:
-    1e:ba
-pub:
-    04:00:9c:f4:c8:00:17:03:01:26:3a:14:d1:92:35:
-    f1:c2:07:9d:6d:63:ba:82:86:d8:33:79:56:b3:3a:
-    d2:eb:c1:bc:41:2c:e1:5d:1e:80:99:0d:c8:cd:90:
-    e2:9a:74:d3:5c:ee:d7:85:5c:a5:0d:3f:12:2f:31:
-    38:e3:f1:29:9b
-ASN1 OID: prime256v1
-NIST CURVE: P-256
-"""
+        load_fixture('privatekey_1.txt'),
     )
 ]
 
@@ -146,43 +128,73 @@ if HAS_CURRENT_CRYPTOGRAPHY:
 
 ################################################
 
-TEST_CSR = r"""
------BEGIN NEW CERTIFICATE REQUEST-----
-MIIBJTCBzQIBADAWMRQwEgYDVQQDEwthbnNpYmxlLmNvbTBZMBMGByqGSM49AgEG
-CCqGSM49AwEHA0IABACc9MgAFwMBJjoU0ZI18cIHnW1juoKG2DN5VrM60uvBvEEs
-4V0egJkNyM2Q4pp001zu14VcpQ0/Ei8xOOPxKZugVTBTBgkqhkiG9w0BCQ4xRjBE
-MCMGA1UdEQQcMBqCC2V4YW1wbGUuY29tggtleGFtcGxlLm9yZzAMBgNVHRMBAf8E
-AjAAMA8GA1UdDwEB/wQFAwMHgAAwCgYIKoZIzj0EAwIDRwAwRAIgcDyoRmwFVBDl
-FvbFZtiSd5wmJU1ltM6JtcfnLWnjY54CICruOByrropFUkOKKb4xXOYsgaDT93Wr
-URnCJfTLr2T3
------END NEW CERTIFICATE REQUEST-----
-"""
+TEST_IPS = [
+    ("0:0:0:0:0:0:0:1", "::1"),
+    ("1::0:2", "1::2"),
+    ("0000:0001:0000:0000:0000:0000:0000:0001", "0:1::1"),
+    ("0000:0001:0000:0000:0001:0000:0000:0001", "0:1::1:0:0:1"),
+    ("0000:0001:0000:0001:0000:0001:0000:0001", "0:1:0:1:0:1:0:1"),
+    ("0.0.0.0", "0.0.0.0"),
+    ("000.001.000.000", "0.1.0.0"),
+    ("2001:d88:ac10:fe01:0:0:0:0", "2001:d88:ac10:fe01::"),
+    ("0000:0000:0000:0000:0000:0000:0000:0000", "::"),
+]
 
 
-if HAS_CURRENT_CRYPTOGRAPHY:
-    def test_csrdomains_cryptography(tmpdir):
-        fn = tmpdir / 'test.csr'
-        fn.write(TEST_CSR)
-        module = MagicMock()
-        domains = cryptography_get_csr_domains(module, str(fn))
-        assert domains == set(['ansible.com', 'example.com', 'example.org'])
+@pytest.mark.parametrize("ip, result", TEST_IPS)
+def test_normalize_ip(ip, result):
+    assert _normalize_ip(ip) == result
 
 
 ################################################
 
-TEST_CERT = r"""
------BEGIN CERTIFICATE-----
-MIIBljCCATugAwIBAgIBATAKBggqhkjOPQQDAjAWMRQwEgYDVQQDEwthbnNpYmxl
-LmNvbTAeFw0xODExMjUxNTI4MjNaFw0xODExMjYxNTI4MjRaMBYxFDASBgNVBAMT
-C2Fuc2libGUuY29tMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEAJz0yAAXAwEm
-OhTRkjXxwgedbWO6gobYM3lWszrS68G8QSzhXR6AmQ3IzZDimnTTXO7XhVylDT8S
-LzE44/Epm6N6MHgwIwYDVR0RBBwwGoILZXhhbXBsZS5jb22CC2V4YW1wbGUub3Jn
-MAwGA1UdEwEB/wQCMAAwDwYDVR0PAQH/BAUDAweAADATBgNVHSUEDDAKBggrBgEF
-BQcDATAdBgNVHQ4EFgQUmNL9PMzNaUX74owwLFRiGDS3B3MwCgYIKoZIzj0EAwID
-SQAwRgIhALz7Ur96ky0OfM5D9MwFmCg2jccqm/UglGI9+4KeOEIyAiEAwFX4tdll
-QSrd1HY/jMsHwdK5wH3JkK/9+fGwyRP11VI=
------END CERTIFICATE-----
-"""
+TEST_CSRS = [
+    (
+        load_fixture('csr_1.pem'),
+        set([
+            ('dns', 'ansible.com'),
+            ('dns', 'example.com'),
+            ('dns', 'example.org')
+        ]),
+        load_fixture('csr_1.txt'),
+    ),
+    (
+        load_fixture('csr_2.pem'),
+        set([
+            ('dns', 'ansible.com'),
+            ('ip', '127.0.0.1'),
+            ('ip', '::1'),
+            ('ip', '2001:d88:ac10:fe01::'),
+            ('ip', '2001:1234:5678:abcd:9876:5432:10fe:dcba')
+        ]),
+        load_fixture('csr_2.txt'),
+    ),
+]
+
+
+@pytest.mark.parametrize("csr, result, openssl_output", TEST_CSRS)
+def test_csridentifiers_openssl(csr, result, openssl_output, tmpdir):
+    fn = tmpdir / 'test.csr'
+    fn.write(csr)
+    module = MagicMock()
+    module.run_command = MagicMock(return_value=(0, openssl_output, 0))
+    identifiers = openssl_get_csr_identifiers('openssl', module, str(fn))
+    assert identifiers == result
+
+
+if HAS_CURRENT_CRYPTOGRAPHY:
+    @pytest.mark.parametrize("csr, result, openssl_output", TEST_CSRS)
+    def test_csridentifiers_cryptography(csr, result, openssl_output, tmpdir):
+        fn = tmpdir / 'test.csr'
+        fn.write(csr)
+        module = MagicMock()
+        identifiers = cryptography_get_csr_identifiers(module, str(fn))
+        assert identifiers == result
+
+
+################################################
+
+TEST_CERT = load_fixture("cert_1.pem")
 
 TEST_CERT_DAYS = [
     (datetime.datetime(2018, 11, 15, 1, 2, 3), 11),
