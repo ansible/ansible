@@ -194,12 +194,14 @@ class AzureRMResourceFacts(AzureRMModuleBase):
                 response = json.loads(response.text)
                 if isinstance(response, dict):
                     if response.get('value'):
+                        self.results['xxx'] = 'aaa'
                         self.results['response'] = self.results['response'] + response['value']
                         skiptoken = response.get('nextLink')
                     else:
+                        self.results['xxx'] = 'bbb'
                         self.results['response'] = self.results['response'] + [response]
             except Exception:
-                self.results['response'] = []
+                self.results['response'] = ['exception']
             if not skiptoken:
                 break
             
