@@ -25,6 +25,7 @@
 - name: Setup and teardown, remove test routes if present
   nxos_static_route: &setup_teardown
     aggregate:
+      - { prefix: "192.168.1.164/32", next_hop: "192.0.2.3" }
       - { prefix: "192.168.20.64/24", next_hop: "192.0.2.3" }
       - { prefix: "192.168.22.64/24", next_hop: "192.0.2.3" }
       - { prefix: "192.168.24.64/24", next_hop: "192.0.2.3" }
@@ -33,6 +34,15 @@
     state: absent
   with_items: "{{ vrfs }}"
   ignore_errors: yes
+
+- name: Setup noise routes to ensure testing while non-test routes present
+  nxos_static_route:
+    prefix: "192.168.1.164/32"
+    next_hop: "192.0.2.3"
+    vrf: "{{ item }}"
+    provider: "{{ connection }}"
+    state: present
+  with_items: "{{ vrfs }}"
 
 - block:
   - name: create static route
