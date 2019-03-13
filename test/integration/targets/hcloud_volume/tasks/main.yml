@@ -38,7 +38,6 @@
     that:
       - result is changed
 
-
 - name: test create volume
   hcloud_volume:
     name: "{{hcloud_volume_name}}"
@@ -133,7 +132,6 @@
     that:
       - volume is changed
       - volume.hcloud_volume.size == 11
-
 
 - name: test delete volume
   hcloud_volume:
