@@ -300,7 +300,7 @@ class MavenDownloader:
 
         metadata_path = "/%s/%s" % (artifact.path(), self.metadata_file_name)
 
-        if artifact.is_snapshot() and self._url_exists(self.base + metadata_path):
+        if artifact.is_snapshot() and (self._request(self.base + metadata_path, failmsg="", force=False) is not None):
             if self.local:
                 return self._uri_for_artifact(artifact, artifact.version)
 
@@ -373,14 +373,6 @@ class MavenDownloader:
         if force:
             raise ValueError(failmsg + " because of " + info['msg'] + "for URL " + url_to_use)
         return None
-
-    def _url_exists(self, url):
-        req_timeout = self.module.params.get('timeout')
-        response, info = fetch_url(self.module, url, timeout=req_timeout)
-
-        if info['status'] == 200:
-            return True
-        return False
 
     def download(self, tmpdir, artifact, verify_download, filename=None):
         if not artifact.version or artifact.version == "latest":
