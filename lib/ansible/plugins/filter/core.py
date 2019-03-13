@@ -77,7 +77,8 @@ class AnsibleJSONEncoder(json.JSONEncoder):
 
 def to_yaml(a, *args, **kw):
     '''Make verbose, human readable yaml'''
-    transformed = yaml.dump(a, Dumper=AnsibleDumper, allow_unicode=True, **kw)
+    default_flow_style = kw.pop('default_flow_style', None)
+    transformed = yaml.dump(a, Dumper=AnsibleDumper, allow_unicode=True, default_flow_style=default_flow_style, **kw)
     return to_text(transformed)
 
 
