@@ -181,6 +181,7 @@ def _update_stack(module, stack, cloud, sdk):
     try:
         stack = cloud.update_stack(
             module.params['name'],
+            tags=module.params['tag'],
             template_file=module.params['template'],
             environment_files=module.params['environment'],
             timeout=module.params['timeout'],
