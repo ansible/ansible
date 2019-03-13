@@ -18,7 +18,9 @@
   assert:
     that:
       - ss is failed
-      - "ss.msg == 'missing required arguments: zone, name'"
+      - "'name' in ss.msg"
+      - "'zone' in ss.msg"
+      - "'missing required arguments: ' in ss.msg"
 
 - name: setup image store with wrong parameters
   cs_image_store:
