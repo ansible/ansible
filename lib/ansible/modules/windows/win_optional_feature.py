@@ -67,11 +67,11 @@ EXAMPLES = r'''
   win_optional_feature:
     name: Microsoft-Windows-Subsystem-Linux
     state: present
-  register: win_optional_feature
+  register: wsl_status
 
 - name: Reboot if installing Linux Subsytem as feature requires it
   win_reboot:
-  when: win_optional_feature.reboot_required
+  when: wsl_status.reboot_required
 '''
 
 RETURN = r'''
@@ -82,7 +82,7 @@ rc:
     sample: Success
 feature_result:
     description: List of features that were installed or removed.
-    returned: always
+    returned: success
     type: complex
     sample:
     contains:
