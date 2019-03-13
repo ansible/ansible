@@ -1990,14 +1990,14 @@ class DockerService(DockerBaseClass):
             ports = {}
             for port in self.publish:
                 if port.get('mode'):
-                    ports[int(port['published_port'])] = (
-                        int(port['target_port']),
+                    ports[port['published_port']] = (
+                        port['target_port'],
                         port['protocol'],
                         port['mode'],
                     )
                 else:
-                    ports[int(port['published_port'])] = (
-                        int(port['target_port']),
+                    ports[port['published_port']] = (
+                        port['target_port'],
                         port['protocol'],
                     )
             endpoint_spec_args['ports'] = ports
