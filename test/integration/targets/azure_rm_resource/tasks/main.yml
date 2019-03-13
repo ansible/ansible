@@ -65,9 +65,6 @@
     resource_name: "{{ nsgname }}"
   register: output
 
-- debug:
-    var: output
-
 - name: Assert value was returned
   assert:
     that:
