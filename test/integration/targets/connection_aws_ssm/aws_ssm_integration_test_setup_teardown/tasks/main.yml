@@ -78,6 +78,11 @@
   register: output
   tags: setup_infra and windows
 
+- name: Wait for EC2 to be available
+  wait_for_connection:
+    delay: 30
+  tags: setup_infra
+
 - name: setting fact for bucket name using instance-id
   set_fact:
     bucket_name: "{{output.instance_ids[0]}}"
