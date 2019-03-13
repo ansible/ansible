@@ -179,6 +179,7 @@ from ansible.module_utils.common.validation import (
     check_required_together,
     count_terms,
     check_type_bool,
+    check_type_bits,
     check_type_bytes,
     check_type_float,
     check_type_int,
@@ -1793,10 +1794,7 @@ class AnsibleModule(object):
         return check_type_bytes(value)
 
     def _check_type_bits(self, value):
-        try:
-            self.human_to_bytes(value, isbits=True)
-        except ValueError:
-            raise TypeError('%s cannot be converted to a Bit value' % type(value))
+        return check_type_bits(value)
 
     def _handle_options(self, argument_spec=None, params=None):
         ''' deal with options to create sub spec '''

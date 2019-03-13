@@ -481,3 +481,10 @@ def check_type_bytes(value):
         human_to_bytes(value)
     except ValueError:
         raise TypeError('%s cannot be converted to a Byte value' % type(value))
+
+
+def check_type_bits(value):
+    try:
+        human_to_bytes(value, isbits=True)
+    except ValueError:
+        raise TypeError('%s cannot be converted to a Bit value' % type(value))
