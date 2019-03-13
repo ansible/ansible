@@ -32,19 +32,19 @@ options:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
     show_intelligence_packs:
-        descriptions:
+        description:
             - Show the intelligence packs for a workspace.
             - Note this will cost one more network overhead for each workspace, expected slow response.
     show_management_groups:
-        descriptions:
+        description:
             - Show the management groups for a workspace.
             - Note this will cost one more network overhead for each workspace, expected slow response.
     show_shared_keys:
-        descriptions:
+        description:
             - Show the shared keys for a workspace.
             - Note this will cost one more network overhead for each workspace, expected slow response.
     show_usages:
-        descriptions:
+        description:
             - Show the list of usages for a workspace.
             - Note this will cost one more network overhead for each workspace, expected slow response.
 extends_documentation_fragment:
@@ -166,7 +166,7 @@ class AzureRMWorkspaceFact(AzureRMModuleBase):
         self.show_usages = None
         self.show_management_groups = None
 
-        super(AzureRMWorkspaceFact, self).__init__(self.module_arg_spec, supports_check_mode=True)
+        super(AzureRMWorkspaceFact, self).__init__(self.module_arg_spec, supports_tags=False, facts_module=True)
 
     def exec_module(self, **kwargs):
 
