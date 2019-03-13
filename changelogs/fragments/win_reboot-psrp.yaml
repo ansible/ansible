@@ -1,0 +1,2 @@
+bugfixes:
+- win_reboot - Fix reboot command validation failure when running under the psrp connection plugin
