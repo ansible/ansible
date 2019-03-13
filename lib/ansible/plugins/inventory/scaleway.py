@@ -27,6 +27,12 @@ DOCUMENTATION = '''
         tags:
             description: Filter results on a specific tag
             type: list
+        mandatory_tags:
+            description: Filter result always matching all these tags - Added in Ansible 2.8
+            type: list
+        exclude_tags:
+            description: Exclude specific tags - Added in Ansible 2.8
+            type: list
         oauth_token:
             required: True
             description: Scaleway OAuth token.
@@ -80,6 +86,85 @@ regions:
   - par1
 variables:
   ansible_host: public_ip.address
+
+# use exclude tags: select all server except the ones tagged bar OR foo
+plugin: scaleway
+hostnames:
+  - hostname
+regions:
+  - par1
+exclude_tags:
+  - bar
+  - foo
+
+# use mandatory_tags: select all server tagged foo AND bar
+plugin: scaleway
+hostnames:
+  - hostname
+regions:
+  - par1
+mandatory_tags:
+  - bar
+  - foo
+
+# mix tags and mandatory_tags: select all server tagged foo AND bar AND (alpha OR beta)
+# it means we will get the server tagged foo,bar,alpha and foo,bar,beta and foo,bar,alpha,beta but NOT foo,bar
+plugin: scaleway
+hostnames:
+  - hostname
+regions:
+  - par1
+mandatory_tags:
+  - bar
+  - foo
+tags:
+  - alpha
+  - beta
+
+# mix tags and exclude_tags: select all server tagged foo OR bar but exclude alpha OR beta
+# it means we will get the server tagged foo,bar,omega and foo,bar but NOT foo,bar,alpha NOT bar,beta NOT alpha,beta
+plugin: scaleway
+hostnames:
+  - hostname
+regions:
+  - par1
+tags:
+  - bar
+  - foo
+exclude_tags:
+  - alpha
+  - beta
+
+# mix mandatory_tags and exclude_tags: select all server tagged foo AND bar but exclude alpha OR beta
+# it means we will get the server tagged foo,bar and foo,bar,omega but NOT foo,bar,alpha NOT foo,bar,beta
+plugin: scaleway
+hostnames:
+  - hostname
+regions:
+  - par1
+mandatory_tags:
+  - bar
+  - foo
+exclude_tags:
+  - alpha
+  - beta
+
+# mix all three tags: select all server tagged foo AND bar AND (one OR two) but exclude alpha OR beta
+# it means we will get the server tagged foo,bar,one AND foo,bar,two AND foo,bar,one,two but NOT foo,bar NOT foo,bar,one,alpha, NOT foo,one NOT foo,alpha
+plugin: scaleway
+hostnames:
+  - hostname
+regions:
+  - par1
+mandatory_tags:
+  - bar
+  - foo
+tags:
+  - one
+  - two
+exclude_tags:
+  - alpha
+  - beta
 '''
 
 import json
@@ -213,7 +298,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
     def _get_zones(self, config_zones):
         return set(SCALEWAY_LOCATION.keys()).intersection(config_zones)
 
-    def match_groups(self, server_info, tags):
+    def match_groups(self, server_info, tags, mandatory_tags, exclude_tags):
         server_zone = extract_zone(server_info=server_info)
         server_tags = extract_tags(server_info=server_info)
 
@@ -221,16 +306,29 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         if server_zone is None:
             return set()
 
+        # return empty set if the server have an excluded tag
+        if exclude_tags and set(server_tags).intersection(exclude_tags):
+            return set()
+
+        # if all the mandatory_tags are not present on the server, return empty
+        if mandatory_tags and not set(mandatory_tags).issubset(set(server_tags)):
+            return set()
+        # if mandatory_tags is None, we assign it the empty set
+        elif mandatory_tags is None:
+            mandatory_tags = set()
+
         # If no filtering is defined, all tags are valid groups
         if tags is None:
             return set(server_tags).union((server_zone,))
 
+        # match against given tags
         matching_tags = set(server_tags).intersection(tags)
 
         if not matching_tags:
             return set()
         else:
-            return matching_tags.union((server_zone,))
+            # we just have to add the mandatory_tags
+            return matching_tags.union((server_zone,)).union(mandatory_tags)
 
     def _filter_host(self, host_infos, hostname_preferences):
 
@@ -240,7 +338,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
         return None
 
-    def do_zone_inventory(self, zone, token, tags, hostname_preferences):
+    def do_zone_inventory(self, zone, token, tags, mandatory_tags, exclude_tags, hostname_preferences):
         self.inventory.add_group(zone)
         zone_info = SCALEWAY_LOCATION[zone]
 
@@ -256,7 +354,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             if not hostname:
                 continue
 
-            groups = self.match_groups(host_infos, tags)
+            groups = self.match_groups(host_infos, tags, mandatory_tags, exclude_tags)
 
             for group in groups:
                 self.inventory.add_group(group=group)
@@ -272,8 +370,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
         config_zones = self.get_option("regions")
         tags = self.get_option("tags")
+        mandatory_tags = self.get_option("mandatory_tags")
+        exclude_tags = self.get_option("exclude_tags")
         token = self.get_option("oauth_token")
         hostname_preference = self.get_option("hostnames")
 
         for zone in self._get_zones(config_zones):
-            self.do_zone_inventory(zone=zone, token=token, tags=tags, hostname_preferences=hostname_preference)
+            self.do_zone_inventory(zone=zone, token=token, tags=tags, mandatory_tags=mandatory_tags,
+                                   exclude_tags=exclude_tags, hostname_preferences=hostname_preference)
