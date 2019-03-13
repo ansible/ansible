@@ -51,6 +51,11 @@ options:
     description:
       - Maximum number of seconds before interrupt request.
     default: 300
+  delay:
+    description:
+      - Number of seconds before ipmi cmd is executed.
+    default: 0
+    version_added: "2.8"
 requirements:
   - "python >= 2.6"
   - pyghmi
@@ -75,6 +80,7 @@ EXAMPLES = '''
 '''
 
 import traceback
+import time
 
 PYGHMI_IMP_ERR = None
 try:
@@ -95,6 +101,7 @@ def main():
             user=dict(required=True, no_log=True),
             password=dict(required=True, no_log=True),
             timeout=dict(default=300, type='int'),
+            delay=dict(default=0, type='int')
         ),
         supports_check_mode=True,
     )
@@ -108,6 +115,7 @@ def main():
     password = module.params['password']
     state = module.params['state']
     timeout = module.params['timeout']
+    delay = module.params['delay']
 
     # --- run command ---
     try:
@@ -117,6 +125,8 @@ def main():
         module.debug('ipmi instantiated - name: "%s"' % name)
 
         current = ipmi_cmd.get_power()
+        if delay:
+            time.sleep(delay)
         if current['powerstate'] != state:
             response = {'powerstate': state} if module.check_mode else ipmi_cmd.set_power(state, wait=timeout)
             changed = True
