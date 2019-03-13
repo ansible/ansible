@@ -62,7 +62,7 @@ options:
     description:
       - Defines the username without assigning a password.
         The options include yes or no in string format.
-    default: no
+    default: 'no'
     choices: ['no', 'yes']
   update_password:
     description:
