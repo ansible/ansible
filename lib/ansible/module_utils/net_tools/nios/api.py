@@ -291,8 +291,8 @@ class WapiModule(WapiBase):
             elif (ib_obj_type == NIOS_MEMBER) and (proposed_object['create_token']):
                 proposed_object = None
                 # the function creates a token that can be used by a pre-provisioned member to join the grid
-                result['api_results'] = self.call_func('create_token', ref, proposed_object)
-                result['changed'] = True
+                result['api_results']=self.call_func('create_token',ref, proposed_object)
+		result['changed'] = True
             elif modified:
                 self.check_if_recordname_exists(obj_filter, ib_obj_ref, ib_obj_type, current_object, proposed_object)
 
@@ -450,8 +450,9 @@ class WapiModule(WapiBase):
             temp = ib_spec['create_token']
             del ib_spec['create_token']
             ib_obj = self.get_object(ib_obj_type, obj_filter.copy(), return_fields=ib_spec.keys())
-            # reinstate 'create_token' key
-            ib_spec['create_token'] = temp
+            if temp:
+                # reinstate 'create_token' key
+                ib_spec['create_token'] = temp
         else:
             ib_obj = self.get_object(ib_obj_type, obj_filter.copy(), return_fields=ib_spec.keys())
         return ib_obj, update, new_name
