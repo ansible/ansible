@@ -3,4 +3,3 @@ posix/ci/group2
 destructive
 skip/osx
 skip/freebsd
-skip/suse
