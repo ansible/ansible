@@ -678,10 +678,9 @@ class Connection(object):
             for_whom = ','.join(for_whom)
 
         # as_who:
+        as_who = None
         if target_roles:
             as_who = ','.join(pg_quote_identifier(r, 'role') for r in target_roles)
-        else:
-            as_who = target_roles
 
         status_before = get_status(objs)
 
@@ -751,15 +750,15 @@ class QueryBuilder(object):
 
     def add_default_revoke(self):
         for obj in self._objs:
-            if not self._as_who:
-                self.query.append(
-                    'ALTER DEFAULT PRIVILEGES IN SCHEMA {0} REVOKE ALL ON {1} FROM {2};'.format(self._schema, obj,
-                                                                                                self._for_whom))
-            else:
+            if self._as_who:
                 self.query.append(
                     'ALTER DEFAULT PRIVILEGES FOR ROLE {0} IN SCHEMA {1} REVOKE ALL ON {2} FROM {3};'.format(self._as_who,
                                                                                                              self._schema, obj,
                                                                                                              self._for_whom))
+            else:
+                self.query.append(
+                    'ALTER DEFAULT PRIVILEGES IN SCHEMA {0} REVOKE ALL ON {1} FROM {2};'.format(self._schema, obj,
+                                                                                                self._for_whom))
 
     def add_grant_option(self):
         if self._grant_option:
@@ -776,28 +775,28 @@ class QueryBuilder(object):
 
     def add_default_priv(self):
         for obj in self._objs:
-            if not self._as_who:
-                self.query.append(
-                    'ALTER DEFAULT PRIVILEGES IN SCHEMA {0} GRANT {1} ON {2} TO {3}'.format(self._schema,
-                                                                                            self._set_what,
-                                                                                            obj,
-                                                                                            self._for_whom))
-            else:
+            if self._as_who:
                 self.query.append(
                     'ALTER DEFAULT PRIVILEGES FOR ROLE {0} IN SCHEMA {1} GRANT {2} ON {3} TO {4}'.format(self._as_who,
                                                                                                          self._schema,
                                                                                                          self._set_what,
                                                                                                          obj,
                                                                                                          self._for_whom))
+            else:
+                self.query.append(
+                    'ALTER DEFAULT PRIVILEGES IN SCHEMA {0} GRANT {1} ON {2} TO {3}'.format(self._schema,
+                                                                                            self._set_what,
+                                                                                            obj,
+                                                                                            self._for_whom))
             self.add_grant_option()
-        if not self._as_who:
-            self.query.append(
-                'ALTER DEFAULT PRIVILEGES IN SCHEMA {0} GRANT USAGE ON TYPES TO {1}'.format(self._schema, self._for_whom))
-        else:
+        if self._as_who:
             self.query.append(
                 'ALTER DEFAULT PRIVILEGES FOR ROLE {0} IN SCHEMA {1} GRANT USAGE ON TYPES TO {2}'.format(self._as_who,
                                                                                                          self._schema,
                                                                                                          self._for_whom))
+        else:
+            self.query.append(
+                'ALTER DEFAULT PRIVILEGES IN SCHEMA {0} GRANT USAGE ON TYPES TO {1}'.format(self._schema, self._for_whom))
         self.add_grant_option()
 
     def build_present(self):
@@ -812,15 +811,15 @@ class QueryBuilder(object):
         if self._obj_type == 'default_privs':
             self.query = []
             for obj in ['TABLES', 'SEQUENCES', 'TYPES']:
-                if not self._as_who:
-                    self.query.append(
-                        'ALTER DEFAULT PRIVILEGES IN SCHEMA {0} REVOKE ALL ON {1} FROM {2};'.format(self._schema, obj,
-                                                                                                    self._for_whom))
-                else:
+                if self._as_who:
                     self.query.append(
                         'ALTER DEFAULT PRIVILEGES FOR ROLE {0} IN SCHEMA {1} REVOKE ALL ON {2} FROM {3};'.format(self._as_who,
                                                                                                                  self._schema, obj,
                                                                                                                  self._for_whom))
+                else:
+                    self.query.append(
+                        'ALTER DEFAULT PRIVILEGES IN SCHEMA {0} REVOKE ALL ON {1} FROM {2};'.format(self._schema, obj,
+                                                                                                    self._for_whom))
         else:
             self.query.append('REVOKE {0} FROM {1};'.format(self._set_what, self._for_whom))
 
@@ -964,9 +963,8 @@ def main():
 
         # check if target_roles is set with type: default_privs
         if p.target_roles and not p.type == 'default_privs':
-            module.fail_json(
-                msg='Invalid usage of target_roles. target_roles is only available with type: default_privs'
-            )
+            module.warn('"target_roles" will be ignored '
+                        'Argument "type: default_privs" is required for usage of "target_roles".')
 
         # target roles
         if p.target_roles:
