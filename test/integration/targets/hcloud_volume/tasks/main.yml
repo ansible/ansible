@@ -60,7 +60,7 @@
     server: "{{hcloud_server_name}}"
   check_mode: yes
   register: volume
-- name: verify test assign volume with checkmode
+- name: verify test attach volume with checkmode
   assert:
     that:
       - volume is changed
@@ -83,7 +83,7 @@
     name: "{{hcloud_volume_name}}"
   check_mode: yes
   register: volume
-- name: verify detach volume
+- name: verify detach volume with checkmode
   assert:
     that:
       - volume is changed
