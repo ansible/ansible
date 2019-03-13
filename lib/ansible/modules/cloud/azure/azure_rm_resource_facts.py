@@ -201,7 +201,6 @@ class AzureRMResourceFacts(AzureRMModuleBase):
                 self.fail('Failed to parse response: ' + str(e))
             if not skiptoken:
                 break
-            
         return self.results
 
 
