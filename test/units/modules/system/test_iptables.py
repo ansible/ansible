@@ -578,6 +578,64 @@ class TestIptables(ModuleTestCase):
             'tcp-reset',
         ])
 
+    def test_jump_tee_gateway_negative(self):
+        """ Missing gateway when JUMP is set to TEE """
+        set_module_args({
+            'table': 'mangle',
+            'chain': 'PREROUTING',
+            'in_interface': 'eth0',
+            'protocol': 'udp',
+            'match': 'state',
+            'jump': 'TEE',
+            'ctstate': ['NEW'],
+            'destination_port': '9521',
+            'destination': '127.0.0.1'
+        })
+
+        with self.assertRaises(AnsibleFailJson) as e:
+            iptables.main()
+        self.assertTrue(e.exception.args[0]['failed'])
+        self.assertEqual(e.exception.args[0]['msg'], 'jump is TEE but all of the following are missing: gateway')
+
+    def test_jump_tee_gateway(self):
+        """ Using gateway when JUMP is set to TEE """
+        set_module_args({
+            'table': 'mangle',
+            'chain': 'PREROUTING',
+            'in_interface': 'eth0',
+            'protocol': 'udp',
+            'match': 'state',
+            'jump': 'TEE',
+            'ctstate': ['NEW'],
+            'destination_port': '9521',
+            'gateway': '192.168.10.1',
+            'destination': '127.0.0.1'
+        })
+        commands_results = [
+            (0, '', ''),
+        ]
+
+        with patch.object(basic.AnsibleModule, 'run_command') as run_command:
+            run_command.side_effect = commands_results
+            with self.assertRaises(AnsibleExitJson) as result:
+                iptables.main()
+                self.assertTrue(result.exception.args[0]['changed'])
+
+        self.assertEqual(run_command.call_count, 1)
+        self.assertEqual(run_command.call_args_list[0][0][0], [
+            '/sbin/iptables',
+            '-t', 'mangle',
+            '-C', 'PREROUTING',
+            '-p', 'udp',
+            '-d', '127.0.0.1',
+            '-m', 'state',
+            '-j', 'TEE',
+            '--gateway', '192.168.10.1',
+            '-i', 'eth0',
+            '--destination-port', '9521',
+            '--state', 'NEW'
+        ])
+
     def test_tcp_flags(self):
         """ Test various ways of inputting tcp_flags """
         args = [
