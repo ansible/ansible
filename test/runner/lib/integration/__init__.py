@@ -6,6 +6,7 @@ import contextlib
 import json
 import os
 import shutil
+import stat
 import tempfile
 
 from lib.target import (
@@ -24,6 +25,11 @@ from lib.util import (
     display,
     make_dirs,
     named_temporary_file,
+    COVERAGE_CONFIG_PATH,
+    COVERAGE_OUTPUT_PATH,
+    MODE_DIRECTORY,
+    MODE_DIRECTORY_WRITE,
+    MODE_FILE,
 )
 
 from lib.cache import (
@@ -33,6 +39,28 @@ from lib.cache import (
 from lib.cloud import (
     CloudEnvironmentConfig,
 )
+
+
+def setup_common_temp_dir(args, path):
+    """
+    :type args: IntegrationConfig
+    :type path: str
+    """
+    if args.explain:
+        return
+
+    os.mkdir(path)
+    os.chmod(path, MODE_DIRECTORY)
+
+    coverage_config_path = os.path.join(path, COVERAGE_CONFIG_PATH)
+
+    shutil.copy(COVERAGE_CONFIG_PATH, coverage_config_path)
+    os.chmod(coverage_config_path, MODE_FILE)
+
+    coverage_output_path = os.path.join(path, COVERAGE_OUTPUT_PATH)
+
+    os.mkdir(coverage_output_path)
+    os.chmod(coverage_output_path, MODE_DIRECTORY_WRITE)
 
 
 def generate_dependency_map(integration_targets):
