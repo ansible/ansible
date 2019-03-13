@@ -972,6 +972,7 @@ class AzureRMModuleBase(object):
         if not self._log_analytics_client:
             self._log_analytics_client = self.get_mgmt_svc_client(LogAnalyticsManagementClient,
                                                                   base_url=self._cloud_environment.endpoints.resource_manager)
+        return self._log_analytics_client
 
     @property
     def log_analytics_models(self):

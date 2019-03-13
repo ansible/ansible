@@ -157,12 +157,12 @@ class AzureRMWorkspace(AzureRMModuleBase):
         if workspace and self.intelligence_packs:
             for key in self.intelligence_packs.keys():
                 enabled = self.intelligence_packs[key]
-                for x in enumerate(intelligence_packs):
-                    if x.name.lower() == key.lower() or x.displayname.lower() == key.lower():
-                        if x.enabled != enabled:
+                for x in intelligence_packs:
+                    if x['name'].lower() == key.lower():
+                        if x['enabled'] != enabled:
                             changed = True
-                            self.change_intelligence(x.name, enabled)
-                            x.enabled = enabled
+                            self.change_intelligence(x['name'], enabled)
+                            x['enabled'] = enabled
                         break
         if workspace:
             self.results = self.to_dict(workspace)
@@ -199,7 +199,8 @@ class AzureRMWorkspace(AzureRMModuleBase):
 
     def list_intelligence_packs(self):
         try:
-            return self.log_analytics_client.workspaces.list_intelligence_packs(self.resource_group, self.name)
+            response = self.log_analytics_client.workspaces.list_intelligence_packs(self.resource_group, self.name)
+            return [x.as_dict() for x in response]
         except CloudError as exc:
             self.fail('Error when listing intelligence packs {0}'.format(exc.message or str(exc)))
 
@@ -213,20 +214,32 @@ class AzureRMWorkspace(AzureRMModuleBase):
             self.fail('Error when changing intelligence pack {0} - {1}'.format(key, exc.message or str(exc)))
 
     def list_management_groups(self):
+        result = []
         try:
-            return self.log_analytics_client.workspaces.list_management_groups(self.resource_group, self.name)
+            response = self.log_analytics_client.workspaces.list_management_groups(self.resource_group, self.name)
+            while True:
+                result.append(response.next().as_dict())
+        except StopIteration:
+            pass
         except CloudError as exc:
             self.fail('Error when listing management groups {0}'.format(exc.message or str(exc)))
+        return result
 
     def list_usages(self):
+        result = []
         try:
-            return self.log_analytics_client.workspaces.list_usages(self.resource_group, self.name)
+            response = self.log_analytics_client.workspaces.list_usages(self.resource_group, self.name)
+            while True:
+                result.append(response.next().as_dict())
+        except StopIteration:
+            pass
         except CloudError as exc:
             self.fail('Error when listing usages {0}'.format(exc.message or str(exc)))
+        return result
 
     def get_shared_keys(self):
         try:
-            return self.log_analytics_client.workspaces.get_shared_keys(self.resource_group, self.name)
+            return self.log_analytics_client.workspaces.get_shared_keys(self.resource_group, self.name).as_dict()
         except CloudError as exc:
             self.fail('Error when getting shared key {0}'.format(exc.message or str(exc)))
 
