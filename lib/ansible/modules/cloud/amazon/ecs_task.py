@@ -84,6 +84,11 @@ options:
         version_added: 2.8
         choices: ["EC2", "FARGATE"]
         type: str
+    task_tags:
+        description:
+          - Tags that will be added to ecs tasks on start and run
+        required: false
+        version_added: 2.8
 extends_documentation_fragment:
     - aws
     - ec2
@@ -319,7 +324,6 @@ class EcsExecManager:
     def ecs_task_long_format_enabled(self):
         account_support = self.ecs.list_account_settings(name='taskLongArnFormat', effectiveSettings=True)
         return account_support['settings'][0]['value'] == 'enabled'
-
 
     def ecs_api_handles_tags(self):
         from distutils.version import LooseVersion
