@@ -30,10 +30,10 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn.host = 'abc'
         mock_ospe.return_value = True
         boto3 = MagicMock()
-        boto3.client('ssm').return_value=MagicMock()
-        conn.start_session= MagicMock()
-        conn._session_id= MagicMock()
-        conn._session_id.return_value='s1'
+        boto3.client('ssm').return_value = MagicMock()
+        conn.start_session = MagicMock()
+        conn._session_id = MagicMock()
+        conn._session_id.return_value = 's1'
 
         s_popen.return_value.stdin.write = MagicMock()
         s_poll.return_value = MagicMock()
@@ -103,11 +103,11 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn = connection_loader.get('aws_ssm', pc, new_stdin)
 
         conn.get_option = MagicMock()
-        conn.get_option.side_effect = ['1','2','3','4','5']
+        conn.get_option.side_effect = ['1', '2', '3', '4', '5']
         conn._get_url = MagicMock()
         conn._get_url.side_effect = ['url1','url2']
         boto3 = MagicMock()
-        boto3.client('s3').return_value= MagicMock()
+        boto3.client('s3').return_value = MagicMock()
         conn.get_option.return_value = 1
         ssm_action = 'get'
         get_command = MagicMock()
@@ -118,8 +118,7 @@ class TestConnectionBaseClass(unittest.TestCase):
         (returncode, stdout, stderr) = conn.exec_command(put_command, in_data=None, sudoable=False)
         returncode = 0
         (returncode, stdout, stderr) = conn.exec_command(get_command, in_data=None, sudoable=False)
-
-        
+      
     @patch('subprocess.check_output')
     def test_plugins_connection_aws_ssm_close(self, s_check_output):
         pc = PlayContext()
@@ -135,8 +134,8 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn._session.terminate = MagicMock()
         conn._session.communicate = MagicMock()
         conn._terminate_session = MagicMock()
-        conn._terminate_session.return_value=''
+        conn._terminate_session.return_value = ''
         conn._session_id = MagicMock()
-        conn._session_id.return_value= 'a'
+        conn._session_id.return_value = 'a'
         conn._client = MagicMock()
         conn.close()
