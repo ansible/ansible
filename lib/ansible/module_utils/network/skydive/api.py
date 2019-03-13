@@ -109,7 +109,7 @@ class skydive_inject_protocol(object):
                 metadata["Type"] = params["node_type"]
                 seed = params["seed"]
                 if not seed:
-                    seed = "%s:%s" % (params["name"], params["type"])
+                    seed = "%s:%s" % (params["name"], params["node_type"])
                 if module.params['state'] == 'present' or module.params['state'] == 'update':
                     uid = str(uuid.uuid5(uuid.NAMESPACE_OID, seed))
                     node = Node(uid, host, metadata=metadata)
@@ -176,6 +176,9 @@ class skydive_wsclient(skydive_client_check):
                                             params=module.params,
                                             result=self.result)
         elif "relation_type" in module.params:
+            self.parent_node = self.get_node_id(module.params['parent_node'])
+            self.child_node = self.get_node_id(module.params['child_node'])
+
             self.wsclient_object = WSClient("ansible-" + str(os.getpid()) + "-" + module.params['host'],
                                             "%s://%s/ws/publisher" % (scheme, kwargs["endpoint"]),
                                             protocol=type('skydive_full_inject_protocol', (skydive_inject_protocol,
@@ -186,9 +189,21 @@ class skydive_wsclient(skydive_client_check):
                                             password=kwargs["password"],
                                             module=module,
                                             params=module.params,
-                                            node1=module.params['parent_node'],
-                                            node2=module.params['child_node'],
+                                            node1=self.parent_node,
+                                            node2=self.child_node,
                                             result=self.result)
+
+    def get_node_id(self, node_selector):
+        """ Checks if Gremlin expresssion is passed as input to get the nodes UUID """
+        if node_selector.startswith("G.") or node_selector.startswith("g."):
+            nodes = self.restclient_object.lookup_nodes(node_selector)
+            if len(nodes) == 0:
+                raise self.module.fail_json(msg=to_text("Node not found: {0}".format(node_selector)))
+            elif len(nodes) > 1:
+                raise self.module.fail_json(
+                    msg=to_text("Node selection should return only one node: {0}".format(node_selector)))
+            return str(nodes[0].id)
+        return node_selector
 
 
 class skydive_restclient(skydive_client_check):
@@ -318,7 +333,7 @@ class skydive_node(skydive_wsclient, skydive_restclient):
 
 
 class skydive_edge(skydive_wsclient, skydive_restclient):
-    """ Implements Skydive Node modules """
+    """ Implements Skydive Edge modules """
 
     def __init__(self, module):
         self.module = module
@@ -329,8 +344,8 @@ class skydive_edge(skydive_wsclient, skydive_restclient):
     def run(self):
         try:
             edge_exists = False
-            edge_query = SKYDIVE_GREMLIN_EDGE_QUERY + "('Parent', '{0}', 'Child', '{1}')".format(self.module.params['parent_node'],
-                                                                                                 self.module.params['child_node'])
+            edge_query = SKYDIVE_GREMLIN_EDGE_QUERY + "('Parent', '{0}', 'Child', '{1}')".format(self.parent_node,
+                                                                                                 self.child_node)
             query_result = self.restclient_object.lookup_edges(edge_query)
             if query_result:
                 query_result = query_result[0].__dict__
