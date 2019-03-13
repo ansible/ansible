@@ -92,7 +92,7 @@
 
 - name: Create var_to_delete.yml
   template:
-    dest: "{{role_path}}/vars/vars_to_delete.yml"
+    dest: "/tmp/vars_to_delete.yml"
     src: vars_to_delete.yml.j2
   tags: setup_infra
 
@@ -104,12 +104,12 @@
 
 - name: create bucket with instance id and rolename
   s3_bucket:
-    name: "{{ bucket_name }}"
+    name: "{{bucket_name}}"
   register: s3_output
   tags: setup_infra
 
 - name: include variable file to delete infra
-  include_vars:  "{{role_path}}/vars/vars_to_delete.yml"
+  include_vars:  "/tmp/vars_to_delete.yml"
   tags: delete_infra
 
 ## Delete Infra in AWS
