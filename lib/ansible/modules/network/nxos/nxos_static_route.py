@@ -109,8 +109,11 @@ def reconcile_candidate(module, candidate, prefix, want):
         parents = ['vrf context {0}'.format(vrf)]
         flags = " | section '{0}' | include '^  ip route'".format(parents[0])
 
+    # Find existing routes in this vrf/default
     netcfg = CustomNetworkConfig(indent=2, contents=get_config(module, flags=[flags]))
     routes = str(netcfg).split('\n')
+    # strip whitespace from route strings
+    routes = filter(len, [i.strip() for i in routes])
 
     prefix_and_nh = 'ip route {0} {1}'.format(prefix, want['next_hop'])
     existing = [i for i in routes if i.startswith(prefix_and_nh)]
