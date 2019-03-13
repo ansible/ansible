@@ -418,6 +418,7 @@ def main():
         is_ready=dict(type='bool', default=False),
         bootable=dict(type='bool'),
         is_featured=dict(type='bool'),
+        is_public=dict(type='bool'),
         is_dynamically_scalable=dict(type='bool'),
         state=dict(choices=['present', 'absent'], default='present'),
         poll_async=dict(type='bool', default=True),
