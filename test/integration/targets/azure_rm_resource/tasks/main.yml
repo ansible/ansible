@@ -68,6 +68,27 @@
 - debug:
     var: output
 
+- name: Assert value was returned
+  assert:
+    that:
+      - not output.changed
+      - output.response[0].name is not None
+      - output.response | lenght == 1
+
+- name: Try to query a list
+  azure_rm_resource_facts:
+    api_version: '2018-02-01'
+    resource_group: "{{ resource_group }}"
+    provider: network
+    resource_type: networksecuritygroups
+  register: output
+- name: Assert value was returned
+  assert:
+    that:
+      - not output.changed
+      - output.response[0].name is not None
+      - output.response | length > 1
+
 - name: Create storage account that requires LRO polling
   azure_rm_resource:
     polling_timeout: 600
