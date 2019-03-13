@@ -72,4 +72,3 @@ class TestCnosStaticRouteModule(TestCnosModule):
                              mask='255.255.255.0', next_hop='1.2.4.8', state='absent'))
         self.execute_module(changed=True,
                             commands=['no ip route 10.10.30.12 255.255.255.0 1.2.4.8 1'])
-

@@ -118,6 +118,12 @@ commands:
 from copy import deepcopy
 from re import findall
 
+try:
+    import ipaddress
+    HAS_IPADDRESS = True
+except ImportError:
+    HAS_IPADDRESS = False    
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import validate_ip_address
 from ansible.module_utils.network.common.utils import remove_default_spec
@@ -197,8 +203,8 @@ def map_config_to_obj(module):
         index = 0
         for word in splitted_line:
             if word in ('tag', 'description'):
-                route.update(word=splitted_line[index+1])
-            index = index+1
+                route.update(word=splitted_line[index + 1])
+            index = index + 1
         obj.append(route)
 
     return obj
@@ -265,6 +271,9 @@ def main():
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
+    if not HAS_IPADDRESS:
+        module.fail_json(msg="ipaddress is required for this module. Run 'pip install ipaddress' for install.")
+
     warnings = list()
     check_args(module, warnings)
 
@@ -287,4 +296,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
