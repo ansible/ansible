@@ -20,7 +20,7 @@ __metaclass__ = type
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Module to work on Link Aggregation with Lenovo Switches
+# Module to work on User Configuration with Lenovo Switches
 # Lenovo Networking
 #
 ANSIBLE_METADATA = {'metadata_version': '1.1',
