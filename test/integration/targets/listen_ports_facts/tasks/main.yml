@@ -10,7 +10,7 @@
   with_items:
     - net-tools
     - netcat
-  when: ansible_os_family == 'Debian'
+  when: ansible_os_family == "Debian"
 
 - name: install netstat and netcat on rh < 7
   yum:
@@ -34,19 +34,19 @@
   command: nc -u -l 5555
   async: 45
   poll: 0
-  when: ansible_os_family == "RedHat" or ansible_os_family == 'Debian'
+  when: ansible_os_family == "RedHat" or ansible_os_family == "Debian"
 
 - name: start UDP server on port 5556
   command: nc -u -l 5556
   async: 45
   poll: 0
-  when: ansible_os_family == "RedHat" or ansible_os_family == 'Debian'
+  when: ansible_os_family == "RedHat" or ansible_os_family == "Debian"
 
 - name: start TCP server on port 5557
   command: nc -l 5557
   async: 45
   poll: 0
-  when: ansible_os_family == "RedHat" or ansible_os_family == 'Debian'
+  when: ansible_os_family == "RedHat" or ansible_os_family == "Debian"
 
 - name: Gather listening ports facts with whitelists
   listen_ports_facts:
@@ -54,44 +54,44 @@
       - 22
     whitelist_udp:
       - 55556
-  when: ansible_os_family == "RedHat" or ansible_os_family == 'Debian'
+  when: ansible_os_family == "RedHat" or ansible_os_family == "Debian"
 
 - name: check for ansible_facts.tcp_listen_violations exists
   assert:
     that: ansible_facts.tcp_listen_violations is defined
-  when: ansible_os_family == "RedHat" or ansible_os_family == 'Debian'
+  when: ansible_os_family == "RedHat" or ansible_os_family == "Debian"
 
 - name: check for ansible_facts.udp_listen_violations exists
   assert:
     that: ansible_facts.udp_listen_violations is defined
-  when: ansible_os_family == "RedHat" or ansible_os_family == 'Debian'
+  when: ansible_os_family == "RedHat" or ansible_os_family == "Debian"
 
 - name: check for ansible_facts.udp_listen exists
   assert:
     that: ansible_facts.udp_listen is defined
-  when: ansible_os_family == "RedHat" or ansible_os_family == 'Debian'
+  when: ansible_os_family == "RedHat" or ansible_os_family == "Debian"
 
 - name: check for ansible_facts.tcp_listen exists
   assert:
     that: ansible_facts.tcp_listen is defined
-  when: ansible_os_family == "RedHat" or ansible_os_family == 'Debian'
+  when: ansible_os_family == "RedHat" or ansible_os_family == "Debian"
 
 - name: check TCP violations
   assert:
     that: ansible_facts.tcp_listen_violations|length > 0
-  when: ansible_os_family == "RedHat" or ansible_os_family == 'Debian'
+  when: ansible_os_family == "RedHat" or ansible_os_family == "Debian"
 
 - name: check UDP violations
   assert:
     that: ansible_facts.udp_listen_violations|length > 0
-  when: ansible_os_family == "RedHat" or ansible_os_family == 'Debian'
+  when: ansible_os_family == "RedHat" or ansible_os_family == "Debian"
 
 - name: check TCP listening ports
   assert:
     that: ansible_facts.tcp_listen|length > 0
-  when: ansible_os_family == "RedHat" or ansible_os_family == 'Debian'
+  when: ansible_os_family == "RedHat" or ansible_os_family == "Debian"
 
 - name: check UDP listening ports
   assert:
     that: ansible_facts.udp_listen|length > 0
-  when: ansible_os_family == "RedHat" or ansible_os_family == 'Debian'
+  when: ansible_os_family == "RedHat" or ansible_os_family == "Debian"
