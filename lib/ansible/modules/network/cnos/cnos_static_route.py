@@ -122,7 +122,7 @@ try:
     import ipaddress
     HAS_IPADDRESS = True
 except ImportError:
-    HAS_IPADDRESS = False    
+    HAS_IPADDRESS = False
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import validate_ip_address
