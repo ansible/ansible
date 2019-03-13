@@ -23,7 +23,7 @@ short_description: Create and manage block volumes on the Hetzner Cloud.
 version_added: "2.8"
 
 description:
-    - Create, update and attach/dettach block volumes on the Hetzner Cloud.
+    - Create, update and attach/detach block volumes on the Hetzner Cloud.
 
 author:
     - Christopher Schmitt (@cschmitt-hcloud)
@@ -130,7 +130,6 @@ from ansible.module_utils.hcloud import Hcloud
 
 try:
     from hcloud.volumes.domain import Volume
-    from hcloud.ssh_keys.domain import SSHKey
     from hcloud.servers.domain import Server
     import hcloud
 except ImportError:
@@ -204,10 +203,8 @@ class AnsibleHcloudVolume(Hcloud):
                 self._mark_as_changed()
 
         server_name = self.module.params.get("server")
-
         if server_name:
             server = self.client.servers.get_by_name(server_name)
-
             if self.hcloud_volume.server != server:
                 if not self.module.check_mode:
                     automount = self.module.params.get("automount", False)
