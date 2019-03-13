@@ -55,85 +55,171 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-tcp_listen:
-  description: A list of processes that are listening on a TCP port.
-  returned: when at least one process is listening on a TCP port.
-  type: list
-  sample:
-    - address: '0.0.0.0'
-      name: 'mysqld'
-      pid: 1223
-      port: 3306
-      protocol: 'tcp'
-      stime: 'Thu Feb  2 13:29:45 2017'
-      user: 'mysql'
-    - address: '0.0.0.0'
-      name: 'httpd'
-      pid: 905
-      port: 443
-      protocol: 'tcp'
-      stime: 'Thu Feb  2 13:29:45 2017'
-      user: 'apache'
-
-udp_listen:
-  description: A list of processes that are listening on a UDP port.
-  returned: when at least one process is listening on a UDP port.
-  type: list
-  sample:
-    - address: '0.0.0.0'
-      name: 'rsyslogd'
-      pid: 609
-      port: 514
-      protocol: 'udp'
-      stime: 'Thu Feb  2 13:29:45 2017'
-      user: 'root'
-    - address: '0.0.0.0'
-      name: 'chrome'
-      pid: 4551
-      port: 5353
-      protocol: 'udp'
-      stime: 'Thu Feb  2 13:29:45 2017'
-      user: 'root'
-
-tcp_listen_violations:
-  description: A list of processes that are listening on a TCP port that violated the whitelist_tcp argument.
-  returned: when at least one process that is listening on a TCP port isn't included in the supplied TCP whitelist.
-  type: list
-  sample:
-    - address: '0.0.0.0'
-      name: 'mysqld'
-      pid: 1223
-      port: 3306
-      protocol: 'tcp'
-      stime: 'Thu Feb  2 13:29:45 2017'
-      user: 'mysql'
-    - address: '0.0.0.0'
-      name: 'httpd'
-      pid: 905
-      port: 443
-      protocol: 'tcp'
-      stime: 'Thu Feb  2 13:29:45 2017'
-      user: 'apache'
-
-udp_listen_violations:
-  description: A list of processes that are listening on a UDP port that violated the whitelist_udp argument.
-  returned: when at least one process that is listening on a UDP port isn't included in the supplied UDP whitelist.
-  type: list
-  sample:
-    - address: '0.0.0.0'
-      name: 'rsyslogd'
-      pid: 609
-      port: 514
-      protocol: 'udp'
-      stime: 'Thu Feb  2 13:29:45 2017'
-      user: 'root'
-    - address: '0.0.0.0'
-      name: 'chrome'
-      pid: 4551
-      port: 5353
-      protocol: 'udp'
-      stime: 'Thu Feb  2 13:29:45 2017'
-      user: 'root'
+ansible_facts:
+  description: Dictionary containing details of TCP and UDP ports with listening servers and any violations not found in the optional whitelists
+  returned: always
+  type: complex
+  contains:
+    tcp_listen:
+      description: A list of processes that are listening on a TCP port.
+      returned: if TCP servers were found
+      type: list
+      contains:
+        address:
+          description: The address the server is listening on.
+          returned: always
+          type: str
+          sample: "0.0.0.0"
+        name:
+          description: The name of the listening process.
+          returned: if user permissions allow
+          type: str
+          sample: "mysqld"
+        pid:
+          description: The pid of the listening process.
+          returned: always
+          type: int
+          sample: 1223
+        port:
+          description: The port the server is listening on.
+          returned: always
+          type: int
+          sample: 3306
+        protocol:
+          description: The network protocol of the server.
+          returned: always
+          type: str
+          sample: "tcp"
+        stime:
+          description: The start time of the listening process.
+          returned: always
+          type: str
+          sample: "Thu Feb  2 13:29:45 2017"
+        user:
+          description: The user who is running the listening process.
+          returned: always
+          type: str
+          sample: "mysql"
+    udp_listen:
+      description: A list of processes that are listening on a UDP port.
+      returned: if UDP servers were found
+      type: list
+      contains:
+        address:
+          description: The address the server is listening on.
+          returned: always
+          type: str
+          sample: "0.0.0.0"
+        name:
+          description: The name of the listening process.
+          returned: if user permissions allow
+          type: str
+          sample: "rsyslogd"
+        pid:
+          description: The pid of the listening process.
+          returned: always
+          type: int
+          sample: 609
+        port:
+          description: The port the server is listening on.
+          returned: always
+          type: int
+          sample: 514
+        protocol:
+          description: The network protocol of the server.
+          returned: always
+          type: str
+          sample: "udp"
+        stime:
+          description: The start time of the listening process.
+          returned: always
+          type: str
+          sample: "Thu Feb  2 13:29:45 2017"
+        user:
+          description: The user who is running the listening process.
+          returned: always
+          type: str
+          sample: "root"
+    tcp_listen_violations:
+      description: A list of processes that are listening on a TCP port that was not in the whitelist_tcp argument.
+      returned: if a TCP whitelist was supplied and violations were found
+      type: list
+      contains:
+        address:
+          description: The address the server is listening on.
+          returned: always
+          type: str
+          sample: "0.0.0.0"
+        name:
+          description: The name of the listening process.
+          returned: if user permissions allow
+          type: str
+          sample: "mysqld"
+        pid:
+          description: The pid of the listening process.
+          returned: always
+          type: int
+          sample: 1223
+        port:
+          description: The port the server is listening on.
+          returned: always
+          type: int
+          sample: 3306
+        protocol:
+          description: The network protocol of the server.
+          returned: always
+          type: str
+          sample: "tcp"
+        stime:
+          description: The start time of the listening process.
+          returned: always
+          type: str
+          sample: "Thu Feb  2 13:29:45 2017"
+        user:
+          description: The user who is running the listening process.
+          returned: always
+          type: str
+          sample: "mysql"
+    udp_listen_violations:
+      description: A list of processes that are listening on a UDP port that was not in the whitelist_udp argument.
+      returned: if a UDP whitelist was supplied and violations were found
+      type: list
+      contains:
+        address:
+          description: The address the server is listening on.
+          returned: always
+          type: str
+          sample: "0.0.0.0"
+        name:
+          description: The name of the listening process.
+          returned: if user permissions allow
+          type: str
+          sample: "rsyslogd"
+        pid:
+          description: The pid of the listening process.
+          returned: always
+          type: int
+          sample: 609
+        port:
+          description: The port the server is listening on.
+          returned: always
+          type: int
+          sample: 514
+        protocol:
+          description: The network protocol of the server.
+          returned: always
+          type: str
+          sample: "udp"
+        stime:
+          description: The start time of the listening process.
+          returned: always
+          type: str
+          sample: "Thu Feb  2 13:29:45 2017"
+        user:
+          description: The user who is running the listening process.
+          returned: always
+          type: str
+          sample: "root"
 '''
 
 import re
