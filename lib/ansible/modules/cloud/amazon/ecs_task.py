@@ -219,6 +219,7 @@ task:
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.basic import missing_required_lib
 from ansible.module_utils.ec2 import ec2_argument_spec, get_ec2_security_group_ids_from_names, ansible_dict_to_boto3_tag_list
 
 try:
