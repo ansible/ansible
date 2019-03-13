@@ -25,7 +25,6 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-
 import os
 from functools import partial
 from ansible.module_utils._text import to_native
@@ -245,7 +244,6 @@ class WapiModule(WapiBase):
 
         # get object reference
         ib_obj_ref, update, new_name = self.get_object_ref(self.module, ib_obj_type, obj_filter, ib_spec)
-
         proposed_object = {}
         for key, value in iteritems(ib_spec):
             if self.module.params[key] is not None:
@@ -268,7 +266,6 @@ class WapiModule(WapiBase):
         else:
             current_object = obj_filter
             ref = None
-
         # checks if the object type is member to normalize the attributes being passed
         if (ib_obj_type == NIOS_MEMBER):
             proposed_object = member_normalize(proposed_object)
@@ -289,6 +286,12 @@ class WapiModule(WapiBase):
             if ref is None:
                 if not self.module.check_mode:
                     self.create_object(ib_obj_type, proposed_object)
+                result['changed'] = True
+            # Check if NIOS_MEMBER and the flag to call function create_token is set
+            elif (ib_obj_type == NIOS_MEMBER) and (proposed_object['create_token']):
+                proposed_object = None
+                # the function creates a token that can be used by a pre-provisioned member to join the grid
+                result['api_results'] = self.call_func('create_token', ref, proposed_object)
                 result['changed'] = True
             elif modified:
                 self.check_if_recordname_exists(obj_filter, ib_obj_ref, ib_obj_type, current_object, proposed_object)
@@ -442,6 +445,13 @@ class WapiModule(WapiBase):
             # reinstate restart_if_needed key if it's set to true in play
             if module.params['restart_if_needed']:
                 ib_spec['restart_if_needed'] = temp
+        elif (ib_obj_type == NIOS_MEMBER):
+            # del key 'create_token' as nios_member get_object fails with the key present
+            temp = ib_spec['create_token']
+            del ib_spec['create_token']
+            ib_obj = self.get_object(ib_obj_type, obj_filter.copy(), return_fields=ib_spec.keys())
+            # reinstate 'create_token' key
+            ib_spec['create_token'] = temp
         else:
             ib_obj = self.get_object(ib_obj_type, obj_filter.copy(), return_fields=ib_spec.keys())
         return ib_obj, update, new_name
