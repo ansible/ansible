@@ -759,10 +759,9 @@
         <<: *aws_connection_info
       register: fargate_run_task_output
 
-#   This is where you'd make sure you disable the taskLongArnFormat
-#   - name: disable taskLongArnFormat
-#     shell:
-#       aws ecs put-account-setting --name taskLongArnFormat --value disabled
+    - name: disable taskLongArnFormat
+      shell:
+        aws ecs put-account-setting --name taskLongArnFormat --value disabled
 
     - name: create fargate ECS task with run task and tags (LF disabled) (sould fail)
       ecs_task:
@@ -784,31 +783,29 @@
       register: fargate_run_task_output_with_tags_fail
       ignore_errors: yes
 
-#   This is where you'd make sure you enable the taskLongArnFormat
-#   - name: enable taskLongArnFormat
-#     shell:
-#       aws ecs put-account-setting --name taskLongArnFormat --value enabled
+    - name: enable taskLongArnFormat
+      shell:
+        aws ecs put-account-setting --name taskLongArnFormat --value enabled
 
 
-# This would probably work if i could enable that taskLongArnFormat thing.
-#   - name: create fargate ECS task with run task and tags
-#     ecs_task:
-#       operation: run
-#       cluster: "{{ ecs_cluster_name }}"
-#       task_definition: "{{ ecs_task_name }}-vpc"
-#       launch_type: FARGATE
-#       count: 1
-#       task_tags:
-#         tag_key: tag_value
-#         tag_key2: tag_value2
-#       network_configuration:
-#         subnets: "{{ setup_subnet.results | json_query('[].subnet.id') }}"
-#         security_groups:
-#           - '{{ setup_sg.group_id }}'
-#         assign_public_ip: true
-#       started_by: ansible_user
-#       <<: *aws_connection_info
-#     register: fargate_run_task_output_with_tags
+    - name: create fargate ECS task with run task and tags
+      ecs_task:
+        operation: run
+        cluster: "{{ ecs_cluster_name }}"
+        task_definition: "{{ ecs_task_name }}-vpc"
+        launch_type: FARGATE
+        count: 1
+        task_tags:
+          tag_key: tag_value
+          tag_key2: tag_value2
+        network_configuration:
+          subnets: "{{ setup_subnet.results | json_query('[].subnet.id') }}"
+          security_groups:
+            - '{{ setup_sg.group_id }}'
+          assign_public_ip: true
+        started_by: ansible_user
+        <<: *aws_connection_info
+      register: fargate_run_task_output_with_tags
 
 
     # ============================================================
