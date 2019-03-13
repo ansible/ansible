@@ -48,14 +48,18 @@
 
 - name: Create Windows ec2 instance
   ec2:
-    instance_type: "{{ instance_type }}"
-    image: "{{ windows_ami_id }}"
+    instance_type: "{{instance_type}}"
+    image: "{{windows_ami_id}}"
     wait: "yes"
     count: 1
-    region: "{{ region_name }}"
-    instance_profile_name: "{{ iam_role_name }}"
+    region: "{{region_name}}"
+    instance_profile_name: "{{iam_role_name}}"
     instance_tags:
       name: aws_ssm_integration_test
+    user_data: |
+                <powershell>
+                Restart-Service AmazonSSMAgent
+                </powershell>
     state: present
   register: output
   tags: setup_infra and windows
