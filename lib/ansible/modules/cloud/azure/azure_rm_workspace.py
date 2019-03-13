@@ -151,11 +151,15 @@ class AzureRMWorkspace(AzureRMModuleBase):
             workspace = None
             if not self.check_mode:
                 self.delete_workspace()
-
+        if workspace and workspace.id:
+            self.results = self.to_dict(workspace)
+            self.results['intelligence_packs'] = self.list_intelligence_packs()
+            self.results['management_groups'] = self.list_management_groups()
+            self.results['usages'] = self.list_usages()
+            self.results['shared_keys'] = self.get_shared_keys()
         # handle the intelligence pack
-        intelligence_packs = []
-        if workspace.id and self.intelligence_packs:
-            intelligence_packs = self.list_intelligence_packs()
+        if workspace and workspace.id and self.intelligence_packs:
+            intelligence_packs = self.results['intelligence_packs']
             for key in self.intelligence_packs.keys():
                 enabled = self.intelligence_packs[key]
                 for x in intelligence_packs:
@@ -166,12 +170,6 @@ class AzureRMWorkspace(AzureRMModuleBase):
                                 self.change_intelligence(x['name'], enabled)
                                 x['enabled'] = enabled
                         break
-        if workspace.id:
-            self.results = self.to_dict(workspace)
-            self.results['intelligence_packs'] = intelligence_packs
-            self.results['management_groups'] = self.list_management_groups()
-            self.results['usages'] = self.list_usages()
-            self.results['shared_keys'] = self.get_shared_keys()
         self.results['changed'] = changed
         return self.results
 
