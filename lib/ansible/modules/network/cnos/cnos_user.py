@@ -30,7 +30,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: cnos_user
-extends_documentation_fragment: cnos
 version_added: "2.8"
 author: "Anil Kumar Muraleedharan (@amuraleedhar)"
 short_description: Manage the collection of local users on Lenovo CNOS devices
