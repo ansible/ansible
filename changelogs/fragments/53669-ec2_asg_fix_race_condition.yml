@@ -1,0 +1,2 @@
+bugfixes:
+  - ec2_asg - Fix scenario where min_size can end up passing None type to boto
