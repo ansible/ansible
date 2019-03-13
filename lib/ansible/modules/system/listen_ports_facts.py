@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: listen_ports_facts
 
@@ -39,7 +39,7 @@ options:
     default: []
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Gather facts on listening ports, and populate the tcp_listen_violations fact with processes listening on TCP ports that are not 22, 80, or 443.
   listen_ports_facts:
     whitelist_tcp:
@@ -54,7 +54,7 @@ EXAMPLES = '''
   when: tcp_listen_violations
 '''
 
-RETURN = '''
+RETURN = r'''
 tcp_listen:
   description: A list of processes that are listening on a TCP port.
   returned: when at least one process is listening on a TCP port.
