@@ -10,6 +10,7 @@ import re
 
 from ansible.module_utils._text import to_native
 from ansible.module_utils.common._json_compat import json
+from ansible.module_utils.json_utils import jsonify
 from ansible.module_utils.common.collections import is_iterable
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.pycompat24 import literal_eval
@@ -19,7 +20,7 @@ from ansible.module_utils.six import (
     string_types,
     text_type,
 )
-from ansible.module_utils.text.formatters import human_to_bytes, bytes_to_human
+from ansible.module_utils.text.formatters import human_to_bytes
 
 
 def count_terms(terms, module_parameters):
@@ -489,3 +490,15 @@ def check_type_bits(value):
         human_to_bytes(value, isbits=True)
     except ValueError:
         raise TypeError('%s cannot be converted to a Bit value' % type(value))
+
+
+def check_type_jsonarg(value):
+    """Return a jsonified string. Sometimes the controller turns a json string
+    into a dict/list so transform it back into json here
+    """
+    if isinstance(value, (text_type, binary_type)):
+        return value.strip()
+    else:
+        if isinstance(value, (list, tuple, dict)):
+            return jsonify(value)
+    raise TypeError('%s cannot be converted to a json string' % type(value))

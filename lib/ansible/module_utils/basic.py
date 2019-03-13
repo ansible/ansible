@@ -95,6 +95,13 @@ except ImportError as e:
     print('\n{{"msg": "Error: ansible requires the stdlib json: {0}", "failed": true}}'.format(to_native(e)))
     sys.exit(1)
 
+from ansible.module_utils.json_utils import (
+    _json_encode_fallback,
+    jsonify,
+    json_dict_unicode_to_bytes,
+    json_dict_bytes_to_unicode,
+)
+
 AVAILABLE_HASH_ALGORITHMS = dict()
 try:
     import hashlib
@@ -177,6 +184,7 @@ from ansible.module_utils.common.validation import (
     check_type_bytes,
     check_type_float,
     check_type_int,
+    check_type_jsonarg,
     check_type_list,
     check_type_dict,
     check_type_path,
@@ -303,45 +311,6 @@ def get_all_subclasses(cls):
 
 
 # End compat shims
-
-
-def json_dict_unicode_to_bytes(d, encoding='utf-8', errors='surrogate_or_strict'):
-    ''' Recursively convert dict keys and values to byte str
-
-        Specialized for json return because this only handles, lists, tuples,
-        and dict container types (the containers that the json module returns)
-    '''
-
-    if isinstance(d, text_type):
-        return to_bytes(d, encoding=encoding, errors=errors)
-    elif isinstance(d, dict):
-        return dict(map(json_dict_unicode_to_bytes, iteritems(d), repeat(encoding), repeat(errors)))
-    elif isinstance(d, list):
-        return list(map(json_dict_unicode_to_bytes, d, repeat(encoding), repeat(errors)))
-    elif isinstance(d, tuple):
-        return tuple(map(json_dict_unicode_to_bytes, d, repeat(encoding), repeat(errors)))
-    else:
-        return d
-
-
-def json_dict_bytes_to_unicode(d, encoding='utf-8', errors='surrogate_or_strict'):
-    ''' Recursively convert dict keys and values to byte str
-
-        Specialized for json return because this only handles, lists, tuples,
-        and dict container types (the containers that the json module returns)
-    '''
-
-    if isinstance(d, binary_type):
-        # Warning, can traceback
-        return to_text(d, encoding=encoding, errors=errors)
-    elif isinstance(d, dict):
-        return dict(map(json_dict_bytes_to_unicode, iteritems(d), repeat(encoding), repeat(errors)))
-    elif isinstance(d, list):
-        return list(map(json_dict_bytes_to_unicode, d, repeat(encoding), repeat(errors)))
-    elif isinstance(d, tuple):
-        return tuple(map(json_dict_bytes_to_unicode, d, repeat(encoding), repeat(errors)))
-    else:
-        return d
 
 
 def _remove_values_conditions(value, no_log_strings, deferred_removals):
@@ -589,30 +558,6 @@ def env_fallback(*args, **kwargs):
         if arg in os.environ:
             return os.environ[arg]
     raise AnsibleFallbackNotFound
-
-
-def _json_encode_fallback(obj):
-    if isinstance(obj, Set):
-        return list(obj)
-    elif isinstance(obj, datetime.datetime):
-        return obj.isoformat()
-    raise TypeError("Cannot json serialize %s" % to_native(obj))
-
-
-def jsonify(data, **kwargs):
-    for encoding in ("utf-8", "latin-1"):
-        try:
-            return json.dumps(data, encoding=encoding, default=_json_encode_fallback, **kwargs)
-        # Old systems using old simplejson module does not support encoding keyword.
-        except TypeError:
-            try:
-                new_data = json_dict_bytes_to_unicode(data, encoding=encoding)
-            except UnicodeDecodeError:
-                continue
-            return json.dumps(new_data, default=_json_encode_fallback, **kwargs)
-        except UnicodeDecodeError:
-            continue
-    raise UnicodeError('Invalid unicode encoding encountered')
 
 
 def missing_required_lib(library, reason=None, url=None):
@@ -1691,14 +1636,7 @@ class AnsibleModule(object):
         return check_type_path(value, self._string_conversion_action)
 
     def _check_type_jsonarg(self, value):
-        # Return a jsonified string.  Sometimes the controller turns a json
-        # string into a dict/list so transform it back into json here
-        if isinstance(value, (text_type, binary_type)):
-            return value.strip()
-        else:
-            if isinstance(value, (list, tuple, dict)):
-                return self.jsonify(value)
-        raise TypeError('%s cannot be converted to a json string' % type(value))
+        return check_type_jsonarg(value)
 
     def _check_type_raw(self, value):
         return check_type_raw(value)
