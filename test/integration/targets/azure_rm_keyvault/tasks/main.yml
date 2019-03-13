@@ -147,7 +147,7 @@
     resource_type: vaults
     resource_name: "vault{{ rpfx }}"
   register: output
-- name: Assert the facts are properly set
+- name: Assert the facts are properly set -- trigger
   assert:
     that:
       - output.response[0].tags.aaa == "bbb"
