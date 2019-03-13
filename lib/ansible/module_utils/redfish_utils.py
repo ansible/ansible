@@ -385,6 +385,32 @@ class RedfishUtils(object):
             return response
         return {'ret': True}
 
+    def manage_indicator_led(self, command):
+        result = {}
+        key = 'IndicatorLED'
+
+        payloads = {'IndicatorLedOn': 'Lit', 'IndicatorLedOff': 'Off', "IndicatorLedBlink": 'Blinking'}
+
+        result = {}
+        for chassis_uri in self.chassis_uri_list:
+            response = self.get_request(self.root_uri + chassis_uri)
+            if response['ret'] is False:
+                return response
+            result['ret'] = True
+            data = response['data']
+            if key not in data:
+                return {'ret': False, 'msg': "Key %s not found" % key}
+
+            if command in payloads.keys():
+                payload = {'IndicatorLED': payloads[command]}
+                response = self.patch_request(self.root_uri + chassis_uri, payload, HEADERS)
+                if response['ret'] is False:
+                    return response
+            else:
+                return {'ret': False, 'msg': 'Invalid command'}
+
+        return result
+
     def manage_system_power(self, command):
         result = {}
         key = "Actions"
