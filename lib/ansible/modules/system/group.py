@@ -53,6 +53,12 @@ options:
         type: bool
         default: no
         version_added: "2.6"
+    non_unique:
+        description:
+            - This option allows to change the group ID to a non-unique value. Requires C(gid).
+        type: bool
+        default: no
+        version_added: "2.8"
 seealso:
 - module: user
 - module: win_group
@@ -99,6 +105,7 @@ class Group(object):
         self.gid = module.params['gid']
         self.system = module.params['system']
         self.local = module.params['local']
+        self.non_unique = module.params['non_unique']
 
     def execute_command(self, cmd):
         return self.module.run_command(cmd)
@@ -121,6 +128,8 @@ class Group(object):
             if key == 'gid' and kwargs[key] is not None:
                 cmd.append('-g')
                 cmd.append(str(kwargs[key]))
+                if self.non_unique:
+                    cmd.append('-o')
             elif key == 'system' and kwargs[key] is True:
                 cmd.append('-r')
         cmd.append(self.name)
@@ -138,6 +147,8 @@ class Group(object):
                 if kwargs[key] is not None and info[2] != int(kwargs[key]):
                     cmd.append('-g')
                     cmd.append(str(kwargs[key]))
+                    if self.non_unique:
+                        cmd.append('-o')
         if len(cmd) == 1:
             return (None, '', '')
         if self.module.check_mode:
@@ -183,6 +194,8 @@ class SunOS(Group):
             if key == 'gid' and kwargs[key] is not None:
                 cmd.append('-g')
                 cmd.append(str(kwargs[key]))
+                if self.non_unique:
+                    cmd.append('-o')
         cmd.append(self.name)
         return self.execute_command(cmd)
 
@@ -257,6 +270,8 @@ class FreeBsdGroup(Group):
         if self.gid is not None:
             cmd.append('-g')
             cmd.append(str(self.gid))
+            if self.non_unique:
+                cmd.append('-o')
         return self.execute_command(cmd)
 
     def group_mod(self, **kwargs):
@@ -266,6 +281,8 @@ class FreeBsdGroup(Group):
         if self.gid is not None and int(self.gid) != info[2]:
             cmd.append('-g')
             cmd.append(str(self.gid))
+            if self.non_unique:
+                cmd.append('-o')
         # modify the group if cmd will do anything
         if cmd_len != len(cmd):
             if self.module.check_mode:
@@ -377,6 +394,8 @@ class OpenBsdGroup(Group):
         if self.gid is not None:
             cmd.append('-g')
             cmd.append(str(self.gid))
+            if self.non_unique:
+                cmd.append('-o')
         cmd.append(self.name)
         return self.execute_command(cmd)
 
@@ -386,6 +405,8 @@ class OpenBsdGroup(Group):
         if self.gid is not None and int(self.gid) != info[2]:
             cmd.append('-g')
             cmd.append(str(self.gid))
+            if self.non_unique:
+                cmd.append('-o')
         if len(cmd) == 1:
             return (None, '', '')
         if self.module.check_mode:
@@ -419,6 +440,8 @@ class NetBsdGroup(Group):
         if self.gid is not None:
             cmd.append('-g')
             cmd.append(str(self.gid))
+            if self.non_unique:
+                cmd.append('-o')
         cmd.append(self.name)
         return self.execute_command(cmd)
 
@@ -428,6 +451,8 @@ class NetBsdGroup(Group):
         if self.gid is not None and int(self.gid) != info[2]:
             cmd.append('-g')
             cmd.append(str(self.gid))
+            if self.non_unique:
+                cmd.append('-o')
         if len(cmd) == 1:
             return (None, '', '')
         if self.module.check_mode:
@@ -445,9 +470,13 @@ def main():
             name=dict(type='str', required=True),
             gid=dict(type='int'),
             system=dict(type='bool', default=False),
-            local=dict(type='bool', default=False)
+            local=dict(type='bool', default=False),
+            non_unique=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
+        required_if=[
+            ['non_unique', True, ['gid']],
+        ],
     )
 
     group = Group(module)
