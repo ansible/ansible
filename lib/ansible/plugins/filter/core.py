@@ -61,7 +61,8 @@ UUID_NAMESPACE_ANSIBLE = uuid.UUID('361E6D51-FAEC-444A-9079-341386DA8E2E')
 
 def to_yaml(a, *args, **kw):
     '''Make verbose, human readable yaml'''
-    transformed = yaml.dump(a, Dumper=AnsibleDumper, default_flow_style=None, allow_unicode=True, **kw)
+    default_flow_style = kw.pop('default_flow_style', None)
+    transformed = yaml.dump(a, Dumper=AnsibleDumper, default_flow_style=default_flow_style, allow_unicode=True, **kw)
     return to_text(transformed)
 
 
