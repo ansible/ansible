@@ -21,6 +21,7 @@ from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text
 import ast
 import os
+import json
 
 
 def navigate_hash(source, path, default=None):
@@ -143,7 +144,8 @@ class GcpSession(object):
                 msg="Service Account Email only works with Machine Account-based authentication"
             )
 
-        if self.module.params.get('service_account_file') is not None and self.module.params['auth_kind'] != 'serviceaccount':
+        if (self.module.params.get('service_account_file') is not None or
+                self.module.params.get('service_account_contents') is not None) and self.module.params['auth_kind'] != 'serviceaccount':
             self.module.fail_json(
                 msg="Service Account File only works with Service Account-based authentication"
             )
@@ -153,9 +155,12 @@ class GcpSession(object):
         if cred_type == 'application':
             credentials, project_id = google.auth.default(scopes=self.module.params['scopes'])
             return credentials
-        elif cred_type == 'serviceaccount':
+        elif cred_type == 'serviceaccount' and self.module.params.get('service_account_file'):
             path = os.path.realpath(os.path.expanduser(self.module.params['service_account_file']))
             return service_account.Credentials.from_service_account_file(path).with_scopes(self.module.params['scopes'])
+        elif cred_type == 'serviceaccount' and self.module.params.get('service_account_contents'):
+            cred = json.loads(self.module.params.get('service_account_contents'))
+            return service_account.Credentials.from_service_account_info(cred).with_scopes(self.module.params['scopes'])
         elif cred_type == 'machineaccount':
             return google.auth.compute_engine.Credentials(
                 self.module.params['service_account_email'])
@@ -199,6 +204,10 @@ class GcpModule(AnsibleModule):
                     required=False,
                     fallback=(env_fallback, ['GCP_SERVICE_ACCOUNT_FILE']),
                     type='path'),
+                service_account_contents=dict(
+                    required=False,
+                    fallback=(env_fallback, ['GCP_SERVICE_ACCOUNT_CONTENTS']),
+                    type='str'),
                 scopes=dict(
                     required=False,
                     fallback=(env_fallback, ['GCP_SCOPES']),
@@ -211,7 +220,7 @@ class GcpModule(AnsibleModule):
             mutual = kwargs['mutually_exclusive']
 
         kwargs['mutually_exclusive'] = mutual.append(
-            ['service_account_email', 'service_account_file']
+            ['service_account_email', 'service_account_file', 'service_account_contents']
         )
 
         AnsibleModule.__init__(self, *args, **kwargs)

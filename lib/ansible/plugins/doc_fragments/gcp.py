@@ -18,6 +18,12 @@ options:
         type: str
         required: true
         choices: [ application, machineaccount, serviceaccount ]
+    service_account_contents:
+        description:
+            - A string representing the contents of a Service Account JSON file.
+            - This should not be passed in as a dictionary, but a string
+              that has the exact contents of a service account json file (valid JSON)
+        type: str
     service_account_file:
         description:
             - The path of a Service Account JSON file if serviceaccount is selected as type.
@@ -36,6 +42,8 @@ notes:
     C(GCP_SERVICE_ACCOUNT_FILE) env variable.
   - For authentication, you can set service_account_email using the
     C(GCP_SERVICE_ACCOUNT_EMAIL) env variable.
+  - For authentication, you can set service_account_contents using the
+    C(GCP_SERVICE_ACCOUNT_CONTENTS) env variable.
   - For authentication, you can set auth_kind using the C(GCP_AUTH_KIND) env
     variable.
   - For authentication, you can set scopes using the C(GCP_SCOPES) env variable.
