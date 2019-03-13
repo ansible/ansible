@@ -1,29 +1,17 @@
 ---
 # These files are pre formatted and we want to get the base64 value so we can use it for httpbin
 # dynamic content in checksum_url
-- name: get base64 for sha1sum
-  slurp:
-    path: '{{ role_path }}/files/ftp/anon/sha1sum.txt'
-  register: sha1sum
-  delegate_to: localhost
-
-- name: get base64 for sha256sum
-  slurp:
-    path: '{{ role_path }}/files/ftp/anon/sha256sum.txt'
-  register: sha256sum
-  delegate_to: localhost
-
-- name: get base64 for sha256sum with dot leading file
-  slurp:
-    path: '{{ role_path }}/files/ftp/anon/sha256sum_with_dot.txt'
-  register: sha256sum_dot
-  delegate_to: localhost
+- name: set base64 values for checksum files
+  set_fact:
+    sha1sum: '{{ lookup("file", "ftp/anon/sha1sum.txt") | b64encode }}'
+    sha256sum: '{{ lookup("file", "ftp/anon/sha256sum.txt") | b64encode }}'
+    sha256sum_dot: '{{ lookup("file", "ftp/anon/sha256sum_with_dot.txt") | b64encode }}'
 
 - name: download file with sha1 checksum url
   win_get_url:
     url: https://{{ httpbin_host }}/base64/cHR1eA==
     dest: '{{ remote_tmp_dir }}\sha1.txt'
-    checksum_url: https://{{ httpbin_host }}/base64/{{ sha1sum.content }}
+    checksum_url: https://{{ httpbin_host }}/base64/{{ sha1sum }}
     force: True
   register: download_sha1_url
 
