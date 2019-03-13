@@ -1,31 +1,20 @@
-- name: Download PSTools
+- name: Download PsExec
   win_get_url:
-    url: https://download.sysinternals.com/files/PSTools.zip
-    dest: C:\Windows\Temp\PSTools.zip
-    force: no
+    url: https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/win_psexec/PsExec.exe
+    dest: '{{ remote_tmp_dir }}\PsExec.exe'
 
-- name: Create sysinternals directory
-  win_file:
-    path: C:\Windows\Temp\sysinternals
-    state: directory
-
-- name: Unzip PSTools
-  win_unzip:
-    src: C:\Windows\Temp\PSTools.zip
-    dest: C:\Windows\Temp\sysinternals
-
-- name: Add sysinternals to PATH
-  win_path:
-    name: PATH
-    elements: C:\Windows\Temp\sysinternals
-    scope: machine
-    state: present
+- name: Get the existing PATH env var
+  win_shell: '$env:PATH'
+  register: system_path
+  changed_when: False
 
 - name: Run whoami
   win_psexec:
     command: whoami.exe
     nobanner: true
   register: whoami
+  environment:
+    PATH: '{{ remote_tmp_dir }};{{ system_path.stdout | trim }}'
 
 - name: Test whoami
   assert:
@@ -40,6 +29,7 @@
     command: whoami.exe
     system: yes
     nobanner: true
+    executable: '{{ remote_tmp_dir }}\PsExec.exe'
   register: whoami_as_system
   # Seems to be a bug with PsExec where the stdout can be empty, just retry the task to make this test a bit more stable
   until: whoami_as_system.rc == 0 and whoami_as_system.stdout == 'nt authority\system'
@@ -70,26 +60,11 @@
     command: powershell.exe -NonInteractive "exit 1"
   ignore_errors: yes
   register: whoami_multiple_args
+  environment:
+    PATH: '{{ remote_tmp_dir }};{{ system_path.stdout | trim }}'
 
 - name: Test command with multiple argumetns
   assert:
     that:
     - whoami_multiple_args.rc == 1
     - whoami_multiple_args.psexec_command == "psexec.exe -accepteula powershell.exe -NonInteractive \"exit 1\""
-
-- name: Remove sysinternals from PATH
-  win_path:
-    name: PATH
-    elements: C:\Windows\Temp\sysinternals
-    scope: machine
-    state: absent
-
-- name: Remove sysinternals directory
-  win_file:
-    path: C:\Windows\Temp\sysinternals
-    state: absent
-
-- name: Remove sysinternals directory
-  win_file:
-    path: C:\Windows\Temp\PSTools.zip
-    state: absent
