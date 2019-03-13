@@ -30,5 +30,4 @@ INVENTORY=../connection_aws_ssm/inventory.aws_ssm ./test.sh \
     "$@" || true
 
 cd ../connection_aws_ssm
-
 ansible-playbook -c local aws_ssm_integration_test_setup_teardown.yml --tags delete_infra

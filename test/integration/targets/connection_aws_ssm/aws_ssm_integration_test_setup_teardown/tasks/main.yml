@@ -1,12 +1,12 @@
 ---
-# tasks file for ec2
-
-- name: Install Session Manager Plugin for debian
+## Task file for setup/teardown AWS resources for aws_ssm integration testing
+## Setup Infra in AWS
+- name: Install Session Manager Plugin for Debian/Ubuntu
   include_tasks: debian.yml
   when: ansible_distribution == "Ubuntu" or ansible_distribution == "Debian"
   tags: setup_infra
 
-- name: Install Session Manager Plugin for RedHat
+- name: Install Session Manager Plugin for RedHat/Amazon
   include_tasks: redhat.yml
   when: ansible_distribution == "CentOS" or ansible_distribution == "RedHat" or ansible_distribution == "Amazon"
   tags: setup_infra
@@ -19,7 +19,7 @@
   register: role_output
   tags: setup_infra
 
-- name: setting fact for role name
+- name: Setting fact for role name
   set_fact:
      random_role_name: "{{role_output.role_result.role_name}}"
   tags: setup_infra
@@ -34,7 +34,7 @@
   register: policy_name
   tags: setup_infra
 
-- name: setting fact for policy name
+- name: Setting fact for policy name
   set_fact:
     random_policy_name: "{{policy_name.policies[0]}}"
   tags: setup_infra
@@ -83,14 +83,14 @@
     delay: 30
   tags: setup_infra
 
-- name: setting fact for bucket name using instance-id
+- name: Setting fact for S3 bucket-name using EC2 instance-id
   set_fact:
     bucket_name: "{{output.instance_ids[0]}}"
     del_instance_id: "{{output.instance_ids[0]}}"
     del_bucket_name: "{{output.instance_ids[0]}}"
   tags: setup_infra
 
-- name: create var_to_delete.yml
+- name: Create var_to_delete.yml
   template:
     dest: "{{role_path}}/vars/vars_to_delete.yml"
     src: vars_to_delete.yml.j2
@@ -112,8 +112,7 @@
   include_vars:  "{{role_path}}/vars/vars_to_delete.yml"
   tags: delete_infra
 
-### Delete Infra in AWS
-## S3 Deletion
+## Delete Infra in AWS
 - name: S3 bucket Deletion
   aws_s3:
     bucket: "{{bucket_name}}"
@@ -121,8 +120,7 @@
   register: s3_delete_status
   tags: delete_infra
 
-## EC2-Instance Termination
-- name: Terminate instances that were previously launched
+- name: Terminate EC2 instances that were previously launched
   ec2:
     state: 'absent'
     instance_ids: "{{instance_id}}"
@@ -130,7 +128,6 @@
   register: ec2_terminate_status
   tags: delete_infra
 
-  ## IAM Policy Deletion
 - name: Delete IAM policy
   iam_policy:
     iam_type: role
@@ -141,7 +138,6 @@
   tags: delete_infra
   register: iam_policy_deletion_status
 
-## IAM Role Deletion
 - name: Delete IAM role
   iam:
     iam_type: role

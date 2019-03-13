@@ -8,4 +8,3 @@ bucket_name=@S3_BUCKET
 # support tests that target testhost
 [testhost:children]
 aws_ssm
-
