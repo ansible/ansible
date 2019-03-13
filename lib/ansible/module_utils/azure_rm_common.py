@@ -979,6 +979,7 @@ class AzureRMModuleBase(object):
         self.log('Getting log analytics models')
         return LogAnalyticsModels
 
+
 class AzureRMAuthException(Exception):
     pass
 

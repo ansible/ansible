@@ -15,11 +15,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_workspace
+module: azure_rm_workspace_facts
 version_added: "2.8"
 short_description: Manage Azure Log Analytics workspaces.
 description:
-    - Create, delete Azure Log Analytics workspaces.
+    - Get, query Azure Log Analytics workspaces.
 options:
     resource_group:
         description:
@@ -31,6 +31,22 @@ options:
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
+    show_intelligence_packs:
+        descriptions:
+            - Show the intelligence packs for a workspace.
+            - Note this will cost one more network overhead for each workspace, expected slow response.
+    show_management_groups:
+        descriptions:
+            - Show the management groups for a workspace.
+            - Note this will cost one more network overhead for each workspace, expected slow response.
+    show_shared_keys:
+        descriptions:
+            - Show the shared keys for a workspace.
+            - Note this will cost one more network overhead for each workspace, expected slow response.
+    show_usages:
+        descriptions:
+            - Show the list of usages for a workspace.
+            - Note this will cost one more network overhead for each workspace, expected slow response.
 extends_documentation_fragment:
     - azure
 

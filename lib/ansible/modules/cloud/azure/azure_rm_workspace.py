@@ -59,8 +59,8 @@ options:
     intelligence_packs:
         description:
             - Manage intelligence packs possible for this workspace.
-            - "Enable one pack by setting it to C(true). E.g. {'Backup': true}".
-            - "Disable one pack by setting it to C(false). E.g. {'Backup': false}".
+            - "Enable one pack by setting it to C(true). E.g. {'Backup': true}."
+            - "Disable one pack by setting it to C(false). E.g. {'Backup': false}."
             - Other intelligence packs not list in this property will not be changed.
         type: dict
 extends_documentation_fragment:
