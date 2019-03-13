@@ -182,6 +182,9 @@ class InstanceBase(object):
             'tag;me': 'value@noplez',
             'tag!notit': 'value<=ohwhy?'
         }
+        self._ignore_state = {
+            'Code': 16, 'Name': 'running'
+        }
 
         # common attributes
         self.ami_launch_index = '0'
@@ -254,7 +257,8 @@ class BotoInstance(InstanceBase):
         self.requester_id = None
         self.sourceDestCheck = 'true'
         self.spot_instance_request_id = None
-        self.state = 'running'
+        self.state = self._ignore_state['Name']
+        self.state_code = self._ignore_state['Code']
         self.state_reason = None
         self.tags = dict(self._ignore_tags)
 
@@ -299,7 +303,7 @@ class Boto3Instance(InstanceBase):
         self.public_ip_address = '12.3.456.7'
         self.security_groups = [{'GroupId': key, 'GroupName': value} for key, value in self._ignore_security_groups.items()]
         self.source_dest_check = True
-        self.state = {'Code': 16, 'Name': 'running'}
+        self.state = dict(self._ignore_state)
         self.state_transition_reason = ''
         self.tags = [{'Key': k, 'Value': v} for k, v in self._ignore_tags.items()]
 

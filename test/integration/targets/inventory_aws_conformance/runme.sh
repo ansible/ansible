@@ -52,6 +52,7 @@ cat << EOF > $OUTPUT_DIR/test.aws_ec2.yml
 plugin: aws_ec2
 cache: False
 use_contrib_script_compatible_sanitization: True
+strict: True
 regions:
     - us-east-1
 hostnames:
