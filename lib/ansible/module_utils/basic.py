@@ -4,18 +4,6 @@
 
 from __future__ import absolute_import, division, print_function
 
-SIZE_RANGES = {
-    'Y': 1 << 80,
-    'Z': 1 << 70,
-    'E': 1 << 60,
-    'P': 1 << 50,
-    'T': 1 << 40,
-    'G': 1 << 30,
-    'M': 1 << 20,
-    'K': 1 << 10,
-    'B': 1,
-}
-
 FILE_ATTRIBUTES = {
     'A': 'noatime',
     'a': 'append',
@@ -94,6 +82,12 @@ except ImportError:
 NoneType = type(None)
 
 from ansible.module_utils._text import to_native, to_bytes, to_text
+from ansible.module_utils.text.formatters import (
+    _lenient_lowercase,
+    bytes_to_human,
+    human_to_bytes,
+    SIZE_RANGES,
+)
 
 try:
     from ansible.module_utils.common._json_compat import json
@@ -533,73 +527,6 @@ def heuristic_log_sanitize(data, no_log_values=None):
     return output
 
 
-def bytes_to_human(size, isbits=False, unit=None):
-
-    base = 'Bytes'
-    if isbits:
-        base = 'bits'
-    suffix = ''
-
-    for suffix, limit in sorted(iteritems(SIZE_RANGES), key=lambda item: -item[1]):
-        if (unit is None and size >= limit) or unit is not None and unit.upper() == suffix[0]:
-            break
-
-    if limit != 1:
-        suffix += base[0]
-    else:
-        suffix = base
-
-    return '%.2f %s' % (size / limit, suffix)
-
-
-def human_to_bytes(number, default_unit=None, isbits=False):
-
-    '''
-    Convert number in string format into bytes (ex: '2K' => 2048) or using unit argument.
-    example: human_to_bytes('10M') <=> human_to_bytes(10, 'M')
-    '''
-    m = re.search(r'^\s*(\d*\.?\d*)\s*([A-Za-z]+)?', str(number), flags=re.IGNORECASE)
-    if m is None:
-        raise ValueError("human_to_bytes() can't interpret following string: %s" % str(number))
-    try:
-        num = float(m.group(1))
-    except Exception:
-        raise ValueError("human_to_bytes() can't interpret following number: %s (original input string: %s)" % (m.group(1), number))
-
-    unit = m.group(2)
-    if unit is None:
-        unit = default_unit
-
-    if unit is None:
-        ''' No unit given, returning raw number '''
-        return int(round(num))
-    range_key = unit[0].upper()
-    try:
-        limit = SIZE_RANGES[range_key]
-    except Exception:
-        raise ValueError("human_to_bytes() failed to convert %s (unit = %s). The suffix must be one of %s" % (number, unit, ", ".join(SIZE_RANGES.keys())))
-
-    # default value
-    unit_class = 'B'
-    unit_class_name = 'byte'
-    # handling bits case
-    if isbits:
-        unit_class = 'b'
-        unit_class_name = 'bit'
-    # check unit value if more than one character (KB, MB)
-    if len(unit) > 1:
-        expect_message = 'expect %s%s or %s' % (range_key, unit_class, range_key)
-        if range_key == 'B':
-            expect_message = 'expect %s or %s' % (unit_class, unit_class_name)
-
-        if unit_class_name in unit.lower():
-            pass
-        elif unit[1] != unit_class:
-            raise ValueError("human_to_bytes() failed to convert %s. Value is not a valid string (%s)" % (number, expect_message))
-
-    return int(round(num * limit))
-
-
 def _load_params():
     ''' read the modules parameters and store them globally.
 
@@ -662,20 +589,6 @@ def env_fallback(*args, **kwargs):
         if arg in os.environ:
             return os.environ[arg]
     raise AnsibleFallbackNotFound
-
-
-def _lenient_lowercase(lst):
-    """Lowercase elements of a list.
-
-    If an element is not a string, pass it through untouched.
-    """
-    lowered = []
-    for value in lst:
-        try:
-            lowered.append(value.lower())
-        except AttributeError:
-            lowered.append(value)
-    return lowered
 
 
 def _json_encode_fallback(obj):

@@ -19,6 +19,7 @@ from ansible.module_utils.six import (
     string_types,
     text_type,
 )
+from ansible.module_utils.text.formatters import human_to_bytes, bytes_to_human
 
 
 def count_terms(terms, module_parameters):

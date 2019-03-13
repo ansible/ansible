@@ -29,7 +29,7 @@ import math
 from jinja2.filters import environmentfilter
 
 from ansible.errors import AnsibleFilterError
-from ansible.module_utils import basic
+from ansible.module_utils.text import formatters
 from ansible.module_utils.six import binary_type, text_type
 from ansible.module_utils.six.moves import zip, zip_longest
 from ansible.module_utils.common._collections_compat import Hashable, Mapping, Iterable
@@ -163,7 +163,7 @@ def inversepower(x, base=2):
 def human_readable(size, isbits=False, unit=None):
     ''' Return a human readable string '''
     try:
-        return basic.bytes_to_human(size, isbits, unit)
+        return formatters.bytes_to_human(size, isbits, unit)
     except Exception:
         raise AnsibleFilterError("human_readable() can't interpret following string: %s" % size)
 
@@ -171,7 +171,7 @@ def human_readable(size, isbits=False, unit=None):
 def human_to_bytes(size, default_unit=None, isbits=False):
     ''' Return bytes count from a human readable string '''
     try:
-        return basic.human_to_bytes(size, default_unit, isbits)
+        return formatters.human_to_bytes(size, default_unit, isbits)
     except Exception:
         raise AnsibleFilterError("human_to_bytes() can't interpret following string: %s" % size)
 

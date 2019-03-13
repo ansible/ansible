@@ -120,7 +120,8 @@ ansible_facts:
     }
 '''
 
-from ansible.module_utils.basic import AnsibleModule, bytes_to_human
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.text.formatters import bytes_to_human
 from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec, find_obj
 
 try:
