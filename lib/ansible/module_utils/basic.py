@@ -179,6 +179,7 @@ from ansible.module_utils.common.validation import (
     check_required_together,
     count_terms,
     check_type_bool,
+    check_type_bytes,
     check_type_float,
     check_type_int,
     check_type_list,
@@ -1789,10 +1790,7 @@ class AnsibleModule(object):
         return check_type_raw(value)
 
     def _check_type_bytes(self, value):
-        try:
-            self.human_to_bytes(value)
-        except ValueError:
-            raise TypeError('%s cannot be converted to a Byte value' % type(value))
+        return check_type_bytes(value)
 
     def _check_type_bits(self, value):
         try:

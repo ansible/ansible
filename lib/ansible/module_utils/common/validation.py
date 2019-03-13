@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2018 Ansible Project
+# Copyright (c) 2019 Ansible Project
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import absolute_import, division, print_function
@@ -474,3 +474,10 @@ def check_type_path(value, string_conversion_action):
 
 def check_type_raw(value):
     return value
+
+
+def check_type_bytes(value):
+    try:
+        human_to_bytes(value)
+    except ValueError:
+        raise TypeError('%s cannot be converted to a Byte value' % type(value))
