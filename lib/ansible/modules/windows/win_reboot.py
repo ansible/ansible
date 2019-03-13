@@ -68,7 +68,6 @@ notes:
 - The connection user must have the C(SeRemoteShutdownPrivilege) privilege enabled, see
   U(https://docs.microsoft.com/en-us/windows/security/threat-protection/security-policy-settings/force-shutdown-from-a-remote-system)
   for more information.
-  some Windows hosts.
 seealso:
 - module: reboot
 author:
