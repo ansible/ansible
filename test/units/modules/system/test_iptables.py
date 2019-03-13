@@ -729,3 +729,102 @@ class TestIptables(ModuleTestCase):
                     '--log-prefix', '** DROP-this_ip **',
                     '--log-level', log_lvl
                 ])
+
+    def test_iprange(self):
+        """ Test iprange module with its flags src_range and dst_range """
+        set_module_args({
+            'chain': 'INPUT',
+            'match': ['iprange'],
+            'src_range': '192.168.1.100-192.168.1.199',
+            'jump': 'ACCEPT'
+        })
+
+        commands_results = [
+            (0, '', ''),
+        ]
+
+        with patch.object(basic.AnsibleModule, 'run_command') as run_command:
+            run_command.side_effect = commands_results
+            with self.assertRaises(AnsibleExitJson) as result:
+                iptables.main()
+                self.assertTrue(result.exception.args[0]['changed'])
+
+        self.assertEqual(run_command.call_count, 1)
+        self.assertEqual(run_command.call_args_list[0][0][0], [
+            '/sbin/iptables',
+            '-t',
+            'filter',
+            '-C',
+            'INPUT',
+            '-m',
+            'iprange',
+            '-j',
+            'ACCEPT',
+            '--src-range',
+            '192.168.1.100-192.168.1.199',
+        ])
+
+        set_module_args({
+            'chain': 'INPUT',
+            'src_range': '192.168.1.100-192.168.1.199',
+            'dst_range': '10.0.0.50-10.0.0.100',
+            'jump': 'ACCEPT'
+        })
+
+        commands_results = [
+            (0, '', ''),
+        ]
+
+        with patch.object(basic.AnsibleModule, 'run_command') as run_command:
+            run_command.side_effect = commands_results
+            with self.assertRaises(AnsibleExitJson) as result:
+                iptables.main()
+                self.assertTrue(result.exception.args[0]['changed'])
+
+        self.assertEqual(run_command.call_count, 1)
+        self.assertEqual(run_command.call_args_list[0][0][0], [
+            '/sbin/iptables',
+            '-t',
+            'filter',
+            '-C',
+            'INPUT',
+            '-j',
+            'ACCEPT',
+            '-m',
+            'iprange',
+            '--src-range',
+            '192.168.1.100-192.168.1.199',
+            '--dst-range',
+            '10.0.0.50-10.0.0.100'
+        ])
+
+        set_module_args({
+            'chain': 'INPUT',
+            'dst_range': '10.0.0.50-10.0.0.100',
+            'jump': 'ACCEPT'
+        })
+
+        commands_results = [
+            (0, '', ''),
+        ]
+
+        with patch.object(basic.AnsibleModule, 'run_command') as run_command:
+            run_command.side_effect = commands_results
+            with self.assertRaises(AnsibleExitJson) as result:
+                iptables.main()
+                self.assertTrue(result.exception.args[0]['changed'])
+
+        self.assertEqual(run_command.call_count, 1)
+        self.assertEqual(run_command.call_args_list[0][0][0], [
+            '/sbin/iptables',
+            '-t',
+            'filter',
+            '-C',
+            'INPUT',
+            '-j',
+            'ACCEPT',
+            '-m',
+            'iprange',
+            '--dst-range',
+            '10.0.0.50-10.0.0.100'
+        ])
