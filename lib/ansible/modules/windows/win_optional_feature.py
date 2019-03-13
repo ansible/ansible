@@ -15,26 +15,27 @@ DOCUMENTATION = r'''
 ---
 module: win_optional_feature
 version_added: "2.8"
-short_description: Installs and uninstalls Optional Windows Features on Windows
+short_description: Manage optional Windows features
 description:
-    - Installs or uninstalls Windows Features on non-Server Windows.
-    - This module uses the Enable/Disable-WindowsOptionalFeature Cmdlets
+    - Install or uninstall optional Windows features on non-Server Windows.
+    - This module uses the C(Enable-WindowsOptionalFeature) and C(Disable-WindowsOptionalFeature) cmdlets.
 options:
   name:
     description:
-      - FeatureName of feature to install.
+      - The name of the feature to install.
+      - This relates to C(FeatureName) in the Powershell cmdlet.
       - To list all available features use the PowerShell command C(Get-WindowsOptionalFeature).
     type: str
     required: yes
   state:
     description:
-      - State of the feature on the system.
+      - Whether to ensure the feature is absent or present on the system.
     type: str
     choices: [ absent, present ]
     default: present
   include_parent:
     description:
-      - Enables the parent feature and the parent's dependencies
+      - Whether to enable the parent feature and the parent's dependencies.
     type: bool
     default: no
   source:
@@ -44,6 +45,7 @@ options:
     type: str
 seealso:
 - module: win_chocolatey
+- module: win_feature
 - module: win_package
 author:
     - Carson Anderson (@rcanderson23)
