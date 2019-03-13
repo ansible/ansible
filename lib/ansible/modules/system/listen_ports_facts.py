@@ -30,10 +30,12 @@ options:
   whitelist_tcp:
     description:
       - A list of TCP port numbers that are expected to have processes listening.
+    type: list
     default: []
   whitelist_udp:
     description:
       - A list of UDP port numbers that are expected to have processes listening.
+    type: list
     default: []
 '''
 
