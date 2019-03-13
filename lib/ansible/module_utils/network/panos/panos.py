@@ -96,22 +96,30 @@ class ConnectionHelper(object):
                     'pandevice', pandevice.__version__,
                     _vstr(self.min_pandevice_version)))
 
-        d, host_arg, serial_number = None, None, None
-        if module.params['provider'] and module.params['provider']['host']:
-            d = module.params['provider']
-            host_arg = 'host'
-            serial_number = d['serial_number']
-        elif module.params['ip_address'] is not None:
-            d = module.params
-            host_arg = 'ip_address'
+        pan_device_auth, serial_number = None, None
+        if module.params.get('provider', {}).get('ip_address') is not None:
+            pan_device_auth = (
+                module.params['provider']['ip_address'],
+                module.params['provider']['username'],
+                module.params['provider']['password'],
+                module.params['provider']['api_key'],
+                module.params['provider']['port'],
+            )
+            serial_number = module.params['provider']['serial_number']
+        elif module.params.get('ip_address') is not None:
+            pan_device_auth = (
+                module.params['ip_address'],
+                module.params['username'],
+                module.params['password'],
+                module.params['api_key'],
+                module.params['port'],
+            )
         else:
-            module.fail_json(msg='New or classic provider params are required.')
+            module.fail_json(msg='Provider params are required.')
 
         # Create the connection object.
         try:
-            self.device = PanDevice.create_from_device(
-                d[host_arg], d['username'], d['password'],
-                d['api_key'], d['port'])
+            self.device = PanDevice.create_from_device(*pan_device_auth)
         except PanDeviceError as e:
             module.fail_json(msg='Failed connection: {0}'.format(e))
 
@@ -302,7 +310,7 @@ def get_connection(vsys=None, device_group=None,
             'type': 'dict',
             'required_one_of': [['password', 'api_key'], ],
             'options': {
-                'host': {'required': True},
+                'ip_address': {'required': True},
                 'username': {'default': 'admin'},
                 'password': {'no_log': True},
                 'api_key': {'no_log': True},
@@ -314,7 +322,7 @@ def get_connection(vsys=None, device_group=None,
 
     if with_classic_provider_spec:
         spec['provider']['required'] = False
-        spec['provider']['options']['host']['required'] = False
+        spec['provider']['options']['ip_address']['required'] = False
         del(spec['provider']['required_one_of'])
         spec.update({
             'ip_address': {'required': False},
