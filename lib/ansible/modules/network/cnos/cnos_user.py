@@ -315,7 +315,7 @@ def main():
         update_password=dict(default='always', choices=['on_create', 'always']),
         privileges=dict(type='list', aliases=['privilege']),
         no_password=dict(default='no', choices=['no', 'yes']),
-        view=dict(type='str')
+        view=dict(type='str'),
         state=dict(default='present', choices=['present', 'absent'])
     )
 
