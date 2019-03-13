@@ -108,7 +108,7 @@
   register: s3_output
   tags: setup_infra
 
-- name: include variable file to delete infra
+- name: Include variable file to delete infra
   include_vars:  "/tmp/vars_to_delete.yml"
   tags: delete_infra
 
