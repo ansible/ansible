@@ -381,13 +381,13 @@ $request_params = @{
 }
 
 if ($checksum) {
-    $checksum = $checksum.Trim().toLower()
+    $checksum = $checksum.Trim().ToLower()
 }
 if ($checksum_algorithm) {
-    $checksum_algorithm = $checksum_algorithm.Trim().toLower()
+    $checksum_algorithm = $checksum_algorithm.Trim().ToLower()
 }
 if ($checksum_url) {
-    $checksum_url = $checksum_url.Trim().toLower()
+    $checksum_url = $checksum_url.Trim()
 }
 
 # Check for case $checksum variable contain url. If yes, get file data from url and replace original value in $checksum
