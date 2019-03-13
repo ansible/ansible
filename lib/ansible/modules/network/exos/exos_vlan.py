@@ -38,20 +38,48 @@ options:
   name:
     description:
       - Name of the VLAN.
+    type: str
   vlan_id:
     description:
       - ID of the VLAN. Range 1-4094.
-    required: true
+    type: int
   interfaces:
     description:
       - List of interfaces that should be associated to the VLAN.
     required: true
+    type: list
   delay:
     description:
       - Delay the play should wait to check for declarative intent params values with default of 10 ms
     default: 10
+    type: int
   aggregate:
     description: List of VLANs definitions to be configured
+    type: list
+    suboptions:
+      name:
+        description:
+          - Name of the VLAN.
+        type: str
+      vlan_id:
+        description:
+          - ID of the VLAN. Range 1-4094.
+        required: true
+        type: int
+      interfaces:
+        description:
+          - List of interfaces that should be associated to the VLAN.
+        required: true
+        type: list
+      delay:
+        description:
+          - Delay the play should wait to check for declarative intent params values with default of 10 ms
+        type: int
+      state:
+        description:
+          - State of the VLAN configuration.
+        choices: ['present', 'absent']
+        type: str
   purge:
     description:
       - Purge VLANs not defined in the I(aggregate) parameter.
@@ -62,6 +90,7 @@ options:
       - State of the VLAN configuration.
     default: present
     choices: ['present', 'absent']
+    type: str
 """
 
 EXAMPLES = """

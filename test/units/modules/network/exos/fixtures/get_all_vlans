@@ -1,0 +1,427 @@
+{
+    "openconfig-vlan:vlans": {
+        "vlan": [
+            {
+                "config": {
+                    "name": "Default",
+                    "status": "ACTIVE",
+                    "tpid": "oc-vlan-types:TPID_0x8100",
+                    "vlan-id": 1
+                },
+                "members": {
+                    "member": [
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "10"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "11"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "12"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "13"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "14"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "15"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "16"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "17"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "18"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "19"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "20"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "21"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "22"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "23"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "24"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "25"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "26"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "27"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "28"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "29"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "30"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "31"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "32"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "33"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "34"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "35"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "36"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "37"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "38"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "39"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "4"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "40"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "41"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "42"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "43"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "44"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "45"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "46"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "47"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "48"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "49"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "5"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "50"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "51"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "52"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "53"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "54"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "6"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "7"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "8"
+                                }
+                            }
+                        },
+                        {
+                            "interface-ref": {
+                                "state": {
+                                    "interface": "9"
+                                }
+                            }
+                        }
+                    ]
+                },
+                "state": {
+                    "name": "Default",
+                    "status": "ACTIVE",
+                    "tpid": "oc-vlan-types:TPID_0x8100",
+                    "vlan-id": 1
+                },
+                "vlan-id": "1"
+            },
+            {
+                "config": {
+                    "name": "ansible_100",
+                    "status": "ACTIVE",
+                    "tpid": "oc-vlan-types:TPID_0x8100",
+                    "vlan-id": 100
+                },
+                "state": {
+                    "name": "ansible_100",
+                    "status": "ACTIVE",
+                    "tpid": "oc-vlan-types:TPID_0x8100",
+                    "vlan-id": 100
+                },
+                "vlan-id": "100"
+            },
+            {
+                "config": {
+                    "name": "ansible_200",
+                    "status": "ACTIVE",
+                    "tpid": "oc-vlan-types:TPID_0x8100",
+                    "vlan-id": 200
+                },
+                "state": {
+                    "name": "ansible_200",
+                    "status": "ACTIVE",
+                    "tpid": "oc-vlan-types:TPID_0x8100",
+                    "vlan-id": 200
+                },
+                "vlan-id": "200"
+            },
+            {
+                "config": {
+                    "name": "ansible_300",
+                    "status": "ACTIVE",
+                    "tpid": "oc-vlan-types:TPID_0x8100",
+                    "vlan-id": 300
+                },
+                "state": {
+                    "name": "ansible_300",
+                    "status": "ACTIVE",
+                    "tpid": "oc-vlan-types:TPID_0x8100",
+                    "vlan-id": 300
+                },
+                "vlan-id": "300"
+            }
+        ]
+    }
+}
