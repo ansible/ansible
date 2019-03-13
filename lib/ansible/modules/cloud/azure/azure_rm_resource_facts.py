@@ -189,7 +189,7 @@ class AzureRMResourceFacts(AzureRMModuleBase):
             if skiptoken:
                 query_parameters['skiptoken'] = skiptoken
             response = self.mgmt_client.query(self.url, "GET", query_parameters, header_parameters, None, [200, 404], 0, 0)
-            self.results['raw_response'] = response
+            self.results['raw_response'] = response.text
             try:
                 response = json.loads(response.text)
                 if isinstance(response, dict):
