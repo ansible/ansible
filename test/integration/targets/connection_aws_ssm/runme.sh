@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -eux
 
-# Execute Integration for Linux
+# Execute Integration tests for Linux
 ansible-playbook -c local aws_ssm_integration_test_setup_teardown.yml --tags setup_infra,linux
 
 cd ../connection
@@ -17,7 +17,7 @@ cd ../connection_aws_ssm
 
 ansible-playbook -c local aws_ssm_integration_test_setup_teardown.yml --tags delete_infra
 
-# Execute Integration for Windows
+# Execute Integration tests for Windows
 ansible-playbook -c local aws_ssm_integration_test_setup_teardown.yml --tags setup_infra,windows
 
 cd ../connection
