@@ -61,7 +61,7 @@ except ImportError:
     pass
 
 
-class AzureRMWorkspace(AzureRMModuleBase):
+class AzureRMWorkspaceFact(AzureRMModuleBase):
 
     def __init__(self):
 
@@ -88,7 +88,7 @@ class AzureRMWorkspace(AzureRMModuleBase):
         self.show_usages = None
         self.show_management_groups = None
 
-        super(AzureRMWorkspace, self).__init__(self.module_arg_spec, supports_check_mode=True)
+        super(AzureRMWorkspaceFact, self).__init__(self.module_arg_spec, supports_check_mode=True)
 
     def exec_module(self, **kwargs):
 
@@ -169,7 +169,7 @@ class AzureRMWorkspace(AzureRMModuleBase):
 
 
 def main():
-    AzureRMWorkspace()
+    AzureRMWorkspaceFact()
 
 
 if __name__ == '__main__':

@@ -153,18 +153,20 @@ class AzureRMWorkspace(AzureRMModuleBase):
                 self.delete_workspace()
 
         # handle the intelligence pack
-        intelligence_packs = self.list_intelligence_packs()
-        if workspace and self.intelligence_packs:
+        intelligence_packs = []
+        if workspace.id and self.intelligence_packs:
+            intelligence_packs = self.list_intelligence_packs()
             for key in self.intelligence_packs.keys():
                 enabled = self.intelligence_packs[key]
                 for x in intelligence_packs:
                     if x['name'].lower() == key.lower():
                         if x['enabled'] != enabled:
                             changed = True
-                            self.change_intelligence(x['name'], enabled)
-                            x['enabled'] = enabled
+                            if not self.check_mode:
+                                self.change_intelligence(x['name'], enabled)
+                                x['enabled'] = enabled
                         break
-        if workspace:
+        if workspace.id:
             self.results = self.to_dict(workspace)
             self.results['intelligence_packs'] = intelligence_packs
             self.results['management_groups'] = self.list_management_groups()
