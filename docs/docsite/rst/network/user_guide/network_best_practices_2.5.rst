@@ -1,8 +1,8 @@
 .. _network-best-practices:
 
-****************************
-Network Examples for Ansible
-****************************
+************************
+Ansible Network Examples
+************************
 
 This document describes some examples of using Ansible to manage your network infrastructure.
 
