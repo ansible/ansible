@@ -1,20 +1,7 @@
 # Test playbook for the listen_ports_facts module
-# (c) 2019, Nathan Davison <ndavison85@gmail.com>
+# Copyright: (c) 2019, Nathan Davison <ndavison85@gmail.com>
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 - name: install netstat and netcat on deb
   apt:
@@ -44,13 +31,19 @@
   when: ansible_os_family == "RedHat" and ansible_distribution_major_version|int >= 7
 
 - name: start UDP server on port 5555
-  shell: nc -u -l 5555 &
+  command: nc -u -l 5555
+  async: 45
+  poll: 0
 
 - name: start UDP server on port 5556
-  shell: nc -u -l 5556 &
+  command: nc -u -l 5556
+  async: 45
+  poll: 0
 
 - name: start TCP server on port 5557
-  shell: nc -l 5557 &
+  command: nc -l 5557
+  async: 45
+  poll: 0
 
 - name: Gather listening ports facts with whitelists
   listen_ports_facts:
