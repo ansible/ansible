@@ -72,8 +72,8 @@
   assert:
     that:
       - not output.changed
-      - output.response[0].name is not None
-      - output.response | lenght == 1
+      - output.response[0]['name'] is not None
+      - output.response | length == 1
 
 - name: Try to query a list
   azure_rm_resource_facts:
@@ -86,7 +86,7 @@
   assert:
     that:
       - not output.changed
-      - output.response[0].name is not None
+      - output.response[0]['name'] is not None
       - output.response | length > 1
 
 - name: Create storage account that requires LRO polling
