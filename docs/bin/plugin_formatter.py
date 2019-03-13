@@ -321,6 +321,10 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
         if module_categories:
             primary_category = module_categories[0]
 
+        if not doc:
+            display.error("*** ERROR: DOCUMENTATION section missing for %s. ***" % module_path)
+            continue
+
         if 'options' in doc and doc['options'] is None:
             display.error("*** ERROR: DOCUMENTATION.options must be a dictionary/hash when used. ***")
             pos = getattr(doc, "ansible_pos", None)
