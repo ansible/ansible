@@ -129,6 +129,22 @@
       - not create_group_gid_again is changed
       - create_group_gid_again.gid | int == gid.stdout_lines[0] | int
 
+- block:
+    - name: create a group with a non-unique gid
+      group:
+        name: ansibullgroup3
+        gid: '{{ gid.stdout_lines[0] }}'
+        non_unique: true
+        state: present
+      register: create_group_gid_non_unique
+
+    - name: assert create group with a non unique gid
+      assert:
+          that:
+          - create_group_gid_non_unique is changed
+          - create_group_gid_non_unique.gid | int == gid.stdout_lines[0] | int
+  when: ansible_facts.system != 'Darwin'
+
 ##
 ## group remove
 ##
