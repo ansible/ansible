@@ -53,6 +53,17 @@
       - volume.hcloud_volume.size == 10
       - volume.hcloud_volume.server != "{{hcloud_server_name}}"
 
+- name: test create volume idempotence
+  hcloud_volume:
+    name: "{{hcloud_volume_name}}"
+    size: 10
+    location: "fsn1"
+  register: volume
+- name: verify test create volume
+  assert:
+    that:
+      - result is not changed
+
 - name: test attach volume with checkmode
   hcloud_volume:
     name: "{{hcloud_volume_name}}"
