@@ -18,7 +18,7 @@ options:
       - The domain name of an ACM certificate to limit the search to
     aliases:
       - name
-  status:
+  statuses:
     description:
       - Status to filter the certificate results
     choices: ['PENDING_VALIDATION', 'ISSUED', 'INACTIVE', 'EXPIRED', 'VALIDATION_TIMED_OUT']
