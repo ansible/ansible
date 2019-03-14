@@ -261,7 +261,7 @@ Function Get-FileStat($file) {
         }
         
         # only get the size of a directory if there are files (not directories) inside the folder
-        $dir_files_sum = Get-ChildItem $file.FullName -Recurse | Where-Object { -not $_.PSIsContainer }
+        $dir_files_sum = Get-ChildItem -LiteralPath $file.FullName -Recurse | Where-Object { -not $_.PSIsContainer }
 
         if ($dir_files_sum -eq $null -or ($dir_files_sum.PSObject.Properties.name -contains 'length' -eq $false)) {
             $file_stat.size = 0
@@ -291,7 +291,7 @@ Function Get-FileStat($file) {
 
 Function Get-FilesInFolder($path) {
     $items = @()
-    foreach ($item in (Get-ChildItem -Force -Path $path -ErrorAction SilentlyContinue)) {
+    foreach ($item in (Get-ChildItem -Force -LiteralPath $path -ErrorAction SilentlyContinue)) {
         if ($item.PSIsContainer -and $recurse) {
             if (($item.Attributes -like '*ReparsePoint*' -and $follow) -or ($item.Attributes -notlike '*ReparsePoint*')) {
                 # File is a link and we want to follow a link OR file is not a link
@@ -311,8 +311,8 @@ Function Get-FilesInFolder($path) {
 
 $paths_to_check = @()
 foreach ($path in $paths) {
-    if (Test-Path $path) {
-        if ((Get-Item -Force $path).PSIsContainer) {
+    if (Test-Path -LiteralPath $path) {
+        if ((Get-Item -LiteralPath $path -Force).PSIsContainer) {
             $paths_to_check += Get-FilesInFolder -path $path
         } else {
             Fail-Json $result "Argument path $path is a file not a directory"
@@ -325,7 +325,7 @@ $paths_to_check = $paths_to_check | Select-Object -Unique
 
 foreach ($path in $paths_to_check) {
     try {
-        $file = Get-Item -Force -Path $path
+        $file = Get-Item -LiteralPath $path -Force
         $info = Get-FileStat -file $file
     } catch {
         Add-Warning -obj $result -message "win_find failed to check some files, these files were ignored and will not be part of the result output"

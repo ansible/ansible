@@ -46,9 +46,9 @@ Function Get-ExecutablePath {
     $full_path = [System.IO.Path]::GetFullPath($executable)
 
     if ($full_path -ne $executable -and $directory -ne $null) {
-        $file = Get-Item -Path "$directory\$executable" -Force -ErrorAction SilentlyContinue
+        $file = Get-Item -LiteralPath "$directory\$executable" -Force -ErrorAction SilentlyContinue
     } else {
-        $file = Get-Item -Path $executable -Force -ErrorAction SilentlyContinue
+        $file = Get-Item -LiteralPath $executable -Force -ErrorAction SilentlyContinue
     }
 
     if ($file -ne $null) {

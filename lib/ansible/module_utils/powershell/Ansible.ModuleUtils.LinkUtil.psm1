@@ -425,7 +425,7 @@ Function Remove-Link($link_path) {
 }
 
 Function New-Link($link_path, $link_target, $link_type) {
-    if (-not (Test-Path -Path $link_target)) {
+    if (-not (Test-Path -LiteralPath $link_target)) {
         throw "link_target '$link_target' does not exist, cannot create link"
     }
     

@@ -22,14 +22,14 @@
 - name: fail to copy a file with parent dir that doesn't exist and filename is set
   win_copy:
     src: foo.txt
-    dest: '{{test_win_copy_path}}\missing-dir\foo.txt'
+    dest: '{{ remote_tmp_dir }}\missing-dir\foo.txt'
   register: fail_missing_parent_dir
   failed_when: "'does not exist' not in fail_missing_parent_dir.msg"
 
 - name: fail to copy an encrypted file without the password set
   win_copy:
     src: '{{role_path}}/files-different/vault/vault-file'
-    dest: '{{test_win_copy_path}}\file'
+    dest: '{{ remote_tmp_dir }}\file'
   register: fail_copy_encrypted_file
   ignore_errors: yes # weird failed_when doesn't work in this case
 
@@ -42,7 +42,7 @@
 - name: fail to copy a directory with an encrypted file without the password
   win_copy:
     src: '{{role_path}}/files-different/vault'
-    dest: '{{test_win_copy_path}}'
+    dest: '{{ remote_tmp_dir }}'
   register: fail_copy_directory_with_enc_file
   ignore_errors: yes
 
@@ -55,13 +55,13 @@
 - name: copy with content (check mode)
   win_copy:
     content: a
-    dest: '{{test_win_copy_path}}\file'
+    dest: '{{ remote_tmp_dir }}\file'
   register: copy_content_check
   check_mode: yes
 
 - name: get result of copy with content (check mode)
   win_stat:
-    path: '{{test_win_copy_path}}\file'
+    path: '{{ remote_tmp_dir }}\file'
   register: copy_content_actual_check
 
 - name: assert copy with content (check mode)
@@ -76,12 +76,12 @@
 - name: copy with content
   win_copy:
     content: a
-    dest: '{{test_win_copy_path}}\file'
+    dest: '{{ remote_tmp_dir }}\file'
   register: copy_content
 
 - name: get result of copy with content
   win_stat:
-    path: '{{test_win_copy_path}}\file'
+    path: '{{ remote_tmp_dir }}\file'
   register: copy_content_actual
 
 - name: assert copy with content
@@ -97,7 +97,7 @@
 - name: copy with content (idempotent)
   win_copy:
     content: a
-    dest: '{{test_win_copy_path}}\file'
+    dest: '{{ remote_tmp_dir }}\file'
   register: copy_content_again
 
 - name: assert copy with content (idempotent)
@@ -108,7 +108,7 @@
 - name: copy with content change when missing
   win_copy:
     content: b
-    dest: '{{test_win_copy_path}}\file'
+    dest: '{{ remote_tmp_dir }}\file'
     force: no
   register: copy_content_when_missing
 
@@ -120,13 +120,13 @@
 - name: copy single file (check mode)
   win_copy:
     src: foo.txt
-    dest: '{{test_win_copy_path}}\foo-target.txt'
+    dest: '{{ remote_tmp_dir }}\foo-target.txt'
   register: copy_file_check
   check_mode: yes
 
 - name: get result of copy single file (check mode)
   win_stat:
-    path: '{{test_win_copy_path}}\foo-target.txt'
+    path: '{{ remote_tmp_dir }}\foo-target.txt'
   register: copy_file_actual_check
 
 - name: assert copy single file (check mode)
@@ -134,7 +134,7 @@
     that:
     - copy_file_check is changed
     - copy_file_check.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
-    - copy_file_check.dest == test_win_copy_path + '\\foo-target.txt'
+    - copy_file_check.dest == remote_tmp_dir + '\\foo-target.txt'
     - copy_file_check.operation == 'file_copy'
     - copy_file_check.size == 8
     - copy_file_actual_check.stat.exists == False
@@ -142,12 +142,12 @@
 - name: copy single file
   win_copy:
     src: foo.txt
-    dest: '{{test_win_copy_path}}\foo-target.txt'
+    dest: '{{ remote_tmp_dir }}\foo-target.txt'
   register: copy_file
 
 - name: get result of copy single file
   win_stat:
-    path: '{{test_win_copy_path}}\foo-target.txt'
+    path: '{{ remote_tmp_dir }}\foo-target.txt'
   register: copy_file_actual
 
 - name: assert copy single file
@@ -155,7 +155,7 @@
     that:
     - copy_file is changed
     - copy_file.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
-    - copy_file.dest == test_win_copy_path + '\\foo-target.txt'
+    - copy_file.dest == remote_tmp_dir + '\\foo-target.txt'
     - copy_file.operation == 'file_copy'
     - copy_file.size == 8
     - copy_file_actual.stat.exists == True
@@ -164,7 +164,7 @@
 - name: copy single file (idempotent)
   win_copy:
     src: foo.txt
-    dest: '{{test_win_copy_path}}\foo-target.txt'
+    dest: '{{ remote_tmp_dir }}\foo-target.txt'
   register: copy_file_again
 
 - name: assert copy single file (idempotent)
@@ -175,7 +175,7 @@
 - name: copy single file (backup)
   win_copy:
     content: "{{ lookup('file', 'foo.txt') }}\nfoo bar"
-    dest: '{{test_win_copy_path}}\foo-target.txt'
+    dest: '{{ remote_tmp_dir }}\foo-target.txt'
     backup: yes
   register: copy_file_backup
 
@@ -193,13 +193,13 @@
 - name: copy single file to folder (check mode)
   win_copy:
     src: foo.txt
-    dest: '{{test_win_copy_path}}\'
+    dest: '{{ remote_tmp_dir }}\'
   register: copy_file_to_folder_check
   check_mode: yes
 
 - name: get result of copy single file to folder (check mode)
   win_stat:
-    path: '{{test_win_copy_path}}\foo.txt'
+    path: '{{ remote_tmp_dir }}\foo.txt'
   register: copy_file_to_folder_actual_check
 
 - name: assert copy single file to folder (check mode)
@@ -207,7 +207,7 @@
     that:
     - copy_file_to_folder_check is changed
     - copy_file_to_folder_check.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
-    - copy_file_to_folder_check.dest == test_win_copy_path + '\\foo.txt'
+    - copy_file_to_folder_check.dest == remote_tmp_dir + '\\foo.txt'
     - copy_file_to_folder_check.operation == 'file_copy'
     - copy_file_to_folder_check.size == 8
     - copy_file_to_folder_actual_check.stat.exists == False
@@ -215,12 +215,12 @@
 - name: copy single file to folder
   win_copy:
     src: foo.txt
-    dest: '{{test_win_copy_path}}\'
+    dest: '{{ remote_tmp_dir }}\'
   register: copy_file_to_folder
 
 - name: get result of copy single file to folder
   win_stat:
-    path: '{{test_win_copy_path}}\foo.txt'
+    path: '{{ remote_tmp_dir }}\foo.txt'
   register: copy_file_to_folder_actual
 
 - name: assert copy single file to folder
@@ -228,7 +228,7 @@
     that:
     - copy_file_to_folder is changed
     - copy_file_to_folder.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
-    - copy_file_to_folder.dest == test_win_copy_path + '\\foo.txt'
+    - copy_file_to_folder.dest == remote_tmp_dir + '\\foo.txt'
     - copy_file_to_folder.operation == 'file_copy'
     - copy_file_to_folder.size == 8
     - copy_file_to_folder_actual.stat.exists == True
@@ -237,7 +237,7 @@
 - name: copy single file to folder (idempotent)
   win_copy:
     src: foo.txt
-    dest: '{{test_win_copy_path}}\'
+    dest: '{{ remote_tmp_dir }}\'
   register: copy_file_to_folder_again
 
 - name: assert copy single file to folder (idempotent)
@@ -248,13 +248,13 @@
 - name: copy single file to missing folder (check mode)
   win_copy:
     src: foo.txt
-    dest: '{{test_win_copy_path}}\missing\'
+    dest: '{{ remote_tmp_dir }}\missing\'
   register: copy_file_to_missing_folder_check
   check_mode: yes
 
 - name: get result of copy single file to missing folder (check mode)
   win_stat:
-    path: '{{test_win_copy_path}}\missing\foo.txt'
+    path: '{{ remote_tmp_dir }}\missing\foo.txt'
   register: copy_file_to_missing_folder_actual_check
 
 - name: assert copy single file to missing folder (check mode)
@@ -269,12 +269,12 @@
 - name: copy single file to missing folder
   win_copy:
     src: foo.txt
-    dest: '{{test_win_copy_path}}\missing\'
+    dest: '{{ remote_tmp_dir }}\missing\'
   register: copy_file_to_missing_folder
 
 - name: get result of copy single file to missing folder
   win_stat:
-    path: '{{test_win_copy_path}}\missing\foo.txt'
+    path: '{{ remote_tmp_dir }}\missing\foo.txt'
   register: copy_file_to_missing_folder_actual
 
 - name: assert copy single file to missing folder
@@ -290,13 +290,13 @@
 - name: copy folder (check mode)
   win_copy:
     src: files
-    dest: '{{test_win_copy_path}}\recursive\folder'
+    dest: '{{ remote_tmp_dir }}\recursive\folder'
   register: copy_folder_check
   check_mode: yes
 
 - name: get result of copy folder (check mode)
   win_stat:
-    path: '{{test_win_copy_path}}\recursive\folder'
+    path: '{{ remote_tmp_dir }}\recursive\folder'
   register: copy_folder_actual_check
 
 - name: assert copy folder (check mode)
@@ -309,12 +309,12 @@
 - name: copy folder
   win_copy:
     src: files
-    dest: '{{test_win_copy_path}}\recursive\folder'
+    dest: '{{ remote_tmp_dir }}\recursive\folder'
   register: copy_folder
 
 - name: get result of copy folder
   win_find:
-    paths: '{{test_win_copy_path}}\recursive\folder'
+    paths: '{{ remote_tmp_dir }}\recursive\folder'
     recurse: yes
     file_type: directory
   register: copy_folder_actual
@@ -336,7 +336,7 @@
 - name: copy folder (idempotent)
   win_copy:
     src: files
-    dest: '{{test_win_copy_path}}\recursive\folder'
+    dest: '{{ remote_tmp_dir }}\recursive\folder'
   register: copy_folder_again
 
 - name: assert copy folder (idempotent)
@@ -347,22 +347,22 @@
 - name: change the text of a file in the remote source
   win_copy:
     content: bar.txt
-    dest: '{{test_win_copy_path}}\recursive\folder\files\foo.txt'
+    dest: '{{ remote_tmp_dir }}\recursive\folder\files\foo.txt'
 
 - name: remove folder for test of recursive copy
   win_file:
-    path: '{{test_win_copy_path}}\recursive\folder\files\subdir\subdir2\subdir3\subdir4'
+    path: '{{ remote_tmp_dir }}\recursive\folder\files\subdir\subdir2\subdir3\subdir4'
     state: absent
 
 - name: copy folder after changes
   win_copy:
     src: files
-    dest: '{{test_win_copy_path}}\recursive\folder'
+    dest: '{{ remote_tmp_dir }}\recursive\folder'
   register: copy_folder_after_change
 
 - name: get result of copy folder after changes
   win_find:
-    paths: '{{test_win_copy_path}}\recursive\folder\files'
+    paths: '{{ remote_tmp_dir }}\recursive\folder\files'
     recurse: yes
     patterns: ['foo.txt', 'qux.txt']
   register: copy_folder_after_changes_actual
@@ -378,13 +378,13 @@
 - name: copy folder's contents (check mode)
   win_copy:
     src: files/
-    dest: '{{test_win_copy_path}}\recursive-contents\'
+    dest: '{{ remote_tmp_dir }}\recursive-contents\'
   register: copy_folder_contents_check
   check_mode: yes
 
 - name: get result of copy folder'scontents (check mode)
   win_stat:
-    path: '{{test_win_copy_path}}\recursive-contents'
+    path: '{{ remote_tmp_dir }}\recursive-contents'
   register: copy_folder_contents_actual_check
 
 - name: assert copy folder's contents (check mode)
@@ -397,12 +397,12 @@
 - name: copy folder's contents
   win_copy:
     src: files/
-    dest: '{{test_win_copy_path}}\recursive-contents\'
+    dest: '{{ remote_tmp_dir }}\recursive-contents\'
   register: copy_folder_contents
 
 - name: get result of copy folder
   win_find:
-    paths: '{{test_win_copy_path}}\recursive-contents'
+    paths: '{{ remote_tmp_dir }}\recursive-contents'
     recurse: yes
     file_type: directory
   register: copy_folder_contents_actual
@@ -423,14 +423,14 @@
 - name: fail to copy file to a folder
   win_copy:
     src: foo.txt
-    dest: '{{test_win_copy_path}}\recursive-contents'
+    dest: '{{ remote_tmp_dir }}\recursive-contents'
   register: fail_file_to_folder
   failed_when: "'object at path is already a directory' not in fail_file_to_folder.msg"
 
 - name: fail to copy folder to a file
   win_copy:
     src: subdir/
-    dest: '{{test_win_copy_path}}\recursive-contents\foo.txt'
+    dest: '{{ remote_tmp_dir }}\recursive-contents\foo.txt'
   register: fail_folder_to_file
   failed_when: "'object at parent directory path is already a file' not in fail_folder_to_file.msg"
 
@@ -444,12 +444,12 @@
 - name: copy a file with colon as a source
   win_copy:
     src: '{{role_path}}/files-different/colon:file'
-    dest: '{{test_win_copy_path}}\colon.file'
+    dest: '{{ remote_tmp_dir }}\colon.file'
   register: copy_file_with_colon
 
 - name: get result of file with colon as a source
   win_stat:
-    path: '{{test_win_copy_path}}\colon.file'
+    path: '{{ remote_tmp_dir }}\colon.file'
   register: copy_file_with_colon_result
 
 - name: assert results of copy a file with colon as a source
@@ -468,13 +468,13 @@
 - name: copy an encrypted file without decrypting
   win_copy:
     src: '{{role_path}}/files-different/vault/vault-file'
-    dest: '{{test_win_copy_path}}\vault-file'
+    dest: '{{ remote_tmp_dir }}\vault-file'
     decrypt: no
   register: copy_encrypted_file
 
 - name: get stat of copied encrypted file without decrypting
   win_stat:
-    path: '{{test_win_copy_path}}\vault-file'
+    path: '{{ remote_tmp_dir }}\vault-file'
   register: copy_encrypted_file_result
 
 - name: assert result of copy an encrypted file without decrypting
@@ -486,7 +486,7 @@
 - name: copy an encrypted file without decrypting (idempotent)
   win_copy:
     src: '{{role_path}}/files-different/vault/vault-file'
-    dest: '{{test_win_copy_path}}\vault-file'
+    dest: '{{ remote_tmp_dir }}\vault-file'
     decrypt: no
   register: copy_encrypted_file_again
 
@@ -498,13 +498,13 @@
 - name: copy folder with encrypted files without decrypting
   win_copy:
     src: '{{role_path}}/files-different/vault/'
-    dest: '{{test_win_copy_path}}\encrypted-test'
+    dest: '{{ remote_tmp_dir }}\encrypted-test'
     decrypt: no
   register: copy_encrypted_file
 
 - name: get result of copy folder with encrypted files without decrypting
   win_find:
-    paths: '{{test_win_copy_path}}\encrypted-test'
+    paths: '{{ remote_tmp_dir }}\encrypted-test'
     recurse: yes
     patterns: '*vault*'
   register: copy_encrypted_file_result
@@ -520,7 +520,7 @@
 - name: copy folder with encrypted files without decrypting (idempotent)
   win_copy:
     src: '{{role_path}}/files-different/vault/'
-    dest: '{{test_win_copy_path}}\encrypted-test'
+    dest: '{{ remote_tmp_dir }}\encrypted-test'
     decrypt: no
   register: copy_encrypted_file_again
 
@@ -531,5 +531,5 @@
 
 - name: remove test folder after local to remote tests
   win_file:
-    path: '{{test_win_copy_path}}'
+    path: '{{ remote_tmp_dir }}'
     state: absent

@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- set_fact: output_file={{win_output_dir}}\\foo.txt
+- set_fact: output_file={{ remote_tmp_dir }}\\foo.txt
 
 - name: prep with a basic win copy
   win_copy: src=foo.txt dest={{output_file}}
@@ -32,7 +32,7 @@
 #      - "file_result.state == 'file'"
 
 - name: verify that we are checking an absent file
-  win_file: path={{win_output_dir}}/bar.txt state=absent
+  win_file: path={{ remote_tmp_dir }}/bar.txt state=absent
   register: file2_result
 
 - name: verify that the file was marked as changed
@@ -43,14 +43,14 @@
 
 - name: verify we can touch a file (check)
   win_file:
-    path: '{{win_output_dir}}\touch.txt'
+    path: '{{ remote_tmp_dir }}\touch.txt'
     state: touch
   register: touch_file_check
   check_mode: yes
 
 - name: get details of touched file (check)
   win_stat:
-    path: '{{win_output_dir}}\touch.txt'
+    path: '{{ remote_tmp_dir }}\touch.txt'
   register: touch_file_actual_check
 
 - name: assert touch a file (check)
@@ -60,12 +60,12 @@
     - not touch_file_actual_check.stat.exists
 
 - name: verify we can touch a file
-  win_file: path={{win_output_dir}}/touch.txt state=touch
+  win_file: path={{ remote_tmp_dir }}/touch.txt state=touch
   register: touch_file
 
 - name: get details of touched file
   win_stat:
-    path: '{{win_output_dir}}\touch.txt'
+    path: '{{ remote_tmp_dir }}\touch.txt'
   register: touch_file_actual
 
 - name: assert touch a file
@@ -77,13 +77,13 @@
 
 - name: touch a file again
   win_file:
-    path: '{{win_output_dir}}\touch.txt'
+    path: '{{ remote_tmp_dir }}\touch.txt'
     state: touch
   register: touch_file_again
 
 - name: get details of touched file again
   win_stat:
-    path: '{{win_output_dir}}\touch.txt'
+    path: '{{ remote_tmp_dir }}\touch.txt'
   register: touch_file_actual_again
 
 - name: assert touch a file again
@@ -94,14 +94,14 @@
 
 - name: touch an existing file in check mode
   win_file:
-    path: '{{win_output_dir}}\touch.txt'
+    path: '{{ remote_tmp_dir }}\touch.txt'
     state: touch
   register: touch_file_again_check
   check_mode: yes
 
 - name: get details of touched file in check mode
   win_stat:
-    path: '{{win_output_dir}}\touch.txt'
+    path: '{{ remote_tmp_dir }}\touch.txt'
   register: touch_file_again_actual_check
 
 - name: assert touch an existing file in check mode
@@ -111,7 +111,7 @@
     - touch_file_again_actual_check.stat.lastwritetime == touch_file_actual_again.stat.lastwritetime
 
 #- name: change file mode
-#  win_file: path={{win_output_dir}}/baz.txt mode=0600
+#  win_file: path={{ remote_tmp_dir }}/baz.txt mode=0600
 #  register: file4_result
 
 #- name: verify that the file was marked as changed
@@ -121,7 +121,7 @@
 #      - "file4_result.mode == '0600'"
 #
 #- name: change ownership and group
-#  win_file: path={{win_output_dir}}/baz.txt owner=1234 group=1234
+#  win_file: path={{ remote_tmp_dir }}/baz.txt owner=1234 group=1234
 #
 #- name: setup a tmp-like directory for ownership test
 #  win_file: path=/tmp/worldwritable mode=1777 state=directory
@@ -147,7 +147,7 @@
 #  win_file: path=/tmp/worldwritable state=absent
 
 #- name: create soft link to file
-#  win_file: src={{output_file}} dest={{win_output_dir}}/soft.txt state=link
+#  win_file: src={{output_file}} dest={{ remote_tmp_dir }}/soft.txt state=link
 #  register: file5_result
 
 #- name: verify that the file was marked as changed
@@ -156,7 +156,7 @@
 #      - "file5_result.changed == true"
 #
 #- name: create hard link to file
-#  win_file: src={{output_file}} dest={{win_output_dir}}/hard.txt state=hard
+#  win_file: src={{output_file}} dest={{ remote_tmp_dir }}/hard.txt state=hard
 #  register: file6_result
 #
 #- name: verify that the file was marked as changed
@@ -165,7 +165,7 @@
 #      - "file6_result.changed == true"
 #
 - name: create a directory
-  win_file: path={{win_output_dir}}/foobar state=directory
+  win_file: path={{ remote_tmp_dir }}/foobar state=directory
   register: file7_result
 
 - debug: var=file7_result
@@ -192,22 +192,22 @@
 #  when: selinux_installed.stdout != "" and selinux_enabled.stdout != "Disabled"
 
 - name: remote directory foobar
-  win_file: path={{win_output_dir}}/foobar state=absent
+  win_file: path={{ remote_tmp_dir }}/foobar state=absent
 
 - name: remove file foo.txt
-  win_file: path={{win_output_dir}}/foo.txt state=absent
+  win_file: path={{ remote_tmp_dir }}/foo.txt state=absent
 
 - name: remove file bar.txt
-  win_file: path={{win_output_dir}}/foo.txt state=absent
+  win_file: path={{ remote_tmp_dir }}/foo.txt state=absent
 
 - name: remove file baz.txt
-  win_file: path={{win_output_dir}}/foo.txt state=absent
+  win_file: path={{ remote_tmp_dir }}/foo.txt state=absent
 
 - name: win copy directory structure over
-  win_copy: src=foobar dest={{win_output_dir}}
+  win_copy: src=foobar dest={{ remote_tmp_dir }}
 
 - name: remove directory foobar
-  win_file: path={{win_output_dir}}/foobar state=absent
+  win_file: path={{ remote_tmp_dir }}/foobar state=absent
   register: file14_result
 
 - debug: var=file14_result
@@ -219,7 +219,7 @@
 #      - 'file14_result.state == "absent"'
 
 - name: create a test sub-directory
-  win_file: dest={{win_output_dir}}/sub1 state=directory
+  win_file: dest={{ remote_tmp_dir }}/sub1 state=directory
   register: file15_result
 
 - name: verify that the new directory was created
@@ -229,7 +229,7 @@
 #      - 'file15_result.state == "directory"'
 
 - name: create test files in the sub-directory
-  win_file: dest={{win_output_dir}}/sub1/{{item}} state=touch
+  win_file: dest={{ remote_tmp_dir }}/sub1/{{item}} state=touch
   with_items:
   - file1
   - file2
@@ -244,7 +244,7 @@
   with_items: "{{file16_result.results}}"
 
 #- name: try to force the sub-directory to a link
-#  win_file: src={{win_output_dir}}/testing dest={{win_output_dir}}/sub1 state=link force=yes
+#  win_file: src={{ remote_tmp_dir }}/testing dest={{ remote_tmp_dir }}/sub1 state=link force=yes
 #  register: file17_result
 #  ignore_errors: true
 
@@ -255,7 +255,7 @@
 #      - 'file17_result.state == "directory"'
 
 #- name: create soft link to directory using absolute path
-#  win_file: src=/ dest={{win_output_dir}}/root state=link
+#  win_file: src=/ dest={{ remote_tmp_dir }}/root state=link
 #  register: file18_result
 #
 #- name: verify that the result was marked as changed
@@ -264,7 +264,7 @@
 #      - "file18_result.changed == true"
 #
 - name: create another test sub-directory
-  win_file: dest={{win_output_dir}}/sub2 state=directory
+  win_file: dest={{ remote_tmp_dir }}/sub2 state=directory
   register: file19_result
 
 - name: verify that the new directory was created
@@ -274,7 +274,7 @@
 #      - 'file19_result.state == "directory"'
 
 #- name: create soft link to relative file
-#  win_file: src=../sub1/file1 dest={{win_output_dir}}/sub2/link1 state=link
+#  win_file: src=../sub1/file1 dest={{ remote_tmp_dir }}/sub2/link1 state=link
 #  register: file20_result
 #
 #- name: verify that the result was marked as changed
@@ -283,7 +283,7 @@
 #      - "file20_result.changed == true"
 
 #- name: create soft link to relative directory
-#  win_file: src=sub1 dest={{win_output_dir}}/sub1-link state=link
+#  win_file: src=sub1 dest={{ remote_tmp_dir }}/sub1-link state=link
 #  register: file21_result
 #
 #- name: verify that the result was marked as changed
@@ -292,7 +292,7 @@
 #      - "file21_result.changed == true"
 #
 #- name: test file creation with symbolic mode
-#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=u=rwx,g=rwx,o=rwx
+#  win_file: dest={{ remote_tmp_dir }}/test_symbolic state=touch mode=u=rwx,g=rwx,o=rwx
 #  register: result
 #
 #- name: assert file mode
@@ -301,7 +301,7 @@
 #    - result.mode == '0777'
 
 #- name: modify symbolic mode for all
-#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=a=r
+#  win_file: dest={{ remote_tmp_dir }}/test_symbolic state=touch mode=a=r
 #  register: result
 #
 #- name: assert file mode
@@ -310,7 +310,7 @@
 #    - result.mode == '0444'
 
 #- name: modify symbolic mode for owner
-#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=u+w
+#  win_file: dest={{ remote_tmp_dir }}/test_symbolic state=touch mode=u+w
 #  register: result
 #
 #- name: assert file mode
@@ -319,7 +319,7 @@
 #    - result.mode == '0644'
 
 #- name: modify symbolic mode for group
-#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=g+w
+#  win_file: dest={{ remote_tmp_dir }}/test_symbolic state=touch mode=g+w
 #  register: result
 #
 #- name: assert file mode
@@ -328,7 +328,7 @@
 #    - result.mode == '0664'
 #
 #- name: modify symbolic mode for world
-#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=o+w
+#  win_file: dest={{ remote_tmp_dir }}/test_symbolic state=touch mode=o+w
 #  register: result
 #
 #- name: assert file mode
@@ -337,7 +337,7 @@
 #    - result.mode == '0666'
 #
 #- name: modify symbolic mode for owner
-#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=u+x
+#  win_file: dest={{ remote_tmp_dir }}/test_symbolic state=touch mode=u+x
 #  register: result
 #
 #- name: assert file mode
@@ -346,7 +346,7 @@
 #    - result.mode == '0766'
 ##
 #- name: modify symbolic mode for group
-#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=g+x
+#  win_file: dest={{ remote_tmp_dir }}/test_symbolic state=touch mode=g+x
 #  register: result
 #
 #- name: assert file mode
@@ -355,7 +355,7 @@
 #    - result.mode == '0776'
 #
 #- name: modify symbolic mode for world
-#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=o+x
+#  win_file: dest={{ remote_tmp_dir }}/test_symbolic state=touch mode=o+x
 #  register: result
 #
 #- name: assert file mode
@@ -364,7 +364,7 @@
 #    - result.mode == '0777'
 
 #- name: remove symbolic mode for world
-#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=o-wx
+#  win_file: dest={{ remote_tmp_dir }}/test_symbolic state=touch mode=o-wx
 #  register: result
 #
 #- name: assert file mode
@@ -373,7 +373,7 @@
 #    - result.mode == '0774'
 #
 #- name: remove symbolic mode for group
-#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=g-wx
+#  win_file: dest={{ remote_tmp_dir }}/test_symbolic state=touch mode=g-wx
 #  register: result
 #
 #- name: assert file mode
@@ -382,7 +382,7 @@
 #    - result.mode == '0744'
 
 #- name: remove symbolic mode for owner
-#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=u-wx
+#  win_file: dest={{ remote_tmp_dir }}/test_symbolic state=touch mode=u-wx
 #  register: result
 
 #- name: assert file mode
@@ -391,7 +391,7 @@
 #    - result.mode == '0444'
 #
 #- name: set sticky bit with symbolic mode
-#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=o+t
+#  win_file: dest={{ remote_tmp_dir }}/test_symbolic state=touch mode=o+t
 #  register: result
 
 #- name: assert file mode
@@ -400,7 +400,7 @@
 #    - result.mode == '01444'
 #
 #- name: remove sticky bit with symbolic mode
-#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=o-t
+#  win_file: dest={{ remote_tmp_dir }}/test_symbolic state=touch mode=o-t
 #  register: result
 #
 #- name: assert file mode
@@ -409,7 +409,7 @@
 #    - result.mode == '0444'
 
 #- name: add setgid with symbolic mode
-#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=g+s
+#  win_file: dest={{ remote_tmp_dir }}/test_symbolic state=touch mode=g+s
 #  register: result
 #
 #- name: assert file mode
@@ -418,7 +418,7 @@
 #    - result.mode == '02444'
 #
 #- name: remove setgid with symbolic mode
-#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=g-s
+#  win_file: dest={{ remote_tmp_dir }}/test_symbolic state=touch mode=g-s
 #  register: result
 #
 #- name: assert file mode
@@ -427,7 +427,7 @@
 #    - result.mode == '0444'
 
 #- name: add setuid with symbolic mode
-#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=u+s
+#  win_file: dest={{ remote_tmp_dir }}/test_symbolic state=touch mode=u+s
 #  register: result
 #
 #- name: assert file mode
@@ -436,7 +436,7 @@
 #    - result.mode == '04444'
 
 #- name: remove setuid with symbolic mode
-#  win_file: dest={{win_output_dir}}/test_symbolic state=touch mode=u-s
+#  win_file: dest={{ remote_tmp_dir }}/test_symbolic state=touch mode=u-s
 #  register: result
 #
 #- name: assert file mode
@@ -448,13 +448,13 @@
 # symlink is modified, rather than the link itself
 
 #- name: create a test file
-#  win_copy: dest={{win_output_dir}}\test_follow content="this is a test file\n" mode=0666
+#  win_copy: dest={{ remote_tmp_dir }}\test_follow content="this is a test file\n" mode=0666
 
 #- name: create a symlink to the test file
-#  win_file: path={{win_output_dir}}\test_follow_link src="./test_follow" state=link
+#  win_file: path={{ remote_tmp_dir }}\test_follow_link src="./test_follow" state=link
 #
 #- name: modify the permissions on the link using follow=yes
-#  win_file: path={{win_output_dir}}\test_follow_link mode=0644 follow=yes
+#  win_file: path={{ remote_tmp_dir }}\test_follow_link mode=0644 follow=yes
 #  register: result
 
 #- name: assert that the chmod worked
@@ -463,7 +463,7 @@
 #    - result.changed
 #
 #- name: stat the link target
-#  win_stat: path={{win_output_dir}}/test_follow
+#  win_stat: path={{ remote_tmp_dir }}/test_follow
 #  register: result
 #
 #- name: assert that the link target was modified correctly
@@ -472,11 +472,11 @@
 ##    - result.stat.mode == '0644'
 
 - name: create a directory
-  win_file: path={{win_output_dir}}/dirtest state=directory
+  win_file: path={{ remote_tmp_dir }}/dirtest state=directory
   register: file_result
 
 - name: stat the directory created
-  win_stat: path={{win_output_dir}}/dirtest
+  win_stat: path={{ remote_tmp_dir }}/dirtest
   register: stat_result
 
 - name: assert the directory was created
@@ -487,11 +487,11 @@
        - stat_result.stat.isdir
 
 - name: re run create directory (bug 2147)
-  win_file: path={{win_output_dir}}/dirtest state=directory
+  win_file: path={{ remote_tmp_dir }}/dirtest state=directory
   register: file_result
 
 - name: stat the directory created again
-  win_stat: path={{win_output_dir}}/dirtest
+  win_stat: path={{ remote_tmp_dir }}/dirtest
   register: stat_result
 
 - name: assert the directory exists but was not changed
@@ -502,11 +502,11 @@
        - stat_result.stat.isdir
 
 - name: remove empty dir we just created
-  win_file: path={{win_output_dir}}/dirtest state=absent
+  win_file: path={{ remote_tmp_dir }}/dirtest state=absent
   register: file_result
 
 - name: stat the removed directory
-  win_stat: path={{win_output_dir}}/dirtest
+  win_stat: path={{ remote_tmp_dir }}/dirtest
   register: stat_result
 
 - name: assert the directory does not exist
@@ -517,13 +517,13 @@
 
 - name: create dir with spaces and parens in the dir name
   win_file:
-    path: '{{win_output_dir}}\dir with spaces (and parens) [block]'
+    path: '{{ remote_tmp_dir }}\dir with spaces (and parens) [block]'
     state: directory
   register: file_result
 
 - name: stat the directory with spaces and parens
   win_stat:
-    path: '{{win_output_dir}}\dir with spaces (and parens) [block]'
+    path: '{{ remote_tmp_dir }}\dir with spaces (and parens) [block]'
   register: stat_result
 
 - name: check dir with spaces and parens in the dir name has been created
@@ -535,13 +535,13 @@
 
 - name: create file in dir with special char
   win_file:
-    path: '{{win_output_dir}}\dir with spaces (and parens) [block]\file[1].txt'
+    path: '{{ remote_tmp_dir }}\dir with spaces (and parens) [block]\file[1].txt'
     state: touch
   register: file_result
 
 - name: stat the file with spaces and parens
   win_stat:
-    path: '{{win_output_dir}}\dir with spaces (and parens) [block]\file[1].txt'
+    path: '{{ remote_tmp_dir }}\dir with spaces (and parens) [block]\file[1].txt'
   register: stat_result
 
 - name: check file in dir with spaces and parens exist
@@ -553,13 +553,13 @@
 
 - name: remove dir with spaces and parens in the dir name
   win_file:
-    path: '{{win_output_dir}}/dir with spaces (and parens) [block]'
+    path: '{{ remote_tmp_dir }}/dir with spaces (and parens) [block]'
     state: absent
   register: file_result
 
 - name: stat the dir with spaces and parens in the dir name
   win_stat:
-    path: '{{win_output_dir}}\dir with spaces (and parens) [block]'
+    path: '{{ remote_tmp_dir }}\dir with spaces (and parens) [block]'
   register: stat_result
 
 - name: assert dir with spaces and parens in the dir name was removed
@@ -570,17 +570,17 @@
 
 # Need to use shell to create the file as win_file doesn't support setting attributes
 - name: create hidden file
-  win_shell: $file = New-Item -Path "{{ win_output_dir }}\hidden.txt" -ItemType File; $file.Attributes = "Hidden"
+  win_shell: $file = New-Item -Path "{{ remote_tmp_dir }}\hidden.txt" -ItemType File; $file.Attributes = "Hidden"
 
 - name: delete hidden file
   win_file:
-    path: '{{ win_output_dir }}\hidden.txt'
+    path: '{{ remote_tmp_dir }}\hidden.txt'
     state: absent
   register: delete_hidden
 
 - name: get result of delete hidden file
   win_stat:
-    path: '{{ win_output_dir }}\hidden.txt'
+    path: '{{ remote_tmp_dir }}\hidden.txt'
   register: delete_hidden_actual
 
 - name: assert delete hidden file
@@ -591,24 +591,24 @@
 
 - name: create folder to point set symbolic link for
   win_file:
-    path: "{{win_output_dir}}/link-test/link-target"
+    path: "{{ remote_tmp_dir }}/link-test/link-target"
     state: directory
 
 - name: create symbolic link
-  win_command: cmd.exe /c mklink /d "{{win_output_dir}}\link-test\link" "{{win_output_dir}}\link-test\link-target"
+  win_command: cmd.exe /c mklink /d "{{ remote_tmp_dir }}\link-test\link" "{{ remote_tmp_dir }}\link-test\link-target"
 
 - name: remove symbolic link target
   win_file:
-    path: "{{win_output_dir}}/link-test/link-target"
+    path: "{{ remote_tmp_dir }}/link-test/link-target"
     state: absent
 
 - name: remove parent folder with broken link
   win_file:
-    path: "{{win_output_dir}}/link-test"
+    path: "{{ remote_tmp_dir }}/link-test"
     state: absent
 
 - name: clean up sub1
-  win_file: path={{win_output_dir}}/sub1 state=absent
+  win_file: path={{ remote_tmp_dir }}/sub1 state=absent
 
 - name: clean up sub2
-  win_file: path={{win_output_dir}}/sub2 state=absent
+  win_file: path={{ remote_tmp_dir }}/sub2 state=absent

@@ -10,78 +10,78 @@
 - name: setup source folder for remote tests
   win_copy:
     src: files/
-    dest: '{{test_win_copy_path}}\source\'
+    dest: '{{ remote_tmp_dir }}\source\'
 
 - name: setup remote failure tests
   win_file:
     path: '{{item.path}}'
     state: '{{item.state}}'
   with_items:
-  - { 'path': '{{test_win_copy_path}}\target\folder', 'state': 'directory' }
-  - { 'path': '{{test_win_copy_path}}\target\file', 'state': 'touch' }
-  - { 'path': '{{test_win_copy_path}}\target\subdir', 'state': 'touch' }
+  - { 'path': '{{ remote_tmp_dir }}\target\folder', 'state': 'directory' }
+  - { 'path': '{{ remote_tmp_dir }}\target\file', 'state': 'touch' }
+  - { 'path': '{{ remote_tmp_dir }}\target\subdir', 'state': 'touch' }
 
 - name: fail source is a file but dest is a folder
   win_copy:
-    src: '{{test_win_copy_path}}\source\foo.txt'
-    dest: '{{test_win_copy_path}}\target\folder'
+    src: '{{ remote_tmp_dir }}\source\foo.txt'
+    dest: '{{ remote_tmp_dir }}\target\folder'
     remote_src: yes
   register: fail_remote_file_to_folder
   failed_when: "'dest is already a folder' not in fail_remote_file_to_folder.msg"
 
 - name: fail source is a file but dest is a folder
   win_copy:
-    src: '{{test_win_copy_path}}\source\'
-    dest: '{{test_win_copy_path}}\target\'
+    src: '{{ remote_tmp_dir }}\source\'
+    dest: '{{ remote_tmp_dir }}\target\'
     remote_src: yes
   register: fail_remote_folder_to_file
   failed_when: "'dest is already a file' not in fail_remote_folder_to_file.msg"
 
 - name: fail source is a file dest parent dir is also a file
   win_copy:
-    src: '{{test_win_copy_path}}\source\foo.txt'
-    dest: '{{test_win_copy_path}}\target\file\foo.txt'
+    src: '{{ remote_tmp_dir }}\source\foo.txt'
+    dest: '{{ remote_tmp_dir }}\target\file\foo.txt'
     remote_src: yes
   register: fail_remote_file_parent_dir_file
   failed_when: "'is currently a file' not in fail_remote_file_parent_dir_file.msg"
 
 - name: fail source is a folder dest parent dir is also a file
   win_copy:
-    src: '{{test_win_copy_path}}\source\subdir'
-    dest: '{{test_win_copy_path}}\target\file'
+    src: '{{ remote_tmp_dir }}\source\subdir'
+    dest: '{{ remote_tmp_dir }}\target\file'
     remote_src: yes
   register: fail_remote_folder_parent_dir_file
   failed_when: "'object at dest parent dir is not a folder' not in fail_remote_folder_parent_dir_file.msg"
 
 - name: fail to copy a remote file with parent dir that doesn't exist and filename is set
   win_copy:
-    src: '{{test_win_copy_path}}\source\foo.txt'
-    dest: '{{test_win_copy_path}}\missing-dir\foo.txt'
+    src: '{{ remote_tmp_dir }}\source\foo.txt'
+    dest: '{{ remote_tmp_dir }}\missing-dir\foo.txt'
     remote_src: yes
   register: fail_remote_missing_parent_dir
   failed_when: "'does not exist' not in fail_remote_missing_parent_dir.msg"
 
 - name: remove target after remote failure tests
   win_file:
-    path: '{{test_win_copy_path}}\target'
+    path: '{{ remote_tmp_dir }}\target'
     state: absent
 
 - name: create remote target after cleaning
   win_file:
-    path: '{{test_win_copy_path}}\target'
+    path: '{{ remote_tmp_dir }}\target'
     state: directory
 
 - name: copy single file remote (check mode)
   win_copy:
-    src: '{{test_win_copy_path}}\source\foo.txt'
-    dest: '{{test_win_copy_path}}\target\foo-target.txt'
+    src: '{{ remote_tmp_dir }}\source\foo.txt'
+    dest: '{{ remote_tmp_dir }}\target\foo-target.txt'
     remote_src: yes
   register: remote_copy_file_check
   check_mode: yes
 
 - name: get result of copy single file remote (check mode)
   win_stat:
-    path: '{{test_win_copy_path}}\target\foo-target.txt'
+    path: '{{ remote_tmp_dir }}\target\foo-target.txt'
   register: remote_copy_file_actual_check
 
 - name: assert copy single file remote (check mode)
@@ -92,14 +92,14 @@
 
 - name: copy single file remote
   win_copy:
-    src: '{{test_win_copy_path}}\source\foo.txt'
-    dest: '{{test_win_copy_path}}\target\foo-target.txt'
+    src: '{{ remote_tmp_dir }}\source\foo.txt'
+    dest: '{{ remote_tmp_dir }}\target\foo-target.txt'
     remote_src: yes
   register: remote_copy_file
 
 - name: get result of copy single file remote
   win_stat:
-    path: '{{test_win_copy_path}}\target\foo-target.txt'
+    path: '{{ remote_tmp_dir }}\target\foo-target.txt'
   register: remote_copy_file_actual
 
 - name: assert copy single file remote
@@ -115,8 +115,8 @@
 
 - name: copy single file remote (idempotent)
   win_copy:
-    src: '{{test_win_copy_path}}\source\foo.txt'
-    dest: '{{test_win_copy_path}}\target\foo-target.txt'
+    src: '{{ remote_tmp_dir }}\source\foo.txt'
+    dest: '{{ remote_tmp_dir }}\target\foo-target.txt'
     remote_src: yes
   register: remote_copy_file_again
 
@@ -127,15 +127,15 @@
 
 - name: copy single file into folder remote (check mode)
   win_copy:
-    src: '{{test_win_copy_path}}\source\foo.txt'
-    dest: '{{test_win_copy_path}}\target\'
+    src: '{{ remote_tmp_dir }}\source\foo.txt'
+    dest: '{{ remote_tmp_dir }}\target\'
     remote_src: yes
   register: remote_copy_file_to_folder_check
   check_mode: yes
 
 - name: get result of copy single file into folder remote (check mode)
   win_stat:
-    path: '{{test_win_copy_path}}\target\foo.txt'
+    path: '{{ remote_tmp_dir }}\target\foo.txt'
   register: remote_copy_file_to_folder_actual_check
 
 - name: assert copy single file into folder remote (check mode)
@@ -146,14 +146,14 @@
 
 - name: copy single file into folder remote
   win_copy:
-    src: '{{test_win_copy_path}}\source\foo.txt'
-    dest: '{{test_win_copy_path}}\target\'
+    src: '{{ remote_tmp_dir }}\source\foo.txt'
+    dest: '{{ remote_tmp_dir }}\target\'
     remote_src: yes
   register: remote_copy_file_to_folder
 
 - name: get result of copy single file into folder remote
   win_stat:
-    path: '{{test_win_copy_path}}\target\foo.txt'
+    path: '{{ remote_tmp_dir }}\target\foo.txt'
   register: remote_copy_file_to_folder_actual
 
 - name: assert copy single file into folder remote
@@ -169,8 +169,8 @@
 
 - name: copy single file into folder remote (idempotent)
   win_copy:
-    src: '{{test_win_copy_path}}\source\foo.txt'
-    dest: '{{test_win_copy_path}}\target\'
+    src: '{{ remote_tmp_dir }}\source\foo.txt'
+    dest: '{{ remote_tmp_dir }}\target\'
     remote_src: yes
   register: remote_copy_file_to_folder_again
 
@@ -181,15 +181,15 @@
 
 - name: copy single file to missing folder (check mode)
   win_copy:
-    src: '{{test_win_copy_path}}\source\foo.txt'
-    dest: '{{test_win_copy_path}}\target\missing\'
+    src: '{{ remote_tmp_dir }}\source\foo.txt'
+    dest: '{{ remote_tmp_dir }}\target\missing\'
     remote_src: yes
   register: remote_copy_file_to_missing_folder_check
   check_mode: yes
 
 - name: get result of copy single file to missing folder remote (check mode)
   win_stat:
-    path: '{{test_win_copy_path}}\target\missing\foo.txt'
+    path: '{{ remote_tmp_dir }}\target\missing\foo.txt'
   register: remote_copy_file_to_missing_folder_actual_check
 
 - name: assert copy single file to missing folder remote (check mode)
@@ -201,14 +201,14 @@
 
 - name: copy single file to missing folder remote
   win_copy:
-    src: '{{test_win_copy_path}}\source\foo.txt'
-    dest: '{{test_win_copy_path}}\target\missing\'
+    src: '{{ remote_tmp_dir }}\source\foo.txt'
+    dest: '{{ remote_tmp_dir }}\target\missing\'
     remote_src: yes
   register: remote_copy_file_to_missing_folder
 
 - name: get result of copy single file to missing folder remote
   win_stat:
-    path: '{{test_win_copy_path}}\target\missing\foo.txt'
+    path: '{{ remote_tmp_dir }}\target\missing\foo.txt'
   register: remote_copy_file_to_missing_folder_actual
 
 - name: assert copy single file to missing folder remote
@@ -223,20 +223,20 @@
 
 - name: clear target for folder to folder test
   win_file:
-    path: '{{test_win_copy_path}}\target'
+    path: '{{ remote_tmp_dir }}\target'
     state: absent
 
 - name: copy folder to folder remote (check mode)
   win_copy:
-    src: '{{test_win_copy_path}}\source'
-    dest: '{{test_win_copy_path}}\target'
+    src: '{{ remote_tmp_dir }}\source'
+    dest: '{{ remote_tmp_dir }}\target'
     remote_src: yes
   register: remote_copy_folder_to_folder_check
   check_mode: yes
 
 - name: get result of copy folder to folder remote (check mode)
   win_stat:
-    path: '{{test_win_copy_path}}\target'
+    path: '{{ remote_tmp_dir }}\target'
   register: remote_copy_folder_to_folder_actual_check
 
 - name: assert copy folder to folder remote (check mode)
@@ -248,14 +248,14 @@
 
 - name: copy folder to folder remote
   win_copy:
-    src: '{{test_win_copy_path}}\source'
-    dest: '{{test_win_copy_path}}\target'
+    src: '{{ remote_tmp_dir }}\source'
+    dest: '{{ remote_tmp_dir }}\target'
     remote_src: yes
   register: remote_copy_folder_to_folder
 
 - name: get result of copy folder to folder remote
   win_find:
-    paths: '{{test_win_copy_path}}\target'
+    paths: '{{ remote_tmp_dir }}\target'
     recurse: yes
     file_type: directory
   register: remote_copy_folder_to_folder_actual
@@ -276,8 +276,8 @@
 
 - name: copy folder to folder remote (idempotent)
   win_copy:
-    src: '{{test_win_copy_path}}\source'
-    dest: '{{test_win_copy_path}}\target'
+    src: '{{ remote_tmp_dir }}\source'
+    dest: '{{ remote_tmp_dir }}\target'
     remote_src: yes
   register: remote_copy_folder_to_folder_again
 
@@ -289,23 +289,23 @@
 - name: change remote file after folder to folder test
   win_copy:
     content: bar.txt
-    dest: '{{test_win_copy_path}}\target\source\foo.txt'
+    dest: '{{ remote_tmp_dir }}\target\source\foo.txt'
 
 - name: remote remote folder after folder to folder test
   win_file:
-    path: '{{test_win_copy_path}}\target\source\subdir\subdir2\subdir3\subdir4'
+    path: '{{ remote_tmp_dir }}\target\source\subdir\subdir2\subdir3\subdir4'
     state: absent
 
 - name: copy folder to folder remote after change
   win_copy:
-    src: '{{test_win_copy_path}}\source'
-    dest: '{{test_win_copy_path}}\target'
+    src: '{{ remote_tmp_dir }}\source'
+    dest: '{{ remote_tmp_dir }}\target'
     remote_src: yes
   register: remote_copy_folder_to_folder_after_change
 
 - name: get result of copy folder to folder remote after change
   win_find:
-    paths: '{{test_win_copy_path}}\target\source'
+    paths: '{{ remote_tmp_dir }}\target\source'
     recurse: yes
     patterns: ['foo.txt', 'qux.txt']
   register: remote_copy_folder_to_folder_after_change_actual
@@ -320,20 +320,20 @@
 
 - name: clear target folder before folder contents to remote test
   win_file:
-    path: '{{test_win_copy_path}}\target'
+    path: '{{ remote_tmp_dir }}\target'
     state: absent
 
 - name: copy folder contents to folder remote with backslash (check mode)
   win_copy:
-    src: '{{test_win_copy_path}}\source\'
-    dest: '{{test_win_copy_path}}\target'
+    src: '{{ remote_tmp_dir }}\source\'
+    dest: '{{ remote_tmp_dir }}\target'
     remote_src: yes
   register: remote_copy_folder_content_backslash_check
   check_mode: yes
 
 - name: get result of copy folder contents to folder remote with backslash (check mode)
   win_stat:
-    path: '{{test_win_copy_path}}\target'
+    path: '{{ remote_tmp_dir }}\target'
   register: remote_copy_folder_content_backslash_actual_check
 
 - name: assert copy folder content to folder remote with backslash (check mode)
@@ -344,14 +344,14 @@
 
 - name: copy folder contents to folder remote with backslash
   win_copy:
-    src: '{{test_win_copy_path}}\source\'
-    dest: '{{test_win_copy_path}}\target'
+    src: '{{ remote_tmp_dir }}\source\'
+    dest: '{{ remote_tmp_dir }}\target'
     remote_src: yes
   register: remote_copy_folder_content_backslash
 
 - name: get result of copy folder contents to folder remote with backslash
   win_find:
-    paths: '{{test_win_copy_path}}\target'
+    paths: '{{ remote_tmp_dir }}\target'
     recurse: yes
     file_type: directory
   register: remote_copy_folder_content_backslash_actual
@@ -371,8 +371,8 @@
 
 - name: copy folder contents to folder remote with backslash (idempotent)
   win_copy:
-    src: '{{test_win_copy_path}}\source\'
-    dest: '{{test_win_copy_path}}\target'
+    src: '{{ remote_tmp_dir }}\source\'
+    dest: '{{ remote_tmp_dir }}\target'
     remote_src: yes
   register: remote_copy_folder_content_backslash_again
 
@@ -384,23 +384,23 @@
 - name: change remote file after folder content to folder test
   win_copy:
     content: bar.txt
-    dest: '{{test_win_copy_path}}\target\foo.txt'
+    dest: '{{ remote_tmp_dir }}\target\foo.txt'
 
 - name: remote remote folder after folder content to folder test
   win_file:
-    path: '{{test_win_copy_path}}\target\subdir\subdir2\subdir3\subdir4'
+    path: '{{ remote_tmp_dir }}\target\subdir\subdir2\subdir3\subdir4'
     state: absent
 
 - name: copy folder content to folder remote after change
   win_copy:
-    src: '{{test_win_copy_path}}/source/'
-    dest: '{{test_win_copy_path}}/target/'
+    src: '{{ remote_tmp_dir }}/source/'
+    dest: '{{ remote_tmp_dir }}/target/'
     remote_src: yes
   register: remote_copy_folder_content_to_folder_after_change
 
 - name: get result of copy folder content to folder remote after change
   win_find:
-    paths: '{{test_win_copy_path}}\target'
+    paths: '{{ remote_tmp_dir }}\target'
     recurse: yes
     patterns: ['foo.txt', 'qux.txt']
   register: remote_copy_folder_content_to_folder_after_change_actual
@@ -416,20 +416,20 @@
 # https://github.com/ansible/ansible/issues/50077
 - name: create empty nested directory
   win_file:
-    path: '{{ test_win_copy_path }}\source\empty-nested\nested-dir'
+    path: '{{ remote_tmp_dir }}\source\empty-nested\nested-dir'
     state: directory
 
 - name: copy empty nested directory (check mode)
   win_copy:
-    src: '{{ test_win_copy_path }}\source\empty-nested'
-    dest: '{{ test_win_copy_path }}\target'
+    src: '{{ remote_tmp_dir }}\source\empty-nested'
+    dest: '{{ remote_tmp_dir }}\target'
     remote_src: True
   check_mode: True
   register: copy_empty_dir_check
 
 - name: get result of copy empty nested directory (check mode)
   win_stat:
-    path: '{{ test_win_copy_path }}\target\empty-nested'
+    path: '{{ remote_tmp_dir }}\target\empty-nested'
   register: copy_empty_dir_actual_check
 
 - name: assert copy empty nested directory (check mode)
@@ -441,14 +441,14 @@
 
 - name: copy empty nested directory
   win_copy:
-    src: '{{ test_win_copy_path }}\source\empty-nested'
-    dest: '{{ test_win_copy_path }}\target'
+    src: '{{ remote_tmp_dir }}\source\empty-nested'
+    dest: '{{ remote_tmp_dir }}\target'
     remote_src: True
   register: copy_empty_dir
 
 - name: get result of copy empty nested directory
   win_stat:
-    path: '{{ test_win_copy_path }}\target\empty-nested\nested-dir'
+    path: '{{ remote_tmp_dir }}\target\empty-nested\nested-dir'
   register: copy_empty_dir_actual
 
 - name: assert copy empty nested directory
@@ -460,8 +460,8 @@
 
 - name: copy empty nested directory (idempotent)
   win_copy:
-    src: '{{ test_win_copy_path }}\source\empty-nested'
-    dest: '{{ test_win_copy_path }}\target'
+    src: '{{ remote_tmp_dir }}\source\empty-nested'
+    dest: '{{ remote_tmp_dir }}\target'
     remote_src: True
   register: copy_empty_dir_again
 

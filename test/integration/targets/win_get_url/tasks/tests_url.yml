@@ -71,8 +71,8 @@
 - name: manually change the content and last modified time on FTP source to older datetime
   win_shell: |
       $path = '{{ remote_tmp_dir }}\output'
-      Set-Content -Path $path -Value 'abc'
-      (Get-Item -Path $path).LastWriteTime = (Get-Date -Date "01/01/1970")
+      Set-Content -LiteralPath $path -Value 'abc'
+      (Get-Item -LiteralPath $path).LastWriteTime = (Get-Date -Date "01/01/1970")
 
 - name: download newer file with force no
   win_get_url:

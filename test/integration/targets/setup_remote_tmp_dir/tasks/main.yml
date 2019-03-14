@@ -3,8 +3,14 @@
     gather_subset: distribution
   when: ansible_facts == {}
 
+# TODO: have default.yml (Linux) to use this suffix
+- name: generate suffix
+  set_fact:
+    remote_tmp_suffix: '{{ (remote_tmp_disable_special | default(False) | bool) | ternary(".ansible test", ".ÅÑŚÌβŁÈ [$!@^&test(;)]") }}'
+
 - include_tasks: "{{ lookup('first_found', files)}}"
   vars:
     files:
       - "{{ ansible_os_family | lower }}.yml"
       - "default.yml"
+  when: not remote_tmp_dir is defined  # do not create another dir if it's already defined

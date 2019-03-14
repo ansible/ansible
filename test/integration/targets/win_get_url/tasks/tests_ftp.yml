@@ -72,7 +72,7 @@
     - ftp_anon_force_no is not changed
 
 - name: set last modified time on FTP source to newer datetime
-  win_shell: (Get-Item -Path '{{ remote_tmp_dir }}\ftp\anon\file2.txt').LastWriteTime = (Get-Date).AddHours(24)
+  win_shell: (Get-Item -LiteralPath '{{ remote_tmp_dir }}\ftp\anon\file2.txt').LastWriteTime = (Get-Date).AddHours(24)
 
 - name: download newer file from FTP source to same dest (check)
   win_get_url:

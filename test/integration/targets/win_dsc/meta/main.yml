@@ -1,2 +1,4 @@
 dependencies:
-- setup_remote_tmp_dir
+# The DSC handler in PowerShell fails to handle glob like chars in the path
+- role: setup_remote_tmp_dir
+  remote_tmp_disable_special: True

@@ -16,54 +16,63 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+- name: create test file for slurping
+  win_copy:
+    content: Slurp this!
+    dest: '{{ remote_tmp_dir }}\slurp.txt'
+
 - name: test slurping an existing file
-  slurp: src="C:/Windows/win.ini"
+  slurp:
+    src: '{{ remote_tmp_dir }}\slurp.txt'
   register: slurp_existing
 
 - name: check slurp existing result
   assert:
     that:
-      - "slurp_existing.content"
-      - "slurp_existing.encoding == 'base64'"
-      - "slurp_existing is not changed"
-      - "slurp_existing is not failed"
+      - slurp_existing.content == 'U2x1cnAgdGhpcyE='
+      - slurp_existing.encoding == 'base64'
+      - slurp_existing is not changed
+      - slurp_existing is not failed
 
 - name: test slurping a large binary file with path param and backslashes
-  slurp: path="C:\Windows\explorer.exe"
+  slurp:
+    path: C:\Windows\explorer.exe
   register: slurp_path_backslashes
   no_log: true
 
 - name: check slurp result with path param and backslashes
   assert:
     that:
-      - "slurp_path_backslashes.content"
-      - "slurp_path_backslashes.encoding == 'base64'"
-      - "slurp_path_backslashes is not changed"
-      - "slurp_path_backslashes is not failed"
+      - slurp_path_backslashes.content
+      - slurp_path_backslashes.encoding == 'base64'
+      - slurp_path_backslashes is not changed
+      - slurp_path_backslashes is not failed
 
 - name: test slurping a non-existent file
-  slurp: src="C:/this_file_should_not_exist.txt"
+  slurp:
+    src: C:\this_file_should_not_exist.txt
   register: slurp_missing
   ignore_errors: true
 
 - name: check slurp missing result
   assert:
     that:
-      - "slurp_missing is failed"
-      - "slurp_missing.msg"
-      - "slurp_missing is not changed"
+      - slurp_missing is failed
+      - slurp_missing.msg
+      - slurp_missing is not changed
 
 - name: test slurping a directory
-  slurp: src="C:/Windows"
+  slurp:
+    src: C:\Windows
   register: slurp_dir
   ignore_errors: true
 
 - name: check slurp directory result
   assert:
     that:
-      - "slurp_dir is failed"
-      - "slurp_dir.msg"
-      - "slurp_dir is not changed"
+      - slurp_dir is failed
+      - slurp_dir.msg
+      - slurp_dir is not changed
 
 - name: test slurp with missing argument
   action: slurp
@@ -73,6 +82,6 @@
 - name: check slurp with missing argument result
   assert:
     that:
-      - "slurp_no_args is failed"
-      - "slurp_no_args.msg"
-      - "slurp_no_args is not changed"
+      - slurp_no_args is failed
+      - slurp_no_args.msg
+      - slurp_no_args is not changed

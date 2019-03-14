@@ -1,2 +1,2 @@
 dependencies:
-  - prepare_win_tests
+- setup_remote_tmp_dir

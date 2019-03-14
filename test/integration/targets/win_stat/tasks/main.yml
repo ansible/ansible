@@ -1,13 +1,3 @@
-- name: make sure symlink file does not exist
-  test_symlink_file:
-    src: '{{win_stat_dir}}\file-link.txt'
-    state: absent
-
-- name: remove win_stat testing directories for clean slate
-  win_file:
-    path: '{{win_stat_dir}}'
-    state: absent
-
 # while most of the setup can be done with modules, it is quicker to do them
 # all in bulk than with with_items to save each round trip over WinRM
 - name: set test files and folders
@@ -23,8 +13,9 @@
         "junction-dest"
     )
 
+    $tmp_path = '{{ remote_tmp_dir }}'
     foreach ($directory in $directories) {
-        New-Item -Path "{{win_stat_dir}}\$directory" -ItemType Directory
+        New-Item -Path "$tmp_path\$directory" -ItemType Directory
     }
 
     $normal_content = "abc"
@@ -39,8 +30,8 @@
         "link-dest\file.txt"
     )
     foreach ($file in $normal_files) {
-        New-Item -Path "{{win_stat_dir}}\$file" -ItemType File
-        [System.IO.File]::WriteAllText("{{win_stat_dir}}\$file", $normal_content)
+        New-Item -Path "$tmp_path\$file" -ItemType File
+        [System.IO.File]::WriteAllText("$tmp_path\$file", $normal_content)
     }
 
     $share_stat = Get-WmiObject -Class Win32_Share -Filter "name='folder-share'"
@@ -48,16 +39,16 @@
         $share_stat.Delete()
     }
     $wmi = [wmiClass] 'Win32_Share'
-    $wmi.Create("{{win_stat_dir}}\shared", "folder-share", 0)
+    $wmi.Create("$tmp_path\shared", "folder-share", 0)
 
-    cmd.exe /c mklink /D "{{win_stat_dir}}\link" "{{win_stat_dir}}\link-dest"
-    cmd.exe /c mklink /H "{{win_stat_dir}}\nested\hard-link.ps1" "{{win_stat_dir}}\nested\hard-target.txt"
-    cmd.exe /c mklink /J "{{win_stat_dir}}\junction-link" "{{win_stat_dir}}\junction-dest"
-    cmd.exe /c mklink /D "{{win_stat_dir}}\nested\nested\link-rel" "..\..\link-dest"
-    cmd.exe /c mklink /D "{{win_stat_dir}}\outer-link" "{{win_stat_dir}}\nested\nested\link-rel"
+    cmd.exe /c mklink /D "$tmp_path\link" "$tmp_path\link-dest"
+    cmd.exe /c mklink /H "$tmp_path\nested\hard-link.ps1" "$tmp_path\nested\hard-target.txt"
+    cmd.exe /c mklink /J "$tmp_path\junction-link" "$tmp_path\junction-dest"
+    cmd.exe /c mklink /D "$tmp_path\nested\nested\link-rel" "..\..\link-dest"
+    cmd.exe /c mklink /D "$tmp_path\outer-link" "$tmp_path\nested\nested\link-rel"
 
     $date = Get-Date -Year 2016 -Month 11 -Day 1 -Hour 7 -Minute 10 -Second 5 -Millisecond 0
-    Get-ChildItem -Path "{{win_stat_dir}}" -Recurse | ForEach-Object {
+    Get-ChildItem -LiteralPath $tmp_path -Recurse | ForEach-Object {
         $_.CreationTime = $date
         $_.LastAccessTime = $date
         $_.LastWriteTime = $date
@@ -71,7 +62,7 @@
     }
 
     foreach ($attribute in $attributes.GetEnumerator()) {
-        $item = Get-Item -Path "{{win_stat_dir}}\$($attribute.Name)"
+        $item = Get-Item -LiteralPath "$tmp_path\$($attribute.Name)"
         $file_attributes = $item.Attributes -split ','
         if ($file_attributes -notcontains $attribute.Value) {
             $file_attributes += $attribute.Value
@@ -80,29 +71,19 @@
     }
 
     # weird issue, need to access the file in anyway to get the correct date stats
-    Test-Path {{win_stat_dir}}\nested\hard-link.ps1
+    Test-Path -LiteralPath "$tmp_path\nested\hard-link.ps1"
 
 # mklink.exe and win_file cannot do this right now so we need a custom module
 - name: create file symlink
   test_symlink_file:
-    src: '{{win_stat_dir}}\file-link.txt'
-    target: '{{win_stat_dir}}\nested\file.ps1'
+    src: '{{ remote_tmp_dir }}\file-link.txt'
+    target: '{{ remote_tmp_dir }}\nested\file.ps1'
     state: present
 
 - block:
   - include_tasks: tests.yml
 
   always:
-  - name: make sure symlink file does not exist
-    test_symlink_file:
-      src: '{{win_stat_dir}}\file-link.txt'
-      state: absent
-
-  - name: remove testing folder
-    win_file:
-      path: '{{win_stat_dir}}'
-      state: absent
-
   - name: ensure test user is deleted
     win_user:
       name: '{{win_stat_user}}'

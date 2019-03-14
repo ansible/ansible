@@ -1,0 +1,2 @@
+bugfixes:
+- windows - Various fixes to Windows modules to support paths with glob like chars like ``[``, ``&``, etc

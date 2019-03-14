@@ -1,3 +1,6 @@
 dependencies:
-- setup_remote_tmp_dir
+# PowerShellGet (*-PSRepository) does not support glob like chars
+# https://github.com/PowerShell/PowerShellGet/issues/441
+- role: setup_remote_tmp_dir
+  remote_tmp_disable_special: True
 - setup_win_psget

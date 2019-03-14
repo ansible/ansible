@@ -7,19 +7,19 @@
 
 - name: expect failure when setting paths to a file
   win_find:
-    paths: "{{win_output_dir}}\\win_find\\single\\large.ps1"
+    paths: "{{ remote_tmp_dir }}\\single\\large.ps1"
   register: actual
-  failed_when: actual.msg != 'Argument path ' + win_output_dir + '\\win_find\\single\\large.ps1 is a file not a directory'
+  failed_when: actual.msg != 'Argument path ' + remote_tmp_dir + '\\single\\large.ps1 is a file not a directory'
 
 - name: expect failure when path is set to a non existent folder
   win_find:
-    paths: "{{win_output_dir}}\\win_find\\thisisafakefolder"
+    paths: "{{ remote_tmp_dir }}\\thisisafakefolder"
   register: actual
-  failed_when: actual.msg != 'Argument path ' + win_output_dir + '\\win_find\\thisisafakefolder does not exist cannot get information on'
+  failed_when: actual.msg != 'Argument path ' + remote_tmp_dir + '\\thisisafakefolder does not exist cannot get information on'
 
 - name: get files in single directory
   win_find:
-    paths: "{{win_output_dir}}\\win_find\\single"
+    paths: "{{ remote_tmp_dir }}\\single"
   register: actual
 
 - name: set expected value for files in a single directory
@@ -41,7 +41,7 @@
           lastaccesstime: 1477984205,
           lastwritetime: 1477984205,
           owner: BUILTIN\Administrators,
-          path: "{{win_find_dir}}\\single\\large.ps1",
+          path: "{{ remote_tmp_dir }}\\single\\large.ps1",
           isreadonly: False,
           isshared: False,
           size: 260002 }
@@ -57,7 +57,7 @@
           lastaccesstime: 1477984205,
           lastwritetime: 1477984205,
           owner: BUILTIN\Administrators,
-          path: "{{win_find_dir}}\\single\\out_20161101-091005.log",
+          path: "{{ remote_tmp_dir }}\\single\\out_20161101-091005.log",
           isreadonly: False,
           isshared: False,
           size: 14 }
@@ -73,7 +73,7 @@
           lastaccesstime: 1477984205,
           lastwritetime: 1477984205,
           owner: BUILTIN\Administrators,
-          path: "{{win_find_dir}}\\single\\small.ps1",
+          path: "{{ remote_tmp_dir }}\\single\\small.ps1",
           isreadonly: False,
           isshared: False,
           size: 1 }
@@ -89,7 +89,7 @@
           lastaccesstime: 1477984205,
           lastwritetime: 1477984205,
           owner: BUILTIN\Administrators,
-          path: "{{win_find_dir}}\\single\\test.ps1",
+          path: "{{ remote_tmp_dir }}\\single\\test.ps1",
           isreadonly: False,
           isshared: False,
           size: 14 }
@@ -101,7 +101,7 @@
 
 - name: find hidden files
   win_find:
-    paths: ['{{win_find_dir}}\\single', '{{win_find_dir}}\\nested']
+    paths: ['{{ remote_tmp_dir }}\\single', '{{ remote_tmp_dir }}\\nested']
     hidden: True
   register: actual
 
@@ -124,7 +124,7 @@
           lastaccesstime: 1477984205,
           lastwritetime: 1477984205,
           owner: BUILTIN\Administrators,
-          path: "{{win_find_dir}}\\single\\hidden.ps1",
+          path: "{{ remote_tmp_dir }}\\single\\hidden.ps1",
           isreadonly: False,
           isshared: False,
           size: 14 }
@@ -136,13 +136,13 @@
 
 - name: find file based on pattern
   win_find:
-    paths: '{{win_find_dir}}\\single'
+    paths: '{{ remote_tmp_dir }}\\single'
     patterns: ['*.log', 'out_*']
   register: actual_pattern
 
 - name: find file based on pattern regex
   win_find:
-    paths: '{{win_find_dir}}\\single'
+    paths: '{{ remote_tmp_dir }}\\single'
     patterns: "out_\\d{8}-\\d{6}.log"
     use_regex: True
   register: actual_regex
@@ -166,7 +166,7 @@
           lastaccesstime: 1477984205,
           lastwritetime: 1477984205,
           owner: BUILTIN\Administrators,
-          path: "{{win_find_dir}}\\single\\out_20161101-091005.log",
+          path: "{{ remote_tmp_dir }}\\single\\out_20161101-091005.log",
           isreadonly: False,
           isshared: False,
           size: 14 }
@@ -180,7 +180,7 @@
 
 - name: find files with recurse set
   win_find:
-    paths: "{{win_find_dir}}\\nested"
+    paths: "{{ remote_tmp_dir }}\\nested"
     recurse: True
     patterns: "*.ps1"
   register: actual
@@ -204,7 +204,7 @@
           lastaccesstime: 1477984205,
           lastwritetime: 1477984205,
           owner: BUILTIN\Administrators,
-          path: "{{win_find_dir}}\\nested\\sub-nest\\test.ps1",
+          path: "{{ remote_tmp_dir }}\\nested\\sub-nest\\test.ps1",
           isreadonly: False,
           isshared: False,
           size: 14 }
@@ -220,7 +220,7 @@
           lastaccesstime: 1477984205,
           lastwritetime: 1477984205,
           owner: BUILTIN\Administrators,
-          path: "{{win_find_dir}}\\nested\\file.ps1",
+          path: "{{ remote_tmp_dir }}\\nested\\file.ps1",
           isreadonly: False,
           isshared: False,
           size: 14 }
@@ -236,7 +236,7 @@
           lastaccesstime: 1477984205,
           lastwritetime: 1477984205,
           owner: BUILTIN\Administrators,
-          path: "{{win_find_dir}}\\nested\\test.ps1",
+          path: "{{ remote_tmp_dir }}\\nested\\test.ps1",
           isreadonly: False,
           isshared: False,
           size: 14 }
@@ -248,7 +248,7 @@
 
 - name: find files with recurse set and follow links
   win_find:
-    paths: "{{win_find_dir}}\\nested"
+    paths: "{{ remote_tmp_dir }}\\nested"
     recurse: True
     follow: True
     patterns: "*.ps1"
@@ -273,7 +273,7 @@
           lastaccesstime: 1477984205,
           lastwritetime: 1477984205,
           owner: BUILTIN\Administrators,
-          path: "{{win_find_dir}}\\nested\\link\\link.ps1",
+          path: "{{ remote_tmp_dir }}\\nested\\link\\link.ps1",
           isreadonly: False,
           isshared: False,
           size: 14 }
@@ -289,7 +289,7 @@
           lastaccesstime: 1477984205,
           lastwritetime: 1477984205,
           owner: BUILTIN\Administrators,
-          path: "{{win_find_dir}}\\nested\\sub-nest\\test.ps1",
+          path: "{{ remote_tmp_dir }}\\nested\\sub-nest\\test.ps1",
           isreadonly: False,
           isshared: False,
           size: 14 }
@@ -305,7 +305,7 @@
           lastaccesstime: 1477984205,
           lastwritetime: 1477984205,
           owner: BUILTIN\Administrators,
-          path: "{{win_find_dir}}\\nested\\file.ps1",
+          path: "{{ remote_tmp_dir }}\\nested\\file.ps1",
           isreadonly: False,
           isshared: False,
           size: 14 }
@@ -321,7 +321,7 @@
           lastaccesstime: 1477984205,
           lastwritetime: 1477984205,
           owner: BUILTIN\Administrators,
-          path: "{{win_find_dir}}\\nested\\test.ps1",
+          path: "{{ remote_tmp_dir }}\\nested\\test.ps1",
           isreadonly: False,
           isshared: False,
           size: 14 }
@@ -333,7 +333,7 @@
 
 - name: find directories
   win_find:
-    paths: "{{win_find_dir}}\\link-dest"
+    paths: "{{ remote_tmp_dir }}\\link-dest"
     file_type: directory
   register: actual
 
@@ -354,7 +354,7 @@
           lastaccesstime: 1477984205,
           lastwritetime: 1477984205,
           owner: BUILTIN\Administrators,
-          path: "{{win_find_dir}}\\link-dest\\sub-link",
+          path: "{{ remote_tmp_dir }}\\link-dest\\sub-link",
           isreadonly: False,
           isshared: False,
           size: 0 }
@@ -366,7 +366,7 @@
 
 - name: find directories recurse and follow with a broken link
   win_find:
-    paths: "{{win_find_dir}}"
+    paths: "{{ remote_tmp_dir }}"
     file_type: directory
     recurse: True
     follow: True
@@ -381,10 +381,10 @@
     - actual.files[0].islnk == True
     - actual.files[6].filename == 'junction-link'
     - actual.files[6].islnk == True
-    - actual.files[6].lnk_source == win_find_dir + '\\junction-link-dest'
+    - actual.files[6].lnk_source == remote_tmp_dir + '\\junction-link-dest'
     - actual.files[11].filename == 'link'
     - actual.files[11].islnk == True
-    - actual.files[11].lnk_source == win_find_dir + '\\link-dest'
+    - actual.files[11].lnk_source == remote_tmp_dir + '\\link-dest'
     - actual.files[15].filename == 'folder'
     - actual.files[15].islnk == False
     - actual.files[15].isshared == True
@@ -392,13 +392,13 @@
 
 - name: filter files by size without byte specified
   win_find:
-    paths: "{{win_find_dir}}\\single"
+    paths: "{{ remote_tmp_dir }}\\single"
     size: 260002
   register: actual_without_byte
 
 - name: filter files by size with byte specified
   win_find:
-    paths: "{{win_find_dir}}\\single"
+    paths: "{{ remote_tmp_dir }}\\single"
     size: 253k
   register: actual_with_byte
 
@@ -421,7 +421,7 @@
           lastaccesstime: 1477984205,
           lastwritetime: 1477984205,
           owner: BUILTIN\Administrators,
-          path: "{{win_find_dir}}\\single\\large.ps1",
+          path: "{{ remote_tmp_dir }}\\single\\large.ps1",
           isreadonly: False,
           isshared: False,
           size: 260002 }
@@ -435,13 +435,13 @@
 
 - name: filter files by size (less than) without byte specified
   win_find:
-    paths: "{{win_find_dir}}\\single"
+    paths: "{{ remote_tmp_dir }}\\single"
     size: -4
   register: actual_without_byte
 
 - name: filter files by size (less than) with byte specified
   win_find:
-    paths: "{{win_find_dir}}\\single"
+    paths: "{{ remote_tmp_dir }}\\single"
     size: -4b
   register: actual_with_byte
 
@@ -464,7 +464,7 @@
           lastaccesstime: 1477984205,
           lastwritetime: 1477984205,
           owner: BUILTIN\Administrators,
-          path: "{{win_find_dir}}\\single\\small.ps1",
+          path: "{{ remote_tmp_dir }}\\single\\small.ps1",
           isreadonly: False,
           isshared: False,
           size: 1 }
@@ -479,13 +479,13 @@
 # For dates we cannot assert against expected as the times change, this is a poor mans attempt at testing
 - name: filter files by age without unit specified
   win_find:
-    paths: "{{win_find_dir}}\\date"
+    paths: "{{ remote_tmp_dir }}\\date"
     age: 3600
   register: actual_without_unit
 
 - name: filter files by age with unit specified
   win_find:
-    paths: "{{win_find_dir}}\\date"
+    paths: "{{ remote_tmp_dir }}\\date"
     age: 1h
   register: actual_with_unit
 
@@ -495,17 +495,17 @@
     - actual_without_unit == actual_with_unit
     - actual_without_unit.matched == 1
     - actual_without_unit.files[0].checksum == 'd1185139c47f5bc951e2e9135922fe31059206b1'
-    - actual_without_unit.files[0].path == win_find_dir + '\\date\\old.ps1'
+    - actual_without_unit.files[0].path == remote_tmp_dir + '\\date\\old.ps1'
 
 - name: filter files by age (newer than) without unit specified
   win_find:
-    paths: "{{win_find_dir}}\\date"
+    paths: "{{ remote_tmp_dir }}\\date"
     age: -3600
   register: actual_without_unit
 
 - name: filter files by age (newer than) without unit specified
   win_find:
-    paths: "{{win_find_dir}}\\date"
+    paths: "{{ remote_tmp_dir }}\\date"
     age: -1h
   register: actual_with_unit
 
@@ -515,11 +515,11 @@
     - actual_without_unit == actual_with_unit
     - actual_without_unit.matched == 1
     - actual_without_unit.files[0].checksum == 'af99d0e98df4531b9f26c942f41d65c58766bfa9'
-    - actual_without_unit.files[0].path == win_find_dir + '\\date\\new.ps1'
+    - actual_without_unit.files[0].path == remote_tmp_dir + '\\date\\new.ps1'
 
 - name: get list of files with md5 checksum
   win_find:
-    paths: "{{win_find_dir}}\\single"
+    paths: "{{ remote_tmp_dir }}\\single"
     patterns: test.ps1
     checksum_algorithm: md5
   register: actual_md5_checksum
@@ -531,7 +531,7 @@
   
 - name: get list of files with sha1 checksum
   win_find:
-    paths: "{{win_find_dir}}\\single"
+    paths: "{{ remote_tmp_dir }}\\single"
     patterns: test.ps1
     checksum_algorithm: sha1
   register: actual_sha1_checksum
@@ -543,7 +543,7 @@
 
 - name: get list of files with sha256 checksum
   win_find:
-    paths: "{{win_find_dir}}\\single"
+    paths: "{{ remote_tmp_dir }}\\single"
     patterns: test.ps1
     checksum_algorithm: sha256
   register: actual_sha256_checksum
@@ -555,7 +555,7 @@
 
 - name: get list of files with sha384 checksum
   win_find:
-    paths: "{{win_find_dir}}\\single"
+    paths: "{{ remote_tmp_dir }}\\single"
     patterns: test.ps1
     checksum_algorithm: sha384
   register: actual_sha384_checksum
@@ -567,7 +567,7 @@
 
 - name: get list of files with sha512 checksum
   win_find:
-    paths: "{{win_find_dir}}\\single"
+    paths: "{{ remote_tmp_dir }}\\single"
     patterns: test.ps1
     checksum_algorithm: sha512
   register: actual_sha512_checksum
@@ -579,7 +579,7 @@
 
 - name: get list of files without checksum
   win_find:
-    paths: "{{win_find_dir}}\\single"
+    paths: "{{ remote_tmp_dir }}\\single"
     patterns: test.ps1
     get_checksum: False
   register: actual_no_checksum
@@ -592,7 +592,7 @@
 # https://github.com/ansible/ansible/issues/26158
 - name: get list of files in an empty nested directory
   win_find:
-    paths: '{{win_find_dir}}\emptynested'
+    paths: '{{ remote_tmp_dir }}\emptynested'
   register: actual_empty_nested
 
 - name: assert get list of files in an empty nested directory
@@ -602,61 +602,68 @@
 
 - name: create new folders for security tests
   win_file:
-    path: '{{win_find_dir}}\{{item}}'
+    path: C:\ansible win_find\{{ item }}
     state: directory
   with_items:
   - secure-tests\secure\internal-folder
   - secure-tests\open\internal-folder
 
-- name: create random password for test user
-  set_fact:
-    test_win_find_password: password123! + {{ lookup('password', '/dev/null chars=ascii_letters,digits length=8') }}
+- block:
+  - name: create random password for test user
+    set_fact:
+      test_win_find_password: password123! + {{ lookup('password', '/dev/null chars=ascii_letters,digits length=8') }}
 
-- name: create test user who does not have access to secure folder
-  win_user:
-    name: '{{test_win_find_username}}'
-    password: '{{test_win_find_password}}'
-    state: present
-    groups:
-    - Users
+  - name: create test user who does not have access to secure folder
+    win_user:
+      name: '{{test_win_find_username}}'
+      password: '{{test_win_find_password}}'
+      state: present
+      groups:
+      - Users
 
-- name: change owner of secure folder
-  win_owner:
-    path: '{{win_find_dir}}\secure-tests\secure'
-    user: BUILTIN\Administrators
-    recurse: yes
+  - name: change owner of secure folder
+    win_owner:
+      path: C:\ansible win_find\secure-tests\secure
+      user: BUILTIN\Administrators
+      recurse: yes
 
-- name: set explicit inheritance of secure folder for the Administrators accounts
-  win_acl:
-    user: BUILTIN\Administrators
-    path: '{{win_find_dir}}\secure-tests\secure'
-    rights: FullControl
-    type: allow
-    state: present
-    inherit: None
+  - name: set explicit inheritance of secure folder for the Administrators accounts
+    win_acl:
+      user: BUILTIN\Administrators
+      path: C:\ansible win_find\secure-tests\secure
+      rights: FullControl
+      type: allow
+      state: present
+      inherit: None
 
-- name: remove inheritance on the secure folder
-  win_acl_inheritance:
-    path: '{{win_find_dir}}\secure-tests\secure'
-    reorganize: no
-    state: absent
+  - name: remove inheritance on the secure folder
+    win_acl_inheritance:
+      path: C:\ansible win_find\secure-tests\secure
+      reorganize: no
+      state: absent
 
-- name: run win_find with under-privileged account
-  win_find:
-    paths: '{{win_find_dir}}\secure-tests'
-    recurse: yes
-    file_type: directory
-  register: secure_result
-  become: yes
-  become_method: runas
-  become_user: '{{test_win_find_username}}'
-  vars:
-    ansible_become_password: '{{test_win_find_password}}'
+  - name: run win_find with under-privileged account
+    win_find:
+      paths: C:\ansible win_find\secure-tests
+      recurse: yes
+      file_type: directory
+    register: secure_result
+    become: yes
+    become_method: runas
+    become_user: '{{test_win_find_username}}'
+    vars:
+      ansible_become_password: '{{test_win_find_password}}'
 
-- name: assert win_find only examined 2 files with under-privileged account
-  assert:
-    that:
-    - secure_result.examined == 2
-    - secure_result.matched == 2
-    - secure_result.files[0].path == win_find_dir + "\secure-tests\open"
-    - secure_result.files[1].path == win_find_dir + "\secure-tests\open\internal-folder"
+  - name: assert win_find only examined 2 files with under-privileged account
+    assert:
+      that:
+      - secure_result.examined == 2
+      - secure_result.matched == 2
+      - secure_result.files[0].path | lower == 'c:\\ansible win_find\\secure-tests\\open'
+      - secure_result.files[1].path | lower == 'c:\\ansible win_find\\secure-tests\\open\\internal-folder'
+
+  always:
+    - name: remove secure folder tests
+      win_file:
+        path: C:\ansible win_find
+        state: absent

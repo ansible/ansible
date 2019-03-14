@@ -1,2 +1,1 @@
-win_find_dir: "{{win_output_dir}}\\win_find"
 test_win_find_username: testuser

@@ -1,7 +1,7 @@
 - name: create temporary directory
   win_tempfile:
     state: directory
-    suffix: .test
+    suffix: '{{ remote_tmp_suffix }}'
   register: remote_tmp_dir
   notify:
     - delete temporary directory (windows)

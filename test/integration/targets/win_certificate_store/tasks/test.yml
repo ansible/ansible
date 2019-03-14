@@ -2,7 +2,7 @@
 - name: fail with invalid store location
   win_certificate_store:
     state: present
-    path: '{{win_cert_dir}}\subj-cert.pem'
+    path: '{{ remote_tmp_dir }}\subj-cert.pem'
     store_location: FakeLocation
   register: fail_fake_location
   failed_when: "fail_fake_location.msg != 'value of store_location must be one of: CurrentUser, LocalMachine. Got no match for: FakeLocation'"
@@ -10,7 +10,7 @@
 - name: fail with invalid store name
   win_certificate_store:
     state: present
-    path: '{{win_cert_dir}}\subj-cert.pem'
+    path: '{{ remote_tmp_dir }}\subj-cert.pem'
     store_name: FakeName
   register: fail_fake_name
   failed_when: "fail_fake_name.msg != 'value of store_name must be one of: AddressBook, AuthRoot, CertificateAuthority, Disallowed, My, Root, TrustedPeople, TrustedPublisher. Got no match for: FakeName'"
@@ -31,7 +31,7 @@
 - name: fail when state=exported and no thumbprint is set
   win_certificate_store:
     state: exported
-    path: '{{win_cert_dir}}'
+    path: '{{ remote_tmp_dir }}'
   register: fail_export_no_thumbprint
   failed_when: "fail_export_no_thumbprint.msg != 'state is exported but all of the following are missing: thumbprint'"
 
@@ -39,9 +39,9 @@
   win_certificate_store:
     state: exported
     thumbprint: '{{subj_thumbprint}}'
-    path: '{{win_cert_dir}}'
+    path: '{{ remote_tmp_dir }}'
   register: fail_export_path_is_dir
-  failed_when: fail_export_path_is_dir.msg != "Cannot export cert to path '" + win_cert_dir + "' as it is a directory"
+  failed_when: fail_export_path_is_dir.msg != "Cannot export cert to path '" + remote_tmp_dir + "' as it is a directory"
 
 - name: fail when state=absent and not path or thumbprint is set
   win_certificate_store:
@@ -51,7 +51,7 @@
 
 - name: import pem certificate (check)
   win_certificate_store:
-    path: '{{win_cert_dir}}\subj-cert.pem'
+    path: '{{ remote_tmp_dir }}\subj-cert.pem'
     state: present
   register: import_pem_check
   check_mode: yes
@@ -69,7 +69,7 @@
 
 - name: import pem certificate
   win_certificate_store:
-    path: '{{win_cert_dir}}\subj-cert.pem'
+    path: '{{ remote_tmp_dir }}\subj-cert.pem'
     state: present
   register: import_pem
 
@@ -86,7 +86,7 @@
 
 - name: import pem certificate (idempotent)
   win_certificate_store:
-    path: '{{win_cert_dir}}\subj-cert.pem'
+    path: '{{ remote_tmp_dir }}\subj-cert.pem'
     state: present
   register: import_pem_again
 
@@ -143,7 +143,7 @@
 
 - name: import der certificate (check)
   win_certificate_store:
-    path: '{{win_cert_dir}}\subj-cert.cer'
+    path: '{{ remote_tmp_dir }}\subj-cert.cer'
     state: present
   register: import_der_check
   check_mode: yes
@@ -161,7 +161,7 @@
 
 - name: import der certificate
   win_certificate_store:
-    path: '{{win_cert_dir}}\subj-cert.cer'
+    path: '{{ remote_tmp_dir }}\subj-cert.cer'
     state: present
   register: import_der
 
@@ -178,7 +178,7 @@
 
 - name: import der certificate (idempotent)
   win_certificate_store:
-    path: '{{win_cert_dir}}\subj-cert.cer'
+    path: '{{ remote_tmp_dir }}\subj-cert.cer'
     state: present
   register: import_der_again
 
@@ -189,7 +189,7 @@
 
 - name: remove certificate based on path (check)
   win_certificate_store:
-    path: '{{win_cert_dir}}\subj-cert.cer'
+    path: '{{ remote_tmp_dir }}\subj-cert.cer'
     state: absent
   register: remove_path_check
   check_mode: yes
@@ -207,7 +207,7 @@
 
 - name: remove certificate based on path
   win_certificate_store:
-    path: '{{win_cert_dir}}\subj-cert.cer'
+    path: '{{ remote_tmp_dir }}\subj-cert.cer'
     state: absent
   register: remove_path
 
@@ -224,7 +224,7 @@
 
 - name: remove certificate based on path (idempotent)
   win_certificate_store:
-    path: '{{win_cert_dir}}\subj-cert.cer'
+    path: '{{ remote_tmp_dir }}\subj-cert.cer'
     state: absent
   register: remove_path_again
 
@@ -235,7 +235,7 @@
 
 - name: import PEM encoded p7b chain (check)
   win_certificate_store:
-    path: '{{win_cert_dir}}\chain.pem'
+    path: '{{ remote_tmp_dir }}\chain.pem'
     state: present
   register: import_pem_p7b_check
   check_mode: yes
@@ -260,7 +260,7 @@
 
 - name: import PEM encoded p7b chain
   win_certificate_store:
-    path: '{{win_cert_dir}}\chain.pem'
+    path: '{{ remote_tmp_dir }}\chain.pem'
     state: present
   register: import_pem_p7b
 
@@ -284,7 +284,7 @@
 
 - name: import PEM encoded p7b chain (idempotent)
   win_certificate_store:
-    path: '{{win_cert_dir}}\chain.pem'
+    path: '{{ remote_tmp_dir }}\chain.pem'
     state: present
   register: import_pem_p7b_again
 
@@ -303,7 +303,7 @@
 
 - name: import DER encoded p7b chain into custom store (check)
   win_certificate_store:
-    path: '{{win_cert_dir}}\chain.p7b'
+    path: '{{ remote_tmp_dir }}\chain.p7b'
     state: present
     store_name: TrustedPeople
     store_location: CurrentUser
@@ -330,7 +330,7 @@
 
 - name: import DER encoded p7b chain into custom store
   win_certificate_store:
-    path: '{{win_cert_dir}}\chain.p7b'
+    path: '{{ remote_tmp_dir }}\chain.p7b'
     state: present
     store_name: TrustedPeople
     store_location: CurrentUser
@@ -356,7 +356,7 @@
 
 - name: import DER encoded p7b chain into custom store (idempotent)
   win_certificate_store:
-    path: '{{win_cert_dir}}\chain.p7b'
+    path: '{{ remote_tmp_dir }}\chain.p7b'
     state: present
     store_name: TrustedPeople
     store_location: CurrentUser
@@ -379,7 +379,7 @@
 
 - name: import pfx without password and non exportable (check)
   win_certificate_store:
-    path: '{{win_cert_dir}}\subj-cert-without-pass.pfx'
+    path: '{{ remote_tmp_dir }}\subj-cert-without-pass.pfx'
     state: present
     key_exportable: no
   vars: &become_vars
@@ -403,7 +403,7 @@
 
 - name: import pfx without password and non exportable
   win_certificate_store:
-    path: '{{win_cert_dir}}\subj-cert-without-pass.pfx'
+    path: '{{ remote_tmp_dir }}\subj-cert-without-pass.pfx'
     state: present
     key_exportable: no
   vars: *become_vars
@@ -423,7 +423,7 @@
 
 - name: import pfx without password and non exportable (idempotent)
   win_certificate_store:
-    path: '{{win_cert_dir}}\subj-cert-without-pass.pfx'
+    path: '{{ remote_tmp_dir }}\subj-cert-without-pass.pfx'
     state: present
     key_exportable: no
   vars: *become_vars
@@ -436,7 +436,7 @@
 
 - name: fail import pfx with password and none set
   win_certificate_store:
-    path: '{{win_cert_dir}}\subj-cert-with-pass.pfx'
+    path: '{{ remote_tmp_dir }}\subj-cert-with-pass.pfx'
     state: present
     store_location: CurrentUser
     store_name: TrustedPeople
@@ -445,7 +445,7 @@
 
 - name: import pfx with password (check)
   win_certificate_store:
-    path: '{{win_cert_dir}}\subj-cert-with-pass.pfx'
+    path: '{{ remote_tmp_dir }}\subj-cert-with-pass.pfx'
     state: present
     password: '{{key_password}}'
     store_location: CurrentUser
@@ -467,7 +467,7 @@
 
 - name: import pfx with password
   win_certificate_store:
-    path: '{{win_cert_dir}}\subj-cert-with-pass.pfx'
+    path: '{{ remote_tmp_dir }}\subj-cert-with-pass.pfx'
     state: present
     password: '{{key_password}}'
     store_location: CurrentUser
@@ -489,7 +489,7 @@
 
 - name: import pfx with password (idempotent)
   win_certificate_store:
-    path: '{{win_cert_dir}}\subj-cert-with-pass.pfx'
+    path: '{{ remote_tmp_dir }}\subj-cert-with-pass.pfx'
     state: present
     password: '{{key_password}}'
     store_location: CurrentUser
@@ -504,12 +504,12 @@
 
 - name: import root cert for export tests
   win_certificate_store:
-    path: '{{win_cert_dir}}\root-cert.pem'
+    path: '{{ remote_tmp_dir }}\root-cert.pem'
     state: present
 
 - name: export cert as pem (check)
   win_certificate_store:
-    path: '{{win_cert_dir}}\exported\cert.pem'
+    path: '{{ remote_tmp_dir }}\exported-cert.pem'
     thumbprint: '{{subj_thumbprint}}'
     state: exported
     file_type: pem
@@ -518,7 +518,7 @@
 
 - name: get result of export cert as pem (check)
   win_stat:
-    path: '{{win_cert_dir}}\exported\cert.pem'
+    path: '{{ remote_tmp_dir }}\exported-cert.pem'
   register: export_pem_result_check
 
 - name: assert results of export cert as pem (check)
@@ -530,7 +530,7 @@
 
 - name: export cert as pem
   win_certificate_store:
-    path: '{{win_cert_dir}}\exported\cert.pem'
+    path: '{{ remote_tmp_dir }}\exported-cert.pem'
     thumbprint: '{{subj_thumbprint}}'
     state: exported
     file_type: pem
@@ -538,7 +538,7 @@
 
 - name: get result of export cert as pem
   win_stat:
-    path: '{{win_cert_dir}}\exported\cert.pem'
+    path: '{{ remote_tmp_dir }}\exported-cert.pem'
   register: export_pem_result
 
 - name: assert results of export cert as pem
@@ -550,7 +550,7 @@
 
 - name: export cert as pem (idempotent)
   win_certificate_store:
-    path: '{{win_cert_dir}}\exported\cert.pem'
+    path: '{{ remote_tmp_dir }}\exported-cert.pem'
     thumbprint: '{{subj_thumbprint}}'
     state: exported
     file_type: pem
@@ -563,7 +563,7 @@
 
 - name: export cert as der (check)
   win_certificate_store:
-    path: '{{win_cert_dir}}\exported\cert.cer'
+    path: '{{ remote_tmp_dir }}\exported-cert.cer'
     thumbprint: '{{subj_thumbprint}}'
     state: exported
     file_type: der
@@ -572,7 +572,7 @@
 
 - name: get result of export cert as der (check)
   win_stat:
-    path: '{{win_cert_dir}}\exported\cert.cer'
+    path: '{{ remote_tmp_dir }}\exported-cert.cer'
   register: export_der_result_check
 
 - name: assert results of export cert as der (check)
@@ -584,7 +584,7 @@
 
 - name: export cert as der
   win_certificate_store:
-    path: '{{win_cert_dir}}\exported\cert.cer'
+    path: '{{ remote_tmp_dir }}\exported-cert.cer'
     thumbprint: '{{subj_thumbprint}}'
     state: exported
     file_type: der
@@ -592,7 +592,7 @@
 
 - name: get result of export cert as der
   win_stat:
-    path: '{{win_cert_dir}}\exported\cert.cer'
+    path: '{{ remote_tmp_dir }}\exported-cert.cer'
   register: export_der_result
 
 - name: assert results of export cert as der
@@ -604,7 +604,7 @@
 
 - name: export cert as der (idempotent)
   win_certificate_store:
-    path: '{{win_cert_dir}}\exported\cert.cer'
+    path: '{{ remote_tmp_dir }}\exported-cert.cer'
     thumbprint: '{{subj_thumbprint}}'
     state: exported
     file_type: der
@@ -617,7 +617,7 @@
 
 - name: export cert as der replacing pem
   win_certificate_store:
-    path: '{{win_cert_dir}}\exported\cert.pem'
+    path: '{{ remote_tmp_dir }}\exported-cert.pem'
     thumbprint: '{{subj_thumbprint}}'
     state: exported
     file_type: der
@@ -625,7 +625,7 @@
 
 - name: get result of export cert as der replacing pem
   win_stat:
-    path: '{{win_cert_dir}}\exported\cert.pem'
+    path: '{{ remote_tmp_dir }}\exported-cert.pem'
   register: export_der_over_pem_result
 
 - name: assert results of export cert as der replacing pem
@@ -637,7 +637,7 @@
 
 - name: export cert as pem replacing der
   win_certificate_store:
-    path: '{{win_cert_dir}}\exported\cert.cer'
+    path: '{{ remote_tmp_dir }}\exported-cert.cer'
     thumbprint: '{{subj_thumbprint}}'
     state: exported
     file_type: pem
@@ -645,7 +645,7 @@
 
 - name: get result of export cert as pem replacing der
   win_stat:
-    path: '{{win_cert_dir}}\exported\cert.cer'
+    path: '{{ remote_tmp_dir }}\exported-cert.cer'
   register: export_pem_over_der_result
 
 - name: assert results of export cert as pem replacing der
@@ -657,7 +657,7 @@
 
 - name: export cert with key and password as pfx (check)
   win_certificate_store:
-    path: '{{win_cert_dir}}\exported\cert-pass.pfx'
+    path: '{{ remote_tmp_dir }}\exported-cert-pass.pfx'
     thumbprint: '{{subj_thumbprint}}'
     state: exported
     file_type: pkcs12
@@ -670,7 +670,7 @@
 
 - name: get result of export cert with key and password as pfx (check)
   win_stat:
-    path: '{{win_cert_dir}}\exported\cert-pass.pfx'
+    path: '{{ remote_tmp_dir }}\exported-cert-pass.pfx'
   register: export_pfx_with_pass_result_check
 
 - name: assert results of export cert with key and password as pfx (check)
@@ -682,7 +682,7 @@
 
 - name: export cert with key and password as pfx
   win_certificate_store:
-    path: '{{win_cert_dir}}\exported\cert-pass.pfx'
+    path: '{{ remote_tmp_dir }}\exported-cert-pass.pfx'
     thumbprint: '{{subj_thumbprint}}'
     state: exported
     file_type: pkcs12
@@ -695,7 +695,7 @@
 - name: get result of export cert with key and password as pfx
   win_shell: |
     $cert = New-Object -TypeName System.Security.Cryptography.X509Certificates.X509Certificate2
-    $cert.Import("{{win_cert_dir}}\exported\cert-pass.pfx", "{{key_password}}", 0)
+    $cert.Import("{{ remote_tmp_dir }}\exported-cert-pass.pfx", "{{key_password}}", 0)
     $cert.HasPrivateKey
   vars: *become_vars
   register: export_pfx_with_pass_result
@@ -709,7 +709,7 @@
 
 - name: export cert with key and password as pfx (idempotent)
   win_certificate_store:
-    path: '{{win_cert_dir}}\exported\cert-pass.pfx'
+    path: '{{ remote_tmp_dir }}\exported-cert-pass.pfx'
     thumbprint: '{{subj_thumbprint}}'
     state: exported
     file_type: pkcs12
@@ -726,7 +726,7 @@
 
 - name: export cert with key without password as pfx (check)
   win_certificate_store:
-    path: '{{win_cert_dir}}\exported\cert-without-pass.pfx'
+    path: '{{ remote_tmp_dir }}\exported-cert-without-pass.pfx'
     thumbprint: '{{subj_thumbprint}}'
     state: exported
     file_type: pkcs12
@@ -738,7 +738,7 @@
 
 - name: get result of export cert with key without password as pfx (check)
   win_stat:
-    path: '{{win_cert_dir}}\exported\cert-without-pass.pfx'
+    path: '{{ remote_tmp_dir }}\exported-cert-without-pass.pfx'
   register: export_pfx_without_pass_result_check
 
 - name: assert results of export cert with key without password as pfx (check)
@@ -750,7 +750,7 @@
 
 - name: export cert with key without password as pfx
   win_certificate_store:
-    path: '{{win_cert_dir}}\exported\cert-without-pass.pfx'
+    path: '{{ remote_tmp_dir }}\exported-cert-without-pass.pfx'
     thumbprint: '{{subj_thumbprint}}'
     state: exported
     file_type: pkcs12
@@ -762,7 +762,7 @@
 - name: get result of export cert with key without password as pfx
   win_shell: |
     $cert = New-Object -TypeName System.Security.Cryptography.X509Certificates.X509Certificate2
-    $cert.Import("{{win_cert_dir}}\exported\cert-without-pass.pfx", $null, 0)
+    $cert.Import("{{ remote_tmp_dir }}\exported-cert-without-pass.pfx", $null, 0)
     $cert.HasPrivateKey
   vars: *become_vars
   register: export_pfx_without_pass_result
@@ -776,7 +776,7 @@
 
 - name: export cert with key without password as pfx (idempotent)
   win_certificate_store:
-    path: '{{win_cert_dir}}\exported\cert-without-pass.pfx'
+    path: '{{ remote_tmp_dir }}\exported-cert-without-pass.pfx'
     thumbprint: '{{subj_thumbprint}}'
     state: exported
     file_type: pkcs12
@@ -792,7 +792,7 @@
 
 - name: fail to export cert with key as pfx when not marked as exportable
   win_certificate_store:
-    path: '{{win_cert_dir}}\exported\cert-fail.pfx'
+    path: '{{ remote_tmp_dir }}\exported-cert-fail.pfx'
     thumbprint: '{{subj_thumbprint}}'
     state: exported
     file_type: pkcs12

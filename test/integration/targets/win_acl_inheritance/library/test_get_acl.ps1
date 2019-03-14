@@ -13,7 +13,7 @@ $result = @{
     changed = $false
 }
 
-$acl = Get-Acl -Path $path
+$acl = Get-Acl -LiteralPath $path
 
 $result.inherited = $acl.AreAccessRulesProtected -eq $false
 
