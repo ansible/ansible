@@ -210,7 +210,7 @@ def map_obj_to_ele(module, want):
 
         if operation == 'merge':
             if item['name'] == 'root' and (not item['active'] or item['role'] or item['full_name']):
-                module.fail_json(msg="'root' account cannot deactive, set role and set full_name.")
+                module.fail_json(msg="'root' account cannot be deactivated or be assigned a role and a full name")
 
             if item['active']:
                 user.set('active', 'active')
