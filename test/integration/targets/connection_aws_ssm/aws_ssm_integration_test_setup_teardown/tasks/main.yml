@@ -16,6 +16,11 @@
     name: boto3
   tags: setup_infra
 
+- name: Install Boto
+  pip:
+    name: boto
+  tags: setup_infra
+
 - name: Create IAM role
   iam:
     iam_type: role
