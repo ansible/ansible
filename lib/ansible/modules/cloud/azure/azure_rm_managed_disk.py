@@ -104,6 +104,7 @@ EXAMPLES = '''
         location: eastus
         resource_group: myResourceGroup
         disk_size_gb: 4
+        zones: 2
 
     - name: Create managed operating system disk from page blob
       azure_rm_managed_disk:
@@ -267,8 +268,8 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         resource_group = self.get_resource_group(self.resource_group)
         if not self.location:
             self.location = resource_group.location
-        # convert elements to ints
-        self.zones = [int(i) for i in self.zones] if self.zones else None
+        # get zones values
+        self.zones = self.zones if self.zones else None
 
         disk_instance = self.get_managed_disk()
         result = disk_instance
