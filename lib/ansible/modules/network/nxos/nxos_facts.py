@@ -253,14 +253,7 @@ class Default(FactsBase):
         if data:
             self.facts['license_hostid'] = self.parse_license_hostid(data)
 
-    def parse_version(self, data):
-        match = re.search(r'\s+system:\s+version\s*(\S+)', data, re.M)
-        if match:
-            return match.group(1)
-        else:
-            match = re.search(r'\s+kickstart:\s+version\s*(\S+)', data, re.M)
-            if match:
-                return match.group(1)
+        self.facts.update(self.platform_facts())
 
     def parse_serialnum(self, data):
         match = re.search(r'Processor Board ID\s*(\S+)', data, re.M)
