@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -eux
 
-# Execute Integration tests for Linux
+# Execute Integration tests for Windows
 ansible-playbook -c local aws_ssm_integration_test_setup_teardown.yml --tags setup_infra
 
 cd ../connection
@@ -13,6 +13,6 @@ INVENTORY=../connection_aws_ssm/inventory.aws_ssm ./test.sh \
     -e action_prefix= \
     "$@" || true
 
-cd ../connection_aws_ssm
+cd ../connection_aws_ssm_powershell
 
 ansible-playbook -c local aws_ssm_integration_test_setup_teardown.yml --tags delete_infra

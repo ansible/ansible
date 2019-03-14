@@ -53,26 +53,27 @@
     seconds: 10
   tags: setup_infra
 
-- name: Create Linux ec2 instance
+- name: Create Windows ec2 instance
   ec2:
     instance_type: "{{instance_type}}"
-    image: "{{linux_ami_id}}"
+    image: "{{windows_ami_id}}"
     wait: "yes"
     count: 1
     region: "{{region_name}}"
-    instance_profile_name: "{{random_role_name}}"
+    instance_profile_name: "{{iam_role_name}}"
     instance_tags:
       Name: aws_ssm_integration_test
     user_data: |
-                 #!/bin/sh
-                 sudo systemctl start amazon-ssm-agent
+                <powershell>
+                Restart-Service AmazonSSMAgent
+                </powershell>
     state: present
   register: output
   tags: setup_infra
 
 - name: Wait for EC2 to be available
   wait_for_connection:
-    delay: 30
+    delay: 500
   tags: setup_infra
 
 - name: Setting fact for S3 bucket-name using EC2 instance-id
@@ -94,7 +95,7 @@
     src: inventory.aws_ssm.j2
   tags: setup_infra
 
-- name: create bucket with instance id and rolename
+- name: Create S3 bucket with EC2 instance id and rolename
   s3_bucket:
     name: "{{bucket_name}}"
   register: s3_output
