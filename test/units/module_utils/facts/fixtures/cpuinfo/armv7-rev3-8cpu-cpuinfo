@@ -1,0 +1,75 @@
+processor   : 0
+model name  : ARMv7 Processor rev 3 (v7l)
+BogoMIPS    : 12.00
+Features    : half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt vfpd32 lpae
+CPU implementer : 0x41
+CPU architecture: 7
+CPU variant : 0x0
+CPU part    : 0xc07
+CPU revision    : 3
+processor   : 1
+model name  : ARMv7 Processor rev 3 (v7l)
+BogoMIPS    : 12.00
+Features    : half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt vfpd32 lpae
+CPU implementer : 0x41
+CPU architecture: 7
+CPU variant : 0x0
+CPU part    : 0xc07
+CPU revision    : 3
+processor   : 2
+model name  : ARMv7 Processor rev 3 (v7l)
+BogoMIPS    : 12.00
+Features    : half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt vfpd32 lpae
+CPU implementer : 0x41
+CPU architecture: 7
+CPU variant : 0x0
+CPU part    : 0xc07
+CPU revision    : 3
+processor   : 3
+model name  : ARMv7 Processor rev 3 (v7l)
+BogoMIPS    : 12.00
+Features    : half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt vfpd32 lpae
+CPU implementer : 0x41
+CPU architecture: 7
+CPU variant : 0x0
+CPU part    : 0xc07
+CPU revision    : 3
+processor   : 4
+model name  : ARMv7 Processor rev 3 (v7l)
+BogoMIPS    : 120.00
+Features    : half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt vfpd32 lpae
+CPU implementer : 0x41
+CPU architecture: 7
+CPU variant : 0x2
+CPU part    : 0xc0f
+CPU revision    : 3
+processor   : 5
+model name  : ARMv7 Processor rev 3 (v7l)
+BogoMIPS    : 120.00
+Features    : half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt vfpd32 lpae
+CPU implementer : 0x41
+CPU architecture: 7
+CPU variant : 0x2
+CPU part    : 0xc0f
+CPU revision    : 3
+processor   : 6
+model name  : ARMv7 Processor rev 3 (v7l)
+BogoMIPS    : 120.00
+Features    : half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt vfpd32 lpae
+CPU implementer : 0x41
+CPU architecture: 7
+CPU variant : 0x2
+CPU part    : 0xc0f
+CPU revision    : 3
+processor   : 7
+model name  : ARMv7 Processor rev 3 (v7l)
+BogoMIPS    : 120.00
+Features    : half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt vfpd32 lpae
+CPU implementer : 0x41
+CPU architecture: 7
+CPU variant : 0x2
+CPU part    : 0xc0f
+CPU revision    : 3
+Hardware    : ODROID-XU4
+Revision    : 0100
+Serial      : 0000000000000000
