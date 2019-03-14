@@ -1,19 +1,63 @@
 ---
- # Test setup
+# Test setup
+# Use single task to save in CI runtime
 - name: create test folders
-  win_file:
-    path: '{{ remote_tmp_dir }}\folder'
-    state: directory
+  win_shell: |
+    $ErrorActionPreference = 'Stop'
 
-- name: create test files
-  win_copy:
-    dest: '{{ remote_tmp_dir }}\folder\file.txt'
-    content: a
+    $tmp_dir = '{{ test_win_acl_inheritance_path }}'
+    New-Item -Path $tmp_dir -ItemType Directory > $null
+
+    Add-Type -AssemblyName System.DirectoryServices.AccountManagement
+    $current_sid = ([System.DirectoryServices.AccountManagement.UserPrincipal]::Current).Sid
+    $system_sid = New-Object -TypeName System.Security.Principal.SecurityIdentifier -ArgumentList @([System.Security.Principal.WellKnownSidType]::LocalSystemSid, $null)
+    $everyone_sid = New-Object -TypeName System.Security.Principal.SecurityIdentifier -ArgumentList @([System.Security.Principal.WellKnownSidType]::WorldSid, $null)
+
+    $sd = New-Object -TypeName System.Security.AccessControl.DirectorySecurity
+    $sd.SetAccessRuleProtection($true, $false)
+    $sd.AddAccessRule(
+        (New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList @(
+            $system_sid,
+            [System.Security.AccessControl.FileSystemRights]::FullControl,
+            [System.Security.AccessControl.InheritanceFlags]"ContainerInherit, ObjectInherit",
+            [System.Security.AccessControl.PropagationFlags]::None,
+            [System.Security.AccessControl.AccessControlType]::Allow
+        ))
+    )
+    $sd.AddAccessRule(
+        (New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList @(
+            $current_sid,
+            [System.Security.AccessControl.FileSystemRights]::FullControl,
+            [System.Security.AccessControl.InheritanceFlags]"ContainerInherit, ObjectInherit",
+            [System.Security.AccessControl.PropagationFlags]::None,
+            [System.Security.AccessControl.AccessControlType]::Allow
+        ))
+    )
+    $sd.AddAccessRule(
+        (New-Object -TypeName System.Security.AccessControl.FileSystemAccessRule -ArgumentList @(
+            $everyone_sid,
+            [System.Security.AccessControl.FileSystemRights]::Read,
+            [System.Security.AccessControl.InheritanceFlags]"ContainerInherit, ObjectInherit",
+            [System.Security.AccessControl.PropagationFlags]::None,
+            [System.Security.AccessControl.AccessControlType]::Allow
+        ))
+    )
+
+    Set-Acl -LiteralPath $tmp_dir -AclObject $sd
+
+    New-Item -Path "$tmp_dir\folder" -ItemType Directory > $null
+    Set-Content -LiteralPath "$tmp_dir\folder\file.txt" -Value 'a'
+
+
+    $system_sid.Value
+    $current_sid.Value
+    $everyone_sid.Value
+  register: test_sids  # register the output SID values used for comparison tests below
 
 # Run tests
 - name: remove inheritance check
   win_acl_inheritance:
-    path: '{{ remote_tmp_dir }}\folder'
+    path: '{{ test_win_acl_inheritance_path }}\folder'
     reorganize: True
     state: absent
   register: remove_check
@@ -21,7 +65,7 @@
 
 - name: get actual remove inheritance check
   test_get_acl:
-    path: '{{ remote_tmp_dir }}\folder'
+    path: '{{ test_win_acl_inheritance_path }}\folder'
   register: actual_remove_check
 
 - name: assert remove inheritance check
@@ -29,17 +73,20 @@
     that:
     - remove_check is changed
     - actual_remove_check.inherited == True
+    - actual_remove_check.user_details[test_sids.stdout_lines[0]].isinherited == True
+    - actual_remove_check.user_details[test_sids.stdout_lines[1]].isinherited == True
+    - actual_remove_check.user_details[test_sids.stdout_lines[2]].isinherited == True
 
 - name: remove inheritance
   win_acl_inheritance:
-    path: '{{ remote_tmp_dir }}\folder'
+    path: '{{ test_win_acl_inheritance_path }}\folder'
     reorganize: True
     state: absent
   register: remove
 
 - name: get actual remove inheritance
   test_get_acl:
-    path: '{{ remote_tmp_dir }}\folder'
+    path: '{{ test_win_acl_inheritance_path }}\folder'
   register: actual_remove
 
 - name: assert remove inheritance
@@ -47,44 +94,25 @@
     that:
     - remove is changed
     - actual_remove.inherited == False
-    - actual_remove.user_details['BUILTIN/Administrators'].isinherited == False
-    - actual_remove.user_details['BUILTIN/Administrators'].isnotinherited == True
-    - actual_remove.user_details['BUILTIN/Users'].isinherited == False
-    - actual_remove.user_details['BUILTIN/Users'].isnotinherited == True
-    - actual_remove.user_details['CREATOR OWNER'].isinherited == False
-    - actual_remove.user_details['CREATOR OWNER'].isnotinherited == True
-    - actual_remove.user_details['NT AUTHORITY/SYSTEM'].isinherited == False
-    - actual_remove.user_details['NT AUTHORITY/SYSTEM'].isnotinherited == True
+    - actual_remove.user_details[test_sids.stdout_lines[0]].isinherited == False
+    - actual_remove.user_details[test_sids.stdout_lines[1]].isinherited == False
+    - actual_remove.user_details[test_sids.stdout_lines[2]].isinherited == False
 
 - name: remove inheritance again
   win_acl_inheritance:
-    path: '{{ remote_tmp_dir }}\folder'
+    path: '{{ test_win_acl_inheritance_path }}\folder'
     reorganize: True
     state: absent
   register: remove_again
-
-- name: get actual remove inheritance again
-  test_get_acl:
-    path: '{{ remote_tmp_dir }}\folder'
-  register: actual_remove_again
 
 - name: assert remove inheritance again
   assert:
     that:
     - remove_again is not changed
-    - actual_remove_again.inherited == False
-    - actual_remove.user_details['BUILTIN/Administrators'].isinherited == False
-    - actual_remove.user_details['BUILTIN/Administrators'].isnotinherited == True
-    - actual_remove.user_details['BUILTIN/Users'].isinherited == False
-    - actual_remove.user_details['BUILTIN/Users'].isnotinherited == True
-    - actual_remove.user_details['CREATOR OWNER'].isinherited == False
-    - actual_remove.user_details['CREATOR OWNER'].isnotinherited == True
-    - actual_remove.user_details['NT AUTHORITY/SYSTEM'].isinherited == False
-    - actual_remove.user_details['NT AUTHORITY/SYSTEM'].isnotinherited == True
 
 - name: add inheritance check
   win_acl_inheritance:
-    path: '{{ remote_tmp_dir }}\folder'
+    path: '{{ test_win_acl_inheritance_path }}\folder'
     reorganize: True
     state: present
   register: add_check
@@ -92,7 +120,7 @@
 
 - name: get actual add inheritance check
   test_get_acl:
-    path: '{{ remote_tmp_dir }}\folder'
+    path: '{{ test_win_acl_inheritance_path }}\folder'
   register: actual_add_check
 
 - name: assert add inheritance check
@@ -100,25 +128,20 @@
     that:
     - add_check is changed
     - actual_add_check.inherited == False
-    - actual_add_check.user_details['BUILTIN/Administrators'].isinherited == False
-    - actual_add_check.user_details['BUILTIN/Administrators'].isnotinherited == True
-    - actual_add_check.user_details['BUILTIN/Users'].isinherited == False
-    - actual_add_check.user_details['BUILTIN/Users'].isnotinherited == True
-    - actual_add_check.user_details['CREATOR OWNER'].isinherited == False
-    - actual_add_check.user_details['CREATOR OWNER'].isnotinherited == True
-    - actual_add_check.user_details['NT AUTHORITY/SYSTEM'].isinherited == False
-    - actual_add_check.user_details['NT AUTHORITY/SYSTEM'].isnotinherited == True
+    - actual_add_check.user_details[test_sids.stdout_lines[0]].isinherited == False
+    - actual_add_check.user_details[test_sids.stdout_lines[1]].isinherited == False
+    - actual_add_check.user_details[test_sids.stdout_lines[2]].isinherited == False
 
 - name: add inheritance
   win_acl_inheritance:
-    path: '{{ remote_tmp_dir }}\folder'
+    path: '{{ test_win_acl_inheritance_path }}\folder'
     reorganize: True
     state: present
   register: add
 
 - name: get actual add inheritance
   test_get_acl:
-    path: '{{ remote_tmp_dir }}\folder'
+    path: '{{ test_win_acl_inheritance_path }}\folder'
   register: actual_add
 
 - name: assert add inheritance
@@ -126,37 +149,18 @@
     that:
     - add is changed
     - actual_add.inherited == True
-    - actual_add.user_details['BUILTIN/Administrators'].isinherited == True
-    - actual_add.user_details['BUILTIN/Administrators'].isnotinherited == False
-    - actual_add.user_details['BUILTIN/Users'].isinherited == True
-    - actual_add.user_details['BUILTIN/Users'].isnotinherited == True # Bug in win_acl_inheritance, resetting inheritance doubles up entries
-    - actual_add.user_details['CREATOR OWNER'].isinherited == True
-    - actual_add.user_details['CREATOR OWNER'].isnotinherited == False
-    - actual_add.user_details['NT AUTHORITY/SYSTEM'].isinherited == True
-    - actual_add.user_details['NT AUTHORITY/SYSTEM'].isnotinherited == False
+    - actual_add.user_details[test_sids.stdout_lines[0]].isinherited == True
+    - actual_add.user_details[test_sids.stdout_lines[1]].isinherited == True
+    - actual_add.user_details[test_sids.stdout_lines[2]].isinherited == True
 
 - name: add inheritance again
   win_acl_inheritance:
-    path: '{{ remote_tmp_dir }}\folder'
+    path: '{{ test_win_acl_inheritance_path }}\folder'
     reorganize: True
     state: present
   register: add_again
-
-- name: get actual add inheritance again
-  test_get_acl:
-    path: '{{ remote_tmp_dir }}\folder'
-  register: actual_add_again
 
 - name: assert add inheritance again
   assert:
     that:
     - add_again is not changed
-    - actual_add_again.inherited == True
-    - actual_add_again.user_details['BUILTIN/Administrators'].isinherited == True
-    - actual_add_again.user_details['BUILTIN/Administrators'].isnotinherited == False
-    - actual_add_again.user_details['BUILTIN/Users'].isinherited == True
-    - actual_add_again.user_details['BUILTIN/Users'].isnotinherited == True # Bug in win_acl_inheritance, resetting inheritance doubles up entries
-    - actual_add_again.user_details['CREATOR OWNER'].isinherited == True
-    - actual_add_again.user_details['CREATOR OWNER'].isnotinherited == False
-    - actual_add_again.user_details['NT AUTHORITY/SYSTEM'].isinherited == True
-    - actual_add_again.user_details['NT AUTHORITY/SYSTEM'].isnotinherited == False

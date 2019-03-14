@@ -259,9 +259,14 @@ Function Get-FileStat($file) {
             $isshared = $true
             $file_stat.sharename = $share_info.Name
         }
-        
+
         # only get the size of a directory if there are files (not directories) inside the folder
-        $dir_files_sum = Get-ChildItem -LiteralPath $file.FullName -Recurse | Where-Object { -not $_.PSIsContainer }
+        try {
+            $dir_files_sum = $file.EnumerateFiles("*", [System.IO.SearchOption]::AllDirectories)
+        } catch [System.IO.DirectoryNotFoundException] {
+            # Dir is a broken ReparsePoint
+            $dir_files_sum = $null
+        }
 
         if ($dir_files_sum -eq $null -or ($dir_files_sum.PSObject.Properties.name -contains 'length' -eq $false)) {
             $file_stat.size = 0
@@ -291,8 +296,22 @@ Function Get-FileStat($file) {
 
 Function Get-FilesInFolder($path) {
     $items = @()
-    foreach ($item in (Get-ChildItem -Force -LiteralPath $path -ErrorAction SilentlyContinue)) {
-        if ($item.PSIsContainer -and $recurse) {
+
+    # Get-ChildItem has a bug with special path chars like [] even with -LiteralPath
+    # due to the issue with broken ReparsePoints
+    $dir = New-Object -TypeName System.IO.DirectoryInfo -ArgumentList $path
+    try {
+        $dir_children = $dir.EnumerateFileSystemInfos()
+    } catch [System.IO.DirectoryNotFoundException] {
+        # EnumerateFileSystemInfos() fails on a ReparsePoint that is pointing to a missing target
+        $dir_children = @()
+    } catch [System.UnauthorizedAccessException] {
+        # Don't have permissions on the directory, historically we just ignored these
+        $dir_children = @()
+    }
+
+    foreach ($item in $dir_children) {
+        if ($item -is [System.IO.DirectoryInfo] -and $recurse) {
             if (($item.Attributes -like '*ReparsePoint*' -and $follow) -or ($item.Attributes -notlike '*ReparsePoint*')) {
                 # File is a link and we want to follow a link OR file is not a link
                 $items += $item.FullName
@@ -321,7 +340,9 @@ foreach ($path in $paths) {
         Fail-Json $result "Argument path $path does not exist cannot get information on"
     }
 }
-$paths_to_check = $paths_to_check | Select-Object -Unique
+
+# Make sure we only check the path once and it is sorted, EnumerateFileSystemEntries seems to be random
+$paths_to_check = $paths_to_check | Select-Object -Unique | Sort-Object
 
 foreach ($path in $paths_to_check) {
     try {
@@ -336,7 +357,7 @@ foreach ($path in $paths_to_check) {
     $result.examined = $new_examined
 
     if ($info -ne $false) {
-        $files = $result.Files        
+        $files = $result.Files
         $files += $info
 
         $new_matched = $result.matched + 1

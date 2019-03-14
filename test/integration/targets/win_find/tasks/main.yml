@@ -66,13 +66,15 @@
     cmd.exe /c mklink /D "$tmp_dir\broken-link" "$tmp_dir\broken-link-dest"
     cmd.exe /c mklink /H "$tmp_dir\hard-link-dest\hard-link.log" "$tmp_dir\hard-link-dest\file-abc.log"
     cmd.exe /c mklink /J "$tmp_dir\junction-link" "$tmp_dir\junction-link-dest"
-  
+
     $date = Get-Date -Year 2016 -Month 11 -Day 1 -Hour 7 -Minute 10 -Second 5 -Millisecond 0
-    Get-ChildItem -LiteralPath $tmp_dir -Recurse | Where-Object { $_.Name -ne "new.ps1" } | ForEach-Object {
+    Set-Location -LiteralPath $tmp_dir
+    Get-ChildItem -Recurse | Where-Object { $_.Name -ne "new.ps1" } | ForEach-Object {
         $_.CreationTime = $date
         $_.LastAccessTime = $date
         $_.LastWriteTime = $date
     }
+    Pop-Location
 
     $attributes = @{
         "hidden" = "Hidden"

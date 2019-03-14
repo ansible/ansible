@@ -28,6 +28,12 @@ Function New-TempFile {
         $module.FailJson("No random temporary file worked in $attempt attempts. Error: $($error.Exception.Message)", $error)
     }
 
+    # If the path is an absolute path, use GetFullPath to convert the potentiall DOS 8.3 filename to the full NTFS path
+    # e.g. C:\Users\ADMINI~1\AppData\Local to C:\Users\Administrator\AppData\Local
+    if ([System.IO.Path]::IsPathRooted($temppath)) {
+        $temppath = [System.IO.Path]::GetFullPath($temppath)
+    }
+
     return $temppath.ToString()
 }
 

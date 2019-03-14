@@ -1,6 +1,6 @@
 ---
 - name: get expanded %TEMP% value
-  win_command: powershell.exe "$env:TEMP"
+  win_shell: '[System.IO.Path]::GetFullPath("$env:TEMP")'
   register: raw_temp_value
 
 # match filter doesn't work with \, replace it with /
