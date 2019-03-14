@@ -49,10 +49,11 @@ options:
   objs:
     description:
       - Comma separated list of database objects to set privileges on.
-      - If I(type) is C(table) or C(sequence), the special value
+      - If I(type) is C(table), C(sequence) or C(function), the special value
         C(ALL_IN_SCHEMA) can be provided instead to specify all database
         objects of type I(type) in the schema specified via I(schema). (This
-        also works with PostgreSQL < 9.0.)
+        also works with PostgreSQL < 9.0.) (C(ALL_IN_SCHEMA) is available for
+        C(function) from version 2.8)
       - If I(type) is C(database), this parameter can be omitted, in which case
         privileges are set for the database specified via I(database).
       - 'If I(type) is I(function), colons (":") in object names will be
@@ -282,6 +283,7 @@ EXAMPLES = """
     type: foreign_data_wrapper
     role: reader
 
+# Available since version 2.8
 # GRANT ALL PRIVILEGES ON FOREIGN SERVER fdw_server TO reader
 - postgresql_privs:
     db: test
@@ -290,6 +292,16 @@ EXAMPLES = """
     type: foreign_server
     role: reader
 
+# Available since version 2.8
+# GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA common TO caller
+# Grant 'execute' permissions on all functions in schema 'common' to role 'caller'
+- postgresql_privs:
+    type: function
+    state: present
+    privs: EXECUTE
+    roles: caller
+    objs: ALL_IN_SCHEMA
+    schema: common
 """
 
 import traceback
@@ -424,6 +436,16 @@ class Connection(object):
                    WHERE nspname = %s AND relkind = 'S'"""
         self.cursor.execute(query, (schema,))
         return [t[0] for t in self.cursor.fetchall()]
+
+    def get_all_functions_in_schema(self, schema):
+        if not self.schema_exists(schema):
+            raise Error('Schema "%s" does not exist.' % schema)
+        query = """SELECT p.proname, oidvectortypes(p.proargtypes)
+                    FROM pg_catalog.pg_proc p
+                    JOIN pg_namespace n ON n.oid = p.pronamespace
+                    WHERE nspname = %s"""
+        self.cursor.execute(query, (schema,))
+        return ["%s(%s)" % (t[0], t[1]) for t in self.cursor.fetchall()]
 
     # Methods for getting access control lists and group membership info
 
@@ -824,6 +846,8 @@ def main():
             objs = conn.get_all_tables_in_schema(p.schema)
         elif p.type == 'sequence' and p.objs == 'ALL_IN_SCHEMA':
             objs = conn.get_all_sequences_in_schema(p.schema)
+        elif p.type == 'function' and p.objs == 'ALL_IN_SCHEMA':
+            objs = conn.get_all_functions_in_schema(p.schema)
         elif p.type == 'default_privs':
             if p.objs == 'ALL_DEFAULT':
                 objs = frozenset(VALID_DEFAULT_OBJS.keys())
@@ -841,9 +865,9 @@ def main():
         else:
             objs = p.objs.split(',')
 
-        # function signatures are encoded using ':' to separate args
-        if p.type == 'function':
-            objs = [obj.replace(':', ',') for obj in objs]
+            # function signatures are encoded using ':' to separate args
+            if p.type == 'function':
+                objs = [obj.replace(':', ',') for obj in objs]
 
         # roles
         if p.roles == 'PUBLIC':
