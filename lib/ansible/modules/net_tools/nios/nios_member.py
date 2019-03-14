@@ -469,7 +469,7 @@ def main():
         syslog_servers=dict(type='list', elements='dict', options=syslog_spec),
         pre_provisioning=dict(type='dict', elements='dict', options=pre_prov_spec),
         extattrs=dict(type='dict'),
-        create_token=dict(type='bool',default=False),
+        create_token=dict(type='bool', default=False),
     )
 
     argument_spec = dict(
