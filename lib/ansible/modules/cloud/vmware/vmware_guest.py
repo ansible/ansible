@@ -1531,7 +1531,7 @@ class PyVmomiHelper(PyVmomi):
     # March 2019, Added by chaitra kurdekar
     # To Set vApp Product Information in VM.
     def configure_vapp_product(self, vm_obj):
-        if 'vapp_product' not in self.params:
+        if 'vapp_product' not in self.params or len(self.params['vapp_product']) == 0:
             return
 
         new_vmconfig_spec = vim.vApp.VmConfigSpec()
@@ -2421,8 +2421,8 @@ class PyVmomiHelper(PyVmomi):
         self.customize_customvalues(vm_obj=self.current_vm_obj, config_spec=self.configspec)
         self.configure_resource_alloc_info(vm_obj=self.current_vm_obj)
         self.configure_vapp_properties(vm_obj=self.current_vm_obj)
-        # self.configure_vapp_product(vm_obj=self.current_vm_obj)
-        self.configure_vapp_ovfEnvironmentTransport(vm_obj=self.current_vm_obj)
+        self.configure_vapp_product(vm_obj=self.current_vm_obj)
+        # self.configure_vapp_ovfEnvironmentTransport(vm_obj=self.current_vm_obj)
 
         if self.params['annotation'] and self.current_vm_obj.config.annotation != self.params['annotation']:
             self.configspec.annotation = str(self.params['annotation'])
