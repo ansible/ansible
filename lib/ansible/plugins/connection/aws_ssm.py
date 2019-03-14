@@ -224,7 +224,7 @@ class Connection(ConnectionBase):
 
         # Handle the back-end throttling
         display.vvvvv(u"EXEC write: '{0}'".format(to_text(cmd)), host=self.host)
-        for c in cmd:
+        for c in cmd.encode('utf-8'):
             session.stdin.write(c)
             time.sleep(10 / 1000.0)
 
@@ -329,10 +329,10 @@ class Connection(ConnectionBase):
         client = boto3.client('s3')
         if ssm_action == 'get':
             (returncode, stdout, stderr) = self.exec_command(put_command, in_data=None, sudoable=False)
-            with open(out_path, 'wb') as data:
+            with open(out_path.encode('utf-8'), 'wb') as data:
                 client.download_fileobj(self.get_option('bucket_name'), s3_path, data)
         else:
-            with open(in_path, 'rb') as data:
+            with open(in_path.encode('utf-8'), 'rb') as data:
                 client.upload_fileobj(data, self.get_option('bucket_name'), s3_path)
             (returncode, stdout, stderr) = self.exec_command(get_command, in_data=None, sudoable=False)
 
