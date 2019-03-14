@@ -85,7 +85,10 @@ options:
     tags:
         description:
             - Tags to assign to the managed disk.
-
+    zones:
+        description:
+            - A list of avaliablity Zones for you managed disk.
+            
 extends_documentation_fragment:
     - azure
     - azure_tags
@@ -174,7 +177,8 @@ def managed_disk_to_dict(managed_disk):
         disk_size_gb=managed_disk.disk_size_gb,
         os_type=managed_disk.os_type.lower() if managed_disk.os_type else None,
         storage_account_type=managed_disk.sku.name if managed_disk.sku else None,
-        managed_by=managed_disk.managed_by
+        managed_by=managed_disk.managed_by,
+        zones=managed_disk.zones
     )
 
 
@@ -220,6 +224,9 @@ class AzureRMManagedDisk(AzureRMModuleBase):
             ),
             managed_by=dict(
                 type='str'
+            ),
+            zones=dict(
+                type='list'
             )
         )
         required_if = [
@@ -240,6 +247,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         self.os_type = None
         self.disk_size_gb = None
         self.tags = None
+        self.tags = None
         self.managed_by = None
         super(AzureRMManagedDisk, self).__init__(
             derived_arg_spec=self.module_arg_spec,
@@ -258,6 +266,8 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         resource_group = self.get_resource_group(self.resource_group)
         if not self.location:
             self.location = resource_group.location
+        # convert elements to ints
+        self.zones = [int(i) for i in self.zones] if self.zones else None
 
         disk_instance = self.get_managed_disk()
         result = disk_instance
@@ -335,6 +345,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         creation_data = {}
         disk_params['location'] = self.location
         disk_params['tags'] = self.tags
+        disk_params['zones'] = self.zones
         if self.storage_account_type:
             storage_account_type = self.compute_models.DiskSku(name=self.storage_account_type)
             disk_params['sku'] = storage_account_type
