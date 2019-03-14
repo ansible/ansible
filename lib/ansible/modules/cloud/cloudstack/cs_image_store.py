@@ -46,6 +46,13 @@ options:
     description:
       - The image store provider name. Required when creating a new Image Store
     type: str
+  force_recreate:
+    description:
+      - Set to C(True) if you're changing an existing Image Store.
+      - This will force the recreation of the Image Store.
+      - Recreation might fail if there are snapshots present on the Image Store. Delete them before running the recreation.
+    type: bool
+    default: no
 
 extends_documentation_fragment: cloudstack
 
@@ -164,9 +171,13 @@ class AnsibleCloudstackImageStore(AnsibleCloudStack):
             # Cloudstack API expects 'provider' but returns 'providername'
             args['providername'] = args.pop('provider')
             if self.has_changed(args, image_store):
-                self.absent_image_store()
-                self.image_store = None
-                self.image_store = self.present_image_store()
+                if self.module.params.get('force_recreate'):
+                    self.absent_image_store()
+                    self.image_store = None
+                    self.image_store = self.present_image_store()
+                else:
+                    self.module.warn("Changes to the Image Store won't be applied"
+                                     "Use force_recreate=yes to allow the store to be recreated")
 
         return self.image_store
 
@@ -189,6 +200,7 @@ def main():
         name=dict(required=True),
         zone=dict(required=True),
         provider=dict(),
+        force_recreate=dict(type='bool', default=False),
         state=dict(choices=['present', 'absent'], default='present'),
     ))
 
