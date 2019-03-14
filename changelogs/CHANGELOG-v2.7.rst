@@ -5,6 +5,91 @@ Ansible 2.7 "In the Light" Release Notes
 .. contents:: Topics
 
 
+v2.7.9
+======
+
+Release Summary
+---------------
+
+| Release Date: 2019-03-14
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- Add missing import for ConnectionError in edge and routeros module_utils.
+- ``to_yaml`` filter updated to maintain formatting consistency when used with ``pyyaml`` versions 5.1 and later (https://github.com/ansible/ansible/pull/53772)
+- docker_image - set ``changed`` to ``false`` when using ``force: yes`` to tag or push an image that ends up being identical to one already present on the Docker host or Docker registry.
+- jenkins_plugin - Set new default value for the update_url parameter (https://github.com/ansible/ansible/issues/52086)
+
+Bugfixes
+--------
+
+- Fix bug where some inventory parsing tracebacks were missing or reported under the wrong plugin.
+- Fix rabbitmq_plugin idempotence due to information message in new version of rabbitmq (https://github.com/ansible/ansible/pull/52166)
+- Fixed KeyError issue in vmware_host_config_manager when a supported option isn't already set (https://github.com/ansible/ansible/issues/44561).
+- Fixed issue related to --yaml flag in vmware_vm_inventory. Also fixed caching issue in vmware_vm_inventory (https://github.com/ansible/ansible/issues/52381).
+- If large integers are passed as options to modules under Python 2, module argument parsing will reject them as they are of type ``long`` and not of type ``int``.
+- allow nice error to work when auto plugin reads file w/o `plugin` field
+- ansible-doc - Fix traceback on providing arguemnt --all to ansible-doc command
+- azure_rm_virtualmachine_facts - fixed crash related to attached managed disks (https://github.com/ansible/ansible/issues/52181)
+- basic - modify the correct variable when determining available hashing algorithms to avoid errors when md5 is not available (https://github.com/ansible/ansible/issues/51355)
+- cloudscale - Fix compatibilty with Python3 in version 3.5 and lower.
+- convert input into text to ensure valid comparisons in nmap inventory plugin
+- dict2items - Allow dict2items to work with hostvars
+- dnsimple - fixed a KeyError exception related to record types handling.
+- docker_container - now returns warnings from docker daemon on container creation and updating.
+- docker_swarm - Fixed node_id parameter not working for node removal (https://github.com/ansible/ansible/issues/53501)
+- docker_swarm - do not crash with older docker daemons (https://github.com/ansible/ansible/issues/51175).
+- docker_swarm - fixes idempotency for the ``ca_force_rotate`` option.
+- docker_swarm - improve Swarm detection.
+- docker_swarm - improve idempotency checking; ``rotate_worker_token`` and ``rotate_manager_token`` are now also used when all other parameters have not changed.
+- docker_swarm - now supports docker-py 1.10.0 and newer for most operations, instead only docker 2.6.0 and newer.
+- docker_swarm - properly implement check mode (it did apply changes).
+- docker_swarm - the ``force`` option was ignored when ``state: present``.
+- docker_swarm_service - do basic validation of ``publish`` option if specified (must be list of dicts).
+- docker_swarm_service - don't crash when ``publish`` is not specified.
+- docker_swarm_service - fix problem with docker daemons which do not return ``UpdateConfig`` in the swarm service spec.
+- docker_swarm_service - the return value was documented as ``ansible_swarm_service``, but the module actually returned ``ansible_docker_service``. Documentation and code have been updated so that the variable is now called ``swarm_service``. In Ansible 2.7.x, the old name ``ansible_docker_service`` can still be used to access the result.
+- ec2 - if the private_ip has been provided for the new network interface it shouldn't also be added to top level parameters for run_instances()
+- fix DNSimple to ensure check works even when the number of records is larger than 100
+- get_url - return no change in check mode when checksum matches
+- inventory plugins - Fix creating groups from composed variables by getting the latest host variables
+- inventory_aws_ec2 - fix no_log indentation so AWS temporary credentials aren't displayed in tests
+- jenkins_plugin - Prevent plugin to be reinstalled when state=present (https://github.com/ansible/ansible/issues/43728)
+- lvol - fixed ValueError when using float size (https://github.com/ansible/ansible/issues/32886, https://github.com/ansible/ansible/issues/29429)
+- mysql - MySQLdb doesn't import the cursors module for its own purposes so it has to be imported in MySQL module utilities before it can be used in dependent modules like the proxysql module family.
+- mysql - fixing unexpected keyword argument 'cursorclass' issue after migration from MySQLdb to PyMySQL.
+- mysql_user: match backticks, single and double quotes when checking user privileges.
+- onepassword_facts - Fixes issues which prevented this module working with 1Password CLI version 0.5.5 (or greater). Older versions of the CLI were deprecated by 1Password and will no longer function.
+- openssl_certificate - ``has_expired`` correctly checks if the certificate is expired or not
+- openssl_certificate - fix Python 3 string/bytes problems for `notBefore`/`notAfter` for self-signed and ownCA providers.
+- openssl_certificate - make sure that extensions are actually present when their values should be checked.
+- openssl_csr - improve ``subject`` validation.
+- openssl_csr - improve error messages for invalid SANs.
+- play order is now applied under all circumstances, fixes
+- remote_management foreman - Fixed issue where it was impossible to createdelete a product because product was missing in dict choices ( https://github.com/ansible/ansible/issues/48594 )
+- rhsm_repository - handle systems without any repos
+- skip invalid plugin after warning in loader
+- urpmi module - fixed issue
+- win_certificate_store - Fix exception handling typo
+- win_chocolatey - Fix issue when parsing a beta Chocolatey install - https://github.com/ansible/ansible/issues/52331
+- win_chocolatey_source - fix bug where a Chocolatey source could not be disabled unless ``source`` was also set - https://github.com/ansible/ansible/issues/50133
+- win_domain - Do not fail if DC is already promoted but a reboot is required, return ``reboot_required: True``
+- win_domain - Fix when running without credential delegated authentication - https://github.com/ansible/ansible/issues/53182
+- win_file - Fix issue when managing hidden files and directories - https://github.com/ansible/ansible/issues/42466
+- winrm - attempt to recover from a WinRM send input failure if possible
+- zabbix_hostmacro: fixes truncation of macro contexts that contain colons (see https://github.com/ansible/ansible/pull/51853)
+
+New Plugins
+-----------
+
+Inventory
+~~~~~~~~~
+
+- vmware_vm_inventory - VMware Guest inventory source
+
 v2.7.8
 ======
 

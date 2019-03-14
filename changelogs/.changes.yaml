@@ -819,3 +819,66 @@ releases:
     - winrm-ansible-conn-error.yaml
     - yum-unauthenticated-proxy.yaml
     release_date: '2019-02-21'
+  2.7.9:
+    codename: In the Light
+    fragments:
+    - 36811-fix-lvol-valueerror-with-float-size.yaml
+    - 39301-dnsimple_keyerror_record-type.yaml
+    - 40092-mysql_user-match-backticks.yml
+    - 44561-vmware_host_config_manager-fix_key_error.yml
+    - 47508-openssl_certificate-fix-not-before-after.yml
+    - 47809-module_utils_mysql-unexpected-keyword-argument-cursorclass.yml
+    - 49191-module_utils_mysql-unexpected-keyword-argument-cursorclass.yml
+    - 49776-product_fix_katello_foreman_module.yaml
+    - 49881-fix-broken-urpmi-module.yaml
+    - 49981-filter-dnsimple-request-by-record-name.yaml
+    - 51136-fix-ansible-inventory-tracebacks.yml
+    - 51853-fix-truncated-macro-contexts.yml
+    - 51953-onepassword_facts-bug-fixes.yaml
+    - 52034-fix-traceback-on_ansible-doc_-all.yaml
+    - 52051-jenkins_plugin-state_present_fix.yaml
+    - 52166-fix_rabbitmq_plugin_idempotence.yml
+    - 52381-vmware_vm_inventory-fix_yaml_flag.yaml
+    - 52536-jenkins_plugin-update_url.yaml
+    - 52540-fix-vm-facts-crashing-managed-disk.yaml
+    - 52822-cloudscale_fix-py3.yaml
+    - 52825-docker_swarm-detection-check-mode.yaml
+    - 52885-edgeos-connectionError_fix.yaml
+    - 52895-docker_swarm-labels.yaml
+    - 53003-docker_swarm-force-new-cluster.yml
+    - 53039-docker_swarm-ca_force_rotate.yml
+    - 53070-get_url-check_mode.yml
+    - 53129-docker_swarm-older-docker-py.yaml
+    - 53152-create-groups-using-composed-variables.yaml
+    - 53198-openssl_csr-subject-validation.yml
+    - 53201-openssl_csr-improve-invalid-san.yml
+    - 53207-openssl_certificate-assertonly-extensions.yml
+    - 53224-docker_swarm_service-UpdateConfig.yml
+    - 53229-docker_swarm_service-return-value.yml
+    - 53262-docker_swarm_service-test_parameter_versions.yml
+    - 53289-module-option-int-long.yml
+    - 53440-docker_container-warnings.yml
+    - 53451-docker_image-fix-changed-tag-push.yml
+    - 53503-docker_swarm_fix_node_id.yml
+    - auto_nice_error.yml
+    - aws_ec2_inventory_integration_tests.yaml
+    - dict2items-mapping.yaml
+    - ec2_fix_assigning_private_without_public_ip.yml
+    - fix_order_serial.yml
+    - md5-hash-algorithms-pop-fix.yaml
+    - nmap_bytes_fix.yml
+    - openssl_certificate_fix_has_expired.yml
+    - rhsm_repository-handle-no-repos.yml
+    - skip_invalid_plugin.yml
+    - to_yaml-default_flow_style.yaml
+    - v2.7.9_summary.yaml
+    - win_certificate_store-excp.yaml
+    - win_chocolatey-beta-versions.yaml
+    - win_chocolatey_source_disabled.yaml
+    - win_domain-cred.yaml
+    - win_file-hidden.yaml
+    - winrm-send-input-check.yaml
+    plugins:
+      inventory:
+      - vmware_vm_inventory
+    release_date: '2019-03-14'
