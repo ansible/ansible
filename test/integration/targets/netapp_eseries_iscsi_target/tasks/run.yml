@@ -60,7 +60,7 @@
     name: myTarget
     ping: yes
     unnamed_discovery: yes
-  check: yes
+  check_mode: yes
   register: result
 
 - name: Ensure no change resulted

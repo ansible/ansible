@@ -31,7 +31,7 @@
   register: hostlist
 
 - set_fact:
-  host1: "{{ hostlist['json'][0] }}"
+    host1: "{{ hostlist['json'][0] }}"
 
 - name: host connected, module exists, options exist, arguments different
   vmware_host_kernel_manager:
