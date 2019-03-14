@@ -93,6 +93,7 @@ changed:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.netvisor.pn_nvos import pn_cli, run_cli
+from ansible.module_utils.network.netvisor.netvisor import run_commands
 
 
 def check_cli(module, cli):
@@ -107,14 +108,14 @@ def check_cli(module, cli):
 
     show = cli
     cli += ' snmp-community-show format community-string no-show-headers'
-    rc, out, err = module.run_command(cli, use_unsafe_shell=True)
+    rc, out, err = run_commands(module, cli)
 
     out = out.split()
 
     if community in out:
         cli = show
         cli += ' snmp-trap-sink-show community %s format type,dest-host no-show-headers' % community
-        rc, out, err = module.run_command(cli, use_unsafe_shell=True)
+        rc, out, err = run_commands(module, cli)
 
         out = out.split()
 

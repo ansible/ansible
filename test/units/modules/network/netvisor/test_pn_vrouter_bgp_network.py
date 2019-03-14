@@ -51,7 +51,7 @@ class TestVrouterBGPNetworkModule(TestNvosModule):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_vrouter_name': 'foo-vrouter',
                          'pn_network': '10.10.10.10', 'pn_netmask': '31', 'state': 'present'})
         result = self.execute_module(changed=True, state='present')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 vrouter-bgp-network-add vrouter-name foo-vrouter  netmask 31 '
+        expected_cmd = ' switch sw01 vrouter-bgp-network-add vrouter-name foo-vrouter  netmask 31 '
         expected_cmd += 'network 10.10.10.10'
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
@@ -59,5 +59,5 @@ class TestVrouterBGPNetworkModule(TestNvosModule):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_vrouter_name': 'foo-vrouter',
                          'pn_network': '10.10.10.10', 'state': 'absent'})
         result = self.execute_module(changed=True, state='absent')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 vrouter-bgp-network-remove vrouter-name foo-vrouter  network 10.10.10.10'
+        expected_cmd = ' switch sw01 vrouter-bgp-network-remove vrouter-name foo-vrouter  network 10.10.10.10'
         self.assertEqual(result['cli_cmd'], expected_cmd)

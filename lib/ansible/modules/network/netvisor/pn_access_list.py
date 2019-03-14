@@ -85,38 +85,29 @@ changed:
   type: bool
 """
 
-import shlex
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.netvisor.pn_nvos import pn_cli, run_cli
+from ansible.module_utils.network.netvisor.netvisor import run_commands
 
 
 def check_cli(module, cli):
     """
     This method checks for idempotency using the access-list-show command.
-    If a list with given name exists, return ACC_LIST_EXISTS
-    as True else False.
+    If a list with given name exists, return True else False.
     :param module: The Ansible module to fetch input parameters
     :param cli: The CLI string
-    :return Global Booleans: ACC_LIST_EXISTS
     """
     list_name = module.params['pn_name']
 
-    show = cli + \
-        ' access-list-show format name no-show-headers'
-    show = shlex.split(show)
-    out = module.run_command(show)[1]
+    cli += ' access-list-show format name no-show-headers'
+    out = run_commands(module, cli)
 
-    out = out.split()
-    # Global flags
-    global ACC_LIST_EXISTS
-
-    ACC_LIST_EXISTS = True if list_name in out else False
+    return True if list_name in out else False
 
 
 def main():
     """ This section is for arguments parsing """
 
-    global state_map
     state_map = dict(
         present='access-list-create',
         absent='access-list-delete',
@@ -148,7 +139,7 @@ def main():
     # Building the CLI command string
     cli = pn_cli(module, cliswitch)
 
-    check_cli(module, cli)
+    ACC_LIST_EXISTS = check_cli(module, cli)
     cli += ' %s name %s ' % (command, list_name)
 
     if command == 'access-list-delete':

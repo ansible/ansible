@@ -52,19 +52,19 @@ class TestCpuClassModule(TestNvosModule):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_name': 'icmp',
                          'pn_scope': 'local', 'pn_rate_limit': '1000', 'state': 'present'})
         result = self.execute_module(changed=True, state='present')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 cpu-class-create name icmp  scope local  rate-limit 1000 '
+        expected_cmd = ' switch sw01 cpu-class-create name icmp  scope local  rate-limit 1000 '
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
     def test_cpu_class_delete(self):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_name': 'icmp',
                          'state': 'absent'})
         result = self.execute_module(changed=True, state='absent')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 cpu-class-delete name icmp '
+        expected_cmd = ' switch sw01 cpu-class-delete name icmp '
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
     def test_cpu_class_update(self):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_name': 'icmp',
                          'pn_rate_limit': '2000', 'state': 'update'})
         result = self.execute_module(changed=True, state='absent')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 cpu-class-modify name icmp  rate-limit 2000 '
+        expected_cmd = ' switch sw01 cpu-class-modify name icmp  rate-limit 2000 '
         self.assertEqual(result['cli_cmd'], expected_cmd)

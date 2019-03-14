@@ -100,6 +100,7 @@ changed:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.netvisor.pn_nvos import pn_cli, run_cli
+from ansible.module_utils.network.netvisor.netvisor import run_commands
 
 
 def check_cli(module, cli):
@@ -110,9 +111,21 @@ def check_cli(module, cli):
     :param cli: The CLI string
     """
     name = module.params['pn_name']
+    clicopy = cli
 
-    cli += ' cpu-class-show format name no-show-headers'
-    out = module.run_command(cli.split(), use_unsafe_shell=True)[1]
+    cli += ' system-settings-show format cpu-class-enable no-show-headers'
+    out = run_commands(module, cli)[1]
+    out = out.split()
+
+    if 'on' not in out:
+        module.fail_json(
+            failed=True,
+            msg='Enable CPU class before creating or deleting'
+        )
+
+    cli = clicopy
+    cli += ' cpu-class-show name %s format name no-show-headers' % name
+    out = run_commands(module, cli)[1]
     out = out.split()
 
     return True if name in out else False
@@ -121,7 +134,6 @@ def check_cli(module, cli):
 def main():
     """ This section is for arguments parsing """
 
-    global state_map
     state_map = dict(
         present='cpu-class-create',
         absent='cpu-class-delete',

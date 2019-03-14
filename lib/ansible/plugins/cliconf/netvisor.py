@@ -19,6 +19,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+cliconf: netvisor
+short_description: Use netvisor cliconf to run command on Pluribus netvisor platform
+description:
+  - This netvisor plugin provides low level abstraction apis for
+    sending and receiving CLI commands from Pluribus netvisor devices.
+version_added: 2.8
+"""
+
 import json
 from ansible.plugins.cliconf import CliconfBase
 
