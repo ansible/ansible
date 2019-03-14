@@ -289,20 +289,20 @@ def main():
 
     def getPidSTime(pid):
         ps_cmd = module.get_bin_path('ps', True)
-        rc, ps_output, stderr = module.run_command([ps_cmd, '-o', 'lstart', '-p', pid])
+        rc, ps_output, stderr = module.run_command([ps_cmd, '-o', 'lstart', '-p', str(pid)])
         stime = ''
         if rc == 0:
-            for line in ps_output.splitlines():
+            for line in iter(ps_output.splitlines()):
                 if 'started' not in line:
                     stime = line
         return stime
 
     def getPidUser(pid):
         ps_cmd = module.get_bin_path('ps', True)
-        rc, ps_output, stderr = module.run_command([ps_cmd, '-o', 'user', '-p', pid])
+        rc, ps_output, stderr = module.run_command([ps_cmd, '-o', 'user', '-p', str(pid)])
         user = ''
         if rc == 0:
-            for line in ps_output.splitlines():
+            for line in iter(ps_output.splitlines()):
                 if line != 'USER':
                     user = line
         return user
