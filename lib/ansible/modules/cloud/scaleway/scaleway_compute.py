@@ -457,7 +457,8 @@ def absent_strategy_terminate(compute_api, wished_server):
     if compute_api.module.check_mode:
         return changed, {"status": "Server %s would be made absent." % target_server["id"]}
 
-    # Even running server can be terminated
+    # Only running server can be terminated
+    # FIXME: stop with terminate will not destroy non-running server (API limitation)
     while fetch_state(compute_api=compute_api, server=target_server) != "stopped":
         wait_to_complete_state_transition(compute_api=compute_api, server=target_server)
         response = terminate_server(compute_api=compute_api, server=target_server)
