@@ -80,6 +80,9 @@ options:
     tags:
         description:
             - Tags to assign to the managed disk.
+    zones:
+        description:
+            - A list of avaliability Zones for your managed disk.
 
 extends_documentation_fragment:
     - azure
@@ -155,6 +158,7 @@ def managed_disk_to_dict(managed_disk):
         name=managed_disk.name,
         location=managed_disk.location,
         tags=managed_disk.tags,
+        zones=managed_disk.zones,
         disk_size_gb=managed_disk.disk_size_gb,
         os_type=os_type,
         storage_account_type=managed_disk.sku.name.value,
@@ -206,7 +210,11 @@ class AzureRMManagedDisk(AzureRMModuleBase):
             ),
             managed_by=dict(
                 type='str'
+            ),
+            zones=dict(
+                type='list'
             )
+
         )
         required_if = [
             ('create_option', 'import', ['source_uri']),
@@ -227,6 +235,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         self.os_type = None
         self.disk_size_gb = None
         self.tags = None
+        self.zones = None
         self.managed_by = None
         super(AzureRMManagedDisk, self).__init__(
             derived_arg_spec=self.module_arg_spec,
@@ -245,6 +254,8 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         resource_group = self.get_resource_group(self.resource_group)
         if not self.location:
             self.location = resource_group.location
+        # convert elements to ints
+        self.zones = [int(i) for i in self.zones] if self.zones else None
 
         disk_instance = self.get_managed_disk()
         result = disk_instance
@@ -318,6 +329,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         disk_params = {}
         creation_data = {}
         disk_params['location'] = self.location
+        disk_params['zones'] = self.zones
         disk_params['tags'] = self.tags
         if self.storage_account_type:
             storage_account_type = self.compute_models.DiskSku(self.storage_account_type)
