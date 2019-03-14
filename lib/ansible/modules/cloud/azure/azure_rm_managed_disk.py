@@ -104,7 +104,6 @@ EXAMPLES = '''
         location: eastus
         resource_group: myResourceGroup
         disk_size_gb: 4
-        zones: 2
 
     - name: Create managed operating system disk from page blob
       azure_rm_managed_disk:
