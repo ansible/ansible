@@ -2,7 +2,7 @@
 set -eux
 
 # Execute Integration tests for Linux
-ansible-playbook -c local aws_ssm_integration_test_setup_teardown.yml --tags setup_infra,linux
+ansible-playbook -c local -i localhost aws_ssm_integration_test_setup_teardown.yml --tags "setup_infra,linux"
 
 cd ../connection
 
@@ -15,10 +15,10 @@ INVENTORY=../connection_aws_ssm/inventory.aws_ssm ./test.sh \
 
 cd ../connection_aws_ssm
 
-ansible-playbook -c local aws_ssm_integration_test_setup_teardown.yml --tags delete_infra
+ansible-playbook -c local -i localhost aws_ssm_integration_test_setup_teardown.yml --tags "delete_infra"
 
 # Execute Integration tests for Windows
-ansible-playbook -c local aws_ssm_integration_test_setup_teardown.yml --tags setup_infra,windows
+ansible-playbook -c local -i localhost aws_ssm_integration_test_setup_teardown.yml --tags "setup_infra,windows"
 
 cd ../connection
 

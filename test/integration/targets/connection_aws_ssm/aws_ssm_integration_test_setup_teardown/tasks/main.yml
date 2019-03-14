@@ -68,7 +68,7 @@
                  sudo systemctl start amazon-ssm-agent
     state: present
   register: output
-  tags: setup_infra and linux
+  tags: linux
 
 - name: Create Windows ec2 instance
   ec2:
@@ -86,7 +86,7 @@
                 </powershell>
     state: present
   register: output
-  tags: setup_infra and windows
+  tags: windows
 
 - name: Wait for EC2 to be available
   wait_for_connection:
