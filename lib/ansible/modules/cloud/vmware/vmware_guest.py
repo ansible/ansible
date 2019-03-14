@@ -1513,13 +1513,13 @@ class PyVmomiHelper(PyVmomi):
             self.configspec.vAppConfig = new_vmconfig_spec
             self.change_detected = True
 
-    # March 2019, Added by chaitra kurdekar
-    # to Set vApp ovfEnvironmentTransport mode in VM.
+    # to Set ovfEnvironmentTransport mode in VM.
     def configure_vapp_ovfEnvironmentTransport(self, vm_obj):
         if 'vapp_ovf_environment_transport' in self.params:
             new_vmconfig_spec = vim.vApp.VmConfigSpec()
-            # orig_spec = vm_obj.config.vAppConfig if vm_obj.config.vAppConfig else new_vmconfig_spec
-            vmconfig_spec = self.configspec.vAppConfig if self.configspec.vAppConfig else new_vmconfig_spec
+            # This is primarily for vcsim/integration tests, unset vAppConfig was not seen on my deployments
+            orig_spec = vm_obj.config.vAppConfig if vm_obj.config.vAppConfig else new_vmconfig_spec
+            vmconfig_spec = self.configspec.vAppConfig if self.configspec.vAppConfig else orig_spec
             old_value = vmconfig_spec.ovfEnvironmentTransport
             new_value = [self.params['vapp_ovf_environment_transport']]
             # verify value is changed
@@ -1528,7 +1528,6 @@ class PyVmomiHelper(PyVmomi):
                 self.configspec.vAppConfig = vmconfig_spec
                 self.change_detected = True
 
-    # March 2019, Added by chaitra kurdekar
     # To Set vApp Product Information in VM.
     def configure_vapp_product(self, vm_obj):
         if 'vapp_product' not in self.params or len(self.params['vapp_product']) == 0:
@@ -2422,7 +2421,7 @@ class PyVmomiHelper(PyVmomi):
         self.configure_resource_alloc_info(vm_obj=self.current_vm_obj)
         self.configure_vapp_properties(vm_obj=self.current_vm_obj)
         self.configure_vapp_product(vm_obj=self.current_vm_obj)
-        # self.configure_vapp_ovfEnvironmentTransport(vm_obj=self.current_vm_obj)
+        self.configure_vapp_ovfEnvironmentTransport(vm_obj=self.current_vm_obj)
 
         if self.params['annotation'] and self.current_vm_obj.config.annotation != self.params['annotation']:
             self.configspec.annotation = str(self.params['annotation'])
