@@ -1516,6 +1516,7 @@ class PyVmomiHelper(PyVmomi):
     # to Set ovfEnvironmentTransport mode in VM.
     def configure_vapp_ovfEnvironmentTransport(self, vm_obj):
         if 'vapp_ovf_environment_transport' in self.params:
+            is_property_changed = False
             new_vmconfig_spec = vim.vApp.VmConfigSpec()
             # This is primarily for vcsim/integration tests, unset vAppConfig was not seen on my deployments
             orig_spec = vm_obj.config.vAppConfig if vm_obj.config.vAppConfig else new_vmconfig_spec
@@ -1523,8 +1524,19 @@ class PyVmomiHelper(PyVmomi):
             old_value = vmconfig_spec.ovfEnvironmentTransport
             new_value = [self.params['vapp_ovf_environment_transport']]
             # verify value is changed
-            if not old_value == new_value:
-                vmconfig_spec.ovfEnvironmentTransport = [self.params['vapp_ovf_environment_transport']]
+            n = len(old_value)
+            m = len(new_value)
+            if (n != m):
+                is_property_changed = True
+            # Sort both arrays
+            old_value.sort()
+            new_value.sort()
+            for i in range(0, n - 1):
+                if (old_value[i] != new_value[i]):
+                    is_property_changed = True
+                    break
+            if is_property_changed:
+                vmconfig_spec.ovfEnvironmentTransport = new_value
                 self.configspec.vAppConfig = vmconfig_spec
                 self.change_detected = True
 
