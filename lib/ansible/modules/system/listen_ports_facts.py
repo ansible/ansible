@@ -274,6 +274,28 @@ def applyWhitelist(portspids, whitelist=None):
     return processes
 
 
+def getPidSTime(pid):
+    ps_cmd = module.get_bin_path('ps', True)
+    rc, ps_output, stderr = module.run_command([ps_cmd, '-o', 'lstart', '-p', str(pid)])
+    stime = ''
+    if rc == 0:
+        for line in ps_output.splitlines():
+            if 'started' not in line:
+                stime = line
+    return stime
+
+
+def getPidUser(pid):
+    ps_cmd = module.get_bin_path('ps', True)
+    rc, ps_output, stderr = module.run_command([ps_cmd, '-o', 'user', '-p', str(pid)])
+    user = ''
+    if rc == 0:
+        for line in ps_output.splitlines():
+            if line != 'USER':
+                user = line
+    return user
+
+
 def main():
 
     module = AnsibleModule(
@@ -286,26 +308,6 @@ def main():
 
     if platform.system() != 'Linux':
         module.fail_json(msg='This module requires Linux.')
-
-    def getPidSTime(pid):
-        ps_cmd = module.get_bin_path('ps', True)
-        rc, ps_output, stderr = module.run_command([ps_cmd, '-o', 'lstart', '-p', pid])
-        stime = ''
-        if rc == 0:
-            for line in ps_output.splitlines():
-                if 'started' not in line:
-                    stime = line
-        return stime
-
-    def getPidUser(pid):
-        ps_cmd = module.get_bin_path('ps', True)
-        rc, ps_output, stderr = module.run_command([ps_cmd, '-o', 'user', '-p', pid])
-        user = ''
-        if rc == 0:
-            for line in ps_output.splitlines():
-                if line != 'USER':
-                    user = line
-        return user
 
     result = dict(
         changed=False,
