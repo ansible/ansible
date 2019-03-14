@@ -297,7 +297,7 @@ def public_ip_payload(compute_api, public_ip):
 
     lookup = [ip["id"] for ip in ip_list]
     if public_ip in lookup:
-        return {"public_ip": public_ip}
+        return {"dynamic_ip_required": False, "public_ip": public_ip}
 
 
 def create_server(compute_api, server):
@@ -311,6 +311,9 @@ def create_server(compute_api, server):
             "name": server["name"],
             "organization": server["organization"]
             }
+
+    if "public_ip" in server:
+        data["public_ip"] = server["public_ip"]
 
     if server["security_group"]:
         data["security_group"] = server["security_group"]
