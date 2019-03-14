@@ -5,8 +5,8 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+from ansible.module_utils._text import to_native
 from ansible.module_utils.common.collections import is_iterable
-from ansible.module_utils.common.errors import AnsibleModuleParameterError
 from ansible.module_utils.six import string_types
 
 
@@ -31,12 +31,10 @@ def check_mutually_exclusive(terms, module_parameters):
     a single list or list of lists that are groups of terms that should be
     mutually exclusive with one another
 
-    Raises AnsibleModuleParameterException if the check fails.
-
     :arg terms: List of mutually exclusive module parameters
     :arg module_parameters: Dictionary of module parameters
 
-    :returns: A list of terms that are mutually exclusive.
+    :returns: Empty list or raises TypeError if the check fails.
     """
 
     results = []
@@ -49,7 +47,9 @@ def check_mutually_exclusive(terms, module_parameters):
             results.append(check)
 
     if results:
-        raise AnsibleModuleParameterError(requirements=terms, module_parameters=module_parameters, results=results)
+        full_list = ['|'.join(check) for check in results]
+        msg = "parameters are mutually exclusive: %s" % ', '.join(full_list)
+        raise TypeError(to_native(msg))
 
     return results
 
@@ -62,9 +62,7 @@ def check_required_one_of(terms, module_parameters):
         least one is required.
     :arg module_parameters: Dictionary of module parameters
 
-    :returns: Empty list or raises AnsibleModuleParameterException if the check fails.
-        The results attribute of the exception contains a list of terms that
-        should be present in module parameters but are missing.
+    :returns: Empty list or raises TypeError if the check fails.
     """
 
     results = []
@@ -77,7 +75,11 @@ def check_required_one_of(terms, module_parameters):
             results.append(term)
 
     if results:
-        raise AnsibleModuleParameterError(requirements=terms, module_parameters=module_parameters, results=results)
+        for term in results:
+            msg = "one of the following is required: %s" % ', '.join(term)
+            raise TypeError(to_native(msg))
+
+    return results
 
 
 def check_required_together(terms, module_parameters):
@@ -89,9 +91,7 @@ def check_required_together(terms, module_parameters):
         in the module_parameters.
     :arg module_parameters: Dictionary of module parameters
 
-    :returns: Empty list or raises AnsibleModuleParameterException if the check fails.
-        The results attribute of the exception contains a list of lists of terms
-        that exist in module_parametcs but are missing other required terms.
+    :returns: Empty list or raises TypeError if the check fails.
     """
 
     results = []
@@ -104,9 +104,12 @@ def check_required_together(terms, module_parameters):
         if len(non_zero) > 0:
             if 0 in counts:
                 results.append(term)
-
     if results:
-        raise AnsibleModuleParameterError(requirements=terms, module_parameters=module_parameters, results=results)
+        for term in results:
+            msg = "parameters are required together: %s" % ', '.join(term)
+            raise TypeError(to_native(msg))
+
+    return results
 
 
 def check_required_by(requirements, module_parameters):
@@ -117,9 +120,7 @@ def check_required_by(requirements, module_parameters):
     :arg requirements: Dictionary of requirements
     :arg module_parameters: Dictionary of module parameters
 
-    :returns: Empty dictionary or raises AnsibleModuleParameterException if the
-        check fails. The results attribute of the exception contains a dictionary
-        of required terms with a list of missing terms for each key.
+    :returns: Empty dictionary or raises TypeError if the
     """
 
     result = {}
@@ -138,7 +139,12 @@ def check_required_by(requirements, module_parameters):
                 result[key].append(required)
 
     if result:
-        raise AnsibleModuleParameterError(requirements=requirements, module_parameters=module_parameters, results=result)
+        for key, missing in result.items():
+            if len(missing) > 0:
+                msg = "missing parameter(s) required by '%s': %s" % (key, ', '.join(missing))
+                raise TypeError(to_native(msg))
+
+    return result
 
 
 def check_required_arguments(argument_spec, module_parameters):
@@ -151,7 +157,7 @@ def check_required_arguments(argument_spec, module_parameters):
         and their specification
     :arg module_paramaters: Dictionary of module parameters
 
-    :returns: Empty list or raises AnsibleModuleParameterException if the check fails.
+    :returns: Empty list or raises TypeError if the check fails.
     """
 
     missing = []
@@ -164,13 +170,16 @@ def check_required_arguments(argument_spec, module_parameters):
             missing.append(k)
 
     if missing:
-        raise AnsibleModuleParameterError(argument_spec=argument_spec, module_parameters=module_parameters, results=missing)
+        msg = "missing required arguments: %s" % ", ".join(missing)
+        raise TypeError(to_native(msg))
+
+    return missing
 
 
 def check_required_if(requirements, module_parameters):
     """Check parameters that are conditionally required.
 
-    Raises AnsibleModuleParameterException if the check fails.
+    Raises TypeError if the check fails.
 
     :arg requirements: List of lists specifying a parameter, value, parameters
         required when the given parameter is the specified value, and optionally
@@ -184,7 +193,7 @@ def check_required_if(requirements, module_parameters):
 
     :arg module_paramaters: Dictionary of module parameters
 
-    :returns: Empty list or Raises AnsibleModuleParameterException if the check fails.
+    :returns: Empty list or raises TypeError if the check fails.
         The results attribute of the exception contains a list of dictionaries.
         Each dictionary is the result of evaluting each item in requirements.
         Each return dictionary contains the following keys:
@@ -241,7 +250,12 @@ def check_required_if(requirements, module_parameters):
             results.append(missing)
 
     if results:
-        raise AnsibleModuleParameterError(requirements=requirements, module_parameters=module_parameters, results=results)
+        for missing in results:
+            msg = "%s is %s but %s of the following are missing: %s" % (
+                missing['parameter'], missing['value'], missing['requires'], ', '.join(missing['missing']))
+            raise TypeError(to_native(msg))
+
+    return results
 
 
 def check_missing_parameters(module_parameters, required_parameters=None):
@@ -252,7 +266,7 @@ def check_missing_parameters(module_parameters, required_parameters=None):
     :arg required_parameters: List of parameters to look for in the given module
         parameters
 
-    :returns: Empty list or raises AnsibleModuleParameterException if the check fails.
+    :returns: Empty list or raises TypeError if the check fails.
     """
     missing_params = []
     if required_parameters is None:
@@ -263,4 +277,7 @@ def check_missing_parameters(module_parameters, required_parameters=None):
             missing_params.append(param)
 
     if missing_params:
-        raise AnsibleModuleParameterError(requirements=required_parameters, module_parameters=module_parameters, results=missing_params)
+        msg = "missing required arguments: %s" % ', '.join(missing_params)
+        raise TypeError(to_native(msg))
+
+    return missing_params

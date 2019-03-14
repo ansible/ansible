@@ -103,7 +103,7 @@ def complex_argspec():
         zardoz=dict(choices=['one', 'two']),
         zardoz2=dict(type='list', choices=['one', 'two', 'three']),
     )
-    mut_ex = (('bar', 'bam'),('bing', 'bang', 'bong'))
+    mut_ex = (('bar', 'bam'), ('bing', 'bang', 'bong'))
     req_to = (('bam', 'baz'),)
 
     kwargs = dict(

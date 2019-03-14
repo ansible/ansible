@@ -269,8 +269,12 @@ import tempfile
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.common.errors import AnsibleModuleError
 from ansible.module_utils._text import to_bytes, to_native
+
+
+class AnsibleModuleError(Exception):
+    def __init__(self, results):
+        self.results = results
 
 
 def split_pre_existing_dir(dirname):

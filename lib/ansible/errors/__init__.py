@@ -209,6 +209,11 @@ class AnsibleRuntimeError(AnsibleError):
     pass
 
 
+class AnsibleModuleError(AnsibleRuntimeError):
+    ''' a module failed somehow '''
+    pass
+
+
 class AnsibleConnectionFailure(AnsibleRuntimeError):
     ''' the transport / connection_plugin had a fatal error '''
     pass
