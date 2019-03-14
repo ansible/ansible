@@ -5,8 +5,11 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+import re
+
 from ansible.module_utils._text import to_native
 from ansible.module_utils.common.collections import is_iterable
+from ansible.module_utils.pycompat24 import literal_eval
 from ansible.module_utils.six import string_types
 
 
@@ -282,6 +285,33 @@ def check_missing_parameters(module_parameters, required_parameters=None):
 
     return missing_params
 
+def safe_eval(value, locals=None, include_exceptions=False):
+    # do not allow method calls to modules
+    if not isinstance(value, string_types):
+        # already templated to a datavaluestructure, perhaps?
+        if include_exceptions:
+            return (value, None)
+        return value
+    if re.search(r'\w\.\w+\(', value):
+        if include_exceptions:
+            return (value, None)
+        return value
+    # do not allow imports
+    if re.search(r'import \w+', value):
+        if include_exceptions:
+            return (value, None)
+        return value
+    try:
+        result = literal_eval(value)
+        if include_exceptions:
+            return (result, None)
+        else:
+            return result
+    except Exception as e:
+        if include_exceptions:
+            return (value, e)
+        return value
+
 def check_type_str(value, string_conversion_action=None):
     if isinstance(value, string_types):
         return value
@@ -301,7 +331,6 @@ def check_type_str(value, string_conversion_action=None):
         raise TypeError(to_native(msg))
 
     return to_native(value, errors='surrogate_or_strict')
-
 
 def check_type_list(value):
     """Verify that the value is a list or convert to a list. A comma separated

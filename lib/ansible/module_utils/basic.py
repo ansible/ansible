@@ -184,6 +184,7 @@ from ansible.module_utils.common.validation import (
     count_terms,
     check_type_list,
     check_type_str,
+    safe_eval,
 )
 from ansible.module_utils._text import to_native, to_bytes, to_text
 from ansible.module_utils.common._utils import get_all_subclasses as _get_all_subclasses
@@ -1742,32 +1743,7 @@ class AnsibleModule(object):
                 self.fail_json(msg=msg)
 
     def safe_eval(self, value, locals=None, include_exceptions=False):
-
-        # do not allow method calls to modules
-        if not isinstance(value, string_types):
-            # already templated to a datavaluestructure, perhaps?
-            if include_exceptions:
-                return (value, None)
-            return value
-        if re.search(r'\w\.\w+\(', value):
-            if include_exceptions:
-                return (value, None)
-            return value
-        # do not allow imports
-        if re.search(r'import \w+', value):
-            if include_exceptions:
-                return (value, None)
-            return value
-        try:
-            result = literal_eval(value)
-            if include_exceptions:
-                return (result, None)
-            else:
-                return result
-        except Exception as e:
-            if include_exceptions:
-                return (value, e)
-            return value
+        return safe_eval(value, locals, include_exceptions)
 
     def _check_type_str(self, value):
         try:
