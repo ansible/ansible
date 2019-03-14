@@ -24,7 +24,7 @@ from ansible.inventory.data import InventoryData
 from ansible.template import Templar
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def inventory_module():
     r = InventoryModule()
     r.inventory = InventoryData()
@@ -60,13 +60,11 @@ def test_keyed_group_separator(inventory_module):
         {
             'prefix': 'farmer',
             'separator': '_old_',
-            'key': 'farmer',
-            'unsafe': True
+            'key': 'farmer'
         },
         {
             'separator': 'mmmmmmmmmm',
-            'key': 'barn',
-            'unsafe': True
+            'key': 'barn'
         }
     ]
     inventory_module._add_host_to_keyed_groups(
@@ -76,6 +74,22 @@ def test_keyed_group_separator(inventory_module):
         assert group_name in inventory_module.inventory.groups
         group = inventory_module.inventory.groups[group_name]
         assert group.hosts == [host]
+
+
+def test_keyed_group_empty_construction(inventory_module):
+    inventory_module.inventory.add_host('farm')
+    inventory_module.inventory.set_variable('farm', 'barn', {})
+    host = inventory_module.inventory.get_host('farm')
+    keyed_groups = [
+        {
+            'separator': 'mmmmmmmmmm',
+            'key': 'barn'
+        }
+    ]
+    inventory_module._add_host_to_keyed_groups(
+        keyed_groups, host.vars, host.name, strict=True
+    )
+    assert host.groups == []
 
 
 def test_keyed_parent_groups(inventory_module):
