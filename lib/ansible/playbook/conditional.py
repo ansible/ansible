@@ -114,7 +114,7 @@ class Conditional:
         if isinstance(conditional, bool):
             return conditional
 
-        if C.CONDITINAL_BARE_VARS:
+        if C.CONDITIONAL_BARE_VARS:
             if conditional in all_vars and VALID_VAR_REGEX.match(conditional):
                 display.deprecated('evaluating %s as a bare variable, this behaviour will go away and you might need to add |bool'
                                    ' to the expression in the future. Also see CONDITIONAL_BARE_VARS configuration toggle.' % conditional, "2.12")
