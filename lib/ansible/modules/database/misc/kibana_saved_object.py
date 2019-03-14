@@ -41,19 +41,29 @@ options:
       description:
         - The URL of Kibana.
     user:
+      type: str
       description:
         - A username for the module to use for Digest, Basic or WSSE authentication.
+      aliases: [url_username]
     password:
+      type: str
       description:
         - A password for the module to use for Digest, Basic or WSSE authentication.
+      aliases: [url_password]
     force_basic_auth:
+      type: bool
       description:
         - The library used by the module only sends authentication information when a webservice
           responds to an initial request with a 401 status. Since some basic auth services do not properly
           send a 401, logins will fail. This option forces the sending of the Basic authentication header
           upon initial request.
+      default: false
+    use_proxy:
       type: bool
-      default: 'false'
+      description:
+        - if C(false), it will not use a proxy, even if one is defined in
+          an environment variable on the target hosts.
+      default: true
     validate_certs:
       description:
         - If C(no), SSL certificates will not be validated.  This should only
@@ -170,7 +180,7 @@ from ansible.module_utils.urls import fetch_url, url_argument_spec
 def get_request_params(module, object_id, object_type, kibana_url,
                        timeout, content=None, overwrite=False, tenant=None):
 
-    url = "{}/api/saved_objects/{}/{}".format(kibana_url, object_type, object_id)
+    url = "{0}/api/saved_objects/{1}/{2}".format(kibana_url, object_type, object_id)
     headers = {'kbn-xsrf': 'true'}
     data = ''
     if content is not None:
@@ -218,7 +228,7 @@ def get_object(module, object_id, object_type, kibana_url,
             if e.code == 404:
                 return e
         except Exception:
-            module.fail_json(msg="An error occured while trying to get the object '{}'. {}".format(object_id, to_native(e)))
+            module.fail_json(msg="An error occured while trying to get the object '{0}'. {1}".format(object_id, to_native(e)))
 
 
 def create_object(module, object_id, object_type, kibana_url, content,
@@ -241,7 +251,7 @@ def create_object(module, object_id, object_type, kibana_url, content,
                          data=request_params['data'],
                          timeout=timeout)
     except Exception as e:
-        module.fail_json(msg="An error occured while trying to get the object '{}'. {}".format(object_id, to_native(e)))
+        module.fail_json(msg="An error occured while trying to get the object '{0}'. {1}".format(object_id, to_native(e)))
 
 
 def update_object(module, object_id, object_type, kibana_url, content,
@@ -263,7 +273,7 @@ def update_object(module, object_id, object_type, kibana_url, content,
                          data=request_params['data'],
                          timeout=timeout)
     except Exception as e:
-        module.fail_json(msg="An error occured while trying to get the object '{}'. {}".format(object_id, to_native(e)))
+        module.fail_json(msg="An error occured while trying to get the object '{0}'. {1}".format(object_id, to_native(e)))
 
 
 def delete_object(module, object_id, object_type, kibana_url,
@@ -283,7 +293,7 @@ def delete_object(module, object_id, object_type, kibana_url,
                          headers=request_params['headers'],
                          timeout=timeout)
     except Exception as e:
-        module.fail_json(msg="An error occured while trying to get the object '{}'. {}".format(object_id, to_native(e)))
+        module.fail_json(msg="An error occured while trying to get the object '{0}'. {1}".format(object_id, to_native(e)))
 
 
 def is_object_present(module, object_id, object_type, kibana_url,
@@ -304,13 +314,14 @@ def is_object_present(module, object_id, object_type, kibana_url,
         elif r_info['status'] == 200:
             return True, r.read()
         else:
-            module.fail_json(msg="Got status other then 200 or 404.{}".format(r_info))
+            module.fail_json(msg="Got status other then 200 or 404. {0}".format(r_info))
     except Exception as e:
-        module.fail_json(msg="An error occured while trying to get the object '{}'. {}".format(object_id, to_native(e)))
+        module.fail_json(msg="An error occured while trying to get the object '{0}'. {1}".format(object_id, to_native(e)))
 
 
 def main():
     argument_spec = url_argument_spec()
+    del argument_spec['http_agent'],argument_spec['force'],argument_spec['url']
     argument_spec.update(dict(
         id=dict(type='str'),
         type=dict(type='str', required=True,
@@ -329,8 +340,8 @@ def main():
         overwrite=dict(type='bool', default=False),
         url_username=dict(type='str', aliases=['user']),
         url_password=dict(type='str', aliases=['password'], no_log=True),
+
         searchguard_tenant=dict(type='str'),
-        socks_proxy=dict(type='str')
     ))
 
     module = AnsibleModule(
@@ -348,7 +359,6 @@ def main():
     searchguard_tenant = module.params['searchguard_tenant']
     user = module.params['url_username']
     password = module.params['url_password']
-    socks_proxy = module.params['socks_proxy']
 
     present, existing_object = is_object_present(
         module=module,
@@ -378,11 +388,11 @@ def main():
                 )
                 module.exit_json(changed=True, object_id=object_id,
                                  object_type=object_type,
-                                 msg="object has been updated: {}".format(object_id))
+                                 msg="object has been updated: {0}".format(object_id))
             else:
                 module.exit_json(changed=False, object_id=object_id,
                                  object_type=object_type,
-                                 msg="Object already exists: {}".format(object_id))
+                                 msg="Object already exists: {0}".format(object_id))
         if present and overwrite:
             # Overwrite object
             r = create_object(
@@ -397,7 +407,7 @@ def main():
             )
             module.exit_json(changed=True, object_id=object_id,
                              object_type=object_type,
-                             msg="Object has been overwritten: {}".format(object_id))
+                             msg="Object has been overwritten: {0}".format(object_id))
         if not present:
             # Create object
             r = create_object(
@@ -411,12 +421,12 @@ def main():
             )
             module.exit_json(changed=True, object_id=object_id,
                              object_type=object_type,
-                             msg="Object has been created: {}".format(object_id))
+                             msg="Object has been created: {0}".format(object_id))
     if state == 'absent':
         if not present:
             module.exit_json(changed=False, object_id=object_id,
                              object_type=object_type,
-                             msg="Object does not exist: {}".format(object_id))
+                             msg="Object does not exist: {0}".format(object_id))
 
         if present:
             r = delete_object(
@@ -429,7 +439,7 @@ def main():
             )
             module.exit_json(changed=True, object_id=object_id,
                              object_type=object_type,
-                             msg="Object has been deleted: {}".format(object_id))
+                             msg="Object has been deleted: {0}".format(object_id))
 
 
 if __name__ == '__main__':
