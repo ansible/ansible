@@ -8,7 +8,7 @@
   tasks:
     - name: set conditial bare vars status
       set_fact:
-        bare: "{{lookup('config', 'CONDITINAL_BARE_VARS')|bool}}"
+        bare: "{{lookup('config', 'CONDITIONAL_BARE_VARS')|bool}}"
 
     - name: test conditional '=='
       shell: echo 'testing'

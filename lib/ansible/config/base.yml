@@ -319,7 +319,7 @@ COLOR_WARN:
   env: [{name: ANSIBLE_COLOR_WARN}]
   ini:
   - {key: warn, section: colors}
-CONDITINAL_BARE_VARS:
+CONDITIONAL_BARE_VARS:
   name: Allow bare variable evaluation in conditionals
   default: True
   type: boolean
