@@ -60,6 +60,8 @@ regions:
 hostnames:
   - network-interface.addresses.association.public-ip
   - dns-name
+filters:
+  instance-state-name: running
 compose:
   # vars that don't exist anymore in any meaningful way
   ec2_item: undefined | default("")

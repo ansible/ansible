@@ -16,7 +16,7 @@ class Connection(object):
 
     def __init__(self, **kwargs):
         self.reservations = [
-            Reservation(instance_id='i-0678e70402c0b434c', owner_id='123456789012', region=kwargs['region'])
+            Reservation(id_1='i-0678e70402c0b434c', id_2='i-16a83b42f01c082a1', owner_id='123456789012', region=kwargs['region'])
         ]
 
     def get_all_instances(self, *args, **kwargs):

@@ -13,10 +13,16 @@ class Paginator(object):
         {'Filters': [{'Name': 'instance-state-name',
             'Values': ['running', 'pending', 'stopping', 'stopped']}]}
         '''
+        filters = kwargs.get('Filters', [])
+        if not (filters or any([True for f in filters if f['Name'] == 'instance-state-name'])):
+            self.instance_states = ['running', 'pending', 'stopping', 'stopped']
+        else:
+            self.instance_states = [f['Values'] for f in filters if f['Name'] == 'instance-state-name'][0]
         return self
 
     def build_full_result(self):
-        return {'Reservations': [{'Instances': [x.to_dict() for x in self.datalist]}]}
+        filtered_states = set([x.state['Name'] for x in self.datalist]).difference(set(self.instance_states))
+        return {'Reservations': [{'Instances': [x.to_dict() for x in self.datalist if x.state['Name'] not in filtered_states]}]}
 
 
 class Client(object):
@@ -29,7 +35,10 @@ class Client(object):
 
     def get_paginator(self, method):
         if method == 'describe_instances':
-            return Paginator([Boto3Instance(instance_id='i-0678e70402c0b434c', owner_id='123456789012', region=self.region)])
+            return Paginator(
+                [Boto3Instance(instance_id='i-0678e70402c0b434c', owner_id='123456789012', region=self.region),
+                 Boto3Instance(instance_id='i-16a83b42f01c082a1', owner_id='123456789012', region=self.region, stopped=True)]
+            )
 
 
 class Session(object):

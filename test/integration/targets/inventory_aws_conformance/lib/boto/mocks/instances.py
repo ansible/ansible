@@ -16,8 +16,11 @@ DNSDOMAIN = "ansible.amazon.com"
 
 
 class Reservation(object):
-    def __init__(self, owner_id, instance_id, region):
-        self.instances = [BotoInstance(instance_id=instance_id, owner_id=owner_id, region=region)]
+    def __init__(self, owner_id, id_1, id_2, region):
+        self.instances = [
+            BotoInstance(instance_id=id_1, owner_id=owner_id, region=region),
+            BotoInstance(instance_id=id_2, owner_id=owner_id, region=region, stopped=True)
+        ]
         self.owner_id = owner_id
 
 
@@ -170,7 +173,7 @@ class BlockDeviceMapping(MutableMapping):
 
 
 class InstanceBase(object):
-    def __init__(self):
+    def __init__(self, stopped=False):
         # set common ignored attribute to make sure instances have identical tags and security groups
         self._ignore_security_groups = {
             'sg-0e1d2bd02b45b712e': 'sgname-with-hyphens',
@@ -182,9 +185,10 @@ class InstanceBase(object):
             'tag;me': 'value@noplez',
             'tag!notit': 'value<=ohwhy?'
         }
-        self._ignore_state = {
-            'Code': 16, 'Name': 'running'
-        }
+        if not stopped:
+            self._ignore_state = {'Code': 16, 'Name': 'running'}
+        else:
+            self._ignore_state = {'Code': 80, 'Name': 'stopped'}
 
         # common attributes
         self.ami_launch_index = '0'
@@ -198,7 +202,10 @@ class InstanceBase(object):
         self.private_dns_name = 'ip-20-0-0-20.ec2.internal'
         self.private_ip_address = '20.0.0.20'
         self.product_codes = []
-        self.public_dns_name = 'ec2-12-3-456-78.compute-1.amazonaws.com'
+        if not stopped:
+            self.public_dns_name = 'ec2-12-3-456-78.compute-1.amazonaws.com'
+        else:
+            self.public_dns_name = ''
         self.root_device_name = '/dev/sda1'
         self.root_device_type = 'ebs'
         self.subnet_id = 'subnet-09564ba2121bca7bd'
@@ -226,8 +233,8 @@ class BotoInstance(InstanceBase):
 
     boto3 = False
 
-    def __init__(self, instance_id=None, owner_id=None, region=None):
-        super(BotoInstance, self).__init__()
+    def __init__(self, instance_id=None, owner_id=None, region=None, stopped=False):
+        super(BotoInstance, self).__init__(stopped=stopped)
 
         self._in_monitoring_element = False
         self._tags = [Tag(instance_id, k, v) for k, v in self._ignore_tags.items()]
@@ -241,7 +248,10 @@ class BotoInstance(InstanceBase):
             'arn': 'arn:aws:iam::{0}:instance-profile/developer'.format(owner_id),
             'id': 'ABCDE2GHIJKLMN8PQRSTU'
         }
-        self.ip_address = '12.3.456.7'
+        if not stopped:
+            self.ip_address = '12.3.456.7'
+        else:
+            self.ip_address = ''  # variable is returned as empty by boto if the instance is stopped
         self.item = '\n                '
         self.kernel = None
         self.launch_time = '2019-02-27T19:41:49.000Z'
@@ -259,7 +269,13 @@ class BotoInstance(InstanceBase):
         self.spot_instance_request_id = None
         self.state = self._ignore_state['Name']
         self.state_code = self._ignore_state['Code']
-        self.state_reason = None
+        if not stopped:
+            self.state_reason = None
+        else:
+            self.state_reason = {
+                'code': 'Client.UserInitiatedShutdown',
+                'message': 'Client.UserInitiatedShutdown: User initiated shutdown'
+            }
         self.tags = dict(self._ignore_tags)
 
         self.interfaces = BotoNetworkInterface(
@@ -276,8 +292,8 @@ class Boto3Instance(InstanceBase):
 
     boto3 = True
 
-    def __init__(self, instance_id=None, owner_id=None, region=None):
-        super(Boto3Instance, self).__init__()
+    def __init__(self, instance_id=None, owner_id=None, region=None, stopped=False):
+        super(Boto3Instance, self).__init__(stopped=stopped)
 
         self.block_device_mappings = [{
             'DeviceName': '/dev/sda1',
@@ -300,16 +316,24 @@ class Boto3Instance(InstanceBase):
         self.launch_time = datetime.datetime(2019, 2, 27, 19, 41, 49, tzinfo=tzutc())
         self.monitoring = {'State': 'disabled'}
         self.placement = {'AvailabilityZone': region + 'e', 'GroupName': '', 'Tenancy': 'default'}
-        self.public_ip_address = '12.3.456.7'
+        if not stopped:
+            self.public_ip_address = '12.3.456.7'  # variable is not returned by boto3 if the instance is stopped
         self.security_groups = [{'GroupId': key, 'GroupName': value} for key, value in self._ignore_security_groups.items()]
         self.source_dest_check = True
         self.state = dict(self._ignore_state)
-        self.state_transition_reason = ''
+        if not stopped:
+            self.state_transition_reason = ''
+        else:
+            self.state_transition_reason = 'User initiated (2019-02-11 12:49:13 GMT)'
+            self.state_reason = {  # this variable is only returned by AWS if the instance is stopped
+                'Code': 'Client.UserInitiatedShutdown',
+                'Message': 'Client.UserInitiatedShutdown: User initiated shutdown'
+            }
         self.tags = [{'Key': k, 'Value': v} for k, v in self._ignore_tags.items()]
 
         self.network_interfaces = Boto3NetworkInterface(
             owner_id=owner_id,
-            public_ip=self.public_ip_address,
+            public_ip=getattr(self, 'public_ip_address', ''),
             public_dns=self.public_dns_name,
             private_ip=self.private_ip_address,
             security_groups=self.security_groups,
