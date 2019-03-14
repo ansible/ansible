@@ -78,7 +78,7 @@ options:
     timeout:
       type: int
       description:
-        - Request timeout. 
+        - Request timeout.
         - Should be provided in seconds.
       default: 30
     type:
@@ -128,6 +128,16 @@ EXAMPLES = '''
         title: my-pattern-*
     user: ansible
     password: s3cr3t
+    force_basic_auth: true
+    searchguard_tenant: my_application
+
+- name: Create an index pattern using a jinja template
+  kibana_saved_object:
+    id: my-pattern
+    state: present
+    type: index-pattern
+    kibana_url: http://192.168.0.42:5601/
+    content: '{{ lookup("template", "content.json.j2") }}'
     searchguard_tenant: my_application
 '''
 
@@ -157,8 +167,7 @@ from ansible.module_utils._text import to_native
 from ansible.module_utils.urls import fetch_url, url_argument_spec
 
 
-
-def get_request_params(module, object_id, object_type, kibana_url, 
+def get_request_params(module, object_id, object_type, kibana_url,
                        timeout, content=None, overwrite=False, tenant=None):
 
     url = "{}/api/saved_objects/{}/{}".format(kibana_url, object_type, object_id)
@@ -190,7 +199,7 @@ def are_different(module, existing_object, object_id, object_type, content):
 
 def get_object(module, object_id, object_type, kibana_url,
                timeout, tenant=None):
-    
+
     request_params = get_request_params(
         module=module,
         object_id=object_id,
@@ -200,15 +209,15 @@ def get_object(module, object_id, object_type, kibana_url,
         timeout=timeout
     )
     try:
-        return fetch_url(module,request_params['url'],
-                        method='GET',
-                        headers=request_params['headers'],
-                        timeout=timeout)
+        return fetch_url(module, request_params['url'],
+                         method='GET',
+                         headers=request_params['headers'],
+                         timeout=timeout)
     except Exception as e:
         try:
             if e.code == 404:
                 return e
-        except:
+        except Exception:
             module.fail_json(msg="An error occured while trying to get the object '{}'. {}".format(object_id, to_native(e)))
 
 
@@ -226,11 +235,11 @@ def create_object(module, object_id, object_type, kibana_url, content,
         overwrite=overwrite
     )
     try:
-        return fetch_url(module,request_params['url'],
-                        method='POST',
-                        headers=request_params['headers'],
-                        data=request_params['data'],
-                        timeout=timeout)
+        return fetch_url(module, request_params['url'],
+                         method='POST',
+                         headers=request_params['headers'],
+                         data=request_params['data'],
+                         timeout=timeout)
     except Exception as e:
         module.fail_json(msg="An error occured while trying to get the object '{}'. {}".format(object_id, to_native(e)))
 
@@ -280,7 +289,7 @@ def delete_object(module, object_id, object_type, kibana_url,
 def is_object_present(module, object_id, object_type, kibana_url,
                       timeout, tenant=None):
 
-    r, r_info= get_object(
+    r, r_info = get_object(
         module=module,
         object_id=object_id,
         object_type=object_type,
@@ -298,6 +307,7 @@ def is_object_present(module, object_id, object_type, kibana_url,
             module.fail_json(msg="Got status other then 200 or 404.{}".format(r_info))
     except Exception as e:
         module.fail_json(msg="An error occured while trying to get the object '{}'. {}".format(object_id, to_native(e)))
+
 
 def main():
     argument_spec = url_argument_spec()
@@ -340,7 +350,6 @@ def main():
     password = module.params['url_password']
     socks_proxy = module.params['socks_proxy']
 
-
     present, existing_object = is_object_present(
         module=module,
         object_id=object_id,
@@ -349,7 +358,6 @@ def main():
         tenant=searchguard_tenant,
         timeout=timeout
     )
-
 
     if state == 'present':
         if present and not overwrite:
@@ -426,4 +434,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
