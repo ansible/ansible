@@ -25,6 +25,7 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+
 import os
 from functools import partial
 from ansible.module_utils._text import to_native
@@ -291,8 +292,8 @@ class WapiModule(WapiBase):
             elif (ib_obj_type == NIOS_MEMBER) and (proposed_object['create_token']):
                 proposed_object = None
                 # the function creates a token that can be used by a pre-provisioned member to join the grid
-                result['api_results']=self.call_func('create_token',ref, proposed_object)
-		result['changed'] = True
+                result['api_results'] = self.call_func('create_token', ref, proposed_object)
+                result['changed'] = True
             elif modified:
                 self.check_if_recordname_exists(obj_filter, ib_obj_ref, ib_obj_type, current_object, proposed_object)
 
