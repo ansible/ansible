@@ -13,7 +13,7 @@ from ansible.playbook.play_context import PlayContext
 from ansible.plugins.connection import aws_ssm
 from ansible.plugins.loader import connection_loader, become_loader
 
-@pytest.mark.skipif(sys.version_info < (2,7), reason="requires python 2.7 or higher")
+@pytest.mark.skipif(sys.version_info < (2, 7), reason="requires python 2.7 or higher")
 class TestConnectionBaseClass(unittest.TestCase):
 
     @patch('os.path.exists')
@@ -81,7 +81,6 @@ class TestConnectionBaseClass(unittest.TestCase):
 
     @patch('os.path.exists')
     def test_plugins_connection_aws_ssm_put_file(self, mock_ospe):
-        skipif
         pc = PlayContext()
         new_stdin = StringIO()
         conn = connection_loader.get('aws_ssm', pc, new_stdin)
