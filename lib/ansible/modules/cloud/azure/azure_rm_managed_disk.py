@@ -88,7 +88,8 @@ options:
     zones:
         description:
             - A list of avaliablity Zones for you managed disk.
-            
+        version_added: "2.8"
+
 extends_documentation_fragment:
     - azure
     - azure_tags
