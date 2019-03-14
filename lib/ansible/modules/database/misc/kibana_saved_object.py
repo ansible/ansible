@@ -41,13 +41,36 @@ options:
       description:
         - The URL of Kibana.
     user:
-      type: str
       description:
-        - A username for the module to use for authentication.
+        - A username for the module to use for Digest, Basic or WSSE authentication.
     password:
-      type: str
       description:
-        - A password for the module to use for authentication.
+        - A password for the module to use for Digest, Basic or WSSE authentication.
+    force_basic_auth:
+      description:
+        - The library used by the module only sends authentication information when a webservice
+          responds to an initial request with a 401 status. Since some basic auth services do not properly
+          send a 401, logins will fail. This option forces the sending of the Basic authentication header
+          upon initial request.
+      type: bool
+      default: 'false'
+    validate_certs:
+      description:
+        - If C(no), SSL certificates will not be validated.  This should only
+          set to C(no) used on personally controlled sites using self-signed
+          certificates.
+      type: bool
+      default: 'true'
+    client_cert:
+      description:
+        - PEM formatted certificate chain file to be used for SSL client
+          authentication. This file can also include the key as well, and if
+          the key is included, I(client_key) is not required
+    client_key:
+      description:
+        - PEM formatted file that contains your private key to be used for SSL
+          client authentication. If I(client_cert) contains both the certificate
+          and key, this option is not required.
     searchguard_tenant:
       type: str
       description:
@@ -70,10 +93,12 @@ options:
         - config
         - timelion-sheet
     content:
-      type: path
+      type: dict
       description:
-        - Path of the attributes file.
-        - TODO: Change the name
+        - Body of the object.
+        - Should contain "attributes" dictionary.
+        - JSON file can be used like '{{ lookup("template", "content.json.j2") }}'
+        - See L(Kibana saved object API documentation) for details.
     overwrite:
       type: bool
       description:
@@ -88,76 +113,69 @@ RETURN = '''
 '''
 
 import os
-import requests
 import json
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
+from ansible.module_utils.urls import fetch_url, url_argument_spec, open_url
+
 
 
 def get_request_params(module, object_id, object_type, kibana_url, 
-                       timeout, content={}, overwrite=False,
-                       username=None, password=None, tenant=None, proxy=None):
+                       timeout, content=None, overwrite=False, tenant=None):
 
     url = "{}/api/saved_objects/{}/{}".format(kibana_url, object_type, object_id)
     headers = {'kbn-xsrf': 'true'}
-    auth = ()
-    proxies = {}
-    query_params = {}
-    if any(item is not None for item in [username, password]):
-        auth = (username, password)
+    data = ''
+    if content is not None:
+        data = json.dumps(content)
+        headers['Content-Type'] = 'application/json'
     if tenant is not None:
         headers['sgtenant'] = tenant
-    if proxy is not None:
-        proxies['http'] = proxy
-        proxies['https'] = proxy
     if overwrite:
-        query_params['overwrite'] = True
+        url += '?overwrite=true'
     return {
         'url': url,
         'headers': headers,
-        'auth': auth,
-        'proxies': proxies,
-        'query_params': query_params,
-        'data': content
+        'data': data
     }
 
 
 def are_different(module, existing_object, object_id, object_type, content):
-    object_json = existing_object.json()
-    if object_json['id'] == object_id and object_json['type'] == object_type \
-       and object_json.get('attributes') == content.get('attributes') \
-       and object_json.get('references') == content.get('references'):
+    existing_object = json.loads(existing_object)
+    if existing_object['id'] == object_id and existing_object['type'] == object_type \
+       and existing_object.get('attributes') == content.get('attributes') \
+       and existing_object.get('references') == content.get('references'):
         return False
     else:
         return True
 
 
-def get_object(module, object_id, object_type, kibana_url, timeout,
-               username=None, password=None, tenant=None, proxy=None):
+def get_object(module, object_id, object_type, kibana_url,
+               timeout, tenant=None):
     
     request_params = get_request_params(
         module=module,
         object_id=object_id,
         object_type=object_type,
         kibana_url=kibana_url,
-        username=username,
-        password=password,
         tenant=tenant,
-        proxy=proxy,
         timeout=timeout
     )
     try:
-        return requests.get(request_params['url'],
-                            auth=request_params['auth'],
-                            headers=request_params['headers'],
-                            proxies=request_params['proxies'])
+        return fetch_url(module,request_params['url'],
+                        method='GET',
+                        headers=request_params['headers'],
+                        timeout=timeout)
     except Exception as e:
-        module.fail_json(msg="An error occured while trying to get the object '{}'. {}".format(object_id, to_native(e)))
+        try:
+            if e.code == 404:
+                return e
+        except:
+            module.fail_json(msg="An error occured while trying to get the object '{}'. {}".format(object_id, to_native(e)))
 
 
-def create_object(module, object_id, object_type, kibana_url, content, timeout,
-                  username=None, password=None, tenant=None, proxy=None,
-                  overwrite=False):
+def create_object(module, object_id, object_type, kibana_url, content,
+                  timeout, tenant=None, overwrite=False):
 
     request_params = get_request_params(
         module=module,
@@ -165,27 +183,22 @@ def create_object(module, object_id, object_type, kibana_url, content, timeout,
         object_type=object_type,
         kibana_url=kibana_url,
         content=content,
-        username=username,
-        password=password,
         tenant=tenant,
-        proxy=proxy,
         timeout=timeout,
         overwrite=overwrite
     )
     try:
-        return requests.post(request_params['url'],
-                            auth=request_params['auth'],
-                            headers=request_params['headers'],
-                            proxies=request_params['proxies'],
-                            params=request_params['query_params'],
-                            json=request_params['data'])
-
+        return fetch_url(module,request_params['url'],
+                        method='POST',
+                        headers=request_params['headers'],
+                        data=request_params['data'],
+                        timeout=timeout)
     except Exception as e:
         module.fail_json(msg="An error occured while trying to get the object '{}'. {}".format(object_id, to_native(e)))
 
 
-def update_object(module, object_id, object_type, kibana_url, content, timeout,
-                  username=None, password=None, tenant=None, proxy=None):
+def update_object(module, object_id, object_type, kibana_url, content,
+                  timeout, tenant=None):
 
     request_params = get_request_params(
         module=module,
@@ -193,95 +206,87 @@ def update_object(module, object_id, object_type, kibana_url, content, timeout,
         object_type=object_type,
         kibana_url=kibana_url,
         content=content,
-        username=username,
-        password=password,
         tenant=tenant,
-        proxy=proxy,
         timeout=timeout
     )
     try:
-        return requests.put(request_params['url'],
-                            auth=request_params['auth'],
-                            headers=request_params['headers'],
-                            proxies=request_params['proxies'],
-                            params=request_params['query_params'],
-                            json=request_params['data'])
-
+        return fetch_url(module, request_params['url'],
+                         method='PUT',
+                         headers=request_params['headers'],
+                         data=request_params['data'],
+                         timeout=timeout)
     except Exception as e:
         module.fail_json(msg="An error occured while trying to get the object '{}'. {}".format(object_id, to_native(e)))
 
 
-def delete_object(module, object_id, object_type, kibana_url, timeout, 
-                  username=None, password=None, tenant=None, proxy=None):
+def delete_object(module, object_id, object_type, kibana_url,
+                  timeout, tenant=None):
 
     request_params = get_request_params(
         module=module,
         object_id=object_id,
         object_type=object_type,
         kibana_url=kibana_url,
-        username=username,
-        password=password,
         tenant=tenant,
-        proxy=proxy,
         timeout=timeout,
     )
     try:
-        return requests.delete(request_params['url'],
-                               auth=request_params['auth'],
-                               headers=request_params['headers'],
-                               proxies=request_params['proxies'],
-                               params=request_params['query_params'],
-                               json=request_params['data'])
-
+        return fetch_url(module, request_params['url'],
+                         method='DELETE',
+                         headers=request_params['headers'],
+                         timeout=timeout)
     except Exception as e:
         module.fail_json(msg="An error occured while trying to get the object '{}'. {}".format(object_id, to_native(e)))
 
 
-def is_object_present(module, object_id, object_type, kibana_url, timeout,
-                      username=None, password=None, tenant=None, proxy=None):
-    r = get_object(
+def is_object_present(module, object_id, object_type, kibana_url,
+                      timeout, tenant=None):
+
+    r, r_info= get_object(
         module=module,
         object_id=object_id,
         object_type=object_type,
         kibana_url=kibana_url,
-        username=username,
-        password=password,
         tenant=tenant,
-        proxy=proxy,
         timeout=timeout
     )
 
-    if r.status_code == 404:
-        return False, None
-    elif r.status_code == 200:
-        return True, r
-    else:
-        module.fail_json(msg="Got status other then 200 or 404")
-
+    try:
+        if r_info['status'] == 404:
+            return False, None
+        elif r_info['status'] == 200:
+            return True, r.read()
+        else:
+            module.fail_json(msg="Got status other then 200 or 404.{}".format(r_info))
+    except Exception as e:
+        module.fail_json(msg="An error occured while trying to get the object '{}'. {}".format(object_id, to_native(e)))
 
 def main():
+    argument_spec = url_argument_spec()
+    argument_spec.update(dict(
+        id=dict(type='str'),
+        type=dict(type='str', required=True,
+                  choices=[
+                      'visualization',
+                      'dashboard',
+                      'search',
+                      'index-pattern',
+                      'config',
+                      'timelion-sheet'
+                  ]),
+        state=dict(type='str', default='present', choices=['present', 'absent']),
+        content=dict(type='dict', required=True),
+        kibana_url=dict(type='str', required=True),
+        timeout=dict(type='int', default=30),
+        overwrite=dict(type='bool', default=False),
+        url_username=dict(type='str', aliases=['user']),
+        url_password=dict(type='str', aliases=['password'], no_log=True),
+        searchguard_tenant=dict(type='str'),
+        socks_proxy=dict(type='str')
+    ))
+
     module = AnsibleModule(
-        argument_spec=dict(
-            id=dict(type='str'),
-            type=dict(type='str', required=True,
-                      choices=[
-                          'visualization',
-                          'dashboard',
-                          'search',
-                          'index-pattern',
-                          'config',
-                          'timelion-sheet'
-                      ]),
-            state=dict(type='str', default='present', choices=['present', 'absent']),
-            content=dict(type='dict', required=True),
-            kibana_url=dict(type='str', required=True),
-            timeout=dict(type='float', default="30"),
-            overwrite=dict(type='bool', default=False),
-            user=dict(type='str'),
-            password=dict(type='str'),
-            searchguard_tenant=dict(type='str'),
-            proxy=dict(type='str')
-        ),
+        argument_spec=argument_spec,
         supports_check_mode=True,
     )
 
@@ -292,23 +297,21 @@ def main():
     kibana_url = module.params['kibana_url']
     timeout = module.params['timeout']
     overwrite = module.params['overwrite']
-    user = module.params['user']
-    password = module.params['password']
     searchguard_tenant = module.params['searchguard_tenant']
-    proxy = module.params['proxy']
+    user = module.params['url_username']
+    password = module.params['url_password']
+    socks_proxy = module.params['socks_proxy']
 
-     
+
     present, existing_object = is_object_present(
         module=module,
         object_id=object_id,
         object_type=object_type,
         kibana_url=kibana_url,
-        username=user,
-        password=password,
         tenant=searchguard_tenant,
-        proxy=proxy,
         timeout=timeout
     )
+
 
     if state == 'present':
         if present and not overwrite:
@@ -324,10 +327,7 @@ def main():
                     object_type=object_type,
                     kibana_url=kibana_url,
                     content=content,
-                    username=user,
-                    password=password,
                     tenant=searchguard_tenant,
-                    proxy=proxy,
                     timeout=timeout,
                 )
                 module.exit_json(changed=True, object_id=object_id, msg="Object has been updated: {}".format(object_id))
@@ -341,10 +341,7 @@ def main():
                 object_type=object_type,
                 kibana_url=kibana_url,
                 content=content,
-                username=user,
-                password=password,
                 tenant=searchguard_tenant,
-                proxy=proxy,
                 timeout=timeout,
                 overwrite=True
             )
@@ -357,26 +354,20 @@ def main():
                 object_type=object_type,
                 kibana_url=kibana_url,
                 content=content,
-                username=user,
-                password=password,
                 tenant=searchguard_tenant,
-                proxy=proxy,
                 timeout=timeout
             )
             module.exit_json(changed=True, object_id=object_id, msg="Object has been created: {}".format(object_id))
     if state == 'absent':
         if not present:
-            module.exit_json(changed=False, object_id=object_id, msg="object does not exist")
+            module.exit_json(changed=False, object_id=object_id, msg="Object does not exist: {}".format(object_id))
         if present:
             r = delete_object(
                 module=module,
                 object_id=object_id,
                 object_type=object_type,
                 kibana_url=kibana_url,
-                username=user,
-                password=password,
                 tenant=searchguard_tenant,
-                proxy=proxy,
                 timeout=timeout
             )
             module.exit_json(changed=True, object_id=object_id, msg="Object has been deleted: {}".format(object_id))
