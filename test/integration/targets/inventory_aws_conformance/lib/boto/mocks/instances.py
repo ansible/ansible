@@ -16,11 +16,13 @@ DNSDOMAIN = "ansible.amazon.com"
 
 
 class Reservation(object):
-    def __init__(self, owner_id, id_1, id_2, region):
-        self.instances = [
-            BotoInstance(instance_id=id_1, owner_id=owner_id, region=region),
-            BotoInstance(instance_id=id_2, owner_id=owner_id, region=region, stopped=True)
-        ]
+    def __init__(self, owner_id, instance_ids, region):
+        if len(instance_ids) > 1:
+            stopped_instance = instance_ids[-1]
+        self.instances = []
+        for instance_id in instance_ids:
+            stopped = bool(instance_id == stopped_instance)
+            self.instances.append(BotoInstance(instance_id=instance_id, owner_id=owner_id, region=region, stopped=stopped))
         self.owner_id = owner_id
 
 
