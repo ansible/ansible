@@ -1,0 +1,60 @@
+# Test code for the vmware guest dynamic plugin module
+# Copyright: (c) 2019, Diego Morales <dgmorales@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+---
+- name: Prepare VMware folders for testing dynamic inventory folder support
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  vars:
+    ansible_python_interpreter: '{{ ansible_playbook_python }}' # to get the same behavior as implicit localhost
+    vcsim_user: user
+    vcsim_pass: pass
+    datacenter: DC1
+  tasks:
+    - name: store the vcenter container ip
+      set_fact:
+        vcsim: "{{ lookup('env', 'VCENTER_HOST') }}"
+
+    - debug:
+        var: vcsim
+
+    - name: Create root folder
+      vcenter_folder:
+        hostname: '{{ vcsim }}'
+        username: '{{ vcsim_user }}'
+        password: '{{ vcsim_pass }}'
+        validate_certs: no
+        datacenter: '{{ datacenter }}'
+        folder_name: folder0
+        folder_type: vm
+        state: present
+
+    - name: Create subfolders
+      vcenter_folder:
+        hostname: '{{ vcsim }}'
+        username: '{{ vcsim_user }}'
+        password: '{{ vcsim_pass }}'
+        validate_certs: no
+        datacenter: '{{ datacenter }}'
+        folder_name: '{{ item }}'
+        folder_type: vm
+        parent_folder: folder0
+        state: present
+      loop:
+        - subfolderA
+        - subfolderB
+
+    - name: Move VMs to new folders
+      vmware_guest_move:
+        hostname: '{{ vcsim }}'
+        username: '{{ vcsim_user }}'
+        password: '{{ vcsim_pass }}'
+        validate_certs: no
+        datacenter: '{{ datacenter }}'
+        name: '{{ item.vm }}'
+        dest_folder: '{{ item.folder }}'
+      loop:
+        - { vm: 'DC1_H0_VM0', folder: '/{{ datacenter }}/vm/folder0/subfolderA'}
+        - { vm: 'DC1_H0_VM1', folder: '/{{ datacenter }}/vm/folder0/subfolderB'}

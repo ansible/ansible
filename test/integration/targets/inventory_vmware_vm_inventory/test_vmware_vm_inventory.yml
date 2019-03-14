@@ -10,9 +10,12 @@
       set_fact:
         vcsim: "{{ lookup('env', 'VCENTER_HOST') }}"
 
-    - name: Check that there are 'all' and 'otherGuest' groups present in inventory
+    - name: Check that some expected groups are present in inventory
       assert:
         that: "'{{ item }}' in {{ groups.keys() | list }}"
       with_items:
-      - all
-      - otherGuest
+        - all
+        - otherGuest
+        - folder0
+        - folder0_subfoldera
+        - folder0_subfolderb

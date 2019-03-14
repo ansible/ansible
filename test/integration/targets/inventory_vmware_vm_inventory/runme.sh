@@ -17,7 +17,10 @@ cat > "$VMWARE_CONFIG" <<VMWARE_YAML
 plugin: vmware_vm_inventory
 strict: False
 validate_certs: False
+datacenter: DC1
 with_tags: False
+with_folders: True
+search_folder: folder0
 VMWARE_YAML
 
 cleanup() {
@@ -41,10 +44,13 @@ echo "Kill all previous instances"
 curl "http://${VCENTER_HOST}:5000/killall" > /dev/null 2>&1
 
 echo "Start new VCSIM server"
-curl "http://${VCENTER_HOST}:5000/spawn?datacenter=1&cluster=1&folder=0" > /dev/null 2>&1
+curl "http://${VCENTER_HOST}:5000/spawn?dc=2&cluster=1&folder=0" > /dev/null 2>&1
 
 echo "Debugging new instances"
 curl "http://${VCENTER_HOST}:5000/govc_find"
+
+# Creates folder structure to test inventory folder support
+ansible-playbook -i 'localhost,' test_vmware_prep_folders.yml
 
 # Get inventory
 ansible-inventory -i ${VMWARE_CONFIG} --list
@@ -59,7 +65,7 @@ ${PYTHON} -m pip install toml
 ansible-inventory -i ${VMWARE_CONFIG} --list --toml
 
 echo "Check if cache is working for inventory plugin"
-ls "$(pwd)/inventory_cache/vmware_vm_*" > /dev/null 2>&1
+ls "$(pwd)/inventory_cache/vmware_vm_"* > /dev/null 2>&1
 if [ $? -ne 0 ]; then
     echo "Cache directory not found. Please debug"
     exit 1
