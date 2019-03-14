@@ -38,7 +38,7 @@ class TestAdminServiceModule(TestNvosModule):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_vxlan': True,
                          'pn_enable_vlans': '1-399,401-4092', 'pn_no_snoop_linklocal_vlans': 'none', 'state': 'update'})
         result = self.execute_module(changed=True, state='update')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 igmp-snooping-modify  vxlan  enable-vlans '
+        expected_cmd = ' switch sw01 igmp-snooping-modify  vxlan  enable-vlans '
         expected_cmd += '1-399,401-4092 no-snoop-linklocal-vlans none'
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
