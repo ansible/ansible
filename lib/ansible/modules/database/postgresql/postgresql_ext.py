@@ -1,129 +1,173 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: postgresql_ext
-short_description: Add or remove PostgreSQL extensions from a database.
+short_description: Add or remove PostgreSQL extensions from a database
 description:
-   - Add or remove PostgreSQL extensions from a database.
+- Add or remove PostgreSQL extensions from a database.
 version_added: "1.9"
 options:
   name:
     description:
-      - name of the extension to add or remove
+    - Name of the extension to add or remove.
     required: true
+    type: str
   db:
     description:
-      - name of the database to add or remove the extension to/from
+    - Name of the database to add or remove the extension to/from.
     required: true
+    type: str
+    aliases:
+    - login_db
   schema:
     description:
-      - name of the schema to add the extension to
+    - Name of the schema to add the extension to.
     version_added: "2.8"
+    type: str
   login_user:
     description:
-      - The username used to authenticate with
+    - The username used to authenticate with.
+    type: str
   login_password:
     description:
-      - The password used to authenticate with
+    - The password used to authenticate with.
+    type: str
   login_host:
     description:
-      - Host running the database
+    - Host running the database.
+    type: str
     default: localhost
   login_unix_socket:
     description:
-      - Path to a Unix domain socket for local connections.
+    - Path to a Unix domain socket for local connections.
+    type: path
     version_added: '2.8'
   ssl_mode:
     description:
-      - Determines whether or with what priority a secure SSL TCP/IP connection
-        will be negotiated with the server.
-      - See U(https://www.postgresql.org/docs/current/static/libpq-ssl.html) for
-        more information on the modes.
-      - Default of C(prefer) matches libpq default.
+    - Determines whether or with what priority a secure SSL TCP/IP connection
+      will be negotiated with the server.
+    - See U(https://www.postgresql.org/docs/current/static/libpq-ssl.html) for
+      more information on the modes.
+    - Default of C(prefer) matches libpq default.
     default: prefer
-    choices: ["disable", "allow", "prefer", "require", "verify-ca", "verify-full"]
+    choices: [allow, disable, prefer, require, verify-ca, verify-full]
+    type: str
     version_added: '2.8'
   ssl_rootcert:
     description:
-      - Specifies the name of a file containing SSL certificate authority (CA)
-        certificate(s). If the file exists, the server's certificate will be
-        verified to be signed by one of these authorities.
+    - Specifies the name of a file containing SSL certificate authority (CA)
+      certificate(s). If the file exists, the server's certificate will be
+      verified to be signed by one of these authorities.
+    type: path
     version_added: '2.8'
   port:
     description:
-      - Database port to connect to.
+    - Database port to connect to.
     default: 5432
+    type: int
   session_role:
+    description:
+    - Switch to session_role after connecting.
+    - The specified session_role must be a role that the current login_user is a member of.
+    - Permissions checking for SQL commands is carried out as though the session_role were the one that had logged in originally.
+    type: str
     version_added: "2.8"
-    description: |
-      Switch to session_role after connecting. The specified session_role must be a role that the current login_user is a member of.
-      Permissions checking for SQL commands is carried out as though the session_role were the one that had logged in originally.
   state:
     description:
-      - The database extension state
+    - The database extension state.
     default: present
-    choices: [ "present", "absent" ]
+    choices: [ absent, present ]
+    type: str
   cascade:
     description:
-      - Automatically install/remove any extensions that this extension depends on
-        that are not already installed/removed (supported since PostgreSQL 9.6).
+    - Automatically install/remove any extensions that this extension depends on
+      that are not already installed/removed (supported since PostgreSQL 9.6).
     type: bool
     default: no
     version_added: '2.8'
 notes:
-   - The default authentication assumes that you are either logging in as or sudo'ing to the C(postgres) account on the host.
-   - This module uses I(psycopg2), a Python PostgreSQL database adapter. You must ensure that psycopg2 is installed on
-     the host before using this module. If the remote host is the PostgreSQL server (which is the default case), then PostgreSQL must also be installed
-     on the remote host. For Ubuntu-based systems, install the C(postgresql), C(libpq-dev), and C(python-psycopg2) packages on the remote host before using
-     this module.
+- The default authentication assumes that you are either logging in as
+  or sudo'ing to the C(postgres) account on the host.
+- This module uses I(psycopg2), a Python PostgreSQL database adapter.
+- You must ensure that psycopg2 is installed on the host before using this module.
+- If the remote host is the PostgreSQL server (which is the default case),
+  then PostgreSQL must also be installed on the remote host.
+- For Ubuntu-based systems, install the C(postgresql), C(libpq-dev),
+  and C(python-psycopg2) packages on the remote host before using this module.
 requirements: [ psycopg2 ]
 author:
-    - "Daniel Schep (@dschep)"
-    - "Thomas O'Donnell (@andytom)"
+- Daniel Schep (@dschep)
+- Thomas O'Donnell (@andytom)
 '''
 
-EXAMPLES = '''
-# Adds postgis to the database "acme"
-- postgresql_ext:
+EXAMPLES = r'''
+- name: Adds postgis extension to the database acme in the schema foo
+  postgresql_ext:
     name: postgis
     db: acme
-    schema: extensions
+    schema: foo
 
-# Adds earthdistance to the database "template1"
-- postgresql_ext:
+- name: Removes postgis extension to the database acme
+  postgresql_ext:
+    name: postgis
+    db: acme
+    state: absent
+
+- name: Adds earthdistance extension to the database template1 cascade
+  postgresql_ext:
     name: earthdistance
     db: template1
     cascade: true
+
+# In the example below, if earthdistance extension is installed,
+# it will be removed too because it depends on cube:
+- name: Removes cube extension from the database acme cascade
+  postgresql_ext:
+    name: cube
+    db: acme
+    cascade: yes
+    state: absent
 '''
+
+RETURN = r'''
+query:
+  description: List of executed queries.
+  returned: always
+  type: list
+  sample: ["DROP EXTENSION \"acme\""]
+
+'''
+
 import traceback
 
 PSYCOPG2_IMP_ERR = None
 try:
     import psycopg2
     import psycopg2.extras
+    HAS_PSYCOPG2 = True
 except ImportError:
     PSYCOPG2_IMP_ERR = traceback.format_exc()
-    postgresqldb_found = False
-else:
-    postgresqldb_found = True
+    HAS_PSYCOPG2 = False
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.postgres import postgres_common_argument_spec
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
 from ansible.module_utils.database import pg_quote_identifier
+
+executed_queries = []
 
 
 class NotSupportedError(Exception):
@@ -146,6 +190,7 @@ def ext_delete(cursor, ext, cascade):
         if cascade:
             query += " CASCADE"
         cursor.execute(query)
+        executed_queries.append(query)
         return True
     else:
         return False
@@ -159,6 +204,7 @@ def ext_create(cursor, ext, schema, cascade):
         if cascade:
             query += " CASCADE"
         cursor.execute(query)
+        executed_queries.append(query)
         return True
     else:
         return False
@@ -169,27 +215,26 @@ def ext_create(cursor, ext, schema, cascade):
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
-            login_user=dict(default="postgres"),
-            login_password=dict(default="", no_log=True),
-            login_host=dict(default=""),
-            login_unix_socket=dict(default=""),
-            port=dict(default="5432"),
-            db=dict(required=True),
-            ext=dict(required=True, aliases=['name']),
-            schema=dict(default=""),
-            state=dict(default="present", choices=["absent", "present"]),
-            cascade=dict(type='bool', default=False),
-            ssl_mode=dict(default='prefer', choices=[
-                          'disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
-            ssl_rootcert=dict(default=None),
-            session_role=dict(),
-        ),
-        supports_check_mode=True
+    argument_spec = postgres_common_argument_spec()
+    argument_spec.update(
+        db=dict(type="str", required=True, aliases=["login_db"]),
+        port=dict(type="int", default=5432, aliases=["login_port"]),
+        ext=dict(type="str", required=True, aliases=['name']),
+        schema=dict(type="str"),
+        state=dict(type="str", default="present", choices=["absent", "present"]),
+        cascade=dict(type='bool', default=False),
+        ssl_mode=dict(type='str', default='prefer', choices=[
+                      'disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
+        ssl_rootcert=dict(type="path", default=None),
+        session_role=dict(type="str"),
     )
 
-    if not postgresqldb_found:
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        supports_check_mode=True,
+    )
+
+    if not HAS_PSYCOPG2:
         module.fail_json(msg=missing_required_lib('psycopg2'), exception=PSYCOPG2_IMP_ERR)
 
     db = module.params["db"]
@@ -233,8 +278,7 @@ def main():
             db_connection.set_isolation_level(psycopg2
                                               .extensions
                                               .ISOLATION_LEVEL_AUTOCOMMIT)
-        cursor = db_connection.cursor(
-            cursor_factory=psycopg2.extras.DictCursor)
+        cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
     except TypeError as e:
         if 'sslrootcert' in e.args[0]:
@@ -268,7 +312,7 @@ def main():
     except Exception as e:
         module.fail_json(msg="Database query failed: %s" % to_native(e), exception=traceback.format_exc())
 
-    module.exit_json(changed=changed, db=db, ext=ext)
+    module.exit_json(changed=changed, db=db, ext=ext, queries=executed_queries)
 
 
 if __name__ == '__main__':
