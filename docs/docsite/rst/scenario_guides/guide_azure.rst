@@ -1,5 +1,5 @@
-Microsoft Azure Ansible Guide
-=============================
+Microsoft Azure Guide
+=====================
 
 Ansible includes a suite of modules for interacting with Azure Resource Manager, giving you the tools to easily create
 and orchestrate infrastructure on the Microsoft Azure Cloud.

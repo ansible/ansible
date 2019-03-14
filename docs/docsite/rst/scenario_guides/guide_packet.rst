@@ -1,5 +1,5 @@
 **********************************
-Packet.net Ansible Guide
+Packet.net Guide
 **********************************
 
 Introduction

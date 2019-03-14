@@ -1,8 +1,8 @@
 .. _meraki_guide:
 
-**************************
-Cisco Meraki Ansible Guide
-**************************
+******************
+Cisco Meraki Guide
+******************
 
 .. contents::
    :local:
@@ -90,7 +90,7 @@ These are the common parameters which are used for most every module.
     state
         General specification of what action to take. ``query`` does lookups. ``present`` creates or edits. ``absent`` deletes.
 
-.. hint:: Use the ``org_id`` and ``net_id`` parameters when possible. ``org_name`` and ``net_name`` require additional behind-the-scenes API calls to learn the ID values. ``org_id`` and ``net_id`` will perform faster.
+.. hint:: Use the ``org_id`` and ``net_id`` parameters when possible. ``org_name`` and ``net_name`` require additional behind-the-scenes API calls to learn the ID values. ``org_id`` and ``net_id`` will perform faster. 
 
 Meraki Authentication
 =====================
@@ -110,7 +110,7 @@ Meraki and its related Ansible modules return most information in the form of a 
 
     [
         {
-            "orgAccess": "full",
+            "orgAccess": "full", 
             "name": "John Doe",
             "tags": [],
             "networks": [],
@@ -153,7 +153,7 @@ Ansible's Meraki modules do not allow for manipulating data. For example, you ma
 
         - set_fact:
             new_rule:
-              -
+              - 
                 - comment: Block traffic to server
                   src_cidr: 192.0.1.0/24
                   src_port: any

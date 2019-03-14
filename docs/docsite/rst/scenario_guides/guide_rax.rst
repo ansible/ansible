@@ -1,5 +1,5 @@
-Rackspace Cloud Ansible Guide
-=============================
+Rackspace Cloud Guide
+=====================
 
 .. _rax_introduction:
 
@@ -8,14 +8,14 @@ Introduction
 
 .. note:: This section of the documentation is under construction. We are in the process of adding more examples about the Rackspace modules and how they work together.  Once complete, there will also be examples for Rackspace Cloud in `ansible-examples <https://github.com/ansible/ansible-examples/>`_.
 
-Ansible contains a number of core modules for interacting with Rackspace Cloud.
+Ansible contains a number of core modules for interacting with Rackspace Cloud.  
 
-The purpose of this section is to explain how to put Ansible modules together
+The purpose of this section is to explain how to put Ansible modules together 
 (and use inventory scripts) to use Ansible in a Rackspace Cloud context.
 
-Prerequisites for using the rax modules are minimal.  In addition to ansible itself,
-all of the modules require and are tested against pyrax 1.5 or higher.
-You'll need this Python module installed on the execution host.
+Prerequisites for using the rax modules are minimal.  In addition to ansible itself, 
+all of the modules require and are tested against pyrax 1.5 or higher. 
+You'll need this Python module installed on the execution host.  
 
 ``pyrax`` is not currently available in many operating system
 package repositories, so you will likely need to install it via pip:
@@ -58,7 +58,7 @@ The `rax.py` inventory script and all `rax` modules support a standard `pyrax` c
 Setting the environment parameter ``RAX_CREDS_FILE`` to the path of this file will help Ansible find how to load
 this information.
 
-More information about this credentials file can be found at
+More information about this credentials file can be found at 
 https://github.com/pycontribs/pyrax/blob/master/docs/getting_started.md#authenticating
 
 
@@ -95,7 +95,7 @@ The 'rax' module provides the ability to provision instances within Rackspace Cl
 
 .. note::
 
-   Authentication with the Rackspace-related modules is handled by either
+   Authentication with the Rackspace-related modules is handled by either 
    specifying your username and API key as environment variables or passing
    them as module arguments, or by specifying the location of a credentials
    file.
@@ -146,7 +146,7 @@ With the host group now created, the next play in this playbook could now config
         - ntp
         - webserver
 
-The method above ties the configuration of a host with the provisioning step.  This isn't always what you want, and leads us
+The method above ties the configuration of a host with the provisioning step.  This isn't always what you want, and leads us 
 to the next section.
 
 .. _host_inventory:
@@ -173,11 +173,11 @@ To use the Rackspace dynamic inventory script, copy ``rax.py`` into your invento
 
 ``rax.py`` also accepts a ``RAX_REGION`` environment variable, which can contain an individual region, or a comma separated list of regions.
 
-When using ``rax.py``, you will not have a 'localhost' defined in the inventory.
+When using ``rax.py``, you will not have a 'localhost' defined in the inventory.  
 
 As mentioned previously, you will often be running most of these modules outside of the host loop, and will need 'localhost' defined.  The recommended way to do this, would be to create an ``inventory`` directory, and place both the ``rax.py`` script and a file containing ``localhost`` in it.
 
-Executing ``ansible`` or ``ansible-playbook`` and specifying the ``inventory`` directory instead
+Executing ``ansible`` or ``ansible-playbook`` and specifying the ``inventory`` directory instead 
 of an individual file, will cause ansible to evaluate each file in that directory for inventory.
 
 Let's test our inventory script to see if it can talk to Rackspace Cloud.
@@ -186,8 +186,8 @@ Let's test our inventory script to see if it can talk to Rackspace Cloud.
 
     $ RAX_CREDS_FILE=~/.raxpub ansible all -i inventory/ -m setup
 
-Assuming things are properly configured, the ``rax.py`` inventory script will output information similar to the
-following information, which will be utilized for inventory and variables.
+Assuming things are properly configured, the ``rax.py`` inventory script will output information similar to the 
+following information, which will be utilized for inventory and variables. 
 
 .. code-block:: json
 
@@ -785,12 +785,12 @@ Advanced Usage
 Autoscaling with Tower
 ++++++++++++++++++++++
 
-:ref:`ansible_tower` also contains a very nice feature for auto-scaling use cases.
-In this mode, a simple curl script can call a defined URL and the server will "dial out" to the requester
+:ref:`ansible_tower` also contains a very nice feature for auto-scaling use cases.  
+In this mode, a simple curl script can call a defined URL and the server will "dial out" to the requester 
 and configure an instance that is spinning up.  This can be a great way to reconfigure ephemeral nodes.
-See the Tower documentation for more details.
+See the Tower documentation for more details.  
 
-A benefit of using the callback in Tower over pull mode is that job results are still centrally recorded
+A benefit of using the callback in Tower over pull mode is that job results are still centrally recorded 
 and less information has to be shared with remote hosts.
 
 .. _pending_information:
@@ -804,3 +804,7 @@ Ansible is a powerful orchestration tool, and rax modules allow you the opportun
 * Expansion of an already-online environment, where nodes are provisioned, bootstrapped, configured, and software installed
 * A procedure where app log files are uploaded to a central location, like Cloud Files, before a node is decommissioned
 * Servers and load balancers that have DNS records created and destroyed on creation and decommissioning, respectively
+
+
+
+

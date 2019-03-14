@@ -1,5 +1,5 @@
-Alibaba Cloud Compute Services Ansible Guide
-============================================
+Alibaba Cloud Compute Services Guide
+====================================
 
 .. _alicloud_intro:
 
@@ -26,7 +26,7 @@ Normally, you'll use the following pattern for plays that provision Alicloud res
 
 Authentication
 ``````````````
-
+   
 You can specify your Alicloud authentication credentials (access key and secret key) by passing them as
 environment variables or by storing them in a vars file.
 

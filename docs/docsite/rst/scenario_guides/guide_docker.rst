@@ -1,5 +1,5 @@
-Docker Ansible Guide
-====================
+Docker Guide
+============
 
 Ansible offers the following modules for orchestrating Docker containers:
 

@@ -1,5 +1,5 @@
-Amazon Web Services Ansible Guide
-=================================
+Amazon Web Services Guide
+=========================
 
 .. _aws_intro:
 
@@ -9,7 +9,7 @@ Introduction
 Ansible contains a number of modules for controlling Amazon Web Services (AWS).  The purpose of this
 section is to explain how to put Ansible modules together (and use inventory scripts) to use Ansible in AWS context.
 
-Requirements for the AWS modules are minimal.
+Requirements for the AWS modules are minimal.  
 
 All of the modules require and are tested against recent versions of boto.  You'll need this Python module installed on your control machine.  Boto can be installed from your OS distribution or python's "pip install boto".
 
@@ -27,8 +27,8 @@ In your playbook steps we'll typically be using the following pattern for provis
 
 Authentication
 ``````````````
-
-Authentication with the AWS-related modules is handled by either
+   
+Authentication with the AWS-related modules is handled by either 
 specifying your access and secret key as ENV variables or module arguments.
 
 For environment variables::
@@ -54,9 +54,9 @@ Note that if you store your credentials in vars_file, you need to refer to them 
 Provisioning
 ````````````
 
-The ec2 module provisions and de-provisions instances within EC2.
+The ec2 module provisions and de-provisions instances within EC2.  
 
-An example of making sure there are only 5 instances tagged 'Demo' in EC2 follows.
+An example of making sure there are only 5 instances tagged 'Demo' in EC2 follows.  
 
 In the example below, the "exact_count" of instances is set to 5.  This means if there are 0 instances already existing, then
 5 new instances would be created.  If there were 2 instances, only 3 would be created, and if there were 8 instances, 3 instances would
@@ -74,12 +74,12 @@ instance.::
       tasks:
 
         - name: Provision a set of instances
-          ec2:
+          ec2: 
              key_name: my_key
              group: test
              instance_type: t2.micro
              image: "{{ ami_id }}"
-             wait: true
+             wait: true 
              exact_count: 5
              count_tag:
                 Name: Demo
@@ -100,19 +100,19 @@ From this, we'll use the add_host module to dynamically create a host group cons
       tasks:
 
         - name: Provision a set of instances
-          ec2:
+          ec2: 
              key_name: my_key
              group: test
              instance_type: t2.micro
              image: "{{ ami_id }}"
-             wait: true
+             wait: true 
              exact_count: 5
              count_tag:
                 Name: Demo
              instance_tags:
                 Name: Demo
           register: ec2
-
+    
        - name: Add all instance public IPs to host group
          add_host: hostname={{ item.public_ip }} groups=ec2hosts
          loop: "{{ ec2.instances }}"
@@ -141,7 +141,7 @@ Host Inventory
 ``````````````
 
 Once your nodes are spun up, you'll probably want to talk to them again.  With a cloud setup, it's best to not maintain a static list of cloud hostnames
-in text files.  Rather, the best way to handle this is to use the ec2 dynamic inventory script. See :ref:`dynamic_inventory`.
+in text files.  Rather, the best way to handle this is to use the ec2 dynamic inventory script. See :ref:`dynamic_inventory`. 
 
 This will also dynamically select nodes that were even created outside of Ansible, and allow Ansible to manage them.
 
@@ -176,9 +176,9 @@ Autoscaling with Ansible Pull
 Amazon Autoscaling features automatically increase or decrease capacity based on load.  There are also Ansible modules shown in the cloud documentation that
 can configure autoscaling policy.
 
-When nodes come online, it may not be sufficient to wait for the next cycle of an ansible command to come along and configure that node.
+When nodes come online, it may not be sufficient to wait for the next cycle of an ansible command to come along and configure that node.  
 
-To do this, pre-bake machine images which contain the necessary ansible-pull invocation.  Ansible-pull is a command line tool that fetches a playbook from a git server and runs it locally.
+To do this, pre-bake machine images which contain the necessary ansible-pull invocation.  Ansible-pull is a command line tool that fetches a playbook from a git server and runs it locally.  
 
 One of the challenges of this approach is that there needs to be a centralized way to store data about the results of pull commands in an autoscaling context.
 For this reason, the autoscaling solution provided below in the next section can be a better approach.
@@ -202,7 +202,7 @@ with remote hosts.
 Ansible With (And Versus) CloudFormation
 ````````````````````````````````````````
 
-CloudFormation is a Amazon technology for defining a cloud stack as a JSON or YAML document.
+CloudFormation is a Amazon technology for defining a cloud stack as a JSON or YAML document.   
 
 Ansible modules provide an easier to use interface than CloudFormation in many examples, without defining a complex JSON/YAML document.
 This is recommended for most users.
@@ -223,7 +223,7 @@ AWS Image Building With Ansible
 Many users may want to have images boot to a more complete configuration rather than configuring them entirely after instantiation.  To do this,
 one of many programs can be used with Ansible playbooks to define and upload a base image, which will then get its own AMI ID for usage with
 the ec2 module or other Ansible AWS modules such as ec2_asg or the cloudformation module.   Possible tools include Packer, aminator, and Ansible's
-ec2_ami module.
+ec2_ami module.  
 
 Generally speaking, we find most users using Packer.
 
@@ -251,3 +251,4 @@ documentation for a full list with examples.
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
+

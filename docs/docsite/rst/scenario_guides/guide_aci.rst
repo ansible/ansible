@@ -1,7 +1,7 @@
 .. _aci_guide:
 
-Cisco ACI Ansible Guide
-=======================
+Cisco ACI Guide
+===============
 
 
 .. _aci_guide_intro:
@@ -60,7 +60,7 @@ For instance ensuring that a specific tenant exists, is done using the following
         host: my-apic-1
         username: admin
         password: my-password
-
+    
         tenant: customer-xyz
         description: Customer XYZ
         state: present
@@ -81,7 +81,7 @@ A module can also be used to query a specific object.
         host: my-apic-1
         username: admin
         password: my-password
-
+    
         tenant: customer-xyz
         state: query
       register: my_tenant
@@ -95,7 +95,7 @@ Or query all objects.
         host: my-apic-1
         username: admin
         password: my-password
-
+    
         state: query
       register: all_tenants
 
@@ -147,7 +147,7 @@ One way to set this up is to add to every task the directive: ``delegate_to: loc
         host: '{{ ansible_host }}'
         username: '{{ ansible_user }}'
         password: '{{ ansible_password }}'
-
+    
         state: query
       delegate_to: localhost
       register: all_tenants
@@ -180,7 +180,7 @@ But used tasks do not need anything special added.
         host: '{{ ansible_host }}'
         username: '{{ ansible_user }}'
         password: '{{ ansible_password }}'
-
+    
         state: query
       register: all_tenants
 
@@ -348,7 +348,7 @@ You can automate this by using the following Ansible task:
         host: my-apic-1
         username: admin
         password: my-password
-
+    
         aaa_user: admin
         certificate_name: admin
         certificate: "{{ lookup('file', 'pki/admin.crt') }}"  # This will read the certificate data from a local file
@@ -403,7 +403,7 @@ For instance, if you would like to ensure a specific tenant exists on ACI, these
     - aci_rest:
         host: my-apic-1
         private_key: pki/admin.key
-
+    
         method: post
         path: /api/mo/uni.xml
         content: |
@@ -416,7 +416,7 @@ For instance, if you would like to ensure a specific tenant exists on ACI, these
     - aci_rest:
         host: my-apic-1
         private_key: pki/admin.key
-
+    
         method: post
         path: /api/mo/uni.json
         content:
@@ -436,7 +436,7 @@ For instance, if you would like to ensure a specific tenant exists on ACI, these
     - aci_rest:
         host: my-apic-1
         private_key: pki/admin.key
-
+    
         method: post
         path: /api/mo/uni.json
         content:
@@ -452,7 +452,7 @@ For instance, if you would like to ensure a specific tenant exists on ACI, these
     - aci_tenant:
         host: my-apic-1
         private_key: pki/admin.key
-
+    
         tenant: customer-xyz
         description: Customer XYZ
         state: present
