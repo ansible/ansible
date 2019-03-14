@@ -425,13 +425,28 @@ class Constructable(object):
                         else:
                             raise AnsibleParserError("Invalid group name format, expected a string or a list of them or dictionary, got: %s" % type(key))
 
-                        for bare_name in new_raw_group_names:
+                        if isinstance(raw_parent_name, list) and len(raw_parent_name) != len(new_raw_group_names):
+                            if strict:
+                                raise AnsibleParserError('Size of parents (%s) did not match size of groups (%s) for %s' % (
+                                    len(raw_parent_name), len(new_raw_group_names), keyed))
+                            continue
+
+                        for i, bare_name in enumerate(new_raw_group_names):
                             gname = self._sanitize_group_name('%s%s%s' % (prefix, sep, bare_name))
                             result_gname = self.inventory.add_group(gname)
                             self.inventory.add_child(result_gname, host)
 
                             if raw_parent_name:
-                                parent_name = self._sanitize_group_name(raw_parent_name)
+                                if isinstance(raw_parent_name, list):
+                                    if i > len(raw_parent_name):
+                                        continue
+                                    this_raw_parent_name = raw_parent_name[i]
+                                elif isinstance(raw_parent_name, string_types):
+                                    this_raw_parent_name = raw_parent_name
+                                else:
+                                    raise AnsibleParserError(
+                                        "Invalid parent group name format, expected  string or list size same as groups, got: %s" % type(raw_parent_name))
+                                parent_name = self._sanitize_group_name(this_raw_parent_name)
                                 self.inventory.add_group(parent_name)
                                 self.inventory.add_child(parent_name, result_gname)
 

@@ -159,6 +159,41 @@ def test_parent_group_templating(inventory_module):
     assert [child.name for child in locations_group.child_groups] == ['betsy']
 
 
+def test_parent_group_templating_with_list(inventory_module):
+    inventory_module.inventory.add_host('cow')
+    inventory_module.inventory.set_variable('cow', 'properties', {
+        'sound': 'mmmmmmmmmm',
+        'food': 'grass'
+    })
+    host = inventory_module.inventory.get_host('cow')
+    keyed_groups = [
+        {
+            'separator': '',
+            'prefix': '',
+            'key': 'properties',
+            'parent_group': '{{ properties.keys() | list }}'
+        },
+        {
+            'separator': '',
+            'prefix': '',
+            'key': 'properties.keys() | list',
+            'parent_group': 'properties'
+        }
+    ]
+    inventory_module._add_host_to_keyed_groups(
+        keyed_groups, host.vars, host.name, strict=True
+    )
+    # Traverse chain of groups from root "properties" to host "cow"
+    print(inventory_module.inventory.groups)
+    assert 'properties' in inventory_module.inventory.groups
+    root_group = inventory_module.inventory.groups['properties']
+    assert set(group.name for group in root_group.child_groups) == set(['sound', 'food'])
+    sound_subgroup = inventory_module.inventory.groups['sound']
+    food_subgroup = inventory_module.inventory.groups['food']
+    assert [group.name for group in sound_subgroup.child_groups] == ['soundmmmmmmmmmm']
+    assert [group.name for group in food_subgroup.child_groups] == ['foodgrass']
+
+
 def test_parent_group_templating_error(inventory_module):
     inventory_module.inventory.add_host('cow')
     inventory_module.inventory.set_variable('cow', 'nickname', 'betsy')
