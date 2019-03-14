@@ -24,7 +24,6 @@ class TestConnectionBaseClass(unittest.TestCase):
         pc = PlayContext()
         new_stdin = StringIO()
         conn = connection_loader.get('aws_ssm', pc, new_stdin)
-
         conn.get_option = MagicMock()
         conn.get_option.side_effect = ['i1234', 'executable', 'abcd', 'i1234']
         conn.host = 'abc'
@@ -34,7 +33,6 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn.start_session = MagicMock()
         conn._session_id = MagicMock()
         conn._session_id.return_value = 's1'
-
         s_popen.return_value.stdin.write = MagicMock()
         s_poll.return_value = MagicMock()
         s_poll.return_value.register = MagicMock()
@@ -43,7 +41,6 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn._stdin_readline = MagicMock()
         conn._stdin_readline.return_value = 'abc123'
         conn.SESSION_START = 'abc'
-
         conn.start_session()
 
     @patch('random.choice')
@@ -51,9 +48,7 @@ class TestConnectionBaseClass(unittest.TestCase):
         pc = PlayContext()
         new_stdin = StringIO()
         conn = connection_loader.get('aws_ssm', pc, new_stdin)
-
         r_choice.side_effect = ['a', 'a', 'a', 'a', 'a', 'b', 'b', 'b', 'b', 'b']
-
         conn._connected = True
         conn.MARK_LENGTH = 5
         conn._session = MagicMock()
@@ -82,7 +77,6 @@ class TestConnectionBaseClass(unittest.TestCase):
         cmd = MagicMock()
         returncode = 'a'
         stdout = 'b'
-        
         return (returncode, stdout, conn._flush_stderr)
 
     @patch('os.path.exists')
@@ -90,22 +84,18 @@ class TestConnectionBaseClass(unittest.TestCase):
         pc = PlayContext()
         new_stdin = StringIO()
         conn = connection_loader.get('aws_ssm', pc, new_stdin)
-
         conn._connect = MagicMock()
         conn._file_transport_command = MagicMock()
         conn._file_transport_command.return_value = (0, 'stdout', 'stderr')
-
         res, stdout, stderr = conn.put_file('/in/file', '/out/file')
 
     def test_plugins_connection_aws_ssm_fetch_file(self):
         pc = PlayContext()
         new_stdin = StringIO()
         conn = connection_loader.get('aws_ssm', pc, new_stdin)
-
         conn._connect = MagicMock()
         conn._file_transport_command = MagicMock()
         conn._file_transport_command.return_value = (0, 'stdout', 'stderr')
-
         res, stdout, stderr = conn.fetch_file('/in/file', '/out/file')
 
     @patch('subprocess.check_output')
@@ -114,7 +104,6 @@ class TestConnectionBaseClass(unittest.TestCase):
         pc = PlayContext()
         new_stdin = StringIO()
         conn = connection_loader.get('aws_ssm', pc, new_stdin)
-
         conn.get_option = MagicMock()
         conn.get_option.side_effect = ['1', '2', '3', '4', '5']
         conn._get_url = MagicMock()
@@ -137,12 +126,9 @@ class TestConnectionBaseClass(unittest.TestCase):
         pc = PlayContext()
         new_stdin = StringIO()
         conn = connection_loader.get('aws_ssm', pc, new_stdin)
-
         conn._session_id = True
-
         conn.get_option = MagicMock()
         conn.get_option.side_effect = ["i-12345", "/abc", "pqr"]
-
         conn._session = MagicMock()
         conn._session.terminate = MagicMock()
         conn._session.communicate = MagicMock()
