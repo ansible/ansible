@@ -116,6 +116,8 @@ class AnsibleCloudstackImageStore(AnsibleCloudStack):
         return [provider.get('name') for provider in storage_provides.get('dataStoreProvider')]
 
     def get_image_store(self):
+        if self.image_store:
+            return self.image_store
         image_store = self.module.params.get('name')
         args = {
             'name': self.module.params.get('name'),
@@ -139,22 +141,24 @@ class AnsibleCloudstackImageStore(AnsibleCloudStack):
             self.module.fail_json(
                 msg='Provider %s is not in the provider list (%s). Please specify a correct provider' % (
                     self.module.params.get('provider'), provider_list))
+        args = {
+            'name': self.module.params.get('name'),
+            'url': self.module.params.get('url'),
+            'zoneid': self.get_zone(key='id'),
+            'provider': self.module.params.get('provider')
+        }
+        if not image_store:
+            self.result['changed'] = True
+            if not self.module.check_mode:
+                res = self.query_api('addImageStore', **args)
+                self.image_store = res.get('imagestore')
+        else:
+            # Cloudstack API expects 'provider' but returns 'providername'
+            args['providername'] = args.pop('provider')
+            if self.has_changed(args, image_store):
+                self.fail_json(msg='Image Store cannot be updated. Please delete it first.')
 
-        if not self.module.check_mode:
-            args = {
-                'name': self.module.params.get('name'),
-                'url': self.module.params.get('url'),
-                'zoneid': self.get_zone(key='id'),
-                'provider': self.module.params.get('provider')
-            }
-            if not image_store:
-                self.result['changed'] = True
-                self.query_api('addImageStore', **args)
-            else:
-                if self.has_changed(args, image_store):
-                    self.fail_json(msg='Image Store cannot be updated. Please delete it first.')
-
-        return image_store
+        return self.image_store
 
     def absent_image_store(self):
         image_store = self.get_image_store()
