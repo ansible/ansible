@@ -51,7 +51,7 @@ options:
     description:
     - The value(s) to specify. Required when C(state=present).
     aliases: [ values ]
-    type: str
+    type: list
   zone:
     description:
     - The name of the zone to manage (eg C(example.com)).
