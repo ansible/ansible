@@ -14,7 +14,7 @@ DOCUMENTATION = r'''
 module: vcenter_license
 short_description: Manage VMware vCenter license keys
 description:
-- Add and delete vCenter license keys.
+- Add and delete vCenter, ESXi server license keys.
 version_added: '2.4'
 author:
 - Dag Wieers (@dagwieers)
@@ -37,12 +37,19 @@ options:
     -  Whether to add (C(present)) or remove (C(absent)) the license key.
     choices: [absent, present]
     default: present
+  esxi_hostname:
+    description:
+    - The hostname of the ESXi server to which the specified license will be assigned.
+    - This parameter is optional.
+    version_added: '2.8'
 notes:
 - This module will also auto-assign the current vCenter to the license key
   if the product matches the license key, and vCenter us currently assigned
   an evaluation license only.
 - The evaluation license (00000-00000-00000-00000-00000) is not listed
   when unused.
+- If C(esxi_hostname) is specified, then will assign the C(license) key to
+  the ESXi host.
 extends_documentation_fragment: vmware.vcenter_documentation
 '''
 
@@ -64,6 +71,16 @@ EXAMPLES = r'''
     license: f600d-21ae3-5592b-249e0-cc341
     state: absent
   delegate_to: localhost
+
+- name: Add ESXi license and assign to the ESXi host
+  vcenter_license:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    esxi_hostname: '{{ esxi_hostname }}'
+    license: f600d-21ae3-5592b-249e0-dd502
+    state: present
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -83,7 +100,8 @@ except ImportError:
     HAS_PYVMOMI = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec
+from ansible.module_utils._text import to_native
+from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec, find_hostsystem_by_name
 
 
 class VcenterLicenseMgr(PyVmomi):
@@ -112,6 +130,7 @@ def main():
         labels=dict(type='dict', default=dict(source='ansible')),
         license=dict(type='str', required=True),
         state=dict(type='str', default='present', choices=['absent', 'present']),
+        esxi_hostname=dict(type='str'),
     ))
 
     module = AnsibleModule(
@@ -146,24 +165,48 @@ def main():
     if module._diff:
         result['diff']['before'] = '\n'.join(result['licenses']) + '\n'
 
-    if state == 'present' and license not in result['licenses']:
+    if state == 'present':
+        if license not in result['licenses']:
+            result['changed'] = True
+            if module.check_mode:
+                result['licenses'].append(license)
+            else:
+                lm.AddLicense(license, labels)
 
-        result['changed'] = True
-        if module.check_mode:
-            result['licenses'].append(license)
-        else:
-            lm.AddLicense(license, labels)
+        key = pyv.find_key(lm.licenses, license)
+        if key is not None:
+            lam = lm.licenseAssignmentManager
+            assigned_license = None
+            # assign to current vCenter, if esxi_hostname is not specified
+            if module.params['esxi_hostname'] is None:
+                entityId = pyv.content.about.instanceUuid
+                # if key name not contain "VMware vCenter Server"
+                if pyv.content.about.name not in key.name:
+                    module.warn('License key "%s" (%s) is not suitable for "%s"' % (license, key.name, pyv.content.about.name))
+            # assign to ESXi server
+            else:
+                esxi_host = find_hostsystem_by_name(pyv.content, module.params['esxi_hostname'])
+                if esxi_host is None:
+                    module.fail_json(msg='Cannot find the specified ESXi host "%s".' % module.params['esxi_hostname'])
+                entityId = esxi_host._moId
+                # e.g., key.editionKey is "esx.enterprisePlus.cpuPackage", not sure all keys are in this format
+                if 'esx' not in key.editionKey:
+                    module.warn('License key "%s" edition "%s" is not suitable for ESXi server' % (license, key.editionKey))
 
-            # Automatically assign to current vCenter, if needed
-            key = pyv.find_key(lm.licenses, license)
-            if pyv.content.about.name in key.name:
+            try:
+                assigned_license = lam.QueryAssignedLicenses(entityId=entityId)
+            except Exception as e:
+                module.fail_json('Could not query vCenter "%s" assigned license info due to %s.' % (entityId, to_native(e)))
+
+            if not assigned_license or (len(assigned_license) != 0 and assigned_license[0].assignedLicense.licenseKey != license):
                 try:
-                    lam = lm.licenseAssignmentManager
-                    lam.UpdateAssignedLicense(entity=pyv.content.about.instanceUuid, licenseKey=license)
+                    lam.UpdateAssignedLicense(entity=entityId, licenseKey=license)
                 except Exception:
-                    module.warn('Could not assign "%s" (%s) to vCenter.' % (license, key.name))
-
+                    module.fail_json('Could not assign "%s" (%s) to vCenter.' % (license, key.name))
+                result['changed'] = True
             result['licenses'] = pyv.list_keys(lm.licenses)
+        else:
+            module.fail_json(msg='License "%s" is not existing or can not be added' % license)
         if module._diff:
             result['diff']['after'] = '\n'.join(result['licenses']) + '\n'
 
