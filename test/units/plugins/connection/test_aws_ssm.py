@@ -1,6 +1,6 @@
 from io import StringIO
 import pytest
-
+import sys
 from ansible import constants as C
 from ansible.errors import AnsibleAuthenticationFailure
 from ansible.compat.selectors import SelectorKey, EVENT_READ
@@ -13,7 +13,7 @@ from ansible.playbook.play_context import PlayContext
 from ansible.plugins.connection import aws_ssm
 from ansible.plugins.loader import connection_loader, become_loader
 
-
+@pytest.mark.skipif(sys.version_info < (2.7), reason="requires python 2.7 or higher")
 class TestConnectionBaseClass(unittest.TestCase):
 
     @patch('os.path.exists')
@@ -81,6 +81,7 @@ class TestConnectionBaseClass(unittest.TestCase):
 
     @patch('os.path.exists')
     def test_plugins_connection_aws_ssm_put_file(self, mock_ospe):
+        skipif
         pc = PlayContext()
         new_stdin = StringIO()
         conn = connection_loader.get('aws_ssm', pc, new_stdin)
@@ -120,7 +121,7 @@ class TestConnectionBaseClass(unittest.TestCase):
         (returncode, stdout, stderr) = conn.exec_command(put_command, in_data=None, sudoable=False)
         returncode = 0
         (returncode, stdout, stderr) = conn.exec_command(get_command, in_data=None, sudoable=False)
-    
+
     @patch('subprocess.check_output')
     def test_plugins_connection_aws_ssm_close(self, s_check_output):
         pc = PlayContext()
