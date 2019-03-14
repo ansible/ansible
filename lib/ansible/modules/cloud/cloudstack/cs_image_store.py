@@ -97,13 +97,10 @@ class AnsibleCloudstackImageStore(AnsibleCloudStack):
     def __init__(self, module):
         super(AnsibleCloudstackImageStore, self).__init__(module)
         self.returns = {
-            'id': 'id',
-            'name': 'name',
             'protocol': 'protocol',
             'providername': 'provider_name',
             'scope': 'scope',
-            'url': 'url',
-            'zone': 'zone'
+            'url': 'url'
 
         }
         self.image_store = None
