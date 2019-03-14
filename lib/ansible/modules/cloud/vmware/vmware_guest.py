@@ -358,7 +358,6 @@ options:
     description:
     - Set OVF Transport mode
     - 'For value, refer to: U(https://www.vmware.com/support/developer/converter-sdk/conv61_apireference/vim.vApp.VmConfigSpec.html)'
-    default: com.vmware.guestInfo
     version_added: '2.8'
   customization_spec:
     description:
@@ -1515,7 +1514,7 @@ class PyVmomiHelper(PyVmomi):
 
     # to Set ovfEnvironmentTransport mode in VM.
     def configure_vapp_ovfEnvironmentTransport(self, vm_obj):
-        if 'vapp_ovf_environment_transport' in self.params:
+        if 'vapp_ovf_environment_transport' in self.params and self.params['vapp_ovf_environment_transport'] is not None:
             is_property_changed = False
             new_vmconfig_spec = vim.vApp.VmConfigSpec()
             # This is primarily for vcsim/integration tests, unset vAppConfig was not seen on my deployments
@@ -2660,7 +2659,7 @@ def main():
         wait_for_customization=dict(type='bool', default=False),
         vapp_properties=dict(type='list', default=[]),
         vapp_product=dict(type='dict', default={}),
-        vapp_ovf_environment_transport=dict(type='str', default='com.vmware.guestInfo'),
+        vapp_ovf_environment_transport=dict(type='str', default=None),
         datastore=dict(type='str'),
         convert=dict(type='str', choices=['thin', 'thick', 'eagerzeroedthick']),
     )
