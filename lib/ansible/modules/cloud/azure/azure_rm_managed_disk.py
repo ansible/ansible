@@ -248,7 +248,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         self.os_type = None
         self.disk_size_gb = None
         self.tags = None
-        self.tags = None
+        self.zones = None
         self.managed_by = None
         super(AzureRMManagedDisk, self).__init__(
             derived_arg_spec=self.module_arg_spec,
