@@ -304,14 +304,16 @@ class ChangelogFragmentLinter(object):
         errors = []
 
         for section, lines in fragment.content.items():
-            if section not in self.config.sections:
-                errors.append((fragment.path, 0, 0, 'invalid section: %s' % section))
-            elif section == self.config.prelude_name:
+            if section == self.config.prelude_name:
                 if not isinstance(lines, str):
                     errors.append((fragment.path, 0, 0, 'section "%s" must be type str not %s' % (section, type(lines).__name__)))
             else:
+                # doesn't account for prelude but only the RM should be adding those
                 if not isinstance(lines, list):
                     errors.append((fragment.path, 0, 0, 'section "%s" must be type list not %s' % (section, type(lines).__name__)))
+
+                if section not in self.config.sections:
+                    errors.append((fragment.path, 0, 0, 'invalid section: %s' % section))
 
             if isinstance(lines, list):
                 for line in lines:
