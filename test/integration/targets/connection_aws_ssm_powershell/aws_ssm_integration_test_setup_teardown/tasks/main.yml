@@ -34,7 +34,7 @@
      random_role_name: "{{role_output.role_result.role_name}}"
   tags: setup_infra
 
-- name: Assign a policy called SSM and S3 to the "{{iam_role_name}}"
+- name: Assign a policy called SSM and S3 to the "{{random_role_name}}"
   iam_policy:
     iam_type: role
     iam_name: "{{random_role_name}}"
@@ -60,7 +60,7 @@
     wait: "yes"
     count: 1
     region: "{{region_name}}"
-    instance_profile_name: "{{iam_role_name}}"
+    instance_profile_name: "{{random_role_name}}"
     instance_tags:
       Name: aws_ssm_integration_test
     user_data: |
