@@ -5,7 +5,7 @@
 # to the complete work.
 #
 # (c) 2016 Red Hat Inc.
-# (c) 2017 Cisco Systems Inc.
+# (c) 2019 Cisco Systems Inc.
 #
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
@@ -76,12 +76,14 @@ class UCSModule():
             proxy = {}
 
         try:
-            handle = UcsHandle(ip=self.module.params['hostname'],
-                               username=self.module.params['username'],
-                               password=self.module.params['password'],
-                               port=self.module.params['port'],
-                               secure=self.module.params['use_ssl'],
-                               proxy=proxy)
+            handle = UcsHandle(
+                ip=self.module.params['hostname'],
+                username=self.module.params['username'],
+                password=self.module.params['password'],
+                port=self.module.params['port'],
+                secure=self.module.params['use_ssl'],
+                proxy=proxy
+            )
             handle.login()
         except Exception as e:
             self.result['msg'] = str(e)
@@ -89,7 +91,7 @@ class UCSModule():
         self.login_handle = handle
 
     def logout(self):
-        if self.login_handle:
+        if hasattr(self, 'login_handle'):
             self.login_handle.logout()
             return True
         return False
