@@ -164,7 +164,9 @@ class AnsibleCloudstackImageStore(AnsibleCloudStack):
             # Cloudstack API expects 'provider' but returns 'providername'
             args['providername'] = args.pop('provider')
             if self.has_changed(args, image_store):
-                self.fail_json(msg='Image Store cannot be updated. Please delete it first.')
+                self.absent_image_store()
+                self.image_store = None
+                self.image_store = self.present_image_store()
 
         return self.image_store
 
