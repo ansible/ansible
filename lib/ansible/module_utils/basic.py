@@ -138,6 +138,7 @@ from ansible.module_utils.common._collections_compat import (
     Sequence, MutableSequence,
     Set, MutableSet,
 )
+from ansible.module_utils.common.errors import AnsibleModuleParameterError
 from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.common.file import (
     _PERM_BITS as PERM_BITS,
@@ -1609,13 +1610,14 @@ class AnsibleModule(object):
         if param is None:
             param = self.params
 
-        mutually_exclusive_checks = check_mutually_exclusive(spec, param)
-        if mutually_exclusive_checks:
-            for check in mutually_exclusive_checks:
-                msg = "parameters are mutually exclusive: %s" % ', '.join(check)
-                if self._options_context:
-                    msg += " found in %s" % " -> ".join(self._options_context)
-                self.fail_json(msg=msg)
+        try:
+            check_mutually_exclusive(spec, param)
+        except AnsibleModuleParameterError as e:
+            full_list = ['|'.join(check) for check in e.results]
+            msg = "parameters are mutually exclusive: %s" % ', '.join(full_list)
+            if self._options_context:
+                msg += " found in %s" % " -> ".join(self._options_context)
+            self.fail_json(msg=msg)
 
     def _check_required_one_of(self, spec, param=None):
         if spec is None:
@@ -1624,12 +1626,14 @@ class AnsibleModule(object):
         if param is None:
             param = self.params
 
-        required_one_of_check_results = check_required_one_of(spec, param)
-        for term in required_one_of_check_results:
-            msg = "one of the following is required: %s" % ', '.join(term)
-            if self._options_context:
-                msg += " found in %s" % " -> ".join(self._options_context)
-            self.fail_json(msg=msg)
+        try:
+            check_required_one_of(spec, param)
+        except AnsibleModuleParameterError as e:
+            for term in e.results:
+                msg = "one of the following is required: %s" % ', '.join(term)
+                if self._options_context:
+                    msg += " found in %s" % " -> ".join(self._options_context)
+                self.fail_json(msg=msg)
 
     def _check_required_together(self, spec, param=None):
         if spec is None:
@@ -1637,12 +1641,14 @@ class AnsibleModule(object):
         if param is None:
             param = self.params
 
-        check_required_together_results = check_required_together(spec, param)
-        for term in check_required_together_results:
-            msg = "parameters are required together: %s" % ', '.join(term)
-            if self._options_context:
-                msg += " found in %s" % " -> ".join(self._options_context)
-            self.fail_json(msg=msg)
+        try:
+            check_required_together(spec, param)
+        except AnsibleModuleParameterError as e:
+            for term in e.results:
+                msg = "parameters are required together: %s" % ', '.join(term)
+                if self._options_context:
+                    msg += " found in %s" % " -> ".join(self._options_context)
+                self.fail_json(msg=msg)
 
     def _check_required_by(self, spec, param=None):
         if spec is None:
@@ -1650,19 +1656,23 @@ class AnsibleModule(object):
         if param is None:
             param = self.params
 
-        check_required_by_results = check_required_by(spec, param)
-        for key, missing in check_required_by_results.items():
-            if len(missing) > 0:
-                self.fail_json(msg="missing parameter(s) required by '%s': %s" % (key, ', '.join(missing)))
+        try:
+            check_required_by(spec, param)
+        except AnsibleModuleParameterError as e:
+            for key, missing in e.results.items():
+                if len(missing) > 0:
+                    self.fail_json(msg="missing parameter(s) required by '%s': %s" % (key, ', '.join(missing)))
 
     def _check_required_arguments(self, spec=None, param=None):
         if spec is None:
             spec = self.argument_spec
         if param is None:
             param = self.params
-        missing = check_required_arguments(spec, param)
-        if len(missing) > 0:
-            msg = "missing required arguments: %s" % ", ".join(missing)
+
+        try:
+            check_required_arguments(spec, param)
+        except AnsibleModuleParameterError as e:
+            msg = "missing required arguments: %s" % ", ".join(e.results)
             if self._options_context:
                 msg += " found in %s" % " -> ".join(self._options_context)
             self.fail_json(msg=msg)
@@ -1673,13 +1683,16 @@ class AnsibleModule(object):
             return
         if param is None:
             param = self.params
-        check_required_if_results = check_required_if(spec, param)
-        for missing in check_required_if_results:
-            msg = "%s is %s but %s of the following are missing: %s" % (
-                missing['parameter'], missing['value'], missing['requires'], ', '.join(missing['missing']))
-            if self._options_context:
-                msg += " found in %s" % " -> ".join(self._options_context)
-            self.fail_json(msg=msg)
+
+        try:
+            check_required_if(spec, param)
+        except AnsibleModuleParameterError as e:
+            for missing in e.results:
+                msg = "%s is %s but %s of the following are missing: %s" % (
+                    missing['parameter'], missing['value'], missing['requires'], ', '.join(missing['missing']))
+                if self._options_context:
+                    msg += " found in %s" % " -> ".join(self._options_context)
+                self.fail_json(msg=msg)
 
     def _check_argument_values(self, spec=None, param=None):
         ''' ensure all arguments have the requested values, and there are no stray arguments '''
@@ -2293,9 +2306,10 @@ class AnsibleModule(object):
     def fail_on_missing_params(self, required_params=None):
         if not required_params:
             return
-        missing_params = check_missing_parameters(self.params, required_params)
-        if missing_params:
-            self.fail_json(msg="missing required arguments: %s" % ', '.join(missing_params))
+        try:
+            check_missing_parameters(self.params, required_params)
+        except AnsibleModuleParameterError as e:
+            self.fail_json(msg="missing required arguments: %s" % ', '.join(e.results))
 
     def digest_from_file(self, filename, algorithm):
         ''' Return hex digest of local file for a digest_method specified by name, or None if file is not present. '''

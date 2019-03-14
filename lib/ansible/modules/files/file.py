@@ -199,23 +199,12 @@ import sys
 import time
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.errors import AnsibleModuleError, AnsibleModuleParameterError
 from ansible.module_utils._text import to_bytes, to_native
 
 
 # There will only be a single AnsibleModule object per module
 module = None
-
-
-class AnsibleModuleError(Exception):
-    def __init__(self, results):
-        self.results = results
-
-    def __repr__(self):
-        print('AnsibleModuleError(results={0})'.format(self.results))
-
-
-class ParameterError(AnsibleModuleError):
-    pass
 
 
 class Sentinel(object):
@@ -268,8 +257,8 @@ def additional_parameter_handling(params):
 
     # make sure the target path is a directory when we're doing a recursive operation
     if params['recurse'] and params['state'] != 'directory':
-        raise ParameterError(results={"msg": "recurse option requires state to be 'directory'",
-                                      "path": params["path"]})
+        raise AnsibleModuleParameterError(results={"msg": "recurse option requires state to be 'directory'",
+                                                   "path": params["path"]})
 
     # Make sure that src makes sense with the state
     if params['src'] and params['state'] not in ('link', 'hard'):
@@ -278,7 +267,7 @@ def additional_parameter_handling(params):
                     " error in Ansible 2.10")
 
         # In 2.10, switch to this
-        # raise ParameterError(results={"msg": "src option requires state to be 'link' or 'hard'",
+        # raise AnsibleModuleParameterError(results={"msg": "src option requires state to be 'link' or 'hard'",
         #                               "path": params["path"]})
 
 

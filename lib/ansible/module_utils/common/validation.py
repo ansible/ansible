@@ -6,6 +6,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 from ansible.module_utils.common.collections import is_iterable
+from ansible.module_utils.common.errors import AnsibleModuleParameterError
 from ansible.module_utils.six import string_types
 
 
@@ -30,22 +31,27 @@ def check_mutually_exclusive(terms, module_parameters):
     a single list or list of lists that are groups of terms that should be
     mutually exclusive with one another
 
+    Raises AnsibleModuleParameterException if the check fails.
+
     :arg terms: List of mutually exclusive module parameters
     :arg module_parameters: Dictionary of module parameters
 
     :returns: A list of terms that are mutually exclusive.
     """
 
-    result = []
+    results = []
     if terms is None:
-        return result
+        return results
 
     for check in terms:
         count = count_terms(check, module_parameters)
         if count > 1:
-            result.append(check)
+            results.append(check)
 
-    return result
+    if results:
+        raise AnsibleModuleParameterError(requirements=terms, module_parameters=module_parameters, results=results)
+
+    return results
 
 
 def check_required_one_of(terms, module_parameters):
@@ -53,21 +59,25 @@ def check_required_one_of(terms, module_parameters):
     parameters. Accepts a list of lists or tuples.
 
     :arg terms: List of lists of terms to check. For each list of terms, at
-        least is required.
+        least one is required.
     :arg module_parameters: Dictionary of module parameters
 
-    :returns: list of terms that should be present in module parameters but
-              are missing
+    :returns: Empty list or raises AnsibleModuleParameterException if the check fails.
+        The results attribute of the exception contains a list of terms that
+        should be present in module parameters but are missing.
     """
 
-    result = []
-    for term in terms:
+    results = []
+    if terms is None:
+        return results
 
+    for term in terms:
         count = count_terms(term, module_parameters)
         if count == 0:
-            result.append(term)
+            results.append(term)
 
-    return result
+    if results:
+        raise AnsibleModuleParameterError(requirements=terms, module_parameters=module_parameters, results=results)
 
 
 def check_required_together(terms, module_parameters):
@@ -79,22 +89,24 @@ def check_required_together(terms, module_parameters):
         in the module_parameters.
     :arg module_parameters: Dictionary of module parameters
 
-    :returns: List of lists of terms that exist in module_parametcs but are
-        missing other required terms.
+    :returns: Empty list or raises AnsibleModuleParameterException if the check fails.
+        The results attribute of the exception contains a list of lists of terms
+        that exist in module_parametcs but are missing other required terms.
     """
 
-    result = []
+    results = []
     if terms is None:
-        return result
+        return results
 
     for term in terms:
         counts = [count_terms(field, module_parameters) for field in term]
         non_zero = [c for c in counts if c > 0]
         if len(non_zero) > 0:
             if 0 in counts:
-                result.append(term)
+                results.append(term)
 
-    return result
+    if results:
+        raise AnsibleModuleParameterError(requirements=terms, module_parameters=module_parameters, results=results)
 
 
 def check_required_by(requirements, module_parameters):
@@ -105,8 +117,9 @@ def check_required_by(requirements, module_parameters):
     :arg requirements: Dictionary of requirements
     :arg module_parameters: Dictionary of module parameters
 
-    :returns: Dictionary of required terms with a list of missing terms for
-        each key
+    :returns: Empty dictionary or raises AnsibleModuleParameterException if the
+        check fails. The results attribute of the exception contains a dictionary
+        of required terms with a list of missing terms for each key.
     """
 
     result = {}
@@ -124,32 +137,40 @@ def check_required_by(requirements, module_parameters):
             if required not in module_parameters or module_parameters[required] is None:
                 result[key].append(required)
 
-    return result
+    if result:
+        raise AnsibleModuleParameterError(requirements=requirements, module_parameters=module_parameters, results=result)
 
 
 def check_required_arguments(argument_spec, module_parameters):
     """Check all paramaters in argument_spec and return a list of parameters
     that are required by not present in module_parameters.
 
+    Raises AnsibleModuleParameterException if the check fails.
+
     :arg argument_spec: Argument spec dicitionary containing all parameters
         and their specification
     :arg module_paramaters: Dictionary of module parameters
 
-    :returns: List of parameters that are required but missing.
-
+    :returns: Empty list or raises AnsibleModuleParameterException if the check fails.
     """
 
     missing = []
+    if argument_spec is None:
+        return missing
+
     for (k, v) in argument_spec.items():
         required = v.get('required', False)
         if required and k not in module_parameters:
             missing.append(k)
 
-    return missing
+    if missing:
+        raise AnsibleModuleParameterError(argument_spec=argument_spec, module_parameters=module_parameters, results=missing)
 
 
 def check_required_if(requirements, module_parameters):
     """Check parameters that are conditionally required.
+
+    Raises AnsibleModuleParameterException if the check fails.
 
     :arg requirements: List of lists specifying a parameter, value, parameters
         required when the given parameter is the specified value, and optionally
@@ -163,9 +184,10 @@ def check_required_if(requirements, module_parameters):
 
     :arg module_paramaters: Dictionary of module parameters
 
-    :returns: List of dictionaries. Each dictionary is the result of evaluting
-        each item in requirements. Each return dictionary contains the following
-        keys:
+    :returns: Empty list or Raises AnsibleModuleParameterException if the check fails.
+        The results attribute of the exception contains a list of dictionaries.
+        Each dictionary is the result of evaluting each item in requirements.
+        Each return dictionary contains the following keys:
 
             :key missing: List of parameters that are required but missing
             :key requires: 'any' or 'all'
@@ -185,9 +207,9 @@ def check_required_if(requirements, module_parameters):
             ]
 
     """
-    result = []
+    results = []
     if requirements is None:
-        return result
+        return results
 
     for req in requirements:
         missing = {}
@@ -216,9 +238,10 @@ def check_required_if(requirements, module_parameters):
             missing['parameter'] = key
             missing['value'] = val
             missing['requirements'] = requirements
-            result.append(missing)
+            results.append(missing)
 
-    return result
+    if results:
+        raise AnsibleModuleParameterError(requirements=requirements, module_parameters=module_parameters, results=results)
 
 
 def check_missing_parameters(module_parameters, required_parameters=None):
@@ -229,7 +252,7 @@ def check_missing_parameters(module_parameters, required_parameters=None):
     :arg required_parameters: List of parameters to look for in the given module
         parameters
 
-    :returns: List of missing parameters.
+    :returns: Empty list or raises AnsibleModuleParameterException if the check fails.
     """
     missing_params = []
     if required_parameters is None:
@@ -239,4 +262,5 @@ def check_missing_parameters(module_parameters, required_parameters=None):
         if not module_parameters.get(param):
             missing_params.append(param)
 
-    return missing_params
+    if missing_params:
+        raise AnsibleModuleParameterError(requirements=required_parameters, module_parameters=module_parameters, results=missing_params)

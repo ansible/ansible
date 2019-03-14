@@ -94,13 +94,16 @@ def complex_argspec():
         foo=dict(required=True, aliases=['dup']),
         bar=dict(),
         bam=dict(),
+        bing=dict(),
+        bang=dict(),
+        bong=dict(),
         baz=dict(fallback=(basic.env_fallback, ['BAZ'])),
         bar1=dict(type='bool'),
         bar3=dict(type='list', elements='path'),
         zardoz=dict(choices=['one', 'two']),
         zardoz2=dict(type='list', choices=['one', 'two', 'three']),
     )
-    mut_ex = (('bar', 'bam'),)
+    mut_ex = (('bar', 'bam'),('bing', 'bang', 'bong'))
     req_to = (('bam', 'baz'),)
 
     kwargs = dict(
@@ -137,7 +140,7 @@ def options_argspec_list():
             elements='dict',
             options=options_spec,
             mutually_exclusive=[
-                ['bam', 'bam1']
+                ['bam', 'bam1'],
             ],
             required_if=[
                 ['foo', 'hello', ['bam']],
@@ -241,7 +244,7 @@ class TestComplexArgSpecs:
         assert isinstance(am.params['baz'], str)
         assert am.params['baz'] == 'test data'
 
-    @pytest.mark.parametrize('stdin', [{'foo': 'hello', 'bar': 'bad', 'bam': 'bad2'}], indirect=['stdin'])
+    @pytest.mark.parametrize('stdin', [{'foo': 'hello', 'bar': 'bad', 'bam': 'bad2', 'bing': 'a', 'bang': 'b', 'bong': 'c'}], indirect=['stdin'])
     def test_fail_mutually_exclusive(self, capfd, stdin, complex_argspec):
         """Fail because of mutually exclusive parameters"""
         with pytest.raises(SystemExit):
@@ -251,7 +254,7 @@ class TestComplexArgSpecs:
         results = json.loads(out)
 
         assert results['failed']
-        assert results['msg'] == "parameters are mutually exclusive: bar, bam"
+        assert results['msg'] == "parameters are mutually exclusive: bar|bam, bing|bang|bong"
 
     @pytest.mark.parametrize('stdin', [{'foo': 'hello', 'bam': 'bad2'}], indirect=['stdin'])
     def test_fail_required_together(self, capfd, stdin, complex_argspec):
@@ -403,7 +406,7 @@ class TestComplexOptions:
         ({'foobar': [{"foo": "hello", "bam": "good", "invalid": "bad"}]}, 'module: invalid found in foobar. Supported parameters include'),
         # Mutually exclusive options found
         ({'foobar': [{"foo": "test", "bam": "bad", "bam1": "bad", "baz": "req_to"}]},
-         'parameters are mutually exclusive: bam, bam1 found in foobar'),
+         'parameters are mutually exclusive: bam|bam1 found in foobar'),
         # required_if fails
         ({'foobar': [{"foo": "hello", "bar": "bad"}]},
          'foo is hello but all of the following are missing: bam found in foobar'),
@@ -427,7 +430,7 @@ class TestComplexOptions:
          'module: invalid found in foobar. Supported parameters include'),
         # Mutually exclusive options found
         ({'foobar': {"foo": "test", "bam": "bad", "bam1": "bad", "baz": "req_to"}},
-         'parameters are mutually exclusive: bam, bam1 found in foobar'),
+         'parameters are mutually exclusive: bam|bam1 found in foobar'),
         # required_if fails
         ({'foobar': {"foo": "hello", "bar": "bad"}},
          'foo is hello but all of the following are missing: bam found in foobar'),

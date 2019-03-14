@@ -9,6 +9,7 @@ import pytest
 
 from ansible.module_utils._text import to_native
 from ansible.module_utils.common.validation import check_mutually_exclusive
+from ansible.module_utils.common.errors import AnsibleModuleParameterError
 
 
 @pytest.fixture
@@ -38,10 +39,13 @@ def test_check_mutually_exclusive_found(mutually_exclusive_terms):
         ('string1', 'string2'),
         ('box', 'fox', 'socks'),
     ]
+
+    with pytest.raises(AnsibleModuleParameterError) as e:
+        check_mutually_exclusive(mutually_exclusive_terms, params)
+
     expected.sort()
-    result = check_mutually_exclusive(mutually_exclusive_terms, params)
-    result.sort()
-    assert result == expected
+    e.value.results.sort()
+    assert e.value.results == expected
 
 
 def test_check_mutually_exclusive_none():
