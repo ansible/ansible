@@ -64,6 +64,12 @@ DOCUMENTATION = '''
               U(http://docs.aws.amazon.com/cli/latest/reference/ec2/describe-instances.html#options)
           type: dict
           default: {}
+        include_extra_api_calls:
+          description: Add two additional API calls for every instance to include 'persistent' and 'events' host variables. Spot instances
+              may be persistent and instances may have associated events.
+          type: bool
+          default: False
+          version_added: '2.8'
         strict_permissions:
           description: By default if a 403 (Forbidden) is encountered this plugin will fail. You can set strict_permissions to
               False in the inventory config file which will allow 403 errors to be gracefully skipped.
@@ -394,7 +400,12 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 reservations = paginator.paginate(Filters=filters).build_full_result().get('Reservations')
                 instances = []
                 for r in reservations:
-                    instances.extend(r.get('Instances'))
+                    new_instances = r['Instances']
+                    for instance in new_instances:
+                        instance.update(self._get_reservation_details(r))
+                        if self.get_option('include_extra_api_calls'):
+                            instance.update(self._get_event_set_and_persistence(connection, instance['InstanceId'], instance.get('SpotInstanceRequestId')))
+                    instances.extend(new_instances)
             except botocore.exceptions.ClientError as e:
                 if e.response['ResponseMetadata']['HTTPStatusCode'] == 403 and not strict_permissions:
                     instances = []
@@ -406,6 +417,36 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             all_instances.extend(instances)
 
         return sorted(all_instances, key=lambda x: x['InstanceId'])
+
+    def _get_reservation_details(self, reservation):
+        return {
+            'OwnerId': reservation['OwnerId'],
+            'RequesterId': reservation.get('RequesterId', ''),
+            'ReservationId': reservation['ReservationId']
+        }
+
+    def _get_event_set_and_persistence(self, connection, instance_id, spot_instance):
+        host_vars = {'Events': '', 'Persistent': False}
+        try:
+            kwargs = {'InstanceIds': [instance_id]}
+            host_vars['Events'] = connection.describe_instance_status(**kwargs)['InstanceStatuses'][0].get('Events', '')
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            if not self.get_option('strict_permissions'):
+                pass
+            else:
+                raise AnsibleError("Failed to describe instance status: %s" % to_native(e))
+        if spot_instance:
+            try:
+                kwargs = {'SpotInstanceRequestIds': [spot_instance]}
+                host_vars['Persistent'] = bool(
+                    connection.describe_spot_instance_requests(**kwargs)['SpotInstanceRequests'][0].get('Type') == 'persistent'
+                )
+            except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                if not self.get_option('strict_permissions'):
+                    pass
+                else:
+                    raise AnsibleError("Failed to describe spot instance requests: %s" % to_native(e))
+        return host_vars
 
     def _get_tag_hostname(self, preference, instance):
         tag_hostnames = preference.split('tag:', 1)[1]
