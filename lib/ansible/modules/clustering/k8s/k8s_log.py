@@ -27,7 +27,7 @@ description:
   - Use the OpenShift Python client to perform read operations on K8s log endpoints.
   - Authenticate using either a config file, certificates, password or token.
   - Supports check mode.
-  - Analogous to `kubectl log` or `oc log`
+  - Analogous to `kubectl logs` or `oc logs`
 
 options:
   api_version:
