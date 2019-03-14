@@ -158,11 +158,11 @@ def managed_disk_to_dict(managed_disk):
         name=managed_disk.name,
         location=managed_disk.location,
         tags=managed_disk.tags,
-        zones=managed_disk.zones,
         disk_size_gb=managed_disk.disk_size_gb,
         os_type=os_type,
         storage_account_type=managed_disk.sku.name.value,
-        managed_by=managed_disk.managed_by
+        managed_by=managed_disk.managed_by,
+        zones=managed_disk.zones
     )
 
 
