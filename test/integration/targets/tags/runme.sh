@@ -54,7 +54,6 @@ if [[ -z "$OUT" ]]; then
     echo "Failed unexpected for tags as dict"
     exit 1
 fi
-
 OUT=$(ansible-playbook -i ../../inventory test_unexpected_list_tags.yml -v --list-tasks 2>&1 | grep 'ERROR! tags must be specified as a int or string')
 if [[ -z "$OUT" ]]; then
     echo "Failed unexpected for tags as list"
