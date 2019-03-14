@@ -43,6 +43,10 @@ rm -rf .cache
 #   RUN THE PLUGIN
 #################################################
 
+# create boto3 symlinks
+ln -s "$TARGET/lib/boto" "$TARGET/lib/boto3"
+ln -s "$TARGET/lib/boto" "$TARGET/lib/botocore"
+
 # run the plugin second
 export ANSIBLE_INVENTORY_ENABLED=aws_ec2
 export ANSIBLE_INVENTORY=test.aws_ec2.yml
@@ -152,6 +156,8 @@ rm -f "$OUTPUT_DIR/plugin.out"
 #ansible-inventory -i $OUTPUT_DIR/test.aws_ec2.yml --list | tee -a $OUTPUT_DIR/plugin.out
 ANSIBLE_JINJA2_NATIVE=1 ansible-inventory -vvvv -i "$OUTPUT_DIR/test.aws_ec2.yml" --list --output="$OUTPUT_DIR/plugin.out"
 rm -f "$OUTPUT_DIR/aws_ec2.yml"
+rm "$TARGET/lib/boto3"
+rm "$TARGET/lib/botocore"
 
 #################################################
 #   DIFF THE RESULTS
