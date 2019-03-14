@@ -82,7 +82,13 @@ except ImportError:
 NoneType = type(None)
 
 from ansible.module_utils._text import to_native, to_bytes, to_text
-from ansible.module_utils.text.formatters import (
+from ansible.module_utils.common.text.converters import (
+    jsonify,
+    container_to_bytes as json_dict_unicode_to_bytes,
+    container_to_text as json_dict_bytes_to_unicode,
+)
+
+from ansible.module_utils.common.text.formatters import (
     _lenient_lowercase,
     bytes_to_human,
     human_to_bytes,
@@ -95,12 +101,6 @@ except ImportError as e:
     print('\n{{"msg": "Error: ansible requires the stdlib json: {0}", "failed": true}}'.format(to_native(e)))
     sys.exit(1)
 
-from ansible.module_utils.json_utils import (
-    _json_encode_fallback,
-    jsonify,
-    json_dict_unicode_to_bytes,
-    json_dict_bytes_to_unicode,
-)
 
 AVAILABLE_HASH_ALGORITHMS = dict()
 try:

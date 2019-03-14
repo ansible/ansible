@@ -29,7 +29,7 @@ import math
 from jinja2.filters import environmentfilter
 
 from ansible.errors import AnsibleFilterError
-from ansible.module_utils.text import formatters
+from ansible.module_utils.common.text import formatters
 from ansible.module_utils.six import binary_type, text_type
 from ansible.module_utils.six.moves import zip, zip_longest
 from ansible.module_utils.common._collections_compat import Hashable, Mapping, Iterable
