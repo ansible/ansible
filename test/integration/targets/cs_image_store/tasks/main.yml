@@ -35,6 +35,20 @@
       - ss is failed
       - "ss.msg == 'state is present but all of the following are missing: url, provider'"
 
+- name: setup image store in check mode
+  cs_image_store:
+    name: "storage_pool_adv"
+    zone: "{{ cs_common_zone_adv }}"
+    url: "nfs://nfs-mount.domain/share/images/"
+    provider: "NFS"
+    state: present
+  check_mode: true
+  register: ss
+- name: verify setup image store in check mode
+  assert:
+    that:
+      - ss is successful
+      - ss is changed
 
 - name: setup image store
   cs_image_store:
@@ -43,12 +57,12 @@
     url: "nfs://nfs-mount.domain/share/images/"
     provider: "NFS"
     state: present
-  ignore_errors: true
   register: ss
 - name: verify setup image store
   assert:
     that:
       - ss is successful
+      - ss is changed
 
 - name: setup image store idempotence
   cs_image_store:
@@ -57,11 +71,11 @@
     url: "nfs://nfs-mount.domain/share/images/"
     provider: "NFS"
     state: present
-  ignore_errors: true
   register: ss
 - name: verify setup image store idempotence
   assert:
     that:
+      - ss is successful
       - ss is not changed
 
 - name: delete the image store
@@ -69,19 +83,18 @@
     name: "storage_pool_adv"
     zone: "{{ cs_common_zone_adv }}"
     state: absent
-  ignore_errors: true
   register: ss
 - name: verify results for delete the image store
   assert:
     that:
       - ss is successful
+      - ss is changed
 
 - name: delete the image store idempotence
   cs_image_store:
     name: "storage_pool_adv"
     zone: "{{ cs_common_zone_adv }}"
     state: absent
-  ignore_errors: true
   register: ss
 - name: verify delete the image store idempotence
   assert:
