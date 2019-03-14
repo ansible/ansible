@@ -62,7 +62,7 @@
     region: "{{region_name}}"
     instance_profile_name: "{{random_role_name}}"
     instance_tags:
-      name: aws_ssm_integration_test
+      Name: aws_ssm_integration_test
     user_data: |
                  #!/bin/sh
                  sudo systemctl start amazon-ssm-agent
@@ -79,7 +79,7 @@
     region: "{{region_name}}"
     instance_profile_name: "{{iam_role_name}}"
     instance_tags:
-      name: aws_ssm_integration_test
+      Name: aws_ssm_integration_test
     user_data: |
                 <powershell>
                 Restart-Service AmazonSSMAgent
