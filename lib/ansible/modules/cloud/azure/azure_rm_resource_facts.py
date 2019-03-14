@@ -127,7 +127,7 @@ class AzureRMResourceFacts(AzureRMModuleBase):
         )
         # store the results of the module operation
         self.results = dict(
-            response=None
+            response=[]
         )
         self.mgmt_client = None
         self.url = None
@@ -189,7 +189,6 @@ class AzureRMResourceFacts(AzureRMModuleBase):
             if skiptoken:
                 query_parameters['skiptoken'] = skiptoken
             response = self.mgmt_client.query(self.url, "GET", query_parameters, header_parameters, None, [200, 404], 0, 0)
-
             try:
                 response = json.loads(response.text)
                 if isinstance(response, dict):
@@ -198,8 +197,8 @@ class AzureRMResourceFacts(AzureRMModuleBase):
                         skiptoken = response.get('nextLink')
                     else:
                         self.results['response'] = self.results['response'] + [response]
-            except Exception:
-                self.results['response'] = []
+            except Exception as e:
+                self.fail('Failed to parse response: ' + str(e))
             if not skiptoken:
                 break
         return self.results
