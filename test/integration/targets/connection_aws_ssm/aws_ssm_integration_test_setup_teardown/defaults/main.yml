@@ -1,7 +1,7 @@
 ---
 instance_type: t2.micro
-ami_id_linux: ami-0de7daa7385332688
-ami_id_windows: ami-035be7bafff33b6b6
+linux_ami_id: ami-0de7daa7385332688
+windows_ami_id: ami-035be7bafff33b6b6
 iam_role_name: integration_test_aws_ssm_role
 iam_policy_name: integration_test_aws_ssm_access_policy
 region_name: us-east-1
