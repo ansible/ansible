@@ -7,6 +7,7 @@
   docker_image:
     name: "hello-world:latest"
     state: absent
+    force_absent: yes
   register: absent_1
 
 - name: Make sure image is not there (idempotency)
@@ -23,14 +24,14 @@
   docker_image:
     name: "hello-world:latest"
     state: present
-    pull: no
+    source: pull
   register: present_1
 
 - name: Make sure image is there (idempotent)
   docker_image:
     name: "hello-world:latest"
     state: present
-    pull: yes
+    source: pull
   register: present_2
 
 - assert:
@@ -81,12 +82,14 @@
   docker_image:
     name: "{{ registry_address }}/test/hello-world:latest"
     state: absent
+    force_absent: yes
 
 - name: Push image to test registry
   docker_image:
     name: "hello-world:latest"
     repository: "{{ registry_address }}/test/hello-world"
     push: yes
+    source: local
   register: push_1
 
 - name: Push image to test registry (idempotent)
@@ -94,6 +97,7 @@
     name: "hello-world:latest"
     repository: "{{ registry_address }}/test/hello-world"
     push: yes
+    source: local
   register: push_2
 
 - name: Push image to test registry (force, still idempotent)
@@ -119,6 +123,7 @@
   docker_image:
     name: "{{ registry_address }}/test/hello-world:latest"
     state: absent
+    force_absent: yes
 
 - name: Get facts of local image (absent)
   docker_image_facts:
@@ -129,12 +134,14 @@
   docker_image:
     name: "{{ registry_address }}/test/hello-world:latest"
     state: present
+    source: pull
   register: pull_1
 
 - name: Pull image from test registry (idempotency)
   docker_image:
     name: "{{ registry_address }}/test/hello-world:latest"
     state: present
+    source: pull
   register: pull_2
 
 - name: Get facts of local image (present)
