@@ -2421,8 +2421,8 @@ class PyVmomiHelper(PyVmomi):
         self.customize_customvalues(vm_obj=self.current_vm_obj, config_spec=self.configspec)
         self.configure_resource_alloc_info(vm_obj=self.current_vm_obj)
         self.configure_vapp_properties(vm_obj=self.current_vm_obj)
-        #self.configure_vapp_product(vm_obj=self.current_vm_obj)
-        #self.configure_vapp_ovfEnvironmentTransport(vm_obj=self.current_vm_obj)
+        # self.configure_vapp_product(vm_obj=self.current_vm_obj)
+        self.configure_vapp_ovfEnvironmentTransport(vm_obj=self.current_vm_obj)
 
         if self.params['annotation'] and self.current_vm_obj.config.annotation != self.params['annotation']:
             self.configspec.annotation = str(self.params['annotation'])
