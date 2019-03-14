@@ -197,7 +197,10 @@ def split_pre_existing_dir(dirname):
     head, tail = os.path.split(dirname)
     b_head = to_bytes(head, errors='surrogate_or_strict')
     if not os.path.exists(b_head):
-        (pre_existing_dir, new_directory_list) = split_pre_existing_dir(head)
+        if head == dirname:
+            return None, [head]
+        else:
+            (pre_existing_dir, new_directory_list) = split_pre_existing_dir(head)
     else:
         return head, [tail]
     new_directory_list.append(tail)
@@ -209,7 +212,11 @@ def adjust_recursive_directory_permissions(pre_existing_dir, new_directory_list,
     Walk the new directories list and make sure that permissions are as we would expect
     '''
     if new_directory_list:
-        working_dir = os.path.join(pre_existing_dir, new_directory_list.pop(0))
+        first_sub_dir = new_directory_list.pop(0)
+        if not pre_existing_dir:
+            working_dir = first_sub_dir
+        else:
+            working_dir = os.path.join(pre_existing_dir, first_sub_dir)
         directory_args['path'] = working_dir
         changed = module.set_fs_attributes_if_different(directory_args, changed)
         changed = adjust_recursive_directory_permissions(working_dir, new_directory_list, module, directory_args, changed)
