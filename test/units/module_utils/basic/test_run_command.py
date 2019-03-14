@@ -83,6 +83,7 @@ def rc_am(mocker, am, mock_os, mock_subprocess):
     am.fail_json = mocker.MagicMock(side_effect=SystemExit)
     am._os = mock_os
     am._subprocess = mock_subprocess
+    am.get_buffer_size = mocker.MagicMock(return_value=900)
     yield am
 
 
