@@ -283,6 +283,11 @@ options:
       licenses:
         description:
           - An array of license types.
+  create_token:
+    description:
+      - Flag for initiating a create token request for pre-provisioned members.
+    type: bool
+    default: False
   state:
     description:
       - Configures the intended state of the instance of the object on
@@ -464,6 +469,7 @@ def main():
         syslog_servers=dict(type='list', elements='dict', options=syslog_spec),
         pre_provisioning=dict(type='dict', elements='dict', options=pre_prov_spec),
         extattrs=dict(type='dict'),
+        create_token=dict(type='bool', default=False),
     )
 
     argument_spec = dict(
