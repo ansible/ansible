@@ -2,6 +2,7 @@
    set_fact:
        managed_disk1: "{{ resource_group | hash('md5') | truncate(24, True, '') }}"
        managed_disk2: "{{ resource_group | hash('md5') | truncate(18, True, '') }}"
+       managed_disk3: "{{ resource_group | hash('md5') | truncate(16, True, '') }}"
 
  - name: Clearing (if) previous disks were created
    azure_rm_managed_disk:
@@ -369,6 +370,29 @@
 
  - name: Assert delete failed since disk is attached to VM
    assert: { that: "output['failed'] == True" }
+
+ - name: create new managed disk with zones
+   azure_rm_managed_disk:
+       resource_group: "{{ resource_group }}"
+       name: "{{ managed_disk3 }}"
+       disk_size_gb: 1
+       storage_account_type: "Standard_LRS"
+       zones: 1
+       tags:
+           testing: testing
+           delete: never
+   register: output
+
+ - assert:
+     that:
+       - output.changed
+       - output.state.zones == ["1"]
+
+ - name: Delete managed disk with zones
+   azure_rm_managed_disk:
+       resource_group: "{{ resource_group }}"
+       name: "{{ managed_disk3 }}"
+       state: absent
 
  - name: Delete managed disk (Check Mode)
    azure_rm_managed_disk:
