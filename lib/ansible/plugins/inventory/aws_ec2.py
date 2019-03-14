@@ -69,6 +69,7 @@ DOCUMENTATION = '''
               may be persistent and instances may have associated events.
           type: bool
           default: False
+          version_added: '2.8'
         strict_permissions:
           description: By default if a 403 (Forbidden) is encountered this plugin will fail. You can set strict_permissions to
               False in the inventory config file which will allow 403 errors to be gracefully skipped.
