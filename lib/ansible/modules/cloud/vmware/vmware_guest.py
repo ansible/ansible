@@ -1526,7 +1526,7 @@ class PyVmomiHelper(PyVmomi):
             if not old_value == new_value:
                 vmconfig_spec.ovfEnvironmentTransport = [self.params['vapp_ovf_environment_transport']]
                 self.configspec.vAppConfig = vmconfig_spec
-                self.change_detected = True
+                self.change_detected = False
 
     # March 2019, Added by chaitra kurdekar
     # To Set vApp Product Information in VM.
