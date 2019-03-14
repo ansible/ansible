@@ -180,7 +180,7 @@ def managed_disk_to_dict(managed_disk):
         os_type=managed_disk.os_type.lower() if managed_disk.os_type else None,
         storage_account_type=managed_disk.sku.name if managed_disk.sku else None,
         managed_by=managed_disk.managed_by,
-        zones=managed_disk.zones
+        zones=managed_disk.zones if managed_disk.zones else None
     )
 
 
@@ -268,8 +268,6 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         resource_group = self.get_resource_group(self.resource_group)
         if not self.location:
             self.location = resource_group.location
-        # get zones values
-        self.zones = self.zones if self.zones else None
 
         disk_instance = self.get_managed_disk()
         result = disk_instance
