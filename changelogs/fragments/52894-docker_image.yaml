@@ -1,0 +1,4 @@
+minor_changes:
+- "docker_image - the ``source`` option has been added to clarify the action performed by the module."
+- "docker_image - the ``force`` option has been deprecated; more specific options ``force_source``, ``force_absent`` and ``force_tag`` have been added instead."
+- "docker_image - all build-related options have been moved into a suboption ``build``. This affects the ``dockerfile``, ``http_timeout``, ``nocache``, ``path``, ``pull``, ``rm``, and ``buildargs`` options."
