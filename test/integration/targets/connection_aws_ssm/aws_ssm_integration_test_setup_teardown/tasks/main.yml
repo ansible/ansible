@@ -51,7 +51,8 @@
 
 - pause:
     seconds: 10
-  tags: setup_infra
+  tags:
+    - setup_infra
 
 - name: Create Linux ec2 instance
   ec2:
@@ -68,7 +69,8 @@
                  sudo systemctl start amazon-ssm-agent
     state: present
   register: output
-  tags: linux
+  tags:
+    - linux
 
 - name: Create Windows ec2 instance
   ec2:
