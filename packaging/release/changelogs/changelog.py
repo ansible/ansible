@@ -175,6 +175,8 @@ def load_plugins(version, force_reload):
         LOGGER.info('refreshing plugin cache')
 
         plugins_data['version'] = version
+        plugins_data['plugins'] = {}
+
         for plugin_type in C.DOCUMENTABLE_PLUGINS:
             plugins_data['plugins'][plugin_type] = json.loads(subprocess.check_output([os.path.join(BASE_DIR, 'bin', 'ansible-doc'),
                                                                                        '--json', '-t', plugin_type]))
