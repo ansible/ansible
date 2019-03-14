@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_workspace_facts
+module: azure_rm_loganalyticsworkspace_facts
 version_added: "2.8"
 short_description: Manage Azure Log Analytics workspaces.
 description:
@@ -56,6 +56,14 @@ author:
 '''
 
 EXAMPLES = '''
+- name: Query a workspace
+  azure_rm_loganalyticsworkspace_facts:
+      resource_group: foo
+      name: bar
+      show_intelligence_packs: true
+      show_management_groups: true
+      show_shared_keys: true
+      show_usages: true
 '''
 
 RETURN = '''
@@ -70,7 +78,6 @@ location:
     type: str
     returned: success
     example: "eastus"
-    
 sku:
     description:
         - The SKU of the workspace
@@ -139,7 +146,7 @@ except ImportError:
     pass
 
 
-class AzureRMWorkspaceFact(AzureRMModuleBase):
+class AzureRMLogAnalyticsWorkspaceFact(AzureRMModuleBase):
 
     def __init__(self):
 
@@ -166,7 +173,7 @@ class AzureRMWorkspaceFact(AzureRMModuleBase):
         self.show_usages = None
         self.show_management_groups = None
 
-        super(AzureRMWorkspaceFact, self).__init__(self.module_arg_spec, supports_tags=False, facts_module=True)
+        super(AzureRMLogAnalyticsWorkspaceFact, self).__init__(self.module_arg_spec, supports_tags=False, facts_module=True)
 
     def exec_module(self, **kwargs):
 
@@ -248,7 +255,7 @@ class AzureRMWorkspaceFact(AzureRMModuleBase):
 
 
 def main():
-    AzureRMWorkspaceFact()
+    AzureRMLogAnalyticsWorkspaceFact()
 
 
 if __name__ == '__main__':

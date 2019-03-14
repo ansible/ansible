@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_workspace
+module: azure_rm_loganalyticsworkspace
 version_added: "2.8"
 short_description: Manage Azure Log Analytics workspaces.
 description:
@@ -72,6 +72,12 @@ author:
 '''
 
 EXAMPLES = '''
+- name: Create a workspace with backup enabled
+  azure_rm_loganalyticsworkspace:
+    resource_group: foo
+    name: bar
+    intelligence_pack:
+        Backup: true
 '''
 
 RETURN = '''
@@ -80,6 +86,67 @@ id:
     type: str
     returned: success
     example: "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/foo/providers/Microsoft.OperationalInsights/workspaces/bar"
+location:
+    description:
+        - Resource location.
+    type: str
+    returned: success
+    example: "eastus"
+sku:
+    description:
+        - The SKU of the workspace
+    type: str
+    returned: success
+    example: "per_gb2018"
+retention_in_days:
+    description:
+        - The workspace data retention in days.
+        - -1 means Unlimited retention for the C(unlimited) C(sku).
+        - 730 days is the maximum allowed for all other C(sku)s.
+    type: int
+    returned: success
+    example: 40
+intelligence_packs:
+    description:
+        - Lists all the intelligence packs possible and whether they are enabled or disabled for a given workspace.
+    type: list
+    returned: success
+    example: ['name': 'CapacityPerformance', 'enabled': true]
+management_groups:
+    description:
+        - List of management groups connected to the workspace.
+    type: list
+    returned: success
+    example: "{'value': []}"
+shared_keys:
+    description:
+        - Shared keys for the workspace.
+    type: list
+    returned: success
+    example: "{
+                'primarySharedKey': 'BozLY1JnZbxu0jWUQSY8iRPEM8ObmpP8rW+8bUl3+HpDJI+n689SxXgTgU7k1qdxo/WugRLxechxbolAfHM5uA==',
+                'secondarySharedKey': '7tDt5W0JBrCQKtQA3igfFltLSzJeyr9LmuT+B/ibzd8cdC1neZ1ePOQLBx5NUzc0q2VUIK0cLhWNyFvo/hT8Ww=='
+              }"
+usages:
+    description:
+        - List of usage metrics for the workspace.
+    type: list
+    returned: success
+    example: "{
+                'value': [
+                    {
+                    'name': {
+                        'value': 'DataAnalyzed',
+                        'localizedValue': 'Data Analyzed'
+                    },
+                    'unit': 'Bytes',
+                    'currentValue': 0,
+                    'limit': 524288000,
+                    'nextResetTime': '2017-10-03T00:00:00Z',
+                    'quotaPeriod': 'P1D'
+                    }
+                ]
+              }"
 '''  # NOQA
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, format_resource_id
@@ -93,7 +160,7 @@ except ImportError:
     pass
 
 
-class AzureRMWorkspace(AzureRMModuleBase):
+class AzureRMLogAnalyticsWorkspace(AzureRMModuleBase):
 
     def __init__(self):
 
@@ -120,7 +187,7 @@ class AzureRMWorkspace(AzureRMModuleBase):
         self.retention_in_days = None
         self.intelligence_packs = None
 
-        super(AzureRMWorkspace, self).__init__(self.module_arg_spec, supports_check_mode=True)
+        super(AzureRMLogAnalyticsWorkspace, self).__init__(self.module_arg_spec, supports_check_mode=True)
 
     def exec_module(self, **kwargs):
 
@@ -245,7 +312,7 @@ class AzureRMWorkspace(AzureRMModuleBase):
 
 
 def main():
-    AzureRMWorkspace()
+    AzureRMLogAnalyticsWorkspace()
 
 
 if __name__ == '__main__':
