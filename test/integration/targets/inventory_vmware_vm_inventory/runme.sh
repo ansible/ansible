@@ -48,6 +48,9 @@ curl "http://${VCENTER_HOST}:${port}/spawn?datacenter=1&cluster=1&folder=0" > /d
 echo "Debugging new instances"
 curl "http://${VCENTER_HOST}:${port}/govc_find"
 
+# Creates folder structure to test inventory folder support
+ansible-playbook -i 'localhost,' test_vmware_prep_folders.yml
+
 # Get inventory
 ansible-inventory -i ${VMWARE_CONFIG} --list
 
