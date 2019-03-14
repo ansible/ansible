@@ -1,3 +1,5 @@
+from ansible.module_utils.common._collections_compat import MutableMapping
+
 import datetime
 from dateutil.tz import tzutc
 import sys
@@ -183,7 +185,7 @@ class InstanceBase(object):
         }
         self._ignore_tags = {
             'tag-with-hyphens': 'value:with:colons',
-            '쪴': 'value1with@invalid:characters',
+            b'\xec\xaa\xb4'.decode('utf'): 'value1with@invalid:characters',
             'tag;me': 'value@noplez',
             'tag!notit': 'value<=ohwhy?'
         }
