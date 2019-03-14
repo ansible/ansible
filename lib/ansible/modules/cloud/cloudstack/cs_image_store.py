@@ -18,34 +18,39 @@ short_description: Manages CloudStack Image Stores.
 version_added: "2.8"
 
 description:
-    - "Deploy, remove, recreate CloudStack Image Stores."
+  - "Deploy, remove, recreate CloudStack Image Stores."
 
 options:
-    url:
-        description:
-            - The URL for the Image Store.
-        required: true
-    name:
-        description:
-            - The ID of the Image Store. Required when deleting a Image Store.
-        required: true
-    zone:
-        description:
-            - The Zone name for the Image Store.
-        required: true
-    state:
-        description:
-            - Stage of the Image Store
-        choices: ['present', 'absent']
-        default: present
-    provider:
-        description:
-            - The image store provider name. Required when creating a new Image Store
+  url:
+    description:
+      - The URL for the Image Store.
+      - Required when I(state=present).
+    type: str
+  name:
+    description:
+      - The ID of the Image Store. Required when deleting a Image Store.
+    required: true
+    type: str
+  zone:
+    description:
+      - The Zone name for the Image Store.
+    required: true
+    type: str
+  state:
+    description:
+      - Stage of the Image Store
+    choices: ['present', 'absent']
+    default: present
+    type: str
+  provider:
+    description:
+      - The image store provider name. Required when creating a new Image Store
+    type: str
 
 extends_documentation_fragment: cloudstack
 
 author:
-    - Patryk Cichy (@PatTheSilent)
+  - Patryk Cichy (@PatTheSilent)
 '''
 
 EXAMPLES = '''
@@ -58,34 +63,40 @@ EXAMPLES = '''
 
 RETURN = '''
 id:
-    description: the ID of the image store
-    type: str
-    returned: success
+  description: the ID of the image store
+  type: str
+  returned: success
+  sample: feb11a84-a093-45eb-b84d-7f680313c40b
 name:
-    description: the name of the image store
-    type: str
-    returned: success
+  description: the name of the image store
+  type: str
+  returned: success
+  sample: nfs-01
 protocol:
-    description: the protocol of the image store
-    type: str
-    returned: success
+  description: the protocol of the image store
+  type: str
+  returned: success
+  sample: nfs
 provider_name:
-    description: the provider name of the image store
-    type: str
-    returned: success
+  description: the provider name of the image store
+  type: str
+  returned: success
+  sample: NFS
 scope:
-    description: the scope of the image store
-    type: str
-    returned: success
+  description: the scope of the image store
+  type: str
+  returned: success
+  sample: ZONE
 url:
-    description: the url of the image store
-    type: str
-    returned: success
+  description: the url of the image store
+  type: str
+  sample: nfs://192.168.21.16/exports/secondary
+  returned: success
 zone:
-    description: the Zone name of the image store
-    type: str
-    returned: success
-
+  description: the Zone name of the image store
+  type: str
+  returned: success
+  sample: zone-01
 '''
 
 from ansible.module_utils.basic import AnsibleModule
