@@ -86,6 +86,7 @@ options:
     description:
       - Toggles no-use_srv_records flag
     type: bool
+    version_added: "2.8"
   summarize:
     description:
       - Whether to print a transaction summary.
