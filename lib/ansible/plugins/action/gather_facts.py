@@ -35,6 +35,10 @@ class ActionModule(ActionBase):
             if fact_filter is not None:
                 self._display.warning('Ignoring filter(%s) for %s' % (fact_filter, fact_module))
 
+        # Strip out keys with ``None`` values, effectively mimicking ``omit`` behavior
+        # This ensures we don't pass a ``None`` value as an argument expecting a specific type
+        mod_args = dict((k, v) for k, v in mod_args.items() if v is not None)
+
         return mod_args
 
     def run(self, tmp=None, task_vars=None):
