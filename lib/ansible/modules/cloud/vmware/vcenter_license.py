@@ -176,31 +176,34 @@ def main():
         key = pyv.find_key(lm.licenses, license)
         if key is not None:
             lam = lm.licenseAssignmentManager
-            # Automatically assign to current vCenter, if needed
+            assigned_license = None
+            # assign to current vCenter, if esxi_hostname is not specified
             if module.params['esxi_hostname'] is None:
-                if pyv.content.about.name in key.name:
-                    try:
-                        lam.UpdateAssignedLicense(entity=pyv.content.about.instanceUuid, licenseKey=license)
-                    except Exception:
-                        module.warn('Could not assign "%s" (%s) to vCenter.' % (license, key.name))
-                    result['changed'] = True
-                else:
+                entityId = pyv.content.about.instanceUuid
+                # if key name not contain "VMware vCenter Server"
+                if pyv.content.about.name not in key.name:
                     module.warn('License key "%s" (%s) is not suitable for "%s"' % (license, key.name, pyv.content.about.name))
-            # Assign license key to ESXi host
+            # assign to ESXi server
             else:
                 esxi_host = find_hostsystem_by_name(pyv.content, module.params['esxi_hostname'])
                 if esxi_host is None:
                     module.fail_json(msg='Cannot find the specified ESXi host "%s".' % module.params['esxi_hostname'])
+                entityId = esxi_host._moId
                 # e.g., key.editionKey is "esx.enterprisePlus.cpuPackage", not sure all keys are in this format
-                if 'esx' in key.editionKey:
-                    try:
-                        lam.UpdateAssignedLicense(entity=esxi_host._moId, licenseKey=license)
-                    except Exception as e:
-                        module.warn('Could not assign "%s" (%s) to ESXi host %s, due to %s.'
-                                    % (license, key.name, esxi_host._moId, to_native(e)))
-                    result['changed'] = True
-                else:
+                if 'esx' not in key.editionKey:
                     module.warn('License key "%s" edition "%s" is not suitable for ESXi server' % (license, key.editionKey))
+
+            try:
+                assigned_license = lam.QueryAssignedLicenses(entityId=entityId)
+            except Exception as e:
+                module.fail_json('Could not query vCenter "%s" assigned license info due to %s.' % (entityId, to_native(e)))
+
+            if not assigned_license or (len(assigned_license) != 0 and assigned_license[0].assignedLicense.licenseKey != license):
+                try:
+                    lam.UpdateAssignedLicense(entity=entityId, licenseKey=license)
+                except Exception:
+                    module.fail_json('Could not assign "%s" (%s) to vCenter.' % (license, key.name))
+                result['changed'] = True
             result['licenses'] = pyv.list_keys(lm.licenses)
         else:
             module.fail_json(msg='License "%s" is not existing or can not be added' % license)
