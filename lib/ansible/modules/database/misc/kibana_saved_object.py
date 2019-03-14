@@ -107,16 +107,54 @@ options:
 '''
 
 EXAMPLES = '''
+- name: Create an index pattern
+  kibana_saved_object:
+    id: my-pattern
+    state: present
+    type: index-pattern
+    kibana_url: http://192.168.0.42:5601/
+    content:
+      attributes:
+        title: my-pattern-*
+
+- name: Create an index pattern with searchguard enabled
+  kibana_saved_object:
+    id: my-pattern
+    state: present
+    type: index-pattern
+    kibana_url: http://192.168.0.42:5601/
+    content:
+      attributes:
+        title: my-pattern-*
+    user: ansible
+    password: s3cr3t
+    searchguard_tenant: my_application
 '''
 
 RETURN = '''
+msg:
+  description: The result of the operation
+  returned: always
+  type: str
+  sample: 'Object has been created: my-pattern'
+object_id:
+  description: ID of the saved object
+  returned: always
+  type: str
+  sample: 'my-pattern'
+object_type:
+  description: ID of the saved object
+  returned: always
+  type: str
+  sample: 'index-pattern'
 '''
+
 
 import os
 import json
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
-from ansible.module_utils.urls import fetch_url, url_argument_spec, open_url
+from ansible.module_utils.urls import fetch_url, url_argument_spec
 
 
 
@@ -330,9 +368,13 @@ def main():
                     tenant=searchguard_tenant,
                     timeout=timeout,
                 )
-                module.exit_json(changed=True, object_id=object_id, msg="Object has been updated: {}".format(object_id))
+                module.exit_json(changed=True, object_id=object_id,
+                                 object_type=object_type,
+                                 msg="object has been updated: {}".format(object_id))
             else:
-                module.exit_json(changed=False, object_id=object_id, msg="Object already exists: {}".format(object_id))
+                module.exit_json(changed=False, object_id=object_id,
+                                 object_type=object_type,
+                                 msg="Object already exists: {}".format(object_id))
         if present and overwrite:
             # Overwrite object
             r = create_object(
@@ -345,7 +387,9 @@ def main():
                 timeout=timeout,
                 overwrite=True
             )
-            module.exit_json(changed=True, object_id=object_id, msg="Object has been overwritten: {}".format(object_id))
+            module.exit_json(changed=True, object_id=object_id,
+                             object_type=object_type,
+                             msg="Object has been overwritten: {}".format(object_id))
         if not present:
             # Create object
             r = create_object(
@@ -357,10 +401,15 @@ def main():
                 tenant=searchguard_tenant,
                 timeout=timeout
             )
-            module.exit_json(changed=True, object_id=object_id, msg="Object has been created: {}".format(object_id))
+            module.exit_json(changed=True, object_id=object_id,
+                             object_type=object_type,
+                             msg="Object has been created: {}".format(object_id))
     if state == 'absent':
         if not present:
-            module.exit_json(changed=False, object_id=object_id, msg="Object does not exist: {}".format(object_id))
+            module.exit_json(changed=False, object_id=object_id,
+                             object_type=object_type,
+                             msg="Object does not exist: {}".format(object_id))
+
         if present:
             r = delete_object(
                 module=module,
@@ -370,7 +419,9 @@ def main():
                 tenant=searchguard_tenant,
                 timeout=timeout
             )
-            module.exit_json(changed=True, object_id=object_id, msg="Object has been deleted: {}".format(object_id))
+            module.exit_json(changed=True, object_id=object_id,
+                             object_type=object_type,
+                             msg="Object has been deleted: {}".format(object_id))
 
 
 if __name__ == '__main__':
