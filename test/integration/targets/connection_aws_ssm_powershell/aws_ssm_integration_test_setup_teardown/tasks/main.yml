@@ -91,8 +91,8 @@
 
 - name: Create hosts file
   template:
-    dest: "{{playbook_dir}}/inventory.aws_ssm"
-    src: inventory.aws_ssm.j2
+    dest: "{{playbook_dir}}/inventory.aws_ssm_powershell"
+    src: inventory.aws_ssm_powershell.j2
   tags: setup_infra
 
 - name: Create S3 bucket with EC2 instance id and rolename
