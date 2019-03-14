@@ -315,6 +315,10 @@ class ChangelogFragmentLinter(object):
 
             if isinstance(lines, list):
                 for line in lines:
+                    if not isinstance(line, str):
+                        errors.append((fragment.path, 0, 0, 'section "%s" list items must be type str not %s' % (section, type(line).__name__)))
+                        continue
+
                     results = rstcheck.check(line, filename=fragment.path, report_level=docutils.utils.Reporter.WARNING_LEVEL)
                     errors += [(fragment.path, 0, 0, result[1]) for result in results]
             elif isinstance(lines, str):
