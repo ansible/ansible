@@ -202,7 +202,7 @@ class AnsibleHcloudVolume(Hcloud):
                     self.hcloud_volume.resize(size).wait_until_finished()
                 self._mark_as_changed()
             elif self.hcloud_volume.size > size:
-+              self.module.warn("Shrinking of volumes is not supported")
+                self.module.warn("Shrinking of volumes is not supported")
 
         server_name = self.module.params.get("server")
         if server_name:
