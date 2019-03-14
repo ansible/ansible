@@ -29,8 +29,8 @@ DOCUMENTATION = '''
     options:
         datacenter:
             description:
-              - Datacenter name. 
-              - Required if C(search_folder) or C(with_folders) are set, otherwise ignored.
+              - Datacenter name. Limit generated inventory to this Datacenter.
+              - Required if C(search_folder) or C(with_folders) are set.
             version_added: "2.8"
             required: False
         hostname:
@@ -176,9 +176,12 @@ class BaseVMwareInventory:
             if not self.root_folder:
                 raise AnsibleError("Specified datacenter + search_folder '%s/vm/%s' were not found on Inventory." %
                                    (self.datacenter, self.search_folder))
-        elif self.with_folders:
-            self.root_folder = self.content.searchIndex.FindByInventoryPath('%s/vm' % self.datacenter)
-            if not self.root_folder:
+        elif self.datacenter:
+            # self.root_folder = self.content.searchIndex.FindByInventoryPath('%s/vm' % self.datacenter)
+            datacenter_obj = self.content.searchIndex.FindByInventoryPath('%s' % self.datacenter)
+            if datacenter_obj:
+                self.root_folder = datacenter_obj.vmFolder
+            else:
                 raise AnsibleError("Specified datacenter '%s' was not found on Inventory." % self.datacenter)
         else:
             self.root_folder = self.content.rootFolder
