@@ -19,6 +19,8 @@ short_description: Manage Windows Server DNS records
 description:
 - Manage DNS records within an existing Windows Server DNS zone.
 author: John Nelson (@johnboy2)
+requirements:
+  - This module requires Windows 8, Server 2012, or newer.
 options:
   name:
     description:
