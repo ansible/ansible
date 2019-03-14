@@ -5,7 +5,7 @@
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
-    'status': ['stableinterface'],
+    'status': ['preview'],
     'supported_by': 'community'
 }
 
@@ -18,7 +18,7 @@ short_description: Manages CloudStack Image Stores.
 version_added: "2.8"
 
 description:
-    - ""
+    - "Deploy, remove, recreate CloudStack Image Stores."
 
 options:
     url:
