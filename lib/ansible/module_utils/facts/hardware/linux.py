@@ -156,6 +156,7 @@ class LinuxHardware(Hardware):
         i = 0
         vendor_id_occurrence = 0
         model_name_occurrence = 0
+        processor_occurence = 0
         physid = 0
         coreid = 0
         sockets = {}
@@ -203,6 +204,8 @@ class LinuxHardware(Hardware):
                     vendor_id_occurrence += 1
                 if key == 'model name':
                     model_name_occurrence += 1
+                if key == 'processor':
+                    processor_occurence += 1
                 i += 1
             elif key == 'physical id':
                 physid = data[1].strip()
@@ -225,6 +228,12 @@ class LinuxHardware(Hardware):
         if vendor_id_occurrence > 0:
             if vendor_id_occurrence == model_name_occurrence:
                 i = vendor_id_occurrence
+
+        # The fields for ARM CPUs do not always include 'vendor_id' or 'model name',
+        # and sometimes includes both 'processor' and 'Processor'.
+        # Always use 'processor' count for ARM systems
+        if collected_facts.get('ansible_architecture').startswith(('armv', 'aarch')):
+            i = processor_occurence
 
         # FIXME
         if collected_facts.get('ansible_architecture') != 's390x':
