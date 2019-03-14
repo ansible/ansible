@@ -402,11 +402,11 @@ class ConfigManager(object):
             direct_aliases = []
             if direct:
                 direct_aliases = [direct[alias] for alias in defs[config].get('aliases', []) if alias in direct]
-            if direct and (config in direct or direct_aliases):
-                if config in direct:
-                    value = direct[config]
-                else:
-                    value = direct_aliases[0]
+            if direct and config in direct:
+                value = direct[config]
+                origin = 'Direct'
+            elif direct and direct_aliases:
+                value = direct_aliases[0]
                 origin = 'Direct'
 
             else:
