@@ -321,7 +321,7 @@ def is_object_present(module, object_id, object_type, kibana_url,
 
 def main():
     argument_spec = url_argument_spec()
-    del argument_spec['http_agent'],argument_spec['force'],argument_spec['url']
+    del argument_spec['http_agent'], argument_spec['force'], argument_spec['url']
     argument_spec.update(dict(
         id=dict(type='str'),
         type=dict(type='str', required=True,
