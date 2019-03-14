@@ -1526,7 +1526,7 @@ class PyVmomiHelper(PyVmomi):
             if not old_value == new_value:
                 vmconfig_spec.ovfEnvironmentTransport = [self.params['vapp_ovf_environment_transport']]
                 self.configspec.vAppConfig = vmconfig_spec
-                self.change_detected = False
+                self.change_detected = True
 
     # March 2019, Added by chaitra kurdekar
     # To Set vApp Product Information in VM.
@@ -2247,7 +2247,6 @@ class PyVmomiHelper(PyVmomi):
         self.configure_disks(vm_obj=vm_obj)
         self.configure_network(vm_obj=vm_obj)
         self.configure_cdrom(vm_obj=vm_obj)
-        self.configure_vapp_ovfEnvironmentTransport(vm_obj=vm_obj)
 
         # Find if we need network customizations (find keys in dictionary that requires customizations)
         network_changes = False
@@ -2422,8 +2421,8 @@ class PyVmomiHelper(PyVmomi):
         self.customize_customvalues(vm_obj=self.current_vm_obj, config_spec=self.configspec)
         self.configure_resource_alloc_info(vm_obj=self.current_vm_obj)
         self.configure_vapp_properties(vm_obj=self.current_vm_obj)
-        self.configure_vapp_product(vm_obj=self.current_vm_obj)
-        self.configure_vapp_ovfEnvironmentTransport(vm_obj=self.current_vm_obj)
+        #self.configure_vapp_product(vm_obj=self.current_vm_obj)
+        #self.configure_vapp_ovfEnvironmentTransport(vm_obj=self.current_vm_obj)
 
         if self.params['annotation'] and self.current_vm_obj.config.annotation != self.params['annotation']:
             self.configspec.annotation = str(self.params['annotation'])
