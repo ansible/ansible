@@ -34,6 +34,7 @@ options:
     description:
     - Use to specify the API version. in conjunction with I(kind), I(name), and I(namespace) to identify a
       specific object.
+    - If using I(label_selector), cannot be overridden
     default: v1
     aliases:
     - api
@@ -42,24 +43,28 @@ options:
     description:
     - Use to specify an object model. Use in conjunction with I(api_version), I(name), and I(namespace) to identify a
       specific object.
+    - If using I(label_selector), cannot be overridden
     required: no
     default: Pod
-  name:
-    description:
-    - Use to specify an object name.  Use in conjunction with I(api_version), I(kind) and I(namespace) to identify a
-      specific object.
   namespace:
     description:
     - Use to specify an object namespace. Use in conjunction with I(api_version), I(kind), and I(name)
       to identify a specfic object.
+  name:
+    description:
+    - Use to specify an object name.  Use in conjunction with I(api_version), I(kind) and I(namespace) to identify a
+      specific object.
+    - Only one of I(name) or I(label_selector) may be provided
+  label_selectors:
+    description:
+    - List of label selectors to use to filter results
+    - Only one of I(name) or I(label_selector) may be provided
   container:
     description:
     - Use to specify the container within a pod to grab the log from.
     - If there is only one container, this will default to that container.
     - If there is more than one container, this option is required.
     required: no
-  label_selectors:
-    description: List of label selectors to use to filter results
 
 extends_documentation_fragment:
   - k8s_auth_options
@@ -73,11 +78,35 @@ requirements:
 EXAMPLES = '''
 - name: Get a log from a Pod
   k8s_log:
-    api_version: v1
-    kind: Pod
-    name: web-1
+    name: example-1
     namespace: testing
-  register: web_log
+  register: log
+
+# This will get the log from the first Pod found matching the selector
+- name: Log a Pod matching a label selector
+  k8s_log:
+    namespace: testing
+    label_selectors:
+    - app=example
+  register: log
+
+# This will get the log from a single Pod managed by this Deployment
+- name: Get a log from a Deployment
+  k8s_log:
+    api_version: apps/v1
+    kind: Deployment
+    namespace: testing
+    name: example
+  register: log
+
+# This will get the log from a single Pod managed by this DeploymentConfig
+- name: Get a log from a DeploymentConfig
+  k8s_log:
+    api_version: apps.openshift.io/v1
+    kind: DeploymentConfig
+    namespace: testing
+    name: example
+  register: log
 '''
 
 RETURN = '''
@@ -123,24 +152,26 @@ class KubernetesLogModule(KubernetesAnsibleModule):
 
         self.client = self.get_api_client()
         resource = self.find_resource(self.params['kind'], self.params['api_version'], fail=True)
+        v1_pods = self.find_resource('Pod', 'v1', fail=True)
+
         if 'log' not in resource.subresources:
             if not self.params.get('name'):
                 self.fail(msg='name must be provided for resources that do not support the log subresource')
             instance = resource.get(name=self.params['name'], namespace=self.params.get('namespace'))
             label_selector = ','.join(self.extract_selectors(instance))
-            resource = self.find_resource('Pod', 'v1', fail=True)
+            resource = v1_pods
 
         if label_selector:
-            v1_pods = self.find_resource('Pod', 'v1', fail=True)
             instances = v1_pods.get(namespace=self.params['namespace'], label_selector=label_selector)
             if not instances.items:
                 self.fail(msg='No pods in namespace {0} matched selector {1}'.format(self.params['namespace'], label_selector))
             # This matches the behavior of kubectl when logging pods via a selector
             name = instances.items[0].metadata.name
+            resource = v1_pods
 
         kwargs = {}
         if self.params.get('container'):
-            kwargs['query_params'] = dict(containter=self.params['container'])
+            kwargs['query_params'] = dict(container=self.params['container'])
 
         self.exit_json(changed=False, log=resource.log.get(
             name=name,
@@ -178,9 +209,7 @@ class KubernetesLogModule(KubernetesAnsibleModule):
                     selectors.append('{key} {operator} {values}'.format(
                         key=expression.key,
                         operator=operator.lower(),
-                        values='({0})'.format(
-                            ', '.join(expression.values)
-                        )
+                        values='({0})'.format(', '.join(expression.values))
                     ))
                 else:
                     self.fail(msg='The k8s_log module does not support the {0} matchExpression operator'.format(operator.lower()))
