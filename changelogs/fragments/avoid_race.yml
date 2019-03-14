@@ -1,0 +1,2 @@
+bugfixes:
+    - Attempt to avoid race condition based on incorrect buffer size assumptions
