@@ -17,7 +17,7 @@ module: win_dns_record
 version_added: "2.8"
 short_description: Manage Windows Server DNS records
 description:
-- Manages DNS records within an existing Windows Server DNS zone.
+- Manage DNS records within an existing Windows Server DNS zone.
 author: John Nelson (@johnboy2)
 options:
   name:

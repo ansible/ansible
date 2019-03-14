@@ -13,7 +13,7 @@ $spec = @{
         type = @{ type = "str"; choices = "A","AAAA","CNAME","PTR"; required = $true }
         value = @{ type = "list"; elements = "str"; default = @() ; aliases=@( 'values' )}
         zone = @{ type = "str"; required = $true }
-        computer_name = @{ type = "str"; required = $false }
+        computer_name = @{ type = "str" }
     }
     supports_check_mode = $true
 }
@@ -30,7 +30,7 @@ $dns_computer_name = $module.Params.computer_name
 
 
 $extra_args = @{}
-if ($dns_computer_name -ne $null) {
+if ($null -ne $dns_computer_name) {
     $extra_args.ComputerName = $dns_computer_name
 }
 
@@ -52,7 +52,7 @@ if ($ttl -lt 1 -or $ttl -gt 31557600) {
 $ttl = New-TimeSpan -Seconds $ttl
 
 
-if (($type -eq 'CNAME' -or $type -eq 'PTR') -and $values -ne $null -and $values.Count -gt 0 -and $zone[-1] -ne '.') {
+if (($type -eq 'CNAME' -or $type -eq 'PTR') -and $null -ne $values -and $values.Count -gt 0 -and $zone[-1] -ne '.') {
     # CNAMEs and PTRs should be '.'-terminated, or record matching will fail
     $values = $values | ForEach-Object {
         if ($_ -Like "*.") { $_ } else { "$_." }
@@ -78,7 +78,7 @@ $changes = @{
 
 
 $records = Get-DnsServerResourceRecord -ZoneName $zone -Name $name -RRType $type -Node -ErrorAction:Ignore @extra_args | Sort-Object
-if ($records -ne $null) {
+if ($null -ne $records) {
     # We use [Hashtable]$required_values below as a set rather than a map.
     # It provides quick lookup to test existing DNS record against. By removing
     # items as each is processed, whatever remains at the end is missing
@@ -119,7 +119,7 @@ if ($records -ne $null) {
 }
 
 
-if ($values -ne $null -and $values.Count -gt 0) {
+if ($null -ne $values -and $values.Count -gt 0) {
     foreach ($value in $values) {
         $splat_args = @{ $type = $true; $record_argument_name = $value }
         $module.Result.debug_splat_args = $splat_args
