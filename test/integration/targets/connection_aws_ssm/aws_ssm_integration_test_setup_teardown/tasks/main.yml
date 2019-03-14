@@ -11,6 +11,10 @@
   when: ansible_distribution == "CentOS" or ansible_distribution == "RedHat" or ansible_distribution == "Amazon"
   tags: setup_infra
 
+- name: Install Boto3
+  pip:
+    name: boto3
+
 - name: Create IAM role
   iam:
     iam_type: role
