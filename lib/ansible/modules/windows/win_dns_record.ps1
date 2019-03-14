@@ -36,18 +36,18 @@ if ($null -ne $dns_computer_name) {
 
 if ($state -eq 'present') {
     if ($values.Count -eq 0) {
-        $module.FailJson("values must be non-empty when state='present'")
+        $module.FailJson("Parameter 'values' must be non-empty when state='present'")
     }
 } else {
     if ($values.Count -ne 0) {
-        $module.FailJson("values must be undefined or empty when state='absent'")
+        $module.FailJson("Parameter 'values' must be undefined or empty when state='absent'")
     }
 }
 
 
 # TODO: add warning for forest minTTL override -- see https://docs.microsoft.com/en-us/windows/desktop/ad/configuration-of-ttl-limits
 if ($ttl -lt 1 -or $ttl -gt 31557600) {
-    $module.FailJson("ttl must be between 1 and 31557600")
+    $module.FailJson("Parameter 'ttl' must be between 1 and 31557600")
 }
 $ttl = New-TimeSpan -Seconds $ttl
 
