@@ -2,9 +2,11 @@
 
 set -eux
 
+TARGET=$(pwd)
+
 # set the output dir
-if [ -z ${OUTPUT_DIR+null} ]; then
-    export OUTPUT_DIR=$(pwd)
+if [ -z "${OUTPUT_DIR+null}" ]; then
+    export OUTPUT_DIR=$TARGET
 fi
 
 #################################################
@@ -12,7 +14,7 @@ fi
 #################################################
 
 # run the script first
-cat << EOF > $OUTPUT_DIR/ec2.ini
+cat << EOF > "$OUTPUT_DIR/ec2.ini"
 [ec2]
 regions = us-east-1
 cache_path = $(pwd)/.cache
@@ -25,7 +27,7 @@ aws_secret_acccess_key = BAR
 EOF
 
 rm -f script.out
-./ec2.sh | tee -a $OUTPUT_DIR/script.out
+./ec2.sh | tee -a "$OUTPUT_DIR/script.out"
 #./ec2.sh 
 RC=$?
 if [[ $RC != 0 ]]; then
@@ -48,7 +50,7 @@ export AWS_ACCESS_KEY_ID=FOO
 export AWS_SECRET_ACCESS_KEY=BAR
 export ANSIBLE_TRANSFORM_INVALID_GROUP_CHARS=never
 
-cat << EOF > $OUTPUT_DIR/test.aws_ec2.yml
+cat << EOF > "$OUTPUT_DIR/test.aws_ec2.yml"
 plugin: aws_ec2
 cache: False
 use_contrib_script_compatible_sanitization: True
@@ -142,15 +144,15 @@ EOF
 
 # override boto's import path(s)
 echo "PWD: $(pwd)"
-export PYTHONPATH=$(pwd)/lib:$PYTHONPATH
+export PYTHONPATH="$TARGET/lib:$PYTHONPATH"
 
-rm -f $OUTPUT_DIR/plugin.out
+rm -f "$OUTPUT_DIR/plugin.out"
 #ansible-inventory -i $OUTPUT_DIR/test.aws_ec2.yml --list | tee -a $OUTPUT_DIR/plugin.out
-ANSIBLE_JINJA2_NATIVE=1 ansible-inventory -vvvv -i $OUTPUT_DIR/test.aws_ec2.yml --list --output=$OUTPUT_DIR/plugin.out
-rm -f $OUTPUT_DIR/aws_ec2.yml
+ANSIBLE_JINJA2_NATIVE=1 ansible-inventory -vvvv -i "$OUTPUT_DIR/test.aws_ec2.yml" --list --output="$OUTPUT_DIR/plugin.out"
+rm -f "$OUTPUT_DIR/aws_ec2.yml"
 
 #################################################
 #   DIFF THE RESULTS
 #################################################
 
-./inventory_diff.py $OUTPUT_DIR/script.out $OUTPUT_DIR/plugin.out
+./inventory_diff.py "$OUTPUT_DIR/script.out" "$OUTPUT_DIR/plugin.out"
