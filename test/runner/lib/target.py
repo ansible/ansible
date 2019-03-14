@@ -363,8 +363,12 @@ def analyze_integration_target_dependencies(integration_targets):
 
         for meta_path in meta_paths:
             if os.path.exists(meta_path):
-                with open(meta_path, 'r') as meta_fd:
-                    meta_lines = meta_fd.read().splitlines()
+                with open(meta_path, 'rb') as meta_fd:
+                    # try and decode the file as a utf-8 string, skip if it contains invalid chars (binary file)
+                    try:
+                        meta_lines = meta_fd.read().decode('utf-8').splitlines()
+                    except UnicodeDecodeError:
+                        continue
 
                 for meta_line in meta_lines:
                     if re.search(r'^ *#.*$', meta_line):
