@@ -28,6 +28,21 @@ options:
       - name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT
     vars:
       - name: ansible_command_timeout
+  persistent_connect_timeout:
+    type: int
+    description:
+      - Configures, in seconds, the amount of time to wait when trying to
+        initially establish a persistent connection.  If this value expires
+        before the connection to the remote device is completed, the connection
+        will fail.
+    default: 30
+    ini:
+      - section: persistent_connection
+        key: connect_timeout
+    env:
+      - name: ANSIBLE_PERSISTENT_CONNECT_TIMEOUT
+    vars:
+      - name: ansible_connect_timeout
 """
 import os
 import pty

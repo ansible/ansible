@@ -54,11 +54,10 @@ class ActionModule(ActionNetworkModule):
             elif self._play_context.connection == 'local':
                 self._task.args['username'] = self._play_context.connection_user
 
-        if self._task.action == 'nxos_install_os':
+        if self._task.action == 'nxos_install_os' and self._play_context.connection == 'network_cli':
             connection = self._connection
-            if connection.get_option('persistent_command_timeout') < 600 or connection.get_option('persistent_connect_timeout') < 600:
-                msg = 'PERSISTENT_COMMAND_TIMEOUT and PERSISTENT_CONNECT_TIMEOUT'
-                msg += ' must be set to 600 seconds or higher when using nxos_install_os module'
+            msg = self.meet_minimum_timeout(connection, min_time=600)
+            if msg:
                 return {'failed': True, 'msg': msg}
 
         if self._play_context.connection in ('network_cli', 'httpapi'):
@@ -93,8 +92,14 @@ class ActionModule(ActionNetworkModule):
                 display.vvv('using connection plugin %s (was local)' % pc.connection, pc.remote_addr)
                 connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
 
+                if self._task.action == 'nxos_install_os':
+                    msg = self.meet_minimum_timeout(connection, min_time=600)
+                    if msg:
+                        return {'failed': True, 'msg': msg}
+
+                connect_timeout = connection.get_option('persistent_connect_timeout')
                 command_timeout = int(provider['timeout']) if provider['timeout'] else connection.get_option('persistent_command_timeout')
-                connection.set_options(direct={'persistent_command_timeout': command_timeout})
+                connection.set_options(direct={'persistent_command_timeout': command_timeout, 'persistent_connect_timeout': connect_timeout})
 
                 socket_path = connection.run()
                 display.vvvv('socket_path: %s' % socket_path, pc.remote_addr)
@@ -127,6 +132,23 @@ class ActionModule(ActionNetworkModule):
 
         result = super(ActionModule, self).run(task_vars=task_vars)
         return result
+
+    def meet_minimum_timeout(self, connection, min_time):
+        """
+        Returns msg post minimum timeout required check
+
+        :param connection: A connection object
+        :param min_time: A int value that indicates minimum time required
+        :rtype: String
+        :returns: A string value
+
+        """
+        msg = ''
+        min_time = int(min_time)
+        if connection.get_option('persistent_command_timeout') < min_time or connection.get_option('persistent_connect_timeout') < min_time:
+            msg = 'PERSISTENT_COMMAND_TIMEOUT and PERSISTENT_CONNECT_TIMEOUT'
+            msg += ' must be set to 600 seconds or higher when using nxos_install_os module'
+        return msg
 
     @staticmethod
     def nxapi_implementation(provider, play_context):
