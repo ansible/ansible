@@ -7,13 +7,17 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-author: psharkey@cleo.com
+author:
+- Pat Sharkey (@psharkey) <psharkey@cleo.com>
+- HanumanthaRao MVL (@hanumantharaomvl) <hanumanth@flux7.com>
+- Gaurav Ashtikar (@gau1991 )<gaurav.ashtikar@flux7.com>
 connection: aws_ssm
 short_description: execute via AWS Systems Manager
 description:
 - This connection plugin allows ansible to execute tasks on an EC2 instance via the aws ssm CLI.
 version_added: "2.8"
 requirements:
+- The remote EC2 instance must be running the AWS Systems Manager Agent (SSM Agent).
 - The control machine must have the aws session manager plugin installed.
 - The remote EC2 instance must have the curl installed.
 options:
