@@ -1356,8 +1356,8 @@
     name: "{{ cname }}"
     state: started
     exposed_ports:
-    - "1234"
-    - "5678"
+    - "9001"
+    - "9002"
   register: exposed_ports_1
 
 - name: exposed_ports (idempotency)
@@ -1367,8 +1367,8 @@
     name: "{{ cname }}"
     state: started
     exposed_ports:
-    - "5678"
-    - "1234"
+    - "9002"
+    - "9001"
   register: exposed_ports_2
 
 - name: exposed_ports (less ports)
@@ -1378,7 +1378,7 @@
     name: "{{ cname }}"
     state: started
     exposed_ports:
-    - "1234"
+    - "9002"
   register: exposed_ports_3
 
 - name: exposed_ports (more ports)
@@ -1388,8 +1388,8 @@
     name: "{{ cname }}"
     state: started
     exposed_ports:
-    - "1234"
-    - "1235"
+    - "9002"
+    - "9003"
     force_kill: yes
   register: exposed_ports_4
 
@@ -2942,8 +2942,8 @@
     name: "{{ cname }}"
     state: started
     published_ports:
-    - 1234
-    - 5678
+    - 9001
+    - 9002
   register: published_ports_1
 
 - name: published_ports (idempotency)
@@ -2953,8 +2953,8 @@
     name: "{{ cname }}"
     state: started
     published_ports:
-    - 5678
-    - 1234
+    - 9002
+    - 9001
   register: published_ports_2
 
 - name: published_ports (less published_ports)
@@ -2964,7 +2964,7 @@
     name: "{{ cname }}"
     state: started
     published_ports:
-    - 1234
+    - 9002
   register: published_ports_3
 
 - name: published_ports (more published_ports)
@@ -2974,8 +2974,8 @@
     name: "{{ cname }}"
     state: started
     published_ports:
-    - 1234
-    - 2345
+    - 9002
+    - 9003
     force_kill: yes
   register: published_ports_4
 
