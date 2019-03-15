@@ -11,7 +11,7 @@ fi
 
 virtualenv --system-site-packages --python "${ANSIBLE_TEST_PYTHON_INTERPRETER:-python}" "${OUTPUT_DIR}/aws-ec2-inventory"
 source "${OUTPUT_DIR}/aws-ec2-inventory/bin/activate"
-pip install python-dateutil jmespath jinja2 PyYaml cryptography paramiko
+pip install python-dateutil jmespath "Jinja2>=2.10" PyYaml cryptography paramiko
 
 # create boto3 symlinks
 ln -s "$TARGET/lib/boto" "$TARGET/lib/boto3"
