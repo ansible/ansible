@@ -67,6 +67,7 @@ options:
   filename:
     description:
     - Path, from the source root, to a file whose contents is used for the template.
+      Either a filename or build template must be provided.
     required: false
   ignored_files:
     description:
@@ -114,19 +115,23 @@ options:
         required: false
       branch_name:
         description:
-        - Name of the branch to build.
+        - Name of the branch to build. Exactly one a of branch name, tag, or commit
+          SHA must be provided.
         required: false
       tag_name:
         description:
-        - Name of the tag to build.
+        - Name of the tag to build. Exactly one of a branch name, tag, or commit SHA
+          must be provided.
         required: false
       commit_sha:
         description:
-        - Explicit commit SHA to build.
+        - Explicit commit SHA to build. Exactly one of a branch name, tag, or commit
+          SHA must be provided.
         required: false
   build:
     description:
-    - Contents of the build template.
+    - Contents of the build template. Either a filename or build template must be
+      provided.
     required: false
     suboptions:
       tags:
@@ -184,23 +189,23 @@ notes:
 EXAMPLES = '''
 - name: create a repository
   gcp_sourcerepo_repository:
-      name: projects/{{ gcp_project }}/repos/{{ resource_name }}
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: projects/{{ gcp_project }}/repos/{{ resource_name }}
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
 
 - name: create a trigger
   gcp_cloudbuild_trigger:
-      trigger_template:
-        branch_name: master
-        project_id: "test_project"
-        repo_name: "test_object"
-      filename: cloudbuild.yaml
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    trigger_template:
+      branch_name: master
+      project_id: test_project
+      repo_name: test_object
+    filename: cloudbuild.yaml
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -233,6 +238,7 @@ substitutions:
 filename:
   description:
   - Path, from the source root, to a file whose contents is used for the template.
+    Either a filename or build template must be provided.
   returned: success
   type: str
 ignoredFiles:
@@ -285,22 +291,25 @@ triggerTemplate:
       type: str
     branchName:
       description:
-      - Name of the branch to build.
+      - Name of the branch to build. Exactly one a of branch name, tag, or commit
+        SHA must be provided.
       returned: success
       type: str
     tagName:
       description:
-      - Name of the tag to build.
+      - Name of the tag to build. Exactly one of a branch name, tag, or commit SHA
+        must be provided.
       returned: success
       type: str
     commitSha:
       description:
-      - Explicit commit SHA to build.
+      - Explicit commit SHA to build. Exactly one of a branch name, tag, or commit
+        SHA must be provided.
       returned: success
       type: str
 build:
   description:
-  - Contents of the build template.
+  - Contents of the build template. Either a filename or build template must be provided.
   returned: success
   type: complex
   contains:

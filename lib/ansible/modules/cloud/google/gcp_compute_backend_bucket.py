@@ -76,30 +76,30 @@ options:
     required: true
 extends_documentation_fragment: gcp
 notes:
-- 'API Reference: U(https://cloud.google.com/compute/docs/reference/latest/backendBuckets)'
+- 'API Reference: U(https://cloud.google.com/compute/docs/reference/v1/backendBuckets)'
 - 'Using a Cloud Storage bucket as a load balancer backend: U(https://cloud.google.com/compute/docs/load-balancing/http/backend-bucket)'
 '''
 
 EXAMPLES = '''
 - name: create a bucket
   gcp_storage_bucket:
-      name: "bucket-backendbucket"
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: bucket-backendbucket
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: bucket
 
 - name: create a backend bucket
   gcp_compute_backend_bucket:
-      name: "test_object"
-      bucket_name: "{{ bucket.name }}"
-      description: A BackendBucket to connect LNB w/ Storage Bucket
-      enable_cdn: true
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    bucket_name: "{{ bucket.name }}"
+    description: A BackendBucket to connect LNB w/ Storage Bucket
+    enable_cdn: 'true'
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''

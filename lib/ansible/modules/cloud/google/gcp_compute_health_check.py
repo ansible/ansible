@@ -264,26 +264,26 @@ options:
         - PROXY_V1
 extends_documentation_fragment: gcp
 notes:
-- 'API Reference: U(https://cloud.google.com/compute/docs/reference/rest/latest/healthChecks)'
+- 'API Reference: U(https://cloud.google.com/compute/docs/reference/rest/v1/healthChecks)'
 - 'Official Documentation: U(https://cloud.google.com/load-balancing/docs/health-checks)'
 '''
 
 EXAMPLES = '''
 - name: create a health check
   gcp_compute_health_check:
-      name: "test_object"
-      type: TCP
-      tcp_health_check:
-        port_name: service-health
-        request: ping
-        response: pong
-      healthy_threshold: 10
-      timeout_sec: 2
-      unhealthy_threshold: 5
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    type: TCP
+    tcp_health_check:
+      port_name: service-health
+      request: ping
+      response: pong
+    healthy_threshold: 10
+    timeout_sec: 2
+    unhealthy_threshold: 5
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''

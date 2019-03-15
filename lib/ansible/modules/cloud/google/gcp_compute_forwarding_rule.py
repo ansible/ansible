@@ -205,43 +205,43 @@ options:
     required: true
 extends_documentation_fragment: gcp
 notes:
-- 'API Reference: U(https://cloud.google.com/compute/docs/reference/latest/forwardingRule)'
+- 'API Reference: U(https://cloud.google.com/compute/docs/reference/v1/forwardingRule)'
 - 'Official Documentation: U(https://cloud.google.com/compute/docs/load-balancing/network/forwarding-rules)'
 '''
 
 EXAMPLES = '''
 - name: create a address
   gcp_compute_address:
-      name: "address-forwardingrule"
-      region: us-west1
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: address-forwardingrule
+    region: us-west1
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: address
 
 - name: create a target pool
   gcp_compute_target_pool:
-      name: "targetpool-forwardingrule"
-      region: us-west1
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: targetpool-forwardingrule
+    region: us-west1
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: targetpool
 
 - name: create a forwarding rule
   gcp_compute_forwarding_rule:
-      name: "test_object"
-      region: us-west1
-      target: "{{ targetpool }}"
-      ip_protocol: TCP
-      port_range: 80-80
-      ip_address: "{{ address.address }}"
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    region: us-west1
+    target: "{{ targetpool }}"
+    ip_protocol: TCP
+    port_range: 80-80
+    ip_address: "{{ address.address }}"
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''

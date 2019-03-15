@@ -148,13 +148,13 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a dataset
   gcp_bigquery_dataset:
-      name: my_example_dataset
-      dataset_reference:
-        dataset_id: my_example_dataset
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: my_example_dataset
+    dataset_reference:
+      dataset_id: my_example_dataset
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
