@@ -73,6 +73,34 @@ And you can use this vaulted inventory configuration file using:
 
     $ ansible-inventory -i filename.vmware.yml --list --vault-password-file=/path/to/vault_password_file
 
+Generating groups from folders
+==============================
+
+Ansible groups are generated from vCenter folders.
+
+To keep them unique the group names match the full folder path, replacing each foldername is urlencoded so that no namingcollission occure, e.g. VMware allows forward/backward slashes within folder names.
+As an example, suppose a vCenter folder layout for an AWX lab like this:
+
+.. code-block:: text
+
+    /AWX
+    /AWX/lab
+    /AWX/lab/db
+    /AWX/lab/workers
+
+Will generate an inventory like this:
+
+.. code-block:: text
+
+    @all:
+      |--@awx:
+      |  |--@awx_lab:
+      |  |  |--@awx_lab_db:
+      |  |  |  |--awx-db01_xxxx-uuid
+      |  |  |--@awx_lab_workers:
+      |  |  |  |--awx-worker01_xxxx-uuid
+      |  |  |  |--awx-worker02_xxxx-uuid
+    ...
 
 .. seealso::
 
