@@ -49,13 +49,14 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name:  a ssl certificate facts
+- name: " a ssl certificate facts"
   gcp_compute_ssl_certificate_facts:
-      filters:
-      - name = test_object
-      project: test_project
-      auth_kind: serviceaccount
-      service_account_file: "/tmp/auth.pem"
+    filters:
+    - name = test_object
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: facts
 '''
 
 RETURN = '''
