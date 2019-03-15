@@ -47,12 +47,13 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name:  a managed zone facts
+- name: " a managed zone facts"
   gcp_dns_managed_zone_facts:
-      dns_name: test.somewild2.example.com.
-      project: test_project
-      auth_kind: serviceaccount
-      service_account_file: "/tmp/auth.pem"
+    dns_name: test.somewild2.example.com.
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: facts
 '''
 
 RETURN = '''
@@ -95,7 +96,7 @@ items:
         is a set of DNS name servers that all host the same ManagedZones. Most users
         will leave this field unset.
       returned: success
-      type: list
+      type: str
     creationTime:
       description:
       - The time that this resource was created on the server.

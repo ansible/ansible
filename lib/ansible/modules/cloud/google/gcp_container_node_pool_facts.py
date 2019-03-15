@@ -60,13 +60,14 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name:  a node pool facts
+- name: " a node pool facts"
   gcp_container_node_pool_facts:
-      cluster: "{{ cluster }}"
-      location: us-central1-a
-      project: test_project
-      auth_kind: serviceaccount
-      service_account_file: "/tmp/auth.pem"
+    cluster: "{{ cluster }}"
+    location: us-central1-a
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: facts
 '''
 
 RETURN = '''

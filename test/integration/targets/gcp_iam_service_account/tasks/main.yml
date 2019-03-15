@@ -15,25 +15,21 @@
 # Pre-test setup
 - name: delete a service account
   gcp_iam_service_account:
-      name: '"{{resource_name}}@{{gcp_project}}.google.com.iam.gserviceaccount.com"
-
-      '
-      display_name: My Ansible test key
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: absent
+    name: '"{{resource_name}}@{{gcp_project}}.google.com.iam.gserviceaccount.com"'
+    display_name: My Ansible test key
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
 #----------------------------------------------------------
 - name: create a service account
   gcp_iam_service_account:
-      name: '"{{resource_name}}@{{gcp_project}}.google.com.iam.gserviceaccount.com"
-
-      '
-      display_name: My Ansible test key
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: '"{{resource_name}}@{{gcp_project}}.google.com.iam.gserviceaccount.com"'
+    display_name: My Ansible test key
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: result
 - name: assert changed is true
   assert:
@@ -54,14 +50,12 @@
 # ----------------------------------------------------------------------------
 - name: create a service account that already exists
   gcp_iam_service_account:
-      name: '"{{resource_name}}@{{gcp_project}}.google.com.iam.gserviceaccount.com"
-
-      '
-      display_name: My Ansible test key
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: '"{{resource_name}}@{{gcp_project}}.google.com.iam.gserviceaccount.com"'
+    display_name: My Ansible test key
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: result
 - name: assert changed is false
   assert:
@@ -70,14 +64,12 @@
 #----------------------------------------------------------
 - name: delete a service account
   gcp_iam_service_account:
-      name: '"{{resource_name}}@{{gcp_project}}.google.com.iam.gserviceaccount.com"
-
-      '
-      display_name: My Ansible test key
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: absent
+    name: '"{{resource_name}}@{{gcp_project}}.google.com.iam.gserviceaccount.com"'
+    display_name: My Ansible test key
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
   register: result
 - name: assert changed is true
   assert:
@@ -98,14 +90,12 @@
 # ----------------------------------------------------------------------------
 - name: delete a service account that does not exist
   gcp_iam_service_account:
-      name: '"{{resource_name}}@{{gcp_project}}.google.com.iam.gserviceaccount.com"
-
-      '
-      display_name: My Ansible test key
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: absent
+    name: '"{{resource_name}}@{{gcp_project}}.google.com.iam.gserviceaccount.com"'
+    display_name: My Ansible test key
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
   register: result
 - name: assert changed is false
   assert:
