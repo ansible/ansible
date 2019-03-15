@@ -3,7 +3,7 @@
 - name: get register cmd that will get ace info
   set_fact:
     test_ace_cmd: |
-      $ace_list = (Get-Acl -Path $path).Access | Where-Object { $_.IsInherited -eq $false } | ForEach-Object {
+      $ace_list = (Get-Acl -LiteralPath $path).Access | Where-Object { $_.IsInherited -eq $false } | ForEach-Object {
           @{
               rights = $_.FileSystemRights.ToString()
               type = $_.AccessControlType.ToString()
