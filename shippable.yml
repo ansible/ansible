@@ -105,6 +105,22 @@ matrix:
     - env: T=linux/ubuntu1604py3/3
     - env: T=linux/ubuntu1804/3
 
+    - env: T=osx/10.11/4
+    - env: T=rhel/7.6/4
+    - env: T=rhel/8.0/4
+    - env: T=freebsd/11.1/4
+    - env: T=freebsd/12.0/4
+    - env: T=linux/centos6/4
+    - env: T=linux/centos7/4
+    - env: T=linux/fedora28/4
+    - env: T=linux/fedora29/4
+    - env: T=linux/opensuse15py2/4
+    - env: T=linux/opensuse15/4
+    - env: T=linux/ubuntu1404/4
+    - env: T=linux/ubuntu1604/4
+    - env: T=linux/ubuntu1604py3/4
+    - env: T=linux/ubuntu1804/4
+
     - env: T=aws/2.7/1
     - env: T=aws/3.6/1
 
