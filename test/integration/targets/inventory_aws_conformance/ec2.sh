@@ -3,7 +3,7 @@
 
 if [ -f ../../../../contrib/inventory/ec2.py ]; then
     ABS_SCRIPT="../../../../contrib/inventory/ec2.py"
-    ABS_SCRIPT=$($ANSIBLE_TEST_PYTHON_INTERPRETER -c "import os; print(os.path.abspath('${ABS_SCRIPT}'))")
+    ABS_SCRIPT=$(python -c "import os; print(os.path.abspath('${ABS_SCRIPT}'))")
 elif [ -f ~/ansible/contrib/inventory/ec2.py ]; then
     ABS_SCRIPT=~/ansible/contrib/inventory/ec2.py
 else
@@ -19,4 +19,4 @@ fi
 cd "${OUTPUT_DIR}"
 cp $ABS_SCRIPT .
 
-exec "$ANSIBLE_TEST_PYTHON_INTERPRETER" ec2.py
+ANSIBLE_JINJA2_NATIVE=1 ansible-inventory -vvvv -i ec2.py --list --output="$OUTPUT_DIR/script.out"

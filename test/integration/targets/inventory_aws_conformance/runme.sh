@@ -9,11 +9,9 @@ if [ -z "${OUTPUT_DIR+null}" ]; then
     export OUTPUT_DIR=$TARGET
 fi
 
-virtualenv --system-site-packages --python ${ANSIBLE_TEST_PYTHON_INTERPRETER:-python} "${OUTPUT_DIR}/aws-ec2-inventory"
+virtualenv --system-site-packages --python "${ANSIBLE_TEST_PYTHON_INTERPRETER:-python}" "${OUTPUT_DIR}/aws-ec2-inventory"
 source "${OUTPUT_DIR}/aws-ec2-inventory/bin/activate"
 pip install python-dateutil jmespath jinja2 PyYaml cryptography paramiko
-
-ANSIBLE_TEST_PYTHON_INTERPRETER=$(which python)
 
 # create boto3 symlinks
 ln -s "$TARGET/lib/boto" "$TARGET/lib/boto3"
@@ -40,8 +38,7 @@ aws_secret_acccess_key = BAR
 EOF
 
 rm -f script.out
-./ec2.sh | tee -a "$OUTPUT_DIR/script.out"
-#./ec2.sh 
+./ec2.sh
 RC=$?
 if [[ $RC != 0 ]]; then
     exit $RC
@@ -162,7 +159,7 @@ ANSIBLE_JINJA2_NATIVE=1 ansible-inventory -vvvv -i "$OUTPUT_DIR/test.aws_ec2.yml
 rm -f "$OUTPUT_DIR/aws_ec2.yml"
 rm "$TARGET/lib/boto3"
 rm "$TARGET/lib/botocore"
-rm -r ${OUTPUT_DIR}/aws-ec2-inventory/
+rm -r "${OUTPUT_DIR}/aws-ec2-inventory/"
 
 #################################################
 #   DIFF THE RESULTS
