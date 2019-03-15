@@ -321,7 +321,7 @@ Function Get-FileChecksum($path, $algorithm = 'sha1')
     Helper function to calculate a hash of a file in a way which PowerShell 3
     and above can handle
 #>
-    If (Test-Path -Path $path -PathType Leaf)
+    If (Test-Path -LiteralPath $path -PathType Leaf)
     {
         switch ($algorithm)
         {
@@ -334,7 +334,7 @@ Function Get-FileChecksum($path, $algorithm = 'sha1')
         }
 
         If ($PSVersionTable.PSVersion.Major -ge 4) {
-            $raw_hash = Get-FileHash $path -Algorithm $algorithm
+            $raw_hash = Get-FileHash -LiteralPath $path -Algorithm $algorithm
             $hash = $raw_hash.Hash.ToLower()
         } Else {
             $fp = [System.IO.File]::Open($path, [System.IO.Filemode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite);
@@ -342,7 +342,7 @@ Function Get-FileChecksum($path, $algorithm = 'sha1')
             $fp.Dispose();
         }
     }
-    ElseIf (Test-Path -Path $path -PathType Container)
+    ElseIf (Test-Path -LiteralPath $path -PathType Container)
     {
         $hash = "3";
     }
