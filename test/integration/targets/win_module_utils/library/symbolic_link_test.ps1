@@ -6,7 +6,7 @@
 
 $ErrorActionPreference = 'Stop'
 
-$path = Join-Path -Path $env:TEMP -ChildPath '.ansible  .ÅÑŚÌβŁÈ [$!@^&test(;)]'
+$path = Join-Path -Path ([System.IO.Path]::GetFullPath($env:TEMP)) -ChildPath '.ansible .ÅÑŚÌβŁÈ [$!@^&test(;)]'
 
 $folder_target = "$path\folder"
 $file_target = "$path\file"
