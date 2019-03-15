@@ -37,6 +37,7 @@ options:
     description:
     - The "time to live" of the record, in seconds.
     - Ignored when C(state=absent).
+    - Valid range is 1 - 31557600.
     - Note that an Active Directory forest can specify a minimum TTL, and will
       dynamically "round up" other values to that minimum.
     default: 3600
