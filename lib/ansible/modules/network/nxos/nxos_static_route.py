@@ -285,11 +285,11 @@ def main():
     if warnings:
         result['warnings'] = warnings
 
-    want_list = map_params_to_obj(module)
-    for want in want_list:
-        prefix = normalize_prefix(module, want['prefix'])
+    want = map_params_to_obj(module)
+    for w in want:
+        prefix = normalize_prefix(module, w['prefix'])
         candidate = CustomNetworkConfig(indent=3)
-        reconcile_candidate(module, candidate, prefix, want)
+        reconcile_candidate(module, candidate, prefix, w)
 
         if not module.check_mode and candidate:
             candidate = candidate.items_text()
