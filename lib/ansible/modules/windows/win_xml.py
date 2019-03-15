@@ -73,8 +73,8 @@ options:
 author:
     - Richard Levenberg (@richardcs)
     - Jon Hawkesworth (@jhawkesworth)
-notes: 
-    - Only supports operating on xml elements, attributes and text. 
+notes:
+    - Only supports operating on xml elements, attributes and text.
     - Namespace, processing-instruction, command and document node types cannot be modified with this module.
 seealso:
     - module: xml
