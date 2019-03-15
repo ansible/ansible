@@ -301,7 +301,9 @@ Function Get-ChocolateyPackageVersion {
 
     $command = Argv-ToString -arguments @($choco_path, "list", "--local-only", "--exact", "--limit-output", $name)
     $res = Run-Command -command $command
-    if ($res.rc -ne 0) {
+
+    # Chocolatey v0.10.12 introduced enhanced exit codes, 2 means no results, e.g. no package
+    if ($res.rc -notin @(0, 2)) {
         $result.command = $command
         $result.rc = $res.rc
         $result.stdout = $res.stdout
