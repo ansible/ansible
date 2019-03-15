@@ -57,7 +57,7 @@
     that:
     - ipr is not successful
     - ipr is not changed
-    - 'ipr.msg == "parameters are mutually exclusive: account, project"'
+    - 'ipr.msg == "parameters are mutually exclusive: account|project"'
 
 - name: test create a VLAN IP RANGE in check mode
   cs_vlan_ip_range:
