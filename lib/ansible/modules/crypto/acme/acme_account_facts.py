@@ -21,7 +21,7 @@ version_added: "2.7"
 short_description: Retrieves information on ACME accounts
 description:
    - "Allows to retrieve information on accounts a CA supporting the
-      L(ACME protocol,https://tools.ietf.org/html/draft-ietf-acme-acme-18),
+      L(ACME protocol,https://tools.ietf.org/html/rfc8555),
       such as L(Let's Encrypt,https://letsencrypt.org/)."
    - "This module only works with the ACME v2 protocol."
 notes:
