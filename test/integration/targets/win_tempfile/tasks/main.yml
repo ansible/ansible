@@ -1,6 +1,15 @@
 ---
-- name: get expanded %TEMP% value
+- name: get the current %TEMP% value
   win_shell: '[System.IO.Path]::GetFullPath($env:TEMP)'
+  register: temp_value
+
+- name: register temp path value
+  set_fact:
+    temp_value: '{{ temp_value.stdout | trim }}'
+
+
+- name: get raw %TEMP% value
+  win_shell: '$env:TEMP'
   register: raw_temp_value
 
 - name: create temp file defaults check
@@ -18,7 +27,7 @@
     that:
     - create_tmp_file_defaults_check is changed
     - create_tmp_file_defaults_check.state == 'file'
-    - create_tmp_file_defaults_check.path.startswith((raw_temp_value.stdout | trim) + '\\ansible.')
+    - create_tmp_file_defaults_check.path.startswith(temp_value + '\\ansible.')
     - actual_create_tmp_file_defaults_check.stat.exists == False
 
 - name: create temp file defaults
@@ -35,7 +44,7 @@
     that:
     - create_tmp_file_defaults is changed
     - create_tmp_file_defaults.state == 'file'
-    - create_tmp_file_defaults.path.startswith((raw_temp_value.stdout | trim ) + '\\ansible.')
+    - create_tmp_file_defaults.path.startswith(temp_value + '\\ansible.')
     - actual_create_tmp_file_defaults.stat.exists == True
     - actual_create_tmp_file_defaults.stat.isdir == False
 
@@ -53,7 +62,7 @@
     that:
     - create_tmp_file_defaults_again is changed
     - create_tmp_file_defaults_again.state == 'file'
-    - create_tmp_file_defaults_again.path.startswith((raw_temp_value.stdout | trim) + '\\ansible.')
+    - create_tmp_file_defaults_again.path.startswith(temp_value + '\\ansible.')
     - create_tmp_file_defaults_again.path != create_tmp_file_defaults.path
     - actual_create_tmp_file_defaults_again.stat.exists == True
     - actual_create_tmp_file_defaults_again.stat.isdir == False
@@ -74,7 +83,7 @@
     that:
     - create_tmp_folder_check is changed
     - create_tmp_folder_check.state == 'directory'
-    - create_tmp_folder_check.path.startswith((raw_temp_value.stdout | trim)  + '\\ansible.')
+    - create_tmp_folder_check.path.startswith(temp_value  + '\\ansible.')
     - actual_create_tmp_folder_check.stat.exists == False
 
 - name: create temp folder
@@ -92,7 +101,7 @@
     that:
     - create_tmp_folder is changed
     - create_tmp_folder.state == 'directory'
-    - create_tmp_folder.path.startswith((raw_temp_value.stdout | trim) + '\\ansible.')
+    - create_tmp_folder.path.startswith(temp_value + '\\ansible.')
     - actual_create_tmp_folder.stat.exists == True
     - actual_create_tmp_folder.stat.isdir == True
 
@@ -111,7 +120,7 @@
     that:
     - create_tmp_file_suffix is changed
     - create_tmp_file_suffix.state == 'file'
-    - create_tmp_file_suffix.path.startswith((raw_temp_value.stdout | trim) + '\\ansible.')
+    - create_tmp_file_suffix.path.startswith(temp_value + '\\ansible.')
     - create_tmp_file_suffix.path.endswith('test-suffix')
     - actual_creat_tmp_file_suffix.stat.exists == True
     - actual_creat_tmp_file_suffix.stat.isdir == False
@@ -131,7 +140,7 @@
     that:
     - create_tmp_file_prefix is changed
     - create_tmp_file_prefix.state == 'file'
-    - create_tmp_file_prefix.path.startswith((raw_temp_value.stdout | trim) + '\\test-prefix')
+    - create_tmp_file_prefix.path.startswith(temp_value + '\\test-prefix')
     - actual_creat_tmp_file_prefix.stat.exists == True
     - actual_creat_tmp_file_prefix.stat.isdir == False
 
