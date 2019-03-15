@@ -119,7 +119,7 @@
 
 - name: Create Inventory file for Windows host
   template:
-    dest: "{{playbook_dir}}/inventory.aws_ssm"
+    dest: "{{playbook_dir}}/inventory-windows.aws_ssm"
     src: inventory-windows.aws_ssm.j2
   tags: setup_infra
 
