@@ -345,7 +345,7 @@ class PluginLoader:
                 # HACK: We have no way of executing python byte compiled files as ansible modules so specifically exclude them
                 # FIXME: I believe this is only correct for modules and module_utils.
                 # For all other plugins we want .pyc and .pyo should be valid
-                if full_path.endswith(('.pyc', '.pyo')):
+                if any(full_path.endswith(x) for x in C.BLACKLIST_EXTS):
                     continue
 
                 splitname = os.path.splitext(full_name)
