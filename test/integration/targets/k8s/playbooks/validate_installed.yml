@@ -1,9 +1,0 @@
-- hosts: localhost
-  connection: local
-  vars:
-    playbook_namespace: ansible-test-k8s-validate
-
-  tasks:
-  - include_role:
-      name: k8s
-      tasks_from: validate_installed

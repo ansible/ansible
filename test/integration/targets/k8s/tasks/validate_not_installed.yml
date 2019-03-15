@@ -1,7 +1,3 @@
-- hosts: localhost
-  connection: local
-
-  tasks:
   - k8s:
       definition:
         apiVersion: v1

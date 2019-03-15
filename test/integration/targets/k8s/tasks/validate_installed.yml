@@ -4,6 +4,10 @@
         name: "{{ playbook_namespace }}"
         kind: namespace
 
+    - copy:
+        src: files
+        dest: "{{ remote_tmp_dir }}"
+
     - name: incredibly simple ConfigMap
       k8s:
         definition:
@@ -23,7 +27,7 @@
 
     - name: extra property does not fail without strict
       k8s:
-        src: "{{ role_path }}/files/kuard-extra-property.yml"
+        src: "{{ remote_tmp_dir }}/files/kuard-extra-property.yml"
         namespace: "{{ playbook_namespace }}"
         validate:
           fail_on_error: yes
@@ -31,7 +35,7 @@
 
     - name: extra property fails with strict
       k8s:
-        src: "{{ role_path }}/files/kuard-extra-property.yml"
+        src: "{{ remote_tmp_dir }}/files/kuard-extra-property.yml"
         namespace: "{{ playbook_namespace }}"
         validate:
           fail_on_error: yes
@@ -46,7 +50,7 @@
 
     - name: invalid type fails at validation stage
       k8s:
-        src: "{{ role_path }}/files/kuard-invalid-type.yml"
+        src: "{{ remote_tmp_dir }}/files/kuard-invalid-type.yml"
         namespace: "{{ playbook_namespace }}"
         validate:
           fail_on_error: yes
@@ -61,7 +65,7 @@
 
     - name: invalid type fails with warnings when fail_on_error is False
       k8s:
-        src: "{{ role_path }}/files/kuard-invalid-type.yml"
+        src: "{{ remote_tmp_dir }}/files/kuard-invalid-type.yml"
         namespace: "{{ playbook_namespace }}"
         validate:
           fail_on_error: no
@@ -76,11 +80,11 @@
 
     - name: setup custom resource definition
       k8s:
-        src: "{{ role_path }}/files/setup-crd.yml"
+        src: "{{ remote_tmp_dir }}/files/setup-crd.yml"
 
     - name: add custom resource definition
       k8s:
-        src: "{{ role_path }}/files/crd-resource.yml"
+        src: "{{ remote_tmp_dir }}/files/crd-resource.yml"
         namespace: "{{ playbook_namespace }}"
         validate:
           fail_on_error: yes
