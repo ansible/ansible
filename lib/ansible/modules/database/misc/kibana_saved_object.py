@@ -364,6 +364,10 @@ def main():
                              object_id=object_id,
                              object_type=object_type,
                              content=content):
+                if module.check_mode:
+                    module.exit_json(changed=True, object_id=object_id,
+                                     object_type=object_type,
+                                     msg="Object would have been updated if check mode had not been spacified: {0}".format(object_id))
                 # Update object
                 r = update_object(
                     module=module,
@@ -376,12 +380,16 @@ def main():
                 )
                 module.exit_json(changed=True, object_id=object_id,
                                  object_type=object_type,
-                                 msg="object has been updated: {0}".format(object_id))
+                                 msg="Object has been updated: {0}".format(object_id))
             else:
                 module.exit_json(changed=False, object_id=object_id,
                                  object_type=object_type,
                                  msg="Object already exists: {0}".format(object_id))
         if present and overwrite:
+            if module.check_mode:
+                module.exit_json(changed=True, object_id=object_id,
+                                 object_type=object_type,
+                                 msg="Object would have been overwritten if check mode had not been spacified: {0}".format(object_id))
             # Overwrite object
             r = create_object(
                 module=module,
@@ -398,6 +406,10 @@ def main():
                              msg="Object has been overwritten: {0}".format(object_id))
         if not present:
             # Create object
+            if module.check_mode:
+                module.exit_json(changed=True, object_id=object_id,
+                                 object_type=object_type,
+                                 msg="Object would have been created if check mode had not been spacified: {0}".format(object_id))
             r = create_object(
                 module=module,
                 object_id=object_id,
@@ -417,6 +429,10 @@ def main():
                              msg="Object does not exist: {0}".format(object_id))
 
         if present:
+            if module.check_mode:
+                module.exit_json(changed=True, object_id=object_id,
+                                 object_type=object_type,
+                                 msg="Object would have been deleted if check mode had not been spacified: {0}".format(object_id))
             r = delete_object(
                 module=module,
                 object_id=object_id,
