@@ -133,6 +133,7 @@ class Connection(ConnectionBase):
     allow_executable = False
     allow_extras = True
     has_pipelining = False
+    is_windows = False
     _client = None
     _session = None
     _stdout = None
@@ -145,11 +146,21 @@ class Connection(ConnectionBase):
         super(Connection, self).__init__(*args, **kwargs)
         self.host = self._play_context.remote_addr
 
+        if getattr(self._shell, "SHELL_FAMILY", '') == 'powershell':
+            self.delegate = None
+            self.has_native_async = True
+            self.always_pipeline_modules = True
+            self.module_implementation_preferences = ('.ps1', '.exe', '')
+            self.protocol = None
+            self.shell_id = None
+
     def _connect(self):
         ''' connect to the host via ssm '''
 
         self._play_context.remote_user = getpass.getuser()
 
+        if getattr(self._shell, "SHELL_FAMILY", '') == 'powershell':
+            self.is_windows = True
         if not self._session_id:
             self.start_session()
         return self
@@ -258,7 +269,7 @@ class Connection(ConnectionBase):
             if begin:
                 if mark_end in line:
                     for line in stdout.splitlines():
-                        display.vvvvv(u"POST_PROCESS powershell: {0}".format(to_text(line)), host=self.host)
+                        display.vvvvv(u"POST_PROCESS: {0}".format(to_text(line)), host=self.host)
                     returncode, stdout = self._post_process(stdout)
                     break
                 else:
@@ -271,27 +282,54 @@ class Connection(ConnectionBase):
     def _prepare_terminal(self):
         ''' perform any one-time terminal settings '''
 
-        self._session.stdin.write("stty -echo\n")
-        self._session.stdin.write("PS1=''\n")
+        if not self.is_windows:
+            self._session.stdin.write("stty -echo\n")
+            self._session.stdin.write("PS1=''\n")
 
     def _wrap_command(self, cmd, sudoable, mark_start, mark_end):
         ''' wrap commad so stdout and status can be extracted '''
 
-        if sudoable:
-            cmd = "sudo " + cmd
-        return "echo '" + mark_start + "'\n" + cmd + "\necho $'\\n'$?\n" + "echo '" + mark_end + "'\n"
+        if self.is_windows:
+            return cmd + "; echo $? $LASTEXITCODE; echo '" + mark_start + "'\n" + "echo '" + mark_end + "'\n"
+        else:
+            if sudoable:
+                cmd = "sudo " + cmd
+            return "echo '" + mark_start + "'\n" + cmd + "\necho $'\\n'$?\n" + "echo '" + mark_end + "'\n"
 
     def _post_process(self, stdout):
         ''' extract command status and strip unwanted lines '''
 
-        # Get command return code
-        returncode = int(stdout.splitlines()[-2])
+        if self.is_windows:
+            success = stdout.rfind('True')
+            fail = stdout.rfind('False')
 
-        # Throw away ending lines
-        for x in range(0, 3):
-            stdout = stdout[:stdout.rfind('\n')]
+            if success > fail:
+                returncode = 0
+                stdout = stdout[:success]
+            elif fail > success:
+                try:
+                    # test using: ansible -m raw -a 'cmd /c exit 99'
+                    returncode = int(stdout[fail:].split()[1])
+                except (IndexError, ValueError):
+                    returncode = -1
+                stdout = stdout[:fail]
+            else:
+                returncode = -51
 
-        return (returncode, stdout)
+            # Strip sequence at terminal width
+            if len(stdout) > 200:
+                stdout = stdout.replace('\r\r\n', '')
+
+            return (returncode, stdout)
+        else:
+            # Get command return code
+            returncode = int(stdout.splitlines()[-2])
+
+            # Throw away ending lines
+            for x in range(0, 3):
+                stdout = stdout[:stdout.rfind('\n')]
+
+            return (returncode, stdout)
 
     def _filter_ansi(self, line):
         ''' remove any ANSI terminal control codes '''
