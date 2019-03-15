@@ -1,2 +1,2 @@
 ---
-test_acl_path: '{{ win_output_dir }}/win_acl'
+test_acl_path: '{{ win_output_dir }}\win_acl .ÅÑŚÌβŁÈ [$!@^&test(;)]'
