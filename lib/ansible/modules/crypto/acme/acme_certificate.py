@@ -21,7 +21,7 @@ version_added: "2.2"
 short_description: Create SSL/TLS certificates with the ACME protocol
 description:
    - "Create and renew SSL/TLS certificates with a CA supporting the
-      L(ACME protocol,https://tools.ietf.org/html/draft-ietf-acme-acme-18),
+      L(ACME protocol,https://tools.ietf.org/html/rfc8555),
       such as L(Let's Encrypt,https://letsencrypt.org/). The current
       implementation supports the C(http-01), C(dns-01) and C(tls-alpn-01)
       challenges."
@@ -36,7 +36,7 @@ description:
       the necessary certificate has to be created and served.
       It is I(not) the responsibility of this module to perform these steps."
    - "For details on how to fulfill these challenges, you might have to read through
-      L(the main ACME specification,https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-8)
+      L(the main ACME specification,https://tools.ietf.org/html/rfc8555#section-8)
       and the L(TLS-ALPN-01 specification,https://tools.ietf.org/html/draft-ietf-acme-tls-alpn-05#section-3).
       Also, consider the examples provided for this module."
    - "The module includes experimental support for IP identifiers according to
@@ -55,8 +55,8 @@ seealso:
                  Provides useful information for example on rate limits.
     link: https://letsencrypt.org/docs/
   - name: Automatic Certificate Management Environment (ACME)
-    description: The current draft specification of the ACME protocol.
-    link: https://tools.ietf.org/html/draft-ietf-acme-acme-18
+    description: The specification of the ACME protocol (RFC 8555).
+    link: https://tools.ietf.org/html/rfc8555
   - name: ACME TLS ALPN Challenge Extension
     description: The current draft specification of the C(tls-alpn-01) challenge.
     link: https://tools.ietf.org/html/draft-ietf-acme-tls-alpn-05
@@ -351,7 +351,7 @@ authorizations:
   type: complex
   contains:
       authorization:
-        description: ACME authorization object. See U(https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-7.1.4)
+        description: ACME authorization object. See U(https://tools.ietf.org/html/rfc8555#section-7.1.4)
         returned: success
         type: dict
 order_uri:
@@ -534,13 +534,13 @@ class ACMEClient(object):
             keyauthorization = self.account.get_keyauthorization(token)
 
             if challenge_type == 'http-01':
-                # https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-8.3
+                # https://tools.ietf.org/html/rfc8555#section-8.3
                 resource = '.well-known/acme-challenge/' + token
                 data[challenge_type] = {'resource': resource, 'resource_value': keyauthorization}
             elif challenge_type == 'dns-01':
                 if identifier_type != 'dns':
                     continue
-                # https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-8.4
+                # https://tools.ietf.org/html/rfc8555#section-8.4
                 resource = '_acme-challenge'
                 value = nopad_b64(hashlib.sha256(to_bytes(keyauthorization)).digest())
                 record = (resource + identifier[1:]) if identifier.startswith('*.') else (resource + '.' + identifier)
@@ -639,7 +639,7 @@ class ACMEClient(object):
         '''
         Create a new certificate based on the csr.
         Return the certificate object as dict
-        https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-7.4
+        https://tools.ietf.org/html/rfc8555#section-7.4
         '''
         csr = pem_to_der(self.csr)
         new_cert = {
@@ -673,7 +673,7 @@ class ACMEClient(object):
     def _download_cert(self, url):
         '''
         Download and parse the certificate chain.
-        https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-7.4.2
+        https://tools.ietf.org/html/rfc8555#section-7.4.2
         '''
         content, info = self.account.get_request(url, parse_json_result=False, headers={'Accept': 'application/pem-certificate-chain'})
 
@@ -741,7 +741,7 @@ class ACMEClient(object):
     def _new_order_v2(self):
         '''
         Start a new certificate order (ACME v2 protocol).
-        https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-7.4
+        https://tools.ietf.org/html/rfc8555#section-7.4
         '''
         identifiers = []
         for identifier_type, identifier in self.identifiers:
@@ -906,7 +906,7 @@ class ACMEClient(object):
         '''
         Deactivates all valid authz's. Does not raise exceptions.
         https://community.letsencrypt.org/t/authorization-deactivation/19860/2
-        https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-7.5.2
+        https://tools.ietf.org/html/rfc8555#section-7.5.2
         '''
         authz_deactivate = {
             'status': 'deactivated'
