@@ -52,12 +52,13 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name:  a database facts
+- name: " a database facts"
   gcp_sql_database_facts:
-      instance: "{{ instance }}"
-      project: test_project
-      auth_kind: serviceaccount
-      service_account_file: "/tmp/auth.pem"
+    instance: "{{ instance }}"
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: facts
 '''
 
 RETURN = '''

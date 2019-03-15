@@ -108,22 +108,22 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a bucket
   gcp_storage_bucket:
-      name: "{{ resource_name }}"
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: "{{ resource_name }}"
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: bucket
 
 - name: create a bucket access control
   gcp_storage_bucket_access_control:
-      bucket: "test_object"
-      entity: user-alexstephen@google.com
-      role: WRITER
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    bucket: test_object
+    entity: user-alexstephen@google.com
+    role: WRITER
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
