@@ -10,7 +10,7 @@
   assert:
     that:
     - ip_address is failed
-    - 'ip_address.msg == "parameters are mutually exclusive: vpc, network"'
+    - 'ip_address.msg == "parameters are mutually exclusive: vpc|network"'
 
 - name: run test for network setup
   import_tasks: network.yml
