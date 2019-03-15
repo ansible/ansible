@@ -22,7 +22,12 @@ class Paginator(object):
 
     def build_full_result(self):
         filtered_states = set([x.state['Name'] for x in self.datalist]).difference(set(self.instance_states))
-        return {'Reservations': [{'Instances': [x.to_dict() for x in self.datalist if x.state['Name'] not in filtered_states]}]}
+        return {'Reservations': [{
+            'Instances': [x.to_dict() for x in self.datalist if x.state['Name'] not in filtered_states],
+            'OwnerId': '123456789012',
+            'RequesterId': 'AIDAIS3MMFPO53D2T3WWE',
+            'ReservationId': 'r-07889670a282de964'
+        }]}
 
 
 class Client(object):
