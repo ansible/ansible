@@ -18,7 +18,7 @@ INVENTORY=../connection_aws_ssm/inventory-linux.aws_ssm ./test.sh \
 INVENTORY=../connection_aws_ssm/inventory-windows.aws_ssm ./test.sh \
     -e target_hosts=aws_ssm \
     -e local_tmp=/tmp/ansible-local \
-    -e remote_tmp=c:/windows/temp/ansible-remote
+    -e remote_tmp=c:/windows/temp/ansible-remote \
     -e action_prefix= \
     "$@" || true
 
