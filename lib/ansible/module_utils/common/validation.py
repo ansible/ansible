@@ -8,10 +8,11 @@ __metaclass__ = type
 import os
 import re
 
-from ansible.module_utils.common.text.converters import jsonify
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.common._json_compat import json
 from ansible.module_utils.common.collections import is_iterable
+from ansible.module_utils.common.text.converters import jsonify
+from ansible.module_utils.common.text.formatters import human_to_bytes
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.pycompat24 import literal_eval
 from ansible.module_utils.six import (
@@ -20,7 +21,6 @@ from ansible.module_utils.six import (
     string_types,
     text_type,
 )
-from ansible.module_utils.common.text.formatters import human_to_bytes
 
 
 def count_terms(terms, module_parameters):
