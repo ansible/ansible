@@ -119,14 +119,14 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a interconnect attachment
   gcp_compute_interconnect_attachment:
-      name: "test_object"
-      region: us-central1
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      interconnect: https://googleapis.com/compute/v1/projects/test_project/global/interconnects/...
-      router: https://googleapis.com/compute/v1/projects/test_project/regions/us-central1/routers/...
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    region: us-central1
+    project: test_project
+    auth_kind: serviceaccount
+    interconnect: https://googleapis.com/compute/v1/projects/test_project/global/interconnects/...
+    router: https://googleapis.com/compute/v1/projects/test_project/regions/us-central1/routers/...
+    service_account_file: "/tmp/auth.pem"
+    state: present
   register: disk
 '''
 

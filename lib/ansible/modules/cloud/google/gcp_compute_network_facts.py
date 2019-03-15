@@ -49,13 +49,14 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name:  a network facts
+- name: " a network facts"
   gcp_compute_network_facts:
-      filters:
-      - name = test_object
-      project: test_project
-      auth_kind: serviceaccount
-      service_account_file: "/tmp/auth.pem"
+    filters:
+    - name = test_object
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: facts
 '''
 
 RETURN = '''
@@ -66,15 +67,14 @@ items:
   contains:
     description:
       description:
-      - An optional description of this resource. Provide this property when you create
-        the resource.
+      - An optional description of this resource. The resource must be recreated to
+        modify this field.
       returned: success
       type: str
     gateway_ipv4:
       description:
-      - A gateway address for default routing to other networks. This value is read
-        only and is selected by the Google Compute Engine, typically as the first
-        usable address in the IPv4Range.
+      - The gateway address for default routing out of the network. This value is
+        selected by GCP.
       returned: success
       type: str
     id:
@@ -84,9 +84,13 @@ items:
       type: int
     ipv4_range:
       description:
-      - 'The range of internal addresses that are legal on this network. This range
-        is a CIDR specification, for example: 192.168.0.0/16. Provided by the client
-        when the network is created.'
+      - If this field is specified, a deprecated legacy network is created.
+      - You will no longer be able to create a legacy network on Feb 1, 2020.
+      - See the [legacy network docs](U(https://cloud.google.com/vpc/docs/legacy))
+        for more details.
+      - The range of internal addresses that are legal on this legacy network.
+      - 'This range is a CIDR specification, for example: `192.168.0.0/16`.'
+      - The resource must be recreated to modify this field.
       returned: success
       type: str
     name:
@@ -106,10 +110,11 @@ items:
       type: list
     autoCreateSubnetworks:
       description:
-      - When set to true, the network is created in "auto subnet mode". When set to
-        false, the network is in "custom subnet mode".
-      - In "auto subnet mode", a newly created network is assigned the default CIDR
-        of 10.128.0.0/9 and it automatically creates one subnetwork per region.
+      - When set to `true`, the network is created in "auto subnet mode" and it will
+        create a subnet for each region automatically across the `10.128.0.0/9` address
+        range.
+      - When set to `false`, the network is created in "custom subnet mode" so the
+        user can explicitly connect subnetwork resources.
       returned: success
       type: bool
     creationTimestamp:
@@ -126,9 +131,9 @@ items:
       contains:
         routingMode:
           description:
-          - The network-wide routing mode to use. If set to REGIONAL, this network's
+          - The network-wide routing mode to use. If set to `REGIONAL`, this network's
             cloud routers will only advertise routes with subnetworks of this network
-            in the same region as the router. If set to GLOBAL, this network's cloud
+            in the same region as the router. If set to `GLOBAL`, this network's cloud
             routers will advertise routes with all subnetworks of this network, across
             regions.
           returned: success
