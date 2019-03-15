@@ -39,8 +39,9 @@ Try {
         $result.changed = $true
     }
 
-    If ($recurse) {
-        $files = Get-ChildItem -LiteralPath $path -Force -Recurse
+    If ($recurse -and $file -is [System.IO.DirectoryInfo]) {
+        # Get-ChildItem falls flat on pre PSv5 when dealing with complex path chars
+        $files = $file.EnumerateFileSystemInfos("*", [System.IO.SearchOption]::AllDirectories)
         ForEach($file in $files){
             $acl = Get-Acl -LiteralPath $file.FullName
 
