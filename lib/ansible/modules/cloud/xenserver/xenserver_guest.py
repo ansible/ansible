@@ -438,7 +438,6 @@ except ImportError:
     pass
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils import six
 from ansible.module_utils.xenserver import (xenserver_common_argument_spec, XAPI, XenServerObject, get_object_ref,
                                             gather_vm_params, gather_vm_facts, set_vm_power_state, wait_for_vm_ip_address,
