@@ -8,14 +8,14 @@
   check_mode: yes
 
 - name: check if source exists (check mode)
-  win_command: choco.exe source list -r
+  choco_source:
   register: create_actual_check
 
 - name: assert create source (check mode)
   assert:
     that:
     - create_check is changed
-    - create_actual_check.stdout_lines == []
+    - create_actual_check.sources == []
 
 - name: create source
   win_chocolatey_source:
@@ -25,14 +25,23 @@
   register: create
 
 - name: check if source exists
-  win_command: choco.exe source list -r
+  choco_source:
   register: create_actual
 
 - name: assert create source
   assert:
     that:
     - create is changed
-    - create_actual.stdout_lines == ["chocolatey|https://chocolatey.org/api/v2/|False|||0|False|False|False"]
+    - create_actual.sources|length == 1
+    - create_actual.sources[0].name == 'chocolatey'
+    - create_actual.sources[0].source == 'https://chocolatey.org/api/v2/'
+    - create_actual.sources[0].disabled == False
+    - create_actual.sources[0].source_username == None
+    - create_actual.sources[0].priority == 0
+    - create_actual.sources[0].certificate == None
+    - create_actual.sources[0].bypass_proxy == False
+    - create_actual.sources[0].allow_self_service == False
+    - create_actual.sources[0].admin_only == False
 
 - name: create source (idempotent)
   win_chocolatey_source:
@@ -54,14 +63,14 @@
   check_mode: yes
 
 - name: check if source is removed (check mode)
-  win_command: choco.exe source list -r
+  choco_source:
   register: remove_actual_check
 
 - name: assert remove source (check mode)
   assert:
     that:
     - remove_check is changed
-    - remove_actual_check.stdout == create_actual.stdout
+    - remove_actual_check.sources == create_actual.sources
 
 - name: remove source
   win_chocolatey_source:
@@ -70,14 +79,14 @@
   register: remove
 
 - name: check if source is removed
-  win_command: choco.exe source list -r
+  choco_source:
   register: remove_actual
 
 - name: assert remove source
   assert:
     that:
     - remove is changed
-    - remove_actual.stdout_lines == []
+    - remove_actual.sources == []
 
 - name: remove source (idempotent)
   win_chocolatey_source:
@@ -105,14 +114,14 @@
   check_mode: yes
 
 - name: check if source is created (check mode)
-  win_command: choco.exe source list -r
+  choco_source:
   register: create_special_actual_check
 
 - name: assert create a disabled service (check mode)
   assert:
     that:
     - create_special_check is changed
-    - create_special_actual_check.stdout_lines == []
+    - create_special_actual_check.sources == []
 
 - name: create a disabled service
   win_chocolatey_source:
@@ -128,14 +137,23 @@
   register: create_special
 
 - name: check if source is created
-  win_command: choco.exe source list -r
+  choco_source:
   register: create_special_actual
 
 - name: assert create a disabled service
   assert:
     that:
     - create_special is changed
-    - create_special_actual.stdout_lines == ["test'|\"source 123^|C:\\chocolatey repos|True|username|C:\\cert.pfx|1|True|False|False"]
+    - create_special_actual.sources|length == 1
+    - create_special_actual.sources[0].name == test_chocolatey_name
+    - create_special_actual.sources[0].source == 'C:\\chocolatey repos'
+    - create_special_actual.sources[0].disabled == True
+    - create_special_actual.sources[0].source_username == 'username'
+    - create_special_actual.sources[0].priority == 1
+    - create_special_actual.sources[0].certificate == 'C:\\cert.pfx'
+    - create_special_actual.sources[0].bypass_proxy == True
+    - create_special_actual.sources[0].allow_self_service == False
+    - create_special_actual.sources[0].admin_only == False
 
 - name: create a disabled service pass always update
   win_chocolatey_source:
@@ -190,14 +208,14 @@
   check_mode: yes
 
 - name: check if source is changed (check mode)
-  win_command: choco.exe source list -r
+  choco_source:
   register: modify_source_check_actual
 
 - name: assert edit an existing source (check mode)
   assert:
     that:
     - modify_source_check is changed
-    - modify_source_check_actual.stdout_lines == create_special_actual.stdout_lines
+    - modify_source_check_actual.sources == create_special_actual.sources
 
 - name: edit an existing source
   win_chocolatey_source:
@@ -214,14 +232,22 @@
   register: modify_source
 
 - name: check if source is changed
-  win_command: choco.exe source list -r
+  choco_source:
   register: modify_source_actual
 
 - name: assert edit an existing source
   assert:
     that:
     - modify_source is changed
-    - modify_source_actual.stdout_lines == ["test'|\"source 123^|C:\\chocolatey repos2|False|username2|C:\\cert2.pfx|5|False|True|True"]
+    - modify_source_actual.sources[0].name == test_chocolatey_name
+    - modify_source_actual.sources[0].source == 'C:\\chocolatey repos2'
+    - modify_source_actual.sources[0].disabled == False
+    - modify_source_actual.sources[0].source_username == 'username2'
+    - modify_source_actual.sources[0].priority == 5
+    - modify_source_actual.sources[0].certificate == 'C:\\cert2.pfx'
+    - modify_source_actual.sources[0].bypass_proxy == False
+    - modify_source_actual.sources[0].allow_self_service == True
+    - modify_source_actual.sources[0].admin_only == True
 
 - name: edit an existing source (idempotent)
   win_chocolatey_source:
@@ -250,14 +276,14 @@
   check_mode: True
 
 - name: get result of disable source (check mode)
-  win_command: choco.exe source list -r
+  choco_source:
   register: disable_source_actual_check
 
 - name: assert disable source (check mode)
   assert:
     that:
     - disable_source_check is changed
-    - disable_source_actual_check.stdout == modify_source_actual.stdout
+    - disable_source_actual_check.sources == modify_source_actual.sources
 
 - name: disable source
   win_chocolatey_source:
@@ -266,14 +292,22 @@
   register: disable_source
 
 - name: get result of disable source
-  win_command: choco.exe source list -r
+  choco_source:
   register: disable_source_actual
 
 - name: assert disable source
   assert:
     that:
     - disable_source is changed
-    - disable_source_actual.stdout_lines == ["test'|\"source 123^|C:\\chocolatey repos2|True|username2|C:\\cert2.pfx|5|False|True|True"]
+    - disable_source_actual.sources[0].name == test_chocolatey_name
+    - disable_source_actual.sources[0].source == 'C:\\chocolatey repos2'
+    - disable_source_actual.sources[0].disabled == True
+    - disable_source_actual.sources[0].source_username == 'username2'
+    - disable_source_actual.sources[0].priority == 5
+    - disable_source_actual.sources[0].certificate == 'C:\\cert2.pfx'
+    - disable_source_actual.sources[0].bypass_proxy == False
+    - disable_source_actual.sources[0].allow_self_service == True
+    - disable_source_actual.sources[0].admin_only == True
 
 - name: disable source (idempotent)
   win_chocolatey_source:
@@ -294,14 +328,14 @@
   check_mode: True
 
 - name: get result of enable source (check mode)
-  win_command: choco.exe source list -r
+  choco_source:
   register: enable_source_actual_check
 
 - name: assert enable source (check mode)
   assert:
     that:
     - enable_source_check is changed
-    - enable_source_actual_check.stdout == disable_source_actual.stdout
+    - enable_source_actual_check.sources == disable_source_actual.sources
 
 - name: enable source
   win_chocolatey_source:
@@ -310,14 +344,22 @@
   register: enable_source
 
 - name: get result of enable source
-  win_command: choco.exe source list -r
+  choco_source:
   register: enable_source_actual
 
 - name: assert enable source
   assert:
     that:
     - enable_source is changed
-    - enable_source_actual.stdout_lines == ["test'|\"source 123^|C:\\chocolatey repos2|False|username2|C:\\cert2.pfx|5|False|True|True"]
+    - enable_source_actual.sources[0].name == test_chocolatey_name
+    - enable_source_actual.sources[0].source == 'C:\\chocolatey repos2'
+    - enable_source_actual.sources[0].disabled == False
+    - enable_source_actual.sources[0].source_username == 'username2'
+    - enable_source_actual.sources[0].priority == 5
+    - enable_source_actual.sources[0].certificate == 'C:\\cert2.pfx'
+    - enable_source_actual.sources[0].bypass_proxy == False
+    - enable_source_actual.sources[0].allow_self_service == True
+    - enable_source_actual.sources[0].admin_only == True
 
 - name: enable source (idempotent)
   win_chocolatey_source:
