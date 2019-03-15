@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -eux
+set -ex
 
 TARGET=$(pwd)
 
@@ -8,6 +8,19 @@ TARGET=$(pwd)
 if [ -z "${OUTPUT_DIR+null}" ]; then
     export OUTPUT_DIR=$TARGET
 fi
+
+virtualenv --system-site-packages --python ${ANSIBLE_TEST_PYTHON_INTERPRETER:-python} "${OUTPUT_DIR}/aws-ec2-inventory"
+source "${OUTPUT_DIR}/aws-ec2-inventory/bin/activate"
+pip install python-dateutil jmespath jinja2 PyYaml cryptography paramiko
+
+ANSIBLE_TEST_PYTHON_INTERPRETER=$(which python)
+
+# create boto3 symlinks
+ln -s "$TARGET/lib/boto" "$TARGET/lib/boto3"
+ln -s "$TARGET/lib/boto" "$TARGET/lib/botocore"
+
+# override boto's import path(s)
+export PYTHONPATH="$TARGET/lib:$PYTHONPATH"
 
 #################################################
 #   RUN THE SCRIPT
@@ -42,10 +55,6 @@ rm -rf .cache
 #################################################
 #   RUN THE PLUGIN
 #################################################
-
-# create boto3 symlinks
-ln -s "$TARGET/lib/boto" "$TARGET/lib/boto3"
-ln -s "$TARGET/lib/boto" "$TARGET/lib/botocore"
 
 # run the plugin second
 export ANSIBLE_INVENTORY_ENABLED=aws_ec2
@@ -148,16 +157,12 @@ keyed_groups:
     prefix: security_group
 EOF
 
-# override boto's import path(s)
-echo "PWD: $(pwd)"
-export PYTHONPATH="$TARGET/lib:$PYTHONPATH"
-
 rm -f "$OUTPUT_DIR/plugin.out"
-#ansible-inventory -i $OUTPUT_DIR/test.aws_ec2.yml --list | tee -a $OUTPUT_DIR/plugin.out
 ANSIBLE_JINJA2_NATIVE=1 ansible-inventory -vvvv -i "$OUTPUT_DIR/test.aws_ec2.yml" --list --output="$OUTPUT_DIR/plugin.out"
 rm -f "$OUTPUT_DIR/aws_ec2.yml"
 rm "$TARGET/lib/boto3"
 rm "$TARGET/lib/botocore"
+rm -r ${OUTPUT_DIR}/aws-ec2-inventory/
 
 #################################################
 #   DIFF THE RESULTS
