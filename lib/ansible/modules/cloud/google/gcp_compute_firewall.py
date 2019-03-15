@@ -214,27 +214,27 @@ options:
     required: false
 extends_documentation_fragment: gcp
 notes:
-- 'API Reference: U(https://cloud.google.com/compute/docs/reference/latest/firewalls)'
+- 'API Reference: U(https://cloud.google.com/compute/docs/reference/v1/firewalls)'
 - 'Official Documentation: U(https://cloud.google.com/vpc/docs/firewalls)'
 '''
 
 EXAMPLES = '''
 - name: create a firewall
   gcp_compute_firewall:
-      name: "test_object"
-      allowed:
-      - ip_protocol: tcp
-        ports:
-        - '22'
-      target_tags:
-      - test-ssh-server
-      - staging-ssh-server
-      source_tags:
-      - test-ssh-clients
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    allowed:
+    - ip_protocol: tcp
+      ports:
+      - '22'
+    target_tags:
+    - test-ssh-server
+    - staging-ssh-server
+    source_tags:
+    - test-ssh-clients
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''

@@ -44,11 +44,12 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name:  a trigger facts
+- name: " a trigger facts"
   gcp_cloudbuild_trigger_facts:
-      project: test_project
-      auth_kind: serviceaccount
-      service_account_file: "/tmp/auth.pem"
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: facts
 '''
 
 RETURN = '''
@@ -86,6 +87,7 @@ items:
     filename:
       description:
       - Path, from the source root, to a file whose contents is used for the template.
+        Either a filename or build template must be provided.
       returned: success
       type: str
     ignoredFiles:
@@ -141,22 +143,26 @@ items:
           type: str
         branchName:
           description:
-          - Name of the branch to build.
+          - Name of the branch to build. Exactly one a of branch name, tag, or commit
+            SHA must be provided.
           returned: success
           type: str
         tagName:
           description:
-          - Name of the tag to build.
+          - Name of the tag to build. Exactly one of a branch name, tag, or commit
+            SHA must be provided.
           returned: success
           type: str
         commitSha:
           description:
-          - Explicit commit SHA to build.
+          - Explicit commit SHA to build. Exactly one of a branch name, tag, or commit
+            SHA must be provided.
           returned: success
           type: str
     build:
       description:
-      - Contents of the build template.
+      - Contents of the build template. Either a filename or build template must be
+        provided.
       returned: success
       type: complex
       contains:

@@ -53,14 +53,15 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name:  a disk facts
+- name: " a disk facts"
   gcp_compute_disk_facts:
-      zone: us-central1-a
-      filters:
-      - name = test_object
-      project: test_project
-      auth_kind: serviceaccount
-      service_account_file: "/tmp/auth.pem"
+    zone: us-central1-a
+    filters:
+    - name = test_object
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: facts
 '''
 
 RETURN = '''
@@ -137,6 +138,15 @@ items:
         .'
       returned: success
       type: list
+    physicalBlockSizeBytes:
+      description:
+      - Physical block size of the persistent disk, in bytes. If not present in a
+        request, a default value is used. Currently supported sizes are 4096 and 16384,
+        other sizes may be added in the future.
+      - If an unsupported value is requested, the error message will list the supported
+        values for the caller's project.
+      returned: success
+      type: int
     type:
       description:
       - URL of the disk type resource describing which disk type to use to create

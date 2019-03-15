@@ -121,12 +121,12 @@ notes:
 EXAMPLES = '''
 - name: create a address
   gcp_compute_address:
-      name: test-address1
-      region: us-west1
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test-address1
+    region: us-west1
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''

@@ -229,10 +229,6 @@ options:
         description:
         - OAuth2 Client Secret for IAP.
         required: false
-      oauth2_client_secret_sha256:
-        description:
-        - OAuth2 Client Secret SHA-256 for IAP.
-        required: false
   load_balancing_scheme:
     description:
     - Indicates whether the backend service will be used with internal or external
@@ -302,39 +298,39 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a instance group
   gcp_compute_instance_group:
-      name: "instancegroup-backendservice"
-      zone: us-central1-a
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: instancegroup-backendservice
+    zone: us-central1-a
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: instancegroup
 
 - name: create a http health check
   gcp_compute_http_health_check:
-      name: "httphealthcheck-backendservice"
-      healthy_threshold: 10
-      port: 8080
-      timeout_sec: 2
-      unhealthy_threshold: 5
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: httphealthcheck-backendservice
+    healthy_threshold: 10
+    port: 8080
+    timeout_sec: 2
+    unhealthy_threshold: 5
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: healthcheck
 
 - name: create a backend service
   gcp_compute_backend_service:
-      name: "test_object"
-      backends:
-      - group: "{{ instancegroup }}"
-      health_checks:
-      - "{{ healthcheck.selfLink }}"
-      enable_cdn: true
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    backends:
+    - group: "{{ instancegroup }}"
+    health_checks:
+    - "{{ healthcheck.selfLink }}"
+    enable_cdn: 'true'
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -655,15 +651,7 @@ def main():
             description=dict(type='str'),
             enable_cdn=dict(type='bool'),
             health_checks=dict(type='list', elements='str'),
-            iap=dict(
-                type='dict',
-                options=dict(
-                    enabled=dict(type='bool'),
-                    oauth2_client_id=dict(type='str'),
-                    oauth2_client_secret=dict(type='str'),
-                    oauth2_client_secret_sha256=dict(type='str'),
-                ),
-            ),
+            iap=dict(type='dict', options=dict(enabled=dict(type='bool'), oauth2_client_id=dict(type='str'), oauth2_client_secret=dict(type='str'))),
             load_balancing_scheme=dict(type='str', choices=['INTERNAL', 'EXTERNAL']),
             name=dict(type='str'),
             port_name=dict(type='str'),
