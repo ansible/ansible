@@ -108,7 +108,6 @@
 
 - name: call module with symbolic link tests
   symbolic_link_test:
-    path: C:\ansible testing
   register: symbolic_link
 
 - assert:

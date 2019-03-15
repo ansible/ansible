@@ -496,7 +496,7 @@ Function Remove-Link($link_path) {
 }
 
 Function New-Link($link_path, $link_target, $link_type) {
-    if (-not (Test-Path -Path $link_target)) {
+    if (-not (Test-Path -LiteralPath $link_target)) {
         throw "link_target '$link_target' does not exist, cannot create link"
     }
     
@@ -505,13 +505,13 @@ Function New-Link($link_path, $link_target, $link_type) {
             $type = [Ansible.LinkType]::SymbolicLink
         }
         "junction" {
-            if (Test-Path -Path $link_target -PathType Leaf) {
+            if (Test-Path -LiteralPath $link_target -PathType Leaf) {
                 throw "cannot set the target for a junction point to a file"
             }
             $type = [Ansible.LinkType]::JunctionPoint
         }
         "hard" {
-            if (Test-Path -Path $link_target -PathType Container) {
+            if (Test-Path -LiteralPath $link_target -PathType Container) {
                 throw "cannot set the target for a hard link to a directory"
             }
             $type = [Ansible.LinkType]::HardLink
