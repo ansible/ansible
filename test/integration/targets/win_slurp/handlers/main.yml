@@ -1,0 +1,4 @@
+- name: remove test directory
+  win_file:
+    path: '{{ test_win_slurp_dir }}'
+    state: absent
