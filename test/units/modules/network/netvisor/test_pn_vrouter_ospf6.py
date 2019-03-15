@@ -51,12 +51,12 @@ class TestVrouterOSPF6Module(TestNvosModule):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_vrouter_name': 'foo-vrouter',
                          'pn_nic': 'eth0.4092', 'pn_ospf6_area': '0.0.0.0', 'state': 'present'})
         result = self.execute_module(changed=True, state='present')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 vrouter-ospf6-add vrouter-name foo-vrouter  nic eth0.4092 ospf6-area 0.0.0.0 '
+        expected_cmd = ' switch sw01 vrouter-ospf6-add vrouter-name foo-vrouter  nic eth0.4092 ospf6-area 0.0.0.0 '
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
     def test_vrouter_ospf6_remove(self):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_vrouter_name': 'foo-vrouter',
                          'pn_nic': 'eth0.4092', 'state': 'absent'})
         result = self.execute_module(changed=True, state='absent')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 vrouter-ospf6-remove vrouter-name foo-vrouter  nic eth0.4092'
+        expected_cmd = ' switch sw01 vrouter-ospf6-remove vrouter-name foo-vrouter  nic eth0.4092'
         self.assertEqual(result['cli_cmd'], expected_cmd)

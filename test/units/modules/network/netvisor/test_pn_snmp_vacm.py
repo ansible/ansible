@@ -58,19 +58,19 @@ class TestSnmpVacmModule(TestNvosModule):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_user_name': 'foo',
                          'pn_user_type': 'rouser', 'state': 'present'})
         result = self.execute_module(changed=True, state='present')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 snmp-vacm-create user-name foo  user-type rouser'
+        expected_cmd = ' switch sw01 snmp-vacm-create user-name foo  user-type rouser'
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
     def test_snmp_vacm_delete(self):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_user_name': 'foo',
                          'state': 'absent'})
         result = self.execute_module(changed=True, state='update')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 snmp-vacm-delete user-name foo '
+        expected_cmd = ' switch sw01 snmp-vacm-delete user-name foo '
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
     def test_snmp_vacm_modify(self):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_user_name': 'foo',
                          'pn_user_type': 'rwuser', 'state': 'absent'})
         result = self.execute_module(changed=True, state='update')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 snmp-vacm-delete user-name foo '
+        expected_cmd = ' switch sw01 snmp-vacm-delete user-name foo '
         self.assertEqual(result['cli_cmd'], expected_cmd)

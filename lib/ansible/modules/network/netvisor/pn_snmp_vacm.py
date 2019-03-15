@@ -57,20 +57,23 @@ options:
 """
 
 EXAMPLES = """
-- name: snmp vacm functionality
+- name: create snmp vacm
   pn_snmp_vacm:
+    pn_cliswitch: "sw01"
     state: "present"
     pn_user_name: "foo"
     pn_user_type: "rouser"
 
-- name: snmp vacm functionality
+- name: update snmp vacm
   pn_snmp_vacm:
+    pn_cliswitch: "sw01"
     state: "update"
     pn_user_name: "foo"
     pn_user_type: "rwuser"
 
-- name: snmp vacm functionality
+- name: delete snmp vacm
   pn_snmp_vacm:
+    pn_cliswitch: "sw01"
     state: "absent"
     pn_user_name: "foo"
 """
@@ -97,6 +100,7 @@ changed:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.netvisor.pn_nvos import pn_cli, run_cli, booleanArgs
+from ansible.module_utils.network.netvisor.netvisor import run_commands
 
 
 def check_cli(module, cli):
@@ -110,7 +114,7 @@ def check_cli(module, cli):
     show = cli
 
     cli += ' snmp-user-show user-name %s format user-name no-show-headers' % user_name
-    rc, out, err = module.run_command(cli, use_unsafe_shell=True)
+    rc, out, err = run_commands(module, cli)
     if out:
         pass
     else:
@@ -118,7 +122,7 @@ def check_cli(module, cli):
 
     cli = show
     cli += ' snmp-vacm-show format user-name no-show-headers'
-    out = module.run_command(cli, use_unsafe_shell=True)[1]
+    out = run_commands(module, cli)[1]
 
     out = out.split()
 

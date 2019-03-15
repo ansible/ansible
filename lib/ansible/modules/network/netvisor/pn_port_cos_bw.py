@@ -74,6 +74,7 @@ EXAMPLES = """
     state: "update"
     pn_port: "all"
     pn_cos: "0"
+    pn_weight: "priority"
 """
 
 RETURN = """
