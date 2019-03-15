@@ -233,6 +233,12 @@
       - result is failed
   when: result is not skipped
 
+- name: uninstall conflicting urllib3 pip package
+  pip:
+    name: urllib3
+    state: absent
+  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
+
 - name: install OS packages that are needed for SNI on old python
   package:
     name: "{{ item }}"
