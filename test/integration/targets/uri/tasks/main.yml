@@ -233,11 +233,18 @@
       - result is failed
   when: result is not skipped
 
+- name: check if urllib3 is installed as an OS package
+  package:
+    name: "{{ uri_os_packages[ansible_os_family].urllib3 }}"
+  check_mode: yes
+  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
+  register: urllib3
+
 - name: uninstall conflicting urllib3 pip package
   pip:
     name: urllib3
     state: absent
-  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
+  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool and urllib3.changed
 
 - name: install OS packages that are needed for SNI on old python
   package:
