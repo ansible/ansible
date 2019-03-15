@@ -69,7 +69,8 @@
        name: "md{{ rpfx }}3"
        storage_account_type: "Standard_LRS"
        disk_size_gb: 1
-       zones: 1
+       zones:
+           - 1
        tags:
            testing: testing
            delete: never
