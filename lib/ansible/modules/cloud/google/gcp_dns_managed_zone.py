@@ -82,13 +82,13 @@ notes:
 EXAMPLES = '''
 - name: create a managed zone
   gcp_dns_managed_zone:
-      name: "test_object"
-      dns_name: test.somewild2.example.com.
-      description: test zone
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    dns_name: test.somewild2.example.com.
+    description: test zone
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -126,7 +126,7 @@ nameServerSet:
     a set of DNS name servers that all host the same ManagedZones. Most users will
     leave this field unset.
   returned: success
-  type: list
+  type: str
 creationTime:
   description:
   - The time that this resource was created on the server.
@@ -161,7 +161,7 @@ def main():
             description=dict(required=True, type='str'),
             dns_name=dict(required=True, type='str'),
             name=dict(required=True, type='str'),
-            name_server_set=dict(type='list', elements='str'),
+            name_server_set=dict(type='str'),
             labels=dict(type='dict'),
         )
     )

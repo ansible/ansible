@@ -113,6 +113,26 @@ options:
     - If the subscriber never acknowledges the message, the Pub/Sub system will eventually
       redeliver the message.
     required: false
+  message_retention_duration:
+    description:
+    - How long to retain unacknowledged messages in the subscription's backlog, from
+      the moment a message is published. If retainAckedMessages is true, then this
+      also configures the retention of acknowledged messages, and thus configures
+      how far back in time a subscriptions.seek can be done. Defaults to 7 days. Cannot
+      be more than 7 days (`"604800s"`) or less than 10 minutes (`"600s"`).
+    - 'A duration in seconds with up to nine fractional digits, terminated by ''s''.
+      Example: `"600.5s"`.'
+    required: false
+    default: 604800s
+    version_added: 2.8
+  retain_acked_messages:
+    description:
+    - Indicates whether to retain acknowledged messages. If `true`, then messages
+      are not expunged from the subscription's backlog, even if they are acknowledged,
+      until they fall out of the messageRetentionDuration window.
+    required: false
+    type: bool
+    version_added: 2.8
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/pubsub/docs/reference/rest/v1/projects.subscriptions)'
@@ -122,22 +142,22 @@ notes:
 EXAMPLES = '''
 - name: create a topic
   gcp_pubsub_topic:
-      name: "topic-subscription"
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: topic-subscription
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: topic
 
 - name: create a subscription
   gcp_pubsub_subscription:
-      name: "test_object"
-      topic: "{{ topic }}"
-      ack_deadline_seconds: 300
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    topic: "{{ topic }}"
+    ack_deadline_seconds: 300
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -207,6 +227,24 @@ ackDeadlineSeconds:
     redeliver the message.
   returned: success
   type: int
+messageRetentionDuration:
+  description:
+  - How long to retain unacknowledged messages in the subscription's backlog, from
+    the moment a message is published. If retainAckedMessages is true, then this also
+    configures the retention of acknowledged messages, and thus configures how far
+    back in time a subscriptions.seek can be done. Defaults to 7 days. Cannot be more
+    than 7 days (`"604800s"`) or less than 10 minutes (`"600s"`).
+  - 'A duration in seconds with up to nine fractional digits, terminated by ''s''.
+    Example: `"600.5s"`.'
+  returned: success
+  type: str
+retainAckedMessages:
+  description:
+  - Indicates whether to retain acknowledged messages. If `true`, then messages are
+    not expunged from the subscription's backlog, even if they are acknowledged, until
+    they fall out of the messageRetentionDuration window.
+  returned: success
+  type: bool
 '''
 
 ################################################################################
@@ -232,6 +270,8 @@ def main():
             labels=dict(type='dict'),
             push_config=dict(type='dict', options=dict(push_endpoint=dict(required=True, type='str'), attributes=dict(type='dict'))),
             ack_deadline_seconds=dict(type='int'),
+            message_retention_duration=dict(default='604800s', type='str'),
+            retain_acked_messages=dict(type='bool'),
         )
     )
 
@@ -286,6 +326,10 @@ def updateMask(request, response):
         update_mask.append('pushConfig')
     if request.get('ackDeadlineSeconds') != response.get('ackDeadlineSeconds'):
         update_mask.append('ackDeadlineSeconds')
+    if request.get('messageRetentionDuration') != response.get('messageRetentionDuration'):
+        update_mask.append('messageRetentionDuration')
+    if request.get('retainAckedMessages') != response.get('retainAckedMessages'):
+        update_mask.append('retainAckedMessages')
     return ','.join(update_mask)
 
 
@@ -301,6 +345,8 @@ def resource_to_request(module):
         u'labels': module.params.get('labels'),
         u'pushConfig': SubscriptionPushconfig(module.params.get('push_config', {}), module).to_request(),
         u'ackDeadlineSeconds': module.params.get('ack_deadline_seconds'),
+        u'messageRetentionDuration': module.params.get('message_retention_duration'),
+        u'retainAckedMessages': module.params.get('retain_acked_messages'),
     }
     request = encode_request(request, module)
     return_vals = {}
@@ -375,6 +421,8 @@ def response_to_hash(module, response):
         u'labels': response.get(u'labels'),
         u'pushConfig': SubscriptionPushconfig(response.get(u'pushConfig', {}), module).from_response(),
         u'ackDeadlineSeconds': response.get(u'ackDeadlineSeconds'),
+        u'messageRetentionDuration': response.get(u'messageRetentionDuration'),
+        u'retainAckedMessages': response.get(u'retainAckedMessages'),
     }
 
 

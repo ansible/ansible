@@ -61,14 +61,12 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a service account
   gcp_iam_service_account:
-      name: '"{{resource_name}}@{{gcp_project}}.google.com.iam.gserviceaccount.com"
-
-      '
-      display_name: My Ansible test key
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: '"{{resource_name}}@{{gcp_project}}.google.com.iam.gserviceaccount.com"'
+    display_name: My Ansible test key
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
