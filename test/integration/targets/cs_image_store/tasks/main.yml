@@ -63,6 +63,10 @@
     that:
       - ss is successful
       - ss is changed
+      - "ss.url == 'nfs://nfs-mount.domain/share/images/'"
+      - "ss.provider_name == 'NFS'"
+      - "ss.zone == cs_common_zone_adv"
+      - "ss.protocol == 'nfs'"
 
 - name: setup image store idempotence
   cs_image_store:
@@ -77,6 +81,11 @@
     that:
       - ss is successful
       - ss is not changed
+      - "ss.url == 'nfs://nfs-mount.domain/share/images/'"
+      - "ss.provider_name == 'NFS'"
+      - "ss.zone == cs_common_zone_adv"
+      - "ss.protocol == 'nfs'"
+      - "ss.name == 'storage_pool_adv'"
 
 - name: image store not recreated
   cs_image_store:
@@ -92,6 +101,8 @@
       - ss is successful
       - ss is not changed
       - "ss.url == 'nfs://nfs-mount.domain/share/images/'"
+      - "ss.name == 'storage_pool_adv'"
+      - "ss.zone == cs_common_zone_adv"
 
 - name: recreate image store
   cs_image_store:
@@ -108,6 +119,8 @@
       - ss is successful
       - ss is changed
       - "ss.url == 'nfs://nfs-mount.domain/share2/images/'"
+      - "ss.name == 'storage_pool_adv'"
+      - "ss.zone == cs_common_zone_adv"
 
 - name: delete the image store
   cs_image_store:
@@ -120,6 +133,8 @@
     that:
       - ss is successful
       - ss is changed
+      - "ss.name == 'storage_pool_adv'"
+      - "ss.zone == cs_common_zone_adv"
 
 - name: delete the image store idempotence
   cs_image_store:
@@ -132,3 +147,5 @@
     that:
       - ss is successful
       - ss is not changed
+      - ss.name is undefined
+      - "ss.zone == cs_common_zone_adv"
