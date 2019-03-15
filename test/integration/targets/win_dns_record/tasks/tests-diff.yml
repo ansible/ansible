@@ -1,5 +1,5 @@
 # Diff tests are present because those records have to be created MANUALLY by
-# the win_dns_record module when in check mode, as there is otherwise in
+# the win_dns_record module when in check mode, as there is otherwise no way in
 # Windows DNS to *simulate* a record or change.
 
 
