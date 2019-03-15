@@ -396,12 +396,12 @@ Function Get-ExecutablePath($executable, $directory) {
     $full_path = [System.IO.Path]::GetFullPath($executable)
 
     if ($full_path -ne $executable -and $directory -ne $null) {
-        $file = Get-Item -Path "$directory\$executable" -Force -ErrorAction SilentlyContinue
+        $file = Get-Item -LiteralPath "$directory\$executable" -Force -ErrorAction SilentlyContinue
     } else {
-        $file = Get-Item -Path $executable -Force -ErrorAction SilentlyContinue
+        $file = Get-Item -LiteralPath $executable -Force -ErrorAction SilentlyContinue
     }
 
-    if ($file -ne $null) {
+    if ($null -ne $file) {
         $executable_path = $file.FullName
     } else {
         $executable_path = [Ansible.CommandUtil]::SearchPath($executable)    
@@ -423,7 +423,7 @@ Function Run-Command {
     # need to validate the working directory if it is set
     if ($working_directory) {
         # validate working directory is a valid path
-        if (-not (Test-Path -Path $working_directory)) {
+        if (-not (Test-Path -LiteralPath $working_directory)) {
             throw "invalid working directory path '$working_directory'"
         }
     }
