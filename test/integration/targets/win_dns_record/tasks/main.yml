@@ -1,37 +1,12 @@
-# We do this IN ADDITION to the cmdlet-testing below because those tests
-# require the DNS feature to first be installed -- but we don't want to install
-# the feature on unsupported versions. Hence this pre-test.
+# We do an explicit OS version check here *INSTEAD OF* the usual test for
+# cmdlet existence. That's because a cmdlet test here won't work without first
+# installing the DNS feature, but we don't want to install the feature on OS'
+# that can't be supported anyway. Hence this fallback to an explicit OS version
+# test.
 - name: check OS version is supported
   win_shell: 'if ([Environment]::OSVersion.Version -ge [Version]"6.2") { $true } else { $false }'
   register: os_supported
 
-- when: os_supported.stdout | trim | bool
-  block:
-    - name: ensure DNS services are installed
-      win_feature:
-        name: DNS
-        state: present
-      register: dns_install
-
-    - name: reboot server if needed
-      win_reboot:
-      when: dns_install is changed and dns_install.reboot_required
-
-    # This check is mostly redundant due to OS-version check above, but it
-    # included anyway for completeness.
-    - name: check availability of cmdlets
-      win_shell: |
-        if (
-            (Get-Command -Name Get-DnsServerResourceRecord -ErrorAction SilentlyContinue) `
-            -and `
-            (Get-Command -Name Add-DnsServerPrimaryZone -ErrorAction SilentlyContinue) `
-        ) {
-            $true
-        } else {
-            $false
-        }
-      register: run_tests
-
-    - name: perform tests if able
-      include: tests.yml
-      when: run_tests is not skipped and (run_tests.stdout | trim | bool)
+- name: run tests on supported hosts
+  include: tests.yml
+  when: os_supported.stdout | trim | bool

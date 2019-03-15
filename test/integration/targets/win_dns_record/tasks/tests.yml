@@ -1,3 +1,13 @@
+- name: ensure DNS services are installed
+  win_feature:
+    name: DNS
+    state: present
+  register: dns_install
+
+- name: reboot server if needed
+  win_reboot:
+  when: dns_install.reboot_required
+
 - name: Clean slate
   import_tasks: clean.yml
   vars:
