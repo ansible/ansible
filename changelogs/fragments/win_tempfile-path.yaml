@@ -1,0 +1,2 @@
+bugfixes:
+- win_tempfile - Always return the full NTFS absolute path and not a DOS 8.3 path.
