@@ -177,8 +177,8 @@ from ansible.module_utils._text import to_native
 from ansible.module_utils.urls import fetch_url, url_argument_spec
 
 
-def get_request_params(module, object_id, object_type, kibana_url,
-                       timeout, content=None, overwrite=False, tenant=None):
+def get_request_params(object_id, object_type, kibana_url,
+                       content=None, overwrite=False, tenant=None):
 
     url = "{0}/api/saved_objects/{1}/{2}".format(kibana_url, object_type, object_id)
     headers = {'kbn-xsrf': 'true'}
@@ -190,11 +190,7 @@ def get_request_params(module, object_id, object_type, kibana_url,
         headers['sgtenant'] = tenant
     if overwrite:
         url += '?overwrite=true'
-    return {
-        'url': url,
-        'headers': headers,
-        'data': data
-    }
+    return url, headers, data
 
 
 def are_different(module, existing_object, object_id, object_type, content):
@@ -210,18 +206,16 @@ def are_different(module, existing_object, object_id, object_type, content):
 def get_object(module, object_id, object_type, kibana_url,
                timeout, tenant=None):
 
-    request_params = get_request_params(
-        module=module,
+    url, headers, _ = get_request_params(
         object_id=object_id,
         object_type=object_type,
         kibana_url=kibana_url,
         tenant=tenant,
-        timeout=timeout
     )
     try:
-        return fetch_url(module, request_params['url'],
+        return fetch_url(module, url,
                          method='GET',
-                         headers=request_params['headers'],
+                         headers=headers,
                          timeout=timeout)
     except Exception as e:
         try:
@@ -234,21 +228,19 @@ def get_object(module, object_id, object_type, kibana_url,
 def create_object(module, object_id, object_type, kibana_url, content,
                   timeout, tenant=None, overwrite=False):
 
-    request_params = get_request_params(
-        module=module,
+    url, headers, data = get_request_params(
         object_id=object_id,
         object_type=object_type,
         kibana_url=kibana_url,
         content=content,
         tenant=tenant,
-        timeout=timeout,
         overwrite=overwrite
     )
     try:
-        return fetch_url(module, request_params['url'],
+        return fetch_url(module, url,
                          method='POST',
-                         headers=request_params['headers'],
-                         data=request_params['data'],
+                         headers=headers,
+                         data=data,
                          timeout=timeout)
     except Exception as e:
         module.fail_json(msg="An error occured while trying to get the object '{0}'. {1}".format(object_id, to_native(e)))
@@ -257,20 +249,18 @@ def create_object(module, object_id, object_type, kibana_url, content,
 def update_object(module, object_id, object_type, kibana_url, content,
                   timeout, tenant=None):
 
-    request_params = get_request_params(
-        module=module,
+    url, headers, data = get_request_params(
         object_id=object_id,
         object_type=object_type,
         kibana_url=kibana_url,
         content=content,
         tenant=tenant,
-        timeout=timeout
     )
     try:
-        return fetch_url(module, request_params['url'],
+        return fetch_url(module, url,
                          method='PUT',
-                         headers=request_params['headers'],
-                         data=request_params['data'],
+                         headers=headers,
+                         data=data,
                          timeout=timeout)
     except Exception as e:
         module.fail_json(msg="An error occured while trying to get the object '{0}'. {1}".format(object_id, to_native(e)))
@@ -279,18 +269,16 @@ def update_object(module, object_id, object_type, kibana_url, content,
 def delete_object(module, object_id, object_type, kibana_url,
                   timeout, tenant=None):
 
-    request_params = get_request_params(
-        module=module,
+    url, headers, _ = get_request_params(
         object_id=object_id,
         object_type=object_type,
         kibana_url=kibana_url,
         tenant=tenant,
-        timeout=timeout,
     )
     try:
-        return fetch_url(module, request_params['url'],
+        return fetch_url(module, url,
                          method='DELETE',
-                         headers=request_params['headers'],
+                         headers=headers,
                          timeout=timeout)
     except Exception as e:
         module.fail_json(msg="An error occured while trying to get the object '{0}'. {1}".format(object_id, to_native(e)))
