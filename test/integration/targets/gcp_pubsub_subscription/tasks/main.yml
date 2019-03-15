@@ -15,31 +15,31 @@
 # Pre-test setup
 - name: create a topic
   gcp_pubsub_topic:
-      name: "topic-subscription"
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: topic-subscription
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: topic
 - name: delete a subscription
   gcp_pubsub_subscription:
-      name: "{{ resource_name }}"
-      topic: "{{ topic }}"
-      ack_deadline_seconds: 300
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: absent
+    name: "{{ resource_name }}"
+    topic: "{{ topic }}"
+    ack_deadline_seconds: 300
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
 #----------------------------------------------------------
 - name: create a subscription
   gcp_pubsub_subscription:
-      name: "{{ resource_name }}"
-      topic: "{{ topic }}"
-      ack_deadline_seconds: 300
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: "{{ resource_name }}"
+    topic: "{{ topic }}"
+    ack_deadline_seconds: 300
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: result
 - name: assert changed is true
   assert:
@@ -60,13 +60,13 @@
 # ----------------------------------------------------------------------------
 - name: create a subscription that already exists
   gcp_pubsub_subscription:
-      name: "{{ resource_name }}"
-      topic: "{{ topic }}"
-      ack_deadline_seconds: 300
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: "{{ resource_name }}"
+    topic: "{{ topic }}"
+    ack_deadline_seconds: 300
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: result
 - name: assert changed is false
   assert:
@@ -75,13 +75,13 @@
 #----------------------------------------------------------
 - name: delete a subscription
   gcp_pubsub_subscription:
-      name: "{{ resource_name }}"
-      topic: "{{ topic }}"
-      ack_deadline_seconds: 300
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: absent
+    name: "{{ resource_name }}"
+    topic: "{{ topic }}"
+    ack_deadline_seconds: 300
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
   register: result
 - name: assert changed is true
   assert:
@@ -102,13 +102,13 @@
 # ----------------------------------------------------------------------------
 - name: delete a subscription that does not exist
   gcp_pubsub_subscription:
-      name: "{{ resource_name }}"
-      topic: "{{ topic }}"
-      ack_deadline_seconds: 300
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: absent
+    name: "{{ resource_name }}"
+    topic: "{{ topic }}"
+    ack_deadline_seconds: 300
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
   register: result
 - name: assert changed is false
   assert:
@@ -119,10 +119,10 @@
 # If errors happen, don't crash the playbook!
 - name: delete a topic
   gcp_pubsub_topic:
-      name: "topic-subscription"
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: absent
+    name: topic-subscription
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
   register: topic
   ignore_errors: true

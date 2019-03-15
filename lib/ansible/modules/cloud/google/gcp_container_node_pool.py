@@ -144,6 +144,11 @@ options:
       resource quota is sufficient for this number of instances. You must also have
       available firewall and routes quota.
     required: true
+  version:
+    description:
+    - The version of the Kubernetes of this node.
+    required: false
+    version_added: 2.8
   autoscaling:
     description:
     - Autoscaler configuration for this NodePool. Autoscaler is enabled only if a
@@ -188,17 +193,7 @@ options:
         description:
         - Specifies the Auto Upgrade knobs for the node pool.
         required: false
-        suboptions:
-          auto_upgrade_start_time:
-            description:
-            - This field is set when upgrades are about to commence with the approximate
-              start time for the upgrades, in RFC3339 text format.
-            required: false
-          description:
-            description:
-            - This field is set when upgrades are about to commence with the description
-              of the upgrade.
-            required: false
+        suboptions: {}
   cluster:
     description:
     - The cluster this node pool belongs to.
@@ -221,25 +216,25 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a cluster
   gcp_container_cluster:
-      name: "cluster-nodepool"
-      initial_node_count: 4
-      location: us-central1-a
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: cluster-nodepool
+    initial_node_count: 4
+    location: us-central1-a
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: cluster
 
 - name: create a node pool
   gcp_container_node_pool:
-      name: my-pool
-      initial_node_count: 4
-      cluster: "{{ cluster }}"
-      location: us-central1-a
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: my-pool
+    initial_node_count: 4
+    cluster: "{{ cluster }}"
+    location: us-central1-a
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -462,14 +457,10 @@ def main():
                 ),
             ),
             initial_node_count=dict(required=True, type='int'),
+            version=dict(type='str'),
             autoscaling=dict(type='dict', options=dict(enabled=dict(type='bool'), min_node_count=dict(type='int'), max_node_count=dict(type='int'))),
             management=dict(
-                type='dict',
-                options=dict(
-                    auto_upgrade=dict(type='bool'),
-                    auto_repair=dict(type='bool'),
-                    upgrade_options=dict(type='dict', options=dict(auto_upgrade_start_time=dict(type='str'), description=dict(type='str'))),
-                ),
+                type='dict', options=dict(auto_upgrade=dict(type='bool'), auto_repair=dict(type='bool'), upgrade_options=dict(type='dict', options=dict()))
             ),
             cluster=dict(required=True),
             location=dict(required=True, type='str', aliases=['region', 'zone']),
@@ -526,6 +517,7 @@ def resource_to_request(module):
         u'name': module.params.get('name'),
         u'config': NodePoolConfig(module.params.get('config', {}), module).to_request(),
         u'initialNodeCount': module.params.get('initial_node_count'),
+        u'version': module.params.get('version'),
         u'autoscaling': NodePoolAutoscaling(module.params.get('autoscaling', {}), module).to_request(),
         u'management': NodePoolManagement(module.params.get('management', {}), module).to_request(),
     }
@@ -604,7 +596,7 @@ def response_to_hash(module, response):
         u'name': response.get(u'name'),
         u'config': NodePoolConfig(response.get(u'config', {}), module).from_response(),
         u'initialNodeCount': module.params.get('initial_node_count'),
-        u'version': response.get(u'version'),
+        u'version': module.params.get('version'),
         u'autoscaling': NodePoolAutoscaling(response.get(u'autoscaling', {}), module).from_response(),
         u'management': NodePoolManagement(response.get(u'management', {}), module).from_response(),
     }

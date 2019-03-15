@@ -90,14 +90,14 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a project
   gcp_resourcemanager_project:
-      name: My Sample Project
-      id: alextest-{{ 10000000000 | random }}
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      parent:
-        type: organization
-        id: 636173955921
-      state: present
+    name: My Sample Project
+    id: alextest-{{ 10000000000 | random }}
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    parent:
+      type: organization
+      id: 636173955921
+    state: present
 '''
 
 RETURN = '''

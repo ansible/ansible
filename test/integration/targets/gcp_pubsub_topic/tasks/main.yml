@@ -15,19 +15,19 @@
 # Pre-test setup
 - name: delete a topic
   gcp_pubsub_topic:
-      name: test-topic1
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: absent
+    name: test-topic1
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
 #----------------------------------------------------------
 - name: create a topic
   gcp_pubsub_topic:
-      name: test-topic1
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: test-topic1
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: result
 - name: assert changed is true
   assert:
@@ -48,11 +48,11 @@
 # ----------------------------------------------------------------------------
 - name: create a topic that already exists
   gcp_pubsub_topic:
-      name: test-topic1
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: test-topic1
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: result
 - name: assert changed is false
   assert:
@@ -61,11 +61,11 @@
 #----------------------------------------------------------
 - name: delete a topic
   gcp_pubsub_topic:
-      name: test-topic1
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: absent
+    name: test-topic1
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
   register: result
 - name: assert changed is true
   assert:
@@ -86,11 +86,11 @@
 # ----------------------------------------------------------------------------
 - name: delete a topic that does not exist
   gcp_pubsub_topic:
-      name: test-topic1
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: absent
+    name: test-topic1
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
   register: result
 - name: assert changed is false
   assert:

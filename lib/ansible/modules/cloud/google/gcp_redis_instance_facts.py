@@ -48,12 +48,13 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name:  a instance facts
+- name: " a instance facts"
   gcp_redis_instance_facts:
-      region: us-central1
-      project: test_project
-      auth_kind: serviceaccount
-      service_account_file: "/tmp/auth.pem"
+    region: us-central1
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: facts
 '''
 
 RETURN = '''
