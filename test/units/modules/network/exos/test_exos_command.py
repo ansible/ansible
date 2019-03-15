@@ -22,8 +22,8 @@ __metaclass__ = type
 import json
 
 from units.compat.mock import patch
-from ansible.modules.network.exos import exos_command
 from units.modules.utils import set_module_args
+from ansible.modules.network.exos import exos_command
 from .exos_module import TestExosModule, load_fixture
 
 
