@@ -117,14 +117,14 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn.poll_stderr = MagicMock()
         conn.poll_stderr.register = MagicMock()
         conn.stderr = None
-        s_popen.poll().return_value != None 
+        s_popen.poll().return_value != None
         return(conn.stderr)
 
     @patch('boto3.client')
     def test_plugins_connection_aws_ssm_get_url(self, boto):
         pc = PlayContext()
         new_stdin = StringIO()
-        conn = connection_loader.get('aws_ssm', pc, new_stdin)     
+        conn = connection_loader.get('aws_ssm', pc, new_stdin)
         boto3 = MagicMock()
         boto3.client('s3').return_value = MagicMock()
         boto3.generate_presigned_url.return_value = MagicMock()
@@ -189,4 +189,3 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn._session_id.return_value = 'a'
         conn._client = MagicMock()
         conn.close()
-
