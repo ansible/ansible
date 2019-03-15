@@ -81,6 +81,7 @@ changed:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.netvisor.pn_nvos import pn_cli, run_cli
+from ansible.module_utils.network.netvisor.netvisor import run_commands
 
 
 def check_cli(module, cli):
@@ -92,19 +93,28 @@ def check_cli(module, cli):
     """
     name = module.params['pn_name']
     ip = module.params['pn_ip']
+    clicopy = cli
+
+    cli += ' access-list-show name %s no-show-headers ' % name
+    out = run_commands(module, cli)[1]
+
+    if name not in out:
+        module.fail_json(
+            failed=True,
+            msg='access-list with name %s does not exist' % name
+        )
+
+    cli = clicopy
     cli += ' access-list-ip-show name %s format ip no-show-headers' % name
 
-    out = module.run_command(cli.split(), use_unsafe_shell=True)[1]
-
+    out = run_commands(module, cli)[1]
     out = out.split()
-
     return True if ip in out else False
 
 
 def main():
     """ This section is for arguments parsing """
 
-    global state_map
     state_map = dict(
         present='access-list-ip-add',
         absent='access-list-ip-remove',
