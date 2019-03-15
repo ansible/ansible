@@ -111,6 +111,9 @@ class HostVars(Mapping):
             out[host] = self.get(host)
         return repr(out)
 
+    def __dict__(self):
+        return self.__repr__()
+
 
 class HostVarsVars(Mapping):
 
