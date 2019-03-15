@@ -62,7 +62,7 @@
 - name: verify test create volume
   assert:
     that:
-      - result is not changed
+      - volume is not changed
 
 - name: test attach volume with checkmode
   hcloud_volume:
@@ -120,7 +120,8 @@
 - name: verify test update volume lable
   assert:
     that:
-      - volume is success
+      - volume is changed
+      - volume.hcloud_volume.labels.key == "value"
 
 - name: test update volume label with the same label
   hcloud_volume:
@@ -133,15 +134,26 @@
     that:
       - volume is not changed
 
-- name: test update volume size
+- name: test increase volume size
   hcloud_volume:
     name: "{{hcloud_volume_name}}"
     size: 11
   register: volume
-- name: verify test update volume size
+- name: verify test increase volume size
   assert:
     that:
       - volume is changed
+      - volume.hcloud_volume.size == 11
+
+- name: test decreace volume size
+  hcloud_volume:
+    name: "{{hcloud_volume_name}}"
+    size: 10
+  register: volume
+- name: verify test decreace volume size
+  assert:
+    that:
+      - volume is not changed
       - volume.hcloud_volume.size == 11
 
 - name: test delete volume
