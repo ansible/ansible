@@ -72,9 +72,6 @@ from ansible.module_utils._text import to_native
 from ansible.module_utils.hcloud import Hcloud
 
 try:
-    from hcloud.volumes.domain import Volume
-    from hcloud.ssh_keys.domain import SSHKey
-    from hcloud.locations.domain import Server
     from hcloud import APIException
 except ImportError:
     pass
