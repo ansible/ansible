@@ -1,9 +1,9 @@
 [aws_ssm]
-node1-{{del_instance_id}} instance_id={{del_instance_id}} region={{region_name}}
+{{linux_instance_id}} instance_id={{linux_instance_id}} region={{aws_region}}
 
 [aws_ssm:vars]
 ansible_connection=aws_ssm
-bucket_name={{del_bucket_name}}
+bucket_name={{bucket_name}}
 
 # support tests that target testhost
 [testhost:children]

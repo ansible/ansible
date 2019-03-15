@@ -1,6 +1,5 @@
 ---
 ## Task file for setup/teardown AWS resources for aws_ssm integration testing
-## Setup Infra in AWS
 - name: Install Session Manager Plugin for Debian/Ubuntu
   include_tasks: debian.yml
   when: ansible_distribution == "Ubuntu" or ansible_distribution == "Debian"
@@ -59,65 +58,88 @@
     image: "{{linux_ami_id}}"
     wait: "yes"
     count: 1
-    region: "{{region_name}}"
+    region: "{{aws_region}}"
     instance_profile_name: "{{random_role_name}}"
     instance_tags:
-      Name: aws_ssm_integration_test
+      Name: aws_ssm_integration_test_linux
     user_data: |
                  #!/bin/sh
                  sudo systemctl start amazon-ssm-agent
     state: present
-  register: output
+  register: linux_output
+  tags: setup_infra
+
+- name: Create Windows ec2 instance
+  ec2:
+    instance_type: "{{instance_type}}"
+    image: "{{windows_ami_id}}"
+    wait: "yes"
+    count: 1
+    region: "{{aws_region}}"
+    instance_profile_name: "{{random_role_name}}"
+    instance_tags:
+      Name: aws_ssm_integration_test_windows
+    user_data: |
+                <powershell>
+                Restart-Service AmazonSSMAgent
+                </powershell>
+    state: present
+  register: windows_output
   tags: setup_infra
 
 - name: Wait for EC2 to be available
   wait_for_connection:
-    delay: 30
+    delay: 300
   tags: setup_infra
 
 - name: Setting fact for S3 bucket-name using EC2 instance-id
   set_fact:
-    bucket_name: "{{output.instance_ids[0]}}"
-    del_instance_id: "{{output.instance_ids[0]}}"
-    del_bucket_name: "{{output.instance_ids[0]}}"
+    bucket_name: "{{linux_output.instance_ids[0]}}-{{windows_output.instance_ids[0]}}"
+    linux_instance_id: "{{linux_output.instance_ids[0]}}"
+    windows_instance_id: "{{windows_output.instance_ids[0]}}"
   tags: setup_infra
 
-- name: Create var_to_delete.yml
-  template:
-    dest: "/tmp/vars_to_delete.yml"
-    src: vars_to_delete.yml.j2
-  tags: setup_infra
-
-- name: Create hosts file
-  template:
-    dest: "{{playbook_dir}}/inventory.aws_ssm"
-    src: inventory.aws_ssm.j2
-  tags: setup_infra
-
-- name: create bucket with instance id and rolename
+- name: Create bucket with instance id and rolename
   s3_bucket:
     name: "{{bucket_name}}"
   register: s3_output
   tags: setup_infra
 
+- name: Create var_to_delete.yml
+  template:
+    dest: "{{playbook_dir}}/vars_to_delete.yml"
+    src: vars_to_delete.yml.j2
+  tags: setup_infra
+
+- name: Create Inventory file for Linux host
+  template:
+    dest: "{{playbook_dir}}/inventory-linux.aws_ssm"
+    src: inventory-linux.aws_ssm.j2
+  tags: setup_infra
+
+- name: Create Inventory file for Windows host
+  template:
+    dest: "{{playbook_dir}}/inventory.aws_ssm"
+    src: inventory-windows.aws_ssm.j2
+  tags: setup_infra
+
 - name: Include variable file to delete infra
-  include_vars:  "/tmp/vars_to_delete.yml"
+  include_vars:  "{{playbook_dir}}/vars_to_delete.yml"
   tags: delete_infra
 
-## Delete Infra in AWS
 - name: S3 bucket Deletion
   aws_s3:
     bucket: "{{bucket_name}}"
     mode: delete
-  register: s3_delete_status
   tags: delete_infra
 
 - name: Terminate EC2 instances that were previously launched
   ec2:
     state: 'absent'
-    instance_ids: "{{instance_id}}"
-    region: "{{region_name}}"
-  register: ec2_terminate_status
+    instance_ids:
+      - "{{linux_instance_id}}"
+      - "{{windows_instance_id}}"
+    region: "{{aws_region}}"
   tags: delete_infra
 
 - name: Delete IAM policy
@@ -128,12 +150,10 @@
     policy_document:  aws_ssm_integration_test_setup_teardown/files/custom_role.json
     state: absent
   tags: delete_infra
-  register: iam_policy_deletion_status
 
 - name: Delete IAM role
   iam:
     iam_type: role
     name: "{{role_name_random}}"
     state: absent
-  register: iam_role_deletion_status
   tags: delete_infra
