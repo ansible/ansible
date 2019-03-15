@@ -98,11 +98,6 @@ lib/ansible/modules/cloud/centurylink/clc_firewall_policy.py E335
 lib/ansible/modules/cloud/centurylink/clc_server_snapshot.py E335
 lib/ansible/modules/cloud/cloudstack/cs_cluster.py E326
 lib/ansible/modules/cloud/cloudstack/cs_host.py E326
-lib/ansible/modules/cloud/cloudstack/cs_network.py E324
-lib/ansible/modules/cloud/cloudstack/cs_network_offering.py E322
-lib/ansible/modules/cloud/cloudstack/cs_network_offering.py E326
-lib/ansible/modules/cloud/cloudstack/cs_portforward.py E324
-lib/ansible/modules/cloud/cloudstack/cs_project.py E322
 lib/ansible/modules/cloud/cloudstack/cs_service_offering.py E322
 lib/ansible/modules/cloud/cloudstack/cs_service_offering.py E323
 lib/ansible/modules/cloud/cloudstack/cs_service_offering.py E326
