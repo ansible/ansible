@@ -31,18 +31,7 @@ DOCUMENTATION = '''
 ---
 module: gcp_compute_network
 description:
-- Represents a Network resource.
-- Your Cloud Platform Console project can contain multiple networks, and each network
-  can have multiple instances attached to it. A network allows you to define a gateway
-  IP and the network range for the instances attached to that network. Every project
-  is provided with a default network with preset configurations and firewall rules.
-  You can choose to customize the default network by adding or removing rules, or
-  you can create new networks in that project. Generally, most users only need one
-  network, although you can have up to five networks per project by default.
-- A network belongs to only one project, and each instance can only belong to one
-  network. All Compute Engine networks use the IPv4 protocol. Compute Engine currently
-  does not support IPv6. However, Google is a major advocate of IPv6 and it is an
-  important future direction.
+- Manages a VPC network or legacy network resource on GCP.
 short_description: Creates a GCP Network
 version_added: 2.6
 author: Google Inc. (@googlecloudplatform)
@@ -60,14 +49,18 @@ options:
     default: present
   description:
     description:
-    - An optional description of this resource. Provide this property when you create
-      the resource.
+    - An optional description of this resource. The resource must be recreated to
+      modify this field.
     required: false
   ipv4_range:
     description:
-    - 'The range of internal addresses that are legal on this network. This range
-      is a CIDR specification, for example: 192.168.0.0/16. Provided by the client
-      when the network is created.'
+    - If this field is specified, a deprecated legacy network is created.
+    - You will no longer be able to create a legacy network on Feb 1, 2020.
+    - See the [legacy network docs](U(https://cloud.google.com/vpc/docs/legacy)) for
+      more details.
+    - The range of internal addresses that are legal on this legacy network.
+    - 'This range is a CIDR specification, for example: `192.168.0.0/16`.'
+    - The resource must be recreated to modify this field.
     required: false
   name:
     description:
@@ -80,10 +73,11 @@ options:
     required: true
   auto_create_subnetworks:
     description:
-    - When set to true, the network is created in "auto subnet mode". When set to
-      false, the network is in "custom subnet mode".
-    - In "auto subnet mode", a newly created network is assigned the default CIDR
-      of 10.128.0.0/9 and it automatically creates one subnetwork per region.
+    - When set to `true`, the network is created in "auto subnet mode" and it will
+      create a subnet for each region automatically across the `10.128.0.0/9` address
+      range.
+    - When set to `false`, the network is created in "custom subnet mode" so the user
+      can explicitly connect subnetwork resources.
     required: false
     type: bool
   routing_config:
@@ -95,9 +89,9 @@ options:
     suboptions:
       routing_mode:
         description:
-        - The network-wide routing mode to use. If set to REGIONAL, this network's
+        - The network-wide routing mode to use. If set to `REGIONAL`, this network's
           cloud routers will only advertise routes with subnetworks of this network
-          in the same region as the router. If set to GLOBAL, this network's cloud
+          in the same region as the router. If set to `GLOBAL`, this network's cloud
           routers will advertise routes with all subnetworks of this network, across
           regions.
         required: true
@@ -113,26 +107,25 @@ notes:
 EXAMPLES = '''
 - name: create a network
   gcp_compute_network:
-      name: "test_object"
-      auto_create_subnetworks: true
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    auto_create_subnetworks: 'true'
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
 description:
   description:
-  - An optional description of this resource. Provide this property when you create
-    the resource.
+  - An optional description of this resource. The resource must be recreated to modify
+    this field.
   returned: success
   type: str
 gateway_ipv4:
   description:
-  - A gateway address for default routing to other networks. This value is read only
-    and is selected by the Google Compute Engine, typically as the first usable address
-    in the IPv4Range.
+  - The gateway address for default routing out of the network. This value is selected
+    by GCP.
   returned: success
   type: str
 id:
@@ -142,9 +135,13 @@ id:
   type: int
 ipv4_range:
   description:
-  - 'The range of internal addresses that are legal on this network. This range is
-    a CIDR specification, for example: 192.168.0.0/16. Provided by the client when
-    the network is created.'
+  - If this field is specified, a deprecated legacy network is created.
+  - You will no longer be able to create a legacy network on Feb 1, 2020.
+  - See the [legacy network docs](U(https://cloud.google.com/vpc/docs/legacy)) for
+    more details.
+  - The range of internal addresses that are legal on this legacy network.
+  - 'This range is a CIDR specification, for example: `192.168.0.0/16`.'
+  - The resource must be recreated to modify this field.
   returned: success
   type: str
 name:
@@ -164,10 +161,10 @@ subnetworks:
   type: list
 autoCreateSubnetworks:
   description:
-  - When set to true, the network is created in "auto subnet mode". When set to false,
-    the network is in "custom subnet mode".
-  - In "auto subnet mode", a newly created network is assigned the default CIDR of
-    10.128.0.0/9 and it automatically creates one subnetwork per region.
+  - When set to `true`, the network is created in "auto subnet mode" and it will create
+    a subnet for each region automatically across the `10.128.0.0/9` address range.
+  - When set to `false`, the network is created in "custom subnet mode" so the user
+    can explicitly connect subnetwork resources.
   returned: success
   type: bool
 creationTimestamp:
@@ -184,10 +181,11 @@ routingConfig:
   contains:
     routingMode:
       description:
-      - The network-wide routing mode to use. If set to REGIONAL, this network's cloud
-        routers will only advertise routes with subnetworks of this network in the
-        same region as the router. If set to GLOBAL, this network's cloud routers
-        will advertise routes with all subnetworks of this network, across regions.
+      - The network-wide routing mode to use. If set to `REGIONAL`, this network's
+        cloud routers will only advertise routes with subnetworks of this network
+        in the same region as the router. If set to `GLOBAL`, this network's cloud
+        routers will advertise routes with all subnetworks of this network, across
+        regions.
       returned: success
       type: str
 '''
@@ -232,7 +230,7 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                update(module, self_link(module), kind)
+                update(module, self_link(module), kind, fetch)
                 fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
@@ -256,9 +254,22 @@ def create(module, link, kind):
     return wait_for_operation(module, auth.post(link, resource_to_request(module)))
 
 
-def update(module, link, kind):
+def update(module, link, kind, fetch):
+    update_fields(module, resource_to_request(module), response_to_hash(module, fetch))
+    return fetch_resource(module, self_link(module), kind)
+
+
+def update_fields(module, request, response):
+    if response.get('routingConfig') != request.get('routingConfig'):
+        routing_config_update(module, request, response)
+
+
+def routing_config_update(module, request, response):
     auth = GcpSession(module, 'compute')
-    return wait_for_operation(module, auth.patch(link, resource_to_request(module)))
+    auth.patch(
+        ''.join(["https://www.googleapis.com/compute/v1/", "projects/{project}/global/networks/{name}"]).format(**module.params),
+        {u'routingConfig': NetworkRoutingconfig(module.params.get('routing_config', {}), module).to_request()},
+    )
 
 
 def delete(module, link, kind):
