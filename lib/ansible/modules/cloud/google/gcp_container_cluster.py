@@ -170,20 +170,6 @@ options:
           Because the master endpoint is open to the Internet, you should create a
           strong password.
         required: false
-      cluster_ca_certificate:
-        description:
-        - Base64-encoded public certificate that is the root of trust for the cluster.
-        required: false
-      client_certificate:
-        description:
-        - Base64-encoded public certificate used by clients to authenticate to the
-          cluster endpoint.
-        required: false
-      client_key:
-        description:
-        - Base64-encoded private key used by clients to authenticate to the cluster
-          endpoint.
-        required: false
   logging_service:
     description:
     - 'The logging service the cluster should use to write logs. Currently available
@@ -210,6 +196,31 @@ options:
     - The name of the Google Compute Engine network to which the cluster is connected.
       If left unspecified, the default network will be used.
     required: false
+  private_cluster_config:
+    description:
+    - Configuration for a private cluster.
+    required: false
+    version_added: 2.8
+    suboptions:
+      enable_private_nodes:
+        description:
+        - Whether nodes have internal IP addresses only. If enabled, all nodes are
+          given only RFC 1918 private addresses and communicate with the master via
+          private networking.
+        required: false
+        type: bool
+      enable_private_endpoint:
+        description:
+        - Whether the master's internal IP address is used as the cluster endpoint.
+        required: false
+        type: bool
+      master_ipv4_cidr_block:
+        description:
+        - The IP range in CIDR notation to use for the hosted master network. This
+          range will be used for assigning internal IP addresses to the master or
+          set of masters, as well as the ILB VIP. This range must not overlap with
+          any other ranges in use within the cluster's network.
+        required: false
   cluster_ipv4_cidr:
     description:
     - The IP address range of the container pods in this cluster, in CIDR notation
@@ -265,19 +276,19 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a cluster
   gcp_container_cluster:
-      name: my-cluster
-      initial_node_count: 2
-      master_auth:
-        username: cluster_admin
-        password: my-secret-password
-      node_config:
-        machine_type: n1-standard-4
-        disk_size_gb: 500
-      location: us-central1-a
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: my-cluster
+    initial_node_count: 2
+    master_auth:
+      username: cluster_admin
+      password: my-secret-password
+    node_config:
+      machine_type: n1-standard-4
+      disk_size_gb: 500
+    location: us-central1-a
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -459,6 +470,42 @@ network:
     If left unspecified, the default network will be used.
   returned: success
   type: str
+privateClusterConfig:
+  description:
+  - Configuration for a private cluster.
+  returned: success
+  type: complex
+  contains:
+    enablePrivateNodes:
+      description:
+      - Whether nodes have internal IP addresses only. If enabled, all nodes are given
+        only RFC 1918 private addresses and communicate with the master via private
+        networking.
+      returned: success
+      type: bool
+    enablePrivateEndpoint:
+      description:
+      - Whether the master's internal IP address is used as the cluster endpoint.
+      returned: success
+      type: bool
+    masterIpv4CidrBlock:
+      description:
+      - The IP range in CIDR notation to use for the hosted master network. This range
+        will be used for assigning internal IP addresses to the master or set of masters,
+        as well as the ILB VIP. This range must not overlap with any other ranges
+        in use within the cluster's network.
+      returned: success
+      type: str
+    privateEndpoint:
+      description:
+      - The internal IP address of this cluster's master endpoint.
+      returned: success
+      type: str
+    publicEndpoint:
+      description:
+      - The external IP address of this cluster's master endpoint.
+      returned: success
+      type: str
 clusterIpv4Cidr:
   description:
   - The IP address range of the container pods in this cluster, in CIDR notation (e.g.
@@ -603,19 +650,14 @@ def main():
                     preemptible=dict(type='bool'),
                 ),
             ),
-            master_auth=dict(
-                type='dict',
-                options=dict(
-                    username=dict(type='str'),
-                    password=dict(type='str'),
-                    cluster_ca_certificate=dict(type='str'),
-                    client_certificate=dict(type='str'),
-                    client_key=dict(type='str'),
-                ),
-            ),
+            master_auth=dict(type='dict', options=dict(username=dict(type='str'), password=dict(type='str'))),
             logging_service=dict(type='str', choices=['logging.googleapis.com', 'none']),
             monitoring_service=dict(type='str', choices=['monitoring.googleapis.com', 'none']),
             network=dict(type='str'),
+            private_cluster_config=dict(
+                type='dict',
+                options=dict(enable_private_nodes=dict(type='bool'), enable_private_endpoint=dict(type='bool'), master_ipv4_cidr_block=dict(type='str')),
+            ),
             cluster_ipv4_cidr=dict(type='str'),
             addons_config=dict(
                 type='dict',
@@ -684,6 +726,7 @@ def resource_to_request(module):
         u'loggingService': module.params.get('logging_service'),
         u'monitoringService': module.params.get('monitoring_service'),
         u'network': module.params.get('network'),
+        u'privateClusterConfig': ClusterPrivateclusterconfig(module.params.get('private_cluster_config', {}), module).to_request(),
         u'clusterIpv4Cidr': module.params.get('cluster_ipv4_cidr'),
         u'addonsConfig': ClusterAddonsconfig(module.params.get('addons_config', {}), module).to_request(),
         u'subnetwork': module.params.get('subnetwork'),
@@ -761,6 +804,7 @@ def response_to_hash(module, response):
         u'loggingService': response.get(u'loggingService'),
         u'monitoringService': response.get(u'monitoringService'),
         u'network': response.get(u'network'),
+        u'privateClusterConfig': ClusterPrivateclusterconfig(response.get(u'privateClusterConfig', {}), module).from_response(),
         u'clusterIpv4Cidr': response.get(u'clusterIpv4Cidr'),
         u'addonsConfig': ClusterAddonsconfig(response.get(u'addonsConfig', {}), module).from_response(),
         u'subnetwork': response.get(u'subnetwork'),
@@ -893,6 +937,37 @@ class ClusterMasterauth(object):
                 u'clusterCaCertificate': self.request.get(u'clusterCaCertificate'),
                 u'clientCertificate': self.request.get(u'clientCertificate'),
                 u'clientKey': self.request.get(u'clientKey'),
+            }
+        )
+
+
+class ClusterPrivateclusterconfig(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = {}
+
+    def to_request(self):
+        return remove_nones_from_dict(
+            {
+                u'enablePrivateNodes': self.request.get('enable_private_nodes'),
+                u'enablePrivateEndpoint': self.request.get('enable_private_endpoint'),
+                u'masterIpv4CidrBlock': self.request.get('master_ipv4_cidr_block'),
+                u'privateEndpoint': self.request.get('private_endpoint'),
+                u'publicEndpoint': self.request.get('public_endpoint'),
+            }
+        )
+
+    def from_response(self):
+        return remove_nones_from_dict(
+            {
+                u'enablePrivateNodes': self.request.get(u'enablePrivateNodes'),
+                u'enablePrivateEndpoint': self.request.get(u'enablePrivateEndpoint'),
+                u'masterIpv4CidrBlock': self.request.get(u'masterIpv4CidrBlock'),
+                u'privateEndpoint': self.request.get(u'privateEndpoint'),
+                u'publicEndpoint': self.request.get(u'publicEndpoint'),
             }
         )
 

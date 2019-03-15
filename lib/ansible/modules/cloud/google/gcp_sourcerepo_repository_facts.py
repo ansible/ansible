@@ -44,11 +44,12 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name:  a repository facts
+- name: " a repository facts"
   gcp_sourcerepo_repository_facts:
-      project: test_project
-      auth_kind: serviceaccount
-      service_account_file: "/tmp/auth.pem"
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: facts
 '''
 
 RETURN = '''

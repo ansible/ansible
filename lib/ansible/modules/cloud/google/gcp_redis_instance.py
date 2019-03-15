@@ -123,30 +123,30 @@ notes:
 EXAMPLES = '''
 - name: create a network
   gcp_compute_network:
-      name: "network-instance"
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: network-instance
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: network
 
 - name: create a instance
   gcp_redis_instance:
-      name: instance37
-      tier: STANDARD_HA
-      memory_size_gb: 1
-      region: us-central1
-      location_id: us-central1-a
-      redis_version: REDIS_3_2
-      display_name: Ansible Test Instance
-      reserved_ip_range: 192.168.0.0/29
-      labels:
-        my_key: my_val
-        other_key: other_val
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: instance37
+    tier: STANDARD_HA
+    memory_size_gb: 1
+    region: us-central1
+    location_id: us-central1-a
+    redis_version: REDIS_3_2
+    display_name: Ansible Test Instance
+    reserved_ip_range: 192.168.0.0/29
+    labels:
+      my_key: my_val
+      other_key: other_val
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
