@@ -58,7 +58,7 @@ options:
     required: false
     default: sentry.io
 
-notes: 
+notes:
   - Module supports check_mode, but it can't provide 100 percent gurantee what specified slug hasn't been used before.
 author: "Mikhail Naletov (@okgolove)"
 '''
