@@ -80,32 +80,26 @@ class Connection(AwsSsmConnection):
         return cmd + "; echo $?; echo '" + mark_start + "'\n" + "echo '" + mark_end + "'\n"
 
     def _post_process(self, stdout):
-        ''' extract command status and strip unwanted lines '''
+        ''' extract command status and strip anything following '''
 
-        extra_lines = 4
-        stdout = stdout.replace('\r', '')
-        lines = stdout.splitlines()
+        success = stdout.rfind('True')
+        fail = stdout.rfind('False')
 
-        # Get command return code
-        if 'True' in lines[-1]:
-            extra_lines = 2
-            if len(lines) == 1:
-                extra_lines = 0
-                stdout = ''
+        if success > fail:
             returncode = 0
-        elif 'False' in lines[-1]:
-            extra_lines = 2
-            returncode = -1
-        elif 'False' in lines[-2]:
-            extra_lines = 2
-            returncode = -1
-        elif 'True' in lines[-3]:
-            returncode = 0
+            stdout = stdout[:success]
+        elif fail > success:
+            try:
+                # test using: ansible -m raw -a 'cmd /c exit 99'
+                returncode = int(stdout[fail:].split()[1])
+            except (IndexError, ValueError):
+                returncode = -1
+            stdout = stdout[:fail]
         else:
             returncode = -51
 
-        # Throw away ending lines
-        for x in range(0, extra_lines):
-            stdout = stdout[:stdout.rfind('\n')]
+        # Strip sequence at terminal width
+        if len(stdout) > 200:
+            stdout = stdout.replace('\r\r\n', '')
 
         return (returncode, stdout)
