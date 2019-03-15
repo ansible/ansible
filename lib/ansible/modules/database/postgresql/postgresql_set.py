@@ -20,13 +20,13 @@ short_description: Change a PostgreSQL server configuration parameter
 description:
    - Allows to change a PostgreSQL server configuration parameter.
    - The module uses ALTER SYSTEM command U(https://www.postgresql.org/docs/current/sql-altersystem.html)
-     and applys changes by reload server configuration.
+     and applies changes by reload server configuration.
    - ALTER SYSTEM is used for changing server configuration parameters across the entire database cluster.
    - It can be more convenient and safe than the traditional method of manually editing the postgresql.conf file.
    - ALTER SYSTEM writes the given parameter setting to the $PGDATA/postgresql.auto.conf file,
      which is read in addition to postgresql.conf U(https://www.postgresql.org/docs/current/sql-altersystem.html).
    - The module allows to reset parameter to boot_val (cluster initial value) by I(reset=yes) or remove parameter
-     string from postgresql.auto.conf and reload I(value=default).
+     string from postgresql.auto.conf and reload I(value=default) (for settings with postmaster context restart is required).
    - After change you can see in the ansible output the previous and
      the new parameter value and other information using returned values and M(debug) module.
 version_added: "2.8"
@@ -55,6 +55,7 @@ options:
       be a role that the current login_user is a member of.
     - Permissions checking for SQL commands is carried out as though
       the session_role were the one that had logged in originally.
+    type: str
   db:
     description:
     - Name of database to connect.
@@ -111,7 +112,7 @@ notes:
   The final check of the parameter value cannot compare it because the server was
   not restarted and the value in pg_settings is not updated yet.
 - For some parameters restart of PostgreSQL server is required.
-  See official documentation U(https://www.postgresql.org/).
+  See official documentation U(https://www.postgresql.org/docs/current/view-pg-settings.html).
 - The default authentication assumes that you are either logging in as or
   sudo'ing to the postgres account on the host.
 - This module uses psycopg2, a Python PostgreSQL database adapter. You must
@@ -194,7 +195,7 @@ context:
   sample: user
 '''
 
-PG_REQ_VER = 9.4
+PG_REQ_VER = 90400
 
 from copy import deepcopy
 
@@ -287,14 +288,17 @@ def pretty_to_bytes(pretty_val):
     return val_in_bytes
 
 
-def param_set(cursor, module, name, value):
+def param_set(cursor, module, name, value, context):
     try:
-        if value in ('DEFAULT', 'default'):
+        if value.lower() in 'default':
             query = "ALTER SYSTEM SET %s = DEFAULT" % name
         else:
             query = "ALTER SYSTEM SET %s = '%s'" % (name, value)
         cursor.execute(query)
-        cursor.execute("SELECT pg_reload_conf()")
+
+        if context != 'postmaster':
+            cursor.execute("SELECT pg_reload_conf()")
+
     except Exception as e:
         module.fail_json(msg="Unable to get %s value due to : %s" % (name, to_native(e)))
 
@@ -338,6 +342,9 @@ def main():
         supports_check_mode=True,
     )
 
+    if not HAS_PSYCOPG2:
+        module.fail_json(msg="the python psycopg2 module is required")
+
     name = module.params["name"]
     value = module.params["value"]
     reset = module.params["reset"]
@@ -355,9 +362,6 @@ def main():
 
     if not value and not reset:
         module.fail_json(msg="%s: at least one of value or reset param must be specified" % name)
-
-    if not HAS_PSYCOPG2:
-        module.fail_json(msg="the python psycopg2 module is required")
 
     # To use defaults values, keyword arguments must be absent, so
     # check which values are empty and don't include in the **kw
@@ -390,10 +394,9 @@ def main():
     cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
     # Check server version (needs 9.4 or later):
-    cursor.execute('SELECT version()')
-    ver = cursor.fetchone()[0].split()[1]
-    ver = '.'.join(ver.split('.')[:2])
-    if PG_REQ_VER > float(ver):
+    cursor.execute("select current_setting('server_version_num')")
+    ver = int(cursor.fetchone()[0])
+    if ver < PG_REQ_VER:
         module.warn("PostgreSQL is %s version but %s or later is required" % (ver, PG_REQ_VER))
         kw = dict(
             changed=False,
@@ -438,7 +441,8 @@ def main():
 
     # Do job
     if context == "internal":
-        module.fail_json(msg="%s: cannot be changed (internal context). See documentation" % name)
+        module.fail_json(msg="%s: cannot be changed (internal context). See "
+                             "https://www.postgresql.org/docs/current/runtime-config-preset.html" % name)
 
     if context == "postmaster":
         restart_required = True
@@ -462,7 +466,7 @@ def main():
 
     # Set param:
     if value and value != current_value:
-        changed = param_set(cursor, module, name, value)
+        changed = param_set(cursor, module, name, value, context)
 
         kw['value_pretty'] = value
 
@@ -476,7 +480,7 @@ def main():
             )
             module.exit_json(**kw)
 
-        changed = param_set(cursor, module, name, boot_val)
+        changed = param_set(cursor, module, name, boot_val, context)
 
     if restart_required:
         module.warn("Restart of PostgreSQL is required for setting %s" % name)
