@@ -1,0 +1,2 @@
+bugfixes:
+- win_chocolatey - Fix incompatibilities with the latest release of Chocolatey ``v0.10.12+``
