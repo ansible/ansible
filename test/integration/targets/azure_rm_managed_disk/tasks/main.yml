@@ -11,6 +11,7 @@
        state: absent
    with_items:
      - "md{{ rpfx }}os"
+     - "md{{ rpfx }}3"
      - "md{{ rpfx }}2"
      - "md{{ rpfx }}1"
 
@@ -61,6 +62,24 @@
        - output.changed
        - output.state.id is defined
        - output.state.os_type == None
+
+ - name: Create new managed disk with zones
+   azure_rm_managed_disk:
+       resource_group: "{{ resource_group }}"
+       name: "md{{ rpfx }}3"
+       storage_account_type: "Standard_LRS"
+       disk_size_gb: 1
+       zones: 1
+       tags:
+           testing: testing
+           delete: never
+   register: output
+
+ - name: Assert status succeeded and results include an zones value
+   assert:
+     that:
+       - output.changed
+       - output.state.zones == ["1"] 
 
  - name: Change the operating system type of the managed disk to linux
    azure_rm_managed_disk:
@@ -459,6 +478,7 @@
    with_items:
        - 1
        - 2
+       - 3
 
  - name: Delete virtual machine
    azure_rm_virtualmachine:
