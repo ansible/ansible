@@ -1,12 +1,3 @@
-- hosts: localhost
-  connection: local
-  gather_facts: no
-  vars:
-    ansible_python_interpreter: "{{ ansible_playbook_python }}"
-    recreate_crd_default_merge_expectation: recreate_crd is failed
-    playbook_namespace: ansible-test-k8s-older-openshift
-
-  tasks:
     - python_requirements_facts:
         dependencies:
           - openshift==0.6.0
@@ -35,9 +26,7 @@
           - "'. This is required for append_hash.' in k8s_append_hash.msg"
 
     # merge_type
-    - include_role:
-        name: k8s
-        tasks_from: crd
+    - include_tasks: crd.yml
 
     # validate
     - name: attempt to use validate with older openshift
