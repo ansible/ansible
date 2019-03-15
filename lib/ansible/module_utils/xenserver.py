@@ -647,22 +647,24 @@ def wait_for_task(module, task_ref, timeout=300):
 
     result = ""
 
-    # If we have to wait indefinitely, make timeout larger than 0 so we can
+    # If we have to wait indefinitely, make time_left larger than 0 so we can
     # enter while loop.
     if timeout == 0:
-        timeout = 1
+        time_left = 1
+    else:
+        time_left = timeout
 
     try:
-        while timeout > 0:
+        while time_left > 0:
             task_status = xapi_session.xenapi.task.get_status(task_ref).lower()
 
             if task_status == "pending":
                 # Task is still running.
                 time.sleep(interval)
 
-                # We decrease timeout only if we don't wait indefinitely.
+                # We decrease time_left only if we don't wait indefinitely.
                 if timeout != 0:
-                    timeout -= interval
+                    time_left -= interval
 
                 continue
             elif task_status == "success":
@@ -860,11 +862,7 @@ class XenServerObject(object):
                                                  "Please download XenServer SDK and copy XenAPI.py to your Python site-packages. "
                                                  "Check Notes section in module documentation for more info."))
 
-        if module:
-            self.module = module
-        else:
-            module.fail_json(msg="XenServerObject: Invalid module object passed!")
-
+        self.module = module
         self.xapi_session = XAPI.connect(module)
 
         try:
