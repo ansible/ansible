@@ -30,12 +30,12 @@ $path = Get-AnsibleParam -obj $params "path" -type "path" -failifempty $true
 $state = Get-AnsibleParam -obj $params "state" -type "str" -default "absent" -validateSet "present","absent" -resultobj $result
 $reorganize = Get-AnsibleParam -obj $params "reorganize" -type "bool" -default $false -resultobj $result
 
-If (-Not (Test-Path -Path $path)) {
+If (-Not (Test-Path -LiteralPath $path)) {
     Fail-Json $result "$path file or directory does not exist on the host"
 }
  
 Try {
-    $objACL = Get-ACL -Path $path
+    $objACL = Get-ACL -LiteralPath $path
     # AreAccessRulesProtected - $false if inheritance is set ,$true if inheritance is not set
     $inheritanceDisabled = $objACL.AreAccessRulesProtected
 
@@ -45,9 +45,9 @@ Try {
 
         If ($reorganize) {
             # it wont work without intermediate save, state would be the same
-            Set-ACL -Path $path -AclObject $objACL -WhatIf:$check_mode
+            Set-ACL -LiteralPath $path -AclObject $objACL -WhatIf:$check_mode
             $result.changed = $true
-            $objACL = Get-ACL -Path $path
+            $objACL = Get-ACL -LiteralPath $path
 
             # convert explicit ACE to inherited ACE
             ForEach($inheritedRule in $objACL.Access) {
@@ -67,11 +67,11 @@ Try {
             }
         }
 
-        Set-ACL -Path $path -AclObject $objACL -WhatIf:$check_mode
+        Set-ACL -LiteralPath $path -AclObject $objACL -WhatIf:$check_mode
         $result.changed = $true
     } Elseif (($state -eq "absent") -And (-not $inheritanceDisabled)) {
         $objACL.SetAccessRuleProtection($True, $reorganize)
-        Set-ACL -Path $path -AclObject $objACL -WhatIf:$check_mode
+        Set-ACL -LiteralPath $path -AclObject $objACL -WhatIf:$check_mode
         $result.changed = $true
     }
 } Catch {
