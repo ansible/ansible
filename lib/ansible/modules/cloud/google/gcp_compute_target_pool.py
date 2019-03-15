@@ -135,12 +135,12 @@ notes:
 EXAMPLES = '''
 - name: create a target pool
   gcp_compute_target_pool:
-      name: "test_object"
-      region: us-west1
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    region: us-west1
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''

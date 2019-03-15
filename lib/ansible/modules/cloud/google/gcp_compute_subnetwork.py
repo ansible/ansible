@@ -140,24 +140,24 @@ notes:
 EXAMPLES = '''
 - name: create a network
   gcp_compute_network:
-      name: "network-subnetwork"
-      auto_create_subnetworks: true
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: network-subnetwork
+    auto_create_subnetworks: 'true'
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: network
 
 - name: create a subnetwork
   gcp_compute_subnetwork:
-      name: ansiblenet
-      region: us-west1
-      network: "{{ network }}"
-      ip_cidr_range: 172.16.0.0/16
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: ansiblenet
+    region: us-west1
+    network: "{{ network }}"
+    ip_cidr_range: 172.16.0.0/16
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
