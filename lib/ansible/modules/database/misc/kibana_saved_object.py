@@ -206,7 +206,7 @@ def are_different(module, existing_object, object_id, object_type, content):
 def get_object(module, object_id, object_type, kibana_url,
                timeout, tenant=None):
 
-    url, headers, _ = get_request_params(
+    url, headers, dummy = get_request_params(
         object_id=object_id,
         object_type=object_type,
         kibana_url=kibana_url,
@@ -269,7 +269,7 @@ def update_object(module, object_id, object_type, kibana_url, content,
 def delete_object(module, object_id, object_type, kibana_url,
                   timeout, tenant=None):
 
-    url, headers, _ = get_request_params(
+    url, headers, dummy = get_request_params(
         object_id=object_id,
         object_type=object_type,
         kibana_url=kibana_url,
