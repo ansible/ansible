@@ -60,6 +60,61 @@ And you can use this vaulted inventory configuration file using:
 
     $ ansible-inventory -i filename.vmware.yml --list --vault-password-file=/path/to/vault_password_file
 
+Limiting inventory to a datacenter or folder
+============================================
+
+You can limit the search to a specific datacenter or folder. See the example:
+
+.. code-block:: yaml
+
+    plugin: vmware_vm_inventory
+    strict: False
+    hostname: 10.65.223.31
+    username: administrator@vsphere.local
+    password: Esxi@123$%
+    validate_certs: False
+    datacenter: MyDC
+    search_folder: Folder1/SubfolderA
+    with_tags: True
+
+The ``search_folder`` path is relative to the builtin vm subfolder of the
+specified datacenter. So setting ``search_folder`` requires also setting
+``datacenter``.
+
+Generating groups from folders
+==============================
+
+You can generate ansible groups from vCenter folders with ``with_folders: True``. It requires also setting ``datacenter``.
+
+To keep them unique the group names match the full folder path, replacing
+'/' by '_'. As an example, suppose a vCenter folder layout for an AWX lab like
+this:
+
+.. code-block:: text
+
+    /AWX
+    /AWX/lab
+    /AWX/lab/db
+    /AWX/lab/workers
+
+Setting ``with_folders: True`` (and a ``datacenter`` name) will generate an inventory like this:
+
+.. code-block:: text
+
+    @all:
+      |--@awx:
+      |  |--@awx_lab:
+      |  |  |--@awx_lab_db:
+      |  |  |  |--awx-db01_xxxx-uuid
+      |  |  |--@awx_lab_workers:
+      |  |  |  |--awx-worker01_xxxx-uuid
+      |  |  |  |--awx-worker02_xxxx-uuid
+    ...
+
+Also note that even if the ``search_folder`` param is also used specifying an
+inner folder, the generated group names still match the full path. So in the
+example above if ``search_folder`` was set to *AWX/lab*, the only difference
+in the generated groups above would be the absence of the outer *awx* group.
 
 .. seealso::
 
