@@ -138,7 +138,6 @@ from ansible.module_utils.network.ironware.ironware import run_commands
 from ansible.module_utils.network.ironware.ironware import ironware_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.six.moves import zip
 
 
 class FactsBase(object):
@@ -320,14 +319,14 @@ class MPLS(FactsBase):
         facts = list()
         regex = r'End-point[0-9 ]*: +(?P<tagged>tagged|untagged) +(vlan +(?P<vlan>[0-9]+) +)?(inner- vlan +(?P<innervlan>[0-9]+) +)?(?P<port>e [0-9/]+|--)'
         matches = re.finditer(regex, data, re.IGNORECASE | re.DOTALL)
-        for n, match in enumerate(matches):
+        for match in matches:
             f = match.groupdict()
             f['type'] = 'local'
             facts.append(f)
 
         regex = r'Vll-Peer +: +(?P<vllpeer>[0-9\.]+).*Tunnel LSP +: +(?P<lsp>\S+)'
         matches = re.finditer(regex, data, re.IGNORECASE | re.DOTALL)
-        for n, match in enumerate(matches):
+        for match in matches:
             f = match.groupdict()
             f['type'] = 'remote'
             facts.append(f)
@@ -343,14 +342,14 @@ class MPLS(FactsBase):
         facts = list()
         regex = r'Vlan (?P<vlanid>[0-9]+)\s(?: +(?:L2.*)\s| +Tagged: (?P<tagged>.+)+\s| +Untagged: (?P<untagged>.+)\s)*'
         matches = re.finditer(regex, data, re.IGNORECASE)
-        for n, match in enumerate(matches):
+        for match in matches:
             f = match.groupdict()
             f['type'] = 'local'
             facts.append(f)
 
         regex = r'Peer address: (?P<vllpeer>[0-9\.]+)'
         matches = re.finditer(regex, data, re.IGNORECASE)
-        for n, match in enumerate(matches):
+        for match in matches:
             f = match.groupdict()
             f['type'] = 'remote'
             facts.append(f)

@@ -20,8 +20,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from units.compat.mock import patch
-from ansible.modules.network.nos import nos_config
 from units.modules.utils import set_module_args
+from ansible.modules.network.nos import nos_config
 from .nos_module import TestNosModule, load_fixture
 
 
@@ -113,7 +113,7 @@ class TestNosConfigModule(TestNosModule):
         set_module_args(dict(lines=lines, match='none'))
         self.execute_module(changed=True, commands=lines)
 
-    def test_nos_config_match_none(self):
+    def test_nos_config_match_none_parents(self):
         lines = ['ip address 1.2.3.4 255.255.255.0', 'description test string']
         parents = ['interface TenGigabitEthernet 104/0/0']
         set_module_args(dict(lines=lines, parents=parents, match='none'))
