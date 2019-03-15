@@ -58,7 +58,7 @@ options:
     required: false
     default: sentry.io
 
-notes: "Module supports check_mode, but it can't provide 100 percent gurantee what specified slug hasn't been used before." 
+notes: "Module supports check_mode, but it can't provide 100 percent gurantee what specified slug hasn't been used before."
 author: "Mikhail Naletov (@okgolove)"
 '''
 
@@ -82,6 +82,7 @@ from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six.moves.urllib.parse import urlparse
 
+
 def main():
     arg_spec = dict(
         api_token=dict(required=True),
@@ -102,9 +103,9 @@ def main():
     state = module.params['state']
     team = module.params['team']
     url = urlparse(module.params['url'])
-    
+
     if not url.scheme:
-      url = "https://{0}".format(url.path)
+        url = "https://{0}".format(url.path)
 
     def is_project_exists(project_name, organization, team, api_token):
         response, info = fetch_url(
@@ -114,7 +115,7 @@ def main():
             method="GET")
         if info["status"] != 200:
             module.fail_json(msg="Unable to obtain a project list, response status: {0}, message: {1}".format(
-                  info["status"], info["msg"]))
+                info["status"], info["msg"]))
         body = json.loads(response.read())
         return bool([x for x in body if x["name"] == project_name])
 
@@ -137,7 +138,7 @@ def main():
                 method="POST")
             if info["status"] != 201:
                 module.fail_json(msg="Unable to create the project, response status: {0}, message: {1}".format(
-                  info["status"], info["msg"]))
+                    info["status"], info["msg"]))
         module.exit_json(changed=True)
 
     if state == 'absent':
@@ -154,7 +155,7 @@ def main():
                     method="DELETE")
                 if info["status"] != 204:
                     module.fail_json(msg="Unable to delete the project, response status: {0}, message: {1}".format(
-                    info["status"], info["msg"]))
+                        info["status"], info["msg"]))
             module.exit_json(changed=True)
         else:
             module.exit_json(changed=False)
