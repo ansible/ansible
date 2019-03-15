@@ -53,6 +53,12 @@ EXAMPLES = r'''
         - prefix: distro
           key: ansible_distribution
 
+        # this creates a group per distro (distro_centos, distro_debian) and assigns the hosts that have matching values to it,
+        # using the default separator "_"
+        - prefix: distro
+          key: ansible_distribution
+          to_lower: true
+
         # the following examples assume the first inventory is from contrib/inventory/ec2.py
         # this creates a group per ec2 architecture and assign hosts to the matching ones (arch_x86_64, arch_sparc, etc)
         - prefix: arch

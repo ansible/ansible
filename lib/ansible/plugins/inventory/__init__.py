@@ -404,6 +404,7 @@ class Constructable(object):
                         prefix = keyed.get('prefix', '')
                         sep = keyed.get('separator', '_')
                         raw_parent_name = keyed.get('parent_group', None)
+                        to_lower = keyed.get('to_lower', False)
                         if raw_parent_name:
                             try:
                                 raw_parent_name = self.templar.template(raw_parent_name)
@@ -426,6 +427,7 @@ class Constructable(object):
                             raise AnsibleParserError("Invalid group name format, expected a string or a list of them or dictionary, got: %s" % type(key))
 
                         for bare_name in new_raw_group_names:
+                            bare_name = bare_name.lower() if to_lower else bare_name
                             gname = self._sanitize_group_name('%s%s%s' % (prefix, sep, bare_name))
                             result_gname = self.inventory.add_group(gname)
                             self.inventory.add_child(result_gname, host)
