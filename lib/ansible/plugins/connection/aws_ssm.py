@@ -365,7 +365,12 @@ class Connection(ConnectionBase):
 
         s3_path = out_path.replace('\\', '/')
         bucket_url = 's3://%s/%s' % (self.get_option('bucket_name'), s3_path)
-        put_command = "curl --request PUT --upload-file '%s' '%s'" % (in_path, self._get_url('put_object', self.get_option('bucket_name'), s3_path, 'PUT'))
+
+        if self.is_windows:
+            put_command = "curl -Method PUT -InFile '%s' -Uri '%s'" % (in_path, self._get_url('put_object', self.get_option('bucket_name'), s3_path, 'PUT'))
+        else:
+            put_command = "curl --request PUT --upload-file '%s' '%s'" % (in_path, self._get_url('put_object', self.get_option('bucket_name'), s3_path, 'PUT'))
+
         get_command = "curl '%s' -o '%s'" % (self._get_url('get_object', self.get_option('bucket_name'), s3_path, 'GET'), out_path)
 
         client = boto3.client('s3')
