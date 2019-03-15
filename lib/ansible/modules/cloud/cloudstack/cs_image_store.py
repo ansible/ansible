@@ -67,6 +67,7 @@ EXAMPLES = '''
     name: nfs-01
     provider: NFS
     url: nfs://192.168.21.16/exports/secondary
+  delegate_to: localhost
 
 # Change the NFS share URL and force a Image Store recreation
 - name: Change the NFS url
@@ -76,12 +77,14 @@ EXAMPLES = '''
     provider: NFS
     force_recreate: yes
     url: nfs://192.168.21.10/shares/secondary
+  delegate_to: localhost
 
 - name: delete the image store
   cs_image_store:
     name: nfs-01
     zone: zone-01
     state: absent
+  delegate_to: localhost
 
 '''
 
