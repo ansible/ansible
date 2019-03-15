@@ -83,23 +83,23 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a service account
   gcp_iam_service_account:
-      name: test-ansible@graphite-playground.google.com.iam.gserviceaccount.com
-      display_name: My Ansible test key
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: test-ansible@graphite-playground.google.com.iam.gserviceaccount.com
+    display_name: My Ansible test key
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: serviceaccount
 
 - name: create a service account key
   gcp_iam_service_account_key:
-      service_account: "{{ serviceaccount }}"
-      private_key_type: TYPE_GOOGLE_CREDENTIALS_FILE
-      path: "~/test_account.json"
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    service_account: "{{ serviceaccount }}"
+    private_key_type: TYPE_GOOGLE_CREDENTIALS_FILE
+    path: "~/test_account.json"
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''

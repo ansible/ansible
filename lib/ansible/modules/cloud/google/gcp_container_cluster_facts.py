@@ -52,12 +52,13 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name:  a cluster facts
+- name: " a cluster facts"
   gcp_container_cluster_facts:
-      location: us-central1-a
-      project: test_project
-      auth_kind: serviceaccount
-      service_account_file: "/tmp/auth.pem"
+    location: us-central1-a
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: facts
 '''
 
 RETURN = '''
@@ -245,6 +246,42 @@ items:
         If left unspecified, the default network will be used.
       returned: success
       type: str
+    privateClusterConfig:
+      description:
+      - Configuration for a private cluster.
+      returned: success
+      type: complex
+      contains:
+        enablePrivateNodes:
+          description:
+          - Whether nodes have internal IP addresses only. If enabled, all nodes are
+            given only RFC 1918 private addresses and communicate with the master
+            via private networking.
+          returned: success
+          type: bool
+        enablePrivateEndpoint:
+          description:
+          - Whether the master's internal IP address is used as the cluster endpoint.
+          returned: success
+          type: bool
+        masterIpv4CidrBlock:
+          description:
+          - The IP range in CIDR notation to use for the hosted master network. This
+            range will be used for assigning internal IP addresses to the master or
+            set of masters, as well as the ILB VIP. This range must not overlap with
+            any other ranges in use within the cluster's network.
+          returned: success
+          type: str
+        privateEndpoint:
+          description:
+          - The internal IP address of this cluster's master endpoint.
+          returned: success
+          type: str
+        publicEndpoint:
+          description:
+          - The external IP address of this cluster's master endpoint.
+          returned: success
+          type: str
     clusterIpv4Cidr:
       description:
       - The IP address range of the container pods in this cluster, in CIDR notation
