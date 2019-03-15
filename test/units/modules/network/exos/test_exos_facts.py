@@ -20,12 +20,11 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
-import json
 
 from units.compat.mock import patch
-from ansible.modules.network.exos import exos_facts
 from units.modules.utils import set_module_args
-from .exos_module import TestExosModule, load_fixture
+from ansible.modules.network.exos import exos_facts
+from .exos_module import TestExosModule
 
 
 class TestExosFactsModule(TestExosModule):
