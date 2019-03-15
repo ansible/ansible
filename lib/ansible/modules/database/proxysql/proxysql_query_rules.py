@@ -133,8 +133,7 @@ options:
         transactions). If C(2), multiplexing is not disabled for just the current query.
         Default is NULL, thus not modifying multiplexing policies.
         See U(https://github.com/sysown/proxysql/wiki/Multiplexing#ad-hoc-enabledisable-of-multiplexing)
-    choices: [ null, 0, 1, 2 ]
-    default: null
+    choices: [ 0, 1, 2 ]
   log:
     description:
       - Query will be logged.
@@ -551,7 +550,7 @@ def main():
             mirror_hostgroup=dict(type='int'),
             error_msg=dict(type='str'),
             OK_msg=dict(type='str'),
-            multiplex=dict(default=null, choices=[null, 0, 1, 2]),
+            multiplex=dict(choices=[0, 1, 2]),
             log=dict(type='bool'),
             apply=dict(type='bool'),
             comment=dict(type='str'),
