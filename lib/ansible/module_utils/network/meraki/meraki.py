@@ -319,3 +319,6 @@ class MerakiModule(object):
 
         self.result.update(**kwargs)
         self.module.fail_json(msg=msg, **self.result)
+
+    def warn(self, msg):
+        self.module.warn(msg)
