@@ -138,3 +138,6 @@ class HostVarsVars(Mapping):
 
     def __repr__(self):
         return repr(self._vars)
+
+    def __dict__(self):
+        return self._vars
