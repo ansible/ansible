@@ -106,13 +106,13 @@ class HostVars(Mapping):
         return len(self._inventory.hosts)
 
     def __repr__(self):
+        return repr(self.__dict__())
+
+    def __dict__(self):
         out = {}
         for host in self._inventory.hosts:
             out[host] = self.get(host)
-        return repr(out)
-
-    def __dict__(self):
-        return self.__repr__()
+        return out
 
 
 class HostVarsVars(Mapping):
