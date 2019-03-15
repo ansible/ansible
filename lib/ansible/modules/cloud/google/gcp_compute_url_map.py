@@ -170,49 +170,49 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a instance group
   gcp_compute_instance_group:
-      name: "instancegroup-urlmap"
-      zone: us-central1-a
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: instancegroup-urlmap
+    zone: us-central1-a
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: instancegroup
 
 - name: create a http health check
   gcp_compute_http_health_check:
-      name: "httphealthcheck-urlmap"
-      healthy_threshold: 10
-      port: 8080
-      timeout_sec: 2
-      unhealthy_threshold: 5
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: httphealthcheck-urlmap
+    healthy_threshold: 10
+    port: 8080
+    timeout_sec: 2
+    unhealthy_threshold: 5
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: healthcheck
 
 - name: create a backend service
   gcp_compute_backend_service:
-      name: "backendservice-urlmap"
-      backends:
-      - group: "{{ instancegroup }}"
-      health_checks:
-      - "{{ healthcheck.selfLink }}"
-      enable_cdn: true
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: backendservice-urlmap
+    backends:
+    - group: "{{ instancegroup }}"
+    health_checks:
+    - "{{ healthcheck.selfLink }}"
+    enable_cdn: 'true'
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: backendservice
 
 - name: create a url map
   gcp_compute_url_map:
-      name: "test_object"
-      default_service: "{{ backendservice }}"
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    default_service: "{{ backendservice }}"
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
