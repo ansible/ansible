@@ -12,5 +12,5 @@
   assert:
     that:
       - result is failed
-      - "result.msg == 'parameters are mutually exclusive: list_all, state'"
+      - "result.msg == 'parameters are mutually exclusive: list_all|state'"
 ...

@@ -26,7 +26,7 @@
 - assert:
     that:
       - network is failed
-      - "network.msg == 'parameters are mutually exclusive: ipam_config, ipam_options'"
+      - "network.msg == 'parameters are mutually exclusive: ipam_config|ipam_options'"
 
 - name: Create network with deprecated custom IPAM config
   docker_network:
