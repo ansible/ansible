@@ -311,7 +311,7 @@ class Interfaces(FactsBase):
     def populate_ipv6_interfaces(self, data):
         addresses = re.split(r'-{3,}', data)[1].lstrip()
         for line in addresses.split('\n'):
-            if len(line) == 0:
+            if not line:
                 break
 
             match = re.match(r'^([\da-f:]+)/(\d+)\s+([CV])-(\d+)\s+.+$', line)
@@ -350,7 +350,7 @@ class Interfaces(FactsBase):
     def parse_neighbors(self, neighbors):
         facts = dict()
         lines = neighbors.split('Port: ')
-        if len(lines) == 0:
+        if not lines:
             return facts
         for line in lines:
             match = re.search(r'^(\w.*?)\s+Index.*IfName\s+(\w.*)$\s+SysName\s+:\s(\S+)', line, (re.M | re.S))
@@ -368,7 +368,7 @@ class Interfaces(FactsBase):
         parsed = dict()
         interfaces = re.split(r'-{3,}', data)[1].lstrip()
         for line in interfaces.split('\n'):
-            if len(line) == 0:
+            if not line or re.match('^All', line):
                 break
             else:
                 match = re.split(r'^(\S+)\s+', line)

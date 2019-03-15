@@ -22,7 +22,6 @@ __metaclass__ = type
 import os
 import json
 
-from ansible.module_utils import basic
 from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase
 
 
