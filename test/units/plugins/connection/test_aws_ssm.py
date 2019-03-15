@@ -50,7 +50,6 @@ class TestConnectionBaseClass(unittest.TestCase):
         new_stdin = StringIO()
         conn = connection_loader.get('aws_ssm', pc, new_stdin)
         r_choice.side_effect = ['a', 'a', 'a', 'a', 'a', 'b', 'b', 'b', 'b', 'b']
-#        conn._connected = True
         conn.MARK_LENGTH = 5
         conn._session = MagicMock()
         conn._session.stdin.write = MagicMock()
@@ -117,7 +116,7 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn.poll_stderr = MagicMock()
         conn.poll_stderr.register = MagicMock()
         conn.stderr = None
-        s_popen.poll().return_value != None
+        s_popen.poll().return_value = 123
         return(conn.stderr)
 
     @patch('boto3.client')
