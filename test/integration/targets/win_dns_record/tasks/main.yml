@@ -35,4 +35,3 @@
     - name: perform tests if able
       include: tests.yml
       when: run_tests is not skipped and (run_tests.stdout | trim | bool)
-
