@@ -38,26 +38,26 @@ class TestPortConfigModule(TestNvosModule):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_port': '1,2',
                          'pn_speed': '10g', 'pn_jumbo': True, 'state': 'update'})
         result = self.execute_module(changed=True, state='update')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 port-config-modify  speed 10g port 1,2 jumbo '
+        expected_cmd = ' switch sw01 port-config-modify  speed 10g port 1,2 jumbo '
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
     def test_pn_port_config_modify_t2(self):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_port': 'all',
                          'pn_host_enable': True, 'state': 'update'})
         result = self.execute_module(changed=True, state='update')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 port-config-modify  port all host-enable '
+        expected_cmd = ' switch sw01 port-config-modify  port all host-enable '
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
     def test_pn_port_config_modify_t3(self):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_port': '5',
                          'pn_crc_check_enable': True, 'pn_vxlan_termination': False, 'state': 'update'})
         result = self.execute_module(changed=True, state='update')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 port-config-modify  port 5 crc-check-enable  no-vxlan-termination '
+        expected_cmd = ' switch sw01 port-config-modify  port 5 crc-check-enable  no-vxlan-termination '
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
     def test_pn_port_config_modify_t4(self):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_port': '10,11,12',
                          'pn_pause': False, 'pn_enable': True, 'state': 'update'})
         result = self.execute_module(changed=True, state='update')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 port-config-modify  port 10,11,12 no-pause  enable '
+        expected_cmd = ' switch sw01 port-config-modify  port 10,11,12 no-pause  enable '
         self.assertEqual(result['cli_cmd'], expected_cmd)
