@@ -6,8 +6,7 @@
 
 $ErrorActionPreference = 'Stop'
 
-$params = Parse-Args $args;
-$path = Get-AnsibleParam -obj $params -name "path" -type "path" -failifempty $true
+$path = Join-Path -Path $env:TEMP -ChildPath '.ansible  .ÅÑŚÌβŁÈ [$!@^&test(;)]'
 
 $folder_target = "$path\folder"
 $file_target = "$path\file"
@@ -17,13 +16,14 @@ $hardlink_path = "$path\hardlink"
 $hardlink_path_2 = "$path\hardlink2"
 $junction_point_path = "$path\junction"
 
-if (Test-Path -Path $path) {
-    Remove-Item -Path $path -Force -Recurse | Out-Null
+if (Test-Path -LiteralPath $path) {
+    # Remove-Item struggles with broken symlinks, rely on trusty rmdir instead
+    Run-Command -command "cmd.exe /c rmdir /S /Q `"$path`"" > $null
 }
 New-Item -Path $path -ItemType Directory | Out-Null
 New-Item -Path $folder_target -ItemType Directory | Out-Null
 New-Item -Path $file_target -ItemType File | Out-Null
-Set-Content -Path $file_target -Value "a"
+Set-Content -LiteralPath $file_target -Value "a"
 
 Function Assert-Equals($actual, $expected) {
     if ($actual -ne $expected) {
@@ -42,7 +42,7 @@ Load-LinkUtils
 
 # path is not a link
 $no_link_result = Get-Link -link_path $path
-Assert-True -expression ($no_link_result -eq $null) -message "did not return null result for a non link"
+Assert-True -expression ($null -eq $no_link_result) -message "did not return null result for a non link"
 
 # fail to create hard link pointed to a directory
 try {
@@ -122,7 +122,7 @@ if ($hardlink_result.HardTargets[0] -ne $hardlink_path -and $hardlink_result.Har
 if ($hardlink_result.HardTargets[0] -ne $file_target -and $hardlink_result.HardTargets[1] -ne $file_target) {
     Assert-True -expression $false -message "file $file_target is not a target of the hard link"
 }
-Assert-equals -actual (Get-Content -Path $hardlink_path -Raw) -expected (Get-Content -Path $file_target -Raw)
+Assert-equals -actual (Get-Content -LiteralPath $hardlink_path -Raw) -expected (Get-Content -LiteralPath $file_target -Raw)
 
 # create a new hard link and verify targets go to 3
 New-Link -link_path $hardlink_path_2 -link_target $file_target -link_type "hard"
@@ -130,7 +130,7 @@ $hardlink_result_2 = Get-Link -link_path $hardlink_path
 Assert-True -expression ($hardlink_result_2.HardTargets.Count -eq 3) -message "did not return 3 targets for the hard link, actual $($hardlink_result_2.Targets.Count)"
 
 # check if broken symbolic link still works
-Remove-Item -Path $folder_target -Force | Out-Null
+Remove-Item -LiteralPath $folder_target -Force | Out-Null
 $broken_link_result = Get-Link -link_path $symlink_folder_path
 Assert-Equals -actual $broken_link_result.Type -expected "SymbolicLink"
 Assert-Equals -actual $broken_link_result.SubstituteName -expected "\??\$folder_target"
@@ -150,18 +150,21 @@ Assert-Equals -actual $broken_junction_result.HardTargets -expected $null
 
 # delete file symbolic link
 Remove-Link -link_path $symlink_file_path
-Assert-True -expression (-not (Test-Path -Path $symlink_file_path)) -message "failed to delete file symbolic link"
+Assert-True -expression (-not (Test-Path -LiteralPath $symlink_file_path)) -message "failed to delete file symbolic link"
 
 # delete folder symbolic link
 Remove-Link -link_path $symlink_folder_path
-Assert-True -expression (-not (Test-Path -Path $symlink_folder_path)) -message "failed to delete folder symbolic link"
+Assert-True -expression (-not (Test-Path -LiteralPath $symlink_folder_path)) -message "failed to delete folder symbolic link"
 
 # delete junction point
 Remove-Link -link_path $junction_point_path
-Assert-True -expression (-not (Test-Path -Path $junction_point_path)) -message "failed to delete junction point"
+Assert-True -expression (-not (Test-Path -LiteralPath $junction_point_path)) -message "failed to delete junction point"
 
 # delete hard link
 Remove-Link -link_path $hardlink_path
-Assert-True -expression (-not (Test-Path -Path $hardlink_path)) -message "failed to delete hard link"
+Assert-True -expression (-not (Test-Path -LiteralPath $hardlink_path)) -message "failed to delete hard link"
+
+# cleanup after tests
+Run-Command -command "cmd.exe /c rmdir /S /Q `"$path`"" > $null
 
 Exit-Json @{ data = "success" }
