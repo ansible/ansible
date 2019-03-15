@@ -66,6 +66,12 @@ options:
         operator in front of the regular expression matching against
         match_pattern.
     type: bool
+  re_modifiers:
+    description:
+      - Comma separated list of options to modify the behavior of the RE engine.
+        With C(CASELESS) the match is case insensitive. With C(GLOBAL) the replace
+        is global (replaces all matches and not just the first).
+        For backward compatibility, only C(CASELESS) is the enabled by default.
   flagOUT:
     description:
       - Used in combination with I(flagIN) and apply to create chains of rules.
@@ -102,6 +108,9 @@ options:
         essentially a throttling mechanism and QoS, and allows a way to give
         priority to queries over others. This value is added to the
         mysql-default_query_delay global variable that applies to all queries.
+  next_query_flagIN:
+    description:
+      - When is set, its value will become the I(flagIN) value for the next queries.
   mirror_flagOUT:
     description:
       - Enables query mirroring. If set I(mirror_flagOUT) can be used to
@@ -112,8 +121,20 @@ options:
         mirror queries to the same or different hostgroup.
   error_msg:
     description:
-      - Query will be blocked, and the specified error_msg will be returned to
+      - Query will be blocked, and the specified I(error_msg) will be returned to
         the client.
+  OK_msg:
+    description:
+      - The specified message will be returned for a query that uses the defined rule.
+  multiplex:
+    description:
+      - If C(0), multiplex will be disabled. If C(1), multiplex could be re-enabled if
+        there are is not any other conditions preventing this (like user variables or
+        transactions). If C(2), multiplexing is not disabled for just the current query.
+        Default is NULL, thus not modifying multiplexing policies.
+        See U(https://github.com/sysown/proxysql/wiki/Multiplexing#ad-hoc-enabledisable-of-multiplexing)
+    choices: [ null, 0, 1, 2 ]
+    default: null
   log:
     description:
       - Query will be logged.
@@ -276,6 +297,7 @@ class ProxyQueryRule(object):
                             "match_digest",
                             "match_pattern",
                             "negate_match_pattern",
+                            "re_modifiers",
                             "flagOUT",
                             "replace_pattern",
                             "destination_hostgroup",
@@ -283,9 +305,12 @@ class ProxyQueryRule(object):
                             "timeout",
                             "retries",
                             "delay",
+                            "next_query_flagIN",
                             "mirror_flagOUT",
                             "mirror_hostgroup",
                             "error_msg",
+                            "OK_msg",
+                            "multiplex",
                             "log",
                             "apply",
                             "comment"]
@@ -513,6 +538,7 @@ def main():
             match_digest=dict(type='str'),
             match_pattern=dict(type='str'),
             negate_match_pattern=dict(type='bool'),
+            re_modifiers=dict(type='str'),
             flagOUT=dict(type='int'),
             replace_pattern=dict(type='str'),
             destination_hostgroup=dict(type='int'),
@@ -520,9 +546,12 @@ def main():
             timeout=dict(type='int'),
             retries=dict(type='int'),
             delay=dict(type='int'),
+            next_query_flagIN=dict(type='int'),
             mirror_flagOUT=dict(type='int'),
             mirror_hostgroup=dict(type='int'),
             error_msg=dict(type='str'),
+            OK_msg=dict(type='str'),
+            multiplex=dict(default=null, choices=[null, 0, 1, 2]),
             log=dict(type='bool'),
             apply=dict(type='bool'),
             comment=dict(type='str'),
