@@ -56,7 +56,7 @@ EXAMPLES = r"""
 
 RETURN = r'''
 path:
-  description: Path to created file or directory
+  description: The absolute path to the created file or directory.
   returned: success
   type: string
   sample: C:\Users\Administrator\AppData\Local\Temp\ansible.bMlvdk

@@ -16,7 +16,14 @@ Function New-TempFile {
         $randomname = [System.IO.Path]::GetRandomFileName()
         $temppath = (Join-Path -Path $path -ChildPath "$prefix$randomname$suffix")
         Try {
-            New-Item -Path $temppath -ItemType $type -WhatIf:$checkmode | Out-Null
+            $file = New-Item -Path $temppath -ItemType $type -WhatIf:$checkmode
+            # Makes sure we get the full absolute path of the created temp file and not a relative or DOS 8.3 dir
+            if (-not $checkmode) {
+                $temppath = $file.FullName
+            } else {
+                # Just rely on GetFulLpath for check mode
+                $temppath = [System.IO.Path]::GetFullPath($temppath)
+            }
         } Catch {
             $temppath = $null
             $error = $_.Exception.Message
