@@ -339,7 +339,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
             self.fail("Error getting virtual machine {0} - {1}".format(name, str(exc)))
 
     def generate_managed_disk_property(self):
-        # TODO: Add support for EncryptionSettings, DiskIOPSReadWrite, DiskMBpsReadWrite, Zones
+        # TODO: Add support for EncryptionSettings, DiskIOPSReadWrite, DiskMBpsReadWrite
         disk_params = {}
         creation_data = {}
         disk_params['location'] = self.location
