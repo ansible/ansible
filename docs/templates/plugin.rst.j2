@@ -194,7 +194,7 @@ Common return values are documented here :doc:`common_return_values`, the follow
     <th class="head">type</th>
     <th class="head">sample</th>
     </tr>
-{% for entry in returndocs|dictsort %}
+{% for entry, unusedvalue in returndocs|dictsort %}
 
     <tr>
     <td>@{ entry }@</td>
