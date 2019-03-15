@@ -126,30 +126,30 @@ notes:
 EXAMPLES = '''
 - name: create a network
   gcp_compute_network:
-      name: "network-router"
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: network-router
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: network
 
 - name: create a router
   gcp_compute_router:
-      name: "test_object"
-      network: "{{ network }}"
-      bgp:
-        asn: 64514
-        advertise_mode: CUSTOM
-        advertised_groups:
-        - ALL_SUBNETS
-        advertised_ip_ranges:
-        - range: 1.2.3.4
-        - range: 6.7.0.0/16
-      region: us-central1
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    network: "{{ network }}"
+    bgp:
+      asn: 64514
+      advertise_mode: CUSTOM
+      advertised_groups:
+      - ALL_SUBNETS
+      advertised_ip_ranges:
+      - range: 1.2.3.4
+      - range: 6.7.0.0/16
+    region: us-central1
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''

@@ -53,14 +53,15 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name:  a router facts
+- name: " a router facts"
   gcp_compute_router_facts:
-      region: us-central1
-      filters:
-      - name = test_object
-      project: test_project
-      auth_kind: serviceaccount
-      service_account_file: "/tmp/auth.pem"
+    region: us-central1
+    filters:
+    - name = test_object
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: facts
 '''
 
 RETURN = '''
