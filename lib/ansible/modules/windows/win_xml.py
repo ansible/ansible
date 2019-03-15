@@ -17,8 +17,8 @@ module: win_xml
 version_added: "2.7"
 short_description: Manages XML file content on Windows hosts
 description:
-    - Manages XML file contents, using xpath to select which xml nodes need to be managed.
-    - XML fragments, formatted as strings, are used to modify existing XML on remote Windows servers.
+    - Manages XML nodes, attributes and text, using xpath to select which xml nodes need to be managed.
+    - XML fragments, formatted as strings, are used to specify the desired state of a part or parts of XML files on remote Windows servers.
     - For non-Windows targets, use the M(xml) module instead.
 options:
     attribute:
@@ -28,7 +28,7 @@ options:
         type: str
     count:
         description:
-        - When set to C(yes), return the number of nodes matched by C(xpath).
+        - When set to C(yes), return the number of nodes matched by I(xpath).
         type: bool
         default: false
         version_added: 2.8
@@ -41,7 +41,7 @@ options:
         default: no
     fragment:
         description:
-        - The string representation of the XML fragment expected at xpath.  Since ansible 2.8 not required when state is absent, or when C(count=yes).
+        - The string representation of the XML fragment expected at xpath.  Since ansible 2.8 not required when I(state=absent), or when I(count=yes).
         type: str
         required: false
         aliases: [ xmlstring ]
@@ -53,7 +53,7 @@ options:
         aliases: [ dest, file ]
     state:
         description:
-        - Set or remove the nodes (or attributes) matched by C(xpath).
+        - Set or remove the nodes (or attributes) matched by I(xpath).
         type: str
         default: present
         choices: [ present, absent ]
@@ -73,6 +73,13 @@ options:
 author:
     - Richard Levenberg (@richardcs)
     - Jon Hawkesworth (@jhawkesworth)
+notes: Only supports operating on xml elements, attributes and text. Namespace, processing-instruction, command and document node types cannot be modified with this module.
+seealso:
+    - module: xml
+      description: XML manipulation for Posix hosts.
+    - name: w3shools XPath tutorial
+      description: A useful tutorial on XPath
+      link: https://www.w3schools.com/xml/xpath_intro.asp
 '''
 
 EXAMPLES = r'''

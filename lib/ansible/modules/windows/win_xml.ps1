@@ -164,31 +164,36 @@ if ($type -eq "element") {
             }
         }
     } else { # state -eq 'present'
-        $xmlchild = $null
+        $xmlfragment = $null
         Try {
-            $xmlchild = [xml]$fragment
+            $xmlfragment = [xml]$fragment
         } Catch {
             Fail-Json $result "Failed to parse fragment as XML: $($_.Exception.Message)"
         }
 
-        $child = $xmlorig.CreateElement($xmlchild.get_DocumentElement().get_Name(), $xmlorig.get_DocumentElement().get_NamespaceURI())
-        Copy-Xml -dest $child -src $xmlchild.DocumentElement -xmlorig $xmlorig
-
         foreach ($node in $nodeList) {
+            $candidate = $xmlorig.CreateElement($xmlfragment.get_DocumentElement().get_Name(), $xmlorig.get_DocumentElement().get_NamespaceURI())
+            Copy-Xml -dest $candidate -src $xmlfragment.DocumentElement -xmlorig $xmlorig
+
             if ($node.get_NodeType() -eq "Document") {
                 $node = $node.get_DocumentElement()
             }
             $elements = $node.get_ChildNodes()
             [bool]$present = $false
             [bool]$changed = $false
+            $element_count = $elements.get_Count()
+            $nstatus = "node: " + $node.get_Value() + " element: " + $elements.get_OuterXml() + " Element count is $element_count" 
+            Add-Warning $result $nstatus
             if ($elements.get_Count()) {
                 if ($debug) {
                     $err = @()
                     $result.err = {$err}.Invoke()
                 }
                 foreach ($element in $elements) {
+                    $estatus = "element is " + $element.get_OuterXml()
+                    Add-Warning $result $estatus
                     try {
-                        Compare-XmlDocs $child $element
+                        Compare-XmlDocs $candidate $element
                         $present = $true
                         break
                     } catch {
@@ -198,7 +203,7 @@ if ($type -eq "element") {
                     }
                 }
                 if (-Not $present -and ($state -eq "present")) {
-                    [void]$node.AppendChild($child)
+                    [void]$node.AppendChild($candidate)
                     $result.msg = $result.msg + "xml added "
                     $changed = $true
                 }
@@ -214,23 +219,40 @@ if ($type -eq "element") {
     }
 } elseif ($type -eq "attribute") {
     foreach ($node in $nodeList) {
-        [bool]$add = !$node.HasAttribute($attribute) -Or ($node.$attribute -ne $fragment)
-        if ($add -And ($state -eq "present")) {
-            if (!$node.HasAttribute($attribute)) {
-                $node.SetAttributeNode($attribute, $xmlorig.get_DocumentElement().get_NamespaceURI())
+        if ($state -eq 'present') {
+            if ($node.NodeType -eq 'Attribute') {
+                if ($node.Name -eq $attribute -and $node.Value -ne $fragment ) {
+                    # this is already the attribute with the right name, so just set its value to match fragment
+                    $node.Value = $fragment
+                    $changed = $true
+                }
+            } else { # assume NodeType is Element
+                if ($node.$attribute -ne $fragment) {
+                    if (!$node.HasAttribute($attribute)) { # add attribute to Element if missing
+                        $node.SetAttributeNode($attribute, $xmlorig.get_DocumentElement().get_NamespaceURI())
+                    }
+                    #set the attribute into the element
+                    $node.SetAttribute($attribute, $fragment)
+                    $changed = $true
+                }
             }
-            $node.SetAttribute($attribute, $fragment)
-            $changed = $true
-        } elseif (!$add -And ($state -eq "absent")) {
-            $node.RemoveAttribute($attribute)
-            $changed = $true
+        } elseif ($state -eq 'absent') {
+            if ($node.NodeType -eq 'Attribute') {
+                $attrNode = [System.Xml.XmlAttribute]$node
+                $parent = $attrNode.OwnerElement
+                $parent.RemoveAttribute($attribute)
+                $changed = $true
+            } else { # element node processing
+                if ($node.Name -eq $attribute ) { # note not caring about the state of 'fragment' at this point
+                   $node.RemoveAttribute($attribute)
+                   $changed = $true
+                }
+            }
         } else {
             Add-Warning $result "Unexpected state when processing attribute $($attribute), add was $add, state was $state"
         }
     }
 }
-
-
 if ($changed) {
     if ($state -eq "absent") {
         $summary = "$type removed"
