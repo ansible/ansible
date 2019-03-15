@@ -573,6 +573,7 @@ def main():
             # it.
             filename = url_filename(info['url'])
         dest = os.path.join(dest, filename)
+        result['dest'] = dest
 
     # raise an error if there is no tmpsrc file
     if not os.path.exists(tmpsrc):
