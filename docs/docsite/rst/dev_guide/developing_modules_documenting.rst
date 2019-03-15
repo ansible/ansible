@@ -117,7 +117,7 @@ Module documentation should briefly and accurately define what each module and o
     * Descriptions should always start with a capital letter and end with a full stop. Consistency always helps.
     * Verify that arguments in doc and module spec dict are identical.
     * For password / secret arguments no_log=True should be set.
-    * If an optional parameter is sometimes required, reflect this fact in the documentation, e.g. "Required when C(state=present)."
+    * If an optional parameter is sometimes required, reflect this fact in the documentation, e.g. "Required when I(state=present)."
     * If your module allows ``check_mode``, reflect this fact in the documentation.
 
 Each documentation field is described below. Before committing your module documentation, please test it at the command line and as HTML:
