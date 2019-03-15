@@ -76,26 +76,26 @@ notes:
 EXAMPLES = '''
 - name: create a instance
   gcp_spanner_instance:
-      name: "instance-database"
-      display_name: My Spanner Instance
-      node_count: 2
-      labels:
-        cost_center: ti-1700004
-      config: regional-us-central1
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: instance-database
+    display_name: My Spanner Instance
+    node_count: 2
+    labels:
+      cost_center: ti-1700004
+    config: regional-us-central1
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: instance
 
 - name: create a database
   gcp_spanner_database:
-      name: webstore
-      instance: "{{ instance }}"
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: webstore
+    instance: "{{ instance }}"
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
