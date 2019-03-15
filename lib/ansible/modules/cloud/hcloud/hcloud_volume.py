@@ -113,12 +113,12 @@ RETURN = """
 hcloud_volume:
     description: The block volume
     returned: Always
-    type: complex
+    type: dict
     sample: {
         "id": 1234567,
-        "name": "my-volume",
+        "name": "my-volmume",
         "size": "1337",
-        "location": "fsn1",
+        "location": "fsn",
         "labels": {},
         "server": "my-server",
     }
@@ -147,7 +147,7 @@ class AnsibleHcloudVolume(Hcloud):
             server_name = self.hcloud_volume.server.name
 
         return {
-            "id": self.hcloud_volume.id,
+            "id": to_native(self.hcloud_volume.id),
             "name": to_native(self.hcloud_volume.name),
             "size": self.hcloud_volume.size,
             "location": to_native(self.hcloud_volume.location.name),
