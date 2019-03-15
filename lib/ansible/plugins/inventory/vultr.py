@@ -9,30 +9,35 @@ DOCUMENTATION = r'''
     name: vultr
     plugin_type: inventory
     author:
-      - "Yanis Guenane (@Spredzy)"
+        - "Yanis Guenane (@Spredzy)"
     short_description: Vultr inventory source
+    version_added: "2.7"
     description:
         - Get inventory hosts from Vultr public cloud.
-        - Uses C(api_config), C(~/.vultr.ini), C(./vultr.ini) or VULTR_API_CONFIG path to config file.
+        - Uses I(api_config), I(~/.vultr.ini), I(./vultr.ini) or C(VULTR_API_CONFIG) path to config file.
     options:
         plugin:
             description: token that ensures this is a source file for the 'vultr' plugin.
+            type: str
             required: True
-            choices: ['vultr']
+            choices: [ vultr ]
         api_account:
             description: Specify the account to be used.
+            type: str
             default: default
         api_config:
             description: Path to the vultr configuration file. If not specified will be taken from regular Vultr configuration.
+            type: path
             env:
-              - name: VULTR_API_CONFIG
+                - name: VULTR_API_CONFIG
         api_key:
             description: Vultr API key. If not specified will be taken from regular Vultr configuration.
+            type: str
             env:
-              - name: VULTR_API_KEY
+                - name: VULTR_API_KEY
         hostname:
             description: Field to match the hostname. Note v4_main_ip corresponds to the main_ip field returned from the API and name to label.
-            type: string
+            type: str
             default: v4_main_ip
             choices:
                 - v4_main_ip
