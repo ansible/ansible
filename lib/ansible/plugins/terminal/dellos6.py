@@ -40,13 +40,12 @@ class TerminalModule(TerminalBase):
         re.compile(br"% ?Bad secret"),
         re.compile(br"(\bInterface is part of a port-channel\b)"),
         re.compile(br"(\bThe maximum number of users have already been created\b)|(\bUse '-' for range\b)"),
-        re.compile(br"Error:(.+)\s(\S+)"),
         re.compile(br"(?:incomplete|ambiguous) command", re.I),
         re.compile(br"connection timed out", re.I),
         re.compile(br"'[^']' +returned error code: ?\d+"),
         re.compile(br"Invalid|invalid.*$", re.I),
-        re.compile(br"((\bout of range\b)|(\bnot found\b)|(\bCould not\b)|(\bUnable to\b)|(\bCannot\b)).*", re.I),
-        re.compile(br"((\balready exists\b)|(\bdoes not exist\b)|(\bnot active\b)|(\bFailed\b)|(\bIncorrect\b)|(\bnot enabled\b)).*", re.I),
+        re.compile(br"((\bout of range\b)|(\bnot found\b)|(\bCould not\b)|(\bUnable to\b)|(\bCannot\b)|(\bError\b)).*", re.I),
+        re.compile(br"((\balready exists\b)|(\bnot exist\b)|(\bnot active\b)|(\bFailed\b)|(\bIncorrect\b)|(\bnot enabled\b)).*", re.I),
 
     ]
 
