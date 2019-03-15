@@ -255,7 +255,7 @@
         mode = oct(0o777 & ~umask)
         print(str(mode).replace('o', ''))
       args:
-        executable: python
+        executable: "{{ ansible_facts.python.executable }}"
       register: user_login_defs_umask
 
     - name: validate that user home dir is created
@@ -775,3 +775,85 @@
         password_lock: no
 
   when: ansible_facts['system'] in ['FreeBSD', 'OpenBSD', 'Linux']
+
+
+  ## Check local mode
+  # Even if we don't have a system that is bound to a directory, it's useful
+  # to run with local: true to exercise the code path that reads through the local
+  # user database file.
+  # https://github.com/ansible/ansible/issues/50947
+
+- name: Create /etc/gshadow
+  file:
+    path: /etc/gshadow
+    state: touch
+  when: ansible_facts.os_family == 'Suse'
+  tags:
+    - user_test_local_mode
+
+- name: Create /etc/libuser.conf
+  file:
+    path: /etc/libuser.conf
+    state: touch
+  when:
+    - ansible_facts.distribution == 'Ubuntu'
+    - ansible_facts.distribution_major_version is version_compare('16', '==')
+  tags:
+    - user_test_local_mode
+
+- name: Ensure luseradd is present
+  action: "{{ ansible_facts.pkg_mgr }}"
+  args:
+    name: libuser
+    state: present
+  when: ansible_facts.system in ['Linux']
+  tags:
+    - user_test_local_mode
+
+- name: Create local_ansibulluser
+  user:
+    name: local_ansibulluser
+    state: present
+    local: yes
+  register: local_user_test_1
+  tags:
+    - user_test_local_mode
+
+- name: Create local_ansibulluser again
+  user:
+    name: local_ansibulluser
+    state: present
+    local: yes
+  register: local_user_test_2
+  tags:
+    - user_test_local_mode
+
+- name: Remove local_ansibulluser
+  user:
+    name: local_ansibulluser
+    state: absent
+    remove: yes
+    local: yes
+  register: local_user_test_3
+  tags:
+    - user_test_local_mode
+
+- name: Remove local_ansibulluser again
+  user:
+    name: local_ansibulluser
+    state: absent
+    remove: yes
+    local: yes
+  register: local_user_test_4
+  tags:
+    - user_test_local_mode
+
+- name: Ensure local user accounts were created
+  assert:
+    that:
+      - local_user_test_1 is changed
+      - local_user_test_2 is not changed
+      - local_user_test_3 is changed
+      - local_user_test_4 is not changed
+  tags:
+    - user_test_local_mode
