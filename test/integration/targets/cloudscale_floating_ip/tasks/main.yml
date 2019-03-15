@@ -22,6 +22,8 @@
         - { 'ip_version': 6, 'reverse_ptr': '{{ cloudscale_resource_prefix }}-6.example.com' }
         - { 'ip_version': 6, 'prefix_length': 56 }
 
+    - import_tasks: unassigned.yml
+
   always:
     - import_role:
         name: cloudscale_common
