@@ -18,7 +18,7 @@ short_description: Manages CloudStack Image Stores.
 version_added: "2.8"
 
 description:
-  - "Deploy, remove, recreate CloudStack Image Stores."
+  - Deploy, remove, recreate CloudStack Image Stores.
 
 options:
   url:
@@ -39,7 +39,7 @@ options:
   state:
     description:
       - Stage of the Image Store
-    choices: ['present', 'absent']
+    choices: [present, absent]
     default: present
     type: str
   provider:
@@ -48,7 +48,7 @@ options:
     type: str
   force_recreate:
     description:
-      - Set to C(True) if you're changing an existing Image Store.
+      - Set to C(yes) if you're changing an existing Image Store.
       - This will force the recreation of the Image Store.
       - Recreation might fail if there are snapshots present on the Image Store. Delete them before running the recreation.
     type: bool
@@ -65,7 +65,24 @@ EXAMPLES = '''
   cs_image_store:
     zone: zone-01
     name: nfs-01
+    provider: NFS
     url: nfs://192.168.21.16/exports/secondary
+
+# Change the NFS share URL and force a Image Store recreation
+- name: Change the NFS url
+  cs_image_store:
+    zone: zone-01
+    name: nfs-01
+    provider: NFS
+    force_recreate: yes
+    url: nfs://192.168.21.10/shares/secondary
+
+- name: delete the image store
+  cs_image_store:
+    name: nfs-01
+    zone: zone-01
+    state: absent
+
 '''
 
 RETURN = '''
@@ -119,7 +136,6 @@ class AnsibleCloudstackImageStore(AnsibleCloudStack):
             'providername': 'provider_name',
             'scope': 'scope',
             'url': 'url'
-
         }
         self.image_store = None
 
