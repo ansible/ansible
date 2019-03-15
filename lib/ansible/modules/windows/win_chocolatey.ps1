@@ -328,7 +328,6 @@ Function Get-ChocolateyPackageVersion {
     $res = Run-Command -command $command
 
     # Chocolatey v0.10.12 introduced enhanced exit codes, 2 means no results, e.g. no package
-    # 
     if ($res.rc -notin @(0, 2)) {
         $module.Result.command = $command
         $module.Result.rc = $res.rc
