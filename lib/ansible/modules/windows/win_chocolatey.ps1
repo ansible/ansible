@@ -155,7 +155,8 @@ Function Choco-IsInstalled
         Fail-Json -obj $result -message "Error checking installation status for package 'package': $($_.Exception.Message)"
     }
 
-    if ($LastExitCode -ne 0) {
+    # Chocolatey v0.10.12 introduced enhanced exit codes, 2 means no results, e.g. no package
+    if ($LastExitCode -notin @(0, 2)) {
         $result.rc = $LastExitCode
         $result.command =  "$script:executable list $options"
         $result.stdout = $output | Out-String
