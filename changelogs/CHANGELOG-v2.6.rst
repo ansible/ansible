@@ -2,6 +2,32 @@
 Ansible 2.6 "Heartbreaker" Release Notes
 ========================================
 
+v2.6.15
+=======
+
+Release Summary
+---------------
+
+| Release Date: 2019-03-14
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- ``to_yaml`` filter updated to maintain formatting consistency when used with ``pyyaml`` versions 5.1 and later (https://github.com/ansible/ansible/pull/53772)
+
+Bugfixes
+--------
+
+- inventory_aws_ec2 - fix no_log indentation so AWS temporary credentials aren't displayed in tests
+- mysql_user: match backticks, single and double quotes when checking user privileges.
+- win_domain - Do not fail if DC is already promoted but a reboot is required, return ``reboot_required: True``
+- win_domain - Fix when running without credential delegated authentication - https://github.com/ansible/ansible/issues/53182
+- win_file - Fix issue when managing hidden files and directories - https://github.com/ansible/ansible/issues/42466
+- winrm - attempt to recover from a WinRM send input failure if possible
+- zypper - Fix Python 3 compatibility issues
+
 v2.6.14
 =======
 
