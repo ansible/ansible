@@ -858,6 +858,16 @@ class AzureInventory(object):
                 self._inventory[safe_key].append(host_name)
                 self._inventory[safe_value].append(host_name)
 
+                if value:
+                    key = self._to_safe("tag_" + key + "=" + value)
+                else:
+                    key = self._to_safe("tag_" + key)
+
+                if not self._inventory.get(key):
+                    self._inventory[key] = []
+
+                self._inventory[key].append(host_name)
+
     def _json_format_dict(self, pretty=False):
         # convert inventory to json
         if pretty:
