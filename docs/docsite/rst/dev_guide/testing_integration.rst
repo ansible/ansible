@@ -151,11 +151,8 @@ Most container images are for testing with Python 2:
 
   - centos6
   - centos7
-  - fedora24
-  - fedora25
-  - opensuse42.1
-  - opensuse42.2
-  - ubuntu1204
+  - fedora28
+  - opensuse15py2
   - ubuntu1404
   - ubuntu1604
 
@@ -164,7 +161,11 @@ Python 3
 
 To test with Python 3 use the following images:
 
+  - fedora29
+  - opensuse15
   - ubuntu1604py3
+  - ubuntu1804
+
 
 Legacy Cloud Tests
 ==================
