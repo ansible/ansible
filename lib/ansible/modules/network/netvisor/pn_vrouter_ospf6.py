@@ -88,6 +88,7 @@ changed:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.netvisor.pn_nvos import pn_cli, run_cli
+from ansible.module_utils.network.netvisor.netvisor import run_commands
 
 
 def check_cli(module, cli):
@@ -109,7 +110,7 @@ def check_cli(module, cli):
 
     # Check for vRouter
     check_vrouter = cli + ' vrouter-show format name no-show-headers '
-    out = module.run_command(check_vrouter, use_unsafe_shell=True)[1]
+    out = run_commands(module, check_vrouter)[1]
     out = out.split()
 
     VROUTER_EXISTS = True if vrouter_name in out else False
@@ -117,7 +118,7 @@ def check_cli(module, cli):
     if nic_str:
         # Check for nic
         show = cli + ' vrouter-ospf6-show vrouter-name %s format nic no-show-headers' % vrouter_name
-        out = module.run_command(show, use_unsafe_shell=True)[1]
+        out = run_commands(module, show)[1]
 
         NIC_EXISTS = True if nic_str in out else False
 

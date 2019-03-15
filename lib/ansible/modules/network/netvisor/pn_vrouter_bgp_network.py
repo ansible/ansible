@@ -53,7 +53,7 @@ options:
 EXAMPLES = """
 - name:  Add network to bgp
   pn_vrouter_bgp_network:
-    pn_cliswitch: "{{ inventory_hostname }}"
+    pn_cliswitch: "sw01"
     state: "present"
     pn_vrouter_name: "foo-vrouter"
     pn_network: '10.10.10.10'
@@ -61,7 +61,7 @@ EXAMPLES = """
 
 - name:  Remove network from bgp
   pn_vrouter_bgp_network:
-    pn_cliswitch: "{{ inventory_hostname }}"
+    pn_cliswitch: "sw01"
     state: "absent"
     pn_vrouter_name: "foo-vrouter"
     pn_network: '10.10.10.10'
@@ -89,6 +89,7 @@ changed:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.netvisor.pn_nvos import pn_cli, run_cli
+from ansible.module_utils.network.netvisor.netvisor import run_commands
 
 
 def check_cli(module, cli):
@@ -103,14 +104,14 @@ def check_cli(module, cli):
 
     show = cli
     cli += ' vrouter-show name %s format name no-show-headers' % name
-    rc, out, err = module.run_command(cli, use_unsafe_shell=True)
+    rc, out, err = run_commands(module, cli)
     VROUTER_EXISTS = '' if out else None
 
     cli = show
     cli += ' vrouter-bgp-network-show vrouter-name %s network %s format network no-show-headers' % (name, network)
-    out = module.run_command(cli, use_unsafe_shell=True)[1]
-
-    NETWORK_EXISTS = True if network in out else False
+    out = run_commands(module, cli)[1]
+    out = out.split()
+    NETWORK_EXISTS = True if network in out[-1] else False
 
     return NETWORK_EXISTS, VROUTER_EXISTS
 

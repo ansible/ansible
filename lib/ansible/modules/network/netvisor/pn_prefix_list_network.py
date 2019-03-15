@@ -88,6 +88,7 @@ changed:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.netvisor.pn_nvos import pn_cli, run_cli
+from ansible.module_utils.network.netvisor.netvisor import run_commands
 
 
 def check_cli(module, cli):
@@ -101,10 +102,10 @@ def check_cli(module, cli):
     network = module.params['pn_network']
     show = cli
 
-    cli += ' prefix-list-show name %s format name no-show-headers' % name
-    rc, out, err = module.run_command(cli, use_unsafe_shell=True)
+    cli += ' prefix-list-show format name no-show-headers'
+    out = run_commands(module, cli)[1]
 
-    if not out:
+    if name not in out.split()[-1]:
         module.fail_json(
             failed=True,
             msg='Prefix list with name %s does not exists' % name
@@ -112,7 +113,7 @@ def check_cli(module, cli):
 
     cli = show
     cli += ' prefix-list-network-show name %s format network no-show-headers' % name
-    out = module.run_command(cli, use_unsafe_shell=True)[1]
+    rc, out, err = run_commands(module, cli)
 
     if out:
         out = out.split()[1]
