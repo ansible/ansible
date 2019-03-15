@@ -48,12 +48,13 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name:  a table facts
+- name: " a table facts"
   gcp_bigquery_table_facts:
-      dataset: example_dataset
-      project: test_project
-      auth_kind: serviceaccount
-      service_account_file: "/tmp/auth.pem"
+    dataset: example_dataset
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: facts
 '''
 
 RETURN = '''
