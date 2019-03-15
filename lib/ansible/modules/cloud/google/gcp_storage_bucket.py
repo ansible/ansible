@@ -65,14 +65,6 @@ options:
           string Alternatively, you can add `register: name-of-resource` to a gcp_storage_bucket
           task and then set this bucket field to "{{ name-of-resource }}"'
         required: true
-      domain:
-        description:
-        - The domain associated with the entity.
-        required: false
-      email:
-        description:
-        - The email address associated with the entity.
-        required: false
       entity:
         description:
         - 'The entity holding the permission, in one of the following forms: user-userId
@@ -86,10 +78,6 @@ options:
       entity_id:
         description:
         - The ID for the entity.
-        required: false
-      id:
-        description:
-        - The ID of the access-control entry.
         required: false
       project_team:
         description:
@@ -156,14 +144,6 @@ options:
           string Alternatively, you can add `register: name-of-resource` to a gcp_storage_bucket
           task and then set this bucket field to "{{ name-of-resource }}"'
         required: true
-      domain:
-        description:
-        - The domain associated with the entity.
-        required: false
-      email:
-        description:
-        - The email address associated with the entity.
-        required: false
       entity:
         description:
         - 'The entity holding the permission, in one of the following forms: * user-{{userId}}
@@ -172,39 +152,10 @@ options:
           (such as "domain-example.com") * project-team-{{projectId}} * allUsers *
           allAuthenticatedUsers .'
         required: true
-      entity_id:
-        description:
-        - The ID for the entity.
-        required: false
-      generation:
-        description:
-        - The content generation of the object, if applied to an object.
-        required: false
-      id:
-        description:
-        - The ID of the access-control entry.
-        required: false
       object:
         description:
         - The name of the object, if applied to an object.
         required: false
-      project_team:
-        description:
-        - The project team associated with the entity.
-        required: false
-        suboptions:
-          project_number:
-            description:
-            - The project team associated with the entity.
-            required: false
-          team:
-            description:
-            - The team.
-            required: false
-            choices:
-            - editors
-            - owners
-            - viewers
       role:
         description:
         - The access permission for the entity.
@@ -313,10 +264,6 @@ options:
         description:
         - The entity, in the form project-owner-projectId.
         required: false
-      entity_id:
-        description:
-        - The ID for the entity.
-        required: false
   storage_class:
     description:
     - The bucket's default storage class, used whenever no storageClass is specified
@@ -394,11 +341,11 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a bucket
   gcp_storage_bucket:
-      name: ansible-storage-module
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: ansible-storage-module
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -794,11 +741,8 @@ def main():
                 elements='dict',
                 options=dict(
                     bucket=dict(required=True),
-                    domain=dict(type='str'),
-                    email=dict(type='str'),
                     entity=dict(required=True, type='str'),
                     entity_id=dict(type='str'),
-                    id=dict(type='str'),
                     project_team=dict(
                         type='dict', options=dict(project_number=dict(type='str'), team=dict(type='str', choices=['editors', 'owners', 'viewers']))
                     ),
@@ -820,16 +764,8 @@ def main():
                 elements='dict',
                 options=dict(
                     bucket=dict(required=True),
-                    domain=dict(type='str'),
-                    email=dict(type='str'),
                     entity=dict(required=True, type='str'),
-                    entity_id=dict(type='str'),
-                    generation=dict(type='int'),
-                    id=dict(type='str'),
                     object=dict(type='str'),
-                    project_team=dict(
-                        type='dict', options=dict(project_number=dict(type='str'), team=dict(type='str', choices=['editors', 'owners', 'viewers']))
-                    ),
                     role=dict(required=True, type='str', choices=['OWNER', 'READER']),
                 ),
             ),
@@ -861,7 +797,7 @@ def main():
             logging=dict(type='dict', options=dict(log_bucket=dict(type='str'), log_object_prefix=dict(type='str'))),
             metageneration=dict(type='int'),
             name=dict(type='str'),
-            owner=dict(type='dict', options=dict(entity=dict(type='str'), entity_id=dict(type='str'))),
+            owner=dict(type='dict', options=dict(entity=dict(type='str'))),
             storage_class=dict(type='str', choices=['MULTI_REGIONAL', 'REGIONAL', 'STANDARD', 'NEARLINE', 'COLDLINE', 'DURABLE_REDUCED_AVAILABILITY']),
             versioning=dict(type='dict', options=dict(enabled=dict(type='bool'))),
             website=dict(type='dict', options=dict(main_page_suffix=dict(type='str'), not_found_page=dict(type='str'))),
