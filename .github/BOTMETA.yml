@@ -410,7 +410,7 @@ files:
     maintainers: $team_imc
   $modules/remote_management/intersight/: &intersight
     labels: [ cisco, remote_management, intersight ]
-    maintainers: $team_ucs
+    maintainers: $team_intersight
   $modules/remote_management/ipmi/: cloudnull
   $modules/remote_management/lxca/: navalkp prabhosa
   $modules/remote_management/manageiq/: $team_manageiq
@@ -1405,6 +1405,7 @@ macros:
   team_hcloud: cschmitt-hcloud LKaemmerling
   team_hpux: bcoca dagwieers davx8342
   team_imc: dagwieers
+  team_intersight: dsoper2 movinalot
   team_ios: rcarrillocruz
   team_iosxr: rcarrillocruz gdpak
   team_ipa: Nosmoht Akasurde fxfitz
