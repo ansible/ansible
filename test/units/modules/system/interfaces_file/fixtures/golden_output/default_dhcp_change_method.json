@@ -2,7 +2,7 @@
     "eth0": {
         "address_family": "inet",
         "down": [],
-        "method": "manual",
+        "method": "dhcp",
         "post-up": [],
         "pre-up": [],
         "up": []
