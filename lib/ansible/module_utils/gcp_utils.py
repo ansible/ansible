@@ -299,6 +299,8 @@ class GcpRequest(object):
                 diff = self._compare_lists(value1, value2)
             elif isinstance(value2, dict):
                 diff = self._compare_dicts(value1, value2)
+            elif isinstance(value1, bool):
+                diff = self._compare_boolean(value1, value2)
             # Always use to_text values to avoid unicode issues.
             elif to_text(value1) != to_text(value2):
                 diff = value1
@@ -308,3 +310,25 @@ class GcpRequest(object):
             pass
 
         return diff
+
+    def _compare_boolean(self, value1, value2):
+        try:
+            # Both True
+            if value1 and isinstance(value2, bool) and value2:
+                return None
+            # Value1 True, value2 'true'
+            elif value1 and to_text(value2) == 'true':
+                return None
+            # Both False
+            elif not value1 and isinstance(value2, bool) and not value2:
+                return None
+            # Value1 False, value2 'false'
+            elif not value1 and to_text(value2) == 'false':
+                return None
+            else:
+                return value2
+
+        # to_text may throw UnicodeErrors.
+        # These errors shouldn't crash Ansible and should be hidden.
+        except UnicodeError:
+            return None
