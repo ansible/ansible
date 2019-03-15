@@ -49,13 +49,14 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name:  a health check facts
+- name: " a health check facts"
   gcp_compute_health_check_facts:
-      filters:
-      - name = test_object
-      project: test_project
-      auth_kind: serviceaccount
-      service_account_file: "/tmp/auth.pem"
+    filters:
+    - name = test_object
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: facts
 '''
 
 RETURN = '''

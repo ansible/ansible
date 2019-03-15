@@ -106,11 +106,6 @@ options:
         - Specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648
           base64 to either encrypt or decrypt this resource.
         required: false
-      sha256:
-        description:
-        - The RFC 4648 base64 encoded SHA-256 hash of the customer-supplied encryption
-          key that protects this resource.
-        required: false
   labels:
     description:
     - Labels to apply to this Image.
@@ -173,11 +168,6 @@ options:
         - Specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648
           base64 to either encrypt or decrypt this resource.
         required: false
-      sha256:
-        description:
-        - The RFC 4648 base64 encoded SHA-256 hash of the customer-supplied encryption
-          key that protects this resource.
-        required: false
   source_disk_id:
     description:
     - The ID value of the disk used to create this image. This value may be used to
@@ -193,29 +183,29 @@ options:
     - RAW
 extends_documentation_fragment: gcp
 notes:
-- 'API Reference: U(https://cloud.google.com/compute/docs/reference/latest/images)'
+- 'API Reference: U(https://cloud.google.com/compute/docs/reference/v1/images)'
 - 'Official Documentation: U(https://cloud.google.com/compute/docs/images)'
 '''
 
 EXAMPLES = '''
 - name: create a disk
   gcp_compute_disk:
-      name: "disk-image"
-      zone: us-central1-a
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: disk-image
+    zone: us-central1-a
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: disk
 
 - name: create a image
   gcp_compute_image:
-      name: "test_object"
-      source_disk: "{{ disk }}"
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    source_disk: "{{ disk }}"
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -453,7 +443,7 @@ def main():
             disk_size_gb=dict(type='int'),
             family=dict(type='str'),
             guest_os_features=dict(type='list', elements='dict', options=dict(type=dict(type='str', choices=['VIRTIO_SCSI_MULTIQUEUE']))),
-            image_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'), sha256=dict(type='str'))),
+            image_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'))),
             labels=dict(type='dict'),
             licenses=dict(type='list', elements='str'),
             name=dict(required=True, type='str'),
@@ -462,7 +452,7 @@ def main():
                 options=dict(container_type=dict(type='str', choices=['TAR']), sha1_checksum=dict(type='str'), source=dict(required=True, type='str')),
             ),
             source_disk=dict(),
-            source_disk_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'), sha256=dict(type='str'))),
+            source_disk_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'))),
             source_disk_id=dict(type='str'),
             source_type=dict(type='str', choices=['RAW']),
         )
