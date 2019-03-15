@@ -123,54 +123,54 @@ notes:
 EXAMPLES = '''
 - name: create a network
   gcp_compute_network:
-      name: "network-vpn-tunnel"
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: network-vpn-tunnel
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: network
 
 - name: create a router
   gcp_compute_router:
-      name: "router-vpn-tunnel"
-      network: "{{ network }}"
-      bgp:
-        asn: 64514
-        advertise_mode: CUSTOM
-        advertised_groups:
-        - ALL_SUBNETS
-        advertised_ip_ranges:
-        - range: 1.2.3.4
-        - range: 6.7.0.0/16
-      region: us-central1
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: router-vpn-tunnel
+    network: "{{ network }}"
+    bgp:
+      asn: 64514
+      advertise_mode: CUSTOM
+      advertised_groups:
+      - ALL_SUBNETS
+      advertised_ip_ranges:
+      - range: 1.2.3.4
+      - range: 6.7.0.0/16
+    region: us-central1
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: router
 
 - name: create a target vpn gateway
   gcp_compute_target_vpn_gateway:
-      name: "gateway-vpn-tunnel"
-      region: us-west1
-      network: "{{ network }}"
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: gateway-vpn-tunnel
+    region: us-west1
+    network: "{{ network }}"
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: gateway
 
 - name: create a vpn tunnel
   gcp_compute_vpn_tunnel:
-      name: "test_object"
-      region: us-west1
-      target_vpn_gateway: "{{ gateway }}"
-      router: "{{ router }}"
-      shared_secret: super secret
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    region: us-west1
+    target_vpn_gateway: "{{ gateway }}"
+    router: "{{ router }}"
+    shared_secret: super secret
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
