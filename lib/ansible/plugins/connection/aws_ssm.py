@@ -68,7 +68,7 @@ EXAMPLES = '''
     - name: Stop spooler service
       win_service:
         name: spooler
-        state: started
+        state: stopped
 
 # Install a Nginx Package on Linux Instance
 - name: Install a Nginx Package
