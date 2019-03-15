@@ -12,7 +12,7 @@
     include_tasks: tests.yml
 
   always:
-  - name: clenaup testing dir
+  - name: cleanup testing dir
     win_file:
       path: '{{ test_acl_path }}'
       state: absent

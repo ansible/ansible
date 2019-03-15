@@ -31,9 +31,9 @@ function Get-UserSID {
 
     if ($searchAppPools) {
         Import-Module -Name WebAdministration
-        $testIISPath = Test-Path -Path "IIS:"
+        $testIISPath = Test-Path -LiteralPath "IIS:"
         if ($testIISPath) {
-            $appPoolObj = Get-ItemProperty -Path "IIS:\AppPools\$AccountName"
+            $appPoolObj = Get-ItemProperty -LiteralPath "IIS:\AppPools\$AccountName"
             $userSID = $appPoolObj.applicationPoolSid
         }
     }
@@ -91,7 +91,7 @@ $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "prese
 $inherit = Get-AnsibleParam -obj $params -name "inherit" -type "str"
 $propagation = Get-AnsibleParam -obj $params -name "propagation" -type "str" -default "None" -validateset "InheritOnly","None","NoPropagateInherit"
 
-If (-Not (Test-Path -Path $path)) {
+If (-Not (Test-Path -LiteralPath $path)) {
     Fail-Json -obj $result -message "$path file or directory does not exist on the host"
 }
 
@@ -101,7 +101,7 @@ if (!$sid) {
     Fail-Json -obj $result -message "$user is not a valid user or group on the host machine or domain"
 }
 
-If (Test-Path -Path $path -PathType Leaf) {
+If (Test-Path -LiteralPath $path -PathType Leaf) {
     $inherit = "None"
 }
 ElseIf ($null -eq $inherit) {
@@ -134,7 +134,7 @@ Try {
     Else {
         $objACE = New-Object System.Security.AccessControl.FileSystemAccessRule ($objUser, $colRights, $InheritanceFlag, $PropagationFlag, $objType)
     }
-    $objACL = Get-ACL $path
+    $objACL = Get-ACL -LiteralPath $path
 
     # Check if the ACE exists already in the objects ACL list
     $match = $false
@@ -169,7 +169,7 @@ Try {
     If ($state -eq "present" -And $match -eq $false) {
         Try {
             $objACL.AddAccessRule($objACE)
-            Set-ACL $path $objACL
+            Set-ACL -LiteralPath $path -AclObject $objACL
             $result.changed = $true
         }
         Catch {
@@ -179,7 +179,7 @@ Try {
     ElseIf ($state -eq "absent" -And $match -eq $true) {
         Try {
             $objACL.RemoveAccessRule($objACE)
-            Set-ACL $path $objACL
+            Set-ACL -LiteralPath $path -AclObject $objACL
             $result.changed = $true
         }
         Catch {
