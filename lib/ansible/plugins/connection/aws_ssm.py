@@ -55,6 +55,47 @@ options:
     - name: ansible_ssm_timeout
 """
 
+EXAMPLES = '''
+
+# Stop Spooler Process on Windows Instances
+- name: Stop Spooler Service on Windows Instances
+  vars:
+    ansible_connection: aws_ssm
+    ansible_shell_executable: powershell
+    bucket_name: nameofthebucket
+    region: us-east-1
+  tasks:
+    - name: Stop spooler service
+      win_service:
+        name: spooler
+        state: started
+
+# Install a Nginx Package on Linux Instance
+- name: Install a Nginx Package
+  vars:
+    ansible_connection: aws_ssm
+    bucket_name: nameofthebucket
+    region: us-west-2
+  tasks:
+    - name: Install a Nginx Package
+      yum:
+        name: nginx
+        state: present
+
+# Create a directory in Windows Instances
+- name: Create a directory in Windows Instance
+  vars:
+    ansible_connection: aws_ssm
+    ansible_shell_executable: powershell
+    bucket_name: nameofthebucket
+    region: us-east-1
+  tasks:
+    - name: Create a Directory
+      win_file:
+        path: "Windows path here"
+        state: directory
+'''
+
 import os
 import boto3
 import getpass
