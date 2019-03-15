@@ -1,0 +1,2 @@
+bugfixes:
+  - user - fix a bug when checking if a local user account exists on a system using directory authentication (https://github.com/ansible/ansible/issues/50947, https://github.com/ansible/ansible/issues/38206)
