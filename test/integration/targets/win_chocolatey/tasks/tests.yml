@@ -23,6 +23,7 @@
 - name: get result of install package (check mode)
   win_command: choco.exe list --local-only --exact --limit-output {{ test_choco_package1|quote }}
   register: install_actual_check
+  failed_when: not install_actual_check.rc in [0, 2]  # v0.10.12+ returns 2 for no package
 
 - name: assert install package (check mode)
   assert:
@@ -96,6 +97,7 @@
 - name: get result of remove package
   win_command: choco.exe list --local-only --exact --limit-output {{ test_choco_package1|quote }}
   register: remove_actual
+  failed_when: not remove_actual.rc in [0, 2]
 
 - name: check if removed package file still exists
   win_stat:
@@ -183,6 +185,7 @@
 - name: get list of installed packages after removal
   win_command: choco.exe list --local-only --limit-output ansible
   register: remove_multiple_actual
+  failed_when: not remove_multiple_actual.rc in [0, 2]
 
 - name: get info on package 1
   win_stat:
