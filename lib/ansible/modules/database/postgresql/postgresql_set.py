@@ -290,7 +290,7 @@ def pretty_to_bytes(pretty_val):
 
 def param_set(cursor, module, name, value, context):
     try:
-        if value.lower() in 'default':
+        if str(value).lower() == 'default':
             query = "ALTER SYSTEM SET %s = DEFAULT" % name
         else:
             query = "ALTER SYSTEM SET %s = '%s'" % (name, value)
