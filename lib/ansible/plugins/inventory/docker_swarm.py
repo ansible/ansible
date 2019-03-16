@@ -181,6 +181,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
                     self.inventory.set_variable(self.node_attrs['ID'], 'docker_swarm_node_attributes', self.node_attrs)
                 if 'ManagerStatus' in self.node_attrs:
                     if self.node_attrs['ManagerStatus'].get('Leader'):
+                        # This is workaround of bug in Docker when in some cases the Leader IP is 0.0.0.0
+                        # Check moby/moby#35437 for details
                         self.inventory.set_variable(self.node_attrs['ID'], 'ansible_host',
                                                     parse_address(self.node_attrs['ManagerStatus']['Addr'])[0])
                         self.inventory.add_host(self.node_attrs['ID'], group='leader')
