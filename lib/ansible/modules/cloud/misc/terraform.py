@@ -125,6 +125,39 @@ EXAMPLES = """
       region: "eu-west-1"
       bucket: "some-bucket"
       key: "random.tfstate"
+
+# Other Example with planed stage
+- name: "planned the project"
+  terraform:
+    state: planned
+    project_path: "project/"
+    plan_file: "{{ terraform_plan_file }}"
+    state_file: "{{ terraform_state_file }}"
+    force_init: true
+    variables:
+      example_string: "sample content"
+      example_map:
+        content: "test content"
+        second: "other Value"
+
+- name: "present the project"
+  terraform:
+    state: present
+    project_path: "project/"
+    state_file: "{{ terraform_state_file }}"
+    plan_file: "{{ terraform_plan_file }}"
+
+- name: "absent the project"
+  terraform:
+    state: absent
+    project_path: "project/"
+    state_file: "{{ terraform_state_file }}"
+    variables:
+      example_string: "sample content"
+      example_map:
+        content: "test content"
+        second: "other Value"
+
 """
 
 RETURN = """
@@ -179,9 +212,9 @@ def preflight_validation(bin_path, project_path, variables_args=None, plan_file=
         module.fail_json(msg="Path for Terraform project '{0}' doesn't exist on this host - check the path and try again please.".format(project_path))
 
     if variables_check:
-      rc, out, err = module.run_command([bin_path, 'validate'] + variables_args, cwd=project_path, use_unsafe_shell=True)
-      if rc != 0:
-          module.fail_json(msg="Failed to validate Terraform configuration files:\r\n{0}".format(err))
+        rc, out, err = module.run_command([bin_path, 'validate'] + variables_args, cwd=project_path, use_unsafe_shell=True)
+        if rc != 0:
+            module.fail_json(msg="Failed to validate Terraform configuration files:\r\n{0}".format(err))
 
 
 def _state_args(state_file, project_path, must_exists=True):
@@ -193,7 +226,8 @@ def _state_args(state_file, project_path, must_exists=True):
     else:
         return []
 
-def _variables_args(variables,variables_file=[]):
+
+def _variables_args(variables, variables_file=None):
     variables_args = []
     for k, v in variables.items():
         variables_args.extend([
@@ -205,38 +239,42 @@ def _variables_args(variables,variables_file=[]):
 
     return variables_args
 
-def convertOsLookupPath(path , project_path):
-     if os.path.isabs(path):
-         return path
-     else:
-         return os.path.join(project_path, path)
+
+def convertOsLookupPath(path, project_path):
+    if os.path.isabs(path):
+        return path
+    else:
+        return os.path.join(project_path, path)
+
 
 def convertPythonVarValueToTerraformVarCommandlineParameter(varValue):
     if(isinstance(varValue, list)):
         varstring = ""
         listVars = []
-        for index,val in enumerate(varValue):
+        for index, val in enumerate(varValue):
             varstring = varstring + formatSimpleValue(val)
 
-            if index < (len(varValue) -1):
+            if index < (len(varValue) - 1):
                 varstring = varstring + ","
 
-        return "["+varstring+"]"
+        return "[" + varstring + "]"
     elif(isinstance(varValue, dict)):
         varstring = ""
         i = 0
         for k, v in varValue.items():
-            varstring = varstring +  k + " = " + formatSimpleValue(v)
-            if i < (len(varValue) -1):
+            varstring = varstring + k + " = " + formatSimpleValue(v)
+            if i < (len(varValue) - 1):
                 varstring = varstring + ", "
             i = i + 1
 
-        return "{ "+varstring+" }"
+        return "{ " + varstring + " }"
     else:
         return formatSimpleValue(varValue)
 
+
 def formatSimpleValue(singleValue):
-    return '\"'+str(singleValue)+'\"'
+    return '\"' + str(singleValue) + '\"'
+
 
 def init_plugins(bin_path, project_path, backend_config):
     command = [bin_path, 'init', '-input=false']
@@ -377,7 +415,7 @@ def main():
         if state_file:
             command.extend(_state_args(state_file, project_path))
 
-    if (state != 'present') or (state == 'present' and not plan_file) :
+    if (state != 'present') or (state == 'present' and not plan_file):
         variables_args = _variables_args(variables, variables_file)
         variables_check = True
     else:
