@@ -133,18 +133,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             raise AnsibleError('Unable to setup TLS, this was the original exception: %s' % to_native(e))
 
     def _get_tls_connect_params(self):
-        if self.get_option('tls') and self.get_option('cert_path') and self.get_option('key_path'):
-            # TLS with certs and no host verification
-            tls_config = self._get_tls_config(client_cert=(self.get_option('cert_path'),
-                                                           self.get_option('key_path')),
-                                              verify=False)
-            return tls_config
-
-        if self.get_option('tls'):
-            # TLS with no certs and not host verification
-            tls_config = self._get_tls_config(verify=False)
-            return tls_config
-
         if self.get_option('tls_verify') and self.get_option('cert_path') and self.get_option('key_path'):
             # TLS with certs and host verification
             if self.get_option('cacert_path'):
@@ -172,6 +160,17 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             # TLS with verify and no certs
             tls_config = self._get_tls_config(verify=True,
                                               assert_hostname=self.get_option('tls_hostname'))
+            return tls_config
+
+        if self.get_option('tls') and self.get_option('cert_path') and self.get_option('key_path'):
+            # TLS with certs and no host verification
+            tls_config = self._get_tls_config(client_cert=(self.get_option('cert_path'), self.get_option('key_path')),
+                                              verify=False)
+            return tls_config
+
+        if self.get_option('tls'):
+            # TLS with no certs and not host verification
+            tls_config = self._get_tls_config(verify=False)
             return tls_config
 
         # No TLS

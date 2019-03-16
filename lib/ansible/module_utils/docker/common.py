@@ -357,25 +357,6 @@ class AnsibleDockerClient(Client):
         if auth['tls'] or auth['tls_verify']:
             auth['docker_host'] = auth['docker_host'].replace('tcp://', 'https://')
 
-        if auth['tls'] and auth['cert_path'] and auth['key_path']:
-            # TLS with certs and no host verification
-            tls_config = self._get_tls_config(client_cert=(auth['cert_path'], auth['key_path']),
-                                              verify=False,
-                                              ssl_version=auth['ssl_version'])
-            return dict(base_url=auth['docker_host'],
-                        tls=tls_config,
-                        version=auth['api_version'],
-                        timeout=auth['timeout'])
-
-        if auth['tls']:
-            # TLS with no certs and not host verification
-            tls_config = self._get_tls_config(verify=False,
-                                              ssl_version=auth['ssl_version'])
-            return dict(base_url=auth['docker_host'],
-                        tls=tls_config,
-                        version=auth['api_version'],
-                        timeout=auth['timeout'])
-
         if auth['tls_verify'] and auth['cert_path'] and auth['key_path']:
             # TLS with certs and host verification
             if auth['cacert_path']:
@@ -415,6 +396,26 @@ class AnsibleDockerClient(Client):
                         tls=tls_config,
                         version=auth['api_version'],
                         timeout=auth['timeout'])
+
+        if auth['tls'] and auth['cert_path'] and auth['key_path']:
+            # TLS with certs and no host verification
+            tls_config = self._get_tls_config(client_cert=(auth['cert_path'], auth['key_path']),
+                                              verify=False,
+                                              ssl_version=auth['ssl_version'])
+            return dict(base_url=auth['docker_host'],
+                        tls=tls_config,
+                        version=auth['api_version'],
+                        timeout=auth['timeout'])
+
+        if auth['tls']:
+            # TLS with no certs and not host verification
+            tls_config = self._get_tls_config(verify=False,
+                                              ssl_version=auth['ssl_version'])
+            return dict(base_url=auth['docker_host'],
+                        tls=tls_config,
+                        version=auth['api_version'],
+                        timeout=auth['timeout'])
+
         # No TLS
         return dict(base_url=auth['docker_host'],
                     version=auth['api_version'],
