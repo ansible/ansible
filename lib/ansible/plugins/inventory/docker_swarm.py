@@ -69,12 +69,12 @@ host: tcp://my-docker-host:2375
 
 # Example using remote docker with unverified TLS
 plugin: docker_swarm
-host: tcp://my-docker-host:2375
+host: tcp://my-docker-host:2376
 tls: yes
 
 # Example using remote docker with verified TLS and client certificate verification
 plugin: docker_swarm
-host: tcp://my-docker-host:2375
+host: tcp://my-docker-host:2376
 tls_verify: yes
 cacert_path: /somewhere/ca.pem
 key_path: /somewhere/key.pem
@@ -98,10 +98,10 @@ keyed_groups:
     prefix: label
 '''
 
-from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
-from ansible.release import __version__
+from ansible.parsing.utils.addresses import parse_address
 
 try:
     import docker
@@ -181,6 +181,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
                     self.inventory.set_variable(self.node_attrs['ID'], 'docker_swarm_node_attributes', self.node_attrs)
                 if 'ManagerStatus' in self.node_attrs:
                     if self.node_attrs['ManagerStatus'].get('Leader'):
+                        self.inventory.set_variable(self.node_attrs['ID'], 'ansible_host',
+                                                    parse_address(self.node_attrs['ManagerStatus']['Addr'])[0])
                         self.inventory.add_host(self.node_attrs['ID'], group='leader')
                 # Use constructed if applicable
                 strict = self.get_option('strict')
