@@ -11,7 +11,7 @@ DOCUMENTATION = '''
     name: docker_swarm
     plugin_type: inventory
     version_added: '2.8'
-    authors:
+    author:
       - Stefan Heitmüller (@morph027) <stefan.heitmueller@gmx.com>
     short_description: Ansible dynamic inventory plugin for Docker swarm nodes.
     requirements:
