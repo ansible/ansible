@@ -34,7 +34,7 @@ options:
     required: false
   collect_targets_health:
     description:
-      - When set to "yes", output contains targets health list 
+      - When set to "yes", output contains targets health list
     required: false
     default: no
     type: bool
@@ -158,9 +158,9 @@ target_groups:
             type: dict
             sample: "[
                 {
-                    'HealthCheckPort': '80', 
+                    'HealthCheckPort': '80',
                     'Target': {
-                        'Id': 'i-0123456', 
+                        'Id': 'i-0123456',
                         'Port': 80
                     },
                     'TargetHealth': {
