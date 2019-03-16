@@ -41,9 +41,9 @@ options:
   supported_services:
     description:
       - Services supported by the network offering.
-      - A list of one or more of the following services.
-      - Dns, PortForwarding, Dhcp, SourceNat, UserData, Firewall, StaticNat, Vpn, Lb.
+      - A list of one or more items from the choice list.
     type: list
+    choices: [ Dns, PortForwarding, Dhcp, SourceNat, UserData, Firewall, StaticNat, Vpn, Lb ]
     aliases: [ supported_service ]
   traffic_type:
     description:
