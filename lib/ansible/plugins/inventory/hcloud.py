@@ -8,7 +8,7 @@ __metaclass__ = type
 DOCUMENTATION = r"""
     name: hcloud
     plugin_type: inventory
-    authors:
+    author:
       - Lukas Kaemmerling (@lkaemmerling)
     short_description: Ansible dynamic inventory plugin for the Hetzner Cloud.
     version_added: "2.8"
