@@ -1606,15 +1606,25 @@ class AnsibleModule(object):
         return safe_eval(value, locals, include_exceptions)
 
     def _check_type_str(self, value):
+        opts = {
+            'error': False,
+            'warn': False,
+            'ignore': True
+        }
+
+        # Ignore, warn, or error when converting to a string.
+        allow_conversion = opts.get(self._string_conversion_action, True)
         try:
-            return check_type_str(value, self._string_conversion_action)
+            return check_type_str(value, allow_conversion)
         except TypeError as e:
-            # Ignore, warn, or error when converting to a string.
-            # The current default is to warn. Change this in Anisble 2.12 to error.
+            common_msg = 'quote the entire value to ensure it does not change.'
             if self._string_conversion_action == 'error':
-                raise
+                msg = common_msg.capitalize()
+                raise TypeError(to_native(msg))
             elif self._string_conversion_action == 'warn':
-                self.warn(to_native(e))
+                msg = ('The value {0!r} (type {0.__class__.__name__}) in a string field was converted to {1!r} (type string). '
+                       'If this does not look like what you expect, {2}').format(value, to_text(value), common_msg)
+                self.warn(to_native(msg))
                 return to_native(value, errors='surrogate_or_strict')
 
     def _check_type_list(self, value):

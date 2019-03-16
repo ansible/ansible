@@ -324,25 +324,27 @@ def safe_eval(value, locals=None, include_exceptions=False):
         return value
 
 
-def check_type_str(value, string_conversion_action=None):
+def check_type_str(value, allow_conversion=True):
+    """Verify that the value is a string or convert to a string. Since unexpected
+    changes can sometimes happen when converting to a string, allow_conversion
+    controls whether or not the value will be converted or a TypeError will be
+    raised if the value is not a string and would be converted.
+
+    :arg value: Value to validate or convert to a string
+    :arg allow_conversion: Whether to convert the string and return it or raise
+        a TypeError
+
+    :returns: Original value if it is a string, the value converted to a string
+        if allow_conversion=True, or raises a TypeError if allow_conversion=False.
+    """
     if isinstance(value, string_types):
         return value
 
-    # Ignore, warn, or error when converting to a string.
-    # The current default is to warn. Change this in Anisble 2.12 to error.
-    if string_conversion_action is None:
-        string_conversion_action = 'warn'
+    if allow_conversion:
+        return to_native(value, errors='surrogate_or_strict')
 
-    common_msg = 'quote the entire value to ensure it does not change.'
-    if string_conversion_action == 'error':
-        msg = common_msg.capitalize()
-        raise TypeError(to_native(msg))
-    elif string_conversion_action == 'warn':
-        msg = ('The value {0!r} (type {0.__class__.__name__}) in a string field was converted to {1!r} (type string). '
-               'If this does not look like what you expect, {2}').format(value, to_text(value), common_msg)
-        raise TypeError(to_native(msg))
-
-    return to_native(value, errors='surrogate_or_strict')
+    msg = "'{0!r}' is not a string and conversion is not allowed".format(value)
+    raise TypeError(to_native(msg))
 
 
 def check_type_list(value):
