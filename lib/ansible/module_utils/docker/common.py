@@ -187,17 +187,17 @@ def get_connect_params(auth, fail_function):
         # TLS with certs and host verification
         if auth['cacert_path']:
             tls_config = _get_tls_config(client_cert=(auth['cert_path'], auth['key_path']),
-                                       ca_cert=auth['cacert_path'],
-                                       verify=True,
-                                       assert_hostname=auth['tls_hostname'],
-                                       ssl_version=auth['ssl_version'],
-                                       fail_function=fail_function)
+                                         ca_cert=auth['cacert_path'],
+                                         verify=True,
+                                         assert_hostname=auth['tls_hostname'],
+                                         ssl_version=auth['ssl_version'],
+                                         fail_function=fail_function)
         else:
             tls_config = _get_tls_config(client_cert=(auth['cert_path'], auth['key_path']),
-                                       verify=True,
-                                       assert_hostname=auth['tls_hostname'],
-                                       ssl_version=auth['ssl_version'],
-                                       fail_function=fail_function)
+                                         verify=True,
+                                         assert_hostname=auth['tls_hostname'],
+                                         ssl_version=auth['ssl_version'],
+                                         fail_function=fail_function)
 
         return dict(base_url=auth['docker_host'],
                     tls=tls_config,
@@ -207,10 +207,10 @@ def get_connect_params(auth, fail_function):
     if auth['tls_verify'] and auth['cacert_path']:
         # TLS with cacert only
         tls_config = _get_tls_config(ca_cert=auth['cacert_path'],
-                                   assert_hostname=auth['tls_hostname'],
-                                   verify=True,
-                                   ssl_version=auth['ssl_version'],
-                                   fail_function=fail_function)
+                                     assert_hostname=auth['tls_hostname'],
+                                     verify=True,
+                                     ssl_version=auth['ssl_version'],
+                                     fail_function=fail_function)
         return dict(base_url=auth['docker_host'],
                     tls=tls_config,
                     version=auth['api_version'],
@@ -219,9 +219,9 @@ def get_connect_params(auth, fail_function):
     if auth['tls_verify']:
         # TLS with verify and no certs
         tls_config = _get_tls_config(verify=True,
-                                   assert_hostname=auth['tls_hostname'],
-                                   ssl_version=auth['ssl_version'],
-                                   fail_function=fail_function)
+                                     assert_hostname=auth['tls_hostname'],
+                                     ssl_version=auth['ssl_version'],
+                                     fail_function=fail_function)
         return dict(base_url=auth['docker_host'],
                     tls=tls_config,
                     version=auth['api_version'],
@@ -230,9 +230,9 @@ def get_connect_params(auth, fail_function):
     if auth['tls'] and auth['cert_path'] and auth['key_path']:
         # TLS with certs and no host verification
         tls_config = _get_tls_config(client_cert=(auth['cert_path'], auth['key_path']),
-                                   verify=False,
-                                   ssl_version=auth['ssl_version'],
-                                   fail_function=fail_function)
+                                     verify=False,
+                                     ssl_version=auth['ssl_version'],
+                                     fail_function=fail_function)
         return dict(base_url=auth['docker_host'],
                     tls=tls_config,
                     version=auth['api_version'],
@@ -241,8 +241,8 @@ def get_connect_params(auth, fail_function):
     if auth['tls']:
         # TLS with no certs and not host verification
         tls_config = _get_tls_config(verify=False,
-                                   ssl_version=auth['ssl_version'],
-                                   fail_function=fail_function)
+                                     ssl_version=auth['ssl_version'],
+                                     fail_function=fail_function)
         return dict(base_url=auth['docker_host'],
                     tls=tls_config,
                     version=auth['api_version'],
