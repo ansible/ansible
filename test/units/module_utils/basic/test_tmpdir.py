@@ -58,6 +58,11 @@ class TestAnsibleModuleTmpDir:
             False,
             os.path.join(os.environ['HOME'], ".test/ansible-moduletmp-42-")
         ),
+        (
+            {},
+            False,
+            '/tmp/ansible-moduletmp-42-'
+        ),
     )
 
     # pylint bug: https://github.com/PyCQA/pylint/issues/511
@@ -67,6 +72,8 @@ class TestAnsibleModuleTmpDir:
         makedirs = {'called': False}
 
         def mock_mkdtemp(prefix, dir):
+            if dir is None:
+                return os.path.join(os.path.join('/tmp', prefix))
             return os.path.join(dir, prefix)
 
         def mock_makedirs(path, mode):
@@ -90,7 +97,7 @@ class TestAnsibleModuleTmpDir:
         # verify subsequent calls always produces the same tmpdir
         assert am.tmpdir == actual_tmpdir
 
-        if not stat_exists:
+        if am._remote_tmp and not stat_exists:
             assert makedirs['called']
             expected = os.path.expanduser(os.path.expandvars(am._remote_tmp))
             assert makedirs['path'] == expected

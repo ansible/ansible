@@ -764,6 +764,7 @@ class AnsibleModule(object):
         self._legal_inputs = []
         self._options_context = list()
         self._tmpdir = None
+        self._remote_tmp = None
 
         if add_file_common_args:
             for k, v in FILE_COMMON_ARGUMENTS.items():
@@ -848,8 +849,9 @@ class AnsibleModule(object):
         if self._tmpdir is None:
             basedir = None
 
-            basedir = os.path.expanduser(os.path.expandvars(self._remote_tmp))
-            if not os.path.exists(basedir):
+            if self._remote_tmp is not None:
+                basedir = os.path.expanduser(os.path.expandvars(self._remote_tmp))
+            if basedir is not None and not os.path.exists(basedir):
                 try:
                     os.makedirs(basedir, mode=0o700)
                 except (OSError, IOError) as e:
@@ -871,7 +873,7 @@ class AnsibleModule(object):
                     msg="Failed to create remote module tmp path at dir %s "
                         "with prefix %s: %s" % (basedir, basefile, to_native(e))
                 )
-            if not self._keep_remote_files:
+            if not getattr(self, '_keep_remote_files', None):
                 atexit.register(shutil.rmtree, tmpdir)
             self._tmpdir = tmpdir
 
