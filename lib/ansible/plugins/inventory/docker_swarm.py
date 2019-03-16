@@ -135,7 +135,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
     def _get_tls_connect_params(self):
         if self.get_option('tls') and self.get_option('cert_path') and self.get_option('key_path'):
             # TLS with certs and no host verification
-            tls_config = self._get_tls_config(client_cert=(self.get_option('cert_path'), self.get_option('key_path')),
+            tls_config = self._get_tls_config(client_cert=(self.get_option('cert_path'),
+                                                           self.get_option('key_path')),
                                               verify=False)
             return tls_config
 
@@ -147,12 +148,14 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         if self.get_option('tls_verify') and self.get_option('cert_path') and self.get_option('key_path'):
             # TLS with certs and host verification
             if self.get_option('cacert_path'):
-                tls_config = self._get_tls_config(client_cert=(self.get_option('cert_path'), self.get_option('key_path')),
+                tls_config = self._get_tls_config(client_cert=(self.get_option('cert_path'),
+                                                               self.get_option('key_path')),
                                                   ca_cert=self.get_option('cacert_path'),
                                                   verify=True,
                                                   assert_hostname=self.get_option('tls_hostname'))
             else:
-                tls_config = self._get_tls_config(client_cert=(self.get_option('cert_path'), self.get_option('key_path')),
+                tls_config = self._get_tls_config(client_cert=(self.get_option('cert_path'),
+                                                               self.get_option('key_path')),
                                                   verify=True,
                                                   assert_hostname=self.get_option('tls_hostname'))
 
@@ -175,7 +178,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         return None
 
     def _populate(self):
-        self.client = docker.DockerClient(base_url=self.get_option('host'), tls=self._get_tls_connect_params())
+        self.client = docker.DockerClient(base_url=self.get_option('host'),
+                                          tls=self._get_tls_connect_params())
         self.inventory.add_group('all')
         self.inventory.add_group('manager')
         self.inventory.add_group('worker')
@@ -195,7 +199,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
                 self.node_attrs = self.client.nodes.get(self.node.id).attrs
                 self.inventory.add_host(self.node_attrs['ID'])
                 self.inventory.add_host(self.node_attrs['ID'], group=self.node_attrs['Spec']['Role'])
-                self.inventory.set_variable(self.node_attrs['ID'], 'ansible_host', self.node_attrs['Status']['Addr'])
+                self.inventory.set_variable(self.node_attrs['ID'], 'ansible_host',
+                                            self.node_attrs['Status']['Addr'])
                 if self.get_option('include_host_uri', True):
                     self.inventory.set_variable(self.node_attrs['ID'], 'ansible_host_uri',
                                                 "tcp://" + self.node_attrs['Status']['Addr'] + ":" + host_uri_port)
@@ -206,7 +211,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
                         # This is workaround of bug in Docker when in some cases the Leader IP is 0.0.0.0
                         # Check moby/moby#35437 for details
                         swarm_leader_ip = parse_address(self.node_attrs['ManagerStatus']['Addr'])[0] or \
-                                          self.node_attrs['Status']['Addr']
+                            self.node_attrs['Status']['Addr']
                         if self.get_option('include_host_uri', True):
                             self.inventory.set_variable(self.node_attrs['ID'], 'ansible_host_uri', "tcp://" +
                                                         swarm_leader_ip + ":" + host_uri_port)
@@ -215,13 +220,23 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
                 # Use constructed if applicable
                 strict = self.get_option('strict')
                 # Composed variables
-                self._set_composite_vars(self.get_option('compose'), self.node_attrs, self.node_attrs['ID'], strict=strict)
+                self._set_composite_vars(self.get_option('compose'),
+                                         self.node_attrs,
+                                         self.node_attrs['ID'],
+                                         strict=strict)
                 # Complex groups based on jinja2 conditionals, hosts that meet the conditional are added to group
-                self._add_host_to_composed_groups(self.get_option('groups'), self.node_attrs, self.node_attrs['ID'], strict=strict)
+                self._add_host_to_composed_groups(self.get_option('groups'),
+                                                  self.node_attrs,
+                                                  self.node_attrs['ID'],
+                                                  strict=strict)
                 # Create groups based on variable values and add the corresponding hosts to it
-                self._add_host_to_keyed_groups(self.get_option('keyed_groups'), self.node_attrs, self.node_attrs['ID'], strict=strict)
+                self._add_host_to_keyed_groups(self.get_option('keyed_groups'),
+                                               self.node_attrs,
+                                               self.node_attrs['ID'],
+                                               strict=strict)
         except Exception as e:
-            raise AnsibleError('Unable to fetch hosts from Docker swarm API, this was the original exception: %s' % to_native(e))
+            raise AnsibleError('Unable to fetch hosts from Docker swarm API, this was the original exception: %s' %
+                               to_native(e))
 
     def verify_file(self, path):
         """Return the possibly of a file being consumable by this plugin."""
@@ -231,7 +246,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
     def parse(self, inventory, loader, path, cache=True):
         if not HAS_DOCKER:
-            raise AnsibleError('The Docker swarm dynamic inventory plugin requires the Docker SDK for Python: https://github.com/docker/docker-py.')
+            raise AnsibleError('The Docker swarm dynamic inventory plugin requires the Docker SDK for Python: '
+                               'https://github.com/docker/docker-py.')
         super(InventoryModule, self).parse(inventory, loader, path, cache)
         self._read_config_data(path)
         self._populate()
