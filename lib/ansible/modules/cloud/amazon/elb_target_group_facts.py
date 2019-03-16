@@ -32,6 +32,12 @@ options:
     description:
       - The names of the target groups.
     required: false
+  collect_targets_health:
+    description:
+      - When set to "yes", output contains targets health list 
+    required: false
+    default: no
+    type: bool
 
 extends_documentation_fragment:
     - aws
@@ -146,6 +152,22 @@ target_groups:
             returned: always
             type: str
             sample: "arn:aws:elasticloadbalancing:ap-southeast-2:01234567890:targetgroup/mytargetgroup/aabbccddee0044332211"
+        targets_health_description:
+            description: The targets health of the target group.
+            returned: when collect_targets_health is enabled
+            type: dict
+            sample: "[
+                {
+                    'HealthCheckPort': '80', 
+                    'Target': {
+                        'Id': 'i-0123456', 
+                        'Port': 80
+                    },
+                    'TargetHealth': {
+                        'State': 'healthy'
+                    }
+                }
+            ]"
         target_group_name:
             description: The name of the target group.
             returned: always
@@ -197,11 +219,20 @@ def get_target_group_tags(connection, module, target_group_arn):
         module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
 
+def get_target_group_targets_health(connection, module, target_group_arn):
+
+    try:
+        return connection.describe_target_health(TargetGroupArn=target_group_arn)['TargetHealthDescriptions']
+    except ClientError as e:
+        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+
+
 def list_target_groups(connection, module):
 
     load_balancer_arn = module.params.get("load_balancer_arn")
     target_group_arns = module.params.get("target_group_arns")
     names = module.params.get("names")
+    collect_targets_health = module.params.get("collect_targets_health")
 
     try:
         target_group_paginator = connection.get_paginator('describe_target_groups')
@@ -231,6 +262,9 @@ def list_target_groups(connection, module):
     # Get tags for each target group
     for snaked_target_group in snaked_target_groups:
         snaked_target_group['tags'] = get_target_group_tags(connection, module, snaked_target_group['target_group_arn'])
+        if collect_targets_health:
+            snaked_target_group['targets_health_description'] = [camel_dict_to_snake_dict(
+                target) for target in get_target_group_targets_health(connection, module, snaked_target_group['target_group_arn'])]
 
     module.exit_json(target_groups=snaked_target_groups)
 
@@ -242,7 +276,8 @@ def main():
         dict(
             load_balancer_arn=dict(type='str'),
             target_group_arns=dict(type='list'),
-            names=dict(type='list')
+            names=dict(type='list'),
+            collect_targets_health=dict(default=False, type='bool', required=False)
         )
     )
 
