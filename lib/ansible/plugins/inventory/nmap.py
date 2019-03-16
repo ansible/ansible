@@ -59,6 +59,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleParserError
 from ansible.module_utils._text import to_native, to_text
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
+from ansible.module_utils.common.process import get_bin_path
 
 
 class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
@@ -68,14 +69,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     find_port = re.compile(r'^(\d+)/(\w+)\s+(\w+)\s+(\w+)')
 
     def __init__(self):
-
         self._nmap = None
-        for path in os.environ.get('PATH').split(':'):
-            candidate = os.path.join(path, 'nmap')
-            if os.path.exists(candidate):
-                self._nmap = candidate
-                break
-
         super(InventoryModule, self).__init__()
 
     def verify_file(self, path):
@@ -90,6 +84,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         return valid
 
     def parse(self, inventory, loader, path, cache=False):
+
+        try:
+            self._nmap = get_bin_path('nmap', True)
+        except ValueError as e:
+            raise AnsibleParserError(e)
 
         if self._nmap is None:
             raise AnsibleParserError('nmap inventory plugin requires the nmap cli tool to work')
@@ -160,7 +159,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
                 # TODO: parse more data, OS?
 
-            # if any lefotvers
+            # if any leftovers
             if host and ports:
                 self.inventory.set_variable(host, 'ports', ports)
 
