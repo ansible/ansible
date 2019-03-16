@@ -99,7 +99,7 @@ notes:
   - When connecting to Docker daemon with TLS, you might need to install additional Python packages.
     For the Docker SDK for Python, version 2.4 or newer, this can be done by installing C(docker[tls]) with M(pip).
   - Note that the Docker SDK for Python only allows to specify the path to the Docker configuration for very few functions.
-    In general, it will use C($HOME/docker/config.json) if the C(DOCKER_CONFIG) environment variable is not specified,
+    In general, it will use C($HOME/.docker/config.json) if the C(DOCKER_CONFIG) environment variable is not specified,
     and use C($DOCKER_CONFIG/config.json) otherwise.
 '''
 
