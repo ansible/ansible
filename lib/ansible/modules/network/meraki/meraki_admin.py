@@ -32,9 +32,10 @@ options:
         - Email cannot be updated.
         - Required when creating or editing an administrator.
         type: str
-    orgAccess:
+    org_access:
         description:
         - Privileges assigned to the administrator in the organization.
+        aliases: [ orgAccess ]
         choices: [ full, none, read-only ]
         type: str
     tags:
@@ -97,7 +98,7 @@ EXAMPLES = r'''
     org_name: YourOrg
     state: present
     name: Jane Doe
-    orgAccess: read-only
+    org_access: read-only
     email: jane@doe.com
 
 - name: Create new administrator with organization access
@@ -106,7 +107,7 @@ EXAMPLES = r'''
     org_name: YourOrg
     state: present
     name: Jane Doe
-    orgAccess: read-only
+    org_access: read-only
     email: jane@doe.com
 
 - name: Create a new administrator with organization access
@@ -115,7 +116,7 @@ EXAMPLES = r'''
     org_name: YourOrg
     state: present
     name: Jane Doe
-    orgAccess: read-only
+    org_access: read-only
     email: jane@doe.com
 
 - name: Revoke access to an organization for an administrator
@@ -284,8 +285,8 @@ def create_admin(meraki, org_id, name, email):
 
     is_admin_existing = find_admin(meraki, get_admins(meraki, org_id), email)
 
-    if meraki.params['orgAccess'] is not None:
-        payload['orgAccess'] = meraki.params['orgAccess']
+    if meraki.params['org_access'] is not None:
+        payload['orgAccess'] = meraki.params['org_access']
     if meraki.params['tags'] is not None:
         payload['tags'] = json.loads(meraki.params['tags'])
     if meraki.params['networks'] is not None:
@@ -329,7 +330,7 @@ def main():
     argument_spec.update(state=dict(type='str', choices=['present', 'query', 'absent'], required=True),
                          name=dict(type='str'),
                          email=dict(type='str'),
-                         orgAccess=dict(type='str', choices=['full', 'read-only', 'none']),
+                         org_access=dict(type='str', aliases=['orgAccess'], choices=['full', 'read-only', 'none']),
                          tags=dict(type='json'),
                          networks=dict(type='json'),
                          org_name=dict(type='str', aliases=['organization']),
