@@ -56,6 +56,13 @@ DOCUMENTATION = '''
         tls_hostname:
             description: When verifying the authenticity of the Docker Host server, provide the expected name of the server.
             type: str
+        host_uri:
+            description: Toggle to return the additional attribute I(ansible_host_uri) which contains the URI of the
+                         swarm leader in format of M(tcp://172.16.0.1:2376). This value may be used without additional
+                         modification as value of option I(docker_host) in Docker Swarm modules when connecting via API.
+                         The port always defaults to M(2376).
+            type: bool
+            default: no
 '''
 
 EXAMPLES = '''
@@ -177,12 +184,19 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
                 self.inventory.add_host(self.node_attrs['ID'])
                 self.inventory.add_host(self.node_attrs['ID'], group=self.node_attrs['Spec']['Role'])
                 self.inventory.set_variable(self.node_attrs['ID'], 'ansible_host', self.node_attrs['Status']['Addr'])
+                if self.get_option('host_uri', True):
+                    self.inventory.set_variable(self.node_attrs['ID'], 'ansible_host_uri',
+                                                "tcp://" + self.node_attrs['Status']['Addr'] + ":2376")
                 if self.get_option('verbose_output', True):
                     self.inventory.set_variable(self.node_attrs['ID'], 'docker_swarm_node_attributes', self.node_attrs)
                 if 'ManagerStatus' in self.node_attrs:
                     if self.node_attrs['ManagerStatus'].get('Leader'):
                         # This is workaround of bug in Docker when in some cases the Leader IP is 0.0.0.0
                         # Check moby/moby#35437 for details
+                        if self.get_option('host_uri', True):
+                            self.inventory.set_variable(self.node_attrs['ID'], 'ansible_host_uri', "tcp://" +
+                                                        parse_address(self.node_attrs['ManagerStatus']['Addr'])[0] +
+                                                        ":2376")
                         self.inventory.set_variable(self.node_attrs['ID'], 'ansible_host',
                                                     parse_address(self.node_attrs['ManagerStatus']['Addr'])[0])
                         self.inventory.add_host(self.node_attrs['ID'], group='leader')
