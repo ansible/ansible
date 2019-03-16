@@ -65,7 +65,7 @@ DOCUMENTATION = '''
             default: no
         include_host_uri_port:
             description: Override the detected port number included in I(ansible_host_uri)
-            type: str
+            type: int
 '''
 
 EXAMPLES = '''
