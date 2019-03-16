@@ -118,6 +118,13 @@ options:
             description:
               - CPUs in which to allow execution, e.g., "0-3", "0,1".
             type: str
+      use_config_proxy:
+        description:
+          - If set to `yes` and a proxy configuration is specified in the docker client configuration
+            (by default C($HOME/.docker/config.json)), the corresponding environment variables will
+            be set in the container being built.
+          - Needs Docker SDK for Python >= 3.7.0.
+        type: bool
     version_added: "2.8"
   archive_path:
     description:
@@ -454,6 +461,7 @@ class ImageManager(DockerBaseClass):
         self.http_timeout = build.get('http_timeout')
         self.push = parameters.get('push')
         self.buildargs = build.get('args')
+        self.use_config_proxy = build.get('use_config_proxy')
 
         # If name contains a tag, it takes precedence over tag parameter.
         if not is_image_name_id(self.name):
@@ -711,6 +719,8 @@ class ImageManager(DockerBaseClass):
             params['cache_from'] = self.cache_from
         if self.network:
             params['network_mode'] = self.network
+        if self.use_config_proxy:
+            params['use_config_proxy'] = self.use_config_proxy
 
         for line in self.client.build(**params):
             # line = json.loads(line)
@@ -776,6 +786,7 @@ def main():
             pull=dict(type='bool', default=True),
             rm=dict(type='bool', default=True),
             args=dict(type='dict'),
+            use_config_proxy=dict(type='bool'),
         )),
         archive_path=dict(type='path'),
         container_limits=dict(type='dict', options=dict(
@@ -816,9 +827,13 @@ def main():
     def detect_build_network(client):
         return client.params['build'] and client.params['build']['network'] is not None
 
+    def detect_use_config_proxy(client):
+        return client.params['build'] and client.params['build']['use_config_proxy'] is not None
+
     option_minimal_versions = dict()
     option_minimal_versions["build.cache_from"] = dict(docker_py_version='2.1.0', docker_api_version='1.25', detect_usage=detect_build_cache_from)
     option_minimal_versions["build.network"] = dict(docker_py_version='2.4.0', docker_api_version='1.25', detect_usage=detect_build_network)
+    option_minimal_versions["build.use_config_proxy"] = dict(docker_py_version='3.7.0', detect_usage=detect_use_config_proxy)
 
     client = AnsibleDockerClient(
         argument_spec=argument_spec,
