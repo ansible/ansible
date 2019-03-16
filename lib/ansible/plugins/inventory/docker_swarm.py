@@ -63,6 +63,9 @@ DOCUMENTATION = '''
                          The port always defaults to M(2376).
             type: bool
             default: no
+        include_host_uri_port:
+            description: Override the detected port number included in I(ansible_host_uri)
+            type: str
 '''
 
 EXAMPLES = '''
@@ -177,6 +180,15 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         self.inventory.add_group('manager')
         self.inventory.add_group('worker')
         self.inventory.add_group('leader')
+
+        if self.get_option('include_host_uri', True):
+            if self.get_option('include_host_uri_port'):
+                host_uri_port = self.get_option('include_host_uri_port')
+            elif self.get_option('tls') or self.get_option('tls_verify'):
+                host_uri_port = "2376"
+            else:
+                host_uri_port = "2375"
+
         try:
             self.nodes = self.client.nodes.list()
             for self.node in self.nodes:
@@ -186,19 +198,18 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
                 self.inventory.set_variable(self.node_attrs['ID'], 'ansible_host', self.node_attrs['Status']['Addr'])
                 if self.get_option('include_host_uri', True):
                     self.inventory.set_variable(self.node_attrs['ID'], 'ansible_host_uri',
-                                                "tcp://" + self.node_attrs['Status']['Addr'] + ":2376")
+                                                "tcp://" + self.node_attrs['Status']['Addr'] + ":" + host_uri_port)
                 if self.get_option('verbose_output', True):
                     self.inventory.set_variable(self.node_attrs['ID'], 'docker_swarm_node_attributes', self.node_attrs)
                 if 'ManagerStatus' in self.node_attrs:
                     if self.node_attrs['ManagerStatus'].get('Leader'):
                         # This is workaround of bug in Docker when in some cases the Leader IP is 0.0.0.0
                         # Check moby/moby#35437 for details
+                        swarm_leader_ip = parse_address(self.node_attrs['ManagerStatus']['Addr'])[0] or "0.0.0.0"
                         if self.get_option('include_host_uri', True):
                             self.inventory.set_variable(self.node_attrs['ID'], 'ansible_host_uri', "tcp://" +
-                                                        parse_address(self.node_attrs['ManagerStatus']['Addr'])[0] +
-                                                        ":2376")
-                        self.inventory.set_variable(self.node_attrs['ID'], 'ansible_host',
-                                                    parse_address(self.node_attrs['ManagerStatus']['Addr'])[0])
+                                                        swarm_leader_ip + ":" + host_uri_port)
+                        self.inventory.set_variable(self.node_attrs['ID'], 'ansible_host', swarm_leader_ip)
                         self.inventory.add_host(self.node_attrs['ID'], group='leader')
                 # Use constructed if applicable
                 strict = self.get_option('strict')
