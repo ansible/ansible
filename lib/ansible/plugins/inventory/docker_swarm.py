@@ -29,7 +29,9 @@ DOCUMENTATION = '''
             required: true
             choices: docker_swarm
         host:
-            description: Socket of a Docker swarm manager node (tcp,unix).
+            description:
+                - Socket of a Docker swarm manager node (tcp,unix).
+                - "Use C(unix://var/run/docker.sock) to connect via local socket."
             type: str
             required: true
         verbose_output:
@@ -56,6 +58,21 @@ DOCUMENTATION = '''
         tls_hostname:
             description: When verifying the authenticity of the Docker Host server, provide the expected name of the server.
             type: str
+        ssl_version:
+            description: Provide a valid SSL version number. Default value determined by ssl.py module.
+            type: str
+        api_version:
+            description:
+                - The version of the Docker API running on the Docker Host.
+                - Defaults to the latest version of the API supported by docker-py.
+            type: str
+        timeout:
+            description:
+                - The maximum amount of time in seconds to wait on a response from the API.
+                - If the value is not specified in the task, the value of environment variable C(DOCKER_TIMEOUT) will be used
+                  instead. If the environment variable is not set, the default value will be used.
+            type: int
+            default: 60
         include_host_uri:
             description: Toggle to return the additional attribute I(ansible_host_uri) which contains the URI of the
                          swarm leader in format of M(tcp://172.16.0.1:2376). This value may be used without additional
@@ -138,11 +155,16 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             cacert_path=self.get_option('cacert_path'),
             cert_path=self.get_option('cert_path'),
             tls_hostname=self.get_option('tls_hostname'),
-            api_version=None,
-            timeout=None,
-            ssl_version=None,
+            api_version=self.get_option('api_version'),
+            timeout=self.get_option('timeout') or 60,
+            ssl_version=self.get_option('ssl_version'),
             debug=None,
         )
+        if raw_params['timeout'] is not None:
+            try:
+                raw_params['timeout'] = int(raw_params['timeout'])
+            except Exception as dummy:
+                raise AnsibleError('Argument to timeout function must be an integer')
         update_tls_hostname(raw_params)
         connect_params = get_connect_params(raw_params, fail_function=self._fail)
         self.client = docker.DockerClient(**get_connect_params)
