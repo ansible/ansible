@@ -290,12 +290,12 @@ class DataLoader:
             for path in paths:
                 upath = unfrackpath(path, follow=False)
                 b_upath = to_bytes(upath, errors='surrogate_or_strict')
-                b_mydir = os.path.dirname(b_upath)
+                b_pb_base_dir = os.path.dirname(b_upath)
 
                 # if path is in role and 'tasks' not there already, add it into the search
-                if (is_role or self._is_role(path)) and b_mydir.endswith(b'tasks'):
-                    search.append(os.path.join(os.path.dirname(b_mydir), b_dirname, b_source))
-                    search.append(os.path.join(b_mydir, b_source))
+                if (is_role or self._is_role(path)) and b_pb_base_dir.endswith(b'/tasks'):
+                    search.append(os.path.join(os.path.dirname(b_pb_base_dir), b_dirname, b_source))
+                    search.append(os.path.join(b_pb_base_dir, b_source))
                 else:
                     # don't add dirname if user already is using it in source
                     if b_source.split(b'/')[0] != dirname:
