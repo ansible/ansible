@@ -93,9 +93,7 @@ DOCKER_COMMON_ARGS = dict(
     debug=dict(type='bool', default=False)
 )
 
-DOCKER_MUTUALLY_EXCLUSIVE = [
-    ['tls', 'tls_verify']
-]
+DOCKER_MUTUALLY_EXCLUSIVE = []
 
 DOCKER_REQUIRED_TOGETHER = [
     ['cert_path', 'key_path']
