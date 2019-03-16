@@ -275,7 +275,7 @@
   docker_image:
     name: "{{ iname }}"
     build:
-       path: "{{ role_path }}/files"
+      path: "{{ role_path }}/files"
       pull: no
     source: build
   register: path_2
