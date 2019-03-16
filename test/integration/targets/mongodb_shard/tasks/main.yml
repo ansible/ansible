@@ -1,0 +1,367 @@
+# test code for the mongodb_shard module
+# (c) 2019,  Rhys Campbell <rhys.james.campbell@googlemail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# ============================================================
+
+- name: Ensure tests home exists
+  file:
+    path: /home/tests
+    state: directory
+
+- name: Execute cleanup script if /home/tests/mongodb[1-3] directories exist
+  script: files/bash/mongod_teardown.sh
+  args:
+    removes: /home/tests/mongodb3001
+
+- name: Execute mongod script
+  script: files/bash/mongodb_replicaset.sh 3000 "{{ mongodb_replicaset1 }}" 3 0
+
+- name: Execute mongod script
+  script: files/bash/mongodb_replicaset.sh 3003 "{{ mongodb_replicaset2 }}" 3 0
+
+- name: Ensure /home/tests/config dir exists
+  file:
+    path: /home/tests/config
+    state: directory
+
+- name: Launch cfg server
+  command: mongod --configsvr --port 4000 --dbpath /home/tests/config --logpath /home/tests/config.log --smallfiles --replSet "{{ configsrv_replicaset }}" --fork
+
+- name: Create replicaset1 with module
+  mongodb_replicaset:
+    login_user: admin
+    login_password: secret
+    login_host: "localhost"
+    login_port: 3001
+    login_database: "admin"
+    replica_set: "{{ mongodb_replicaset1 }}"
+    members:
+     - "localhost:3001"
+     - "localhost:3002"
+     - "localhost:3003"
+
+- name: Create replicaset2 with module
+  mongodb_replicaset:
+    login_user: admin
+    login_password: secret
+    login_host: "localhost"
+    login_port: 3004
+    login_database: "admin"
+    replica_set: "{{ mongodb_replicaset2 }}"
+    members:
+     - "localhost:3004"
+     - "localhost:3005"
+     - "localhost:3006"
+
+- name: Create config srv replicaset with module
+  mongodb_replicaset:
+    login_user: admin
+    login_password: secret
+    login_host: "localhost"
+    login_port: 4000
+    login_database: "admin"
+    replica_set: "{{ configsrv_replicaset }}"
+    validate: no
+    members:
+     - "localhost:4000"
+
+- name: Launch mongos
+  command: mongos --configdb "{{ configsrv_replicaset }}/localhost:4000" --logpath /home/tests/mongos.log --port 27017 --fork
+
+- pause:
+    seconds: 10
+
+- name: Add shard 1
+  mongodb_shard:
+    login_user: admin
+    login_password: admin
+    shard: "{{ mongodb_replicaset1 }}/localhost:3001"
+    state: present
+
+- name: Add shard 2
+  mongodb_shard:
+    login_user: admin
+    login_password: admin
+    shard: "{{ mongodb_replicaset2 }}/localhost:3004"
+    state: present
+
+- name: Get replicaset info
+  command: mongo admin --eval "sh.status()" --port 27017
+  register: mongo_output
+
+- name: Assert shard name is in mongo_output
+  assert:
+    that:
+      - "mongo_output.changed == true"
+      - "'{{ mongodb_replicaset1 }}/localhost:3001,localhost:3002,localhost:3003' in mongo_output.stdout"
+      - "'{{ mongodb_replicaset2 }}/localhost:3004,localhost:3005,localhost:3006' in mongo_output.stdout"
+      - "'balancer' in mongo_output.stdout"
+
+- name: Remove shard 2
+  mongodb_shard:
+    login_user: admin
+    login_password: admin
+    shard: "{{ mongodb_replicaset2 }}"
+    state: absent
+
+- pause:
+    seconds: 10
+
+- name: Get replicaset info
+  command: mongo admin --eval "sh.status()" --port 27017
+  register: mongo_output
+
+- name: Assert shard 2 is draining
+  assert:
+    that:
+      - "mongo_output.changed == true"
+      - "'{{ mongodb_replicaset1 }}/localhost:3001,localhost:3002,localhost:3003' in mongo_output.stdout"
+      - "'\"draining\" : true' in mongo_output.stdout"
+      - "'balancer' in mongo_output.stdout"
+
+- pause:
+    seconds: 10
+
+- name: Run remove command again to finalize shard removal
+  mongodb_shard:
+    login_user: admin
+    login_password: admin
+    shard: "{{ mongodb_replicaset2 }}"
+    state: absent
+
+- name: Get replicaset info
+  command: mongo admin --eval "sh.status()" --port 27017
+  register: mongo_output
+
+- name: Assert shard 2 is not present
+  assert:
+    that:
+      - "mongo_output.changed == true"
+      - "'{{ mongodb_replicaset1 }}/localhost:3001,localhost:3002,localhost:3003' in mongo_output.stdout"
+      - "'{{ mongodb_replicaset2 }}/localhost:3004,localhost:3005,localhost:3006' not in mongo_output.stdout"
+      - "'balancer' in mongo_output.stdout"
+
+# Repeat of above with auth enabled
+- name: Execute cleanup script if /home/tests/mongodb[1-*] directories exist
+  script: files/bash/mongod_teardown.sh
+  args:
+    removes: /home/tests/mongodb3001
+
+- name: Murder all mongod processes
+  shell: pkill mongod && sleep 10 || sleep 10;
+
+- name: Murder all mongos processes
+  shell: pkill mongos && sleep 10 || sleep 10;
+
+- name: Remove /home/tests/config
+  shell: rm -Rf /home/tests/config
+
+- name: Ensure /home/tests/config dir exists
+  file:
+    path: /home/tests/config
+    state: directory
+
+- name: Execute mongod script
+  script: files/bash/mongodb_replicaset.sh 3000 "{{ mongodb_replicaset1 }}" 3 0
+
+- name: Execute mongod script
+  script: files/bash/mongodb_replicaset.sh 3003 "{{ mongodb_replicaset2 }}" 3 0
+
+- name: Create replicaset1 with module
+  mongodb_replicaset:
+    login_user: admin
+    login_password: secret
+    login_host: "localhost"
+    login_port: 3001
+    login_database: "admin"
+    replica_set: "{{ mongodb_replicaset1 }}"
+    members:
+     - "localhost:3001"
+     - "localhost:3002"
+     - "localhost:3003"
+
+- name: Create replicaset2 with module
+  mongodb_replicaset:
+    login_user: admin
+    login_password: secret
+    login_host: "localhost"
+    login_port: 3004
+    login_database: "admin"
+    replica_set: "{{ mongodb_replicaset2 }}"
+    members:
+     - "localhost:3004"
+     - "localhost:3005"
+     - "localhost:3006"
+
+- name: Ensure /home/tests/config dir exists
+  file:
+    path: /home/tests/config
+    state: directory
+
+- name: Launch cfg server
+  command: mongod --configsvr --port 4000 --dbpath /home/tests/config --logpath /home/tests/config.log --smallfiles --replSet "{{ configsrv_replicaset }}" --fork
+
+- name: Create config srv replicaset with module
+  mongodb_replicaset:
+    login_user: "{{ mongodb_admin_user }}"
+    login_password: "{{ mongodb_admin_password }}"
+    login_port: 4000
+    login_database: "admin"
+    replica_set: "{{ configsrv_replicaset }}"
+    validate: no
+    members:
+     - "localhost:4000"
+
+- pause:
+    seconds: 30
+
+- name: Add mongodb admin user to each shard 3.4+
+  mongodb_user:
+    login_host: localhost
+    login_port: "{{ item.port }}"
+    replica_set: "{{ item.rs }}"
+    database: admin
+    name: "{{ mongodb_admin_user }}"
+    password: "{{ mongodb_admin_password }}"
+    roles: ["root"]
+    state: present
+  register: mongo_admin_user
+  with_items:
+    - { "port": 3001, "rs": "{{ mongodb_replicaset1 }}" }
+    - { "port": 3004, "rs": "{{ mongodb_replicaset2 }}" }
+    - { "port": 4000, "rs": "{{ configsrv_replicaset }}" }
+  when: mongodb_version not in ["3.2", "4.0"] and test_mongo_auth == True
+
+- name: Add mongodb admin user to each shard 3.2 ^ 4.0
+  mongodb_user:
+    login_host: localhost
+    login_port: "{{ item.port }}"
+    replica_set: "{{ item.rs }}"
+    database: admin
+    name: "{{ mongodb_admin_user }}"
+    password: "{{ mongodb_admin_password }}"
+    roles: ["root"]
+    state: present
+  register: mongo_admin_user
+  with_items:
+    - { "port": 3001, "rs": "{{ mongodb_replicaset1 }}" }
+    - { "port": 3004, "rs": "{{ mongodb_replicaset2 }}" }
+  when: mongodb_version not in ["3.2", "4.0"] and test_mongo_auth == True
+
+# mongodb_user throws an error when creating a user on 3.2 (also on 4.0 with Ubuntu 18.04)
+# 'majority' is the only valid write concern when writing to config server replica sets
+- name: Copy create_user_root_3.2.js.j2 template to host
+  template:
+    src: create_user_root_3.2.js.j2
+    dest: /root/create_user_root_3.2.js
+  when: mongodb_version in ["3.2", "4.0"]
+
+- name: Create admin user on 3.2 and 4.0 config replset
+  shell: mongo admin --port 4000 /root/create_user_root_3.2.js
+  when: mongodb_version in ["3.2", "4.0"]
+
+- name: Murder all mongod processes
+  shell: pkill mongod && sleep 10 || sleep 10;
+
+- name: Execute mongod script to launch with auth shard1
+  script: files/bash/mongodb_replicaset.sh 3000 "{{ mongodb_replicaset1 }}" 3 1
+
+- name: Execute mongod script to launch with auth shard2
+  script: files/bash/mongodb_replicaset.sh 3003 "{{ mongodb_replicaset2 }}" 3 1
+
+- name: Launch cfg server with auth
+  command: mongod --configsvr --port 4000 --dbpath /home/tests/config --logpath /home/tests/config.log --smallfiles --replSet "{{ configsrv_replicaset }}" --fork --auth --keyFile /root/my.key
+
+- pause:
+    seconds: 10
+
+- name: Launch mongos
+  command: mongos --configdb "{{ configsrv_replicaset }}/localhost:4000" --logpath /home/tests/mongos.log --port 27017 --fork --keyFile /root/my.key
+
+- pause:
+    seconds: 10
+
+- name: Add shard 1
+  mongodb_shard:
+    login_user: "{{ mongodb_admin_user }}"
+    login_password: "{{ mongodb_admin_password }}"
+    shard: "{{ mongodb_replicaset1 }}/localhost:3001"
+    state: present
+
+- name: Add shard 2
+  mongodb_shard:
+    login_user: "{{ mongodb_admin_user }}"
+    login_password: "{{ mongodb_admin_password }}"
+    shard: "{{ mongodb_replicaset2 }}/localhost:3004"
+    state: present
+
+- name: Get replicaset info
+  command: mongo admin --eval "sh.status()" --port 27017 -u "{{ mongodb_admin_user }}" -p "{{ mongodb_admin_password }}"
+  register: mongo_output
+
+- name: Assert shard name is in mongo_output
+  assert:
+    that:
+      - "mongo_output.changed == true"
+      - "'{{ mongodb_replicaset1 }}/localhost:3001,localhost:3002,localhost:3003' in mongo_output.stdout"
+      - "'{{ mongodb_replicaset2 }}/localhost:3004,localhost:3005,localhost:3006' in mongo_output.stdout"
+      - "'balancer' in mongo_output.stdout"
+
+- name: Remove shard 2
+  mongodb_shard:
+    login_user: "{{ mongodb_admin_user }}"
+    login_password: "{{ mongodb_admin_password }}"
+    shard: "{{ mongodb_replicaset2 }}"
+    state: absent
+
+- pause:
+    seconds: 10
+
+- name: Get replicaset info
+  command: mongo admin --eval "sh.status()" --port 27017 -u "{{ mongodb_admin_user }}" -p "{{ mongodb_admin_password }}"
+  register: mongo_output
+
+- name: Assert shard 2 is draining
+  assert:
+    that:
+      - "mongo_output.changed == true"
+      - "'{{ mongodb_replicaset1 }}/localhost:3001,localhost:3002,localhost:3003' in mongo_output.stdout"
+      - "'\"draining\" : true' in mongo_output.stdout"
+      - "'balancer' in mongo_output.stdout"
+
+- pause:
+    seconds: 10
+
+- name: Run remove command again to finalize shard removal
+  mongodb_shard:
+    login_user: "{{ mongodb_admin_user }}"
+    login_password: "{{ mongodb_admin_password }}"
+    shard: "{{ mongodb_replicaset2 }}"
+    state: absent
+
+- name: Get replicaset info
+  command: mongo admin --eval "sh.status()" --port 27017 -u "{{ mongodb_admin_user }}" -p "{{ mongodb_admin_password }}"
+  register: mongo_output
+
+- name: Assert shard 2 is not present
+  assert:
+    that:
+      - "mongo_output.changed == true"
+      - "'{{ mongodb_replicaset1 }}/localhost:3001,localhost:3002,localhost:3003' in mongo_output.stdout"
+      - "'{{ mongodb_replicaset2 }}/localhost:3004,localhost:3005,localhost:3006' not in mongo_output.stdout"
+      - "'balancer' in mongo_output.stdout"

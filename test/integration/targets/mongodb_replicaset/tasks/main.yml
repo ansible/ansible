@@ -1,0 +1,438 @@
+# test code for the mongodb_replicaset module
+# (c) 2019,  Rhys Campbell <rhys.james.campbell@googlemail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# ============================================================
+
+- name: Ensure tests home exists
+  file:
+    path: /home/tests
+    state: directory
+
+- name: Execute cleanup script if /home/tests/mongodb[1-3] directories exist
+  script: files/bash/mongod_teardown.sh
+  args:
+    removes: /home/tests/mongodb3001
+
+- name: Execute mongod script
+  script: files/bash/mongodb_replicaset.sh 3000 "{{ mongodb_replicaset1 }}" 3 0
+
+# test with yaml list
+- name: Create replicaset with module
+  mongodb_replicaset:
+    login_user: admin
+    login_password: secret
+    login_host: "localhost"
+    login_port: 3001
+    login_database: "admin"
+    replica_set: "{{ mongodb_replicaset1 }}"
+    members:
+     - "localhost:3001"
+     - "localhost:3002"
+     - "localhost:3003"
+
+- pause:
+    seconds: 10
+
+- name: Get replicaset info
+  command: mongo admin --eval "rs.status()" --port 3001
+  register: mongo_output
+
+- name: Assert replicaset name is in mongo_output
+  assert:
+    that:
+      - "mongo_output.changed == true"
+      - "'{{ mongodb_replicaset1 }}' in mongo_output.stdout"
+      - "'localhost:3001' in mongo_output.stdout"
+      - "'localhost:3002' in mongo_output.stdout"
+      - "'localhost:3003' in mongo_output.stdout"
+
+- name: Add mongodb admin user
+  mongodb_user:
+    login_host: localhost
+    login_port: 3001
+    replica_set: "{{ mongodb_replicaset1 }}"
+    database: admin
+    name: "{{ mongodb_admin_user }}"
+    password: "{{ mongodb_admin_password }}"
+    roles: ["root"]
+    state: present
+  register: mongo_admin_user
+  when: test_mongo_auth
+
+- name: Murder all mongod processes
+  shell: pkill mongod && sleep 10;
+
+- name: Execute mongod script to restart with auth enabled
+  script: files/bash/mongodb_replicaset.sh 3000 "{{ mongodb_replicaset1 }}" 3 1
+  ignore_errors: "{{ debug }}"
+
+- name: Debug - Output mongodb logs
+  shell: cat /home/tests/mongodb3001/log.log
+  when: debug
+
+- name: Validate replicaset previously created
+  mongodb_replicaset:
+    login_user: "{{ mongodb_admin_user }}"
+    login_password: "{{ mongodb_admin_password }}"
+    login_host: "localhost"
+    login_port: 3001
+    login_database: "admin"
+    replica_set: "{{ mongodb_replicaset1 }}"
+    members:
+     - "localhost:3001"
+     - "localhost:3002"
+     - "localhost:3003"
+  register: mongodb_replicaset
+
+- name: Assert replicaset name has not changed
+  assert:
+    that: mongodb_replicaset.changed == False
+
+  #############################################################
+
+- name: Execute cleanup script if /home/tests/mongodb3001 directories exist
+  script: files/bash/mongod_teardown.sh
+  args:
+    removes: /home/tests/mongodb3001
+
+- pause:
+    seconds: 10
+
+- name: Execute mongod script
+  script: files/bash/mongodb_replicaset.sh 3000 "{{ mongodb_replicaset2 }}" 3 0
+
+# Test with python style list
+- name: Create replicaset with module
+  mongodb_replicaset:
+    login_user: admin
+    login_password: secret
+    login_host: "localhost"
+    login_port: 3001
+    login_database: "admin"
+    replica_set: "{{ mongodb_replicaset2 }}"
+    members: [ "localhost:3001", "localhost:3002", "localhost:3003" ]
+
+- pause:
+    seconds: 10
+
+- name: Get replicaset info
+  command: mongo admin --eval "rs.status()" --port 3001
+  register: mongo_output
+
+- name: Assert replicaset name is in mongo_output
+  assert:
+    that:
+      - "mongo_output.changed == true"
+      - "'{{ mongodb_replicaset2 }}' in mongo_output.stdout"
+      - "'localhost:3001' in mongo_output.stdout"
+      - "'localhost:3002' in mongo_output.stdout"
+      - "'localhost:3003' in mongo_output.stdout"
+
+#############################################################
+
+- name: Execute cleanup script if /home/tests/mongodb3001 directories exist
+  script: files/bash/mongod_teardown.sh
+  args:
+    removes: /home/tests/mongodb3001
+
+- pause:
+    seconds: 10
+
+- name: Execute mongod script
+  script: files/bash/mongodb_replicaset.sh 3000 "{{ mongodb_replicaset3 }}" 3 0
+
+# Test with csv string
+- name: Create replicaset with module
+  mongodb_replicaset:
+    login_user: admin
+    login_password: secret
+    login_host: "localhost"
+    login_port: 3001
+    login_database: "admin"
+    replica_set: "{{ mongodb_replicaset3 }}"
+    members: "localhost:3001,localhost:3002,localhost:3003"
+
+- pause:
+    seconds: 10
+
+- name: Get replicaset info
+  command: mongo admin --eval "rs.status()" --port 3001
+  register: mongo_output
+
+- name: Assert replicaset name is in mongo_output
+  assert:
+    that:
+      - "mongo_output.changed == true"
+      - "'{{ mongodb_replicaset3 }}' in mongo_output.stdout"
+      - "'localhost:3001' in mongo_output.stdout"
+      - "'localhost:3002' in mongo_output.stdout"
+      - "'localhost:3003' in mongo_output.stdout"
+
+  #############################################################
+
+- name: Execute cleanup script if /home/tests/mongodb3001 directories exist
+  script: files/bash/mongod_teardown.sh
+  args:
+    removes: /home/tests/mongodb3001
+
+- pause:
+    seconds: 10
+
+- name: Execute mongod script
+  script: files/bash/mongodb_replicaset.sh 3000 "{{ mongodb_replicaset4 }}" 3 0
+
+# Test with arbiter_at_index
+- name: Create replicaset with module
+  mongodb_replicaset:
+    login_user: admin
+    login_password: secret
+    login_host: "localhost"
+    login_port: 3001
+    login_database: "admin"
+    arbiter_at_index: 2
+    replica_set: "{{ mongodb_replicaset4 }}"
+    members: "localhost:3001,localhost:3002,localhost:3003"
+
+- pause:
+    seconds: 10
+
+- name: Get replicaset info
+  command: mongo admin --eval "rs.status()" --port 3001
+  register: mongo_output
+
+- name: Assert replicaset name is in mongo_output
+  assert:
+    that:
+      - "mongo_output.changed == true"
+      - "'{{ mongodb_replicaset4 }}' in mongo_output.stdout"
+      - "'localhost:3001' in mongo_output.stdout"
+      - "'localhost:3002' in mongo_output.stdout"
+      - "'localhost:3003' in mongo_output.stdout"
+      - "'ARBITER' in mongo_output.stdout"
+
+#############################################################
+
+- name: Execute cleanup script if /home/tests/mongodb3001 directories exist
+  script: files/bash/mongod_teardown.sh
+  args:
+    removes: /home/tests/mongodb3001
+
+- pause:
+    seconds: 10
+
+- name: Execute mongod script
+  script: files/bash/mongodb_replicaset.sh 3000 "{{ mongodb_replicaset5 }}" 3 0
+
+# Test with chainingAllowed
+- name: Create replicaset with module
+  mongodb_replicaset:
+    login_user: admin
+    login_password: secret
+    login_host: "localhost"
+    login_port: 3001
+    login_database: "admin"
+    chaining_allowed: no
+    replica_set: "{{ mongodb_replicaset5 }}"
+    members:
+      - localhost:3001
+      - localhost:3002
+      - localhost:3003
+
+- pause:
+    seconds: 10
+
+- name: Get replicaset info
+  command: mongo admin --eval "rs.conf()" --port 3001
+  register: mongo_output
+
+- name: Assert replicaset name is in mongo_output
+  assert:
+    that:
+      - "mongo_output.changed == true"
+      - "'{{ mongodb_replicaset5 }}' in mongo_output.stdout"
+      - "'localhost:3001' in mongo_output.stdout"
+      - "'localhost:3002' in mongo_output.stdout"
+      - "'localhost:3003' in mongo_output.stdout"
+      - "'chainingAllowed\" : false,' in mongo_output.stdout"
+
+#############################################################
+
+- name: Execute cleanup script if /home/tests/mongodb3001 directories exist
+  script: files/bash/mongod_teardown.sh
+  args:
+    removes: /home/tests/mongodb3001
+
+- pause:
+    seconds: 10
+
+- name: Execute mongod script
+  script: files/bash/mongodb_replicaset.sh 3000 "{{ mongodb_replicaset6 }}" 5 0
+
+# Test with 5 mongod processes
+- name: Create replicaset with module
+  mongodb_replicaset:
+    login_user: admin
+    login_password: secret
+    login_host: "localhost"
+    login_port: 3001
+    login_database: "admin"
+    replica_set: "{{ mongodb_replicaset6 }}"
+    members:
+      - localhost:3001
+      - localhost:3002
+      - localhost:3003
+      - localhost:3004
+      - localhost:3005
+
+- pause:
+    seconds: 10
+
+- name: Get replicaset info
+  command: mongo admin --eval "rs.conf()" --port 3001
+  register: mongo_output
+
+- name: Assert replicaset name is in mongo_output
+  assert:
+    that:
+      - "mongo_output.changed == true"
+      - "'{{ mongodb_replicaset6 }}' in mongo_output.stdout"
+      - "'localhost:3001' in mongo_output.stdout"
+      - "'localhost:3002' in mongo_output.stdout"
+      - "'localhost:3003' in mongo_output.stdout"
+      - "'localhost:3004' in mongo_output.stdout"
+      - "'localhost:3005' in mongo_output.stdout"
+
+#############################################################
+
+- name: Execute cleanup script if /home/tests/mongodb3001 directories exist
+  script: files/bash/mongod_teardown.sh
+  args:
+    removes: /home/tests/mongodb3001
+
+- pause:
+    seconds: 10
+
+- name: Execute mongod script
+  script: files/bash/mongodb_replicaset.sh 3000 "{{ mongodb_replicaset7 }}" 3 0
+
+# Test withheartbeatTimeoutSecs
+- name: Create replicaset with module
+  mongodb_replicaset:
+    login_user: admin
+    login_password: secret
+    login_host: "localhost"
+    login_port: 3001
+    login_database: "admin"
+    election_timeout_millis: 9999
+    replica_set: "{{ mongodb_replicaset7 }}"
+    members:
+      - localhost:3001
+      - localhost:3002
+      - localhost:3003
+
+- pause:
+    seconds: 10
+
+- name: Get replicaset info
+  command: mongo admin --eval "rs.conf()" --port 3001
+  register: mongo_output
+
+- name: Assert replicaset name is in mongo_output
+  assert:
+    that:
+      - "mongo_output.changed == true"
+      - "'{{ mongodb_replicaset7 }}' in mongo_output.stdout"
+      - "'localhost:3001' in mongo_output.stdout"
+      - "'localhost:3002' in mongo_output.stdout"
+      - "'localhost:3003' in mongo_output.stdout"
+      - "'electionTimeoutMillis\" : 9999,' in mongo_output.stdout"
+
+#############################################################
+
+- name: Execute cleanup script if /home/tests/mongodb3001 directories exist
+  script: files/bash/mongod_teardown.sh
+  args:
+    removes: /home/tests/mongodb3001
+
+- pause:
+    seconds: 10
+
+- name: Execute mongod script
+  script: files/bash/mongodb_replicaset.sh 3000 "{{ mongodb_replicaset8 }}" 3 0
+
+# Test with heartbeatTimeoutSecs
+- name: Create replicaset with module protocolVersion 0 (Mongodb 3.0)
+  mongodb_replicaset:
+    login_user: admin
+    login_password: secret
+    login_host: "localhost"
+    login_port: 3001
+    login_database: "admin"
+    protocol_version: 0
+    heartbeat_timeout_secs: 9
+    replica_set: "{{ mongodb_replicaset8 }}"
+    members:
+      - localhost:3001
+      - localhost:3002
+      - localhost:3003
+  when: mongodb_version.startswith('3') == True
+
+- name: Create replicaset with module protocolVersion 1 (MongoDB 4.0+)
+  mongodb_replicaset:
+    login_user: admin
+    login_password: secret
+    login_host: "localhost"
+    login_port: 3001
+    login_database: "admin"
+    protocol_version: 1
+    election_timeout_millis: 9000
+    replica_set: "{{ mongodb_replicaset8 }}"
+    members:
+      - localhost:3001
+      - localhost:3002
+      - localhost:3003
+  when: mongodb_version.startswith('4') == True
+
+- pause:
+    seconds: 10
+
+- name: Get replicaset info
+  command: mongo admin --eval "rs.conf()" --port 3001
+  register: mongo_output
+
+- name: Assert replicaset name is in mongo_output MongoDB 3.0+
+  assert:
+    that:
+      - "mongo_output.changed == true"
+      - "'{{ mongodb_replicaset8 }}' in mongo_output.stdout"
+      - "'localhost:3001' in mongo_output.stdout"
+      - "'localhost:3002' in mongo_output.stdout"
+      - "'localhost:3003' in mongo_output.stdout"
+      - "'heartbeatTimeoutSecs\" : 9,' in mongo_output.stdout"
+  when: mongodb_version.startswith('3') == True
+
+- name: Assert replicaset name is in mongo_output MongoDB 4.0+
+  assert:
+    that:
+      - "mongo_output.changed == true"
+      - "'{{ mongodb_replicaset8 }}' in mongo_output.stdout"
+      - "'localhost:3001' in mongo_output.stdout"
+      - "'localhost:3002' in mongo_output.stdout"
+      - "'localhost:3003' in mongo_output.stdout"
+      - "'electionTimeoutMillis\" : 9000,' in mongo_output.stdout"
+  when: mongodb_version.startswith('4') == True

@@ -1,0 +1,76 @@
+# test code for the mysql_db module
+# (c) 2019,  Rhys Campbell <rhys.james.campbell@googlemail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# ============================================================
+
+- meta: end_play
+  when: ansible_distribution != 'Ubuntu'
+    or (ansible_distribution == 'Ubuntu' and ansible_distribution_version == '14.04')
+    or (ansible_distribution == 'Ubuntu' and ansible_distribution_version == '18.04')
+
+- name: Import MongoDB public GPG Key xenial
+  apt_key:
+    keyserver: "{{ apt_xenial.keyserver }}"
+    id: "{{ apt_xenial.keyserver_id }}"
+  when: ansible_distribution_version == "16.04"
+
+- name: Add MongoDB repository into sources list xenial
+  apt_repository:
+    repo: "{{ apt_xenial.repo }}"
+    state: present
+  when: ansible_distribution_version == "16.04"
+
+- name: Import MongoDB public GPG Key bionic
+  apt_key:
+    keyserver: "{{ apt_bionic.keyserver }}"
+    id: "{{ apt_bionic.keyserver_id }}"
+  when: ansible_distribution_version == "18.04"
+
+- name: Add MongoDB repository into sources list bionic
+  apt_repository:
+    repo: "{{ apt_bionic.repo }}"
+    state: present
+  when: ansible_distribution_version == "18.04"
+
+- name: Update apt keys
+  shell: apt-key update && apt-get update
+  when: mongodb_version != "4.0"
+
+# Need to handle various platforms here. Package name will not always be the same
+- name: Ensure mongod package is installed
+  apt:
+    name: "{{ mongodb_packages.mongod }}"
+    state: present
+    force: yes
+
+- name: Ensure mongos package is installed
+  apt:
+    name: "{{ mongodb_packages.mongos }}"
+    state: present
+    force: yes
+
+- name: Ensure mongo client is installed
+  apt:
+    name: "{{ mongodb_packages.mongo }}"
+    state: present
+    force: yes
+
+- name: Install additional packages
+  apt:
+    name: "{{ additional_packages }}"
+    state: present
