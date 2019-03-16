@@ -30,6 +30,7 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+import re
 from ansible.module_utils.basic import AnsibleModule, json, env_fallback
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils.six.moves.urllib.parse import urlencode
@@ -46,6 +47,7 @@ def meraki_argument_spec():
                 timeout=dict(type='int', default=30),
                 org_name=dict(type='str', aliases=['organization']),
                 org_id=dict(type='str'),
+                output_version=dict(type='str', choices=['old', 'new'], default='new'),
                 )
 
 
@@ -62,6 +64,7 @@ class MerakiModule(object):
         self.org_id = None
         self.net_id = None
         self.check_mode = module.check_mode
+        self.key_map = {}
 
         # normal output
         self.existing = None
@@ -130,16 +133,25 @@ class MerakiModule(object):
         else:
             self.params['protocol'] = 'http'
 
-    def sanitize(self, original, proposed):
-        """Determine which keys are unique to original"""
-        keys = []
-        for k, v in original.items():
-            try:
-                if proposed[k] and k not in self.ignored_keys:
-                    pass
-            except KeyError:
-                keys.append(k)
-        return keys
+    def sanitize_keys(self, data):
+        if isinstance(data, dict):
+            items = {}
+            for k, v in data.items():
+                try:
+                    new = { self.key_map[k]: data[k] }
+                    items[self.key_map[k]] = self.sanitize_keys(data[k])
+                except KeyError:
+                    snake_k = re.sub('([a-z0-9])([A-Z])', r'\1_\2', k).lower()
+                    new = { snake_k: data[k] }
+                    items[snake_k] = self.sanitize_keys(data[k])
+            return items
+        elif isinstance(data, list):
+            items = []
+            for i in data:
+                items.append(self.sanitize_keys(i))
+            return items
+        elif isinstance(data, int) or isinstance(data, str) or isinstance(data, float):
+            return data
 
     def is_update_required(self, original, proposed, optional_ignore=None):
         ''' Compare two data-structures '''
@@ -346,6 +358,11 @@ class MerakiModule(object):
             self.result['url'] = self.url
 
         self.result.update(**kwargs)
+        if self.params['output_version'] == 'new':
+            try:
+                self.result['data'] = self.sanitize_keys(self.result['data'])
+            except KeyError:
+                pass
         self.module.exit_json(**self.result)
 
     def fail_json(self, msg, **kwargs):
