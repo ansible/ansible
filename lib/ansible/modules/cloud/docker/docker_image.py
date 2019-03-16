@@ -811,10 +811,10 @@ def main():
     ]
 
     def detect_build_cache_from(client):
-        return bool(client.params['build'] and client.params['build']['cache_from'] is not None)
+        return client.params['build'] and client.params['build']['cache_from'] is not None
 
     def detect_build_network(client):
-        return bool(client.params['build'] and client.params['build']['network'] is not None)
+        return client.params['build'] and client.params['build']['network'] is not None
 
     option_minimal_versions = dict()
     option_minimal_versions["build.cache_from"] = dict(docker_py_version='2.1.0', docker_api_version='1.25', detect_usage=detect_build_cache_from)
