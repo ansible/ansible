@@ -38,6 +38,7 @@ options:
     required: false
     default: no
     type: bool
+    version_added: 2.8
 
 extends_documentation_fragment:
     - aws
