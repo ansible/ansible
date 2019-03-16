@@ -1,0 +1,9 @@
+---
+- hosts: 127.0.0.1
+  connection: local
+  gather_facts: no
+  tasks:
+    - name: Create a Swarm cluster
+      docker_swarm:
+        state: present
+        advertise_addr: "{{ansible_default_ipv4.address | default('127.0.0.1')}}"
