@@ -110,6 +110,7 @@ keyed_groups:
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native
+from ansible.module_utils.docker.common import update_tls_hostname, get_connect_params
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
 from ansible.parsing.utils.addresses import parse_address
 
@@ -125,60 +126,26 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
     NAME = 'docker_swarm'
 
-    def _get_tls_config(self, **kwargs):
-        try:
-            tls_config = docker.tls.TLSConfig(**kwargs)
-            return tls_config
-        except Exception as e:
-            raise AnsibleError('Unable to setup TLS, this was the original exception: %s' % to_native(e))
-
-    def _get_tls_connect_params(self):
-        if self.get_option('tls_verify') and self.get_option('cert_path') and self.get_option('key_path'):
-            # TLS with certs and host verification
-            if self.get_option('cacert_path'):
-                tls_config = self._get_tls_config(client_cert=(self.get_option('cert_path'),
-                                                               self.get_option('key_path')),
-                                                  ca_cert=self.get_option('cacert_path'),
-                                                  verify=True,
-                                                  assert_hostname=self.get_option('tls_hostname'))
-            else:
-                tls_config = self._get_tls_config(client_cert=(self.get_option('cert_path'),
-                                                               self.get_option('key_path')),
-                                                  verify=True,
-                                                  assert_hostname=self.get_option('tls_hostname'))
-
-            return tls_config
-
-        if self.get_option('tls_verify') and self.get_option('cacert_path'):
-            # TLS with cacert only
-            tls_config = self._get_tls_config(ca_cert=self.get_option('cacert_path'),
-                                              assert_hostname=self.get_option('tls_hostname'),
-                                              verify=True)
-            return tls_config
-
-        if self.get_option('tls_verify'):
-            # TLS with verify and no certs
-            tls_config = self._get_tls_config(verify=True,
-                                              assert_hostname=self.get_option('tls_hostname'))
-            return tls_config
-
-        if self.get_option('tls') and self.get_option('cert_path') and self.get_option('key_path'):
-            # TLS with certs and no host verification
-            tls_config = self._get_tls_config(client_cert=(self.get_option('cert_path'), self.get_option('key_path')),
-                                              verify=False)
-            return tls_config
-
-        if self.get_option('tls'):
-            # TLS with no certs and not host verification
-            tls_config = self._get_tls_config(verify=False)
-            return tls_config
-
-        # No TLS
-        return None
+    def _fail(self, msg):
+        raise AnsibleError(msg)
 
     def _populate(self):
-        self.client = docker.DockerClient(base_url=self.get_option('host'),
-                                          tls=self._get_tls_connect_params())
+        raw_params = dict(
+            docker_host=self.get_option('docker_host'),
+            tls=self.get_option('tls'),
+            tls_verify=self.get_option('tls_verify'),
+            key_path=self.get_option('key_path'),
+            cacert_path=self.get_option('cacert_path'),
+            cert_path=self.get_option('cert_path'),
+            tls_hostname=self.get_option('tls_hostname'),
+            api_version=None,
+            timeout=None,
+            ssl_version=None,
+            debug=None,
+        )
+        update_tls_hostname(raw_params)
+        connect_params = get_connect_params(raw_params, fail_function=self._fail)
+        self.client = docker.DockerClient(**get_connect_params)
         self.inventory.add_group('all')
         self.inventory.add_group('manager')
         self.inventory.add_group('worker')
