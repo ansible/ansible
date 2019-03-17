@@ -26,7 +26,7 @@ description:
     - "Please note that the module regenerates private keys if they don't match
       the module's options. In particular, if you provide another passphrase
       (or specify none), change the keysize, etc., the private key will be
-      regenerated. If you are concerned of this overwriting your private key,
+      regenerated. If you are concerned that this could overwrite your private key,
       please consider using the I(backup) option."
     - The module can use the cryptography Python library, or the pyOpenSSL Python
       library. By default, it tries to detect which one is available. This can be
