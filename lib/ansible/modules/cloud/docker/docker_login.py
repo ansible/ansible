@@ -203,11 +203,10 @@ class LoginManager(DockerBaseClass):
         :return: None
         '''
 
-        cmd = "%s logout " % self.client.module.get_bin_path('docker', True)
+        cmd = [self.client.module.get_bin_path('docker', True), "logout", self.registry_url]
         # TODO: docker does not support config file in logout, restore this when they do
         # if self.config_path and self.config_file_exists(self.config_path):
-        #     cmd += "--config '%s' " % self.config_path
-        cmd += "'%s'" % self.registry_url
+        #     cmd.extend(["--config", self.config_path])
 
         (rc, out, err) = self.client.module.run_command(cmd)
         if rc != 0:
