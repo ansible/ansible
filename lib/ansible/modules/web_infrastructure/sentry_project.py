@@ -25,26 +25,31 @@ options:
   api_token:
     description:
       - API token generated in Sentry. The token sufficient access to manipulate projects.
+    type: str
     required: true
 
   organization:
     description:
       - Organization containing a project.
+    type: str
     required: true
 
   project_name:
     description:
       - Project name you want to work with.
+    type: str
     required: true
 
   project_slug:
     description:
       - Slug name. Slug name must be unique (even after project deletion you can't create a project with same slug name).
+    type: str
     required: true
 
   state:
     description:
       - The state of project.
+    type: str
     required: true
     choices: [ "present", "absent" ]
 
@@ -55,6 +60,7 @@ options:
   url:
     description:
       - Sentry URL.
+    type: str
     required: false
     default: sentry.io
 
@@ -86,13 +92,13 @@ from ansible.module_utils.six.moves.urllib.parse import urlparse
 
 def main():
     arg_spec = dict(
-        api_token=dict(required=True),
-        organization=dict(required=True),
-        project_name=dict(required=True),
-        project_slug=dict(required=True),
-        state=dict(required=True, choices=['present', 'absent']),
-        team=dict(required=True),
-        url=dict(default="sentry.io")
+        api_token=dict(type="str", required=True),
+        organization=dict(type="str", required=True),
+        project_name=dict(type="str", required=True),
+        project_slug=dict(type="str", required=True),
+        state=dict(type="str", required=True, choices=['present', 'absent']),
+        team=dict(type="str", required=True),
+        url=dict(type="str", default="sentry.io")
     )
 
     module = AnsibleModule(argument_spec=arg_spec, supports_check_mode=True)
@@ -108,7 +114,7 @@ def main():
     if not url.scheme:
         url = "https://{0}".format(url.path)
 
-    def is_project_exists(project_name, organization, team, api_token):
+    def does_project_exist(project_name, organization, team, api_token):
         response, info = fetch_url(
             module, "{url}/api/0/teams/{organization}/{team}/projects/".format(
                 url=url, organization=organization, team=team),
@@ -121,7 +127,7 @@ def main():
         return bool([x for x in body if x["name"] == project_name])
 
     if state == 'present':
-        if is_project_exists(project_name, organization, team, api_token):
+        if does_project_exist(project_name, organization, team, api_token):
             module.exit_json(changed=False)
         if not module.check_mode:
             response, info = fetch_url(
@@ -143,7 +149,7 @@ def main():
         module.exit_json(changed=True)
 
     if state == 'absent':
-        if is_project_exists(project_name, organization, team, api_token):
+        if does_project_exist(project_name, organization, team, api_token):
             if not module.check_mode:
                 response, info = fetch_url(
                     module, "{url}/api/0/projects/{organization}/{project_slug}/".format(
