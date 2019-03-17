@@ -766,13 +766,12 @@
         name: awscli
 
     - name: disable taskLongArnFormat
-      shell: |
-        AWS_ACCESS_KEY_ID="{{ aws_access_key }}" \
-        AWS_SECRET_ACCESS_KEY="{{ aws_secret_key }}" \
-        AWS_SESSION_TOKEN="{{ security_token }}" \
-        AWS_DEFAULT_REGION="{{ aws_region }}" \
-        aws ecs put-account-setting --name taskLongArnFormat --value disabled --region "{{ aws_region }}"
-      no_log: yes
+      command: aws ecs put-account-setting --name taskLongArnFormat --value disabled
+      environment:
+        AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
+        AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
+        AWS_SESSION_TOKEN: "{{ security_token | default('') }}"
+        AWS_DEFAULT_REGION: "{{ aws_region }}"
 
     - name: create fargate ECS task with run task and tags (LF disabled) (should fail)
       ecs_task:
@@ -795,13 +794,12 @@
       ignore_errors: yes
 
     - name: enable taskLongArnFormat
-      shell: |
-        AWS_ACCESS_KEY_ID="{{ aws_access_key }}" \
-        AWS_SECRET_ACCESS_KEY="{{ aws_secret_key }}" \
-        AWS_SESSION_TOKEN="{{ security_token }}" \
-        AWS_DEFAULT_REGION="{{ aws_region }}" \
-        aws ecs put-account-setting --name taskLongArnFormat --value enabled --region "{{ aws_region }}"
-      no_log: yes
+      command: aws ecs put-account-setting --name taskLongArnFormat --value enabled
+      environment:
+        AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
+        AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
+        AWS_SESSION_TOKEN: "{{ security_token | default('') }}"
+        AWS_DEFAULT_REGION: "{{ aws_region }}"
 
     - name: create fargate ECS task with run task and tags
       ecs_task:
