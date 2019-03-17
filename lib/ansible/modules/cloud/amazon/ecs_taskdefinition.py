@@ -306,7 +306,7 @@ def main():
         volumes=dict(required=False, type='list'),
         launch_type=dict(required=False, choices=['EC2', 'FARGATE']),
         cpu=dict(),
-        memory=dict(required=False, type='str')
+        memory=dict(required=False, type='int')
     ))
 
     module = AnsibleAWSModule(argument_spec=argument_spec,
