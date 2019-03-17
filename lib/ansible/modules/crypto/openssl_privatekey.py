@@ -118,7 +118,7 @@ options:
         version_added: "2.8"
     backup:
         description:
-            - Create a backup file including the timestamp information so you can get
+            - Create a backup file including a timestamp so you can get
               the original private key back if you somehow clobbered it incorrectly.
         type: bool
         default: no
