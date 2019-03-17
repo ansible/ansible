@@ -28,9 +28,11 @@ options:
   label:
     description:
       - Used to specify the label of the volume to be formatted.
+    type: str
   new_label:
     description:
       - Used to specify the new file system label of the formatted volume.
+    type: str
   file_system:
     description:
       - Used to specify the file system to be used when formatting the target volume.
@@ -45,6 +47,7 @@ options:
   large_frs:
     description:
       - Specifies that large File Record System (FRS) should be used.
+    type: bool
   compress:
     description:
       - Enable compression on the resulting NTFS volume.
@@ -53,6 +56,7 @@ options:
   integrity_streams:
     description:
       - Enable integrity streams on the resulting ReFS volume.
+    type: bool
   full:
     description:
       - A full format writes to every sector of the disk, takes much longer to perform than the 
@@ -63,11 +67,11 @@ options:
     description:
       - Specify if formatting should be forced for volumes that are not created from new partitions.
       - Volumes that have been formatted previously or contain data must be force-formatted.
+    type: bool
 notes:
-  - One of three parameters (drive_letter, path and label) are mandatory to identify the target 
+  - One of three parameters (I(drive_letter), I(path) and I(label)) are mandatory to identify the target 
     volume but more than one cannot be specified at the same time.
-  - This module cannot be used for changing the drive letter of a pre-existing partition or volume.
-    Refer to the M(win_access_path) module for setting and removing drive letters.
+  - This module is not idempotent and always formats the target volume if I(force) is specified.
   - For more information, see U(https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/format-msft-volume)
 author:
   - Varun Chopra (@chopraaa) <v@chopraaa.com>
