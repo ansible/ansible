@@ -75,9 +75,9 @@
   assert:
     that:
     - result is changed
-    - result.vultr_server.name == '{{ vultr_server_name }}'
+    - result.vultr_server.name == vultr_server_name
     - result.vultr_server.os == 'CentOS 6 x64'
-    - result.vultr_server.plan == '{{ vultr_server_plan_1 }}'
+    - result.vultr_server.plan == vultr_server_plan_1
     - result.vultr_server.region == 'Amsterdam'
     - result.vultr_server.power_status == 'running'
 
@@ -97,9 +97,9 @@
     that:
     - result is not changed
     - result.vultr_server.power_status == 'running'
-    - result.vultr_server.name == '{{ vultr_server_name }}'
+    - result.vultr_server.name == vultr_server_name
     - result.vultr_server.os == 'CentOS 6 x64'
-    - result.vultr_server.plan == '{{ vultr_server_plan_1 }}'
+    - result.vultr_server.plan == vultr_server_plan_1
     - result.vultr_server.region == 'Amsterdam'
 
 - name: test stop an existing server in check mode
@@ -113,7 +113,7 @@
     that:
     - result is changed
     - result.vultr_server.power_status == 'running'
-    - result.vultr_server.name == '{{ vultr_server_name }}'
+    - result.vultr_server.name == vultr_server_name
     - result.vultr_server.os == 'CentOS 6 x64'
     - result.vultr_server.region == 'Amsterdam'
 
@@ -127,7 +127,7 @@
     that:
     - result is changed
     - result.vultr_server.power_status == 'stopped'
-    - result.vultr_server.name == '{{ vultr_server_name }}'
+    - result.vultr_server.name == vultr_server_name
     - result.vultr_server.os == 'CentOS 6 x64'
     - result.vultr_server.region == 'Amsterdam'
 
@@ -141,7 +141,7 @@
     that:
     - result is not changed
     - result.vultr_server.power_status == 'stopped'
-    - result.vultr_server.name == '{{ vultr_server_name }}'
+    - result.vultr_server.name == vultr_server_name
     - result.vultr_server.os == 'CentOS 6 x64'
     - result.vultr_server.region == 'Amsterdam'
 
@@ -156,7 +156,7 @@
     that:
     - result is changed
     - result.vultr_server.power_status == 'stopped'
-    - result.vultr_server.name == '{{ vultr_server_name }}'
+    - result.vultr_server.name == vultr_server_name
     - result.vultr_server.os == 'CentOS 6 x64'
     - result.vultr_server.region == 'Amsterdam'
 
@@ -170,7 +170,7 @@
     that:
     - result is changed
     - result.vultr_server.power_status == 'running'
-    - result.vultr_server.name == '{{ vultr_server_name }}'
+    - result.vultr_server.name == vultr_server_name
     - result.vultr_server.os == 'CentOS 6 x64'
     - result.vultr_server.region == 'Amsterdam'
 
@@ -184,7 +184,7 @@
     that:
     - result is not changed
     - result.vultr_server.power_status == 'running'
-    - result.vultr_server.name == '{{ vultr_server_name }}'
+    - result.vultr_server.name == vultr_server_name
     - result.vultr_server.os == 'CentOS 6 x64'
     - result.vultr_server.region == 'Amsterdam'
 
@@ -201,9 +201,9 @@
     that:
     - result is not changed
     - result.vultr_server.power_status == 'running'
-    - result.vultr_server.name == '{{ vultr_server_name }}'
+    - result.vultr_server.name == vultr_server_name
     - result.vultr_server.os == 'CentOS 6 x64'
-    - result.vultr_server.plan == '{{ vultr_server_plan_1 }}'
+    - result.vultr_server.plan == vultr_server_plan_1
     - result.vultr_server.region == 'Amsterdam'
 
 - name: test update plan for server without force
@@ -218,9 +218,9 @@
     that:
     - result is not changed
     - result.vultr_server.power_status == 'running'
-    - result.vultr_server.name == '{{ vultr_server_name }}'
+    - result.vultr_server.name == vultr_server_name
     - result.vultr_server.os == 'CentOS 6 x64'
-    - result.vultr_server.plan == '{{ vultr_server_plan_1 }}'
+    - result.vultr_server.plan == vultr_server_plan_1
     - result.vultr_server.region == 'Amsterdam'
 
 - name: setup firewall group
@@ -262,9 +262,9 @@
     that:
     - result is changed
     - result.vultr_server.power_status == 'running'
-    - result.vultr_server.name == '{{ vultr_server_name }}'
+    - result.vultr_server.name == vultr_server_name
     - result.vultr_server.os == 'CentOS 6 x64'
-    - result.vultr_server.plan == '{{ vultr_server_plan_1 }}'
+    - result.vultr_server.plan == vultr_server_plan_1
     - result.vultr_server.region == 'Amsterdam'
     - result.vultr_server.tag == ''
     - result.vultr_server.firewall_group != 'test_firewall_group'
@@ -282,7 +282,7 @@
     that:
     - result is changed
     - result.vultr_server.power_status == 'running'
-    - result.vultr_server.name == '{{ vultr_server_name }}'
+    - result.vultr_server.name == vultr_server_name
     - result.vultr_server.os == 'CentOS 6 x64'
     - result.vultr_server.region == 'Amsterdam'
     - result.vultr_server.tag == 'test_tag'
@@ -301,7 +301,7 @@
     that:
     - result is not changed
     - result.vultr_server.power_status == 'running'
-    - result.vultr_server.name == '{{ vultr_server_name }}'
+    - result.vultr_server.name == vultr_server_name
     - result.vultr_server.os == 'CentOS 6 x64'
     - result.vultr_server.region == 'Amsterdam'
     - result.vultr_server.tag == 'test_tag'
@@ -322,9 +322,9 @@
     that:
     - result is changed
     - result.vultr_server.power_status == 'running'
-    - result.vultr_server.name == '{{ vultr_server_name }}'
+    - result.vultr_server.name == vultr_server_name
     - result.vultr_server.os == 'CentOS 6 x64'
-    - result.vultr_server.plan == '{{ vultr_server_plan_1 }}'
+    - result.vultr_server.plan == vultr_server_plan_1
     - result.vultr_server.region == 'Amsterdam'
     - result.vultr_server.auto_backup_enabled == false
 
@@ -342,9 +342,9 @@
     that:
     - result is changed
     - result.vultr_server.power_status == 'running'
-    - result.vultr_server.name == '{{ vultr_server_name }}'
+    - result.vultr_server.name == vultr_server_name
     - result.vultr_server.os == 'CentOS 6 x64'
-    - result.vultr_server.plan == '{{ vultr_server_plan_2 }}'
+    - result.vultr_server.plan == vultr_server_plan_2
     - result.vultr_server.region == 'Amsterdam'
     - result.vultr_server.auto_backup_enabled == true
 
@@ -362,9 +362,9 @@
     that:
     - result is not changed
     - result.vultr_server.power_status == 'running'
-    - result.vultr_server.name == '{{ vultr_server_name }}'
+    - result.vultr_server.name == vultr_server_name
     - result.vultr_server.os == 'CentOS 6 x64'
-    - result.vultr_server.plan == '{{ vultr_server_plan_2 }}'
+    - result.vultr_server.plan == vultr_server_plan_2
     - result.vultr_server.region == 'Amsterdam'
     - result.vultr_server.auto_backup_enabled == true
 
@@ -383,9 +383,9 @@
     that:
     - result is changed
     - result.vultr_server.power_status == 'running'
-    - result.vultr_server.name == '{{ vultr_server_name }}'
+    - result.vultr_server.name == vultr_server_name
     - result.vultr_server.os == 'CentOS 6 x64'
-    - result.vultr_server.plan == '{{ vultr_server_plan_2 }}'
+    - result.vultr_server.plan == vultr_server_plan_2
     - result.vultr_server.region == 'Amsterdam'
     - result.vultr_server.v6_main_ip == ''
 
@@ -403,9 +403,9 @@
     that:
     - result is changed
     - result.vultr_server.power_status == 'stopped'
-    - result.vultr_server.name == '{{ vultr_server_name }}'
+    - result.vultr_server.name == vultr_server_name
     - result.vultr_server.os == 'CentOS 6 x64'
-    - result.vultr_server.plan == '{{ vultr_server_plan_2 }}'
+    - result.vultr_server.plan == vultr_server_plan_2
     - result.vultr_server.region == 'Amsterdam'
     - result.vultr_server.v6_main_ip != ''
 
@@ -422,9 +422,9 @@
     that:
     - result is not changed
     - result.vultr_server.power_status == 'stopped'
-    - result.vultr_server.name == '{{ vultr_server_name }}'
+    - result.vultr_server.name == vultr_server_name
     - result.vultr_server.os == 'CentOS 6 x64'
-    - result.vultr_server.plan == '{{ vultr_server_plan_2 }}'
+    - result.vultr_server.plan == vultr_server_plan_2
     - result.vultr_server.region == 'Amsterdam'
     - result.vultr_server.v6_main_ip != ''
 
@@ -439,7 +439,7 @@
     that:
     - result is changed
     - result.vultr_server.power_status == 'stopped'
-    - result.vultr_server.name == '{{ vultr_server_name }}'
+    - result.vultr_server.name == vultr_server_name
     - result.vultr_server.os == 'CentOS 6 x64'
     - result.vultr_server.region == 'Amsterdam'
 
@@ -453,7 +453,7 @@
     that:
     - result is changed
     - result.vultr_server.power_status == 'running'
-    - result.vultr_server.name == '{{ vultr_server_name }}'
+    - result.vultr_server.name == vultr_server_name
     - result.vultr_server.os == 'CentOS 6 x64'
     - result.vultr_server.region == 'Amsterdam'
 
@@ -468,7 +468,7 @@
     that:
     - result is changed
     - result.vultr_server.power_status == 'running'
-    - result.vultr_server.name == '{{ vultr_server_name }}'
+    - result.vultr_server.name == vultr_server_name
     - result.vultr_server.os == 'CentOS 6 x64'
     - result.vultr_server.region == 'Amsterdam'
 
@@ -486,7 +486,7 @@
     that:
     - result is changed
     - result.vultr_server.power_status == 'running'
-    - result.vultr_server.name == '{{ vultr_server_name }}'
+    - result.vultr_server.name == vultr_server_name
     - result.vultr_server.os == 'CentOS 6 x64'
     - result.vultr_server.region == 'Amsterdam'
 
