@@ -421,15 +421,16 @@ from ansible.module_utils.docker.common import (
 )
 from ansible.module_utils._text import to_native
 
-try:
-    if LooseVersion(docker_version) >= LooseVersion('2.0.0'):
-        from docker.auth import resolve_repository_name
-    else:
-        from docker.auth.auth import resolve_repository_name
-    from docker.utils.utils import parse_repository_tag
-except ImportError:
-    # missing Docker SDK for Python handled in module_utils.docker.common
-    pass
+if docker_version is not None:
+    try:
+        if LooseVersion(docker_version) >= LooseVersion('2.0.0'):
+            from docker.auth import resolve_repository_name
+        else:
+            from docker.auth.auth import resolve_repository_name
+        from docker.utils.utils import parse_repository_tag
+    except ImportError:
+        # missing Docker SDK for Python handled in module_utils.docker.common
+        pass
 
 
 class ImageManager(DockerBaseClass):
