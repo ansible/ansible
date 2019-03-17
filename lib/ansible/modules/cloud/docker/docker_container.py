@@ -429,12 +429,14 @@ options:
     type: bool
   oom_score_adj:
     description:
-      - An integer value containing the score given to the container in order to tune OOM killer preferences.
+      - An integer value containing the score given to the container in order to tune
+        OOM killer preferences.
     type: int
     version_added: "2.2"
   output_logs:
     description:
-      - If set to true, output of the container command will be printed (only effective when log_driver is set to json-file or journald.
+      - If set to true, output of the container command will be printed (only effective
+        when log_driver is set to json-file or journald.
     type: bool
     default: no
     version_added: "2.7"
@@ -446,7 +448,8 @@ options:
   pid_mode:
     description:
       - Set the PID namespace mode for the container.
-      - Note that Docker SDK for Python < 2.0 only supports 'host'. Newer versions of the Docker SDK for Python (docker) allow all values supported by the docker daemon.
+      - Note that Docker SDK for Python < 2.0 only supports 'host'. Newer versions of the
+        Docker SDK for Python (docker) allow all values supported by the docker daemon.
     type: str
   pids_limit:
     description:
