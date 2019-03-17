@@ -654,6 +654,7 @@ author:
   - "Daan Oosterveld (@dusdanig)"
   - "Chris Houseknecht (@chouseknecht)"
   - "Kassian Sun (@kassiansun)"
+  - "Felix Fontein (@felixfontein)"
 
 requirements:
   - "L(Docker SDK for Python,https://docker-py.readthedocs.io/en/stable/) >= 1.8.0 (use L(docker-py,https://pypi.org/project/docker-py/) for Python 2.6)"
