@@ -124,7 +124,7 @@ def main():
             method="GET")
         if info["status"] != 200:
             module.fail_json(msg="Unable to obtain a project list, response status: {0}, message: {1}".format(
-                info["status"], info["msg"]))
+                info["status"], info.get("msg", "No message has been provided"))
         body = json.loads(response.read())
         return bool([x for x in body if x["name"] == project_name])
 
@@ -147,7 +147,7 @@ def main():
                 method="POST")
             if info["status"] != 201:
                 module.fail_json(msg="Unable to create the project, response status: {0}, message: {1}".format(
-                    info["status"], info["msg"]))
+                    info["status"], info.get("msg", "No message has been provided"))
         module.exit_json(changed=True)
 
     if state == 'absent':
@@ -164,7 +164,7 @@ def main():
                     method="DELETE")
                 if info["status"] != 204:
                     module.fail_json(msg="Unable to delete the project, response status: {0}, message: {1}".format(
-                        info["status"], info["msg"]))
+                        info["status"], info.get("msg", "No message has been provided"))
             module.exit_json(changed=True)
         else:
             module.exit_json(changed=False)
