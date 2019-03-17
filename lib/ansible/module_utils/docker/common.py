@@ -256,7 +256,9 @@ def get_connect_params(auth, fail_function):
 
 DOCKERPYUPGRADE_SWITCH_TO_DOCKER = "Try `pip uninstall docker-py` followed by `pip install docker`."
 DOCKERPYUPGRADE_UPGRADE_DOCKER = "Use `pip install --upgrade docker` to upgrade."
-DOCKERPYUPGRADE_RECOMMEND_DOCKER = "Use `pip install --upgrade docker-py` to upgrade. Hint: if you do not need Python 2.6 support, try `pip uninstall docker-py` instead followed by `pip install docker`."
+DOCKERPYUPGRADE_RECOMMEND_DOCKER = ("Use `pip install --upgrade docker-py` to upgrade. "
+                                    "Hint: if you do not need Python 2.6 support, try "
+                                    "`pip uninstall docker-py` instead followed by `pip install docker`.")
 
 
 class AnsibleDockerClient(Client):
