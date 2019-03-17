@@ -247,7 +247,7 @@ EXAMPLES = '''
   bigip_pool_member:
     pool: my-pool
     partition: Common
-    host: "{{ item.address }}"
+    host: "{{ item.host }}"
     name: "{{ item.name }}"
     priority_group: "{{ item.priority_group }}"
     port: 80
