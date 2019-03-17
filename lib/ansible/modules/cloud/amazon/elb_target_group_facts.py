@@ -154,21 +154,40 @@ target_groups:
             type: str
             sample: "arn:aws:elasticloadbalancing:ap-southeast-2:01234567890:targetgroup/mytargetgroup/aabbccddee0044332211"
         targets_health_description:
-            description: The targets health of the target group.
+            description: Targets health description.
             returned: when collect_targets_health is enabled
-            type: dict
-            sample: "[
-                {
-                    'health_check_port': '80',
-                    'target': {
-                        'id': 'i-0123456789',
-                        'port': 80
-                    },
-                    'target_health': {
-                        'state': 'healthy'
-                    }
-                }
-            ]"
+            type: complex
+            contains:
+                health_check_port:
+                    description: The port to check target health.
+                    returned: always
+                    type: string
+                    sample: '80'
+                target:
+                    description: The target metadata.
+                    returned: always
+                    type: complex
+                    contains:
+                        id:
+                            description: The ID of the target.
+                            returned: always
+                            type: string
+                            sample: i-0123456789
+                        port:
+                            description: The port to use to connect with the target.
+                            returned: always
+                            type: int
+                            sample: 80
+                target_health:
+                    description: The target health status.
+                    returned: always
+                    type: complex
+                    contains:
+                        state:
+                            description: The state of the target health.
+                            returned: always
+                            type: string
+                            sample: healthy
         target_group_name:
             description: The name of the target group.
             returned: always
