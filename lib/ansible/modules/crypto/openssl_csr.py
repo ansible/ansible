@@ -353,6 +353,7 @@ try:
     import cryptography.hazmat.backends
     import cryptography.hazmat.primitives.serialization
     import cryptography.hazmat.primitives.hashes
+    import ipaddress
     CRYPTOGRAPHY_VERSION = LooseVersion(cryptography.__version__)
 except ImportError:
     CRYPTOGRAPHY_IMP_ERR = traceback.format_exc()
@@ -673,16 +674,17 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
         raise CertificateSigningRequestError('Unknown subject field identifier "{0}"'.format(id))
 
     def _get_san(self, name):
-        if name.startswith('DNS:'):
-            return cryptography.x509.DNSName(to_text(name[4:]))
-        if name.startswith('IP:'):
-            return cryptography.x509.IPAddress(to_text(name[3:]))
-        if name.startswith('email:'):
-            return cryptography.x509.RFC822Name(to_text(name[6:]))
-        if name.startswith('URI:'):
-            return cryptography.x509.UniformResourceIdentifier(to_text(name[4:]))
-        if name.startswith('DirName:'):
-            return cryptography.x509.DirectoryName(to_text(name[8:]))
+        try:
+            if name.startswith('DNS:'):
+                return cryptography.x509.DNSName(to_text(name[4:]))
+            if name.startswith('IP:'):
+                return cryptography.x509.IPAddress(ipaddress.ip_address(to_text(name[3:])))
+            if name.startswith('email:'):
+                return cryptography.x509.RFC822Name(to_text(name[6:]))
+            if name.startswith('URI:'):
+                return cryptography.x509.UniformResourceIdentifier(to_text(name[4:]))
+        except Exception as e:
+            raise CertificateSigningRequestError('Cannot parse Subject Alternative Name "{0}": {1}'.format(name, e))
         if ':' not in name:
             raise CertificateSigningRequestError('Cannot parse Subject Alternative Name "{0}" (forgot "DNS:" prefix?)'.format(name))
         raise CertificateSigningRequestError('Cannot parse Subject Alternative Name "{0}" (potentially unsupported by cryptography backend)'.format(name))
