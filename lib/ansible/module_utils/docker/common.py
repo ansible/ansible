@@ -433,9 +433,10 @@ class AnsibleDockerClient(Client):
     def _handle_ssl_error(self, error):
         match = re.match(r"hostname.*doesn\'t match (\'.*\')", str(error))
         if match:
-            self.fail("You asked for verification that Docker daemon host name matches %s. The actual hostname is %s. "
-                      "Most likely you need to set DOCKER_TLS_HOSTNAME or pass tls_hostname with a value of %s. "
-                      "You may also use TLS without verification by setting the tls parameter to true."
+            self.fail("You asked for verification that Docker daemons certificate's hostname matches %s. "
+                      "The actual certificate's hostname is %s. Most likely you need to set DOCKER_TLS_HOSTNAME "
+                      "or pass `tls_hostname` with a value of %s. You may also use TLS without verification by "
+                      "setting the `tls` parameter to true."
                       % (self.auth_params['tls_hostname'], match.group(1), match.group(1)))
         self.fail("SSL Exception: %s" % (error))
 
