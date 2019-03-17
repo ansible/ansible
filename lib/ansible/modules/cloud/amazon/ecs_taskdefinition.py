@@ -216,8 +216,8 @@ class EcsTaskManager:
                 if param in container:
                     try:
                         container[param] = int(container[param])
-                    except:
-                         self.module.fail_json(msg="Container parameter '{0}' requires an integer value, '{1}' given".format(param, container[param]))
+                    except Exception as e:
+                        self.module.fail_json(msg="Container parameter '{0}' requires an integer value, '{1}' given".format(param, container[param]))
 
             if 'portMappings' in container:
                 for port_mapping in container['portMappings']:
