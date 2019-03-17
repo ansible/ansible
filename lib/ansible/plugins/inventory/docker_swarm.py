@@ -167,7 +167,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
                 raise AnsibleError('Argument to timeout function must be an integer')
         update_tls_hostname(raw_params)
         connect_params = get_connect_params(raw_params, fail_function=self._fail)
-        self.client = docker.DockerClient(**get_connect_params)
+        self.client = docker.DockerClient(**connect_params)
         self.inventory.add_group('all')
         self.inventory.add_group('manager')
         self.inventory.add_group('worker')
