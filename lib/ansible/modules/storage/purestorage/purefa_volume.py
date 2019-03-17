@@ -110,6 +110,29 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
+volume:
+    description: A dictionary describing the changed volume.  Only some
+        attributes below will be returned with various actions.
+    type: dict
+    returned: success
+    contains:
+        source:
+            description: Volume name of source volume used for volume copy
+            type: str
+        serial:
+            description: Volume serial number
+            type: str
+            sample: '361019ECACE43D83000120A4'
+        created:
+            description: Volume creation time
+            type: str
+            sample: '2019-03-13T22:49:24Z'
+        name:
+            description: Volume name
+            type: str
+        size:
+            description: Volume size in bytes
+            type: int
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -173,8 +196,9 @@ def create_volume(module, array):
     if module.params['qos']:
         if 549755813888 >= int(human_to_bytes(module.params['qos'])) >= 1048576:
             try:
-                array.create_volume(module.params['name'], module.params['size'],
-                                    bandwidth_limit=module.params['qos'])
+                volume = array.create_volume(module.params['name'],
+                                             module.params['size'],
+                                             bandwidth_limit=module.params['qos'])
                 changed = True
             except Exception:
                 module.fail_json(msg='Volume {0} creation failed.'.format(module.params['name']))
@@ -182,12 +206,12 @@ def create_volume(module, array):
             module.fail_json(msg='QoS value {0} out of range.'.format(module.params['qos']))
     else:
         try:
-            array.create_volume(module.params['name'], module.params['size'])
+            volume = array.create_volume(module.params['name'], module.params['size'])
             changed = True
         except Exception:
             module.fail_json(msg='Volume {0} creation failed.'.format(module.params['name']))
 
-    module.exit_json(changed=changed)
+    module.exit_json(changed=changed, volume=volume)
 
 
 def copy_from_volume(module, array):
@@ -198,23 +222,23 @@ def copy_from_volume(module, array):
 
     if tgt is None:
         try:
-            array.copy_volume(module.params['name'],
-                              module.params['target'])
+            volume = array.copy_volume(module.params['name'],
+                                       module.params['target'])
             changed = True
         except Exception:
             module.fail_json(msg='Copy volume {0} to volume {1} failed.'.format(module.params['name'],
                                                                                 module.params['target']))
     elif tgt is not None and module.params['overwrite']:
         try:
-            array.copy_volume(module.params['name'],
-                              module.params['target'],
-                              overwrite=module.params['overwrite'])
+            volume = array.copy_volume(module.params['name'],
+                                       module.params['target'],
+                                       overwrite=module.params['overwrite'])
             changed = True
         except Exception:
             module.fail_json(msg='Copy volume {0} to volume {1} failed.'.format(module.params['name'],
                                                                                 module.params['target']))
 
-    module.exit_json(changed=changed)
+    module.exit_json(changed=changed, volume=volume)
 
 
 def update_volume(module, array):
@@ -228,7 +252,7 @@ def update_volume(module, array):
         if human_to_bytes(module.params['size']) != vol['size']:
             if human_to_bytes(module.params['size']) > vol['size']:
                 try:
-                    array.extend_volume(module.params['name'], module.params['size'])
+                    volume = array.extend_volume(module.params['name'], module.params['size'])
                     changed = True
                 except Exception:
                     module.fail_json(msg='Volume {0} resize failed.'.format(module.params['name']))
@@ -236,21 +260,21 @@ def update_volume(module, array):
         if human_to_bytes(module.params['qos']) != vol_qos['bandwidth_limit']:
             if module.params['qos'] == '0':
                 try:
-                    array.set_volume(module.params['name'], bandwidth_limit='')
+                    volume = array.set_volume(module.params['name'], bandwidth_limit='')
                     changed = True
                 except Exception:
                     module.fail_json(msg='Volume {0} QoS removal failed.'.format(module.params['name']))
             elif 549755813888 >= int(human_to_bytes(module.params['qos'])) >= 1048576:
                 try:
-                    array.set_volume(module.params['name'],
-                                     bandwidth_limit=module.params['qos'])
+                    volume = array.set_volume(module.params['name'],
+                                              bandwidth_limit=module.params['qos'])
                     changed = True
                 except Exception:
                     module.fail_json(msg='Volume {0} QoS change failed.'.format(module.params['name']))
             else:
                 module.fail_json(msg='QoS value {0} out of range. Check documentation.'.format(module.params['qos']))
 
-    module.exit_json(changed=changed)
+    module.exit_json(changed=changed, volume=volume)
 
 
 def delete_volume(module, array):
@@ -258,27 +282,27 @@ def delete_volume(module, array):
     changed = False
     if not module.check_mode:
         try:
-            array.destroy_volume(module.params['name'])
+            volume = array.destroy_volume(module.params['name'])
             if module.params['eradicate']:
                 try:
-                    array.eradicate_volume(module.params['name'])
+                    volume = array.eradicate_volume(module.params['name'])
                 except Exception:
                     module.fail_json(msg='Eradicate volume {0} failed.'.format(module.params['name']))
             changed = True
         except Exception:
             module.fail_json(msg='Delete volume {0} failed.'.format(module.params['name']))
-    module.exit_json(changed=changed)
+    module.exit_json(changed=changed, volume=volume)
 
 
 def eradicate_volume(module, array):
     """ Eradicate Deleted Volume"""
     changed = False
     try:
-        array.eradicate_volume(module.params['name'])
+        volume = array.eradicate_volume(module.params['name'])
         changed = True
     except Exception:
         module.fail_json(msg='Eradication of volume {0} failed'.format(module.params['name']))
-    module.exit_json(changed=changed)
+    module.exit_json(changed=changed, volume=volume)
 
 
 def main():
