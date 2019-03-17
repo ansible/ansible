@@ -16,7 +16,7 @@ DOCUMENTATION = '''
     short_description: Ansible dynamic inventory plugin for Docker swarm nodes.
     requirements:
         - python >= 2.7
-        - Docker SDK for Python > 1.10.0
+        - L(Docker SDK for Python,https://docker-py.readthedocs.io/en/stable/) >= 1.10.0
     extends_documentation_fragment:
         - constructed
     description:

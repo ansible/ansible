@@ -29,7 +29,7 @@ options:
     api_version:
         description:
             - The version of the Docker API running on the Docker Host.
-            - Defaults to the latest version of the API supported by docker-py.
+            - Defaults to the latest version of the API supported by Docker SDK for Python and the docker daemon.
             - If the value is not specified in the task, the value of environment variable C(DOCKER_API_VERSION) will be
               used instead. If the environment variable is not set, the default value will be used.
         type: str
@@ -103,7 +103,7 @@ notes:
     and use C($DOCKER_CONFIG/config.json) otherwise.
 '''
 
-    # Additional, more specific stuff for minimal docker-py version < 2.0
+    # Additional, more specific stuff for minimal Docker SDK for Python version < 2.0
 
     DOCKER_PY_1_DOCUMENTATION = r'''
 options: {}
@@ -118,15 +118,15 @@ requirements:
      reinstall of it is required."
 '''
 
-    # Additional, more specific stuff for minimal docker-py version >= 2.0.
-    # Note that docker-py >= 2.0 requires Python 2.7 or newer.
+    # Additional, more specific stuff for minimal Docker SDK for Python version >= 2.0.
+    # Note that Docker SDK for Python >= 2.0 requires Python 2.7 or newer.
 
     DOCKER_PY_2_DOCUMENTATION = r'''
 options: {}
 requirements:
   - "Python >= 2.7"
-  - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
-     module has been superseded by L(docker,https://pypi.org/project/docker/)
-     (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
-     This module does I(not) work with docker-py."
+  - "Please note that this module does I(not) work with L(docker-py,https://pypi.org/project/docker-py/),
+     which is a too old version of the Docker SDK for Python. If you have it installed, please upgrade to
+     L(docker,https://pypi.org/project/docker-py/). Please note that you have to uninstall docker-py first
+     before installing docker to avoid a broken installation."
 '''

@@ -311,7 +311,7 @@ extends_documentation_fragment:
   - docker.docker_py_1_documentation
 
 requirements:
-  - "docker-py >= 1.8.0"
+  - "L(Docker SDK for Python,https://docker-py.readthedocs.io/en/stable/) >= 1.8.0 (use L(docker-py,https://pypi.org/project/docker-py/) for Python 2.6)"
   - "Docker API >= 1.20"
 
 author:
@@ -412,19 +412,21 @@ image:
 import os
 import re
 
+from distutils.version import LooseVersion
+
 from ansible.module_utils.docker.common import (
-    HAS_DOCKER_PY_2, HAS_DOCKER_PY_3, AnsibleDockerClient, DockerBaseClass, is_image_name_id,
+    docker_version, AnsibleDockerClient, DockerBaseClass, is_image_name_id,
 )
 from ansible.module_utils._text import to_native
 
 try:
-    if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
+    if LooseVersion(docker_version) >= LooseVersion('2.0.0'):
         from docker.auth import resolve_repository_name
     else:
         from docker.auth.auth import resolve_repository_name
     from docker.utils.utils import parse_repository_tag
 except ImportError:
-    # missing docker-py handled in docker_common
+    # missing Docker SDK for Python handled in module_utils.docker.common
     pass
 
 
@@ -587,7 +589,7 @@ class ImageManager(DockerBaseClass):
 
             try:
                 with open(self.archive_path, 'wb') as fd:
-                    if HAS_DOCKER_PY_3:
+                    if self.client.docker_py_version >= LooseVersion('3.0.0'):
                         for chunk in image:
                             fd.write(chunk)
                     else:
@@ -704,7 +706,7 @@ class ImageManager(DockerBaseClass):
             dockerfile=self.dockerfile,
             decode=True,
         )
-        if not HAS_DOCKER_PY_3:
+        if self.client.docker_py_version < LooseVersion('3.0.0'):
             params['stream'] = True
         build_output = []
         if self.tag:

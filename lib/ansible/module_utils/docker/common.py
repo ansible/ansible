@@ -58,14 +58,14 @@ except ImportError as exc:
 # to ensure the user does not have both ``docker`` and ``docker-py`` modules
 # installed, as they utilize the same namespace are are incompatible
 try:
-    # docker
+    # docker (Docker SDK for Python >= 2.0.0)
     import docker.models  # noqa: F401
     HAS_DOCKER_MODELS = True
 except ImportError:
     HAS_DOCKER_MODELS = False
 
 try:
-    # docker-py
+    # docker-py (Docker SDK for Python < 2.0.0)
     import docker.ssladapter  # noqa: F401
     HAS_DOCKER_SSLADAPTER = True
 except ImportError:
@@ -107,7 +107,7 @@ BYTE_SUFFIXES = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
 if not HAS_DOCKER_PY:
     docker_version = None
 
-    # No docker-py. Create a place holder client to allow
+    # No Docker SDK for Python. Create a place holder client to allow
     # instantiation of AnsibleModule and proper error handing
     class Client(object):  # noqa: F811
         def __init__(self, **kwargs):
@@ -293,29 +293,31 @@ class AnsibleDockerClient(Client):
         self.docker_py_version = LooseVersion(docker_version)
 
         if HAS_DOCKER_MODELS and HAS_DOCKER_SSLADAPTER:
-            self.fail("Cannot have both the docker-py and docker python modules installed together as they use the same namespace and "
-                      "cause a corrupt installation. Please uninstall both packages, and re-install only the docker-py or docker python "
-                      "module. It is recommended to install the docker module if no support for Python 2.6 is required. "
-                      "Please note that simply uninstalling one of the modules can leave the other module in a broken state.")
+            self.fail("Cannot have both the docker-py and docker python modules (old and new version of Docker "
+                      "SDK for Python) installed together as they use the same namespace and cause a corrupt "
+                      "installation. Please uninstall both packages, and re-install only the docker-py or docker "
+                      "python module. It is recommended to install the docker module if no support for Python 2.6 "
+                      "is required. Please note that simply uninstalling one of the modules can leave the other "
+                      "module in a broken state.")
 
         if not HAS_DOCKER_PY:
             if NEEDS_DOCKER_PY2:
-                msg = "Failed to import docker - %s. Try `pip install docker`"
+                msg = "Failed to import docker (Docker SDK for Python) - %s. Try `pip install docker`."
             else:
-                msg = "Failed to import docker or docker-py - %s. Try `pip install docker` or `pip install docker-py` (Python 2.6)"
+                msg = "Failed to import docker or docker-py (Docker SDK for Python) - %s. Try `pip install docker` or `pip install docker-py` (Python 2.6)."
             self.fail(msg % HAS_DOCKER_ERROR)
 
         if self.docker_py_version < LooseVersion(min_docker_version):
+            msg = "Error: Docker SDK for Python version is %s. Minimum version required is %s. "
             if NEEDS_DOCKER_PY2:
                 if docker_version < LooseVersion('2.0'):
-                    msg = "Error: docker-py version is %s, while this module requires docker %s. Try `pip uninstall docker-py` and then `pip install docker`"
+                    msg += "Try `pip uninstall docker-py` followed by `pip install docker`."
                 else:
-                    msg = "Error: docker version is %s. Minimum version required is %s. Use `pip install --upgrade docker` to upgrade."
+                    msg += "Use `pip install --upgrade docker` to upgrade."
             else:
                 # The minimal required version is < 2.0 (and the current version as well).
                 # Advertise docker (instead of docker-py) for non-Python-2.6 users.
-                msg = ("Error: docker / docker-py version is %s. Minimum version required is %s. "
-                       "Hint: if you do not need Python 2.6 support, try `pip uninstall docker-py` followed by `pip install docker`")
+                msg = (msg + "Hint: if you do not need Python 2.6 support, try `pip uninstall docker-py` followed by `pip install docker`.")
             self.fail(msg % (docker_version, min_docker_version))
 
         self.debug = self.module.params.get('debug')
@@ -333,7 +335,7 @@ class AnsibleDockerClient(Client):
             self.docker_api_version_str = self.version()['ApiVersion']
             self.docker_api_version = LooseVersion(self.docker_api_version_str)
             if self.docker_api_version < LooseVersion(min_docker_api_version):
-                self.fail('docker API version is %s. Minimum version required is %s.' % (self.docker_api_version_str, min_docker_api_version))
+                self.fail('Docker API version is %s. Minimum version required is %s.' % (self.docker_api_version_str, min_docker_api_version))
 
         if option_minimal_versions is not None:
             self._get_minimal_versions(option_minimal_versions, option_minimal_versions_ignore_params)
@@ -465,18 +467,15 @@ class AnsibleDockerClient(Client):
                     else:
                         usg = 'set %s option' % (option, )
                     if not support_docker_api:
-                        msg = 'docker API version is %s. Minimum version required is %s to %s.'
+                        msg = 'Docker API version is %s. Minimum version required is %s to %s.'
                         msg = msg % (self.docker_api_version_str, data['docker_api_version'], usg)
                     elif not support_docker_py:
+                        msg = "Docker SDK for Python version is %s. Minimum version required is %s to %s."
                         if LooseVersion(data['docker_py_version']) < LooseVersion('2.0.0'):
-                            msg = ("docker-py version is %s. Minimum version required is %s to %s. "
-                                   "Consider switching to the 'docker' package if you do not require Python 2.6 support.")
+                            msg = (msg + " Hint: if you do not need Python 2.6 support, try `pip uninstall "
+                                   "docker-py` followed by `pip install docker`.")
                         elif self.docker_py_version < LooseVersion('2.0.0'):
-                            msg = ("docker-py version is %s. Minimum version required is %s to %s. "
-                                   "You have to switch to the Python 'docker' package. First uninstall 'docker-py' before "
-                                   "installing 'docker' to avoid a broken installation.")
-                        else:
-                            msg = "docker version is %s. Minimum version required is %s to %s."
+                            msg = (msg + " Try `pip uninstall docker-py` followed by `pip install docker`.")
                         msg = msg % (docker_version, data['docker_py_version'], usg)
                     else:
                         # should not happen
@@ -621,9 +620,9 @@ class AnsibleDockerClient(Client):
 
     def _image_lookup(self, name, tag):
         '''
-        Including a tag in the name parameter sent to the docker-py images method does not
-        work consistently. Instead, get the result set for name and manually check if the tag
-        exists.
+        Including a tag in the name parameter sent to the Docker SDK for Python images method
+        does not work consistently. Instead, get the result set for name and manually check
+        if the tag exists.
         '''
         try:
             response = self.images(name=name)

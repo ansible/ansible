@@ -446,7 +446,7 @@ options:
   pid_mode:
     description:
       - Set the PID namespace mode for the container.
-      - Note that docker-py < 2.0 only supports 'host'. Newer versions allow all values supported by the docker daemon.
+      - Note that Docker SDK for Python < 2.0 only supports 'host'. Newer versions of the Docker SDK for Python (docker) allow all values supported by the docker daemon.
     type: str
   pids_limit:
     description:
@@ -656,7 +656,7 @@ author:
   - "Kassian Sun (@kassiansun)"
 
 requirements:
-  - "docker-py >= 1.8.0"
+  - "L(Docker SDK for Python,https://docker-py.readthedocs.io/en/stable/) >= 1.8.0 (use L(docker-py,https://pypi.org/project/docker-py/) for Python 2.6)"
   - "Docker API >= 1.20"
 '''
 
@@ -945,7 +945,7 @@ try:
         from docker.utils.types import Ulimit, LogConfig
     from docker.errors import APIError, NotFound
 except Exception:
-    # missing docker-py handled in ansible.module_utils.docker.common
+    # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
 
 
@@ -1351,7 +1351,7 @@ class TaskParameters(DockerBaseClass):
 
         if self.client.docker_py_version >= LooseVersion('1.9') and self.client.docker_api_version >= LooseVersion('1.22'):
             # blkio_weight can always be updated, but can only be set on creation
-            # when docker-py and docker API are new enough
+            # when Docker SDK for Python and Docker API are new enough
             host_config_params['blkio_weight'] = 'blkio_weight'
 
         if self.client.docker_py_version >= LooseVersion('3.0'):
@@ -1819,15 +1819,15 @@ class Container(DockerBaseClass):
             config_mapping['log_options'] = log_config.get('Config')
 
         if self.parameters.client.option_minimal_versions['auto_remove']['supported']:
-            # auto_remove is only supported in docker>=2; unfortunately it has a default
-            # value, that's why we have to jump through the hoops here
+            # auto_remove is only supported in Docker SDK for Python >= 2.0.0; unfortunately
+            # it has a default value, that's why we have to jump through the hoops here
             config_mapping['auto_remove'] = host_config.get('AutoRemove')
 
         if self.parameters.client.option_minimal_versions['stop_timeout']['supported']:
-            # stop_timeout is only supported in docker>=2.1. Note that stop_timeout
-            # has a hybrid role, in that it used to be something only used for stopping
-            # containers, and is now also used as a container property. That's why
-            # it needs special handling here.
+            # stop_timeout is only supported in Docker SDK for Python >= 2.1. Note that
+            # stop_timeout has a hybrid role, in that it used to be something only used
+            # for stopping containers, and is now also used as a container property.
+            # That's why it needs special handling here.
             config_mapping['stop_timeout'] = config.get('StopTimeout')
 
         if self.parameters.client.docker_api_version < LooseVersion('1.22'):
@@ -2754,9 +2754,9 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
             if stop_timeout_needed_for_update and not stop_timeout_supported:
                 # We warn (instead of fail) since in older versions, stop_timeout was not used
                 # to update the container's configuration, but only when stopping a container.
-                self.module.warn("docker or docker-py version is %s. Minimum version required is 2.1 to update "
+                self.module.warn("Docker SDK for Python's version is %s. Minimum version required is 2.1 to update "
                                  "the container's stop_timeout configuration. "
-                                 "If you use the 'docker-py' module, you have to switch to the docker 'Python' package." % (docker_version,))
+                                 "If you use the 'docker-py' module, you have to switch to the 'docker' Python package." % (docker_version,))
         else:
             if stop_timeout_needed_for_update and not stop_timeout_supported:
                 # We warn (instead of fail) since in older versions, stop_timeout was not used

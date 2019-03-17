@@ -70,7 +70,7 @@ extends_documentation_fragment:
   - docker.docker_py_2_documentation
 
 requirements:
-  - "docker >= 2.1.0"
+  - "L(Docker SDK for Python,https://docker-py.readthedocs.io/en/stable/) >= 2.1.0"
   - "Docker API >= 1.25"
 
 author:
@@ -156,7 +156,7 @@ import hashlib
 try:
     from docker.errors import APIError
 except ImportError:
-    # missing docker-py handled in ansible.module_utils.docker.common
+    # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
 
 from ansible.module_utils.docker.common import AnsibleDockerClient, DockerBaseClass, compare_generic
