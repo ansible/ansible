@@ -2,21 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # (c) 2016, René Moser <mail@renemoser.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -29,43 +15,47 @@ module: cs_region
 short_description: Manages regions on Apache CloudStack based clouds.
 description:
     - Add, update and remove regions.
-version_added: "2.3"
-author: "René Moser (@resmo)"
+version_added: '2.3'
+author: René Moser (@resmo)
 options:
   id:
     description:
       - ID of the region.
       - Must be an number (int).
+    type: int
     required: true
   name:
     description:
       - Name of the region.
-      - Required if C(state=present)
+      - Required if I(state=present)
+    type: str
   endpoint:
     description:
       - Endpoint URL of the region.
-      - Required if C(state=present)
+      - Required if I(state=present)
+    type: str
   state:
     description:
       - State of the region.
-    default: 'present'
-    choices: [ 'present', 'absent' ]
+    type: str
+    default: present
+    choices: [ present, absent ]
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# create a region
-- local_action:
-    module: cs_region
+- name: create a region
+  cs_region:
     id: 2
     name: geneva
     endpoint: https://cloud.gva.example.com
+  delegate_to: localhost
 
-# remove a region with ID 2
-- local_action:
-    module: cs_region
+- name: remove a region with ID 2
+  cs_region:
     id: 2
     state: absent
+  delegate_to: localhost
 '''
 
 RETURN = '''
