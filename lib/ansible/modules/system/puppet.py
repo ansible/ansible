@@ -252,50 +252,39 @@ def main():
             cmd += " --server %s" % pipes.quote(p['puppetmaster'])
         if p['show_diff']:
             cmd += " --show_diff"
-        if p['environment']:
-            cmd += " --environment '%s'" % p['environment']
-        if p['tags']:
-            cmd += " --tags '%s'" % ','.join(p['tags'])
-        if p['certname']:
-            cmd += " --certname='%s'" % p['certname']
-        if module.check_mode:
-            cmd += " --noop"
-        elif 'noop' in p:
-            if p['noop']:
-                cmd += " --noop"
-            else:
-                cmd += " --no-noop"
     else:
         cmd = "%s apply --detailed-exitcodes " % base_cmd
-        if p['logdest'] == 'syslog':
-            cmd += "--logdest syslog "
-        if p['logdest'] == 'all':
-            cmd += " --logdest syslog --logdest stdout"
         if p['modulepath']:
-            cmd += "--modulepath='%s'" % p['modulepath']
-        if p['environment']:
-            cmd += "--environment '%s' " % p['environment']
-        if p['certname']:
-            cmd += " --certname='%s'" % p['certname']
-        if p['tags']:
-            cmd += " --tags '%s'" % ','.join(p['tags'])
-        if module.check_mode:
-            cmd += "--noop "
-        elif 'noop' in p:
-            if p['noop']:
-                cmd += " --noop"
-            else:
-                cmd += " --no-noop"
+            cmd += " --modulepath='%s'" % p['modulepath']
         if p['execute']:
             cmd += " --execute '%s'" % p['execute']
         else:
             cmd += pipes.quote(p['manifest'])
         if p['summarize']:
             cmd += " --summarize"
-        if p['debug']:
-            cmd += " --debug"
-        if p['verbose']:
-            cmd += " --verbose"
+
+    if p['certname']:
+        cmd += " --certname='%s'" % p['certname']
+    if p['logdest'] == 'syslog':
+        cmd += " --logdest syslog"
+    if p['logdest'] == 'all':
+        cmd += " --logdest syslog --logdest stdout"
+    if p['tags']:
+        cmd += " --tags '%s'" % ','.join(p['tags'])
+    if p['environment']:
+        cmd += " --environment '%s' " % p['environment']
+    if module.check_mode:
+        cmd += " --noop"
+    elif 'noop' in p:
+        if p['noop']:
+            cmd += " --noop"
+        else:
+            cmd += " --no-noop"
+    if p['debug']:
+        cmd += " --debug"
+    if p['verbose']:
+        cmd += " --verbose"
+
     rc, stdout, stderr = module.run_command(cmd)
 
     if rc == 0:
