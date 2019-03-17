@@ -214,7 +214,10 @@ class EcsTaskManager:
         for container in container_definitions:
             for param in ('memory', 'cpu', 'memoryReservation'):
                 if param in container:
-                    container[param] = int(container[param])
+                    try:
+                        container[param] = int(container[param])
+                    except:
+                         self.module.fail_json(msg="Container parameter '{0}' requires an integer value, '{1}' given".format(param, container[param]))
 
             if 'portMappings' in container:
                 for port_mapping in container['portMappings']:
