@@ -98,10 +98,11 @@ options:
     type: bool
   acl_type:
     description:
-      - Access control type for the VPC network tier.
+      - Access control type for the network.
+      - If not specified, Cloudstack will default to C(account) for isolated networks
+      - and C(domain) for shared networks.
       - Only considered on create.
     type: str
-    default: account
     choices: [ account, domain ]
   acl:
     description:
@@ -269,7 +270,7 @@ tags:
   type: list
   sample: '[ { "key": "foo", "value": "bar" } ]'
 acl_type:
-  description: Access type of the VPC network tier (Domain, Account).
+  description: Access type of the network (Domain, Account).
   returned: success
   type: str
   sample: Account

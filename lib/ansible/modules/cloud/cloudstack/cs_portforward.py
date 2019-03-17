@@ -20,121 +20,136 @@ short_description: Manages port forwarding rules on Apache CloudStack based clou
 description:
     - Create, update and remove port forwarding rules.
 version_added: '2.0'
-author: "René Moser (@resmo)"
+author: René Moser (@resmo)
 options:
   ip_address:
     description:
       - Public IP address the rule is assigned to.
+    type: str
     required: true
   vm:
     description:
       - Name of virtual machine which we make the port forwarding rule for.
-      - Required if C(state=present).
+      - Required if I(state=present).
+    type: str
   state:
     description:
       - State of the port forwarding rule.
+    type: str
     default: present
     choices: [ present, absent ]
   protocol:
     description:
       - Protocol of the port forwarding rule.
+    type: str
     default: tcp
     choices: [ tcp, udp ]
   public_port:
     description:
       - Start public port for this rule.
+    type: int
     required: true
   public_end_port:
     description:
       - End public port for this rule.
-      - If not specified equal C(public_port).
+      - If not specified equal I(public_port).
+    type: int
   private_port:
     description:
       - Start private port for this rule.
+    type: int
     required: true
   private_end_port:
     description:
       - End private port for this rule.
-      - If not specified equal C(private_port).
+      - If not specified equal I(private_port).
+    type: int
   open_firewall:
     description:
       - Whether the firewall rule for public port should be created, while creating the new rule.
       - Use M(cs_firewall) for managing firewall rules.
-    default: false
+    default: no
     type: bool
   vm_guest_ip:
     description:
       - VM guest NIC secondary IP address for the port forwarding rule.
-    default: false
+    type: str
   network:
     description:
       - Name of the network.
-    version_added: "2.3"
+    type: str
+    version_added: '2.3'
   vpc:
     description:
       - Name of the VPC.
-    version_added: "2.3"
+    version_added: '2.3'
+    type: str
   domain:
     description:
-      - Domain the C(vm) is related to.
+      - Domain the I(vm) is related to.
+    type: str
   account:
     description:
-      - Account the C(vm) is related to.
+      - Account the I(vm) is related to.
+    type: str
   project:
     description:
-      - Name of the project the C(vm) is located in.
+      - Name of the project the I(vm) is located in.
+    type: str
   zone:
     description:
       - Name of the zone in which the virtual machine is in.
       - If not set, default zone is used.
+    type: str
   poll_async:
     description:
       - Poll async jobs until job has finished.
-    default: true
+    default: yes
     type: bool
   tags:
     description:
-      - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
-      - "To delete all tags, set a empty list e.g. C(tags: [])."
+      - List of tags. Tags are a list of dictionaries having keys I(key) and I(value).
+      - "To delete all tags, set a empty list e.g. I(tags: [])."
+    type: list
     aliases: [ tag ]
-    version_added: "2.4"
+    version_added: '2.4'
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
 - name: 1.2.3.4:80 -> web01:8080
-  local_action:
-    module: cs_portforward
+  cs_portforward:
     ip_address: 1.2.3.4
     vm: web01
     public_port: 80
     private_port: 8080
+  delegate_to: localhost
 
 - name: forward SSH and open firewall
-  local_action:
-    module: cs_portforward
+  cs_portforward:
     ip_address: '{{ public_ip }}'
     vm: '{{ inventory_hostname }}'
     public_port: '{{ ansible_ssh_port }}'
     private_port: 22
     open_firewall: true
+  delegate_to: localhost
 
 - name: forward DNS traffic, but do not open firewall
-  local_action:
-    module: cs_portforward
+  cs_portforward:
     ip_address: 1.2.3.4
     vm: '{{ inventory_hostname }}'
     public_port: 53
     private_port: 53
     protocol: udp
+  delegate_to: localhost
 
 - name: remove ssh port forwarding
-  local_action:
-    module: cs_portforward
+  cs_portforward:
     ip_address: 1.2.3.4
     public_port: 22
     private_port: 22
     state: absent
+  delegate_to: localhost
 '''
 
 RETURN = '''
@@ -163,6 +178,7 @@ private_end_port:
   description: End port on the virtual machine's IP address.
   returned: success
   type: int
+  sample: 80
 public_port:
   description: Start port on the public IP address.
   returned: success

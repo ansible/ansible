@@ -16,37 +16,44 @@ short_description: Manages network offerings on Apache CloudStack based clouds.
 description:
     - Create, update, enable, disable and remove network offerings.
 version_added: '2.5'
-author: "David Passante (@dpassante)"
+author: David Passante (@dpassante)
 options:
   state:
     description:
       - State of the network offering.
+    type: str
     choices: [ enabled, present, disabled, absent]
     default: present
   display_text:
     description:
       - Display text of the network offerings.
+    type: str
   guest_ip_type:
     description:
       - Guest type of the network offering.
+    type: str
     choices: [ Shared, Isolated ]
   name:
     description:
       - The name of the network offering.
+    type: str
     required: true
   supported_services:
     description:
       - Services supported by the network offering.
-      - One or more of the choices.
+      - A list of one or more items from the choice list.
+    type: list
     choices: [ Dns, PortForwarding, Dhcp, SourceNat, UserData, Firewall, StaticNat, Vpn, Lb ]
     aliases: [ supported_service ]
   traffic_type:
     description:
       - The traffic type for the network offering.
+    type: str
     default: Guest
   availability:
     description:
       - The availability of network offering. Default value is Optional
+    type: str
   conserve_mode:
     description:
       - Whether the network offering has IP conserve mode enabled.
@@ -55,10 +62,11 @@ options:
     description:
       - Network offering details in key/value pairs.
       - with service provider as a value
-    choices: [ internallbprovider, publiclbprovider ]
+    type: list
   egress_default_policy:
     description:
       - Whether the default egress policy is allow or to deny.
+    type: str
     choices: [ allow, deny ]
   persistent:
     description:
@@ -74,21 +82,26 @@ options:
   max_connections:
     description:
       - Maximum number of concurrent connections supported by the network offering.
+    type: int
   network_rate:
     description:
       - Data transfer rate in megabits per second allowed.
+    type: int
   service_capabilities:
     description:
       - Desired service capabilities as part of network offering.
+    type: list
     aliases: [ service_capability ]
   service_offering:
     description:
       - The service offering name or ID used by virtual router provider.
-  service_provider:
+    type: str
+  service_providers:
     description:
       - Provider to service mapping.
       - If not specified, the provider for the service will be mapped to the default provider on the physical network.
-    aliases: [service_provider]
+    type: list
+    aliases: [ service_provider ]
   specify_ip_ranges:
     description:
       - Wheter the network offering supports specifying IP ranges.
@@ -103,8 +116,7 @@ extends_documentation_fragment: cloudstack
 
 EXAMPLES = '''
 - name: Create a network offering and enable it
-  local_action:
-    module: cs_network_offering
+  cs_network_offering:
     name: my_network_offering
     display_text: network offering description
     state: enabled
@@ -113,13 +125,14 @@ EXAMPLES = '''
     service_providers:
       - { service: 'dns', provider: 'virtualrouter' }
       - { service: 'dhcp', provider: 'virtualrouter' }
+  delegate_to: localhost
 
 
 - name: Remove a network offering
-  local_action:
-    module: cs_network_offering
+  cs_network_offering:
     name: my_network_offering
     state: absent
+  delegate_to: localhost
 '''
 
 RETURN = '''
