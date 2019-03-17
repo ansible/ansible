@@ -931,7 +931,8 @@ from ansible.module_utils.docker.common import (
     compare_generic,
     is_image_name_id,
     sanitize_result,
-    parse_healthcheck
+    parse_healthcheck,
+    DOCKER_COMMON_ARGS,
 )
 from ansible.module_utils.six import string_types
 
@@ -2642,13 +2643,11 @@ def detect_ipvX_address_usage(client):
 
 class AnsibleDockerClientContainer(AnsibleDockerClient):
     # A list of module options which are not docker container properties
-    __NON_CONTAINER_PROPERTY_OPTIONS = (
-        'docker_host', 'tls_hostname', 'api_version', 'timeout', 'cacert_path', 'cert_path',
-        'key_path', 'ssl_version', 'tls', 'tls_verify', 'debug', 'env_file', 'force_kill',
-        'keep_volumes', 'ignore_image', 'name', 'pull', 'purge_networks', 'recreate',
-        'restart', 'state', 'trust_image_content', 'networks', 'cleanup', 'kill_signal',
+    __NON_CONTAINER_PROPERTY_OPTIONS = tuple([
+        'env_file', 'force_kill', 'keep_volumes', 'ignore_image', 'name', 'pull', 'purge_networks',
+        'recreate', 'restart', 'state', 'trust_image_content', 'networks', 'cleanup', 'kill_signal',
         'output_logs', 'paused'
-    )
+    ] + list(DOCKER_COMMON_ARGS.keys()))
 
     def _parse_comparisons(self):
         comparisons = {}
