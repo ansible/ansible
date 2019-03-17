@@ -357,10 +357,6 @@ class Connection(ConnectionBase):
             else:
                 returncode = -51
 
-            # Strip sequence at terminal width
-            if len(stdout) > 200:
-                stdout = stdout.replace('\r\r\n', '')
-
             return (returncode, stdout)
         else:
             # Get command return code
@@ -375,8 +371,16 @@ class Connection(ConnectionBase):
     def _filter_ansi(self, line):
         ''' remove any ANSI terminal control codes '''
 
-        ansi_filter = re.compile(r'(\x9B|\x1B\[)[0-?]*[ -/]*[@-~]')
-        return ansi_filter.sub('', line)
+        if self.is_windows:
+            ansi_filter = re.compile(r'(\x9B|\x1B\[)[0-?]*[ -/]*[@-~]')
+            line = ansi_filter.sub('', line)
+
+            # Replace or strip sequence (at terminal width)
+            line = line.replace('\r\r\n', '\n')
+            if len(line) == 201:
+                line = line[:-1]
+
+        return line
 
     def _flush_stderr(self, subprocess):
         ''' read and return stderr with minimal blocking '''
