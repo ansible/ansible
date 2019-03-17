@@ -352,8 +352,8 @@ class TemplatesModule(BaseModule):
                 base_template=otypes.Template(
                     name=self.param('version').get('base_template')
                 ) if self.param('version').get('base_template') else None,
-                version_number=self.param('version').get('number'),
                 version_name=self.param('version').get('name'),
+                version_=self.param('version').get('number')
             ) if self.param('version') else None,
             memory_policy=otypes.MemoryPolicy(
                 guaranteed=convert_to_bytes(self.param('memory_guaranteed')),
@@ -369,15 +369,15 @@ class TemplatesModule(BaseModule):
 
     def update_check(self, entity):
         return (
-            equal(self._module.params.get('cluster'), get_link_name(self._connection, entity.cluster)) and
-            equal(self._module.params.get('description'), entity.description) and
-            equal(self.param('operating_system'), str(entity.os.type)) and
-            equal(self.param('name'), str(entity.name)) and
-            equal(convert_to_bytes(self.param('memory_guaranteed')), entity.memory_policy.guaranteed) and
-            equal(convert_to_bytes(self.param('memory_max')), entity.memory_policy.max) and
-            equal(convert_to_bytes(self.param('memory')), entity.memory) and
-            equal(self._module.params.get('cpu_profile'), get_link_name(self._connection, entity.cpu_profile)) and
-            equal(self.param('io_threads'), entity.io.threads)
+            equal(self._module.params.get('cluster'), get_link_name(self._connection, entity.cluster))
+            and equal(self._module.params.get('description'), entity.description)
+            and equal(self.param('operating_system'), str(entity.os.type))
+            and equal(self.param('name'), str(entity.name))
+            and equal(convert_to_bytes(self.param('memory_guaranteed')), entity.memory_policy.guaranteed)
+            and equal(convert_to_bytes(self.param('memory_max')), entity.memory_policy.max)
+            and equal(convert_to_bytes(self.param('memory')), entity.memory)
+            and equal(self._module.params.get('cpu_profile'), get_link_name(self._connection, entity.cpu_profile))
+            and equal(self.param('io_threads'), entity.io.threads)
         )
 
     def _get_export_domain_service(self):
@@ -527,15 +527,33 @@ def main():
             module=module,
             service=templates_service,
         )
-
+        ret = None
+        changed=False
         state = module.params['state']
         if state == 'present':
-            ret = templates_module.create(
-                result_state=otypes.TemplateStatus.OK,
-                search_params=searchable_attributes(module),
-                clone_permissions=module.params['clone_permissions'],
-                seal=module.params['seal'],
-            )
+            if module.params['version'] != None:
+                templates = templates_service.list()
+                for template in templates:
+                    if module.params.get('name') == template.name:
+                        if module.params.get('version').get('number') != None and module.params.get('version').get('number') == template.version.version_number:
+                            template_service= templates_service.template_service(template.id)
+                            ret = template_service.update(
+                                template=templates_module.build_entity()
+                            )
+                if ret == None:
+                    ret = templates_service.add(templates_module.build_entity())
+            if ret == None:
+                ret = templates_module.create(
+                    result_state=otypes.TemplateStatus.OK,
+                    search_params=searchable_attributes(module),
+                    clone_permissions=module.params['clone_permissions'],
+                    seal=module.params['seal'],
+                )
+            ret = {
+                'changed': changed,
+                'id': template.id,
+                'template': get_dict_of_struct(template)
+            }
         elif state == 'absent':
             ret = templates_module.remove()
         elif state == 'exported':
@@ -640,9 +658,9 @@ def main():
                         cluster_mappings=_get_cluster_mappings(module),
                         role_mappings=_get_role_mappings(module),
                         domain_mappings=_get_domain_mappings(module),
-                    ) if (module.params['cluster_mappings']
-                          or module.params['role_mappings']
-                          or module.params['domain_mappings']) else None
+                    ) if (module.params['cluster_mappings'] or
+                          module.params['role_mappings'] or
+                          module.params['domain_mappings']) else None
                 )
 
                 if module.params['wait']:
