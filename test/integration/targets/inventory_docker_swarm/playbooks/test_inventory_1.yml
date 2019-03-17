@@ -29,6 +29,10 @@
       debug:
         var: ansible_host
 
+    - name: Make sure docker_swarm_node_attributes is available
+      assert:
+        that:
+          - docker_swarm_node_attributes is not undefined
     - name: Print docker_swarm_node_attributes per host
       debug:
         var: docker_swarm_node_attributes

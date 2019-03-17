@@ -1115,7 +1115,7 @@ files:
 # plugins/inventory
   $plugins/inventory/__init__.py:
     support: core
-  $plugins/inventory/docker_swarm.py: *docker
+  $plugins/inventory/docker: *docker
   $plugins/inventory/gcp_compute.py:
     maintainers: $team_google
     supershipit: $team_google
@@ -1327,6 +1327,10 @@ files:
   test/integration/targets/gcp:
     maintainers: $team_google
     supershipit: $team_google
+  test/integration/targets/inventory_docker: *docker
+  test/integration/targets/inventory_docker_swarm:
+    <<: *docker
+    maintainers: $team_docker morph027
   test/integration/targets/meraki: *meraki
   test/integration/targets/mso: *aci
   test/integration/targets/mysql: *mysql
