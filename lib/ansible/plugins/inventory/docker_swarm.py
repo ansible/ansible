@@ -28,8 +28,10 @@ DOCUMENTATION = '''
             type: str
             required: true
             choices: docker_swarm
-        host:
-            description: Socket of a Docker swarm manager node (tcp,unix).
+        docker_host:
+            description:
+                - Socket of a Docker swarm manager node (tcp,unix).
+                - "Use C(unix://var/run/docker.sock) to connect via local socket."
             type: str
             required: true
         verbose_output:
@@ -56,6 +58,21 @@ DOCUMENTATION = '''
         tls_hostname:
             description: When verifying the authenticity of the Docker Host server, provide the expected name of the server.
             type: str
+        ssl_version:
+            description: Provide a valid SSL version number. Default value determined by ssl.py module.
+            type: str
+        api_version:
+            description:
+                - The version of the Docker API running on the Docker Host.
+                - Defaults to the latest version of the API supported by docker-py.
+            type: str
+        timeout:
+            description:
+                - The maximum amount of time in seconds to wait on a response from the API.
+                - If the value is not specified in the task, the value of environment variable C(DOCKER_TIMEOUT) will be used
+                  instead. If the environment variable is not set, the default value will be used.
+            type: int
+            default: 60
         include_host_uri:
             description: Toggle to return the additional attribute I(ansible_host_uri) which contains the URI of the
                          swarm leader in format of M(tcp://172.16.0.1:2376). This value may be used without additional
@@ -71,20 +88,20 @@ DOCUMENTATION = '''
 EXAMPLES = '''
 # Minimal example using local docker
 plugin: docker_swarm
-host: unix://var/run/docker.sock
+docker_host: unix://var/run/docker.sock
 
 # Minimal example using remote docker
 plugin: docker_swarm
-host: tcp://my-docker-host:2375
+docker_host: tcp://my-docker-host:2375
 
 # Example using remote docker with unverified TLS
 plugin: docker_swarm
-host: tcp://my-docker-host:2376
+docker_host: tcp://my-docker-host:2376
 tls: yes
 
 # Example using remote docker with verified TLS and client certificate verification
 plugin: docker_swarm
-host: tcp://my-docker-host:2376
+docker_host: tcp://my-docker-host:2376
 tls_verify: yes
 cacert_path: /somewhere/ca.pem
 key_path: /somewhere/key.pem
@@ -92,7 +109,7 @@ cert_path: /somewhere/cert.pem
 
 # Example using constructed features to create groups and set ansible_host
 plugin: docker_swarm
-host: tcp://my-docker-host:2375
+docker_host: tcp://my-docker-host:2375
 strict: False
 keyed_groups:
   # add e.g. x86_64 hosts to an arch_x86_64 group
@@ -110,6 +127,7 @@ keyed_groups:
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native
+from ansible.module_utils.docker.common import update_tls_hostname, get_connect_params
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
 from ansible.parsing.utils.addresses import parse_address
 
@@ -125,61 +143,31 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
     NAME = 'docker_swarm'
 
-    def _get_tls_config(self, **kwargs):
-        try:
-            tls_config = docker.tls.TLSConfig(**kwargs)
-            return tls_config
-        except Exception as e:
-            raise AnsibleError('Unable to setup TLS, this was the original exception: %s' % to_native(e))
-
-    def _get_tls_connect_params(self):
-        if self.get_option('tls') and self.get_option('cert_path') and self.get_option('key_path'):
-            # TLS with certs and no host verification
-            tls_config = self._get_tls_config(client_cert=(self.get_option('cert_path'),
-                                                           self.get_option('key_path')),
-                                              verify=False)
-            return tls_config
-
-        if self.get_option('tls'):
-            # TLS with no certs and not host verification
-            tls_config = self._get_tls_config(verify=False)
-            return tls_config
-
-        if self.get_option('tls_verify') and self.get_option('cert_path') and self.get_option('key_path'):
-            # TLS with certs and host verification
-            if self.get_option('cacert_path'):
-                tls_config = self._get_tls_config(client_cert=(self.get_option('cert_path'),
-                                                               self.get_option('key_path')),
-                                                  ca_cert=self.get_option('cacert_path'),
-                                                  verify=True,
-                                                  assert_hostname=self.get_option('tls_hostname'))
-            else:
-                tls_config = self._get_tls_config(client_cert=(self.get_option('cert_path'),
-                                                               self.get_option('key_path')),
-                                                  verify=True,
-                                                  assert_hostname=self.get_option('tls_hostname'))
-
-            return tls_config
-
-        if self.get_option('tls_verify') and self.get_option('cacert_path'):
-            # TLS with cacert only
-            tls_config = self._get_tls_config(ca_cert=self.get_option('cacert_path'),
-                                              assert_hostname=self.get_option('tls_hostname'),
-                                              verify=True)
-            return tls_config
-
-        if self.get_option('tls_verify'):
-            # TLS with verify and no certs
-            tls_config = self._get_tls_config(verify=True,
-                                              assert_hostname=self.get_option('tls_hostname'))
-            return tls_config
-
-        # No TLS
-        return None
+    def _fail(self, msg):
+        raise AnsibleError(msg)
 
     def _populate(self):
-        self.client = docker.DockerClient(base_url=self.get_option('host'),
-                                          tls=self._get_tls_connect_params())
+        raw_params = dict(
+            docker_host=self.get_option('docker_host'),
+            tls=self.get_option('tls'),
+            tls_verify=self.get_option('tls_verify'),
+            key_path=self.get_option('key_path'),
+            cacert_path=self.get_option('cacert_path'),
+            cert_path=self.get_option('cert_path'),
+            tls_hostname=self.get_option('tls_hostname'),
+            api_version=self.get_option('api_version'),
+            timeout=self.get_option('timeout') or 60,
+            ssl_version=self.get_option('ssl_version'),
+            debug=None,
+        )
+        if raw_params['timeout'] is not None:
+            try:
+                raw_params['timeout'] = int(raw_params['timeout'])
+            except Exception as dummy:
+                raise AnsibleError('Argument to timeout function must be an integer')
+        update_tls_hostname(raw_params)
+        connect_params = get_connect_params(raw_params, fail_function=self._fail)
+        self.client = docker.DockerClient(**connect_params)
         self.inventory.add_group('all')
         self.inventory.add_group('manager')
         self.inventory.add_group('worker')
