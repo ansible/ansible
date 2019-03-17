@@ -108,8 +108,8 @@ notes:
     DOCKER_PY_1_DOCUMENTATION = r'''
 options: {}
 requirements:
-  - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
-     module has been superseded by L(docker,https://pypi.org/project/docker/)
+  - "Docker SDK for Python: Please note that the L(docker-py,https://pypi.org/project/docker-py/)
+     Python module has been superseded by L(docker,https://pypi.org/project/docker/)
      (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
      For Python 2.6, C(docker-py) must be used. Otherwise, it is recommended to
      install the C(docker) Python module. Note that both modules should I(not)
@@ -125,8 +125,8 @@ requirements:
 options: {}
 requirements:
   - "Python >= 2.7"
-  - "Please note that this module does I(not) work with L(docker-py,https://pypi.org/project/docker-py/),
-     which is a too old version of the Docker SDK for Python. If you have it installed, please upgrade to
-     L(docker,https://pypi.org/project/docker-py/). Please note that you have to uninstall docker-py first
-     before installing docker to avoid a broken installation."
+  - "Docker SDK for Python: Please note that the L(docker-py,https://pypi.org/project/docker-py/)
+     Python module has been superseded by L(docker,https://pypi.org/project/docker/)
+     (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
+     This module does I(not) work with docker-py."
 '''
