@@ -28,7 +28,7 @@ DOCUMENTATION = '''
             type: str
             required: true
             choices: docker_swarm
-        host:
+        docker_host:
             description:
                 - Socket of a Docker swarm manager node (tcp,unix).
                 - "Use C(unix://var/run/docker.sock) to connect via local socket."
@@ -88,20 +88,20 @@ DOCUMENTATION = '''
 EXAMPLES = '''
 # Minimal example using local docker
 plugin: docker_swarm
-host: unix://var/run/docker.sock
+docker_host: unix://var/run/docker.sock
 
 # Minimal example using remote docker
 plugin: docker_swarm
-host: tcp://my-docker-host:2375
+docker_host: tcp://my-docker-host:2375
 
 # Example using remote docker with unverified TLS
 plugin: docker_swarm
-host: tcp://my-docker-host:2376
+docker_host: tcp://my-docker-host:2376
 tls: yes
 
 # Example using remote docker with verified TLS and client certificate verification
 plugin: docker_swarm
-host: tcp://my-docker-host:2376
+docker_host: tcp://my-docker-host:2376
 tls_verify: yes
 cacert_path: /somewhere/ca.pem
 key_path: /somewhere/key.pem
@@ -109,7 +109,7 @@ cert_path: /somewhere/cert.pem
 
 # Example using constructed features to create groups and set ansible_host
 plugin: docker_swarm
-host: tcp://my-docker-host:2375
+docker_host: tcp://my-docker-host:2375
 strict: False
 keyed_groups:
   # add e.g. x86_64 hosts to an arch_x86_64 group
