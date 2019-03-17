@@ -119,7 +119,7 @@ options:
     backup:
         description:
             - Create a backup file including a timestamp so you can get
-              the original private key back if you somehow clobbered it incorrectly.
+              the original private key back if you overwrote it with a new one by accident.
         type: bool
         default: no
         version_added: "2.8"
