@@ -24,7 +24,7 @@ DOCUMENTATION = '''
         - Uses a YAML configuration file docker_swarm.[yml|yaml].
     options:
         plugin:
-            description: The name of this plugin, it should always be set to 'docker_swarm' for this plugin to recognize it as it's own.
+            description: The name of this plugin, it should always be set to C(docker_swarm) for this plugin to recognize it as it's own.
             type: str
             required: true
             choices: docker_swarm
@@ -56,7 +56,7 @@ DOCUMENTATION = '''
             description: Path to the client's TLS certificate file.
             type: path
         tls_hostname:
-            description: When verifying the authenticity of the Docker Host server, provide the expected name of the server.
+            description: When verifying the authenticity of the Docker host server, provide the expected name of the server.
             type: str
         ssl_version:
             description: Provide a valid SSL version number. Default value determined by ssl.py module.

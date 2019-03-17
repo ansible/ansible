@@ -71,7 +71,7 @@ options:
       - This controls the current state of the user. C(present) will login in a user, C(absent) will log them out.
       - To logout you only need the registry server, which defaults to DockerHub.
       - Before 2.1 you could ONLY log in.
-      - docker does not support 'logout' with a custom config file.
+      - Docker does not support 'logout' with a custom config file.
     type: str
     default: 'present'
     choices: ['present', 'absent']

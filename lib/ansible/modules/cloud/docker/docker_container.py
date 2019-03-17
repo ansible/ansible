@@ -293,7 +293,7 @@ options:
   init:
     description:
       - Run an init inside the container that forwards signals and reaps processes.
-        This option requires Docker API 1.25+.
+        This option requires Docker API >= 1.25.
     type: bool
     default: no
     version_added: "2.6"
@@ -579,9 +579,9 @@ options:
         will be set to this value.
       - When the container is stopped, will be used as a timeout for stopping the
         container. In case the container has a custom C(StopTimeout) configuration,
-        the behavior depends on the version of docker. New versions of docker will
-        always use the container's configured C(StopTimeout) value if it has been
-        configured.
+        the behavior depends on the version of the docker daemon. New versions of
+        the docker daemon will always use the container's configured C(StopTimeout)
+        value if it has been configured.
     type: int
   trust_image_content:
     description:
@@ -622,7 +622,7 @@ options:
       - "Use docker CLI-style syntax: C(/host:/container[:mode])"
       - "Mount modes can be a comma-separated list of various modes such as C(ro), C(rw), C(consistent),
         C(delegated), C(cached), C(rprivate), C(private), C(rshared), C(shared), C(rslave), C(slave).
-        Note that docker might not support all modes and combinations of such modes."
+        Note that the docker daemon might not support all modes and combinations of such modes."
       - SELinux hosts can additionally use C(z) or C(Z) to use a shared or
         private label for the volume.
       - "Note that Ansible 2.7 and earlier only supported one mode, which had to be one of C(ro), C(rw),
@@ -2544,8 +2544,8 @@ class ContainerManager(DockerBaseClass):
                     pass
                 except APIError as exc:
                     if 'Unpause the container before stopping or killing' in exc.explanation:
-                        # New docker versions do not allow containers to be removed if they are paused
-                        # Make sure we don't end up in an infinite loop
+                        # New docker daemon versions do not allow containers to be removed
+                        # if they are paused. Make sure we don't end up in an infinite loop.
                         if count == 3:
                             self.fail("Error removing container %s (tried to unpause three times): %s" % (container_id, str(exc)))
                         count += 1
@@ -2611,8 +2611,8 @@ class ContainerManager(DockerBaseClass):
                         response = self.client.stop(container_id)
                 except APIError as exc:
                     if 'Unpause the container before stopping or killing' in exc.explanation:
-                        # New docker versions do not allow containers to be removed if they are paused
-                        # Make sure we don't end up in an infinite loop
+                        # New docker daemon versions do not allow containers to be removed
+                        # if they are paused. Make sure we don't end up in an infinite loop.
                         if count == 3:
                             self.fail("Error removing container %s (tried to unpause three times): %s" % (container_id, str(exc)))
                         count += 1
@@ -2761,7 +2761,7 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
             if stop_timeout_needed_for_update and not stop_timeout_supported:
                 # We warn (instead of fail) since in older versions, stop_timeout was not used
                 # to update the container's configuration, but only when stopping a container.
-                self.module.warn("docker API version is %s. Minimum version required is 1.25 to set or "
+                self.module.warn("Docker API version is %s. Minimum version required is 1.25 to set or "
                                  "update the container's stop_timeout configuration." % (self.docker_api_version_str,))
         self.option_minimal_versions['stop_timeout']['supported'] = stop_timeout_supported
 

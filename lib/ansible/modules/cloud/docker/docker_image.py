@@ -241,11 +241,13 @@ options:
       - When C(absent) an image will be removed. Use the force option to un-tag and remove all images
         matching the provided name.
       - When C(present) check if an image exists using the provided name and tag. If the image is not found or the
-        force option is used, the image will either be pulled, built or loaded. By default the image will be pulled
-        from Docker Hub. To build the image, provide a path value set to a directory containing a context and
-        Dockerfile. To load an image, specify load_path to provide a path to an archive file. To tag an image to a
-        repository, provide a repository path. If the name contains a repository path, it will be pushed.
-      - "NOTE: C(build) is DEPRECATED and will be removed in release 2.11. Specifying C(build) will behave the
+        force option is used, the image will either be pulled, built or loaded, depending on the I(source) option.
+      - By default the image will be pulled from Docker Hub, or the registry specified in the image's name. Note that
+        this will change in Ansible 2.12, so to make sure that you are pulling, set I(source) to C(pull). To build
+        the image, provide a I(path) value set to a directory containing a context and Dockerfile, and set I(source)
+        to C(build). To load an image, specify I(load_path) to provide a path to an archive file. To tag an image to
+        a repository, provide a I(repository) path. If the name contains a repository path, it will be pushed.
+      - "NOTE: C(state=build) is DEPRECATED and will be removed in release 2.11. Specifying C(build) will behave the
          same as C(present)."
     type: str
     default: present
@@ -293,7 +295,7 @@ options:
     version_added: "2.1"
   use_tls:
     description:
-      - "DEPRECATED. Whether to use tls to connect to the docker server. Set to
+      - "DEPRECATED. Whether to use tls to connect to the docker daemon. Set to
         C(encrypt) to use TLS. And set to C(verify) to use TLS and verify that
         the server's certificate is valid for the server."
       - "NOTE: If you specify this option, it will set the value of the I(tls) or
