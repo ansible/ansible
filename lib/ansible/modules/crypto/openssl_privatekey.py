@@ -27,7 +27,7 @@ description:
       the module's options. In particular, if you provide another passphrase
       (or specify none), change the keysize, etc., the private key will be
       regenerated. If you are concerned that this could overwrite your private key,
-      please consider using the I(backup) option."
+      consider using the I(backup) option."
     - The module can use the cryptography Python library, or the pyOpenSSL Python
       library. By default, it tries to detect which one is available. This can be
       overridden with the I(select_crypto_backend) option."
