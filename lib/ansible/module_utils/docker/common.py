@@ -254,6 +254,11 @@ def get_connect_params(auth, fail_function):
                 timeout=auth['timeout'])
 
 
+DOCKERPYUPGRADE_SWITCH_TO_DOCKER = "Try `pip uninstall docker-py` followed by `pip install docker`."
+DOCKERPYUPGRADE_UPGRADE_DOCKER = "Use `pip install --upgrade docker` to upgrade."
+DOCKERPYUPGRADE_RECOMMEND_DOCKER = "Use `pip install --upgrade docker-py` to upgrade. Hint: if you do not need Python 2.6 support, try `pip uninstall docker-py` instead followed by `pip install docker`."
+
+
 class AnsibleDockerClient(Client):
 
     def __init__(self, argument_spec=None, supports_check_mode=False, mutually_exclusive=None,
@@ -309,15 +314,14 @@ class AnsibleDockerClient(Client):
 
         if self.docker_py_version < LooseVersion(min_docker_version):
             msg = "Error: Docker SDK for Python version is %s. Minimum version required is %s. "
-            if NEEDS_DOCKER_PY2:
-                if docker_version < LooseVersion('2.0'):
-                    msg += "Try `pip uninstall docker-py` followed by `pip install docker`."
-                else:
-                    msg += "Use `pip install --upgrade docker` to upgrade."
-            else:
+            if not NEEDS_DOCKER_PY2:
                 # The minimal required version is < 2.0 (and the current version as well).
                 # Advertise docker (instead of docker-py) for non-Python-2.6 users.
-                msg = (msg + "Hint: if you do not need Python 2.6 support, try `pip uninstall docker-py` followed by `pip install docker`.")
+                msg += DOCKERPYUPGRADE_RECOMMEND_DOCKER
+            elif docker_version < LooseVersion('2.0'):
+                msg += DOCKERPYUPGRADE_SWITCH_TO_DOCKER
+            else:
+                msg += DOCKERPYUPGRADE_UPGRADE_DOCKER
             self.fail(msg % (docker_version, min_docker_version))
 
         self.debug = self.module.params.get('debug')
@@ -470,12 +474,13 @@ class AnsibleDockerClient(Client):
                         msg = 'Docker API version is %s. Minimum version required is %s to %s.'
                         msg = msg % (self.docker_api_version_str, data['docker_api_version'], usg)
                     elif not support_docker_py:
-                        msg = "Docker SDK for Python version is %s. Minimum version required is %s to %s."
+                        msg = "Docker SDK for Python version is %s. Minimum version required is %s to %s. "
                         if LooseVersion(data['docker_py_version']) < LooseVersion('2.0.0'):
-                            msg = (msg + " Hint: if you do not need Python 2.6 support, try `pip uninstall "
-                                   "docker-py` followed by `pip install docker`.")
+                            msg += DOCKERPYUPGRADE_RECOMMEND_DOCKER
                         elif self.docker_py_version < LooseVersion('2.0.0'):
-                            msg = (msg + " Try `pip uninstall docker-py` followed by `pip install docker`.")
+                            msg += DOCKERPYUPGRADE_SWITCH_TO_DOCKER
+                        else:
+                            msg += DOCKERPYUPGRADE_UPGRADE_DOCKER
                         msg = msg % (docker_version, data['docker_py_version'], usg)
                     else:
                         # should not happen
