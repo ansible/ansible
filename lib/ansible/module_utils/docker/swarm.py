@@ -13,6 +13,7 @@ except ImportError:
 
 from ansible.module_utils._text import to_native
 from ansible.module_utils.docker.common import AnsibleDockerClient
+from ansible.parsing.utils.addresses import parse_address
 
 
 class AnsibleDockerSwarmClient(AnsibleDockerClient):
@@ -166,6 +167,13 @@ class AnsibleDockerSwarmClient(AnsibleDockerClient):
 
         json_str = json.dumps(node_info, ensure_ascii=False)
         node_info = json.loads(json_str)
+
+        if 'ManagerStatus' in node_info:
+            if node_info['ManagerStatus'].get('Leader'):
+                # This is workaround of bug in Docker when in some cases the Leader IP is 0.0.0.0
+                # Check moby/moby#35437 for details
+                swarm_leader_ip = parse_address(node_info['ManagerStatus']['Addr'])[0] or node_info['Status']['Addr']
+                node_info['Status']['Addr'] = swarm_leader_ip
         return node_info
 
     def get_all_nodes_inspect(self):
