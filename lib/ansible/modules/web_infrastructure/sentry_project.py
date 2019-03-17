@@ -56,6 +56,7 @@ options:
   team:
     description:
       - The name of the team to create a new project for.
+    type: str
 
   url:
     description:
