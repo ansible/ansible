@@ -318,7 +318,7 @@ def find_ids(nb, data):
             elif query_id:
                 data[k] = query_id.id
             else:
-               raise ValueError("Could not resolve id of %s: %s" % (k, v)) 
+                raise ValueError("Could not resolve id of %s: %s" % (k, v))
 
     return data
 
