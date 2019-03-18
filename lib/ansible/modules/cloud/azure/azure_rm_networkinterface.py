@@ -339,7 +339,8 @@ state:
             "private_ip_address": "10.1.0.10",
             "private_ip_allocation_method": "Static",
             "public_ip_address": {
-                "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/publicIPAddresses/publicip001",
+                "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/publicIPAddresse
+                       s/publicip001",
                 "name": "publicip001"
             },
             "subnet": {},
