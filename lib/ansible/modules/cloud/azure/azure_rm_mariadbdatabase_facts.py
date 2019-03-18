@@ -17,7 +17,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_mariadbdatabase_facts
-version_added: "2.7"
+version_added: "2.8"
 short_description: Get Azure MariaDB Database facts.
 description:
     - Get facts of MariaDB Database.

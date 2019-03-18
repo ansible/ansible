@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module:     
+module: azure_rm_mariadbfirewallrule_facts
 version_added: "2.8"
 short_description: Get Azure MariaDB Firewall Rule facts.
 description:
