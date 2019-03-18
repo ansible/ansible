@@ -32,6 +32,13 @@ options:
     description:
       - The names of the target groups.
     required: false
+  collect_targets_health:
+    description:
+      - When set to "yes", output contains targets health description
+    required: false
+    default: no
+    type: bool
+    version_added: 2.8
 
 extends_documentation_fragment:
     - aws
@@ -146,6 +153,41 @@ target_groups:
             returned: always
             type: str
             sample: "arn:aws:elasticloadbalancing:ap-southeast-2:01234567890:targetgroup/mytargetgroup/aabbccddee0044332211"
+        targets_health_description:
+            description: Targets health description.
+            returned: when collect_targets_health is enabled
+            type: complex
+            contains:
+                health_check_port:
+                    description: The port to check target health.
+                    returned: always
+                    type: string
+                    sample: '80'
+                target:
+                    description: The target metadata.
+                    returned: always
+                    type: complex
+                    contains:
+                        id:
+                            description: The ID of the target.
+                            returned: always
+                            type: string
+                            sample: i-0123456789
+                        port:
+                            description: The port to use to connect with the target.
+                            returned: always
+                            type: int
+                            sample: 80
+                target_health:
+                    description: The target health status.
+                    returned: always
+                    type: complex
+                    contains:
+                        state:
+                            description: The state of the target health.
+                            returned: always
+                            type: string
+                            sample: healthy
         target_group_name:
             description: The name of the target group.
             returned: always
@@ -197,11 +239,20 @@ def get_target_group_tags(connection, module, target_group_arn):
         module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
 
+def get_target_group_targets_health(connection, module, target_group_arn):
+
+    try:
+        return connection.describe_target_health(TargetGroupArn=target_group_arn)['TargetHealthDescriptions']
+    except ClientError as e:
+        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+
+
 def list_target_groups(connection, module):
 
     load_balancer_arn = module.params.get("load_balancer_arn")
     target_group_arns = module.params.get("target_group_arns")
     names = module.params.get("names")
+    collect_targets_health = module.params.get("collect_targets_health")
 
     try:
         target_group_paginator = connection.get_paginator('describe_target_groups')
@@ -231,6 +282,9 @@ def list_target_groups(connection, module):
     # Get tags for each target group
     for snaked_target_group in snaked_target_groups:
         snaked_target_group['tags'] = get_target_group_tags(connection, module, snaked_target_group['target_group_arn'])
+        if collect_targets_health:
+            snaked_target_group['targets_health_description'] = [camel_dict_to_snake_dict(
+                target) for target in get_target_group_targets_health(connection, module, snaked_target_group['target_group_arn'])]
 
     module.exit_json(target_groups=snaked_target_groups)
 
@@ -242,7 +296,8 @@ def main():
         dict(
             load_balancer_arn=dict(type='str'),
             target_group_arns=dict(type='list'),
-            names=dict(type='list')
+            names=dict(type='list'),
+            collect_targets_health=dict(default=False, type='bool', required=False)
         )
     )
 
