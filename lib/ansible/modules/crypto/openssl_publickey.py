@@ -205,7 +205,7 @@ class PublicKey(crypto_utils.OpenSSLObject):
             except (IOError, OSError) as exc:
                 raise PublicKeyError(exc)
             except AttributeError as exc:
-                self.remove()
+                self.remove(module)
                 raise PublicKeyError('You need to have PyOpenSSL>=16.0.0 to generate public keys')
 
         self.fingerprint = crypto_utils.get_fingerprint(
@@ -315,7 +315,7 @@ def main():
             module.exit_json(**result)
 
         try:
-            public_key.remove()
+            public_key.remove(module)
         except PublicKeyError as exc:
             module.fail_json(msg=to_native(exc))
 
