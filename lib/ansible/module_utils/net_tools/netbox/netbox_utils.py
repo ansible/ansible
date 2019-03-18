@@ -178,6 +178,64 @@ ALLOWED_QUERY_PARAMS = {
 QUERY_PARAMS_IDS = set(["vrf", "site", "vlan_group", "tenant"])
 
 
+def _build_diff(before=None, after=None):
+    return {"before": before, "after": after}
+
+
+def create_netbox_object(nb_endpoint, data, check_mode):
+    """Create a Netbox object.
+    :returns tuple(serialized_nb_obj, diff): tuple of the serialized created
+    Netbox object and the Ansible diff.
+    """
+    if check_mode:
+        serialized_nb_obj = data
+    else:
+        try:
+            serialized_nb_obj = nb_endpoint.create(data).serialize()
+        except AttributeError:
+            serialized_nb_obj = nb_endpoint.create(data)
+
+    diff = _build_diff(before={"state": "absent"}, after={"state": "present"})
+    return serialized_nb_obj, diff
+
+
+def delete_netbox_object(nb_obj, check_mode):
+    """Delete a Netbox object.
+    :returns tuple(serialized_nb_obj, diff): tuple of the serialized deleted
+    Netbox object and the Ansible diff.
+    """
+    if not check_mode:
+        nb_obj.delete()
+
+    diff = _build_diff(before={"state": "present"}, after={"state": "absent"})
+    return nb_obj.serialize(), diff
+
+
+def update_netbox_object(nb_obj, data, check_mode):
+    """Update a Netbox object.
+    :returns tuple(serialized_nb_obj, diff): tuple of the serialized updated
+    Netbox object and the Ansible diff.
+    """
+    serialized_nb_obj = nb_obj.serialize()
+    updated_obj = serialized_nb_obj.copy()
+    updated_obj.update(data)
+    if serialized_nb_obj == updated_obj:
+        return serialized_nb_obj, None
+    else:
+        data_before, data_after = {}, {}
+        for key in data:
+            if serialized_nb_obj[key] != updated_obj[key]:
+                data_before[key] = serialized_nb_obj[key]
+                data_after[key] = updated_obj[key]
+
+        if not check_mode:
+            nb_obj.update(data)
+            udpated_obj = nb_obj.serialize()
+
+        diff = _build_diff(before=data_before, after=data_after)
+        return updated_obj, diff
+
+
 def _get_query_param_id(nb, match, child):
     endpoint = CONVERT_TO_ID[match]
     app = find_app(endpoint)
@@ -258,7 +316,7 @@ def find_ids(nb, data):
             elif k in NO_DEFAULT_ID:
                 pass
             else:
-                data[k] = 1
+                raise ValueError("Could not resolve id of %s: %s" % (k, v))
 
     return data
 

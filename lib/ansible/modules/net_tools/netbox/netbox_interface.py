@@ -204,7 +204,15 @@ import json
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-from ansible.module_utils.net_tools.netbox.netbox_utils import find_ids, normalize_data, INTF_FORM_FACTOR, INTF_MODE
+from ansible.module_utils.net_tools.netbox.netbox_utils import (
+    find_ids,
+    normalize_data,
+    create_netbox_object,
+    delete_netbox_object,
+    update_netbox_object,
+    INTF_FORM_FACTOR,
+    INTF_MODE,
+)
 from ansible.module_utils.compat import ipaddress
 from ansible.module_utils._text import to_text
 
@@ -225,19 +233,15 @@ def main():
     argument_spec = dict(
         netbox_url=dict(type="str", required=True),
         netbox_token=dict(type="str", required=True, no_log=True),
-        data=dict(
-            type="dict",
-            required=True,
-            options=dict(
-                device=dict(required=True),
-                name=dict(required=True),
-            ),
-        ),
+        data=dict(type="dict", required=True),
         state=dict(required=False, default="present", choices=["present", "absent"]),
         validate_certs=dict(type="bool", default=True)
     )
+
+    global module
     module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=False)
+                           supports_check_mode=True)
+
     # Fail module if pynetbox is not installed
     if not HAS_PYNETBOX:
         module.fail_json(msg=missing_required_lib('pynetbox'), exception=PYNETBOX_IMP_ERR)
@@ -300,35 +304,47 @@ def ensure_interface_present(nb, nb_endpoint, data):
         changed = False
         return {"msg": data, "changed": changed}
 
-    intf = nb_endpoint.get(name=data["name"], device_id=data["device"])
+    nb_intf = nb_endpoint.get(name=data["name"], device_id=data["device"])
+    result = dict()
 
-    if not intf:
-        intf = nb_endpoint.create(data).serialize()
+    if not nb_intf:
+        intf, diff = create_netbox_object(nb_endpoint, data, module.check_mode)
         changed = True
         msg = "Interface %s created" % (data["name"])
     else:
-        intf = intf.serialize()
-        msg = "Interface %s already exists" % (data["name"])
-        changed = False
-
-    return {"interface": intf, "msg": msg, "changed": changed}
+        intf, diff = update_netbox_object(nb_intf, data, module.check_mode)
+        if intf is False:
+            module.fail_json(
+                msg="Request failed, couldn't update device: %s" % (data["name"])
+            )
+        if diff:
+            msg = "Interface %s updated" % (data["name"])
+            changed = True
+            result["diff"] = diff
+        else:
+            msg = "Interface %s already exists" % (data["name"])
+            changed = False
+    result.update({"interface": intf, "msg": msg, "changed": changed})
+    return result
 
 
 def ensure_interface_absent(nb, nb_endpoint, data):
     """
-    :returns dict(msg, changed)
+    :returns dict(msg, changed, diff)
     """
-    intf = nb_endpoint.get(name=data["name"], device_id=data["device"])
-
-    if intf:
-        intf.delete()
+    nb_intf = nb_endpoint.get(name=data["name"], device_id=data["device"])
+    result = dict()
+    if nb_intf:
+        dummy, diff = delete_netbox_object(nb_intf, module.check_mode)
         changed = True
         msg = "Interface %s deleted" % (data["name"])
+        result["diff"] = diff
     else:
         msg = "Interface %s already absent" % (data["name"])
         changed = False
 
-    return {"msg": msg, "changed": changed}
+    result.update({"msg": msg, "changed": changed})
+    return result
 
 
 if __name__ == "__main__":
