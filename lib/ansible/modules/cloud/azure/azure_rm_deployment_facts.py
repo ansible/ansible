@@ -47,7 +47,7 @@ EXAMPLES = '''
 
 RETURN = '''
 deployments:
-    description: A list of dictionaries containing facts for Artifact.
+    description: A list of dictionaries containing facts for deployments.
     returned: always
     type: complex
     contains:
