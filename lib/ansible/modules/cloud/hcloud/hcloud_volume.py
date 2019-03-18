@@ -113,15 +113,40 @@ RETURN = """
 hcloud_volume:
     description: The block volume
     returned: Always
-    type: dict
-    sample: {
-        "id": 1234567,
-        "name": "my-volmume",
-        "size": "1337",
-        "location": "fsn",
-        "labels": {},
-        "server": "my-server",
-    }
+    type: complex
+    contains:
+        id:
+            description: ID of the volume
+            type: int
+            returned: Always
+            sample: 12345
+        name:
+            description: Name of the volume
+            type: string
+            returned: Always
+            sample: my-volume
+        size:
+            description: Size in MB of the volume
+            type: int
+            returned: Always
+            sample: 1337
+        location:
+            description: Location name where the volume is located at
+            type: string
+            returned: Always
+            sample: "fsn1"
+        labels:
+            description: User-defined labels (key-value pairs)
+            type: dict
+            returned: Always
+            sample:
+                key: value
+                mylabel: 123
+        server:
+            description: Server name where the volume is attached to
+            type: string
+            returned: Always
+            sample: "my-server"
 """
 
 from ansible.module_utils.basic import AnsibleModule
