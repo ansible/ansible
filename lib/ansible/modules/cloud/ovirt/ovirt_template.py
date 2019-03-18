@@ -187,8 +187,8 @@ options:
     version:
         description:
             - "C(name) - The name of this version."
-            - "C(base_template) - References the template that this version is associated with."
-            - "C(number) - The index of this version in the versions hierarchy of the template."
+            - "C(base_template) - ID of the referenced template that this version is associated with."
+            - "C(number) - The index of this version in the versions hierarchy of the template. Used for editing of sub template."
         version_added: "2.8"
 extends_documentation_fragment: ovirt
 '''
@@ -350,10 +350,9 @@ class TemplatesModule(BaseModule):
             ) if self.param('memory') else None,
             version=otypes.TemplateVersion(
                 base_template=otypes.Template(
-                    name=self.param('version').get('base_template')
+                    id=self.param('version').get('base_template')
                 ) if self.param('version').get('base_template') else None,
-                version_name=self.param('version').get('name'),
-                version_=self.param('version').get('number')
+                version_name=self.param('version').get('name')
             ) if self.param('version') else None,
             memory_policy=otypes.MemoryPolicy(
                 guaranteed=convert_to_bytes(self.param('memory_guaranteed')),
@@ -466,6 +465,33 @@ def _get_vnic_profile_mappings(module):
     return vnicProfileMappings
 
 
+def _template_subversion(module, templates_service, templates_module, connection):
+    resp = None
+    changed = False
+    if module.params.get('version').get('number') != None:
+        templates = templates_service.list()
+        for template in templates:
+            if module.params.get('version').get('number') == template.version.version_number and module.params.get('name') == template.name:
+                # Update template with version number
+                template_service = templates_service.template_service(template.id)
+                resp = template_service.update(
+                    template=templates_module.build_entity()
+                )
+                changed = True
+    else:
+        # If template was not updated creates it
+        resp = templates_service.add(templates_module.build_entity())
+        changed = True
+    return {
+        'changed': changed,
+        'id': getattr(resp, 'id', None),
+        type(resp).__name__.lower(): get_dict_of_struct(
+            struct=resp,
+            connection=templates_module._connection
+        )
+    }
+
+
 def searchable_attributes(module):
     """
     Return all searchable template attributes passed to module.
@@ -527,33 +553,17 @@ def main():
             module=module,
             service=templates_service,
         )
-        ret = None
-        changed=False
         state = module.params['state']
         if state == 'present':
             if module.params['version'] != None:
-                templates = templates_service.list()
-                for template in templates:
-                    if module.params.get('name') == template.name:
-                        if module.params.get('version').get('number') != None and module.params.get('version').get('number') == template.version.version_number:
-                            template_service= templates_service.template_service(template.id)
-                            ret = template_service.update(
-                                template=templates_module.build_entity()
-                            )
-                if ret == None:
-                    ret = templates_service.add(templates_module.build_entity())
-            if ret == None:
+                ret = _template_subversion(module, templates_service, templates_module, connection)
+            else:
                 ret = templates_module.create(
                     result_state=otypes.TemplateStatus.OK,
                     search_params=searchable_attributes(module),
                     clone_permissions=module.params['clone_permissions'],
                     seal=module.params['seal'],
                 )
-            ret = {
-                'changed': changed,
-                'id': template.id,
-                'template': get_dict_of_struct(template)
-            }
         elif state == 'absent':
             ret = templates_module.remove()
         elif state == 'exported':
