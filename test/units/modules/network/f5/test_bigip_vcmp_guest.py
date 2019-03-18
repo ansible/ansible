@@ -156,23 +156,36 @@ class TestManager(unittest.TestCase):
         self.patcher1 = patch('time.sleep')
         self.patcher1.start()
 
+        try:
+            self.p1 = patch('library.modules.bigip_vcmp_guest.ModuleParameters.initial_image_exists')
+            self.m1 = self.p1.start()
+            self.m1.return_value = True
+        except Exception:
+            self.p1 = patch('ansible.modules.network.f5.bigip_vcmp_guest.ModuleParameters.initial_image_exists')
+            self.m1 = self.p1.start()
+            self.m1.return_value = True
+
     def tearDown(self):
         self.patcher1.stop()
+        self.p1.stop()
 
-    def test_create_vlan(self, *args):
+    def test_create_vcmpguest(self, *args):
         set_module_args(dict(
             name="guest1",
             mgmt_network="bridged",
             mgmt_address="10.10.10.10/24",
             initial_image="BIGIP-13.1.0.0.0.931.iso",
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            required_if=self.spec.required_if
         )
 
         # Override methods to force specific logic in the module to happen
