@@ -21,7 +21,7 @@ version_added: "2.7"
 short_description: Revoke certificates with the ACME protocol
 description:
    - "Allows to revoke certificates issued by a CA supporting the
-      L(ACME protocol,https://tools.ietf.org/html/draft-ietf-acme-acme-14),
+      L(ACME protocol,https://tools.ietf.org/html/rfc8555),
       such as L(Let's Encrypt,https://letsencrypt.org/)."
 notes:
    - "Exactly one of C(account_key_src), C(account_key_content),
@@ -188,7 +188,7 @@ def main():
             result, info = account.send_signed_request(endpoint, payload)
         if info['status'] != 200:
             already_revoked = False
-            # Standarized error in draft 14 (https://tools.ietf.org/html/draft-ietf-acme-acme-14#section-7.6)
+            # Standarized error from draft 14 on (https://tools.ietf.org/html/rfc8555#section-7.6)
             if result.get('type') == 'urn:ietf:params:acme:error:alreadyRevoked':
                 already_revoked = True
             else:
