@@ -26,9 +26,10 @@ DOCUMENTATION = '''
             required: True
             choices: ['aws_ec2']
         boto_profile:
-          description: The boto profile to use. This plugin supports boto3-style credentials, so the profile
-              may be sourced from ~/.aws/config for assuming an IAM role.
-              See U(https://boto3.amazonaws.com/v1/documentation/api/latest/guide/configuration.html) for details.
+          description:
+              - The boto profile to use.
+              - This plugin supports boto3-style credentials, so the profile may be sourced from ~/.aws/config for assuming an IAM role.
+              - See U(https://boto3.amazonaws.com/v1/documentation/api/latest/guide/configuration.html) for details.
           env:
               - name: AWS_PROFILE
               - name: AWS_DEFAULT_PROFILE
@@ -54,30 +55,34 @@ DOCUMENTATION = '''
               - name: EC2_SECURITY_TOKEN
         regions:
           description:
-            - A list of regions in which to describe EC2 instances.
-            - If empty (the default) default this will include all regions, except possibly restricted ones like us-gov-west-1 and cn-north-1.
+              - A list of regions in which to describe EC2 instances.
+              - If empty (the default) default this will include all regions, except possibly restricted ones like us-gov-west-1 and cn-north-1.
           type: list
           default: []
         hostnames:
-          description: A list in order of precedence for hostname variables. You can use the options specified in
-              U(http://docs.aws.amazon.com/cli/latest/reference/ec2/describe-instances.html#options). To use tags as hostnames
-              use the syntax tag:Name=Value to use the hostname Name_Value, or tag:Name to use the value of the Name tag.
+          description:
+              - A list in order of precedence for hostname variables.
+              - You can use the options specified in U(http://docs.aws.amazon.com/cli/latest/reference/ec2/describe-instances.html#options).
+              - To use tags as hostnames use the syntax tag:Name=Value to use the hostname Name_Value, or tag:Name to use the value of the Name tag.
           type: list
           default: []
         filters:
-          description: A dictionary of filter value pairs. Available filters are listed here
-              U(http://docs.aws.amazon.com/cli/latest/reference/ec2/describe-instances.html#options)
+          description:
+              - A dictionary of filter value pairs.
+              - Available filters are listed here U(http://docs.aws.amazon.com/cli/latest/reference/ec2/describe-instances.html#options).
           type: dict
           default: {}
         include_extra_api_calls:
-          description: Add two additional API calls for every instance to include 'persistent' and 'events' host variables. Spot instances
-              may be persistent and instances may have associated events.
+          description:
+              - Add two additional API calls for every instance to include 'persistent' and 'events' host variables.
+              - Spot instances may be persistent and instances may have associated events.
           type: bool
           default: False
           version_added: '2.8'
         strict_permissions:
-          description: By default if a 403 (Forbidden) is encountered this plugin will fail. You can set strict_permissions to
-              False in the inventory config file which will allow 403 errors to be gracefully skipped.
+          description:
+              - By default if a 403 (Forbidden) error code is encountered this plugin will fail.
+              - You can set this option to False in the inventory config file which will allow 403 errors to be gracefully skipped.
           type: bool
           default: True
         use_contrib_script_compatible_sanitization:
