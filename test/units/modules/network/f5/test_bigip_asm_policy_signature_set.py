@@ -126,9 +126,11 @@ class TestManager(unittest.TestCase):
             alarm='yes',
             block='no',
             learn='yes',
-            server='localhost',
-            password='password',
-            user='admin',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
