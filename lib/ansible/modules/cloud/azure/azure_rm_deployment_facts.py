@@ -147,10 +147,10 @@ class AzureRMDeploymentFacts(AzureRMModuleBase):
         d = {
             'id': d.get('id'),
             'name': d.get('name'),
-            'provisioning_state': d.get('parameters', {}).get('provisioning_state'),
+            'provisioning_state': d.get('properties', {}).get('provisioning_state'),
             'output_resources': output_resources,
             'outputs': d.get('parameters', {}).get('outputs'),
-            'parameters': d.get('parameters', {}).get('parameters'),
+            'parameters': d.get('properties', {}).get('parameters'),
             # 'template_link'
             # 'resource_group': self.parse_resource_to_dict(d.get('id')).get('resource_group'),
             # 'lab_name': self.parse_resource_to_dict(d.get('id')).get('name'),
@@ -163,7 +163,6 @@ class AzureRMDeploymentFacts(AzureRMModuleBase):
             # 'publisher': d.get('publisher'),
             # 'target_os_type': d.get('target_os_type'),
             # 'title': d.get('title')
-            'all': d
         }
         return d
 
