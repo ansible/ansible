@@ -38,6 +38,9 @@ notes:
     - This module requires both the ANSIBLE_PERSISTENT_CONNECT_TIMEOUT and
       ANSIBLE_PERSISTENT_COMMAND_TIMEOUT timers to be set to 600 seconds or higher.
       The module will exit if the timers are not set properly.
+    - When using connection local, ANSIBLE_PERSISTENT_CONNECT_TIMEOUT and
+      ANSIBLE_PERSISTENT_COMMAND_TIMEOUT can only be set using ENV variables or
+      the ansible.cfg file.
     - Do not include full file paths, just the name of the file(s) stored on
       the top level flash directory.
     - This module attempts to install the software immediately,
