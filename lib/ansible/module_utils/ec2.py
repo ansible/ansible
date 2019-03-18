@@ -561,10 +561,11 @@ def _hashable_policy(policy, policy_list):
                 tupleified = tuple(tupleified)
             policy_list.append(tupleified)
     elif isinstance(policy, string_types) or isinstance(policy, binary_type):
+        policy = to_text(policy)
         # convert root account ARNs to just account IDs
         if policy.startswith('arn:aws:iam::') and policy.endswith(':root'):
             policy = policy.split(':')[4]
-        return [(to_text(policy))]
+        return [policy]
     elif isinstance(policy, dict):
         sorted_keys = list(policy.keys())
         sorted_keys.sort()
