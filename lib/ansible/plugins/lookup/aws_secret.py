@@ -8,7 +8,7 @@ DOCUMENTATION = r"""
 lookup: aws_secret
 author:
   - Aaron Smith <ajsmith10381@gmail.com>
-version_added: "2.7"
+version_added: "2.8"
 requirements:
   - boto3
   - botocore>=1.10.0
@@ -63,9 +63,8 @@ from ansible.errors import AnsibleError
 try:
     import boto3
     import botocore
-    HAS_BOTO = True
 except ImportError:
-    HAS_BOTO = False
+    raise AnsibleError("The lookup aws_secret requires boto3 and botocore.")
 
 from ansible.plugins import AnsiblePlugin
 from ansible.plugins.lookup import LookupBase
@@ -107,8 +106,6 @@ class LookupModule(LookupBase):
         return credentials
 
     def run(self, terms, variables, **kwargs):
-        if not HAS_BOTO:
-            raise AnsibleError("The lookup aws_secret requires boto3 and botocore.")
 
         self.set_options(var_options=variables, direct=kwargs)
         boto_credentials = self._get_credentials()

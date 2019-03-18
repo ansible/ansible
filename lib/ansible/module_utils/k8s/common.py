@@ -52,7 +52,7 @@ except ImportError:
 try:
     import urllib3
     urllib3.disable_warnings()
-except (ImportError, AttributeError):
+except ImportError:
     pass
 
 
