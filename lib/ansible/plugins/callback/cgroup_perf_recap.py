@@ -364,6 +364,14 @@ class CallbackModule(CallbackBase):
     def _profile(self, obj=None):
         prev_task = None
         results = dict.fromkeys(self._features)
+        for dummy, f in self._files.items():
+            if f is None:
+                continue
+            try:
+                f.close()
+            except Exception:
+                pass
+
         try:
             for name, prof in self._profilers.items():
                 prof.running = False
@@ -396,12 +404,6 @@ class CallbackModule(CallbackBase):
 
     def v2_playbook_on_stats(self, stats):
         self._profile()
-
-        for dummy, f in self._files.items():
-            try:
-                f.close()
-            except Exception:
-                pass
 
         if not self._display_recap:
             return
