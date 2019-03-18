@@ -56,7 +56,7 @@ options:
     version:
         description:
             - Server version.
-        choices: ['5.6', '5.7']
+        choices: ['10.2']
     enforce_ssl:
         description:
             - Enable SSL enforcement.
@@ -100,7 +100,7 @@ EXAMPLES = '''
       location: eastus
       storage_mb: 1024
       enforce_ssl: True
-      version: 5.6
+      version: 10.2
       admin_username: cloudsa
       admin_password: password
 '''
@@ -114,10 +114,10 @@ id:
     sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforMariaDB/servers/mariadbsrv1b6dd89593
 version:
     description:
-        - 'Server version. Possible values include: C(5.6), C(5.7)'
+        - 'Server version. Possible values include: C(10.2)'
     returned: always
     type: str
-    sample: 5.6
+    sample: 10.2
 state:
     description:
         - 'A state of a server that is visible to user. Possible values include: C(Ready), C(Dropping), C(Disabled)'
@@ -173,7 +173,7 @@ class AzureRMMariaDbServers(AzureRMModuleBase):
             ),
             version=dict(
                 type='str',
-                choices=['5.6', '5.7']
+                choices=['10.2']
             ),
             enforce_ssl=dict(
                 type='bool',
