@@ -542,7 +542,7 @@ class PgDbConn(object):
                 try:
                     self.cursor.execute('SET ROLE %s' % self.session_role)
                 except Exception as e:
-                    module.fail_json(msg="Could not switch role: %s" % to_native(e))
+                    self.module.fail_json(msg="Could not switch role: %s" % to_native(e))
 
             return self.cursor
 
