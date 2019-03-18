@@ -172,40 +172,76 @@
         that:
           - "{{ test_foo.results[0].stdout == 'outer' }}"
 
-- name: Test setting environment using set_fact
+- name: Test undefined environment value with set_fact
   hosts: testhost
   environment:
-    http_proxy: "{{ proxy_var }}"
+    env_testvar1: "{{ proxy_var }}"
 
   pre_tasks:
     - set_fact:
         proxy_var: proxyserver1
 
   tasks:
-    - shell: echo $http_proxy
+    - shell: echo $env_testvar1
       register: set_fact_test
 
-    - name: Ensure environment variable was set properly from set_fact
-      assert:
+    - assert:
         that:
-          - "'proxyserver1' in set_fact_test.stdout_lines"
+          - "'proxyserver1' in set_fact_test.stdout"
 
-- name: Test setting environment using include_vars
+- name: Test undefined environment value with include_vars
   hosts: testhost
   environment:
-    http_proxy: "{{ include_proxy_var }}"
+    env_testvar2: "{{ include_proxy_var }}"
 
   tasks:
     - include_vars: testvars.yml
 
-    - shell: echo $http_proxy
+    - shell: echo $env_testvar2
       register: include_vars_test
 
     - debug:
         var: include_vars_test
       tags: debug
 
-    - name: Ensure environment variable was set properly from include_vars
-      assert:
+    - assert:
         that:
-          - "'from include vars' in include_vars_test.stdout_lines"
+          - "'from include vars' in include_vars_test.stdout"
+
+- name: Test undefined environment value with add_host
+  hosts: testhost
+  environment:
+    env_testvar3: "{{ testvar3 }}"
+
+  tasks:
+    - add_host:
+        name: envtest_host
+
+    - set_fact:
+        testvar3: testvar3 set
+
+    - shell: echo $env_testvar3
+      register: add_host_test
+
+    - assert:
+        that:
+          - "'testvar3 set' in add_host_test.stdout"
+
+- name: Test undefined environment value with group_by
+  hosts: testhost
+  environment:
+    env_testvar4: "{{ testvar4 }}"
+
+  tasks:
+    - group_by:
+        key: env_test_group
+
+    - set_fact:
+        testvar4: testvar4 set
+
+    - shell: echo $env_testvar4
+      register: add_host_test
+
+    - assert:
+        that:
+          - "'testvar4 set' in add_host_test.stdout"

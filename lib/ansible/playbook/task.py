@@ -315,13 +315,22 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
                     env[k] = templar.template(v, convert_bare=False)
                 except AnsibleUndefinedVariable as e:
                     error = to_native(e)
-
+                    plugins_ignore_undefined = (
+                        'add_host',
+                        'debug',
+                        'gather_facts',
+                        'group_by',
+                        'meta',
+                        'include_vars',
+                        'set_fact',
+                        'setup',
+                    )
                     if (self.action in ('setup', 'gather_facts') and 'ansible_facts.env' in error or
                             'ansible_env' in error or
-                            # Ignore undefined errors for set_fact, include_vars, and fact gathering since those tasks
-                            # can set variables later used to set environment variables, or environment has no effect on those tasks
-                            self.action in ('setup', 'gather_facts', 'set_fact', 'include_vars')) and 'is undefined' in error:
-                        # ignore as fact gathering is required for 'env' facts
+
+                            # Ignore undefined errors for certain tasks on which environment has no effect allowing for
+                            # variables used in environment to be set by later tasks.
+                            self.action in plugins_ignore_undefined and 'is undefined' in error):
                         return
                     raise
 
