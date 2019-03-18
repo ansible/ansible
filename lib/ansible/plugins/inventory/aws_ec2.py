@@ -17,13 +17,18 @@ DOCUMENTATION = '''
     description:
         - Get inventory hosts from Amazon Web Services EC2.
         - Uses a YAML configuration file that ends with aws_ec2.(yml|yaml).
+    notes:
+        - If no credentials are provided and the control node has an associated IAM instance profile then the
+          role will be used for authentication.
     options:
         plugin:
             description: token that ensures this is a source file for the 'aws_ec2' plugin.
             required: True
             choices: ['aws_ec2']
         boto_profile:
-          description: The boto profile to use.
+          description: The boto profile to use. This plugin supports boto3-style credentials, so the profile
+              may be sourced from ~/.aws/config for assuming an IAM role.
+              See U(https://boto3.amazonaws.com/v1/documentation/api/latest/guide/configuration.html) for details.
           env:
               - name: AWS_PROFILE
               - name: AWS_DEFAULT_PROFILE
