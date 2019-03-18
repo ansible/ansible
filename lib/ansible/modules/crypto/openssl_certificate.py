@@ -594,29 +594,30 @@ class Certificate(crypto_utils.OpenSSLObject):
             result = datetime.datetime.strptime(input_string, '%Y%m%d%H%M%SZ')
         return result
 
-    def check(self, module, perms_required=True):
-        """Ensure the resource is in its desired state."""
+    def _validate_privatekey(self):
+        if self.backend == 'pyopenssl':
+            ctx = OpenSSL.SSL.Context(OpenSSL.SSL.TLSv1_2_METHOD)
+            ctx.use_privatekey(self.privatekey)
+            ctx.use_certificate(self.cert)
+            try:
+                ctx.check_privatekey()
+                return True
+            except OpenSSL.SSL.Error:
+                return False
+        elif self.backend == 'cryptography':
+            return self.cert.public_key().public_numbers() == self.privatekey.public_key().public_numbers()
 
-        state_and_perms = super(Certificate, self).check(module, perms_required)
-
-        def _validate_privatekey():
-            if self.privatekey_path:
-                ctx = OpenSSL.SSL.Context(OpenSSL.SSL.TLSv1_2_METHOD)
-                ctx.use_privatekey(self.privatekey)
-                ctx.use_certificate(self.cert)
-                try:
-                    ctx.check_privatekey()
-                    return True
-                except OpenSSL.SSL.Error:
-                    return False
-
-        def _validate_csr():
+    def _validate_csr(self):
+        if self.backend == 'pyopenssl':
+            # Verify that CSR is signed by certificate's private key
             try:
                 self.csr.verify(self.cert.get_pubkey())
             except OpenSSL.crypto.Error:
                 return False
+            # Check subject
             if self.csr.get_subject() != self.cert.get_subject():
                 return False
+            # Check extensions
             csr_extensions = self.csr.get_extensions()
             cert_extension_count = self.cert.get_extension_count()
             if len(csr_extensions) != cert_extension_count:
@@ -627,25 +628,53 @@ class Certificate(crypto_utils.OpenSSLObject):
                 if cert_extension.get_data() != list(csr_extension)[0].get_data():
                     return False
             return True
+        elif self.backend == 'cryptography':
+            # Verify that CSR is signed by certificate's private key
+            if not self.csr.is_signature_valid:
+                return False
+            if self.csr.public_key().public_numbers() != self.cert.public_key().public_numbers():
+                return False
+            # Check subject
+            if self.csr.subject != self.cert.subject:
+                return False
+            # Check extensions
+            cert_exts = self.cert.extensions
+            csr_exts = self.csr.extensions
+            if len(cert_exts) != len(csr_exts):
+                return False
+            for cert_ext in cert_exts:
+                try:
+                    csr_ext = csr_exts.get_extension_for_class(extclass)
+                    if cert_ext != csr_ext:
+                        return False
+                except cryptography.x509.ExtensionNotFound as e:
+                    return False
+            return True
+
+    def check(self, module, perms_required=True):
+        """Ensure the resource is in its desired state."""
+
+        state_and_perms = super(Certificate, self).check(module, perms_required)
 
         if not state_and_perms:
             return False
 
-        self.cert = crypto_utils.load_certificate(self.path)
+        self.cert = crypto_utils.load_certificate(self.path, backend=self.backend)
 
         if self.privatekey_path:
             try:
                 self.privatekey = crypto_utils.load_privatekey(
                     self.privatekey_path,
-                    self.privatekey_passphrase
+                    self.privatekey_passphrase,
+                    backend=self.backend
                 )
             except crypto_utils.OpenSSLBadPassphraseError as exc:
                 raise CertificateError(exc)
-            return _validate_privatekey()
+            return self._validate_privatekey()
 
         if self.csr_path:
-            self.csr = crypto_utils.load_certificate_request(self.csr_path)
-            if not _validate_csr():
+            self.csr = crypto_utils.load_certificate_request(self.csr_path, backend=self.backend)
+            if not self._validate_csr():
                 return False
 
         return True
