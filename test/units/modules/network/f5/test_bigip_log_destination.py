@@ -80,9 +80,11 @@ class TestV1Parameters(unittest.TestCase):
                 forward_to='pool1',
                 syslog_format='rfc5424'
             ),
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         )
         p = V1ModuleParameters(params=args)
         assert p.name == 'foo'
@@ -110,14 +112,17 @@ class TestV1Manager(unittest.TestCase):
                 forward_to='pool1',
             ),
             state='present',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            mutually_exclusive=self.spec.mutually_exclusive
         )
 
         # Override methods in the specific type of manager
