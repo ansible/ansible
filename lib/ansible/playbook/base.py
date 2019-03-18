@@ -195,11 +195,6 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
 
     def preprocess_data(self, ds):
         ''' infrequently used method to do some pre-processing of legacy terms '''
-
-        for base_class in self.__class__.mro():
-            method = getattr(self, "_preprocess_data_%s" % base_class.__name__.lower(), None)
-            if method:
-                return method(ds)
         return ds
 
     def load_data(self, ds, variable_manager=None, loader=None):
