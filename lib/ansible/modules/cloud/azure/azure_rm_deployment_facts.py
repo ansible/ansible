@@ -220,7 +220,7 @@ class AzureRMDeploymentFacts(AzureRMModuleBase):
         # convert dictionary to list
         output_resources_list = []
         for r in output_resources:
-            output_resources_list.append(r)
+            output_resources_list.append(output_resources[r])
 
         d = {
             'id': d.get('id'),
