@@ -140,10 +140,17 @@ class AzureRMDeploymentFacts(AzureRMModuleBase):
 
     def format_response(self, item):
         d = item.as_dict()
+        output_resources = []
+        for resource in d.get('properties', {}).get('output_resources'):
+            output_resources.append(resource.get('id'))
+
         d = {
             'id': d.get('id'),
             'name': d.get('name'),
             'provisioning_state': d.get('parameters', {}).get('provisioning_state'),
+            'output_resources': output_resources,
+            'outputs': d.get('parameters', {}).get('outputs'),
+            'parameters': d.get('parameters', {}).get('parameters'),
             # 'template_link'
             # 'resource_group': self.parse_resource_to_dict(d.get('id')).get('resource_group'),
             # 'lab_name': self.parse_resource_to_dict(d.get('id')).get('name'),

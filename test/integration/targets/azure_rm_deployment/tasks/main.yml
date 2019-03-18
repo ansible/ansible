@@ -35,3 +35,11 @@
   register: output
 - debug:
     var: output
+
+- name: Assert that values are returned
+  assert:
+    that:
+      - not output.changed
+      - output.deployments[0]['provisioning_state'] != None
+      - output.deployments[0]['output_resources'] | lenght > 0
+      - output.deployments[0]['outpus'] | lenght > 0
