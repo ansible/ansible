@@ -30,25 +30,46 @@ options:
     auth:
         description:
             - "Dictionary with values needed to create HTTP/HTTPS connection to oVirt:"
-            - C(username)[I(required)] - The name of the user, something like I(admin@internal).
-              Default value is set by I(OVIRT_USERNAME) environment variable.
-            - "C(password)[I(required)] - The password of the user. Default value is set by I(OVIRT_PASSWORD) environment variable."
-            - "C(url) - A string containing the API URL of the server, usually
-            something like `I(https://server.example.com/ovirt-engine/api)`. Default value is set by I(OVIRT_URL) environment variable.
-            Either C(url) or C(hostname) is required."
-            - "C(hostname) - A string containing the hostname of the server, usually
-            something like `I(server.example.com)`. Default value is set by I(OVIRT_HOSTNAME) environment variable.
-            Either C(url) or C(hostname) is required."
-            - "C(token) - Token to be used instead of login with username/password. Default value is set by I(OVIRT_TOKEN) environment variable."
-            - "C(insecure) - A boolean flag that indicates if the server TLS
-            certificate and host name should be checked."
-            - "C(ca_file) - A PEM file containing the trusted CA certificates. The
-            certificate presented by the server will be verified using these CA
-            certificates. If `C(ca_file)` parameter is not set, system wide
-            CA certificate store is used. Default value is set by I(OVIRT_CAFILE) environment variable."
-            - "C(kerberos) - A boolean flag indicating if Kerberos authentication
-            should be used instead of the default basic authentication."
-            - "C(headers) - Dictionary of HTTP headers to be added to each API call."
+        suboptions:
+            username:
+                description:
+                    - The name of the user, something like I(admin@internal).
+                    - Default value is set by I(OVIRT_USERNAME) environment variable.
+                required: true
+            password:
+                description:
+                    - The password of the user.
+                    - Default value is set by I(OVIRT_PASSWORD) environment variable.
+                required: true
+            url:
+                description:
+                    - A string containing the API URL of the server, usually something like `I(https://server.example.com/ovirt-engine/api)`.
+                    - Default value is set by I(OVIRT_URL) environment variable.
+                    - Either C(url) or C(hostname) is required.
+            hostname:
+                description:
+                    - A string containing the hostname of the server, usually something like `I(server.example.com)`.
+                    - Default value is set by I(OVIRT_HOSTNAME) environment variable.
+                    - Either C(url) or C(hostname) is required.
+            token:
+                description:
+                    - Token to be used instead of login with username/password.
+                    - Default value is set by I(OVIRT_TOKEN) environment variable.
+            insecure:
+                description:
+                    - A boolean flag that indicates if the server TLS certificate and host name should be checked.
+            ca_file:
+                description:
+                    - A PEM file containing the trusted CA certificates.
+                    - The certificate presented by the server will be verified using these CA certificates.
+                    - If `C(ca_file)` parameter is not set, system wide CA certificate store is used.
+                    - Default value is set by I(OVIRT_CAFILE) environment variable.
+            kerberos:
+                description:
+                    -  A boolean flag indicating if Kerberos authentication should be used instead of the default basic authentication.
+            headers:
+                description:
+                    - Dictionary of HTTP headers to be added to each API call.
         type: dict
         required: true
     timeout:
