@@ -24,29 +24,27 @@ options:
   instance_id:
     description: The EC2 instance ID.
     vars:
-    - name: instance_id
-    - name: aws_instance_id
+    - name: ansible_aws_ssm_instance_id
   region:
     description: The region the EC2 instance is located.
     vars:
-    - name: region
-    - name: aws_region
+    - name: ansible_aws_ssm_region
     default: 'us-east-1'
   bucket_name:
     description: The name of the S3 bucket used for file transfers.
     vars:
-    - name: bucket_name
+    - name: ansible_aws_ssm_bucket_name
   plugin:
     description: This defines the location of the session-manager-plugin binary.
     vars:
-    - name: session_manager_plugin
+    - name: ansible_aws_ssm_plugin
     default: '/usr/local/bin/session-manager-plugin'
   retries:
     description: Number of attempts to connect.
     default: 3
     type: integer
     vars:
-    - name: ansible_ssm_retries
+    - name: ansible_aws_ssm_retries
   timeout:
     description: Connection timeout seconds.
     default: 60
@@ -62,8 +60,8 @@ EXAMPLES = '''
   vars:
     ansible_connection: aws_ssm
     ansible_shell_executable: powershell
-    bucket_name: nameofthebucket
-    region: us-east-1
+    ansible_aws_ssm_bucket_name: nameofthebucket
+    ansible_aws_ssm_region: us-east-1
   tasks:
     - name: Stop spooler service
       win_service:
@@ -74,8 +72,8 @@ EXAMPLES = '''
 - name: Install a Nginx Package
   vars:
     ansible_connection: aws_ssm
-    bucket_name: nameofthebucket
-    region: us-west-2
+    ansible_aws_ssm_bucket_name: nameofthebucket
+    ansible_aws_ssm_region: us-west-2
   tasks:
     - name: Install a Nginx Package
       yum:
@@ -87,8 +85,8 @@ EXAMPLES = '''
   vars:
     ansible_connection: aws_ssm
     ansible_shell_executable: powershell
-    bucket_name: nameofthebucket
-    region: us-east-1
+    ansible_aws_ssm_bucket_name: nameofthebucket
+    ansible_aws_ssm_region: us-east-1
   tasks:
     - name: Create a Directory
       win_file:
