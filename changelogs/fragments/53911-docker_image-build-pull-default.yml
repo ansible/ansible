@@ -1,0 +1,2 @@
+minor_changes:
+- "docker_image - the default for ``build.pull`` will change from ``yes`` to ``no`` in Ansible 2.12. Please update your playbooks/roles now."
