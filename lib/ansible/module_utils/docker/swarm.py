@@ -4,6 +4,7 @@
 
 import json
 from time import sleep
+from re import split
 
 try:
     from docker.errors import APIError
@@ -13,7 +14,18 @@ except ImportError:
 
 from ansible.module_utils._text import to_native
 from ansible.module_utils.docker.common import AnsibleDockerClient
-from ansible.parsing.utils.addresses import parse_address
+
+
+def strip_ipaddress(address=None):
+    if address is None:
+        return address
+
+    count_colons = address.count(":")
+
+    if count_colons == 1:
+        return split(":", address)[0]
+    else:
+        return address
 
 
 class AnsibleDockerSwarmClient(AnsibleDockerClient):
@@ -172,7 +184,7 @@ class AnsibleDockerSwarmClient(AnsibleDockerClient):
             if node_info['ManagerStatus'].get('Leader'):
                 # This is workaround of bug in Docker when in some cases the Leader IP is 0.0.0.0
                 # Check moby/moby#35437 for details
-                swarm_leader_ip = parse_address(node_info['ManagerStatus']['Addr'])[0] or node_info['Status']['Addr']
+                swarm_leader_ip = strip_ipaddress(node_info['ManagerStatus']['Addr']) or node_info['Status']['Addr']
                 node_info['Status']['Addr'] = swarm_leader_ip
         return node_info
 
