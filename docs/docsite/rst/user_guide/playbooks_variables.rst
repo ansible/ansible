@@ -1025,7 +1025,7 @@ Here is the order of precedence from least to greatest (the last listed variable
   #. task vars (only for the task)
   #. include_vars
   #. set_facts / registered vars
-  #. role (and include_role) params
+  #. role params
   #. include params
   #. extra vars (always win precedence)
 
