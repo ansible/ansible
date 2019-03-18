@@ -50,16 +50,16 @@ options:
     default: 60
     type: integer
     vars:
-    - name: ansible_ssm_timeout
+    - name: ansible_aws_ssm_timeout
 """
 
-EXAMPLES = '''
+EXAMPLES = r'''
 
 # Stop Spooler Process on Windows Instances
 - name: Stop Spooler Service on Windows Instances
   vars:
     ansible_connection: aws_ssm
-    ansible_shell_executable: powershell
+    ansible_shell_type: powershell
     ansible_aws_ssm_bucket_name: nameofthebucket
     ansible_aws_ssm_region: us-east-1
   tasks:
@@ -84,13 +84,13 @@ EXAMPLES = '''
 - name: Create a directory in Windows Instance
   vars:
     ansible_connection: aws_ssm
-    ansible_shell_executable: powershell
+    ansible_shell_type: powershell
     ansible_aws_ssm_bucket_name: nameofthebucket
     ansible_aws_ssm_region: us-east-1
   tasks:
     - name: Create a Directory
       win_file:
-        path: "Windows path here"
+        path: C:\Windows\temp
         state: directory
 '''
 
