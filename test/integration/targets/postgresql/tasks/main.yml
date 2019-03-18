@@ -762,6 +762,10 @@
     that:
       - "result.stdout_lines[-1] == '(0 rows)'"
 
+# Test postgresql_set
+- include: postgresql_set.yml
+  when: postgres_version_resp.stdout is version('9.4', '>=')
+
 # Verify different session_role scenarios
 - include: session_role.yml
 
