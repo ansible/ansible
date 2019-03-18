@@ -18,6 +18,7 @@
     provider: selfsigned
     selfsigned_digest: sha256
     selfsigned_not_after: "-1s"
+    selfsigned_not_before: "-100s"
     select_crypto_backend: '{{ select_crypto_backend }}'
 
 - name: "(Expired) Check task fails because cert is expired (has_expired: false)"
