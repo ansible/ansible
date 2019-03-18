@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# (c) 2018, NetApp, Inc
+# (c) 2018-2019, NetApp, Inc
 # GNU General Public License v3.0+
 # (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -163,7 +163,11 @@ options:
     choices: ['default', 'dp_destination', 'sync_source', 'sync_destination']
     version_added: '2.7'
 
-
+  comment:
+    description:
+    - When specified as part of a vserver-create, this field represents the comment associated with the Vserver.
+    - When part of vserver-get-iter call, this will return the list of matching Vservers.
+    version_added: '2.8'
 '''
 
 EXAMPLES = """
@@ -214,7 +218,8 @@ class NetAppOntapSVM(object):
             ipspace=dict(type='str', required=False),
             snapshot_policy=dict(type='str', required=False),
             language=dict(type='str', required=False),
-            subtype=dict(choices=['default', 'dp_destination', 'sync_source', 'sync_destination'])
+            subtype=dict(choices=['default', 'dp_destination', 'sync_source', 'sync_destination']),
+            comment=dict(type="str", required=False)
         ))
 
         self.module = AnsibleModule(
@@ -281,7 +286,8 @@ class NetAppOntapSVM(object):
                                'language': vserver_info.get_child_content('language'),
                                'snapshot_policy': vserver_info.get_child_content('snapshot-policy'),
                                'allowed_protocols': protocols,
-                               'ipspace': vserver_info.get_child_content('ipspace')}
+                               'ipspace': vserver_info.get_child_content('ipspace'),
+                               'comment': vserver_info.get_child_content('comment')}
         return vserver_details
 
     def create_vserver(self):
@@ -293,6 +299,7 @@ class NetAppOntapSVM(object):
         self.add_parameter_to_dict(options, 'ipspace', 'ipspace')
         self.add_parameter_to_dict(options, 'snapshot_policy', 'snapshot-policy')
         self.add_parameter_to_dict(options, 'subtype', 'vserver-subtype')
+        self.add_parameter_to_dict(options, 'comment', 'comment')
         vserver_create = netapp_utils.zapi.NaElement.create_node_with_children('vserver-create', **options)
         try:
             self.server.invoke_successfully(vserver_create,
@@ -301,6 +308,9 @@ class NetAppOntapSVM(object):
             self.module.fail_json(msg='Error provisioning SVM %s: %s'
                                       % (self.parameters['name'], to_native(e)),
                                   exception=traceback.format_exc())
+        # add allowed-protocols after creation, since vserver-create doesn't allow this attribute during creation
+        if self.parameters.get('allowed_protocols'):
+            self.modify_vserver({'allowed_protocols': self.parameters['allowed_protocols']})
 
     def delete_vserver(self):
         vserver_delete = netapp_utils.zapi.NaElement.create_node_with_children(
@@ -339,6 +349,8 @@ class NetAppOntapSVM(object):
                 vserver_modify.add_new_child('language', self.parameters['language'])
             if attribute == 'snapshot_policy':
                 vserver_modify.add_new_child('snapshot_policy', self.parameters['snapshot_policy'])
+            if attribute == 'comment':
+                vserver_modify.add_new_child('comment', self.parameters['comment'])
             if attribute == 'allowed_protocols':
                 allowed_protocols = netapp_utils.zapi.NaElement('allowed-protocols')
                 for protocol in self.parameters['allowed_protocols']:
