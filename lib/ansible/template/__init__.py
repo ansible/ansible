@@ -592,10 +592,7 @@ class Templar:
         return self._lookup(name, *args, **kwargs)
 
     def _lookup(self, name, *args, **kwargs):
-        if isinstance(name, string_types):
-            instance = self._lookup_loader.get(name.lower(), loader=self._loader, templar=self)
-        else:
-            instance = name
+        instance = self._lookup_loader.get(name.lower(), loader=self._loader, templar=self)
 
         if instance is not None:
             wantlist = kwargs.pop('wantlist', False)
@@ -693,17 +690,18 @@ class Templar:
                 else:
                     return data
 
-            lookups = self._lookup_loader.all(loader=self._loader, templar=self)
+            lookups = self._lookup_loader.all(path_only=True)
+            lookup_names = [os.path.splitext(os.path.basename(l))[0].lstrip('_') for l in lookups]
 
             if disable_lookups:
                 t.globals['query'] = t.globals['q'] = t.globals['lookup'] = self._fail_lookup
-                for lookup in lookups:
-                    t.globals[lookup._load_name] = self._fail_lookup
+                for lookup in lookup_names:
+                    t.globals[lookup] = self._fail_lookup
             else:
                 t.globals['lookup'] = self._lookup
                 t.globals['query'] = t.globals['q'] = self._query_lookup
-                for lookup in lookups:
-                    t.globals[lookup._load_name] = partial(self._query_lookup, lookup)
+                for lookup in lookup_names:
+                    t.globals[lookup] = partial(self._query_lookup, lookup)
 
             t.globals['now'] = self._now_datetime
 
