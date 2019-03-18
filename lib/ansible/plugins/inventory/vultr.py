@@ -16,16 +16,18 @@ DOCUMENTATION = r'''
         - constructed
     description:
         - Get inventory hosts from Vultr public cloud.
-        - Uses I(api_config), I(~/.vultr.ini), I(./vultr.ini) or C(VULTR_API_CONFIG) path to config file.
+        - Uses an YAML configuration file ending with either I(vultr.yml) or I(vultr.yaml) to set parameter values (also see examples).
+        - Uses I(api_config), I(~/.vultr.ini), I(./vultr.ini) or C(VULTR_API_CONFIG) pointing to a Vultr credentials INI file
+          (see U(https://docs.ansible.com/ansible/latest/scenario_guides/guide_vultr.html)).
     options:
         plugin:
-            description: token that ensures this is a source file for the 'vultr' plugin.
-            type: str
+            description: Token that ensures this is a source file for the 'vultr' plugin.
+            type: string
             required: True
             choices: [ vultr ]
         api_account:
             description: Specify the account to be used.
-            type: str
+            type: string
             default: default
         api_config:
             description: Path to the vultr configuration file. If not specified will be taken from regular Vultr configuration.
@@ -34,12 +36,12 @@ DOCUMENTATION = r'''
                 - name: VULTR_API_CONFIG
         api_key:
             description: Vultr API key. If not specified will be taken from regular Vultr configuration.
-            type: str
+            type: string
             env:
                 - name: VULTR_API_KEY
         hostname:
             description: Field to match the hostname. Note v4_main_ip corresponds to the main_ip field returned from the API and name to label.
-            type: str
+            type: string
             default: v4_main_ip
             choices:
                 - v4_main_ip
@@ -47,7 +49,7 @@ DOCUMENTATION = r'''
                 - name
         filter_by_tag:
             description: Only return servers filtered by this tag
-            type: str
+            type: string
             version_added: "2.8"
         strict:
             version_added: "2.8"
@@ -79,7 +81,7 @@ filter_by_tag: Cache
 import json
 
 from ansible.errors import AnsibleError
-from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, to_safe_group_name
+from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
 from ansible.module_utils.six.moves import configparser
 from ansible.module_utils.urls import open_url
 from ansible.module_utils._text import to_native
