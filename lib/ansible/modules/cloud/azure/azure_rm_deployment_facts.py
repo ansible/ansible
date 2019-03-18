@@ -196,29 +196,27 @@ class AzureRMDeploymentFacts(AzureRMModuleBase):
         d = item.as_dict()
         output_resources = {}
         for dependency in d.get('properties', {}).get('dependencies'):
-            resource = output_resources.get(dependency['id'], {})
-            resource['id'] = dependency['id']
-            resource['name'] = dependency['name']
-            dependency['type'] = dependency['type']
-
             # go through dependent resources
             depends_on = []
             for depends_on_resource in dependency['depends_on']:
                 depends_on.append(depends_on_resource['id'])
-                sub_resource = output_resources.get(dependency['id'], {})
-                sub_resource['id'] = depends_on_resource['id']
-                sub_resource['name'] = depends_on_resource['name']
-                sub_resource['type'] = depends_on_resource['type']
-                sub_resource['depends_on'] = sub_resource.get('depends_on', [])
-                output_resources[depends_on_resource['id']] = sub_resource
+                # append if not in list
+                if not output_resources.get(depends_on_resource['id']):
+                    sub_resource = {
+                        'id': depends_on_resource['id'],
+                        'name': depends_on_resource['name'],
+                        'type': depends_on_resource['type'],
+                        'depends_on': []
+                    }
+                    output_resources[depends_on_resource['id']] = sub_resource
             
             resource = {
-                'id' = dependency['id'],
-                'name' = dependency['name'],
-                'type' = dependency['type'],
-                'depends_on' = depends_on
+                'id': dependency['id'],
+                'name': dependency['name'],
+                'type': dependency['type'],
+                'depends_on': depends_on
             }
-            output_resources[resource.get('id')] = resource
+            output_resources[dependency['id']] = resource
 
         # convert dictionary to list
         output_resources_list = []
