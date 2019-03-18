@@ -70,6 +70,9 @@ EXAMPLES = '''
 - name: lookup ssm parameter store in nominated aws profile
   debug: msg="{{ lookup('aws_ssm', 'Hello', aws_profile='myprofile' ) }}"
 
+- name: lookup ssm parameter store using explicit aws credentials
+  debug: msg="{{ lookup('aws_ssm', 'Hello', aws_access_key=my_aws_access_key, aws_secret_key=my_aws_secret_key, aws_security_token=my_security_token ) }}"
+
 - name: lookup ssm parameter store with all options.
   debug: msg="{{ lookup('aws_ssm', 'Hello', decrypt=false, region='us-east-2', aws_profile='myprofile') }}"
 
