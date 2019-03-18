@@ -146,23 +146,13 @@ class AzureRMDeploymentFacts(AzureRMModuleBase):
 
         d = {
             'id': d.get('id'),
+            'resource_group': self.resource_group, 
             'name': d.get('name'),
             'provisioning_state': d.get('properties', {}).get('provisioning_state'),
-            'output_resources': output_resources,
-            'outputs': d.get('parameters', {}).get('outputs'),
             'parameters': d.get('properties', {}).get('parameters'),
-            # 'template_link'
-            # 'resource_group': self.parse_resource_to_dict(d.get('id')).get('resource_group'),
-            # 'lab_name': self.parse_resource_to_dict(d.get('id')).get('name'),
-            # 'artifact_source_name': self.parse_resource_to_dict(d.get('id')).get('child_name_1'),
-            # 'id': d.get('id'),
-            # 'description': d.get('description'),
-            # 'file_path': d.get('file_path'),
-            # 'name': d.get('name'),
-            # 'parameters': d.get('parameters'),
-            # 'publisher': d.get('publisher'),
-            # 'target_os_type': d.get('target_os_type'),
-            # 'title': d.get('title')
+            'outputs': d.get('properties', {}).get('outputs'),
+            'dependencies': d.get('properties', {}).get('dependencies'),
+            'template_link': d.get('properties', {}).get('template_link')
         }
         return d
 
