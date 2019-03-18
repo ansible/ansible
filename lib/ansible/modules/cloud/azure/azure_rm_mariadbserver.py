@@ -87,6 +87,7 @@ extends_documentation_fragment:
 
 author:
     - "Zim Kalinowski (@zikalino)"
+    - "Matti Ranta (@techknowlogick)"
 
 '''
 
