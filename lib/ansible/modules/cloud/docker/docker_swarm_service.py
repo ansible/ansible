@@ -1141,6 +1141,42 @@ def get_value(key, values, default=None):
     return value if value is not None else default
 
 
+def has_dict_changed(new_dict, old_dict):
+    """
+    Check if new_dict has differences compared to old_dict while
+    ignoring keys in old_dict which are None in new_dict.
+    """
+    if new_dict is None:
+        return False
+    if not new_dict and old_dict:
+        return True
+    if not old_dict and new_dict:
+        return True
+    defined_options = dict(
+        (option, value) for option, value in new_dict.items()
+        if value is not None
+    )
+    for option, value in defined_options.items():
+        if value != old_dict.get(option):
+            return True
+    return False
+
+
+def has_list_of_dicts_changed(new_list, old_list):
+    """
+    Check two lists of dicts has differences.
+    """
+    if new_list is None:
+        return False
+    old_list = old_list or []
+    if len(new_list) != len(old_list):
+        return True
+    for new_item, old_item in zip(new_list, old_list):
+        if has_dict_changed(new_item, old_item):
+            return True
+    return False
+
+
 class DockerService(DockerBaseClass):
     def __init__(self):
         super(DockerService, self).__init__()
@@ -1613,11 +1649,11 @@ class DockerService(DockerBaseClass):
         if self.mode != os.mode:
             needs_rebuild = True
             differences.add('mode', parameter=self.mode, active=os.mode)
-        if self.mounts is not None and self.mounts != (os.mounts or []):
+        if has_list_of_dicts_changed(self.mounts, os.mounts):
             differences.add('mounts', parameter=self.mounts, active=os.mounts)
-        if self.configs is not None and self.configs != (os.configs or []):
+        if has_list_of_dicts_changed(self.configs, os.configs):
             differences.add('configs', parameter=self.configs, active=os.configs)
-        if self.secrets is not None and self.secrets != (os.secrets or []):
+        if has_list_of_dicts_changed(self.secrets, os.secrets):
             differences.add('secrets', parameter=self.secrets, active=os.secrets)
         if self.networks is not None and self.networks != (os.networks or []):
             differences.add('networks', parameter=self.networks, active=os.networks)
@@ -1662,7 +1698,7 @@ class DockerService(DockerBaseClass):
             differences.add('restart_policy_delay', parameter=self.restart_policy_delay, active=os.restart_policy_delay)
         if self.restart_policy_window is not None and self.restart_policy_window != os.restart_policy_window:
             differences.add('restart_policy_window', parameter=self.restart_policy_window, active=os.restart_policy_window)
-        if self.rollback_config is not None and self.has_rollback_config_changed(os.rollback_config):
+        if has_dict_changed(self.rollback_config, os.rollback_config):
             differences.add('rollback_config', parameter=self.rollback_config, active=os.rollback_config)
         if self.update_delay is not None and self.update_delay != os.update_delay:
             differences.add('update_delay', parameter=self.update_delay, active=os.update_delay)
@@ -1736,18 +1772,6 @@ class DockerService(DockerBaseClass):
         if '@' not in self.image:
             old_image = old_image.split('@')[0]
         return self.image != old_image, old_image
-
-    def has_rollback_config_changed(self, old_rollback_config):
-        if old_rollback_config is None and self.rollback_config:
-            return True
-        defined_options = dict(
-            (option, value) for option, value in self.rollback_config.items()
-            if value is not None
-        )
-        for option, value in defined_options.items():
-            if value != old_rollback_config.get(option):
-                return True
-        return False
 
     def __str__(self):
         return str({
