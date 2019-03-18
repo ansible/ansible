@@ -17,7 +17,7 @@ $state = Get-AnsibleParam -obj $params -name "state" -type "str" -validateset "a
 
 # used in template/copy when dest is the path to a dir and source is a file
 $original_basename = Get-AnsibleParam -obj $params -name "_original_basename" -type "str"
-if ((Test-Path -Path $path -PathType Container) -and ($null -ne $original_basename)) {
+if ((Test-Path -LiteralPath $path -PathType Container) -and ($null -ne $original_basename)) {
     $path = Join-Path -Path $path -ChildPath $original_basename
 }
 
@@ -82,7 +82,7 @@ function Remove-File($file, $checkmode) {
 }
 
 function Remove-Directory($directory, $checkmode) {
-    foreach ($file in Get-ChildItem $directory.FullName) {
+    foreach ($file in Get-ChildItem -LiteralPath $directory.FullName) {
         Remove-File -file $file -checkmode $checkmode
     }
     Remove-Item -LiteralPath $directory.FullName -Force -Recurse -WhatIf:$checkmode
