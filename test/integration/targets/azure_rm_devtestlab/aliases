@@ -13,4 +13,5 @@ azure_rm_devtestlabvirtualmachine_facts
 azure_rm_devtestlabvirtualmachine_facts
 azure_rm_devtestlabvirtualnetwork_facts
 azure_rm_devtestlabvirtualnetwork
+disabled
 
