@@ -112,3 +112,163 @@ def test_get_nanoseconds_from_raw_option(docker_swarm_service):
 
     with pytest.raises(ValueError):
         docker_swarm_service.get_nanoseconds_from_raw_option('test', [])
+
+
+def test_has_dict_changed(docker_swarm_service):
+    assert not docker_swarm_service.has_dict_changed(
+        {"a": 1},
+        {"a": 1},
+    )
+    assert not docker_swarm_service.has_dict_changed(
+        {"a": 1},
+        {"a": 1, "b": 2}
+    )
+    assert docker_swarm_service.has_dict_changed(
+        {"a": 1},
+        {"a": 2, "b": 2}
+    )
+    assert docker_swarm_service.has_dict_changed(
+        {"a": 1, "b": 1},
+        {"a": 1}
+    )
+    assert not docker_swarm_service.has_dict_changed(
+        None,
+        {"a": 2, "b": 2}
+    )
+    assert docker_swarm_service.has_dict_changed(
+        {},
+        {"a": 2, "b": 2}
+    )
+    assert docker_swarm_service.has_dict_changed(
+        {"a": 1},
+        {}
+    )
+    assert docker_swarm_service.has_dict_changed(
+        {"a": 1},
+        None
+    )
+    assert not docker_swarm_service.has_dict_changed(
+        {},
+        {}
+    )
+    assert not docker_swarm_service.has_dict_changed(
+        None,
+        None
+    )
+    assert not docker_swarm_service.has_dict_changed(
+        {},
+        None
+    )
+    assert not docker_swarm_service.has_dict_changed(
+        None,
+        {}
+    )
+
+
+def test_has_list_of_dicts_changed(docker_swarm_service):
+    assert docker_swarm_service.has_list_of_dicts_changed(
+        [
+            {"a": 1},
+            {"b": 1}
+        ],
+        [
+            {"a": 1}
+        ]
+    )
+    assert docker_swarm_service.has_list_of_dicts_changed(
+        [
+            {"a": 1},
+        ],
+        [
+            {"a": 1},
+            {"b": 1},
+        ]
+    )
+    assert not docker_swarm_service.has_list_of_dicts_changed(
+        [
+            {"a": 1},
+            {"b": 1},
+        ],
+        [
+            {"a": 1},
+            {"b": 1}
+        ]
+    )
+    assert not docker_swarm_service.has_list_of_dicts_changed(
+        None,
+        [
+            {"b": 1},
+            {"a": 1}
+        ]
+    )
+    assert docker_swarm_service.has_list_of_dicts_changed(
+        [],
+        [
+            {"b": 1},
+            {"a": 1}
+        ]
+    )
+    assert not docker_swarm_service.has_list_of_dicts_changed(
+        None,
+        None
+    )
+    assert not docker_swarm_service.has_list_of_dicts_changed(
+        [],
+        None
+    )
+    assert not docker_swarm_service.has_list_of_dicts_changed(
+        None,
+        []
+    )
+    assert not docker_swarm_service.has_list_of_dicts_changed(
+        [
+            {"src": 1, "dst": 2},
+            {"src": 1, "dst": 2, "protocol": "udp"},
+        ],
+        [
+            {"src": 1, "dst": 2,  "protocol": "tcp"},
+            {"src": 1, "dst": 2, "protocol": "udp"},
+        ]
+    )
+    assert not docker_swarm_service.has_list_of_dicts_changed(
+        [
+            {"src": 1, "dst": 2, "protocol": "udp"},
+            {"src": 1, "dst": 3, "protocol": "tcp"},
+        ],
+        [
+            {"src": 1, "dst": 2, "protocol": "udp"},
+            {"src": 1, "dst": 3,  "protocol": "tcp"},
+        ]
+    )
+    assert docker_swarm_service.has_list_of_dicts_changed(
+        [
+            {"src": 1, "dst": 2, "protocol": "udp"},
+            {"src": 1, "dst": 2},
+            {"src": 3, "dst": 4},
+        ],
+        [
+            {"src": 1, "dst": 3, "protocol": "udp"},
+            {"src": 1, "dst": 2, "protocol": "tcp"},
+            {"src": 3, "dst": 4, "protocol": "tcp"},
+        ]
+    )
+    assert docker_swarm_service.has_list_of_dicts_changed(
+        [
+            {"src": 1, "dst": 3, "protocol": "tcp"},
+            {"src": 1, "dst": 2, "protocol": "udp"},
+        ],
+        [
+            {"src": 1, "dst": 2, "protocol": "tcp"},
+            {"src": 1, "dst": 2, "protocol": "udp"},
+        ]
+    )
+    assert docker_swarm_service.has_list_of_dicts_changed(
+        [
+            {"src": 1, "dst": 2, "protocol": "udp"},
+            {"src": 1, "dst": 2, "protocol": "tcp", "extra": {"test": "foo"}},
+        ],
+        [
+            {"src": 1, "dst": 2, "protocol": "udp"},
+            {"src": 1, "dst": 2,  "protocol": "tcp"},
+        ]
+    )
