@@ -482,7 +482,7 @@ def _template_subversion(module, templates_service, templates_module, connection
                     )
                     changed = True
                 else:
-                    # Retrun selected template
+                    # Return selected template
                     resp = template
     else:
         # If there was not definded version number it will craete
