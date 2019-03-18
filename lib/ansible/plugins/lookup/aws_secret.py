@@ -8,7 +8,7 @@ DOCUMENTATION = r"""
 lookup: aws_secret
 author:
   - Aaron Smith <ajsmith10381@gmail.com>
-version_added: "2.8"
+version_added: "2.7"
 requirements:
   - boto3
   - botocore>=1.10.0
