@@ -538,7 +538,7 @@ class RequestWithMethod(urllib_request.Request):
             return urllib_request.Request.get_method(self)
 
 
-def RedirectHandlerFactory(follow_redirects=None, validate_certs=True):
+def RedirectHandlerFactory(follow_redirects=None, validate_certs=True, ca_path=None):
     """This is a class factory that closes over the value of
     ``follow_redirects`` so that the RedirectHandler class has access to
     that value without having to use globals, and potentially cause problems
@@ -553,7 +553,7 @@ def RedirectHandlerFactory(follow_redirects=None, validate_certs=True):
         """
 
         def redirect_request(self, req, fp, code, msg, hdrs, newurl):
-            handler = maybe_add_ssl_handler(newurl, validate_certs)
+            handler = maybe_add_ssl_handler(newurl, validate_certs, ca_path=ca_path)
             if handler:
                 urllib_request._opener.add_handler(handler)
 
@@ -667,15 +667,18 @@ class SSLValidationHandler(urllib_request.BaseHandler):
 
     tmp_certs = (None, None)
 
-    def __init__(self, hostname, port):
+    def __init__(self, hostname, port, ca_path=None):
         self.hostname = hostname
         self.port = port
+        self.ca_path = ca_path
 
     def get_ca_certs(self):
         # tries to find a valid CA cert in one of the
         # standard locations for the current distribution
 
-        if SSLValidationHandler.tmp_certs[0] and os.path.isfile(SSLValidationHandler.tmp_certs[0]):
+        if self.ca_path:
+            return self.ca_path, [self.ca_path]
+        elif SSLValidationHandler.tmp_certs[0] and os.path.isfile(SSLValidationHandler.tmp_certs[0]):
             return SSLValidationHandler.tmp_certs
 
         ca_certs = []
@@ -840,7 +843,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
     https_request = http_request
 
 
-def maybe_add_ssl_handler(url, validate_certs):
+def maybe_add_ssl_handler(url, validate_certs, ca_path=None):
     parsed = generic_urlparse(urlparse(url))
     if parsed.scheme == 'https' and validate_certs:
         if not HAS_SSL:
@@ -859,7 +862,7 @@ def maybe_add_ssl_handler(url, validate_certs):
             port = 443
         # create the SSL validation handler and
         # add it to the list of handlers
-        return SSLValidationHandler(hostname, port)
+        return SSLValidationHandler(hostname, port, ca_path=ca_path)
 
 
 def rfc2822_date_string(timetuple, zone='-0000'):
@@ -882,7 +885,8 @@ def rfc2822_date_string(timetuple, zone='-0000'):
 class Request:
     def __init__(self, headers=None, use_proxy=True, force=False, timeout=10, validate_certs=True,
                  url_username=None, url_password=None, http_agent=None, force_basic_auth=False,
-                 follow_redirects='urllib2', client_cert=None, client_key=None, cookies=None, unix_socket=None):
+                 follow_redirects='urllib2', client_cert=None, client_key=None, cookies=None, unix_socket=None,
+                 ca_path=None):
         """This class works somewhat similarly to the ``Session`` class of from requests
         by defining a cookiejar that an be used across requests as well as cascaded defaults that
         can apply to repeated requests
@@ -916,6 +920,7 @@ class Request:
         self.client_cert = client_cert
         self.client_key = client_key
         self.unix_socket = unix_socket
+        self.ca_path = ca_path
         if isinstance(cookies, cookiejar.CookieJar):
             self.cookies = cookies
         else:
@@ -931,7 +936,7 @@ class Request:
              url_username=None, url_password=None, http_agent=None,
              force_basic_auth=None, follow_redirects=None,
              client_cert=None, client_key=None, cookies=None, use_gssapi=False,
-             unix_socket=None):
+             unix_socket=None, ca_path=None):
         """
         Sends a request via HTTP(S) or FTP using urllib2 (Python2) or urllib (Python3)
 
@@ -967,7 +972,8 @@ class Request:
             request
         :kwarg use_gssapi: (optional) Use GSSAPI handler of requests.
         :kwarg unix_socket: (optional) String of file system path to unix socket file to use when establishing
-        connection to the provided url
+            connection to the provided url
+        :kwarg ca_path: (optional) String of file system path to CA cert bundle to use
         :returns: HTTPResponse
         """
 
@@ -992,13 +998,14 @@ class Request:
         client_key = self._fallback(client_key, self.client_key)
         cookies = self._fallback(cookies, self.cookies)
         unix_socket = self._fallback(unix_socket, self.unix_socket)
+        ca_path = self._fallback(ca_path, self.ca_path)
 
         handlers = []
 
         if unix_socket:
             handlers.append(UnixHTTPHandler(unix_socket))
 
-        ssl_handler = maybe_add_ssl_handler(url, validate_certs)
+        ssl_handler = maybe_add_ssl_handler(url, validate_certs, ca_path=ca_path)
         if ssl_handler:
             handlers.append(ssl_handler)
         if HAS_GSSAPI and use_gssapi:
@@ -1083,7 +1090,7 @@ class Request:
         if hasattr(socket, 'create_connection') and CustomHTTPSHandler:
             handlers.append(CustomHTTPSHandler)
 
-        handlers.append(RedirectHandlerFactory(follow_redirects, validate_certs))
+        handlers.append(RedirectHandlerFactory(follow_redirects, validate_certs, ca_path=ca_path))
 
         # add some nicer cookie handling
         if cookies is not None:
@@ -1203,7 +1210,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
              url_username=None, url_password=None, http_agent=None,
              force_basic_auth=False, follow_redirects='urllib2',
              client_cert=None, client_key=None, cookies=None,
-             use_gssapi=False, unix_socket=None):
+             use_gssapi=False, unix_socket=None, ca_path=None):
     '''
     Sends a request via HTTP(S) or FTP using urllib2 (Python2) or urllib (Python3)
 
@@ -1215,7 +1222,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
                           url_username=url_username, url_password=url_password, http_agent=http_agent,
                           force_basic_auth=force_basic_auth, follow_redirects=follow_redirects,
                           client_cert=client_cert, client_key=client_key, cookies=cookies,
-                          use_gssapi=use_gssapi, unix_socket=unix_socket)
+                          use_gssapi=use_gssapi, unix_socket=unix_socket, ca_path=ca_path)
 
 
 #
@@ -1251,7 +1258,7 @@ def url_argument_spec():
 
 def fetch_url(module, url, data=None, headers=None, method=None,
               use_proxy=True, force=False, last_mod_time=None, timeout=10,
-              use_gssapi=False, unix_socket=None):
+              use_gssapi=False, unix_socket=None, ca_path=None):
     """Sends a request via HTTP(S) or FTP (needs the module as parameter)
 
     :arg module: The AnsibleModule (used to get username, password etc. (s.b.).
@@ -1266,7 +1273,8 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     :kwarg int timeout:   Default: 10
     :kwarg boolean use_gssapi:   Default: False
     :kwarg unix_socket: (optional) String of file system path to unix socket file to use when establishing
-    connection to the provided url
+        connection to the provided url
+    :kwarg ca_path: (optional) String of file system path to CA cert bundle to use
 
     :returns: A tuple of (**response**, **info**). Use ``response.read()`` to read the data.
         The **info** contains the 'status' and other meta data. When a HttpError (status > 400)
@@ -1317,7 +1325,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
                      url_password=password, http_agent=http_agent, force_basic_auth=force_basic_auth,
                      follow_redirects=follow_redirects, client_cert=client_cert,
                      client_key=client_key, cookies=cookies, use_gssapi=use_gssapi,
-                     unix_socket=unix_socket)
+                     unix_socket=unix_socket, ca_path=ca_path)
         # Lowercase keys, to conform to py2 behavior, so that py3 and py2 are predictable
         info.update(dict((k.lower(), v) for k, v in r.info().items()))
 
