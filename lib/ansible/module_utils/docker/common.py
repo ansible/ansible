@@ -700,7 +700,7 @@ class AnsibleDockerClient(Client):
             if header:
                 return self._result(self._get(
                     self._url("/distribution/{0}/json", image),
-                    headers={'X-Registry-Auth':header}
+                    headers={'X-Registry-Auth': header}
                 ), json=True)
         return super(AnsibleDockerClient, self).inspect_distribution(image)
 
