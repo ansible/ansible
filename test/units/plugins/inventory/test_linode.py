@@ -22,6 +22,9 @@ __metaclass__ = type
 
 import pytest
 import sys
+import os
+import json
+from collections import namedtuple
 
 linode_apiv4 = pytest.importorskip('linode_api4')
 mandatory_py_version = pytest.mark.skipif(
@@ -33,6 +36,91 @@ mandatory_py_version = pytest.mark.skipif(
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.plugins.inventory.linode import InventoryModule
 
+instances_json = """
+{
+  "data": [
+    {
+      "group": "test",
+      "hypervisor": "kvm",
+      "id": 123,
+      "status": "running",
+      "type": "g5-standard-1",
+      "alerts": {
+        "network_in": 5,
+        "network_out": 5,
+        "cpu": 90,
+        "transfer_quota": 80,
+        "io": 5000
+      },
+      "label": "linode123",
+      "backups": {
+        "enabled": true,
+        "schedule": {
+          "window": "W02",
+          "day": "Scheduling"
+        }
+      },
+      "specs": {
+        "memory": 2048,
+        "disk": 30720,
+        "vcpus": 1,
+        "transfer": 2000
+      },
+      "ipv6": "1234:abcd::1234:abcd:89ef:67cd/64",
+      "created": "2017-01-01T00:00:00",
+      "region": "us-east-1a",
+      "ipv4": [
+        "123.45.67.89",
+        "192.168.45.67"
+      ],
+      "updated": "2017-01-01T00:00:00",
+      "image": "linode/ubuntu17.04",
+      "tags": ["something"]
+    },
+    {
+      "group": "test",
+      "hypervisor": "kvm",
+      "id": 456,
+      "status": "running",
+      "type": "g5-standard-1",
+      "alerts": {
+        "network_in": 5,
+        "network_out": 5,
+        "cpu": 90,
+        "transfer_quota": 80,
+        "io": 5000
+      },
+      "label": "linode456",
+      "backups": {
+        "enabled": false,
+        "schedule": {
+          "window": null,
+          "day": null
+        }
+      },
+      "specs": {
+        "memory": 2048,
+        "disk": 30720,
+        "vcpus": 1,
+        "transfer": 2000
+      },
+      "ipv6": "1234:abcd::1234:abcd:89ef:67cd/64",
+      "created": "2017-01-01T00:00:00",
+      "region": "us-east-1a",
+      "ipv4": [
+        "123.45.67.89",
+        "192.168.45.68"
+      ],
+      "updated": "2017-01-01T00:00:00",
+      "image": "linode/debian9",
+      "tags": []
+    }
+  ]
+}
+"""
+
+# converts instance_json dict into python objects
+instances = json.loads(instances_json, object_hook=lambda d: namedtuple('X', d.keys())(*d.values()))
 
 @pytest.fixture(scope="module")
 def inventory():
@@ -77,3 +165,11 @@ def test_config_user_options(inventory):
 
 def test_verify_file_bad_config(inventory):
     assert inventory.verify_file('foobar.linde.yml') is False
+
+def test_get_instance_public_ip(inventory):
+    instance = instances.data[0]
+    assert inventory._get_instance_public_ip(instance) == '123.45.67.89'
+
+def test_get_instance_private_ip(inventory):
+    instance = instances.data[0]
+    assert inventory._get_instance_private_ip(instance) == '192.168.45.67'
