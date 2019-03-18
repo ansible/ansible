@@ -1220,7 +1220,7 @@ def main():
             module.exit_json(**result)
 
         try:
-            certificate.remove()
+            certificate.remove(module)
         except CertificateError as exc:
             module.fail_json(msg=to_native(exc))
 
