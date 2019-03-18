@@ -18,14 +18,19 @@
 
 try:
     from OpenSSL import crypto
+except ImportError:
+    # An error will be raised in the calling class to let the end
+    # user know that OpenSSL couldn't be found.
+    pass
+try:
     from cryptography import x509
     from cryptography.hazmat.backends import default_backend as cryptography_backend
     from cryptography.hazmat.primitives.serialization import load_pem_private_key
     from cryptography.hazmat.primitives import hashes
 except ImportError:
-    # An error will be raised in the calling class to let the end
-    # user know that OpenSSL couldn't be found.
+    # Error handled in the calling module.
     pass
+
 
 import abc
 import datetime
