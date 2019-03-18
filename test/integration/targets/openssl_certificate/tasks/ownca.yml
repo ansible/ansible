@@ -21,6 +21,7 @@
     privatekey_path: '{{ output_dir }}/ca_privatekey.pem'
     provider: selfsigned
     selfsigned_digest: sha256
+    select_crypto_backend: '{{ select_crypto_backend }}'
 
 - name: Generate ownca certificate
   openssl_certificate:
@@ -31,6 +32,7 @@
     ownca_privatekey_path: '{{ output_dir }}/ca_privatekey.pem'
     provider: ownca
     ownca_digest: sha256
+    select_crypto_backend: '{{ select_crypto_backend }}'
   register: ownca_certificate
 
 - name: Generate ownca certificate
@@ -42,6 +44,7 @@
     ownca_privatekey_path: '{{ output_dir }}/ca_privatekey.pem'
     provider: ownca
     ownca_digest: sha256
+    select_crypto_backend: '{{ select_crypto_backend }}'
   register: ownca_certificate_idempotence
 
 - name: Generate ownca certificate (check mode)
@@ -53,6 +56,7 @@
     ownca_privatekey_path: '{{ output_dir }}/ca_privatekey.pem'
     provider: ownca
     ownca_digest: sha256
+    select_crypto_backend: '{{ select_crypto_backend }}'
   check_mode: yes
 
 - name: Check ownca certificate
@@ -69,6 +73,7 @@
       commonName: www.example.com
     issuer:
       commonName: Example CA
+    select_crypto_backend: '{{ select_crypto_backend }}'
 
 - name: Generate ownca v2 certificate
   openssl_certificate:
@@ -80,6 +85,7 @@
     provider: ownca
     ownca_digest: sha256
     ownca_version: 2
+    select_crypto_backend: '{{ select_crypto_backend }}'
 
 - name: Generate ownca certificate2
   openssl_certificate:
@@ -90,6 +96,7 @@
     ownca_privatekey_path: '{{ output_dir }}/ca_privatekey.pem'
     provider: ownca
     ownca_digest: sha256
+    select_crypto_backend: '{{ select_crypto_backend }}'
 
 - name: Check ownca certificate2
   openssl_certificate:
@@ -117,6 +124,7 @@
       - biometricInfo
     issuer:
       commonName: Example CA
+    select_crypto_backend: '{{ select_crypto_backend }}'
 
 - name: Create ownca certificate with notBefore and notAfter
   openssl_certificate:
@@ -128,6 +136,7 @@
     privatekey_path: "{{ output_dir }}/privatekey3.pem"
     ownca_path: '{{ output_dir }}/ca_cert.pem'
     ownca_privatekey_path: '{{ output_dir }}/ca_privatekey.pem'
+    select_crypto_backend: '{{ select_crypto_backend }}'
 
 - name: Create ownca certificate with relative notBefore and notAfter
   openssl_certificate:
@@ -139,6 +148,7 @@
     privatekey_path: "{{ output_dir }}/privatekey3.pem"
     ownca_path: '{{ output_dir }}/ca_cert.pem'
     ownca_privatekey_path: '{{ output_dir }}/ca_privatekey.pem'
+    select_crypto_backend: '{{ select_crypto_backend }}'
 
 - name: Generate ownca ECC certificate
   openssl_certificate:
@@ -149,6 +159,7 @@
     ownca_privatekey_path: '{{ output_dir }}/ca_privatekey.pem'
     provider: ownca
     ownca_digest: sha256
+    select_crypto_backend: '{{ select_crypto_backend }}'
   register: ownca_certificate_ecc
 
 - name: Generate ownca certificate (failed passphrase 1)
@@ -160,6 +171,7 @@
     ownca_privatekey_passphrase: hunter2
     provider: ownca
     ownca_digest: sha256
+    select_crypto_backend: '{{ select_crypto_backend }}'
   ignore_errors: yes
   register: passphrase_error_1
 
@@ -172,6 +184,7 @@
     ownca_privatekey_passphrase: wrong_password
     provider: ownca
     ownca_digest: sha256
+    select_crypto_backend: '{{ select_crypto_backend }}'
   ignore_errors: yes
   register: passphrase_error_2
 
@@ -183,6 +196,7 @@
     ownca_privatekey_path: '{{ output_dir }}/privatekeypw.pem'
     provider: ownca
     ownca_digest: sha256
+    select_crypto_backend: '{{ select_crypto_backend }}'
   ignore_errors: yes
   register: passphrase_error_3
 

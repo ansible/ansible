@@ -18,13 +18,14 @@
     provider: selfsigned
     selfsigned_digest: sha256
     selfsigned_not_after: "-1s"
-    select_crypto_backend: pyopenssl
+    select_crypto_backend: '{{ select_crypto_backend }}'
 
 - name: "Check task fails because cert is expired (has_expired: false)"
   openssl_certificate:
     provider: assertonly
     path: "{{ output_dir }}/has_expired_cert.pem"
     has_expired: false
+    select_crypto_backend: '{{ select_crypto_backend }}'
   ignore_errors: true
   register: expired_cert_check
 
@@ -37,4 +38,5 @@
     provider: assertonly
     path: "{{ output_dir }}/has_expired_cert.pem"
     has_expired: true
+    select_crypto_backend: '{{ select_crypto_backend }}'
   register: expired_cert_skip

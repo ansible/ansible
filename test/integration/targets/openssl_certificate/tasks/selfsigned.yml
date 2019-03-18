@@ -24,7 +24,7 @@
     privatekey_path: '{{ output_dir }}/privatekey.pem'
     provider: selfsigned
     selfsigned_digest: sha256
-    select_crypto_backend: cryptography
+    select_crypto_backend: '{{ select_crypto_backend }}'
   register: selfsigned_certificate
 
 - name: Generate selfsigned certificate - idempotency
@@ -34,7 +34,7 @@
     privatekey_path: '{{ output_dir }}/privatekey.pem'
     provider: selfsigned
     selfsigned_digest: sha256
-    select_crypto_backend: cryptography
+    select_crypto_backend: '{{ select_crypto_backend }}'
   register: selfsigned_certificate_idempotence
 
 - name: Generate selfsigned certificate (check mode)
@@ -44,7 +44,7 @@
     privatekey_path: '{{ output_dir }}/privatekey.pem'
     provider: selfsigned
     selfsigned_digest: sha256
-    select_crypto_backend: cryptography
+    select_crypto_backend: '{{ select_crypto_backend }}'
   check_mode: yes
 
 - name: Check selfsigned certificate
@@ -60,6 +60,7 @@
       - sha256WithECDSAEncryption
     subject:
       commonName: www.example.com
+    select_crypto_backend: '{{ select_crypto_backend }}'
 
 - name: Generate selfsigned v2 certificate
   openssl_certificate:
@@ -100,6 +101,7 @@
     privatekey_path: '{{ output_dir }}/privatekey2.pem'
     provider: selfsigned
     selfsigned_digest: sha256
+    select_crypto_backend: '{{ select_crypto_backend }}'
 
 - name: Check selfsigned certificate2
   openssl_certificate:
@@ -126,6 +128,7 @@
     extendedKeyUsage:
       - ipsecUser
       - biometricInfo
+    select_crypto_backend: '{{ select_crypto_backend }}'
 
 - name: Create private key 3
   openssl_privatekey:
@@ -146,6 +149,7 @@
     path: "{{ output_dir }}/cert3.pem"
     csr_path: "{{ output_dir }}/csr3.pem"
     privatekey_path: "{{ output_dir }}/privatekey3.pem"
+    select_crypto_backend: '{{ select_crypto_backend }}'
 
 - name: Generate privatekey
   openssl_privatekey:
@@ -167,6 +171,7 @@
     privatekey_path: '{{ output_dir }}/privatekey_ecc.pem'
     provider: selfsigned
     selfsigned_digest: sha256
+    select_crypto_backend: '{{ select_crypto_backend }}'
   register: selfsigned_certificate_ecc
 
 - name: Generate selfsigned certificate (failed passphrase 1)
@@ -177,6 +182,7 @@
     privatekey_passphrase: hunter2
     provider: selfsigned
     selfsigned_digest: sha256
+    select_crypto_backend: '{{ select_crypto_backend }}'
   ignore_errors: yes
   register: passphrase_error_1
 
@@ -188,6 +194,7 @@
     privatekey_passphrase: wrong_password
     provider: selfsigned
     selfsigned_digest: sha256
+    select_crypto_backend: '{{ select_crypto_backend }}'
   ignore_errors: yes
   register: passphrase_error_2
 
@@ -198,6 +205,7 @@
     privatekey_path: '{{ output_dir }}/privatekeypw.pem'
     provider: selfsigned
     selfsigned_digest: sha256
+    select_crypto_backend: '{{ select_crypto_backend }}'
   ignore_errors: yes
   register: passphrase_error_3
 

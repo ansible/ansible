@@ -25,6 +25,7 @@
     privatekey_path: '{{ output_dir }}/privatekey.pem'
     provider: selfsigned
     selfsigned_digest: sha256
+    select_crypto_backend: '{{ select_crypto_backend }}'
 
 - name: (Assertonly) - Assert that subject_alt_name is there (should fail)
   openssl_certificate:
@@ -32,7 +33,7 @@
     provider: assertonly
     subject_alt_name:
       - "DNS:example.com"
-    select_crypto_backend: cryptography
+    select_crypto_backend: '{{ select_crypto_backend }}'
   ignore_errors: yes
   register: extension_missing_san
 
@@ -42,7 +43,7 @@
     provider: assertonly
     key_usage:
       - digitalSignature
-    select_crypto_backend: cryptography
+    select_crypto_backend: '{{ select_crypto_backend }}'
   ignore_errors: yes
   register: extension_missing_ku
 
@@ -52,6 +53,7 @@
     provider: assertonly
     extended_key_usage:
       - biometricInfo
+    select_crypto_backend: '{{ select_crypto_backend }}'
   ignore_errors: yes
   register: extension_missing_eku
 
@@ -70,6 +72,7 @@
     privatekey_path: '{{ output_dir }}/privatekey.pem'
     privatekey_passphrase: hunter2
     provider: assertonly
+    select_crypto_backend: '{{ select_crypto_backend }}'
   ignore_errors: yes
   register: passphrase_error_1
 
@@ -79,6 +82,7 @@
     privatekey_path: '{{ output_dir }}/privatekeypw.pem'
     privatekey_passphrase: wrong_password
     provider: assertonly
+    select_crypto_backend: '{{ select_crypto_backend }}'
   ignore_errors: yes
   register: passphrase_error_2
 
@@ -87,6 +91,7 @@
     path: '{{ output_dir }}/cert_noext.pem'
     privatekey_path: '{{ output_dir }}/privatekeypw.pem'
     provider: assertonly
+    select_crypto_backend: '{{ select_crypto_backend }}'
   ignore_errors: yes
   register: passphrase_error_3
 
