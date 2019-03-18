@@ -911,7 +911,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             self._cleanup_remote_tmp = False
 
         # NOTE: yum returns results .. but that made it 'compatible' with squashing, so we allow mappings, for now
-        if 'results' in data and not isinstance(data['results')], Mapping):
+        if 'results' in data and not isinstance(data['results'], Mapping):
             data['ansible_module_results'] = data['results']
             del data['results']
             display.warning("Found internal 'results' key in module return, renamed to 'ansible_module_results'.")
