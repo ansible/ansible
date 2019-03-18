@@ -272,6 +272,16 @@ options:
       - Possible states are C(INVALID), C(NEW), C(ESTABLISHED), C(RELATED), C(UNTRACKED), C(SNAT), C(DNAT)
     type: list
     default: []
+  src_range:
+    description:
+      - Specifies the source IP range to match in the iprange module.
+    type: str
+    version_added: "2.8"
+  dst_range:
+    description:
+      - Specifies the destination IP range to match in the iprange module.
+    type: str
+    version_added: "2.8"
   limit:
     description:
       - Specifies the maximum average number of matches to allow per second.
@@ -359,6 +369,13 @@ EXAMPLES = r'''
     syn: match
     jump: ACCEPT
     comment: Accept new SSH connections.
+
+- name: Match on IP ranges
+  iptables:
+    chain: FORWARD
+    src_range: 192.168.1.100-192.168.1.199
+    dst_range: 10.0.0.1-10.0.0.50
+    jump: ACCEPT
 
 - name: Tag all outbound tcp packets with DSCP mark 8
   iptables:
@@ -527,6 +544,13 @@ def construct_rule(params):
     elif params['ctstate']:
         append_match(rule, params['ctstate'], 'conntrack')
         append_csv(rule, params['ctstate'], '--ctstate')
+    if 'iprange' in params['match']:
+        append_param(rule, params['src_range'], '--src-range', False)
+        append_param(rule, params['dst_range'], '--dst-range', False)
+    elif params['src_range'] or params['dst_range']:
+        append_match(rule, params['src_range'] or params['dst_range'], 'iprange')
+        append_param(rule, params['src_range'], '--src-range', False)
+        append_param(rule, params['dst_range'], '--dst-range', False)
     append_match(rule, params['limit'] or params['limit_burst'], 'limit')
     append_param(rule, params['limit'], '--limit', False)
     append_param(rule, params['limit_burst'], '--limit-burst', False)
@@ -639,6 +663,8 @@ def main():
             set_dscp_mark_class=dict(type='str'),
             comment=dict(type='str'),
             ctstate=dict(type='list', default=[]),
+            src_range=dict(type='str'),
+            dst_range=dict(type='str'),
             limit=dict(type='str'),
             limit_burst=dict(type='str'),
             uid_owner=dict(type='str'),
