@@ -20,7 +20,7 @@ module: ns1_record
 
 short_description: Create, modify and delete NS1 hosted DNS records.
 
-version_added: "2.7"
+version_added: "2.8"
 
 description:
   - Create, modify and delete record objects within an existing zone.
@@ -191,7 +191,7 @@ EXAMPLES = '''
     name: test.com
     zone: test.com
     state: present
-    type: MX 
+    type: MX
     answers:
       - answer:
           - 5
@@ -293,22 +293,22 @@ class NS1Record(NS1ModuleBase):
             for subparam in param:
                 if isinstance(subparam, dict):
                     filtered.append(
-                        {
-                            key: value
+                        dict(
+                            (key, value)
                             for key, value in subparam.items()
                             if value is not None
-                        }
+                        )
                     )
         else:
             filtered = param
         return filtered
 
     def api_params(self):
-        params = {
-            key: self.module.params.get(key)
-            for key in RECORD_KEYS_MAP
+        params = dict(
+            (key, self.module.params.get(key))
+            for key, value in RECORD_KEYS_MAP.items()
             if key != "answers" and self.module.params.get(key) is not None
-        }
+        )
         return params
 
     def remove_id(self, d):

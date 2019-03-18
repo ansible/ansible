@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2019, Matthew Burtless <mburtless@ns1.com>
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
 # Make coding more python3-ish
 from __future__ import absolute_import, division, print_function
@@ -9,11 +9,6 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-
-try:
-    from ansible.module_utils.ansible_release import __version__ as ANSIBLE_VERSION
-except Exception:
-    ANSIBLE_VERSION = 'unknown'
 
 HAS_NS1 = True
 
