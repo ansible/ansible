@@ -196,13 +196,13 @@ def main():
             try:
                 assigned_license = lam.QueryAssignedLicenses(entityId=entityId)
             except Exception as e:
-                module.fail_json('Could not query vCenter "%s" assigned license info due to %s.' % (entityId, to_native(e)))
+                module.fail_json(msg='Could not query vCenter "%s" assigned license info due to %s.' % (entityId, to_native(e)))
 
             if not assigned_license or (len(assigned_license) != 0 and assigned_license[0].assignedLicense.licenseKey != license):
                 try:
                     lam.UpdateAssignedLicense(entity=entityId, licenseKey=license)
                 except Exception:
-                    module.fail_json('Could not assign "%s" (%s) to vCenter.' % (license, key.name))
+                    module.fail_json(msg='Could not assign "%s" (%s) to vCenter.' % (license, key.name))
                 result['changed'] = True
             result['licenses'] = pyv.list_keys(lm.licenses)
         else:
