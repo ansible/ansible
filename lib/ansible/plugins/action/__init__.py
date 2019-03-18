@@ -21,6 +21,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleActionSkip, AnsibleActionFail
 from ansible.executor.module_common import modify_module
 from ansible.executor.interpreter_discovery import discover_interpreter, InterpreterDiscoveryRequiredError
+from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.json_utils import _filter_non_json_lines
 from ansible.module_utils.six import binary_type, string_types, text_type, iteritems, with_metaclass
 from ansible.module_utils.six.moves import shlex_quote
@@ -908,6 +909,12 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # get internal info before cleaning
         if data.pop("_ansible_suppress_tmpdir_delete", False):
             self._cleanup_remote_tmp = False
+
+        # NOTE: yum returns results .. but that made it 'compatible' with squashing, so we allow mappings, for now
+        if 'results' in data and not isinstance(data['results')], Mapping):
+            data['ansible_module_results'] = data['results']
+            del data['results']
+            display.warning("Found internal 'results' key in module return, renamed to 'ansible_module_results'.")
 
         # remove internal keys
         remove_internal_keys(data)
