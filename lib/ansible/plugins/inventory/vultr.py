@@ -176,13 +176,16 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
         hostname_preference = self.get_option('hostname')
 
+        # Add a top group 'vultr'
+        self.inventory.add_group(group='vultr')
+
         # Filter by tag is supported by the api with a query
         filter_by_tag = self.get_option('filter_by_tag')
         for server in _retrieve_servers(api_key, filter_by_tag):
 
             server = Vultr.normalize_result(server, SCHEMA)
 
-            self.inventory.add_host(host=server['name'])
+            self.inventory.add_host(host=server['name'], group='vultr')
 
             for attribute, value in server.items():
                 self.inventory.set_variable(server['name'], attribute, value)
