@@ -27,6 +27,7 @@ options:
       - Can specify a list of values to include a larger subset.
       - Values can also be used with an initial C(!) to specify that a specific subset
         should not be collected.
+    type: list
     required: True
     choices:
       - all
@@ -6473,7 +6474,6 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import flatten_boolean
@@ -6486,7 +6486,6 @@ except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import flatten_boolean
@@ -8802,7 +8801,8 @@ class GtmAPoolsFactManager(BaseManager):
             self.client.provider['server'],
             self.client.provider['server_port'],
         )
-        resp = self.client.api.get(uri)
+        query = "?expandSubcollections=true"
+        resp = self.client.api.get(uri + query)
         try:
             response = resp.json()
         except ValueError as ex:
@@ -8854,7 +8854,8 @@ class GtmAaaaPoolsFactManager(BaseManager):
             self.client.provider['server'],
             self.client.provider['server_port'],
         )
-        resp = self.client.api.get(uri)
+        query = "?expandSubcollections=true"
+        resp = self.client.api.get(uri + query)
         try:
             response = resp.json()
         except ValueError as ex:
@@ -8906,7 +8907,8 @@ class GtmCnamePoolsFactManager(BaseManager):
             self.client.provider['server'],
             self.client.provider['server_port'],
         )
-        resp = self.client.api.get(uri)
+        query = "?expandSubcollections=true"
+        resp = self.client.api.get(uri + query)
         try:
             response = resp.json()
         except ValueError as ex:
@@ -8958,7 +8960,8 @@ class GtmMxPoolsFactManager(BaseManager):
             self.client.provider['server'],
             self.client.provider['server_port'],
         )
-        resp = self.client.api.get(uri)
+        query = "?expandSubcollections=true"
+        resp = self.client.api.get(uri + query)
         try:
             response = resp.json()
         except ValueError as ex:
@@ -9010,7 +9013,8 @@ class GtmNaptrPoolsFactManager(BaseManager):
             self.client.provider['server'],
             self.client.provider['server_port'],
         )
-        resp = self.client.api.get(uri)
+        query = "?expandSubcollections=true"
+        resp = self.client.api.get(uri + query)
         try:
             response = resp.json()
         except ValueError as ex:
@@ -9062,7 +9066,8 @@ class GtmSrvPoolsFactManager(BaseManager):
             self.client.provider['server'],
             self.client.provider['server_port'],
         )
-        resp = self.client.api.get(uri)
+        query = "?expandSubcollections=true"
+        resp = self.client.api.get(uri + query)
         try:
             response = resp.json()
         except ValueError as ex:
@@ -10873,11 +10878,15 @@ class LtmPoolsParameters(BaseParameters):
 
     @property
     def active_member_count(self):
-        return int(self._values['stats']['activeMemberCnt'])
+        if 'availableMemberCnt' in self._values['stats']:
+            return int(self._values['stats']['activeMemberCnt'])
+        return None
 
     @property
     def available_member_count(self):
-        return int(self._values['stats']['availableMemberCnt'])
+        if 'availableMemberCnt' in self._values['stats']:
+            return int(self._values['stats']['availableMemberCnt'])
+        return None
 
     @property
     def all_max_queue_entry_age_ever(self):
@@ -10945,7 +10954,9 @@ class LtmPoolsParameters(BaseParameters):
 
     @property
     def member_count(self):
-        return self._values['stats']['memberCnt']
+        if 'memberCnt' in self._values['stats']:
+            return self._values['stats']['memberCnt']
+        return None
 
     @property
     def total_requests(self):
@@ -11172,6 +11183,8 @@ class LtmPoolsFactManager(BaseManager):
                 raise F5ModuleError(response['message'])
             else:
                 raise F5ModuleError(resp.content)
+        if 'items' not in response:
+            return []
         result = response['items']
         return result
 
@@ -15450,15 +15463,11 @@ def main():
         supports_check_mode=spec.supports_check_mode
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
         module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
         module.fail_json(msg=str(ex))
 
 
