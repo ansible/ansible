@@ -466,20 +466,26 @@ def _get_vnic_profile_mappings(module):
 
 
 def _template_subversion(module, templates_service, templates_module, connection):
-    resp = None
     changed = False
-    if module.params.get('version').get('number') != None:
+    resp = None
+    version = module.params.get('version')
+    if version.get('number') is not None:
         templates = templates_service.list()
         for template in templates:
-            if module.params.get('version').get('number') == template.version.version_number and module.params.get('name') == template.name:
-                # Update template with version number
-                template_service = templates_service.template_service(template.id)
-                resp = template_service.update(
-                    template=templates_module.build_entity()
-                )
-                changed = True
+            if version.get('number') == template.version.version_number and module.params.get('name') == template.name:
+                # Select template with correct subversion number and name
+                if version.get('name') != template.version.version_name or not templates_module.update_check(template):
+                    # Update template with version number
+                    template_service = templates_service.template_service(template.id)
+                    resp = template_service.update(
+                        template=templates_module.build_entity()
+                    )
+                    changed = True
+                else:
+                    # Retrun selected template
+                    resp = template
     else:
-        # If template was not updated creates it
+        # If there was not definded version number it will craete
         resp = templates_service.add(templates_module.build_entity())
         changed = True
     return {
@@ -556,7 +562,7 @@ def main():
 
         state = module.params['state']
         if state == 'present':
-            if module.params['version'] != None:
+            if module.params['version'] is not None:
                 ret = _template_subversion(module, templates_service, templates_module, connection)
             else:
                 ret = templates_module.create(
