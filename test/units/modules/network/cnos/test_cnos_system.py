@@ -97,7 +97,6 @@ class TestCnosSystemModule(TestCnosModule):
         commands = ['ip name-server 1.2.3.4 vrf management']
         self.execute_module(changed=True, commands=commands)
 
-
     def test_cnos_system_state_absent(self):
         set_module_args(dict(state='absent'))
         commands = ['no hostname']
