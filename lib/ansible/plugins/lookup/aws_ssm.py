@@ -85,7 +85,7 @@ EXAMPLES = '''
   ignore_errors: true
 
 - name: show fact default to "access failed" if we don't have access
-  debug: msg="{{ "the secret was:" ~ temp_secret | default('couldn\'t access secret') }}"
+  debug: msg="{{ "the secret was:" ~ temp_secret | default("couldn't access secret") }}"
 
 - name: return a dictionary of ssm parameters from a hierarchy path
   debug: msg="{{ lookup('aws_ssm', '/PATH/to/params', region='ap-southeast-2', bypath=true, recursive=true ) }}"
