@@ -75,8 +75,8 @@ options:
       pull:
         description:
           - When building an image downloads any updates to the FROM image in Dockerfile.
+          - The default is currently C(yes). This will change to C(no) in Ansible 2.12.
         type: bool
-        default: yes
       rm:
         description:
           - Remove intermediate containers after build.
@@ -200,8 +200,8 @@ options:
     description:
       - When building an image downloads any updates to the FROM image in Dockerfile.
       - Please use I(build.pull) instead. This option will be removed in Ansible 2.12.
+      - The default is currently C(yes). This will change to C(no) in Ansible 2.12.
     type: bool
-    default: yes
     version_added: "2.1"
   push:
     description:
@@ -773,7 +773,7 @@ def main():
             network=dict(type='str'),
             nocache=dict(type='bool', default=False),
             path=dict(type='path', required=True),
-            pull=dict(type='bool', default=True),
+            pull=dict(type='bool'),
             rm=dict(type='bool', default=True),
             args=dict(type='dict'),
         )),
@@ -794,7 +794,7 @@ def main():
         name=dict(type='str', required=True),
         nocache=dict(type='bool', default=False, removedin_version='2.12'),
         path=dict(type='path', aliases=['build_path'], removedin_version='2.12'),
-        pull=dict(type='bool', default=True, removedin_version='2.12'),
+        pull=dict(type='bool', removedin_version='2.12'),
         push=dict(type='bool', default=False),
         repository=dict(type='str'),
         rm=dict(type='bool', default=True, removedin_version='2.12'),
@@ -851,7 +851,7 @@ def main():
     )
     for option, build_option in build_options.items():
         default_value = None
-        if option in ('pull', 'rm'):
+        if option in ('rm', ):
             default_value = True
         elif option in ('nocache', ):
             default_value = False
@@ -863,9 +863,13 @@ def main():
             client.module.params['build'][build_option] = client.module.params[option]
             client.module.warn('Please specify build.%s instead of %s. The %s option '
                                'has been renamed and will be removed in Ansible 2.12.' % (build_option, option, option))
-    if client.module.params['source'] == 'build' and \
-            (not client.module.params['build'] or not client.module.params['build'].get('path')):
-        client.module.fail('If "source" is set to "build", the "build.path" option must be specified.')
+    if client.module.params['source'] == 'build':
+        if (not client.module.params['build'] or not client.module.params['build'].get('path')):
+            client.module.fail('If "source" is set to "build", the "build.path" option must be specified.')
+        if client.module.params['build']['pull'] is None:
+            client.module.warn("The default for build.pull is currently 'yes', but will be changed to 'no' in Ansible 2.12. "
+                               "Please set build.pull explicitly to the value you need.")
+            client.module.params['build']['pull'] = True  # TODO: change to False in Ansible 2.12
 
     if client.module.params['state'] == 'present' and client.module.params['source'] is None:
         # Autodetection. To be removed in Ansible 2.12.
