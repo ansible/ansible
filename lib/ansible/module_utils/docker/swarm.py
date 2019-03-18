@@ -16,18 +16,6 @@ from ansible.module_utils._text import to_native
 from ansible.module_utils.docker.common import AnsibleDockerClient
 
 
-def strip_ipaddress(address=None):
-    if address is None:
-        return address
-
-    count_colons = address.count(":")
-
-    if count_colons == 1:
-        return split(":", address)[0]
-    else:
-        return address
-
-
 class AnsibleDockerSwarmClient(AnsibleDockerClient):
 
     def __init__(self, **kwargs):
@@ -184,7 +172,11 @@ class AnsibleDockerSwarmClient(AnsibleDockerClient):
             if node_info['ManagerStatus'].get('Leader'):
                 # This is workaround of bug in Docker when in some cases the Leader IP is 0.0.0.0
                 # Check moby/moby#35437 for details
-                swarm_leader_ip = strip_ipaddress(node_info['ManagerStatus']['Addr']) or node_info['Status']['Addr']
+                count_colons = node_info['ManagerStatus']['Addr'].count(":")
+                if count_colons == 1:
+                    swarm_leader_ip = split(":", node_info['ManagerStatus']['Addr'])[0] or node_info['Status']['Addr']
+                else:
+                    swarm_leader_ip = node_info['Status']['Addr']
                 node_info['Status']['Addr'] = swarm_leader_ip
         return node_info
 
