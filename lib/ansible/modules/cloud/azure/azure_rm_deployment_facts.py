@@ -88,26 +88,26 @@ deployments:
             description:
                 - Dictionary containing deployment outputs.
             returned: always
-        resources:
+        output_resources:
             description:
                 - List of resources.
             returned: always
             type: complex
             contains:
-                resource_id:
+                id:
                     description:
                         - Resource id.
                     returned: always
                     type: str
                     sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkI
                              nterfaces/myNetworkInterface"
-                resource_name:
+                name:
                     description:
                         - Resource name.
                     returned: always
                     type: str
                     sample: myNetworkInterface
-                resource_type:
+                type:
                     description:
                         - Resource type.
                     returned: always
@@ -204,16 +204,15 @@ class AzureRMDeploymentFacts(AzureRMModuleBase):
                 if not output_resources.get(depends_on_resource['id']):
                     sub_resource = {
                         'id': depends_on_resource['id'],
-                        'name': depends_on_resource['name'],
-                        'type': depends_on_resource['type'],
+                        'name': depends_on_resource['resource_name'],
+                        'type': depends_on_resource['resource_type'],
                         'depends_on': []
                     }
                     output_resources[depends_on_resource['id']] = sub_resource
-            
             resource = {
                 'id': dependency['id'],
-                'name': dependency['name'],
-                'type': dependency['type'],
+                'name': dependency['resource_name'],
+                'type': dependency['resource_type'],
                 'depends_on': depends_on
             }
             output_resources[dependency['id']] = resource
@@ -225,7 +224,7 @@ class AzureRMDeploymentFacts(AzureRMModuleBase):
 
         d = {
             'id': d.get('id'),
-            'resource_group': self.resource_group, 
+            'resource_group': self.resource_group,
             'name': d.get('name'),
             'provisioning_state': d.get('properties', {}).get('provisioning_state'),
             'parameters': d.get('properties', {}).get('parameters'),
