@@ -11,3 +11,5 @@ keyed_groups:
     prefix: tag
   - key: engine
     prefix: rds
+filters:
+  db-instance-id: "{{ resource_prefix }}-mariadb"
