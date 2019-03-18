@@ -71,13 +71,13 @@ EXAMPLES = '''
 - name: Create an image from a virtual machine
   azure_rm_image:
     resource_group: myResourceGroup
-    name: foobar
-    source: testvm001
+    name: myImage
+    source: myVirtualMachine
 
 - name: Create an image from os disk
   azure_rm_image:
     resource_group: myResourceGroup
-    name: foobar
+    name: myImage
     source: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Compute/disks/disk001
     data_disk_sources:
         - datadisk001
@@ -87,7 +87,7 @@ EXAMPLES = '''
 - name: Create an image from os disk via dict
   azure_rm_image:
     resource_group: myResourceGroup
-    name: foobar
+    name: myImage
     source:
         type: disks
         resource_group: myResourceGroup
@@ -101,7 +101,7 @@ EXAMPLES = '''
   azure_rm_image:
     state: absent
     resource_group: myResourceGroup
-    name: foobar
+    name: myImage
     source: testvm001
 '''
 
@@ -110,7 +110,7 @@ id:
     description: Image resource path.
     type: str
     returned: success
-    example: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Compute/images/foobar"
+    example: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Compute/images/myImage"
 '''  # NOQA
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, format_resource_id

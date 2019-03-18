@@ -81,8 +81,8 @@ author:
 EXAMPLES = '''
     - name: Create a virtual network
       azure_rm_virtualnetwork:
-        name: foobar
         resource_group: myResourceGroup
+        name: myVirtualNetwork
         address_prefixes_cidr:
             - "10.1.0.0/16"
             - "172.100.0.0/16"
@@ -95,8 +95,8 @@ EXAMPLES = '''
 
     - name: Delete a virtual network
       azure_rm_virtualnetwork:
-        name: foobar
         resource_group: myResourceGroup
+        name: myVirtualNetwork
         state: absent
 '''
 RETURN = '''
@@ -114,7 +114,7 @@ state:
             "127.0.0.3"
         ],
         "etag": 'W/"0712e87c-f02f-4bb3-8b9e-2da0390a3886"',
-        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/virtualNetworks/my_test_network",
+        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/virtualNetworks/myVirtualNetwork",
         "location": "eastus",
         "name": "my_test_network",
         "provisioning_state": "Succeeded",

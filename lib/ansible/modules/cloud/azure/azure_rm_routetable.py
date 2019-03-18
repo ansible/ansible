@@ -59,24 +59,16 @@ author:
 EXAMPLES = '''
     - name: Create a route table
       azure_rm_routetable:
-        name: foobar
         resource_group: myResourceGroup
+        name: myRouteTable
         disable_bgp_route_propagation: False
         tags:
           purpose: testing
 
-    - name: Update the subnet (idempotent)
-      azure_rm_subnet:
-        name: subnet
-        virtual_network_name: virtualnetwork
-        resource_group: myResourceGroup
-        address_prefix_cidr: "10.1.0.0/16"
-        route_table: foobar
-
     - name: Delete a route table
       azure_rm_routetable:
-        name: foobar
         resource_group: myResourceGroup
+        name: myRouteTable
         state: absent
 '''
 RETURN = '''
