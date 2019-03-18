@@ -194,7 +194,14 @@ import json
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-from ansible.module_utils.net_tools.netbox.netbox_utils import find_ids, normalize_data, SITE_STATUS
+from ansible.module_utils.net_tools.netbox.netbox_utils import (
+    find_ids,
+    normalize_data,
+    create_netbox_object,
+    delete_netbox_object,
+    update_netbox_object,
+    SITE_STATUS,
+)
 from ansible.module_utils.compat import ipaddress
 from ansible.module_utils._text import to_text
 
@@ -215,18 +222,15 @@ def main():
     argument_spec = dict(
         netbox_url=dict(type="str", required=True),
         netbox_token=dict(type="str", required=True, no_log=True),
-        data=dict(
-            type="dict",
-            required=True,
-            options=dict(
-                name=dict(required=True),
-            ),
-        ),
+        data=dict(type="dict", required=True),
         state=dict(required=False, default="present", choices=["present", "absent"]),
         validate_certs=dict(type="bool", default=True)
     )
+
+    global module
     module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=False)
+                           supports_check_mode=True)
+
     # Fail module if pynetbox is not installed
     if not HAS_PYNETBOX:
         module.fail_json(msg=missing_required_lib('pynetbox'), exception=PYNETBOX_IMP_ERR)
@@ -296,35 +300,48 @@ def ensure_site_present(nb, nb_endpoint, data):
         changed = False
         return {"msg": data, "changed": changed}
 
-    site = nb_endpoint.get(slug=data["slug"])
-
-    if not site:
-        site = nb_endpoint.create(data).serialize()
+    nb_site = nb_endpoint.get(slug=data["slug"])
+    result = dict()
+    if not nb_site:
+        site, diff = create_netbox_object(nb_endpoint, data, module.check_mode)
         changed = True
         msg = "Site %s created" % (data["name"])
+        result["diff"] = diff
     else:
-        site = site.serialize()
-        msg = "Site %s already exists" % (data["name"])
-        changed = False
+        site, diff = update_netbox_object(nb_site, data, module.check_mode)
+        if site is False:
+            module.fail_json(
+                msg="Request failed, couldn't update device: %s" % (data["name"])
+            )
+        if diff:
+            msg = "Site %s updated" % (data["name"])
+            changed = True
+            result["diff"] = diff
+        else:
+            msg = "Site %s already exists" % (data["name"])
+            changed = False
 
-    return {"site": site, "msg": msg, "changed": changed}
+    result.update({"site": site, "msg": msg, "changed": changed})
+    return result
 
 
 def ensure_site_absent(nb, nb_endpoint, data):
     """
     :returns dict(msg, changed)
     """
-    site = nb_endpoint.get(slug=data["slug"])
-
-    if site:
-        site.delete()
+    nb_site = nb_endpoint.get(slug=data["slug"])
+    result = dict()
+    if nb_site:
+        dummy, diff = delete_netbox_object(nb_site, module.check_mode)
         changed = True
         msg = "Site %s deleted" % (data["name"])
+        result["diff"] = diff
     else:
         msg = "Site %s already absent" % (data["name"])
         changed = False
 
-    return {"msg": msg, "changed": changed}
+    result.update({"msg": msg, "changed": changed})
+    return result
 
 
 if __name__ == "__main__":
