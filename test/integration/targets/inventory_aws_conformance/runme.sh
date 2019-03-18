@@ -95,7 +95,7 @@ compose:
   ec2_kernel: kernel_id | default("")
   ec2_monitored:  monitoring.state in ['enabled', 'pending']
   ec2_monitoring_state: monitoring.state
-  ec2_account_id: network_interfaces | json_query("[0].owner_id")
+  ec2_account_id: owner_id
   ec2_placement: placement.availability_zone
   ec2_ramdisk: ramdisk_id | default("")
   ec2_reason: state_transition_reason
