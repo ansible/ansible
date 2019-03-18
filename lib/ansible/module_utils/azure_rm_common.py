@@ -69,7 +69,8 @@ AZURE_API_PROFILES = {
         'StorageManagementClient': '2017-10-01',
         'WebsiteManagementClient': '2016-08-01',
         'PostgreSQLManagementClient': '2017-12-01',
-        'MySQLManagementClient': '2017-12-01'
+        'MySQLManagementClient': '2017-12-01',
+        'MariaDBManagementClient': '2019-03-01'
     },
 
     '2017-03-09-profile': {
@@ -162,6 +163,7 @@ try:
     from azure.mgmt.sql import SqlManagementClient
     from azure.mgmt.rdbms.postgresql import PostgreSQLManagementClient
     from azure.mgmt.rdbms.mysql import MySQLManagementClient
+    from azure.mgmt.rdbms.mariadb import MariaDBManagementClient
     from azure.mgmt.containerregistry import ContainerRegistryManagementClient
     from azure.mgmt.containerinstance import ContainerInstanceManagementClient
 except ImportError as exc:
@@ -291,6 +293,7 @@ class AzureRMModuleBase(object):
         self._marketplace_client = None
         self._sql_client = None
         self._mysql_client = None
+        self._mariadb_client = None
         self._postgresql_client = None
         self._containerregistry_client = None
         self._containerinstance_client = None
@@ -910,6 +913,14 @@ class AzureRMModuleBase(object):
             self._mysql_client = self.get_mgmt_svc_client(MySQLManagementClient,
                                                           base_url=self._cloud_environment.endpoints.resource_manager)
         return self._mysql_client
+
+    @property
+    def mariadb_client(self):
+        self.log('Getting MariaDB client')
+        if not self._mariadb_client:
+            self._mariadb_client = self.get_mgmt_svc_client(MariaDBManagementClient,
+                                                          base_url=self._cloud_environment.endpoints.resource_manager)
+        return self._mariadb_client
 
     @property
     def sql_client(self):
