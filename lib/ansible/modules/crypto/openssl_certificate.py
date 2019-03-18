@@ -687,15 +687,18 @@ class SelfSignedCertificateCryptography(Certificate):
             )
 
         if not self.check(module, perms_required=False) or self.force:
-            cert_builder = x509.CertificateBuilder()
-            cert_builder = cert_builder.subject_name(self.csr.subject)
-            cert_builder = cert_builder.issuer_name(self.csr.subject)
-            cert_builder = cert_builder.serial_number(self.serial_number)
-            cert_builder = cert_builder.not_valid_before(self.notBefore)
-            cert_builder = cert_builder.not_valid_after(self.notAfter)
-            cert_builder = cert_builder.public_key(self.privatekey.public_key())
-            for extension in self.csr.extensions:
-                cert_builder = cert_builder.add_extension(extension.value, critical=extension.critical)
+            try:
+                cert_builder = x509.CertificateBuilder()
+                cert_builder = cert_builder.subject_name(self.csr.subject)
+                cert_builder = cert_builder.issuer_name(self.csr.subject)
+                cert_builder = cert_builder.serial_number(self.serial_number)
+                cert_builder = cert_builder.not_valid_before(self.notBefore)
+                cert_builder = cert_builder.not_valid_after(self.notAfter)
+                cert_builder = cert_builder.public_key(self.privatekey.public_key())
+                for extension in self.csr.extensions:
+                    cert_builder = cert_builder.add_extension(extension.value, critical=extension.critical)
+            except ValueError as e:
+                raise CertificateError(str(e))
 
             certificate = cert_builder.sign(
                 private_key=self.privatekey, algorithm=self.digest,
