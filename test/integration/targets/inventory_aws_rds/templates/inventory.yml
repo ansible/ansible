@@ -4,3 +4,5 @@ aws_secret_access_key: '{{ aws_secret_key }}'
 aws_security_token: '{{ security_token }}'
 regions:
   - '{{ aws_region }}'
+filters:
+  db-instance-id: "{{ resource_prefix }}-mariadb"

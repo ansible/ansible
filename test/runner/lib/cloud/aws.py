@@ -99,8 +99,12 @@ class AwsCloudEnvironment(CloudEnvironment):
 
         ansible_vars.update(dict(parser.items('default')))
 
+        env_vars = {'ANSIBLE_DEBUG_BOTOCORE_LOGS': 'True'}
+
         return CloudEnvironmentConfig(
+            env_vars=env_vars,
             ansible_vars=ansible_vars,
+            callback_plugins=['aws_resource_actions'],
         )
 
     def on_failure(self, target, tries):
