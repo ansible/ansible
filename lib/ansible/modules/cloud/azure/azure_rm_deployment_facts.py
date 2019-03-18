@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2018 Zim Kalinowski, <zikalino@microsoft.com>
+# Copyright (c) 2019 Zim Kalinowski, (@zikalino)
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -56,7 +56,8 @@ deployments:
                 - The identifier of the resource.
             returned: always
             type: str
-            sample: id
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Resources/deployments/myD
+                     eployment"
         resource_group:
             description:
                 - Resource group name.
@@ -67,6 +68,59 @@ deployments:
                 - Deployment name.
             returned: always
             sample: myDeployment
+        provisioning_state:
+            description:
+                - Provisioning state of the deployment.
+            returned: always
+            sample: Succeeded
+        template_link:
+            description:
+                - Link to the template.
+            returned: always
+            sample: "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/d01a5c06f4f1bc03a049ca17bbbd6e06d62657b3/101-vm-simple-linux/
+                     azuredeploy.json"
+        parameters:
+            description:
+                - Dictionary containing deployment parameters.
+            returned: always
+            type: complex
+        outputs:
+            description:
+                - Dictionary containing deployment outputs.
+            returned: always
+        resources:
+            description:
+                - List of resources.
+            returned: always
+            type: complex
+            contains:
+                resource_id:
+                    description:
+                        - Resource id.
+                    returned: always
+                    type: str
+                    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkI
+                             nterfaces/myNetworkInterface"
+                resource_name:
+                    description:
+                        - Resource name.
+                    returned: always
+                    type: str
+                    sample: myNetworkInterface
+                resource_type:
+                    description:
+                        - Resource type.
+                    returned: always
+                    type: str
+                    sample: Microsoft.Network/networkInterfaces
+                depends_on:
+                    description:
+                        - List of resource ids.
+                    type: list
+                    returned: always
+                    sample:
+                        - "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGropup/providers/Microsoft.Network/virtualNet
+                           works/myVirtualNetwork"
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -140,9 +194,36 @@ class AzureRMDeploymentFacts(AzureRMModuleBase):
 
     def format_response(self, item):
         d = item.as_dict()
-        output_resources = []
-        # for resource in d.get('properties', {}).get('output_resources'):
-        #     output_resources.append(resource.get('id'))
+        output_resources = {}
+        for dependency in d.get('properties', {}).get('dependencies'):
+            resource = output_resources.get(dependency['id'], {})
+            resource['id'] = dependency['id']
+            resource['name'] = dependency['name']
+            dependency['type'] = dependency['type']
+
+            # go through dependent resources
+            depends_on = []
+            for depends_on_resource in dependency['depends_on']:
+                depends_on.append(depends_on_resource['id'])
+                sub_resource = output_resources.get(dependency['id'], {})
+                sub_resource['id'] = depends_on_resource['id']
+                sub_resource['name'] = depends_on_resource['name']
+                sub_resource['type'] = depends_on_resource['type']
+                sub_resource['depends_on'] = sub_resource.get('depends_on', [])
+                output_resources[depends_on_resource['id']] = sub_resource
+            
+            resource = {
+                'id' = dependency['id'],
+                'name' = dependency['name'],
+                'type' = dependency['type'],
+                'depends_on' = depends_on
+            }
+            output_resources[resource.get('id')] = resource
+
+        # convert dictionary to list
+        output_resources_list = []
+        for r in output_resources:
+            output_resources_list.append(r)
 
         d = {
             'id': d.get('id'),
@@ -151,8 +232,8 @@ class AzureRMDeploymentFacts(AzureRMModuleBase):
             'provisioning_state': d.get('properties', {}).get('provisioning_state'),
             'parameters': d.get('properties', {}).get('parameters'),
             'outputs': d.get('properties', {}).get('outputs'),
-            'dependencies': d.get('properties', {}).get('dependencies'),
-            'template_link': d.get('properties', {}).get('template_link')
+            'output_resources': output_resources_list,
+            'template_link': d.get('properties', {}).get('template_link').get('uri')
         }
         return d
 
