@@ -615,8 +615,12 @@ class Base(FieldAttributeBase):
     # explicitly invoke a debugger on tasks
     _debugger = FieldAttribute(isa='string')
 
-    # param names which have been deprecated/removed
-    DEPRECATED_ATTRIBUTES = [
-        'sudo', 'sudo_user', 'sudo_pass', 'sudo_exe', 'sudo_flags',
-        'su', 'su_user', 'su_pass', 'su_exe', 'su_flags',
-    ]
+    # Privilege escalation
+    _become = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('become'))
+    _become_method = FieldAttribute(isa='string', default=context.cliargs_deferred_get('become_method'))
+    _become_user = FieldAttribute(isa='string', default=context.cliargs_deferred_get('become_user'))
+    _become_flags = FieldAttribute(isa='string', default=context.cliargs_deferred_get('become_flags'))
+    _become_exe = FieldAttribute(isa='string', default=context.cliargs_deferred_get('become_exe'))
+
+    # used to hold sudo/su stuff
+    DEPRECATED_ATTRIBUTES = []
