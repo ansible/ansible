@@ -5,7 +5,6 @@ from dateutil.tz import tzutc
 import sys
 
 try:
-    from ansible.module_utils.common._collections_compat import MutableMapping
     from ansible.parsing.yaml.objects import AnsibleUnicode
 except ImportError:
     AnsibleUnicode = str
