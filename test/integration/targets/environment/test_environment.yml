@@ -171,3 +171,41 @@
       assert:
         that:
           - "{{ test_foo.results[0].stdout == 'outer' }}"
+
+- name: Test setting environment using set_fact
+  hosts: testhost
+  environment:
+    http_proxy: "{{ proxy_var }}"
+
+  pre_tasks:
+    - set_fact:
+        proxy_var: proxyserver1
+
+  tasks:
+    - shell: echo $http_proxy
+      register: set_fact_test
+
+    - name: Ensure environment variable was set properly from set_fact
+      assert:
+        that:
+          - "'proxyserver1' in set_fact_test.stdout_lines"
+
+- name: Test setting environment using include_vars
+  hosts: testhost
+  environment:
+    http_proxy: "{{ include_proxy_var }}"
+
+  tasks:
+    - include_vars: testvars.yml
+
+    - shell: echo $http_proxy
+      register: include_vars_test
+
+    - debug:
+        var: include_vars_test
+      tags: debug
+
+    - name: Ensure environment variable was set properly from include_vars
+      assert:
+        that:
+          - "'from include vars' in include_vars_test.stdout_lines"

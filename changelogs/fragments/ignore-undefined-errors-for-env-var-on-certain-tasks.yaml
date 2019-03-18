@@ -1,0 +1,2 @@
+bugfixes:
+  - tasks - ignore undefined errors in variables used in environment settings or certain tasks (https://github.com/ansible/ansible/pull/53978)

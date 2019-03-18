@@ -315,7 +315,12 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
                     env[k] = templar.template(v, convert_bare=False)
                 except AnsibleUndefinedVariable as e:
                     error = to_native(e)
-                    if self.action in ('setup', 'gather_facts') and 'ansible_facts.env' in error or 'ansible_env' in error:
+
+                    if (self.action in ('setup', 'gather_facts') and 'ansible_facts.env' in error or
+                            'ansible_env' in error or
+                            # Ignore undefined errors for set_fact, include_vars, and fact gathering since those tasks
+                            # can set variables later used to set environment variables, or environment has no effect on those tasks
+                            self.action in ('setup', 'gather_facts', 'set_fact', 'include_vars')) and 'is undefined' in error:
                         # ignore as fact gathering is required for 'env' facts
                         return
                     raise
