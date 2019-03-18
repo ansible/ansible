@@ -368,15 +368,15 @@ class TemplatesModule(BaseModule):
 
     def update_check(self, entity):
         return (
-            equal(self._module.params.get('cluster'), get_link_name(self._connection, entity.cluster))
-            and equal(self._module.params.get('description'), entity.description)
-            and equal(self.param('operating_system'), str(entity.os.type))
-            and equal(self.param('name'), str(entity.name))
-            and equal(convert_to_bytes(self.param('memory_guaranteed')), entity.memory_policy.guaranteed)
-            and equal(convert_to_bytes(self.param('memory_max')), entity.memory_policy.max)
-            and equal(convert_to_bytes(self.param('memory')), entity.memory)
-            and equal(self._module.params.get('cpu_profile'), get_link_name(self._connection, entity.cpu_profile))
-            and equal(self.param('io_threads'), entity.io.threads)
+            equal(self._module.params.get('cluster'), get_link_name(self._connection, entity.cluster)) and
+            equal(self._module.params.get('description'), entity.description) and
+            equal(self.param('operating_system'), str(entity.os.type)) and
+            equal(self.param('name'), str(entity.name)) and
+            equal(convert_to_bytes(self.param('memory_guaranteed')), entity.memory_policy.guaranteed) and
+            equal(convert_to_bytes(self.param('memory_max')), entity.memory_policy.max) and
+            equal(convert_to_bytes(self.param('memory')), entity.memory) and
+            equal(self._module.params.get('cpu_profile'), get_link_name(self._connection, entity.cpu_profile)) and
+            equal(self.param('io_threads'), entity.io.threads)
         )
 
     def _get_export_domain_service(self):
@@ -553,6 +553,7 @@ def main():
             module=module,
             service=templates_service,
         )
+
         state = module.params['state']
         if state == 'present':
             if module.params['version'] != None:
@@ -668,9 +669,9 @@ def main():
                         cluster_mappings=_get_cluster_mappings(module),
                         role_mappings=_get_role_mappings(module),
                         domain_mappings=_get_domain_mappings(module),
-                    ) if (module.params['cluster_mappings'] or
-                          module.params['role_mappings'] or
-                          module.params['domain_mappings']) else None
+                    ) if (module.params['cluster_mappings']
+                          or module.params['role_mappings']
+                          or module.params['domain_mappings']) else None
                 )
 
                 if module.params['wait']:
