@@ -689,6 +689,21 @@ class AnsibleDockerClient(Client):
         elif isinstance(result, string_types) and result:
             self.module.warn('Docker warning: {0}'.format(result))
 
+    def inspect_distribution(self, image):
+        '''
+        Get image digest by directly calling the Docker API when running Docker SDK < 4.0.0
+        since prior versions did not support accessing private repositories.
+        '''
+        if self.docker_py_version < LooseVersion('4.0.0'):
+            registry = auth.resolve_repository_name(image)[0]
+            header = auth.get_config_header(self, registry)
+            if header:
+                return self._result(self._get(
+                    self._url("/distribution/{0}/json", image),
+                    headers={'X-Registry-Auth':header}
+                ), json=True)
+        return super(AnsibleDockerClient, self).inspect_distribution(image)
+
 
 def compare_dict_allow_more_present(av, bv):
     '''
