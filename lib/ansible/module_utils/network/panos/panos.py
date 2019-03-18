@@ -97,7 +97,7 @@ class ConnectionHelper(object):
                     _vstr(self.min_pandevice_version)))
 
         pan_device_auth, serial_number = None, None
-        if module.params.get('provider', {}).get('ip_address') is not None:
+        if module.params['provider'] and module.params['provider']['ip_address']:
             pan_device_auth = (
                 module.params['provider']['ip_address'],
                 module.params['provider']['username'],
@@ -106,7 +106,7 @@ class ConnectionHelper(object):
                 module.params['provider']['port'],
             )
             serial_number = module.params['provider']['serial_number']
-        elif module.params.get('ip_address') is not None:
+        elif module.params.get('ip_address', None) is not None:
             pan_device_auth = (
                 module.params['ip_address'],
                 module.params['username'],
@@ -114,6 +114,8 @@ class ConnectionHelper(object):
                 module.params['api_key'],
                 module.params['port'],
             )
+            msg = 'Classic provider params are deprecated; use "provider" instead'
+            module.deprecate(msg, '2.12')
         else:
             module.fail_json(msg='Provider params are required.')
 
