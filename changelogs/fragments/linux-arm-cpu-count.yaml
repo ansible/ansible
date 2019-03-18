@@ -1,0 +1,2 @@
+bugfixes:
+  - report correct CPU information on ARM systems (https://github.com/ansible/ansible/pull/52884)
