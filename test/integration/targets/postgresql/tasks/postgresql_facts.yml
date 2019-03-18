@@ -6,6 +6,8 @@
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_user:
+    db: "{{ db_default }}"
+    login_user: "{{ pg_user }}"
     name: session_superuser
     role_attr_flags: SUPERUSER
 
