@@ -86,6 +86,16 @@ class MockONTAPConnection(object):
         return xml
 
     @staticmethod
+    def build_vserver_info():
+        ''' build xml data for vserser-info '''
+        xml = netapp_utils.zapi.NaElement('xml')
+        attributes = netapp_utils.zapi.NaElement('attributes-list')
+        attributes.add_node_with_children('vserver-info',
+                                          **{'vserver-name': 'test_vserver'})
+        xml.add_child_elem(attributes)
+        return xml
+
+    @staticmethod
     def build_net_port_info():
         ''' build xml data for net-port-info '''
         xml = netapp_utils.zapi.NaElement('xml')

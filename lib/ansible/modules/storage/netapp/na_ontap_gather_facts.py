@@ -56,6 +56,7 @@ EXAMPLES = '''
     password: "admins_password"
 - debug:
     var: ontap_facts
+
 - name: Limit Fact Gathering to Aggregate Information
   na_ontap_gather_facts:
     state: info
@@ -63,6 +64,7 @@ EXAMPLES = '''
     username: "admin"
     password: "admins_password"
     gather_subset: "aggregate_info"
+
 - name: Limit Fact Gathering to Volume and Lun Information
   na_ontap_gather_facts:
     state: info
@@ -72,6 +74,7 @@ EXAMPLES = '''
     gather_subset:
       - volume_info
       - lun_info
+
 - name: Gather all facts except for volume and lun information
   na_ontap_gather_facts:
     state: info
