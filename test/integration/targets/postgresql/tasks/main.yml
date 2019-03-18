@@ -187,6 +187,17 @@
     that:
       - 'result.changed == True'
 
+- name: Check that conn_limit has actually been set / updated to 200
+  become_user: "{{ pg_user }}"
+  become: True
+  shell: echo "SELECT datconnlimit AS conn_limit FROM pg_database WHERE datname = '{{ db_name }}';" | psql -d postgres
+  register: result
+
+- assert:
+    that:
+      - "result.stdout_lines[-1] == '(1 row)'"
+      - "'200' == '{{ result.stdout_lines[-2] | trim }}'"
+
 - name: Cleanup test DB
   become_user: "{{ pg_user }}"
   become: True
