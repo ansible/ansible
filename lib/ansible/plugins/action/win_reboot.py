@@ -52,7 +52,7 @@ class ActionModule(RebootActionModule, ActionBase):
     def perform_reboot(self, task_vars, distribution):
         shutdown_command = self.get_shutdown_command(task_vars, distribution)
         shutdown_command_args = self.get_shutdown_command_args(distribution)
-        reboot_command = '{0} {1}'.format(shutdown_command, shutdown_command_args)
+        reboot_command = self._connection._shell._encode_script('{0} {1}'.format(shutdown_command, shutdown_command_args))
 
         display.vvv("{action}: rebooting server...".format(action=self._task.action))
         display.debug("{action}: distribution: {dist}".format(action=self._task.action, dist=distribution))
@@ -69,7 +69,8 @@ class ActionModule(RebootActionModule, ActionBase):
             display.warning('A scheduled reboot was pre-empted by Ansible.')
 
             # Try to abort (this may fail if it was already aborted)
-            result1 = self._low_level_execute_command('shutdown /a', sudoable=self.DEFAULT_SUDOABLE)
+            result1 = self._low_level_execute_command(self._connection._shell._encode_script('shutdown /a'),
+                                                      sudoable=self.DEFAULT_SUDOABLE)
 
             # Initiate reboot again
             result2 = self._low_level_execute_command(reboot_command, sudoable=self.DEFAULT_SUDOABLE)
