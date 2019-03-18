@@ -1,8 +1,8 @@
 .. _netvisor_platform_options:
 
-***************************************
+*************************
 NETVISOR Platform Options
-***************************************
+*************************
 
 NETVISOR Ansible modules only support CLI connections today. ``httpapi`` modules may be added in future.
 This page offers details on how to use ``network_cli`` on NETVISOR in Ansible.
@@ -40,7 +40,7 @@ Using CLI in Ansible
 ====================
 
 Example CLI ``group_vars/netvisor.yml``
-----------------------------------
+---------------------------------------
 
 .. code-block:: yaml
 
