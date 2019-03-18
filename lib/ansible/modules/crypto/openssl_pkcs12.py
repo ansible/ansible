@@ -241,7 +241,7 @@ class Pkcs(crypto_utils.OpenSSLObject):
         self.pkcs12 = crypto.PKCS12()
 
         try:
-            self.remove()
+            self.remove(module)
         except PkcsError as exc:
             module.fail_json(msg=to_native(exc))
 
@@ -274,14 +274,14 @@ class Pkcs(crypto_utils.OpenSSLObject):
                                                      self.iter_size, self.maciter_size))
             os.close(pkcs12_file)
         except (IOError, OSError) as exc:
-            self.remove()
+            self.remove(module)
             raise PkcsError(exc)
 
     def parse(self, module):
         """Read PKCS#12 file."""
 
         try:
-            self.remove()
+            self.remove(module)
             with open(self.src, 'rb') as pkcs12_fh:
                 pkcs12_content = pkcs12_fh.read()
             p12 = crypto.load_pkcs12(pkcs12_content,
@@ -298,7 +298,7 @@ class Pkcs(crypto_utils.OpenSSLObject):
             os.close(pkcs12_file)
 
         except IOError as exc:
-            self.remove()
+            self.remove(module)
             raise PkcsError(exc)
 
 
@@ -378,7 +378,7 @@ def main():
 
         if os.path.exists(module.params['path']):
             try:
-                pkcs12.remove()
+                pkcs12.remove(module)
                 changed = True
             except PkcsError as exc:
                 module.fail_json(msg=to_native(exc))

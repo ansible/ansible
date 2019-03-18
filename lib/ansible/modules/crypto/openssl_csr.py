@@ -1046,7 +1046,7 @@ def main():
             module.exit_json(**result)
 
         try:
-            csr.remove()
+            csr.remove(module)
         except (CertificateSigningRequestError, crypto_utils.OpenSSLObjectError) as exc:
             module.fail_json(msg=to_native(exc))
 
