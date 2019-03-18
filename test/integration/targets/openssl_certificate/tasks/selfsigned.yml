@@ -1,23 +1,23 @@
 ---
-- name: Generate privatekey
+- name: (Selfsigned, {{select_crypto_backend}}) Generate privatekey
   openssl_privatekey:
     path: '{{ output_dir }}/privatekey.pem'
 
-- name: Generate privatekey with password
+- name: (Selfsigned, {{select_crypto_backend}}) Generate privatekey with password
   openssl_privatekey:
     path: '{{ output_dir }}/privatekeypw.pem'
     passphrase: hunter2
     cipher: auto
     select_crypto_backend: cryptography
 
-- name: Generate CSR
+- name: (Selfsigned, {{select_crypto_backend}}) Generate CSR
   openssl_csr:
     path: '{{ output_dir }}/csr.csr'
     privatekey_path: '{{ output_dir }}/privatekey.pem'
     subject:
       commonName: www.example.com
 
-- name: Generate selfsigned certificate
+- name: (Selfsigned, {{select_crypto_backend}}) Generate selfsigned certificate
   openssl_certificate:
     path: '{{ output_dir }}/cert.pem'
     csr_path: '{{ output_dir }}/csr.csr'
@@ -27,7 +27,7 @@
     select_crypto_backend: '{{ select_crypto_backend }}'
   register: selfsigned_certificate
 
-- name: Generate selfsigned certificate - idempotency
+- name: (Selfsigned, {{select_crypto_backend}}) Generate selfsigned certificate - idempotency
   openssl_certificate:
     path: '{{ output_dir }}/cert.pem'
     csr_path: '{{ output_dir }}/csr.csr'
@@ -37,7 +37,7 @@
     select_crypto_backend: '{{ select_crypto_backend }}'
   register: selfsigned_certificate_idempotence
 
-- name: Generate selfsigned certificate (check mode)
+- name: (Selfsigned, {{select_crypto_backend}}) Generate selfsigned certificate (check mode)
   openssl_certificate:
     path: '{{ output_dir }}/cert.pem'
     csr_path: '{{ output_dir }}/csr.csr'
@@ -47,13 +47,12 @@
     select_crypto_backend: '{{ select_crypto_backend }}'
   check_mode: yes
 
-- name: Check selfsigned certificate
+- name: (Selfsigned, {{select_crypto_backend}}) Check selfsigned certificate
   openssl_certificate:
     path: '{{ output_dir }}/cert.pem'
     privatekey_path: '{{ output_dir }}/privatekey.pem'
     provider: assertonly
     has_expired: False
-    select_crypto_backend: pyopenssl
     version: 3
     signature_algorithms:
       - sha256WithRSAEncryption
@@ -62,7 +61,7 @@
       commonName: www.example.com
     select_crypto_backend: '{{ select_crypto_backend }}'
 
-- name: Generate selfsigned v2 certificate
+- name: (Selfsigned, {{select_crypto_backend}}) Generate selfsigned v2 certificate
   openssl_certificate:
     path: '{{ output_dir }}/cert_v2.pem'
     csr_path: '{{ output_dir }}/csr.csr'
@@ -71,11 +70,11 @@
     selfsigned_digest: sha256
     selfsigned_version: 2
 
-- name: Generate privatekey2
+- name: (Selfsigned, {{select_crypto_backend}}) Generate privatekey2
   openssl_privatekey:
     path: '{{ output_dir }}/privatekey2.pem'
 
-- name: Generate CSR2
+- name: (Selfsigned, {{select_crypto_backend}}) Generate CSR2
   openssl_csr:
     subject:
       CN: www.example.com
@@ -94,7 +93,7 @@
       - ipsecUser
       - biometricInfo
 
-- name: Generate selfsigned certificate2
+- name: (Selfsigned, {{select_crypto_backend}}) Generate selfsigned certificate2
   openssl_certificate:
     path: '{{ output_dir }}/cert2.pem'
     csr_path: '{{ output_dir }}/csr2.csr'
@@ -103,14 +102,13 @@
     selfsigned_digest: sha256
     select_crypto_backend: '{{ select_crypto_backend }}'
 
-- name: Check selfsigned certificate2
+- name: (Selfsigned, {{select_crypto_backend}}) Check selfsigned certificate2
   openssl_certificate:
     path: '{{ output_dir }}/cert2.pem'
     privatekey_path: '{{ output_dir }}/privatekey2.pem'
     provider: assertonly
     has_expired: False
     version: 3
-    select_crypto_backend: pyopenssl
     signature_algorithms:
       - sha256WithRSAEncryption
       - sha256WithECDSAEncryption
@@ -130,18 +128,18 @@
       - biometricInfo
     select_crypto_backend: '{{ select_crypto_backend }}'
 
-- name: Create private key 3
+- name: (Selfsigned, {{select_crypto_backend}}) Create private key 3
   openssl_privatekey:
     path: "{{ output_dir }}/privatekey3.pem"
 
-- name: Create CSR 3
+- name: (Selfsigned, {{select_crypto_backend}}) Create CSR 3
   openssl_csr:
     subject:
       CN: www.example.com
     privatekey_path: "{{ output_dir }}/privatekey3.pem"
     path: "{{ output_dir }}/csr3.pem"
 
-- name: Create certificate3 with notBefore and notAfter
+- name: (Selfsigned, {{select_crypto_backend}}) Create certificate3 with notBefore and notAfter
   openssl_certificate:
     provider: selfsigned
     selfsigned_not_before: 20181023133742Z
@@ -151,20 +149,20 @@
     privatekey_path: "{{ output_dir }}/privatekey3.pem"
     select_crypto_backend: '{{ select_crypto_backend }}'
 
-- name: Generate privatekey
+- name: (Selfsigned, {{select_crypto_backend}}) Generate privatekey
   openssl_privatekey:
     path: '{{ output_dir }}/privatekey_ecc.pem'
     type: ECC
     curve: secp256k1
 
-- name: Generate CSR
+- name: (Selfsigned, {{select_crypto_backend}}) Generate CSR
   openssl_csr:
     path: '{{ output_dir }}/csr_ecc.csr'
     privatekey_path: '{{ output_dir }}/privatekey_ecc.pem'
     subject:
       commonName: www.example.com
 
-- name: Generate selfsigned certificate
+- name: (Selfsigned, {{select_crypto_backend}}) Generate selfsigned certificate
   openssl_certificate:
     path: '{{ output_dir }}/cert_ecc.pem'
     csr_path: '{{ output_dir }}/csr_ecc.csr'
@@ -174,7 +172,7 @@
     select_crypto_backend: '{{ select_crypto_backend }}'
   register: selfsigned_certificate_ecc
 
-- name: Generate selfsigned certificate (failed passphrase 1)
+- name: (Selfsigned, {{select_crypto_backend}}) Generate selfsigned certificate (failed passphrase 1)
   openssl_certificate:
     path: '{{ output_dir }}/cert_pw1.pem'
     csr_path: '{{ output_dir }}/csr_ecc.csr'
@@ -186,7 +184,7 @@
   ignore_errors: yes
   register: passphrase_error_1
 
-- name: Generate selfsigned certificate (failed passphrase 2)
+- name: (Selfsigned, {{select_crypto_backend}}) Generate selfsigned certificate (failed passphrase 2)
   openssl_certificate:
     path: '{{ output_dir }}/cert_pw2.pem'
     csr_path: '{{ output_dir }}/csr_ecc.csr'
@@ -198,7 +196,7 @@
   ignore_errors: yes
   register: passphrase_error_2
 
-- name: Generate selfsigned certificate (failed passphrase 3)
+- name: (Selfsigned, {{select_crypto_backend}}) Generate selfsigned certificate (failed passphrase 3)
   openssl_certificate:
     path: '{{ output_dir }}/cert_pw3.pem'
     csr_path: '{{ output_dir }}/csr_ecc.csr'

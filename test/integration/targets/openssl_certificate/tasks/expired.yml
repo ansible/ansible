@@ -1,16 +1,16 @@
 ---
-- name: Generate privatekey
+- name: (Expired, {{select_crypto_backend}}) Generate privatekey
   openssl_privatekey:
     path: '{{ output_dir }}/has_expired_privatekey.pem'
 
-- name: Generate CSR
+- name: (Expired, {{select_crypto_backend}}) Generate CSR
   openssl_csr:
     path: '{{ output_dir }}/has_expired_csr.csr'
     privatekey_path: '{{ output_dir }}/has_expired_privatekey.pem'
     subject:
       commonName: www.example.com
 
-- name: Generate expired selfsigned certificate
+- name: (Expired, {{select_crypto_backend}}) Generate expired selfsigned certificate
   openssl_certificate:
     path: '{{ output_dir }}/has_expired_cert.pem'
     csr_path: '{{ output_dir }}/has_expired_csr.csr'
@@ -20,7 +20,7 @@
     selfsigned_not_after: "-1s"
     select_crypto_backend: '{{ select_crypto_backend }}'
 
-- name: "Check task fails because cert is expired (has_expired: false)"
+- name: "(Expired) Check task fails because cert is expired (has_expired: false)"
   openssl_certificate:
     provider: assertonly
     path: "{{ output_dir }}/has_expired_cert.pem"
@@ -29,11 +29,11 @@
   ignore_errors: true
   register: expired_cert_check
 
-- name: Ensure previous task failed
+- name: (Expired, {{select_crypto_backend}}) Ensure previous task failed
   assert:
     that: expired_cert_check is failed
 
-- name: "Check expired cert check is ignored (has_expired: true)"
+- name: "(Expired) Check expired cert check is ignored (has_expired: true)"
   openssl_certificate:
     provider: assertonly
     path: "{{ output_dir }}/has_expired_cert.pem"

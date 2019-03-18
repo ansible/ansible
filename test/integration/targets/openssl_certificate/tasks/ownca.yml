@@ -1,9 +1,9 @@
 ---
-- name: Generate CA privatekey
+- name: (OwnCA, {{select_crypto_backend}}) Generate CA privatekey
   openssl_privatekey:
     path: '{{ output_dir }}/ca_privatekey.pem'
 
-- name: Generate CA CSR
+- name: (OwnCA, {{select_crypto_backend}}) Generate CA CSR
   openssl_csr:
     path: '{{ output_dir }}/ca_csr.csr'
     privatekey_path: '{{ output_dir }}/ca_privatekey.pem'
@@ -14,7 +14,7 @@
     - 'CA:TRUE'
     basic_constraints_critical: yes
 
-- name: Generate selfsigned CA certificate
+- name: (OwnCA, {{select_crypto_backend}}) Generate selfsigned CA certificate
   openssl_certificate:
     path: '{{ output_dir }}/ca_cert.pem'
     csr_path: '{{ output_dir }}/ca_csr.csr'
@@ -23,7 +23,7 @@
     selfsigned_digest: sha256
     select_crypto_backend: '{{ select_crypto_backend }}'
 
-- name: Generate ownca certificate
+- name: (OwnCA, {{select_crypto_backend}}) Generate ownca certificate
   openssl_certificate:
     path: '{{ output_dir }}/ownca_cert.pem'
     csr_path: '{{ output_dir }}/csr.csr'
@@ -35,7 +35,7 @@
     select_crypto_backend: '{{ select_crypto_backend }}'
   register: ownca_certificate
 
-- name: Generate ownca certificate
+- name: (OwnCA, {{select_crypto_backend}}) Generate ownca certificate
   openssl_certificate:
     path: '{{ output_dir }}/ownca_cert.pem'
     csr_path: '{{ output_dir }}/csr.csr'
@@ -47,7 +47,7 @@
     select_crypto_backend: '{{ select_crypto_backend }}'
   register: ownca_certificate_idempotence
 
-- name: Generate ownca certificate (check mode)
+- name: (OwnCA, {{select_crypto_backend}}) Generate ownca certificate (check mode)
   openssl_certificate:
     path: '{{ output_dir }}/ownca_cert.pem'
     csr_path: '{{ output_dir }}/csr.csr'
@@ -59,7 +59,7 @@
     select_crypto_backend: '{{ select_crypto_backend }}'
   check_mode: yes
 
-- name: Check ownca certificate
+- name: (OwnCA, {{select_crypto_backend}}) Check ownca certificate
   openssl_certificate:
     path: '{{ output_dir }}/ownca_cert.pem'
     privatekey_path: '{{ output_dir }}/privatekey.pem'
@@ -75,7 +75,7 @@
       commonName: Example CA
     select_crypto_backend: '{{ select_crypto_backend }}'
 
-- name: Generate ownca v2 certificate
+- name: (OwnCA, {{select_crypto_backend}}) Generate ownca v2 certificate
   openssl_certificate:
     path: '{{ output_dir }}/ownca_cert_v2.pem'
     csr_path: '{{ output_dir }}/csr.csr'
@@ -87,7 +87,7 @@
     ownca_version: 2
     select_crypto_backend: '{{ select_crypto_backend }}'
 
-- name: Generate ownca certificate2
+- name: (OwnCA, {{select_crypto_backend}}) Generate ownca certificate2
   openssl_certificate:
     path: '{{ output_dir }}/ownca_cert2.pem'
     csr_path: '{{ output_dir }}/csr2.csr'
@@ -98,7 +98,7 @@
     ownca_digest: sha256
     select_crypto_backend: '{{ select_crypto_backend }}'
 
-- name: Check ownca certificate2
+- name: (OwnCA, {{select_crypto_backend}}) Check ownca certificate2
   openssl_certificate:
     path: '{{ output_dir }}/ownca_cert2.pem'
     privatekey_path: '{{ output_dir }}/privatekey2.pem'
@@ -126,7 +126,7 @@
       commonName: Example CA
     select_crypto_backend: '{{ select_crypto_backend }}'
 
-- name: Create ownca certificate with notBefore and notAfter
+- name: (OwnCA, {{select_crypto_backend}}) Create ownca certificate with notBefore and notAfter
   openssl_certificate:
     provider: ownca
     ownca_not_before: 20181023133742Z
@@ -138,7 +138,7 @@
     ownca_privatekey_path: '{{ output_dir }}/ca_privatekey.pem'
     select_crypto_backend: '{{ select_crypto_backend }}'
 
-- name: Create ownca certificate with relative notBefore and notAfter
+- name: (OwnCA, {{select_crypto_backend}}) Create ownca certificate with relative notBefore and notAfter
   openssl_certificate:
     provider: ownca
     ownca_not_before: +1s
@@ -150,7 +150,7 @@
     ownca_privatekey_path: '{{ output_dir }}/ca_privatekey.pem'
     select_crypto_backend: '{{ select_crypto_backend }}'
 
-- name: Generate ownca ECC certificate
+- name: (OwnCA, {{select_crypto_backend}}) Generate ownca ECC certificate
   openssl_certificate:
     path: '{{ output_dir }}/ownca_cert_ecc.pem'
     csr_path: '{{ output_dir }}/csr_ecc.csr'
@@ -162,7 +162,7 @@
     select_crypto_backend: '{{ select_crypto_backend }}'
   register: ownca_certificate_ecc
 
-- name: Generate ownca certificate (failed passphrase 1)
+- name: (OwnCA, {{select_crypto_backend}}) Generate ownca certificate (failed passphrase 1)
   openssl_certificate:
     path: '{{ output_dir }}/ownca_cert_pw1.pem'
     csr_path: '{{ output_dir }}/csr_ecc.csr'
@@ -175,7 +175,7 @@
   ignore_errors: yes
   register: passphrase_error_1
 
-- name: Generate ownca certificate (failed passphrase 2)
+- name: (OwnCA, {{select_crypto_backend}}) Generate ownca certificate (failed passphrase 2)
   openssl_certificate:
     path: '{{ output_dir }}/ownca_cert_pw1.pem'
     csr_path: '{{ output_dir }}/csr_ecc.csr'
@@ -188,7 +188,7 @@
   ignore_errors: yes
   register: passphrase_error_2
 
-- name: Generate ownca certificate (failed passphrase 3)
+- name: (OwnCA, {{select_crypto_backend}}) Generate ownca certificate (failed passphrase 3)
   openssl_certificate:
     path: '{{ output_dir }}/ownca_cert_pw3.pem'
     csr_path: '{{ output_dir }}/csr_ecc.csr'
