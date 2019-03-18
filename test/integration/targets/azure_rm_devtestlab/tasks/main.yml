@@ -385,11 +385,13 @@
     allow_claim: no
     expiration_date: "2029-02-22T01:49:12.117974Z"
   register: output
+  when: "github_token | length > 0"
 
 - name: Assert that change was registered
   assert:
     that:
       - output.changed
+  when: "github_token | length > 0"
 
 - name: Update instance of DTL Virtual Machine with same parameters
   azure_rm_devtestlabvirtualmachine:
@@ -415,11 +417,13 @@
     allow_claim: no
     expiration_date: "2029-02-22T01:49:12.117974Z"
   register: output
+  when: "github_token | length > 0"
 
 - name: Assert that nothing has changed
   assert:
     that:
       - output.changed == false
+  when: "github_token | length > 0"
 
 - name: Update instance of DTL Virtual Machine - change notes
   azure_rm_devtestlabvirtualmachine:
@@ -445,11 +449,13 @@
     allow_claim: no
     expiration_date: "2029-02-22T01:49:12.117974Z"
   register: output
+  when: "github_token | length > 0"
 
 - name: Assert that change was registered
   assert:
     that:
       - output.changed
+  when: "github_token | length > 0"
 
 - name: Get Facts of DTL Virtual Machine
   azure_rm_devtestlabvirtualmachine_facts:
@@ -479,6 +485,7 @@
       - output_vm.virtualmachines[0]['storage_type'] != None
       - output_vm.virtualmachines[0]['user_name'] != None
       - output_vm.virtualmachines[0]['vm_size'] != None
+  when: "github_token | length > 0"
 
 - name: List Facts of DTL Virtual Machine
   azure_rm_devtestlabvirtualmachine_facts:
@@ -505,6 +512,7 @@
       - output_vm.virtualmachines[0]['storage_type'] != None
       - output_vm.virtualmachines[0]['user_name'] != None
       - output_vm.virtualmachines[0]['vm_size'] != None
+  when: "github_token | length > 0"
 
 
 - name: List all artifact sources
@@ -662,6 +670,7 @@
   assert:
     that:
       - output.changed
+  when: "github_token | length > 0"
 
 - name: Create instance of DevTest Lab Environment - idempotent
   azure_rm_devtestlabenvironment:
@@ -678,6 +687,7 @@
   assert:
     that:
       - not output.changed
+  when: "github_token | length > 0"
 
 - name: Delete instance of DevTest Lab Environment
   azure_rm_devtestlabenvironment:
@@ -691,6 +701,7 @@
   assert:
     that:
       - output.changed
+  when: "github_token | length > 0"
 
 - name: Create instance of DevTest Lab Image
   azure_rm_devtestlabcustomimage:
@@ -704,6 +715,7 @@
   assert:
     that:
       - output.changed
+  when: "github_token | length > 0"
   
 - name: Create instance of DevTest Lab Image -- idempotent
   azure_rm_devtestlabcustomimage:
@@ -717,6 +729,7 @@
   assert:
     that:
       - not output.changed
+  when: "github_token | length > 0"
 
 - name: Delete instance of Lab -- check mode
   azure_rm_devtestlab:
