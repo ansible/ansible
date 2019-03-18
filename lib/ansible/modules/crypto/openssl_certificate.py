@@ -546,7 +546,7 @@ class CertificateError(crypto_utils.OpenSSLObjectError):
 
 class Certificate(crypto_utils.OpenSSLObject):
 
-    def __init__(self, module):
+    def __init__(self, module, backend):
         super(Certificate, self).__init__(
             module.params['path'],
             module.params['state'],
@@ -561,8 +561,8 @@ class Certificate(crypto_utils.OpenSSLObject):
         self.cert = None
         self.privatekey = None
         self.csr = None
+        self.backend = backend
         self.module = module
-        self.backend = module.params['select_crypto_backend']
 
     def get_relative_time_option(self, input_string, input_name, backend='pyopenssl'):
         """Return an ASN1 formatted string if a relative timespec
@@ -642,7 +642,7 @@ class Certificate(crypto_utils.OpenSSLObject):
 class SelfSignedCertificateCryptography(Certificate):
     """Generate the self-signed certificate, using the cryptography backend"""
     def __init__(self, module):
-        super(SelfSignedCertificateCryptography, self).__init__(module)
+        super(SelfSignedCertificateCryptography, self).__init__(module, 'cryptography')
         self.notBefore = self.get_relative_time_option(module.params['selfsigned_not_before'], 'selfsigned_not_before',
                                                        backend='cryptography')
         self.notAfter = self.get_relative_time_option(module.params['selfsigned_not_after'], 'selfsigned_not_after',
@@ -735,7 +735,7 @@ class SelfSignedCertificate(Certificate):
     """Generate the self-signed certificate."""
 
     def __init__(self, module):
-        super(SelfSignedCertificate, self).__init__(module)
+        super(SelfSignedCertificate, self).__init__(module, 'pyopenssl')
         self.notBefore = self.get_relative_time_option(module.params['selfsigned_not_before'], 'selfsigned_not_before')
         self.notAfter = self.get_relative_time_option(module.params['selfsigned_not_after'], 'selfsigned_not_after')
         self.digest = module.params['selfsigned_digest']
@@ -814,7 +814,7 @@ class SelfSignedCertificate(Certificate):
 class OwnCACertificateCryptography(Certificate):
     """Generate the own CA certificate. Using the cryptography backend"""
     def __init__(self, module):
-        super(OwnCACertificateCryptography, self).__init__(module)
+        super(OwnCACertificateCryptography, self).__init__(module, 'cryptography')
         self.notBefore = self.get_relative_time_option(module.params['ownca_not_before'], 'ownca_not_before',
                                                        backend='cryptography')
         self.notAfter = self.get_relative_time_option(module.params['ownca_not_after'], 'ownca_not_after',
@@ -915,7 +915,7 @@ class OwnCACertificate(Certificate):
     """Generate the own CA certificate."""
 
     def __init__(self, module):
-        super(OwnCACertificate, self).__init__(module)
+        super(OwnCACertificate, self).__init__(module, 'pyopenssl')
         self.notBefore = self.get_relative_time_option(module.params['ownca_not_before'], 'ownca_not_before')
         self.notAfter = self.get_relative_time_option(module.params['ownca_not_after'], 'ownca_not_after')
         self.digest = module.params['ownca_digest']
@@ -1006,7 +1006,7 @@ class OwnCACertificate(Certificate):
 class AssertOnlyCertificateCryptography(Certificate):
     """Validate the supplied cert, using the cryptography backend"""
     def __init__(self, module):
-        super(AssertOnlyCertificateCryptography, self).__init__(module)
+        super(AssertOnlyCertificateCryptography, self).__init__(module, 'cryptography')
         self.signature_algorithms = module.params['signature_algorithms']
         if module.params['subject']:
             self.subject = crypto_utils.parse_name_field(module.params['subject'])
@@ -1422,17 +1422,11 @@ class AssertOnlyCertificateCryptography(Certificate):
         return result
 
 
-
-
-
-
-
-
 class AssertOnlyCertificate(Certificate):
     """validate the supplied certificate."""
 
     def __init__(self, module):
-        super(AssertOnlyCertificate, self).__init__(module)
+        super(AssertOnlyCertificate, self).__init__(module, 'pyopenssl')
         self.signature_algorithms = module.params['signature_algorithms']
         if module.params['subject']:
             self.subject = crypto_utils.parse_name_field(module.params['subject'])
@@ -1691,14 +1685,19 @@ class AssertOnlyCertificate(Certificate):
 
 
 class AcmeCertificateCryptography(Certificate):
-    pass
+    """Retrieve a certificate using the ACME protocol."""
+
+    def __init__(self, module):
+        super(AcmeCertificateCryptography, self).__init__(module, 'cryptography')
+
+    # TODO: implement
 
 
 class AcmeCertificate(Certificate):
     """Retrieve a certificate using the ACME protocol."""
 
     def __init__(self, module):
-        super(AcmeCertificate, self).__init__(module)
+        super(AcmeCertificate, self).__init__(module, 'pyopenssl')
         self.accountkey_path = module.params['acme_accountkey_path']
         self.challenge_path = module.params['acme_challenge_path']
         self.use_chain = module.params['acme_chain']
