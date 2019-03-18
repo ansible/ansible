@@ -65,7 +65,11 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.openstack import (
         openstack_full_argument_spec, openstack_module_kwargs,
         openstack_cloud_from_module)
-from openstack import connect
+
+try:
+  from openstack import connect
+except ImportError:
+  from openstack import connect
 
 def main():
 
@@ -117,4 +121,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
