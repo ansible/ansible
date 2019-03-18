@@ -600,7 +600,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         cache_needs_update = False
         if cache:
             try:
-                results = self.cache.get(cache_key)
+                results = self._cache[cache_key]
             except KeyError:
                 # if cache expires or cache file doesn't exist
                 cache_needs_update = True
@@ -613,7 +613,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         # If the cache has expired/doesn't exist or if refresh_inventory/flush cache is used
         # when the user is using caching, update the cached inventory
         if cache_needs_update or (not cache and self.get_option('cache')):
-            self.cache.set(cache_key, results)
+            self._cache[cache_key] = results
 
     @staticmethod
     def _legacy_script_compatible_group_sanitization(name):
