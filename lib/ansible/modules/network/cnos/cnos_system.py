@@ -101,8 +101,13 @@ EXAMPLES = """
       - 8.8.8.8
       - 8.8.4.4
 
-- name: configure name servers with VRF support
+- name: configure DNS Lookup sources
   cnos_system:
+    lookup_source: MgmtEth0/0/CPU0/0
+    lookup_enabled: yes
+
+- name: configure name servers with VRF support
+  nxos_system:
     name_servers:
       - { server: 8.8.8.8, vrf: mgmt }
       - { server: 8.8.4.4, vrf: mgmt }
@@ -115,28 +120,19 @@ commands:
   type: list
   sample:
     - hostname cnos01
-    - ip domain-name test.example.com
+    - ip domain-name test.example.com vrf default
 """
 import re
 
 from ansible.module_utils.network.cnos.cnos import get_config, load_config
 from ansible.module_utils.network.cnos.cnos import cnos_argument_spec
-from ansible.module_utils.network.cnos.cnos import check_args
+from ansible.module_utils.network.cnos.cnos import check_args, debugOutput
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.network.common.config import NetworkConfig
 from ansible.module_utils.network.common.utils import ComplexList
 
 _CONFIGURED_VRFS = None
-
-
-def has_vrf(module, vrf):
-    global _CONFIGURED_VRFS
-    if _CONFIGURED_VRFS is not None:
-        return vrf in _CONFIGURED_VRFS
-    config = get_config(module)
-    _CONFIGURED_VRFS = re.findall(r'vrf context (\S+)', config)
-    return vrf in _CONFIGURED_VRFS
 
 
 def map_obj_to_commands(want, have, module):
@@ -149,34 +145,30 @@ def map_obj_to_commands(want, have, module):
     def difference(x, y, z):
         return [item for item in x[z] if item not in y[z]]
 
-    def remove(cmd, commands, vrf=None):
-        if vrf:
-            commands.append('vrf context %s' % vrf)
-        commands.append(cmd)
-        if vrf:
-            commands.append('exit')
-
-    def add(cmd, commands, vrf=None):
-        if vrf:
-            if not has_vrf(module, vrf):
-                module.fail_json(msg='invalid vrf name %s' % vrf)
-        return remove(cmd, commands, vrf)
-
     if state == 'absent':
         if have['hostname']:
             commands.append('no hostname')
 
         for item in have['domain_name']:
-            cmd = 'no ip domain-name %s' % item['name']
-            remove(cmd, commands, item['vrf'])
+            my_vrf = 'default'
+            if item['vrf'] is not None:
+                my_vrf = item['vrf']
+            cmd = 'no ip domain-name {0} vrf {1}'.format(item['name'], my_vrf)
+            commands.append(cmd)
 
         for item in have['domain_search']:
-            cmd = 'no ip domain-list %s' % item['name']
-            remove(cmd, commands, item['vrf'])
+            my_vrf = 'default'
+            if item['vrf'] is not None:
+                my_vrf = item['vrf']
+            cmd = 'no ip domain-list {0} vrf {1}'.format(item['name'], my_vrf) 
+            commands.append(cmd)
 
         for item in have['name_servers']:
-            cmd = 'no ip name-server %s' % item['server']
-            remove(cmd, commands, item['vrf'])
+            my_vrf = 'default'
+            if item['vrf'] is not None:
+                my_vrf = item['vrf']
+            cmd = 'no ip name-server {0} vrf {1}'.format(item['server'], my_vrf)
+            commands.append(cmd)
 
     if state == 'present':
         if needs_update('hostname'):
@@ -197,43 +189,70 @@ def map_obj_to_commands(want, have, module):
             if want.get('domain_name')[0]['name'] == 'default':
                 if have['domain_name']:
                     for item in have['domain_name']:
-                        cmd = 'no ip domain-name %s' % item['name']
-                        remove(cmd, commands, item['vrf'])
+                        my_vrf = 'default'
+                        if item['vrf'] is not None:
+                            my_vrf = item['vrf']
+                        cmd = 'no ip domain-name {0} vrf {1}'.format(item['name'], my_vrf)
+                        commands.append(cmd)
             else:
                 for item in difference(have, want, 'domain_name'):
-                    cmd = 'no ip domain-name %s' % item['name']
-                    remove(cmd, commands, item['vrf'])
+                    my_vrf = 'default'
+                    if item['vrf'] is not None:
+                        my_vrf = item['vrf']
+                    cmd = 'no ip domain-name {0} vrf {1}'.format(item['name'], my_vrf)
+                    commands.append(cmd)
                 for item in difference(want, have, 'domain_name'):
-                    cmd = 'ip domain-name %s' % item['name']
-                    add(cmd, commands, item['vrf'])
+                    my_vrf = 'default'
+                    if item['vrf'] is not None:
+                        my_vrf = item['vrf']
+                    cmd = 'ip domain-name {0} vrf {1}'.format(item['name'], my_vrf)
+                    commands.append(cmd)
 
         if want['domain_search']:
             if want.get('domain_search')[0]['name'] == 'default':
                 if have['domain_search']:
                     for item in have['domain_search']:
-                        cmd = 'no ip domain-list %s' % item['name']
-                        remove(cmd, commands, item['vrf'])
+                        my_vrf = 'default'
+                        if item['vrf'] is not None:
+                            my_vrf = item['vrf']
+                        cmd = 'no ip domain-list {0} vrf {1}'.format(item['name'], my_vrf)
+                        commands.append(cmd)
             else:
                 for item in difference(have, want, 'domain_search'):
-                    cmd = 'no ip domain-list %s' % item['name']
-                    remove(cmd, commands, item['vrf'])
+                    my_vrf = 'default'
+                    if item['vrf'] is not None:
+                        my_vrf = item['vrf']
+                    cmd = 'no ip domain-list {0} vrf {1}'.format(item['name'], my_vrf)
+                    commands.append(cmd)
                 for item in difference(want, have, 'domain_search'):
-                    cmd = 'ip domain-list %s' % item['name']
-                    add(cmd, commands, item['vrf'])
+                    my_vrf = 'default'
+                    if item['vrf'] is not None:
+                        my_vrf = item['vrf']
+                    cmd = 'ip domain-list {0} vrf {1}'.format(item['name'], my_vrf)
+                    commands.append(cmd)
 
         if want['name_servers']:
             if want.get('name_servers')[0]['server'] == 'default':
                 if have['name_servers']:
                     for item in have['name_servers']:
-                        cmd = 'no ip name-server %s' % item['server']
-                        remove(cmd, commands, item['vrf'])
+                        my_vrf = 'default'
+                        if item['vrf'] is not None:
+                            my_vrf = item['vrf']
+                        cmd = 'no ip name-server {0} vrf {1}'.format(item['server'], my_vrf)
+                        commands.append(cmd)
             else:
                 for item in difference(have, want, 'name_servers'):
-                    cmd = 'no ip name-server %s' % item['server']
-                    remove(cmd, commands, item['vrf'])
+                    my_vrf = 'default'
+                    if item['vrf'] is not None:
+                        my_vrf = item['vrf']
+                    cmd = 'no ip name-server {0} vrf {1}'.format(item['server'], my_vrf)
+                    commands.append(cmd)
                 for item in difference(want, have, 'name_servers'):
-                    cmd = 'ip name-server %s' % item['server']
-                    add(cmd, commands, item['vrf'])
+                    my_vrf = 'default'
+                    if item['vrf'] is not None:
+                        my_vrf = item['vrf']
+                    cmd = 'ip name-server {0} vrf {1}'.format(item['server'], my_vrf)
+                    commands.append(cmd)
 
     return commands
 
@@ -244,48 +263,35 @@ def parse_hostname(config):
         return match.group(1)
 
 
-def parse_domain_name(config, vrf_config):
+def parse_domain_name(config):
     objects = list()
-    regex = re.compile(r'ip domain-name (\S+)')
-
-    match = regex.search(config, re.M)
-    if match:
-        objects.append({'name': match.group(1), 'vrf': None})
-
-    for vrf, cfg in iteritems(vrf_config):
-        match = regex.search(cfg, re.M)
-        if match:
-            objects.append({'name': match.group(1), 'vrf': vrf})
+    myconf = config.splitlines()
+    for line in myconf:
+        if 'ip domain-name' in line:
+            datas = line.split()
+            objects.append({'name': datas[2], 'vrf': datas[4]})
 
     return objects
 
 
-def parse_domain_search(config, vrf_config):
+def parse_domain_search(config ):
     objects = list()
-
-    for item in re.findall(r'^ip domain-list (\S+)', config, re.M):
-        objects.append({'name': item, 'vrf': None})
-
-    for vrf, cfg in iteritems(vrf_config):
-        for item in re.findall(r'ip domain-list (\S+)', cfg, re.M):
-            objects.append({'name': item, 'vrf': vrf})
+    myconf = config.splitlines()
+    for line in myconf:
+        if 'ip domain-list' in line:
+            datas = line.split()
+            objects.append({'name': datas[2], 'vrf': datas[4]})
 
     return objects
 
 
-def parse_name_servers(config, vrf_config, vrfs):
+def parse_name_servers(config):
     objects = list()
-
-    match = re.search('^ip name-server (.+)$', config, re.M)
-    if match and 'use-vrf' not in match.group(1):
-        for addr in match.group(1).split(' '):
-            objects.append({'server': addr, 'vrf': None})
-
-    for vrf, cfg in iteritems(vrf_config):
-        vrf_match = re.search('ip name-server (.+)', cfg, re.M)
-        if vrf_match:
-            for addr in vrf_match.group(1).split(' '):
-                objects.append({'server': addr, 'vrf': vrf})
+    myconf = config.splitlines()
+    for line in myconf:
+        if 'ip name-server' in line:
+            datas = line.split()
+            objects.append({'server': datas[2], 'vrf': datas[4]})
 
     return objects
 
@@ -294,19 +300,12 @@ def map_config_to_obj(module):
     config = get_config(module)
     configobj = NetworkConfig(indent=2, contents=config)
 
-    vrf_config = {}
-
-    vrfs = re.findall(r'^vrf context (\S+)$', config, re.M)
-    for vrf in vrfs:
-        config_data = configobj.get_block_config(path=['vrf context %s' % vrf])
-        vrf_config[vrf] = config_data
-
     return {
         'hostname': parse_hostname(config),
         'lookup_enabled': 'no ip domain-lookup' not in config,
-        'domain_name': parse_domain_name(config, vrf_config),
-        'domain_search': parse_domain_search(config, vrf_config),
-        'name_servers': parse_name_servers(config, vrf_config, vrfs),
+        'domain_name': parse_domain_name(config),
+        'domain_search': parse_domain_search(config),
+        'name_servers': parse_name_servers(config),
     }
 
 
@@ -377,7 +376,6 @@ def main():
 
     commands = map_obj_to_commands(want, have, module)
     result['commands'] = commands
-
     if commands:
         if not module.check_mode:
             load_config(module, commands)
@@ -388,3 +386,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
