@@ -160,7 +160,7 @@ def map_obj_to_commands(want, have, module):
             my_vrf = 'default'
             if item['vrf'] is not None:
                 my_vrf = item['vrf']
-            cmd = 'no ip domain-list {0} vrf {1}'.format(item['name'], my_vrf) 
+            cmd = 'no ip domain-list {0} vrf {1}'.format(item['name'], my_vrf)
             commands.append(cmd)
 
         for item in have['name_servers']:
@@ -274,7 +274,7 @@ def parse_domain_name(config):
     return objects
 
 
-def parse_domain_search(config ):
+def parse_domain_search(config):
     objects = list()
     myconf = config.splitlines()
     for line in myconf:
@@ -386,4 +386,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
