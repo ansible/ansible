@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_mariadbdatabase
-version_added: "2.5"
+version_added: "2.8"
 short_description: Manage MariaDB Database instance.
 description:
     - Create, update and delete instance of MariaDB Database.
