@@ -346,6 +346,17 @@ options:
         default: no
         aliases: [ subjectAltName_strict ]
 
+    select_crypto_backend:
+        description:
+            - Determines which crypto backend to use.
+            - The default choice is C(auto), which tries to use C(cryptography) if available, and falls back to C(pyopenssl).
+            - If set to C(pyopenssl), will try to use the L(pyOpenSSL,https://pypi.org/project/pyOpenSSL/) library.
+            - If set to C(cryptography), will try to use the L(cryptography,https://cryptography.io/) library.
+        type: str
+        default: auto
+        choices: [ auto, cryptography, pyopenssl ]
+        version_added: "2.8"
+
 extends_documentation_fragment: files
 notes:
     - All ASN.1 TIME values should be specified following the YYYYMMDDHHMMSSZ pattern.
@@ -639,6 +650,7 @@ class Certificate(crypto_utils.OpenSSLObject):
 
         return True
 
+
 class SelfSignedCertificateCryptography(Certificate):
     """Generate the self-signed certificate, using the cryptography backend"""
     def __init__(self, module):
@@ -646,7 +658,7 @@ class SelfSignedCertificateCryptography(Certificate):
         self.notBefore = self.get_relative_time_option(module.params['selfsigned_not_before'], 'selfsigned_not_before',
                                                        backend='cryptography')
         self.notAfter = self.get_relative_time_option(module.params['selfsigned_not_after'], 'selfsigned_not_after',
-                                                       backend='cryptography')
+                                                      backend='cryptography')
         self.digest = crypto_utils.select_message_digest(module.params['selfsigned_digest'])
         self.version = module.params['selfsigned_version']
         self.serial_number = x509.random_serial_number()
@@ -655,7 +667,7 @@ class SelfSignedCertificateCryptography(Certificate):
 
         try:
             self.privatekey = crypto_utils.load_privatekey(
-                    self.privatekey_path, self.privatekey_passphrase, backend='cryptography'
+                self.privatekey_path, self.privatekey_passphrase, backend='cryptography'
             )
         except crypto_utils.OpenSSLBadPassphraseError as exc:
             module.fail_json(msg=to_native(exc))
@@ -811,6 +823,7 @@ class SelfSignedCertificate(Certificate):
 
         return result
 
+
 class OwnCACertificateCryptography(Certificate):
     """Generate the own CA certificate. Using the cryptography backend"""
     def __init__(self, module):
@@ -908,7 +921,6 @@ class OwnCACertificateCryptography(Certificate):
             })
 
         return result
-
 
 
 class OwnCACertificate(Certificate):
@@ -1034,7 +1046,6 @@ class AssertOnlyCertificateCryptography(Certificate):
         self.message = []
         # self._sanitize_inputs()
 
-
     def _sanitize_inputs(self):
         """Ensure inputs are properly sanitized before comparison."""
 
@@ -1049,10 +1060,10 @@ class AssertOnlyCertificateCryptography(Certificate):
                 elif isinstance(attr[0], tuple):
                     setattr(self, param, [(to_bytes(item[0]), to_bytes(item[1])) for item in attr])
             elif isinstance(attr, tuple):
-                setattr(self, param, dict((to_bytes(k), to_bytes(v)) for (k, v) in attr.iteritems()))
+                setattr(self, param, dict((to_bytes(k), to_bytes(v)) for (k, v) in attr.items()))
                 # setattr(self, param, dict((to_bytes(k), to_bytes(v)) for (k, v) in attr))
             elif isinstance(attr, dict):
-                setattr(self, param, dict((to_bytes(k), to_bytes(v)) for (k, v) in attr.iteritems()))
+                setattr(self, param, dict((to_bytes(k), to_bytes(v)) for (k, v) in attr.items()))
                 # setattr(self, param, dict((to_bytes(k), to_bytes(v)) for (k, v) in attr))
             elif isinstance(attr, str):
                 setattr(self, param, to_bytes(attr))
@@ -1106,7 +1117,6 @@ class AssertOnlyCertificateCryptography(Certificate):
             return cryptography.x509.oid.NameOID.POSTAL_ADDRESS
         if id in ('postalCode', ):
             return cryptography.x509.oid.NameOID.POSTAL_CODE
-
 
     def _get_san(self, name):
         if name.startswith('DNS:'):
@@ -1208,7 +1218,6 @@ class AssertOnlyCertificateCryptography(Certificate):
             params[self._get_keyusage(usage)] = True
         return params
 
-
     def assertonly(self):
         self.cert = crypto_utils.load_certificate(self.path, backend='cryptography')
 
@@ -1222,19 +1231,20 @@ class AssertOnlyCertificateCryptography(Certificate):
 
         def _validate_subject():
             if self.subject:
-                expected_subject = Name([NameAttribute(oid=self._get_name_oid(sub[0]), value=to_text(sub[1])) for sub in
-                    self.subject])
+                expected_subject = Name([NameAttribute(oid=self._get_name_oid(sub[0]), value=to_text(sub[1]))
+                                         for sub in self.subject])
                 cert_subject = self.cert.subject
                 if (not self.subject_strict and not all(x in cert_subject for x in expected_subject)) or \
                    (self.subject_strict and not set(expected_subject) == set(cert_subject)):
-                   self.message.append(
-                       'Invalid subject component (got %s, expected all of %s to be present)' % (cert_subject,
-                           expected_subject)
+                    self.message.append(
+                        'Invalid subject component (got %s, expected all of %s to be present)' %
+                        (cert_subject, expected_subject)
                     )
+
         def _validate_issuer():
             if self.issuer:
-                expected_issuer = Name([NameAttribute(oid=self._get_name_oid(iss[0]), value=to_text(iss[1])) for iss in
-                    self.issuer])
+                expected_issuer = Name([NameAttribute(oid=self._get_name_oid(iss[0]), value=to_text(iss[1]))
+                                        for iss in self.issuer])
                 cert_issuer = self.cert.issuer
                 if (not self.issuer_strict and not all(x in cert_issuer for x in expected_issuer)) or \
                    (self.issuer_strict and not set(expected_issuer) == set(cert_issuer)):
@@ -1254,7 +1264,7 @@ class AssertOnlyCertificateCryptography(Certificate):
         def _validate_version():
             # FIXME
             if self.version:
-                expected_version = x509.Version(int(self.version) - 1 )
+                expected_version = x509.Version(int(self.version) - 1)
                 if expected_version != self.cert.version:
                     self.message.append(
                         'Invalid certificate version number (got %s, expected %s)' % (self.cert.version, self.version)
@@ -1280,11 +1290,11 @@ class AssertOnlyCertificateCryptography(Certificate):
                             decipher_only=current_keyusage.decipher_only
                         ))
 
-
                     if (not self.keyUsage_strict and not all(x in test_keyusage for x in self._parse_key_usage())) or \
                             (self.keyUsage_strict and current_keyusage != expected_keyusage):
                         self.message.append(
-                            'Invalid keyUsage components (got %s, expected all of %s to be present)' % ([x for x in test_keyusage if x == True], [x for x in self.keyUsage if x == True])
+                            'Invalid keyUsage components (got %s, expected all of %s to be present)' %
+                            ([x for x in test_keyusage if x is True], [x for x in self.keyUsage if x is True])
                         )
 
                 except cryptography.x509.ExtensionNotFound:
@@ -1339,7 +1349,8 @@ class AssertOnlyCertificateCryptography(Certificate):
 
         def _validate_valid_at():
             if self.valid_at[0]:
-                if not (self.cert.not_valid_before <= self.get_relative_time_option(self.valid_at[0], 'valid_at', backend='cryptography')  <= self.cert.not_valid_after):
+                rt = self.get_relative_time_option(self.valid_at[0], 'valid_at', backend='cryptography')
+                if not (self.cert.not_valid_before <= rt <= self.cert.not_valid_after):
                     self.message.append(
                         'Certificate is not valid for the specified date (%s) - notBefore: %s - notAfter: %s' % (self.valid_at,
                                                                                                                  self.cert.not_valid_before,
@@ -1348,14 +1359,13 @@ class AssertOnlyCertificateCryptography(Certificate):
 
         def _validate_invalid_at():
             if self.invalid_at[0]:
-                if not (self.get_relative_time_option(self.invalid_at[0], 'invalid_at', backend='cryptography') <=
-                        self.cert.not_valid_before) or (self.get_relative_time_option(self.invalid_at, 'invalid_at', backend='cryptography') >= self.cert.not_valid_after):
+                if not (self.get_relative_time_option(self.invalid_at[0], 'invalid_at', backend='cryptography') <= self.cert.not_valid_before) \
+                   or (self.get_relative_time_option(self.invalid_at, 'invalid_at', backend='cryptography') >= self.cert.not_valid_after):
                     self.message.append(
                         'Certificate is not invalid for the specified date (%s) - notBefore: %s - notAfter: %s' % (self.invalid_at,
                                                                                                                    self.cert.not_valid_before,
                                                                                                                    self.cert.not_valid_after)
                     )
-
 
         def _validate_valid_in():
             if self.valid_in[0]:
@@ -1397,7 +1407,6 @@ class AssertOnlyCertificateCryptography(Certificate):
                 'Error while reading private key %s: %s' % (self.privatekey_path, str(e))
             )
 
-
         if len(self.message):
             module.fail_json(msg=' | '.join(self.message))
 
@@ -1410,7 +1419,6 @@ class AssertOnlyCertificateCryptography(Certificate):
         self.message = []
 
         return parent_check and assertonly_check
-
 
     def dump(self, check_mode=False):
         result = {
@@ -1627,8 +1635,7 @@ class AssertOnlyCertificate(Certificate):
                     self.valid_in = "+" + self.valid_in + "s"
                 valid_in_asn1 = self.get_relative_time_option(self.valid_in, "valid_in")
                 valid_in_date = to_bytes(valid_in_asn1, errors='surrogate_or_strict')
-                if not (self.cert.get_notBefore() <= valid_in_date <=
-                        self.cert.get_notAfter()):
+                if not (self.cert.get_notBefore() <= valid_in_date <= self.cert.get_notAfter()):
                     self.message.append(
                         'Certificate is not valid in %s from now (that would be %s) - notBefore: %s - notAfter: %s'
                         % (self.valid_in, valid_in_date,
@@ -1861,7 +1868,6 @@ def main():
             except AttributeError:
                 module.fail_json(msg='You need to have PyOpenSSL>=0.15')
 
-
         if provider == 'selfsigned':
             certificate = SelfSignedCertificate(module)
         elif provider == 'acme':
@@ -1886,9 +1892,7 @@ def main():
             certificate = AssertOnlyCertificateCryptography(module)
             # certificate = AssertOnlyCertificate(module)
 
-
     if module.params['state'] == 'present':
-
 
         if module.check_mode:
             result = certificate.dump(check_mode=True)
