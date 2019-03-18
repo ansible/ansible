@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) 2018, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
+# Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -46,6 +46,13 @@ options:
     default: 5432
     aliases:
     - login_port
+  session_role:
+    description:
+    - Switch to session_role after connecting. The specified session_role must
+      be a role that the current login_user is a member of.
+    - Permissions checking for SQL commands is carried out as though
+      the session_role were the one that had logged in originally.
+    type: str
   login_user:
     description:
     - User (role) used to authenticate with PostgreSQL.
@@ -83,6 +90,7 @@ options:
 notes:
 - The default authentication assumes that you are either logging in as or
   sudo'ing to the postgres account on the host.
+- login_user or session_role must be able to read from pg_authid.
 - To avoid "Peer authentication failed for user postgres" error,
   use postgres user as a I(become_user).
 - This module uses psycopg2, a Python PostgreSQL database adapter. You must
@@ -122,7 +130,7 @@ EXAMPLES = r'''
     filter: "!settings,!roles"
 
 # On FreeBSD with PostgreSQL 9.5 version and lower use pgsql user to become
-# and pass "postgresq" as a database to connect to
+# and pass "postgres" as a database to connect to
 - name: Collect tablespaces and repl_slots facts
   become: yes
   become_user: pgsql
@@ -132,12 +140,12 @@ EXAMPLES = r'''
     - tablesp*
     - repl_sl*
 
-- name: Collect all facts except settings
+- name: Collect all facts except databases
   become: yes
   become_user: postgres
   postgresql_facts:
     filter:
-    - "!settings"
+    - "!databases"
 '''
 
 RETURN = r'''
@@ -235,7 +243,7 @@ databases:
                 type: int
                 sample: 0
             nspname:
-              description: Namecpase where the extension is.
+              description: Namespace where the extension is.
               returned: always
               type: str
               sample: pg_catalog
@@ -298,7 +306,7 @@ repl_slots:
       sample: acme
     plugin:
       description:
-      - The base name of the shared object containing the the output plugin
+      - Base name of the shared object containing the output plugin
         this logical slot is using, or null for physical slots.
       returned: always
       type: str
@@ -517,15 +525,26 @@ from ansible.module_utils.six import iteritems
 #
 
 class PgDbConn(object):
-    def __init__(self, module, params_dict):
+    def __init__(self, module, params_dict, session_role):
         self.params_dict = params_dict
         self.module = module
         self.db_conn = None
+        self.session_role = session_role
+        self.cursor = None
 
     def connect(self):
         try:
             self.db_conn = psycopg2.connect(**self.params_dict)
-            return self.db_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+            self.cursor = self.db_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+            # Switch role, if specified:
+            if self.session_role:
+                try:
+                    self.cursor.execute('SET ROLE %s' % self.session_role)
+                except Exception as e:
+                    module.fail_json(msg="Could not switch role: %s" % to_native(e))
+
+            return self.cursor
 
         except TypeError as e:
             if 'sslrootcert' in e.args[0]:
@@ -893,7 +912,9 @@ class PgClusterFacts(object):
                  "ELSE 'No Access' END, "
                  "t.spcname "
                  "FROM pg_catalog.pg_database AS d "
-                 "JOIN pg_catalog.pg_tablespace t on d.dattablespace = t.oid")
+                 "JOIN pg_catalog.pg_tablespace t ON d.dattablespace = t.oid "
+                 "WHERE d.datname != 'template0'")
+
         res = self.__exec_sql(query)
 
         db_dict = {}
@@ -908,9 +929,6 @@ class PgClusterFacts(object):
             )
 
         for datname in db_dict:
-            if datname == 'template0':
-                continue
-
             self.cursor = self.db_obj.reconnect(datname)
             db_dict[datname]['namespaces'] = self.get_namespaces()
             db_dict[datname]['extensions'] = self.get_ext_info()
@@ -948,6 +966,7 @@ def main():
         filter=dict(type='list'),
         ssl_mode=dict(type='str', default='prefer', choices=['allow', 'disable', 'prefer', 'require', 'verify-ca', 'verify-full']),
         ssl_rootcert=dict(type='str'),
+        session_role=dict(type='str'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -959,6 +978,7 @@ def main():
 
     filter_ = module.params["filter"]
     sslrootcert = module.params["ssl_rootcert"]
+    session_role = module.params["session_role"]
 
     # To use defaults values, keyword arguments must be absent, so
     # check which values are empty and don't include in the **kw
@@ -984,7 +1004,7 @@ def main():
         module.fail_json(msg='psycopg2 must be at least 2.4.3 in order '
                              'to user the ssl_rootcert parameter')
 
-    db_conn_obj = PgDbConn(module, kw)
+    db_conn_obj = PgDbConn(module, kw, session_role)
 
     # Do job:
     pg_facts = PgClusterFacts(module, db_conn_obj)
