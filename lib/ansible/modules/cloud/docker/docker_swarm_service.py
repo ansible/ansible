@@ -2255,6 +2255,7 @@ class DockerServiceManager(object):
             name=name,
             **service_data
         )
+        # Prior to Docker SDK 4.0.0 no warnings were returned and will thus be ignored.
         self.client.report_warnings(result, ['Warning'])
 
     def create_service(self, name, service):
