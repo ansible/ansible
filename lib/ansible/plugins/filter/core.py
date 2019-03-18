@@ -556,7 +556,7 @@ def random_mac(value):
         raise AnsibleFilterError('Invalid value (%s) for random_mac: %s' % (value, err))
 
     # Generate random int between x10000000 and xFFFFFFFFFF
-    v = randint(68719476736,1099511627775)
+    v = randint(68719476736, 1099511627775)
     # Select first n chars to complement input prefix
     remain = 2 * (6 - len(mac_items))
     rnd = ('%x' % v)[:remain]
