@@ -2249,14 +2249,13 @@ class DockerServiceManager(object):
 
     def update_service(self, name, old_service, new_service):
         service_data = new_service.build_docker_service(self.get_networks_names_ids())
-        self.client.update_service(
+        result = self.client.update_service(
             old_service.service_id,
             old_service.service_version,
             name=name,
             **service_data
         )
-        # Unfortunately, docker-py f***ed up and doesn't return the structure
-        # the corresponding API call returns, which would include a list of warnings.
+        self.client.report_warnings(result, ['Warning'])
 
     def create_service(self, name, service):
         service_data = service.build_docker_service(self.get_networks_names_ids())
