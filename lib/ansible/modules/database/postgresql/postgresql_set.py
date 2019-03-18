@@ -243,13 +243,19 @@ def param_get(cursor, module, name):
         val[0] = 'off'
 
     if unit == 'kB':
-        raw_val = int(raw_val) * 1024
-        boot_val = int(boot_val) * 1024
+        if int(raw_val) > 0:
+            raw_val = int(raw_val) * 1024
+        if int(boot_val) > 0:
+            boot_val = int(boot_val) * 1024
+
         unit = 'b'
 
     elif unit == 'MB':
-        raw_val = int(raw_val) * 1024 * 1024
-        boot_val = int(boot_val) * 1024 * 1024
+        if int(raw_val) > 0:
+            raw_val = int(raw_val) * 1024 * 1024
+        if int(boot_val) > 0:
+            boot_val = int(boot_val) * 1024 * 1024
+
         unit = 'b'
 
     return (val[0], raw_val, unit, boot_val, context)
