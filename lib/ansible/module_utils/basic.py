@@ -1767,23 +1767,23 @@ class AnsibleModule(object):
                 return (value, e)
             return value
 
-    def _check_type_str(self, value):
+    def _check_type_str(self, key, value):
         if isinstance(value, string_types):
             return value
 
         # Ignore, warn, or error when converting to a string.
-        # The current default is to warn. Change this in Anisble 2.12 to error.
+        # The current default is to warn. Change this in Ansible 2.12 to error.
         common_msg = 'quote the entire value to ensure it does not change.'
         if self._string_conversion_action == 'error':
             msg = common_msg.capitalize()
             raise TypeError(msg)
         elif self._string_conversion_action == 'warn':
-            msg = ('The value {0!r} (type {0.__class__.__name__}) in a string field was converted to {1!r} (type string). '
-                   'If this does not look like what you expect, {2}').format(value, to_text(value), common_msg)
+            msg = ('The key {0!r} with value {1!r} (type {1.__class__.__name__}) in a string field was converted to {2!r} (type string). '
+                   'If this does not look like what you expect, {3}').format(key, value, to_text(value), common_msg)
             self.warn(msg)
         return to_native(value, errors='surrogate_or_strict')
 
-    def _check_type_list(self, value):
+    def _check_type_list(self, key, value):
         if isinstance(value, list):
             return value
 
@@ -1794,7 +1794,7 @@ class AnsibleModule(object):
 
         raise TypeError('%s cannot be converted to a list' % type(value))
 
-    def _check_type_dict(self, value):
+    def _check_type_dict(self, key, value):
         if isinstance(value, dict):
             return value
 
@@ -1839,7 +1839,7 @@ class AnsibleModule(object):
 
         raise TypeError('%s cannot be converted to a dict' % type(value))
 
-    def _check_type_bool(self, value):
+    def _check_type_bool(self, key, value):
         if isinstance(value, bool):
             return value
 
@@ -1848,50 +1848,55 @@ class AnsibleModule(object):
 
         raise TypeError('%s cannot be converted to a bool' % type(value))
 
-    def _check_type_int(self, value):
+    def _check_type_int(self, key, value):
         if isinstance(value, integer_types):
             return value
 
         if isinstance(value, string_types):
-            return int(value)
+            try:
+                return int(value)
+            except ValueError:
+                pass
 
         raise TypeError('%s cannot be converted to an int' % type(value))
 
-    def _check_type_float(self, value):
+    def _check_type_float(self, key, value):
         if isinstance(value, float):
             return value
 
         if isinstance(value, (binary_type, text_type, int)):
-            return float(value)
+            try:
+                return float(value)
+            except ValueError:
+                pass
 
         raise TypeError('%s cannot be converted to a float' % type(value))
 
-    def _check_type_path(self, value):
-        value = self._check_type_str(value)
+    def _check_type_path(self, key, value):
+        value = self._check_type_str(key, value)
         return os.path.expanduser(os.path.expandvars(value))
 
-    def _check_type_jsonarg(self, value):
+    def _check_type_jsonarg(self, key, value):
         # Return a jsonified string.  Sometimes the controller turns a json
         # string into a dict/list so transform it back into json here
         if isinstance(value, (text_type, binary_type)):
             return value.strip()
-        else:
-            if isinstance(value, (list, tuple, dict)):
-                return self.jsonify(value)
+        elif isinstance(value, (list, tuple, dict)):
+            return self.jsonify(value)
         raise TypeError('%s cannot be converted to a json string' % type(value))
 
-    def _check_type_raw(self, value):
+    def _check_type_raw(self, key, value):
         return value
 
-    def _check_type_bytes(self, value):
+    def _check_type_bytes(self, key, value):
         try:
-            self.human_to_bytes(value)
+            return self.human_to_bytes(value)
         except ValueError:
             raise TypeError('%s cannot be converted to a Byte value' % type(value))
 
-    def _check_type_bits(self, value):
+    def _check_type_bits(self, key, value):
         try:
-            self.human_to_bytes(value, isbits=True)
+            return self.human_to_bytes(value, isbits=True)
         except ValueError:
             raise TypeError('%s cannot be converted to a Bit value' % type(value))
 
@@ -2007,7 +2012,7 @@ class AnsibleModule(object):
 
             type_checker, wanted_name = self._get_wanted_type(wanted, k)
             try:
-                param[k] = type_checker(value)
+                param[k] = type_checker(k, value)
                 wanted_elements = v.get('elements', None)
                 if wanted_elements:
                     if wanted != 'list' or not isinstance(param[k], list):
