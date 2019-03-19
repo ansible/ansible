@@ -1,0 +1,4 @@
+- name: remove test dir
+  win_file:
+    path: '{{ testing_dir }}'
+    state: absent
