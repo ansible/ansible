@@ -1,13 +1,13 @@
 - name: download single file (check)
   win_get_url:
     url: https://{{ httpbin_host }}/base64/SG93IG5vdyBicm93biBjb3c=
-    dest: '{{ remote_tmp_dir }}\output.txt'
+    dest: '{{ testing_dir }}\output.txt'
   check_mode: yes
   register: http_download_check
 
 - name: get result of download single file (check)
   win_stat:
-    path: '{{ remote_tmp_dir }}\output.txt'
+    path: '{{ testing_dir }}\output.txt'
   register: http_download_result_check
 
 - name: assert download single file (check)
@@ -22,12 +22,12 @@
 - name: download single file
   win_get_url:
     url: https://{{ httpbin_host }}/base64/SG93IG5vdyBicm93biBjb3c=
-    dest: '{{ remote_tmp_dir }}\output.txt'
+    dest: '{{ testing_dir }}\output.txt'
   register: http_download
 
 - name: get result of download single file
   win_stat:
-    path: '{{ remote_tmp_dir }}\output.txt'
+    path: '{{ testing_dir }}\output.txt'
   register: http_download_result
 
 - name: assert download single file
@@ -42,7 +42,7 @@
 - name: download single file (idempotent)
   win_get_url:
     url: https://{{ httpbin_host }}/base64/SG93IG5vdyBicm93biBjb3c=
-    dest: '{{ remote_tmp_dir }}\output.txt'
+    dest: '{{ testing_dir }}\output.txt'
   register: http_download_again
 
 - name: assert download single file (idempotent)
@@ -54,12 +54,12 @@
 - name: download file for force=no tests
   win_get_url:
     url: https://s3.amazonaws.com/ansible-ci-files/test/integration/roles/test_win_get_url/SlimFTPd.exe
-    dest: '{{ remote_tmp_dir }}\output'
+    dest: '{{ testing_dir }}\output'
 
 - name: download single file with force no
   win_get_url:
     url: https://s3.amazonaws.com/ansible-ci-files/test/integration/roles/test_win_get_url/SlimFTPd.exe
-    dest: '{{ remote_tmp_dir }}\output'
+    dest: '{{ testing_dir }}\output'
     force: no
   register: http_download_no_force
 
@@ -70,14 +70,14 @@
 
 - name: manually change the content and last modified time on FTP source to older datetime
   win_shell: |
-      $path = '{{ remote_tmp_dir }}\output'
-      Set-Content -Path $path -Value 'abc'
-      (Get-Item -Path $path).LastWriteTime = (Get-Date -Date "01/01/1970")
+      $path = '{{ testing_dir }}\output'
+      Set-Content -LiteralPath $path -Value 'abc'
+      (Get-Item -LiteralPath $path).LastWriteTime = (Get-Date -Date "01/01/1970")
 
 - name: download newer file with force no
   win_get_url:
     url: https://s3.amazonaws.com/ansible-ci-files/test/integration/roles/test_win_get_url/SlimFTPd.exe
-    dest: '{{ remote_tmp_dir }}\output'
+    dest: '{{ testing_dir }}\output'
     force: no
   register: http_download_newer_no_force
 
@@ -89,12 +89,12 @@
 - name: download file to directory
   win_get_url:
     url: https://{{ httpbin_host }}/image/png
-    dest: '{{ remote_tmp_dir }}'
+    dest: '{{ testing_dir }}'
   register: http_download_to_directory
 
 - name: get result of download to directory
   win_stat:
-    path: '{{ remote_tmp_dir }}\png'
+    path: '{{ testing_dir }}\png'
   register: http_download_to_directory_result
 
 - name: assert download file to directory
@@ -109,11 +109,11 @@
     dest: '%TEST_WIN_GET_URL%\jpeg.jpg'
   register: http_download_with_env
   environment:
-    TEST_WIN_GET_URL: '{{ remote_tmp_dir }}'
+    TEST_WIN_GET_URL: '{{ testing_dir }}'
 
 - name: get result of download to path with env var
   win_stat:
-    path: '{{ remote_tmp_dir }}\jpeg.jpg'
+    path: '{{ testing_dir }}\jpeg.jpg'
   register: http_download_with_env_result
 
 - name: assert download to path with env var
@@ -125,7 +125,7 @@
 - name: fail when link returns 404
   win_get_url:
     url: https://{{ httpbin_host }}/status/404
-    dest: '{{ remote_tmp_dir }}\skynet_module.html'
+    dest: '{{ testing_dir }}\skynet_module.html'
   ignore_errors: yes
   register: fail_download_404
 
@@ -146,7 +146,7 @@
 - name: test basic authentication
   win_get_url:
     url: http://{{ httpbin_host }}/basic-auth/username/password
-    dest: '{{ remote_tmp_dir }}\basic.txt'
+    dest: '{{ testing_dir }}\basic.txt'
     url_username: username
     url_password: password
   register: basic_auth
@@ -162,7 +162,7 @@
 - name: test force basic authentication
   win_get_url:
     url: http://{{ httpbin_host }}/hidden-basic-auth/username/password
-    dest: '{{ remote_tmp_dir }}\force-basic.txt'
+    dest: '{{ testing_dir }}\force-basic.txt'
     url_username: username
     url_password: password
     force_basic_auth: yes
@@ -177,7 +177,7 @@
 - name: timeout request
   win_get_url:
     url: https://{{ httpbin_host }}/delay/7
-    dest: '{{ remote_tmp_dir }}\timeout.txt'
+    dest: '{{ testing_dir }}\timeout.txt'
     timeout: 3
   register: timeout_req
   failed_when: timeout_req.msg != "Error requesting 'https://" + httpbin_host + "/delay/7'. The operation has timed out"
@@ -185,14 +185,14 @@
 - name: send request with headers
   win_get_url:
     url: https://{{ httpbin_host }}/headers
-    dest: '{{ remote_tmp_dir }}\headers.txt'
+    dest: '{{ testing_dir }}\headers.txt'
     headers:
       testing: 123
   register: headers
 
 - name: get result of send request with headers
   slurp:
-    path: '{{ remote_tmp_dir }}\headers.txt'
+    path: '{{ testing_dir }}\headers.txt'
   register: headers_actual
 
 - name: assert send request with headers

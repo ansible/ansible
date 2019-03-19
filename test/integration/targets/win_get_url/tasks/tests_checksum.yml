@@ -10,7 +10,7 @@
 - name: download file with sha1 checksum url
   win_get_url:
     url: https://{{ httpbin_host }}/base64/cHR1eA==
-    dest: '{{ remote_tmp_dir }}\sha1.txt'
+    dest: '{{ testing_dir }}\sha1.txt'
     checksum_url: https://{{ httpbin_host }}/base64/{{ sha1sum }}
     force: True
   register: download_sha1_url
@@ -18,7 +18,7 @@
 - name: download file with sha1 checksum value
   win_get_url:
     url: https://{{ httpbin_host }}/base64/cHR1eA==
-    dest: '{{ remote_tmp_dir }}\sha1.txt'
+    dest: '{{ testing_dir }}\sha1.txt'
     checksum: a97e6837f60cec6da4491bab387296bbcd72bdba
     force: True
   register: download_sha1_value
@@ -36,7 +36,7 @@
 - name: download file with sha256 checksum ftp
   win_get_url:
     url: https://{{ httpbin_host }}/base64/cHR1eA==
-    dest: '{{ remote_tmp_dir }}\sha256.txt'
+    dest: '{{ testing_dir }}\sha256.txt'
     checksum_url: ftp://localhost/anon/sha256sum.txt  # tests that a checksum can be from an FTP URI
     checksum_algorithm: sha256
     force: True
@@ -45,8 +45,8 @@
 - name: download file with sha256 checksum dot leading source as file
   win_get_url:
     url: https://{{ httpbin_host }}/base64/cHR1eA==
-    dest: '{{ remote_tmp_dir }}\sha256.txt'
-    checksum_url: '{{ remote_tmp_dir }}\ftp\anon\sha256sum_with_dot.txt'
+    dest: '{{ testing_dir }}\sha256.txt'
+    checksum_url: '{{ testing_dir }}\ftp\anon\sha256sum_with_dot.txt'
     checksum_algorithm: sha256
     force: True
   register: download_sha256_file
@@ -54,7 +54,7 @@
 - name: download file with sha256 checksum value
   win_get_url:
     url: https://{{ httpbin_host }}/base64/cHR1eA==
-    dest: '{{ remote_tmp_dir }}\sha256.txt'
+    dest: '{{ testing_dir }}\sha256.txt'
     checksum: b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006
     checksum_algorithm: sha256
   register: download_sha256_value
@@ -75,7 +75,7 @@
 - name: fail download with invalid checksum and force=no
   win_get_url:
     url: https://{{ httpbin_host }}/base64/cHR1eA==
-    dest: '{{ remote_tmp_dir }}\fail.txt'
+    dest: '{{ testing_dir }}\fail.txt'
     checksum: invalid
     force: no
   register: fail_checksum_force_no
@@ -84,7 +84,7 @@
 - name: fail download with invalid checksum and force=yes
   win_get_url:
     url: https://{{ httpbin_host }}/base64/cHR1eA==
-    dest: '{{ remote_tmp_dir }}\fail.txt'
+    dest: '{{ testing_dir }}\fail.txt'
     checksum: invalid
     force: yes
   register: fail_checksum_force_yes
