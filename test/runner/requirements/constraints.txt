@@ -25,4 +25,3 @@ virtualenv < 16.0.0 ; python_version < '2.7' # virtualenv 16.0.0 and later requi
 pyopenssl < 18.0.0 ; python_version < '2.7' # pyOpenSSL 18.0.0 and later require python 2.7 or later
 pyfmg == 0.6.1 # newer versions do not pass current unit tests
 pycparser < 2.19 ; python_version < '2.7' # pycparser 2.19 and later require python 2.7 or later
-deepdiff < 4.0.0 ; python_version < '3' # deepdiff 4.0.0 and later require python 3
