@@ -846,9 +846,7 @@ class StrategyBase:
             #        we consider the ability of meta tasks to flush handlers
             for handler in handler_block.block:
                 if handler.notified_hosts:
-                    handler_vars = self._variable_manager.get_vars(play=iterator._play, task=handler)
-                    handler_name = handler.get_name()
-                    result = self._do_handler_run(handler, handler_name, iterator=iterator, play_context=play_context)
+                    result = self._do_handler_run(handler, handler.get_name(), iterator=iterator, play_context=play_context)
                     if not result:
                         break
         return result
@@ -874,7 +872,9 @@ class StrategyBase:
         run_once = False
         try:
             action = action_loader.get(handler.action, class_only=True)
-            if handler.run_once or getattr(action, 'BYPASS_HOST_LOOP', False):
+            handler_vars = self._variable_manager.get_vars(play=iterator._play, task=handler)
+            templar = Templar(loader=self._loader, variables=handler_vars)
+            if templar.template(handler.run_once) or getattr(action, 'BYPASS_HOST_LOOP', False):
                 run_once = True
         except KeyError:
             # we don't care here, because the action may simply not have a
