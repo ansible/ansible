@@ -869,13 +869,11 @@ class StrategyBase:
             self._tqm.send_callback('v2_playbook_on_handler_task_start', handler)
             handler.name = saved_name
 
-        run_once = False
+        bypass_host_loop = False
         try:
             action = action_loader.get(handler.action, class_only=True)
-            handler_vars = self._variable_manager.get_vars(play=iterator._play, task=handler)
-            templar = Templar(loader=self._loader, variables=handler_vars)
-            if templar.template(handler.run_once) or getattr(action, 'BYPASS_HOST_LOOP', False):
-                run_once = True
+            if getattr(action, 'BYPASS_HOST_LOOP', False):
+                bypass_host_loop = True
         except KeyError:
             # we don't care here, because the action may simply not have a
             # corresponding action plugin
@@ -887,7 +885,9 @@ class StrategyBase:
                 task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=handler)
                 self.add_tqm_variables(task_vars, play=iterator._play)
                 self._queue_task(host, handler, task_vars, play_context)
-                if run_once:
+
+                templar = Templar(loader=self._loader, variables=task_vars)
+                if templar.template(handler.run_once) or bypass_host_loop:
                     break
 
         # collect the results from the handler run
