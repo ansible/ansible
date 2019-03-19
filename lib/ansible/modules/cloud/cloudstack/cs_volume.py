@@ -29,7 +29,7 @@ DOCUMENTATION = '''
 module: cs_volume
 short_description: Manages volumes on Apache CloudStack based clouds.
 description:
-    - Create, destroy, attach, detach volumes.
+    - Create, destroy, attach, detach, extract or upload volumes.
 version_added: "2.1"
 author:
     - "Jefferson Girão (@jeffersongirao)"
@@ -98,7 +98,7 @@ options:
     description:
       - State of the volume.
     default: present
-    choices: [ present, absent, attached, detached ]
+    choices: [ present, absent, attached, detached, extracted, uploaded ]
   poll_async:
     description:
       - Poll async jobs until job has finished.
@@ -110,6 +110,28 @@ options:
       - "To delete all tags, set a empty list e.g. C(tags: [])."
     aliases: [ 'tag' ]
     version_added: "2.4"
+  url:
+    description:
+      - URL to which the volume would be extracted on I(state=extracted)
+      - or the URL where to download the volume on I(state=uploaded).
+      - Only considered if I(state) is C(extracted) or C(uploaded).
+    type: str
+    version_added: '2.8'
+  mode:
+    description:
+      - Mode for the template extraction.
+      - Only considered if I(state=extracted).
+    type: str
+    choices: [ http_download, ftp_upload ]
+    default: http_download
+    version_added: '2.8'
+  format:
+    description:
+      - The format for the volume.
+      - Only considered if I(state=uploaded).
+    type: str
+    choices: [ QCOW2, RAW, VHD, VHDX, OVA ]
+    version_added: '2.8'
 extends_documentation_fragment: cloudstack
 '''
 
@@ -216,6 +238,12 @@ device_id:
   returned: success
   type: str
   sample: 1
+url:
+  description: The url of the uploaded volume or the download url depending extraction mode.
+  returned: success when I(state=extracted)
+  type: str
+  sample: http://1.12.3.4/userdata/387e2c7c-7c42-4ecc-b4ed-84e8367a1965.vhd
+  version_added: '2.8'
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -237,6 +265,7 @@ class AnsibleCloudStackVolume(AnsibleCloudStack):
             'deviceid': 'device_id',
             'type': 'type',
             'size': 'size',
+            'url': 'url',
         }
         self.volume = None
 
@@ -251,6 +280,10 @@ class AnsibleCloudStackVolume(AnsibleCloudStack):
                 'type': 'DATADISK',
                 'fetch_list': True,
             }
+            # Do not filter on DATADISK when state=extracted
+            if self.module.params.get('state') == 'extracted':
+                del args['type']
+
             volumes = self.query_api('listVolumes', **args)
             if volumes:
                 volume_name = self.module.params.get('name')
@@ -398,6 +431,57 @@ class AnsibleCloudStackVolume(AnsibleCloudStack):
 
         return volume
 
+    def extract_volume(self):
+        volume = self.get_volume()
+        if not volume:
+            self.module.fail_json(msg="Failed: volume not found")
+
+        args = {
+            'id': volume['id'],
+            'url': self.module.params.get('url'),
+            'mode': self.module.params.get('mode').upper(),
+            'zoneid': self.get_zone(key='id')
+        }
+        self.result['changed'] = True
+
+        if not self.module.check_mode:
+            volume = self.query_api('extractVolume', **args)
+
+            poll_async = self.module.params.get('poll_async')
+            if poll_async:
+                volume = self.poll_job(volume, 'volume')
+        return volume
+
+    def upload_volume(self):
+        volume = self.get_volume()
+        if not volume:
+            disk_offering_id = self.get_disk_offering(key='id')
+
+            self.result['changed'] = True
+
+            args = {
+                'name': self.module.params.get('name'),
+                'account': self.get_account(key='name'),
+                'domainid': self.get_domain(key='id'),
+                'projectid': self.get_project(key='id'),
+                'zoneid': self.get_zone(key='id'),
+                'format': self.module.params.get('format'),
+                'url': self.module.params.get('url'),
+                'diskofferingid': disk_offering_id,
+            }
+            if not self.module.check_mode:
+                res = self.query_api('uploadVolume', **args)
+                if 'errortext' in res:
+                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                poll_async = self.module.params.get('poll_async')
+                if poll_async:
+                    volume = self.poll_job(res, 'volume')
+        if volume:
+            volume = self.ensure_tags(resource=volume, resource_type='Volume')
+            self.volume = volume
+
+        return volume
+
 
 def main():
     argument_spec = cs_argument_spec()
@@ -414,13 +498,23 @@ def main():
         custom_id=dict(),
         force=dict(type='bool', default=False),
         shrink_ok=dict(type='bool', default=False),
-        state=dict(choices=['present', 'absent', 'attached', 'detached'], default='present'),
+        state=dict(default='present', choices=[
+            'present',
+            'absent',
+            'attached',
+            'detached',
+            'extracted',
+            'uploaded',
+        ]),
         zone=dict(),
         domain=dict(),
         account=dict(),
         project=dict(),
         poll_async=dict(type='bool', default=True),
         tags=dict(type='list', aliases=['tag']),
+        url=dict(),
+        mode=dict(choices=['http_download', 'ftp_upload'], default='http_download'),
+        format=dict(choices=['QCOW2', 'RAW', 'VHD', 'VHDX', 'OVA']),
     ))
 
     module = AnsibleModule(
@@ -429,6 +523,9 @@ def main():
         mutually_exclusive=(
             ['snapshot', 'disk_offering'],
         ),
+        required_if=[
+            ('state', 'uploaded', ['url', 'format']),
+        ],
         supports_check_mode=True
     )
 
@@ -442,6 +539,10 @@ def main():
         volume = acs_vol.attached_volume()
     elif state in ['detached']:
         volume = acs_vol.detached_volume()
+    elif state == 'extracted':
+        volume = acs_vol.extract_volume()
+    elif state == 'uploaded':
+        volume = acs_vol.upload_volume()
     else:
         volume = acs_vol.present_volume()
 
