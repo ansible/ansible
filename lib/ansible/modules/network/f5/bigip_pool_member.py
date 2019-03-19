@@ -27,31 +27,36 @@ options:
       - This parameter is optional and, if not specified, a node name will be
         created automatically from either the specified C(address) or C(fqdn).
       - The C(enabled) state is an alias of C(present).
+    type: str
     version_added: 2.6
   state:
     description:
       - Pool member state.
+    type: str
     required: True
-    default: present
     choices:
       - present
       - absent
       - enabled
       - disabled
       - forced_offline
+    default: present
   pool:
     description:
       - Pool name. This pool must exist.
+    type: str
     required: True
   partition:
     description:
-      - Partition
+      - Partition to manage resources on.
+    type: str
     default: Common
   address:
     description:
       - IP address of the pool member. This can be either IPv4 or IPv6. When creating a
         new pool member, one of either C(address) or C(fqdn) must be provided. This
         parameter cannot be updated after it is set.
+    type: str
     aliases:
       - ip
       - host
@@ -66,6 +71,7 @@ options:
       - FQDN names must end with a letter or a number.
       - When creating a new pool member, one of either C(address) or C(fqdn) must be
         provided. This parameter cannot be updated after it is set.
+    type: str
     aliases:
       - hostname
     version_added: 2.6
@@ -73,22 +79,27 @@ options:
     description:
       - Pool member port.
       - This value cannot be changed after it has been set.
+    type: int
     required: True
   connection_limit:
     description:
       - Pool member connection limit. Setting this to 0 disables the limit.
+    type: int
   description:
     description:
       - Pool member description.
+    type: str
   rate_limit:
     description:
       - Pool member rate limit (connections-per-second). Setting this to 0
         disables the limit.
+    type: int
   ratio:
     description:
       - Pool member ratio weight. Valid values range from 1 through 100.
         New pool members -- unless overridden with this value -- default
         to 1.
+    type: int
   preserve_node:
     description:
       - When state is C(absent) attempts to remove the node that the pool
@@ -108,6 +119,7 @@ options:
         assigned to the pool member.
       - The higher the number, the higher the priority, so a member with a priority
         of 3 has higher priority than a member with a priority of 1.
+    type: int
     version_added: 2.5
   fqdn_auto_populate:
     description:
@@ -128,13 +140,14 @@ options:
   reuse_nodes:
     description:
       - Reuses node definitions if requested.
-    default: yes
     type: bool
+    default: yes
     version_added: 2.6
   monitors:
     description:
       - Specifies the health monitors that the system currently uses to monitor
         this resource.
+    type: list
     version_added: 2.8
   availability_requirements:
     description:
@@ -147,13 +160,18 @@ options:
           - Monitor rule type when C(monitors) is specified.
           - When creating a new pool, if this value is not specified, the default of
             'all' will be used.
-        choices: ['all', 'at_least']
+        type: str
+        choices:
+          - all
+          - at_least
       at_least:
         description:
           - Specifies the minimum number of active health monitors that must be successful
             before the link is considered up.
           - This parameter is only relevant when a C(type) of C(at_least) is used.
           - This parameter will be ignored if a type of C(all) is used.
+        type: int
+    type: dict
     version_added: 2.8
   ip_encapsulation:
     description:
@@ -163,10 +181,12 @@ options:
       - When C(none), disables IP encapsulation.
       - When C(inherit), inherits IP encapsulation setting from the member's pool.
       - When any other value, Options are None, Inherit from Pool, and Member Specific.
+    type: str
     version_added: 2.8
   aggregate:
     description:
       - List of pool member definitions to be created, modified or removed.
+    type: list
     aliases:
       - members
     version_added: 2.8
@@ -175,8 +195,8 @@ options:
       - Remove members not defined in the C(aggregate) parameter.
       - This operation is all or none, meaning that it will stop if there are some pool members
         that cannot be removed.
-    default: no
     type: bool
+    default: no
     aliases:
       - purge
     version_added: 2.8
@@ -257,16 +277,16 @@ EXAMPLES = '''
       password: secret
   delegate_to: localhost
   loop:
-    - host: 1.1.1.1
+    - address: 1.1.1.1
       name: web1
       priority_group: 4
-    - host: 2.2.2.2
+    - address: 2.2.2.2
       name: web2
       priority_group: 3
-    - host: 3.3.3.3
+    - address: 3.3.3.3
       name: web3
       priority_group: 2
-    - host: 4.4.4.4
+    - address: 4.4.4.4
       name: web4
       priority_group: 1
 
@@ -403,10 +423,7 @@ try:
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import fq_name
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import transform_name
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.common import is_valid_hostname
     from library.module_utils.network.f5.common import flatten_boolean
@@ -419,13 +436,9 @@ except ImportError:
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import fq_name
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import transform_name
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.common import is_valid_hostname
-    from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.common import flatten_boolean
     from ansible.module_utils.network.f5.compare import cmp_str_with_none
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
@@ -990,7 +1003,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = None
         self.have = None
         self.changes = None
@@ -1618,16 +1631,12 @@ def main():
         required_one_of=spec.required_one_of,
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

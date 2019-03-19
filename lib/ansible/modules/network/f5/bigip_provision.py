@@ -24,7 +24,8 @@ options:
   module:
     description:
       - The module to provision in BIG-IP.
-    required: true
+    type: str
+    required: True
     choices:
       - am
       - afm
@@ -52,11 +53,12 @@ options:
         the module is not activated.
       - This parameter is not relevant to C(cgnat) and will not be applied to the
         C(cgnat) module.
-    default: nominal
+    type: str
     choices:
       - dedicated
       - nominal
       - minimum
+    default: nominal
   state:
     description:
       - The state of the provisioned module on the system. When C(present),
@@ -64,10 +66,11 @@ options:
         level provided that there are sufficient resources on the device (such
         as physical RAM) to support the provisioned module. When C(absent),
         de-provision the module.
-    default: present
+    type: str
     choices:
       - present
       - absent
+    default: present
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -111,19 +114,13 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.icontrol import TransactionContextManager
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.icontrol import TransactionContextManager
 
 
@@ -205,7 +202,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.have = None
         self.want = ModuleParameters(params=self.module.params)
         self.changes = UsableChanges()
@@ -883,14 +880,12 @@ def main():
         mutually_exclusive=spec.mutually_exclusive
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

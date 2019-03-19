@@ -109,9 +109,11 @@ class TestManager(unittest.TestCase):
                     chain='bigip_ssl_cert1'
                 )
             ],
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(

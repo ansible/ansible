@@ -128,9 +128,11 @@ class TestManager(unittest.TestCase):
             required_numeric=0,
             required_special=0,
             required_uppercase=0,
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = ApiParameters(params=load_fixture('load_tm_auth_password_policy_1.json'))

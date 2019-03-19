@@ -34,16 +34,18 @@ options:
         cannot be resolved. These situations disable your ability to change their
         C(state) to C(disabled) or C(offline). They will remain in an
         *Unavailable - Enabled* state.
-    default: present
+    type: str
     choices:
       - present
       - absent
       - enabled
       - disabled
       - offline
+    default: present
   name:
     description:
       - Specifies the name of the node.
+    type: str
     required: True
   monitor_type:
     description:
@@ -55,21 +57,28 @@ options:
         or it has a list of one. Where they differ is in the extra guards that
         C(single) provides; namely that it only allows a single monitor.
     version_added: "1.3"
-    choices: ['and_list', 'm_of_n', 'single']
+    type: str
+    choices:
+     - and_list
+     - m_of_n
+     - single
   quorum:
     description:
       - Monitor quorum value when C(monitor_type) is C(m_of_n).
+    type: int
     version_added: 2.2
   monitors:
     description:
       - Specifies the health monitors that the system currently uses to
         monitor this node.
+    type: list
     version_added: 2.2
   address:
     description:
       - IP address of the node. This can be either IPv4 or IPv6. When creating a
         new node, one of either C(address) or C(fqdn) must be provided. This
         parameter cannot be updated after it is set.
+    type: str
     aliases:
       - ip
       - host
@@ -84,6 +93,7 @@ options:
       - FQDN names must end with a letter or a number.
       - When creating a new node, one of either C(address) or C(fqdn) must be
         provided. This parameter cannot be updated after it is set.
+    type: str
     aliases:
       - hostname
     version_added: 2.5
@@ -93,6 +103,7 @@ options:
       - When creating a new node, if this parameter is not specified and C(fqdn) is
         specified, this parameter will default to C(ipv4).
       - This parameter cannot be changed after it has been set.
+    type: str
     choices:
       - ipv4
       - ipv6
@@ -124,6 +135,7 @@ options:
         the FQDN. The default TTL interval is akin to specifying C(3600).
       - When creating a new node, if this parameter is not specified and C(fqdn) is
         specified, this parameter will default to C(3600).
+    type: str
     version_added: 2.6
   fqdn_down_interval:
     description:
@@ -131,31 +143,37 @@ options:
         The associated monitor continues polling as long as the DNS server is down.
       - When creating a new node, if this parameter is not specified and C(fqdn) is
         specified, this parameter will default to C(5).
+    type: int
     version_added: 2.6
   description:
     description:
       - Specifies descriptive text that identifies the node.
       - You can remove a description by either specifying an empty string, or by
         specifying the special value C(none).
+    type: str
   connection_limit:
     description:
       - Node connection limit. Setting this to 0 disables the limit.
+    type: int
     version_added: 2.7
   rate_limit:
     description:
       - Node rate limit (connections-per-second). Setting this to 0 disables the limit.
+    type: int
     version_added: 2.7
   ratio:
     description:
       - Node ratio weight. Valid values range from 1 through 100.
       - When creating a new node, if this parameter is not specified, the default of
         C(1) will be used.
+    type: int
     version_added: 2.7
   dynamic_ratio:
     description:
       - The dynamic ratio number for the node. Used for dynamic ratio load balancing.
       - When creating a new node, if this parameter is not specified, the default of
         C(1) will be used.
+    type: int
     version_added: 2.7
   availability_requirements:
     description:
@@ -168,17 +186,22 @@ options:
           - Monitor rule type when C(monitors) is specified.
           - When creating a new pool, if this value is not specified, the default of
             'all' will be used.
-        choices: ['all', 'at_least']
+        choices:
+          - all
+          - at_least
       at_least:
         description:
           - Specifies the minimum number of active health monitors that must be successful
             before the link is considered up.
           - This parameter is only relevant when a C(type) of C(at_least) is used.
           - This parameter will be ignored if a type of C(all) is used.
+        type: int
+    type: dict
     version_added: 2.8
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
     version_added: 2.5
 extends_documentation_fragment: f5
@@ -765,11 +788,10 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.have = None
         self.want = ModuleParameters(params=self.module.params)
         self.changes = UsableChanges()
-        self.client = F5RestClient(**self.module.params)
 
     def _set_changed_options(self):
         changed = {}
@@ -1157,6 +1179,7 @@ def main():
     module = AnsibleModule(
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode,
+        mutually_exclusive=spec.mutually_exclusive
     )
 
     try:

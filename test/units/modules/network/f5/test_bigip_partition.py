@@ -109,9 +109,11 @@ class TestManagerEcho(unittest.TestCase):
         set_module_args(dict(
             name='foo',
             description='my description',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -133,9 +135,11 @@ class TestManagerEcho(unittest.TestCase):
         set_module_args(dict(
             name='foo',
             description='my description',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = ApiParameters(params=load_fixture('load_tm_auth_partition.json'))
@@ -158,9 +162,11 @@ class TestManagerEcho(unittest.TestCase):
         set_module_args(dict(
             name='foo',
             description='another description',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = ApiParameters(params=load_fixture('load_tm_auth_partition.json'))
@@ -185,9 +191,11 @@ class TestManagerEcho(unittest.TestCase):
         set_module_args(dict(
             name='foo',
             route_domain=1,
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = ApiParameters(params=load_fixture('load_tm_auth_partition.json'))
