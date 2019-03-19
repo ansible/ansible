@@ -10,6 +10,7 @@ disable=
     too-many-nested-blocks,
     too-many-return-statements,
     too-many-statements,
+    unnecessary-pass,
     unused-import,
     useless-object-inheritance,
     consider-using-dict-comprehension,
