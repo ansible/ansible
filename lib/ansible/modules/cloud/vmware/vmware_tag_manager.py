@@ -268,8 +268,9 @@ def main():
         tag_names=dict(type='list', required=True),
         state=dict(type='str', choices=['absent', 'add', 'present', 'remove', 'set'], default='add'),
         object_name=dict(type='str', required=True),
-        object_type=dict(type='str', required=True, choices=['VirtualMachine', 'Datacenter', 'ClusterComputeResource', 
-        'HostSystem', 'VmwareDistributedVirtualSwitch', 'DistributedVirtualPortgroup']),
+        object_type=dict(type='str', required=True, choices=['VirtualMachine', 'Datacenter', 'ClusterComputeResource',
+                                                             'HostSystem', 'VmwareDistributedVirtualSwitch',
+                                                             'DistributedVirtualPortgroup']),
     )
     module = AnsibleModule(argument_spec=argument_spec)
 
