@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# (c) 2017, NetApp, Inc
+# (c) 2017-2019, NetApp, Inc
 # GNU General Public License v3.0+
 # (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -249,10 +249,10 @@ class NetAppOntapISCSI(object):
             else:
                 if self.state == 'present':
                     if not iscsi_service_exists:
-                        self.create_iscsi_service()
-                    elif self.service_state == 'started':
+                        self.create_iscsi_service()  # the service is stopped when initially created
+                    if self.service_state == 'started':
                         self.start_iscsi_service()
-                    else:
+                    if iscsi_service_exists and self.service_state == 'stopped':
                         self.stop_iscsi_service()
 
                 elif self.state == 'absent':
