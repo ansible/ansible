@@ -327,7 +327,7 @@ EXAMPLES = '''
 
 - name: Create VM with defaults
   azure_rm_virtualmachine:
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: testvm10
     admin_username: chouseknecht
     admin_password: <your password here>
@@ -340,14 +340,14 @@ EXAMPLES = '''
 - name: Create an availability set for managed disk vm
   azure_rm_availabilityset:
     name: avs-managed-disk
-    resource_group: Testing
+    resource_group: myResourceGroup
     platform_update_domain_count: 5
     platform_fault_domain_count: 2
     sku: Aligned
 
 - name: Create a VM with managed disk
   azure_rm_virtualmachine:
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: vm-managed-disk
     admin_username: adminUser
     availability_set: avs-managed-disk
@@ -361,7 +361,7 @@ EXAMPLES = '''
 
 - name: Create a VM with existing storage account and NIC
   azure_rm_virtualmachine:
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: testvm002
     vm_size: Standard_D4
     storage_account: testaccount001
@@ -378,7 +378,7 @@ EXAMPLES = '''
 
 - name: Create a VM with OS and multiple data managed disks
   azure_rm_virtualmachine:
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: testvm001
     vm_size: Standard_D4
     managed_disk_type: Standard_LRS
@@ -401,7 +401,7 @@ EXAMPLES = '''
 
 - name: Create a VM with OS and multiple data storage accounts
   azure_rm_virtualmachine:
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: testvm001
     vm_size: Standard_DS1_v2
     admin_username: adminUser
@@ -429,7 +429,7 @@ EXAMPLES = '''
 
 - name: Create a VM with a custom image
   azure_rm_virtualmachine:
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: testvm001
     vm_size: Standard_DS1_v2
     admin_username: adminUser
@@ -438,18 +438,18 @@ EXAMPLES = '''
 
 - name: Create a VM with a custom image from a particular resource group
   azure_rm_virtualmachine:
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: testvm001
     vm_size: Standard_DS1_v2
     admin_username: adminUser
     admin_password: password01
     image:
       name: customimage001
-      resource_group: Testing
+      resource_group: myResourceGroup
 
 - name: Create VM with spcified OS disk size
   azure_rm_virtualmachine:
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: big-os-disk
     admin_username: chouseknecht
     admin_password: <your password here>
@@ -462,7 +462,7 @@ EXAMPLES = '''
 
 - name: Create VM with OS and Plan, accepting the terms
   azure_rm_virtualmachine:
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: f5-nva
     admin_username: chouseknecht
     admin_password: <your password here>
@@ -478,13 +478,13 @@ EXAMPLES = '''
 
 - name: Power Off
   azure_rm_virtualmachine:
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: testvm002
     started: no
 
 - name: Deallocate
   azure_rm_virtualmachine:
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: testvm002
     allocated: no
 
@@ -501,7 +501,7 @@ EXAMPLES = '''
 
 - name: Create a VM with an Availability Zone
   azure_rm_virtualmachine:
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: testvm001
     vm_size: Standard_DS1_v2
     admin_username: adminUser
@@ -511,7 +511,7 @@ EXAMPLES = '''
 
 - name: Remove a VM and all resources that were autocreated
   azure_rm_virtualmachine:
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: testvm002
     remove_on_absent: all_autocreated
     state: absent
@@ -545,7 +545,7 @@ azure_vm:
     contains: {
         "properties": {
             "availabilitySet": {
-                    "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Compute/availabilitySets/MYAVAILABILITYSET"
+                    "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Compute/availabilitySets/MYAVAILABILITYSET"
             },
             "hardwareProfile": {
                 "vmSize": "Standard_D1"
@@ -594,7 +594,7 @@ azure_vm:
             "networkProfile": {
                 "networkInterfaces": [
                     {
-                        "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/networkInterfaces/testvm10_NIC01",
+                        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkInterfaces/testvm10_NIC01",
                         "name": "testvm10_NIC01",
                         "properties": {
                             "dnsSettings": {
@@ -605,20 +605,20 @@ azure_vm:
                             "ipConfigurations": [
                                 {
                                     "etag": 'W/"041c8c2a-d5dd-4cd7-8465-9125cfbe2cf8"',
-                                    "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/networkInterfaces/testvm10_NIC01/ipConfigurations/default",
+                                    "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkInterfaces/testvm10_NIC01/ipConfigurations/default",
                                     "name": "default",
                                     "properties": {
                                         "privateIPAddress": "10.10.0.5",
                                         "privateIPAllocationMethod": "Dynamic",
                                         "provisioningState": "Succeeded",
                                         "publicIPAddress": {
-                                            "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/publicIPAddresses/testvm10_PIP01",
+                                            "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/publicIPAddresses/testvm10_PIP01",
                                             "name": "testvm10_PIP01",
                                             "properties": {
                                                 "idleTimeoutInMinutes": 4,
                                                 "ipAddress": "13.92.246.197",
                                                 "ipConfiguration": {
-                                                    "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/networkInterfaces/testvm10_NIC01/ipConfigurations/default"
+                                                    "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkInterfaces/testvm10_NIC01/ipConfigurations/default"
                                                 },
                                                 "provisioningState": "Succeeded",
                                                 "publicIPAllocationMethod": "Static",
@@ -633,7 +633,7 @@ azure_vm:
                             "provisioningState": "Succeeded",
                             "resourceGuid": "10979e12-ccf9-42ee-9f6d-ff2cc63b3844",
                             "virtualMachine": {
-                                "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Compute/virtualMachines/testvm10"
+                                "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Compute/virtualMachines/testvm10"
                             }
                         }
                     }

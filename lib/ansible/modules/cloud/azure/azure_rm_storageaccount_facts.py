@@ -82,7 +82,7 @@ azure_storageaccounts:
     returned: always
     type: list
     example: [{
-        "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/testing/providers/Microsoft.Storage/storageAccounts/testaccount001",
+        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/testing/providers/Microsoft.Storage/storageAccounts/testaccount001",
         "location": "eastus2",
         "name": "testaccount001",
         "properties": {
