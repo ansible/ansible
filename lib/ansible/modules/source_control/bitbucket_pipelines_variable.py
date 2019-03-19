@@ -19,7 +19,7 @@ module: bitbucket_pipelines_variable
 short_description: Manages Bitbucket pipelines variables
 description:
   - Manages Bitbucket pipelines variables.
-version_added: "2.7"
+version_added: "2.8"
 author:
   - Evgeniy Krysanov (@catcombo)
 options:
