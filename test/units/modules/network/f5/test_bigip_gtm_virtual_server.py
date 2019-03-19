@@ -157,9 +157,11 @@ class TestManager(unittest.TestCase):
             name='vs1',
             address='1.1.1.1',
             state='present',
-            password='admin',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
