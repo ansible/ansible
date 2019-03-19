@@ -111,7 +111,12 @@ class TestManager(unittest.TestCase):
             destination=dict(
                 region='Foobar',
             ),
-            weight=10
+            weight=10,
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(

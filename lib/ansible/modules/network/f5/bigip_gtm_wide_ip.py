@@ -27,6 +27,7 @@ options:
         for a wide IP.
       - The C(round_robin) value is deprecated and will be removed in Ansible 2.9.
       - The C(global_availability) value is deprecated and will be removed in Ansible 2.9.
+    type: str
     required: True
     aliases: ['lb_method']
     choices:
@@ -42,6 +43,7 @@ options:
       - Wide IP name. This name must be formatted as a fully qualified
         domain name (FQDN). You can also use the alias C(wide_ip) but this
         is deprecated and will be removed in a future Ansible version.
+    type: str
     required: True
     aliases:
       - wide_ip
@@ -51,6 +53,7 @@ options:
         type in addition to name, since pool members need different attributes
         depending on the response RDATA they are meant to supply. This value
         is required if you are using BIG-IP versions >= 12.0.0.
+    type: str
     choices:
       - a
       - aaaa
@@ -65,16 +68,18 @@ options:
         is enabled.
       - When C(absent), ensures that the Wide IP has been removed.
       - When C(disabled), ensures that the Wide IP exists and is disabled.
-    default: present
+    type: str
     choices:
       - present
       - absent
       - disabled
       - enabled
+    default: present
     version_added: 2.4
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
     version_added: 2.5
   pools:
@@ -82,21 +87,25 @@ options:
       - The pools that you want associated with the Wide IP.
       - If C(ratio) is not provided when creating a new Wide IP, it will default
         to 1.
+    type: list
     suboptions:
       name:
         description:
           - The name of the pool to include.
+        type: str
         required: True
       ratio:
         description:
           - Ratio for the pool.
           - The system uses this number with the Ratio load balancing method.
+        type: int
     version_added: 2.5
   irules:
     description:
       - List of rules to be applied.
       - If you want to remove all existing iRules, specify a single empty value; C("").
         See the documentation for an example.
+    type: list
     version_added: 2.6
   aliases:
     description:
@@ -104,6 +113,7 @@ options:
         balancing.
       - You can use the same wildcard characters for aliases as you can for actual
         wide IP names.
+    type: list
     version_added: 2.7
   last_resort_pool:
     description:
@@ -111,6 +121,7 @@ options:
         the wide IP.
       - The valid pools for this parameter are those with the C(type) specified in this
         module.
+    type: str
     version_added: 2.8
 extends_documentation_fragment: f5
 author:
@@ -211,12 +222,9 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.common import transform_name
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.common import is_valid_fqdn
     from library.module_utils.network.f5.icontrol import tmos_version
     from library.module_utils.network.f5.icontrol import module_provisioned
@@ -224,12 +232,9 @@ except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.common import transform_name
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.common import is_valid_fqdn
     from ansible.module_utils.network.f5.icontrol import tmos_version
     from ansible.module_utils.network.f5.icontrol import module_provisioned
@@ -560,7 +565,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.kwargs = kwargs
 
     def exec_module(self):
@@ -591,7 +596,7 @@ class ModuleManager(object):
 class BaseManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -939,16 +944,12 @@ def main():
         supports_check_mode=spec.supports_check_mode,
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

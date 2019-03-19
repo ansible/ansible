@@ -24,6 +24,7 @@ options:
   name:
     description:
       - The name of the server.
+    type: str
     required: True
   state:
     description:
@@ -32,16 +33,18 @@ options:
         C(present) creates the server and enables it. If C(enabled), enable the server
         if it exists. If C(disabled), create the server if needed, and set state to
         C(disabled).
-    default: present
+    type: str
     choices:
       - present
       - absent
       - enabled
       - disabled
+    default: present
   datacenter:
     description:
       - Data center the server belongs to. When creating a new GTM server, this value
         is required.
+    type: str
   devices:
     description:
       - Lists the self IP addresses and translations for each device. When creating a
@@ -56,11 +59,13 @@ options:
       - Specifying duplicate C(name) fields is a supported means of providing device
         addresses. In this scenario, the addresses will be assigned to the C(name)'s list
         of addresses.
+    type: list
   server_type:
     description:
       - Specifies the server type. The server type determines the metrics that the
         system can collect from the server. When creating a new GTM server, the default
         value C(bigip) is used.
+    type: str
     choices:
       - alteon-ace-director
       - cisco-css
@@ -88,6 +93,7 @@ options:
       - If you set this parameter to C(enabled) or C(enabled-no-delete), you must
         also ensure that the C(virtual_server_discovery) parameter is also set to
         C(enabled) or C(enabled-no-delete).
+    type: str
     choices:
       - enabled
       - disabled
@@ -97,6 +103,7 @@ options:
       - Specifies whether the system auto-discovers the virtual servers for this server.
         When creating a new GTM server, if this parameter is not specified, the default
         value C(disabled) is used.
+    type: str
     choices:
       - enabled
       - disabled
@@ -104,6 +111,7 @@ options:
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
     version_added: 2.5
   iquery_options:
@@ -126,12 +134,14 @@ options:
           - Specifies that the system checks the performance of a server running an SNMP
             agent.
         type: bool
+    type: dict
     version_added: 2.7
   monitors:
     description:
       - Specifies the health monitors that the system currently uses to monitor this resource.
       - When C(availability_requirements.type) is C(require), you may only have a single monitor in the
         C(monitors) list.
+    type: list
     version_added: 2.8
   availability_requirements:
     description:
@@ -143,13 +153,18 @@ options:
         description:
           - Monitor rule type when C(monitors) is specified.
           - When creating a new pool, if this value is not specified, the default of 'all' will be used.
-        choices: ['all', 'at_least', 'require']
+        type: str
+        choices:
+          - all
+          - at_least
+          - require
       at_least:
         description:
           - Specifies the minimum number of active health monitors that must be successful
             before the link is considered up.
           - This parameter is only relevant when a C(type) of C(at_least) is used.
           - This parameter will be ignored if a type of either C(all) or C(require) is used.
+        type: int
       number_of_probes:
         description:
           - Specifies the minimum number of probes that must succeed for this server to be declared up.
@@ -158,6 +173,7 @@ options:
           - The value of this parameter should always be B(lower) than, or B(equal to), the value of C(number_of_probers).
           - This parameter is only relevant when a C(type) of C(require) is used.
           - This parameter will be ignored if a type of either C(all) or C(at_least) is used.
+        type: int
       number_of_probers:
         description:
           - Specifies the number of probers that should be used when running probes.
@@ -166,6 +182,8 @@ options:
           - The value of this parameter should always be B(higher) than, or B(equal to), the value of C(number_of_probers).
           - This parameter is only relevant when a C(type) of C(require) is used.
           - This parameter will be ignored if a type of either C(all) or C(at_least) is used.
+        type: int
+    type: dict
     version_added: 2.8
   prober_preference:
     description:
@@ -173,6 +191,7 @@ options:
       - This option is ignored in C(TMOS) version C(12.x).
       - From C(TMOS) version C(13.x) and up, when prober_preference is set to C(pool)
         a C(prober_pool) parameter must be specified.
+    type: str
     choices:
       - inside-datacenter
       - outside-datacenter
@@ -188,6 +207,7 @@ options:
         a C(prober_pool) parameter must be specified.
       - The choices are mutually exclusive with prober_preference parameter,
         with the exception of C(any-available) or C(none) option.
+    type: str
     choices:
       - any
       - inside-datacenter
@@ -203,6 +223,7 @@ options:
       - Format of the name can be either be prepended by partition (C(/Common/foo)), or specified
         just as an object name (C(foo)).
       - In C(TMOS) version C(12.x) prober_pool can be set to empty string to revert to default setting of inherit.
+    type: str
     version_added: 2.8
   limits:
     description:
@@ -212,7 +233,6 @@ options:
       - You can define limits for any or all of the limit settings. However, when a
         member does not meet the resource threshold limit requirement, the system marks
         the member as unavailable and directs load-balancing traffic to another resource.
-    version_added: 2.8
     suboptions:
       bits_enabled:
         description:
@@ -245,26 +265,33 @@ options:
             for the member.
           - If the network traffic volume exceeds this limit, the system marks the
             member as unavailable.
+        type: int
       packets_limit:
         description:
           - Specifies the maximum allowable data transfer rate, in packets per second,
             for the member.
           - If the network traffic volume exceeds this limit, the system marks the
             member as unavailable.
+        type: int
       connections_limit:
         description:
           - Specifies the maximum number of concurrent connections, combined, for all of
             the member.
           - If the connections exceed this limit, the system marks the server as
             unavailable.
+        type: int
       cpu_limit:
         description:
           - Specifies the percent of CPU usage.
           - If percent of CPU usage goes above the limit, the system marks the server as unavailable.
+        type: int
       memory_limit:
         description:
           - Specifies the available memory required by the virtual servers on the server.
           - If available memory falls below this limit, the system marks the server as unavailable.
+        type: int
+    type: dict
+    version_added: 2.8
 extends_documentation_fragment: f5
 author:
   - Robert Teller (@r-teller)
@@ -405,12 +432,9 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.common import transform_name
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.common import is_empty_list
     from library.module_utils.network.f5.icontrol import tmos_version
     from library.module_utils.network.f5.icontrol import module_provisioned
@@ -418,12 +442,9 @@ except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.common import transform_name
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.common import is_empty_list
     from ansible.module_utils.network.f5.icontrol import tmos_version
     from ansible.module_utils.network.f5.icontrol import module_provisioned
@@ -1327,7 +1348,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.kwargs = kwargs
 
     def exec_module(self):
@@ -1358,7 +1379,7 @@ class ModuleManager(object):
 class BaseManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.want.update(dict(client=self.client))
         self.have = ApiParameters()
@@ -1748,16 +1769,12 @@ def main():
         supports_check_mode=spec.supports_check_mode,
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

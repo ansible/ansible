@@ -133,9 +133,11 @@ class TestManager(unittest.TestCase):
             port=80,
             interval=20,
             timeout=30,
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
