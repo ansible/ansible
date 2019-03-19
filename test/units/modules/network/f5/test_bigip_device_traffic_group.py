@@ -17,10 +17,10 @@ if sys.version_info < (2, 7):
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.modules.bigip_traffic_group import ApiParameters
-    from library.modules.bigip_traffic_group import ModuleParameters
-    from library.modules.bigip_traffic_group import ModuleManager
-    from library.modules.bigip_traffic_group import ArgumentSpec
+    from library.modules.bigip_device_traffic_group import ApiParameters
+    from library.modules.bigip_device_traffic_group import ModuleParameters
+    from library.modules.bigip_device_traffic_group import ModuleManager
+    from library.modules.bigip_device_traffic_group import ArgumentSpec
 
     # In Ansible 2.8, Ansible changed import paths.
     from test.units.compat import unittest
@@ -29,10 +29,10 @@ try:
 
     from test.units.modules.utils import set_module_args
 except ImportError:
-    from ansible.modules.network.f5.bigip_traffic_group import ApiParameters
-    from ansible.modules.network.f5.bigip_traffic_group import ModuleParameters
-    from ansible.modules.network.f5.bigip_traffic_group import ModuleManager
-    from ansible.modules.network.f5.bigip_traffic_group import ArgumentSpec
+    from ansible.modules.network.f5.bigip_device_traffic_group import ApiParameters
+    from ansible.modules.network.f5.bigip_device_traffic_group import ModuleParameters
+    from ansible.modules.network.f5.bigip_device_traffic_group import ModuleManager
+    from ansible.modules.network.f5.bigip_device_traffic_group import ArgumentSpec
 
     # Ansible 2.8 imports
     from units.compat import unittest
@@ -83,6 +83,22 @@ class TestParameters(unittest.TestCase):
         p = ModuleParameters(params=args)
         assert p.mac_address == '00:00:00:00:00:02'
 
+    def test_module_parameters_3(self):
+        args = dict(
+            name='foo',
+            ha_order=['bigip1'],
+            ha_group='',
+            auto_failback='yes',
+            auto_failback_time=40
+        )
+
+        p = ModuleParameters(params=args)
+        assert p.name == 'foo'
+        assert p.ha_order == ['/Common/bigip1']
+        assert p.ha_group == 'none'
+        assert p.auto_failback == 'true'
+        assert p.auto_failback_time == 40
+
     def test_api_parameters_1(self):
         args = load_fixture('load_tm_cm_traffic_group_1.json')
 
@@ -104,9 +120,11 @@ class TestManager(unittest.TestCase):
     def test_create(self, *args):
         set_module_args(dict(
             name='foo',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -121,3 +139,31 @@ class TestManager(unittest.TestCase):
         results = mm.exec_module()
 
         assert results['changed'] is True
+
+    def test_modify_ha_order(self, *args):
+        set_module_args(dict(
+            name='traffic-group-2',
+            ha_order=['v12-2.ansible.local', 'v12-1.ansible.local'],
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
+        ))
+
+        module = AnsibleModule(
+            argument_spec=self.spec.argument_spec,
+            supports_check_mode=self.spec.supports_check_mode,
+        )
+
+        current = ApiParameters(params=load_fixture('load_tg_ha_order.json'))
+
+        mm = ModuleManager(module=module)
+        mm.exists = Mock(return_value=True)
+        mm.read_current_from_device = Mock(return_value=current)
+        mm.update_on_device = Mock(return_value=True)
+
+        results = mm.exec_module()
+
+        assert results['changed'] is True
+        assert results['ha_order'] == ['/Common/v12-2.ansible.local', '/Common/v12-1.ansible.local']
