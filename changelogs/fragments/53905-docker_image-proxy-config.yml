@@ -1,0 +1,2 @@
+minor_changes:
+- "docker_image - add option ``build.use_proxy_config`` to pass proxy config from the docker client configuration to the container while building."
