@@ -57,79 +57,79 @@ If (-Not (Get-Command $executable -ErrorAction SilentlyContinue)) {
     $module.FailJson("Executable '$executable' was not found.")
 }
 
-$arguments = @()
+$arguments = [System.Collections.Generic.List`1[String]]@($executable)
 
 If ($nobanner -eq $true) {
-    $arguments += "-nobanner"
+    $arguments.Add("-nobanner")
 }
 
 # Support running on local system if no hostname is specified
 If ($hostnames) {
     $hostname_argument = ($hostnames | sort -Unique) -join ','
-    $arguments += "\\$hostname_argument"
+    $arguments.Add("\\$hostname_argument")
 }
 
 # Username is optional
-If ($username -ne $null) {
-    $arguments += "-u"
-    $arguments += $username
+If ($null -ne $username) {
+    $arguments.Add("-u")
+    $arguments.Add($username)
 }
 
 # Password is optional
-If ($password -ne $null) {
-    $arguments += "-p"
-    $arguments += $password
+If ($null -ne $password) {
+    $arguments.Add("-p")
+    $arguments.Add($password)
 }
 
-If ($chdir -ne $null) {
-    $arguments += "-w"
-    $arguments += $chdir
+If ($null -ne $chdir) {
+    $arguments.Add("-w")
+    $arguments.Add($chdir)
 }
 
 If ($wait -eq $false) {
-    $arguments += "-d"
+    $arguments.Add("-d")
 }
 
 If ($noprofile -eq $true) {
-    $arguments += "-e"
+    $arguments.Add("-e")
 }
 
 If ($elevated -eq $true) {
-    $arguments += "-h"
+    $arguments.Add("-h")
 }
 
 If ($system -eq $true) {
-    $arguments += "-s"
+    $arguments.Add("-s")
 }
 
 If ($interactive -eq $true) {
-    $arguments += "-i"
-    If ($session -ne $null) {
-        $arguments += $session
+    $arguments.Add("-i")
+    If ($null -ne $session) {
+        $arguments.Add($session)
     }
 }
 
 If ($limited -eq $true) {
-    $arguments += "-l"
+    $arguments.Add("-l")
 }
 
-If ($priority -ne $null) {
-    $arguments += "-$priority"
+If ($null -ne $priority) {
+    $arguments.Add("-$priority")
 }
 
-If ($timeout -ne $null) {
-    $arguments += "-n"
-    $arguments += $timeout
+If ($null -ne $timeout) {
+    $arguments.Add("-n")
+    $arguments.Add($timeout)
 }
 
 # Add additional advanced options
 If ($extra_opts) {
     ForEach ($opt in $extra_opts) {
-        $arguments += $opt
+        $arguments.Add($opt)
     }
 }
 
-$arguments += "-accepteula"
+$arguments.Add("-accepteula")
 
 $argument_string = Argv-ToString -arguments $arguments
 
@@ -138,9 +138,9 @@ $argument_string = Argv-ToString -arguments $arguments
 $argument_string += " $command"
 
 $start_datetime = [DateTime]::UtcNow
-$module.Result.psexec_command = "$executable $argument_string"
+$module.Result.psexec_command = $argument_string
 
-$command_result = Run-Command -command "$executable $argument_string"
+$command_result = Run-Command -command $argument_string
 
 $end_datetime = [DateTime]::UtcNow
 
