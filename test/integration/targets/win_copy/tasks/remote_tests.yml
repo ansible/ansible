@@ -315,8 +315,8 @@
     that:
     - remote_copy_folder_to_folder_after_change is changed
     - remote_copy_folder_to_folder_after_change_actual.matched == 2
-    - remote_copy_folder_to_folder_after_change_actual.files[0].checksum == 'b54ba7f5621240d403f06815f7246006ef8c7d43'
-    - remote_copy_folder_to_folder_after_change_actual.files[1].checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
+    - remote_copy_folder_to_folder_after_change_actual.files[0].checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
+    - remote_copy_folder_to_folder_after_change_actual.files[1].checksum == 'b54ba7f5621240d403f06815f7246006ef8c7d43'
 
 - name: clear target folder before folder contents to remote test
   win_file:
@@ -410,8 +410,8 @@
     that:
     - remote_copy_folder_content_to_folder_after_change is changed
     - remote_copy_folder_content_to_folder_after_change_actual.matched == 2
-    - remote_copy_folder_content_to_folder_after_change_actual.files[0].checksum == 'b54ba7f5621240d403f06815f7246006ef8c7d43'
-    - remote_copy_folder_content_to_folder_after_change_actual.files[1].checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
+    - remote_copy_folder_content_to_folder_after_change_actual.files[0].checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
+    - remote_copy_folder_content_to_folder_after_change_actual.files[1].checksum == 'b54ba7f5621240d403f06815f7246006ef8c7d43'
 
 # https://github.com/ansible/ansible/issues/50077
 - name: create empty nested directory
