@@ -154,9 +154,9 @@ def load_certificate(path, backend='pyopenssl'):
         with open(path, 'rb') as cert_fh:
             cert_content = cert_fh.read()
         if backend == 'pyopenssl':
-          return crypto.load_certificate(crypto.FILETYPE_PEM, cert_content)
+            return crypto.load_certificate(crypto.FILETYPE_PEM, cert_content)
         elif backend == 'cryptography':
-          return x509.load_pem_x509_certificate(cert_content, cryptography_backend())
+            return x509.load_pem_x509_certificate(cert_content, cryptography_backend())
     except (IOError, OSError) as exc:
         raise OpenSSLObjectError(exc)
 
@@ -172,7 +172,6 @@ def load_certificate_request(path, backend='pyopenssl'):
         return crypto.load_certificate_request(crypto.FILETYPE_PEM, csr_content)
     elif backend == 'cryptography':
         return x509.load_pem_x509_csr(csr_content, cryptography_backend())
-
 
 
 def parse_name_field(input_dict):
@@ -218,6 +217,7 @@ def convert_relative_to_datetime(relative_time_string):
     else:
         return datetime.datetime.utcnow() - offset
 
+
 def select_message_digest(digest_string):
     digest = None
     if digest_string == 'sha256':
@@ -231,7 +231,6 @@ def select_message_digest(digest_string):
     elif digest_string == 'md5':
         digest = hashes.MD5()
     return digest
-
 
 
 @six.add_metaclass(abc.ABCMeta)

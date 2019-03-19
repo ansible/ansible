@@ -644,7 +644,7 @@ class Certificate(crypto_utils.OpenSSLObject):
                 return False
             for cert_ext in cert_exts:
                 try:
-                    csr_ext = csr_exts.get_extension_for_class(extclass)
+                    csr_ext = csr_exts.get_extension_for_oid(cert_ext.oid)
                     if cert_ext != csr_ext:
                         return False
                 except cryptography.x509.ExtensionNotFound as e:
@@ -1322,11 +1322,10 @@ class AssertOnlyCertificateCryptography(Certificate):
                             decipher_only=current_keyusage.decipher_only
                         ))
                     else:
-                      test_keyusage.update(dict(
+                        test_keyusage.update(dict(
                             encipher_only=False,
                             decipher_only=False
-                      ))
-
+                        ))
 
                     if (not self.keyUsage_strict and not all(self._parse_key_usage()[x] == test_keyusage[x] for x in self._parse_key_usage())) or \
                             (self.keyUsage_strict and current_keyusage != expected_keyusage):
