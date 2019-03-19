@@ -28,12 +28,15 @@ options:
       - To specify all addresses, use the value C(all).
       - IP address can be specified, such as 172.27.1.10.
       - IP rangees can be specified, such as 172.27.*.* or 172.27.0.0/255.255.0.0.
+    type: list
   auth_name:
     description:
       - Sets the BIG-IP authentication realm name.
+    type: str
   auth_pam_idle_timeout:
     description:
       - Sets the GUI timeout for automatic logout, in seconds.
+    type: int
   auth_pam_validate_ip:
     description:
       - Sets the authPamValidateIp setting.
@@ -45,6 +48,7 @@ options:
   fast_cgi_timeout:
     description:
       - Sets the timeout of FastCGI.
+    type: int
   hostname_lookup:
     description:
       - Sets whether or not to display the hostname, if possible.
@@ -52,10 +56,20 @@ options:
   log_level:
     description:
       - Sets the minimum httpd log level.
-    choices: ['alert', 'crit', 'debug', 'emerg', 'error', 'info', 'notice', 'warn']
+    type: str
+    choices:
+      - alert
+      - crit
+      - debug
+      - emerg
+      - error
+      - info
+      - notice
+      - warn
   max_clients:
     description:
       - Sets the maximum number of clients that can connect to the GUI at once.
+    type: int
   redirect_http_to_https:
     description:
       - Whether or not to redirect http requests to the GUI to https.
@@ -63,6 +77,7 @@ options:
   ssl_port:
     description:
       - The HTTPS port to listen on.
+    type: int
   ssl_cipher_suite:
     description:
       - Specifies the ciphers that the system uses.
@@ -77,6 +92,7 @@ options:
         ECDHE-ECDSA-AES128-SHA256,ECDHE-ECDSA-AES256-SHA384,AES128-GCM-SHA256,
         AES256-GCM-SHA384,AES128-SHA,AES256-SHA,AES128-SHA256,AES256-SHA256,
         ECDHE-RSA-DES-CBC3-SHA,ECDHE-ECDSA-DES-CBC3-SHA,DES-CBC3-SHA).
+    type: raw
     version_added: 2.6
   ssl_protocols:
     description:
@@ -87,6 +103,7 @@ options:
         recommended way to provide the cipher suite. See examples for usage.
       - Use the value C(default) to set the SSL protocols to the system default.
         This value is equivalent to specifying a list of C(all,-SSLv2,-SSLv3).
+    type: raw
     version_added: 2.6
 notes:
   - Requires the requests Python package on the host. This is as easy as
@@ -248,18 +265,12 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
 
 
 class Parameters(AnsibleF5Parameters):
@@ -525,7 +536,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -700,16 +711,12 @@ def main():
         supports_check_mode=spec.supports_check_mode,
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':
