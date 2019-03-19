@@ -63,16 +63,16 @@ server:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.openstack import (
-        openstack_full_argument_spec, openstack_module_kwargs,
-        openstack_cloud_from_module)
+    openstack_full_argument_spec, openstack_module_kwargs,
+    openstack_cloud_from_module)
 
 try:
-  from openstack import connect
+    from openstack import connect
 except ImportError:
-  from openstack import connect
+    from openstack import connect
+
 
 def main():
-
 
     argument_spec = openstack_full_argument_spec(
         server=dict(required=True),
@@ -104,9 +104,7 @@ def main():
                 module.exit_json(changed=False)
             else:
                 server.set_tags(conn.compute, tags)
-                module.exit_json(changed=True,
-                             server=server.id,
-                             )
+                module.exit_json(changed=True, server=server.id)
         elif state == 'absent':
             for tag in tags:
                 if tag in current_tagging.tags:
@@ -121,3 +119,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
