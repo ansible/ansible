@@ -24,6 +24,7 @@ options:
     description:
       - Specifies the lowest level of ARP messages from the tmm daemon
         to include in the system log.
+    type: str
     choices:
       - debug
       - error
@@ -34,6 +35,7 @@ options:
     description:
       - Specifies the lowest level of HTTP compression messages from the tmm daemon
         to include in the system log.
+    type: str
     choices:
       - debug
       - error
@@ -44,6 +46,7 @@ options:
     description:
       - Specifies the lowest level of HTTP messages from the tmm daemon
         to include in the system log.
+    type: str
     choices:
       - debug
       - error
@@ -54,6 +57,7 @@ options:
     description:
       - Specifies the lowest level of IP address messages from the tmm daemon
         to include in the system log.
+    type: str
     choices:
       - debug
       - informational
@@ -63,6 +67,7 @@ options:
     description:
       - Specifies the lowest level of iRule messages from the tmm daemon
         to include in the system log.
+    type: str
     choices:
       - debug
       - error
@@ -73,6 +78,7 @@ options:
     description:
       - Specifies the lowest level of Layer 4 messages from the tmm daemon
         to include in the system log.
+    type: str
     choices:
       - debug
       - informational
@@ -81,6 +87,7 @@ options:
     description:
       - Specifies the lowest level of network messages from the tmm daemon
         to include in the system log.
+    type: str
     choices:
       - critical
       - debug
@@ -92,6 +99,7 @@ options:
     description:
       - Specifies the lowest level of operating system messages from the tmm daemon
         to include in the system log.
+    type: str
     choices:
       - alert
       - critical
@@ -105,6 +113,7 @@ options:
     description:
       - Specifies the lowest level of PVA messages from the tmm daemon
         to include in the system log.
+    type: str
     choices:
       - debug
       - informational
@@ -113,6 +122,7 @@ options:
     description:
       - Specifies the lowest level of SSL messages from the tmm daemon
         to include in the system log.
+    type: str
     choices:
       - alert
       - critical
@@ -126,9 +136,10 @@ options:
     description:
       - The state of the log level on the system. When C(present), guarantees
         that an existing log level is set to C(value).
-    default: present
+    type: str
     choices:
       - present
+    default: present
 extends_documentation_fragment: f5
 author:
   - Wojciech Wypior (@wojtek0806)
@@ -204,18 +215,12 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
 
 
 class Parameters(AnsibleF5Parameters):
@@ -325,7 +330,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -476,16 +481,12 @@ def main():
         supports_check_mode=spec.supports_check_mode,
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

@@ -93,9 +93,11 @@ class TestModuleManager(unittest.TestCase):
             name='foo',
             content=load_fixture('cert1.key'),
             state='present',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(

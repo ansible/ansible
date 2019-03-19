@@ -115,9 +115,11 @@ class TestManager(unittest.TestCase):
             arp_log_level='debug',
             layer4_log_level='debug',
             password='admin',
-            server='localhost',
-            user='admin',
-            state='present'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         # Configure the parameters that would be returned by querying the
