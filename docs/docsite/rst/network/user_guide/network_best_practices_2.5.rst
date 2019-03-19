@@ -158,11 +158,10 @@ Ansible's "Network Fact modules" gather information from the system and store th
 
 To ensure we call the correct mode (``*_facts``) the task is conditionally run based on the group defined in the inventory file, for more information on the use of conditionals in Ansible Playbooks see :ref:`the_when_statement`.
 
+In this example, we will create an inventory file containing some network switches, then run a playbook to connect to the network devices and return some information about them.
 
 Step 1: Creating the inventory
 ------------------------------
-
-In this example, we will create an inventory file containing some network switches, then run a playbook to connect to the network devices and return some information about them.
 
 First, create a file called ``inventory``, containing:
 
@@ -330,28 +329,28 @@ Example 2: simplifying playbooks with network agnostic modules
 If you have two or more network platforms in your environment, you can use the network agnostic modules to simplify your playbooks. You can use network agnostic modules such as ``cli_command`` or ``cli_config`` in place of the platform-specific modules such as ``eos_config``, ``ios_config``, and ``junos_config``. This reduces the number of tasks and conditionals you need in your playbooks.
 
 .. note::
-  Network agnostic modules require the ``network_cli`` connection plugin.
+  Network agnostic modules require the :ref:`network_cli <network_cli_connection>` connection plugin.
 
 
 Sample playbook with platform-specific modules
 ----------------------------------------------
 
-This example assumes three platforms, Arista EOS, Cisco IOS, and Juniper JunOS.  Without the network agnostic modules, a sample playbook might contain the following three tasks:
+This example assumes three platforms, Arista EOS, Cisco NXOS, and Juniper JunOS.  Without the network agnostic modules, a sample playbook might contain the following three tasks:
 
 .. code-block:: yaml
 
   ---
-  - name: RUN ARISTA COMMAND
+  - name: Run Arista command
     eos_command:
       commands: show ip int br
     when: ansible_network_os == 'eos'
 
-  - name: RUN CISCO NXOS COMMAND
+  - name: Run Cisco NXOS command
     nxos_command:
       commands: show ip int br
-    when: ansible_network_os == 'eos'
+    when: ansible_network_os == 'nxos'
 
-  - name: RUN JUNOS COMMAND
+  - name: Run Junos command
     junos_command:
       commands: show interface terse
     when: ansible_network_os == 'junos'
@@ -364,17 +363,17 @@ If you replace these platform-specific modules with the network agnostic ``cli_c
 .. code-block:: yaml
 
   ---
-  - name: RUN COMMAND AND PRINT TO TERMINAL WINDOW
+  - name: Run command and print to terminal window
     hosts: routers
     gather_facts: false
 
     tasks:
-      - name: RUN SHOW COMMAND
+      - name: Run show command
         cli_command:
           command: "{{show_interfaces}}"
         register: command_output
 
-      - name: PRINT TO TERMINAL WINDOW
+      - name: Print to terminal window
         debug:
           msg: "{{command_output.stdout}}"
 
