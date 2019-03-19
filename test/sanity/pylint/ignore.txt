@@ -1,1 +1,2 @@
+lib/ansible/module_utils/network/edgeswitch/edgeswitch_interface.py duplicate-string-formatting-argument
 test/units/modules/system/test_known_hosts.py ansible-bad-function
