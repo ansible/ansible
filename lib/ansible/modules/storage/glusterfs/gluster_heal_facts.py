@@ -33,9 +33,6 @@ options:
       - Determines which facts are to be returned.
       - If the C(status_filter) is C(self-heal), status of self-heal, along with the number of files still in process are returned.
       - If the C(status_filter) is C(rebalance), rebalance status is returned.
-        self-heal, status of self-heal, along with the number of files still
-        in process are returned. If status_filter is rebalance,
-        rebalance status is returned.
 requirements:
   - GlusterFS > 3.2
 '''
@@ -113,10 +110,7 @@ def get_self_heal_status(name):
             br_dict['status'] = line.split(":")[1].strip()
         elif 'Number' in line:
             br_dict['no_of_entries'] = line.split(":")[1].strip()
-            if int(br_dict['no_of_entries']) != 0:
-                heal_info.append(br_dict)
-            else:
-                continue
+    heal_info.append(br_dict)
     return heal_info
 
 
@@ -178,8 +172,8 @@ def main():
             heal_info = get_self_heal_status(volume_name)
         elif status_filter == "rebalance":
             rebalance_status = get_rebalance_status(volume_name)
-    except Exception:
-        module.fail_json(msg="Invalid heal status option.")
+    except Exception as e:
+        module.fail_json(msg='Error retrieving status: %s' % e, exception=traceback.format_exc())
 
     facts = {}
     facts['glusterfs'] = {'volume': volume_name, 'status_filter': status_filter, 'heal_info': heal_info, 'rebalance': rebalance_status}
