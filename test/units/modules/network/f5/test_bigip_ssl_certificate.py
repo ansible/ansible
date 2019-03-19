@@ -106,9 +106,11 @@ class TestCertificateManager(unittest.TestCase):
             name='foo',
             content=load_fixture('cert1.crt'),
             state='present',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -130,9 +132,11 @@ class TestCertificateManager(unittest.TestCase):
             name='foo',
             content=load_fixture('chain1.crt'),
             state='present',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(

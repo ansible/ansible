@@ -170,14 +170,17 @@ class TestManager(unittest.TestCase):
             ip_version=4,
             state='present',
             partition='Common',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            required_if=self.spec.required_if
         )
         m1 = V1Manager(module=module)
 
@@ -194,6 +197,7 @@ class TestManager(unittest.TestCase):
 
     def test_create_v1_community_1(self, *args):
         set_module_args(dict(
+            name='foo',
             version='v1',
             community='foo',
             source='1.1.1.1',
@@ -203,14 +207,17 @@ class TestManager(unittest.TestCase):
             ip_version=4,
             state='present',
             partition='Common',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            required_if=self.spec.required_if
         )
         m1 = V1Manager(module=module)
 
@@ -237,14 +244,17 @@ class TestManager(unittest.TestCase):
             snmp_privacy_password='secretsecret',
             state='present',
             partition='Common',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            required_if=self.spec.required_if
         )
         m1 = V2Manager(module=module)
 
@@ -270,14 +280,17 @@ class TestManager(unittest.TestCase):
             snmp_privacy_password='secretsecret',
             state='present',
             partition='Common',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            required_if=self.spec.required_if
         )
         m1 = V2Manager(module=module)
 

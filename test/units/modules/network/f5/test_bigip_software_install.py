@@ -85,9 +85,11 @@ class TestManager(unittest.TestCase):
         set_module_args(dict(
             image='BIGIP-13.0.0.0.0.1645.iso',
             volume='HD1.2',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = ApiParameters()
