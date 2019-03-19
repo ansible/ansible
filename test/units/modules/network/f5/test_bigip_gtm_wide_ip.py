@@ -143,9 +143,11 @@ class TestUntypedManager(unittest.TestCase):
         set_module_args(dict(
             name='foo.baz.bar',
             lb_method='round-robin',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -192,9 +194,11 @@ class TestTypedManager(unittest.TestCase):
             name='foo.baz.bar',
             lb_method='round-robin',
             type='a',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -224,9 +228,11 @@ class TestTypedManager(unittest.TestCase):
             name='foo.baz.bar',
             lb_method='round_robin',
             type='a',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -256,9 +262,11 @@ class TestTypedManager(unittest.TestCase):
             name='foo.baz.bar',
             lb_method='global_availability',
             type='a',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -294,9 +302,11 @@ class TestTypedManager(unittest.TestCase):
                     ratio=10
                 )
             ],
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -332,9 +342,11 @@ class TestTypedManager(unittest.TestCase):
                     ratio=10
                 )
             ],
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = ApiParameters(params=load_fixture('load_gtm_wide_ip_with_pools.json'))
@@ -372,9 +384,11 @@ class TestTypedManager(unittest.TestCase):
                     ratio=100
                 )
             ],
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = ApiParameters(params=load_fixture('load_gtm_wide_ip_with_pools.json'))

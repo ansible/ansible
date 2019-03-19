@@ -96,9 +96,11 @@ class TestManager(unittest.TestCase):
             synchronization="yes",
             synchronization_group_name='foo',
             synchronize_zone_files="yes",
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = ApiParameters(params=load_fixture('load_gtm_global_settings_general_1.json'))

@@ -29,14 +29,17 @@ options:
     description:
       - Specifies the name of the GTM virtual server which is assigned to the specified
         C(server).
+    type: str
     required: True
   server_name:
     description:
       - Specifies the GTM server which contains the C(virtual_server).
+    type: str
     required: True
   type:
     description:
       - The type of GTM pool that the member is in.
+    type: str
     choices:
       - a
       - aaaa
@@ -50,10 +53,12 @@ options:
       - Name of the GTM pool.
       - For pools created on different partitions, you must specify partition of the pool in the full path format,
         for example, C(/FooBar/pool_name).
+    type: str
     required: True
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
   member_order:
     description:
@@ -62,6 +67,7 @@ options:
         pool members, such as the Ratio load balancing method.
       - When creating a new member using this module, if the C(member_order) parameter
         is not specified, it will default to C(0) (first member in the pool).
+    type: int
   monitor:
     description:
       - Specifies the monitor assigned to this pool member.
@@ -73,15 +79,19 @@ options:
       - To remove the monitor from the pool member, use the value C(none).
       - For pool members created on different partitions, you can also specify the full
         path to the Common monitor. For example, C(/Common/tcp).
+    type: str
   ratio:
     description:
       - Specifies the weight of the pool member for load balancing purposes.
+    type: int
   description:
     description:
       - The description of the pool member.
+    type: str
   aggregate:
     description:
       - List of GTM pool member definitions to be created, modified or removed.
+    type: list
     aliases:
       - members
     version_added: 2.8
@@ -125,18 +135,22 @@ options:
             for the member.
           - If the network traffic volume exceeds this limit, the system marks the
             member as unavailable.
+        type: int
       packets_limit:
         description:
           - Specifies the maximum allowable data transfer rate, in packets per second,
             for the member.
           - If the network traffic volume exceeds this limit, the system marks the
             member as unavailable.
+        type: int
       connections_limit:
         description:
           - Specifies the maximum number of concurrent connections, combined, for all of
             the member.
           - If the connections exceed this limit, the system marks the server as
             unavailable.
+        type: int
+    type: dict
   state:
     description:
       - Pool member state. When C(present), ensures that the pool member is
@@ -151,12 +165,13 @@ options:
       - Remember that the order of the members will be affected if you add or remove them
         using this method. To some extent, this can be controlled using the C(member_order)
         parameter.
-    default: present
+    type: str
     choices:
       - present
       - absent
       - enabled
       - disabled
+    default: present
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -197,19 +212,16 @@ EXAMPLES = r'''
       - server_name: server1
         virtual_server: vs1
         partition: Common
-        port: 8080
         description: web server1
         member_order: 0
       - server_name: server2
         virtual_server: vs2
         partition: Common
-        port: 8081
         description: web server2
         member_order: 1
       - server_name: server3
         virtual_server: vs3
         partition: Common
-        port: 8082
         description: web server3
         member_order: 2
     provider:
@@ -226,19 +238,16 @@ EXAMPLES = r'''
       - server_name: server1
         virtual_server: vs1
         partition: Common
-        port: 8080
         description: web server1
         member_order: 0
       - server_name: server2
         virtual_server: vs2
         partition: Common
-        port: 8081
         description: web server2
         member_order: 1
       - server_name: server3
         virtual_server: vs3
         partition: Common
-        port: 8082
         description: web server3
         member_order: 2
     replace_all_with: yes
@@ -330,12 +339,9 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.common import transform_name
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.common import flatten_boolean
     from library.module_utils.network.f5.icontrol import module_provisioned
     from library.module_utils.network.f5.icontrol import TransactionContextManager
@@ -344,12 +350,9 @@ except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.common import transform_name
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.common import flatten_boolean
     from ansible.module_utils.network.f5.icontrol import module_provisioned
     from ansible.module_utils.network.f5.icontrol import TransactionContextManager
@@ -599,7 +602,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = None
         self.have = None
         self.changes = None
@@ -1070,16 +1073,12 @@ def main():
         required_together=spec.required_together,
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':
