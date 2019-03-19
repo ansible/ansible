@@ -23,6 +23,13 @@ options:
     command:
         description:
         - a comma separated list containing the command and arguments.
+        required: true
+    privilege:
+        description:
+        - privilege level at which to run the command.
+        choices: ['admin', 'advanced']
+        default: admin
+        version_added: "2.8"
 '''
 
 EXAMPLES = """
@@ -39,6 +46,7 @@ EXAMPLES = """
         username: "{{ admin username }}"
         password: "{{ admin password }}"
         command: ['network', 'interface', 'show']
+        privilege: 'admin'
 """
 
 RETURN = """
@@ -53,10 +61,14 @@ HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 
 
 class NetAppONTAPCommand(object):
+    ''' calls a CLI command '''
+
     def __init__(self):
         self.argument_spec = netapp_utils.na_ontap_host_argument_spec()
         self.argument_spec.update(dict(
-            command=dict(required=True, type='list')
+            command=dict(required=True, type='list'),
+            privilege=dict(required=False, type='str', choices=['admin', 'advanced'],
+                           default='admin')
         ))
         self.module = AnsibleModule(
             argument_spec=self.argument_spec,
@@ -65,19 +77,33 @@ class NetAppONTAPCommand(object):
         parameters = self.module.params
         # set up state variables
         self.command = parameters['command']
+        self.privilege = parameters['privilege']
 
         if HAS_NETAPP_LIB is False:
             self.module.fail_json(msg="the python NetApp-Lib module is required")
         else:
             self.server = netapp_utils.setup_na_ontap_zapi(module=self.module)
 
-    def run_command(self):
+    def asup_log_for_cserver(self, event_name):
+        """
+        Fetch admin vserver for the given cluster
+        Create and Autosupport log event with the given module name
+        :param event_name: Name of the event log
+        :return: None
+        """
+        results = netapp_utils.get_cserver(self.server)
+        cserver = netapp_utils.setup_na_ontap_zapi(module=self.module, vserver=results)
+        netapp_utils.ems_log_event(event_name, cserver)
 
+    def run_command(self):
+        ''' calls the ZAPI '''
+        self.asup_log_for_cserver("na_ontap_command: " + str(self.command))
         command_obj = netapp_utils.zapi.NaElement("system-cli")
         args_obj = netapp_utils.zapi.NaElement("args")
         for arg in self.command:
             args_obj.add_new_child('arg', arg)
         command_obj.add_child_elem(args_obj)
+        command_obj.add_new_child('priv', self.privilege)
 
         try:
             output = self.server.invoke_successfully(command_obj, True)
@@ -88,6 +114,7 @@ class NetAppONTAPCommand(object):
                                   exception=traceback.format_exc())
 
     def apply(self):
+        ''' calls the command and returns raw output '''
         changed = True
         output = self.run_command()
         self.module.exit_json(changed=changed, msg=output)
