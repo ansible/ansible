@@ -1,0 +1,2 @@
+minor_changes:
+- Add better parsing for gathering facts about free memory in Mac OS (https://github.com/ansible/ansible/pull/52917).
