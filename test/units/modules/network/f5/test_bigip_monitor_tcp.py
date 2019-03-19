@@ -166,9 +166,11 @@ class TestManager(unittest.TestCase):
             timeout=30,
             time_until_up=60,
             partition='Common',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -198,9 +200,11 @@ class TestManager(unittest.TestCase):
             timeout=30,
             time_until_up=60,
             partition='Common',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = Parameters(params=load_fixture('load_ltm_monitor_tcp.json'))
@@ -223,9 +227,11 @@ class TestManager(unittest.TestCase):
             name='foo',
             port=800,
             partition='Common',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = Parameters(params=load_fixture('load_ltm_monitor_tcp.json'))
@@ -250,9 +256,11 @@ class TestManager(unittest.TestCase):
             name='foo',
             interval=10,
             partition='Common',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = Parameters(params=load_fixture('load_ltm_monitor_tcp.json'))
@@ -277,9 +285,11 @@ class TestManager(unittest.TestCase):
             name='foo',
             interval=30,
             partition='Common',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = Parameters(params=load_fixture('load_ltm_monitor_tcp.json'))
@@ -305,9 +315,11 @@ class TestManager(unittest.TestCase):
             interval=10,
             timeout=5,
             partition='Common',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = Parameters(params=load_fixture('load_ltm_monitor_tcp.json'))
@@ -332,9 +344,11 @@ class TestManager(unittest.TestCase):
             name='foo',
             send='this is another send string',
             partition='Common',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = Parameters(params=load_fixture('load_ltm_monitor_tcp.json'))
@@ -359,9 +373,11 @@ class TestManager(unittest.TestCase):
             name='foo',
             receive='this is another receive string',
             partition='Common',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = Parameters(params=load_fixture('load_ltm_monitor_tcp.json'))
@@ -386,9 +402,11 @@ class TestManager(unittest.TestCase):
             name='foo',
             timeout=300,
             partition='Common',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = Parameters(params=load_fixture('load_ltm_monitor_tcp.json'))
@@ -413,9 +431,11 @@ class TestManager(unittest.TestCase):
             name='foo',
             time_until_up=300,
             partition='Common',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = Parameters(params=load_fixture('load_ltm_monitor_tcp.json'))
