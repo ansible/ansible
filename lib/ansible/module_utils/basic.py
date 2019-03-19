@@ -1616,7 +1616,7 @@ class AnsibleModule(object):
         allow_conversion = opts.get(self._string_conversion_action, True)
         try:
             return check_type_str(value, allow_conversion)
-        except TypeError as e:
+        except TypeError:
             common_msg = 'quote the entire value to ensure it does not change.'
             if self._string_conversion_action == 'error':
                 msg = common_msg.capitalize()
@@ -1643,7 +1643,7 @@ class AnsibleModule(object):
         return check_type_float(value)
 
     def _check_type_path(self, value):
-        return check_type_path(value, self._string_conversion_action)
+        return check_type_path(value)
 
     def _check_type_jsonarg(self, value):
         return check_type_jsonarg(value)

@@ -69,9 +69,10 @@ VALID_SPECS = (
 
 INVALID_SPECS = (
     # Type is int; unable to convert this string
-    ({'arg': {'type': 'int'}}, {'arg': "bad"}, "invalid literal for int() with base 10: 'bad'"),
+    ({'arg': {'type': 'int'}}, {'arg': "wolf"}, "is of type {0} and we were unable to convert to int: {0} cannot be converted to an int".format(type('bad'))),
     # Type is list elements is int; unable to convert this string
-    ({'arg': {'type': 'list', 'elements': 'int'}}, {'arg': [1, "bad"]}, "invalid literal for int() with base 10: 'bad'"),
+    ({'arg': {'type': 'list', 'elements': 'int'}}, {'arg': [1, "bad"]}, "is of type {0} and we were unable to convert to int: {0} cannot be converted to "
+                                                                        "an int".format(type('int'))),
     # Type is int; unable to convert float
     ({'arg': {'type': 'int'}}, {'arg': 42.1}, "'float'> cannot be converted to an int"),
     # Type is list, elements is int; unable to convert float
