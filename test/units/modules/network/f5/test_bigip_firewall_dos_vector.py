@@ -88,9 +88,11 @@ class TestManager(unittest.TestCase):
             name='aaaa',
             state='mitigate',
             profile='foo',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(

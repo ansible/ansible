@@ -93,9 +93,11 @@ class TestManager(unittest.TestCase):
             name='foo',
             route_domain=20,
             partition='Common',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(

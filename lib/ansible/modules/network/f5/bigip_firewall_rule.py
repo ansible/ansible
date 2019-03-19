@@ -26,15 +26,18 @@ options:
   name:
     description:
       - Specifies the name of the rule.
+    type: str
     required: True
   parent_policy:
     description:
       - The policy which contains the rule to be managed.
       - One of either C(parent_policy) or C(parent_rule_list) is required.
+    type: str
   parent_rule_list:
     description:
       - The rule list which contains the rule to be managed.
       - One of either C(parent_policy) or C(parent_rule_list) is required.
+    type: str
   action:
     description:
       - Specifies the action for the firewall rule.
@@ -56,6 +59,7 @@ options:
         or self IP firewall rule, then Accept Decisively is equivalent to Accept.
       - When creating a new rule, if this parameter is not provided, the default is
         C(reject).
+    type: str
     choices:
       - accept
       - drop
@@ -71,6 +75,7 @@ options:
         according to the specified schedule.
       - When creating a new rule, if this parameter is not provided, the default
         is C(enabled).
+    type: str
     choices:
       - enabled
       - disabled
@@ -80,19 +85,23 @@ options:
       - Specifies a schedule for the firewall rule.
       - You configure schedules to define days and times when the firewall rule is
         made active.
+    type: str
   description:
     description:
       - The rule description.
+    type: str
   irule:
     description:
-      - Specifies an iRule that is applied to the rule.
+      - Specifies an iRule that is applied to the firewall rule.
       - An iRule can be started when the firewall rule matches traffic.
+    type: str
   protocol:
     description:
       - Specifies the protocol to which the rule applies.
       - Protocols may be specified by either their name or numeric value.
       - A special protocol value C(any) can be specified to match any protocol. The
         numeric equivalent of this protocol is C(255).
+    type: str
   source:
     description:
       - Specifies packet sources to which the rule applies.
@@ -105,29 +114,42 @@ options:
       address:
         description:
           - Specifies a specific IP address.
+        type: str
       address_list:
         description:
           - Specifies an existing address list.
+        type: str
       address_range:
         description:
           - Specifies an address range.
+        type: str
       country:
         description:
           - Specifies a country code.
+        type: str
       port:
         description:
           - Specifies a single numeric port.
           - This option is only valid when C(protocol) is C(tcp)(6) or C(udp)(17).
+        type: int
       port_list:
         description:
           - Specifes an existing port list.
           - This option is only valid when C(protocol) is C(tcp)(6) or C(udp)(17).
+        type: str
       port_range:
         description:
           - Specifies a range of ports, which is two port values separated by
             a hyphen. The port to the left of the hyphen should be less than the
             port to the right.
           - This option is only valid when C(protocol) is C(tcp)(6) or C(udp)(17).
+        type: str
+      vlan:
+        description:
+          - Specifies VLANs to which the rule applies.
+          - The VLAN source refers to the packet's source.
+        type: str
+    type: list
   destination:
     description:
       - Specifies packet destinations to which the rule applies.
@@ -140,29 +162,37 @@ options:
       address:
         description:
           - Specifies a specific IP address.
+        type: str
       address_list:
         description:
           - Specifies an existing address list.
+        type: str
       address_range:
         description:
           - Specifies an address range.
+        type: str
       country:
         description:
           - Specifies a country code.
+        type: str
       port:
         description:
           - Specifies a single numeric port.
           - This option is only valid when C(protocol) is C(tcp)(6) or C(udp)(17).
+        type: int
       port_list:
         description:
           - Specifes an existing port list.
           - This option is only valid when C(protocol) is C(tcp)(6) or C(udp)(17).
+        type: str
       port_range:
         description:
           - Specifies a range of ports, which is two port values separated by
             a hyphen. The port to the left of the hyphen should be less than the
             port to the right.
           - This option is only valid when C(protocol) is C(tcp)(6) or C(udp)(17).
+        type: str
+    type: list
   logging:
     description:
       - Specifies whether logging is enabled or disabled for the firewall rule.
@@ -175,6 +205,7 @@ options:
       - This parameter is mutually exclusive with many of the other individual-rule
         specific settings. This includes C(logging), C(action), C(source),
         C(destination), C(irule'), C(protocol) and C(logging).
+    type: str
   icmp_message:
     description:
       - Specifies the Internet Control Message Protocol (ICMP) or ICMPv6 message
@@ -191,6 +222,7 @@ options:
           - You can also specify an arbitrary ICMP message.
           - The ICMP protocol contains definitions for the existing message type and
             number pairs.
+        type: str
       code:
         description:
           - Specifies the code returned in response to the specified ICMP message type.
@@ -202,14 +234,18 @@ options:
           - You can also specify an arbitrary code.
           - The ICMP protocol contains definitions for the existing message code and
             number pairs.
+        type: str
+    type: list
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
   state:
     description:
       - When C(state) is C(present), ensures that the rule exists.
       - When C(state) is C(absent), ensures that the rule is removed.
+    type: str
     choices:
       - present
       - absent
@@ -217,6 +253,7 @@ options:
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
@@ -281,16 +318,164 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-param1:
-  description: The new param1 value of the resource.
-  returned: changed
-  type: bool
-  sample: true
-param2:
-  description: The new param2 value of the resource.
+name:
+  description: Name of the rule.
   returned: changed
   type: str
-  sample: Foo is bar
+  sample: FooRule
+parent_policy:
+  description: The policy which contains the rule to be managed.
+  returned: changed
+  type: str
+  sample: FooPolicy
+parent_rule_list:
+  description: The rule list which contains the rule to be managed.
+  returned: changed
+  type: str
+  sample: FooRuleList
+action:
+  description: The action for the firewall rule.
+  returned: changed
+  type: str
+  sample: drop
+status:
+  description: The activity state of the rule or rule list.
+  returned: changed
+  type: str
+  sample: scheduled
+schedule:
+  description: The schedule for the firewall rule.
+  returned: changed
+  type: str
+  sample: Foo_schedule
+description:
+  description: The rule description.
+  returned: changed
+  type: str
+  sample: MyRule
+irule:
+  description: The iRule that is applied to the firewall rule.
+  returned: changed
+  type: str
+  sample: _sys_auth_radius
+protocol:
+  description: The protocol to which the rule applies.
+  returned: changed
+  type: str
+  sample: any
+source:
+  description: The packet sources to which the rule applies
+  returned: changed
+  type: complex
+  contains:
+    address:
+      description: A specific IP address.
+      returned: changed
+      type: str
+      sample: 192.168.1.1
+    address_list:
+      description: An existing address list.
+      returned: changed
+      type: str
+      sample: foo-list1
+    address_range:
+      description: The address range.
+      returned: changed
+      type: str
+      sample: 1.1.1.1-2.2.2.2
+    country:
+      description: A country code.
+      returned: changed
+      type: str
+      sample: US
+    port:
+      description: Single numeric port.
+      returned: changed
+      type: int
+      sample: 8080
+    port_list:
+      description: An existing port list.
+      returned: changed
+      type: str
+      sample: port-list1
+    port_range:
+      description: The port range.
+      returned: changed
+      type: str
+      sample: 80-443
+    vlan:
+      description: Source VLANs for the packets.
+      returned: changed
+      type: str
+      sample: vlan1
+  sample: hash/dictionary of values
+destination:
+  description: The packet destinations to which the rule applies.
+  returned: changed
+  type: complex
+  contains:
+    address:
+      description: A specific IP address.
+      returned: changed
+      type: str
+      sample: 192.168.1.1
+    address_list:
+      description: An existing address list.
+      returned: changed
+      type: str
+      sample: foo-list1
+    address_range:
+      description: The address range.
+      returned: changed
+      type: str
+      sample: 1.1.1.1-2.2.2.2
+    country:
+      description: A country code.
+      returned: changed
+      type: str
+      sample: US
+    port:
+      description: Single numeric port.
+      returned: changed
+      type: int
+      sample: 8080
+    port_list:
+      description: An existing port list.
+      returned: changed
+      type: str
+      sample: port-list1
+    port_range:
+      description: The port range.
+      returned: changed
+      type: str
+      sample: 80-443
+  sample: hash/dictionary of values
+logging:
+  description: Enable or Disable logging for the firewall rule.
+  returned: changed
+  type: bool
+  sample: yes
+rule_list:
+  description: An existing rule list to use in the rule.
+  returned: changed
+  type: str
+  sample: rule-list-1
+icmp_message:
+  description: The (ICMP) or ICMPv6 message C(type) and C(code) that the rule uses.
+  returned: changed
+  type: complex
+  contains:
+    type:
+      description: The type of ICMP message.
+      returned: changed
+      type: str
+      sample: 0
+    code:
+      description: The code returned in response to the specified ICMP message type.
+      returned: changed
+      type: str
+      sample: 1
+  sample: hash/dictionary of values
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -300,24 +485,16 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.common import transform_name
-    from library.module_utils.network.f5.common import fq_name
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.common import transform_name
-    from ansible.module_utils.network.f5.common import fq_name
 
 
 class Parameters(AnsibleF5Parameters):
@@ -752,7 +929,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -1102,16 +1279,12 @@ def main():
         required_one_of=spec.required_one_of
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':
