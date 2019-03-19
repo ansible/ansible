@@ -50,7 +50,7 @@ options:
       description:
       - Type of object to work with.
       required: True
-      choices: [ VirtualMachine, VmwareDistributedVirtualSwitch, DistributedVirtualPortgroup ]
+      choices: [ VirtualMachine, Datacenter, VmwareDistributedVirtualSwitch, DistributedVirtualPortgroup ]
     object_name:
       description:
       - Name of the object to work with.
@@ -157,6 +157,9 @@ class VmwareTagManager(VmwareRestClient):
 
         if self.object_type == 'VirtualMachine':
             self.managed_object = self.pyv.get_vm_or_template(self.object_name)
+        
+        if self.object_type == 'Datacenter':
+            self.managed_object = self.pyv.find_datacenter_by_name(self.object_name)
 
         if self.object_type == 'VmwareDistributedVirtualSwitch':
             self.managed_object = find_dvs_by_name(self.pyv.content, self.object_name)
@@ -259,7 +262,7 @@ def main():
         tag_names=dict(type='list', required=True),
         state=dict(type='str', choices=['absent', 'add', 'present', 'remove', 'set'], default='add'),
         object_name=dict(type='str', required=True),
-        object_type=dict(type='str', required=True, choices=['VirtualMachine', 'VmwareDistributedVirtualSwitch', 'DistributedVirtualPortgroup']),
+        object_type=dict(type='str', required=True, choices=['VirtualMachine', 'Datacenter','VmwareDistributedVirtualSwitch', 'DistributedVirtualPortgroup']),
     )
     module = AnsibleModule(argument_spec=argument_spec)
 
