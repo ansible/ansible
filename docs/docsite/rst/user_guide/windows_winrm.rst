@@ -502,7 +502,7 @@ There are two ways that older hosts can be used with CredSSP:
   over TLS 1.0. This is the only option when connecting to Windows Server 2008, which
   has no way of supporting TLS 1.2
 
-See :ref:`_winrm_tls12` for more information on how to enable TLS 1.2 on the
+See :ref:`winrm_tls12` for more information on how to enable TLS 1.2 on the
 Windows host.
 
 Set CredSSP Certificate
@@ -758,8 +758,8 @@ manually.
     cannot be configured to use TLS 1.2. Server 2008 R2 and Windows 7 are not
     affected by this issue and can use TLS 1.2.
 
-To verify what protocol the Windows host supports, the following command can be
-run on the Ansible controller::
+To verify what protocol the Windows host supports, you can run the following
+command on the Ansible controller::
 
     openssl s_client -connect <hostname>:5986
 
@@ -800,7 +800,7 @@ line will display the version that was negotiated::
         Verify return code: 21 (unable to verify the first certificate)
 
 If the host is returning ``TLSv1`` then it should be configured so that
-TLS v1.2 is enable. This can be done by running the following PowerShell
+TLS v1.2 is enable. You can do this by running the following PowerShell
 script:
 
 .. code-block:: powershell
@@ -855,7 +855,7 @@ The below Ansible tasks can also be used to enable TLS v1.2:
       when: enable_tls12 is changed
 
 There are other ways to configure the TLS protocols as well as the cipher
-suites that are offered by the Windows host. One tools that can give you a GUI
+suites that are offered by the Windows host. One tool that can give you a GUI
 to manage these settings is `IIS Crypto <https://www.nartac.com/Products/IISCrypto/>`_
 from Nartac Software.
 
