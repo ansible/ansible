@@ -64,6 +64,9 @@ except ImportError:
         from units.modules.utils import set_module_args
     except ImportError:
         pytestmark.append(pytest.mark.skip("F5 Ansible modules require the f5-sdk Python library"))
+        # pytestmark will cause this test to skip but we have to define A so that classes can be
+        # defined below
+        A = object
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
