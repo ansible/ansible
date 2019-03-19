@@ -122,6 +122,21 @@
       - "ss.name == 'storage_pool_adv'"
       - "ss.zone == cs_common_zone_adv"
 
+- name: delete the image store in check_mode
+  cs_image_store:
+    name: "storage_pool_adv"
+    zone: "{{ cs_common_zone_adv }}"
+    state: absent
+  register: ss
+  check_mode: yes
+- name: verify results for delete the image store in check_mode
+  assert:
+    that:
+      - ss is successful
+      - ss is changed
+      - "ss.name == 'storage_pool_adv'"
+      - "ss.zone == cs_common_zone_adv"
+
 - name: delete the image store
   cs_image_store:
     name: "storage_pool_adv"
