@@ -31,7 +31,6 @@ options:
         you must specify the entire list of members.
       - The list will override what is on the device if different.
       - If C(none) value is specified the region members list will be removed.
-    type: raw
     suboptions:
       negate:
         description:
@@ -42,30 +41,37 @@ options:
       region:
         description:
           - Specifies the name of region already defined in the configuration.
+        type: str
       continent:
         description:
           - Specifies one of the seven continents, along with the C(Unknown) setting.
           - Specifying C(Unknown) forces the system to use a default resolution
             if the system cannot determine the location of the local DNS making the request.
           - Full continent names and their abbreviated versions are supported.
+        type: str
       country:
         description:
           - The country name, or code to use.
           - In addition to the country full names, you may also specify their abbreviated
             form, such as C(US) instead of C(United States).
           - Valid country codes can be found here https://countrycode.org/.
+        type: str
       state:
         description:
           - Specifies a state in a given country.
+        type: str
       pool:
         description:
           - Specifies the name of GTM pool already defined in the configuration.
+        type: str
       datacenter:
         description:
           - Specifies the name of GTM data center already defined in the configuration.
+        type: str
       isp:
         description:
           - Specifies an Internet service provider.
+        type: str
         choices:
           - AOL
           - BeijingCNC
@@ -82,16 +88,20 @@ options:
       geo_isp:
         description:
           - Specifies a geolocation ISP
+        type: str
+    type: list
   partition:
     description:
       - Device partition to manage resources on.
       - Partition parameter is also taken into account when used in conjunction with C(pool), C(data_center),
         and C(region) parameters.
+    type: str
     default: Common
   state:
     description:
       - When C(state) is C(present), ensures that the region exists.
       - When C(state) is C(absent), ensures that the region is removed.
+    type: str
     choices:
       - present
       - absent
@@ -152,26 +162,18 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import transform_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
-    from library.module_utils.network.f5.common import transform_name
     from library.module_utils.network.f5.common import flatten_boolean
     from library.module_utils.network.f5.compare import cmp_simple_list
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import transform_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
-    from ansible.module_utils.network.f5.common import transform_name
     from ansible.module_utils.network.f5.common import flatten_boolean
     from ansible.module_utils.network.f5.compare import cmp_simple_list
 
@@ -489,12 +491,14 @@ class ModuleParameters(Parameters):
                 'Region members must be either type of string or list.'
             )
         members = copy.deepcopy(self._values['region_members'])
-        for member in members:
+        for item in members:
+            member = self._filter_params(item)
             if 'negate' in member.keys():
                 if len(member.keys()) > 2:
                     raise F5ModuleError(
                         'You cannot specify negate and more than one option together.'
                     )
+
                 negate = self._flatten_negate(member)
 
             for key, value in iteritems(member):
@@ -586,7 +590,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -815,7 +819,8 @@ class ArgumentSpec(object):
                 required=True
             ),
             region_members=dict(
-                type='raw',
+                type='list',
+                elements='dict',
                 options=dict(
                     region=dict(),
                     continent=dict(),
@@ -855,16 +860,12 @@ def main():
         supports_check_mode=spec.supports_check_mode,
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':
