@@ -22,14 +22,13 @@ $state = $module.Params.state
 $source = $module.Params.source
 $include_parent = $module.Params.include_parent
 
-$win_version = (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\").ProductName
-if ($win_version -notlike "Windows 10*") {
+if (-not (Get-Command -Name Enable-WindowsOptionalFeature -ErrorAction SilentlyContinue)) {
     $module.FailJson("This version of Windows does not support the Enable-WindowsOptionalFeature.")
 }
 
 $feature_state_start = Get-WindowsOptionalFeature -Online -FeatureName $name
 if (-not $feature_state_start) {
-    $module.FailJson("Failed to find feature.")
+    $module.FailJson("Failed to find feature '$name'")
 }
 
 $feature_result = @{
@@ -45,8 +44,8 @@ if ($state -eq "present") {
         }
 
         if ($source) {
-            if (-not (Test-Path -Path $source)) {
-                $module.FailJson("Path could not be found")
+            if (-not (Test-Path -LiteralPath $source)) {
+                $module.FailJson("Path could not be found '$source'")
             }
             $install_args.Source = $source
         }
@@ -55,11 +54,8 @@ if ($state -eq "present") {
             $module.Result.changed = $true
 			break
         }
-        try {
-            $action_result = Enable-WindowsOptionalFeature -Online -NoRestart @install_args
-        } catch {
-            $module.FailJson("$($_.Exception.Message)")
-        }
+        $action_result = Enable-WindowsOptionalFeature -Online -NoRestart @install_args
+
         $module.Result.reboot_required = $action_result.RestartNeeded
         $module.Result.changed = $true
     }
@@ -73,11 +69,8 @@ if ($state -eq "present") {
             $module.Result.changed = $true
 			break
         }
-        try {
-            $action_result = Disable-WindowsOptionalFeature -Online -NoRestart @remove_args
-        } catch {
-            $module.FailJson("$($_.Exception.Message)")
-        }
+        $action_result = Disable-WindowsOptionalFeature -Online -NoRestart @remove_args
+
         $module.Result.reboot_required = $action_result.RestartNeeded
         $module.Result.changed = $true
     }
