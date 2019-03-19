@@ -154,3 +154,12 @@
       - waitfor is successful
       - waitfor is not changed
       - "waitfor.port == {{ http_port }}"
+
+- name: test wait for ssh with clear log
+  wait_for:
+    host: 'localhost'
+    port: 22
+    search_regex: OpenSSH
+    request: 'SSH-2.0-OpenSSH_7.4p1\n'
+    delay: 10
+

@@ -82,6 +82,12 @@ options:
       - Defaults to a multiline regex.
     type: str
     version_added: "1.4"
+  send_string:
+    description:
+      - String to send to socket
+      - Defaults to None.
+    type: str
+    version_added: "2.7"
   exclude_hosts:
     description:
       - List of hosts or IPs to ignore when looking for active TCP connections for C(drained) state.
@@ -437,13 +443,14 @@ def _convert_host_to_hex(host):
     return ips
 
 
-def _create_connection(host, port, connect_timeout):
+def _create_connection(host, port, connect_timeout, send_string=None):
     """
     Connect to a 2-tuple (host, port) and return
     the socket object.
 
     Args:
         2-tuple (host, port) and connection timeout
+        and send_string string
     Returns:
         Socket object
     """
@@ -454,6 +461,8 @@ def _create_connection(host, port, connect_timeout):
         connect_socket.connect((host, port))
     else:
         connect_socket = socket.create_connection((host, port), connect_timeout)
+    if send_string != None:
+        connect_socket.sendall(bytes(send_string))
     return connect_socket
 
 
@@ -491,6 +500,7 @@ def main():
             exclude_hosts=dict(type='list'),
             sleep=dict(type='int', default=1),
             msg=dict(type='str'),
+            send_string=dict(type='str', default=None),
         ),
     )
 
@@ -503,6 +513,7 @@ def main():
     path = module.params['path']
     search_regex = module.params['search_regex']
     msg = module.params['msg']
+    send_string = module.params['send_string']
 
     if search_regex is not None:
         compiled_search_re = re.compile(search_regex, re.MULTILINE)
@@ -596,7 +607,7 @@ def main():
             elif port:
                 alt_connect_timeout = math.ceil(_timedelta_total_seconds(end - datetime.datetime.utcnow()))
                 try:
-                    s = _create_connection(host, port, min(connect_timeout, alt_connect_timeout))
+                    s = _create_connection(host, port, min(connect_timeout, alt_connect_timeout), send_string)
                 except Exception:
                     # Failed to connect by connect_timeout. wait and try again
                     pass
