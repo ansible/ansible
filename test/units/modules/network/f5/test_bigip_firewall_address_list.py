@@ -113,9 +113,11 @@ class TestManager(unittest.TestCase):
                 dict(country='EU')
             ],
             fqdns=['google.com', 'mit.edu'],
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
