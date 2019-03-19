@@ -34,7 +34,11 @@ if (-not $feature_state_start) {
     $module.FailJson("Failed to find feature.")
 }
 
-
+$feature_result = @{
+    name = $feature_state_start.FeatureName
+    display_name = $feature_state_start.DisplayName
+    description = $feature_state_start.Description
+}
 if ($state -eq "present") {
     if ($feature_state_start.State -notlike "Enabled*") {
         $install_args = @{
@@ -52,14 +56,7 @@ if ($state -eq "present") {
 
         if ($module.CheckMode) {
             $module.Result.changed = $true
-            $feature_result = @{
-                name = $feature.FeatureName
-                display_name = $feature.DisplayName
-                description = $feature.Description
-                state = "Enabled"
-            }
-            $module.Result.feature_result = $feature_result
-            $module.ExitJson()
+			break
         }
         try {
             $action_result = Enable-WindowsOptionalFeature -Online -NoRestart @install_args
@@ -78,14 +75,7 @@ if ($state -eq "present") {
 
         if ($check_mode) {
             $module.Result.changed = $true
-            $feature_result = @{
-                name = $feature.FeatureName
-                display_name = $feature.DisplayName
-                description = $feature.Description
-                state = "Disabled"
-            }
-            $module.Result.feature_result = $feature_result
-			$module.ExitJson()
+			break
         }
         try {
             $action_result = Disable-WindowsOptionalFeature -Online -NoRestart @remove_args
@@ -97,12 +87,4 @@ if ($state -eq "present") {
         $module.Result.changed = $true
     }
 }
-$feature = Get-WindowsOptionalFeature -Online -FeatureName $name
-$feature_result = @{
-    name = $feature.FeatureName
-    display_name = $feature.DisplayName
-    description = $feature.Description
-    state = $feature.State.ToString()
-}
-$module.Result.feature_result = $feature_result
 $module.ExitJson()

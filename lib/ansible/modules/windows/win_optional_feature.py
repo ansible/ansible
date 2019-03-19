@@ -101,11 +101,6 @@ feature_result:
             returned: always
             type: str
             sample: ".NET Framework 3.5 (includes .NET 2.0 and 3.0)"
-        state:
-            description: Whether the feature is enabled or disabled
-            returned: always
-            type: str
-            sample: "Enabled"
 reboot_required:
     description: True when the target server requires a reboot to complete updates
     returned: success
