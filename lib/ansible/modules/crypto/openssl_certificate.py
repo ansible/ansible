@@ -521,7 +521,7 @@ from ansible.module_utils import crypto as crypto_utils
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native, to_bytes, to_text
 
-MINIMAL_CRYPTOGRAPHY_VERSION = '1.3'
+MINIMAL_CRYPTOGRAPHY_VERSION = '1.6'
 MINIMAL_PYOPENSSL_VERSION = '0.15'
 
 PYOPENSSL_IMP_ERR = None
