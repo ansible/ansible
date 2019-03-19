@@ -16,7 +16,6 @@ $spec = @{
 }
 
 $module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
-$module.Result.rc = 0
 
 $name = $module.Params.name
 $state = $module.Params.state
@@ -30,7 +29,6 @@ if ($win_version -notlike "Windows 10*") {
 
 $feature_state_start = Get-WindowsOptionalFeature -Online -FeatureName $name
 if (-not $feature_state_start) {
-    $module.Result.rc = 1
     $module.FailJson("Failed to find feature.")
 }
 
@@ -48,7 +46,6 @@ if ($state -eq "present") {
 
         if ($source) {
             if (-not (Test-Path -Path $source)) {
-                $module.Result.rc = 1
                 $module.FailJson("Path could not be found")
             }
             $install_args.Source = $source
@@ -61,7 +58,6 @@ if ($state -eq "present") {
         try {
             $action_result = Enable-WindowsOptionalFeature -Online -NoRestart @install_args
         } catch {
-            $module.Result.rc = 1
             $module.FailJson("$($_.Exception.Message)")
         }
         $module.Result.reboot_required = $action_result.RestartNeeded
@@ -80,7 +76,6 @@ if ($state -eq "present") {
         try {
             $action_result = Disable-WindowsOptionalFeature -Online -NoRestart @remove_args
         } catch {
-            $module.Result.rc = 1
             $module.FailJson("$($_.Exception.Message)")
         }
         $module.Result.reboot_required = $action_result.RestartNeeded

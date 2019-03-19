@@ -75,11 +75,6 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-rc:
-    description: The exit code from the feature installation/removal command.
-    returned: always
-    type: int
-    sample: Success
 feature_result:
     description: List of features that were installed or removed.
     returned: success
