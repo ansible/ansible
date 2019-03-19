@@ -102,9 +102,11 @@ class TestManager(unittest.TestCase):
             license_key='XXXX-XXXX-XXXX-XXXX-XXXX',
             accept_eula=True,
             description='this is a description',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(

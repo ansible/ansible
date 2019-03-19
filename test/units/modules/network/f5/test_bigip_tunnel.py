@@ -92,9 +92,11 @@ class TestManager(unittest.TestCase):
             name='foo',
             profile='ipip',
             local_address='2.2.2.2.',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(

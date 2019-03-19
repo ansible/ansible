@@ -23,14 +23,17 @@ options:
   name:
     description:
       - Specifies the name of the trunk.
+    type: str
     required: True
   interfaces:
     description:
       - The interfaces that are part of the trunk.
       - To clear the list of interfaces, specify an empty list.
+    type: list
   description:
     description:
       - Description of the trunk.
+    type: str
     version_added: 2.7
   link_selection_policy:
     description:
@@ -42,6 +45,7 @@ options:
         same media type and speed.
       - When C(maximum-bandwidth), specifies that the system determines which interfaces
         can handle new traffic based on the members' maximum bandwidth.
+    type: str
     choices:
       - auto
       - maximum-bandwidth
@@ -58,6 +62,7 @@ options:
         address of the destination.
       - When C(source-destination-ip), specifies that the system bases the hash on the
         combined IP addresses of the source and the destination.
+    type: str
     choices:
       - destination-mac
       - source-destination-ip
@@ -83,6 +88,7 @@ options:
         regardless of whether the partner system has issued a request.
       - When C(passive), specifies that the system sends control packets only when
         the partner system has issued a request.
+    type: str
     choices:
       - active
       - passive
@@ -93,6 +99,7 @@ options:
         C(long).
       - When C(long), specifies that the system sends an LACP control packet every 30 seconds.
       - When C(short), specifies that the system sends an LACP control packet every 1 seconds.
+    type: str
     choices:
       - long
       - short
@@ -105,15 +112,17 @@ options:
       - This parameter is not supported on Virtual Editions.
       - You should always wrap this value in quotes to prevent Ansible from interpreting
         the value as a literal hexadecimal number and converting it to an integer.
+    type: raw
     version_added: 2.7
   state:
     description:
       - When C(present), ensures that the resource exists.
       - When C(absent), ensures the resource is removed.
-    default: present
+    type: str
     choices:
       - present
       - absent
+    default: present
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -190,18 +199,12 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.compare import cmp_simple_list
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.compare import cmp_simple_list
 
@@ -365,7 +368,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -590,16 +593,12 @@ def main():
         supports_check_mode=spec.supports_check_mode
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

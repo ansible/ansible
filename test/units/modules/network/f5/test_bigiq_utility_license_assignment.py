@@ -114,9 +114,11 @@ class TestManager(unittest.TestCase):
             device_password='secret',
             managed='no',
             state='present',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
