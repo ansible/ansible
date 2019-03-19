@@ -1,7 +1,7 @@
 #!/usr/bin/python
 """ this is cifs_server module
 
- (c) 2018, NetApp, Inc
+ (c) 2018-2019, NetApp, Inc
  # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 """
 
@@ -94,7 +94,7 @@ EXAMPLES = '''
     - name: Delete cifs_server
       na_ontap_cifs_server:
         state: absent
-        cifs_server_name: data2
+        name: data2
         vserver: svm1
         hostname: "{{ netapp_hostname }}"
         username: "{{ netapp_username }}"
