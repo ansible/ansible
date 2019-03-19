@@ -30,7 +30,7 @@ $result = @{
 
 Function Get-CertFile($path, $password, $key_exportable, $key_storage) {
     # parses a certificate file and returns X509Certificate2Collection
-    if (-not (Test-Path -Path $path -PathType Leaf)) {
+    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
         Fail-Json -obj $result -message "File at '$path' either does not exist or is not a file"
     }
 
@@ -76,7 +76,7 @@ Function New-CertFile($cert, $path, $type, $password) {
         }
     }
 
-    if (Test-Path -Path $path) {
+    if (Test-Path -LiteralPath $path) {
         Remove-Item -Path $path -Force
         $result.changed = $true
     }
@@ -85,7 +85,7 @@ Function New-CertFile($cert, $path, $type, $password) {
     } catch {
         Fail-Json -obj $result -message "Failed to export certificate as bytes: $($_.Exception.Message)"
     }
-    
+
     # Need to manually handle a PEM file
     if ($type -eq "pem") {
         $cert_content = "-----BEGIN CERTIFICATE-----`r`n"
@@ -100,7 +100,7 @@ Function New-CertFile($cert, $path, $type, $password) {
             $result.key_exportable = $cert.PrivateKey.CspKeyContainerInfo.Exportable
         }
     }
-    
+
     if (-not $check_mode) {
         try {
             [System.IO.File]::WriteAllBytes($path, $cert_bytes)
@@ -108,7 +108,7 @@ Function New-CertFile($cert, $path, $type, $password) {
             Fail-Json -obj $result -message "Failed to write cert to file, cert was null: $($_.Exception.Message)"
         } catch [System.IO.IOException] {
             Fail-Json -obj $result -message "Failed to write cert to file due to IO exception: $($_.Exception.Message)"
-        } catch [System.UnauthorizedAccessException, System.Security.SecurityException] {
+        } catch [System.UnauthorizedAccessException] {
             Fail-Json -obj $result -message "Failed to write cert to file due to permission: $($_.Exception.Message)"
         } catch {
             Fail-Json -obj $result -message "Failed to write cert to file: $($_.Exception.Message)"
@@ -128,7 +128,7 @@ Function Get-CertFileType($path, $password) {
         return "unknown"
     }
 
-    $file_contents = Get-Content -Path $path -Raw
+    $file_contents = Get-Content -LiteralPath $path -Raw
     if ($file_contents.StartsWith("-----BEGIN CERTIFICATE-----")) {
         return "pem"
     } elseif ($file_contents.StartsWith("-----BEGIN PKCS7-----")) {
@@ -164,13 +164,13 @@ $store_certificates = $store.Certificates
 try {
     if ($state -eq "absent") {
         $cert_thumbprints = @()
-        
+
         if ($path -ne $null) {
             $certs = Get-CertFile -path $path -password $password -key_exportable $key_exportable -key_storage $key_storage
             foreach ($cert in $certs) {
                 $cert_thumbprints += $cert.Thumbprint
             }
-        } elseif ($thumbprint -ne $null) {
+        } elseif ($null -ne $thumbprint) {
             $cert_thumbprints += $thumbprint
         } else {
             Fail-Json -obj $result -message "Either path or thumbprint must be set when state=absent"
@@ -198,9 +198,9 @@ try {
         # TODO: Add support for PKCS7 and exporting a cert chain
         $result.thumbprints += $thumbprint
         $export = $true
-        if (Test-Path -Path $path -PathType Container) {
+        if (Test-Path -LiteralPath $path -PathType Container) {
             Fail-Json -obj $result -message "Cannot export cert to path '$path' as it is a directory"
-        } elseif (Test-Path -Path $path -PathType Leaf) {
+        } elseif (Test-Path -LiteralPath $path -PathType Leaf) {
             $actual_cert_type = Get-CertFileType -path $path -password $password
             if ($actual_cert_type -eq $file_type) {
                 try {
@@ -210,7 +210,7 @@ try {
                     # that will fail validation
                     $certs = @{Thumbprint = $null}
                 }
-                
+
                 if ($certs.Thumbprint -eq $thumbprint) {
                     $export = $false
                 }
@@ -222,7 +222,7 @@ try {
             if ($found_certs.Count -ne 1) {
                 Fail-Json -obj $result -message "Found $($found_certs.Count) certs when only expecting 1"
             }
-    
+
             New-CertFile -cert $found_certs -path $path -type $file_type -password $password
         }
     } else {
