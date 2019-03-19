@@ -1,5 +1,6 @@
 coverage >= 4.2, != 4.3.2 # features in 4.2+ required, avoid known bug in 4.3.2 on python 2.6
 cryptography < 2.2 ; python_version < '2.7' # cryptography 2.2 drops support for python 2.6
+deepdiff < 4.0.0 ; python_version < '3' # deepdiff 4.0.0 and later require python 3
 urllib3 < 1.24 ; python_version < '2.7' # urllib3 1.24 and later require python 2.7 or later
 pywinrm >= 0.3.0 # message encryption support
 astroid == 1.5.3 ; python_version >= '3.5' # newer versions of astroid require newer versions of pylint to avoid bugs
