@@ -1,0 +1,186 @@
+- name: 'TYPE=PTR - creation (check mode)'
+  win_dns_record: {zone: '{{ win_dns_record_revzone }}', name: 7, value: ansible-mirror.example.com, type: PTR}
+  register: cmd_result
+  check_mode: yes
+
+- name: 'TYPE=PTR - creation get results (check mode)'
+  win_command: powershell.exe "If (Get-DnsServerResourceRecord -ZoneName '{{ win_dns_record_revzone }}' -Name '7' -RRType PTR -Node -ErrorAction:Ignore) { 'exists' } else { 'absent' }"
+  register: cmd_result_actual
+  changed_when: false
+
+- name: 'TYPE=PTR - creation check results (check mode)'
+  assert:
+    that:
+      - cmd_result is changed
+      - cmd_result_actual.stdout == 'absent\r\n'
+
+- name: 'TYPE=PTR - creation'
+  win_dns_record: {zone: '{{ win_dns_record_revzone }}', name: 7, value: ansible-mirror.example.com, type: PTR}
+  register: cmd_result
+
+- name: 'TYPE=PTR - creation get results'
+  win_command: powershell.exe "Get-DnsServerResourceRecord -ZoneName '{{ win_dns_record_revzone }}' -Name '7' -RRType PTR -Node -ErrorAction:Ignore | Select -ExpandProperty RecordData | Select -ExpandProperty PtrDomainName"
+  register: cmd_result_actual
+  changed_when: false
+
+- name: 'TYPE=PTR - creation check results'
+  assert:
+    that:
+      - cmd_result is changed
+      - cmd_result_actual.stdout == 'ansible-mirror.example.com.\r\n'
+
+- name: 'TYPE=PTR - creation (idempotent)'
+  win_dns_record: {zone: '{{ win_dns_record_revzone }}', name: 7, value: ansible-mirror.example.com, type: PTR}
+  register: cmd_result
+
+- name: 'TYPE=PTR - creation get results (idempotent)'
+  win_command: powershell.exe "Get-DnsServerResourceRecord -ZoneName '{{ win_dns_record_revzone }}' -Name '7' -RRType PTR -Node -ErrorAction:Ignore | Select -ExpandProperty RecordData | Select -ExpandProperty PtrDomainName"
+  register: cmd_result_actual
+  changed_when: false
+
+- name: 'TYPE=PTR - creation check results (idempotent)'
+  assert:
+    that:
+      - cmd_result is not changed
+      - cmd_result_actual.stdout == 'ansible-mirror.example.com.\r\n'
+
+
+- name: 'TYPE=PTR - update address (check mode)'
+  win_dns_record: {zone: '{{ win_dns_record_revzone }}', name: 7, value: ansible-altmirror.example.com, type: PTR}
+  register: cmd_result
+  check_mode: yes
+
+- name: 'TYPE=PTR - update address get results (check mode)'
+  win_command: powershell.exe "Get-DnsServerResourceRecord -ZoneName '{{ win_dns_record_revzone }}' -Name '7' -RRType PTR -Node -ErrorAction:Ignore | Select -ExpandProperty RecordData | Select -ExpandProperty PtrDomainName"
+  register: cmd_result_actual
+  changed_when: false
+
+- name: 'TYPE=PTR - update address check results (check mode)'
+  assert:
+    that:
+      - cmd_result is changed
+      - cmd_result_actual.stdout == 'ansible-mirror.example.com.\r\n'
+
+- name: 'TYPE=PTR - update address'
+  win_dns_record: {zone: '{{ win_dns_record_revzone }}', name: 7, value: ansible-altmirror.example.com, type: PTR}
+  register: cmd_result
+
+- name: 'TYPE=PTR - update address get results'
+  win_command: powershell.exe "Get-DnsServerResourceRecord -ZoneName '{{ win_dns_record_revzone }}' -Name '7' -RRType PTR -Node -ErrorAction:Ignore | Select -ExpandProperty RecordData | Select -ExpandProperty PtrDomainName"
+  register: cmd_result_actual
+  changed_when: false
+
+- name: 'TYPE=PTR - update address check results'
+  assert:
+    that:
+      - cmd_result is changed
+      - cmd_result_actual.stdout == 'ansible-altmirror.example.com.\r\n'
+
+- name: 'TYPE=PTR - update address (idempotent)'
+  win_dns_record: {zone: '{{ win_dns_record_revzone }}', name: 7, value: ansible-altmirror.example.com, type: PTR}
+  register: cmd_result
+
+- name: 'TYPE=PTR - update address get results (idempotent)'
+  win_command: powershell.exe "Get-DnsServerResourceRecord -ZoneName '{{ win_dns_record_revzone }}' -Name '7' -RRType PTR -Node -ErrorAction:Ignore | Select -ExpandProperty RecordData | Select -ExpandProperty PtrDomainName"
+  register: cmd_result_actual
+  changed_when: false
+
+- name: 'TYPE=PTR - update address check results (idempotent)'
+  assert:
+    that:
+      - cmd_result is not changed
+      - cmd_result_actual.stdout == 'ansible-altmirror.example.com.\r\n'
+
+
+- name: 'TYPE=PTR - update TTL (check mode)'
+  win_dns_record: {zone: '{{ win_dns_record_revzone }}', name: 7, value: ansible-altmirror.example.com, ttl: 7200, type: PTR}
+  register: cmd_result
+  check_mode: yes
+
+- name: 'TYPE=PTR - update TTL get results (check mode)'
+  win_command: powershell.exe "Get-DnsServerResourceRecord -ZoneName '{{ win_dns_record_revzone }}' -Name '7' -RRType PTR -Node -ErrorAction:Ignore | Select -ExpandProperty TimeToLive | Select -ExpandProperty TotalSeconds"
+  register: cmd_result_actual
+  changed_when: false
+
+- name: 'TYPE=PTR - update TTL check results (check mode)'
+  assert:
+    that:
+      - cmd_result is changed
+      - cmd_result_actual.stdout == '3600\r\n'
+
+- name: 'TYPE=PTR - update TTL'
+  win_dns_record: {zone: '{{ win_dns_record_revzone }}', name: 7, value: ansible-altmirror.example.com, ttl: 7200, type: PTR}
+  register: cmd_result
+
+- name: 'TYPE=PTR - update TTL get results'
+  win_command: powershell.exe "Get-DnsServerResourceRecord -ZoneName '{{ win_dns_record_revzone }}' -Name '7' -RRType PTR -Node -ErrorAction:Ignore | Select -ExpandProperty TimeToLive | Select -ExpandProperty TotalSeconds"
+  register: cmd_result_actual
+  changed_when: false
+
+- name: 'TYPE=PTR - update TTL check results'
+  assert:
+    that:
+      - cmd_result is changed
+      - cmd_result_actual.stdout == '7200\r\n'
+
+- name: 'TYPE=PTR - update TTL (idempotent)'
+  win_dns_record: {zone: '{{ win_dns_record_revzone }}', name: 7, value: ansible-altmirror.example.com, ttl: 7200, type: PTR}
+  register: cmd_result
+
+- name: 'TYPE=PTR - update TTL get results (idempotent)'
+  win_command: powershell.exe "Get-DnsServerResourceRecord -ZoneName '{{ win_dns_record_revzone }}' -Name '7' -RRType PTR -Node -ErrorAction:Ignore | Select -ExpandProperty TimeToLive | Select -ExpandProperty TotalSeconds"
+  register: cmd_result_actual
+  changed_when: false
+
+- name: 'TYPE=PTR - update TTL check results (idempotent)'
+  assert:
+    that:
+      - cmd_result is not changed
+      - cmd_result_actual.stdout == '7200\r\n'
+
+
+- name: 'TYPE=PTR - remove record (check mode)'
+  win_dns_record: {zone: '{{ win_dns_record_revzone }}', name: 7, type: PTR, state: absent}
+  register: cmd_result
+  check_mode: yes
+
+- name: 'TYPE=PTR - remove record get results (check mode)'
+  win_command: powershell.exe "If (Get-DnsServerResourceRecord -ZoneName '{{ win_dns_record_revzone }}' -Name '7' -RRType PTR -Node -ErrorAction:Ignore) { 'exists' } else { 'absent' }"
+  register: cmd_result_actual
+  changed_when: false
+
+- name: 'TYPE=PTR - remove record check results (check mode)'
+  assert:
+    that:
+      - cmd_result is changed
+      - cmd_result_actual.stdout == 'exists\r\n'
+
+- name: 'TYPE=PTR - remove record'
+  win_dns_record: {zone: '{{ win_dns_record_revzone }}', name: 7, type: PTR, state: absent}
+  register: cmd_result
+
+- name: 'TYPE=PTR - remove record get results'
+  win_command: powershell.exe "If (Get-DnsServerResourceRecord -ZoneName '{{ win_dns_record_revzone }}' -Name '7' -RRType PTR -Node -ErrorAction:Ignore) { 'exists' } else { 'absent' }"
+  register: cmd_result_actual
+  changed_when: false
+
+- name: 'TYPE=PTR - remove record check results'
+  assert:
+    that:
+      - cmd_result is changed
+      - cmd_result_actual.stdout == 'absent\r\n'
+
+- name: 'TYPE=PTR - remove record (idempotent)'
+  win_dns_record: {zone: '{{ win_dns_record_revzone }}', name: 7, type: PTR, state: absent}
+  register: cmd_result
+
+- name: 'TYPE=PTR - remove record get results (idempotent)'
+  win_command: powershell.exe "If (Get-DnsServerResourceRecord -ZoneName '{{ win_dns_record_revzone }}' -Name '7' -RRType PTR -Node -ErrorAction:Ignore) { 'exists' } else { 'absent' }"
+  register: cmd_result_actual
+  changed_when: false
+
+- name: 'TYPE=PTR - remove record check results (idempotent)'
+  assert:
+    that:
+      - cmd_result is not changed
+      - cmd_result_actual.stdout == 'absent\r\n'
