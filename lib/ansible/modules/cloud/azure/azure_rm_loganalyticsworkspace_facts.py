@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_loganalyticsworkspace_facts
 version_added: "2.8"
-short_description: Manage Azure Log Analytics workspaces.
+short_description: Get facts of Azure Log Analytics workspaces.
 description:
     - Get, query Azure Log Analytics workspaces.
 options:
