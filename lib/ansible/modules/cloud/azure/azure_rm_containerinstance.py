@@ -55,6 +55,7 @@ options:
         description:
             - The Dns name label for the IP.
         type: str
+        version_added: "2.8"
     ports:
         description:
             - List of ports exposed within the container group.
@@ -96,7 +97,7 @@ options:
             environment_variables:
                 description:
                     - List of container environment variables.
-                type: complex
+                type: dict
                 suboptions:
                     name:
                         description:
@@ -110,10 +111,12 @@ options:
                         description:
                             - Is variable secure.
                         type: bool
+                version_added: "2.8"
             commands:
                 description:
                     - List of commands to execute within the container instance in exec form.
                 type: list
+                version_added: "2.8"
     restart_policy:
         description:
             - Restart policy for all containers within the container group.
@@ -122,6 +125,7 @@ options:
             - always
             - on_failure
             - never
+        version_added: "2.8"
     force_update:
         description:
             - Force update of existing container instance. Any update will result in deletion and recreation of existing containers.
@@ -426,7 +430,8 @@ class AzureRMContainerInstance(AzureRMModuleBase):
                                                           requests=self.cgmodels.ResourceRequests(memory_in_gb=memory, cpu=cpu)
                                                       ),
                                                       ports=ports,
-                                                      command=commands))
+                                                      command=commands,
+                                                      environment_variables=variables))
 
         parameters = self.cgmodels.ContainerGroup(location=self.location,
                                                   containers=containers,
@@ -435,8 +440,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
                                                   ip_address=ip_address,
                                                   os_type=self.os_type,
                                                   volumes=None,
-                                                  tags=self.tags,
-                                                  environment_variables=variables)
+                                                  tags=self.tags)
 
         response = self.containerinstance_client.container_groups.create_or_update(resource_group_name=self.resource_group,
                                                                                    container_group_name=self.name,
