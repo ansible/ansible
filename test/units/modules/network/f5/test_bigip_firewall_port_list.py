@@ -117,9 +117,11 @@ class TestManager(unittest.TestCase):
             ports=[1, 2, 3, 4],
             port_ranges=['10-20', '30-40', '50-60'],
             port_lists=['/Common/foo', 'foo'],
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
