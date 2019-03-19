@@ -792,9 +792,14 @@
   when: postgres_version_resp.stdout is version('9.1', '>=')
 
 # Test postgresql_ext.
-# pg_extension system view is available from PG 9.1
+# pg_extension system view is available from PG 9.1.
+# The tests are restricted by Fedora because there will be errors related with
+# attempts to change the environment during postgis installation or
+# missing postgis package in repositories.
+# Anyway, these tests completely depend on Postgres version,
+# not specific distributions.
 - include: postgresql_ext.yml
-  when: postgres_version_resp.stdout is version('9.1', '>=')
+  when: postgres_version_resp.stdout is version('9.1', '>=') and ansible_distribution == 'Fedora'
 
 # dump/restore tests per format
 # ============================================================

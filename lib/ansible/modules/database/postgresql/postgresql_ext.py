@@ -52,7 +52,7 @@ options:
   login_unix_socket:
     description:
     - Path to a Unix domain socket for local connections.
-    type: path
+    type: str
     version_added: '2.8'
   ssl_mode:
     description:
