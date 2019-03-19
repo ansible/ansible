@@ -23,6 +23,7 @@ options:
   description:
     description:
       - Description of the policy rule.
+    type: str
   actions:
     description:
       - The actions that you want the policy rule to perform.
@@ -41,31 +42,43 @@ options:
           - When C(type) is C(ignore), will remove all existing actions from this
             rule.
           - When C(type) is C(redirect), will redirect an HTTP request to a different URL.
+        type: str
         required: true
-        choices: ['forward', 'enable', 'ignore', 'redirect']
+        choices:
+          - forward
+          - enable
+          - ignore
+          - redirect
       pool:
         description:
           - Pool that you want to forward traffic to.
           - This parameter is only valid with the C(forward) type.
+        type: str
       virtual:
         description:
           - Virtual Server that you want to forward traffic to.
           - This parameter is only valid with the C(forward) type.
+        type: str
       asm_policy:
         description:
           - ASM policy to enable.
           - This parameter is only valid with the C(enable) type.
+        type: str
       location:
         description:
           - The new URL for which a redirect response will be sent.
           - A Tcl command substitution can be used for this field.
+        type: str
+    type: list
   policy:
     description:
       - The name of the policy that you want to associate this rule with.
+    type: str
     required: True
   name:
     description:
       - The name of the rule.
+    type: str
     required: True
   conditions:
     description:
@@ -86,32 +99,42 @@ options:
             list will provide a match.
           - When C(type) is C(all_traffic), will remove all existing conditions from
             this rule.
+        type: str
         required: True
-        choices: [ 'http_uri', 'all_traffic', 'http_host' ]
+        choices:
+          - http_uri
+          - all_traffic
+          - http_host
       path_begins_with_any:
         description:
           - A list of strings of characters that the HTTP URI should start with.
           - This parameter is only valid with the C(http_uri) type.
+        type: str
       host_is_any:
         description:
           - A list of strings of characters that the HTTP Host should match.
           - This parameter is only valid with the C(http_host) type.
+        type: str
       host_begins_with_any:
         description:
           - A list of strings of characters that the HTTP Host should start with.
           - This parameter is only valid with the C(http_host) type.
+        type: str
+    type: list
   state:
     description:
       - When C(present), ensures that the key is uploaded to the device. When
         C(absent), ensures that the key is removed from the device. If the key
         is currently in use, the module will not be able to remove the key.
-    default: present
+    type: str
     choices:
       - present
       - absent
+    default: present
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
 extends_documentation_fragment: f5
 requirements:
@@ -238,22 +261,16 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.common import transform_name
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.common import transform_name
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
 
 
 class Parameters(AnsibleF5Parameters):
@@ -694,7 +711,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -1039,16 +1056,12 @@ def main():
         supports_check_mode=spec.supports_check_mode
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

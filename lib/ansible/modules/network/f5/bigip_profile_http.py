@@ -23,21 +23,25 @@ options:
   name:
     description:
       - Specifies the name of the profile.
+    type: str
     required: True
   parent:
     description:
       - Specifies the profile from which this profile inherits settings.
       - When creating a new profile, if this parameter is not specified, the default
         is the system-supplied C(http) profile.
+    type: str
     default: /Common/http
   description:
     description:
       - Description of the profile.
+    type: str
   proxy_type:
     description:
       - Specifies the proxy mode for the profile.
       - When creating a new profile, if this parameter is not specified, the
         default is provided by the parent profile.
+    type: str
     choices:
       - reverse
       - transparent
@@ -50,6 +54,7 @@ options:
         just as an object name (C(foo)).
       - To remove the entry a value of C(none) or C('') can be set, however the profile C(proxy_type)
         must not be set as C(explicit).
+    type: str
   insert_xforwarded_for:
     description:
       - When specified system inserts an X-Forwarded-For header in an HTTP request
@@ -70,6 +75,7 @@ options:
         the system changes it to the virtual server address.
       - When creating a new profile, if this parameter is not specified, the
         default is provided by the parent profile.
+    type: str
     choices:
       - none
       - all
@@ -87,14 +93,16 @@ options:
       - Passphrase for cookie encryption.
       - When creating a new profile, if this parameter is not specified, the
         default is provided by the parent profile.
+    type: str
   update_password:
     description:
       - C(always) will update passwords if the C(encrypt_cookie_secret) is specified.
       - C(on_create) will only set the password for newly created profiles.
-    default: always
+    type: str
     choices:
       - always
       - on_create
+    default: always
   header_erase:
     description:
       - The name of a header, in an HTTP request, which the system removes from request.
@@ -102,6 +110,7 @@ options:
       - The format of the header must be in C(KEY:VALUE) format, otherwise error is raised.
       - When creating a new profile, if this parameter is not specified, the
         default is provided by the parent profile.
+    type: str
     version_added: 2.8
   header_insert:
     description:
@@ -110,6 +119,7 @@ options:
       - The format of the header must be in C(KEY:VALUE) format, otherwise error is raised.
       - When creating a new profile, if this parameter is not specified, the
         default is provided by the parent profile.
+    type: str
     version_added: 2.8
   server_agent_name:
     description:
@@ -117,6 +127,7 @@ options:
       - To remove the entry completely a value of C(none) or C('') should be set.
       - When creating a new profile, if this parameter is not specified, the
         default is provided by the parent profile.
+    type: str
     version_added: 2.8
   include_subdomains:
     description:
@@ -134,6 +145,7 @@ options:
         re-enables plaintext HTTP access, while specifying C(indefinite) will set it to the maximum value.
       - When creating a new profile, if this parameter is not specified, the
         default is provided by the parent profile.
+    type: str
     version_added: 2.8
   hsts_mode:
     description:
@@ -145,15 +157,17 @@ options:
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
   state:
     description:
       - When C(present), ensures that the profile exists.
       - When C(absent), ensures the profile is removed.
-    default: present
+    type: str
     choices:
       - present
       - absent
+    default: present
 extends_documentation_fragment: f5
 author:
   - Wojciech Wypior (@wojtek0806)
@@ -233,25 +247,19 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.common import flatten_boolean
     from library.module_utils.network.f5.common import transform_name
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.urls import check_header_validity
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.common import flatten_boolean
     from ansible.module_utils.network.f5.common import transform_name
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.urls import check_header_validity
 
 
@@ -639,7 +647,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -880,16 +888,12 @@ def main():
         supports_check_mode=spec.supports_check_mode,
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':
