@@ -1321,8 +1321,14 @@ class AssertOnlyCertificateCryptography(Certificate):
                             encipher_only=current_keyusage.encipher_only,
                             decipher_only=current_keyusage.decipher_only
                         ))
+                    else:
+                      test_keyusage.update(dict(
+                            encipher_only=False,
+                            decipher_only=False
+                      ))
 
-                    if (not self.keyUsage_strict and not all(x in test_keyusage for x in self._parse_key_usage())) or \
+
+                    if (not self.keyUsage_strict and not all(self._parse_key_usage()[x] == test_keyusage[x] for x in self._parse_key_usage())) or \
                             (self.keyUsage_strict and current_keyusage != expected_keyusage):
                         self.message.append(
                             'Invalid keyUsage components (got %s, expected all of %s to be present)' %
