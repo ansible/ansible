@@ -1,10 +1,10 @@
 .. _netvisor_platform_options:
 
-*************************
-NETVISOR Platform Options
-*************************
+**********************************
+Pluribus NETVISOR Platform Options
+**********************************
 
-NETVISOR Ansible modules only support CLI connections today. ``httpapi`` modules may be added in future.
+Pluribus NETVISOR Ansible modules only support CLI connections today. ``httpapi`` modules may be added in future.
 This page offers details on how to use ``network_cli`` on NETVISOR in Ansible.
 
 .. contents:: Topics
@@ -34,7 +34,7 @@ Connections Available
 | **Returned Data Format**  | ``stdout[0].``                                |
 +---------------------------+-----------------------------------------------+
 
-NETVISOR does not support ``ansible_connection: local``. You must use ``ansible_connection: network_cli``.
+Pluribus NETVISOR does not support ``ansible_connection: local``. You must use ``ansible_connection: network_cli``.
 
 Using CLI in Ansible
 ====================
