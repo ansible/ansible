@@ -2617,6 +2617,7 @@ def main():
         stop_signal=dict(docker_py_version='2.6.0', docker_api_version='1.28'),
         publish=dict(docker_py_version='3.0.0', docker_api_version='1.25'),
         read_only=dict(docker_py_version='2.6.0', docker_api_version='1.28'),
+        resolve_image=dict(docker_api_version='1.30', docker_py_version='3.2.0'),
         rollback_config=dict(docker_py_version='3.5.0', docker_api_version='1.28'),
         # specials
         publish_mode=dict(
@@ -2688,12 +2689,6 @@ def main():
             ) is not None,
             usage_msg='set rollback_config.order'
         ),
-        resolve_image_is_true=dict(
-            docker_api_version='1.30',
-            docker_py_version='3.2.0',
-            detect_usage=lambda c: c.module.params['resolve_image'] is True,
-            usage_msg='set resolve_image'
-        )
     )
     required_if = [
         ('state', 'present', ['image'])
