@@ -53,13 +53,10 @@ if ($state -eq "present") {
             $install_args.Source = $source
         }
 
-        if ($module.CheckMode) {
-            $module.Result.changed = $true
-			break
+        if (-not $module.CheckMode) {
+        	$action_result = Enable-WindowsOptionalFeature -Online -NoRestart @install_args
+        	$module.Result.reboot_required = $action_result.RestartNeeded
         }
-        $action_result = Enable-WindowsOptionalFeature -Online -NoRestart @install_args
-
-        $module.Result.reboot_required = $action_result.RestartNeeded
         $module.Result.changed = $true
     }
 } else {
@@ -69,13 +66,10 @@ if ($state -eq "present") {
             FeatureName = $name
         }
 
-        if ($check_mode) {
-            $module.Result.changed = $true
-			break
+        if (-not $module.CheckMode) {
+        	$action_result = Disable-WindowsOptionalFeature -Online -NoRestart @remove_args
+        	$module.Result.reboot_required = $action_result.RestartNeeded
         }
-        $action_result = Disable-WindowsOptionalFeature -Online -NoRestart @remove_args
-
-        $module.Result.reboot_required = $action_result.RestartNeeded
         $module.Result.changed = $true
     }
 }
