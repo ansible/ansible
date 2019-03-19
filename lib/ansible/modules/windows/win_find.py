@@ -214,7 +214,8 @@ matched:
     type: int
     sample: 2
 files:
-    description: Information on the files/folders that match the criteria returned as a list of dictionary elements for each file matched.
+    description: Information on the files/folders that match the criteria returned as a list of dictionary elements
+      for each file matched. The entries are sorted by the path value alphabetically.
     returned: success
     type: complex
     contains:
