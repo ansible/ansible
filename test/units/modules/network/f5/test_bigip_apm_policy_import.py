@@ -103,9 +103,11 @@ class TestManager(unittest.TestCase):
             name='fake_policy',
             source=self.policy,
             type='access_policy',
-            server='localhost',
-            password='password',
-            user='admin',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            ),
         ))
 
         module = AnsibleModule(
