@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2019 Yunge Zhu <yungez@microsoft.com>
+# Copyright (c) 2019 Yunge Zhu (@yungezz)
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -29,7 +29,7 @@ options:
             - Name of the virtual network peering.
     virtual_network:
         description:
-            - Virtual network to be peered.
+            - The name of Virtual network.
             - It can be name of virtual network in same resource group.
             - It can be virtual network resource id.
             - It can be a dict of resource_group and name.
@@ -46,8 +46,8 @@ EXAMPLES = '''
     - name: Get virtual network peering by name
       azure_rm_virtualnetworkpeering_facts:
         resource_group: myResourceGroup
-        name: vnet_peer1
         virtual_network: myVnet1
+        name: myVnetPeer
 
     - name: List virtual network peering of virtual network
       azure_rm_virtualnetworkpeering:
@@ -172,7 +172,7 @@ class AzureRMVirtualNetworkPeeringFacts(AzureRMModuleBase):
         self.results = dict(changed=False)
 
         super(AzureRMVirtualNetworkPeeringFacts, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                                                facts_module=True)
+                                                                supports_tags==False)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
@@ -241,4 +241,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
