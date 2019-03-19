@@ -176,9 +176,10 @@ class TestConnectionBaseClass(unittest.TestCase):
         pc = PlayContext()
         new_stdin = StringIO()
         conn = connection_loader.get('aws_ssm', pc, new_stdin)
+        conn.instance_id = "i-12345"
         conn._session_id = True
         conn.get_option = MagicMock()
-        conn.get_option.side_effect = ["i-12345", "/abc", "pqr"]
+        conn.get_option.side_effect = ["/abc", "pqr"]
         conn._session = MagicMock()
         conn._session.terminate = MagicMock()
         conn._session.communicate = MagicMock()
