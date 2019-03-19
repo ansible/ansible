@@ -68,7 +68,7 @@ class TaskInclude(Task):
         if bad_opts and task.action in ('include_tasks', 'import_tasks'):
             raise AnsibleParserError('Invalid options for %s: %s' % (task.action, ','.join(list(bad_opts))), obj=data)
 
-        if not task.args.get('_raw_params'):
+        if not task.args.get('_raw_params') and 'file' in task.args:
             task.args['_raw_params'] = task.args.pop('file')
 
         apply_attrs = task.args.get('apply', {})
