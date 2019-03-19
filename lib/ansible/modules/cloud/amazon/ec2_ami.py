@@ -418,7 +418,7 @@ def create_image(module, connection):
                     module.fail_json(msg="Error - Device name must be set for volume.")
                 device = rename_item_if_exists(device, 'device_name', 'DeviceName')
                 device = rename_item_if_exists(device, 'virtual_name', 'VirtualName')
-                device = rename_item_if_exists(device, 'no_device', 'NoDevice')
+                device = rename_item_if_exists(device, 'no_device', 'NoDevice', attribute_type=str)
                 device = rename_item_if_exists(device, 'volume_type', 'VolumeType', 'Ebs')
                 device = rename_item_if_exists(device, 'snapshot_id', 'SnapshotId', 'Ebs')
                 device = rename_item_if_exists(device, 'delete_on_termination', 'DeleteOnTermination', 'Ebs')
