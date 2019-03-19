@@ -721,6 +721,10 @@ class ImageManager(DockerBaseClass):
             params['network_mode'] = self.network
         if self.use_config_proxy:
             params['use_config_proxy'] = self.use_config_proxy
+            # Due to a bug in docker-py, it will crash if
+            # use_config_proxy is True and buildargs is None
+            if 'buildargs' not in params:
+                params['buildargs'] = {}
 
         for line in self.client.build(**params):
             # line = json.loads(line)
