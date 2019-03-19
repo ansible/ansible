@@ -14,7 +14,3 @@ mongodb_packages:
   mongod: mongodb-org-server
   mongos: mongodb-org-mongos
   mongo: mongodb-org-shell
-
-additional_packages:
-  - python-pip
-  - python-pymongo

@@ -70,7 +70,7 @@
     state: present
     force: yes
 
-- name: Install additional packages
-  apt:
-    name: "{{ additional_packages }}"
+- name: Install pymongo
+  pip:
+    name: pymongo
     state: present
