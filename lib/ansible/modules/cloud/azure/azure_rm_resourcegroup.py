@@ -82,7 +82,7 @@ state:
     returned: always
     type: dict
     sample: {
-        "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing",
+        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup",
         "location": "westus",
         "name": "Testing",
         "provisioning_state": "Succeeded",
