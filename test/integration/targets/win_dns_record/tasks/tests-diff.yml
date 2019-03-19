@@ -1,0 +1,63 @@
+# Diff tests are present because those records have to be created MANUALLY by
+# the win_dns_record module when in check mode, as there is otherwise no way in
+# Windows DNS to *simulate* a record or change.
+
+
+- name: 'Diff test - creation (check mode)'
+  win_dns_record: {zone: '{{ win_dns_record_zone }}', name: diff_host, value: 1.2.3.4, type: A}
+  register: create_check
+  check_mode: yes
+  diff: yes
+
+- name: 'Diff test - creation'
+  win_dns_record: {zone: '{{ win_dns_record_zone }}', name: diff_host, value: 1.2.3.4, type: A}
+  register: create_do
+  diff: yes
+
+- name: 'Diff test - creation check results'
+  assert:
+    that:
+      - create_check.diff.before == create_do.diff.before
+      - create_check.diff.before == ''
+      - create_check.diff.after == create_do.diff.after
+      - create_check.diff.after == "[{{ win_dns_record_zone }}] diff_host 3600 IN A 1.2.3.4\n"
+
+
+- name: 'Diff test - update TTL (check mode)'
+  win_dns_record: {zone: '{{ win_dns_record_zone }}', name: diff_host, value: 1.2.3.4, type: A, ttl: 7200}
+  register: update_check
+  check_mode: yes
+  diff: yes
+
+- name: 'Diff test - update TTL'
+  win_dns_record: {zone: '{{ win_dns_record_zone }}', name: diff_host, value: 1.2.3.4, type: A, ttl: 7200}
+  register: update_do
+  diff: yes
+
+- name: 'Diff test - update TTL check results'
+  assert:
+    that:
+      - update_check.diff.before == update_do.diff.before
+      - update_check.diff.before == "[{{ win_dns_record_zone }}] diff_host 3600 IN A 1.2.3.4\n"
+      - update_check.diff.after == update_do.diff.after
+      - update_check.diff.after == "[{{ win_dns_record_zone }}] diff_host 7200 IN A 1.2.3.4\n"
+
+
+- name: 'Diff test - deletion (check mode)'
+  win_dns_record: {zone: '{{ win_dns_record_zone }}', name: diff_host, type: A, state: absent}
+  register: delete_check
+  check_mode: yes
+  diff: yes
+
+- name: 'Diff test - deletion'
+  win_dns_record: {zone: '{{ win_dns_record_zone }}', name: diff_host, type: A, state: absent}
+  register: delete_do
+  diff: yes
+
+- name: 'Diff test - deletion check results'
+  assert:
+    that:
+      - delete_check.diff.before == delete_do.diff.before
+      - delete_check.diff.before == "[{{ win_dns_record_zone }}] diff_host 7200 IN A 1.2.3.4\n"
+      - delete_check.diff.after == delete_do.diff.after
+      - delete_check.diff.after == ''
