@@ -160,6 +160,6 @@
     host: 'localhost'
     port: 22
     search_regex: OpenSSH
-    request: 'SSH-2.0-OpenSSH_7.4p1\n'
+    send_string: 'SSH-2.0-OpenSSH_7.4p1\n'
     delay: 10
 
