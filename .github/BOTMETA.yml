@@ -401,8 +401,7 @@ files:
     maintainers: $team_ansible kustodian
     ignored: skvidal
   $modules/packaging/os/zypper.py:
-    ignored: dirtyharrycallahan
-  $modules/packaging/os/zypper_repository.py: robinro
+    ignored: dirtyharrycallahan robinro
   $modules/remote_management/foreman/: ehelms
   $modules/remote_management/hpilo/: dagwieers haad
   $modules/remote_management/imc/:
