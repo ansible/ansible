@@ -69,7 +69,7 @@ from ansible.module_utils.openstack import (
 try:
     from openstack import connect
 except ImportError:
-    from openstack import connect
+    pass
 
 
 def main():
@@ -119,4 +119,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
