@@ -36,6 +36,8 @@ $feature_result = @{
     display_name = $feature_state_start.DisplayName
     description = $feature_state_start.Description
 }
+$module.Result.feature_result = $feature_result
+
 if ($state -eq "present") {
     if ($feature_state_start.State -notlike "Enabled*") {
         $install_args = @{
