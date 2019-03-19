@@ -23,12 +23,14 @@ options:
   name:
     description:
       - Specifies the name of the OneConnect profile.
+    type: str
     required: True
   parent:
     description:
       - Specifies the profile from which this profile inherits settings.
       - When creating a new profile, if this parameter is not specified, the default
         is the system-supplied C(oneconnect) profile.
+    type: str
   source_mask:
     description:
       - Specifies a value that the system applies to the source address to determine
@@ -42,9 +44,11 @@ options:
         connections originating from the same source address.
       - When you are using a SNAT or SNAT pool, the server-side source address is
         translated first and then the OneConnect mask is applied to the translated address.
+    type: str
   description:
     description:
       - Description of the profile.
+    type: str
   maximum_size:
     description:
       - Specifies the maximum number of connections that the system holds in the
@@ -53,6 +57,7 @@ options:
         response is completed.
       - When creating a new profile, if this parameter is not specified, the
         default is provided by the parent profile.
+    type: int
   maximum_age:
     description:
       - Specifies the maximum number of seconds allowed for a connection in the connection
@@ -61,11 +66,13 @@ options:
         connection from the re-use pool.
       - When creating a new profile, if this parameter is not specified, the
         default is provided by the parent profile.
+    type: int
   maximum_reuse:
     description:
       - Specifies the maximum number of times that a server-side connection can be reused.
       - When creating a new profile, if this parameter is not specified, the
         default is provided by the parent profile.
+    type: int
   idle_timeout_override:
     description:
       - Specifies the number of seconds that a connection is idle before the connection
@@ -76,6 +83,7 @@ options:
       - When C(disabled), specifies that there is no timeout override for the connection.
       - When C(indefinite), Specifies that a connection may be idle with no timeout
         override.
+    type: str
   limit_type:
     description:
       - When C(none), simultaneous in-flight requests and responses over TCP connections
@@ -91,6 +99,7 @@ options:
         short expiration timeouts.
       - When creating a new profile, if this parameter is not specified, the default
         is provided by the parent profile.
+    type: str
     choices:
       - none
       - idle
@@ -107,15 +116,17 @@ options:
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
   state:
     description:
       - When C(present), ensures that the profile exists.
       - When C(absent), ensures the profile is removed.
-    default: present
+    type: str
     choices:
       - present
       - absent
+    default: present
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -183,23 +194,17 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.common import transform_name
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.ipaddress import is_valid_ip
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.common import transform_name
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
 
 
@@ -379,7 +384,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -600,16 +605,12 @@ def main():
         supports_check_mode=spec.supports_check_mode,
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

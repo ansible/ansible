@@ -134,9 +134,11 @@ class TestManager(unittest.TestCase):
                     path_begins_with_any=['/ABC']
                 )
             ],
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -173,9 +175,11 @@ class TestManager(unittest.TestCase):
                     path_begins_with_any=['/ABC']
                 )
             ],
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = ApiParameters(params=load_fixture('load_ltm_policy_draft_rule_http-uri_forward.json'))

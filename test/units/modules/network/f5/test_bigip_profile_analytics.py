@@ -101,9 +101,11 @@ class TestManager(unittest.TestCase):
             description='foo',
             collect_geo=True,
             collect_ip=True,
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(

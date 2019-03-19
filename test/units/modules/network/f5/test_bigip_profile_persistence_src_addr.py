@@ -107,9 +107,11 @@ class TestManager(unittest.TestCase):
             name='foo',
             match_across_virtuals='yes',
             parent='bar',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(

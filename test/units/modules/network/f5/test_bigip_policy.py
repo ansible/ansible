@@ -71,9 +71,6 @@ class TestParameters(unittest.TestCase):
         args = dict(
             name='foo',
             description='asdf asdf asdf',
-            password='password',
-            server='localhost',
-            user='admin'
         )
         p = Parameters(params=args)
         assert p.name == 'foo'
@@ -84,10 +81,7 @@ class TestParameters(unittest.TestCase):
         args = dict(
             name='foo',
             description='asdf asdf asdf',
-            password='password',
-            server='localhost',
             strategy='foo',
-            user='admin',
             partition='Common'
         )
         p = Parameters(params=args)
@@ -99,10 +93,7 @@ class TestParameters(unittest.TestCase):
         args = dict(
             name='foo',
             description='asdf asdf asdf',
-            password='password',
-            server='localhost',
             strategy='/Common/foo',
-            user='admin',
             partition='Common'
         )
         p = Parameters(params=args)
@@ -114,10 +105,7 @@ class TestParameters(unittest.TestCase):
         args = dict(
             name='foo',
             description='asdf asdf asdf',
-            password='password',
-            server='localhost',
             strategy='/Foo/bar',
-            user='admin',
             partition='Common'
         )
         p = Parameters(params=args)
@@ -147,9 +135,11 @@ class TestSimpleTrafficPolicyManager(unittest.TestCase):
             name="Policy-Foo",
             state='present',
             strategy='best',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
