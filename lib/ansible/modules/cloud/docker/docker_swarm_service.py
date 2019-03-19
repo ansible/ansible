@@ -468,8 +468,9 @@ options:
   resolve_image:
     description:
       - If the current image digest should be resolved from registry and updated if changed.
+      - Requires API version >= 1.30.
     type: bool
-    default: yes
+    default: no
     version_added: 2.8
   restart_config:
     description:
@@ -2266,12 +2267,10 @@ class DockerServiceManager(object):
     def remove_service(self, name):
         self.client.remove_service(name)
 
-    def get_image_digest(self, name, resolve=True):
+    def get_image_digest(self, name, resolve=False):
         if (
             not name
             or not resolve
-            or self.client.docker_py_version < LooseVersion('3.2')
-            or self.client.docker_api_version < LooseVersion('1.30')
         ):
             return name
         repo, tag = parse_repository_tag(name)
@@ -2543,7 +2542,7 @@ def main():
         )),
         reserve_cpu=dict(type='float', removed_in_version='2.12'),
         reserve_memory=dict(type='str', removed_in_version='2.12'),
-        resolve_image=dict(type='bool', default=True),
+        resolve_image=dict(type='bool', default=False),
         restart_config=dict(type='dict', options=dict(
             condition=dict(type='str', choices=['none', 'on-failure', 'any']),
             delay=dict(type='str'),
@@ -2689,8 +2688,13 @@ def main():
             ) is not None,
             usage_msg='set rollback_config.order'
         ),
+        resolve_image_is_true=dict(
+            docker_api_version='1.30',
+            docker_py_version='3.2.0',
+            detect_usage=lambda c: c.module.params['resolve_image'] is True,
+            usage_msg='set resolve_image'
+        )
     )
-
     required_if = [
         ('state', 'present', ['image'])
     ]
