@@ -82,15 +82,20 @@ class TestManager(unittest.TestCase):
             parents='router bgp 64664',
             before='bfd slow-timer 2000',
             match='exact',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = load_fixture('load_imish_output_1.json')
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            mutually_exclusive=self.spec.mutually_exclusive,
+            required_if=self.spec.required_if,
+            add_file_common_args=self.spec.add_file_common_args
         )
 
         # Override methods in the specific type of manager

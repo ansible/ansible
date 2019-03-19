@@ -24,6 +24,7 @@ options:
   route_domain:
     description:
       - Route domain to manage BGP configuration on.
+    type: str
     default: 0
   lines:
     description:
@@ -33,6 +34,7 @@ options:
         running-config.
       - Be sure to note the configuration command syntax as some commands
         are automatically modified by the device config parser.
+    type: list
     aliases: ['commands']
   parents:
     description:
@@ -40,6 +42,7 @@ options:
         the commands should be checked against.
       - If the C(parents) argument is omitted, the commands are checked against
         the set of top level or global commands.
+    type: list
   src:
     description:
       - The I(src) argument provides a path to the configuration file
@@ -49,6 +52,7 @@ options:
         implemented role or playbook.
       - This argument is mutually exclusive with the I(lines) and
         I(parents) arguments.
+    type: path
   before:
     description:
       - The ordered set of commands to push on to the command stack if
@@ -56,12 +60,14 @@ options:
       - This allows the playbook designer the opportunity to perform
         configuration commands prior to pushing any changes without
         affecting how the set of commands are matched against the system.
+    type: list
   after:
     description:
       - The ordered set of commands to append to the end of the command
         stack if a change needs to be made.
       - Just like with I(before) this allows the playbook designer to
         append a set of commands to be executed after the command set.
+    type: list
   match:
     description:
       - Instructs the module on the way to perform the matching of
@@ -73,8 +79,13 @@ options:
       - Finally, if match is set to I(none), the module will not attempt to
         compare the source configuration with the running configuration on
         the remote device.
+    type: str
+    choices:
+      - line
+      - strict
+      - exact
+      - none
     default: line
-    choices: ['line', 'strict', 'exact', 'none']
   replace:
     description:
       - Instructs the module on the way to perform the configuration
@@ -84,8 +95,11 @@ options:
       - If the replace argument is set to I(block) then the entire
         command block is pushed to the device in configuration mode if any
         line is not correct.
+    type: str
+    choices:
+      - line
+      - block
     default: line
-    choices: ['line', 'block']
   backup:
     description:
       - This argument will cause the module to create a full backup of
@@ -105,6 +119,7 @@ options:
         current running-config for every task in a playbook.
       - The I(running_config) argument allows the implementer to pass in
         the configuration to use as the base config for comparison.
+    type: str
     aliases: ['config']
   save_when:
     description:
@@ -120,8 +135,13 @@ options:
         copied to the startup-config.
       - If the argument is set to I(changed), then the running-config
         will only be copied to the startup-config if the task has made a change.
+    type: str
+    choices:
+      - always
+      - never
+      - modified
+      - changed
     default: never
-    choices: ['always', 'never', 'modified', 'changed']
   diff_against:
     description:
       - When using the C(ansible-playbook --diff) command line argument
@@ -134,8 +154,12 @@ options:
       - When this option is configured as I(running), the module will
         return the before and after diff of the running-config with respect
         to any changes made to the device configuration.
+    type: str
+    choices:
+      - startup
+      - intended
+      - running
     default: startup
-    choices: ['startup', 'intended', 'running']
   diff_ignore_lines:
     description:
       - Use this argument to specify one or more lines that should be
@@ -143,6 +167,7 @@ options:
       - This is used for lines in the configuration that are automatically
         updated by the system.
       - This argument takes a list of regular expressions or exact line matches.
+    type: list
   intended_config:
     description:
       - The C(intended_config) provides the master configuration that
@@ -153,6 +178,7 @@ options:
         configuration against.
       - When specifying this argument, the task should also modify the
         C(diff_against) value and set it to I(intended).
+    type: str
   backup_options:
     description:
       - This is a dict object containing configurable options related to backup file path.
@@ -164,6 +190,7 @@ options:
           - The filename to be used to store the backup configuration. If the the filename
             is not given it will be generated based on the hostname, current time and date
             in format defined by <hostname>_config.<current-date>@<current-time>
+        type: str
       dir_path:
         description:
           - This option provides the path ending with directory name in which the backup
@@ -297,21 +324,15 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.icontrol import upload_file
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.icontrol import upload_file
 
 
@@ -388,7 +409,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -799,11 +820,11 @@ def main():
     client = F5RestClient(**module.params)
 
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

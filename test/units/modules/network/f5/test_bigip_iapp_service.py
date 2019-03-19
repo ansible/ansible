@@ -323,9 +323,11 @@ class TestManager(unittest.TestCase):
             template='f5.http',
             parameters=parameters,
             state='present',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -349,9 +351,11 @@ class TestManager(unittest.TestCase):
             template='f5.http',
             parameters=parameters,
             state='present',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         # Configure the parameters that would be returned by querying the

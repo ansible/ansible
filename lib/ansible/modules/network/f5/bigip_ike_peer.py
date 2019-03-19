@@ -23,10 +23,12 @@ options:
   name:
     description:
       - Specifies the name of the IKE peer.
+    type: str
     required: True
   description:
     description:
       - Description of the IKE peer.
+    type: str
   version:
     description:
       - Specifies which version of IKE is used.
@@ -37,6 +39,7 @@ options:
       - If the system you are configuring is the IPsec responder, and you select
         both versions, the IPsec initiator system determines which IKE version to use.
       - When creating a new IKE peer, this value is required.
+    type: list
     choices:
       - v1
       - v2
@@ -44,6 +47,7 @@ options:
     description:
       - Specifies the identifier type that the local system uses to identify
         itself to the peer during IKE Phase 1 negotiations.
+    type: str
     choices:
       - address
       - asn1dn
@@ -56,6 +60,7 @@ options:
       - This is a required value when C(version) includes (Cv2).
       - Specifies a value for the identity when using a C(presented_id_type) of
         C(override).
+    type: str
   verified_id_type:
     description:
       - Specifies the identifier type that the local system uses to identify
@@ -63,6 +68,7 @@ options:
       - This is a required value when C(version) includes (Cv2).
       - When C(user-fqdn), value of C(verified_id_value) must be in the form of
         User @ DNS domain string.
+    type: str
     choices:
       - address
       - asn1dn
@@ -75,11 +81,13 @@ options:
       - This is a required value when C(version) includes (Cv2).
       - Specifies a value for the identity when using a C(verified_id_type) of
         C(override).
+    type: str
   phase1_auth_method:
     description:
       - Specifies the authentication method for phase 1 negotiation.
       - When creating a new IKE peer, if this value is not specified, the default is
         C(rsa-signature).
+    type: str
     choices:
       - pre-shared-key
       - rsa-signature
@@ -89,12 +97,14 @@ options:
       - When creating a new IKE peer, if this value is not specified, and
         C(phase1_auth_method) is C(rsa-signature), the default is C(default.crt).
       - This parameter is invalid when C(phase1_auth_method) is C(pre-shared-key).
+    type: str
   phase1_key:
     description:
       - Specifies the public key that the digital certificate contains.
       - When creating a new IKE peer, if this value is not specified, and
         C(phase1_auth_method) is C(rsa-signature), the default is C(default.key).
       - This parameter is invalid when C(phase1_auth_method) is C(pre-shared-key).
+    type: str
   phase1_verify_peer_cert:
     description:
       - In IKEv2, specifies whether the certificate sent by the IKE peer is verified
@@ -113,14 +123,17 @@ options:
       - Specifies a string that the IKE peers share for authenticating each other.
       - This parameter is only relevant when C(phase1_auth_method) is C(pre-shared-key).
       - This parameter is invalid when C(phase1_auth_method) is C(rsa-signature).
+    type: str
   remote_address:
     description:
       - Displays the IP address of the BIG-IP system that is remote to the system
         you are configuring.
+    type: str
   phase1_encryption_algorithm:
     description:
       - Specifies the algorithm to use for IKE encryption.
       - IKE C(version) C(v2) does not support C(blowfish), C(camellia), or C(cast128).
+    type: str
     choices:
       - 3des
       - des
@@ -133,6 +146,7 @@ options:
   phase1_hash_algorithm:
     description:
       - Specifies the algorithm to use for IKE authentication.
+    type: str
     choices:
       - sha1
       - md5
@@ -142,6 +156,7 @@ options:
   phase1_perfect_forward_secrecy:
     description:
       - Specifies the Diffie-Hellman group to use for IKE Phase 1 and Phase 2 negotiations.
+    type: str
     choices:
       - ecp256
       - ecp384
@@ -158,22 +173,25 @@ options:
     description:
       - C(always) will allow to update passwords if the user chooses to do so.
         C(on_create) will only set the password for newly created IKE peers.
-    default: always
+    type: str
     choices:
       - always
       - on_create
+    default: always
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
   state:
     description:
       - When C(present), ensures that the resource exists.
       - When C(absent), ensures the resource is removed.
-    default: present
+    type: str
     choices:
       - present
       - absent
+    default: present
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -181,9 +199,33 @@ author:
 '''
 
 EXAMPLES = r'''
-- name: Create a ...
+- name: Create new IKE peer
   bigip_ike_peer:
-    name: foo
+    name: ike1
+    remote_address: 1.2.3.4
+    version:
+      - v1
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
+  delegate_to: localhost
+
+- name: Change presented id type - keyid-tag
+  bigip_ike_peer:
+    name: ike1
+    presented_id_type: keyid-tag
+    presented_id_value: key1
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
+  delegate_to: localhost
+
+- name: Remove IKE peer
+  bigip_ike_peer:
+    name: ike1
+    state: absent
     provider:
       password: secret
       server: lb.mydomain.com
@@ -266,11 +308,8 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.common import transform_name
     from library.module_utils.network.f5.common import flatten_boolean
     from library.module_utils.network.f5.compare import cmp_str_with_none
@@ -278,11 +317,8 @@ except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.common import transform_name
     from ansible.module_utils.network.f5.common import flatten_boolean
     from ansible.module_utils.network.f5.compare import cmp_str_with_none
@@ -461,7 +497,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -756,16 +792,12 @@ def main():
         required_together=spec.required_together,
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':
