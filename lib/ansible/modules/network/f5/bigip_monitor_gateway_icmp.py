@@ -23,32 +23,38 @@ options:
   name:
     description:
       - Monitor name.
+    type: str
     required: True
   parent:
     description:
       - The parent template of this monitor template. Once this value has
         been set, it cannot be changed. By default, this value is the
         C(gateway_icmp) parent on the C(Common) partition.
+    type: str
     default: /Common/gateway_icmp
   description:
     description:
       - The description of the monitor.
+    type: str
   ip:
     description:
       - IP address part of the IP/port definition. If this parameter is not
         provided when creating a new monitor, then the default value will be
         '*'.
+    type: str
   port:
     description:
       - Port address part of the IP/port definition. If this parameter is not
         provided when creating a new monitor, then the default value will be
         '*'. Note that if specifying an IP address, a value between 1 and 65535
         must be specified.
+    type: str
   interval:
     description:
       - Specifies, in seconds, the frequency at which the system issues the
         monitor check when either the resource is down or the status of the
         resource is unknown.
+    type: int
   timeout:
     description:
       - Specifies the number of seconds the target has in which to respond to
@@ -59,6 +65,7 @@ options:
         from the parent monitor.
       - Note that C(timeout) and C(time_until_up) combine to control when a
         resource is set to up.
+    type: int
   time_until_up:
     description:
       - Specifies the number of seconds to wait after a resource first responds
@@ -67,6 +74,7 @@ options:
       - When the interval expires, the resource is marked 'up'.
       - A value of 0, means that the resource is marked up immediately upon
         receipt of the first correct response.
+    type: int
   up_interval:
     description:
       - Specifies the interval for the system to use to perform the health check
@@ -75,6 +83,7 @@ options:
         C(interval) to check the health of the resource.
       - When any other number, enables specification of a different interval to
         use when checking the health of a resource that is up.
+    type: int
   manual_resume:
     description:
       - Specifies whether the system automatically changes the status of a resource
@@ -106,6 +115,7 @@ options:
         latency value you set, the pool member or node is marked down.
       - When C(relative), the percentage of deviation the latency of a monitor probe
         can exceed the mean latency of a monitor probe for the service being probed.
+    type: str
     choices:
       - relative
       - absolute
@@ -113,6 +123,7 @@ options:
     description:
       - When specifying a new monitor, if C(adaptive) is C(yes), and C(type) is
         C(relative), the default is C(25) percent.
+    type: int
   adaptive_limit:
     description:
       - Specifies the absolute number of milliseconds that may not be exceeded by a monitor
@@ -121,12 +132,14 @@ options:
       - This value applies regardless of the value of the C(allowed_divergence) setting.
       - While this value can be configured when C(adaptive) is C(no), it will not take
         effect on the system until C(adaptive) is C(yes).
+    type: int
   sampling_timespan:
     description:
       - Specifies the length, in seconds, of the probe history window that the system
         uses to calculate the mean latency and standard deviation of a monitor probe.
       - While this value can be configured when C(adaptive) is C(no), it will not take
         effect on the system until C(adaptive) is C(yes).
+    type: int
   transparent:
     description:
       - Specifies whether the monitor operates in transparent mode.
@@ -141,15 +154,17 @@ options:
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
   state:
     description:
       - When C(present), ensures that the monitor exists.
       - When C(absent), ensures the monitor is removed.
-    default: present
+    type: str
     choices:
       - present
       - absent
+    default: present
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -254,11 +269,8 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.common import transform_name
     from library.module_utils.network.f5.common import flatten_boolean
     from library.module_utils.network.f5.ipaddress import is_valid_ip
@@ -267,11 +279,8 @@ except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.common import transform_name
     from ansible.module_utils.network.f5.common import flatten_boolean
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
@@ -555,7 +564,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -780,16 +789,12 @@ def main():
         supports_check_mode=spec.supports_check_mode,
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':
