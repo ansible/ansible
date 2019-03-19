@@ -100,9 +100,11 @@ class TestManager(unittest.TestCase):
     def test_create(self, *args):
         set_module_args(dict(
             image='/path/to/BIGIP-13.0.0.0.0.1645.iso',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = ApiParameters(params=load_fixture('load_sys_software_image_1.json'))
