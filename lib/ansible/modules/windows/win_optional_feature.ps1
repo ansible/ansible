@@ -22,6 +22,8 @@ $state = $module.Params.state
 $source = $module.Params.source
 $include_parent = $module.Params.include_parent
 
+$module.Result.reboot_required = $false
+
 if (-not (Get-Command -Name Enable-WindowsOptionalFeature -ErrorAction SilentlyContinue)) {
     $module.FailJson("This version of Windows does not support the Enable-WindowsOptionalFeature.")
 }
