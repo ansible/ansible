@@ -133,6 +133,7 @@ EXAMPLES = '''
 # Add a new host in the dhcp pool
 - virt_net:
     name: br_nat
+    command: modify
     xml: "<host mac='FC:C2:33:00:6c:3c' name='my_vm' ip='192.168.122.30'/>"
 '''
 
@@ -273,8 +274,8 @@ class LibvirtConnection(object):
                         res = 0
                     if res == 0:
                         return True
-            #  command, section, parentIndex, xml, flags=0
-            self.module.fail_json(msg='updating this is not supported yet %s' % to_native(xml))
+        #  command, section, parentIndex, xml, flags=0
+        self.module.fail_json(msg='updating this is not supported yet %s' % to_native(xml))
 
     def destroy(self, entryid):
         if not self.module.check_mode:
