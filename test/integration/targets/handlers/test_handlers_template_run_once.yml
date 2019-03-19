@@ -1,7 +1,8 @@
 - hosts: A,B
   gather_facts: no
   tasks:
-    - command: /bin/true
+    - debug:
+      changed_when: true
       notify:
         - handler
   handlers:
