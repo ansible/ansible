@@ -126,7 +126,7 @@ CATEGORY_COMMANDS_ALL = {
     "Chassis": ["GetFanInventory"],
     "Accounts": ["ListUsers"],
     "Update": ["GetFirmwareInventory"],
-    "Manager": ["GetLogs"],
+    "Manager": ["GetManagerAttributes", "GetLogs"],
 }
 
 CATEGORY_COMMANDS_DEFAULT = {
@@ -134,7 +134,7 @@ CATEGORY_COMMANDS_DEFAULT = {
     "Chassis": "GetFanInventory",
     "Accounts": "ListUsers",
     "Update": "GetFirmwareInventory",
-    "Manager": "GetLogs"
+    "Manager": "GetManagerAttributes"
 }
 
 
@@ -254,7 +254,13 @@ def main():
                 module.fail_json(msg=resource['msg'])
 
             for command in command_list:
-                if command == "GetLogs":
+                if command == "GetManagerAttributes":
+                    module.deprecate(msg='The GetManagerAttributes command in '
+                                         'module redfish_facts is deprecated. '
+                                         'Use an OEM Redfish module instead.',
+                                     version='2.8')
+                    result["manager_attributes"] = rf_utils.get_manager_attributes()
+                elif command == "GetLogs":
                     result["log"] = rf_utils.get_logs()
 
     # Return data back
