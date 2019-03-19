@@ -137,9 +137,11 @@ class TestManager(unittest.TestCase):
             peer_hostname='foo.bar.baz',
             peer_user='admin',
             peer_password='secret',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -162,9 +164,11 @@ class TestManager(unittest.TestCase):
             peer_hostname='foo.bar.baz',
             peer_user='admin',
             peer_password='secret',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
