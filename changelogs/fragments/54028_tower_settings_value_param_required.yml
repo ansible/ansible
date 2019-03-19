@@ -1,0 +1,2 @@
+bugfixes:
+  - "tower_settings - 'name' and 'value' parameters are always required, module can not be used in order to get a setting"
