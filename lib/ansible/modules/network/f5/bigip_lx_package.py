@@ -14,24 +14,26 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: bigip_iapplx_package
-short_description: Manages Javascript iApp packages on a BIG-IP
+module: bigip_lx_package
+short_description: Manages Javascript LX packages on a BIG-IP
 description:
-  - Manages Javascript iApp packages on a BIG-IP. This module will allow
-    you to deploy iAppLX packages to the BIG-IP and manage their lifecycle.
+  - Manages Javascript LX packages on a BIG-IP. This module will allow
+    you to deploy LX packages to the BIG-IP and manage their lifecycle.
 version_added: 2.5
 options:
   package:
     description:
-      - The iAppLX package that you want to upload or remove. When C(state) is C(present),
+      - The LX package that you want to upload or remove. When C(state) is C(present),
         and you intend to use this module in a C(role), it is recommended that you use
         the C({{ role_path }}) variable. An example is provided in the C(EXAMPLES) section.
       - When C(state) is C(absent), it is not necessary for the package to exist on the
         Ansible controller. If the full path to the package is provided, the fileame will
         specifically be cherry picked from it to properly remove the package.
+    type: path
   state:
     description:
-      - Whether the iAppLX package should exist or not.
+      - Whether the LX package should exist or not.
+    type: str
     default: present
     choices:
       - present
@@ -43,6 +45,7 @@ notes:
     This command is already present on RedHat based systems.
   - Requires BIG-IP >= 12.1.0 because the required functionality is missing
     on versions earlier than that.
+  - The module name C(bigip_iapplx_package) has been deprecated in favor of C(bigip_lx_package).
 requirements:
   - Requires BIG-IP >= 12.1.0
   - The 'rpm' tool installed on the Ansible controller
@@ -54,7 +57,7 @@ author:
 
 EXAMPLES = r'''
 - name: Install AS3
-  bigip_iapplx_package:
+  bigip_lx_package:
     package: f5-appsvcs-3.5.0-3.noarch.rpm
     provider:
       password: secret
@@ -62,8 +65,8 @@ EXAMPLES = r'''
       user: admin
   delegate_to: localhost
 
-- name: Add an iAppLX package stored in a role
-  bigip_iapplx_package:
+- name: Add an LX package stored in a role
+  bigip_lx_package:
     package: "{{ roles_path }}/files/MyApp-0.1.0-0001.noarch.rpm'"
     provider:
       password: secret
@@ -71,8 +74,8 @@ EXAMPLES = r'''
       user: admin
   delegate_to: localhost
 
-- name: Remove an iAppLX package
-  bigip_iapplx_package:
+- name: Remove an LX package
+  bigip_lx_package:
     package: MyApp-0.1.0-0001.noarch.rpm
     state: absent
     provider:
@@ -97,20 +100,14 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.icontrol import tmos_version
     from library.module_utils.network.f5.icontrol import upload_file
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.icontrol import tmos_version
     from ansible.module_utils.network.f5.icontrol import upload_file
 
@@ -193,7 +190,7 @@ class ReportableChanges(Changes):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(module=self.module, params=self.module.params)
         self.changes = UsableChanges()
 
@@ -235,7 +232,7 @@ class ModuleManager(object):
             return True
         self.remove_from_device()
         if self.exists():
-            raise F5ModuleError("Failed to delete the iAppLX package")
+            raise F5ModuleError("Failed to delete the LX package.")
         return True
 
     def create(self):
@@ -244,11 +241,11 @@ class ModuleManager(object):
         if not os.path.exists(self.want.package):
             if self.want.package.startswith('/'):
                 raise F5ModuleError(
-                    "The specified iAppLX package was not found at {0}.".format(self.want.package)
+                    "The specified LX package was not found at {0}.".format(self.want.package)
                 )
             else:
                 raise F5ModuleError(
-                    "The specified iAppLX package was not found in {0}.".format(os.getcwd())
+                    "The specified LX package was not found in {0}.".format(os.getcwd())
                 )
         self.upload_to_device()
         self.create_on_device()
@@ -257,7 +254,7 @@ class ModuleManager(object):
         if self.exists():
             return True
         else:
-            raise F5ModuleError("Failed to create the iApp template")
+            raise F5ModuleError("Failed to install LX package.")
 
     def exists(self):
         exists = False
@@ -298,7 +295,7 @@ class ModuleManager(object):
         if task['status'] == 'FINISHED':
             return task['queryResponse']
         raise F5ModuleError(
-            "Failed to find the installed packages on the device"
+            "Failed to find the installed packages on the device."
         )
 
     def _wait_for_task(self, path):
@@ -452,7 +449,7 @@ class ArgumentSpec(object):
                 default='present',
                 choices=['present', 'absent']
             ),
-            package=dict()
+            package=dict(type='path')
         )
         self.argument_spec = {}
         self.argument_spec.update(f5_argument_spec)
@@ -471,16 +468,12 @@ def main():
         required_if=spec.required_if
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':
