@@ -86,6 +86,7 @@
     ownca_digest: sha256
     ownca_version: 2
     select_crypto_backend: '{{ select_crypto_backend }}'
+  when: "select_crypto_backend != 'cryptography'"  # cryptography backend doesn't support v2 certificates
 
 - name: (OwnCA, {{select_crypto_backend}}) Generate ownca certificate2
   openssl_certificate:
