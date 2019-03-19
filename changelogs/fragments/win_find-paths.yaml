@@ -1,0 +1,3 @@
+bugfixes:
+- win_find - Fix issues when using paths with glob like characters, e.g. ``[``, ``]``
+- win_find - Ensure found files are sorted alphabetically by the path instead of it being random
