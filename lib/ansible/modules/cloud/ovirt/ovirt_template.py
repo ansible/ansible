@@ -474,7 +474,7 @@ def _template_subversion(module, templates_service, templates_module, connection
         for template in templates:
             if version.get('number') == template.version.version_number and module.params.get('name') == template.name:
                 # Select template with correct subversion number and name
-                if version.get('name') != template.version.version_name or not templates_module.update_check(template):
+                if version.get('name') is not None and version.get('name') != template.version.version_name or not templates_module.update_check(template):
                     # Update template with version number
                     template_service = templates_service.template_service(template.id)
                     resp = template_service.update(
