@@ -110,7 +110,7 @@ class TestManager(unittest.TestCase):
     def setUp(self):
         self.spec = ArgumentSpec()
 
-    def test_create_topology_record(self, *args):
+    def test_create_topology_region(self, *args):
         set_module_args(dict(
             name='foobar',
             region_members=[
@@ -122,7 +122,12 @@ class TestManager(unittest.TestCase):
                     datacenter='bazcenter'
                 )
             ],
-            partition='Common'
+            partition='Common',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         )
         )
 
@@ -133,7 +138,7 @@ class TestManager(unittest.TestCase):
 
         # Override methods in the specific type of manager
         mm = ModuleManager(module=module)
-        mm.exists = Mock(side_effect=[False, True])
+        mm.exists = Mock(return_value=False)
         mm.create_on_device = Mock(return_value=True)
 
         results = mm.exec_module()
