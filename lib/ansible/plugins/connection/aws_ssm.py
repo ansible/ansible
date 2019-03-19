@@ -207,7 +207,12 @@ class Connection(ConnectionBase):
     def start_session(self):
         ''' start ssm session '''
 
-        display.vvv(u"ESTABLISH SSM CONNECTION TO: {0}".format(self.get_option('instance_id')), host=self.host)
+        if self.get_option('instance_id') is None:
+            self.instance_id = self.host
+        else:
+            self.instance_id = self.get_option('instance_id')
+
+        display.vvv(u"ESTABLISH SSM CONNECTION TO: {0}".format(self.instance_id), host=self.host)
 
         executable = self.get_option('plugin')
         if not os.path.exists(to_bytes(executable, errors='surrogate_or_strict')):
@@ -220,7 +225,7 @@ class Connection(ConnectionBase):
 
         client = boto3.client('ssm', region_name=region_name)
         self._client = client
-        response = client.start_session(Target=self.get_option('instance_id'), Parameters=ssm_parameters)
+        response = client.start_session(Target=self.instance_id, Parameters=ssm_parameters)
         self._session_id = response['SessionId']
 
         cmd = [
@@ -292,7 +297,7 @@ class Connection(ConnectionBase):
                 self._timeout = True
                 display.vvvv(u"EXEC timeout stdout: {0}".format(to_text(stdout)), host=self.host)
                 raise AnsibleConnectionFailure("SSM exec_command timeout on host: %s"
-                                               % self.get_option('instance_id'))
+                                               % self.instance_id)
             if self._poll_stdout.poll(1000):
                 line = self._filter_ansi(self._stdout.readline())
                 display.vvvv(u"EXEC stdout line: {0}".format(to_text(line)), host=self.host)
@@ -456,7 +461,7 @@ class Connection(ConnectionBase):
         ''' terminate the connection '''
         if self._session_id:
 
-            display.vvv(u"CLOSING SSM CONNECTION TO: {0}".format(self.get_option('instance_id')), host=self.host)
+            display.vvv(u"CLOSING SSM CONNECTION TO: {0}".format(self.instance_id), host=self.host)
             if self._timeout:
                 self._session.terminate()
             else:
