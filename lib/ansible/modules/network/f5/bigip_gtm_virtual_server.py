@@ -25,15 +25,18 @@ options:
   name:
     description:
       - Specifies the name of the virtual server.
+    type: str
     version_added: 2.6
   server_name:
     description:
       - Specifies the name of the server that the virtual server is associated with.
+    type: str
     version_added: 2.6
   address:
     description:
       - Specifies the IP Address of the virtual server.
       - When creating a new GTM virtual server, this parameter is required.
+    type: str
     version_added: 2.6
   port:
     description:
@@ -42,12 +45,14 @@ options:
       - To specify all ports, use an C(*).
       - When creating a new GTM virtual server, if this parameter is not specified, a
         default of C(*) will be used.
+    type: int
   translation_address:
     description:
       - Specifies the translation IP address for the virtual server.
       - To unset this parameter, provide an empty string (C("")) as a value.
       - When creating a new GTM virtual server, if this parameter is not specified, a
         default of C(::) will be used.
+    type: str
     version_added: 2.6
   translation_port:
     description:
@@ -55,24 +60,31 @@ options:
       - To specify all ports, use an C(*).
       - When creating a new GTM virtual server, if this parameter is not specified, a
         default of C(*) will be used.
+    type: str
     version_added: 2.6
   availability_requirements:
     description:
       - Specifies, if you activate more than one health monitor, the number of health
         monitors that must receive successful responses in order for the link to be
         considered available.
+    type: dict
     suboptions:
       type:
         description:
           - Monitor rule type when C(monitors) is specified.
           - When creating a new virtual, if this value is not specified, the default of 'all' will be used.
-        choices: ['all', 'at_least', 'require']
+        type: str
+        choices:
+          - all
+          - at_least
+          - require
       at_least:
         description:
           - Specifies the minimum number of active health monitors that must be successful
             before the link is considered up.
           - This parameter is only relevant when a C(type) of C(at_least) is used.
           - This parameter will be ignored if a type of either C(all) or C(require) is used.
+        type: int
       number_of_probes:
         description:
           - Specifies the minimum number of probes that must succeed for this server to be declared up.
@@ -81,6 +93,7 @@ options:
           - The value of this parameter should always be B(lower) than, or B(equal to), the value of C(number_of_probers).
           - This parameter is only relevant when a C(type) of C(require) is used.
           - This parameter will be ignored if a type of either C(all) or C(at_least) is used.
+        type: int
       number_of_probers:
         description:
           - Specifies the number of probers that should be used when running probes.
@@ -89,30 +102,36 @@ options:
           - The value of this parameter should always be B(higher) than, or B(equal to), the value of C(number_of_probers).
           - This parameter is only relevant when a C(type) of C(require) is used.
           - This parameter will be ignored if a type of either C(all) or C(at_least) is used.
+        type: int
     version_added: 2.6
   monitors:
     description:
       - Specifies the health monitors that the system currently uses to monitor this resource.
       - When C(availability_requirements.type) is C(require), you may only have a single monitor in the
         C(monitors) list.
+    type: list
     version_added: 2.6
   virtual_server_dependencies:
     description:
       - Specifies the virtual servers on which the current virtual server depends.
       - If any of the specified servers are unavailable, the current virtual server is also listed as unavailable.
+    type: list
     suboptions:
       server:
         description:
           - Server which the dependant virtual server is part of.
+        type: str
         required: True
       virtual_server:
         description:
           - Virtual server to depend on.
+        type: str
         required: True
     version_added: 2.6
   link:
     description:
       - Specifies a link to assign to the server or virtual server.
+    type: str
     version_added: 2.6
   limits:
     description:
@@ -123,6 +142,7 @@ options:
         threshold limit requirement, the system marks the entire server as unavailable and directs load-balancing
         traffic to another resource.
       - The limit settings available depend on the type of server.
+    type: dict
     suboptions:
       bits_enabled:
         description:
@@ -143,30 +163,35 @@ options:
         description:
           - Specifies the maximum allowable data throughput rate, in bits per second, for the virtual servers on the server.
           - If the network traffic volume exceeds this limit, the system marks the server as unavailable.
+        type: int
       packets_limit:
         description:
           - Specifies the maximum allowable data transfer rate, in packets per second, for the virtual servers on the server.
           - If the network traffic volume exceeds this limit, the system marks the server as unavailable.
+        type: int
       connections_limit:
         description:
           - Specifies the maximum number of concurrent connections, combined, for all of the virtual servers on the server.
           - If the connections exceed this limit, the system marks the server as unavailable.
+        type: int
     version_added: 2.6
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
     version_added: 2.6
   state:
     description:
       - When C(present), ensures that the resource exists.
       - When C(absent), ensures the resource is removed.
-    default: present
+    type: str
     choices:
       - present
       - absent
       - enabled
       - disabled
+    default: present
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -250,13 +275,10 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.common import transform_name
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
-    from library.module_utils.network.f5.common import compare_complex_list
+    from library.module_utils.network.f5.compare import compare_complex_list
     from library.module_utils.network.f5.icontrol import module_provisioned
     from library.module_utils.network.f5.ipaddress import is_valid_ip
     from library.module_utils.network.f5.ipaddress import validate_ip_v6_address
@@ -265,13 +287,10 @@ except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.common import transform_name
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
-    from ansible.module_utils.network.f5.common import compare_complex_list
+    from ansible.module_utils.network.f5.compare import compare_complex_list
     from ansible.module_utils.network.f5.icontrol import module_provisioned
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
     from ansible.module_utils.network.f5.ipaddress import validate_ip_v6_address
@@ -886,7 +905,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -1165,16 +1184,12 @@ def main():
         supports_check_mode=spec.supports_check_mode,
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':
