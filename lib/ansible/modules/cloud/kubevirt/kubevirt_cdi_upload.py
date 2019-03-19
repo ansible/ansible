@@ -158,9 +158,8 @@ class KubeVirtCDIUpload(KubernetesRawModule):
         result = self.perform_action(resource, definition)
 
         headers = {'Authorization': "Bearer {0}".format(result['result']['status']['token'])}
-        files = {'file': imgfile}
         url = "{0}/{1}/upload".format(upload_host, API)
-        requests.post(url, files=files, headers=headers, verify=upload_host_verify_ssl)
+        requests.post(url, data=imgfile, headers=headers, verify=upload_host_verify_ssl)
 
         self.exit_json(changed=True)
 
