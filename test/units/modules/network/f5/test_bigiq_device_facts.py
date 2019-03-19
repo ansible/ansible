@@ -81,9 +81,11 @@ class TestManager(unittest.TestCase):
     def test_get_facts(self, *args):
         set_module_args(dict(
             gather_subset=['system-info'],
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         fixture1 = load_fixture('load_shared_system_setup_1.json')

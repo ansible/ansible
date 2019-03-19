@@ -163,9 +163,6 @@ class TestParameters(unittest.TestCase):
 
     def test_module_no_partition_prefix_parameters(self):
         args = dict(
-            server='localhost',
-            user='admin',
-            password='secret',
             state='present',
             partition='Common',
             name='my-virtual-server',
@@ -197,9 +194,6 @@ class TestParameters(unittest.TestCase):
 
     def test_module_partition_prefix_parameters(self):
         args = dict(
-            server='localhost',
-            user='admin',
-            password='secret',
             state='present',
             partition='Common',
             name='my-virtual-server',
@@ -365,10 +359,22 @@ class TestManager(unittest.TestCase):
             self.p3 = patch(
                 'library.modules.bigip_virtual_server.Parameters._read_current_serverssl_profiles_from_device'
             )
+            self.p4 = patch(
+                'library.modules.bigip_virtual_server.VirtualServerValidator.check_create'
+            )
+
+            self.p5 = patch(
+                'library.modules.bigip_virtual_server.VirtualServerValidator.check_update'
+            )
+
             self.m2 = self.p2.start()
             self.m3 = self.p3.start()
+            self.m4 = self.p4.start()
+            self.m5 = self.p5.start()
             self.m2.return_value = ['asda', 'clientssl', 'cs_foobar.star.local']
             self.m3.return_value = ['baz', 'serverssl', 'ss_foobar.star.local']
+            self.m4.return_value = Mock(return_value=True)
+            self.m5.return_value = Mock(return_value=True)
         except Exception:
             self.p1 = patch('ansible.modules.network.f5.bigip_virtual_server.modules_provisioned')
             self.m1 = self.p1.start()
@@ -379,15 +385,27 @@ class TestManager(unittest.TestCase):
             self.p3 = patch(
                 'ansible.modules.network.f5.bigip_virtual_server.Parameters._read_current_serverssl_profiles_from_device'
             )
+            self.p4 = patch(
+                'ansible.modules.network.f5.bigip_virtual_server.VirtualServerValidator.check_create'
+            )
+            self.p5 = patch(
+                'ansible.modules.network.f5.bigip_virtual_server.VirtualServerValidator.check_update'
+            )
             self.m2 = self.p2.start()
             self.m3 = self.p3.start()
+            self.m4 = self.p4.start()
+            self.m5 = self.p5.start()
             self.m2.return_value = ['asda', 'clientssl', 'cs_foobar.star.local']
             self.m3.return_value = ['baz', 'serverssl', 'ss_foobar.star.local']
+            self.m4.return_value = Mock(return_value=True)
+            self.m5.return_value = Mock(return_value=True)
 
     def tearDown(self):
         self.p1.stop()
         self.p2.stop()
         self.p3.stop()
+        self.p4.stop()
+        self.p5.stop()
 
     def test_create_virtual_server(self, *args):
         set_module_args(dict(
@@ -403,18 +421,21 @@ class TestManager(unittest.TestCase):
             destination="10.10.10.10",
             name="my-snat-pool",
             partition="Common",
-            password="secret",
             port="443",
-            server="localhost",
             snat="Automap",
             state="present",
-            user="admin",
-            validate_certs="no"
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
+
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            mutually_exclusive=self.spec.mutually_exclusive
         )
 
         # Override methods to force specific logic in the module to happen
@@ -434,18 +455,20 @@ class TestManager(unittest.TestCase):
             destination="10.10.10.10",
             name="my-snat-pool",
             partition="Common",
-            password="secret",
             port="443",
-            server="localhost",
             snat="Automap",
             state="absent",
-            user="admin",
-            validate_certs="no"
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            mutually_exclusive=self.spec.mutually_exclusive
         )
 
         # Override methods to force specific logic in the module to happen
@@ -465,13 +488,14 @@ class TestManager(unittest.TestCase):
             destination="10.10.10.10",
             name="my-snat-pool",
             partition="Common",
-            password="secret",
             port="443",
-            server="localhost",
             snat="Automap",
             state="absent",
-            user="admin",
-            validate_certs="no"
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         # Configure the parameters that would be returned by querying the
@@ -484,7 +508,8 @@ class TestManager(unittest.TestCase):
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            mutually_exclusive=self.spec.mutually_exclusive
         )
 
         # Override methods to force specific logic in the module to happen
@@ -500,12 +525,13 @@ class TestManager(unittest.TestCase):
         set_module_args(dict(
             name="my-virtual-server",
             partition="Common",
-            password="secret",
             port="10443",
-            server="localhost",
             state="present",
-            user="admin",
-            validate_certs="no"
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         # Configure the parameters that would be returned by querying the
@@ -514,7 +540,8 @@ class TestManager(unittest.TestCase):
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            mutually_exclusive=self.spec.mutually_exclusive
         )
 
         # Override methods to force specific logic in the module to happen
@@ -530,12 +557,13 @@ class TestManager(unittest.TestCase):
         set_module_args(dict(
             name="my-virtual-server",
             partition="Common",
-            password="secret",
             port="443",
-            server="localhost",
             state="present",
-            user="admin",
-            validate_certs="no"
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         # Configure the parameters that would be returned by querying the
@@ -544,7 +572,8 @@ class TestManager(unittest.TestCase):
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            mutually_exclusive=self.spec.mutually_exclusive
         )
 
         # Override methods to force specific logic in the module to happen
@@ -559,14 +588,15 @@ class TestManager(unittest.TestCase):
         set_module_args(dict(
             name="my-virtual-server",
             partition="Common",
-            password="secret",
             disabled_vlans=[
                 "net1"
             ],
-            server="localhost",
             state="present",
-            user="admin",
-            validate_certs="no"
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         # Configure the parameters that would be returned by querying the
@@ -575,7 +605,8 @@ class TestManager(unittest.TestCase):
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            mutually_exclusive=self.spec.mutually_exclusive
         )
 
         # Override methods to force specific logic in the module to happen
@@ -591,14 +622,15 @@ class TestManager(unittest.TestCase):
         set_module_args(dict(
             name="my-virtual-server",
             partition="Common",
-            password="secret",
             profiles=[
                 'http', 'clientssl'
             ],
-            server="localhost",
             state="present",
-            user="admin",
-            validate_certs="no"
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         # Configure the parameters that would be returned by querying the
@@ -606,7 +638,8 @@ class TestManager(unittest.TestCase):
         current = ApiParameters(params=load_fixture('load_ltm_virtual_2.json'))
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            mutually_exclusive=self.spec.mutually_exclusive
         )
 
         # Override methods to force specific logic in the module to happen
@@ -642,14 +675,10 @@ class TestManager(unittest.TestCase):
             destination="1.1.1.1",
             name="my-virtual-server",
             partition="Common",
-            password="secret",
             port="8443",
-            server="localhost",
             snat="snat-pool1",
             state="disabled",
             source='1.2.3.4/32',
-            user="admin",
-            validate_certs="no",
             irules=[
                 'irule1',
                 'irule2'
@@ -664,7 +693,12 @@ class TestManager(unittest.TestCase):
             ],
             pool='my-pool',
             default_persistence_profile='source_addr',
-            fallback_persistence_profile='dest_addr'
+            fallback_persistence_profile='dest_addr',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         # Configure the parameters that would be returned by querying the
@@ -673,7 +707,8 @@ class TestManager(unittest.TestCase):
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            mutually_exclusive=self.spec.mutually_exclusive
         )
 
         # Override methods to force specific logic in the module to happen
@@ -725,17 +760,19 @@ class TestManager(unittest.TestCase):
             address_translation=True,
             name="my-snat-pool",
             partition="Common",
-            password="secret",
             port="443",
-            server="localhost",
             state="present",
-            user="admin",
-            validate_certs="no"
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            mutually_exclusive=self.spec.mutually_exclusive
         )
 
         # Override methods to force specific logic in the module to happen
@@ -753,17 +790,19 @@ class TestManager(unittest.TestCase):
             address_translation='yes',
             name="my-snat-pool",
             partition="Common",
-            password="secret",
             port="443",
-            server="localhost",
             state="present",
-            user="admin",
-            validate_certs="no"
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            mutually_exclusive=self.spec.mutually_exclusive
         )
 
         # Override methods to force specific logic in the module to happen
@@ -781,17 +820,19 @@ class TestManager(unittest.TestCase):
             address_translation=False,
             name="my-snat-pool",
             partition="Common",
-            password="secret",
             port="443",
-            server="localhost",
             state="present",
-            user="admin",
-            validate_certs="no"
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            mutually_exclusive=self.spec.mutually_exclusive
         )
 
         # Override methods to force specific logic in the module to happen
@@ -809,17 +850,19 @@ class TestManager(unittest.TestCase):
             address_translation='no',
             name="my-snat-pool",
             partition="Common",
-            password="secret",
             port="443",
-            server="localhost",
             state="present",
-            user="admin",
-            validate_certs="no"
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            mutually_exclusive=self.spec.mutually_exclusive
         )
 
         # Override methods to force specific logic in the module to happen
@@ -837,17 +880,19 @@ class TestManager(unittest.TestCase):
             port_translation=True,
             name="my-snat-pool",
             partition="Common",
-            password="secret",
             port="443",
-            server="localhost",
             state="present",
-            user="admin",
-            validate_certs="no"
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            mutually_exclusive=self.spec.mutually_exclusive
         )
 
         # Override methods to force specific logic in the module to happen
@@ -865,17 +910,19 @@ class TestManager(unittest.TestCase):
             port_translation='yes',
             name="my-snat-pool",
             partition="Common",
-            password="secret",
             port="443",
-            server="localhost",
             state="present",
-            user="admin",
-            validate_certs="no"
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            mutually_exclusive=self.spec.mutually_exclusive
         )
 
         # Override methods to force specific logic in the module to happen
@@ -893,17 +940,19 @@ class TestManager(unittest.TestCase):
             port_translation=False,
             name="my-snat-pool",
             partition="Common",
-            password="secret",
             port="443",
-            server="localhost",
             state="present",
-            user="admin",
-            validate_certs="no"
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            mutually_exclusive=self.spec.mutually_exclusive
         )
 
         # Override methods to force specific logic in the module to happen
@@ -921,17 +970,19 @@ class TestManager(unittest.TestCase):
             port_translation='no',
             name="my-snat-pool",
             partition="Common",
-            password="secret",
             port="443",
-            server="localhost",
             state="present",
-            user="admin",
-            validate_certs="no"
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            mutually_exclusive=self.spec.mutually_exclusive
         )
 
         # Override methods to force specific logic in the module to happen

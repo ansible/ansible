@@ -25,6 +25,7 @@ options:
   name:
     description:
       - The name of the vCMP guest to manage.
+    type: str
     required: True
   vlans:
     description:
@@ -34,11 +35,13 @@ options:
       - The order of these VLANs is not important; in fact, it's ignored. This module will
         order the VLANs for you automatically. Therefore, if you deliberately re-order them
         in subsequent tasks, you will find that this module will B(not) register a change.
+    type: list
   initial_image:
     description:
       - Specifies the base software release ISO image file for installing the TMOS
         hypervisor instance and any licensed BIG-IP modules onto the guest's virtual
         disk. When creating a new guest, this parameter is required.
+    type: str
   mgmt_network:
     description:
       - Specifies the method by which the management address is used in the vCMP guest.
@@ -60,6 +63,7 @@ options:
         management network. This immediately connects all of the guest's VMs to the
         physical management network. Changing this property while the guest is in the
         C(configured) or C(provisioned) state has no immediate effect.
+    type: str
     choices:
       - bridged
       - isolated
@@ -77,11 +81,13 @@ options:
         parameter is required if the C(mgmt_network) parameter is C(bridged).
       - When creating a new guest, if you do not specify a network or network mask,
         a default of C(/24) (C(255.255.255.0)) will be assumed.
+    type: str
   mgmt_route:
     description:
       - Specifies the gateway address for the C(mgmt_address).
       - If this value is not specified when creating a new guest, it is set to C(none).
       - The value C(none) can be used during an update to remove this value.
+    type: str
   state:
     description:
       - The state of the vCMP guest on the system. Each state implies the actions of
@@ -97,13 +103,14 @@ options:
       - When C(present), ensures the guest is properly provisioned and starts
         the guest so that it is in a running state.
       - When C(absent), removes the vCMP from the system.
-    default: "present"
+    type: str
     choices:
       - configured
       - disabled
       - provisioned
       - present
       - absent
+    default: present
   cores_per_slot:
     description:
       - Specifies the number of cores that the system allocates to the guest.
@@ -113,9 +120,11 @@ options:
       - The number you can specify depends on the type of hardware you have.
       - In the event of a reboot, the system persists the guest to the same slot on
         which it ran prior to the reboot.
+    type: int
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
   number_of_slots:
     description:
@@ -124,6 +133,7 @@ options:
         it is assigned to.
       - Possible values are dependent on the type of blades being used in this cluster.
       - The default value depends on the type of blades being used in this cluster.
+    type: int
     version_added: 2.7
   min_number_of_slots:
     description:
@@ -133,6 +143,7 @@ options:
       - If at the end of any allocation attempt the guest is not assigned to at least
         this many slots, the attempt fails and the change that initiated it is reverted.
       - A guest's C(min_number_of_slots) value cannot be greater than its C(number_of_slots).
+    type: int
     version_added: 2.7
   allowed_slots:
     description:
@@ -144,6 +155,7 @@ options:
         never assigned to the same slot.
       - By default this list includes every available slot in the cluster. This means,
         by default, the guest may be assigned to any slot.
+    type: list
     version_added: 2.7
 notes:
   - This module can take a lot of time to deploy vCMP guests. This is an intrinsic
@@ -216,11 +228,8 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.urls import parseStats
     from library.module_utils.network.f5.ipaddress import is_valid_ip
     from library.module_utils.compat.ipaddress import ip_interface
@@ -228,11 +237,8 @@ except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.urls import parseStats
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
     from ansible.module_utils.compat.ipaddress import ip_interface
@@ -458,7 +464,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(client=self.client, params=self.module.params)
         self.have = None
         self.changes = ReportableChanges()
@@ -952,19 +958,16 @@ def main():
 
     module = AnsibleModule(
         argument_spec=spec.argument_spec,
-        supports_check_mode=spec.supports_check_mode
+        supports_check_mode=spec.supports_check_mode,
+        required_if=spec.required_if
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':
