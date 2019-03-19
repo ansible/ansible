@@ -919,7 +919,7 @@ class AzureRMModuleBase(object):
         self.log('Getting MariaDB client')
         if not self._mariadb_client:
             self._mariadb_client = self.get_mgmt_svc_client(MariaDBManagementClient,
-                                                          base_url=self._cloud_environment.endpoints.resource_manager)
+                                                            base_url=self._cloud_environment.endpoints.resource_manager)
         return self._mariadb_client
 
     @property

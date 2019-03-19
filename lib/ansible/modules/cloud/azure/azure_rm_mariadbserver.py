@@ -209,8 +209,8 @@ class AzureRMMariaDbServers(AzureRMModuleBase):
         self.to_do = Actions.NoAction
 
         super(AzureRMMariaDbServers, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                                  supports_check_mode=True,
-                                                  supports_tags=True)
+                                                    supports_check_mode=True,
+                                                    supports_tags=True)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
@@ -320,14 +320,14 @@ class AzureRMMariaDbServers(AzureRMModuleBase):
             self.parameters['tags'] = self.tags
             if self.to_do == Actions.Create:
                 response = self.mariadb_client.servers.create(resource_group_name=self.resource_group,
-                                                            server_name=self.name,
-                                                            parameters=self.parameters)
+                                                              server_name=self.name,
+                                                              parameters=self.parameters)
             else:
                 # structure of parameters for update must be changed
                 self.parameters.update(self.parameters.pop("properties", {}))
                 response = self.mariadb_client.servers.update(resource_group_name=self.resource_group,
-                                                            server_name=self.name,
-                                                            parameters=self.parameters)
+                                                              server_name=self.name,
+                                                              parameters=self.parameters)
             if isinstance(response, LROPoller):
                 response = self.get_poller_result(response)
 
@@ -345,7 +345,7 @@ class AzureRMMariaDbServers(AzureRMModuleBase):
         self.log("Deleting the MariaDB Server instance {0}".format(self.name))
         try:
             response = self.mariadb_client.servers.delete(resource_group_name=self.resource_group,
-                                                        server_name=self.name)
+                                                          server_name=self.name)
         except CloudError as e:
             self.log('Error attempting to delete the MariaDB Server instance.')
             self.fail("Error deleting the MariaDB Server instance: {0}".format(str(e)))
@@ -362,7 +362,7 @@ class AzureRMMariaDbServers(AzureRMModuleBase):
         found = False
         try:
             response = self.mariadb_client.servers.get(resource_group_name=self.resource_group,
-                                                     server_name=self.name)
+                                                       server_name=self.name)
             found = True
             self.log("Response : {0}".format(response))
             self.log("MariaDB Server instance : {0} found".format(response.name))
