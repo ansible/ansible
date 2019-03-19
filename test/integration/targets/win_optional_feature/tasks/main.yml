@@ -20,6 +20,7 @@
   win_optional_feature:
     name: NetFx3
     state: present
+    include_parent: true
   check_mode: yes
   register: feature_check
 
@@ -32,6 +33,7 @@
   win_optional_feature:
     name: NetFx3
     state: present
+    include_parent: true
   register: real_feature_check
 
 - name: assert feature installed 
@@ -43,6 +45,7 @@
   win_optional_feature:
     name: NetFx3
     state: present
+    include_parent: true
   register: real_feature_check
 
 - name: assert idempotence
