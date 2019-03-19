@@ -107,8 +107,7 @@ instances_json = """
       "created": "2017-01-01T00:00:00",
       "region": "us-east-1a",
       "ipv4": [
-        "123.45.67.89",
-        "192.168.45.68"
+        "123.45.67.89"
       ],
       "updated": "2017-01-01T00:00:00",
       "image": "linode/debian9",
@@ -175,3 +174,10 @@ def test_get_instance_ip_public(inventory):
 def test_get_instance_ip_private(inventory):
     instance = instances.data[0]
     assert inventory._get_instance_ip(instance, private=True) == '192.168.45.67'
+
+
+def test_get_instance_ip_private_missing(inventory):
+    instance = instances.data[1]
+    with pytest.raises(AnsibleError) as error_message:
+        inventory._get_instance_ip(instance, private=True)
+        assert 'Expected IPv4 address not found' in error_message

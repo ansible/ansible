@@ -143,6 +143,10 @@ class InventoryModule(BaseInventoryPlugin):
                     result_ip = ip
             if result_ip:
                 return result_ip
+            else:
+                raise AnsibleError(
+                    'Expected IPv4 address not found'
+                )
         else:
             raise AnsibleError(
                 'Instance IPv4 address is missing or empty'
