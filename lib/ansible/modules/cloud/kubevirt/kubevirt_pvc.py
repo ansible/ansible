@@ -130,9 +130,10 @@ options:
     description:
       - "If set, this module will wait for the PVC to become bound and CDI (if enabled) to finish its operation
         before returning."
-      - Module is aware of WaitForFirstConsumer and will not erroneously time out in such cases.
       - "Used only if I(state) set to C(present)."
-    default: true
+      - "Unless used in conjuction with I(cdi_source), this might result in a timeout, as clusters may be configured
+        to not bind PVCs until first usage."
+    default: false
     type: bool
   wait_timeout:
     description:
@@ -294,7 +295,7 @@ PVC_ARG_SPEC = {
     'cdi_source': {'type': 'dict'},
     'wait': {
         'type': 'bool',
-        'default': True
+        'default': False
     },
     'wait_timeout': {
         'type': 'int',
@@ -372,26 +373,18 @@ class KubevirtPVC(KubernetesRawModule):
             if 'certConfigMap' in src_spec:
                 annotations['cdi.kubevirt.io/storage.import.certConfigMap'] = src_spec['certConfigMap']
 
-    def _wait_for_creation(self, resource, result):
+    def _wait_for_creation(self, resource, uid):
         return_obj = None
         desired_cdi_status = 'Succeeded'
-        uid = result['metadata']['uid']
         use_cdi = True if self.params.get('cdi_source') else False
-
         if use_cdi and 'upload' in self.params['cdi_source']:
             desired_cdi_status = 'Running'
-        if not use_cdi:
-            v1_events = self.client.resources.get(api_version='v1', kind='Event')
-            pvc_events = v1_events.get(namespace=self.namespace, field_selector='involvedObject.uid={0}'.format(uid))
-            reasons = [item.reason for item in pvc_events.items if hasattr(item, 'reason')]
-            if 'WaitForFirstConsumer' in reasons:
-                return result
 
-        for event in resource.watch(namespace=self.namespace,
-                                    field_selector='involvedObject.uid={0}'.format(uid),
-                                    timeout=self.params.get('wait_timeout')):
+        for event in resource.watch(namespace=self.namespace, timeout=self.params.get('wait_timeout')):
             entity = event['object']
             metadata = entity.metadata
+            if not hasattr(metadata, 'uid') or metadata.uid != uid:
+                continue
             if entity.status.phase == 'Bound':
                 if use_cdi and hasattr(metadata, 'annotations'):
                     import_status = metadata.annotations.get('cdi.kubevirt.io/storage.pod.phase')
@@ -449,7 +442,7 @@ class KubevirtPVC(KubernetesRawModule):
         definition = self.set_defaults(resource, definition)
         result = self.perform_action(resource, definition)
         if self.params.get('wait') and self.params.get('state') == 'present':
-            result['result'] = self._wait_for_creation(resource, result['result'])
+            result['result'] = self._wait_for_creation(resource, result['result']['metadata']['uid'])
 
         self.exit_json(**result)
 
