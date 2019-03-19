@@ -72,10 +72,7 @@ class TestParameters(unittest.TestCase):
             base64='yes',
             dest='/tmp/foo.xml',
             force='yes',
-            file='foo.xml',
-            password='password',
-            server='localhost',
-            user='admin'
+            file='foo.xml'
         )
         p = ModuleParameters(params=args)
         assert p.inline is True
@@ -108,9 +105,11 @@ class TestManager(unittest.TestCase):
             name='fake_policy',
             file='foobar.xml',
             dest='/tmp/foobar.xml',
-            server='localhost',
-            password='password',
-            user='admin',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
