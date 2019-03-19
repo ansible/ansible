@@ -33,13 +33,6 @@ if (-not $feature_state_start) {
     $module.FailJson("Failed to find feature '$name'")
 }
 
-$feature_result = @{
-    name = $feature_state_start.FeatureName
-    display_name = $feature_state_start.DisplayName
-    description = $feature_state_start.Description
-}
-$module.Result.feature_result = $feature_result
-
 if ($state -eq "present") {
 	# Matches for "Enabled" and "EnabledPending"
     if ($feature_state_start.State -notlike "Enabled*") {

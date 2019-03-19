@@ -75,27 +75,6 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-feature_result:
-    description: List of features that were installed or removed.
-    returned: success
-    type: complex
-    sample:
-    contains:
-        name:
-            description: Feature name.
-            returned: always
-            type: str
-            sample: "NetFx3"
-        display_name:
-            description: Feature display name.
-            returned: always
-            type: str
-            sample: ".NET Framework 3.5 (includes .NET 2.0 and 3.0)"
-        description:
-            description: Description of feature
-            returned: always
-            type: str
-            sample: ".NET Framework 3.5 (includes .NET 2.0 and 3.0)"
 reboot_required:
     description: True when the target server requires a reboot to complete updates
     returned: success
