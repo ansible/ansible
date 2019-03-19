@@ -25,50 +25,59 @@ options:
       - The IP addresses for the new self IP. This value is ignored upon update
         as addresses themselves cannot be changed after they are created.
       - This value is required when creating new self IPs.
+    type: str
   allow_service:
     description:
       - Configure port lockdown for the Self IP. By default, the Self IP has a
         "default deny" policy. This can be changed to allow TCP and UDP ports
         as well as specific protocols. This list should contain C(protocol):C(port)
         values.
+    type: list
   name:
     description:
       - The self IP to create.
       - If this parameter is not specified, then it will default to the value supplied
         in the C(address) parameter.
+    type: str
     required: True
   description:
     description:
       - Description of the traffic selector.
+    type: str
     version_added: 2.8
   netmask:
     description:
       - The netmask for the self IP. When creating a new Self IP, this value
         is required.
+    type: str
   state:
     description:
       - When C(present), guarantees that the Self-IP exists with the provided
         attributes.
       - When C(absent), removes the Self-IP from the system.
-    default: present
+    type: str
     choices:
       - absent
       - present
+    default: present
   traffic_group:
     description:
       - The traffic group for the Self IP addresses in an active-active,
         redundant load balancer configuration. When creating a new Self IP, if
         this value is not specified, the default of C(/Common/traffic-group-local-only)
         will be used.
+    type: str
   vlan:
     description:
       - The VLAN that the new self IPs will be on. When creating a new Self
         IP, this value is required.
+    type: str
   route_domain:
     description:
       - The route domain id of the system. When creating a new Self IP, if
         this value is not specified, a default value of C(0) will be used.
       - This value cannot be changed after it is set.
+    type: int
     version_added: 2.3
   partition:
     description:
@@ -76,6 +85,7 @@ options:
         for Self IPs, but the address used may not match any other address used
         by a Self IP. In that sense, Self IPs are not isolated by partitions as
         other resources on a BIG-IP are.
+    type: str
     default: Common
     version_added: 2.5
 extends_documentation_fragment: f5
@@ -226,12 +236,9 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.common import transform_name
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.ipaddress import is_valid_ip
     from library.module_utils.network.f5.ipaddress import ipv6_netmask_to_cidr
     from library.module_utils.compat.ipaddress import ip_address
@@ -242,12 +249,9 @@ except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.common import transform_name
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
     from ansible.module_utils.network.f5.ipaddress import ipv6_netmask_to_cidr
     from ansible.module_utils.compat.ipaddress import ip_address
@@ -575,7 +579,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.have = None
         self.want = ModuleParameters(params=self.module.params)
         self.changes = UsableChanges()
@@ -837,16 +841,12 @@ def main():
         supports_check_mode=spec.supports_check_mode
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

@@ -124,9 +124,11 @@ class TestManager(unittest.TestCase):
             from_address='no-reply@mydomain.com',
             authentication=True,
             partition='Common',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(

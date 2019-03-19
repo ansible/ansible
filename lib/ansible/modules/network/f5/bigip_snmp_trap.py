@@ -23,22 +23,29 @@ options:
   name:
     description:
       - Name of the SNMP configuration endpoint.
+    type: str
     required: True
   snmp_version:
     description:
       - Specifies to which Simple Network Management Protocol (SNMP) version
         the trap destination applies.
-    choices: ['1', '2c']
+    type: str
+    choices:
+      - '1'
+      - '2c'
   community:
     description:
       - Specifies the community name for the trap destination.
+    type: str
   destination:
     description:
       - Specifies the address for the trap destination. This can be either an
         IP address or a hostname.
+    type: str
   port:
     description:
       - Specifies the port for the trap destination.
+    type: str
   network:
     description:
       - Specifies the name of the trap network. This option is not supported in
@@ -48,6 +55,7 @@ options:
         value when configuring a BIG-IP will cause the module to stop and report
         an error. The usual remedy is to choose one of the other options, such as
         C(management).
+    type: str
     choices:
       - other
       - management
@@ -56,13 +64,15 @@ options:
     description:
       - When C(present), ensures that the resource exists.
       - When C(absent), ensures that the resource does not exist.
-    default: present
+    type: str
     choices:
       - present
       - absent
+    default: present
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
     version_added: 2.5
 notes:
@@ -142,21 +152,15 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.common import transform_name
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.icontrol import tmos_version
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.common import transform_name
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.icontrol import tmos_version
 
 
@@ -296,7 +300,7 @@ class V1Parameters(Parameters):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.kwargs = kwargs
 
     def exec_module(self):
@@ -337,7 +341,7 @@ class ModuleManager(object):
 class BaseManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.have = None
 
     def exec_module(self):
@@ -665,16 +669,12 @@ def main():
         supports_check_mode=spec.supports_check_mode
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

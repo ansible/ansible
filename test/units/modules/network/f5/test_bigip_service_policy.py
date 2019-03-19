@@ -109,9 +109,11 @@ class TestManager(unittest.TestCase):
             port_misuse_policy='misuse1',
             partition='Common',
             state='present',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(

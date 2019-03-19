@@ -94,9 +94,11 @@ class TestManager(unittest.TestCase):
         set_module_args(dict(
             auto_check='no',
             auto_phone_home='no',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         # Configure the parameters that would be returned by querying the
