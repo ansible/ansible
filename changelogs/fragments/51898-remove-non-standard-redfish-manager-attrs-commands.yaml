@@ -1,0 +1,3 @@
+---
+bugfixes:
+- "deprecate {Get/Set}ManagerAttributes commands (https://github.com/ansible/ansible/issues/47590)"

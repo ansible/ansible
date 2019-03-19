@@ -522,6 +522,8 @@ class RedfishUtils(object):
 
         response = self.get_request(self.root_uri + self.manager_uri + "/" + key)
         if response['ret'] is False:
+            if '404' in response.get('msg'):
+                response['msg'] = 'The GetManagerAttributes command is not supported on this Redfish service'
             return response
         result['ret'] = True
         data = response['data']
@@ -704,8 +706,10 @@ class RedfishUtils(object):
         payload = {"Attributes": json.loads(manager_attr)}
         response = self.patch_request(self.root_uri + self.manager_uri + "/" + attributes, payload, HEADERS)
         if response['ret'] is False:
+            if '404' in response.get('msg'):
+                response['msg'] = 'The SetManagerAttributes command is not supported on this Redfish service'
             return response
-        return {'ret': True}
+        return {'ret': True, 'changed': True, 'msg': "Modified Manager attribute"}
 
     def set_bios_attributes(self, attr):
         result = {}

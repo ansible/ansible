@@ -223,6 +223,10 @@ def main():
 
         for command in command_list:
             if command == "SetManagerAttributes":
+                module.deprecate(msg='The SetManagerAttributes command in '
+                                     'module redfish_config is deprecated. '
+                                     'Use an OEM Redfish module instead.',
+                                 version='2.8')
                 result = rf_utils.set_manager_attributes(mgr_attributes)
 
     # Return data back or fail with proper message

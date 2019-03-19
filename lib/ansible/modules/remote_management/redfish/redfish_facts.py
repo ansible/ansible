@@ -255,6 +255,10 @@ def main():
 
             for command in command_list:
                 if command == "GetManagerAttributes":
+                    module.deprecate(msg='The GetManagerAttributes command in '
+                                         'module redfish_facts is deprecated. '
+                                         'Use an OEM Redfish module instead.',
+                                     version='2.8')
                     result["manager_attributes"] = rf_utils.get_manager_attributes()
                 elif command == "GetLogs":
                     result["log"] = rf_utils.get_logs()
