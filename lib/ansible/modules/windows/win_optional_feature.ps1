@@ -39,6 +39,7 @@ $feature_result = @{
 $module.Result.feature_result = $feature_result
 
 if ($state -eq "present") {
+	# Matches for "Enabled" and "EnabledPending"
     if ($feature_state_start.State -notlike "Enabled*") {
         $install_args = @{
             FeatureName = $name
@@ -62,6 +63,7 @@ if ($state -eq "present") {
         $module.Result.changed = $true
     }
 } else {
+	# Matches for Disabled, DisabledPending, and DisabledWithPayloadRemoved
     if ($feature_state_start.State -notlike "Disabled*") {
         $remove_args = @{
             FeatureName = $name
