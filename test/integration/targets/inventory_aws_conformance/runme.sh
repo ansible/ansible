@@ -38,7 +38,7 @@ aws_secret_acccess_key = BAR
 EOF
 
 rm -f script.out
-./ec2.sh
+ANSIBLE_JINJA2_NATIVE=1 ansible-inventory -vvvv -i ./ec2.sh --list --output="$OUTPUT_DIR/script.out"
 RC=$?
 if [[ $RC != 0 ]]; then
     exit $RC
