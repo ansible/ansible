@@ -199,14 +199,18 @@ class TestManager(unittest.TestCase):
             icmp_echo='enabled',
             advertise_route='always',
             use_route_advertisement='yes',
-            password='admin',
-            server='localhost',
-            user='admin',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            mutually_exclusive=self.spec.mutually_exclusive,
+            required_one_of=self.spec.required_one_of
         )
         mm = ModuleManager(module=module)
 
@@ -221,14 +225,18 @@ class TestManager(unittest.TestCase):
         set_module_args(dict(
             state='absent',
             address='1.1.1.1',
-            password='admin',
-            server='localhost',
-            user='admin',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            mutually_exclusive=self.spec.mutually_exclusive,
+            required_one_of=self.spec.required_one_of
         )
         mm = ModuleManager(module=module)
 

@@ -29,18 +29,22 @@ options:
       - When used without other conditions it is equivalent of just sleeping.
       - The default timeout is deliberately set to 2 hours because no individual
         REST API.
+    type: int
     default: 7200
   delay:
     description:
       - Number of seconds to wait before starting to poll.
+    type: int
     default: 0
   sleep:
-    default: 1
     description:
       - Number of seconds to sleep between checks, before 2.3 this was hardcoded to 1 second.
+    type: int
+    default: 1
   msg:
     description:
       - This overrides the normal error message from a failure to meet the required conditions.
+    type: str
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -89,15 +93,11 @@ try:
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
 
 
 def hard_timeout(module, want, start):
@@ -148,7 +148,7 @@ class Changes(Parameters):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.have = None
         self.want = Parameters(params=self.module.params)
         self.changes = Parameters()
@@ -334,14 +334,12 @@ def main():
         supports_check_mode=spec.supports_check_mode
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

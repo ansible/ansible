@@ -28,35 +28,38 @@ options:
     description:
       - Create a backup file including the timestamp information so you can
         get the original file back if you somehow clobbered it incorrectly.
-    default: no
     type: bool
+    default: no
   create_on_missing:
     description:
       - Creates the UCS based on the value of C(src) if the file does not already
         exist on the remote system.
-    default: yes
     type: bool
+    default: yes
   dest:
     description:
       - A directory to save the UCS file into.
-    required: yes
+    type: path
+    required: True
   encryption_password:
     description:
-      - Password to use to encrypt the UCS file if desired
+      - Password to use to encrypt the UCS file if desired.
+    type: str
   fail_on_missing:
     description:
       - Make the module fail if the UCS file on the remote system is missing.
-    default: no
     type: bool
+    default: no
   force:
     description:
       - If C(no), the file will only be transferred if the destination does not
         exist.
-    default: yes
     type: bool
+    default: yes
   src:
     description:
       - The name of the UCS file to create on the remote server for downloading
+    type: str
 notes:
   - BIG-IP provides no way to get a checksum of the UCS files on the system
     via any interface except, perhaps, logging in directly to the box (which
@@ -64,7 +67,7 @@ notes:
     do is check for the existence of the file on disk; no check-summing.
   - If you are using this module with either Ansible Tower or Ansible AWX, you
     should be aware of how these Ansible products execute jobs in restricted
-    environments. More informat can be found here
+    environments. More information can be found here
     https://clouddocs.f5.com/products/orchestration/ansible/devel/usage/module-usage-with-tower.html
 extends_documentation_fragment: f5
 author:
@@ -155,10 +158,7 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.common import transform_name
     from library.module_utils.network.f5.icontrol import download_file
     from library.module_utils.network.f5.icontrol import tmos_version
@@ -166,10 +166,7 @@ except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.common import transform_name
     from ansible.module_utils.network.f5.icontrol import download_file
     from ansible.module_utils.network.f5.icontrol import tmos_version
@@ -256,8 +253,9 @@ class ReportableChanges(Changes):
 
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
-        self.client = kwargs.get('client', None)
         self.kwargs = kwargs
+        self.module = kwargs.get('module', None)
+        self.client = F5RestClient(**self.module.params)
 
     def exec_module(self):
         if self.is_version_v1():
@@ -292,7 +290,7 @@ class ModuleManager(object):
 class BaseManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = Parameters(params=self.module.params)
         self.changes = UsableChanges()
 
@@ -602,16 +600,12 @@ def main():
         add_file_common_args=spec.add_file_common_args
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

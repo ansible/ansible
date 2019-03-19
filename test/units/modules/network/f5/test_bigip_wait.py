@@ -103,9 +103,11 @@ class TestManager(unittest.TestCase):
 
     def test_wait_already_available(self, *args):
         set_module_args(dict(
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(

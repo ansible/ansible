@@ -28,10 +28,12 @@ options:
   full_name:
     description:
       - Full name of the user.
+    type: str
   username_credential:
     description:
       - Name of the user to create, remove or modify.
       - The C(root) user may not be removed.
+    type: str
     required: True
     aliases:
       - name
@@ -39,9 +41,11 @@ options:
     description:
       - Set the users password to this unencrypted value.
         C(password_credential) is required when creating a new account.
+    type: str
   shell:
     description:
       - Optionally set the users shell.
+    type: str
     choices:
       - bash
       - none
@@ -56,26 +60,30 @@ options:
         C(operator), C(resource-admin), C(user-manager), C(web-application-security-administrator),
         and C(web-application-security-editor).
       - Partition portion of tuple should be an existing partition or the value 'all'.
+    type: list
   state:
     description:
       - Whether the account should exist or not, taking action if the state is
         different from what is stated.
-    default: present
+    type: str
     choices:
       - present
       - absent
+    default: present
   update_password:
     description:
       - C(always) will allow to update passwords if the user chooses to do so.
         C(on_create) will only set the password for newly created users.
       - When C(username_credential) is C(root), this value will be forced to C(always).
-    default: always
+    type: str
     choices:
       - always
       - on_create
+    default: always
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
     version_added: 2.5
 notes:
@@ -215,20 +223,14 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.icontrol import tmos_version
     from library.module_utils.network.f5.icontrol import upload_file
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.icontrol import tmos_version
     from ansible.module_utils.network.f5.icontrol import upload_file
 
@@ -459,7 +461,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.kwargs = kwargs
 
     def exec_module(self):
@@ -503,7 +505,7 @@ class ModuleManager(object):
 class BaseManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -1103,16 +1105,12 @@ def main():
         supports_check_mode=spec.supports_check_mode
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':
