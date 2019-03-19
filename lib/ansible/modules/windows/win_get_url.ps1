@@ -290,7 +290,7 @@ Function Invoke-DownloadFile {
         }
 
         if ($download) {
-            Copy-Item -Path $tmp_dest -Destination $Dest -Force -WhatIf:$Module.CheckMode > $null
+            Copy-Item -LiteralPath $tmp_dest -Destination $Dest -Force -WhatIf:$Module.CheckMode > $null
             $Module.Result.changed = $true
         }
     }
