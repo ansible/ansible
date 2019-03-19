@@ -903,7 +903,7 @@ class OwnCACertificateCryptography(Certificate):
             cert_builder = cert_builder.serial_number(self.serial_number)
             cert_builder = cert_builder.not_valid_before(self.notBefore)
             cert_builder = cert_builder.not_valid_after(self.notAfter)
-            cert_builder = cert_builder.public_key(self.ca_private_key.public_key())
+            cert_builder = cert_builder.public_key(self.csr.public_key())
             for extension in self.csr.extensions:
                 cert_builder = cert_builder.add_extension(extension.value, critical=extension.critical)
 
