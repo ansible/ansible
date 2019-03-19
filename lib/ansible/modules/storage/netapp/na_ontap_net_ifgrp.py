@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# (c) 2018, NetApp, Inc
+# (c) 2018-2019, NetApp, Inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -248,10 +248,12 @@ class NetAppOntapIfGrp(object):
                                   exception=traceback.format_exc())
 
     def modify_ports(self, current_ports):
-        for port in current_ports:
-            self.remove_port_to_if_grp(port)
-        for port in self.parameters['ports']:
+        add_ports = set(self.parameters['ports']) - set(current_ports)
+        remove_ports = set(current_ports) - set(self.parameters['ports'])
+        for port in add_ports:
             self.add_port_to_if_grp(port)
+        for port in remove_ports:
+            self.remove_port_to_if_grp(port)
 
     def remove_port_to_if_grp(self, port):
         """
@@ -275,9 +277,9 @@ class NetAppOntapIfGrp(object):
 
     def apply(self):
         self.autosupport_log()
-        current = self.get_if_grp()
+        current, modify = self.get_if_grp(), None
         cd_action = self.na_helper.get_cd_action(current, self.parameters)
-        if current and self.parameters['state'] == 'present':
+        if cd_action is None and self.parameters['state'] == 'present':
             current_ports = self.get_if_grp_ports()
             modify = self.na_helper.get_modified_attributes(current_ports, self.parameters)
         if self.na_helper.changed:
