@@ -90,6 +90,14 @@ EXAMPLES = '''
       username: "{{ username }}"
       password: "{{ password }}"
 
+  - name: Set chassis indicator LED to blink
+    redfish_command:
+      category: Chassis
+      command: IndicatorLedBlink
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+
   - name: Add and enable user
     redfish_command:
       category: Accounts
@@ -242,8 +250,10 @@ def main():
         num_led_commands = sum([command in led_commands for command in command_list])
         if num_led_commands > 1:
             result = {'ret': False, 'msg': "Only one IndicatorLed command should be sent at a time."}
-        elif num_led_commands == 1:
-            result = rf_utils.manage_indicator_led(command)
+        else:
+            for command in command_list:
+                if command in led_commands:
+                    result = rf_utils.manage_indicator_led(command)
 
     elif category == "Manager":
         MANAGER_COMMANDS = {
