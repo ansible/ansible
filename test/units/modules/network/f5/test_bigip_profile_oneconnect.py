@@ -103,9 +103,11 @@ class TestManager(unittest.TestCase):
             name='foo',
             parent='bar',
             maximum_reuse=1000,
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(

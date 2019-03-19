@@ -25,21 +25,26 @@ options:
       - Specifies the number of days before a password expires.
       - Based on this value, the BIG-IP system automatically warns users when their
         password is about to expire.
+    type: int
   max_duration:
     description:
       - Specifies the maximum number of days a password is valid.
+    type: int
   max_login_failures:
     description:
       - Specifies the number of consecutive unsuccessful login attempts
         that the system allows before locking out the user.
       - Specify zero (0) to disable this parameter.
+    type: int
   min_duration:
     description:
       - Specifies the minimum number of days a password is valid.
+    type: int
   min_length:
     description:
       - Specifies the minimum number of characters in a valid password.
       - This value must be between 6 and 255.
+    type: int
   policy_enforcement:
     description:
       - Enables or disables the password policy on the BIG-IP system.
@@ -48,23 +53,28 @@ options:
     description:
       - Specifies the number of lowercase alpha characters that must be
         present in a password for the password to be valid.
+    type: int
   required_numeric:
     description:
       - Specifies the number of numeric characters that must be present in
         a password for the password to be valid.
+    type: int
   required_special:
     description:
       - Specifies the number of special characters that must be present in
         a password for the password to be valid.
+    type: int
   required_uppercase:
     description:
       - Specifies the number of uppercase alpha characters that must be
         present in a password for the password to be valid.
+    type: int
   password_memory:
     description:
       - Specifies whether the user has configured the BIG-IP system to
         remember a password on a specific computer and how many passwords
         to remember.
+    type: int
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -145,23 +155,17 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import transform_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.common import flatten_boolean
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import transform_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.common import flatten_boolean
 
 
@@ -288,7 +292,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -423,16 +427,12 @@ def main():
         supports_check_mode=spec.supports_check_mode,
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':
