@@ -22,7 +22,6 @@ __metaclass__ = type
 
 import pytest
 import sys
-import os
 import json
 from collections import namedtuple
 
@@ -122,6 +121,7 @@ instances_json = """
 # converts instance_json dict into python objects
 instances = json.loads(instances_json, object_hook=lambda d: namedtuple('X', d.keys())(*d.values()))
 
+
 @pytest.fixture(scope="module")
 def inventory():
     return InventoryModule()
@@ -166,10 +166,12 @@ def test_config_user_options(inventory):
 def test_verify_file_bad_config(inventory):
     assert inventory.verify_file('foobar.linde.yml') is False
 
-def test_get_instance_public_ip(inventory):
-    instance = instances.data[0]
-    assert inventory._get_instance_public_ip(instance) == '123.45.67.89'
 
-def test_get_instance_private_ip(inventory):
+def test_get_instance_ip_public(inventory):
     instance = instances.data[0]
-    assert inventory._get_instance_private_ip(instance) == '192.168.45.67'
+    assert inventory._get_instance_ip(instance, private=False) == '123.45.67.89'
+
+
+def test_get_instance_ip_private(inventory):
+    instance = instances.data[0]
+    assert inventory._get_instance_ip(instance, private=True) == '192.168.45.67'

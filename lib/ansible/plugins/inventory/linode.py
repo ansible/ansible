@@ -30,9 +30,9 @@ DOCUMENTATION = r'''
             env:
                 - name: LINODE_ACCESS_TOKEN
         instance_access:
-          description: How to access the instance(hostname, public_ip, private_ip).
+          description: How to access the instance.
           default: 'hostname'
-          type: str
+          choices: ['hostname', 'public_ip', 'private_ip']
           required: false
         regions:
           description: Populate inventory with instances in this region.
@@ -132,37 +132,17 @@ class InventoryModule(BaseInventoryPlugin):
                 if instance.type.id in types
             ]
 
-    def _get_instance_public_ip(self, instance):
-        """Returns the public IP address of the instance"""
+    def _get_instance_ip(self, instance, private=False):
+        """Returns the public or private IP address of the instance"""
         if instance.ipv4 and len(instance.ipv4) > 0:
-            public_ip = None
+            result_ip = None
             for ip in instance.ipv4:
-                if not ipaddress.ip_address(ip).is_private:
-                    public_ip = ip
-            if public_ip:
-                return public_ip
-            else:
-                raise AnsibleError(
-                    'Expected public IP not found'
-                )
-        else:
-            raise AnsibleError(
-                'Instance IPv4 address is missing or empty'
-            )
-
-    def _get_instance_private_ip(self, instance):
-        """Returns the private IP address of the instance"""
-        if instance.ipv4 and len(instance.ipv4) > 0:
-            private_ip = None
-            for ip in instance.ipv4:
-                if ipaddress.ip_address(ip).is_private:
-                    private_ip = ip
-            if private_ip:
-                return private_ip
-            else:
-                raise AnsibleError(
-                    'Expected public IP not found'
-                )
+                if not ipaddress.ip_address(ip).is_private and not private:
+                    result_ip = ip
+                elif ipaddress.ip_address(ip).is_private and private:
+                    result_ip = ip
+            if result_ip:
+                return result_ip
         else:
             raise AnsibleError(
                 'Instance IPv4 address is missing or empty'
@@ -172,9 +152,9 @@ class InventoryModule(BaseInventoryPlugin):
         """Add instance names to their dynamic inventory groups."""
         for instance in self.instances:
             if instance_access == 'public_ip':
-                host_identifier = self._get_instance_public_ip(instance)
+                host_identifier = self._get_instance_ip(instance, private=False)
             elif instance_access == 'private_ip':
-                host_identifier = self._get_instance_private_ip(instance)
+                host_identifier = self._get_instance_ip(instance, private=True)
             elif instance_access == 'hostname':
                 host_identifier = instance.label
             else:
@@ -187,25 +167,21 @@ class InventoryModule(BaseInventoryPlugin):
         """Add hostvars for instances in the dynamic inventory."""
         for instance in self.instances:
             if instance_access == 'public_ip':
-                host_identifier = self._get_instance_public_ip(instance)
+                host_identifier = self._get_instance_ip(instance, private=False)
             elif instance_access == 'private_ip':
-                host_identifier = self._get_instance_private_ip(instance)
+                host_identifier = self._get_instance_ip(instance, private=True)
             elif instance_access == 'hostname':
                 host_identifier = instance.label
-            else:
-                raise AnsibleError(
-                    'Instance Access setting is not valid'
-                )
 
             self.inventory.set_variable(
                 host_identifier,
-                "public_ip",
-                self._get_instance_public_ip(instance)
+                'public_ip',
+                self._get_instance_ip(instance, private=False)
             )
             self.inventory.set_variable(
                 host_identifier,
-                "private_ip",
-                self._get_instance_private_ip(instance)
+                'private_ip',
+                self._get_instance_ip(instance, private=True)
             )
             hostvars = instance._raw_json
             for hostvar_key in hostvars:
