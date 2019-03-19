@@ -18,7 +18,7 @@
 
 - name: run with check_mode
   win_optional_feature:
-    name: NetFx3
+    name: TelnetClient
     state: present
     include_parent: true
   check_mode: yes
@@ -31,7 +31,7 @@
 
 - name: run without check_mode
   win_optional_feature:
-    name: NetFx3
+    name: TelnetClient
     state: present
     include_parent: true
   register: real_feature_check
@@ -43,7 +43,7 @@
 
 - name: test idempotence for install
   win_optional_feature:
-    name: NetFx3
+    name: TelnetClient
     state: present
     include_parent: true
   register: real_feature_check
@@ -55,7 +55,7 @@
 
 - name: removal run with check_mode
   win_optional_feature:
-    name: NetFx3
+    name: TelnetClient
     state: absent
   check_mode: yes
   register: feature_check
@@ -67,7 +67,7 @@
 
 - name: remove feature
   win_optional_feature:
-    name: NetFx3
+    name: TelnetClient
     state: absent
   register: real_feature_check
 
@@ -78,7 +78,7 @@
 
 - name: test idempotence for removal 
   win_optional_feature:
-    name: NetFx3
+    name: TelnetClient
     state: absent
   register: real_feature_check
 
