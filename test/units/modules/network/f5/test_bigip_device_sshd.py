@@ -74,9 +74,6 @@ class TestParameters(unittest.TestCase):
             log_level='debug',
             login='enabled',
             port=1010,
-            server='localhost',
-            user='admin',
-            password='password'
         )
         p = ModuleParameters(params=args)
         assert p.allow == ['all']
@@ -102,9 +99,11 @@ class TestManager(unittest.TestCase):
             log_level='debug',
             login='enabled',
             port=1010,
-            server='localhost',
-            user='admin',
-            password='password'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         # Configure the parameters that would be returned by querying the

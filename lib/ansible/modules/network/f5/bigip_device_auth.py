@@ -28,6 +28,7 @@ options:
       - Take special note that the parameters supported by this module will vary depending
         on the C(type) that you are configuring.
       - This module only supports a subset, at this time, of the total available auth types.
+    type: str
     choices:
       - tacacs
       - local
@@ -40,6 +41,7 @@ options:
         by specifying the C(port) key.
       - If no port number is specified, the default port C(49163) is used.
       - This parameter is supported by the C(tacacs) type.
+    type: raw
     suboptions:
       address:
         description:
@@ -57,6 +59,7 @@ options:
         server.
       - B(Do not) use the pound/hash sign in the secret for TACACS+ servers.
       - When configuring TACACS+ auth for the first time, this value is required.
+    type: str
   service_name:
     description:
       - Specifies the name of the service that the user is requesting to be
@@ -67,6 +70,7 @@ options:
       - When configuring this form of system authentication, this setting is required.
       - Note that the majority of TACACS+ implementations are of service type C(ppp),
         so try that first.
+    type: str
     choices:
       - slip
       - ppp
@@ -83,6 +87,7 @@ options:
         or system accounting.
       - Note that the majority of TACACS+ implementations are of protocol type C(ip),
         so try that first.
+    type: str
     choices:
       - lcp
       - ip
@@ -110,6 +115,7 @@ options:
         request to each server until authentication succeeds, or until the system has
         sent a request to all servers in the list.
       - This parameter is supported by the C(tacacs) type.
+    type: str
     choices:
       - use-first-server
       - use-all-servers
@@ -122,19 +128,21 @@ options:
       - The state of the authentication configuration on the system.
       - When C(present), guarantees that the system is configured for the specified C(type).
       - When C(absent), sets the system auth source back to C(local).
-    default: present
+    type: str
     choices:
       - absent
       - present
+    default: present
   update_secret:
     description:
       - C(always) will allow to update secrets if the user chooses to do so.
       - C(on_create) will only set the secret when a C(use_auth_source) is C(yes)
         and TACACS+ is not currently the auth source.
-    default: always
+    type: str
     choices:
       - always
       - on_create
+    default: always
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -209,18 +217,12 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
 
 
 class BaseParameters(AnsibleF5Parameters):
@@ -506,7 +508,7 @@ class BaseManager(object):
 class LocalManager(BaseManager):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = self.get_module_parameters(params=self.module.params)
         self.have = self.get_api_parameters()
         self.changes = self.get_usable_changes()
@@ -574,7 +576,7 @@ class LocalManager(BaseManager):
 class TacacsManager(BaseManager):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = self.get_module_parameters(params=self.module.params)
         self.have = self.get_api_parameters()
         self.changes = self.get_usable_changes()
@@ -719,7 +721,6 @@ class TacacsManager(BaseManager):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
         self.kwargs = kwargs
 
     def exec_module(self):
@@ -790,16 +791,12 @@ def main():
         supports_check_mode=spec.supports_check_mode,
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

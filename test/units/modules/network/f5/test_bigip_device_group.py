@@ -110,9 +110,11 @@ class TestModuleManager(unittest.TestCase):
             dict(
                 name="foo-group",
                 state="present",
-                server='localhost',
-                user='admin',
-                password='password'
+                provider=dict(
+                    server='localhost',
+                    password='password',
+                    user='admin'
+                )
             )
         )
 
@@ -135,9 +137,11 @@ class TestModuleManager(unittest.TestCase):
                 full_sync=True,
                 name="foo-group",
                 state="present",
-                server='localhost',
-                user='admin',
-                password='password'
+                provider=dict(
+                    server='localhost',
+                    password='password',
+                    user='admin'
+                )
             )
         )
 
@@ -161,9 +165,11 @@ class TestModuleManager(unittest.TestCase):
             dict(
                 name="foo-group",
                 state="absent",
-                server='localhost',
-                user='admin',
-                password='password'
+                provider=dict(
+                    server='localhost',
+                    password='password',
+                    user='admin'
+                )
             )
         )
 

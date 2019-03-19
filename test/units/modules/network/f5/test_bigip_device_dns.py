@@ -69,9 +69,6 @@ class TestParameters(unittest.TestCase):
             ip_version=4,
             name_servers=['10.10.10.10', '11.11.11.11'],
             search=['14.14.14.14', '15.15.15.15'],
-            server='localhost',
-            user='admin',
-            password='password'
         )
         p = Parameters(params=args)
         assert p.cache == 'disable'
@@ -100,9 +97,11 @@ class TestManager(unittest.TestCase):
             ip_version=4,
             name_servers=['10.10.10.10', '11.11.11.11'],
             search=['14.14.14.14', '15.15.15.15'],
-            server='localhost',
-            user='admin',
-            password='password'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         # Configure the parameters that would be returned by querying the
@@ -115,7 +114,8 @@ class TestManager(unittest.TestCase):
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            required_one_of=self.spec.required_one_of
         )
         mm = ModuleManager(module=module)
 
