@@ -19,4 +19,4 @@
   include_tasks: impl.yml
   vars:
     select_crypto_backend: cryptography
-  when: cryptography_version.stdout is version('1.3', '>=')
+  when: cryptography_version.stdout is version('1.6', '>=')

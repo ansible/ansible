@@ -30,14 +30,24 @@
       - selfsigned_certificate.notBefore == selfsigned_certificate_idempotence.notBefore
       - selfsigned_certificate.notAfter == selfsigned_certificate_idempotence.notAfter
 
-- name: (Selfsigned validation, {{select_crypto_backend}}) Validate certificate v2 (test - certificate version == 2)
-  shell: 'openssl x509 -noout  -in {{ output_dir}}/cert_v2.pem -text | grep "Version" | sed "s/.*: \(.*\) .*/\1/g"'
-  register: cert_v2_version
+- block:
+  - name: (Selfsigned validation, {{select_crypto_backend}}) Validate certificate v2 (test - certificate version == 2)
+    shell: 'openssl x509 -noout  -in {{ output_dir}}/cert_v2.pem -text | grep "Version" | sed "s/.*: \(.*\) .*/\1/g"'
+    register: cert_v2_version
 
-- name: (Selfsigned validation, {{select_crypto_backend}}) Validate certificate version 2 (assert)
-  assert:
-    that:
-      - cert_v2_version.stdout == '2'
+  - name: (Selfsigned validation, {{select_crypto_backend}}) Validate certificate version 2 (assert)
+    assert:
+      that:
+        - cert_v2_version.stdout == '2'
+  when: select_crypto_backend != 'cryptography'
+
+- block:
+  - name: (Selfsigned validateion, {{ select_crypto_backend }} Validate certificate v2 is failed
+    assert:
+      that:
+        - selfsigned_v2_cert is failed
+        - "'The cryptography backend does not support v2 certificates' in selfsigned_v2_cert.msg"
+  when: select_crypto_backend == 'cryptography'
 
 - name: (Selfsigned validation, {{select_crypto_backend}}) Validate certificate2 (test - privatekey modulus)
   shell: 'openssl rsa -noout -modulus -in {{ output_dir }}/privatekey2.pem'
