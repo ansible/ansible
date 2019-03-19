@@ -73,9 +73,11 @@ class TestParameters(unittest.TestCase):
                 'dest1',
                 'dest2'
             ],
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         )
         p = ModuleParameters(params=args)
         assert p.name == 'foo'
@@ -108,9 +110,11 @@ class TestManager(unittest.TestCase):
                 'dest2'
             ],
             state='present',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
