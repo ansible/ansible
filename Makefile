@@ -245,7 +245,7 @@ sdist: sdist_check clean docs
 # Snapshots shouldn't result in new checkins so the changelog is generated as
 # part of creating the tarball.
 .PHONY: snapshot
-sdist: sdist_check clean docs changelog
+snapshot: sdist_check clean docs changelog
 	_ANSIBLE_SDIST_FROM_MAKEFILE=1 $(PYTHON) setup.py sdist
 
 .PHONY: sdist_upload
