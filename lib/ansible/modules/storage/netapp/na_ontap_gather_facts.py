@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
 # (c) 2018 Piotr Olczak <piotr.olczak@redhat.com>
-# (c) 2018-2019, NetApp, Inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -27,24 +26,8 @@ options:
         description:
             - Returns "info"
         default: "info"
+        required: false
         choices: ['info']
-    gather_subset:
-        description:
-            - When supplied, this argument will restrict the facts collected
-                to a given subset.  Possible values for this argument include
-                "aggregate_info", "cluster_node_info", "lun_info", "net_ifgrp_info",
-                "net_interface_info", "net_port_info", "nvme_info", "nvme_interface_info",
-                "nvme_namespace_info", "nvme_subsystem_info", "ontap_version",
-                "security_key_manager_key_info", "security_login_account_info",
-                "storage_failover_info", "volume_info", "vserver_info",
-                "vserver_login_banner_info", "vserver_motd_info"
-                Can specify a list of values to include a larger subset.  Values can also be used
-                with an initial C(M(!)) to specify that a specific subset should
-                not be collected.
-            - nvme is supported with ONTAP 9.4 onwards.
-            - use "help" to get a list of supported facts for your system.
-        default: "all"
-        version_added: 2.8
 '''
 
 EXAMPLES = '''
@@ -57,34 +40,6 @@ EXAMPLES = '''
 
 - debug:
     var: ontap_facts
-
-- name: Limit Fact Gathering to Aggregate Information
-  na_ontap_gather_facts:
-    state: info
-    hostname: "na-vsim"
-    username: "admin"
-    password: "admins_password"
-    gather_subset: "aggregate_info"
-
-- name: Limit Fact Gathering to Volume and Lun Information
-  na_ontap_gather_facts:
-    state: info
-    hostname: "na-vsim"
-    username: "admin"
-    password: "admins_password"
-    gather_subset:
-      - volume_info
-      - lun_info
-
-- name: Gather all facts except for volume and lun information
-  na_ontap_gather_facts:
-    state: info
-    hostname: "na-vsim"
-    username: "admin"
-    password: "admins_password"
-    gather_subset:
-      - "!volume_info"
-      - "!lun_info"
 '''
 
 RETURN = '''
@@ -137,199 +92,20 @@ class NetAppONTAPGatherFacts(object):
         self.module = module
         self.netapp_info = dict()
 
-        # thanks to coreywan (https://github.com/ansible/ansible/pull/47016)
-        # for starting this
-        # min_version identifies the ontapi version which supports this ZAPI
-        # use 0 if it is supported since 9.1
-        self.fact_subsets = {
-            'net_interface_info': {
-                'method': self.get_generic_get_iter,
-                'kwargs': {
-                    'call': 'net-interface-get-iter',
-                    'attribute': 'net-interface-info',
-                    'field': 'interface-name',
-                    'query': {'max-records': '1024'},
-                },
-                'min_version': '0',
-            },
-            'net_port_info': {
-                'method': self.get_generic_get_iter,
-                'kwargs': {
-                    'call': 'net-port-get-iter',
-                    'attribute': 'net-port-info',
-                    'field': ('node', 'port'),
-                    'query': {'max-records': '1024'},
-                },
-                'min_version': '0',
-            },
-            'cluster_node_info': {
-                'method': self.get_generic_get_iter,
-                'kwargs': {
-                    'call': 'cluster-node-get-iter',
-                    'attribute': 'cluster-node-info',
-                    'field': 'node-name',
-                    'query': {'max-records': '1024'},
-                },
-                'min_version': '0',
-            },
-            'security_login_account_info': {
-                'method': self.get_generic_get_iter,
-                'kwargs': {
-                    'call': 'security-login-get-iter',
-                    'attribute': 'security-login-account-info',
-                    'field': ('user-name', 'application', 'authentication-method'),
-                    'query': {'max-records': '1024'},
-                },
-                'min_version': '0',
-            },
-            'aggregate_info': {
-                'method': self.get_generic_get_iter,
-                'kwargs': {
-                    'call': 'aggr-get-iter',
-                    'attribute': 'aggr-attributes',
-                    'field': 'aggregate-name',
-                    'query': {'max-records': '1024'},
-                },
-                'min_version': '0',
-            },
-            'volume_info': {
-                'method': self.get_generic_get_iter,
-                'kwargs': {
-                    'call': 'volume-get-iter',
-                    'attribute': 'volume-attributes',
-                    'field': ('name', 'owning-vserver-name'),
-                    'query': {'max-records': '1024'},
-                },
-                'min_version': '0',
-            },
-            'lun_info': {
-                'method': self.get_generic_get_iter,
-                'kwargs': {
-                    'call': 'lun-get-iter',
-                    'attribute': 'lun-info',
-                    'field': 'path',
-                    'query': {'max-records': '1024'},
-                },
-                'min_version': '0',
-            },
-            'storage_failover_info': {
-                'method': self.get_generic_get_iter,
-                'kwargs': {
-                    'call': 'cf-get-iter',
-                    'attribute': 'storage-failover-info',
-                    'field': 'node',
-                    'query': {'max-records': '1024'},
-                },
-                'min_version': '0',
-            },
-            'vserver_motd_info': {
-                'method': self.get_generic_get_iter,
-                'kwargs': {
-                    'call': 'vserver-motd-get-iter',
-                    'attribute': 'vserver-motd-info',
-                    'field': 'vserver',
-                    'query': {'max-records': '1024'},
-                },
-                'min_version': '0',
-            },
-            'vserver_login_banner_info': {
-                'method': self.get_generic_get_iter,
-                'kwargs': {
-                    'call': 'vserver-login-banner-get-iter',
-                    'attribute': 'vserver-login-banner-info',
-                    'field': 'vserver',
-                    'query': {'max-records': '1024'},
-                },
-                'min_version': '0',
-            },
-            'security_key_manager_key_info': {
-                'method': self.get_generic_get_iter,
-                'kwargs': {
-                    'call': 'security-key-manager-key-get-iter',
-                    'attribute': 'security-key-manager-key-info',
-                    'field': ('node', 'key-id'),
-                    'query': {'max-records': '1024'},
-                },
-                'min_version': '0',
-            },
-            'vserver_info': {
-                'method': self.get_generic_get_iter,
-                'kwargs': {
-                    'call': 'vserver-get-iter',
-                    'attribute': 'vserver-info',
-                    'field': 'vserver-name',
-                    'query': {'max-records': '1024'},
-                },
-                'min_version': '0',
-            },
-            'net_ifgrp_info': {
-                'method': self.get_ifgrp_info,
-                'kwargs': {},
-                'min_version': '0',
-            },
-            'ontap_version': {
-                'method': self.ontapi,
-                'kwargs': {},
-                'min_version': '0',
-            },
-            # supported in ONTAP 9.4 and onwards
-            'nvme_info': {
-                'method': self.get_generic_get_iter,
-                'kwargs': {
-                    'call': 'nvme-get-iter',
-                    'attribute': 'nvme-target-service-info',
-                    'field': 'vserver',
-                    'query': {'max-records': '1024'},
-                },
-                'min_version': '140',
-            },
-            'nvme_interface_info': {
-                'method': self.get_generic_get_iter,
-                'kwargs': {
-                    'call': 'nvme-interface-get-iter',
-                    'attribute': 'nvme-interface-info',
-                    'field': 'vserver',
-                    'query': {'max-records': '1024'},
-                },
-                'min_version': '140',
-            },
-            'nvme_subsystem_info': {
-                'method': self.get_generic_get_iter,
-                'kwargs': {
-                    'call': 'nvme-subsystem-get-iter',
-                    'attribute': 'nvme-subsystem-info',
-                    'field': 'subsystem',
-                    'query': {'max-records': '1024'},
-                },
-                'min_version': '140',
-            },
-            'nvme_namespace_info': {
-                'method': self.get_generic_get_iter,
-                'kwargs': {
-                    'call': 'nvme-namespace-get-iter',
-                    'attribute': 'nvme-namespace-info',
-                    'field': 'path',
-                    'query': {'max-records': '1024'},
-                },
-                'min_version': '140',
-            },
-        }
-
         if HAS_NETAPP_LIB is False:
             self.module.fail_json(msg="the python NetApp-Lib module is required")
         else:
             self.server = netapp_utils.setup_na_ontap_zapi(module=self.module)
 
     def ontapi(self):
-        api = 'system-get-ontapi-version'
-        api_call = netapp_utils.zapi.NaElement(api)
+        api_call = netapp_utils.zapi.NaElement('system-get-ontapi-version')
         try:
             results = self.server.invoke_successfully(api_call, enable_tunneling=False)
             ontapi_version = results.get_child_content('minor-version')
             return ontapi_version if ontapi_version is not None else '0'
         except netapp_utils.zapi.NaApiError as e:
             self.module.fail_json(msg="Error calling API %s: %s" %
-                                  (api, to_native(e)), exception=traceback.format_exc())
+                                  (api_call.to_string(), to_native(e)), exception=traceback.format_exc())
 
     def call_api(self, call, query=None):
         api_call = netapp_utils.zapi.NaElement(call)
@@ -349,11 +125,7 @@ class NetAppONTAPGatherFacts(object):
                 self.module.fail_json(msg="Error calling API %s: %s" % (call, to_native(e)), exception=traceback.format_exc())
 
     def get_ifgrp_info(self):
-        try:
-            net_port_info = self.netapp_info['net_port_info']
-        except KeyError:
-            net_port_info_calls = self.fact_subsets['net_port_info']
-            net_port_info = net_port_info_calls['method'](**net_port_info_calls['kwargs'])
+        net_port_info = self.netapp_info['net_port_info']
         interfaces = net_port_info.keys()
 
         ifgrps = []
@@ -406,7 +178,7 @@ class NetAppONTAPGatherFacts(object):
 
         return out
 
-    def get_all(self, gather_subset):
+    def get_all(self):
         results = netapp_utils.get_cserver(self.server)
         cserver = netapp_utils.setup_na_ontap_zapi(module=self.module, vserver=results)
         netapp_utils.ems_log_event("na_ontap_gather_facts", cserver)
@@ -521,42 +293,6 @@ class NetAppONTAPGatherFacts(object):
 
         return self.netapp_info
 
-    def get_subset(self, gather_subset, version):
-        runable_subsets = set()
-        exclude_subsets = set()
-        usable_subsets = [key for key in self.fact_subsets.keys() if version >= self.fact_subsets[key]['min_version']]
-        if 'help' in gather_subset:
-            return usable_subsets
-        for subset in gather_subset:
-            if subset == 'all':
-                runable_subsets.update(usable_subsets)
-                return runable_subsets
-            if subset.startswith('!'):
-                subset = subset[1:]
-                if subset == 'all':
-                    return set()
-                exclude = True
-            else:
-                exclude = False
-
-            if subset not in usable_subsets:
-                if subset not in self.fact_subsets.keys():
-                    self.module.fail_json(msg='Bad subset: %s' % subset)
-                self.module.fail_json(msg='Remote system at version %s does not support %s' %
-                                      (version, subset))
-
-            if exclude:
-                exclude_subsets.add(subset)
-            else:
-                runable_subsets.add(subset)
-
-        if not runable_subsets:
-            runable_subsets.update(usable_subsets)
-
-        runable_subsets.difference_update(exclude_subsets)
-
-        return runable_subsets
-
 
 # https://stackoverflow.com/questions/14962485/finding-a-key-recursively-in-a-dictionary
 def __finditem(obj, key):
@@ -594,7 +330,6 @@ def main():
     argument_spec = netapp_utils.na_ontap_host_argument_spec()
     argument_spec.update(dict(
         state=dict(default='info', choices=['info']),
-        gather_subset=dict(default=['all'], type='list'),
     ))
 
     module = AnsibleModule(
@@ -609,11 +344,8 @@ def main():
         module.fail_json(msg="json missing")
 
     state = module.params['state']
-    gather_subset = module.params['gather_subset']
-    if gather_subset is None:
-        gather_subset = ['all']
     v = NetAppONTAPGatherFacts(module)
-    g = v.get_all(gather_subset)
+    g = v.get_all()
     result = {'state': state, 'changed': False}
     module.exit_json(ansible_facts={'ontap_facts': g}, **result)
 
