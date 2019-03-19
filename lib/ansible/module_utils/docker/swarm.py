@@ -4,6 +4,7 @@
 
 import json
 from time import sleep
+from re import split
 
 try:
     from docker.errors import APIError
@@ -166,6 +167,17 @@ class AnsibleDockerSwarmClient(AnsibleDockerClient):
 
         json_str = json.dumps(node_info, ensure_ascii=False)
         node_info = json.loads(json_str)
+
+        if 'ManagerStatus' in node_info:
+            if node_info['ManagerStatus'].get('Leader'):
+                # This is workaround of bug in Docker when in some cases the Leader IP is 0.0.0.0
+                # Check moby/moby#35437 for details
+                count_colons = node_info['ManagerStatus']['Addr'].count(":")
+                if count_colons == 1:
+                    swarm_leader_ip = node_info['ManagerStatus']['Addr'].split(":", 1)[0] or node_info['Status']['Addr']
+                else:
+                    swarm_leader_ip = node_info['Status']['Addr']
+                node_info['Status']['Addr'] = swarm_leader_ip
         return node_info
 
     def get_all_nodes_inspect(self):
