@@ -17,7 +17,7 @@ from ansible.modules.storage.netapp.na_ontap_net_ifgrp \
     import NetAppOntapIfGrp as ifgrp_module  # module under test
 
 if not netapp_utils.has_netapp_lib():
-    pytestmark = pytest.skip('skipping as missing required netapp_lib')
+    pytestmark = pytest.mark.skip('skipping as missing required netapp_lib')
 
 
 def set_module_args(args):
@@ -249,13 +249,25 @@ class TestMyModule(unittest.TestCase):
 
     @patch('ansible.modules.storage.netapp.na_ontap_net_ifgrp.NetAppOntapIfGrp.remove_port_to_if_grp')
     @patch('ansible.modules.storage.netapp.na_ontap_net_ifgrp.NetAppOntapIfGrp.add_port_to_if_grp')
-    def test_modify_ports_calls(self, add_port, remove_port):
+    def test_modify_ports_calls_remove_existing_ports(self, add_port, remove_port):
+        ''' Test if already existing ports are not being added again '''
         data = self.mock_args()
-        data['ports'] = ['1', '2', '3']
+        data['ports'] = ['1', '2']
+        set_module_args(data)
+        self.get_ifgrp_mock_object('ifgrp').modify_ports(current_ports=['1', '2', '3'])
+        assert remove_port.call_count == 1
+        assert add_port.call_count == 0
+
+    @patch('ansible.modules.storage.netapp.na_ontap_net_ifgrp.NetAppOntapIfGrp.remove_port_to_if_grp')
+    @patch('ansible.modules.storage.netapp.na_ontap_net_ifgrp.NetAppOntapIfGrp.add_port_to_if_grp')
+    def test_modify_ports_calls_add_new_ports(self, add_port, remove_port):
+        ''' Test new ports are added '''
+        data = self.mock_args()
+        data['ports'] = ['1', '2', '3', '4']
         set_module_args(data)
         self.get_ifgrp_mock_object('ifgrp').modify_ports(current_ports=['1', '2'])
-        assert remove_port.call_count == 2
-        assert add_port.call_count == 3
+        assert remove_port.call_count == 0
+        assert add_port.call_count == 2
 
     def test_get_ports_returns_none(self):
         set_module_args(self.mock_args())
