@@ -69,9 +69,6 @@ class TestParameters(unittest.TestCase):
             reset='yes',
             merge_content='asdasd',
             verify='no',
-            server='localhost',
-            user='admin',
-            password='password'
         )
         p = Parameters(params=args)
         assert p.save == 'yes'
@@ -90,9 +87,11 @@ class TestManager(unittest.TestCase):
             reset='yes',
             merge_content='asdasd',
             verify='no',
-            server='localhost',
-            user='admin',
-            password='password'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(

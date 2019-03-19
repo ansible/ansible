@@ -104,14 +104,18 @@ class TestManager(unittest.TestCase):
         set_module_args(dict(
             sync_device_to_group='yes',
             device_group="foo",
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            mutually_exclusive=self.spec.mutually_exclusive,
+            required_one_of=self.spec.required_one_of
         )
         mm = ModuleManager(module=module)
 
