@@ -174,7 +174,7 @@ class AnsibleDockerSwarmClient(AnsibleDockerClient):
                 # Check moby/moby#35437 for details
                 count_colons = node_info['ManagerStatus']['Addr'].count(":")
                 if count_colons == 1:
-                    swarm_leader_ip = split(":", node_info['ManagerStatus']['Addr'])[0] or node_info['Status']['Addr']
+                    swarm_leader_ip = node_info['ManagerStatus']['Addr'].split(":", 1)[0] or node_info['Status']['Addr']
                 else:
                     swarm_leader_ip = node_info['Status']['Addr']
                 node_info['Status']['Addr'] = swarm_leader_ip
