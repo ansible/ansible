@@ -30,13 +30,13 @@ xmltodict < 0.12.0 ; python_version < '2.7' # xmltodict 0.12.0 and later require
 lxml < 4.3.0 ; python_version < '2.7' # lxml 4.3.0 and later require python 2.7 or later
 pyvmomi < 6.0.0 ; python_version < '2.7' # pyvmomi 6.0.0 and later require python 2.7 or later
 pyone == 1.1.9 # newer versions do not pass current integration tests
+botocore >= 1.10.0 # adds support for the following AWS services: secretsmanager, fms, and acm-pca
 
 # freeze pylint and its requirements for consistent test results
-astroid == 2.0.4
-isort == 4.3.4
+astroid == 2.2.5
+isort == 4.3.15
 lazy-object-proxy == 1.3.1
 mccabe == 0.6.1
-pylint == 2.1.1
-typed-ast == 1.1.0
-wrapt == 1.10.11
-botocore >= 1.10.0 # adds support for the following AWS services: secretsmanager, fms, and acm-pca
+pylint == 2.3.1
+typed-ast == 1.3.1
+wrapt == 1.11.1

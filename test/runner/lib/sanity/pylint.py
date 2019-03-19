@@ -2,6 +2,7 @@
 from __future__ import absolute_import, print_function
 
 import collections
+import itertools
 import json
 import os
 import datetime
@@ -112,6 +113,13 @@ class PylintTest(SanitySingleVersion):
         module_paths = [p.split(os.path.sep) for p in paths if p.startswith('lib/ansible/modules/')]
         module_dirs = sorted(set([p[3] for p in module_paths if len(p) > 4]))
 
+        large_module_group_threshold = 500
+        large_module_groups = [key for key, value in
+                               itertools.groupby(module_paths, lambda p: p[3] if len(p) > 4 else '') if len(list(value)) > large_module_group_threshold]
+
+        large_module_group_paths = [p.split(os.path.sep) for p in paths if any(p.startswith('lib/ansible/modules/%s/' % g) for g in large_module_groups)]
+        large_module_group_dirs = sorted(set([os.path.sep.join(p[3:5]) for p in large_module_group_paths if len(p) > 5]))
+
         contexts = []
         remaining_paths = set(paths)
 
@@ -143,6 +151,9 @@ class PylintTest(SanitySingleVersion):
         add_context(remaining_paths, 'units', filter_path('test/units/'))
         add_context(remaining_paths, 'test', filter_path('test/'))
         add_context(remaining_paths, 'hacking', filter_path('hacking/'))
+
+        for large_module_group_dir in large_module_group_dirs:
+            add_context(remaining_paths, 'modules/%s' % large_module_group_dir, filter_path('lib/ansible/modules/%s/' % large_module_group_dir))
 
         for module_dir in module_dirs:
             add_context(remaining_paths, 'modules/%s' % module_dir, filter_path('lib/ansible/modules/%s/' % module_dir))
