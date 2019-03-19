@@ -1,7 +1,17 @@
+# Would use [] but this has troubles with PATH and trying to find the executable so just resort to keeping a space
+- name: record special path for tests
+  set_fact:
+    testing_dir: '{{ remote_tmp_dir }}\ansible win_psexec'
+
+- name: create special path testing dir
+  win_file:
+    path: '{{ testing_dir }}'
+    state: directory
+
 - name: Download PsExec
   win_get_url:
     url: https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/win_psexec/PsExec.exe
-    dest: '{{ remote_tmp_dir }}\PsExec.exe'
+    dest: '{{ testing_dir }}\PsExec.exe'
 
 - name: Get the existing PATH env var
   win_shell: '$env:PATH'
@@ -14,7 +24,7 @@
     nobanner: true
   register: whoami
   environment:
-    PATH: '{{ remote_tmp_dir }};{{ system_path.stdout | trim }}'
+    PATH: '{{ testing_dir }};{{ system_path.stdout | trim }}'
 
 - name: Test whoami
   assert:
@@ -29,7 +39,7 @@
     command: whoami.exe
     system: yes
     nobanner: true
-    executable: '{{ remote_tmp_dir }}\PsExec.exe'
+    executable: '{{ testing_dir }}\PsExec.exe'
   register: whoami_as_system
   # Seems to be a bug with PsExec where the stdout can be empty, just retry the task to make this test a bit more stable
   until: whoami_as_system.rc == 0 and whoami_as_system.stdout == 'nt authority\system'
@@ -61,7 +71,7 @@
   ignore_errors: yes
   register: whoami_multiple_args
   environment:
-    PATH: '{{ remote_tmp_dir }};{{ system_path.stdout | trim }}'
+    PATH: '{{ testing_dir }};{{ system_path.stdout | trim }}'
 
 - name: Test command with multiple argumetns
   assert:
