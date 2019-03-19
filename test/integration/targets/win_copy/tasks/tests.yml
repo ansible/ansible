@@ -354,8 +354,8 @@
     that:
     - copy_folder_after_change is changed
     - copy_folder_after_changes_actual.matched == 2
-    - copy_folder_after_changes_actual.files[0].checksum == 'b54ba7f5621240d403f06815f7246006ef8c7d43'
-    - copy_folder_after_changes_actual.files[1].checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
+    - copy_folder_after_changes_actual.files[0].checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
+    - copy_folder_after_changes_actual.files[1].checksum == 'b54ba7f5621240d403f06815f7246006ef8c7d43'
 
 - name: copy folder's contents (check mode)
   win_copy:
