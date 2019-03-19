@@ -23,6 +23,7 @@ options:
   description:
     description:
       - The description to give to the VLAN.
+    type: str
   tagged_interfaces:
     description:
       - Specifies a list of tagged interfaces and trunks that you want to
@@ -30,6 +31,7 @@ options:
         you want to assign a single interface or trunk to multiple VLANs.
       - This parameter is mutually exclusive with the C(untagged_interfaces)
         and C(interfaces) parameters.
+    type: list
     aliases:
       - tagged_interface
   untagged_interfaces:
@@ -38,33 +40,38 @@ options:
         configure for the VLAN.
       - This parameter is mutually exclusive with the C(tagged_interfaces)
         and C(interfaces) parameters.
+    type: list
     aliases:
       - untagged_interface
   name:
     description:
       - The VLAN to manage. If the special VLAN C(ALL) is specified with
         the C(state) value of C(absent) then all VLANs will be removed.
+    type: str
     required: True
   state:
     description:
       - The state of the VLAN on the system. When C(present), guarantees
         that the VLAN exists with the provided attributes. When C(absent),
         removes the VLAN from the system.
-    default: present
+    type: str
     choices:
       - absent
       - present
+    default: present
   tag:
     description:
       - Tag number for the VLAN. The tag number can be any integer between 1
         and 4094. The system automatically assigns a tag number if you do not
         specify a value.
+    type: int
   mtu:
     description:
       - Specifies the maximum transmission unit (MTU) for traffic on this VLAN.
         When creating a new VLAN, if this parameter is not specified, the default
         value used will be C(1500).
       - This number must be between 576 to 9198.
+    type: int
     version_added: 2.5
   cmp_hash:
     description:
@@ -75,6 +82,7 @@ options:
         specifies that the default CMP hash uses L4 ports.
       - When creating a new VLAN, if this parameter is not specified, the default
         of C(default) is used.
+    type: str
     choices:
       - default
       - destination-address
@@ -96,10 +104,11 @@ options:
       - When creating a new VLAN, if this parameter is not specified, the default
         of C(outer) is used.
       - This parameter is not supported on Virtual Editions of BIG-IP.
-    version_added: 2.5
+    type: str
     choices:
       - inner
       - outer
+    version_added: 2.5
   dag_round_robin:
     description:
       - Specifies whether some of the stateless traffic on the VLAN should be
@@ -108,11 +117,12 @@ options:
         and so on.
       - When creating a new VLAN, if this parameter is not specified, the default
         of (no) is used.
-    version_added: 2.5
     type: bool
+    version_added: 2.5
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
     version_added: 2.5
   source_check:
@@ -132,11 +142,13 @@ options:
     description:
       - Specifies the number of seconds that a system can run without detecting network
         traffic on this VLAN before it takes the C(fail_safe_action).
+    type: int
     version_added: 2.8
   fail_safe_action:
     description:
       - Specifies the action that the system takes when it does not detect any traffic on
         this VLAN, and the C(fail_safe_timeout) has expired.
+    type: str
     choices:
       - reboot
       - restart-all
@@ -145,10 +157,12 @@ options:
   sflow_poll_interval:
     description:
       - Specifies the maximum interval in seconds between two pollings.
+    type: int
     version_added: 2.8
   sflow_sampling_rate:
     description:
       - Specifies the ratio of packets observed to the samples generated.
+    type: int
     version_added: 2.8
   interfaces:
     description:
@@ -160,12 +174,15 @@ options:
       interface:
         description:
           - The name of the interface
+        type: str
       tagging:
         description:
           - Whether the interface is C(tagged) or C(untagged).
+        type: str
         choices:
           - tagged
           - untagged
+    type: list
     version_added: 2.8
 notes:
   - Requires BIG-IP versions >= 12.0.0
@@ -290,26 +307,20 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.common import transform_name
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.common import flatten_boolean
-    from library.module_utils.network.f5.common import compare_complex_list
+    from library.module_utils.network.f5.compare import compare_complex_list
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.common import transform_name
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.common import flatten_boolean
-    from ansible.module_utils.network.f5.common import compare_complex_list
+    from ansible.module_utils.network.f5.compare import compare_complex_list
 
 
 class Parameters(AnsibleF5Parameters):
@@ -694,7 +705,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -944,16 +955,12 @@ def main():
         supports_check_mode=spec.supports_check_mode,
         mutually_exclusive=spec.mutually_exclusive
     )
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':
