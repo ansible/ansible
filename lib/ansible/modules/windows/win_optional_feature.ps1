@@ -6,13 +6,13 @@
 #AnsibleRequires -CSharpUtil Ansible.Basic
 
 $spec = @{
-	options = @{
-		name = @{ type = "str"; required = $true }
-		state = @{ type = "str"; default = "present"; choices = @("absent", "present") }
-		source = @{ type = "str" }
-		include_parent = @{ type = "bool"; default = $false }
-	}
-	supports_check_mode = $true
+    options = @{
+        name = @{ type = "str"; required = $true }
+        state = @{ type = "str"; default = "present"; choices = @("absent", "present") }
+        source = @{ type = "str" }
+        include_parent = @{ type = "bool"; default = $false }
+    }
+    supports_check_mode = $true
 }
 
 $module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
@@ -34,7 +34,7 @@ if (-not $feature_state_start) {
 }
 
 if ($state -eq "present") {
-	# Matches for "Enabled" and "EnabledPending"
+    # Matches for "Enabled" and "EnabledPending"
     if ($feature_state_start.State -notlike "Enabled*") {
         $install_args = @{
             FeatureName = $name
@@ -49,21 +49,21 @@ if ($state -eq "present") {
         }
 
         if (-not $module.CheckMode) {
-        	$action_result = Enable-WindowsOptionalFeature -Online -NoRestart @install_args
-        	$module.Result.reboot_required = $action_result.RestartNeeded
+            $action_result = Enable-WindowsOptionalFeature -Online -NoRestart @install_args
+            $module.Result.reboot_required = $action_result.RestartNeeded
         }
         $module.Result.changed = $true
     }
 } else {
-	# Matches for Disabled, DisabledPending, and DisabledWithPayloadRemoved
+    # Matches for Disabled, DisabledPending, and DisabledWithPayloadRemoved
     if ($feature_state_start.State -notlike "Disabled*") {
         $remove_args = @{
             FeatureName = $name
         }
 
         if (-not $module.CheckMode) {
-        	$action_result = Disable-WindowsOptionalFeature -Online -NoRestart @remove_args
-        	$module.Result.reboot_required = $action_result.RestartNeeded
+            $action_result = Disable-WindowsOptionalFeature -Online -NoRestart @remove_args
+            $module.Result.reboot_required = $action_result.RestartNeeded
         }
         $module.Result.changed = $true
     }
