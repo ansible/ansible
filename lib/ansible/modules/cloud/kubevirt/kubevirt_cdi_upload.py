@@ -159,9 +159,19 @@ class KubeVirtCDIUpload(KubernetesRawModule):
 
         headers = {'Authorization': "Bearer {0}".format(result['result']['status']['token'])}
         url = "{0}/{1}/upload".format(upload_host, API)
-        requests.post(url, data=imgfile, headers=headers, verify=upload_host_verify_ssl)
+        ret = requests.post(url, data=imgfile, headers=headers, verify=upload_host_verify_ssl)
+
+        if ret.status_code != 200:
+            self.fail_request("Something went wrong while uploading data", method='POST', url=url,
+                              reason=ret.reason, status_code=ret.status_code)
 
         self.exit_json(changed=True)
+
+    def fail_request(self, msg, **kwargs):
+        req_info = {}
+        for k, v in kwargs.items():
+            req_info['req_' + k] = v
+        self.fail_json(msg=msg, **req_info)
 
 
 def main():
