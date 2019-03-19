@@ -102,7 +102,7 @@ class NetAppONTAPGatherFacts(object):
         try:
             results = self.server.invoke_successfully(api_call, enable_tunneling=False)
             ontapi_version = results.get_child_content('minor-version')
-            return ontapi_version
+            return ontapi_version if ontapi_version is not None else '0'
         except netapp_utils.zapi.NaApiError as e:
             self.module.fail_json(msg="Error calling API %s: %s" %
                                   (api_call.to_string(), to_native(e)), exception=traceback.format_exc())
@@ -182,36 +182,42 @@ class NetAppONTAPGatherFacts(object):
         results = netapp_utils.get_cserver(self.server)
         cserver = netapp_utils.setup_na_ontap_zapi(module=self.module, vserver=results)
         netapp_utils.ems_log_event("na_ontap_gather_facts", cserver)
+
+        self.netapp_info['ontap_version'] = self.ontapi()
+
+        if self.netapp_info['ontap_version'] >= '140':
+            self.netapp_info['nvme_info'] = self.get_generic_get_iter(
+                'nvme-get-iter',
+                attribute='nvme-target-service-info',
+                field='vserver',
+                query={'max-records': '1024'}
+            )
+            self.netapp_info['nvme_interface_info'] = self.get_generic_get_iter(
+                'nvme-interface-get-iter',
+                attribute='nvme-interface-info',
+                field='vserver',
+                query={'max-records': '1024'}
+            )
+            self.netapp_info['nvme_subsystem_info'] = self.get_generic_get_iter(
+                'nvme-subsystem-get-iter',
+                attribute='nvme-subsystem-info',
+                field='subsystem',
+                query={'max-records': '1024'}
+            )
+            self.netapp_info['nvme_namespace_info'] = self.get_generic_get_iter(
+                'nvme-namespace-get-iter',
+                attribute='nvme-namespace-info',
+                field='path',
+                query={'max-records': '1024'}
+            )
+
         self.netapp_info['net_interface_info'] = self.get_generic_get_iter(
             'net-interface-get-iter',
             attribute='net-interface-info',
             field='interface-name',
             query={'max-records': '1024'}
         )
-        self.netapp_info['nvme_info'] = self.get_generic_get_iter(
-            'nvme-get-iter',
-            attribute='nvme-target-service-info',
-            field='vserver',
-            query={'max-records': '1024'}
-        )
-        self.netapp_info['nvme_interface_info'] = self.get_generic_get_iter(
-            'nvme-interface-get-iter',
-            attribute='nvme-interface-info',
-            field='vserver',
-            query={'max-records': '1024'}
-        )
-        self.netapp_info['nvme_subsystem_info'] = self.get_generic_get_iter(
-            'nvme-subsystem-get-iter',
-            attribute='nvme-subsystem-info',
-            field='subsystem',
-            query={'max-records': '1024'}
-        )
-        self.netapp_info['nvme_namespace_info'] = self.get_generic_get_iter(
-            'nvme-namespace-get-iter',
-            attribute='nvme-namespace-info',
-            field='path',
-            query={'max-records': '1024'}
-        )
+
         self.netapp_info['net_port_info'] = self.get_generic_get_iter(
             'net-port-get-iter',
             attribute='net-port-info',
@@ -284,8 +290,6 @@ class NetAppONTAPGatherFacts(object):
             field='vserver-name',
             query={'max-records': '1024'}
         )
-
-        self.netapp_info['ontap_version'] = self.ontapi()
 
         return self.netapp_info
 
