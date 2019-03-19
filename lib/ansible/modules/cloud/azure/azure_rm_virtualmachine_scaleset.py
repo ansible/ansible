@@ -276,7 +276,7 @@ EXAMPLES = '''
     managed_disk_type: Standard_LRS
     image:
       name: customimage001
-      resource_group: Testing
+      resource_group: myResourceGroup
 '''
 
 RETURN = '''
@@ -307,7 +307,7 @@ azure_vmss:
                                         "properties": {
                                             "privateIPAddressVersion": "IPv4",
                                             "subnet": {
-                                                "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/virtualNetworks/testvnet/subnets/testsubnet"
+                                                "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/virtualNetworks/testvnet/subnets/testsubnet"
                                             }
                                         }
                                     }
