@@ -72,16 +72,16 @@ author:
 EXAMPLES = '''
     - name: Create a route
       azure_rm_route:
-        name: foobar
         resource_group: myResourceGroup
+        name: myRoute
         address_prefix: 10.1.0.0/16
         next_hop_type: virtual_network_gateway
         route_table_name: table
 
     - name: Delete a route
       azure_rm_route:
-        name: foobar
         resource_group: myResourceGroup
+        name: myRoute
         route_table_name: table
         state: absent
 '''

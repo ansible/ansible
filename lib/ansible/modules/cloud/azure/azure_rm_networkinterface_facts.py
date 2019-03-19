@@ -77,17 +77,17 @@ azure_networkinterfaces:
         },
         "enable_ip_forwarding": false,
         "etag": 'W/"59726bfc-08c4-44ed-b900-f6a559876a9d"',
-        "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/networkInterfaces/nic003",
+        "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkInterfaces/nic003",
         "ip_configuration": {
             "name": "default",
             "private_ip_address": "10.10.0.4",
             "private_ip_allocation_method": "Dynamic",
             "public_ip_address": {
-                "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/publicIPAddresses/publicip001",
+                "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroup/myResourceGroup/providers/Microsoft.Network/publicIPAddresses/publicip001",
                 "name": "publicip001"
             },
             "subnet": {
-                "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/virtualNetworks/vnet001/subnets/subnet001",
+                "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroup/myResourceGroup/providers/Microsoft.Network/virtualNetworks/vnet001/subnets/subnet001",
                 "name": "subnet001",
                 "virtual_network_name": "vnet001"
             }
@@ -96,7 +96,7 @@ azure_networkinterfaces:
         "mac_address": null,
         "name": "nic003",
         "network_security_group": {
-            "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/secgroup001",
+            "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/secgroup001",
             "name": "secgroup001"
         },
         "primary": null,

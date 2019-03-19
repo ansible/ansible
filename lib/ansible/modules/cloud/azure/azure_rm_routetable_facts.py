@@ -86,7 +86,7 @@ routes:
     type: list
     sample: [
         {
-          "id": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/routeTables/foobar/routes/route",
+          "id": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroup/myResourceGroup/providers/Microsoft.Network/routeTables/foobar/routes/route",
           "name": "route",
           "resource_group": "Testing",
           "routeTables": "foobar",
