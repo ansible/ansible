@@ -1,0 +1,2 @@
+bugfixes:
+- win_get_url - Fix issues when using paths with glob like characters, e.g. ``[``, ``]``
