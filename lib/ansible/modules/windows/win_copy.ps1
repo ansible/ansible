@@ -51,9 +51,9 @@ Function Copy-File($source, $dest) {
         $source_checksum = Get-FileChecksum -path $source
     }
 
-    if (Test-Path -Path $dest -PathType Container) {
+    if (Test-Path -LiteralPath $dest -PathType Container) {
         Fail-Json -obj $result -message "cannot copy file from '$source' to '$dest': dest is already a folder"
-    } elseif (Test-Path -Path $dest -PathType Leaf) {
+    } elseif (Test-Path -LiteralPath $dest -PathType Leaf) {
         if ($force) {
             $target_checksum = Get-FileChecksum -path $dest
             if ($source_checksum -ne $target_checksum) {
@@ -67,23 +67,23 @@ Function Copy-File($source, $dest) {
     if ($copy_file) {
         $file_dir = [System.IO.Path]::GetDirectoryName($dest)
         # validate the parent dir is not a file and that it exists
-        if (Test-Path -Path $file_dir -PathType Leaf) {
+        if (Test-Path -LiteralPath $file_dir -PathType Leaf) {
             Fail-Json -obj $result -message "cannot copy file from '$source' to '$dest': object at dest parent dir is not a folder"
-        } elseif (-not (Test-Path -Path $file_dir)) {
+        } elseif (-not (Test-Path -LiteralPath $file_dir)) {
             # directory doesn't exist, need to create
             New-Item -Path $file_dir -ItemType Directory -WhatIf:$check_mode | Out-Null
             $diff += "+$file_dir\`n"
         }
 
-        if (Test-Path -Path $dest -PathType Leaf) {
-            Remove-Item -Path $dest -Force -Recurse -WhatIf:$check_mode | Out-Null
+        if (Test-Path -LiteralPath $dest -PathType Leaf) {
+            Remove-Item -LiteralPath $dest -Force -Recurse -WhatIf:$check_mode | Out-Null
             $diff += "-$dest`n"
         }
 
         if (-not $check_mode) {
             # cannot run with -WhatIf:$check_mode as if the parent dir didn't
             # exist and was created above would still not exist in check mode
-            Copy-Item -Path $source -Destination $dest -Force | Out-Null
+            Copy-Item -LiteralPath $source -Destination $dest -Force | Out-Null
         }
         $diff += "+$dest`n"
 
@@ -97,14 +97,13 @@ Function Copy-File($source, $dest) {
 
 Function Copy-Folder($source, $dest) {
     $diff = ""
-    $copy_folder = $false
 
-    if (-not (Test-Path -Path $dest -PathType Container)) {
+    if (-not (Test-Path -LiteralPath $dest -PathType Container)) {
         $parent_dir = [System.IO.Path]::GetDirectoryName($dest)
-        if (Test-Path -Path $parent_dir -PathType Leaf) {
+        if (Test-Path -LiteralPath $parent_dir -PathType Leaf) {
             Fail-Json -obj $result -message "cannot copy file from '$source' to '$dest': object at dest parent dir is not a folder"
         }
-        if (Test-Path -Path $dest -PathType Leaf) {
+        if (Test-Path -LiteralPath $dest -PathType Leaf) {
             Fail-Json -obj $result -message "cannot copy folder from '$source' to '$dest': dest is already a file"
         }
 
@@ -113,7 +112,7 @@ Function Copy-Folder($source, $dest) {
         $result.changed = $true
     }
 
-    $child_items = Get-ChildItem -Path $source -Force
+    $child_items = Get-ChildItem -LiteralPath $source -Force
     foreach ($child_item in $child_items) {
         $dest_child_path = Join-Path -Path $dest -ChildPath $child_item.Name
         if ($child_item.PSIsContainer) {
@@ -127,10 +126,9 @@ Function Copy-Folder($source, $dest) {
 }
 
 Function Get-FileSize($path) {
-    $file = Get-Item -Path $path -Force
+    $file = Get-Item -LiteralPath $path -Force
     if ($file.PSIsContainer) {
-        $dir_files_sum = Get-ChildItem $file.FullName -Recurse
-        $size = (Get-ChildItem -Path $file.FullName -Recurse -Force | `
+        $size = (Get-ChildItem -Literalpath $file.FullName -Recurse -Force | `
             Where-Object { $_.PSObject.Properties.Name -contains 'Length' } | `
             Measure-Object -Property Length -Sum).Sum
         if ($null -eq $size) {
@@ -173,7 +171,7 @@ Function Extract-Zip($src, $dest) {
         $entry_target_path = [System.IO.Path]::Combine($dest, $decoded_archive_name)
         $entry_dir = [System.IO.Path]::GetDirectoryName($entry_target_path)
 
-        if (-not (Test-Path -Path $entry_dir)) {
+        if (-not (Test-Path -LiteralPath $entry_dir)) {
             New-Item -Path $entry_dir -ItemType Directory -WhatIf:$check_mode | Out-Null
         }
 
@@ -186,7 +184,7 @@ Function Extract-Zip($src, $dest) {
 }
 
 Function Extract-ZipLegacy($src, $dest) {
-    if (-not (Test-Path -Path $dest)) {
+    if (-not (Test-Path -LiteralPath $dest)) {
         New-Item -Path $dest -ItemType Directory -WhatIf:$check_mode | Out-Null
     }
     $shell = New-Object -ComObject Shell.Application
@@ -205,7 +203,7 @@ Function Extract-ZipLegacy($src, $dest) {
         $entry_target_path = [System.IO.Path]::Combine($dest, $decoded_archive_entry)
         $entry_dir = [System.IO.Path]::GetDirectoryName($entry_target_path)
 
-        if (-not (Test-Path -Path $entry_dir)) {
+        if (-not (Test-Path -LiteralPath $entry_dir)) {
             New-Item -Path $entry_dir -ItemType Directory -WhatIf:$check_mode | Out-Null
         }
 
@@ -219,7 +217,7 @@ Function Extract-ZipLegacy($src, $dest) {
 
             # once file is extraced, we need to rename it with non base64 name
             $combined_encoded_path = [System.IO.Path]::Combine($dest, $encoded_archive_entry)
-            Move-Item -Path $combined_encoded_path -Destination $entry_target_path -Force | Out-Null
+            Move-Item -LiteralPath $combined_encoded_path -Destination $entry_target_path -Force | Out-Null
         }
     }
 }
@@ -236,15 +234,14 @@ if ($copy_mode -eq "query") {
         $local_checksum = $file.checksum
 
         $filepath = Join-Path -Path $dest -ChildPath $filename
-        if (Test-Path -Path $filepath -PathType Leaf) {
+        if (Test-Path -LiteralPath $filepath -PathType Leaf) {
             if ($force) {
                 $checksum = Get-FileChecksum -path $filepath
                 if ($checksum -ne $local_checksum) {
-                    $will_change = $true
                     $changed_files += $file
                 }
             }
-        } elseif (Test-Path -Path $filepath -PathType Container) {
+        } elseif (Test-Path -LiteralPath $filepath -PathType Container) {
             Fail-Json -obj $result -message "cannot copy file to dest '$filepath': object at path is already a directory"
         } else {
             $changed_files += $file
@@ -256,12 +253,12 @@ if ($copy_mode -eq "query") {
 
         $dirpath = Join-Path -Path $dest -ChildPath $dirname
         $parent_dir = [System.IO.Path]::GetDirectoryName($dirpath)
-        if (Test-Path -Path $parent_dir -PathType Leaf) {
+        if (Test-Path -LiteralPath $parent_dir -PathType Leaf) {
             Fail-Json -obj $result -message "cannot copy folder to dest '$dirpath': object at parent directory path is already a file"
         }
-        if (Test-Path -Path $dirpath -PathType Leaf) {
+        if (Test-Path -LiteralPath $dirpath -PathType Leaf) {
             Fail-Json -obj $result -message "cannot copy folder to dest '$dirpath': object at path is already a file"
-        } elseif (-not (Test-Path -Path $dirpath -PathType Container)) {
+        } elseif (-not (Test-Path -LiteralPath $dirpath -PathType Container)) {
             $changed_directories += $directory
         }
     }
@@ -275,7 +272,7 @@ if ($copy_mode -eq "query") {
     # a single zip file containing the files and directories needs to be
     # expanded this will always result in a change as the calculation is done
     # on the win_copy action plugin and is only run if a change needs to occur
-    if (-not (Test-Path -Path $src -PathType Leaf)) {
+    if (-not (Test-Path -LiteralPath $src -PathType Leaf)) {
         Fail-Json -obj $result -message "Cannot expand src zip file: '$src' as it does not exist"
     }
 
@@ -300,17 +297,17 @@ if ($copy_mode -eq "query") {
     $result.src = $src
     $result.dest = $dest
 
-    if (-not (Test-Path -Path $src)) {
+    if (-not (Test-Path -LiteralPath $src)) {
         Fail-Json -obj $result -message "Cannot copy src file: '$src' as it does not exist"
     }
 
-    if (Test-Path -Path $src -PathType Container) {
+    if (Test-Path -LiteralPath $src -PathType Container) {
         # we are copying a directory or the contents of a directory
         $result.operation = 'folder_copy'
         if ($src.EndsWith("/") -or $src.EndsWith("`\")) {
             # copying the folder's contents to dest
             $diff = ""
-            $child_files = Get-ChildItem -Path $src -Force
+            $child_files = Get-ChildItem -LiteralPath $src -Force
             foreach ($child_file in $child_files) {
                 $dest_child_path = Join-Path -Path $dest -ChildPath $child_file.Name
                 if ($child_file.PSIsContainer) {
@@ -321,7 +318,7 @@ if ($copy_mode -eq "query") {
             }
         } else {
             # copying the folder and it's contents to dest
-            $dest = Join-Path -Path $dest -ChildPath (Get-Item -Path $src -Force).Name
+            $dest = Join-Path -Path $dest -ChildPath (Get-Item -LiteralPath $src -Force).Name
             $result.dest = $dest
             $diff = Copy-Folder -source $src -dest $dest
         }
@@ -329,19 +326,19 @@ if ($copy_mode -eq "query") {
         # we are just copying a single file to dest
         $result.operation = 'file_copy'
 
-        $source_basename = (Get-Item -Path $src -Force).Name
+        $source_basename = (Get-Item -LiteralPath $src -Force).Name
         $result.original_basename = $source_basename
 
         if ($dest.EndsWith("/") -or $dest.EndsWith("`\")) {
-            $dest = Join-Path -Path $dest -ChildPath (Get-Item -Path $src -Force).Name
+            $dest = Join-Path -Path $dest -ChildPath (Get-Item -LiteralPath $src -Force).Name
             $result.dest = $dest
         } else {
             # check if the parent dir exists, this is only done if src is a
             # file and dest if the path to a file (doesn't end with \ or /)
-            $parent_dir = Split-Path -Path $dest
-            if (Test-Path -Path $parent_dir -PathType Leaf) {
+            $parent_dir = Split-Path -LiteralPath $dest
+            if (Test-Path -LiteralPath $parent_dir -PathType Leaf) {
                 Fail-Json -obj $result -message "object at destination parent dir '$parent_dir' is currently a file"
-            } elseif (-not (Test-Path -Path $parent_dir -PathType Container)) {
+            } elseif (-not (Test-Path -LiteralPath $parent_dir -PathType Container)) {
                 Fail-Json -obj $result -message "Destination directory '$parent_dir' does not exist"
             }
         }
@@ -351,7 +348,7 @@ if ($copy_mode -eq "query") {
     }
 
     # the file might not exist if running in check mode
-    if (-not $check_mode -or (Test-Path -Path $dest -PathType Leaf)) {
+    if (-not $check_mode -or (Test-Path -LiteralPath $dest -PathType Leaf)) {
         $result.size = Get-FileSize -path $dest
     } else {
         $result.size = $null
@@ -363,34 +360,34 @@ if ($copy_mode -eq "query") {
     # a single file is located in src and we need to copy to dest, this will
     # always result in a change as the calculation is done on the Ansible side
     # before this is run. This should also never run in check mode
-    if (-not (Test-Path -Path $src -PathType Leaf)) {
+    if (-not (Test-Path -LiteralPath $src -PathType Leaf)) {
         Fail-Json -obj $result -message "Cannot copy src file: '$src' as it does not exist"
     }
 
     # the dest parameter is a directory, we need to append original_basename
-    if ($dest.EndsWith("/") -or $dest.EndsWith("`\") -or (Test-Path -Path $dest -PathType Container)) {
+    if ($dest.EndsWith("/") -or $dest.EndsWith("`\") -or (Test-Path -LiteralPath $dest -PathType Container)) {
         $remote_dest = Join-Path -Path $dest -ChildPath $original_basename
-        $parent_dir = Split-Path -Path $remote_dest
+        $parent_dir = Split-Path -LiteralPath $remote_dest
 
         # when dest ends with /, we need to create the destination directories
-        if (Test-Path -Path $parent_dir -PathType Leaf) {
+        if (Test-Path -LiteralPath $parent_dir -PathType Leaf) {
             Fail-Json -obj $result -message "object at destination parent dir '$parent_dir' is currently a file"
-        } elseif (-not (Test-Path -Path $parent_dir -PathType Container)) {
+        } elseif (-not (Test-Path -LiteralPath $parent_dir -PathType Container)) {
             New-Item -Path $parent_dir -ItemType Directory | Out-Null
         }
     } else {
         $remote_dest = $dest
-        $parent_dir = Split-Path -Path $remote_dest
+        $parent_dir = Split-Path -LiteralPath $remote_dest
 
         # check if the dest parent dirs exist, need to fail if they don't
-        if (Test-Path -Path $parent_dir -PathType Leaf) {
+        if (Test-Path -LiteralPath $parent_dir -PathType Leaf) {
             Fail-Json -obj $result -message "object at destination parent dir '$parent_dir' is currently a file"
-        } elseif (-not (Test-Path -Path $parent_dir -PathType Container)) {
+        } elseif (-not (Test-Path -LiteralPath $parent_dir -PathType Container)) {
             Fail-Json -obj $result -message "Destination directory '$parent_dir' does not exist"
         }
     }
 
-    Copy-Item -Path $src -Destination $remote_dest -Force | Out-Null
+    Copy-Item -LiteralPath $src -Destination $remote_dest -Force | Out-Null
     $result.changed = $true
 }
 
