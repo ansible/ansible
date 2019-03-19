@@ -76,9 +76,6 @@ class TestParameters(unittest.TestCase):
             force='yes',
             fail_on_missing='no',
             src='remote.ucs',
-            password='password',
-            server='localhost',
-            user='admin'
         )
         p = Parameters(params=args)
         assert p.backup == 'yes'
@@ -97,14 +94,17 @@ class TestV1Manager(unittest.TestCase):
             force='yes',
             fail_on_missing='no',
             src='remote.ucs',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            add_file_common_args=self.spec.add_file_common_args
         )
 
         # Override methods to force specific logic in the module to happen

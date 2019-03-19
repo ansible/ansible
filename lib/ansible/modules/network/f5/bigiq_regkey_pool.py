@@ -29,20 +29,23 @@ options:
         BIG-IQ does not require this, this module does. If you do not do this,
         the behavior of the module is undefined and you may end up putting
         licenses in the wrong registration key pool.
+    type: str
     required: True
   description:
     description:
       - A description to attach to the pool.
+    type: str
   state:
     description:
       - The state of the regkey pool on the system.
       - When C(present), guarantees that the pool exists.
       - When C(absent), removes the pool, and the licenses it contains, from the
         system.
-    default: present
+    type: str
     choices:
       - absent
       - present
+    default: present
 requirements:
   - BIG-IQ >= 5.3.0
 extends_documentation_fragment: f5
@@ -198,7 +201,6 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
         self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(client=self.client, params=self.module.params)
         self.have = ApiParameters()
