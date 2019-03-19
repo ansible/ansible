@@ -22,6 +22,7 @@ except ImportError:
     # An error will be raised in the calling class to let the end
     # user know that OpenSSL couldn't be found.
     pass
+
 try:
     from cryptography import x509
     from cryptography.hazmat.backends import default_backend as cryptography_backend
