@@ -26,9 +26,11 @@ options:
     name:
       description:
         - Name of setting to modify
+      required: True
     value:
       description:
         - Value to be modified for given setting.
+      required: True
 extends_documentation_fragment: tower
 '''
 
@@ -67,8 +69,8 @@ except ImportError:
 
 def main():
     argument_spec = dict(
-        name=dict(Required=True),
-        value=dict(Required=True),
+        name=dict(required=True),
+        value=dict(required=True),
     )
 
     module = TowerModule(
