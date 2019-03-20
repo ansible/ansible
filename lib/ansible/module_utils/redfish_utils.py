@@ -280,7 +280,7 @@ class RedfishUtils(object):
             ret = inventory.pop('ret') and ret
             if 'entries' in inventory:
                 entries.append(({'systems_uri': systems_uri},
-                               inventory['entries']))
+                                inventory['entries']))
         return dict(ret=ret, entries=entries)
 
     def get_storage_controller_inventory(self, systems_uri):
@@ -910,7 +910,7 @@ class RedfishUtils(object):
         key = "Memory"
         # Get these entries, but does not fail if not found
         properties = ['SerialNumber', 'MemoryDeviceType', 'PartNuber',
-        'MemoryLocation', 'RankCount', 'CapacityMiB', 'OperatingMemoryModes', 'Status', 'Manufacturer', 'Name']
+                      'MemoryLocation', 'RankCount', 'CapacityMiB', 'OperatingMemoryModes', 'Status', 'Manufacturer', 'Name']
 
         # Search for 'key' entry and extract URI from it
         response = self.get_request(self.root_uri + self.systems_uri)
@@ -948,7 +948,7 @@ class RedfishUtils(object):
                         continue
             else:
                 continue
-                
+
             for property in properties:
                 if property in data:
                     dimm[property] = data[property]
