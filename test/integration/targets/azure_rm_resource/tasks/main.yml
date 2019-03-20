@@ -148,6 +148,9 @@
     state: absent
   register: output
 
+- debug:
+    var: output
+
 - name: Assert that storage was successfully deleted
   assert:
     that:
