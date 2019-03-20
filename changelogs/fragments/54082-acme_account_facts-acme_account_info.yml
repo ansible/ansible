@@ -1,0 +1,2 @@
+minor_changes:
+- The ``acme_account_facts`` module has been renamed to ``acme_account_info``.

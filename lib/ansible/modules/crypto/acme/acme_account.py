@@ -33,7 +33,7 @@ seealso:
   - name: Automatic Certificate Management Environment (ACME)
     description: The specification of the ACME protocol (RFC 8555).
     link: https://tools.ietf.org/html/rfc8555
-  - module: acme_account_facts
+  - module: acme_account_info
     description: Retrieves facts about an ACME account.
   - module: openssl_privatekey
     description: Can be used to create a private account key.
