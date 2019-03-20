@@ -206,7 +206,7 @@ class AnsibleFlatMapLoader(object):
         root_path = os.path.dirname(self._root_package.__file__)
         flat_files = []
         # FIXME: make this a dict of filename->dir for faster direct lookup?
-        # FIXME: deal with underscore prefixed deprecated files (or require another method for collections?)
+        # FIXME: deal with _ prefixed deprecated files (or require another method for collections?)
         # FIXME: fix overloaded filenames (eg, rename Windows setup to win_setup)
         for root, dirs, files in os.walk(root_path):
             # add all files in this dir that don't have a blacklisted extension
