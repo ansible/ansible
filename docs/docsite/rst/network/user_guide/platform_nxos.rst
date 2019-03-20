@@ -122,3 +122,36 @@ Example NX-API Task
 In this example the ``proxy_env`` variable defined in ``group_vars`` gets passed to the ``environment`` option of the module used in the task.
 
 .. include:: shared_snippets/SSH_warning.txt
+
+Cisco Nexus Platform Support Matrix
+===================================
+
+The following platforms and software versions have been certified by Cisco to work with this version of Ansible.
+
+  .. table:: Platform / Software Mininum Requirements
+     :widths: auto
+     :align: center
+
+     ===================  =====================
+     Supported Platforms  Minimum NX-OS Version
+     ===================  =====================
+     Cisco Nexus N3k      7.0(3)I2(5) and later
+     Cisco Nexus N9k      7.0(3)I2(5) and later
+     Cisco Nexus N5k      7.3(0)N1(1) and later
+     Cisco Nexus N6k      7.3(0)N1(1) and later
+     Cisco Nexus N7k      7.3(0)D1(1) and later
+     ===================  =====================
+
+  .. table:: Platform Models
+     :widths: auto
+     :align: center
+
+     ========  ===========
+     Platform  Description
+     ========  ===========
+     N3k       Support includes N30xx, N31xx and N35xx models
+     N5k       Support includes all N5xxx models
+     N6k       Support includes all N6xxx models
+     N7k       Support includes all N7xxx models
+     N9k       Support includes all N9xxx models
+     ========  ===========
