@@ -123,7 +123,6 @@ In this example the ``proxy_env`` variable defined in ``group_vars`` gets passed
 
 .. include:: shared_snippets/SSH_warning.txt
 
-***********************************
 Cisco Nexus Platform Support Matrix
 ***********************************
 
