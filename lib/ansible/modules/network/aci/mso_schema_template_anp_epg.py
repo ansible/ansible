@@ -125,7 +125,7 @@ seealso:
 - module: mso_schema_template_anp
 - module: mso_schema_template_anp_epg_subnet
 - module: mso_schema_template_bd
-- module: mso_schema_template_contract
+- module: mso_schema_template_contract_filter
 extends_documentation_fragment: mso
 '''
 
