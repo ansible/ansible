@@ -1593,7 +1593,8 @@ class PyVmomiHelper(PyVmomi):
             # Setting hostName, orgName and fullName is mandatory, so we set some default when missing
             ident.userData.computerName = vim.vm.customization.FixedName()
             # computer name will be truncated to 15 characters if using VM name
-            default_name = self.params['name'].translate(None, string.punctuation)
+            default_name = self.params['name'].replace(' ', '')
+            default_name = ''.join([c for c in default_name if c not in string.punctuation])
             ident.userData.computerName.name = str(self.params['customization'].get('hostname', default_name[0:15]))
             ident.userData.fullName = str(self.params['customization'].get('fullname', 'Administrator'))
             ident.userData.orgName = str(self.params['customization'].get('orgname', 'ACME'))
