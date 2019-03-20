@@ -1,5 +1,18 @@
 ---
 ## Task file for setup/teardown AWS resources for aws_ssm integration testing
+
+- name: set up aws connection info
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{aws_access_key}}"
+      aws_secret_key: "{{aws_secret_key}}"
+      security_token: "{{security_token}}"
+      region: "{{aws_region}}"
+  no_log: yes
+  tags:
+    - setup_infra
+    - delete_infra
+
 - name: Install Session Manager Plugin for Debian/Ubuntu
   include_tasks: debian.yml
   when: ansible_distribution == "Ubuntu" or ansible_distribution == "Debian"
@@ -23,8 +36,9 @@
 - name: Create IAM role
   iam:
     iam_type: role
-    name: "{{iam_role_name}}{{ 600 | random }}"
+    name: "{{resource_prefix}}{{ 600 | random }}_aws_ssm_integration"
     state: present
+    <<: *aws_connection_info
   register: role_output
   tags: setup_infra
 
@@ -37,9 +51,10 @@
   iam_policy:
     iam_type: role
     iam_name: "{{random_role_name}}"
-    policy_name: "{{iam_policy_name}}{{ 600 | random }}"
+    policy_name: "{{resource_prefix}}{{ 600 | random }}"
     policy_document:  aws_ssm_integration_test_setup_teardown/files/custom_role.json
     state: present
+    <<: *aws_connection_info
   register: policy_name
   tags: setup_infra
 
@@ -52,38 +67,38 @@
     seconds: 10
   tags: setup_infra
 
-- name: Create Linux ec2 instance
+- name: Create Linux EC2 instance
   ec2:
     instance_type: "{{instance_type}}"
     image: "{{linux_ami_id}}"
     wait: "yes"
     count: 1
-    region: "{{aws_region}}"
     instance_profile_name: "{{random_role_name}}"
     instance_tags:
-      Name: aws_ssm_integration_test_linux
+      Name: "{{resource_prefix}}-integration-test-aws-ssm-linux"
     user_data: |
                  #!/bin/sh
                  sudo systemctl start amazon-ssm-agent
     state: present
+    <<: *aws_connection_info
   register: linux_output
   tags: setup_infra
 
-- name: Create Windows ec2 instance
+- name: Create Windows EC2 instance
   ec2:
     instance_type: "{{instance_type}}"
     image: "{{windows_ami_id}}"
     wait: "yes"
     count: 1
-    region: "{{aws_region}}"
     instance_profile_name: "{{random_role_name}}"
     instance_tags:
-      Name: aws_ssm_integration_test_windows
+      Name: "{{resource_prefix}}-integration-test-aws-ssm-windows"
     user_data: |
                 <powershell>
                 Restart-Service AmazonSSMAgent
                 </powershell>
     state: present
+    <<: *aws_connection_info
   register: windows_output
   tags: setup_infra
 
@@ -92,9 +107,9 @@
     delay: 300
   tags: setup_infra
 
-- name: Setting fact for S3 bucket-name using EC2 instance-id
+- name: Setting fact for S3 bucket name using EC2 instance id
   set_fact:
-    bucket_name: "{{linux_output.instance_ids[0]}}-{{windows_output.instance_ids[0]}}"
+    bucket_name: "{{resource_prefix}}-aws-ssm-s3"
     linux_instance_id: "{{linux_output.instance_ids[0]}}"
     windows_instance_id: "{{windows_output.instance_ids[0]}}"
   tags: setup_infra
@@ -102,6 +117,7 @@
 - name: Create bucket with instance id and rolename
   s3_bucket:
     name: "{{bucket_name}}"
+    <<: *aws_connection_info
   register: s3_output
   tags: setup_infra
 
@@ -123,6 +139,13 @@
     src: inventory-windows.aws_ssm.j2
   tags: setup_infra
 
+- name: Create AWS Keys Environement
+  template:
+    dest: "{{playbook_dir}}/aws-env-vars.sh"
+    src: aws-env-vars.j2
+  tags: setup_infra
+  no_log: yes
+
 - name: Include variable file to delete infra
   include_vars:  "{{playbook_dir}}/vars_to_delete.yml"
   tags: delete_infra
@@ -131,6 +154,7 @@
   aws_s3:
     bucket: "{{bucket_name}}"
     mode: delete
+    <<: *aws_connection_info
   tags: delete_infra
 
 - name: Terminate EC2 instances that were previously launched
@@ -139,7 +163,7 @@
     instance_ids:
       - "{{linux_instance_id}}"
       - "{{windows_instance_id}}"
-    region: "{{aws_region}}"
+    <<: *aws_connection_info
   tags: delete_infra
 
 - name: Delete IAM policy
@@ -149,11 +173,19 @@
     policy_name: "{{policy_name}}"
     policy_document:  aws_ssm_integration_test_setup_teardown/files/custom_role.json
     state: absent
+    <<: *aws_connection_info
   tags: delete_infra
 
 - name: Delete IAM role
   iam:
     iam_type: role
     name: "{{role_name_random}}"
+    state: absent
+    <<: *aws_connection_info
+  tags: delete_infra
+
+- name: Delete AWS Keys Environement
+  file:
+    path: "{{playbook_dir}}/aws-env-vars.sh"
     state: absent
   tags: delete_infra

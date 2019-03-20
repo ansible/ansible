@@ -1,3 +1,4 @@
 - hosts: localhost
   roles:
-   - aws_ssm_integration_test_setup_teardown
+    - role: aws_ssm_integration_test_setup_teardown
+      when: ansible_python_version is version('3', '<')
