@@ -156,7 +156,8 @@
   openssl_privatekey:
     path: '{{ output_dir }}/privatekey_ecc.pem'
     type: ECC
-    curve: secp256k1
+    curve: "{{ (ansible_distribution == 'CentOS' and ansible_distribution_major_version == '6') | ternary('secp521r1', 'secp256k1') }}"
+    # ^ cryptography on CentOS6 doesn't support secp256k1, so we use secp521r1 instead
 
 - name: (Selfsigned, {{select_crypto_backend}}) Generate CSR
   openssl_csr:
