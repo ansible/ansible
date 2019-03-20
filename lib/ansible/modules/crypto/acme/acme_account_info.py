@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: acme_account_facts
+module: acme_account_info
 author: "Felix Fontein (@felixfontein)"
 version_added: "2.7"
 short_description: Retrieves information on ACME accounts
@@ -26,6 +26,8 @@ description:
    - "This module only works with the ACME v2 protocol."
 notes:
    - "The M(acme_account) module allows to modify, create and delete ACME accounts."
+   - "This module was called C(acme_account_facts) before Ansible 2.8. The usage
+      did not change."
 seealso:
   - module: acme_account
     description: Allows to create, modify or delete an ACME account.
@@ -35,7 +37,7 @@ extends_documentation_fragment:
 
 EXAMPLES = '''
 - name: Check whether an account with the given account key exists
-  acme_account_facts:
+  acme_account_info:
     account_key_src: /etc/pki/cert/private/account.key
     register: account_data
 - name: Verify that account exists
@@ -48,7 +50,7 @@ EXAMPLES = '''
   debug: var=account_data.account.contact
 
 - name: Check whether the account exists and is accessible with the given account key
-  acme_account_facts:
+  acme_account_info:
     account_key_content: "{{ acme_account_key }}"
     account_uri: "{{ acme_account_uri }}"
     register: account_data
@@ -125,6 +127,8 @@ def main():
         ),
         supports_check_mode=True,
     )
+    if module._name == 'acme_account_facts':
+        module.deprecate("The 'acme_account_facts' module has been renamed to 'acme_account_info'", version='2.12')
     set_crypto_backend(module)
 
     if not module.params.get('validate_certs'):
