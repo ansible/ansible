@@ -1,7 +1,6 @@
-unsupported
+shippable/posix/group3
 destructive
 skip/freebsd
 skip/osx
 skip/rhel
 needs/root
-needs/privileged
