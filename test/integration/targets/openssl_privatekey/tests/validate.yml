@@ -126,3 +126,12 @@
       - remove_2 is not changed
       - remove_1.backup_file is not none
       - remove_2.backup_file is undefined
+
+- name: Validate mode
+  assert:
+    that:
+      - privatekey_mode_1 is changed
+      - privatekey_mode_1_stat.stat.mode == '0400'
+      - privatekey_mode_2 is not changed
+      - privatekey_mode_3 is changed
+      - privatekey_mode_3_stat.stat.mode == '0400'
