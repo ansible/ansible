@@ -903,6 +903,60 @@ class RedfishUtils(object):
     def get_multi_cpu_inventory(self):
         return self.aggregate(self.get_cpu_inventory)
 
+    def get_memory_inventory(self):
+        result = {}
+        memory_list = []
+        memory_results = []
+        key = "Memory"
+        # Get these entries, but does not fail if not found
+        properties = ['SerialNumber', 'MemoryDeviceType', 'PartNuber',
+        'MemoryLocation', 'RankCount', 'CapacityMiB', 'OperatingMemoryModes', 'Status', 'Manufacturer', 'Name']
+
+        # Search for 'key' entry and extract URI from it
+        response = self.get_request(self.root_uri + self.systems_uri)
+        if response['ret'] is False:
+            return response
+        result['ret'] = True
+        data = response['data']
+
+        if key not in data:
+            return {'ret': False, 'msg': "Key %s not found" % key}
+
+        memory_uri = data[key]["@odata.id"]
+
+        # Get a list of all CPUs and build respective URIs
+        response = self.get_request(self.root_uri + memory_uri)
+        if response['ret'] is False:
+            return response
+        result['ret'] = True
+        data = response['data']
+
+        for dimm in data[u'Members']:
+            memory_list.append(dimm[u'@odata.id'])
+
+        for m in memory_list:
+            dimm = {}
+            uri = self.root_uri + m
+            response = self.get_request(uri)
+            if response['ret'] is False:
+                return response
+            data = response['data']
+
+            if "Status" in data:
+                if "State" in data["Status"]:
+                    if data["Status"]["State"] == "Absent":
+                        continue
+            else:
+                continue
+                
+            for property in properties:
+                if property in data:
+                    dimm[property] = data[property]
+
+            memory_results.append(dimm)
+        result["entries"] = memory_results
+        return result
+
     def get_nic_inventory(self, resource_uri):
         result = {}
         nic_list = []
