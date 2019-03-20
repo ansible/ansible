@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix handlers to allow for templated values in run_once (https://github.com/ansible/ansible/issues/27237)
