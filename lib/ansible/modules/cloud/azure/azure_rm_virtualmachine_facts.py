@@ -248,8 +248,10 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
             self.fail("Parameter error: resource group required when filtering by name.")
         if self.name:
             self.results['vms'] = self.get_item()
+        elif self.resource_group:
+            self.results['vms'] = self.list_items_by_resourcegroup()
         else:
-            self.results['vms'] = self.list_items()
+            self.results['vms'] = self.list_all_items()
 
         return self.results
 
@@ -268,10 +270,23 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
 
         return result
 
-    def list_items(self):
+    def list_items_by_resourcegroup(self):
         self.log('List all items')
         try:
             items = self.compute_client.virtual_machines.list(self.resource_group)
+        except CloudError as exc:
+            self.fail("Failed to list all items - {0}".format(str(exc)))
+
+        results = []
+        for item in items:
+            if self.has_tags(item.tags, self.tags):
+                results.append(self.serialize_vm(self.get_vm(item.name)))
+        return results
+
+    def list_all_items(self):
+        self.log('List all items')
+        try:
+            items = self.compute_client.virtual_machines.list_all()
         except CloudError as exc:
             self.fail("Failed to list all items - {0}".format(str(exc)))
 
