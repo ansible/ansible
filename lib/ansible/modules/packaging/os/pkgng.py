@@ -132,8 +132,10 @@ def query_package(module, pkgng_path, name, dir_arg):
 def query_update(module, pkgng_path, name, dir_arg, old_pkgng, pkgsite):
 
     # Check to see if a package upgrade is available.
+    # In pkgng 1.10.0 and after, rc is as follows:
     # rc = 0, no updates available or package not installed
     # rc = 1, updates available
+    # In pkgng < 1.10.0, need to check if out contains a certain string.
     if old_pkgng:
         rc, out, err = module.run_command("%s %s upgrade -g -n %s" % (pkgsite, pkgng_path, name))
     else:
@@ -142,13 +144,37 @@ def query_update(module, pkgng_path, name, dir_arg, old_pkgng, pkgsite):
     if rc == 1:
         return True
 
+    # check updates for pkgng < 1.10.0
+    pkgng_ver = query_pkgng_version(module, pkgng_path)
+
+    if pkgng_ver[0] > 1:
+        pass
+    elif pkgng_ver[1] == 0:  # 1.0.x
+        if "The following packages will be upgraded:" in out:
+            return True
+    elif pkgng_ver[1] == 1:  # 1.1.x
+        if "Uprgades have been requested for the following" in out:
+            return True
+    elif pkgng_ver[1] == 2:  # 1.2.x
+        if "Upgrades have been requested for the following" in out:
+            return True
+    else:
+        if "Installed packages to be UPGRADED:" in out:
+            return True
+
     return False
+
+
+def query_pkgng_version(module, pkgng_path):
+
+    rc, out, err = module.run_command("%s -v" % pkgng_path)
+
+    return [int(x) for x in re.split(r'[\._]', out)]
 
 
 def pkgng_older_than(module, pkgng_path, compare_version):
 
-    rc, out, err = module.run_command("%s -v" % pkgng_path)
-    version = [int(x) for x in re.split(r'[\._]', out)]
+    version = query_pkgng_version(module, pkgng_path)
 
     i = 0
     new_pkgng = True
