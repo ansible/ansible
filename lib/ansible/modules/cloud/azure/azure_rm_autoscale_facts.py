@@ -59,7 +59,7 @@ autoscales:
     type: list
     sample: [{
         "enabled": true,
-        "id": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/foo/providers/microsoft.insights/autoscalesettings/scale",
+        "id": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/myResourceGroup/providers/microsoft.insights/autoscalesettings/scale",
         "location": "eastus",
         "name": "scale",
         "notifications": [
@@ -94,7 +94,8 @@ autoscales:
                         "cooldown": 5.0,
                         "direction": "Increase",
                         "metric_name": "Percentage CPU",
-                        "metric_resource_uri": "/subscriptions/XX/resourceGroups/foo/providers/Microsoft.Compute/virtualMachineScaleSets/vmss",
+                        "metric_resource_uri": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsof
+                                                t.Compute/virtualMachineScaleSets/myVmss",
                         "operator": "GreaterThan",
                         "statistic": "Average",
                         "threshold": 70.0,
@@ -107,7 +108,7 @@ autoscales:
                 ]
             }
         ],
-        "target": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/foo/providers/Microsoft.Compute/virtualMachineScaleSets/vmss"
+        "target": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/myVmss"
     }]
 
 '''
