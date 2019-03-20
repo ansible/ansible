@@ -301,7 +301,7 @@ class AzureRMContainerInstanceFacts(AzureRMModuleBase):
             'ports': ports,
             'location': d['location'],
             'containers': containers,
-            'restart_policy': _camel_to_snake(d['restart_policy']),
+            'restart_policy': _camel_to_snake(d.get('restart_policy')) if d.get('restart_policy') else None,
             'tags': d.get('tags', None)
         }
         return d
