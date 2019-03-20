@@ -639,41 +639,35 @@ def main():
                                   'cryptography (>= {0}) and pyOpenSSL (>= {1})').format(
                                       MINIMAL_CRYPTOGRAPHY_VERSION,
                                       MINIMAL_PYOPENSSL_VERSION))
-    if backend == 'pyopenssl':
-        if not PYOPENSSL_FOUND:
-            module.fail_json(msg=missing_required_lib('pyOpenSSL'), exception=PYOPENSSL_IMP_ERR)
-        private_key = PrivateKeyPyOpenSSL(module)
-    elif backend == 'cryptography':
-        if not CRYPTOGRAPHY_FOUND:
-            module.fail_json(msg=missing_required_lib('cryptography'), exception=CRYPTOGRAPHY_IMP_ERR)
-        private_key = PrivateKeyCryptography(module)
+    try:
+        if backend == 'pyopenssl':
+            if not PYOPENSSL_FOUND:
+                module.fail_json(msg=missing_required_lib('pyOpenSSL'), exception=PYOPENSSL_IMP_ERR)
+            private_key = PrivateKeyPyOpenSSL(module)
+        elif backend == 'cryptography':
+            if not CRYPTOGRAPHY_FOUND:
+                module.fail_json(msg=missing_required_lib('cryptography'), exception=CRYPTOGRAPHY_IMP_ERR)
+            private_key = PrivateKeyCryptography(module)
 
-    if private_key.state == 'present':
+        if private_key.state == 'present':
+            if module.check_mode:
+                result = private_key.dump()
+                result['changed'] = module.params['force'] or not private_key.check(module)
+                module.exit_json(**result)
 
-        if module.check_mode:
-            result = private_key.dump()
-            result['changed'] = module.params['force'] or not private_key.check(module)
-            module.exit_json(**result)
-
-        try:
             private_key.generate(module)
-        except PrivateKeyError as exc:
-            module.fail_json(msg=to_native(exc))
-    else:
+        else:
+            if module.check_mode:
+                result = private_key.dump()
+                result['changed'] = os.path.exists(module.params['path'])
+                module.exit_json(**result)
 
-        if module.check_mode:
-            result = private_key.dump()
-            result['changed'] = os.path.exists(module.params['path'])
-            module.exit_json(**result)
-
-        try:
             private_key.remove(module)
-        except PrivateKeyError as exc:
-            module.fail_json(msg=to_native(exc))
 
-    result = private_key.dump()
-
-    module.exit_json(**result)
+        result = private_key.dump()
+        module.exit_json(**result)
+    except crypto_utils.OpenSSLObjectError as exc:
+        module.fail_json(msg=to_native(exc))
 
 
 if __name__ == '__main__':

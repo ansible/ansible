@@ -854,46 +854,40 @@ def main():
                                   'cryptography (>= {0}) and pyOpenSSL (>= {1})').format(
                                       MINIMAL_CRYPTOGRAPHY_VERSION,
                                       MINIMAL_PYOPENSSL_VERSION))
-    if backend == 'pyopenssl':
-        if not PYOPENSSL_FOUND:
-            module.fail_json(msg=missing_required_lib('pyOpenSSL'), exception=PYOPENSSL_IMP_ERR)
-        try:
-            getattr(crypto.X509Req, 'get_extensions')
-        except AttributeError:
-            module.fail_json(msg='You need to have PyOpenSSL>=0.15 to generate CSRs')
-        csr = CertificateSigningRequestPyOpenSSL(module)
-    elif backend == 'cryptography':
-        if not CRYPTOGRAPHY_FOUND:
-            module.fail_json(msg=missing_required_lib('cryptography'), exception=CRYPTOGRAPHY_IMP_ERR)
-        csr = CertificateSigningRequestCryptography(module)
+    try:
+        if backend == 'pyopenssl':
+            if not PYOPENSSL_FOUND:
+                module.fail_json(msg=missing_required_lib('pyOpenSSL'), exception=PYOPENSSL_IMP_ERR)
+            try:
+                getattr(crypto.X509Req, 'get_extensions')
+            except AttributeError:
+                module.fail_json(msg='You need to have PyOpenSSL>=0.15 to generate CSRs')
+            csr = CertificateSigningRequestPyOpenSSL(module)
+        elif backend == 'cryptography':
+            if not CRYPTOGRAPHY_FOUND:
+                module.fail_json(msg=missing_required_lib('cryptography'), exception=CRYPTOGRAPHY_IMP_ERR)
+            csr = CertificateSigningRequestCryptography(module)
 
-    if module.params['state'] == 'present':
+        if module.params['state'] == 'present':
+            if module.check_mode:
+                result = csr.dump()
+                result['changed'] = module.params['force'] or not csr.check(module)
+                module.exit_json(**result)
 
-        if module.check_mode:
-            result = csr.dump()
-            result['changed'] = module.params['force'] or not csr.check(module)
-            module.exit_json(**result)
-
-        try:
             csr.generate(module)
-        except (CertificateSigningRequestError, crypto_utils.OpenSSLObjectError) as exc:
-            module.fail_json(msg=to_native(exc))
 
-    else:
+        else:
+            if module.check_mode:
+                result = csr.dump()
+                result['changed'] = os.path.exists(module.params['path'])
+                module.exit_json(**result)
 
-        if module.check_mode:
-            result = csr.dump()
-            result['changed'] = os.path.exists(module.params['path'])
-            module.exit_json(**result)
-
-        try:
             csr.remove(module)
-        except (CertificateSigningRequestError, crypto_utils.OpenSSLObjectError) as exc:
-            module.fail_json(msg=to_native(exc))
 
-    result = csr.dump()
-
-    module.exit_json(**result)
+        result = csr.dump()
+        module.exit_json(**result)
+    except crypto_utils.OpenSSLObjectError as exc:
+        module.fail_json(msg=to_native(exc))
 
 
 if __name__ == "__main__":

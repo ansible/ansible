@@ -293,34 +293,28 @@ def main():
             msg="The directory '%s' does not exist or the file is not a directory" % base_dir
         )
 
-    public_key = PublicKey(module)
+    try:
+        public_key = PublicKey(module)
 
-    if public_key.state == 'present':
+        if public_key.state == 'present':
+            if module.check_mode:
+                result = public_key.dump()
+                result['changed'] = module.params['force'] or not public_key.check(module)
+                module.exit_json(**result)
 
-        if module.check_mode:
-            result = public_key.dump()
-            result['changed'] = module.params['force'] or not public_key.check(module)
-            module.exit_json(**result)
-
-        try:
             public_key.generate(module)
-        except PublicKeyError as exc:
-            module.fail_json(msg=to_native(exc))
-    else:
+        else:
+            if module.check_mode:
+                result = public_key.dump()
+                result['changed'] = os.path.exists(module.params['path'])
+                module.exit_json(**result)
 
-        if module.check_mode:
-            result = public_key.dump()
-            result['changed'] = os.path.exists(module.params['path'])
-            module.exit_json(**result)
-
-        try:
             public_key.remove(module)
-        except PublicKeyError as exc:
-            module.fail_json(msg=to_native(exc))
 
-    result = public_key.dump()
-
-    module.exit_json(**result)
+        result = public_key.dump()
+        module.exit_json(**result)
+    except crypto_utils.OpenSSLObjectError as exc:
+        module.fail_json(msg=to_native(exc))
 
 
 if __name__ == '__main__':

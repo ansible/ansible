@@ -1691,103 +1691,97 @@ def main():
         add_file_common_args=True,
     )
 
-    if module.params['state'] == 'absent':
-        certificate = CertificateAbsent(module)
+    try:
+        if module.params['state'] == 'absent':
+            certificate = CertificateAbsent(module)
 
-    else:
-        if module.params['provider'] != 'assertonly' and module.params['csr_path'] is None:
-            module.fail_json(msg='csr_path is required when provider is not assertonly')
+        else:
+            if module.params['provider'] != 'assertonly' and module.params['csr_path'] is None:
+                module.fail_json(msg='csr_path is required when provider is not assertonly')
 
-        base_dir = os.path.dirname(module.params['path']) or '.'
-        if not os.path.isdir(base_dir):
-            module.fail_json(
-                name=base_dir,
-                msg='The directory %s does not exist or the file is not a directory' % base_dir
-            )
+            base_dir = os.path.dirname(module.params['path']) or '.'
+            if not os.path.isdir(base_dir):
+                module.fail_json(
+                    name=base_dir,
+                    msg='The directory %s does not exist or the file is not a directory' % base_dir
+                )
 
-        provider = module.params['provider']
+            provider = module.params['provider']
 
-        backend = module.params['select_crypto_backend']
-        if backend == 'auto':
-            # Detect what backend we can use
-            can_use_cryptography = CRYPTOGRAPHY_FOUND and CRYPTOGRAPHY_VERSION >= LooseVersion(MINIMAL_CRYPTOGRAPHY_VERSION)
-            can_use_pyopenssl = PYOPENSSL_FOUND and PYOPENSSL_VERSION >= LooseVersion(MINIMAL_PYOPENSSL_VERSION)
-
-            # If cryptography is available we'll use it
-            if can_use_cryptography:
-                backend = 'cryptography'
-            elif can_use_pyopenssl:
-                backend = 'pyopenssl'
-
-            if module.params['selfsigned_version'] == 2 or module.params['ownca_version'] == 2:
-                module.warn('crypto backend forced to pyopenssl. The cryptography library does not support v2 certificates')
-                backend = 'pyopenssl'
-
-            # Fail if no backend has been found
+            backend = module.params['select_crypto_backend']
             if backend == 'auto':
-                module.fail_json(msg=("Can't detect none of the required Python libraries "
-                                      "cryptography (>= {0}) or PyOpenSSL (>= {1})").format(
-                                          MINIMAL_CRYPTOGRAPHY_VERSION,
-                                          MINIMAL_PYOPENSSL_VERSION))
+                # Detect what backend we can use
+                can_use_cryptography = CRYPTOGRAPHY_FOUND and CRYPTOGRAPHY_VERSION >= LooseVersion(MINIMAL_CRYPTOGRAPHY_VERSION)
+                can_use_pyopenssl = PYOPENSSL_FOUND and PYOPENSSL_VERSION >= LooseVersion(MINIMAL_PYOPENSSL_VERSION)
 
-        if backend == 'pyopenssl':
-            if not PYOPENSSL_FOUND:
-                module.fail_json(msg=missing_required_lib('pyOpenSSL'), exception=PYOPENSSL_IMP_ERR)
-            if module.params['provider'] in ['selfsigned', 'ownca', 'assertonly']:
-                try:
-                    getattr(crypto.X509Req, 'get_extensions')
-                except AttributeError:
-                    module.fail_json(msg='You need to have PyOpenSSL>=0.15')
+                # If cryptography is available we'll use it
+                if can_use_cryptography:
+                    backend = 'cryptography'
+                elif can_use_pyopenssl:
+                    backend = 'pyopenssl'
 
-            if provider == 'selfsigned':
-                certificate = SelfSignedCertificate(module)
-            elif provider == 'acme':
-                certificate = AcmeCertificate(module, 'pyopenssl')
-            elif provider == 'ownca':
-                certificate = OwnCACertificate(module)
-            else:
-                certificate = AssertOnlyCertificate(module)
-        elif backend == 'cryptography':
-            if not CRYPTOGRAPHY_FOUND:
-                module.fail_json(msg=missing_required_lib('cryptography'), exception=CRYPTOGRAPHY_IMP_ERR)
-            if module.params['selfsigned_version'] == 2 or module.params['ownca_version'] == 2:
-                module.fail_json(msg='The cryptography backend does not support v2 certificates, '
-                                     'use select_crypto_backend=pyopenssl for v2 certificates')
-            if provider == 'selfsigned':
-                certificate = SelfSignedCertificateCryptography(module)
-            elif provider == 'acme':
-                certificate = AcmeCertificate(module, 'cryptography')
-            elif provider == 'ownca':
-                certificate = OwnCACertificateCryptography(module)
-            else:
-                certificate = AssertOnlyCertificateCryptography(module)
+                if module.params['selfsigned_version'] == 2 or module.params['ownca_version'] == 2:
+                    module.warn('crypto backend forced to pyopenssl. The cryptography library does not support v2 certificates')
+                    backend = 'pyopenssl'
 
-    if module.params['state'] == 'present':
+                # Fail if no backend has been found
+                if backend == 'auto':
+                    module.fail_json(msg=("Can't detect none of the required Python libraries "
+                                          "cryptography (>= {0}) or PyOpenSSL (>= {1})").format(
+                                              MINIMAL_CRYPTOGRAPHY_VERSION,
+                                              MINIMAL_PYOPENSSL_VERSION))
 
-        if module.check_mode:
-            result = certificate.dump(check_mode=True)
-            result['changed'] = module.params['force'] or not certificate.check(module)
-            module.exit_json(**result)
+            if backend == 'pyopenssl':
+                if not PYOPENSSL_FOUND:
+                    module.fail_json(msg=missing_required_lib('pyOpenSSL'), exception=PYOPENSSL_IMP_ERR)
+                if module.params['provider'] in ['selfsigned', 'ownca', 'assertonly']:
+                    try:
+                        getattr(crypto.X509Req, 'get_extensions')
+                    except AttributeError:
+                        module.fail_json(msg='You need to have PyOpenSSL>=0.15')
 
-        try:
+                if provider == 'selfsigned':
+                    certificate = SelfSignedCertificate(module)
+                elif provider == 'acme':
+                    certificate = AcmeCertificate(module, 'pyopenssl')
+                elif provider == 'ownca':
+                    certificate = OwnCACertificate(module)
+                else:
+                    certificate = AssertOnlyCertificate(module)
+            elif backend == 'cryptography':
+                if not CRYPTOGRAPHY_FOUND:
+                    module.fail_json(msg=missing_required_lib('cryptography'), exception=CRYPTOGRAPHY_IMP_ERR)
+                if module.params['selfsigned_version'] == 2 or module.params['ownca_version'] == 2:
+                    module.fail_json(msg='The cryptography backend does not support v2 certificates, '
+                                         'use select_crypto_backend=pyopenssl for v2 certificates')
+                if provider == 'selfsigned':
+                    certificate = SelfSignedCertificateCryptography(module)
+                elif provider == 'acme':
+                    certificate = AcmeCertificate(module, 'cryptography')
+                elif provider == 'ownca':
+                    certificate = OwnCACertificateCryptography(module)
+                else:
+                    certificate = AssertOnlyCertificateCryptography(module)
+
+        if module.params['state'] == 'present':
+            if module.check_mode:
+                result = certificate.dump(check_mode=True)
+                result['changed'] = module.params['force'] or not certificate.check(module)
+                module.exit_json(**result)
+
             certificate.generate(module)
-        except CertificateError as exc:
-            module.fail_json(msg=to_native(exc))
-    else:
+        else:
+            if module.check_mode:
+                result = certificate.dump(check_mode=True)
+                result['changed'] = os.path.exists(module.params['path'])
+                module.exit_json(**result)
 
-        if module.check_mode:
-            result = certificate.dump(check_mode=True)
-            result['changed'] = os.path.exists(module.params['path'])
-            module.exit_json(**result)
-
-        try:
             certificate.remove(module)
-        except CertificateError as exc:
-            module.fail_json(msg=to_native(exc))
 
-    result = certificate.dump()
-
-    module.exit_json(**result)
+        result = certificate.dump()
+        module.exit_json(**result)
+    except crypto_utils.OpenSSLObjectError as exc:
+        module.fail_json(msg=to_native(exc))
 
 
 if __name__ == "__main__":
