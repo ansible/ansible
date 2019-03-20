@@ -358,7 +358,7 @@
 - name: Retrieve facts by tags
   azure_rm_virtualmachine_facts:
     tags:
-      abc: def
+      - abc: def
   register: results
 
 - name: Assert that facts module returned the second vm
