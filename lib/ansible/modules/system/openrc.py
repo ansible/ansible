@@ -28,11 +28,11 @@ options:
             - C(started)/C(stopped) are idempotent actions that will not run commands unless necessary.
               Not all init scripts support C(restarted) nor C(reloaded) natively, so these will both trigger a stop and start as needed.
     enabled:
-        type: boolean
+        type: bool
         description:
             - Whether the service should start on boot. B(At least one of state and enabled are required.)
     sleep:
-        type: integer
+        type: int
         default: 1
         description:
             - If the service is being C(restarted) or C(reloaded) then sleep this many seconds between the stop and start command.
@@ -42,7 +42,6 @@ options:
         description:
             - The runlevels this script should be enabled/disabled from.
             - Use this to override the defaults set by the package or init script itself.
-        default: ['default']
 notes:
     - One option other than name is required.
 requirements:
@@ -73,7 +72,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(required=True, type='str', aliases=['service']),
-            state=dict(choices=['started', 'stopped', 'restarted', 'reloaded'], type='str'),
+            state=dict(choices=['started', 'stopped', 'restarted', 'reloaded', 'paused'], type='str'),
             enabled=dict(type='bool'),
             sleep=dict(type='int', default=1),
             runlevels=dict(type='list', default=[]),
@@ -166,6 +165,10 @@ def main():
                     rc, out, err = runme(dothis)
 
         elif is_started != (action == 'start'):
+
+            if action == 'pause':
+                action == '--nodeps stop'
+
             result['changed'] = True
             if not module.check_mode:
                 rc, out, err = runme(action)
