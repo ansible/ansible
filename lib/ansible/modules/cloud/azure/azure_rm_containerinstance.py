@@ -184,7 +184,7 @@ from ansible.module_utils.common.dict_transformations import _snake_to_camel
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from msrestazure.azure_operation import AzureOperationPoller
+    from msrest.polling import LROPoller
     from azure.mgmt.containerinstance import ContainerInstanceManagementClient
 except ImportError:
     # This is handled in azure_rm_common
@@ -446,7 +446,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
                                                                                    container_group_name=self.name,
                                                                                    container_group=parameters)
 
-        if isinstance(response, AzureOperationPoller):
+        if isinstance(response, LROPoller):
             response = self.get_poller_result(response)
 
         return response.as_dict()
