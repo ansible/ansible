@@ -9,7 +9,7 @@
   command: openssl ec -in {{ output_dir }}/accountkey.pem -noout -text
 
 - name: Check that account does not exist
-  acme_account_facts:
+  acme_account_info:
     select_crypto_backend: "{{ select_crypto_backend }}"
     account_key_src: "{{ output_dir }}/accountkey.pem"
     acme_version: 2
@@ -31,7 +31,7 @@
     - mailto:example@example.org
 
 - name: Check that account exists
-  acme_account_facts:
+  acme_account_info:
     select_crypto_backend: "{{ select_crypto_backend }}"
     account_key_src: "{{ output_dir }}/accountkey.pem"
     acme_version: 2
@@ -51,7 +51,7 @@
     contact: []
 
 - name: Check that account was modified
-  acme_account_facts:
+  acme_account_info:
     select_crypto_backend: "{{ select_crypto_backend }}"
     account_key_src: "{{ output_dir }}/accountkey.pem"
     acme_version: 2
@@ -61,7 +61,7 @@
   register: account_modified
 
 - name: Check with wrong account URI
-  acme_account_facts:
+  acme_account_info:
     select_crypto_backend: "{{ select_crypto_backend }}"
     account_key_src: "{{ output_dir }}/accountkey.pem"
     acme_version: 2
@@ -71,7 +71,7 @@
   register: account_not_exist
 
 - name: Check with wrong account key
-  acme_account_facts:
+  acme_account_info:
     select_crypto_backend: "{{ select_crypto_backend }}"
     account_key_src: "{{ output_dir }}/accountkey2.pem"
     acme_version: 2
