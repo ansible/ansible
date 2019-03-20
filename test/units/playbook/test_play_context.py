@@ -140,6 +140,7 @@ def test_play_context_make_become_cmd(mocker, parser, reset_cli_args):
                                                                       default_exe, success, default_cmd), cmd) is not None)
 
     play_context.become_pass = None
+    play_context.become_method = 'su'
     play_context.set_become_plugin(become_loader.get('su'))
     play_context.become_flags = su_flags
     cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
@@ -147,12 +148,14 @@ def test_play_context_make_become_cmd(mocker, parser, reset_cli_args):
                                                                       success, default_cmd), cmd) is not None)
 
     play_context.set_become_plugin(become_loader.get('pbrun'))
+    play_context.become_method = 'pbrun'
     play_context.become_flags = pbrun_flags
     cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
     assert re.match("""%s %s -u %s 'echo %s; %s'""" % (pbrun_exe, pbrun_flags, play_context.become_user,
                                                        success, default_cmd), cmd) is not None
 
     play_context.set_become_plugin(become_loader.get('pfexec'))
+    play_context.become_method = 'pfexec'
     play_context.become_flags = pfexec_flags
     cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
     assert re.match('''%s %s "'echo %s; %s'"''' % (pfexec_exe, pfexec_flags, success, default_cmd), cmd) is not None
