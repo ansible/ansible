@@ -159,7 +159,7 @@ EXAMPLES = '''
     objects:
       - name: ${NAME}
         kind: VirtualMachine
-        memory: ${MEMORY_SIZE}Mi
+        memory: ${MEMORY_SIZE}
         state: present
         namespace: vms
     parameters:
