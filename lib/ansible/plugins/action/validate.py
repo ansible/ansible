@@ -86,7 +86,7 @@ class ActionModule(ActionBase):
         self._set_args()
 
         try:
-            from jsonschema import validate,draft7_format_checker,exceptions,RefResolver
+            from jsonschema import validate, draft7_format_checker, exceptions
         except ImportError as e:
             raise AnsibleError("The validate module requires jsonschema python module.")
 
@@ -99,7 +99,7 @@ class ActionModule(ActionBase):
         elif isinstance(self.schema, string_types):
             try:
                 failed, err_msg, schema_data = (
-                    self._load_files(self.schema,validate_extensions=True)
+                    self._load_files(self.schema, validate_extensions=True)
                 )
                 if failed:
                     raise AnsibleActionFail(err_msg)
@@ -123,12 +123,10 @@ class ActionModule(ActionBase):
         except AnsibleUndefinedVariable as e:
             raise AnsibleActionFail("'var' {} is not defined".format(self.var))
 
-
         try:
-
-            validate(instance=variable_value,schema=schema_data,
+            validate(instance=variable_value, schema=schema_data,
                      format_checker=draft7_format_checker,)
         except exceptions.ValidationError as e:
-            raise AnsibleActionFail("Failed validating {} in {}: {}".format(e.validator,e.schema_path,e.message))
+            raise AnsibleActionFail("Failed validating {} in {}: {}".format(e.validator, e.schema_path, e.message))
 
         return result
