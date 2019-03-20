@@ -70,6 +70,12 @@ options:
   bootdisk:
     description:
       - Enable booting from specified disk. C((ide|sata|scsi|virtio)\d+)
+  ciuser:
+    description:
+      - Cloud Init: username of default user to create.
+  ciuser:
+    description:
+      - Cloud Init: password of default user to create.
   clone:
     description:
       - Name of VM to be cloned. If C(vmid) is setted, C(clone) can take arbitrary value but required for intiating the clone.
@@ -167,6 +173,11 @@ options:
     description:
       - Lock/unlock the VM.
     choices: ['migrate', 'backup', 'snapshot', 'rollback']
+  ipconfig:
+    description:
+      - Cloud Init: Set the IP configuration.
+      - Uses YAML hash with the keys needing to be a number (see example below)
+      - Hash index must match the numbering scheme used in the net[n] or else the values will not be assigned
   machine:
     description:
       - Specifies the Qemu machine type.
@@ -186,6 +197,9 @@ options:
     description:
       - Specifies the VM name. Only used on the configuration web interface.
       - Required only for C(state=present).
+  nameserver:
+    description:
+      - Cloud Init: DNS entries to populate the cloud-init drive with
   net:
     description:
       - A hash/dictionary of network interfaces for the VM. C(net='{"key":"value", "key":"value"}').
@@ -264,6 +278,8 @@ options:
     description:
       - Specifies the SCSI controller model.
     choices: ['lsi', 'lsi53c810', 'virtio-scsi-pci', 'virtio-scsi-single', 'megasas', 'pvscsi']
+  searchdomain:
+    description: Cloud Init: search domain to set for the DNS configuration
   serial:
     description:
       - A hash/dictionary of serial device to create inside the VM. C('{"key":"value", "key":"value"}').
@@ -290,6 +306,9 @@ options:
     description:
       - Sets the number of CPU sockets. (1 - N).
     default: 1
+  sshkeys:
+    description:
+      - Cloud Init: SSH key to assign to the default user. NOT TESTED with multiple keys but a multi-line value should work.
   startdate:
     description:
       - Sets the initial date of the real time clock.
@@ -433,7 +452,7 @@ EXAMPLES = '''
     format      : raw
     timeout     : 300  # Note: The task can take a while. Adapt
 
-# Create new VM and lock it for snapashot.
+# Create new VM and lock it for snapshot.
 - proxmox_kvm:
     api_user    : root@pam
     api_password: secret
@@ -450,7 +469,42 @@ EXAMPLES = '''
     name        : spynal
     node        : sabrewulf
     protection  : yes
-
+    
+# Create new VM using Cloud-Init with a username and password
+- proxmox_kvm:
+    node: sabrewulf
+    api_user: root@pam
+    api_password: secret
+    api_host: helldorado
+    name: spynal
+    ide: '{ "ide2": "local:cloudinit,format=qcow2"}'
+    ciuser: mylinuxuser
+    cipassword: supersecret
+    searchdomain: "mydomain.internal"
+    nameserver: 1.1.1.1
+    net: '{"net0":"virtio,bridge=vmbr1,tag=77"}'
+    ipconfig:
+      0:
+        ip: "192.168.1.1/24"
+        gw: "192.168.1.1"
+        
+# Create new VM using Cloud-Init with an ssh key
+- proxmox_kvm:
+    node: sabrewulf
+    api_user: root@pam
+    api_password: secret
+    api_host: helldorado
+    name: spynal
+    ide: '{ "ide2": "local:cloudinit,format=qcow2"}'
+    sshkeys: "ssh-rsa DEADBEEF00012345"
+    searchdomain: "mydomain.internal"
+    nameserver: 1.1.1.1
+    net: '{"net0":"virtio,bridge=vmbr1,tag=77"}'
+    ipconfig:
+      0:
+        ip: "192.168.1.1/24"
+        gw: "192.168.1.1"
+        
 # Start VM
 - proxmox_kvm:
     api_user    : root@pam
@@ -582,6 +636,11 @@ import time
 import traceback
 
 try:
+  from urllib.parse import quote
+except ImportError:
+  from urllib import quote
+  
+try:
     from proxmoxer import ProxmoxAPI
     HAS_PROXMOXER = True
 except ImportError:
@@ -669,7 +728,9 @@ def settings(module, proxmox, vmid, node, name, timeout, **kwargs):
 
 def create_vm(module, proxmox, vmid, newid, node, name, memory, cpu, cores, sockets, timeout, update, **kwargs):
     # Available only in PVE 4
-    only_v4 = ['force', 'protection', 'skiplock']
+    only_v4 = ['force', 'protection', 'skiplock',
+               'ciusername', 'cipassword', 'nameserver', 'searchdomain', 'sshkeys', 'ipconfig'
+              ]
 
     # valide clone parameters
     valid_clone_params = ['format', 'full', 'pool', 'snapname', 'storage', 'target']
@@ -688,7 +749,28 @@ def create_vm(module, proxmox, vmid, newid, node, name, memory, cpu, cores, sock
         for p in only_v4:
             if p in kwargs:
                 del kwargs[p]
+    ###
+    # Clean up the cloud-init variables
 
+    if 'ipconfig' in kwargs:
+        # Need to 'break down' the ipconfig dictionary into a series of the following
+            # ipconfig0: ip=192.168.1.2/24,gw=192.168.1.1
+            # ipconfig1: ip=192.168.2.2/24
+        for int_number in kwargs['ipconfig']:
+            try:
+                int_number_validated = int(int_number)
+                int_label = str('ipconfig%d' % int_number_validated)
+                kwargs[int_label] = str('ip=%s,gw=%s'%(kwargs['ipconfig'][int_number]['ip'],kwargs['ipconfig'][int_number]['gw']))
+            except Exception as e:
+                module.fail_json(msg=str('ipconfig cannot convert %s to an integer: %s' % (int_number, e)), data=kwargs['ipconfig'][int_number])
+        del kwargs['ipconfig']
+    # sshkeys expects a urlencoded string
+    if 'sshkeys' in kwargs:
+        urlencoded_ssh_keys = quote(kwargs['sshkeys'], safe='')
+        kwargs['sshkeys'] = str(urlencoded_ssh_keys)
+    #
+    ###
+    
     # If update, don't update disk (virtio, ide, sata, scsi) and network interface
     if update:
         if 'virtio' in kwargs:
@@ -797,6 +879,8 @@ def main():
             bios=dict(choices=['seabios', 'ovmf']),
             boot=dict(type='str', default='cnd'),
             bootdisk=dict(type='str'),
+            cipassword=dict(type='str'),
+            ciuser=dict(type='str'),
             clone=dict(type='str', default=None),
             cores=dict(type='int', default=1),
             cpu=dict(type='str', default='kvm64'),
@@ -813,6 +897,7 @@ def main():
             hotplug=dict(type='str'),
             hugepages=dict(choices=['any', '2', '1024']),
             ide=dict(type='dict', default=None),
+            ipconfig=dict(type='dict', default=None),
             keyboard=dict(type='str'),
             kvm=dict(type='bool', default='yes'),
             localtime=dict(type='bool'),
@@ -822,6 +907,7 @@ def main():
             migrate_downtime=dict(type='int'),
             migrate_speed=dict(type='int'),
             name=dict(type='str'),
+            nameserver=dict(type='str'),
             net=dict(type='dict'),
             newid=dict(type='int', default=None),
             node=dict(),
@@ -838,11 +924,13 @@ def main():
             scsi=dict(type='dict'),
             scsihw=dict(choices=['lsi', 'lsi53c810', 'virtio-scsi-pci', 'virtio-scsi-single', 'megasas', 'pvscsi']),
             serial=dict(type='dict'),
+            searchdomain=dict(type='str', default=None),
             shares=dict(type='int'),
             skiplock=dict(type='bool'),
             smbios=dict(type='str'),
             snapname=dict(type='str'),
             sockets=dict(type='int', default=1),
+            sshkeys=dict(type='str', default=None),
             startdate=dict(type='str'),
             startup=dict(),
             state=dict(default='present', choices=['present', 'absent', 'stopped', 'started', 'restarted', 'current']),
@@ -971,6 +1059,8 @@ def main():
                       bios=module.params['bios'],
                       boot=module.params['boot'],
                       bootdisk=module.params['bootdisk'],
+                      cipassword=module.params['cipassword'],
+                      ciuser=module.params['ciuser'],
                       cpulimit=module.params['cpulimit'],
                       cpuunits=module.params['cpuunits'],
                       description=module.params['description'],
@@ -988,6 +1078,7 @@ def main():
                       machine=module.params['machine'],
                       migrate_downtime=module.params['migrate_downtime'],
                       migrate_speed=module.params['migrate_speed'],
+                      nameserver=module.params['nameserver'],
                       net=module.params['net'],
                       numa=module.params['numa'],
                       numa_enabled=module.params['numa_enabled'],
@@ -1000,11 +1091,13 @@ def main():
                       sata=module.params['sata'],
                       scsi=module.params['scsi'],
                       scsihw=module.params['scsihw'],
+                      searchdomain=module.params['searchdomain'],
                       serial=module.params['serial'],
                       shares=module.params['shares'],
                       skiplock=module.params['skiplock'],
                       smbios1=module.params['smbios'],
                       snapname=module.params['snapname'],
+                      sshkeys=module.params['sshkeys'],
                       startdate=module.params['startdate'],
                       startup=module.params['startup'],
                       tablet=module.params['tablet'],
