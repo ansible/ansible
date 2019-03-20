@@ -63,7 +63,7 @@ class TestAsaOgModule(TestAsaModule):
             name='service_object_test',
             group_type='port-object',
             protocol='udp',
-            lines=['range 56832 56959', 'range 61363 65185', 'range 1024 4201']
+            lines=[['range 56832 56959', 'range 61363 65185', 'range 1024 4201']]
         ))
         commands = [
             'object-group service service_object_test udp',
@@ -76,7 +76,7 @@ class TestAsaOgModule(TestAsaModule):
             name='service_object_test',
             group_type='port-object',
             protocol='udp',
-            lines=['range 1024 4201']
+            lines=[['range 1024 4201']]
         ))
         commands = [
             'object-group service service_object_test udp',
