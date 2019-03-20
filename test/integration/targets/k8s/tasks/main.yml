@@ -24,6 +24,7 @@
 - file:
     path: "{{ virtualenv }}"
     state: absent
+    recurse: yes
 
 # Test validate with kubernetes-validate
 
@@ -43,6 +44,7 @@
 - file:
     path: "{{ virtualenv }}"
     state: absent
+    recurse: yes
 
 # Test graceful failure for older versions of openshift
 
@@ -63,6 +65,7 @@
 - file:
     path: "{{ virtualenv }}"
     state: absent
+    recurse: yes
 
 # Run full test suite
 
@@ -81,3 +84,4 @@
 - file:
     path: "{{ virtualenv }}"
     state: absent
+    recurse: yes
