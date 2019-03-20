@@ -28,4 +28,4 @@ def test_create_volume_on_invalid_docker_version(mocker, capfd):
     out, dummy = capfd.readouterr()
     results = json.loads(out)
     assert results['failed']
-    assert 'Error: docker / docker-py version is 1.8.0. Minimum version required is 1.10.0.' in results['msg']
+    assert 'Error: Docker SDK for Python version is 1.8.0. Minimum version required is 1.10.0.' in results['msg']
