@@ -5,8 +5,8 @@
       state: absent
       force: true
 
-  - name: Try to get docker_swarm_facts when docker is not running in swarm mode
-    docker_swarm_facts:
+  - name: Try to get docker_swarm_info when docker is not running in swarm mode
+    docker_swarm_info:
     ignore_errors: yes
     register: output
 
@@ -32,8 +32,8 @@
          - 'output.swarm_facts.JoinTokens.Manager'
          - 'output.swarm_facts.JoinTokens.Worker'
 
-  - name: Try to get docker_swarm_facts when docker is running in swarm mode and as manager
-    docker_swarm_facts:
+  - name: Try to get docker_swarm_info when docker is running in swarm mode and as manager
+    docker_swarm_info:
     register: output
 
   - name: assert creding docker swarm facts
@@ -46,8 +46,8 @@
          - 'output.docker_swarm_active == true'
          - 'output.docker_swarm_manager == true'
 
-  - name: Try to get docker_swarm_facts and list of nodes when docker is running in swarm mode and as manager
-    docker_swarm_facts:
+  - name: Try to get docker_swarm_info and list of nodes when docker is running in swarm mode and as manager
+    docker_swarm_info:
       nodes: yes
     register: output
 
@@ -67,8 +67,8 @@
       localnodename:  "{{ output.nodes[0].Hostname }}"
 
 
-  - name: Try to get docker_swarm_facts and verbose list of nodes when docker is running in swarm mode and as manager
-    docker_swarm_facts:
+  - name: Try to get docker_swarm_info and verbose list of nodes when docker is running in swarm mode and as manager
+    docker_swarm_info:
       nodes: yes
       verbose_output: yes
     register: output
@@ -85,8 +85,8 @@
          - 'output.docker_swarm_active == true'
          - 'output.docker_swarm_manager == true'
 
-  - name: Try to get docker_swarm_facts and list of nodes with filters providing existing node name
-    docker_swarm_facts:
+  - name: Try to get docker_swarm_info and list of nodes with filters providing existing node name
+    docker_swarm_info:
       nodes: yes
       nodes_filters:
         name: "{{ localnodename }}"
@@ -107,8 +107,8 @@
     set_fact:
       randomnodename: "{{ 'node-%0x' % ((2**32) | random) }}"
 
-  - name: Try to get docker_swarm_facts and list of nodes with filters providing non-existing random node name
-    docker_swarm_facts:
+  - name: Try to get docker_swarm_info and list of nodes with filters providing non-existing random node name
+    docker_swarm_info:
       nodes: yes
       nodes_filters:
         name: "{{ randomnodename }}"

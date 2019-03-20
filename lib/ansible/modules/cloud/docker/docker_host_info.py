@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: docker_host_facts
+module: docker_host_info
 
 short_description: Retrieves facts about docker host and lists of objects of the services.
 
@@ -87,7 +87,7 @@ options:
       - When set to C(yes) and I(networks), I(volumes), I(images), I(containers) or I(disk_usage) is set to C(yes)
         then output will contain verbose information about objects matching the full output of API method.
         For details see the documentation of your version of Docker API at L(https://docs.docker.com/engine/api/).
-      - The verbose output in this module contains only subset of information returned by I(_facts) module
+      - The verbose output in this module contains only subset of information returned by I(_info) module
         for each type of the objects.
     type: bool
     default: no
@@ -105,29 +105,29 @@ requirements:
 
 EXAMPLES = '''
 - name: Get info on docker host
-  docker_host_facts:
+  docker_host_info:
   register: result
 
 - name: Get info on docker host and list images
-  docker_host_facts:
+  docker_host_info:
     images: yes
   register: result
 
 - name: Get info on docker host and list images matching the filter
-  docker_host_facts:
+  docker_host_info:
     images: yes
     images_filters:
       label: "mylabel"
   register: result
 
 - name: Get info on docker host and verbose list images
-  docker_host_facts:
+  docker_host_info:
     images: yes
     verbose_output: yes
   register: result
 
 - name: Get info on docker host and used disk space
-  docker_host_facts:
+  docker_host_info:
     disk_usage: yes
   register: result
 

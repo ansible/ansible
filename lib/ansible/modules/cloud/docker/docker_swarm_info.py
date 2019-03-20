@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: docker_swarm_facts
+module: docker_swarm_info
 
 short_description: Retrieves facts about Docker Swarm cluster.
 
@@ -73,7 +73,7 @@ options:
       - When set to C(yes) and I(nodes), I(services) or I(tasks) is set to C(yes)
         then output will contain verbose information about objects matching the full output of API method.
         For details see the documentation of your version of Docker API at U(https://docs.docker.com/engine/api/).
-      - The verbose output in this module contains only subset of information returned by I(_facts) module
+      - The verbose output in this module contains only subset of information returned by I(_info) module
         for each type of the objects.
     type: bool
     default: no
@@ -88,7 +88,7 @@ requirements:
 
 EXAMPLES = '''
 - name: Get info on Docker Swarm
-  docker_swarm_facts:
+  docker_swarm_info:
   ignore_errors: yes
   register: result
 
@@ -102,18 +102,18 @@ EXAMPLES = '''
 - block:
 
 - name: Get info on Docker Swarm and list of registered nodes
-  docker_swarm_facts:
+  docker_swarm_info:
     nodes: yes
   register: result
 
 - name: Get info on Docker Swarm and extended list of registered nodes
-  docker_swarm_facts:
+  docker_swarm_info:
     nodes: yes
     verbose_output: yes
   register: result
 
 - name: Get info on Docker Swarm and filtered list of registered nodes
-  docker_swarm_facts:
+  docker_swarm_info:
     nodes: yes
     nodes_filter:
       name: mynode

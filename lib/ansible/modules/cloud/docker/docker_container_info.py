@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: docker_container_facts
+module: docker_container_info
 
 short_description: Retrieves facts about docker container
 
@@ -46,7 +46,7 @@ requirements:
 
 EXAMPLES = '''
 - name: Get infos on container
-  docker_container_facts:
+  docker_container_info:
     name: mydata
   register: result
 

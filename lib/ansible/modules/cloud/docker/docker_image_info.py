@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: docker_image_facts
+module: docker_image_info
 
 short_description: Inspect docker images
 
@@ -22,6 +22,9 @@ version_added: "2.1.0"
 
 description:
      - Provide one or more image names, and the module will inspect each, returning an array of inspection results.
+
+notes:
+     - This module was called C(docker_image_facts) before Ansible 2.8. The usage did not change.
 
 options:
   name:
@@ -48,11 +51,11 @@ author:
 EXAMPLES = '''
 
 - name: Inspect a single image
-  docker_image_facts:
+  docker_image_info:
     name: pacur/centos-7
 
 - name: Inspect multiple images
-  docker_image_facts:
+  docker_image_info:
     name:
       - pacur/centos-7
       - sinatra
@@ -228,6 +231,8 @@ def main():
         supports_check_mode=True,
         min_docker_api_version='1.20',
     )
+    if client.module._name == 'docker_image_facts':
+        client.module.deprecate("The 'docker_image_facts' module has been renamed to 'docker_image_info'", version='2.12')
 
     results = dict(
         changed=False,

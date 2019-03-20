@@ -11,7 +11,7 @@
       force: yes
 
   - name: Inspect a non-present network
-    docker_network_facts:
+    docker_network_info:
       name: "{{ nname }}"
     register: result
 
@@ -27,10 +27,10 @@
       state: present
 
   - name: Inspect a present network
-    docker_network_facts:
+    docker_network_info:
       name: "{{ nname }}"
     register: result
-  - name: Dump docker_network_facts result
+  - name: Dump docker_network_info result
     debug: var=result
 
   - name: "Comparison: use 'docker network inspect'"
@@ -56,5 +56,5 @@
 
   when: docker_py_version is version('1.8.0', '>=') and docker_api_version is version('1.21', '>=')
 
-- fail: msg="Too old docker / docker-py version to run docker_network_facts tests!"
+- fail: msg="Too old docker / docker-py version to run docker_network_info tests!"
   when: not(docker_py_version is version('1.8.0', '>=') and docker_api_version is version('1.21', '>=')) and (ansible_distribution != 'CentOS' or ansible_distribution_major_version|int > 6)

@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: docker_network_facts
+module: docker_network_info
 
 short_description: Retrieves facts about docker network
 
@@ -46,7 +46,7 @@ requirements:
 
 EXAMPLES = '''
 - name: Get infos on network
-  docker_network_facts:
+  docker_network_info:
     name: mydata
   register: result
 

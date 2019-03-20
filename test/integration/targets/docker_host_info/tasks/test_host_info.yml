@@ -9,7 +9,7 @@
 
 - block:
   - name: Get info on Docker host
-    docker_host_facts:
+    docker_host_info:
     register: output
 
   - name: assert reading docker host facts when docker is running
@@ -48,7 +48,7 @@
         - volume_output is changed
 
   - name: Get info on Docker host and list containers
-    docker_host_facts:
+    docker_host_info:
       containers: yes
     register: output
 
@@ -64,7 +64,7 @@
          - 'output.containers[0].ImageID is not defined'
 
   - name: Get info on Docker host and list containers with verbose output
-    docker_host_facts:
+    docker_host_info:
       containers: yes
       verbose_output: yes
     register: output
@@ -81,7 +81,7 @@
          - 'output.containers[0].ImageID is string'
 
   - name: Get info on Docker host and list images
-    docker_host_facts:
+    docker_host_info:
       images: yes
     register: output
 
@@ -97,7 +97,7 @@
          - 'output.disk_usage is not defined'
 
   - name: Get info on Docker host and list images with verbose output
-    docker_host_facts:
+    docker_host_info:
       images: yes
       verbose_output: yes
     register: output
@@ -114,7 +114,7 @@
          - 'output.disk_usage is not defined'
 
   - name: Get info on Docker host and list networks
-    docker_host_facts:
+    docker_host_info:
       networks: yes
     register: output
 
@@ -130,7 +130,7 @@
          - 'output.disk_usage is not defined'
 
   - name: Get info on Docker host and list networks with verbose output
-    docker_host_facts:
+    docker_host_info:
       networks: yes
       verbose_output: yes
     register: output
@@ -147,7 +147,7 @@
          - 'output.disk_usage is not defined'
 
   - name: Get info on Docker host and list volumes
-    docker_host_facts:
+    docker_host_info:
       volumes: yes
     register: output
 
@@ -163,7 +163,7 @@
          - 'output.disk_usage is not defined'
 
   - name: Get info on Docker host and list volumes with verbose output
-    docker_host_facts:
+    docker_host_info:
       volumes: yes
       verbose_output: yes
     register: output
@@ -180,7 +180,7 @@
          - 'output.disk_usage is not defined'
 
   - name: Get info on Docker host and get disk usage
-    docker_host_facts:
+    docker_host_info:
       disk_usage: yes
     register: output
 
@@ -196,7 +196,7 @@
          - 'output.disk_usage.BuilderSize is not defined'
 
   - name: Get info on Docker host and get disk usage with verbose output
-    docker_host_facts:
+    docker_host_info:
       disk_usage: yes
       verbose_output: yes
     register: output
@@ -213,7 +213,7 @@
          - 'output.disk_usage.BuilderSize is number'
 
   - name: Get info on Docker host, disk usage and get all lists together
-    docker_host_facts:
+    docker_host_info:
       volumes: yes
       containers: yes
       networks: yes
@@ -237,7 +237,7 @@
          - 'output.disk_usage.BuilderSize is not defined'
 
   - name: Get info on Docker host, disk usage and get all lists together with verbose output
-    docker_host_facts:
+    docker_host_info:
       volumes: yes
       containers: yes
       networks: yes

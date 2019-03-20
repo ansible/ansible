@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 
 DOCUMENTATION = u'''
-module: docker_volume_facts
+module: docker_volume_info
 version_added: "2.8"
 short_description: Retrieve facts about Docker volumes
 description:
@@ -42,7 +42,7 @@ requirements:
 
 EXAMPLES = '''
 - name: Get infos on volume
-  docker_volume_facts:
+  docker_volume_info:
     name: mydata
   register: result
 

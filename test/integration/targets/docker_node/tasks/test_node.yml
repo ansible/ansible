@@ -5,8 +5,8 @@
       state: absent
       force: true
 
-  - name: Try to get docker_node_facts when docker is not running in swarm mode
-    docker_node_facts:
+  - name: Try to get docker_node_info when docker is not running in swarm mode
+    docker_node_info:
     ignore_errors: yes
     register: output
 
@@ -29,8 +29,8 @@
          - 'output.swarm_facts.JoinTokens.Manager'
          - 'output.swarm_facts.JoinTokens.Worker'
 
-  - name: Try to get docker_node_facts when docker is running in swarm mode and as manager
-    docker_node_facts:
+  - name: Try to get docker_node_info when docker is running in swarm mode and as manager
+    docker_node_info:
     register: output
 
   - name: assert reading docker swarm node facts
