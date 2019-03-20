@@ -18,6 +18,8 @@ DOCUMENTATION = r"""
     description:
         - Reads inventories from the Hetzner Cloud API.
         - Uses a YAML configuration file that ends with hcloud.(yml|yaml).
+    extends_documentation_fragment:
+        - constructed
     options:
         plugin:
             description: marks this as an instance of the "hcloud" plugin
@@ -69,12 +71,24 @@ locations:
   - nbg1
 types:
   - cx11
+
+# Group by a location with prefix e.g. "hcloud_location_nbg1"
+# and image_os_flavor without prefix and separator e.g. "ubuntu"
+# and status with prefix e.g. "server_status_running"
+plugin: hcloud
+keyed_groups:
+  - prefix: hcloud_location
+    key: location:
+  - separator: ""
+    key: image_os_flavor
+  - prefix: "server_status"
+    key: status
 """
 
 import os
-from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native
-from ansible.plugins.inventory import BaseInventoryPlugin
+from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
 from ansible.release import __version__
 
 try:
@@ -83,7 +97,7 @@ except ImportError:
     raise AnsibleError("The Hetzner Cloud dynamic inventory plugin requires hcloud-python.")
 
 
-class InventoryModule(BaseInventoryPlugin):
+class InventoryModule(BaseInventoryPlugin, Constructable):
     NAME = "hcloud"
 
     def _configure_hcloud_client(self):
@@ -106,19 +120,6 @@ class InventoryModule(BaseInventoryPlugin):
             self.client.locations.get_all()
         except hcloud.APIException:
             raise AnsibleError("Invalid Hetzner Cloud API Token.")
-
-    def _add_groups(self):
-        locations = self.client.locations.get_all()
-        for location in locations:
-            self.inventory.add_group(to_native("location_" + location.name))
-
-        images = self.client.images.get_all(type="system")
-        for image in images:
-            self.inventory.add_group(to_native("image_" + image.os_flavor))
-
-        server_types = self.client.server_types.get_all()
-        for server_type in server_types:
-            self.inventory.add_group(to_native("server_type_" + server_type.name))
 
     def _get_servers(self):
         if len(self.get_option("label_selector")) > 0:
@@ -152,6 +153,7 @@ class InventoryModule(BaseInventoryPlugin):
         self.inventory.set_variable(server.name, "id", to_native(server.id))
         self.inventory.set_variable(server.name, "name", to_native(server.name))
         self.inventory.set_variable(server.name, "status", to_native(server.status))
+        self.inventory.set_variable(server.name, "type", to_native(server.type.name))
 
         # Network
         self.inventory.set_variable(server.name, "ipv4", to_native(server.public_net.ipv4.ip))
@@ -175,6 +177,7 @@ class InventoryModule(BaseInventoryPlugin):
         # Image
         self.inventory.set_variable(server.name, "image_id", to_native(server.image.id))
         self.inventory.set_variable(server.name, "image_name", to_native(server.image.name))
+        self.inventory.set_variable(server.name, "image_os_flavor", to_native(server.image.os_flavor))
 
     def verify_file(self, path):
         """Return the possibly of a file being consumable by this plugin."""
@@ -188,12 +191,24 @@ class InventoryModule(BaseInventoryPlugin):
         self._read_config_data(path)
         self._configure_hcloud_client()
         self._test_hcloud_token()
-        self._add_groups()
         self._get_servers()
         self._filter_servers()
+
+        # Add a top group 'hcloud'
+        self.inventory.add_group(group="hcloud")
+
         for server in self.servers:
-            self.inventory.add_host(server.name)
-            self.inventory.add_host(server.name, group="location_" + server.datacenter.location.name)
-            self.inventory.add_host(server.name, group="image_" + server.image.os_flavor)
-            self.inventory.add_host(server.name, group="server_type_" + server.server_type.name)
+            self.inventory.add_host(server.name, group="hcloud")
             self._set_server_attributes(server)
+
+            # Use constructed if applicable
+            strict = self.get_option('strict')
+
+            # Composed variables
+            self._set_composite_vars(self.get_option('compose'), server, server.name, strict=strict)
+
+            # Complex groups based on jinja2 conditionals, hosts that meet the conditional are added to group
+            self._add_host_to_composed_groups(self.get_option('groups'), server, server.name, strict=strict)
+
+            # Create groups based on variable values and add the corresponding hosts to it
+            self._add_host_to_keyed_groups(self.get_option('keyed_groups'), server, server.name, strict=strict)
