@@ -95,6 +95,12 @@ container_groups:
             returned: always
             type: str
             sample: 173.15.18.1
+        dns_name_label:
+            description:
+                - The Dns name label for the IP.
+            returned: always
+            type: str
+            sample: mydomain
         ports:
             description:
                 - List of ports exposed by the container instance.
@@ -140,6 +146,25 @@ container_groups:
                     returned: always
                     type: list
                     sample: [ 80, 81 ]
+                commands:
+                    description:
+                        - List of commands to execute within the container instance in exec form.
+                    returned: always
+                    type: list
+                    sample: [ "pip install abc" ]
+                environment_variables:
+                    description:
+                        - List of container environment variables.
+                    type: complex
+                    contains:
+                        name:
+                            description:
+                                - Environment variable name.
+                            type: str
+                        value:
+                            description:
+                                - Environment variable value.
+                            type: str
         tags:
             description: Tags assigned to the resource. Dictionary of string:string pairs.
             type: dict
@@ -147,6 +172,7 @@ container_groups:
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+from ansible.module_utils.common.dict_transformations import _camel_to_snake
 
 try:
     from msrestazure.azure_exceptions import CloudError
@@ -257,7 +283,9 @@ class AzureRMContainerInstanceFacts(AzureRMModuleBase):
                 'image': old_container['image'],
                 'memory': old_container['resources']['requests']['memory_in_gb'],
                 'cpu': old_container['resources']['requests']['cpu'],
-                'ports': []
+                'ports': [],
+                'commands': old_container.get('command'),
+                'environment_variables': old_container.get('environment_variables')
             }
             for port_index in range(len(old_container['ports'])):
                 new_container['ports'].append(old_container['ports'][port_index]['port'])
@@ -269,9 +297,11 @@ class AzureRMContainerInstanceFacts(AzureRMModuleBase):
             'name': d['name'],
             'os_type': d['os_type'],
             'ip_address': 'public' if d['ip_address']['type'] == 'Public' else 'none',
+            'dns_name_label': d['ip_address'].get('dns_name_label'),
             'ports': ports,
             'location': d['location'],
             'containers': containers,
+            'restart_policy': _camel_to_snake(d['restart_policy']),
             'tags': d.get('tags', None)
         }
         return d
