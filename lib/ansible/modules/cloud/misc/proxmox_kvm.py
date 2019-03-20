@@ -639,7 +639,7 @@ try:
   from urllib.parse import quote
 except ImportError:
   from urllib import quote
-  
+
 try:
     from proxmoxer import ProxmoxAPI
     HAS_PROXMOXER = True
@@ -770,7 +770,7 @@ def create_vm(module, proxmox, vmid, newid, node, name, memory, cpu, cores, sock
         kwargs['sshkeys'] = str(urlencoded_ssh_keys)
     #
     ###
-    
+
     # If update, don't update disk (virtio, ide, sata, scsi) and network interface
     if update:
         if 'virtio' in kwargs:
