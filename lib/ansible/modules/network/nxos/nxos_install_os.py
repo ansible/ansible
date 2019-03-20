@@ -267,7 +267,7 @@ def parse_show_install(data):
         # We get these messages when the upgrade is non-disruptive and
         # we loose connection with the switchover but far enough along that
         # we can be confident the upgrade succeeded.
-        if re.search(r'timeout trying to send command: install', x):
+        if re.search(r'timeout .*trying to send command: install', x):
             ud['upgrade_succeeded'] = True
             ud['use_impact_data'] = True
             break
