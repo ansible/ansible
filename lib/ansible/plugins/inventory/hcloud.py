@@ -153,7 +153,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         self.inventory.set_variable(server.name, "id", to_native(server.id))
         self.inventory.set_variable(server.name, "name", to_native(server.name))
         self.inventory.set_variable(server.name, "status", to_native(server.status))
-        self.inventory.set_variable(server.name, "type", to_native(server.type.name))
+        self.inventory.set_variable(server.name, "type", to_native(server.server_type.name))
 
         # Network
         self.inventory.set_variable(server.name, "ipv4", to_native(server.public_net.ipv4.ip))
@@ -205,10 +205,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             strict = self.get_option('strict')
 
             # Composed variables
-            self._set_composite_vars(self.get_option('compose'), server, server.name, strict=strict)
+            self._set_composite_vars(self.get_option('compose'), {}, server.name, strict=strict)
 
             # Complex groups based on jinja2 conditionals, hosts that meet the conditional are added to group
-            self._add_host_to_composed_groups(self.get_option('groups'), server, server.name, strict=strict)
+            self._add_host_to_composed_groups(self.get_option('groups'), {}, server.name, strict=strict)
 
             # Create groups based on variable values and add the corresponding hosts to it
-            self._add_host_to_keyed_groups(self.get_option('keyed_groups'), server, server.name, strict=strict)
+            self._add_host_to_keyed_groups(self.get_option('keyed_groups'), {}, server.name, strict=strict)
