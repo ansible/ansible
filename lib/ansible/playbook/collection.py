@@ -21,8 +21,8 @@ class Collection:
         if not isinstance(ds, list):
             ds = [ds]
 
-        if 'ansible.core' not in ds and 'ansible.legacy' not in ds:
-            # FIXME: add ansible.legacy in legacy roles, ansible.core in collection-hosted
+        if 'ansible.builtin' not in ds and 'ansible.legacy' not in ds:
+            # FIXME: add ansible.legacy in legacy roles, ansible.builtin in collection-hosted
             ds.append('ansible.legacy')
 
         return ds

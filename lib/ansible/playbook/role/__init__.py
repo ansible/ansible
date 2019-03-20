@@ -238,8 +238,8 @@ class Role(Base, Become, Conditional, Taggable, Collection):
         # if any collections were specified, ensure that core or legacy synthetic collections are always included
         if self.collections:
             # default append collection is core for collection-hosted roles, legacy for others
-            default_append_collection = 'ansible.core' if self.collections else 'ansible.legacy'
-            if 'ansible.core' not in self.collections and 'ansible.legacy' not in self.collections:
+            default_append_collection = 'ansible.builtin' if self.collections else 'ansible.legacy'
+            if 'ansible.builtin' not in self.collections and 'ansible.legacy' not in self.collections:
                 self.collections.append(default_append_collection)
             # FIXME: add test for legacy role + collections meta keyword
 

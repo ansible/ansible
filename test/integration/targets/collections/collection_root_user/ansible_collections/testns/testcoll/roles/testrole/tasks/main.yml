@@ -12,7 +12,7 @@
 
 # verify that pluginloader caching doesn't prevent us from explicitly calling a builtin plugin with the same name
 - name: call builtin ping module explicitly
-  ansible.core.ping:
+  ansible.builtin.ping:
   register: builtinping_out
 
 - debug:
@@ -23,7 +23,7 @@
 
 - assert:
     that:
-    - pluginlookup_out.collection_list == ['testns.testcoll', 'ansible.core', 'testns.coll_in_sys', 'bogus.fromrolemeta']
+    - pluginlookup_out.collection_list == ['testns.testcoll', 'ansible.builtin', 'testns.coll_in_sys', 'bogus.fromrolemeta']
     - ping_out.source is defined and ping_out.source == 'user'
     - systestmodule_out.source is defined and systestmodule_out.source == 'sys'
     - builtinping_out.ping is defined and builtinping_out.ping == 'pong'

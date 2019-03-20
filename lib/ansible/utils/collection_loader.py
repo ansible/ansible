@@ -18,10 +18,10 @@ from ansible.module_utils.six import iteritems, string_types
 
 _SYNTHETIC_PACKAGES = {
     'ansible_collections.ansible': dict(type='pkg_only'),
-    'ansible_collections.ansible.core': dict(type='pkg_only'),
-    'ansible_collections.ansible.core.plugins': dict(type='map', map='ansible.plugins'),
-    'ansible_collections.ansible.core.plugins.module_utils': dict(type='map', map='ansible.module_utils', graft=True),
-    'ansible_collections.ansible.core.plugins.modules': dict(type='flatmap', flatmap='ansible.modules', graft=True),
+    'ansible_collections.ansible.builtin': dict(type='pkg_only'),
+    'ansible_collections.ansible.builtin.plugins': dict(type='map', map='ansible.plugins'),
+    'ansible_collections.ansible.builtin.plugins.module_utils': dict(type='map', map='ansible.module_utils', graft=True),
+    'ansible_collections.ansible.builtin.plugins.modules': dict(type='flatmap', flatmap='ansible.modules', graft=True),
 }
 
 # TODO: tighten this up to subset Python identifier requirements
@@ -179,7 +179,7 @@ class AnsibleCollectionLoader(object):
 
             return newmod
 
-        # FIXME: need to handle the "no dirs present" case for at least the root and synthetic internal collections like ansible.core
+        # FIXME: need to handle the "no dirs present" case for at least the root and synthetic internal collections like ansible.builtin
 
         return None
 
@@ -206,7 +206,7 @@ class AnsibleFlatMapLoader(object):
         root_path = os.path.dirname(self._root_package.__file__)
         flat_files = []
         # FIXME: make this a dict of filename->dir for faster direct lookup?
-        # FIXME: deal with _ prefixed deprecated files (or require another method for collections?)
+        # FIXME: deal with underscore prefixed deprecated files (or require another method for collections?)
         # FIXME: fix overloaded filenames (eg, rename Windows setup to win_setup)
         for root, dirs, files in os.walk(root_path):
             # add all files in this dir that don't have a blacklisted extension

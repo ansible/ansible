@@ -1018,9 +1018,9 @@ class TaskExecutor:
         elif all((module_prefix in C.NETWORK_GROUP_MODULES, module_prefix in self._shared_loader_obj.action_loader)):
             handler_name = module_prefix
         else:
-            # FIXME: once we have ansible.core, preface this action with it so we don't allow it to be hijacked
+            # FIXME: once we have ansible.builtin, preface this action with it so we don't allow it to be hijacked
             handler_name = 'normal'
-            collections = None  # FIXME: until we have ansible.core or a fallback, we have to say don't use the collections here
+            collections = None  # FIXME: until we have ansible.builtin or a fallback, we have to say don't use the collections here
 
         handler = self._shared_loader_obj.action_loader.get(
             handler_name,

@@ -299,7 +299,7 @@ class JinjaPluginIntercept(MutableMapping):
         # FIXME: move this capability into the Jinja plugin loader
         pkg = importlib.import_module(collection_pkg)
 
-        for _, module_name, ispkg in pkgutil.iter_modules(pkg.__path__, prefix=collection_name + '.'):
+        for dummy, module_name, ispkg in pkgutil.iter_modules(pkg.__path__, prefix=collection_name + '.'):
             if ispkg:
                 continue
 

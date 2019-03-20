@@ -63,7 +63,7 @@
       - "'from_user' is testns.testcoll.testtest"
       - lookup('testns.testcoll.mylookup') == 'lookup_from_user_dir'
 
-# ensure that the synthetic ansible.core collection limits to builtin plugins, that ansible.legacy loads overrides
+# ensure that the synthetic ansible.builtin collection limits to builtin plugins, that ansible.legacy loads overrides
 # from legacy plugin dirs, and that a same-named plugin loaded from a real collection is not masked by the others
 - hosts: testhost
   tasks:
@@ -76,7 +76,7 @@
     register: legacy_ping_out
 
   - name: test builtin ping
-    ansible.core.ping:
+    ansible.builtin.ping:
     register: builtin_ping_out
 
   - name: test collection-based ping
@@ -130,7 +130,7 @@
 
     - name: sample task with explicit core
       collections:
-      - ansible.core
+      - ansible.builtin
       - bogus.fromtaskexplicitcore
       testns.testcoll.plugin_lookup:
       register: coll_task_core
@@ -148,7 +148,7 @@
       - coll_play_out.collection_list == ['bogus.fromplay', 'ansible.legacy']
       - coll_block_out.collection_list == ['bogus.fromblock', 'ansible.legacy']
       - coll_task_out.collection_list == ['bogus.fromtask', 'ansible.legacy']
-      - coll_task_core.collection_list == ['ansible.core', 'bogus.fromtaskexplicitcore']
+      - coll_task_core.collection_list == ['ansible.builtin', 'bogus.fromtaskexplicitcore']
       - coll_task_legacy.collection_list == ['ansible.legacy', 'bogus.fromtaskexplicitlegacy']
 
 - name: verify unqualified plugin resolution behavior
@@ -187,8 +187,8 @@
 - name: verify collection-backed role execution (keyword static)
   hosts: testhost
   collections:
-  # set to ansible.core only to ensure that roles function properly without inheriting the play's collections config
-  - ansible.core
+  # set to ansible.builtin only to ensure that roles function properly without inheriting the play's collections config
+  - ansible.builtin
   vars:
     test_role_input: keyword static
   roles:
@@ -204,8 +204,8 @@
 - name: verify collection-backed role execution (dynamic)
   hosts: testhost
   collections:
-  # set to ansible.core only to ensure that roles function properly without inheriting the play's collections config
-  - ansible.core
+  # set to ansible.builtin only to ensure that roles function properly without inheriting the play's collections config
+  - ansible.builtin
   vars:
     test_role_input: dynamic
   tasks:
@@ -221,7 +221,7 @@
 - name: verify collection-backed role execution (task static)
   hosts: testhost
   collections:
-  - ansible.core
+  - ansible.builtin
   vars:
     test_role_input: task static
   tasks:
