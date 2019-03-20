@@ -787,6 +787,9 @@
 # Test postgresql_facts module:
 - include: postgresql_facts.yml
 
+# Test default_privs with target_role
+- include: test_target_role.yml
+
 # dump/restore tests per format
 # ============================================================
 - include: state_dump_restore.yml test_fixture=user file=dbdata.sql
