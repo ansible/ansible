@@ -124,7 +124,7 @@ In this example the ``proxy_env`` variable defined in ``group_vars`` gets passed
 .. include:: shared_snippets/SSH_warning.txt
 
 Cisco Nexus Platform Support Matrix
-***********************************
+===================================
 
 The following platforms and software versions have been certified to work with this version of Ansible.
 
