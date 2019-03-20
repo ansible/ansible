@@ -189,8 +189,8 @@ class AzureRMSubnetFacts(AzureRMModuleBase):
                                                        virtual_network_name=self.virtual_network_name,
                                                        subnet_name=self.name)
             self.log("Response : {0}".format(response))
-        except CloudError:
-            pass  # Return empty when the subnet not exist in get
+        except CloudError as e:
+            self.fail('Could not get facts for Subnet.')
 
         if response is not None:
             results.append(self.format_response(response))
