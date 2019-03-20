@@ -6,10 +6,10 @@
 # To execute this by hand:
 #   1) cd <checkoutdir>
 #   2) source hacking/env-setup
-#   3) PYTHONPATH=./lib nosetests -d -w test -v --nocapture sanity/validate-modules
+#   3) PYTHONPATH=./lib pytest -v sanity/validate-modules
 
 import re
-from ansible.compat.tests import unittest
+import unittest
 
 # TYPE_REGEX = re.compile(r'.*\stype\(.*')
 # TYPE_REGEX = re.compile(r'.*(if|or)\stype\(.*')
