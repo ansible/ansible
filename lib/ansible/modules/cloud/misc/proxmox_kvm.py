@@ -760,7 +760,7 @@ def create_vm(module, proxmox, vmid, newid, node, name, memory, cpu, cores, sock
             try:
                 int_number_validated = int(int_number)
                 int_label = str('ipconfig%d' % int_number_validated)
-                kwargs[int_label] = str('ip=%s,gw=%s'%(kwargs['ipconfig'][int_number]['ip'],kwargs['ipconfig'][int_number]['gw']))
+                kwargs[int_label] = str('ip=%s,gw=%s'%(kwargs['ipconfig'][int_number]['ip'], kwargs['ipconfig'][int_number]['gw']))
             except Exception as e:
                 module.fail_json(msg=str('ipconfig cannot convert %s to an integer: %s' % (int_number, e)), data=kwargs['ipconfig'][int_number])
         del kwargs['ipconfig']
