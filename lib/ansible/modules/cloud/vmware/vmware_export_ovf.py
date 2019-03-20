@@ -95,7 +95,7 @@ from threading import Thread
 from ansible.module_utils.urls import open_url
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text
-from ansible.module_utils.vmware import (connect_to_api, vmware_argument_spec, PyVmomi)
+from ansible.module_utils.vmware import vmware_argument_spec, PyVmomi
 try:
     from pyVmomi import vim
     from pyVim import connect
@@ -137,9 +137,7 @@ class LeaseProgressUpdater(Thread):
 
 class VMwareExportVmOvf(PyVmomi):
     def __init__(self, module):
-        self.content = connect_to_api(module)
-        self.module = module
-        self.params = module.params
+        super(VMwareExportVmOvf, self).__init__(module)
         self.mf_file = ''
         self.ovf_dir = ''
         # set read device content chunk size to 2 MB
