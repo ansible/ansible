@@ -125,8 +125,8 @@ EXAMPLES = '''
     - name: Create a Azure CDN endpoint
       azure_rm_cdnendpoint:
           resource_group: myResourceGroup
-          name: TestEndpoint
-          profile_name: TestProfile
+          profile_name: myProfile
+          name: myEndpoint
           origins:
             - name: TestOrig
               host_name: "www.example.com"
@@ -137,8 +137,8 @@ EXAMPLES = '''
     - name: Delete a Azure CDN endpoint
       azure_rm_cdnendpoint:
           resource_group: myResourceGroup
-          name: TestEndpoint
-          profile_name: TestProfile
+          profile_name: myProfile
+          name: myEndpoint
           state: absent
 '''
 RETURN = '''
@@ -151,7 +151,8 @@ id:
         - Id of the CDN endpoint.
     returned: always
     type: str
-    sample: "/subscriptions/<subs_id>/resourcegroups/xxx/providers/Microsoft.Cdn/profiles/xxx/endpoints/xxx"
+    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/myResourceGroup/providers/Microsoft.Cdn/profiles/myProfile/endpoints/
+             myEndpoint"
 host_name:
     description:
         - Host name of the CDN endpoint.
