@@ -86,6 +86,19 @@
       - output.response[0]['name'] != None
       - output.response | length >= 1
 
+- name: Try to query a list - same without API version
+  azure_rm_resource_facts:
+    resource_group: "{{ resource_group }}"
+    provider: network
+    resource_type: networksecuritygroups
+  register: output
+- name: Assert value was returned
+  assert:
+    that:
+      - not output.changed
+      - output.response[0]['name'] != None
+      - output.response | length >= 1
+
 - name: Create storage account that requires LRO polling
   azure_rm_resource:
     polling_timeout: 600
@@ -123,12 +136,11 @@
   assert:
     that: keys['response']['keys'][0]['value'] | length > 0
 
-- name: Delete storage
+- name: Delete storage - without API version
   azure_rm_resource:
     polling_timeout: 600
     polling_interval: 60
     method: DELETE
-    api_version: '2018-07-01'
     resource_group: "{{ resource_group }}"
     provider: Storage
     resource_type: storageAccounts
