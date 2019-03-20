@@ -87,7 +87,7 @@ options:
       - String to send to socket
       - Defaults to None.
     type: str
-    version_added: "2.7"
+    version_added: "2.8"
   exclude_hosts:
     description:
       - List of hosts or IPs to ignore when looking for active TCP connections for C(drained) state.
@@ -461,7 +461,7 @@ def _create_connection(host, port, connect_timeout, send_string=None):
         connect_socket.connect((host, port))
     else:
         connect_socket = socket.create_connection((host, port), connect_timeout)
-    if send_string != None:
+    if send_string is not None:
         connect_socket.sendall(bytes(send_string))
     return connect_socket
 
