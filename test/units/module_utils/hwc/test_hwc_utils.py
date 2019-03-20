@@ -3,7 +3,7 @@
 import os
 import sys
 
-from ansible.compat.tests import unittest
+from units.compat import unittest
 from ansible.module_utils.hwc_utils import (navigate_hash,
                                             remove_empty_from_dict,
                                             remove_nones_from_dict,

@@ -20,7 +20,7 @@
 import os
 import sys
 
-from ansible.compat.tests import unittest
+from units.compat import unittest
 from ansible.module_utils.hwc_utils import DictComparison
 
 
@@ -31,7 +31,8 @@ class HwcDictComparisonTestCase(unittest.TestCase):
             'test': 'original'
         }
         d = DictComparison(value1)
-        self.assertTrue(d == d)
+        d_ = d
+        self.assertTrue(d == d_)
 
     def test_simple_different(self):
         value1 = {
@@ -63,7 +64,8 @@ class HwcDictComparisonTestCase(unittest.TestCase):
             'test': 'original'
         }
         d = DictComparison(value1)
-        self.assertTrue(d == d)
+        d_ = d
+        self.assertTrue(d == d_)
 
     def test_nested_dictionaries_with_difference(self):
         value1 = {
@@ -108,7 +110,8 @@ class HwcDictComparisonTestCase(unittest.TestCase):
             ]
         }
         d = DictComparison(value1)
-        self.assertTrue(d == d)
+        d_ = d
+        self.assertTrue(d == d_)
 
     def test_arrays_strings_with_difference(self):
         value1 = {
@@ -150,7 +153,8 @@ class HwcDictComparisonTestCase(unittest.TestCase):
             ]
         }
         d = DictComparison(value1)
-        self.assertTrue(d == d)
+        d_ = d
+        self.assertTrue(d == d_)
 
     def test_arrays_dicts_with_difference(self):
         value1 = {

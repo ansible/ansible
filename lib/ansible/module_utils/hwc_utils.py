@@ -1,27 +1,28 @@
-# 2018.05.11 - changed the implementation for classes of GcpSession and
-#              GcpModule
-#            - changed the name of some variables
-#            - changed remove_nones_from_dict
-#
 # Copyright (c), Google Inc, 2017
 # Simplified BSD License (see licenses/simplified_bsd.txt or
 # https://opensource.org/licenses/BSD-2-Clause)
 
+import traceback
+
+REQUESTS_IMP_ERR = None
 try:
     import requests
     HAS_REQUESTS = True
 except ImportError:
+    REQUESTS_IMP_ERR = traceback.format_exc()
     HAS_REQUESTS = False
 
+THIRD_LIBRARIES_IMP_ERR = None
 try:
     from keystoneauth1.adapter import Adapter
     from keystoneauth1.identity import v3
     from keystoneauth1 import session
     HAS_THIRD_LIBRARIES = True
 except ImportError:
+    THIRD_LIBRARIES_IMP_ERR = traceback.format_exc()
     HAS_THIRD_LIBRARIES = False
 
-from ansible.module_utils.basic import AnsibleModule, env_fallback
+from ansible.module_utils.basic import AnsibleModule, env_fallback, missing_required_lib
 from ansible.module_utils._text import to_text
 
 
@@ -55,8 +56,8 @@ def remove_nones_from_dict(obj):
     return _DictClean(obj, lambda v: v is not None)()
 
 
-# Handles the replacement of dicts with values -> the needed value for HWC API
 def replace_resource_dict(item, value):
+    """ Handles the replacement of dicts with values -> the needed value for HWC API"""
     if isinstance(item, list):
         items = []
         for i in item:
@@ -68,8 +69,24 @@ def replace_resource_dict(item, value):
         return item.get(value)
 
 
-# Handles all authentation and HTTP sessions for HWC API calls.
+def are_dicts_different(expect, actual):
+    """Remove all output-only from actual."""
+    actual_vals = {}
+    for k, v in actual.items():
+        if k in expect:
+            actual_vals[k] = v
+
+    expect_vals = {}
+    for k, v in expect.items():
+        if k in actual:
+            expect_vals[k] = v
+
+    return DictComparison(expect_vals) != DictComparison(actual_vals)
+
+
 class HwcSession(object):
+    """Handles all authentation and HTTP sessions for HWC API calls."""
+
     def __init__(self, module, product):
         self.module = module
         self.product = product
@@ -147,19 +164,21 @@ class HwcSession(object):
 
     def _validate(self):
         if not HAS_REQUESTS:
-            self.module.fail_json(msg="Please install the requests library")
+            self.module.fail_json(msg=missing_required_lib('requests'),
+                                  exception=REQUESTS_IMP_ERR)
 
         if not HAS_THIRD_LIBRARIES:
             self.module.fail_json(
-                msg="Please install the keystoneauth1 library")
+                msg=missing_required_lib('keystoneauth1'),
+                exception=THIRD_LIBRARIES_IMP_ERR)
 
     def _credentials(self):
         auth = v3.Password(
             auth_url=self.module.params['identity_endpoint'],
             password=self.module.params['password'],
-            username=self.module.params['user_name'],
-            user_domain_name=self.module.params['domain_name'],
-            project_name=self.module.params['project_name'],
+            username=self.module.params['user'],
+            user_domain_name=self.module.params['domain'],
+            project_name=self.module.params['project'],
             reauthenticate=True
         )
 
@@ -180,27 +199,27 @@ class HwcModule(AnsibleModule):
             dict(
                 identity_endpoint=dict(
                     required=True, type='str',
-                    fallback=(env_fallback, ['IDENTITY_ENDPOINT']),
+                    fallback=(env_fallback, ['ANSIBLE_HWC_IDENTITY_ENDPOINT']),
                 ),
-                user_name=dict(
+                user=dict(
                     required=True, type='str',
-                    fallback=(env_fallback, ['USER_NAME']),
+                    fallback=(env_fallback, ['ANSIBLE_HWC_USER']),
                 ),
                 password=dict(
                     required=True, type='str', no_log=True,
-                    fallback=(env_fallback, ['PASSWORD']),
+                    fallback=(env_fallback, ['ANSIBLE_HWC_PASSWORD']),
                 ),
-                domain_name=dict(
+                domain=dict(
                     required=True, type='str',
-                    fallback=(env_fallback, ['DOMAIN_NAME']),
+                    fallback=(env_fallback, ['ANSIBLE_HWC_DOMAIN']),
                 ),
-                project_name=dict(
+                project=dict(
                     required=True, type='str',
-                    fallback=(env_fallback, ['PROJECT_NAME']),
+                    fallback=(env_fallback, ['ANSIBLE_HWC_PROJECT']),
                 ),
                 region=dict(
                     required=True, type='str',
-                    fallback=(env_fallback, ['REGION']),
+                    fallback=(env_fallback, ['ANSIBLE_HWC_REGION']),
                 ),
                 timeouts=dict(type='dict', options=dict(
                     create=dict(default='10m', type='str'),
@@ -214,13 +233,15 @@ class HwcModule(AnsibleModule):
         super(HwcModule, self).__init__(*args, **kwargs)
 
 
-# This class takes in two dictionaries `a` and `b`.
-# These are dictionaries of arbitrary depth, but made up of standard Python
-# types only.
-# This differ will compare all values in `a` to those in `b`.
-# Note: Only keys in `a` will be compared. Extra keys in `b` will be ignored.
-# Note: On all lists, order does matter.
 class DictComparison(object):
+    ''' This class takes in two dictionaries `a` and `b`.
+        These are dictionaries of arbitrary depth, but made up of standard
+        Python types only.
+        This differ will compare all values in `a` to those in `b`.
+        Note: Only keys in `a` will be compared. Extra keys in `b` will be ignored.
+        Note: On all lists, order does matter.
+    '''
+
     def __init__(self, request):
         self.request = request
 
@@ -238,8 +259,8 @@ class DictComparison(object):
             self._compare_value(dict1.get(k), dict2.get(k)) for k in dict1
         ])
 
-    # Takes in two lists and compares them.
     def _compare_lists(self, list1, list2):
+        """Takes in two lists and compares them."""
         if len(list1) != len(list2):
             return False
 
@@ -260,18 +281,14 @@ class DictComparison(object):
             return (not value1) and (not value2)
 
         # Can assume non-None types at this point.
-        try:
-            if isinstance(value1, list):
-                return self._compare_lists(value1, value2)
-            elif isinstance(value1, dict):
-                return self._compare_dicts(value1, value2)
-            # Always use to_text values to avoid unicode issues.
-            else:
-                return to_text(value1) == to_text(value2)
-        # to_text may throw UnicodeErrors.
-        # These errors shouldn't crash Ansible and return False as default.
-        except UnicodeError:
-            return False
+        if isinstance(value1, list):
+            return self._compare_lists(value1, value2)
+        elif isinstance(value1, dict):
+            return self._compare_dicts(value1, value2)
+        # Always use to_text values to avoid unicode issues.
+        else:
+            return (to_text(value1, errors='surrogate_or_strict')
+                    == to_text(value2, errors='surrogate_or_strict'))
 
 
 class _DictClean(object):

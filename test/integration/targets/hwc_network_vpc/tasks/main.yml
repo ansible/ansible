@@ -16,10 +16,10 @@
 - name: delete a vpc
   hwc_network_vpc:
       identity_endpoint: "{{ identity_endpoint }}"
-      user_name: "{{ user_name }}"
+      user: "{{ user }}"
       password: "{{ password }}"
-      domain_name: "{{ domain_name }}"
-      project_name: "{{ project_name }}"
+      domain: "{{ domain }}"
+      project: "{{ project }}"
       region: "{{ region }}"
       name: "vpc_1"
       cidr: "192.168.100.0/24"
@@ -28,10 +28,10 @@
 - name: create a vpc
   hwc_network_vpc:
       identity_endpoint: "{{ identity_endpoint }}"
-      user_name: "{{ user_name }}"
+      user: "{{ user }}"
       password: "{{ password }}"
-      domain_name: "{{ domain_name }}"
-      project_name: "{{ project_name }}"
+      domain: "{{ domain }}"
+      project: "{{ project }}"
       region: "{{ region }}"
       name: "vpc_1"
       cidr: "192.168.100.0/24"
@@ -40,16 +40,15 @@
 - name: assert changed is true
   assert:
     that:
-      - result.failed == 0
-      - result.changed == true
+      - result is changed
 # ----------------------------------------------------------------------------
 - name: create a vpc that already exists
   hwc_network_vpc:
       identity_endpoint: "{{ identity_endpoint }}"
-      user_name: "{{ user_name }}"
+      user: "{{ user }}"
       password: "{{ password }}"
-      domain_name: "{{ domain_name }}"
-      project_name: "{{ project_name }}"
+      domain: "{{ domain }}"
+      project: "{{ project }}"
       region: "{{ region }}"
       name: "vpc_1"
       cidr: "192.168.100.0/24"
@@ -64,10 +63,10 @@
 - name: delete a vpc
   hwc_network_vpc:
       identity_endpoint: "{{ identity_endpoint }}"
-      user_name: "{{ user_name }}"
+      user: "{{ user }}"
       password: "{{ password }}"
-      domain_name: "{{ domain_name }}"
-      project_name: "{{ project_name }}"
+      domain: "{{ domain }}"
+      project: "{{ project }}"
       region: "{{ region }}"
       name: "vpc_1"
       cidr: "192.168.100.0/24"
@@ -76,16 +75,15 @@
 - name: assert changed is true
   assert:
     that:
-      - result.failed == 0
-      - result.changed == true
+      - result is changed
 # ----------------------------------------------------------------------------
 - name: delete a vpc that does not exist
   hwc_network_vpc:
       identity_endpoint: "{{ identity_endpoint }}"
-      user_name: "{{ user_name }}"
+      user: "{{ user }}"
       password: "{{ password }}"
-      domain_name: "{{ domain_name }}"
-      project_name: "{{ project_name }}"
+      domain: "{{ domain }}"
+      project: "{{ project }}"
       region: "{{ region }}"
       name: "vpc_1"
       cidr: "192.168.100.0/24"
