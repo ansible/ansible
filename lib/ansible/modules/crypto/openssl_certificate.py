@@ -540,7 +540,6 @@ try:
     import cryptography
     from cryptography import x509
     from cryptography.hazmat.backends import default_backend
-    from cryptography.hazmat.primitives import hashes
     from cryptography.hazmat.primitives.serialization import Encoding
     from cryptography.x509 import NameAttribute, Name
     CRYPTOGRAPHY_VERSION = LooseVersion(cryptography.__version__)
@@ -1724,20 +1723,14 @@ class AssertOnlyCertificate(Certificate):
         return result
 
 
-class AcmeCertificateCryptography(Certificate):
-    """Retrieve a certificate using the ACME protocol."""
-
-    def __init__(self, module):
-        super(AcmeCertificateCryptography, self).__init__(module, 'cryptography')
-
-    # TODO: implement
-
-
 class AcmeCertificate(Certificate):
     """Retrieve a certificate using the ACME protocol."""
 
-    def __init__(self, module):
-        super(AcmeCertificate, self).__init__(module, 'pyopenssl')
+    # Since there's no real use of the backend,
+    # other than the 'self.check' function, we just pass the backend to the constructor
+
+    def __init__(self, module, backend):
+        super(AcmeCertificate, self).__init__(module, backend)
         self.accountkey_path = module.params['acme_accountkey_path']
         self.challenge_path = module.params['acme_challenge_path']
         self.use_chain = module.params['acme_chain']
@@ -1905,7 +1898,7 @@ def main():
         if provider == 'selfsigned':
             certificate = SelfSignedCertificate(module)
         elif provider == 'acme':
-            certificate = AcmeCertificate(module)
+            certificate = AcmeCertificate(module, 'pyopenssl')
         elif provider == 'ownca':
             certificate = OwnCACertificate(module)
         else:
@@ -1919,12 +1912,11 @@ def main():
         if provider == 'selfsigned':
             certificate = SelfSignedCertificateCryptography(module)
         elif provider == 'acme':
-            certificate = AcmeCertificateCryptography(module)
+            certificate = AcmeCertificate(module, 'cryptography')
         elif provider == 'ownca':
             certificate = OwnCACertificateCryptography(module)
         else:
             certificate = AssertOnlyCertificateCryptography(module)
-            # certificate = AssertOnlyCertificate(module)
 
     if module.params['state'] == 'present':
 
