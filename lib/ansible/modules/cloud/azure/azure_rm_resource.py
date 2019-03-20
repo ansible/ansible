@@ -263,7 +263,7 @@ class AzureRMResource(AzureRMModuleBase):
         if not self.api_version:
             try:
                 # extract provider and resource type
-                if "/provider/" in self.url:
+                if "/providers/" in self.url:
                     provider = self.url.split("/providers/")[1].split("/")[0]
                     resourceType = self.url.split(provider + "/")[1].split("/")[0]
                     url = "/subscriptions/" + self.subscription_id + "/providers/" + provider
