@@ -50,6 +50,59 @@ For complex variables such as hashes or arrays, ``!unsafe`` should be used on th
         unsafe_key: !unsafe 'unsafe value'
 
 
+Sharing variable values with YAML anchors and aliases
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you want to share variable values across tasks, `YAML anchors and aliases <https://yaml.org/spec/1.2/spec.html#id2765878>`_ help you define, maintain, and use those values in a flexible way.
+You define an anchor with ``&``, then refer to it using an alias, denoted with ``*``.
+
+Here's an example that sets three values with an anchor, uses two of those values with an alias, and overrides the third value::
+
+    ---
+    ...
+    vars:
+        app1:
+            jvm: &jvm_opts
+                opts: '-Xms1G -Xmx2G'
+                port: 1000
+                path: /usr/lib/app1
+        app2:
+            jvm:
+                <<: *jvm_opts
+                path: /usr/lib/app2
+    ...
+
+Here, ``app1`` and ``app2`` share the values for ``opts`` and ``port`` using the anchor ``&jvm_opts`` and the alias ``*jvm_opts``.
+The value for ``path`` is merged by ``<<`` or `merge operator <https://yaml.org/type/merge.html>`_.
+
+Anchors and aliases let you share complex sets of variable values, including nested variables.
+
+Let us assume you have playbook::
+
+      vars:
+        webapp:
+            app: 1.0
+            custom: ToDo_App-1.0
+
+Now, you want to re-use existing value of ``app`` value in ``custom`` value::
+
+    ---
+    - name: Using values nested inside dictionary
+      hosts: localhost
+      vars:
+        webapp:
+            app_version: &my_version 1.0
+            custom_version:
+                - "ToDo_App"
+                - *my_version
+      tasks:
+      - name: Using Anchor value
+        debug:
+            msg: "{{ webapp.custom_version | join('-') }}"
+
+Here, you can anchor 'app_version' value using ``&my_version`` and re-use later as ``*my_version``.
+This way you can access nested values inside dictionaries.
+
 
 .. seealso::
 
