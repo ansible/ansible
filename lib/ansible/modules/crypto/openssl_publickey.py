@@ -197,8 +197,7 @@ class PublicKey(crypto_utils.OpenSSLObject):
                     )
                     publickey_content = crypto.dump_publickey(crypto.FILETYPE_PEM, self.privatekey)
 
-                with open(self.path, 'wb') as publickey_file:
-                    publickey_file.write(publickey_content)
+                crypto_utils.write_file(module, publickey_content)
 
                 self.changed = True
             except crypto_utils.OpenSSLBadPassphraseError as exc:
