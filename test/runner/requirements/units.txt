@@ -5,6 +5,7 @@ pycrypto
 jinja2
 mock
 passlib
+pypsrp
 pytest
 pytest-mock
 pytest-xdist
