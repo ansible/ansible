@@ -241,11 +241,13 @@ options:
       - When C(absent) an image will be removed. Use the force option to un-tag and remove all images
         matching the provided name.
       - When C(present) check if an image exists using the provided name and tag. If the image is not found or the
-        force option is used, the image will either be pulled, built or loaded. By default the image will be pulled
-        from Docker Hub. To build the image, provide a path value set to a directory containing a context and
-        Dockerfile. To load an image, specify load_path to provide a path to an archive file. To tag an image to a
-        repository, provide a repository path. If the name contains a repository path, it will be pushed.
-      - "NOTE: C(build) is DEPRECATED and will be removed in release 2.11. Specifying C(build) will behave the
+        force option is used, the image will either be pulled, built or loaded, depending on the I(source) option.
+      - By default the image will be pulled from Docker Hub, or the registry specified in the image's name. Note that
+        this will change in Ansible 2.12, so to make sure that you are pulling, set I(source) to C(pull). To build
+        the image, provide a I(path) value set to a directory containing a context and Dockerfile, and set I(source)
+        to C(build). To load an image, specify I(load_path) to provide a path to an archive file. To tag an image to
+        a repository, provide a I(repository) path. If the name contains a repository path, it will be pushed.
+      - "NOTE: C(state=build) is DEPRECATED and will be removed in release 2.11. Specifying C(build) will behave the
          same as C(present)."
     type: str
     default: present
@@ -293,7 +295,7 @@ options:
     version_added: "2.1"
   use_tls:
     description:
-      - "DEPRECATED. Whether to use tls to connect to the docker server. Set to
+      - "DEPRECATED. Whether to use tls to connect to the docker daemon. Set to
         C(encrypt) to use TLS. And set to C(verify) to use TLS and verify that
         the server's certificate is valid for the server."
       - "NOTE: If you specify this option, it will set the value of the I(tls) or
@@ -311,7 +313,7 @@ extends_documentation_fragment:
   - docker.docker_py_1_documentation
 
 requirements:
-  - "docker-py >= 1.8.0"
+  - "L(Docker SDK for Python,https://docker-py.readthedocs.io/en/stable/) >= 1.8.0 (use L(docker-py,https://pypi.org/project/docker-py/) for Python 2.6)"
   - "Docker API >= 1.20"
 
 author:
@@ -412,20 +414,23 @@ image:
 import os
 import re
 
+from distutils.version import LooseVersion
+
 from ansible.module_utils.docker.common import (
-    HAS_DOCKER_PY_2, HAS_DOCKER_PY_3, AnsibleDockerClient, DockerBaseClass, is_image_name_id,
+    docker_version, AnsibleDockerClient, DockerBaseClass, is_image_name_id,
 )
 from ansible.module_utils._text import to_native
 
-try:
-    if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
-        from docker.auth import resolve_repository_name
-    else:
-        from docker.auth.auth import resolve_repository_name
-    from docker.utils.utils import parse_repository_tag
-except ImportError:
-    # missing docker-py handled in docker_common
-    pass
+if docker_version is not None:
+    try:
+        if LooseVersion(docker_version) >= LooseVersion('2.0.0'):
+            from docker.auth import resolve_repository_name
+        else:
+            from docker.auth.auth import resolve_repository_name
+        from docker.utils.utils import parse_repository_tag
+    except ImportError:
+        # missing Docker SDK for Python handled in module_utils.docker.common
+        pass
 
 
 class ImageManager(DockerBaseClass):
@@ -587,7 +592,7 @@ class ImageManager(DockerBaseClass):
 
             try:
                 with open(self.archive_path, 'wb') as fd:
-                    if HAS_DOCKER_PY_3:
+                    if self.client.docker_py_version >= LooseVersion('3.0.0'):
                         for chunk in image:
                             fd.write(chunk)
                     else:
@@ -704,7 +709,7 @@ class ImageManager(DockerBaseClass):
             dockerfile=self.dockerfile,
             decode=True,
         )
-        if not HAS_DOCKER_PY_3:
+        if self.client.docker_py_version < LooseVersion('3.0.0'):
             params['stream'] = True
         build_output = []
         if self.tag:

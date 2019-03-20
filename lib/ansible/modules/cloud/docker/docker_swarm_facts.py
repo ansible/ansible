@@ -82,7 +82,7 @@ extends_documentation_fragment:
   - docker.docker_py_1_documentation
 
 requirements:
-    - "docker-py >= 1.10.0"
+    - "L(Docker SDK for Python,https://docker-py.readthedocs.io/en/stable/) >= 1.10.0 (use L(docker-py,https://pypi.org/project/docker-py/) for Python 2.6)"
     - "Docker API >= 1.24"
 '''
 
@@ -177,7 +177,7 @@ tasks:
 try:
     from docker.errors import APIError, NotFound
 except ImportError:
-    # missing docker-py handled in ansible.module_utils.docker_common
+    # missing Docker SDK for Python handled in ansible.module_utils.docker_common
     pass
 
 from ansible.module_utils._text import to_native

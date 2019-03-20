@@ -293,7 +293,7 @@ options:
   init:
     description:
       - Run an init inside the container that forwards signals and reaps processes.
-        This option requires Docker API 1.25+.
+        This option requires Docker API >= 1.25.
     type: bool
     default: no
     version_added: "2.6"
@@ -429,12 +429,14 @@ options:
     type: bool
   oom_score_adj:
     description:
-      - An integer value containing the score given to the container in order to tune OOM killer preferences.
+      - An integer value containing the score given to the container in order to tune
+        OOM killer preferences.
     type: int
     version_added: "2.2"
   output_logs:
     description:
-      - If set to true, output of the container command will be printed (only effective when log_driver is set to json-file or journald.
+      - If set to true, output of the container command will be printed (only effective
+        when log_driver is set to json-file or journald.
     type: bool
     default: no
     version_added: "2.7"
@@ -446,7 +448,8 @@ options:
   pid_mode:
     description:
       - Set the PID namespace mode for the container.
-      - Note that docker-py < 2.0 only supports 'host'. Newer versions allow all values supported by the docker daemon.
+      - Note that Docker SDK for Python < 2.0 only supports 'host'. Newer versions of the
+        Docker SDK for Python (docker) allow all values supported by the docker daemon.
     type: str
   pids_limit:
     description:
@@ -579,9 +582,9 @@ options:
         will be set to this value.
       - When the container is stopped, will be used as a timeout for stopping the
         container. In case the container has a custom C(StopTimeout) configuration,
-        the behavior depends on the version of docker. New versions of docker will
-        always use the container's configured C(StopTimeout) value if it has been
-        configured.
+        the behavior depends on the version of the docker daemon. New versions of
+        the docker daemon will always use the container's configured C(StopTimeout)
+        value if it has been configured.
     type: int
   trust_image_content:
     description:
@@ -622,7 +625,7 @@ options:
       - "Use docker CLI-style syntax: C(/host:/container[:mode])"
       - "Mount modes can be a comma-separated list of various modes such as C(ro), C(rw), C(consistent),
         C(delegated), C(cached), C(rprivate), C(private), C(rshared), C(shared), C(rslave), C(slave).
-        Note that docker might not support all modes and combinations of such modes."
+        Note that the docker daemon might not support all modes and combinations of such modes."
       - SELinux hosts can additionally use C(z) or C(Z) to use a shared or
         private label for the volume.
       - "Note that Ansible 2.7 and earlier only supported one mode, which had to be one of C(ro), C(rw),
@@ -654,9 +657,10 @@ author:
   - "Daan Oosterveld (@dusdanig)"
   - "Chris Houseknecht (@chouseknecht)"
   - "Kassian Sun (@kassiansun)"
+  - "Felix Fontein (@felixfontein)"
 
 requirements:
-  - "docker-py >= 1.8.0"
+  - "L(Docker SDK for Python,https://docker-py.readthedocs.io/en/stable/) >= 1.8.0 (use L(docker-py,https://pypi.org/project/docker-py/) for Python 2.6)"
   - "Docker API >= 1.20"
 '''
 
@@ -945,7 +949,7 @@ try:
         from docker.utils.types import Ulimit, LogConfig
     from docker.errors import APIError, NotFound
 except Exception:
-    # missing docker-py handled in ansible.module_utils.docker.common
+    # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
 
 
@@ -1351,7 +1355,7 @@ class TaskParameters(DockerBaseClass):
 
         if self.client.docker_py_version >= LooseVersion('1.9') and self.client.docker_api_version >= LooseVersion('1.22'):
             # blkio_weight can always be updated, but can only be set on creation
-            # when docker-py and docker API are new enough
+            # when Docker SDK for Python and Docker API are new enough
             host_config_params['blkio_weight'] = 'blkio_weight'
 
         if self.client.docker_py_version >= LooseVersion('3.0'):
@@ -1819,15 +1823,15 @@ class Container(DockerBaseClass):
             config_mapping['log_options'] = log_config.get('Config')
 
         if self.parameters.client.option_minimal_versions['auto_remove']['supported']:
-            # auto_remove is only supported in docker>=2; unfortunately it has a default
-            # value, that's why we have to jump through the hoops here
+            # auto_remove is only supported in Docker SDK for Python >= 2.0.0; unfortunately
+            # it has a default value, that's why we have to jump through the hoops here
             config_mapping['auto_remove'] = host_config.get('AutoRemove')
 
         if self.parameters.client.option_minimal_versions['stop_timeout']['supported']:
-            # stop_timeout is only supported in docker>=2.1. Note that stop_timeout
-            # has a hybrid role, in that it used to be something only used for stopping
-            # containers, and is now also used as a container property. That's why
-            # it needs special handling here.
+            # stop_timeout is only supported in Docker SDK for Python >= 2.1. Note that
+            # stop_timeout has a hybrid role, in that it used to be something only used
+            # for stopping containers, and is now also used as a container property.
+            # That's why it needs special handling here.
             config_mapping['stop_timeout'] = config.get('StopTimeout')
 
         if self.parameters.client.docker_api_version < LooseVersion('1.22'):
@@ -2544,8 +2548,8 @@ class ContainerManager(DockerBaseClass):
                     pass
                 except APIError as exc:
                     if 'Unpause the container before stopping or killing' in exc.explanation:
-                        # New docker versions do not allow containers to be removed if they are paused
-                        # Make sure we don't end up in an infinite loop
+                        # New docker daemon versions do not allow containers to be removed
+                        # if they are paused. Make sure we don't end up in an infinite loop.
                         if count == 3:
                             self.fail("Error removing container %s (tried to unpause three times): %s" % (container_id, str(exc)))
                         count += 1
@@ -2611,8 +2615,8 @@ class ContainerManager(DockerBaseClass):
                         response = self.client.stop(container_id)
                 except APIError as exc:
                     if 'Unpause the container before stopping or killing' in exc.explanation:
-                        # New docker versions do not allow containers to be removed if they are paused
-                        # Make sure we don't end up in an infinite loop
+                        # New docker daemon versions do not allow containers to be removed
+                        # if they are paused. Make sure we don't end up in an infinite loop.
                         if count == 3:
                             self.fail("Error removing container %s (tried to unpause three times): %s" % (container_id, str(exc)))
                         count += 1
@@ -2754,14 +2758,14 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
             if stop_timeout_needed_for_update and not stop_timeout_supported:
                 # We warn (instead of fail) since in older versions, stop_timeout was not used
                 # to update the container's configuration, but only when stopping a container.
-                self.module.warn("docker or docker-py version is %s. Minimum version required is 2.1 to update "
+                self.module.warn("Docker SDK for Python's version is %s. Minimum version required is 2.1 to update "
                                  "the container's stop_timeout configuration. "
-                                 "If you use the 'docker-py' module, you have to switch to the docker 'Python' package." % (docker_version,))
+                                 "If you use the 'docker-py' module, you have to switch to the 'docker' Python package." % (docker_version,))
         else:
             if stop_timeout_needed_for_update and not stop_timeout_supported:
                 # We warn (instead of fail) since in older versions, stop_timeout was not used
                 # to update the container's configuration, but only when stopping a container.
-                self.module.warn("docker API version is %s. Minimum version required is 1.25 to set or "
+                self.module.warn("Docker API version is %s. Minimum version required is 1.25 to set or "
                                  "update the container's stop_timeout configuration." % (self.docker_api_version_str,))
         self.option_minimal_versions['stop_timeout']['supported'] = stop_timeout_supported
 

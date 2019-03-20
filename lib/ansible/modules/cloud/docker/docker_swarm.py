@@ -52,7 +52,7 @@ options:
       - Set to C(join), to join an existing cluster.
       - Set to C(absent), to leave an existing cluster.
       - Set to C(remove), to remove an absent node from the cluster.
-        Note that removing requires docker-py >= 2.4.0.
+        Note that removing requires Docker SDK for Python >= 2.4.0.
       - Set to C(inspect) to display swarm informations.
     type: str
     required: yes
@@ -164,7 +164,7 @@ extends_documentation_fragment:
   - docker
   - docker.docker_py_1_documentation
 requirements:
-  - "docker-py >= 1.10.0"
+  - "L(Docker SDK for Python,https://docker-py.readthedocs.io/en/stable/) >= 1.10.0 (use L(docker-py,https://pypi.org/project/docker-py/) for Python 2.6)"
   - Docker API >= 1.25
 author:
   - Thierry Bouvet (@tbouvet)
@@ -243,7 +243,7 @@ import json
 try:
     from docker.errors import APIError
 except ImportError:
-    # missing docker-py handled in ansible.module_utils.docker.common
+    # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
 
 from ansible.module_utils.docker.common import (
