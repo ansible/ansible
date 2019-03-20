@@ -97,13 +97,13 @@ EXAMPLES = r'''
 # =======================================
 # aws_ec2.yml (Dynamic Inventory - Linux)
 # This will return the Instance IDs matching the filter
-plugin: aws_ec2
-regions:
-    - us-east-1
-hostnames:
-    - instance-id
-filters:
-    tag:SSMTag: ssmlinux
+#plugin: aws_ec2
+#regions:
+#    - us-east-1
+#hostnames:
+#    - instance-id
+#filters:
+#    tag:SSMTag: ssmlinux
 # -----------------------
 - name: install aws-cli
   hosts: all
@@ -120,13 +120,13 @@ filters:
 # The playbook tasks will get executed on the instance ids returned from the dynamic inventory plugin using ssm connection.
 # =====================================================
 # aws_ec2.yml (Dynamic Inventory - Windows)
-plugin: aws_ec2
-regions:
-    - us-east-1
-hostnames:
-    - instance-id
-filters:
-    tag:SSMTag: ssmwindows
+#plugin: aws_ec2
+#regions:
+#    - us-east-1
+#hostnames:
+#    - instance-id
+#filters:
+#    tag:SSMTag: ssmwindows
 # -----------------------
 - name: Create a dir.
   hosts: all
