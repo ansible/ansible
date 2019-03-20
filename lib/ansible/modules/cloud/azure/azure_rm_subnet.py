@@ -205,10 +205,6 @@ class AzureRMSubnet(AzureRMModuleBase):
             )
         )
 
-        required_if = [
-            ('state', 'present', ['address_prefix_cidr'])
-        ]
-
         self.results = dict(
             changed=False,
             state=dict()
@@ -224,8 +220,7 @@ class AzureRMSubnet(AzureRMModuleBase):
         self.service_endpoints = None
 
         super(AzureRMSubnet, self).__init__(self.module_arg_spec,
-                                            supports_check_mode=True,
-                                            required_if=required_if)
+                                            supports_check_mode=True)
 
     def exec_module(self, **kwargs):
 
@@ -235,9 +230,10 @@ class AzureRMSubnet(AzureRMModuleBase):
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
 
-        if self.state == 'present' and not CIDR_PATTERN.match(self.address_prefix_cidr):
+        if self.address_prefix_cidr and not CIDR_PATTERN.match(self.address_prefix_cidr):
             self.fail("Invalid address_prefix_cidr value {0}".format(self.address_prefix_cidr))
 
+        nsg = dict()
         if self.security_group:
             nsg = self.parse_nsg()
 
@@ -268,13 +264,12 @@ class AzureRMSubnet(AzureRMModuleBase):
                         changed = True
                         results['address_prefix'] = self.address_prefix_cidr
 
-                if nsg:
-                    if results['network_security_group'].get('id') != nsg.get('id'):
+                if self.security_group is not None and results['network_security_group'].get('id') != nsg.get('id'):
                         self.log("CHANGED: subnet {0} network security group".format(self.name))
                         changed = True
                         results['network_security_group']['id'] = nsg.get('id')
                         results['network_security_group']['name'] = nsg.get('name')
-                if self.route_table != results['route_table'].get('id'):
+                if self.route_table is not None and self.route_table != results['route_table'].get('id'):
                     changed = True
                     results['route_table']['id'] = self.route_table
                     self.log("CHANGED: subnet {0} route_table to {1}".format(self.name, route_table.get('name')))
@@ -310,6 +305,8 @@ class AzureRMSubnet(AzureRMModuleBase):
             if self.state == 'present' and changed:
                 if not subnet:
                     # create new subnet
+                    if not self.address_prefix_cidr:
+                        self.fail('address_prefix_cidr is not set')
                     self.log('Creating subnet {0}'.format(self.name))
                     subnet = self.network_models.Subnet(
                         address_prefix=self.address_prefix_cidr
@@ -324,13 +321,13 @@ class AzureRMSubnet(AzureRMModuleBase):
                     subnet = self.network_models.Subnet(
                         address_prefix=results['address_prefix']
                     )
-                    if results['network_security_group'].get('id'):
+                    if results['network_security_group'].get('id') is not None:
                         subnet.network_security_group = self.network_models.NetworkSecurityGroup(id=results['network_security_group'].get('id'))
-                    if self.route_table:
-                        subnet.route_table = self.network_models.RouteTable(id=self.route_table)
+                    if results['route_table'].get('id') is not None:
+                        subnet.route_table = self.network_models.RouteTable(id=results['route_table'].get('id'))
 
-                    if self.service_endpoints:
-                        subnet.service_endpoints = self.service_endpoints
+                    if results.get('service_endpoints') is not None:
+                        subnet.service_endpoints = results['service_endpoints']
 
                 self.results['state'] = self.create_or_update_subnet(subnet)
             elif self.state == 'absent' and changed:
