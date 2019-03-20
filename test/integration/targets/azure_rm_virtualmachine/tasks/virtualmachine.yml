@@ -332,7 +332,8 @@
         publisher: Canonical
         sku: 16.04-LTS
         version: latest
-
+      tags:
+        abc: def
 - assert:
       that:
         - azure_vm.properties.availabilitySet.id
@@ -344,10 +345,6 @@
     name: "{{ vm_name2 }}"
   register: results
 
-- name: Just dump output
-  debug:
-    var: results
-
 - name: Assert that facts module returned the second vm
   assert:
     that: 
@@ -357,6 +354,17 @@
       - results.vms[0].admin_username == 'adminuser'
       - results.vms[0].resource_group == "{{ resource_group }}"
       - results.vms[0].power_state != None
+
+- name: Retrieve facts by tags
+  azure_rm_virtualmachine_facts:
+    tags:
+      abc: def
+  register: results
+
+- name: Assert that facts module returned the second vm
+  assert:
+    that: 
+      - results.vms | length >= 1
 
 - name: Should be idempotent with a dual NICs
   azure_rm_virtualmachine:
