@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: validation
+module: validate
 
 short_description: This module validate an Ansible variable against a JSON schema
 
@@ -73,4 +73,5 @@ RETURN = '''
 message:
     description: In case of failure return the reason for failure
     type: str
+    returned: on error
 '''
