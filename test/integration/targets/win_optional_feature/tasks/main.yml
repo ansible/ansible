@@ -16,73 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- name: run with check_mode
-  win_optional_feature:
-    name: TelnetClient
-    state: present
-    include_parent: true
-  check_mode: yes
-  register: feature_check
+- name: check if host supports module
+  win_shell: if (Get-Command -Name Enable-WindowsOptionalFeature -ErrorAction SilentlyContinue) { $true } else { $false }
+  register: run_tests
 
-- name: assert check_mode
-  assert:
-    that:
-      - feature_check.changed
-
-- name: run without check_mode
-  win_optional_feature:
-    name: TelnetClient
-    state: present
-    include_parent: true
-  register: real_feature_check
-
-- name: assert feature installed 
-  assert:
-    that:
-      - real_feature_check.changed
-
-- name: test idempotence for install
-  win_optional_feature:
-    name: TelnetClient
-    state: present
-    include_parent: true
-  register: real_feature_check
-
-- name: assert idempotence
-  assert:
-    that:
-      - not real_feature_check.changed
-
-- name: removal run with check_mode
-  win_optional_feature:
-    name: TelnetClient
-    state: absent
-  check_mode: yes
-  register: feature_check
-
-- name: assert removal check_mode
-  assert:
-    that:
-      - feature_check.changed
-
-- name: remove feature
-  win_optional_feature:
-    name: TelnetClient
-    state: absent
-  register: real_feature_check
-
-- name: assert feature removed
-  assert:
-    that:
-      - real_feature_check.changed
-
-- name: test idempotence for removal 
-  win_optional_feature:
-    name: TelnetClient
-    state: absent
-  register: real_feature_check
-
-- name: assert idempotence
-  assert:
-    that:
-      - not real_feature_check.changed
+- name: run tests
+  include_tasks: tests.yml
+  when: run_tests.stdout | trim | bool
