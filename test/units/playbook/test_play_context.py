@@ -161,22 +161,26 @@ def test_play_context_make_become_cmd(mocker, parser, reset_cli_args):
     assert re.match('''%s %s "'echo %s; %s'"''' % (pfexec_exe, pfexec_flags, success, default_cmd), cmd) is not None
 
     play_context.set_become_plugin(become_loader.get('doas'))
+    play_context.become_method = 'doas'
     play_context.become_flags = doas_flags
     cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
     assert (re.match("""%s %s -u %s %s -c 'echo %s; %s'""" % (doas_exe, doas_flags, play_context.become_user, default_exe, success,
                                                               default_cmd), cmd) is not None)
 
     play_context.set_become_plugin(become_loader.get('ksu'))
+    play_context.become_method = 'ksu'
     play_context.become_flags = ksu_flags
     cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
     assert (re.match("""%s %s %s -e %s -c 'echo %s; %s'""" % (ksu_exe, play_context.become_user, ksu_flags,
                                                               default_exe, success, default_cmd), cmd) is not None)
 
     play_context.set_become_plugin(become_loader.get('bad'))
+    play_context.become_method = 'bad'
     with pytest.raises(AnsibleError):
         play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
 
     play_context.set_become_plugin(become_loader.get('dzdo'))
+    play_context.become_method = 'dzdo'
     play_context.become_flags = dzdo_flags
     cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
     assert re.match("""%s %s -u %s %s -c 'echo %s; %s'""" % (dzdo_exe, dzdo_flags, play_context.become_user, default_exe,
