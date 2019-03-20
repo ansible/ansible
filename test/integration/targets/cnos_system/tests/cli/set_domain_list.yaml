@@ -1,0 +1,111 @@
+---
+- debug: msg="START cli/set_domain_list.yaml"
+
+- name: setup
+  cnos_config:
+    lines:
+      - no ip domain-list ansible.com vrf default
+      - no ip domain-list redhat.com vrf default
+    match: none
+
+- name: configure domain_list
+  cnos_system:
+    domain_search:
+      - ansible.com
+      - redhat.com
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - "'ip domain-list ansible.com vrf default' in result.commands"
+      - "'ip domain-list redhat.com vrf default' in result.commands"
+
+- name: verify domain_list
+  cnos_system:
+    domain_search:
+      - ansible.com
+      - redhat.com
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+
+- name: remove one entry
+  cnos_system:
+    domain_search:
+      - ansible.com
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - "'no ip domain-list redhat.com vrf default' in result.commands"
+
+- name: verify remove one entry
+  cnos_system:
+    domain_search:
+      - ansible.com
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+
+- name: add one entry
+  cnos_system:
+    domain_search:
+      - ansible.com
+      - redhat.com
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - "'ip domain-list redhat.com vrf default' in result.commands"
+
+- name: verify add one entry
+  cnos_system:
+    domain_search:
+      - ansible.com
+      - redhat.com
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+
+- name: add and remove one entry
+  cnos_system:
+    domain_search:
+      - ansible.com
+      - eng.ansible.com
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - "'no ip domain-list redhat.com vrf default' in result.commands"
+      - "'ip domain-list eng.ansible.com vrf default' in result.commands"
+
+- name: verify add and remove one entry
+  cnos_system:
+    domain_search:
+      - ansible.com
+      - eng.ansible.com
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+
+- name: teardown
+  cnos_config:
+    lines:
+      - no ip domain-list ansible.com vrf default
+      - no ip domain-list redhat.com vrf default
+      - no ip domain-list eng.ansible.com vrf default
+    match: none
+
+- debug: msg="END cli/set_domain_search.yaml"
