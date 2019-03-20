@@ -67,7 +67,7 @@ class TaskInclude(Task):
             raise AnsibleParserError('Invalid options for %s: %s' % (task.action, ','.join(list(bad_opts))), obj=data)
 
         if not task.args.get('_raw_params'):
-            task.args['_raw_params'] = task.args.pop('file')
+            task.args['_raw_params'] = task.args.pop('file', None)
 
         apply_attrs = task.args.get('apply', {})
         if apply_attrs and task.action != 'include_tasks':
