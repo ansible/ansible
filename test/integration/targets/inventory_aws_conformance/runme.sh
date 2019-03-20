@@ -2,23 +2,17 @@
 
 set -ex
 
-TARGET=$(pwd)
-
-# set the output dir
-if [ -z "${OUTPUT_DIR+null}" ]; then
-    export OUTPUT_DIR=$TARGET
-fi
-
 virtualenv --system-site-packages --python "${ANSIBLE_TEST_PYTHON_INTERPRETER:-python}" "${OUTPUT_DIR}/aws-ec2-inventory"
 source "${OUTPUT_DIR}/aws-ec2-inventory/bin/activate"
 pip install "python-dateutil>=2.1,<2.7.0" jmespath "Jinja2>=2.10" PyYaml cryptography paramiko
 
 # create boto3 symlinks
-ln -s "$TARGET/lib/boto" "$TARGET/lib/boto3"
-ln -s "$TARGET/lib/boto" "$TARGET/lib/botocore"
+ln -s "$(pwd)/lib/boto" "$(pwd)/lib/boto3"
+ln -s "$(pwd)/lib/boto" "$(pwd)/lib/botocore"
 
 # override boto's import path(s)
-export PYTHONPATH="$TARGET/lib:$PYTHONPATH"
+export PYTHONPATH
+PYTHONPATH="$(pwd)/lib:$PYTHONPATH"
 
 #################################################
 #   RUN THE SCRIPT
@@ -37,17 +31,11 @@ aws_access_key_id = FOO
 aws_secret_acccess_key = BAR
 EOF
 
-rm -f script.out
 ANSIBLE_JINJA2_NATIVE=1 ansible-inventory -vvvv -i ./ec2.sh --list --output="$OUTPUT_DIR/script.out"
 RC=$?
 if [[ $RC != 0 ]]; then
     exit $RC
 fi
-#rm -f $OUTPUT_DIR/ec2.ini
-#rm -f $OUTPUT_DIR/ec2.py
-rm -rf .cache
-
-#exit 0
 
 #################################################
 #   RUN THE PLUGIN
@@ -154,12 +142,7 @@ keyed_groups:
     prefix: security_group
 EOF
 
-rm -f "$OUTPUT_DIR/plugin.out"
 ANSIBLE_JINJA2_NATIVE=1 ansible-inventory -vvvv -i "$OUTPUT_DIR/test.aws_ec2.yml" --list --output="$OUTPUT_DIR/plugin.out"
-rm -f "$OUTPUT_DIR/aws_ec2.yml"
-rm "$TARGET/lib/boto3"
-rm "$TARGET/lib/botocore"
-rm -r "${OUTPUT_DIR}/aws-ec2-inventory/"
 
 #################################################
 #   DIFF THE RESULTS
