@@ -227,7 +227,8 @@ class AzureRMManagedDisk(AzureRMModuleBase):
                 type='str'
             ),
             zones=dict(
-                type='list'
+                type='list',
+                elements='int'
             )
         )
         required_if = [
