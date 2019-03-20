@@ -59,7 +59,7 @@ options:
     type: bool
   full:
     description:
-      - A full format writes to every sector of the disk, takes much longer to perform than the 
+      - A full format writes to every sector of the disk, takes much longer to perform than the
         default (quick) format, and is not recommended on storage that is thinly provisioned.
       - Specify C(true) for full format.
     type: bool
@@ -69,10 +69,13 @@ options:
       - Volumes that have been formatted previously or contain data must be force-formatted.
     type: bool
 notes:
-  - One of three parameters (I(drive_letter), I(path) and I(label)) are mandatory to identify the target 
+  - One of three parameters (I(drive_letter), I(path) and I(label)) are mandatory to identify the target
     volume but more than one cannot be specified at the same time.
   - This module is not idempotent and always formats the target volume if I(force) is specified.
   - For more information, see U(https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/format-msft-volume)
+seealso:
+  - module: win_disk_facts
+  - module: win_partition
 author:
   - Varun Chopra (@chopraaa) <v@chopraaa.com>
 '''

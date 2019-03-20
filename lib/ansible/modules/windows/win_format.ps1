@@ -100,7 +100,7 @@ function Get-AnsibleVolume {
     return $volume
 }
 
-function Format-AnsibleVolume {
+function Get-VolumeParams {
     param(
         $Path,
         $Label,
@@ -108,14 +108,11 @@ function Format-AnsibleVolume {
         $Full,
         $UseLargeFRS,
         $Compress,
-        $SetIntegrityStreams,
-        $WhatIf
+        $SetIntegrityStreams
     )
     $parameters = @{
         Path = $Path
         Full = $Full
-        WhatIf = $WhatIf
-        Confirm = $false
     }
     if ($null -ne $UseLargeFRS) {
         $parameters.Add("UseLargeFRS", $UseLargeFRS)
@@ -133,11 +130,7 @@ function Format-AnsibleVolume {
         $parameters.Add("FileSystem", $FileSystem)
     }
 
-    try {
-        Format-Volume @parameters | Out-Null
-    } catch {
-        $module.FailJson("Unable to format volume at $($Path): $($_.Exception.Message)", $_)
-    }
+    return $parameters
 }
 
 $ansible_volume = Get-AnsibleVolume -DriveLetter $drive_letter -Path $path -Label $label
@@ -147,11 +140,14 @@ if (-not $force_format) {
     $ansible_partition_size = (Get-Partition -Volume $ansible_volume).Size
 
     if ($ansible_volume_size -ne 0 -or $ansible_partition_size -eq $ansible_volume_size) {
-        $module.FailJson("Specify force parameter to format non-pristine volumes")
+        $module.FailJson("You must specify force as a parameter to format non-pristine volumes")
     }
 }
 
-Format-AnsibleVolume -Path $ansible_volume.Path -Full $full_format -Label $new_label -SetIntegrityStreams $integrity_streams -UseLargeFRS $large_frs -Compress $compress_volume -WhatIf $module.CheckMode
+$parameters = Get-VolumeParams -Path $ansible_volume.Path -Full $full_format -Label $new_label -SetIntegrityStreams $integrity_streams -UseLargeFRS $large_frs -Compress $compress_volume
+
+Format-Volume @parameters -WhatIf:$module.CheckMode -Confirm:$false | Out-Null
+
 $module.Result.changed = $true
 
 $module.ExitJson()
