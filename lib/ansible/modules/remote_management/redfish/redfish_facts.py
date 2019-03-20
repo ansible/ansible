@@ -150,9 +150,10 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.redfish_utils import RedfishUtils
 
 CATEGORY_COMMANDS_ALL = {
-    "Systems": ["GetSystemInventory", "GetCpuInventory",
-                "GetNicInventory", "GetStorageControllerInventory",
-                "GetDiskInventory", "GetBiosAttributes", "GetBootOrder"],
+    "Systems": ["GetSystemInventory", "GetPsuInventory", "GetCpuInventory",
+                "GetMemoryInventory", "GetNicInventory",
+                "GetStorageControllerInventory", "GetDiskInventory",
+                "GetBiosAttributes", "GetBootOrder"],
     "Chassis": ["GetFanInventory", "GetPsuInventory"],
     "Accounts": ["ListUsers"],
     "Update": ["GetFirmwareInventory"],
