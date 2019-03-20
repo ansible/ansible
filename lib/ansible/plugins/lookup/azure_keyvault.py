@@ -95,7 +95,7 @@ class LookupModule(LookupBase):
 
         for param in input_args:
             try:
-                key, value = param.split('=')
+                key, value = param.split('=', 1)
                 if key not in accepted_params:
                     raise AnsibleError('%s not an accepted parameter' % key)
                 accepted_params[key] = value
