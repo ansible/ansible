@@ -119,8 +119,8 @@
       - output.containerinstances[0]['ip_address'] != None
       - output.containerinstances[0]['ports'] != None
       - output.containerinstances[0]['containers'] != None
-      - output.containerinstances[0]['containers']['commands'] | length == 2
-      - output.containerinstances[0]['containers']['environment_variables'] | length == 1
+      - output.containerinstances[0]['containers'][0]['commands'] | length == 2
+      - output.containerinstances[0]['containers'][0]['environment_variables'] | length == 1
       - output.containerinstances[0]['restart_policy'] == 'on_failure'
 
 - name: Gather facts for all Container Instances in the resource group
