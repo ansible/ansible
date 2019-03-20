@@ -690,6 +690,9 @@ class Templar:
                 else:
                     return data
 
+            # jinja2 global is inconsistent across versions, this normalizes them
+            t.globals['dict'] = dict
+
             if disable_lookups:
                 t.globals['query'] = t.globals['q'] = t.globals['lookup'] = self._fail_lookup
             else:

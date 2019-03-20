@@ -1,0 +1,2 @@
+bugfixes:
+    - allow 'dict()' jinja2 global to function the same even though it has changed in jinja2 versions
