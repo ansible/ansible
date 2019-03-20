@@ -21,12 +21,6 @@ from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE
 from collections import defaultdict
 
-try:
-    from icontrol.exceptions import iControlUnexpectedHTTPError
-    HAS_F5SDK = True
-except ImportError:
-    HAS_F5SDK = False
-
 
 MANAGED_BY_ANNOTATION_VERSION = 'f5-ansible.version'
 MANAGED_BY_ANNOTATION_MODIFIED = 'f5-ansible.last_modified'
@@ -230,39 +224,6 @@ def flatten_boolean(value):
         return 'no'
 
 
-def cleanup_tokens(client=None):
-    # TODO(Remove this. No longer needed with iControlRestSession destructor)
-    if client is None:
-        return
-    try:
-        # isinstance cannot be used here because to import it creates a
-        # circular dependency with teh module_utils.network.f5.bigip file.
-        #
-        # TODO(consider refactoring cleanup_tokens)
-        if 'F5RestClient' in type(client).__name__:
-            token = client._client.headers.get('X-F5-Auth-Token', None)
-            if not token:
-                return
-            uri = "https://{0}:{1}/mgmt/shared/authz/tokens/{2}".format(
-                client.provider['server'],
-                client.provider['server_port'],
-                token
-            )
-            resp = client.api.delete(uri)
-            try:
-                resp.json()
-            except ValueError as ex:
-                raise F5ModuleError(str(ex))
-            return True
-        else:
-            resource = client.api.shared.authz.tokens_s.token.load(
-                name=client.api.icrs.token
-            )
-            resource.delete()
-    except Exception as ex:
-        pass
-
-
 def is_cli(module):
     transport = module.params['transport']
     provider_transport = (module.params['provider'] or {}).get('transport')
@@ -354,76 +315,10 @@ def transform_name(partition='', name='', sub_path=''):
     return result
 
 
-def compare_complex_list(want, have):
-    """Performs a complex list comparison
-
-    A complex list is a list of dictionaries
-
-    Args:
-        want (list): List of dictionaries to compare with second parameter.
-        have (list): List of dictionaries compare with first parameter.
-
-    Returns:
-        bool:
-    """
-    if want == [] and have is None:
-        return None
-    if want is None:
-        return None
-    w = []
-    h = []
-    for x in want:
-        tmp = [(str(k), str(v)) for k, v in iteritems(x)]
-        w += tmp
-    for x in have:
-        tmp = [(str(k), str(v)) for k, v in iteritems(x)]
-        h += tmp
-    if set(w) == set(h):
-        return None
-    else:
-        return want
-
-
-def compare_dictionary(want, have):
-    """Performs a dictionary comparison
-
-    Args:
-        want (dict): Dictionary to compare with second parameter.
-        have (dict): Dictionary to compare with first parameter.
-
-    Returns:
-        bool:
-    """
-    if want == {} and have is None:
-        return None
-    if want is None:
-        return None
-    w = [(str(k), str(v)) for k, v in iteritems(want)]
-    h = [(str(k), str(v)) for k, v in iteritems(have)]
-    if set(w) == set(h):
-        return None
-    else:
-        return want
-
-
 def is_ansible_debug(module):
     if module._debug and module._verbosity >= 4:
         return True
     return False
-
-
-def fail_json(module, ex, client=None):
-    # TODO(Remove this. No longer needed with iControlRestSession destructor)
-    if is_ansible_debug(module) and client:
-        module.fail_json(msg=str(ex), __f5debug__=client.api.debug_output)
-    module.fail_json(msg=str(ex))
-
-
-def exit_json(module, results, client=None):
-    # TODO(Remove this. No longer needed with iControlRestSession destructor)
-    if is_ansible_debug(module) and client:
-        results['__f5debug__'] = client.api.debug_output
-    module.exit_json(**results)
 
 
 def is_uuid(uuid=None):
