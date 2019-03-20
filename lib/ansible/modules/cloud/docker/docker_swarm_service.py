@@ -776,10 +776,10 @@ extends_documentation_fragment:
   - docker
   - docker.docker_py_2_documentation
 requirements:
-  - "docker >= 2.0.2"
+  - "L(Docker SDK for Python,https://docker-py.readthedocs.io/en/stable/) >= 2.0.2"
   - "Docker API >= 1.24"
 notes:
-  - "Images will only resolve to the latest digest when using Docker API >= 1.30 and docker-py >= 3.2.0.
+  - "Images will only resolve to the latest digest when using Docker API >= 1.30 and Docker SDK for Python >= 3.2.0.
      When using older versions use C(force_update: true) to trigger the swarm to resolve a new image."
 '''
 
@@ -1078,7 +1078,7 @@ try:
         NotFound,
     )
 except ImportError:
-    # missing docker-py handled in ansible.module_utils.docker.common
+    # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
 
 
@@ -2257,6 +2257,7 @@ class DockerServiceManager(object):
             **service_data
         )
         # Prior to Docker SDK 4.0.0 no warnings were returned and will thus be ignored.
+        # (see https://github.com/docker/docker-py/pull/2272)
         self.client.report_warnings(result, ['Warning'])
 
     def create_service(self, name, service):

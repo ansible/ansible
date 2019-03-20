@@ -153,7 +153,7 @@ extends_documentation_fragment:
   - docker.docker_py_1_documentation
 
 requirements:
-  - "docker-py >= 1.8.0"
+  - "L(Docker SDK for Python,https://docker-py.readthedocs.io/en/stable/) >= 1.8.0 (use L(docker-py,https://pypi.org/project/docker-py/) for Python 2.6)"
   - "docker-compose >= 1.7.0"
   - "Docker API >= 1.20"
   - "PyYAML >= 3.11"

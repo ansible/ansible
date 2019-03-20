@@ -37,7 +37,7 @@ extends_documentation_fragment:
   - docker.docker_py_1_documentation
 
 requirements:
-  - "docker-py >= 1.8.0"
+  - "L(Docker SDK for Python,https://docker-py.readthedocs.io/en/stable/) >= 1.8.0 (use L(docker-py,https://pypi.org/project/docker-py/) for Python 2.6)"
   - "Docker API >= 1.20"
 
 author:
@@ -154,7 +154,7 @@ images:
 try:
     from docker import utils
 except ImportError:
-    # missing docker-py handled in ansible.module_utils.docker.common
+    # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
 
 from ansible.module_utils.docker.common import AnsibleDockerClient, DockerBaseClass, is_image_name_id
