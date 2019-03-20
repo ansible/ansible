@@ -59,6 +59,11 @@ options:
         - Whether the image can be accessed publicly. Note that publicizing an image requires admin role by default.
      type: bool
      default: 'yes'
+   protected:
+     description:
+        - Prevent image from being deleted.
+     type: bool
+     default: 'no'
    filename:
      description:
         - The path to the file which has to be uploaded
@@ -119,6 +124,7 @@ def main():
         min_disk=dict(type='int', default=0),
         min_ram=dict(type='int', default=0),
         is_public=dict(type='bool', default=False),
+        protected=dict(type='bool', default=False),
         filename=dict(default=None),
         ramdisk=dict(default=None),
         kernel=dict(default=None),
@@ -150,6 +156,7 @@ def main():
                     wait=module.params['wait'],
                     timeout=module.params['timeout'],
                     is_public=module.params['is_public'],
+                    protected=module.params['protected'],
                     min_disk=module.params['min_disk'],
                     min_ram=module.params['min_ram'],
                     **kwargs
@@ -162,6 +169,7 @@ def main():
                 image=image,
                 kernel=module.params['kernel'],
                 ramdisk=module.params['ramdisk'],
+                protected=module.params['protected'],
                 **module.params['properties'])
             image = cloud.get_image(name_or_id=image.id)
             module.exit_json(changed=changed, image=image, id=image.id)
