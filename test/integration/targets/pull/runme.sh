@@ -162,18 +162,8 @@ function main_repo_full_cloned()
   return 0
 }
 
-function main_repo_shallow_cloned
+function main_repo_shallow_cloned()
 {
-  local ansible_output_log=''
-
-  if [[ $# -ne 1 ]]; then
-    echo 'Usage: main_repo_shallow_cloned <ansible_output_log>' 1>&2
-
-    return 1
-  fi
-
-  ansible_output_log="$1"
-
   if [[ "$(git_supports_depth)" -eq 0 ]]; then
     main_repo_full_cloned
 
@@ -236,18 +226,8 @@ function submodule_full_cloned()
   return 0
 }
 
-function submodule_shallow_cloned
+function submodule_shallow_cloned()
 {
-  local ansible_output_log=''
-
-  if [[ $# -ne 1 ]]; then
-    echo 'Usage: main_repo_shallow_cloned <ansible_output_log>' 1>&2
-
-    return 1
-  fi
-
-  ansible_output_log="$1"
-
   if [[ "$(git_supports_depth)" -eq 0 ]]; then
     submodule_full_cloned
 
@@ -291,7 +271,7 @@ rm -rf "${pull_dir}"
 # Run ansible-pull with defaults (which is shallow clone on main repository and recursive full clone on submodules) and accept GH host key
 ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${remote_repo}" --accept-host-key "$@" | tee "${temp_log}"
 
-main_repo_shallow_cloned "${temp_log}"
+main_repo_shallow_cloned
 submodule_initialized
 submodule_recursively_initialized
 submodule_full_cloned
@@ -312,7 +292,7 @@ rm -rf "${pull_dir}"
 ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${remote_repo}" --accept-host-key --checkout '1.3.0' "$@" | tee "${temp_log}"
 
 main_repo_at_tag '1.3.0'
-main_repo_shallow_cloned "${temp_log}"
+main_repo_shallow_cloned
 submodule_initialized
 submodule_recursively_initialized
 submodule_full_cloned
@@ -322,7 +302,7 @@ rm -rf "${pull_dir}"
 # Run ansible-pull with depth of 1 and accept GH host key using --module-args
 ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${remote_repo}" --module-args 'accept_hostkey=yes depth=1' "$@" | tee "${temp_log}"
 
-main_repo_shallow_cloned "${temp_log}"
+main_repo_shallow_cloned
 submodule_initialized
 submodule_recursively_initialized
 submodule_full_cloned
@@ -343,7 +323,7 @@ rm -rf "${pull_dir}"
 ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${remote_repo}" --module-args 'accept_hostkey=yes depth=1 version=1.3.0' "$@" | tee "${temp_log}"
 
 main_repo_at_tag '1.3.0'
-main_repo_shallow_cloned "${temp_log}"
+main_repo_shallow_cloned
 submodule_initialized
 submodule_recursively_initialized
 submodule_full_cloned
