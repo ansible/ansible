@@ -77,12 +77,12 @@ types:
 # and status with prefix e.g. "server_status_running"
 plugin: hcloud
 keyed_groups:
-  - prefix: hcloud_location
-    key: location:
-  - separator: ""
-    key: image_os_flavor
-  - prefix: "server_status"
-    key: status
+  - key: location
+    prefix: hcloud_location
+  - key: image_os_flavor
+    separator: ""
+  - key: status
+    prefix: server_status
 """
 
 import os
