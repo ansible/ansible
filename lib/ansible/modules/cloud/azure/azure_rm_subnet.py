@@ -36,7 +36,6 @@ options:
         description:
             - CIDR defining the IPv4 address space of the subnet. Must be valid within the context of the
               virtual network.
-        required: true
         aliases:
             - address_prefix
     security_group:
@@ -258,17 +257,16 @@ class AzureRMSubnet(AzureRMModuleBase):
             results = subnet_to_dict(subnet)
 
             if self.state == 'present':
-                if self.address_prefix_cidr:
-                    if results['address_prefix'] != self.address_prefix_cidr:
-                        self.log("CHANGED: subnet {0} address_prefix_cidr".format(self.name))
-                        changed = True
-                        results['address_prefix'] = self.address_prefix_cidr
+                if self.address_prefix_cidr and results['address_prefix'] != self.address_prefix_cidr:
+                    self.log("CHANGED: subnet {0} address_prefix_cidr".format(self.name))
+                    changed = True
+                    results['address_prefix'] = self.address_prefix_cidr
 
                 if self.security_group is not None and results['network_security_group'].get('id') != nsg.get('id'):
-                        self.log("CHANGED: subnet {0} network security group".format(self.name))
-                        changed = True
-                        results['network_security_group']['id'] = nsg.get('id')
-                        results['network_security_group']['name'] = nsg.get('name')
+                    self.log("CHANGED: subnet {0} network security group".format(self.name))
+                    changed = True
+                    results['network_security_group']['id'] = nsg.get('id')
+                    results['network_security_group']['name'] = nsg.get('name')
                 if self.route_table is not None and self.route_table != results['route_table'].get('id'):
                     changed = True
                     results['route_table']['id'] = self.route_table
