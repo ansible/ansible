@@ -127,7 +127,7 @@ def main():
 
         with open(path, 'r') as path_fd:
             for line, text in enumerate(path_fd.readlines()):
-                match = re.search(r'(?: |[^C]\()(_)(?:[ ,)])', text)
+                match = re.search(r'^[^#]*(?:^| |[^C]\()(_)(?:[ ,)])', text)
 
                 if match:
                     print('%s:%d:%d: use `dummy` instead of `_` for a variable name' % (
