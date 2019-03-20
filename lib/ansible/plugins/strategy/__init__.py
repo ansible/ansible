@@ -846,9 +846,7 @@ class StrategyBase:
             #        we consider the ability of meta tasks to flush handlers
             for handler in handler_block.block:
                 if handler.notified_hosts:
-                    handler_vars = self._variable_manager.get_vars(play=iterator._play, task=handler)
-                    handler_name = handler.get_name()
-                    result = self._do_handler_run(handler, handler_name, iterator=iterator, play_context=play_context)
+                    result = self._do_handler_run(handler, handler.get_name(), iterator=iterator, play_context=play_context)
                     if not result:
                         break
         return result
@@ -871,11 +869,11 @@ class StrategyBase:
             self._tqm.send_callback('v2_playbook_on_handler_task_start', handler)
             handler.name = saved_name
 
-        run_once = False
+        bypass_host_loop = False
         try:
             action = action_loader.get(handler.action, class_only=True)
-            if handler.run_once or getattr(action, 'BYPASS_HOST_LOOP', False):
-                run_once = True
+            if getattr(action, 'BYPASS_HOST_LOOP', False):
+                bypass_host_loop = True
         except KeyError:
             # we don't care here, because the action may simply not have a
             # corresponding action plugin
@@ -887,7 +885,9 @@ class StrategyBase:
                 task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=handler)
                 self.add_tqm_variables(task_vars, play=iterator._play)
                 self._queue_task(host, handler, task_vars, play_context)
-                if run_once:
+
+                templar = Templar(loader=self._loader, variables=task_vars)
+                if templar.template(handler.run_once) or bypass_host_loop:
                     break
 
         # collect the results from the handler run
