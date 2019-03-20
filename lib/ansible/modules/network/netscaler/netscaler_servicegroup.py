@@ -76,6 +76,15 @@ options:
         description:
             - "Protocol used to exchange data with the service."
 
+    td:
+        description:
+            - >-
+                Integer value that uniquely identifies the traffic domain in which you want to configure the entity.
+                If you do not specify an ID, the entity becomes part of the default traffic domain, which has an ID
+                of 0.
+            - "Minimum value = C(0)"
+            - "Maximum value = C(4094)"
+
     cachetype:
         choices:
             - 'TRANSPARENT'
@@ -748,6 +757,7 @@ def main():
             ]
         ),
         maxclient=dict(type='float'),
+        td=dict(type='float'),
         maxreq=dict(type='float'),
         cacheable=dict(type='bool'),
         cip=dict(
@@ -880,6 +890,7 @@ def main():
         'autoscale',
         'memberport',
         'graceful',
+        'td',
     ]
 
     readonly_attrs = [
