@@ -262,7 +262,7 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
 
         item = self.get_vm(self.resource_group, self.name)
 
-        if item and self.has_tags(item.tags, self.tags):
+        if item and self.has_tags(item.get('tags'), self.tags):
             result = [item]
 
         return result
