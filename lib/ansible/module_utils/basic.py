@@ -89,7 +89,7 @@ from ansible.module_utils.common.text.converters import (
 )
 
 from ansible.module_utils.common.text.formatters import (
-    _lenient_lowercase,
+    lenient_lowercase,
     bytes_to_human,
     human_to_bytes,
     SIZE_RANGES,
@@ -1577,7 +1577,7 @@ class AnsibleModule(object):
                         # the value.  If we can't figure this out, module author is responsible.
                         lowered_choices = None
                         if param[k] == 'False':
-                            lowered_choices = _lenient_lowercase(choices)
+                            lowered_choices = lenient_lowercase(choices)
                             overlap = BOOLEANS_FALSE.intersection(choices)
                             if len(overlap) == 1:
                                 # Extract from a set
@@ -1585,7 +1585,7 @@ class AnsibleModule(object):
 
                         if param[k] == 'True':
                             if lowered_choices is None:
-                                lowered_choices = _lenient_lowercase(choices)
+                                lowered_choices = lenient_lowercase(choices)
                             overlap = BOOLEANS_TRUE.intersection(choices)
                             if len(overlap) == 1:
                                 (param[k],) = overlap

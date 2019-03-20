@@ -22,7 +22,7 @@ SIZE_RANGES = {
 }
 
 
-def _lenient_lowercase(lst):
+def lenient_lowercase(lst):
     """Lowercase elements of a list.
 
     If an element is not a string, pass it through untouched.
