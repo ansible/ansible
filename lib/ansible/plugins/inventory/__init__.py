@@ -428,12 +428,24 @@ class Constructable(object):
                         for bare_name in new_raw_group_names:
                             gname = self._sanitize_group_name('%s%s%s' % (prefix, sep, bare_name))
                             result_gname = self.inventory.add_group(gname)
-                            self.inventory.add_child(result_gname, host)
+                            try:
+                                self.inventory.add_child(result_gname, host)
+                            except AnsibleError:  # catch recusion errors
+                                if strict:
+                                    raise
+                                else:
+                                    continue
 
                             if raw_parent_name:
                                 parent_name = self._sanitize_group_name(raw_parent_name)
                                 self.inventory.add_group(parent_name)
-                                self.inventory.add_child(parent_name, result_gname)
+                                try:
+                                    self.inventory.add_child(parent_name, result_gname)
+                                except AnsibleError:  # catch recusion errors
+                                    if strict:
+                                        raise
+                                    else:
+                                        continue
 
                     else:
                         # exclude case of empty list and dictionary, because these are valid constructions

@@ -174,7 +174,7 @@ class Group:
     def add_child_group(self, group):
 
         if self == group:
-            raise Exception("can't add group to itself")
+            raise AnsibleError("can't add group to itself")
 
         # don't add if it's already there
         if group not in self.child_groups:

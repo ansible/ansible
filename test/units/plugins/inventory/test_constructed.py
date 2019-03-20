@@ -19,7 +19,7 @@
 
 import pytest
 
-from ansible.errors import AnsibleParserError
+from ansible.errors import AnsibleParserError, AnsibleError
 from ansible.plugins.inventory.constructed import InventoryModule
 from ansible.inventory.data import InventoryData
 from ansible.template import Templar
@@ -174,10 +174,48 @@ def test_parent_group_templating_error(inventory_module):
         inventory_module._add_host_to_keyed_groups(
             keyed_groups, host.vars, host.name, strict=True
         )
-        assert 'Could not generate parent group' in err_message
+    assert 'Could not generate parent group' in err_message.value.message
     # invalid parent group did not raise an exception with strict=False
     inventory_module._add_host_to_keyed_groups(
         keyed_groups, host.vars, host.name, strict=False
     )
     # assert group was never added with invalid parent
     assert 'betsy' not in inventory_module.inventory.groups
+
+
+def test_keyed_groups_recursion_error(inventory_module):
+    inventory_module.inventory.add_host('cow')
+    inventory_module.inventory.set_variable('cow', 'home', 'barns')
+    host = inventory_module.inventory.get_host('cow')
+    keyed_groups = [
+        {
+            'key': 'home',
+            'prefix': '',
+            'separator': '',
+            'parent_group': 'barns'
+        }
+    ]
+
+    with pytest.raises(AnsibleError) as err_message:
+        inventory_module._add_host_to_keyed_groups(
+            keyed_groups, host.vars, host.name, strict=True
+        )
+    assert "can't add group to itself" in err_message.value
+
+
+def test_keyed_groups_non_strict(inventory_module):
+    inventory_module.inventory.add_host('cow')
+    inventory_module.inventory.set_variable('cow', 'home', 'barns')
+    host = inventory_module.inventory.get_host('cow')
+    keyed_groups = [
+        {
+            'key': 'home',
+            'prefix': '',
+            'separator': '',
+            'parent_group': 'barns'
+        }
+    ]
+    inventory_module._add_host_to_keyed_groups(
+        keyed_groups, host.vars, host.name, strict=False
+    )
+    assert "barns" in inventory_module.inventory.groups
