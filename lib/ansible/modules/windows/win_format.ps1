@@ -146,7 +146,11 @@ if (-not $force_format) {
 
 $parameters = Get-VolumeParams -Path $ansible_volume.Path -Full $full_format -Label $new_label -SetIntegrityStreams $integrity_streams -UseLargeFRS $large_frs -Compress $compress_volume
 
-Format-Volume @parameters -WhatIf:$module.CheckMode -Confirm:$false | Out-Null
+# This is a workaround since the cmdlet does not honor the -WhatIf switch on Windows Server 2016 and 2019
+if (-not $module.CheckMode) {
+    Format-Volume @parameters -Confirm:$false | Out-Null
+}
+
 
 $module.Result.changed = $true
 
