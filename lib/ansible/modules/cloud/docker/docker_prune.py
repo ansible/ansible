@@ -74,7 +74,7 @@ options:
   builder_cache:
     description:
       - Whether to prune the builder cache.
-      - Requires version 3.3.0 of the Python Docker SDK or newer.
+      - Requires version 3.3.0 of the Docker SDK for Python or newer.
     type: bool
     default: no
 
@@ -86,7 +86,7 @@ author:
   - "Felix Fontein (@felixfontein)"
 
 requirements:
-  - "docker >= 2.1.0"
+  - "L(Docker SDK for Python,https://docker-py.readthedocs.io/en/stable/) >= 2.1.0"
   - "Docker API >= 1.25"
 '''
 
@@ -184,7 +184,7 @@ from ansible.module_utils.docker.common import AnsibleDockerClient
 try:
     from ansible.module_utils.docker.common import docker_version, clean_dict_booleans_for_docker_api
 except Exception as dummy:
-    # missing docker-py handled in ansible.module_utils.docker.common
+    # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
 
 
@@ -211,7 +211,7 @@ def main():
     # Version checks
     cache_min_version = '3.3.0'
     if client.module.params['builder_cache'] and client.docker_py_version < LooseVersion(cache_min_version):
-        msg = "Error: docker version is %s. Minimum version required for builds option is %s. Use `pip install --upgrade docker` to upgrade."
+        msg = "Error: Docker SDK for Python's version is %s. Minimum version required for builds option is %s. Use `pip install --upgrade docker` to upgrade."
         client.fail(msg % (docker_version, cache_min_version))
 
     result = dict()

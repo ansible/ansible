@@ -40,7 +40,7 @@ author:
   - "Dave Bendit (@DBendit)"
 
 requirements:
-  - "docker-py >= 1.8.0"
+  - "L(Docker SDK for Python,https://docker-py.readthedocs.io/en/stable/) >= 1.8.0 (use L(docker-py,https://pypi.org/project/docker-py/) for Python 2.6)"
   - "Docker API >= 1.21"
 '''
 

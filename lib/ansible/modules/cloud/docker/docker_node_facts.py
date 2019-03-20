@@ -48,7 +48,7 @@ author:
   - Piotr Wojciechowski (@wojciechowskipiotr)
 
 requirements:
-  - "docker-py >= 2.4.0"
+  - "L(Docker SDK for Python,https://docker-py.readthedocs.io/en/stable/) >= 2.4.0"
   - "Docker API >= 1.24"
 '''
 
@@ -92,7 +92,7 @@ from ansible.module_utils.docker.swarm import AnsibleDockerSwarmClient
 try:
     from docker.errors import APIError, NotFound
 except ImportError:
-    # missing docker-py handled in ansible.module_utils.docker.common
+    # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
 
 
