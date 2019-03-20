@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 # Copyright: (c) 2019, Evgeniy Krysanov <evgeniy.krysanov@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -13,7 +14,7 @@ ANSIBLE_METADATA = {
     'supported_by': 'community',
 }
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: bitbucket_pipelines_variable
 short_description: Manages Bitbucket pipelines variables
@@ -26,24 +27,30 @@ options:
   client_id:
     description:
       - OAuth consumer key. If not set the environment variable C(BITBUCKET_CLIENT_ID) will be used.
+    type: str
   client_secret:
     description:
       - OAuth consumer secret. If not set the environment variable C(BITBUCKET_CLIENT_SECRET) will be used.
+    type: str
   repository:
     description:
       - Repository name.
+    type: str
     required: true
   username:
     description:
       - Repository owner.
+    type: str
     required: true
   key:
     description:
       - Pipeline variable name.
+    type: str
     required: true
   value:
     description:
       - Pipeline variable value.
+    type: str
   secured:
     description:
       - Encrypt variable value.
@@ -52,6 +59,7 @@ options:
   state:
     description:
       - Indicates desired state of the variable.
+    type: str
     required: true
     choices:
       - present
@@ -62,7 +70,7 @@ notes:
   - For secured values return parameter C(changed) is always C(True).
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Create or update pipeline variables from the list
   bitbucket_pipelines_variable:
     repository: 'bitbucket-repo'
@@ -84,7 +92,7 @@ EXAMPLES = '''
     state: absent
 '''
 
-RETURN = ''' # '''
+RETURN = r''' # '''
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.bitbucket import BitbucketHelper

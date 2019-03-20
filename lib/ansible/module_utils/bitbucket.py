@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
 # Make coding more python3-ish
