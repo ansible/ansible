@@ -121,12 +121,12 @@ class ActionModule(ActionBase):
                 variable_value = self._templar.template("{{" + variable_value + "}}",
                                                         convert_bare=True, fail_on_undefined=True)
         except AnsibleUndefinedVariable as e:
-            raise AnsibleActionFail("'var' {} is not defined".format(self.var))
+            raise AnsibleActionFail("'var' {0} is not defined".format(self.var))
 
         try:
             validate(instance=variable_value, schema=schema_data,
                      format_checker=draft7_format_checker,)
         except exceptions.ValidationError as e:
-            raise AnsibleActionFail("Failed validating {} in {}: {}".format(e.validator, e.schema_path, e.message))
+            raise AnsibleActionFail("Failed validating {0} in {1}: {2}".format(e.validator, e.schema_path, e.message))
 
         return result

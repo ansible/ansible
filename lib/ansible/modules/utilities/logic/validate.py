@@ -33,11 +33,11 @@ options:
         required: true
 notes:
     - 'This plugin uses JSONSchema python implementation (https://python-jsonschema.readthedocs.io/en/stable/)
-      to validate variable data structure against schemas.'
+       to validate variable data structure against schemas.'
     - 'Due to some bug in jsonschema python module there is not possible to use relative references and in file reference
        in the schema without a patch: https://github.com/Julian/jsonschema/issues/313#issuecomment-300478317.
        Since maintaining such a patch over the jsonschema library is out of discussion,
-       the ansible plugin doesn't work with relative references.'
+       the ansible plugin is not working with relative references.'
 
 author:
     - Virgil Chereches (@brutus333)
