@@ -260,13 +260,10 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
         item = None
         result = []
 
-        try:
-            item = self.compute_client.virtual_machines.get(self.resource_group, self.name)
-        except CloudError as err:
-            self.module.warn("Error getting virtual machine {0} - {1}".format(self.name, str(err)))
+        item = self.get_vm(self.resource_group, self.name)
 
         if item and self.has_tags(item.tags, self.tags):
-            result = [self.serialize_vm(item)]
+            result = [item]
 
         return result
 
@@ -280,7 +277,7 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
         results = []
         for item in items:
             if self.has_tags(item.tags, self.tags):
-                results.append(self.serialize_vm(self.get_vm(self.resource_group, item.name)))
+                results.append(self.get_vm(self.resource_group, item.name))
         return results
 
     def list_all_items(self):
@@ -293,7 +290,7 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
         results = []
         for item in items:
             if self.has_tags(item.tags, self.tags):
-                results.append(self.serialize_vm(self.get_vm(re.sub('\\/.*', '', re.sub('.*resourceGroups\\/', '', item.id)), item.name)))
+                results.append(self.get_vm(re.sub('\\/.*', '', re.sub('.*resourceGroups\\/', '', item.id)), item.name))
         return results
 
     def get_vm(self, resource_group, name):
@@ -304,7 +301,7 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
         '''
         try:
             vm = self.compute_client.virtual_machines.get(resource_group, name, expand='instanceview')
-            return vm
+            return self.serialize_vm(vm)
         except Exception as exc:
             self.fail("Error getting virtual machine {0} - {1}".format(self.name, str(exc)))
 
