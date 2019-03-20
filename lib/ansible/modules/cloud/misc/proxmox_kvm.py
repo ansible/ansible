@@ -156,6 +156,11 @@ options:
       - C(storage) is the storage identifier where to create the disk.
       - C(size) is the size of the disk in GB.
       - C(format) is the drive's backing file's data format. C(qcow2|raw|subvol).
+  ipconfig:
+    description:
+      - Cloud Init: Set the IP configuration.
+      - Uses YAML hash with the keys needing to be a number (see example below)
+      - Hash index must match the numbering scheme used in the net[n] or else the values will not be assigned      
   keyboard:
     description:
       - Sets the keyboard layout for VNC server.
@@ -173,11 +178,6 @@ options:
     description:
       - Lock/unlock the VM.
     choices: ['migrate', 'backup', 'snapshot', 'rollback']
-  ipconfig:
-    description:
-      - Cloud Init: Set the IP configuration.
-      - Uses YAML hash with the keys needing to be a number (see example below)
-      - Hash index must match the numbering scheme used in the net[n] or else the values will not be assigned
   machine:
     description:
       - Specifies the Qemu machine type.
@@ -1071,6 +1071,7 @@ def main():
                       hotplug=module.params['hotplug'],
                       hugepages=module.params['hugepages'],
                       ide=module.params['ide'],
+                      ipconfig=module.params['ipconfig'],
                       keyboard=module.params['keyboard'],
                       kvm=module.params['kvm'],
                       localtime=module.params['localtime'],
