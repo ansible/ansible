@@ -50,7 +50,7 @@ options:
       description:
       - Type of object to work with.
       required: True
-      choices: [ VirtualMachine, Datacenter, ClusterComputeResource, HostSystem, VmwareDistributedVirtualSwitch, DistributedVirtualPortgroup ]
+      choices: [ VirtualMachine, Datacenter, ClusterComputeResource, HostSystem, DistributedVirtualSwitch, DistributedVirtualPortgroup ]
     object_name:
       description:
       - Name of the object to work with.
@@ -96,7 +96,7 @@ EXAMPLES = r'''
     tag_names:
       - Sample_Tag_0003
     object_name: Switch_0001
-    object_type: VmwareDistributedVirtualSwitch
+    object_type: DistributedVirtualSwitch
     state: add
   delegate_to: localhost
 
@@ -167,8 +167,9 @@ class VmwareTagManager(VmwareRestClient):
         if self.object_type == 'HostSystem':
             self.managed_object = self.pyv.find_hostsystem_by_name(self.object_name)
 
-        if self.object_type == 'VmwareDistributedVirtualSwitch':
+        if self.object_type == 'DistributedVirtualSwitch':
             self.managed_object = find_dvs_by_name(self.pyv.content, self.object_name)
+            self.object_type = 'VmwareDistributedVirtualSwitch'
 
         if self.object_type == 'DistributedVirtualPortgroup':
             dvs_name, pg_name = self.object_name.split(":", 1)
@@ -269,7 +270,7 @@ def main():
         state=dict(type='str', choices=['absent', 'add', 'present', 'remove', 'set'], default='add'),
         object_name=dict(type='str', required=True),
         object_type=dict(type='str', required=True, choices=['VirtualMachine', 'Datacenter', 'ClusterComputeResource',
-                                                             'HostSystem', 'VmwareDistributedVirtualSwitch',
+                                                             'HostSystem', 'DistributedVirtualSwitch',
                                                              'DistributedVirtualPortgroup']),
     )
     module = AnsibleModule(argument_spec=argument_spec)
