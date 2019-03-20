@@ -320,7 +320,7 @@ class AzureRMVirtualMachineScaleSetFacts(AzureRMModuleBase):
                     self.log('Could not extract load balancer / virtual network name')
 
                 try:
-                    ssh_password_enabled = (not vmss['properties']['virtualMachineProfile']['osProfile'],
+                    ssh_password_enabled = (not vmss['properties']['virtualMachineProfile']['osProfile']
                                                     ['linuxConfiguration']['disablePasswordAuthentication'])
                 except Exception:
                     self.log('Could not extract SSH password enabled')
