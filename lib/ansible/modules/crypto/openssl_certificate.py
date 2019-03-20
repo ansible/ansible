@@ -1392,7 +1392,7 @@ class AssertOnlyCertificateCryptography(Certificate):
 
         def _validate_invalid_at():
             if self.invalid_at[0]:
-                if not (self.get_relative_time_option(self.invalid_at[0], 'invalid_at') <= self.cert.not_valid_before) \
+                if (self.get_relative_time_option(self.invalid_at[0], 'invalid_at') > self.cert.not_valid_before) \
                    or (self.get_relative_time_option(self.invalid_at, 'invalid_at') >= self.cert.not_valid_after):
                     self.message.append(
                         'Certificate is not invalid for the specified date (%s) - notBefore: %s - notAfter: %s' % (self.invalid_at,
