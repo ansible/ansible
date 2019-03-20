@@ -255,7 +255,9 @@ files:
   $modules/monitoring/zabbix/: eikef D3DeFi
   $modules/net_tools/basics/get_url.py: ptux
   $modules/net_tools/basics/slurp.py: $team_ansible
-  $modules/net_tools/basics/uri.py: $team_ansible
+  $modules/net_tools/basics/uri.py:
+    ignored: romeotheriault
+    maintainers: $team_ansible
   $modules/net_tools/cloudflare_dns.py: andreaso
   $modules/net_tools/exoscale/: resmo
   $modules/net_tools/ldap/: jtyr
