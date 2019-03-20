@@ -308,10 +308,10 @@ submodule_full_cloned
 
 rm -rf "${pull_dir}"
 
-# Run ansible-pull with --checkout at tag 1.2.0 and accept GH host key
-ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${remote_repo}" --accept-host-key --checkout '1.2.0' "$@" | tee "${temp_log}"
+# Run ansible-pull with --checkout at tag 1.3.0 and accept GH host key
+ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${remote_repo}" --accept-host-key --checkout '1.3.0' "$@" | tee "${temp_log}"
 
-main_repo_at_tag '1.2.0'
+main_repo_at_tag '1.3.0'
 main_repo_shallow_cloned "${temp_log}"
 submodule_initialized
 submodule_recursively_initialized
@@ -339,10 +339,10 @@ submodule_full_cloned
 
 rm -rf "${pull_dir}"
 
-# Run ansible-pull with checkout at tag 1.2.0 and accept GH host key using --module-args
-ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${remote_repo}" --module-args 'accept_hostkey=yes depth=1 version=1.2.0' "$@" | tee "${temp_log}"
+# Run ansible-pull with checkout at tag 1.3.0 and accept GH host key using --module-args
+ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${remote_repo}" --module-args 'accept_hostkey=yes depth=1 version=1.3.0' "$@" | tee "${temp_log}"
 
-main_repo_at_tag '1.2.0'
+main_repo_at_tag '1.3.0'
 main_repo_shallow_cloned "${temp_log}"
 submodule_initialized
 submodule_recursively_initialized
