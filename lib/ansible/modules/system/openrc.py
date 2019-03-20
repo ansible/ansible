@@ -11,14 +11,14 @@ ANSIBLE_METADATA = '''
 metadata_version: '1.1'
 status:
     - preview
-supported_by: core
+supported_by: community
 '''
 
 DOCUMENTATION = '''
 module: openrc
 author:
-    - "Ansible Core Team"
-version_added: "2.5"
+    - bcoca
+version_added: "2.9"
 short_description:  Manage OpenRC services.
 description:
     - Controls services on target hosts that use the Openrc init system.
@@ -67,7 +67,6 @@ RETURN = '''
 # defaults
 '''
 
-from collections import defaultdict
 from time import sleep
 
 from ansible.module_utils.basic import AnsibleModule
@@ -97,48 +96,60 @@ def main():
     result = {
         'name': name,
         'changed': False,
-        'services': {},
     }
 
     # locate binaries for service management
     paths = ['/sbin', '/usr/sbin', '/bin', '/usr/bin']
-    rcconf = module.get_bin_path('rc-config', opt_dirs=paths)
-    services = defaultdict({})
-    result['services'] = services
+    conf = module.get_bin_path('rc-config', opt_dirs=paths)
+    ctl = module.get_bin_path('rc-service', opt_dirs=paths)
+    status = module.get_bin_path('rc-status', opt_dirs=paths)
 
-    # figure out enable status
-    (rc, out, err) = module.run_command("%s list " % rcconf)
+    def runme(doit):
+        return module.run_command(ctl, name, doit)
+
+    # check service exists
+    (rc, out, err) = module.run_command("%s -e %s" % (ctl, name))
+    if rc != 0:
+        module.fail_json(msg="The '%s' service was not found." % (name), rc=rc)
+
+    # assume enabled unless in list of disabled
+    is_enabled = True
+    (rc, out, err) = module.run_command("%s -u" % status)
     for line in out:
-        x = line.split()
-        if len(x) > 1:
-            services[x[0]]['runlevel'] = x[1]
-        else:
-            services[x[0]]['runlevel'] = None
-    is_enabled = bool(services[name]['runlevel'])
+        x = line.spilt('[')[0].strip()
+        if name == x:
+            is_enabled = False
+            break
+    result['was_enabled'] = is_enabled
 
     # figure out run status
-    (rc, out, err) = module.run_command("%s show all" % rcconf)
-    for line in out:
-        x = line.spit()
-        if len(x) == 2:
-            services[x[0]]['status'] = x[1].strip('[').strip(']')
-    is_started = (services[name]['status'] == 'started')
+    def get_status():
+
+        status = 'UNKNOWN'
+        (rc, out, err) = runme('status')
+        for line in out:
+            if 'status: ' in line:
+                status = line.split(':')[1].strip()
+                break
+        return status
+
+    result['prev_status'] = get_status()
+    is_started = ('stopped' != result['prev_status'])
 
     # Enable/Disable
     if enabled != is_enabled:  # or (runlevels and set(runlevels).symetric_difference(set(services[name]['rurnlevels'])):
         result['changed'] = True
         if not module.check_mode:
-            if enabled:
-                (rc, out, err) = module.run_command("%s add %s %s" % (rcconf, name, ' '.join(runlevels)))
-            if not enabled:
-                (rc, out, err) = module.run_command("%s delete %s %s" % (rcconf, name, ' '.join(runlevels)))
+            (rc, out, err) = module.run_command("%s %s %s %s" % (conf, name, 'add' if enabled else 'delete', ' '.join(runlevels)))
 
     # Process action if needed
     if action:
-        action = action.replace('p?ed$', '')
 
-        def runme(doit):
-            return module.run_command(rcconf, doit, name)
+        if module.check_mode:
+            # asume operations work and desired state is achieved
+            result['status'] = action
+
+        action = action.replace('p?ed$', '')
 
         if action == 'restart':
             result['changed'] = True
@@ -157,8 +168,10 @@ def main():
                 rc, out, err = runme(action)
 
     # report status of current service
-    result['enabled'] = is_enabled
-    result['status'] = services[name]['status']
+    result['enabled'] = enabled
+    if not module.check_mode:
+        # no assumptions, check actual status
+        result['status'] = get_status()
 
     module.exit_json(result)
 
