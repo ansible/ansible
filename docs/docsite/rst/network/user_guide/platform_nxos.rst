@@ -126,7 +126,7 @@ In this example the ``proxy_env`` variable defined in ``group_vars`` gets passed
 Cisco Nexus Platform Support Matrix
 ===================================
 
-The following platforms and software versions have been certified to work with this version of Ansible.
+The following platforms and software versions have been certified by Cisco to work with this version of Ansible.
 
   .. table:: Platform / Software Mininum Requirements
      :widths: auto
