@@ -280,7 +280,10 @@ class InventoryModule(BaseFileInventoryPlugin):
 
         if '=' in line:
             (k, v) = [e.strip() for e in line.split("=", 1)]
-            return (k, self._parse_value(v))
+            if k in ('ansible_ssh_pass', 'ansible_pass'):
+                return (k, to_text(v, nonstring='passthru', errors='surrogate_or_strict'))
+            else:
+                return (k, self._parse_value(v))
 
         self._raise_error("Expected key=value, got: %s" % (line))
 
@@ -313,7 +316,10 @@ class InventoryModule(BaseFileInventoryPlugin):
             if '=' not in t:
                 self._raise_error("Expected key=value host variable assignment, got: %s" % (t))
             (k, v) = t.split('=', 1)
-            variables[k] = self._parse_value(v)
+            if k in ('ansible_ssh_pass', 'ansible_pass'):
+                variables[k] = to_text(v, nonstring='passthru', errors='surrogate_or_strict')
+            else:
+                variables[k] = self._parse_value(v)
 
         return hostnames, port, variables
 
