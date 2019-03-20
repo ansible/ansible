@@ -132,7 +132,7 @@ EXAMPLES = '''
   - name: Create a redis cache
     azure_rm_rediscache:
         resource_group: myResourceGroup
-        name: myRedisCache
+        name: myRedis
         sku:
           name: basic
           size: C1
@@ -141,7 +141,7 @@ EXAMPLES = '''
   - name: Scale up the redis cache
     azure_rm_rediscache:
         resource_group: myResourceGroup
-        name: myRedisCache
+        name: myRedis
         sku:
           name: standard
           size: C1
@@ -151,11 +151,12 @@ EXAMPLES = '''
   - name: Create redis with subnet
     azure_rm_rediscache:
         resource_group: myResourceGroup
-        name: myRedisCache2
+        name: myRedis
         sku:
           name: premium
           size: P1
-        subnet: /subscriptions/<subs_id>/resourceGroups/redistest1/providers/Microsoft.Network/virtualNetworks/testredisvnet1/subnets/subnet1
+        subnet: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/myVirt
+                 ualNetwork/subnets/mySubnet"
 
 '''
 
@@ -165,14 +166,14 @@ id:
     returned: always
     type: str
     sample: {
-        "id": "/subscriptions/<subs_id>/resourceGroups/rg/providers/Microsoft.Cache/Redis/redis1"
+        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Cache/Redis/myRedis"
     }
 host_name:
     description: Host name of the redis cache.
     returned: state is present
     type: str
     sample: {
-        "host_name": "redis1.redis.cache.windows.net"
+        "host_name": "myredis.redis.cache.windows.net"
     }
 '''
 

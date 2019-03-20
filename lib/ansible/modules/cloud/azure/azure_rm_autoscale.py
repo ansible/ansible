@@ -202,7 +202,7 @@ author:
 EXAMPLES = '''
 - name: Create an auto scale
   azure_rm_autoscale:
-      target: "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/foo/providers/Microsoft.Compute/virtualMachineScaleSets/vmss"
+      target: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/myVmss"
       enabled: true
       profiles:
       - count: '1'
@@ -222,7 +222,8 @@ EXAMPLES = '''
 
 - name: Create an auto scale with compicated profile
   azure_rm_autoscale:
-      target: "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/foo/providers/Microsoft.Compute/virtualMachineScaleSets/vmss"
+      target: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets
+               /myVmss"
       enabled: true
       profiles:
       - count: '1'
@@ -234,7 +235,8 @@ EXAMPLES = '''
           time_window: 10
           direction: Increase
           metric_name: Percentage CPU
-          metric_resource_uri: "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/foo/providers/Microsoft.Compute/virtualMachineScaleSets/vmss"
+          metric_resource_uri: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtua
+                                lMachineScaleSets/vmss"
           value: '1'
           threshold: 70
           cooldown: 5
@@ -273,7 +275,7 @@ state:
     sample: {
         "changed": false,
         "enabled": true,
-        "id": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/foo/providers/microsoft.insights/autoscalesettings/scale",
+        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/microsoft.insights/autoscalesettings/scale",
         "location": "eastus",
         "name": "scale",
         "notifications": [
@@ -308,7 +310,8 @@ state:
                         "cooldown": 5.0,
                         "direction": "Increase",
                         "metric_name": "Percentage CPU",
-                        "metric_resource_uri": "/subscriptions/X/resourceGroups/foo/providers/Microsoft.Compute/virtualMachineScaleSets/vmss",
+                        "metric_resource_uri": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsof
+                                                t.Compute/virtualMachineScaleSets/MyVmss",
                         "operator": "GreaterThan",
                         "statistic": "Average",
                         "threshold": 70.0,
@@ -321,7 +324,8 @@ state:
                 ]
             }
         ],
-        "target": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/foo/providers/Microsoft.Compute/virtualMachineScaleSets/vmss"
+        "target": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScale
+                   Sets/myVmss"
     }
 '''  # NOQA
 

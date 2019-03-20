@@ -75,19 +75,19 @@ rediscaches:
                 - Name of a resource group where the Azure Redis Cache belongs to.
             returned: always
             type: str
-            sample: testGroup
+            sample: myResourceGroup
         name:
             description:
                 - Name of the Azure Redis Cache.
             returned: always
             type: str
-            sample: testRedis
+            sample: myRedis
         id:
             description:
                 - Id of the Azure Redis Cache.
             returned: always
             type: str
-            sample: /subscriptions/<subs_id>/resourceGroups/myResourceGroup/providers/Microsoft.Cache/Redis/myRedis
+            sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Cache/Redis/myRedis
         provisioning_state:
             description:
                 - Provisioning state of the redis cahe
@@ -129,7 +129,8 @@ rediscaches:
                 - The full resource ID of a subnet in a virtual network to deploy the Redis cache in.
             type: str
             sample:
-                - /subscriptions/<subid>/resourceGroups/myResourceGroup/Microsoft.Network|ClassicNetwork/VirtualNetworks/vnet1/subnets/subnet1
+                - "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/Microsoft.Network/VirtualNetworks/myVirtualNetwo
+                   rk/subnets/mySubnet"
         configuration:
             description:
                 - Dict of redis configuration.
