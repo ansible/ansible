@@ -15,35 +15,35 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: proxmox_kvm
-short_description: Management of Qemu(KVM) Virtual Machines in Proxmox VE cluster.
+module:             proxmox_kvm
+short_description:  Management of Qemu(KVM) Virtual Machines in Proxmox VE cluster.
 description:
   - Allows you to create/delete/stop Qemu(KVM) Virtual Machines in Proxmox VE cluster.
-version_added: "2.3"
-author: "Abdoul Bah (@helldorado) <bahabdoul at gmail.com>"
+version_added:      "2.3"
+author:             "Abdoul Bah (@helldorado) <bahabdoul at gmail.com>"
 options:
   acpi:
     description:
       - Specify if ACPI should be enabled/disabled.
-    type: bool
-    default: 'yes'
+    type:           bool
+    default:        'yes'
   agent:
     description:
       - Specify if the QEMU Guest Agent should be enabled/disabled.
-    type: bool
+    type:           bool
   args:
     description:
       - Pass arbitrary arguments to kvm.
       - This option is for experts only!
-    default: "-serial unix:/var/run/qemu-server/VMID.serial,server,nowait"
+    default:        "-serial unix:/var/run/qemu-server/VMID.serial,server,nowait"
   api_host:
     description:
       - Specify the target host of the Proxmox VE cluster.
-    required: true
+    required:       true
   api_user:
     description:
       - Specify the user to authenticate with.
-    required: true
+    required:       true
   api_password:
     description:
       - Specify the password to authenticate with.
@@ -51,42 +51,39 @@ options:
   autostart:
     description:
       - Specify if the VM should be automatically restarted after crash (currently ignored in PVE API).
-    type: bool
-    default: 'no'
+    type:           bool
+    default:        'no'
   balloon:
     description:
       - Specify the amount of RAM for the VM in MB.
       - Using zero disables the balloon driver.
-    default: 0
+    default:        0
   bios:
     description:
       - Specify the BIOS implementation.
-    choices: ['seabios', 'ovmf']
+    choices:        ['seabios', 'ovmf']
   boot:
     description:
       - Specify the boot order -> boot on floppy C(a), hard disk C(c), CD-ROM C(d), or network C(n).
       - You can combine to set order.
-    default: cnd
+    default:        cnd
   bootdisk:
     description:
       - Enable booting from specified disk. C((ide|sata|scsi|virtio)\d+)
   ciuser:
     description:
-      - Cloud Init: username of default user to create.
-  ciuser:
-    description:
-      - Cloud Init: password of default user to create.
+      - Cloud Init username of default user to create.
   clone:
     description:
       - Name of VM to be cloned. If C(vmid) is setted, C(clone) can take arbitrary value but required for intiating the clone.
   cores:
     description:
       - Specify number of cores per socket.
-    default: 1
+    default:        1
   cpu:
     description:
       - Specify emulated CPU type.
-    default: kvm64
+    default:        kvm64
   cpulimit:
     description:
       - Specify if CPU usage will be limited. Value 0 indicates no CPU limit.
@@ -95,7 +92,7 @@ options:
     description:
       - Specify CPU weight for a VM.
       - You can disable fair-scheduler configuration by setting this to 0
-    default: 1000
+    default:        1000
   delete:
     description:
       - Specify a list of settings you want to delete.
@@ -111,24 +108,24 @@ options:
     description:
       - Allow to force stop VM.
       - Can be used only with states C(stopped), C(restarted).
-    type: bool
+    type:           bool
   format:
     description:
       - Target drive's backing file's data format.
       - Used only with clone
-    default: qcow2
-    choices: [ "cloop", "cow", "qcow", "qcow2", "qed", "raw", "vmdk" ]
+    default:        qcow2
+    choices:        [ "cloop", "cow", "qcow", "qcow2", "qed", "raw", "vmdk" ]
   freeze:
     description:
       - Specify if PVE should freeze CPU at startup (use 'c' monitor command to start execution).
-    type: bool
+    type:           bool
   full:
     description:
       - Create a full copy of all disk. This is always done when you clone a normal VM.
       - For VM templates, we try to create a linked clone by default.
       - Used only with clone
-    type: bool
-    default: 'yes'
+    type:           bool
+    default:        'yes'
   hostpci:
     description:
       - Specify a hash/dictionary of map host pci devices into guest. C(hostpci='{"key":"value", "key":"value"}').
@@ -147,7 +144,7 @@ options:
   hugepages:
     description:
       - Enable/disable hugepages memory.
-    choices: ['any', '2', '1024']
+    choices:        ['any', '2', '1024']
   ide:
     description:
       - A hash/dictionary of volume used as IDE hard disk or CD-ROM. C(ide='{"key":"value", "key":"value"}').
@@ -158,26 +155,26 @@ options:
       - C(format) is the drive's backing file's data format. C(qcow2|raw|subvol).
   ipconfig:
     description:
-      - Cloud Init: Set the IP configuration.
+      - Cloud Init Set the IP configuration.
       - Uses YAML hash with the keys needing to be a number (see example below)
-      - Hash index must match the numbering scheme used in the net[n] or else the values will not be assigned      
+      - Hash index must match the numbering scheme used in the net[n] or else the values will not be assigned
   keyboard:
     description:
       - Sets the keyboard layout for VNC server.
   kvm:
     description:
       - Enable/disable KVM hardware virtualization.
-    type: bool
-    default: 'yes'
+    type:           bool
+    default:        'yes'
   localtime:
     description:
       - Sets the real time clock to local time.
       - This is enabled by default if ostype indicates a Microsoft OS.
-    type: bool
+    type:           bool
   lock:
     description:
       - Lock/unlock the VM.
-    choices: ['migrate', 'backup', 'snapshot', 'rollback']
+    choices:        ['migrate', 'backup', 'snapshot', 'rollback']
   machine:
     description:
       - Specifies the Qemu machine type.
@@ -185,7 +182,7 @@ options:
   memory:
     description:
       - Memory size in MB for instance.
-    default: 512
+    default:        512
   migrate_downtime:
     description:
       - Sets maximum tolerated downtime (in seconds) for migrations.
@@ -199,7 +196,7 @@ options:
       - Required only for C(state=present).
   nameserver:
     description:
-      - Cloud Init: DNS entries to populate the cloud-init drive with
+      - Cloud Init DNS entries to populate the cloud-init drive with
   net:
     description:
       - A hash/dictionary of network interfaces for the VM. C(net='{"key":"value", "key":"value"}').
@@ -231,14 +228,14 @@ options:
   onboot:
     description:
       - Specifies whether a VM will be started during system bootup.
-    type: bool
-    default: 'yes'
+    type:           bool
+    default:        'yes'
   ostype:
     description:
       - Specifies guest operating system. This is used to enable special optimization/features for specific operating systems.
       - The l26 is Linux 2.6/3.X Kernel.
-    choices: ['other', 'wxp', 'w2k', 'w2k3', 'w2k8', 'wvista', 'win7', 'win8', 'l24', 'l26', 'solaris']
-    default: l26
+    choices:        ['other', 'wxp', 'w2k', 'w2k3', 'w2k8', 'wvista', 'win7', 'win8', 'l24', 'l26', 'solaris']
+    default:        l26
   parallel:
     description:
       - A hash/dictionary of map host parallel devices. C(parallel='{"key":"value", "key":"value"}').
@@ -250,11 +247,11 @@ options:
   protection:
     description:
       - Enable/disable the protection flag of the VM. This will enable/disable the remove VM and remove disk operations.
-    type: bool
+    type:           bool
   reboot:
     description:
       - Allow reboot. If set to C(yes), the VM exit on reboot.
-    type: bool
+    type:           bool
   revert:
     description:
       - Revert a pending change.
@@ -277,9 +274,9 @@ options:
   scsihw:
     description:
       - Specifies the SCSI controller model.
-    choices: ['lsi', 'lsi53c810', 'virtio-scsi-pci', 'virtio-scsi-single', 'megasas', 'pvscsi']
+    choices:        ['lsi', 'lsi53c810', 'virtio-scsi-pci', 'virtio-scsi-single', 'megasas', 'pvscsi']
   searchdomain:
-    description: Cloud Init: search domain to set for the DNS configuration
+    description: Cloud Init search domain to set for the DNS configuration
   serial:
     description:
       - A hash/dictionary of serial device to create inside the VM. C('{"key":"value", "key":"value"}').
@@ -305,10 +302,10 @@ options:
   sockets:
     description:
       - Sets the number of CPU sockets. (1 - N).
-    default: 1
+    default:        1
   sshkeys:
     description:
-      - Cloud Init: SSH key to assign to the default user. NOT TESTED with multiple keys but a multi-line value should work.
+      - Cloud Init SSH key to assign to the default user. NOT TESTED with multiple keys but a multi-line value should work.
   startdate:
     description:
       - Sets the initial date of the real time clock.
@@ -322,16 +319,16 @@ options:
     description:
       - Indicates desired state of the instance.
       - If C(current), the current state of the VM will be fecthed. You can access it with C(results.status)
-    choices: ['present', 'started', 'absent', 'stopped', 'restarted','current']
-    default: present
+    choices:        ['present', 'started', 'absent', 'stopped', 'restarted','current']
+    default:        present
   storage:
     description:
       - Target storage for full clone.
   tablet:
     description:
       - Enables/disables the USB tablet device.
-    type: bool
-    default: 'no'
+    type:           bool
+    default:        'no'
   target:
     description:
       - Target node. Only allowed if the original VM is on shared storage.
@@ -339,36 +336,36 @@ options:
   tdf:
     description:
       - Enables/disables time drift fix.
-    type: bool
+    type:           bool
   template:
     description:
       - Enables/disables the template.
-    type: bool
-    default: 'no'
+    type:           bool
+    default:        'no'
   timeout:
     description:
       - Timeout for operations.
-    default: 30
+    default:        30
   update:
     description:
       - If C(yes), the VM will be update with new value.
       - Cause of the operations of the API and security reasons, I have disabled the update of the following parameters
       - C(net, virtio, ide, sata, scsi). Per example updating C(net) update the MAC address and C(virtio) create always new disk...
-    type: bool
-    default: 'no'
+    type:           bool
+    default:        'no'
   validate_certs:
     description:
       - If C(no), SSL certificates will not be validated. This should only be used on personally controlled sites using self-signed certificates.
-    type: bool
-    default: 'no'
+    type:           bool
+    default:        'no'
   vcpus:
     description:
       - Sets number of hotplugged vcpus.
   vga:
     description:
       - Select VGA type. If you want to use high resolution modes (>= 1280x1024x16) then you should use option 'std' or 'vmware'.
-    choices: ['std', 'cirrus', 'vmware', 'qxl', 'serial0', 'serial1', 'serial2', 'serial3', 'qxl2', 'qxl3', 'qxl4']
-    default: std
+    choices:        ['std', 'cirrus', 'vmware', 'qxl', 'serial0', 'serial1', 'serial2', 'serial3', 'qxl2', 'qxl3', 'qxl4']
+    default:        std
   virtio:
     description:
       - A hash/dictionary of volume used as VIRTIO hard disk. C(virtio='{"key":"value", "key":"value"}').
@@ -384,7 +381,7 @@ options:
   watchdog:
     description:
       - Creates a virtual hardware watchdog device.
-requirements: [ "proxmoxer", "requests" ]
+requirements:       [ "proxmoxer", "requests" ]
 '''
 
 EXAMPLES = '''
@@ -469,7 +466,7 @@ EXAMPLES = '''
     name        : spynal
     node        : sabrewulf
     protection  : yes
-    
+
 # Create new VM using Cloud-Init with a username and password
 - proxmox_kvm:
     node: sabrewulf
@@ -487,7 +484,7 @@ EXAMPLES = '''
       0:
         ip: "192.168.1.1/24"
         gw: "192.168.1.1"
-        
+
 # Create new VM using Cloud-Init with an ssh key
 - proxmox_kvm:
     node: sabrewulf
@@ -504,7 +501,7 @@ EXAMPLES = '''
       0:
         ip: "192.168.1.1/24"
         gw: "192.168.1.1"
-        
+
 # Start VM
 - proxmox_kvm:
     api_user    : root@pam
@@ -636,9 +633,9 @@ import time
 import traceback
 
 try:
-  from urllib.parse import quote
+    from urllib.parse import quote
 except ImportError:
-  from urllib import quote
+    from urllib import quote
 
 try:
     from proxmoxer import ProxmoxAPI
@@ -730,7 +727,7 @@ def create_vm(module, proxmox, vmid, newid, node, name, memory, cpu, cores, sock
     # Available only in PVE 4
     only_v4 = ['force', 'protection', 'skiplock',
                'ciusername', 'cipassword', 'nameserver', 'searchdomain', 'sshkeys', 'ipconfig'
-              ]
+               ]
 
     # valide clone parameters
     valid_clone_params = ['format', 'full', 'pool', 'snapname', 'storage', 'target']
@@ -754,13 +751,13 @@ def create_vm(module, proxmox, vmid, newid, node, name, memory, cpu, cores, sock
 
     if 'ipconfig' in kwargs:
         # Need to 'break down' the ipconfig dictionary into a series of the following
-            # ipconfig0: ip=192.168.1.2/24,gw=192.168.1.1
-            # ipconfig1: ip=192.168.2.2/24
+        # ipconfig0: ip=192.168.1.2/24,gw=192.168.1.1
+        # ipconfig1: ip=192.168.2.2/24
         for int_number in kwargs['ipconfig']:
             try:
                 int_number_validated = int(int_number)
                 int_label = str('ipconfig%d' % int_number_validated)
-                kwargs[int_label] = str('ip=%s,gw=%s'%(kwargs['ipconfig'][int_number]['ip'], kwargs['ipconfig'][int_number]['gw']))
+                kwargs[int_label] = str('ip=%s,gw=%s' % (kwargs['ipconfig'][int_number]['ip'], kwargs['ipconfig'][int_number]['gw']))
             except Exception as e:
                 module.fail_json(msg=str('ipconfig cannot convert %s to an integer: %s' % (int_number, e)), data=kwargs['ipconfig'][int_number])
         del kwargs['ipconfig']
