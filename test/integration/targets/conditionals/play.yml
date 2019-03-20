@@ -6,9 +6,9 @@
   vars_files:
     - vars/main.yml
   tasks:
-    - name: set conditial bare vars status
+    - name: set conditional bare vars status
       set_fact:
-        bare: "{{lookup('config', 'CONDITINAL_BARE_VARS')|bool}}"
+        bare: "{{lookup('config', 'CONDITIONAL_BARE_VARS')|bool}}"
 
     - name: test conditional '=='
       shell: echo 'testing'
@@ -536,14 +536,14 @@
             - top is skipped
             - sub is skipped
 
-      - name: test that 'comparisson expression' item works with_items
+      - name: test that 'comparison expression' item works with_items
         assert:
           that:
             - item
         with_items:
           - 1 == 1
 
-      - name: test that 'comparisson expression' item works in loop
+      - name: test that 'comparison expression' item works in loop
         assert:
           that:
             - item
