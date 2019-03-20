@@ -67,6 +67,8 @@ RETURN = '''
 # defaults
 '''
 
+import re
+
 from time import sleep
 
 from ansible.module_utils.basic import AnsibleModule
@@ -96,6 +98,7 @@ def main():
     result = {
         'name': name,
         'changed': False,
+        'previous': {}
     }
 
     # locate binaries for service management
@@ -105,7 +108,7 @@ def main():
     status = module.get_bin_path('rc-status', opt_dirs=paths)
 
     def runme(doit):
-        return module.run_command(ctl, name, doit)
+        return module.run_command(' '.join([ctl, name, doit]))
 
     # check service exists
     (rc, out, err) = module.run_command("%s -e %s" % (ctl, name))
@@ -115,32 +118,37 @@ def main():
     # assume enabled unless in list of disabled
     is_enabled = True
     (rc, out, err) = module.run_command("%s -u" % status)
-    for line in out:
-        x = line.spilt('[')[0].strip()
+    for line in out.splitlines():
+        x = line.split('[')[0].strip()
         if name == x:
             is_enabled = False
             break
-    result['was_enabled'] = is_enabled
+    result['previous']['enabled'] = is_enabled
 
     # figure out run status
     def get_status():
 
         status = 'UNKNOWN'
         (rc, out, err) = runme('status')
-        for line in out:
+        for line in out.splitlines():
             if 'status: ' in line:
                 status = line.split(':')[1].strip()
                 break
         return status
 
-    result['prev_status'] = get_status()
-    is_started = ('stopped' != result['prev_status'])
+    result['previous']['status'] = get_status()
+    is_started = ('stopped' != result['previous']['status'])
 
     # Enable/Disable
-    if enabled != is_enabled:  # or (runlevels and set(runlevels).symetric_difference(set(services[name]['rurnlevels'])):
+    result['enabled'] = is_enabled
+    if enabled not in (None, is_enabled):
+        # or (runlevels and set(runlevels).symetric_difference(set(services[name]['rurnlevels'])):
         result['changed'] = True
         if not module.check_mode:
             (rc, out, err) = module.run_command("%s %s %s %s" % (conf, name, 'add' if enabled else 'delete', ' '.join(runlevels)))
+            result['enabled'] = (rc == 0 and enabled)
+        else:
+            result['enabled'] = enabled
 
     # Process action if needed
     if action:
@@ -149,7 +157,8 @@ def main():
             # asume operations work and desired state is achieved
             result['status'] = action
 
-        action = action.replace('p?ed$', '')
+        rc = 0
+        action = re.sub('p?ed$', '', action)
 
         if action == 'restart':
             result['changed'] = True
@@ -167,14 +176,17 @@ def main():
             if not module.check_mode:
                 rc, out, err = runme(action)
 
+        if not module.check_mode and rc != 0:
+            result['failed'] = True
+            result['msg'] = ''.join([out, err])
+
     # report status of current service
-    result['enabled'] = enabled
     if not module.check_mode:
         # no assumptions, check actual status
         result['status'] = get_status()
 
-    module.exit_json(result)
+    module.exit_json(**result)
 
 
-if __name__ == 'main':
+if __name__ == '__main__':
     main()
