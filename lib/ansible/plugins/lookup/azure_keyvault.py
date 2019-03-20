@@ -52,7 +52,7 @@ EXAMPLES = """
     msg: "{{ lookup('azure_keyvault', 'secret_name=someSecretName secret_version=169591fbe36742beb109478459f426ce') }}"
 
  - name: Return a specific version of a secret from a specified vault_uri.
-  debug:
+   debug:
      msg: "{{ lookup('azure_keyvault', 'secret_name=someSecretName secret_version=169591fb vault_uri=https://anothervault.vault.azure.net/') }}"
 """
 
