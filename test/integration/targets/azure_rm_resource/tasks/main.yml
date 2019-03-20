@@ -136,7 +136,7 @@
   assert:
     that: keys['response']['keys'][0]['value'] | length > 0
 
-- name: Delete storage account
+- name: Delete unexisting storage account
   azure_rm_resource:
     polling_timeout: 600
     polling_interval: 60
@@ -151,12 +151,13 @@
 - debug:
     var: output
 
-- name: Assert that storage was successfully deleted
+- name: Assert that no change was detected
   assert:
     that:
-      - output.changed
+      - not output.changed
 
-- name: Delete unexisting account
+
+- name: Delete existing account
   azure_rm_resource:
     polling_timeout: 600
     polling_interval: 60
@@ -168,7 +169,7 @@
     state: absent
   register: output
 
-- name: Assert that storage was successfully created
+- name: Assert that change was repoted
   assert:
     that:
-      - not output.changed
+      - output.changed
