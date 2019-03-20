@@ -420,9 +420,9 @@ class AzureRMContainerInstance(AzureRMModuleBase):
             variable_list = container_def.get("environment_variables")
             if variable_list:
                 for variable in variable_list:
-                    variables.append(self.cgmodels.EnvironmentVariable(name=variable['name'],
-                                                                       value=variable['value'] if not variable['is_secure'] else None,
-                                                                       secure_value=variable['value'] if variable['is_secure'] else None))
+                    variables.append(self.cgmodels.EnvironmentVariable(name=variable.get('name'),
+                                                                       value=variable.get('value') if not variable.get('is_secure') else None,
+                                                                       secure_value=variable.get('value') if variable.get('is_secure') else None))
 
             containers.append(self.cgmodels.Container(name=name,
                                                       image=image,
