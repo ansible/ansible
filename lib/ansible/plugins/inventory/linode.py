@@ -30,9 +30,12 @@ DOCUMENTATION = r'''
             env:
                 - name: LINODE_ACCESS_TOKEN
         instance_access:
-          description: How to access the instance.
-          default: 'hostname'
-          choices: ['hostname', 'public_ip', 'private_ip']
+          description: How to access the instance. Variable used as ansible_host.
+          default: label
+          choices:
+            - label
+            - public_ip
+            - private_ip
           required: false
         regions:
           description: Populate inventory with instances in this region.
@@ -53,7 +56,7 @@ plugin: linode
 # Example with regions, types, groups and access token
 plugin: linode
 access_token: foobar
-instance_access: hostname
+instance_access: label
 regions:
   - eu-west
 types:
@@ -152,20 +155,10 @@ class InventoryModule(BaseInventoryPlugin):
                 'Instance IPv4 address is missing or empty'
             )
 
-    def _add_instances_to_groups(self, instance_access):
+    def _add_instances_to_groups(self):
         """Add instance names to their dynamic inventory groups."""
         for instance in self.instances:
-            if instance_access == 'public_ip':
-                host_identifier = self._get_instance_ip(instance, private=False)
-            elif instance_access == 'private_ip':
-                host_identifier = self._get_instance_ip(instance, private=True)
-            elif instance_access == 'hostname':
-                host_identifier = instance.label
-            else:
-                raise AnsibleError(
-                    'Instance Access setting is not valid'
-                )
-            self.inventory.add_host(host_identifier, group=instance.group)
+            self.inventory.add_host(instance.label, group=instance.group)
 
     def _add_hostvars_for_instances(self, instance_access):
         """Add hostvars for instances in the dynamic inventory."""
@@ -174,23 +167,35 @@ class InventoryModule(BaseInventoryPlugin):
                 host_identifier = self._get_instance_ip(instance, private=False)
             elif instance_access == 'private_ip':
                 host_identifier = self._get_instance_ip(instance, private=True)
-            elif instance_access == 'hostname':
+            elif instance_access == 'label':
                 host_identifier = instance.label
+            else:
+                raise AnsibleError(
+                    'Instance Access setting is not valid'
+                )
 
             self.inventory.set_variable(
-                host_identifier,
+                instance.label,
                 'public_ip',
                 self._get_instance_ip(instance, private=False)
             )
+
             self.inventory.set_variable(
-                host_identifier,
+                instance.label,
                 'private_ip',
                 self._get_instance_ip(instance, private=True)
             )
+
+            self.inventory.set_variable(
+                instance.label,
+                'ansible_host',
+                host_identifier
+            )
+
             hostvars = instance._raw_json
             for hostvar_key in hostvars:
                 self.inventory.set_variable(
-                    host_identifier,
+                    instance.label,
                     hostvar_key,
                     hostvars[hostvar_key]
                 )
@@ -225,7 +230,7 @@ class InventoryModule(BaseInventoryPlugin):
             },
             'instance_access': {
                 'type_to_be': str,
-                'value': config_data.get('instance_access', 'hostname')
+                'value': config_data.get('instance_access', 'label')
             },
         }
 
@@ -263,5 +268,5 @@ class InventoryModule(BaseInventoryPlugin):
         self._filter_by_config(regions, types)
 
         self._add_groups()
-        self._add_instances_to_groups(instance_access)
+        self._add_instances_to_groups()
         self._add_hostvars_for_instances(instance_access)

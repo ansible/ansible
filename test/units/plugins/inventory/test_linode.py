@@ -147,7 +147,7 @@ def test_validation_option_bad_option(inventory):
 def test_empty_config_query_options(inventory):
     regions, types, instance_access = inventory._get_user_options({})
     assert regions == types == []
-    assert instance_access == 'hostname'
+    assert instance_access == 'label'
 
 
 def test_config_user_options(inventory):
