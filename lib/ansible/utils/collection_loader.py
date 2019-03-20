@@ -27,6 +27,7 @@ _SYNTHETIC_PACKAGES = {
 # TODO: tighten this up to subset Python identifier requirements
 _collection_role_name_re = re.compile(r'^(\w+)\.(\w+)\.(\w+)$')
 
+
 # FIXME: exception handling/error logging
 class AnsibleCollectionLoader(object):
     def __init__(self):
@@ -58,7 +59,6 @@ class AnsibleCollectionLoader(object):
             newmod.__path__ = []
 
             sys.modules[pkg_name] = newmod
-
 
     @property
     def _collection_paths(self):
@@ -173,7 +173,7 @@ class AnsibleCollectionLoader(object):
 
             if source:
                 # FIXME: decide cases where we don't actually want to exec the code?
-                exec (source, newmod.__dict__)
+                exec(source, newmod.__dict__)
 
             sys.modules[fullname] = newmod
 
@@ -196,6 +196,7 @@ class AnsibleCollectionLoader(object):
 
 class AnsibleFlatMapLoader(object):
     _extension_blacklist = ['.pyc', '.pyo']
+
     def __init__(self, root_package):
         self._root_package = root_package
         self._dirtree = None
@@ -213,30 +214,26 @@ class AnsibleFlatMapLoader(object):
         self._dirtree = flat_files
 
     def find_file(self, filename):
-        try:
-            # FIXME: thread safety
-            if not self._dirtree:
-                self._init_dirtree()
+        # FIXME: thread safety
+        if not self._dirtree:
+            self._init_dirtree()
 
-            if '.' not in filename:  # no extension specified, use extension regex to filter
-                extensionless_re = re.compile(r'^{0}(\..+)?$'.format(re.escape(filename)))
-                # why doesn't Python have first()?
-                try:
-                    # FIXME: store extensionless in a separate direct lookup?
-                    filepath = next(os.path.join(r, f) for r, f in self._dirtree if extensionless_re.match(f))
-                except StopIteration:
-                    raise IOError("couldn't find {0}".format(filename))
-            else:  # actual filename, just look it up
-                # FIXME: this case sucks; make it a lookup
-                try:
-                    filepath = next(os.path.join(r, f) for r, f in self._dirtree if f == filename)
-                except StopIteration:
-                    raise IOError("couldn't find {0}".format(filename))
+        if '.' not in filename:  # no extension specified, use extension regex to filter
+            extensionless_re = re.compile(r'^{0}(\..+)?$'.format(re.escape(filename)))
+            # why doesn't Python have first()?
+            try:
+                # FIXME: store extensionless in a separate direct lookup?
+                filepath = next(os.path.join(r, f) for r, f in self._dirtree if extensionless_re.match(f))
+            except StopIteration:
+                raise IOError("couldn't find {0}".format(filename))
+        else:  # actual filename, just look it up
+            # FIXME: this case sucks; make it a lookup
+            try:
+                filepath = next(os.path.join(r, f) for r, f in self._dirtree if f == filename)
+            except StopIteration:
+                raise IOError("couldn't find {0}".format(filename))
 
-            return filepath
-        except Exception as ex:
-            print("bang")
-            raise
+        return filepath
 
     def get_data(self, filename):
         found_file = self.find_file(filename)
@@ -263,7 +260,7 @@ def is_collection_qualified_role_name(candidate_name):
     return False
 
 
-def get_collection_role_path(role_name, collection_list=[]):
+def get_collection_role_path(role_name, collection_list=None):
     match = _collection_role_name_re.match(role_name)
 
     if match:
@@ -275,9 +272,9 @@ def get_collection_role_path(role_name, collection_list=[]):
     else:
         role = role_name
 
-    for c in collection_list:
+    for collection_name in collection_list:
         try:
-            role_package = 'ansible_collections.{0}.roles.{1}'.format(c, role)
+            role_package = 'ansible_collections.{0}.roles.{1}'.format(collection_name, role)
 
             # FIXME: we need to be able to enumerate/query collections here without the risk of loading arbitrary module init code along the way
             # should we just ask the collections loader directly now?
@@ -288,7 +285,7 @@ def get_collection_role_path(role_name, collection_list=[]):
             if tasks_file is not None:
                 # the package is now loaded, get the collection's package and ask where it lives
                 path = os.path.dirname(sys.modules[role_package].__file__)
-                return role, path
+                return role, path, collection_name
 
         except IOError:
             continue

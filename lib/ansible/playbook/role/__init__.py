@@ -100,6 +100,7 @@ class Role(Base, Become, Conditional, Taggable, Collection):
     def __init__(self, play=None, from_files=None, from_include=False):
         self._role_name = None
         self._role_path = None
+        self._role_collection = None
         self._role_params = dict()
         self._loader = None
 
@@ -178,6 +179,7 @@ class Role(Base, Become, Conditional, Taggable, Collection):
     def _load_role_data(self, role_include, parent_role=None):
         self._role_name = role_include.role
         self._role_path = role_include.get_role_path()
+        self._role_collection = role_include._role_collection  # FIXME: property accessor or ?
         self._role_params = role_include.get_role_params()
         self._variable_manager = role_include.get_variable_manager()
         self._loader = role_include.get_loader()
@@ -195,10 +197,6 @@ class Role(Base, Become, Conditional, Taggable, Collection):
                 )
             else:
                 self._attributes[attr_name] = role_include._attributes[attr_name]
-
-        # FIXME: disable this for collection-hosted roles (no legacy plugin loading allowed)
-        # ensure all plugins dirs for this role are added to plugin search path
-        add_all_plugin_dirs(self._role_path)
 
         # vars and default vars are regular dictionaries
         self._role_vars = self._load_role_yaml('vars', main=self._from_files.get('vars'), allow_dir=True)
@@ -220,6 +218,30 @@ class Role(Base, Become, Conditional, Taggable, Collection):
             self._dependencies = self._load_dependencies()
         else:
             self._metadata = RoleMetadata()
+
+        # reset collections list; roles do not inherit collections from parents, just use the defaults
+        # FIXME: use a private config default for this so we can allow it to be overridden later
+        self.collections = []
+
+        # configure plugin/collection loading; either prepend the current role's collection or configure legacy plugin loading
+        # FIXME: need exception for ansible.legacy?
+        if self._role_collection:
+            self.collections.insert(0, self._role_collection)
+        else:
+            # legacy role, ensure all plugin dirs under the role are added to plugin search path
+            add_all_plugin_dirs(self._role_path)
+
+        # collections can be specified in metadata for legacy or collection-hosted roles
+        if self._metadata.collections:
+            self.collections.extend(self._metadata.collections)
+
+        # if any collections were specified, ensure that core or legacy synthetic collections are always included
+        if self.collections:
+            # default append collection is core for collection-hosted roles, legacy for others
+            default_append_collection = 'ansible.core' if self.collections else 'ansible.legacy'
+            if 'ansible.core' not in self.collections and 'ansible.legacy' not in self.collections:
+                self.collections.append(default_append_collection)
+            # FIXME: add test for legacy role + collections meta keyword
 
         task_data = self._load_role_yaml('tasks', main=self._from_files.get('tasks'))
         if task_data:

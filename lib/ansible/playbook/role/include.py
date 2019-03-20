@@ -43,11 +43,12 @@ class RoleInclude(RoleDefinition):
     _delegate_to = FieldAttribute(isa='string')
     _delegate_facts = FieldAttribute(isa='bool', default=False)
 
-    def __init__(self, play=None, role_basedir=None, variable_manager=None, loader=None, collection_list=[]):
-        super(RoleInclude, self).__init__(play=play, role_basedir=role_basedir, variable_manager=variable_manager, loader=loader, collection_list=collection_list)
+    def __init__(self, play=None, role_basedir=None, variable_manager=None, loader=None, collection_list=None):
+        super(RoleInclude, self).__init__(play=play, role_basedir=role_basedir, variable_manager=variable_manager,
+                                          loader=loader, collection_list=collection_list)
 
     @staticmethod
-    def load(data, play, current_role_path=None, parent_role=None, variable_manager=None, loader=None, collection_list=[]):
+    def load(data, play, current_role_path=None, parent_role=None, variable_manager=None, loader=None, collection_list=None):
 
         if not (isinstance(data, string_types) or isinstance(data, dict) or isinstance(data, AnsibleBaseYAMLObject)):
             raise AnsibleParserError("Invalid role definition: %s" % to_native(data))

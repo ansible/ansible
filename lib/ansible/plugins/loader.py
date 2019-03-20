@@ -326,26 +326,6 @@ class PluginLoader:
         if extension:
             resource += extension
 
-        #plugin_content = None
-
-        # try:
-        #     # FIXME: now that we're doing custom loader magic, get rid of the get_data reverse-engineering and directly
-        #     # consult the packages and/or custom loaders to just get the file path instead of loading here
-        #     # longer-term, maybe optimize everything to use get_data instead?
-        #     plugin_content = pkgutil.get_data(package, resource)
-        #
-        #     if plugin_content is None:
-        #         return None
-        #
-        #     # HACK: if this is a typed loader, ensure there's a class in there
-        #     # NB: this hack should not be necessary for type-specific plugins
-        #     if self.class_name:
-        #         if not b"class %s" % to_bytes(self.class_name) in plugin_content:
-        #             return None
-        # except IOError:
-        #     if extension:
-        #         return None  # extension was specified and we didn't find it, move on
-
         pkg = sys.modules.get(package)
         if not pkg:
             # FIXME: there must be cheaper/safer way to do this
@@ -362,9 +342,6 @@ class PluginLoader:
                 return None
 
         pkg_path = os.path.dirname(pkg.__file__)
-
-        #if plugin_content:  # we found it earlier, just return the reconstructed path
-        #    return os.path.join(pkg_path, resource)
 
         resource_path = os.path.join(pkg_path, resource)
 
@@ -424,7 +401,8 @@ class PluginLoader:
                     errors.append(to_native(ex))
 
             if errors:
-                raise Exception('; '.join(errors))
+                display.debug(msg='plugin lookup for {0} failed; errors: {1}'.format(name, '; '.join(errors)))
+
             return None
 
         # if we got here, there's no collection list and it's not an FQ name, so do legacy lookup
@@ -526,7 +504,7 @@ class PluginLoader:
         try:
             return self.find_plugin(name, collection_list=collection_list) is not None
         # TODO: limit this to only plugin load/resolution errors
-        except:
+        except Exception:
             pass
 
     __contains__ = has_plugin

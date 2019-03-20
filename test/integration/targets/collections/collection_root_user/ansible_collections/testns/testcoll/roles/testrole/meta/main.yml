@@ -1,0 +1,4 @@
+collections:
+- ansible.core
+- testns.coll_in_sys
+- bogus.fromrolemeta

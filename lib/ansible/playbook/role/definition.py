@@ -45,7 +45,7 @@ class RoleDefinition(Base, Become, Conditional, Taggable, Collection):
 
     _role = FieldAttribute(isa='string')
 
-    def __init__(self, play=None, role_basedir=None, variable_manager=None, loader=None, collection_list=[]):
+    def __init__(self, play=None, role_basedir=None, variable_manager=None, loader=None, collection_list=None):
 
         super(RoleDefinition, self).__init__()
 
@@ -54,6 +54,7 @@ class RoleDefinition(Base, Become, Conditional, Taggable, Collection):
         self._loader = loader
 
         self._role_path = None
+        self._role_collection = None
         self._role_basedir = role_basedir
         self._role_params = dict()
         self._collection_list = collection_list
@@ -152,18 +153,19 @@ class RoleDefinition(Base, Become, Conditional, Taggable, Collection):
         templar = Templar(loader=self._loader, variables=all_vars)
         role_name = templar.template(role_name)
 
-
         # FIXME: sanity check the name first; don't try this with path-ish role names, etc
         # try to load as a collection-based role first
         role_tuple = get_collection_role_path(role_name, self._collection_list)
 
         if role_tuple:
-            # we found it, just return what we got
-            return role_tuple
+            # we found it, stash collection data and return the name/path tuple
+            # FIXME: move the state mutation up a level?
+            self._role_collection = role_tuple[2]
+            return role_tuple[0:2]
 
         # FIXME: refactor this to be callable from internal so we can properly order ansible.legacy searches with the
         # collections keyword
-        if self._collection_list and not 'ansible.legacy' in self._collection_list:
+        if self._collection_list and 'ansible.legacy' not in self._collection_list:
             raise AnsibleError("the role '%s' was not found in %s" % (role_name, ":".join(self._collection_list)), obj=self._ds)
 
         # we always start the search for roles in the base directory of the playbook

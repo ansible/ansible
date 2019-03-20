@@ -1420,6 +1420,8 @@ INSTALLED_CONTENT_ROOTS:
   name: root paths for loading installed role/plugin content
   default: ['~/.ansible/content', '/usr/share/ansible/content']
   type: list
+  env:
+  - {name: ANSIBLE_INSTALLED_CONTENT_ROOTS}
   ini:
   - {key: installed_content_roots, section: defaults}
 INTERPRETER_PYTHON:

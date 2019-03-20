@@ -12,5 +12,17 @@ class Collection:
     # this needs to be populated before we can resolve tasks/roles/etc
     _collections = FieldAttribute(isa='list', listof=string_types, priority=100)
 
-    def __init__(self):
-        super(Collection, self).__init__()
+    def _load_collections(self, attr, ds):
+        if not ds:
+            # if empty/None, just return whatever was there; legacy behavior will do the right thing
+            # FIXME: except inside collection-hosted roles/playbooks, where we want to include the parent collection
+            return ds
+
+        if not isinstance(ds, list):
+            ds = [ds]
+
+        if 'ansible.core' not in ds and 'ansible.legacy' not in ds:
+            # FIXME: add ansible.legacy in legacy roles, ansible.core in collection-hosted
+            ds.append('ansible.legacy')
+
+        return ds

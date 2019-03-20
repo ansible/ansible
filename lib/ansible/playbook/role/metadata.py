@@ -23,17 +23,17 @@ import os
 
 from ansible.errors import AnsibleParserError, AnsibleError
 from ansible.module_utils._text import to_native
-from ansible.module_utils.six import iteritems, string_types
-from ansible.playbook.attribute import Attribute, FieldAttribute
+from ansible.module_utils.six import string_types
+from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
+from ansible.playbook.collection import Collection
 from ansible.playbook.helpers import load_list_of_roles
-from ansible.playbook.role.include import RoleInclude
 from ansible.playbook.role.requirement import RoleRequirement
 
 __all__ = ['RoleMetadata']
 
 
-class RoleMetadata(Base):
+class RoleMetadata(Base, Collection):
     '''
     This class wraps the parsing and validation of the optional metadata
     within each Role (meta/main.yml).
@@ -105,7 +105,7 @@ class RoleMetadata(Base):
     def serialize(self):
         return dict(
             allow_duplicates=self._allow_duplicates,
-            dependencies=self._dependencies,
+            dependencies=self._dependencies
         )
 
     def deserialize(self, data):
