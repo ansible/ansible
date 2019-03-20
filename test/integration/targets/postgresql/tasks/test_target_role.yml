@@ -35,6 +35,7 @@
     type: default_privs
     role: "{{ db_user2 }}"
     target_roles: "{{ db_user1 }}"
+    login_user: "{{ pg_user }}"
   register: result
 
 # Checks
@@ -62,6 +63,7 @@
     type: default_privs
     role: "{{ db_user2 }}"
     target_roles: "{{ db_user1 }}"
+    login_user: "{{ pg_user }}"
   register: result
 
 # Checks
