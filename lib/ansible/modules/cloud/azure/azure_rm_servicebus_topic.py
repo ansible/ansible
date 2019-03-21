@@ -89,13 +89,8 @@ options:
         choices:
             - active
             - disabled
-            - restoring
             - send_disabled
             - receive_disabled
-            - creating
-            - deleting
-            - renaming
-            - unkown
 
 extends_documentation_fragment:
     - azure
@@ -166,7 +161,7 @@ class AzureRMServiceBusTopic(AzureRMModuleBase):
             resource_group=dict(type='str', required=True),
             state=dict(type='str', default='present', choices=['present', 'absent']),
             status=dict(type='str',
-                        choices=['active', 'disabled', 'restoring', 'send_disabled', 'receive_disabled', 'creating', 'deleting', 'renaming', 'unkown']),
+                        choices=['active', 'disabled', 'send_disabled', 'receive_disabled']),
             support_ordering=dict(type='bool')
         )
 

@@ -101,13 +101,8 @@ options:
         choices:
             - active
             - disabled
-            - restoring
             - send_disabled
             - receive_disabled
-            - creating
-            - deleting
-            - renaming
-            - unknown
 
 extends_documentation_fragment:
     - azure
@@ -174,7 +169,7 @@ class AzureRMServiceSubscription(AzureRMModuleBase):
             resource_group=dict(type='str', required=True),
             state=dict(type='str', default='present', choices=['present', 'absent']),
             status=dict(type='str',
-                        choices=['active', 'disabled', 'restoring', 'send_disabled', 'receive_disabled', 'creating', 'deleting', 'renaming', 'unknown']),
+                        choices=['active', 'disabled', 'send_disabled', 'receive_disabled']),
             topic=dict(type='str', required=True)
         )
 

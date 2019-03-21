@@ -110,13 +110,8 @@ options:
         choices:
             - active
             - disabled
-            - restoring
             - send_disabled
             - receive_disabled
-            - creating
-            - deleting
-            - renaming
-            - unknown
 
 extends_documentation_fragment:
     - azure
@@ -194,7 +189,7 @@ class AzureRMServiceBusQueue(AzureRMModuleBase):
             requires_duplicate_detection=dict(type='bool'),
             requires_session=dict(type='bool'),
             status=dict(type='str',
-                        choices=['active', 'disabled', 'restoring', 'send_disabled', 'receive_disabled', 'creating', 'deleting', 'renaming', 'unknown'])
+                        choices=['active', 'disabled', 'send_disabled', 'receive_disabled'])
         )
 
         self.resource_group = None
