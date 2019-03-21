@@ -74,6 +74,7 @@ options:
     containers:
         description:
             - List of containers.
+            - Required when creation.
         suboptions:
             name:
                 description:
@@ -231,6 +232,15 @@ def create_container_dict_from_obj(container):
     return results
 
 
+container_spec=dict(
+    name=dict(type='str', required=True),
+    image=dict(type='str', required=True),
+    memory=dict(type='float', default=1.5),
+    cpu=dict(type='int', default=1),
+    ports=dict(type='list', elements='int')
+)
+
+
 class AzureRMContainerInstance(AzureRMModuleBase):
     """Configuration class for an Azure RM container instance resource"""
 
@@ -284,7 +294,8 @@ class AzureRMContainerInstance(AzureRMModuleBase):
             ),
             containers=dict(
                 type='list',
-                required=True
+                elements='dict',
+                options=container_spec
             ),
             restart_policy=dict(
                 type='str',
@@ -310,9 +321,14 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         self.results = dict(changed=False, state=dict())
         self.cgmodels = None
 
+        required_if = [
+            ('state', 'present', ['containers'])
+        ]
+
         super(AzureRMContainerInstance, self).__init__(derived_arg_spec=self.module_arg_spec,
                                                        supports_check_mode=True,
-                                                       supports_tags=True)
+                                                       supports_tags=True,
+                                                       required_if=required_if)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
@@ -372,7 +388,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
 
             self.results['id'] = response['id']
             self.results['provisioning_state'] = response['provisioning_state']
-            self.results['ip_address'] = response['ip_address']['ip']
+            self.results['ip_address'] = response['ip_address']['ip'] if 'ip_address' in response else ''
 
             self.log("Creation / Update done")
 
@@ -395,21 +411,13 @@ class AzureRMContainerInstance(AzureRMModuleBase):
 
         ip_address = None
 
-        if self.ip_address == 'public':
-            # get list of ports
-            if self.ports:
-                ports = []
-                for port in self.ports:
-                    ports.append(self.cgmodels.Port(port=port, protocol="TCP"))
-                ip_address = self.cgmodels.IpAddress(ports=ports, dns_name_label=self.dns_name_label, type='public')
-
         containers = []
-
+        all_ports = set([])
         for container_def in self.containers:
             name = container_def.get("name")
             image = container_def.get("image")
-            memory = container_def.get("memory", 1.5)
-            cpu = container_def.get("cpu", 1)
+            memory = container_def.get("memory")
+            cpu = container_def.get("cpu")
             commands = container_def.get("commands")
             ports = []
             variables = []
@@ -417,6 +425,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
             port_list = container_def.get("ports")
             if port_list:
                 for port in port_list:
+                    all_ports.add(port)
                     ports.append(self.cgmodels.ContainerPort(port=port))
 
             variable_list = container_def.get("environment_variables")
@@ -435,6 +444,14 @@ class AzureRMContainerInstance(AzureRMModuleBase):
                                                       command=commands,
                                                       environment_variables=variables))
 
+        if self.ip_address == 'public':
+            # get list of ports
+            if len(all_ports) > 0:
+                ports = []
+                for port in all_ports:
+                    ports.append(self.cgmodels.Port(port=port, protocol="TCP"))
+                ip_address = self.cgmodels.IpAddress(ports=ports,dns_name_label=self.dns_name_label, type='public')
+
         parameters = self.cgmodels.ContainerGroup(location=self.location,
                                                   containers=containers,
                                                   image_registry_credentials=registry_credentials,
@@ -444,12 +461,14 @@ class AzureRMContainerInstance(AzureRMModuleBase):
                                                   volumes=None,
                                                   tags=self.tags)
 
-        response = self.containerinstance_client.container_groups.create_or_update(resource_group_name=self.resource_group,
-                                                                                   container_group_name=self.name,
-                                                                                   container_group=parameters)
-
-        if isinstance(response, LROPoller):
-            response = self.get_poller_result(response)
+        try:
+            response = self.containerinstance_client.container_groups.create_or_update(resource_group_name=self.resource_group,
+                                                                                       container_group_name=self.name,
+                                                                                       container_group=parameters)
+            if isinstance(response, LROPoller):
+                response = self.get_poller_result(response)
+        except CloudError as exc:
+            self.fail("Error when creating ACI {0}: {1}".format(self.name, exc.message or str(exc)))
 
         return response.as_dict()
 
@@ -460,8 +479,12 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         :return: True
         '''
         self.log("Deleting the container instance {0}".format(self.name))
-        response = self.containerinstance_client.container_groups.delete(resource_group_name=self.resource_group, container_group_name=self.name)
-        return True
+        try:
+            response = self.containerinstance_client.container_groups.delete(resource_group_name=self.resource_group, container_group_name=self.name)
+            return True
+        except CloudError as exc:
+            self.fail('Error when deleting ACI {0}: {1}'.format(self.name, exc.message or str(exc)))
+            return False
 
     def get_containerinstance(self):
         '''
