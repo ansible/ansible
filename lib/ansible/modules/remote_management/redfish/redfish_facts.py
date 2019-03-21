@@ -74,6 +74,14 @@ EXAMPLES = '''
   - debug:
       msg: "{{ redfish_facts.cpu.entries.0.Model }}"
 
+  - name: Get memory inventory
+    redfish_facts:
+      category: Systems
+      command: GetMemoryInventory
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+
   - name: Get fan inventory with a timeout of 20 seconds
     redfish_facts:
       category: Chassis
