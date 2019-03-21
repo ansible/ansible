@@ -268,7 +268,7 @@ class NetAppONTAPGatherFacts(object):
                 'kwargs': {},
                 'min_version': '0',
             },
-           'system_node_info': {
+            'system_node_info': {
                 'method': self.get_generic_get_iter,
                 'kwargs': {
                     'call': 'system-node-get-iter',
