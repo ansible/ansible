@@ -291,7 +291,6 @@ EXAMPLES = '''
     name: mytemplate
     vm: rhel7
     version:
-        base_template: 026c7c23-7407-4fa0-b1a2-6aefc60b2dde
         number: 2
         name: subversion
 
@@ -301,7 +300,6 @@ EXAMPLES = '''
     name: mytemplate
     vm: rhel7
     version:
-        base_template: 026c7c23-7407-4fa0-b1a2-6aefc60b2dde
         name: subversion
 '''
 
@@ -368,10 +366,8 @@ class TemplatesModule(BaseModule):
                 self.param('memory')
             ) if self.param('memory') else None,
             version=otypes.TemplateVersion(
-                base_template=otypes.Template(
-                    id=self.param('version').get('base_template')
-                ) if self.param('version').get('base_template') else None,
-                version_name=self.param('version').get('name')
+                base_template=self._get_base_template(),
+                version_name=self.param('version').get('name'),
             ) if self.param('version') else None,
             memory_policy=otypes.MemoryPolicy(
                 guaranteed=convert_to_bytes(self.param('memory_guaranteed')),
@@ -384,6 +380,14 @@ class TemplatesModule(BaseModule):
                 threads=self.param('io_threads'),
             ) if self.param('io_threads') is not None else None,
         )
+
+    def _get_base_template(self):
+        templates = self._connection.system_service().templates_service().list()
+        for template in templates:
+            if template.version.version_number == 1 and template.name == self.param('name'):
+                return otypes.Template(
+                    id=template.id
+                )
 
     def update_check(self, entity):
         return (
