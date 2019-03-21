@@ -181,7 +181,7 @@ state:
     sample: {
         "account_type": "Standard_RAGRS",
         "custom_domain": null,
-        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/testing/providers/Microsoft.Storage/storageAccounts/clh0003",
+        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Storage/storageAccounts/clh0003",
         "location": "eastus2",
         "name": "clh0003",
         "primary_endpoints": {

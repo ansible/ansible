@@ -62,24 +62,25 @@ author:
 '''
 
 EXAMPLES = '''
-- name: create function app
+- name: Create a function app
   azure_rm_functionapp:
       resource_group: myResourceGroup
-      name: myfunctionapp
-      storage_account: mystorageaccount
+      name: myFunctionApp
+      storage_account: myStorageAccount
 
-- name: create a function app with app settings
+- name: Create a function app with app settings
   azure_rm_functionapp:
       resource_group: myResourceGroup
-      name: myfunctionapp
-      storage_account: mystorageaccount
+      name: myFunctionApp
+      storage_account: myStorageAccount
       app_settings:
           setting1: value1
           setting2: value2
 
-- name: delete a function app
+- name: Delete a function app
   azure_rm_functionapp:
-      name: myfunctionapp
+      resource_group: myResourceGroup
+      name: myFunctionApp
       state: absent
 '''
 
@@ -89,7 +90,7 @@ state:
     returned: success
     type: dict
     example:
-        id: /subscriptions/.../resourceGroups/ansible-rg/providers/Microsoft.Web/sites/myfunctionapp
+        id: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Web/sites/myFunctionApp
         name: myfunctionapp
         kind: functionapp
         location: East US
@@ -111,7 +112,7 @@ state:
           - name: myfunctionapp.scm.azurewebsites.net
             ssl_state: Disabled
             host_type: Repository
-        server_farm_id: /subscriptions/.../resourceGroups/ansible-rg/providers/Microsoft.Web/serverfarms/EastUSPlan
+        server_farm_id: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Web/serverfarms/EastUSPlan
         reserved: false
         last_modified_time_utc: 2017-08-22T18:54:01.190Z
         scm_site_also_stopped: false
