@@ -10,7 +10,7 @@
     - name: Install libvirt packages
       package:
         name: "{{ virt_net_packages }}"
-  
+
     - name: Start libvirt
       service:
         name: libvirtd
