@@ -93,7 +93,7 @@ EXAMPLES = r'''
 RETURN = r''' # '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.bitbucket import BitbucketHelper
+from ansible.module_utils.source_control.bitbucket import BitbucketHelper
 
 error_messages = {
     'required_value': '`value` is required when the `state` is `present`',
