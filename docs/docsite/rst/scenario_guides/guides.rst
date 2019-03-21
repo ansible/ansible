@@ -1,7 +1,7 @@
 .. _integration_guides:
 
 ******************
-Integration Guides
+Scenario Guides
 ******************
 
 The guides in this section cover integrating Ansible with a variety of
@@ -9,7 +9,7 @@ platforms, products, and technologies. They explore particular use cases in grea
 
 .. toctree::
    :maxdepth: 1
-   :caption: Cloud Integration Guides
+   :caption: Cloud Platform Guides
 
    guide_alicloud
    guide_aws
@@ -24,7 +24,7 @@ platforms, products, and technologies. They explore particular use cases in grea
 
 .. toctree::
    :maxdepth: 1
-   :caption: Network Integration Guides
+   :caption: Network Product Guides
 
    guide_aci
    guide_meraki
@@ -32,7 +32,7 @@ platforms, products, and technologies. They explore particular use cases in grea
 
 .. toctree::
    :maxdepth: 1
-   :caption: Virtualization & Containerization Integration Guides
+   :caption: Virtualization & Containerization Solution Guides
 
    guide_docker
    guide_kubernetes
