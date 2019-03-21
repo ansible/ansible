@@ -1,0 +1,90 @@
+---
+
+# Setup
+- name: Create DB
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_db:
+    state: present
+    name: "{{ db_name }}"
+    owner: "{{ db_user1 }}"
+    login_user: "{{ pg_user }}"
+
+- name: Create a user to be given permissions and other tests
+  postgresql_user:
+    name: "{{ db_user2 }}"
+    state: present
+    encrypted: yes
+    password: password
+    role_attr_flags: LOGIN
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+
+
+# Test
+- name: Create a new schema with name "acme"
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_schema:
+    name: acme
+    login_user: "{{ pg_user }}"
+
+# Checks
+- assert:
+    that: result.changed == true
+
+- name: Check that the new schema "acme" exists
+  become: yes
+  become_user: "{{ pg_user }}"
+  shell: psql {{ db_name }} -c "SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'acme';" -t
+  register: result
+
+- assert:
+    that: "result.stdout_lines[-1] == '(1 row)'"
+
+
+# Test
+- name: Create a new schema "acme" with a user "bob" who will own it
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_schema:
+    name: acme
+    owner: "{{ db_user2 }}"
+    login_user: "{{ pg_user }}"
+
+# Checks
+- assert:
+    that: result.changed == true
+
+- name: Check that the new schema "acme" exists and "{{ db_user2 }}" own it
+  become: yes
+  become_user: "{{ pg_user }}"
+  shell: psql {{ db_name }} -c "SELECT schema_name,schema_owner FROM information_schema.schemata WHERE schema_name = 'acme' AND schema_owner = '{{ db_user2 }}';;" -t
+  register: result
+
+- assert:
+    that: "result.stdout_lines[-1] == '(1 row)'"
+
+
+# Test
+- name: Drop schema "acme" with cascade
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_schema:
+    name: acme
+    ensure: absent
+    cascade_drop: yes
+    login_user: "{{ pg_user }}"
+
+# Checks
+- assert:
+    that: result.changed == true
+
+- name: Check that no schema "acme" exists
+  become: yes
+  become_user: "{{ pg_user }}"
+  shell: psql {{ db_name }} -c "SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'acme';" -t
+  register: result
+
+- assert:
+    that: "result.stdout_lines[-1] == '(0 row)'"
