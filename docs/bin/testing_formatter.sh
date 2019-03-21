@@ -9,7 +9,7 @@ Sanity Tests
 ============
 
 The following sanity tests are available as \`\`--test\`\` options for \`\`ansible-test sanity\`\`.
-This list is also available using \`\`ansible-test sanity --list-tests\`\`.
+This list is also available using \`\`ansible-test sanity --list-tests --allow-disabled\`\`.
 
 For information on how to run these tests, see :ref:\`sanity testing guide <testing_sanity>\`.
 
