@@ -29,6 +29,8 @@ options:
     required: true
 
   organization:
+    aliases:
+      - org
     description:
       - Organization containing a project.
     type: str
