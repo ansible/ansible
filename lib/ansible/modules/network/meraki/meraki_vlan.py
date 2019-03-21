@@ -233,6 +233,30 @@ response:
       returned: success
       type: str
       sample: boot.txt
+    dhcpOptions:
+      description: DHCP options.
+      returned: success
+      type: complex
+      contains:
+        code:
+          description:
+            - Code for DHCP option.
+            - Integer between 2 and 254.
+          returned: success
+          type: int
+          sample: 43
+        type:
+          description:
+            - Type for DHCP option.
+            - Choices are C(text), C(ip), C(hex), C(integer).
+          returned: success
+          type: str
+          sample: text
+        value:
+          description: Value for the DHCP option.
+          returned: success
+          type: str
+          sample: 192.0.1.2
 '''
 
 import os
