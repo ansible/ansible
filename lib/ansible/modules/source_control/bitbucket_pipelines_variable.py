@@ -5,7 +5,6 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
@@ -26,44 +25,44 @@ author:
 options:
   client_id:
     description:
-      - OAuth consumer key. If not set the environment variable C(BITBUCKET_CLIENT_ID) will be used.
+      - The OAuth consumer key.
+      - If not set the environment variable C(BITBUCKET_CLIENT_ID) will be used.
     type: str
   client_secret:
     description:
-      - OAuth consumer secret. If not set the environment variable C(BITBUCKET_CLIENT_SECRET) will be used.
+      - The OAuth consumer secret.
+      - If not set the environment variable C(BITBUCKET_CLIENT_SECRET) will be used.
     type: str
   repository:
     description:
-      - Repository name.
+      - The repository name.
     type: str
     required: true
   username:
     description:
-      - Repository owner.
+      - The repository owner.
     type: str
     required: true
   key:
     description:
-      - Pipeline variable name.
+      - The pipeline variable name.
     type: str
     required: true
   value:
     description:
-      - Pipeline variable value.
+      - The pipeline variable value.
     type: str
   secured:
     description:
-      - Encrypt variable value.
-    default: no
+      - Whether to encrypt the variable value.
     type: bool
+    default: no
   state:
     description:
       - Indicates desired state of the variable.
     type: str
     required: true
-    choices:
-      - present
-      - absent
+    choices: [ absent, present ]
 notes:
   - Bitbucket OAuth consumer key and secret can be obtained from Bitbucket profile -> Settings -> Access Management -> OAuth.
   - Check mode is supported.
@@ -79,7 +78,6 @@ EXAMPLES = r'''
     value: '{{ item.value }}'
     secured: '{{ item.secured }}'
     state: present
-
   with_items:
     - { key: AWS_ACCESS_KEY, value: ABCD1234 }
     - { key: AWS_SECRET, value: qwe789poi123vbn0, secured: True }
