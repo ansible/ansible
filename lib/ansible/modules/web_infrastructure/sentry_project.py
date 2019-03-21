@@ -85,6 +85,7 @@ EXAMPLES = '''
     team: senior
     url: sentry.example.com
 
+- name: Delete project "backend" in "example" organization and "senior" team
   sentry_project:
     api_token: 1234567890abcdwxyz
     organization: example
