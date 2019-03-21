@@ -75,8 +75,8 @@ author:
 '''
 
 EXAMPLES = '''
-# Create project "backend" in "example" organization and "senior" team
-- sentry_project:
+- name: Create project "backend" in "example" organization and "senior" team
+  sentry_project:
     api_token: 1234567890abcdwxyz
     organization: example
     project_name: backend
@@ -85,7 +85,7 @@ EXAMPLES = '''
     team: senior
     url: sentry.example.com
 
-- sentry_project:
+  sentry_project:
     api_token: 1234567890abcdwxyz
     organization: example
     project_name: backend
