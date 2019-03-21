@@ -599,7 +599,8 @@ class Certificate(crypto_utils.OpenSSLObject):
             if not isinstance(result, datetime.datetime):
                 raise CertificateError(
                     'The time spec "%s" for %s is invalid' %
-                    input_string, input_name)
+                    (input_string, input_name)
+                )
         return result
 
     def _validate_privatekey(self):
