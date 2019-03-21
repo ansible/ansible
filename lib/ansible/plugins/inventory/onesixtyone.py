@@ -74,12 +74,13 @@ except Exception:
 try:
     import gevent
     from gevent import socket
+    from gevent.exceptions import LoopExit
     HAS_GEVENT = True
 except Exception:
     HAS_GEVENT = False
 
 
-class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
+class InventoryModule(BaseInventoryPlugin):
     NAME = 'onesixtyone'
 
     def __init__(self):
@@ -96,23 +97,32 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 return True
 
     def parse(self, inventory, loader, path, cache=False):
-        super(InventoryModule, self).parse(inventory, loader, path, cache=cache)
-        self._onesixtyone = get_bin_path(self.NAME, True)
-        self._read_config_data(path)
-
         if not HAS_NETADDR:
             raise AnsibleParserError('this inventory plugin requires the netaddr library. Try: pip install netaddr')
 
         if not HAS_GEVENT:
-            raise AnsibleParserError('this inventory plugin requires the gevent library. Try: yum install python-gevent')
+            raise AnsibleParserError('this inventory plugin requires the gevent library. Try: pip install gevent')
+
+        # Initialize Superclass Method
+        super(InventoryModule, self).parse(inventory, loader, path, cache=cache)
+
+        # Find the onesixtyone binary
+        try:
+            self._onesixtyone = get_bin_path(self.NAME, True)
+        except Exception:
+            raise AnsibleParserError('onesixtyone inventory plugin requires the onesixtyone cli tool to work.')
+
+        # Read Configuration
+        self._read_config_data(path)
 
         try:
             # Using gevent to parallelize reverse dns lookups and adding entries to inventory
             jobs = [gevent.spawn(self._add_device, self, device) for device in self._discovery()]
-            gevent.joinall(jobs, timeout=20)
-
-        except Exception as e:
-            raise AnsibleParserError("failed to parse %s: %s " % (to_native(path), to_native(e)))
+            gevent.joinall(jobs, timeout=20)            
+        
+        # Exception raised by gevent
+        except LoopExit as e:
+            raise AnsibleParserError('gevent library exception, this should not happen: %s', to_native(e))
 
     def _match_platform(self, text):
         """ Matches platforms against text in sysDescr and return the platform.
@@ -121,14 +131,14 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         text -- sysdescr text
         """
         platforms = {
-            'asa': re.compile(r'^Cisco\sAdaptive\sSecurity\sAppliance'),
-            'ios': re.compile(r'^Cisco\sIOS\sSoftware'),
-            'iosxr': re.compile(r'^Cisco\sIOS\sXR\sSoftware'),
-            'nxos': re.compile(r'^Cisco\sNexus\sOperating\sSystem'),
-            'dellos': re.compile(r'^Dell\sApplication\sSoftware'),
-            'junos': re.compile(r'^JUNOS'),
-            'aruba': re.compile(r'^Aruba\sOperating\sSystem\sSoftware'),
-            'eos': re.compile(r'^Arista')
+            'asa': re.compile(r'Cisco\sAdaptive\sSecurity\sAppliance'),
+            'ios': re.compile(r'Cisco\sIOS\sSoftware'),
+            'iosxr': re.compile(r'Cisco\sIOS\sXR\sSoftware'),
+            'nxos': re.compile(r'Cisco\sNexus\sOperating\sSystem'),
+            'dellos': re.compile(r'Dell\sApplication\sSoftware'),
+            'junos': re.compile(r'JUNOS'),
+            'aruba': re.compile(r'Aruba\sOperating\sSystem\sSoftware'),
+            'eos': re.compile(r'Arista'),
         }
         platforms.update(self.get_option('platform'))
 
@@ -140,9 +150,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     def _discovery(self):
         """ Run onesixtyone and parse the output to extract host, community and sysdescr """
-        if self._onesixtyone is None:
-            raise AnsibleParserError('onesixtyone inventory plugin requires the onesixtyone cli tool to work')
-
         # setup command
         cmd = [self._onesixtyone]
 
