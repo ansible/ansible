@@ -97,6 +97,7 @@ options:
             environment_variables:
                 description:
                     - List of container environment variables.
+                    - When updating existing container all existing variables will be replaced by new ones.
                 type: dict
                 suboptions:
                     name:
@@ -115,6 +116,7 @@ options:
             commands:
                 description:
                     - List of commands to execute within the container instance in exec form.
+                    - When updating existing container all existing commands will be replaced by new ones.
                 type: list
                 version_added: "2.8"
     restart_policy:
