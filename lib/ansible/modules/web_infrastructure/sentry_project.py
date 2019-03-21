@@ -51,7 +51,7 @@ options:
       - The state of project.
     type: str
     required: true
-    choices: [ "present", "absent" ]
+    choices: [ "absent", "present" ]
 
   team:
     description:
