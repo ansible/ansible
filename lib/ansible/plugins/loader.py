@@ -503,9 +503,11 @@ class PluginLoader:
 
         try:
             return self.find_plugin(name, collection_list=collection_list) is not None
-        # TODO: limit this to only plugin load/resolution errors
-        except Exception:
-            pass
+        except Exception as ex:
+            if isinstance(ex, AnsibleError):
+                raise
+            # log and continue, likely an innocuous type/package loading failure in collections import
+            display.debug('has_plugin error: {0}'.format(to_native(ex)))
 
     __contains__ = has_plugin
 
