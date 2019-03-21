@@ -209,6 +209,7 @@ except Exception:
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, azure_id_to_dict
 from ansible.module_utils.common.dict_transformations import camel_dict_to_snake_dict
 from ansible.module_utils.six.moves.urllib.parse import urlparse
+import re
 
 
 AZURE_OBJECT_CLASS = 'VirtualMachine'
