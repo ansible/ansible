@@ -789,6 +789,7 @@
 
 # Test default_privs with target_role
 - include: test_target_role.yml
+  when: postgres_version_resp.stdout is version('9.1', '>=')
 
 # dump/restore tests per format
 # ============================================================
