@@ -244,7 +244,7 @@ state:
            vnet_subnet_id: Null
         changed: false
         dns_prefix: aks9860bdcd89
-        id: "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourcegroups/yuwzhoaks/providers/Microsoft.ContainerService/managedClusters/aks9860bdc"
+        id: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/yuwzhoaks/providers/Microsoft.ContainerService/managedClusters/aks9860bdc"
         kube_config: "......"
         kubernetes_version: 1.11.4
         linux_profile:
@@ -254,7 +254,7 @@ state:
         name: aks9860bdc
         provisioning_state: Succeeded
         service_principal_profile:
-           client_id: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+           client_id: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
         tags: {}
         type: Microsoft.ContainerService/ManagedClusters
 '''
