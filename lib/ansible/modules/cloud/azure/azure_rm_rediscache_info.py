@@ -18,10 +18,10 @@ module: azure_rm_rediscache_info
 
 version_added: "2.8"
 
-short_description: Get Azure Azure Cache for Redis instance facts
+short_description: Get Azure Cache for Redis instance facts
 
 description:
-    - Get facts for Azure Azure Cache for Redis instance.
+    - Get facts for Azure Cache for Redis instance.
 
 options:
     resource_group:
