@@ -423,6 +423,20 @@ options:
             can be used in the network to reach this container.
         type: list
     version_added: "2.2"
+  networks_cli_compatible:
+    description:
+      - "When networks are provided to the module via the I(networks) option, the module
+         behaves differently than C(docker run --network): C(docker run --network other)
+         will create a container with network C(other) attached, but the default network
+         not attached. This module with C(networks: {name: other}) will create a container
+         with both C(default) and C(other) attached. If I(purge_networks) is set to C(yes),
+         the C(default) network will be removed afterwards."
+      - "If I(networks_cli_compatible) is set to C(yes), this module will behave as
+         C(docker run --network) and will I(not) add the default network if C(networks) is
+         specified. If C(networks) is not specified, the default network will be attached."
+      - Current value is C(no). A new default of C(yes) will be set in Ansible 2.12.
+    type: bool
+    version_added: "2.8"
   oom_killer:
     description:
       - Whether or not to disable OOM Killer for the container.
@@ -1076,6 +1090,7 @@ class TaskParameters(DockerBaseClass):
         self.network_mode = None
         self.userns_mode = None
         self.networks = None
+        self.networks_cli_compatible = None
         self.oom_killer = None
         self.oom_score_adj = None
         self.paused = None
@@ -1260,6 +1275,17 @@ class TaskParameters(DockerBaseClass):
             if getattr(self, value, None) is not None:
                 if self.client.option_minimal_versions[value]['supported']:
                     result[key] = getattr(self, value)
+
+        if self.networks_cli_compatible and self.networks is not None:
+            network_config = dict()
+            if self.networks:
+                network = self.networks[0]
+                params = dict()
+                for para in ('ipv4_address', 'ipv6_address', 'links', 'aliases'):
+                    if network.get(para):
+                        params[para] = network[para]
+                network_config[network['name']] = self.client.create_endpoint_config(params)
+            result['networking_config'] = self.client.create_networking_config(network_config)
         return result
 
     def _expand_host_paths(self):
@@ -2893,6 +2919,7 @@ def main():
             aliases=dict(type='list', elements='str'),
             links=dict(type='list', elements='str'),
         )),
+        networks_cli_compatible=dict(type='bool'),
         oom_killer=dict(type='bool'),
         oom_score_adj=dict(type='int'),
         output_logs=dict(type='bool', default=False),
@@ -2938,6 +2965,16 @@ def main():
         supports_check_mode=True,
         min_docker_api_version='1.20',
     )
+    if client.module.params['networks_cli_compatible'] is None and client.module.params['networks'] is not None:
+        client.module.deprecate(
+            'Please note that docker_container handles networks slightly different than docker CLI. '
+            'If you specify networks, the default network will still be attached as the first network. '
+            '(You can specify purge_networks to remove all networks not explicitly listed.) '
+            'This behavior will change in Ansible 2.12. You can change the behavior now by setting '
+            'the new `networks_cli_compatible` option to `yes`, and remove this warning by setting '
+            'it to `no`.',
+            version='2.12'
+        )
 
     cm = ContainerManager(client)
     client.module.exit_json(**sanitize_result(cm.results))
