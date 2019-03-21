@@ -1,0 +1,4 @@
+cloud/azure
+destructive
+shippable/azure/group8
+azure_rm_mariadbserver_facts
