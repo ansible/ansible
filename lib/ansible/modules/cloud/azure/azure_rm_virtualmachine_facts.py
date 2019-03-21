@@ -208,7 +208,7 @@ except Exception:
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, azure_id_to_dict
 from ansible.module_utils.common.dict_transformations import camel_dict_to_snake_dict
 from ansible.module_utils.six.moves.urllib.parse import urlparse
-import re
+from msrestazure.tools import parse_resource_id
 
 
 AZURE_OBJECT_CLASS = 'VirtualMachine'
@@ -290,7 +290,7 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
         results = []
         for item in items:
             if self.has_tags(item.tags, self.tags):
-                results.append(self.get_vm(re.sub('\\/.*', '', re.sub('.*resourceGroups\\/', '', item.id)), item.name))
+                results.append(self.get_vm(parse_resource_id(item.id).get('resource_group'), item.name))
         return results
 
     def get_vm(self, resource_group, name):
@@ -314,7 +314,7 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
         '''
 
         result = self.serialize_obj(vm, AZURE_OBJECT_CLASS, enum_modules=AZURE_ENUM_MODULES)
-        resource_group = re.sub('\\/.*', '', re.sub('.*resourceGroups\\/', '', result['id']))
+        resource_group = parse_resource_id(result['id']).get('resource_group')
         instance = None
         power_state = None
 
