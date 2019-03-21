@@ -54,10 +54,12 @@ options:
         description:
             - Regenerate the SAS policy primary key.
         type: bool
+        default: False
     regenerate_secondary_key:
         description:
             - Regenerate the SAS policy secondary key.
         type: bool
+        default: False
     rights:
         description:
             - Claim rights of the SAS policy.
@@ -153,8 +155,8 @@ class AzureRMServiceBusSASPolicy(AzureRMModuleBase):
             namespace=dict(type='str', required=True),
             queue=dict(type='str'),
             topic=dict(type='str'),
-            regenerate_primary_key=dict(type='bool'),
-            regenerate_secondary_key=dict(type='bool'),
+            regenerate_primary_key=dict(type='bool', default=False),
+            regenerate_secondary_key=dict(type='bool', default=False),
             rights=dict(type='str', choices=['manage', 'listen', 'send', 'listen_send'])
         )
 
