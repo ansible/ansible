@@ -24,7 +24,7 @@ if($ip_address -and -not [ipaddress]::TryParse($ip_address, [ref]$tmp)){
 }
 $ip_address_type = $tmp.AddressFamily
 
-$hosts_file = Get-Item -Path "$env:SystemRoot\System32\drivers\etc\hosts"
+$hosts_file = Get-Item -LiteralPath "$env:SystemRoot\System32\drivers\etc\hosts"
 
 $result = @{
     changed = $false
@@ -111,7 +111,7 @@ Function Remove-HostnamesFromEntry($list, $idx, $aliases) {
 
     foreach($name in $aliases){
         $match = Find-HostName -line $line -name $name
-        if($match.Success){        
+        if($match.Success){
             $line = $line.Remove($match.Index + 1, $match.Length -1)
             # was this the last alias? (check for space characters after trimming)
             if($line.Substring(0,(Get-CommentIndex -line $line)).Trim() -inotmatch "\s") {
@@ -165,11 +165,11 @@ Function Add-AliasesToEntry($list, $idx, $aliases) {
 
 $hosts_lines = New-Object System.Collections.ArrayList
 
-Get-Content -Path $hosts_file.FullName | ForEach-Object { $hosts_lines.Add($_) } | Out-Null
+Get-Content -LiteralPath $hosts_file.FullName | ForEach-Object { $hosts_lines.Add($_) } | Out-Null
 
 if ($state -eq 'absent') {
     # go through and remove canonical_name and ip
-    for($idx = 0; $idx -lt $hosts_lines.Count; $idx++) {    
+    for($idx = 0; $idx -lt $hosts_lines.Count; $idx++) {
         $entry = $hosts_lines[$idx]
          # skip comment lines
          if(-not $entry.Trim().StartsWith('#')) {
@@ -202,7 +202,7 @@ if($state -eq 'present') {
                     if($entry_parts.canonical_name -eq $canonical_name) {
                         # don't need to worry about line being removed since canonical_name is present
                         $entry_idx = $idx
-                        
+
                         if($action -eq 'set') {
                             # remove the entry's aliases that are not in $aliases
                             $aliases_to_remove = $entry_parts.aliases | Where-Object { $aliases -notcontains $_ }
@@ -212,14 +212,14 @@ if($state -eq 'present') {
                     } else {
                         # this is the right ip_address, but not the cname we were looking for.
                         # we need to make sure none of aliases or canonical_name exist for this entry
-                        # since the given canonical_name should be an A/AAAA record, 
+                        # since the given canonical_name should be an A/AAAA record,
                         # and aliases should be cname records for the canonical_name.
                         $aliases_to_remove = $aliases + $canonical_name
                     }
                 } else {
                     # this is not the ip_address we are looking for
                     if ($ip_address_type -eq $entry_parts.ip_type) {
-                        if ($entry_parts.canonical_name -eq $canonical_name) {                     
+                        if ($entry_parts.canonical_name -eq $canonical_name) {
                             # remove the entry
                             if (Remove-HostEntry -list $hosts_lines -idx $idx){
                                 # keep index correct if we removed the line
@@ -273,7 +273,7 @@ if($state -eq 'present') {
             # we want to add provided aliases and previously removed aliases that are not already in the list
             $aliases_to_add = ($aliases + $aliases_to_keep) | Where-Object { $entry_parts.aliases -notcontains $_ }
         }
-            
+
         if($aliases_to_add) {
             Add-AliasesToEntry -list $hosts_lines -idx $entry_idx -aliases $aliases_to_add
         }
@@ -292,7 +292,7 @@ if($state -eq 'present') {
 }
 
 if( $result.changed -and -not $check_mode ) {
-    Set-Content -Path $hosts_file -Value $hosts_lines
+    Set-Content -LiteralPath $hosts_file.FullName -Value $hosts_lines
 }
 
 Exit-Json $result
