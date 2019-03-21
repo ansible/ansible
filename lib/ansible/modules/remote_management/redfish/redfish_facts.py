@@ -55,6 +55,18 @@ EXAMPLES = '''
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
+  - debug:
+      msg: "{{ redfish_facts.cpu.entries | to_nice_json }}"
+
+  - name: Get CPU model
+    redfish_facts:
+      category: Systems
+      command: GetCpuInventory
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+  - debug:
+      msg: "{{ redfish_facts.cpu.entries.0.Model }}"
 
   - name: Get fan inventory
     redfish_facts:
@@ -69,6 +81,8 @@ EXAMPLES = '''
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
+  - debug:
+      msg: "{{ redfish_facts | to_nice_json }}"
 
   - name: Get several inventories
     redfish_facts:
