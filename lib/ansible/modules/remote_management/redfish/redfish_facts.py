@@ -57,7 +57,7 @@ EXAMPLES = '''
       password: "{{ password }}"
   - debug:
       msg: "{{ redfish_facts.cpu.entries | to_nice_json }}"
-        
+
   - name: Get CPU model
     redfish_facts:
       category: Systems
@@ -67,7 +67,7 @@ EXAMPLES = '''
       password: "{{ password }}"
   - debug:
       msg: "{{ redfish_facts.cpu.entries.0.Model }}"
-        
+
   - name: Get fan inventory
     redfish_facts:
       category: Chassis
