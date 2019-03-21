@@ -268,6 +268,16 @@ class NetAppONTAPGatherFacts(object):
                 'kwargs': {},
                 'min_version': '0',
             },
+           'system_node_info': {
+                'method': self.get_generic_get_iter,
+                'kwargs': {
+                    'call': 'system-node-get-iter',
+                    'attribute': 'node-details-info',
+                    'field': 'node',
+                    'query': {'max-records': '1024'},
+                },
+                'min_version': '0',
+            },
             # supported in ONTAP 9.4 and onwards
             'nvme_info': {
                 'method': self.get_generic_get_iter,
