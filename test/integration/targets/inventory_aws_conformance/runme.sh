@@ -76,22 +76,22 @@ compose:
   ansible_host: public_ip_address
   ec2_block_devices: dict(block_device_mappings | map(attribute='device_name') | map('basename') | list | zip(block_device_mappings | map(attribute='ebs.volume_id') | list))
   ec2_dns_name: public_dns_name
-  ec2_group_name: placement.group_name
+  ec2_group_name: placement['group_name']
   ec2_id: instance_id
   ec2_instance_profile: iam_instance_profile | default("")
   ec2_ip_address: public_ip_address
   ec2_kernel: kernel_id | default("")
-  ec2_monitored:  monitoring.state in ['enabled', 'pending']
-  ec2_monitoring_state: monitoring.state
+  ec2_monitored:  monitoring['state'] in ['enabled', 'pending']
+  ec2_monitoring_state: monitoring['state']
   ec2_account_id: owner_id
-  ec2_placement: placement.availability_zone
+  ec2_placement: placement['availability_zone']
   ec2_ramdisk: ramdisk_id | default("")
   ec2_reason: state_transition_reason
   ec2_security_group_ids: security_groups | map(attribute='group_id') | list |  join(',')
   ec2_security_group_names: security_groups | map(attribute='group_name') | list |  join(',')
-  ec2_state: state.name
-  ec2_state_code: state.code
-  ec2_state_reason: state_reason.message if state_reason is defined else ""
+  ec2_state: state['name']
+  ec2_state_code: state['code']
+  ec2_state_reason: state_reason['message'] if state_reason is defined else ""
   ec2_sourceDestCheck: source_dest_check | lower | string  # butchered snake_case case not a typo.
 
   # vars that just need ec2_ prefix
@@ -108,7 +108,7 @@ compose:
   ec2_private_dns_name: private_dns_name
   ec2_private_ip_address: private_ip_address
   ec2_public_dns_name: public_dns_name
-  ec2_region: placement.region
+  ec2_region: placement['region']
   ec2_root_device_name: root_device_name
   ec2_root_device_type: root_device_type
   ec2_spot_instance_request_id: spot_instance_request_id | default("")
@@ -126,9 +126,9 @@ keyed_groups:
     prefix: tag
   - key: key_name | regex_replace('-', '_')
     prefix: key
-  - key: placement.region
+  - key: placement['region']
     separator: ""
-  - key: placement.availability_zone
+  - key: placement['availability_zone']
     separator: ""
   - key: platform | default('undefined')
     prefix: platform
@@ -138,7 +138,7 @@ keyed_groups:
     prefix: type
   - key: "image_id | regex_replace('-', '_')"
     separator: ""
-  - key: 'security_groups | json_query("[].group_name") | map("regex_replace", "-", "_") | list'
+  - key: security_groups | map(attribute='group_name') | map("regex_replace", "-", "_") | list
     prefix: security_group
 EOF
 
