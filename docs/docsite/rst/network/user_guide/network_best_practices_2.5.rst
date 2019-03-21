@@ -379,6 +379,8 @@ If you replace these platform-specific modules with the network agnostic ``cli_c
 
 You can see a full example of this and a configuration backup example at `Network agnostic examples <https://github.com/network-automation/agnostic_example>`_.
 
+The ``cli_command`` also supports multiple prompts. See the :ref:`cli_command <cli_command_module>` for an example of this.
+
 
 Implementation Notes
 ====================
@@ -405,7 +407,7 @@ Note that when using variables from tasks in this way we use double quotes (``"`
 Troubleshooting
 ===============
 
-If you receive an connection error please double check the inventory and Playbook for typos or missing lines. If the issue still occurs follow the debug steps in :ref:`network_debug_troubleshooting`.
+If you receive an connection error please double check the inventory and playbook for typos or missing lines. If the issue still occurs follow the debug steps in :ref:`network_debug_troubleshooting`.
 
 .. seealso::
 
