@@ -129,7 +129,7 @@ def main():
             for line, text in enumerate(path_fd.readlines()):
                 match = re.search(r'(?: |[^C]\()(_)(?:[ ,)])', text)
 
-                if match and not text.strip().startswith('#'):  # ignore _ in comments
+                if match:
                     print('%s:%d:%d: use `dummy` instead of `_` for a variable name' % (
                         path, line + 1, match.start(1) + 1))
 

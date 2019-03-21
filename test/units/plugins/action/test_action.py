@@ -121,7 +121,7 @@ class TestActionBase(unittest.TestCase):
         mock_connection = MagicMock()
 
         # create a mock shared loader object
-        def mock_find_plugin(name, options):
+        def mock_find_plugin(name, options, collection_list=None):
             if name == 'badmodule':
                 return None
             elif '.ps1' in options:
