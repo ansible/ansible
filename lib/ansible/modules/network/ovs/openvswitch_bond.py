@@ -20,7 +20,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: openvswitch_bond
-version_added: 2.8
+version_added: '2.8'
 author: "James Denton (@busterswt)"
 short_description: Manage Open vSwitch bonds
 requirements: [ ovs-vsctl ]
@@ -29,10 +29,12 @@ description:
 options:
     bridge:
         required: true
+        type: str
         description:
             - Name of bridge to manage
     port:
         required: true
+        type: str
         description:
             - Name of port to manage on the bridge
     interfaces:
@@ -42,35 +44,43 @@ options:
             - List of interfaces to add to the bond
     bond_mode:
         choices: [ active-backup, balance-tcp, balance-slb ]
+        type: str
         description:
             - Sets the bond mode
     lacp:
-        choices: [ active, passive, off ]
+        choices: [ 'active', 'passive', 'off' ]
+        type: str
         description:
             - Sets LACP mode
     bond_updelay:
+        type: int
         description:
             - Number of milliseconds a link must be up to be activated
               to prevent flapping.
     bond_downdelay:
+        type: int
         description:
             - Number of milliseconds a link must be down to be deactivated
               to prevent flapping.
     state:
-        default: "present"
-        choices: [ present, absent ]
+        default: 'present'
+        choices: [ 'present', 'absent' ]
+        type: str
         description:
             - Whether the port should exist
     timeout:
         default: 5
+        type: int
         description:
-            - How long to wait for ovs-vswitchd to respond
+            - How long to wait for ovs-vswitchd to respond in seconds
     external_ids:
         default: {}
+        type: dict
         description:
             - Dictionary of external_ids applied to a port.
     other_config:
         default: {}
+        type: dict
         description:
             - Dictionary of other_config applied to a port.
     set:
@@ -80,8 +90,8 @@ options:
 '''
 
 EXAMPLES = '''
-# Creates an active-backup bond using eth4 and eth5 on bridge br-ex
-- openvswitch_bond:
+- name: Create an active-backup bond using eth4 and eth5 on bridge br-ex
+  openvswitch_bond:
     bridge: br-ex
     port: bond1
     interfaces:
@@ -89,14 +99,14 @@ EXAMPLES = '''
       - eth5
     state: present
 
-# Deletes the bond from bridge br-ex
-- openvswitch_bond:
+- name: Delete the bond from bridge br-ex
+  openvswitch_bond:
     bridge: br-ex
     port: bond1
     state: absent
 
-# Creates an active lacp bond using eth4 and eth5 on bridge br-ex
-- openvswitch_bond:
+- name: Create an active LACP bond using eth4 and eth5 on bridge br-ex
+  openvswitch_bond:
     bridge: br-ex
     port: bond1
     interfaces:
@@ -105,10 +115,10 @@ EXAMPLES = '''
     lacp: active
     state: present
 
-# Configure bond with miimon link monitoring at 100 millisecond intervals
 # NOTE: other_config values of integer type must be represented
 # as literal strings
-- openvswitch_bond:
+- name: Configure bond with miimon link monitoring at 100 millisecond intervals
+  openvswitch_bond:
     bridge: br-ex
     port: bond1
     interfaces:
@@ -122,8 +132,8 @@ EXAMPLES = '''
       bond-detect-mode: miimon
       bond-miimon-interval: '"100"'
 
-# Creates an active lacp bond using DPDK interfaces
-- openvswitch_bond:
+- name: Create an active LACP bond using DPDK interfaces
+  openvswitch_bond:
     bridge: br-provider
     port: dpdkbond
     interfaces:
