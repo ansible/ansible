@@ -115,7 +115,7 @@
     - push_3 is not changed
 
 - name: Get facts of local image
-  docker_image_facts:
+  docker_image_info:
     name: "{{ registry_address }}/test/hello-world:latest"
   register: facts_1
 
@@ -126,7 +126,7 @@
     force_absent: yes
 
 - name: Get facts of local image (absent)
-  docker_image_facts:
+  docker_image_info:
     name: "{{ registry_address }}/test/hello-world:latest"
   register: facts_2
 
@@ -145,7 +145,7 @@
   register: pull_2
 
 - name: Get facts of local image (present)
-  docker_image_facts:
+  docker_image_info:
     name: "{{ registry_address }}/test/hello-world:latest"
   register: facts_3
 

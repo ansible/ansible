@@ -1,0 +1,58 @@
+---
+- block:
+  - name: Create random volume name
+    set_fact:
+      cname: "{{ 'ansible-test-%0x' % ((2**32) | random) }}"
+
+  - name: Make sure volume is not there
+    docker_volume:
+      name: "{{ cname }}"
+      state: absent
+
+  - name: Inspect a non-present volume
+    docker_volume_info:
+      name: "{{ cname }}"
+    register: result
+
+  - assert:
+      that:
+      - "not result.exists"
+      - "'volume' in result"
+      - "result.volume is none"
+
+  - name: Make sure volume exists
+    docker_volume:
+      name: "{{ cname }}"
+
+  - name: Inspect a present volume
+    docker_volume_info:
+      name: "{{ cname }}"
+    register: result
+  - name: Dump docker_volume_info result
+    debug: var=result
+
+  - name: "Comparison: use 'docker volume inspect'"
+    command: docker volume inspect "{{ cname }}"
+    register: docker_volume_inspect
+  - set_fact:
+      docker_volume_inspect_result: "{{ docker_volume_inspect.stdout | from_json }}"
+  - name: Dump docker volume inspect result
+    debug: var=docker_volume_inspect_result
+
+  - name: Cleanup
+    docker_volume:
+      name: "{{ cname }}"
+      state: absent
+
+  - assert:
+      that:
+      - result.exists
+      - "'volume' in result"
+      - "result.volume"
+      - "result.volume == docker_volume_inspect_result[0]"
+
+  # Requirements for docker_volume
+  when: docker_py_version is version('1.10.0', '>=') and docker_api_version is version('1.24', '>=')
+
+- fail: msg="Too old docker / docker-py version to run docker_volume_info tests!"
+  when: not(docker_py_version is version('1.10.0', '>=') and docker_api_version is version('1.24', '>=')) and (ansible_distribution != 'CentOS' or ansible_distribution_major_version|int > 6)

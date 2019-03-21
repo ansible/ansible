@@ -14,8 +14,8 @@ Ansible offers the following modules for orchestrating Docker containers:
     docker_image
         Provides full control over images, including: build, pull, push, tag and remove.
 
-    docker_image_facts
-        Inspects one or more images in the Docker host's image cache, providing the information as facts for making
+    docker_image_info
+        Inspects one or more images in the Docker host's image cache, providing the information for making
         decision or assertions in a playbook.
 
     docker_login

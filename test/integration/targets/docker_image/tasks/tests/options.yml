@@ -162,7 +162,7 @@
     - repository_2 is not changed
 
 - name: Get facts of image
-  docker_image_facts:
+  docker_image_info:
     name: "{{ registry_address }}/test/{{ iname }}:latest"
   register: facts_1
 

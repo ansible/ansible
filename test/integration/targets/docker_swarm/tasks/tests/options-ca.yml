@@ -67,7 +67,7 @@
     debug: msg="{{ lookup('file', output_dir ~ '/ansible_key1.key') }}"
   - name: Cert
     debug: msg="{{ lookup('file', output_dir ~ '/ansible_key1.pem') }}"
-  - docker_swarm_facts:
+  - docker_swarm_info:
     register: output
     ignore_errors: yes
   - debug: var=output
