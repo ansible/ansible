@@ -232,12 +232,21 @@ def create_container_dict_from_obj(container):
     return results
 
 
+env_var_spec = dict(
+    name=dict(type='str', required=True),
+    value=dict(type='str', required=True),
+    is_secure=dict(type='bool')
+)
+
+
 container_spec = dict(
     name=dict(type='str', required=True),
     image=dict(type='str', required=True),
     memory=dict(type='float', default=1.5),
-    cpu=dict(type='int', default=1),
-    ports=dict(type='list', elements='int')
+    cpu=dict(type='float', default=1),
+    ports=dict(type='list', elements='int'),
+    commands=dict(type='list', elements='str'),
+    environment_variables=dict(type='list', elements='dict', options=env_var_spec)
 )
 
 
