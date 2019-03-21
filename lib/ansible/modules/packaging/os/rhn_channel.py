@@ -59,6 +59,7 @@ EXAMPLES = '''
   delegate_to: localhost
 '''
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves import xmlrpc_client
 
@@ -114,14 +115,23 @@ def main():
     password = module.params['password']
 
     # initialize connection
-    client = xmlrpc_client.Server(saturl)
-    session = client.auth.login(user, password)
+    client = xmlrpc_client.ServerProxy(saturl)
+    try:
+        session = client.auth.login(user, password)
+    except Exception as e:
+        module.fail_json(msg="Unable to establish session with Sattelite server: %s " % to_text(e))
 
     # get systemid
-    sys_id = get_systemid(client, session, systname)
+    try:
+        sys_id = get_systemid(client, session, systname)
+    except Exception as e:
+        module.fail_json(msg="Unable to get system id: %s " % to_text(e))
 
     # get channels for system
-    chans = base_channels(client, session, sys_id)
+    try:
+        chans = base_channels(client, session, sys_id)
+    except Exception as e:
+        module.fail_json(msg="Unable to get channel information: %s " % to_text(e))
 
     try:
         if state == 'present':
@@ -137,6 +147,8 @@ def main():
             else:
                 unsubscribe_channels(channelname, client, session, systname, sys_id)
                 module.exit_json(changed=True, msg="Channel %s removed" % channelname)
+    except Exception as e:
+        module.fail_json('Unable to %s channel (%s): %s' % ('add' if state == 'present' else 'remove', channelname, to_text(e)))
     finally:
         client.auth.logout(session)
 
