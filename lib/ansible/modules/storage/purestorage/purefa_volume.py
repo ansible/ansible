@@ -139,6 +139,9 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pure import get_system, purefa_argument_spec
 
 
+QOS_API_VERSION = "1.14"
+
+
 def human_to_bytes(size):
     """Given a human-readable byte string (e.g. 2G, 30M),
        return the number of bytes.  Will return 0 if the argument has
@@ -193,7 +196,8 @@ def get_target(module, array):
 def create_volume(module, array):
     """Create Volume"""
     changed = False
-    if module.params['qos']:
+    api_version = array._list_available_rest_versions()
+    if module.params['qos'] and QOS_API_VERSION in api_version:
         if 549755813888 >= int(human_to_bytes(module.params['qos'])) >= 1048576:
             try:
                 volume = array.create_volume(module.params['name'],
@@ -244,10 +248,12 @@ def copy_from_volume(module, array):
 def update_volume(module, array):
     """Update Volume size and/or QoS"""
     changed = False
+    api_version = array._list_available_rest_versions()
     vol = array.get_volume(module.params['name'])
-    vol_qos = array.get_volume(module.params['name'], qos=True)
-    if vol_qos['bandwidth_limit'] is None:
-        vol_qos['bandwidth_limit'] = 0
+    if QOS_API_VERSION in api_version:
+        vol_qos = array.get_volume(module.params['name'], qos=True)
+        if vol_qos['bandwidth_limit'] is None:
+            vol_qos['bandwidth_limit'] = 0
     if module.params['size']:
         if human_to_bytes(module.params['size']) != vol['size']:
             if human_to_bytes(module.params['size']) > vol['size']:
@@ -256,7 +262,7 @@ def update_volume(module, array):
                     changed = True
                 except Exception:
                     module.fail_json(msg='Volume {0} resize failed.'.format(module.params['name']))
-    if module.params['qos']:
+    if module.params['qos'] and QOS_API_VERSION in api_version:
         if human_to_bytes(module.params['qos']) != vol_qos['bandwidth_limit']:
             if module.params['qos'] == '0':
                 try:
@@ -280,28 +286,28 @@ def update_volume(module, array):
 def delete_volume(module, array):
     """ Delete Volume"""
     changed = False
-    if not module.check_mode:
-        try:
-            volume = array.destroy_volume(module.params['name'])
-            if module.params['eradicate']:
-                try:
-                    volume = array.eradicate_volume(module.params['name'])
-                except Exception:
-                    module.fail_json(msg='Eradicate volume {0} failed.'.format(module.params['name']))
-            changed = True
-        except Exception:
-            module.fail_json(msg='Delete volume {0} failed.'.format(module.params['name']))
+    try:
+        volume = array.destroy_volume(module.params['name'])
+        if module.params['eradicate']:
+            try:
+                volume = array.eradicate_volume(module.params['name'])
+            except Exception:
+                module.fail_json(msg='Eradicate volume {0} failed.'.format(module.params['name']))
+        changed = True
+    except Exception:
+        module.fail_json(msg='Delete volume {0} failed.'.format(module.params['name']))
     module.exit_json(changed=changed, volume=volume)
 
 
 def eradicate_volume(module, array):
     """ Eradicate Deleted Volume"""
     changed = False
-    try:
-        volume = array.eradicate_volume(module.params['name'])
-        changed = True
-    except Exception:
-        module.fail_json(msg='Eradication of volume {0} failed'.format(module.params['name']))
+    if module.params['eradicate']:
+        try:
+            volume = array.eradicate_volume(module.params['name'])
+            changed = True
+        except Exception:
+            module.fail_json(msg='Eradication of volume {0} failed'.format(module.params['name']))
     module.exit_json(changed=changed, volume=volume)
 
 
