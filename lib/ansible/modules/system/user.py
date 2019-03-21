@@ -2613,6 +2613,145 @@ class HPUX(User):
         return self.execute_command(cmd)
 
 
+class BusyBox(User):
+    """
+    This is the BusyBox class for use on systems that have adduser, deluser,
+    and delgroup commands. It overrides the following methods:
+        - create_user()
+        - remove_user()
+        - modify_user()
+    """
+
+    def create_user(self):
+        cmd = [self.module.get_bin_path('adduser', True)]
+
+        cmd.append('-D')
+
+        if self.uid is not None:
+            cmd.append('-u')
+            cmd.append(self.uid)
+
+        if self.group is not None:
+            if not self.group_exists(self.group):
+                self.module.fail_json(msg='Group {0} does not exist'.format(self.group))
+            cmd.append('-G')
+            cmd.append(self.group)
+
+        if self.comment is not None:
+            cmd.append('-g')
+            cmd.append(self.comment)
+
+        if self.home is not None:
+            cmd.append('-h')
+            cmd.append(self.home)
+
+        if self.shell is not None:
+            cmd.append('-s')
+            cmd.append(self.shell)
+
+        if not self.create_home:
+            cmd.append('-H')
+
+        if self.skeleton is not None:
+            cmd.append('-k')
+            cmd.append(self.skeleton)
+
+        if self.system:
+            cmd.append('-S')
+
+        cmd.append(self.name)
+
+        rc, out, err = self.execute_command(cmd)
+
+        if rc is not None and rc != 0:
+            self.module.fail_json(name=self.name, msg=err, rc=rc)
+
+        if self.password is not None:
+            cmd = [self.module.get_bin_path('chpasswd', True)]
+            cmd.append('--encrypted')
+            data = '{name}:{password}'.format(name=self.name, password=self.password)
+            rc, out, err = self.execute_command(cmd, data=data)
+
+            if rc is not None and rc != 0:
+                self.module.fail_json(name=self.name, msg=err, rc=rc)
+
+        # Add to additional groups
+        if self.groups is not None and len(self.groups):
+            groups = self.get_groups_set()
+            add_cmd_bin = self.module.get_bin_path('adduser', True)
+            for group in groups:
+                cmd = [add_cmd_bin, self.name, group]
+                rc, out, err = self.execute_command(cmd)
+                if rc is not None and rc != 0:
+                    self.module.fail_json(name=self.name, msg=err, rc=rc)
+
+        return rc, out, err
+
+    def remove_user(self):
+
+        cmd = [
+            self.module.get_bin_path('deluser', True),
+            self.name
+        ]
+
+        if self.remove:
+            cmd.append('--remove-home')
+
+        return self.execute_command(cmd)
+
+    def modify_user(self):
+        current_groups = self.user_group_membership()
+        groups = []
+        rc = None
+        out = ''
+        err = ''
+        info = self.user_info()
+        add_cmd_bin = self.module.get_bin_path('adduser', True)
+        remove_cmd_bin = self.module.get_bin_path('delgroup', True)
+
+        # Manage group membership
+        if self.groups is not None and len(self.groups):
+            groups = self.get_groups_set()
+            group_diff = set(current_groups).symmetric_difference(groups)
+
+            if group_diff:
+                for g in groups:
+                    if g in group_diff:
+                        add_cmd = [add_cmd_bin, self.name, g]
+                        rc, out, err = self.execute_command(add_cmd)
+                        if rc is not None and rc != 0:
+                            self.module.fail_json(name=self.name, msg=err, rc=rc)
+
+                for g in group_diff:
+                    if g not in groups and not self.append:
+                        remove_cmd = [remove_cmd_bin, self.name, g]
+                        rc, out, err = self.execute_command(remove_cmd)
+                        if rc is not None and rc != 0:
+                            self.module.fail_json(name=self.name, msg=err, rc=rc)
+
+        # Manage password
+        if self.password is not None:
+            if info[1] != self.password:
+                cmd = [self.module.get_bin_path('chpasswd', True)]
+                cmd.append('--encrypted')
+                data = '{name}:{password}'.format(name=self.name, password=self.password)
+                rc, out, err = self.execute_command(cmd, data=data)
+
+                if rc is not None and rc != 0:
+                    self.module.fail_json(name=self.name, msg=err, rc=rc)
+
+        return rc, out, err
+
+
+class Alpine(BusyBox):
+    """
+    This is the Alpine User manipulation class. It inherits the BusyBox class
+    behaviors such as using adduser and deluser commands.
+    """
+    platform = 'Linux'
+    distribution = 'Alpine'
+
+
 def main():
     ssh_defaults = dict(
         bits=0,
