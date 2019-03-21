@@ -24,7 +24,8 @@ To contribute a module to Ansible, you must:
 * minimize module dependencies
 * support :ref:`check_mode <check_mode_dry>` if possible
 * ensure your code is readable
-* if a module is named `<something>_facts`, it is because it is returning `ansible_facts`. Do not name modules that do not do this with `_facts`.
+* if a module is named ``<something>_facts``, it should be because it's main purpose is returning ``ansible_facts``. Do not name modules that do not do this with ``_facts``.
+* Modules that query/return general information (and not ``ansible_facts``) should be named ``_info``.
 
 Please make sure your module meets these requirements before you submit your PR/proposal. If you have questions, reach out via `Ansible's IRC chat channel <http://irc.freenode.net>`_ or the `Ansible development mailing list <https://groups.google.com/group/ansible-devel>`_.
 
