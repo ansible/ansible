@@ -1,5 +1,5 @@
-from ansible.module_utils.bitbucket import BitbucketHelper
-from ansible.modules.source_control import bitbucket_pipelines_variable
+from ansible.module_utils.source_control.bitbucket import BitbucketHelper
+from ansible.modules.source_control.bitbucket import bitbucket_pipelines_variable
 from units.compat import unittest
 from units.compat.mock import patch
 from units.modules.utils import AnsibleFailJson, AnsibleExitJson, ModuleTestCase, set_module_args
