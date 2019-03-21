@@ -1,0 +1,41 @@
+---
+- name: Set up AWS connection info
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{aws_access_key}}"
+      aws_secret_key: "{{aws_secret_key}}"
+      region: "{{aws_region}}"
+      security_token: "{{security_token}}"
+  no_log: true
+
+- name: Include variable file to delete infra
+  include_vars: "{{playbook_dir}}/vars_to_delete.yml"
+
+- name: Terminate EC2 instances that were previously launched
+  ec2:
+    instance_ids:
+      - "{{linux_instance_id}}"
+      - "{{windows_instance_id}}"
+    state: absent
+    <<: *aws_connection_info
+  ignore_errors: yes
+
+- name: Delete S3 bucket
+  aws_s3:
+    bucket: "{{bucket_name}}"
+    mode: delete
+    <<: *aws_connection_info
+  ignore_errors: yes
+
+- name: Delete IAM role
+  iam_role:
+    name: "{{iam_role_name}}"
+    state: absent
+    <<: *aws_connection_info
+  ignore_errors: yes
+
+- name: Delete AWS keys environement
+  file:
+    path: "{{playbook_dir}}/aws-env-vars.sh"
+    state: absent
+  ignore_errors: yes
