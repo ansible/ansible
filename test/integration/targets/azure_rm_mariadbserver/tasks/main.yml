@@ -177,6 +177,125 @@
       - output.servers[1]['fully_qualified_domain_name'] != None
 
 #
+# configuration
+#
+- name: Create instance of Configuration -- check mode
+  azure_rm_mariadbconfiguration:
+    resource_group: "{{ resource_group }}"
+    server_name: mariadbsrv{{ rpfx }}
+    name: event_scheduler
+    value: "ON"
+  check_mode: yes
+  register: output
+- name: Assert that change was registered
+  assert:
+    that:
+      - output.changed
+
+- name: Try to delete default configuraion
+  azure_rm_mariadbconfiguration_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: mariadbsrv{{ rpfx }}
+    name: event_scheduler
+  register: output
+- name: Get facts of event_scheduler
+  debug:
+    var: output
+
+- name: Try to delete default configuraion
+  azure_rm_mariadbconfiguration:
+    resource_group: "{{ resource_group }}"
+    server_name: mariadbsrv{{ rpfx }}
+    name: event_scheduler
+    state: absent
+  register: output
+- name: Assert that change was registered
+  assert:
+    that:
+      - not output.changed
+
+- name: Try to change default configuraion
+  azure_rm_mariadbconfiguration:
+    resource_group: "{{ resource_group }}"
+    server_name: mariadbsrv{{ rpfx }}
+    name: event_scheduler
+    value: "ON"
+  register: output
+- name: Assert that change was registered
+  assert:
+    that:
+      - output.changed
+
+- name: Try to change default configuration -- idempotent
+  azure_rm_mariadbconfiguration:
+    resource_group: "{{ resource_group }}"
+    server_name: mariadbsrv{{ rpfx }}
+    name: event_scheduler
+    value: "ON"
+  register: output
+- name: Assert that change was registered
+  assert:
+    that:
+      - not output.changed
+
+- name: Try to reset configuration
+  azure_rm_mariadbconfiguration:
+    resource_group: "{{ resource_group }}"
+    server_name: mariadbsrv{{ rpfx }}
+    name: event_scheduler
+    state: absent
+  register: output
+- name: Assert that change was registered
+  assert:
+    that:
+      - output.changed
+
+- name: Try to reset configuration -- idempotent
+  azure_rm_mariadbconfiguration:
+    resource_group: "{{ resource_group }}"
+    server_name: mariadbsrv{{ rpfx }}
+    name: event_scheduler
+    state: absent
+  register: output
+- name: Assert that change was registered
+  assert:
+    that:
+      - not output.changed
+
+- name: Gather facts MariaDB Configuration
+  azure_rm_mariadbconfiguration_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: mariadbsrv{{ rpfx }}
+    name: event_scheduler
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.settings[0].id != None
+      - output.settings[0].name != None
+      - output.settings[0].value != None
+      - output.settings[0].description != None
+      - output.settings[0].source != None
+      - output.settings | length == 1
+
+- name: Gather facts MariaDB Configuration
+  azure_rm_mariadbconfiguration_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: mariadbsrv{{ rpfx }}
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.settings[0].id != None
+      - output.settings[0].name != None
+      - output.settings[0].value != None
+      - output.settings[0].description != None
+      - output.settings[0].source != None
+      - output.settings | length > 1
+
+#
 # clean up azure_rm_mariadbserver test
 #
 
