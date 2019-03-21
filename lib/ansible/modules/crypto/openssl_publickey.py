@@ -146,7 +146,7 @@ else:
     pyopenssl_found = True
 
 from ansible.module_utils import crypto as crypto_utils
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_bytes
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 
@@ -182,9 +182,11 @@ class PublicKey(crypto_utils.OpenSSLObject):
                 if self.format == 'OpenSSH':
                     with open(self.privatekey_path, 'rb') as private_key_fh:
                         privatekey_content = private_key_fh.read()
-                    key = crypto_serialization.load_pem_private_key(privatekey_content,
-                                                                    password=self.privatekey_passphrase,
-                                                                    backend=default_backend())
+                    key = crypto_serialization.load_pem_private_key(
+                        privatekey_content,
+                        password=None if self.privatekey_passphrase is None else to_bytes(self.privatekey_passphrase),
+                        backend=default_backend()
+                    )
                     publickey_content = key.public_key().public_bytes(
                         crypto_serialization.Encoding.OpenSSH,
                         crypto_serialization.PublicFormat.OpenSSH
