@@ -254,6 +254,35 @@ class PlaybookExecutor:
         the serial size specified in the play.
         '''
 
+        if play.serial_inv_tier is None:
+            display.vv("tiering by inventory item %s" % play.serial_inv_tier)
+            serialized_batches = self._get_batches_from_int(play)
+        else:
+            serialized_batches = self._get_batches_from_inventory(play)
+
+        return serialized_batches
+
+    def _get_batches_from_inventory(self, play):
+        # make sure we have a unique list of hosts
+        all_hosts = self._inventory.get_hosts(play.hosts)
+        inventory_item = play.serial_inv_tier
+
+        host_tiers = {}
+        for host in all_hosts:
+            tier = host.vars.get(inventory_item)
+            display.vvv("grouping %s into %s" % (host.name, tier))
+            if tier not in host_tiers:
+                host_tiers[tier] = []
+            host_tiers[tier].append(host)
+
+        serialized_batches = []
+        for tier in host_tiers:
+            serialized_batches.append(host_tiers[tier])
+
+        return serialized_batches
+
+
+    def _get_batches_from_int(self, play):
         # make sure we have a unique list of hosts
         all_hosts = self._inventory.get_hosts(play.hosts, order=play.order)
         all_hosts_len = len(all_hosts)

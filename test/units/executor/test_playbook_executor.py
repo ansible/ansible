@@ -40,6 +40,9 @@ class TestPlaybookExecutor(unittest.TestCase):
         # And cleanup after ourselves too
         co.GlobalCLIArgs._Singleton__instance = None
 
+    def mock_host(self,name,vars={}):
+        return MagicMock(name=name,vars=vars)
+
     def test_get_serialized_batches(self):
         fake_loader = DictDataLoader({
             'no_serial.yml': '''
@@ -76,6 +79,14 @@ class TestPlaybookExecutor(unittest.TestCase):
               tasks:
               - debug: var=inventory_hostname
             ''',
+            'serial_inv_tier.yml': '''
+            - hosts: all
+              gather_facts: no
+              serial: [1, 2, 3]
+              serial_inv_tier: test
+              tasks:
+              - debug: var=inventory_hostname
+            ''',
         })
 
         mock_inventory = MagicMock()
@@ -84,7 +95,7 @@ class TestPlaybookExecutor(unittest.TestCase):
         templar = Templar(loader=fake_loader)
 
         pbe = PlaybookExecutor(
-            playbooks=['no_serial.yml', 'serial_int.yml', 'serial_pct.yml', 'serial_list.yml', 'serial_list_mixed.yml'],
+            playbooks=['no_serial.yml', 'serial_int.yml', 'serial_pct.yml', 'serial_list.yml', 'serial_list_mixed.yml', 'serial_inv_tier.yml'],
             inventory=mock_inventory,
             variable_manager=mock_var_manager,
             loader=fake_loader,
@@ -129,6 +140,33 @@ class TestPlaybookExecutor(unittest.TestCase):
         play.post_validate(templar)
         mock_inventory.get_hosts.return_value = ['host0', 'host1', 'host2', 'host3', 'host4', 'host5', 'host6', 'host7', 'host8', 'host9']
         self.assertEqual(pbe._get_serialized_batches(play), [['host0'], ['host1', 'host2'], ['host3', 'host4', 'host5', 'host6', 'host7', 'host8', 'host9']])
+
+        # Test when tier attribute does not exist on any host
+        playbook = Playbook.load(pbe._playbooks[5], variable_manager=mock_var_manager, loader=fake_loader)
+        play = playbook.get_plays()[0]
+        play.post_validate(templar)
+        hosts = []
+        for id in range(0,10):
+            hosts.append(self.mock_host("host%i" % id))
+        mock_inventory.get_hosts.return_value = hosts
+        self.assertEqual(pbe._get_serialized_batches(play), [hosts])
+
+        # Test when tier attribute exists on some hosts
+        playbook = Playbook.load(pbe._playbooks[5], variable_manager=mock_var_manager, loader=fake_loader)
+        play = playbook.get_plays()[0]
+        play.post_validate(templar)
+        hosts = []
+        for id in range(0,3):
+            hosts.append(self.mock_host("host%i" % id, { "test": "group1" }))
+        for id in range(3,7):
+            hosts.append(self.mock_host("host%i" % id, { "test": "group2" }))
+        for id in range(7,8):
+            hosts.append(self.mock_host("host%i" % id, { "test": "group3" }))
+        for id in range(8,10):
+            hosts.append(self.mock_host("host%i" % id))
+        mock_inventory.get_hosts.return_value = hosts
+        # need to ensure the same elements exist. order does not matter
+        self.assertEqual(sorted(pbe._get_serialized_batches(play), key=len), sorted([hosts[0:3], hosts[3:7], hosts[7:8], hosts[8:10]], key=len))
 
         # Test when serial percent is under 1.0
         playbook = Playbook.load(pbe._playbooks[2], variable_manager=mock_var_manager, loader=fake_loader)
