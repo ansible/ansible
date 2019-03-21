@@ -10,7 +10,7 @@ version="${args[1]}"
 if [[ "${COVERAGE:-}" == "--coverage" ]]; then
     timeout=90
 else
-    timeout=10
+    timeout=11
 fi
 
 ansible-test env --timeout "${timeout}" --color -v
