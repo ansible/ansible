@@ -274,8 +274,10 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
         else:
             with open(b_dest, 'rb') as f:
                 b_lines = f.readlines()
-
-        msg, changed, b_modified_lines = _present_data_manipulator(b_lines, regexp, line, insertafter,
+        # Create a copy of the list to avoid modifying in _present_data_manipulator,
+        # resulting in an incorrect diff
+        b_lines_orig = b_lines[:]
+        msg, changed, b_modified_lines = _present_data_manipulator(b_lines_orig, regexp, line, insertafter,
                                                                    insertbefore, backrefs, firstmatch)
         if not os.path.exists(b_dest):
             diff['before'] = to_native(b('').join(b_lines))
@@ -286,8 +288,10 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
     else:
         with open_locked(b_dest) as f:
             b_lines = f.readlines()
-
-            msg, changed, b_modified_lines = _present_data_manipulator(b_lines, regexp, line, insertafter,
+            # Create a copy of the list to avoid modifying in _present_data_manipulator,
+            # resulting in an incorrect diff
+            b_lines_orig = b_lines[:]
+            msg, changed, b_modified_lines = _present_data_manipulator(b_lines_orig, regexp, line, insertafter,
                                                                        insertbefore, backrefs, firstmatch)
 
             if changed:

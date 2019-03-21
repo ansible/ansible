@@ -53,6 +53,7 @@
       - result2 is not changed
       - result1.msg == 'line added'
       - result1.backup != ''
+      - result1.diff[0].before != result2.diff[0].after
 
 - name: stat the backup file
   stat:
