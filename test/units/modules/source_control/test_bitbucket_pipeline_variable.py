@@ -1,14 +1,14 @@
 from ansible.module_utils.source_control.bitbucket import BitbucketHelper
-from ansible.modules.source_control.bitbucket import bitbucket_pipelines_variable
+from ansible.modules.source_control.bitbucket import bitbucket_pipeline_variable
 from units.compat import unittest
 from units.compat.mock import patch
 from units.modules.utils import AnsibleFailJson, AnsibleExitJson, ModuleTestCase, set_module_args
 
 
-class TestBucketPipelinesVariableModule(ModuleTestCase):
+class TestBucketPipelineVariableModule(ModuleTestCase):
     def setUp(self):
-        super(TestBucketPipelinesVariableModule, self).setUp()
-        self.module = bitbucket_pipelines_variable
+        super(TestBucketPipelineVariableModule, self).setUp()
+        self.module = bitbucket_pipeline_variable
 
     def test_without_required_parameters(self):
         with self.assertRaises(AnsibleFailJson) as exec_info:
@@ -41,7 +41,7 @@ class TestBucketPipelinesVariableModule(ModuleTestCase):
         'BITBUCKET_CLIENT_SECRET': 'XXX',
     })
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
-    @patch.object(bitbucket_pipelines_variable, 'get_existing_pipeline_variable', return_value=None)
+    @patch.object(bitbucket_pipeline_variable, 'get_existing_pipeline_variable', return_value=None)
     def test_env_vars_params(self, *args):
         with self.assertRaises(AnsibleExitJson):
             set_module_args({
@@ -53,7 +53,7 @@ class TestBucketPipelinesVariableModule(ModuleTestCase):
             self.module.main()
 
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
-    @patch.object(bitbucket_pipelines_variable, 'get_existing_pipeline_variable', return_value=None)
+    @patch.object(bitbucket_pipeline_variable, 'get_existing_pipeline_variable', return_value=None)
     def test_create_variable(self, *args):
         with patch.object(self.module, 'create_pipeline_variable') as create_pipeline_variable_mock:
             with self.assertRaises(AnsibleExitJson) as exec_info:
@@ -72,7 +72,7 @@ class TestBucketPipelinesVariableModule(ModuleTestCase):
             self.assertEqual(exec_info.exception.args[0]['changed'], True)
 
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
-    @patch.object(bitbucket_pipelines_variable, 'get_existing_pipeline_variable', return_value=None)
+    @patch.object(bitbucket_pipeline_variable, 'get_existing_pipeline_variable', return_value=None)
     def test_create_variable_check_mode(self, *args):
         with patch.object(self.module, 'create_pipeline_variable') as create_pipeline_variable_mock:
             with self.assertRaises(AnsibleExitJson) as exec_info:
@@ -92,7 +92,7 @@ class TestBucketPipelinesVariableModule(ModuleTestCase):
             self.assertEqual(exec_info.exception.args[0]['changed'], True)
 
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
-    @patch.object(bitbucket_pipelines_variable, 'get_existing_pipeline_variable', return_value={
+    @patch.object(bitbucket_pipeline_variable, 'get_existing_pipeline_variable', return_value={
         'name': 'PIPELINE_VAR_NAME',
         'value': 'Im alive',
         'type': 'pipeline_variable',
@@ -117,7 +117,7 @@ class TestBucketPipelinesVariableModule(ModuleTestCase):
             self.assertEqual(exec_info.exception.args[0]['changed'], True)
 
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
-    @patch.object(bitbucket_pipelines_variable, 'get_existing_pipeline_variable', return_value={
+    @patch.object(bitbucket_pipeline_variable, 'get_existing_pipeline_variable', return_value={
         'name': 'PIPELINE_VAR_NAME',
         'type': 'pipeline_variable',
         'secured': True,
@@ -142,7 +142,7 @@ class TestBucketPipelinesVariableModule(ModuleTestCase):
             self.assertEqual(exec_info.exception.args[0]['changed'], True)
 
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
-    @patch.object(bitbucket_pipelines_variable, 'get_existing_pipeline_variable', return_value={
+    @patch.object(bitbucket_pipeline_variable, 'get_existing_pipeline_variable', return_value={
         'name': 'PIPELINE_VAR_NAME',
         'value': '42',
         'type': 'pipeline_variable',
@@ -168,7 +168,7 @@ class TestBucketPipelinesVariableModule(ModuleTestCase):
             self.assertEqual(exec_info.exception.args[0]['changed'], True)
 
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
-    @patch.object(bitbucket_pipelines_variable, 'get_existing_pipeline_variable', return_value={
+    @patch.object(bitbucket_pipeline_variable, 'get_existing_pipeline_variable', return_value={
         'name': 'PIPELINE_VAR_NAME',
         'value': '42',
         'type': 'pipeline_variable',
@@ -193,7 +193,7 @@ class TestBucketPipelinesVariableModule(ModuleTestCase):
             self.assertEqual(exec_info.exception.args[0]['changed'], False)
 
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
-    @patch.object(bitbucket_pipelines_variable, 'get_existing_pipeline_variable', return_value={
+    @patch.object(bitbucket_pipeline_variable, 'get_existing_pipeline_variable', return_value={
         'name': 'PIPELINE_VAR_NAME',
         'value': 'Im alive',
         'type': 'pipeline_variable',
@@ -219,7 +219,7 @@ class TestBucketPipelinesVariableModule(ModuleTestCase):
             self.assertEqual(exec_info.exception.args[0]['changed'], True)
 
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
-    @patch.object(bitbucket_pipelines_variable, 'get_existing_pipeline_variable', return_value={
+    @patch.object(bitbucket_pipeline_variable, 'get_existing_pipeline_variable', return_value={
         'name': 'PIPELINE_VAR_NAME',
         'value': 'Im alive',
         'type': 'pipeline_variable',
@@ -243,7 +243,7 @@ class TestBucketPipelinesVariableModule(ModuleTestCase):
             self.assertEqual(exec_info.exception.args[0]['changed'], True)
 
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
-    @patch.object(bitbucket_pipelines_variable, 'get_existing_pipeline_variable', return_value=None)
+    @patch.object(bitbucket_pipeline_variable, 'get_existing_pipeline_variable', return_value=None)
     def test_delete_absent_variable(self, *args):
         with patch.object(self.module, 'delete_pipeline_variable') as delete_pipeline_variable_mock:
             with self.assertRaises(AnsibleExitJson) as exec_info:
@@ -261,7 +261,7 @@ class TestBucketPipelinesVariableModule(ModuleTestCase):
             self.assertEqual(exec_info.exception.args[0]['changed'], False)
 
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
-    @patch.object(bitbucket_pipelines_variable, 'get_existing_pipeline_variable', return_value={
+    @patch.object(bitbucket_pipeline_variable, 'get_existing_pipeline_variable', return_value={
         'name': 'PIPELINE_VAR_NAME',
         'value': 'Im alive',
         'type': 'pipeline_variable',

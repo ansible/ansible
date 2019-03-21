@@ -15,10 +15,10 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = r'''
 ---
-module: bitbucket_pipelines_variable
-short_description: Manages Bitbucket pipelines variables
+module: bitbucket_pipeline_variable
+short_description: Manages Bitbucket pipeline variables
 description:
-  - Manages Bitbucket pipelines variables.
+  - Manages Bitbucket pipeline variables.
 version_added: "2.8"
 author:
   - Evgeniy Krysanov (@catcombo)
@@ -71,7 +71,7 @@ notes:
 
 EXAMPLES = r'''
 - name: Create or update pipeline variables from the list
-  bitbucket_pipelines_variable:
+  bitbucket_pipeline_variable:
     repository: 'bitbucket-repo'
     username: bitbucket_username
     name: '{{ item.name }}'
@@ -83,7 +83,7 @@ EXAMPLES = r'''
     - { name: AWS_SECRET, value: qwe789poi123vbn0, secured: True }
 
 - name: Remove pipeline variable
-  bitbucket_pipelines_variable:
+  bitbucket_pipeline_variable:
     repository: bitbucket-repo
     username: bitbucket_username
     name: AWS_ACCESS_KEY
