@@ -121,11 +121,17 @@ def main():
     except Exception as e:
         module.fail_json(msg="Unable to establish session with Sattelite server: %s " % to_text(e))
 
+    if not session:
+        module.fail_json(msg="Failed to establish session with Sattelite server.")
+
     # get systemid
     try:
         sys_id = get_systemid(client, session, systname)
     except Exception as e:
         module.fail_json(msg="Unable to get system id: %s " % to_text(e))
+
+    if not sys_id:
+        module.fail_json(msg="Failed to get system id.")
 
     # get channels for system
     try:
