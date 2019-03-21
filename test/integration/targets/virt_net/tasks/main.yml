@@ -41,12 +41,30 @@
         command: start
         name: foobar
       register: second_virt_net_start
-    
+
+    - name: Destroy the foobar network
+      virt_net:
+        command: destroy
+        name: foobar
+
+    - name: Undefine the foobar network
+      virt_net:
+        command: undefine
+        name: foobar
+      register: second_virt_net_define
+
+    - name: Undefine the foobar network (again)
+      virt_net:
+        command: undefine
+        name: foobar
+      register: second_virt_net_undefine
+
     - name: Ensure the second calls return "unchanged"
       assert:
         that:
           - "second_virt_net_start is not changed"
           - "second_virt_net_define is not changed"
+          - "second_virt_net_undefine is not changed"
     
   always:
     - name: Stop libvirt

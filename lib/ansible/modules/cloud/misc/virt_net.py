@@ -200,28 +200,16 @@ class LibvirtConnection(object):
         self.conn = conn
 
     def find_entry(self, entryid):
-        # entryid = -1 returns a list of everything
+        if entryid == -1:  # Get active entries
+            names = self.conn.listNetworks() + self.conn.listDefinedNetworks()
+            return [self.conn.networkLookupByName(n) for n in names]
 
-        results = []
-
-        # Get active entries
-        for name in self.conn.listNetworks():
-            entry = self.conn.networkLookupByName(name)
-            results.append(entry)
-
-        # Get inactive entries
-        for name in self.conn.listDefinedNetworks():
-            entry = self.conn.networkLookupByName(name)
-            results.append(entry)
-
-        if entryid == -1:
-            return results
-
-        for entry in results:
-            if entry.name() == entryid:
-                return entry
-
-        raise EntryNotFound("network %s not found" % entryid)
+        try:
+            return self.conn.networkLookupByName(entryid)
+        except libvirt.libvirtError as e:
+            if e.get_error_code() == libvirt.VIR_ERR_NO_NETWORK:
+                raise EntryNotFound("network %s not found" % entryid)
+            raise
 
     def create(self, entryid):
         if not self.module.check_mode:
@@ -284,11 +272,18 @@ class LibvirtConnection(object):
                 return self.module.exit_json(changed=True)
 
     def undefine(self, entryid):
-        if not self.module.check_mode:
+        entry = None
+        try:
+            entry = self.find_entry(entryid)
+            found = True
+        except EntryNotFound:
+            found = False
+
+        if found:
             return self.find_entry(entryid).undefine()
-        else:
-            if not self.find_entry(entryid):
-                return self.module.exit_json(changed=True)
+
+        if self.module.check_mode:
+            return self.module.exit_json(changed=found)
 
     def get_status2(self, entry):
         state = entry.isActive()
