@@ -299,7 +299,7 @@ Noteworthy module changes
 
 * The ``docker_service`` module was renamed to :ref:`docker_compose <docker_compose_module>`.
 * The renamed ``docker_compose`` module used to return one fact per service, named same as the service. A dictionary
-  of these facts is returned as the regular return value ``service_facts``. The returned facts will be removed in
+  of these facts is returned as the regular return value ``services``. The returned facts will be removed in
   Ansible 2.12.
 
 * The ``docker_swarm_service`` module no longer sets a defaults for the following options:
