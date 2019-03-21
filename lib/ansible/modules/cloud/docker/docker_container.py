@@ -927,7 +927,7 @@ import re
 import shlex
 from distutils.version import LooseVersion
 
-from ansible.module_utils.basic import human_to_bytes
+from ansible.module_utils.common.text.formatters import human_to_bytes
 from ansible.module_utils.docker.common import (
     AnsibleDockerClient,
     DifferenceTracker,

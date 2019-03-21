@@ -164,8 +164,8 @@
     - name: assert assume role with invalid duration seconds
       assert:
         that:
-          - 'result.failed'
-          - "'unable to convert to int: invalid literal for int()' in result.msg"
+          - result is failed
+          - 'result.msg is search("argument \w+ is of type <.*> and we were unable to convert to int: <.*> cannot be converted to an int")'
 
     # ============================================================
     - name: test assume role with invalid external id
