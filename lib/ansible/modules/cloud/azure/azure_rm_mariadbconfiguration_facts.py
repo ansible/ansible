@@ -48,7 +48,7 @@ EXAMPLES = '''
   - name: Get specific setting of MariaDB Server
     azure_rm_mariadbconfiguration_facts:
       resource_group: myResourceGroup
-      server_name: testmariadbserver
+      server_name: testserver
       name: deadlock_timeout
 
   - name: Get all settings of MariaDB Server
@@ -68,8 +68,8 @@ settings:
                 - Setting resource ID
             returned: always
             type: str
-            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforMariaDB/servers/testmariadbserver
-                     ver/configurations/deadlock_timeout"
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforMariaDB/servers/testserver
+                     /configurations/deadlock_timeout"
         name:
             description:
                 - Setting name.
@@ -209,4 +209,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
