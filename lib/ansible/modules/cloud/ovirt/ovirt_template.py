@@ -284,6 +284,25 @@ EXAMPLES = '''
     image_provider: "glance_domain"
     storage_domain: mystorage
     cluster: mycluster
+
+# Edit template subeversion
+- ovirt_template:
+    cluster: mycluster
+    name: mytemplate
+    vm: rhel7
+    version:
+        base_template: 026c7c23-7407-4fa0-b1a2-6aefc60b2dde
+        number: 2
+        name: subversion
+
+# Create new template subeversion
+- ovirt_template:
+    cluster: mycluster
+    name: mytemplate
+    vm: rhel7
+    version:
+        base_template: 026c7c23-7407-4fa0-b1a2-6aefc60b2dde
+        name: subversion
 '''
 
 RETURN = '''
