@@ -2,3 +2,5 @@ cloud/azure
 destructive
 shippable/azure/group8
 azure_rm_mariadbserver_facts
+azure_rm_mariadbfirewallrule
+azure_rm_mariadbfirewallrule_facts
