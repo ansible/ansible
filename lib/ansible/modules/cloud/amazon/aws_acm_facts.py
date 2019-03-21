@@ -18,11 +18,10 @@ options:
       - The domain name of an ACM certificate to limit the search to
     aliases:
       - name
-  status:
+  statuses:
     description:
       - Status to filter the certificate results
-    choices: ['PENDING_VALIDATION', 'ISSUED', 'INACTIVE', 'EXPIRED', 'VALIDATION_TIMED_OUT']
-
+    choices: ['PENDING_VALIDATION', 'ISSUED', 'INACTIVE', 'EXPIRED', 'VALIDATION_TIMED_OUT', 'REVOKED', 'FAILED']
 requirements:
   - boto3
 author:
@@ -311,7 +310,7 @@ def main():
     argument_spec.update(
         dict(
             domain_name=dict(aliases=['name']),
-            statuses=dict(type='list'),
+            statuses=dict(type='list', choices=['PENDING_VALIDATION', 'ISSUED', 'INACTIVE', 'EXPIRED', 'VALIDATION_TIMED_OUT', 'REVOKED', 'FAILED']),
         )
     )
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
