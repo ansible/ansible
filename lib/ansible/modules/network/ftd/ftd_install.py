@@ -197,18 +197,11 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import Connection
 from ansible.module_utils.six import iteritems
 
-from ansible.module_utils.network.ftd.configuration import BaseConfigurationResource, ParamName, \
-    PATH_PARAMS_FOR_DEFAULT_OBJ
+from ansible.module_utils.network.ftd.configuration import BaseConfigurationResource, ParamName
 from ansible.module_utils.network.ftd.device import HAS_KICK, FtdPlatformFactory, FtdModel
+from ansible.module_utils.network.ftd.operation import FtdOperations, get_system_info
 
 REQUIRED_PARAMS_FOR_LOCAL_CONNECTION = ['device_ip', 'device_netmask', 'device_gateway', 'device_model', 'dns_server']
-
-
-class FtdOperations:
-    GET_SYSTEM_INFO = 'getSystemInformation'
-    GET_MANAGEMENT_IP_LIST = 'getManagementIPList'
-    GET_DNS_SETTING_LIST = 'getDeviceDNSSettingsList'
-    GET_DNS_SERVER_GROUP = 'getDNSServerGroup'
 
 
 def main():
@@ -268,12 +261,6 @@ def check_required_params_for_local_connection(module, params):
         message = "The following parameters are mandatory when the module is used with 'local' connection: %s." % \
                   ', '.join(sorted(missing_params))
         module.fail_json(msg=message)
-
-
-def get_system_info(resource):
-    path_params = {ParamName.PATH_PARAMS: PATH_PARAMS_FOR_DEFAULT_OBJ}
-    system_info = resource.execute_operation(FtdOperations.GET_SYSTEM_INFO, path_params)
-    return system_info
 
 
 def check_that_model_is_supported(module, platform_model):
