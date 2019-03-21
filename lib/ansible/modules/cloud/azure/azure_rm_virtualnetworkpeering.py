@@ -81,19 +81,19 @@ EXAMPLES = '''
     - name: Create virtual network peering
       azure_rm_virtualnetworkpeering:
         resource_group: myResourceGroup
-        name: vnet_peer1
-        virtual_network: myVnet1
+        virtual_network: myVirtualNetwork
+        name: myPeering
         remote_virtual_network:
           resource_group: mySecondResourceGroup
-          name: myVnet2
+          name: myRemoteVirtualNetwork
         allow_virtual_network_access: false
         allow_forwarded_traffic: true
 
     - name: Delete the virtual network peering
       azure_rm_virtualnetworkpeering:
         resource_group: myResourceGroup
-        name: vnet_peer1
-        virtual_network: myVnet1
+        virtual_network: myVirtualNetwork
+        name: myPeering
         state: absent
 '''
 RETURN = '''
@@ -102,7 +102,8 @@ id:
     returned: always
     type: dict
     example:
-        id: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/xxxx/providers/Microsoft.Network/virtualNetworks/xxxx/virtualNetworkPeerings/peer1
+        id: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/myVirtualN
+             etwork/virtualNetworkPeerings/myPeering"
 '''
 
 try:
