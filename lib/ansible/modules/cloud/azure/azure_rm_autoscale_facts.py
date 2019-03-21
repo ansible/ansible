@@ -59,7 +59,7 @@ autoscales:
     type: list
     sample: [{
         "enabled": true,
-        "id": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/myResourceGroup/providers/microsoft.insights/autoscalesettings/scale",
+        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/microsoft.insights/autoscalesettings/scale",
         "location": "eastus",
         "name": "scale",
         "notifications": [

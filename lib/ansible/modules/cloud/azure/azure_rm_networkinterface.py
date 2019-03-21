@@ -246,7 +246,8 @@ EXAMPLES = '''
         subnet_name: subnet001
         os_type: Windows
         rdp_port: 3399
-        security_group: "/subscriptions/XXXXXXX/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/nsg001"
+        security_group: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurit
+                         yGroups/nsg001"
         ip_configurations:
           - name: ipconfig1
             public_ip_address_name: publicip001
