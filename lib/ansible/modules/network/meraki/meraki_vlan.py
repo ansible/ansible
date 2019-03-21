@@ -194,7 +194,7 @@ response:
       type: int
       sample: 2
     name:
-      description: Descriptive name of VLAN
+      description: Descriptive name of VLAN.
       returned: success
       type: str
       sample: TestVLAN
@@ -207,7 +207,32 @@ response:
       description: CIDR notation IP subnet of VLAN.
       returned: success
       type: str
-      sample: 192.0.1.0/24
+      sample: "192.0.1.0/24"
+    dhcpHandling:
+      description: Status of DHCP server on VLAN.
+      returned: success
+      type: str
+      sample: Run a DHCP server
+    dhcpLeaseTime:
+      description: DHCP lease time when server is active.
+      returned: success
+      type: str
+      sample: 1 day
+    dhcpBootOptionsEnabled:
+      description: Whether DHCP boot options are enabled.
+      returned: success
+      type: bool
+      sample: no
+    dhcpBootNextServer:
+      description: DHCP boot option to direct boot clients to the server to load the boot file from.
+      returned: success
+      type: str
+      sample: 192.0.1.2
+    dhcpBootFilename:
+      description: Filename for boot file.
+      returned: success
+      type: str
+      sample: boot.txt
 '''
 
 import os
