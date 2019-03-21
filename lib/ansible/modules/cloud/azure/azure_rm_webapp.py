@@ -277,7 +277,7 @@ azure_webapp:
     returned: always
     type: dict
     sample: {
-        "id": "/subscriptions/<subscription_id>/resourceGroups/ansiblewebapp1/providers/Microsoft.Web/sites/ansiblewindowsaaa"
+        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Web/sites/ansiblewindowsaaa"
     }
 '''
 

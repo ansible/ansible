@@ -102,7 +102,7 @@ id:
     returned: always
     type: dict
     example:
-        id: /subscriptions/xxxx/resourceGroups/xxxx/providers/Microsoft.Network/virtualNetworks/xxxx/virtualNetworkPeerings/peer1
+        id: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/xxxx/providers/Microsoft.Network/virtualNetworks/xxxx/virtualNetworkPeerings/peer1
 '''
 
 try:

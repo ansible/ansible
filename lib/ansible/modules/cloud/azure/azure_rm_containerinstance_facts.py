@@ -63,8 +63,8 @@ container_groups:
                 - The resource id.
             returned: always
             type: str
-            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/demo/providers/Microsoft.ContainerInstance/containerGroups/my
-                    containers"
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.ContainerInstance/contain
+                     erGroups/myContainer"
         resource_group:
             description:
                 - Resource group where the container exists.
@@ -113,15 +113,15 @@ container_groups:
                         - The name of the container instance.
                     returned: always
                     type: str
-                    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/demo/providers/Microsoft.ContainerInstance/containerGroups/my
-                            containers"
+                    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.ContainerInstance
+                             /containerGroups/myContainer"
                 image:
                     description:
                         - The container image name.
                     returned: always
                     type: str
-                    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/demo/providers/Microsoft.ContainerInstance/containerGroups/my
-                            containers"
+                    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.ContainerInstance
+                             /containerGroups/myContainer"
                 memory:
                     description:
                         - The required memory of the containers in GB.
