@@ -201,6 +201,7 @@ vms:
 
 try:
     from msrestazure.azure_exceptions import CloudError
+    from msrestazure.tools import parse_resource_id
 except Exception:
     # This is handled in azure_rm_common
     pass
@@ -248,8 +249,10 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
             self.fail("Parameter error: resource group required when filtering by name.")
         if self.name:
             self.results['vms'] = self.get_item()
+        elif self.resource_group:
+            self.results['vms'] = self.list_items_by_resourcegroup()
         else:
-            self.results['vms'] = self.list_items()
+            self.results['vms'] = self.list_all_items()
 
         return self.results
 
@@ -258,17 +261,14 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
         item = None
         result = []
 
-        try:
-            item = self.compute_client.virtual_machines.get(self.resource_group, self.name)
-        except CloudError as err:
-            self.module.warn("Error getting virtual machine {0} - {1}".format(self.name, str(err)))
+        item = self.get_vm(self.resource_group, self.name)
 
-        if item and self.has_tags(item.tags, self.tags):
-            result = [self.serialize_vm(item)]
+        if item and self.has_tags(item.get('tags'), self.tags):
+            result = [item]
 
         return result
 
-    def list_items(self):
+    def list_items_by_resourcegroup(self):
         self.log('List all items')
         try:
             items = self.compute_client.virtual_machines.list(self.resource_group)
@@ -278,18 +278,31 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
         results = []
         for item in items:
             if self.has_tags(item.tags, self.tags):
-                results.append(self.serialize_vm(self.get_vm(item.name)))
+                results.append(self.get_vm(self.resource_group, item.name))
         return results
 
-    def get_vm(self, name):
+    def list_all_items(self):
+        self.log('List all items')
+        try:
+            items = self.compute_client.virtual_machines.list_all()
+        except CloudError as exc:
+            self.fail("Failed to list all items - {0}".format(str(exc)))
+
+        results = []
+        for item in items:
+            if self.has_tags(item.tags, self.tags):
+                results.append(self.get_vm(parse_resource_id(item.id).get('resource_group'), item.name))
+        return results
+
+    def get_vm(self, resource_group, name):
         '''
         Get the VM with expanded instanceView
 
         :return: VirtualMachine object
         '''
         try:
-            vm = self.compute_client.virtual_machines.get(self.resource_group, name, expand='instanceview')
-            return vm
+            vm = self.compute_client.virtual_machines.get(resource_group, name, expand='instanceview')
+            return self.serialize_vm(vm)
         except Exception as exc:
             self.fail("Error getting virtual machine {0} - {1}".format(self.name, str(exc)))
 
@@ -302,7 +315,7 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
         '''
 
         result = self.serialize_obj(vm, AZURE_OBJECT_CLASS, enum_modules=AZURE_ENUM_MODULES)
-        resource_group = re.sub('\\/.*', '', re.sub('.*resourceGroups\\/', '', result['id']))
+        resource_group = parse_resource_id(result['id']).get('resource_group')
         instance = None
         power_state = None
 
