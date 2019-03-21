@@ -259,7 +259,7 @@ import json
 import base64
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.urls import fetch_url, basic_auth_header
 from ansible.module_utils._text import to_bytes
 
 __metaclass__ = type
@@ -373,8 +373,7 @@ def grafana_create_datasource(module, data):
     if 'grafana_api_key' in data and data['grafana_api_key'] is not None:
         headers['Authorization'] = "Bearer %s" % data['grafana_api_key']
     else:
-        auth = base64.b64encode(to_bytes('%s:%s' % (data['grafana_user'], data['grafana_password'])).replace('\n', ''))
-        headers['Authorization'] = 'Basic %s' % auth
+        headers['Authorization'] = basic_auth_header(data['grafana_user'], data['grafana_password'])
         grafana_switch_organisation(module, data['grafana_url'], data['org_id'], headers)
 
     # test if datasource already exists
@@ -433,8 +432,7 @@ def grafana_delete_datasource(module, data):
     if 'grafana_api_key' in data and data['grafana_api_key']:
         headers['Authorization'] = "Bearer %s" % data['grafana_api_key']
     else:
-        auth = base64.b64encode(to_bytes('%s:%s' % (data['grafana_user'], data['grafana_password'])).replace('\n', ''))
-        headers['Authorization'] = 'Basic %s' % auth
+        headers['Authorization'] = basic_auth_header(data['grafana_user'], data['grafana_password'])
         grafana_switch_organisation(module, data['grafana_url'], data['org_id'], headers)
 
     # test if datasource already exists
