@@ -1,0 +1,223 @@
+- name: Prepare random number
+  set_fact:
+    rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+  run_once: yes
+
+- name: Create instance of MariaDB Server -- check mode
+  azure_rm_mariadbserver:
+    resource_group: "{{ resource_group }}"
+    name: mariadbsrv{{ rpfx }}
+    sku:
+      name: B_Gen5_1
+      tier: Basic
+    location: westus2
+    storage_mb: 51200
+    version: 10.2
+    enforce_ssl: True
+    admin_username: zimxyz
+    admin_password: Testpasswordxyz12!
+  check_mode: yes
+  register: output
+- name: Assert the resource instance is well created
+  assert:
+    that:
+      - output.changed
+
+- name: Create instance of MariaDB Server
+  azure_rm_mariadbserver:
+    resource_group: "{{ resource_group }}"
+    name: mariadbsrv{{ rpfx }}
+    sku:
+      name: B_Gen5_1
+      tier: Basic
+    location: westus2
+    storage_mb: 51200
+    version: 10.2
+    enforce_ssl: True
+    admin_username: zimxyz
+    admin_password: Testpasswordxyz12!
+  register: output
+- name: Assert the resource instance is well created
+  assert:
+    that:
+      - output.changed
+      - output.state == 'Ready'
+
+- name: Create again instance of MariaDB Server
+  azure_rm_mariadbserver:
+    resource_group: "{{ resource_group }}"
+    name: mariadbsrv{{ rpfx }}
+    sku:
+      name: B_Gen5_1
+      tier: Basic
+    location: westus2
+    storage_mb: 51200
+    version: 10.2
+    enforce_ssl: True
+    admin_username: zimxyz
+    admin_password: Testpasswordxyz12!
+  register: output
+- name: Assert the state has not changed
+  assert:
+    that:
+      - output.changed == false
+      - output.state == 'Ready'
+
+- name: Update instance of MariaDB Server, change storage size
+  azure_rm_mariadbserver:
+    resource_group: "{{ resource_group }}"
+    name: mariadbsrv{{ rpfx }}
+    sku:
+      name: B_Gen5_1
+      tier: Basic
+    location: westus2
+    storage_mb: 128000
+    version: 10.2
+    enforce_ssl: True
+    admin_username: zimxyz
+    admin_password: Testpasswordxyz12!
+  register: output
+- name: Assert the state has not changed
+  assert:
+    that:
+      - output.changed
+      - output.state == 'Ready'
+- debug:
+    var: output
+
+- name: Gather facts MariaDB Server
+  azure_rm_mariadbserver_facts:
+    resource_group: "{{ resource_group }}"
+    name: mariadbsrv{{ rpfx }}
+  register: output
+- name: Assert that storage size is correct
+  assert:
+    that:
+      - output.servers[0]['storage_mb'] == 128000
+
+- name: Create second instance of MariaDB Server
+  azure_rm_mariadbserver:
+    resource_group: "{{ resource_group }}"
+    name: mariadbsrv{{ rpfx }}second
+    sku:
+      name: B_Gen5_1
+      tier: Basic
+    location: westus2
+    storage_mb: 51200
+    version: 10.2
+    enforce_ssl: True
+    admin_username: zimxyz
+    admin_password: Testpasswordxyz12!
+    tags:
+      aaa: bbb
+
+- name: Create second instance of MariaDB Server
+  azure_rm_mariadbserver:
+    resource_group: "{{ resource_group }}"
+    name: mariadbsrv{{ rpfx }}second
+    sku:
+      name: B_Gen5_1
+      tier: Basic
+    location: westus2
+    storage_mb: 51200
+    version: 10.2
+    enforce_ssl: True
+    admin_username: zimxyz
+    admin_password: Testpasswordxyz12!
+    tags:
+      ccc: ddd
+
+- name: Gather facts MariaDB Server
+  azure_rm_mariadbserver_facts:
+    resource_group: "{{ resource_group }}"
+    name: mariadbsrv{{ rpfx }}second
+  register: output 
+
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.servers[0]['id'] != None
+      - output.servers[0]['name'] != None
+      - output.servers[0]['location'] != None
+      - output.servers[0]['sku']['name'] != None
+      - output.servers[0]['sku']['tier'] != None
+      - output.servers[0]['sku']['capacity'] != None
+      - output.servers[0]['version'] != None
+      - output.servers[0]['user_visible_state'] != None
+      - output.servers[0]['fully_qualified_domain_name'] != None
+      - output.servers[0]['tags']['aaa'] == 'bbb'
+      - output.servers[0]['tags']['ccc'] == 'ddd'
+
+- name: Gather facts MariaDB Server
+  azure_rm_mariadbserver_facts:
+    resource_group: "{{ resource_group }}"
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.servers[0]['id'] != None
+      - output.servers[0]['name'] != None
+      - output.servers[0]['location'] != None
+      - output.servers[0]['sku']['name'] != None
+      - output.servers[0]['sku']['tier'] != None
+      - output.servers[0]['sku']['capacity'] != None
+      - output.servers[0]['version'] != None
+      - output.servers[0]['user_visible_state'] != None
+      - output.servers[0]['fully_qualified_domain_name'] != None
+      - output.servers[1]['id'] != None
+      - output.servers[1]['name'] != None
+      - output.servers[1]['location'] != None
+      - output.servers[1]['sku']['name'] != None
+      - output.servers[1]['sku']['tier'] != None
+      - output.servers[1]['sku']['capacity'] != None
+      - output.servers[1]['version'] != None
+      - output.servers[1]['user_visible_state'] != None
+      - output.servers[1]['fully_qualified_domain_name'] != None
+
+#
+# clean up azure_rm_mariadbserver test
+#
+
+- name: Delete instance of MariaDB Server -- check mode
+  azure_rm_mariadbserver:
+    resource_group: "{{ resource_group }}"
+    name: mariadbsrv{{ rpfx }}
+    state: absent
+  check_mode: yes
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed
+
+- name: Delete instance of MariaDB Server
+  azure_rm_mariadbserver:
+    resource_group: "{{ resource_group }}"
+    name: mariadbsrv{{ rpfx }}
+    state: absent
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed
+
+- name: Delete unexisting instance of MariaDB Server
+  azure_rm_mariadbserver:
+    resource_group: "{{ resource_group }}"
+    name: mariadbsrv{{ rpfx }}
+    state: absent
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed == false
+
+- name: Delete second instance of MariaDB Server
+  azure_rm_mariadbserver:
+    resource_group: "{{ resource_group }}"
+    name: mariadbsrv{{ rpfx }}second
+    state: absent
+  async: 400
+  poll: 0
