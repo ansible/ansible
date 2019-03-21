@@ -450,7 +450,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
                 ports = []
                 for port in all_ports:
                     ports.append(self.cgmodels.Port(port=port, protocol="TCP"))
-                ip_address = self.cgmodels.IpAddress(ports=ports,dns_name_label=self.dns_name_label, type='public')
+                ip_address = self.cgmodels.IpAddress(ports=ports, dns_name_label=self.dns_name_label, type='public')
 
         parameters = self.cgmodels.ContainerGroup(location=self.location,
                                                   containers=containers,
