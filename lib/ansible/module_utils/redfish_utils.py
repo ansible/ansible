@@ -790,7 +790,7 @@ class RedfishUtils(object):
 
     def set_one_time_boot_device(self, bootdevice):
         result = {}
-        key = "Bios"
+        key = "Boot"
 
         # Search for 'key' entry and extract URI from it
         response = self.get_request(self.root_uri + self.systems_uris[0])
@@ -802,23 +802,35 @@ class RedfishUtils(object):
         if key not in data:
             return {'ret': False, 'msg': "Key %s not found" % key}
 
-        bios_uri = data[key]["@odata.id"]
+        boot = data[key]
 
-        response = self.get_request(self.root_uri + bios_uri)
-        if response['ret'] is False:
-            return response
-        data = response['data']
+        annotation = 'BootSourceOverrideTarget@Redfish.AllowableValues'
+        if annotation in boot:
+            allowable_values = boot[annotation]
+            if isinstance(allowable_values, list) and bootdevice not in allowable_values:
+                return {'ret': False,
+                        'msg': "Boot device %s not in list of allowable values (%s)" %
+                               (bootdevice, allowable_values)}
 
-        boot_mode = data[u'Attributes']["BootMode"]
-        if boot_mode == "Uefi":
-            payload = {"Boot": {"BootSourceOverrideTarget": "UefiTarget", "UefiTargetBootSourceOverride": bootdevice}}
-        else:
-            payload = {"Boot": {"BootSourceOverrideTarget": bootdevice}}
+        enabled = boot.get('BootSourceOverrideEnabled')
+        target = boot.get('BootSourceOverrideTarget')
+
+        # If BootSourceOverrideEnabled and BootSourceOverrideTarget are already
+        # set as needed, just return with 'changed' set to False (do not PATCH)
+        if enabled == 'Once' and target == bootdevice:
+            return {'ret': True, 'changed': False}
+
+        payload = {
+            'Boot': {
+                'BootSourceOverrideEnabled': 'Once',
+                'BootSourceOverrideTarget': bootdevice
+            }
+        }
 
         response = self.patch_request(self.root_uri + self.systems_uris[0], payload)
         if response['ret'] is False:
             return response
-        return {'ret': True}
+        return {'ret': True, 'changed': True}
 
     def set_bios_attributes(self, attr):
         result = {}
