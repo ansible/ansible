@@ -1,0 +1,6 @@
+- include_tasks: test_swarm_info.yml
+  # Maximum of 1.24 (docker API version for docker_swarm_info) and 1.25 (docker API version for docker_swarm) is 1.25
+  when: docker_py_version is version('1.10.0', '>=') and docker_api_version is version('1.25', '>=')
+
+- fail: msg="Too old docker / docker-py version to run docker_swarm_info tests!"
+  when: not(docker_py_version is version('1.10.0', '>=') and docker_api_version is version('1.25', '>=')) and (ansible_distribution != 'CentOS' or ansible_distribution_major_version|int > 6)
