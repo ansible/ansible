@@ -79,7 +79,9 @@
     name: "aci{{ resource_group | hash('md5') | truncate(7, True, '') }}sec"
     os_type: linux
     ip_address: public
+    dns_name_label: mydnslabel{{ resource_group | hash('md5') | truncate(7, True, '') }}
     location: eastus
+    restart_policy: on_failure
     ports:
       - 80
     containers:
@@ -89,6 +91,12 @@
         ports:
           - 80
           - 81
+        commands:
+          - echo abc
+          - echo cdf
+        environment_variables:
+          - name: myvar
+            value: myvarvalue
   register: output
 
 - name: Gather facts for single Container Instance
@@ -96,6 +104,9 @@
     resource_group: "{{ resource_group }}"
     name: "aci{{ resource_group | hash('md5') | truncate(7, True, '') }}sec"
   register: output 
+
+- debug:
+    var: output
 
 - name: Assert that facts are returned
   assert:
@@ -108,6 +119,9 @@
       - output.containerinstances[0]['ip_address'] != None
       - output.containerinstances[0]['ports'] != None
       - output.containerinstances[0]['containers'] != None
+      - output.containerinstances[0]['containers'][0]['commands'] | length == 2
+      - output.containerinstances[0]['containers'][0]['environment_variables'] | length == 1
+      - output.containerinstances[0]['restart_policy'] == 'on_failure'
 
 - name: Gather facts for all Container Instances in the resource group
   azure_rm_containerinstance_facts:

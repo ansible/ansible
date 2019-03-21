@@ -51,6 +51,11 @@ options:
             - public
             - none
         default: 'none'
+    dns_name_label:
+        description:
+            - The Dns name label for the IP.
+        type: str
+        version_added: "2.8"
     ports:
         description:
             - List of ports exposed within the container group.
@@ -89,6 +94,40 @@ options:
             ports:
                 description:
                     - List of ports exposed within the container group.
+            environment_variables:
+                description:
+                    - List of container environment variables.
+                    - When updating existing container all existing variables will be replaced by new ones.
+                type: dict
+                suboptions:
+                    name:
+                        description:
+                            - Environment variable name.
+                        type: str
+                    value:
+                        description:
+                            - Environment variable value.
+                        type: str
+                    is_secure:
+                        description:
+                            - Is variable secure.
+                        type: bool
+                version_added: "2.8"
+            commands:
+                description:
+                    - List of commands to execute within the container instance in exec form.
+                    - When updating existing container all existing commands will be replaced by new ones.
+                type: list
+                version_added: "2.8"
+    restart_policy:
+        description:
+            - Restart policy for all containers within the container group.
+        type: str
+        choices:
+            - always
+            - on_failure
+            - never
+        version_added: "2.8"
     force_update:
         description:
             - Force update of existing container instance. Any update will result in deletion and recreation of existing containers.
@@ -143,10 +182,11 @@ ip_address:
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+from ansible.module_utils.common.dict_transformations import _snake_to_camel
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from msrestazure.azure_operation import AzureOperationPoller
+    from msrest.polling import LROPoller
     from azure.mgmt.containerinstance import ContainerInstanceManagementClient
 except ImportError:
     # This is handled in azure_rm_common
@@ -222,6 +262,9 @@ class AzureRMContainerInstance(AzureRMModuleBase):
                 default='none',
                 choices=['public', 'none']
             ),
+            dns_name_label=dict(
+                type='str',
+            ),
             ports=dict(
                 type='list',
                 default=[]
@@ -243,6 +286,10 @@ class AzureRMContainerInstance(AzureRMModuleBase):
                 type='list',
                 required=True
             ),
+            restart_policy=dict(
+                type='str',
+                choices=['always', 'on_failure', 'never']
+            ),
             force_update=dict(
                 type='bool',
                 default=False
@@ -254,8 +301,9 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         self.location = None
         self.state = None
         self.ip_address = None
-
+        self.dns_name_label = None
         self.containers = None
+        self.restart_policy = None
 
         self.tags = None
 
@@ -353,7 +401,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
                 ports = []
                 for port in self.ports:
                     ports.append(self.cgmodels.Port(port=port, protocol="TCP"))
-                ip_address = self.cgmodels.IpAddress(ports=ports, ip=self.ip_address)
+                ip_address = self.cgmodels.IpAddress(ports=ports, dns_name_label=self.dns_name_label, type='public')
 
         containers = []
 
@@ -362,24 +410,35 @@ class AzureRMContainerInstance(AzureRMModuleBase):
             image = container_def.get("image")
             memory = container_def.get("memory", 1.5)
             cpu = container_def.get("cpu", 1)
+            commands = container_def.get("commands")
             ports = []
+            variables = []
 
             port_list = container_def.get("ports")
             if port_list:
                 for port in port_list:
                     ports.append(self.cgmodels.ContainerPort(port=port))
 
+            variable_list = container_def.get("environment_variables")
+            if variable_list:
+                for variable in variable_list:
+                    variables.append(self.cgmodels.EnvironmentVariable(name=variable.get('name'),
+                                                                       value=variable.get('value') if not variable.get('is_secure') else None,
+                                                                       secure_value=variable.get('value') if variable.get('is_secure') else None))
+
             containers.append(self.cgmodels.Container(name=name,
                                                       image=image,
                                                       resources=self.cgmodels.ResourceRequirements(
                                                           requests=self.cgmodels.ResourceRequests(memory_in_gb=memory, cpu=cpu)
                                                       ),
-                                                      ports=ports))
+                                                      ports=ports,
+                                                      command=commands,
+                                                      environment_variables=variables))
 
         parameters = self.cgmodels.ContainerGroup(location=self.location,
                                                   containers=containers,
                                                   image_registry_credentials=registry_credentials,
-                                                  restart_policy=None,
+                                                  restart_policy=_snake_to_camel(self.restart_policy, True) if self.restart_policy else None,
                                                   ip_address=ip_address,
                                                   os_type=self.os_type,
                                                   volumes=None,
@@ -389,7 +448,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
                                                                                    container_group_name=self.name,
                                                                                    container_group=parameters)
 
-        if isinstance(response, AzureOperationPoller):
+        if isinstance(response, LROPoller):
             response = self.get_poller_result(response)
 
         return response.as_dict()
