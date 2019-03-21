@@ -130,6 +130,7 @@ def open_locked(path, lock_timeout=15):
     fd = lock(path, lock_timeout)
     yield fd
 
+
 def lock(path, lock_timeout=15):
     '''
     Set lock on given path via fcntl.flock(), note that using
