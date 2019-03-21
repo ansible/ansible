@@ -335,7 +335,7 @@ If you have two or more network platforms in your environment, you can use the n
 Sample playbook with platform-specific modules
 ----------------------------------------------
 
-This example assumes three platforms, Arista EOS, Cisco NXOS, and Juniper JunOS.  Without the network agnostic modules, a sample playbook might contain the following three tasks:
+This example assumes three platforms, Arista EOS, Cisco NXOS, and Juniper JunOS.  Without the network agnostic modules, a sample playbook might contain the following three tasks with platform-specific commands:
 
 .. code-block:: yaml
 
@@ -358,7 +358,44 @@ This example assumes three platforms, Arista EOS, Cisco NXOS, and Juniper JunOS.
 Simplified playbook with ``cli_command`` network agnostic module
 ----------------------------------------------------------------
 
-If you replace these platform-specific modules with the network agnostic ``cli_command`` module, this playbook can be simplified to:
+You can replace these platform-specific modules with the network agnostic ``cli_command`` module as follows:
+
+.. code-block:: yaml
+
+  ---
+  - hosts: cisco
+    gather_facts: false
+    connection: network_cli
+
+    tasks:
+      - name: show command for cisco
+        cli_command:
+          command: show ip int br
+        register: result
+
+      - name: display result to terminal window
+          debug:
+        var: result.stdout_lines
+
+.. code-block:: yaml
+
+  ---
+  - hosts: juniper
+    gather_facts: false
+    connection: network_cli
+
+    tasks:
+      - name: show command for juniper
+          cli_command:
+         command: show interfaces terse em1
+          register: result
+
+      - name: display result to terminal window
+          debug:
+         var: result.stdout_lines
+
+
+If you use groups and group_vars by platform type, this playbook can be further simplified to :
 
 .. code-block:: yaml
 
@@ -373,13 +410,33 @@ If you replace these platform-specific modules with the network agnostic ``cli_c
           command: "{{show_interfaces}}"
         register: command_output
 
-      - name: Print to terminal window
-        debug:
-          msg: "{{command_output.stdout}}"
 
-You can see a full example of this and a configuration backup example at `Network agnostic examples <https://github.com/network-automation/agnostic_example>`_.
+You can see a full example of this using group_vars and also a configuration backup example at `Network agnostic examples <https://github.com/network-automation/agnostic_example>`_.
 
-The ``cli_command`` also supports multiple prompts. See the :ref:`cli_command <cli_command_module>` for an example of this.
+Using multiple prompts with the  ``cli_command``
+------------------------------------------------
+
+The ``cli_command`` also supports multiple prompts.
+
+.. code-block:: yaml
+
+  - name: CHANGE PASSWORD TO WORKSHOP DEFAULT
+  cli_command:
+    command: "{{item}}"
+    prompt:
+      - "New password"
+      - "Retype new password"
+    answer:
+      - "mypassword123"
+      - "mypassword123"
+    check_all: True
+  loop:
+    - "configure"
+    - "rollback"
+    - "set system root-authentication plain-text-password"
+    - "commit"
+
+See the :ref:`cli_command <cli_command_module>` for full documentation on this command.
 
 
 Implementation Notes
