@@ -73,6 +73,11 @@ options:
   ciuser:
     description:
       - Cloud Init username of default user to create.
+    version_added: "2.8"
+  cipassword:
+    description:
+      - Cloud Init password of default user to create.
+    version_added: "2.8"
   clone:
     description:
       - Name of VM to be cloned. If C(vmid) is setted, C(clone) can take arbitrary value but required for intiating the clone.
@@ -158,6 +163,7 @@ options:
       - Cloud Init Set the IP configuration.
       - Uses YAML hash with the keys needing to be a number (see example below)
       - Hash index must match the numbering scheme used in the net[n] or else the values will not be assigned
+    version_added: "2.8"
   keyboard:
     description:
       - Sets the keyboard layout for VNC server.
@@ -197,6 +203,7 @@ options:
   nameserver:
     description:
       - Cloud Init DNS entries to populate the cloud-init drive with
+    version_added: "2.8"
   net:
     description:
       - A hash/dictionary of network interfaces for the VM. C(net='{"key":"value", "key":"value"}').
@@ -277,6 +284,7 @@ options:
     choices:        ['lsi', 'lsi53c810', 'virtio-scsi-pci', 'virtio-scsi-single', 'megasas', 'pvscsi']
   searchdomain:
     description: Cloud Init search domain to set for the DNS configuration
+    version_added: "2.8"
   serial:
     description:
       - A hash/dictionary of serial device to create inside the VM. C('{"key":"value", "key":"value"}').
@@ -306,6 +314,7 @@ options:
   sshkeys:
     description:
       - Cloud Init SSH key to assign to the default user. NOT TESTED with multiple keys but a multi-line value should work.
+    version_added: "2.8"
   startdate:
     description:
       - Sets the initial date of the real time clock.
