@@ -590,11 +590,12 @@ class Certificate(crypto_utils.OpenSSLObject):
                 'The timespec "%s" for %s is not valid' %
                 input_string, input_name)
         if self.backend == 'cryptography':
-            try:
-                for date_fmt in ['%Y%m%d%H%M%SZ', '%Y%m%d%H%MZ', '%Y%m%d%H%M%S%z', '%Y%m%d%H%M%z']:
+            for date_fmt in ['%Y%m%d%H%M%SZ', '%Y%m%d%H%MZ', '%Y%m%d%H%M%S%z', '%Y%m%d%H%M%z']:
+                try:
                     result = datetime.datetime.strptime(input_string, date_fmt)
-            except ValueError:
-                pass
+                    break
+                except ValueError:
+                    pass
 
             if not isinstance(result, datetime.datetime):
                 raise CertificateError(
@@ -774,8 +775,8 @@ class SelfSignedCertificateCryptography(Certificate):
             })
         else:
             result.update({
-                'notBefore': self.cert.not_valid_before,
-                'notAfter': self.cert.not_valid_after,
+                'notBefore': self.cert.not_valid_before.strftime("%Y%m%d%H%M%SZ"),
+                'notAfter': self.cert.not_valid_after.strftime("%Y%m%d%H%M%SZ"),
                 'serial_number': self.cert.serial_number,
             })
 
