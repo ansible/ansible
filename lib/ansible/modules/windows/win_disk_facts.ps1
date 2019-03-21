@@ -110,7 +110,11 @@ foreach ($disk in $disks) {
         }
     }
     $win32_disk_drive = Get-CimInstance -ClassName Win32_DiskDrive -ErrorAction SilentlyContinue | Where-Object {
-        $_.SerialNumber -eq $disk.SerialNumber
+        if ($disk.UniqueIdFormat -eq 'Vendor Specific') {
+            $disk.UniqueId.split(':')[0] -eq $_.PNPDeviceID
+        } elseif ($disk.UniqueIdFormat -eq 'FCPH Name') {
+            $disk.UniqueId -eq $_.SerialNumber
+        }
     }
     if ($win32_disk_drive) {
         $disk_info["win32_disk_drive"] += @{
