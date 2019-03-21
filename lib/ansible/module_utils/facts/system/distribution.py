@@ -52,6 +52,7 @@ class DistributionFiles:
     #  - have a function get_distribution_DISTNAME implemented
     # keep names in sync with Conditionals page of docs
     OSDIST_LIST = (
+        {'path': '/etc/cgsl-release', 'name': 'NewStart'},
         {'path': '/etc/altlinux-release', 'name': 'Altlinux'},
         {'path': '/etc/oracle-release', 'name': 'OracleLinux'},
         {'path': '/etc/slackware-version', 'name': 'Slackware'},
@@ -243,6 +244,18 @@ class DistributionFiles:
         alpine_facts['distribution'] = 'Alpine'
         alpine_facts['distribution_version'] = data
         return True, alpine_facts
+
+    def parse_distribution_file_NewStart(self, name, data, path, collected_facts):
+        newstart_facts = {}
+        if 'newstart' not in data.lower():
+            return False, newstart_facts
+        if path == '/etc/cgsl-release':
+            newstart_facts['distribution'] = 'NewStart'
+            newstart_facts['distribution_release'] = ' '.join(data.split()[1:-2])
+            newstart_facts['distribution_version'] = data.split()[-1]
+            newstart_facts['distribution_major_version'] = data.split()[-1].split('.')[0]
+        return True, newstart_facts
+
 
     def parse_distribution_file_SUSE(self, name, data, path, collected_facts):
         suse_facts = {}
