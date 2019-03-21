@@ -28,9 +28,11 @@ description:
     - Many properties that can be specified in this module are for validation of an
       existing or newly generated certificate. The proper place to specify them, if you
       want to receive a certificate with these properties is a CSR (Certificate Signing Request).
-    - It uses the pyOpenSSL python library to interact with OpenSSL.
+    - It uses the pyOpenSSL or cryptography python library to interact with OpenSSL.
+    - If both the cryptography and PyOpenSSL libraries are available (and meet the minimum version requirements)
+      cryptography will be preferred as a backend over PyOpenSSL (unless the backend is forced with C(select_crypto_backend))
 requirements:
-    - python-pyOpenSSL >= 0.15 (if using C(selfsigned) or C(assertonly) provider)
+    - PyOpenSSL >= 0.15 or cryptography >= 1.6 (if using C(selfsigned) or C(assertonly) provider)
     - acme-tiny (if using the C(acme) provider)
 author:
   - Yanis Guenane (@Spredzy)
