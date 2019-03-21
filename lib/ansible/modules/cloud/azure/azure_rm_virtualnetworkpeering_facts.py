@@ -24,16 +24,15 @@ options:
         description:
             - Name of a resource group where the vnet exists.
         required: True
-    name:
-        description:
-            - Name of the virtual network peering.
     virtual_network:
         description:
             - The name of Virtual network.
-            - It can be name of virtual network in same resource group.
+            - It can be name of virtual network.
             - It can be virtual network resource id.
-            - It can be a dict of resource_group and name.
         required: True
+    name:
+        description:
+            - Name of the virtual network peering.
 
 extends_documentation_fragment:
     - azure
