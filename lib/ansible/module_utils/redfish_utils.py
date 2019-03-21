@@ -903,7 +903,7 @@ class RedfishUtils(object):
     def get_multi_cpu_inventory(self):
         return self.aggregate(self.get_cpu_inventory)
 
-    def get_memory_inventory(self):
+    def get_memory_inventory(self, systems_uri):
         result = {}
         memory_list = []
         memory_results = []
@@ -913,7 +913,7 @@ class RedfishUtils(object):
                       'MemoryLocation', 'RankCount', 'CapacityMiB', 'OperatingMemoryModes', 'Status', 'Manufacturer', 'Name']
 
         # Search for 'key' entry and extract URI from it
-        response = self.get_request(self.root_uri + self.systems_uri)
+        response = self.get_request(self.root_uri + systems_uri)
         if response['ret'] is False:
             return response
         result['ret'] = True
@@ -956,6 +956,9 @@ class RedfishUtils(object):
             memory_results.append(dimm)
         result["entries"] = memory_results
         return result
+
+    def get_multi_memory_inventory(self):
+        return self.aggregate(self.get_memory_inventory)
 
     def get_nic_inventory(self, resource_uri):
         result = {}
