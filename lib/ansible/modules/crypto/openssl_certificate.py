@@ -590,7 +590,16 @@ class Certificate(crypto_utils.OpenSSLObject):
                 'The timespec "%s" for %s is not valid' %
                 input_string, input_name)
         if self.backend == 'cryptography':
-            result = datetime.datetime.strptime(input_string, '%Y%m%d%H%M%SZ')
+            try:
+                for date_fmt in ['%Y%m%d%H%M%SZ', '%Y%m%d%H%MZ', '%Y%m%d%H%M%S%z', '%Y%m%d%H%M%z']:
+                    result = datetime.datetime.strptime(input_string, date_fmt)
+            except ValueError:
+                pass
+
+            if not isinstance(result, datetime.datetime):
+                raise CertificateError(
+                    'The time spec "%s" for %s is invalid' %
+                    input_string, input_name)
         return result
 
     def _validate_privatekey(self):
@@ -698,6 +707,11 @@ class SelfSignedCertificateCryptography(Certificate):
         except crypto_utils.OpenSSLBadPassphraseError as exc:
             module.fail_json(msg=to_native(exc))
 
+        if self.digest is None:
+            raise CertificateError(
+                'The digest %s is not supported with the cryptography backend' % module.params['selfsigned_digest']
+            )
+
     def generate(self, module):
         if not os.path.exists(self.privatekey_path):
             raise CertificateError(
@@ -707,11 +721,6 @@ class SelfSignedCertificateCryptography(Certificate):
             raise CertificateError(
                 'The certificate signing request file %s does not exist' % self.csr_path
             )
-        if self.digest is None:
-            raise CertificateError(
-                'The digest %s is not supported with the cryptography backend' % module.params['selfsigned_digest']
-            )
-
         if not self.check(module, perms_required=False) or self.force:
             try:
                 cert_builder = x509.CertificateBuilder()
@@ -758,8 +767,8 @@ class SelfSignedCertificateCryptography(Certificate):
 
         if check_mode:
             result.update({
-                'notBefore': self.notBefore,
-                'notAfter': self.notAfter,
+                'notBefore': self.notBefore.strftime("%Y%m%d%H%M%SZ"),
+                'notAfter': self.notAfter.strftime("%Y%m%d%H%M%SZ"),
                 'serial_number': self.serial_number,
             })
         else:
@@ -936,14 +945,14 @@ class OwnCACertificateCryptography(Certificate):
 
         if check_mode:
             result.update({
-                'notBefore': self.notBefore,
-                'notAfter': self.notAfter,
+                'notBefore': self.notBefore.strftime("%Y%m%d%H%M%SZ"),
+                'notAfter': self.notAfter.strftime("%Y%m%d%H%M%SZ"),
                 'serial_number': self.serial_number,
             })
         else:
             result.update({
-                'notBefore': self.cert.not_valid_before,
-                'notAfter': self.cert.not_valid_after,
+                'notBefore': self.cert.not_valid_before.strftime("%Y%m%d%H%M%SZ"),
+                'notAfter': self.cert.not_valid_after.strftime("%Y%m%d%H%M%SZ"),
                 'serial_number': self.cert.serial_number,
             })
 
@@ -1071,29 +1080,6 @@ class AssertOnlyCertificateCryptography(Certificate):
         self.invalid_at = module.params['invalid_at'],
         self.valid_in = module.params['valid_in'],
         self.message = []
-        # self._sanitize_inputs()
-
-    def _sanitize_inputs(self):
-        """Ensure inputs are properly sanitized before comparison."""
-
-        for param in ['signature_algorithms', 'keyUsage', 'extendedKeyUsage',
-                      'subjectAltName', 'subject', 'issuer', 'notBefore',
-                      'notAfter', 'valid_at', 'invalid_at']:
-
-            attr = getattr(self, param)
-            if isinstance(attr, list) and attr:
-                if isinstance(attr[0], str):
-                    setattr(self, param, [to_bytes(item) for item in attr])
-                elif isinstance(attr[0], tuple):
-                    setattr(self, param, [(to_bytes(item[0]), to_bytes(item[1])) for item in attr])
-            elif isinstance(attr, tuple):
-                setattr(self, param, dict((to_bytes(k), to_bytes(v)) for (k, v) in attr.items()))
-                # setattr(self, param, dict((to_bytes(k), to_bytes(v)) for (k, v) in attr))
-            elif isinstance(attr, dict):
-                setattr(self, param, dict((to_bytes(k), to_bytes(v)) for (k, v) in attr.items()))
-                # setattr(self, param, dict((to_bytes(k), to_bytes(v)) for (k, v) in attr))
-            elif isinstance(attr, str):
-                setattr(self, param, to_bytes(attr))
 
     def _get_name_oid(self, id):
         if id in ('CN', 'commonName'):
