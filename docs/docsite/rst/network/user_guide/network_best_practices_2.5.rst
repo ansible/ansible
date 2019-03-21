@@ -386,13 +386,13 @@ You can replace these platform-specific modules with the network agnostic ``cli_
 
     tasks:
       - name: show command for juniper
-          cli_command:
-         command: show interfaces terse em1
-          register: result
+        cli_command:
+          command: show interfaces terse em1
+        register: result
 
       - name: display result to terminal window
           debug:
-         var: result.stdout_lines
+        var: result.stdout_lines
 
 
 If you use groups and group_vars by platform type, this playbook can be further simplified to :
