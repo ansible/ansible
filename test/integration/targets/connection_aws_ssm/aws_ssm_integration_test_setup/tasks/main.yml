@@ -1,0 +1,157 @@
+---
+## Task file for setup/teardown AWS resources for aws_ssm integration testing
+- block:
+    - name: set up aws connection info
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{aws_access_key}}"
+          aws_secret_key: "{{aws_secret_key}}"
+          security_token: "{{security_token}}"
+          region: "{{aws_region}}"
+      no_log: yes
+
+    - name: Install Session Manager Plugin for Debian/Ubuntu
+      include_tasks: debian.yml
+      when: ansible_distribution == "Ubuntu" or ansible_distribution == "Debian"
+
+    - name: Install Session Manager Plugin for RedHat/Amazon
+      include_tasks: redhat.yml
+      when: ansible_distribution == "CentOS" or ansible_distribution == "RedHat" or ansible_distribution == "Amazon"
+
+    - name: Install Boto3
+      pip:
+        name: boto3
+
+    - name: Install Boto
+      pip:
+        name: boto
+
+    - name: Ensure IAM instance role exists
+      iam_role:
+        name: "{{resource_prefix}}-aws-ssm-role"
+        assume_role_policy_document: "{{ lookup('file','ec2-trust-policy.json') }}"
+        state: present
+        create_instance_profile: yes
+        managed_policy:
+        - AmazonEC2RoleforSSM
+        <<: *aws_connection_info
+      register: role_output
+
+    - name: Setting fact for role name
+      set_fact:
+        iam_role_name: "{{role_output.iam_role.role_name}}"
+
+    - name: Create S3 bucket
+      s3_bucket:
+        name: "{{resource_prefix}}-aws-ssm-s3"
+        <<: *aws_connection_info
+      register: s3_output
+
+    - name: Setting fact for S3 bucket name
+      set_fact:
+        bucket_name: "{{s3_output.name}}"
+
+    - name: Wait for IAM Role getting created
+      pause:
+        seconds: 10
+
+    - name: Create Linux EC2 instance
+      ec2:
+        instance_type: "{{instance_type}}"
+        image: "{{linux_ami_id}}"
+        wait: "yes"
+        count: 1
+        instance_profile_name: "{{iam_role_name}}"
+        instance_tags:
+          Name: "{{resource_prefix}}-integration-test-aws-ssm-linux"
+        user_data: |
+                    #!/bin/sh
+                    sudo systemctl start amazon-ssm-agent
+        state: present
+        <<: *aws_connection_info
+      register: linux_output
+
+    - name: Setting fact for Linux EC2 instance id
+      set_fact:
+        linux_instance_id: "{{linux_output.instance_ids[0]}}"
+
+    - name: Create Windows EC2 instance
+      ec2:
+        instance_type: "{{instance_type}}"
+        image: "{{windows_ami_id}}"
+        wait: "yes"
+        count: 1
+        instance_profile_name: "{{iam_role_name}}"
+        instance_tags:
+          Name: "{{resource_prefix}}-integration-test-aws-ssm-windows"
+        user_data: |
+                    <powershell>
+                    Restart-Service AmazonSSMAgent
+                    </powershell>
+        state: present
+        <<: *aws_connection_info
+      register: windows_output
+
+    - name: Setting fact for Windows EC2 instance id
+      set_fact:
+        windows_instance_id: "{{windows_output.instance_ids[0]}}"
+
+    - name: Wait for EC2 to be available
+      wait_for_connection:
+        delay: 300
+
+    - name: Create var_to_delete.yml
+      template:
+        dest: "{{playbook_dir}}/vars_to_delete.yml"
+        src: vars_to_delete.yml.j2
+
+    - name: Create Inventory file for Linux host
+      template:
+        dest: "{{playbook_dir}}/inventory-linux.aws_ssm"
+        src: inventory-linux.aws_ssm.j2
+
+    - name: Create Inventory file for Windows host
+      template:
+        dest: "{{playbook_dir}}/inventory-windows.aws_ssm"
+        src: inventory-windows.aws_ssm.j2
+
+    - name: Create AWS Keys Environement
+      template:
+        dest: "{{playbook_dir}}/aws-env-vars.sh"
+        src: aws-env-vars.j2
+      no_log: yes
+
+  rescue:
+    - name: Terminate Linux EC2 instances
+      ec2:
+        state: absent
+        instance_ids: linux_output.instance_ids
+        <<: *aws_connection_info
+      ignore_errors: yes
+
+    - name: Terminate Windows EC2 instances
+      ec2:
+        state: absent
+        instance_ids: windows_output.instance_ids
+        <<: *aws_connection_info
+      ignore_errors: yes
+
+    - name: S3 bucket Deletion
+      aws_s3:
+        bucket: "{{bucket_name}}"
+        mode: delete
+        <<: *aws_connection_info
+      ignore_errors: yes
+
+    - name: Delete IAM role
+      iam_role:
+        name: "{{iam_role_name}}"
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: yes
+
+    - name: Delete AWS Keys Environement
+      file:
+        path: "{{playbook_dir}}/aws-env-vars.sh"
+        state: absent
+      ignore_errors: yes

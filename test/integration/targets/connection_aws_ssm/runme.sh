@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
 
 # Setup Environment
-ansible-playbook -c local aws_ssm_integration_test_setup_teardown.yml \
-    --tags setup_infra \
-    "$@"
+ansible-playbook -c local aws_ssm_integration_test_setup.yml "$@"
 
 # Execute test cases only on Python 2.7
 if [ -e aws-env-vars.sh ]; then
@@ -19,7 +17,7 @@ if [ -e aws-env-vars.sh ]; then
         -e local_tmp=/tmp/ansible-local \
         -e remote_tmp=/tmp/ansible-remote \
         -e action_prefix= \
-        "$@"
+        "$@" || true
 
     # Execute Integration tests for Windows
     INVENTORY=../connection_aws_ssm/inventory-windows.aws_ssm ./test.sh \
@@ -27,12 +25,10 @@ if [ -e aws-env-vars.sh ]; then
         -e local_tmp=/tmp/ansible-local \
         -e remote_tmp=c:/windows/temp/ansible-remote \
         -e action_prefix=win_ \
-        "$@"
+        "$@" || true
 
     cd ../connection_aws_ssm
 
     # Destroy Environment
-    ansible-playbook -c local aws_ssm_integration_test_setup_teardown.yml \
-        --tags delete_infra \
-        "$@"
+    ansible-playbook -c local aws_ssm_integration_test_teardown.yml "$@"
 fi
