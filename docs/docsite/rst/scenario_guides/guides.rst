@@ -1,4 +1,4 @@
-.. _integration_guides:
+.. _scenario_guides:
 
 ******************
 Scenario Guides
@@ -9,7 +9,7 @@ platforms, products, and technologies. They explore particular use cases in grea
 
 .. toctree::
    :maxdepth: 1
-   :caption: Cloud Platform Guides
+   :caption: Public Cloud Guides
 
    guide_alicloud
    guide_aws
@@ -24,7 +24,7 @@ platforms, products, and technologies. They explore particular use cases in grea
 
 .. toctree::
    :maxdepth: 1
-   :caption: Network Product Guides
+   :caption: Network Technology Guides
 
    guide_aci
    guide_meraki
@@ -32,7 +32,7 @@ platforms, products, and technologies. They explore particular use cases in grea
 
 .. toctree::
    :maxdepth: 1
-   :caption: Virtualization & Containerization Solution Guides
+   :caption: Virtualization & Containerization Guides
 
    guide_docker
    guide_kubernetes
