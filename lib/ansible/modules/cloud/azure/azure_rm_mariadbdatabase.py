@@ -238,7 +238,7 @@ class AzureRMMariaDbDatabase(AzureRMModuleBase):
 
         return self.results
 
-    def create_update_myariadbdatabase(self):
+    def create_update_mariadbdatabase(self):
         '''
         Creates or updates MariaDB Database with the specified configuration.
 
