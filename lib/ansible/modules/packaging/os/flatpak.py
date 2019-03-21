@@ -150,6 +150,8 @@ from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 
+OUTDATED_FLATPAK_VERSION_ERROR_MESSAGE = "Unknown option --columns=application"
+
 
 def install_flat(module, binary, remote, name, method):
     """Add a new flatpak."""
@@ -182,21 +184,48 @@ def flatpak_exists(module, binary, name, method):
 
 
 def _match_installed_flat_name(module, binary, name, method):
-    # This is a difficult function because it seems there
-    # is no naming convention for the flatpakref to what
-    # the installed flatpak will be named.
+    # This is a difficult function, since if the user supplies a flatpakref url,
+    # we have to rely on a naming convention:
+    # The flatpakref file name needs to match the flatpak name
+    global result
+    parsed_name = _parse_flatpak_name(name)
+    # Try running flatpak list with columns feature
+    command = "{0} list --{1} --app --columns=application".format(binary, method)
+    _flatpak_command(module, False, command, ignore_failure=True)
+    if result['rc'] != 0 and OUTDATED_FLATPAK_VERSION_ERROR_MESSAGE in result['stderr']:
+        # Probably flatpak before 1.2
+        matched_flatpak_name = \
+            _match_flat_using_flatpak_column_feature(module, binary, parsed_name, method)
+    else:
+        # Probably flatpak >= 1.2
+        matched_flatpak_name = \
+            _match_flat_using_outdated_flatpak_format(module, binary, parsed_name, method)
+
+    if matched_flatpak_name:
+        return matched_flatpak_name
+    else:
+        result['msg'] = "Flatpak removal failed: Could not match any installed flatpaks to " +\
+            "the name `{0}`. ".format(_parse_flatpak_name(name)) +\
+            "If you used a URL, try using the reverse DNS name of the flatpak"
+        module.fail_json(**result)
+
+
+def _match_flat_using_outdated_flatpak_format(module, binary, parsed_name, method):
+    global result
+    command = "{0} list --{1} --app --columns=application".format(binary, method)
+    output = _flatpak_command(module, False, command)
+    for row in output.split('\n'):
+        if parsed_name.lower() == row.lower():
+            return row
+
+
+def _match_flat_using_flatpak_column_feature(module, binary, parsed_name, method):
     global result
     command = "{0} list --{1} --app".format(binary, method)
     output = _flatpak_command(module, False, command)
-    parsed_name = _parse_flatpak_name(name)
     for row in output.split('\n'):
         if parsed_name.lower() in row.lower():
             return row.split()[0]
-
-    result['msg'] = "Flatpak removal failed: Could not match any installed flatpaks to " +\
-        "the name `{0}`. ".format(_parse_flatpak_name(name)) +\
-        "If you used a URL, try using the reverse DNS name of the flatpak"
-    module.fail_json(**result)
 
 
 def _parse_flatpak_name(name):
@@ -209,7 +238,7 @@ def _parse_flatpak_name(name):
     return common_name
 
 
-def _flatpak_command(module, noop, command):
+def _flatpak_command(module, noop, command, ignore_failure=False):
     global result
     if noop:
         result['rc'] = 0
@@ -221,9 +250,9 @@ def _flatpak_command(module, noop, command):
     stdout_data, stderr_data = process.communicate()
     result['rc'] = process.returncode
     result['command'] = command
-    result['stdout'] = stdout_data
-    result['stderr'] = stderr_data
-    if result['rc'] != 0:
+    result['stdout'] = to_native(stdout_data)
+    result['stderr'] = to_native(stderr_data)
+    if result['rc'] != 0 and not ignore_failure:
         module.fail_json(msg="Failed to execute flatpak command", **result)
     return to_native(stdout_data)
 
