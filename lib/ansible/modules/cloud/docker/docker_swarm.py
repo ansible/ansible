@@ -412,7 +412,7 @@ class SwarmManager(DockerBaseClass):
 
         if self.state == 'inspect':
             self.client.module.deprecate(
-                "The 'inspect' state is deprecated, please use 'docker_swarm_facts' to inspect swarm cluster",
+                "The 'inspect' state is deprecated, please use 'docker_swarm_info' to inspect swarm cluster",
                 version='2.12')
 
         choice_map.get(self.state)()
