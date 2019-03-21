@@ -175,8 +175,25 @@ from copy import deepcopy
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.cnos.cnos import load_config, run_commands
 from ansible.module_utils.network.cnos.cnos import cnos_argument_spec
-from ansible.module_utils.network.cnos.cnos import get_interface_type
 from ansible.module_utils.network.common.utils import remove_default_spec
+
+
+def get_interface_type(interface):
+    intf_type = 'unknown'
+    if interface.upper()[:2] in ('ET', 'GI', 'FA', 'TE', 'FO', 'HU', 'TWE'):
+        intf_type = 'ethernet'
+    elif interface.upper().startswith('VL'):
+        intf_type = 'svi'
+    elif interface.upper().startswith('LO'):
+        intf_type = 'loopback'
+    elif interface.upper()[:2] in ('MG', 'MA'):
+        intf_type = 'management'
+    elif interface.upper().startswith('PO'):
+        intf_type = 'portchannel'
+    elif interface.upper().startswith('NV'):
+        intf_type = 'nve'
+
+    return intf_type
 
 
 def search_obj_in_list(name, lst):
@@ -515,4 +532,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
