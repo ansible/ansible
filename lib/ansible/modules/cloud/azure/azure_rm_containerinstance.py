@@ -232,7 +232,7 @@ def create_container_dict_from_obj(container):
     return results
 
 
-container_spec=dict(
+container_spec = dict(
     name=dict(type='str', required=True),
     image=dict(type='str', required=True),
     memory=dict(type='float', default=1.5),
