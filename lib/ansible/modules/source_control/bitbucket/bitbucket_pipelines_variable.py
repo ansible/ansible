@@ -43,7 +43,7 @@ options:
       - The repository owner.
     type: str
     required: true
-  key:
+  name:
     description:
       - The pipeline variable name.
     type: str
@@ -74,19 +74,19 @@ EXAMPLES = r'''
   bitbucket_pipelines_variable:
     repository: 'bitbucket-repo'
     username: bitbucket_username
-    key: '{{ item.key }}'
+    name: '{{ item.name }}'
     value: '{{ item.value }}'
     secured: '{{ item.secured }}'
     state: present
   with_items:
-    - { key: AWS_ACCESS_KEY, value: ABCD1234 }
-    - { key: AWS_SECRET, value: qwe789poi123vbn0, secured: True }
+    - { name: AWS_ACCESS_KEY, value: ABCD1234 }
+    - { name: AWS_SECRET, value: qwe789poi123vbn0, secured: True }
 
 - name: Remove pipeline variable
   bitbucket_pipelines_variable:
     repository: bitbucket-repo
     username: bitbucket_username
-    key: AWS_ACCESS_KEY
+    name: AWS_ACCESS_KEY
     state: absent
 '''
 
@@ -117,7 +117,7 @@ def get_existing_pipeline_variable(module, bitbucket):
     Return example::
 
         {
-            'key': 'AWS_ACCESS_KEY_ID',
+            'name': 'AWS_ACCESS_OBKEY_ID',
             'value': 'x7HU80-a2',
             'type': 'pipeline_variable',
             'secured': False,
@@ -146,9 +146,10 @@ def get_existing_pipeline_variable(module, bitbucket):
         if info['status'] != 200:
             module.fail_json(msg='Failed to retrieve the list of pipeline variables: {0}'.format(info))
 
-        var = next(filter(lambda v: v['key'] == module.params['key'], content['values']), None)
+        var = next(filter(lambda v: v['key'] == module.params['name'], content['values']), None)
 
         if var is not None:
+            var['name'] = var.pop('key')
             return var
 
     return None
@@ -162,7 +163,7 @@ def create_pipeline_variable(module, bitbucket):
         ),
         method='POST',
         data={
-            'key': module.params['key'],
+            'key': module.params['name'],
             'value': module.params['value'],
             'secured': module.params['secured'],
         },
@@ -170,7 +171,7 @@ def create_pipeline_variable(module, bitbucket):
 
     if info['status'] != 201:
         module.fail_json(msg='Failed to create pipeline variable `{name}`: {info}'.format(
-            name=module.params['key'],
+            name=module.params['name'],
             info=info,
         ))
 
@@ -191,7 +192,7 @@ def update_pipeline_variable(module, bitbucket, variable_uuid):
 
     if info['status'] != 200:
         module.fail_json(msg='Failed to update pipeline variable `{name}`: {info}'.format(
-            name=module.params['key'],
+            name=module.params['name'],
             info=info,
         ))
 
@@ -208,7 +209,7 @@ def delete_pipeline_variable(module, bitbucket, variable_uuid):
 
     if info['status'] != 204:
         module.fail_json(msg='Failed to delete pipeline variable `{name}`: {info}'.format(
-            name=module.params['key'],
+            name=module.params['name'],
             info=info,
         ))
 
@@ -218,7 +219,7 @@ def main():
     argument_spec.update(
         repository=dict(type='str', required=True),
         username=dict(type='str', required=True),
-        key=dict(type='str', required=True),
+        name=dict(type='str', required=True),
         value=dict(type='str'),
         secured=dict(type='bool', default=False),
         state=dict(type='str', choices=['present', 'absent'], required=True),

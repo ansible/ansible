@@ -15,7 +15,7 @@ class TestBucketPipelinesVariableModule(ModuleTestCase):
             set_module_args({
                 'username': 'name',
                 'repository': 'repo',
-                'key': 'PIPELINE_VAR_NAME',
+                'name': 'PIPELINE_VAR_NAME',
                 'state': 'absent',
             })
             self.module.main()
@@ -29,7 +29,7 @@ class TestBucketPipelinesVariableModule(ModuleTestCase):
                 'client_secret': 'XXX',
                 'username': 'name',
                 'repository': 'repo',
-                'key': 'PIPELINE_VAR_NAME',
+                'name': 'PIPELINE_VAR_NAME',
                 'state': 'present',
             })
             self.module.main()
@@ -47,7 +47,7 @@ class TestBucketPipelinesVariableModule(ModuleTestCase):
             set_module_args({
                 'username': 'name',
                 'repository': 'repo',
-                'key': 'PIPELINE_VAR_NAME',
+                'name': 'PIPELINE_VAR_NAME',
                 'state': 'absent',
             })
             self.module.main()
@@ -62,7 +62,7 @@ class TestBucketPipelinesVariableModule(ModuleTestCase):
                     'client_secret': 'XXX',
                     'username': 'name',
                     'repository': 'repo',
-                    'key': 'PIPELINE_VAR_NAME',
+                    'name': 'PIPELINE_VAR_NAME',
                     'value': '42',
                     'state': 'present',
                 })
@@ -81,7 +81,7 @@ class TestBucketPipelinesVariableModule(ModuleTestCase):
                     'client_secret': 'XXX',
                     'username': 'name',
                     'repository': 'repo',
-                    'key': 'PIPELINE_VAR_NAME',
+                    'name': 'PIPELINE_VAR_NAME',
                     'value': '42',
                     'state': 'present',
                     '_ansible_check_mode': True,
@@ -93,7 +93,7 @@ class TestBucketPipelinesVariableModule(ModuleTestCase):
 
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
     @patch.object(bitbucket_pipelines_variable, 'get_existing_pipeline_variable', return_value={
-        'key': 'PIPELINE_VAR_NAME',
+        'name': 'PIPELINE_VAR_NAME',
         'value': 'Im alive',
         'type': 'pipeline_variable',
         'secured': False,
@@ -107,7 +107,7 @@ class TestBucketPipelinesVariableModule(ModuleTestCase):
                     'client_secret': 'XXX',
                     'username': 'name',
                     'repository': 'repo',
-                    'key': 'PIPELINE_VAR_NAME',
+                    'name': 'PIPELINE_VAR_NAME',
                     'value': '42',
                     'state': 'present',
                 })
@@ -118,7 +118,7 @@ class TestBucketPipelinesVariableModule(ModuleTestCase):
 
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
     @patch.object(bitbucket_pipelines_variable, 'get_existing_pipeline_variable', return_value={
-        'key': 'PIPELINE_VAR_NAME',
+        'name': 'PIPELINE_VAR_NAME',
         'type': 'pipeline_variable',
         'secured': True,
         'uuid': '{9ddb0507-439a-495a- 99f3 - 564f15138127}'
@@ -131,7 +131,7 @@ class TestBucketPipelinesVariableModule(ModuleTestCase):
                     'client_secret': 'XXX',
                     'username': 'name',
                     'repository': 'repo',
-                    'key': 'PIPELINE_VAR_NAME',
+                    'name': 'PIPELINE_VAR_NAME',
                     'value': '42',
                     'secured': True,
                     'state': 'present',
@@ -143,7 +143,7 @@ class TestBucketPipelinesVariableModule(ModuleTestCase):
 
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
     @patch.object(bitbucket_pipelines_variable, 'get_existing_pipeline_variable', return_value={
-        'key': 'PIPELINE_VAR_NAME',
+        'name': 'PIPELINE_VAR_NAME',
         'value': '42',
         'type': 'pipeline_variable',
         'secured': False,
@@ -157,7 +157,7 @@ class TestBucketPipelinesVariableModule(ModuleTestCase):
                     'client_secret': 'XXX',
                     'username': 'name',
                     'repository': 'repo',
-                    'key': 'PIPELINE_VAR_NAME',
+                    'name': 'PIPELINE_VAR_NAME',
                     'value': '42',
                     'secured': True,
                     'state': 'present',
@@ -169,7 +169,7 @@ class TestBucketPipelinesVariableModule(ModuleTestCase):
 
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
     @patch.object(bitbucket_pipelines_variable, 'get_existing_pipeline_variable', return_value={
-        'key': 'PIPELINE_VAR_NAME',
+        'name': 'PIPELINE_VAR_NAME',
         'value': '42',
         'type': 'pipeline_variable',
         'secured': False,
@@ -183,7 +183,7 @@ class TestBucketPipelinesVariableModule(ModuleTestCase):
                     'client_secret': 'XXX',
                     'username': 'name',
                     'repository': 'repo',
-                    'key': 'PIPELINE_VAR_NAME',
+                    'name': 'PIPELINE_VAR_NAME',
                     'value': '42',
                     'state': 'present',
                 })
@@ -194,7 +194,7 @@ class TestBucketPipelinesVariableModule(ModuleTestCase):
 
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
     @patch.object(bitbucket_pipelines_variable, 'get_existing_pipeline_variable', return_value={
-        'key': 'PIPELINE_VAR_NAME',
+        'name': 'PIPELINE_VAR_NAME',
         'value': 'Im alive',
         'type': 'pipeline_variable',
         'secured': False,
@@ -208,7 +208,7 @@ class TestBucketPipelinesVariableModule(ModuleTestCase):
                     'client_secret': 'XXX',
                     'username': 'name',
                     'repository': 'repo',
-                    'key': 'PIPELINE_VAR_NAME',
+                    'name': 'PIPELINE_VAR_NAME',
                     'value': '42',
                     'state': 'present',
                     '_ansible_check_mode': True,
@@ -220,7 +220,7 @@ class TestBucketPipelinesVariableModule(ModuleTestCase):
 
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
     @patch.object(bitbucket_pipelines_variable, 'get_existing_pipeline_variable', return_value={
-        'key': 'PIPELINE_VAR_NAME',
+        'name': 'PIPELINE_VAR_NAME',
         'value': 'Im alive',
         'type': 'pipeline_variable',
         'secured': False,
@@ -234,7 +234,7 @@ class TestBucketPipelinesVariableModule(ModuleTestCase):
                     'client_secret': 'XXX',
                     'username': 'name',
                     'repository': 'repo',
-                    'key': 'PIPELINE_VAR_NAME',
+                    'name': 'PIPELINE_VAR_NAME',
                     'state': 'absent',
                 })
                 self.module.main()
@@ -252,7 +252,7 @@ class TestBucketPipelinesVariableModule(ModuleTestCase):
                     'client_secret': 'XXX',
                     'username': 'name',
                     'repository': 'repo',
-                    'key': 'PIPELINE_VAR_NAME',
+                    'name': 'PIPELINE_VAR_NAME',
                     'state': 'absent',
                 })
                 self.module.main()
@@ -262,7 +262,7 @@ class TestBucketPipelinesVariableModule(ModuleTestCase):
 
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
     @patch.object(bitbucket_pipelines_variable, 'get_existing_pipeline_variable', return_value={
-        'key': 'PIPELINE_VAR_NAME',
+        'name': 'PIPELINE_VAR_NAME',
         'value': 'Im alive',
         'type': 'pipeline_variable',
         'secured': False,
@@ -276,7 +276,7 @@ class TestBucketPipelinesVariableModule(ModuleTestCase):
                     'client_secret': 'XXX',
                     'username': 'name',
                     'repository': 'repo',
-                    'key': 'PIPELINE_VAR_NAME',
+                    'name': 'PIPELINE_VAR_NAME',
                     'state': 'absent',
                     '_ansible_check_mode': True,
                 })
