@@ -1,7 +1,5 @@
 lib/ansible/modules/cloud/amazon/_ec2_ami_find.py E322
 lib/ansible/modules/cloud/amazon/_ec2_ami_find.py E323
-lib/ansible/modules/cloud/amazon/aws_acm_facts.py E322
-lib/ansible/modules/cloud/amazon/aws_acm_facts.py E323
 lib/ansible/modules/cloud/amazon/aws_api_gateway.py E322
 lib/ansible/modules/cloud/amazon/aws_application_scaling_policy.py E322
 lib/ansible/modules/cloud/amazon/aws_application_scaling_policy.py E326
