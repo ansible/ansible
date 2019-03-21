@@ -13,9 +13,9 @@ platforms, products, and technologies. They explore particular use cases in grea
 
    guide_alicloud
    guide_aws
-   guide_azure
    guide_cloudstack
    guide_gce
+   guide_azure
    guide_online
    guide_packet
    guide_rax
