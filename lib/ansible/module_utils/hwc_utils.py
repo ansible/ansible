@@ -1,8 +1,3 @@
-# 2018.05.11 - changed the implementation for classes of GcpSession and
-#              GcpModule
-#            - changed the name of some variables
-#            - changed remove_nones_from_dict
-#
 # Copyright (c), Google Inc, 2017
 # Simplified BSD License (see licenses/simplified_bsd.txt or
 # https://opensource.org/licenses/BSD-2-Clause)
