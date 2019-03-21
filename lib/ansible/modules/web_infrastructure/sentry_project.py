@@ -68,7 +68,8 @@ options:
 
 notes:
   - Module supports check_mode, but it can't provide 100 percent guarantee that the specified slug hasn't been used before.
-author: "Mikhail Naletov (@okgolove)"
+author:
+  - "Mikhail Naletov (@okgolove)"
 '''
 
 EXAMPLES = '''
@@ -81,6 +82,15 @@ EXAMPLES = '''
     state: present
     team: senior
     url: sentry.example.com
+
+- sentry_project:
+    api_token: 1234567890abcdwxyz
+    organization: example
+    project_name: backend
+    project_slug: backend
+    state: absent
+    team: senior
+    url: sentry.example.com
 '''
 
 RETURN = ''' # '''
@@ -88,19 +98,18 @@ RETURN = ''' # '''
 import json
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
-from ansible.module_utils._text import to_native
 from ansible.module_utils.six.moves.urllib.parse import urlparse
 
 
 def main():
     arg_spec = dict(
         api_token=dict(type="str", required=True),
-        organization=dict(type="str", required=True),
+        organization=dict(type="str", required=True, aliases=['org']),
         project_name=dict(type="str", required=True),
         project_slug=dict(type="str", required=True),
-        state=dict(type="str", required=True, choices=['present', 'absent']),
+        state=dict(type="str", required=True, choices=['absent', 'present']),
         team=dict(type="str", required=True),
-        url=dict(type="str", default="sentry.io")
+        url=dict(type="str", default="sentry.io"),
     )
 
     module = AnsibleModule(argument_spec=arg_spec, supports_check_mode=True)
