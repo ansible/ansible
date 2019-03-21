@@ -31,7 +31,7 @@ options:
     provider:
         description:
             - A dict object containing connection details.
-        version_added: 2.8
+        version_added: '2.8'
         required: true
         suboptions:
             ip_address:
@@ -73,7 +73,7 @@ options:
     provider:
         description:
             - A dict object containing connection details.
-        version_added: 2.8
+        version_added: '2.8'
         suboptions:
             ip_address:
                 description:
