@@ -161,6 +161,7 @@ import time
 from functools import wraps
 from ansible import constants as C
 from ansible.errors import AnsibleConnectionFailure, AnsibleError, AnsibleFileNotFound
+from ansible.module_utils.six import PY3
 from ansible.module_utils.six.moves import xrange
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase
@@ -324,8 +325,8 @@ class Connection(ConnectionBase):
 
         session = self._session
 
-        mark_start = "".join([random.choice(string.letters) for i in xrange(self.MARK_LENGTH)])
-        mark_end = "".join([random.choice(string.letters) for i in xrange(self.MARK_LENGTH)])
+        mark_start = "".join([random.choice(string.ascii_letters) for i in xrange(self.MARK_LENGTH)])
+        mark_end = "".join([random.choice(string.ascii_letters) for i in xrange(self.MARK_LENGTH)])
 
         # Wrap command in markers accordingly for the shell used
         cmd = self._wrap_command(cmd, sudoable, mark_start, mark_end)
@@ -334,9 +335,9 @@ class Connection(ConnectionBase):
 
         # Handle the back-end throttling
         display.vvvvv(u"EXEC write: '{0}'".format(to_text(cmd)), host=self.host)
-        for c in cmd.encode('utf-8'):
-            session.stdin.write(c)
-            time.sleep(10 / 1000.0)
+        for c in cmd:
+            session.stdin.write(c.encode('utf-8'))
+            time.sleep(15 / 1000.0)
 
         # Read stdout between the markers
         stdout = ''
@@ -378,8 +379,10 @@ class Connection(ConnectionBase):
         ''' perform any one-time terminal settings '''
 
         if not self.is_windows:
-            self._session.stdin.write("stty -echo\n")
-            self._session.stdin.write("PS1=''\n")
+            cmd = "stty -echo\n" + "PS1=''\n"
+            if PY3:
+                cmd = to_bytes(cmd)
+            self._session.stdin.write(cmd)
 
     def _wrap_command(self, cmd, sudoable, mark_start, mark_end):
         ''' wrap commad so stdout and status can be extracted '''
@@ -424,6 +427,7 @@ class Connection(ConnectionBase):
 
     def _filter_ansi(self, line):
         ''' remove any ANSI terminal control codes '''
+        line = line.decode('utf-8')
 
         if self.is_windows:
             ansi_filter = re.compile(r'(\x9B|\x1B\[)[0-?]*[ -/]*[@-~]')
@@ -516,7 +520,10 @@ class Connection(ConnectionBase):
             if self._timeout:
                 self._session.terminate()
             else:
-                self._session.communicate("exit\n")
+                cmd = "\nexit\n"
+                if PY3:
+                    cmd = to_bytes(cmd)
+                self._session.communicate(cmd)
 
             display.vvvv(u"TERMINATE SSM SESSION: {0}".format(self._session_id), host=self.host)
             self._client.terminate_session(SessionId=self._session_id)
