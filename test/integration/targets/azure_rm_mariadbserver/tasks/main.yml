@@ -177,6 +177,155 @@
       - output.servers[1]['fully_qualified_domain_name'] != None
 
 #
+# azure_rm_mariadbdatabase tests below
+#
+- name: Create instance of MariaDB Database -- check mode
+  azure_rm_mariadbdatabase:
+    resource_group: "{{ resource_group }}"
+    server_name: mariadbsrv{{ rpfx }}
+    name: testdatabase
+  check_mode: yes
+  register: output
+- name: Assert the resource instance is well created
+  assert:
+    that:
+      - output.changed
+
+- name: Create instance of MariaDB Database
+  azure_rm_mariadbdatabase:
+    resource_group: "{{ resource_group }}"
+    server_name: mariadbsrv{{ rpfx }}
+    name: testdatabase
+    collation: latin1_swedish_ci
+    charset: latin1
+  register: output
+- name: Assert the resource instance is well created
+  assert:
+    that:
+      - output.changed
+      - output.name == 'testdatabase'
+
+- name: Create again instance of MariaDB Database
+  azure_rm_mariadbdatabase:
+    resource_group: "{{ resource_group }}"
+    server_name: mariadbsrv{{ rpfx }}
+    name: testdatabase
+    collation: latin1_swedish_ci
+    charset: latin1
+  register: output
+- name: Assert the state has not changed
+  assert:
+    that:
+      - output.changed == false
+      - output.name == 'testdatabase'
+
+- name: Try to update database without force_update
+  azure_rm_mariadbdatabase:
+    resource_group: "{{ resource_group }}"
+    server_name: mariadbsrv{{ rpfx }}
+    name: testdatabase
+    collation: latin1_czech_ci
+    charset: latin1
+  ignore_errors: yes
+  register: output
+- name: Assert that nothing has changed
+  assert:
+    that:
+      - output.changed == False
+
+- name: Update instance of database using force_update
+  azure_rm_mariadbdatabase:
+    resource_group: "{{ resource_group }}"
+    server_name: mariadbsrv{{ rpfx }}
+    name: testdatabase
+    collation: latin1_czech_ci
+    charset: latin1
+    force_update: yes
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed
+      - output.name == 'testdatabase'
+
+- name: Create second instance of MariaDB Database
+  azure_rm_mariadbdatabase:
+    resource_group: "{{ resource_group }}"
+    server_name: mariadbsrv{{ rpfx }}
+    name: testdatabase2
+
+- name: Gather facts MariaDB Database
+  azure_rm_mariadbdatabase_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: mariadbsrv{{ rpfx }}
+    name: testdatabase
+  register: output 
+
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.databases[0]['server_name'] != None
+      - output.databases[0]['name'] != None
+      - output.databases[0]['charset'] != None
+      - output.databases[0]['collation'] != None
+
+- name: Gather facts MariaDB Database
+  azure_rm_mariadbdatabase_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: mariadbsrv{{ rpfx }}
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.databases[0]['server_name'] != None
+      - output.databases[0]['name'] != None
+      - output.databases[0]['charset'] != None
+      - output.databases[0]['collation'] != None
+      - output.databases[1]['server_name'] != None
+      - output.databases[1]['name'] != None
+      - output.databases[1]['charset'] != None
+      - output.databases[1]['collation'] != None
+
+- name: Delete instance of MariaDB Database -- check mode
+  azure_rm_mariadbdatabase:
+    resource_group: "{{ resource_group }}"
+    server_name: mariadbsrv{{ rpfx }}
+    name: testdatabase
+    state: absent
+  check_mode: yes
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed
+
+- name: Delete instance of MariaDB Database
+  azure_rm_mariadbdatabase:
+    resource_group: "{{ resource_group }}"
+    server_name: mariadbsrv{{ rpfx }}
+    name: testdatabase
+    state: absent
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed
+
+- name: Delete unexisting instance of MariaDB Database
+  azure_rm_mariadbdatabase:
+    resource_group: "{{ resource_group }}"
+    server_name: mariadbsrv{{ rpfx }}
+    name: testdatabase
+    state: absent
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed == false
+
+#
 # azure_rm_firewallrule tests below
 #
 - name: Create instance of Firewall Rule -- check mode
