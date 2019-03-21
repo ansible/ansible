@@ -108,7 +108,7 @@ options:
     description:
       - List of tags. Tags are a list of dictionaries having keys I(key) and I(value).
       - "To delete all tags, set a empty list e.g. I(tags: [])."
-    type: str
+    type: list
     aliases: [ tag ]
     version_added: '2.4'
   url:
