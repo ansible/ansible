@@ -1,4 +1,5 @@
-.. _scenario_guides:
+:orphan:
+.. unified index page included for backwards compatibility
 
 ******************
 Scenario Guides
