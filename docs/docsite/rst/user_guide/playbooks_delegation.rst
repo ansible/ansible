@@ -116,7 +116,7 @@ You can also mix and match the values::
 Rolling Update Tiered
 ``````````````````````````
 
-In additoin to the ``serial`` parameter you can also specify updates roll out in a tiered fasion based off fact from the specified hosts. You can use the ``serial_tier_fact`` parameter to specify the item to group nodes by. When using ``serial_tier_fact`` the ``serial`` parameter will still be honored but will apply to each tier individually::
+In addition to the ``serial`` parameter you can also specify updates roll out in a tiered fasion based off a fact from the specified hosts. You can use the ``serial_tier_fact`` parameter to specify the fact to group nodes by. When using ``serial_tier_fact`` the ``serial`` parameter will still be honored but will apply to each tier individually::
 
     - name: example play
       hosts: databases
@@ -134,7 +134,7 @@ In additoin to the ``serial`` parameter you can also specify updates roll out in
         debug:
           msg: "{{ inventory_hostname }}"
 
-In the above example nodes would be grouped based off the host fact ``rack_id``. Hosts that do not have a value set will go into the same group::
+In the above example hosts would be grouped based off the host fact ``rack_id``. Hosts that do not have a value set will go into the same group::
 
     [databases]
     db1 rack_id=rack1
