@@ -208,6 +208,10 @@ TEMPLATE_ARG_SPEC = {
         ],
         'default': 'present'
     },
+    'merge_type': {
+        'type': 'list',
+        'choices': ['json', 'merge', 'strategic-merge']
+    },
     'objects': {
         'type': 'list',
     },
