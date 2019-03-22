@@ -35,6 +35,12 @@ options:
               user must use Ansible structure of the parameters not the Kubernetes API structure. For more information
               please take a look at M(kubevirt_vm) module and at EXAMPLES section, where you can see example.
         type: list
+    merge_type:
+        description:
+            - Whether to override the default patch merge approach with a specific type. By default, the strategic
+              merge will typically be used.
+        type: list
+        choices: [ json, merge, strategic-merge ]
     display_name:
         description:
             - "A brief, user-friendly name, which can be employed by user interfaces."
