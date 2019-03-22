@@ -363,7 +363,7 @@ You can replace these platform-specific modules with the network agnostic ``cli_
 .. code-block:: yaml
 
   ---
-  - hosts: cisco
+  - hosts: network
     gather_facts: false
     connection: network_cli
 
