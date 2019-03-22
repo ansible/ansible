@@ -17,7 +17,7 @@ DOCUMENTATION = """
 lookup: :aws_kms_encrypt
 author:
     - Achintha Gunasekara (@achinthagunasekara) <contact@achinthagunasekara.com>
-version_added: "2.7"
+version_added: "2.8"
 requirements:
     - boto3
     - aws_encryption_sdk
