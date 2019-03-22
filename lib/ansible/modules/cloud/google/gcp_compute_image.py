@@ -730,10 +730,10 @@ class ImageImageencryptionkey(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({u'rawKey': self.request.get('raw_key'), u'sha256': self.request.get('sha256')})
+        return remove_nones_from_dict({u'rawKey': self.request.get('raw_key')})
 
     def from_response(self):
-        return remove_nones_from_dict({u'rawKey': self.request.get(u'rawKey'), u'sha256': self.request.get(u'sha256')})
+        return remove_nones_from_dict({u'rawKey': self.request.get(u'rawKey')})
 
 
 class ImageRawdisk(object):
@@ -764,10 +764,10 @@ class ImageSourcediskencryptionkey(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({u'rawKey': self.request.get('raw_key'), u'sha256': self.request.get('sha256')})
+        return remove_nones_from_dict({u'rawKey': self.request.get('raw_key')})
 
     def from_response(self):
-        return remove_nones_from_dict({u'rawKey': self.request.get(u'rawKey'), u'sha256': self.request.get(u'sha256')})
+        return remove_nones_from_dict({u'rawKey': self.request.get(u'rawKey')})
 
 
 if __name__ == '__main__':
