@@ -794,7 +794,7 @@ def main():
             ('state', 'absent', ['record']),
             ('type', 'SRV', ['proto', 'service']),
             ('type', 'TLSA', ['proto', 'port']),
-        ],
+        ]
         ),
     )
 
