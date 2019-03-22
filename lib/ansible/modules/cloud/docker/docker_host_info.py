@@ -132,7 +132,7 @@ EXAMPLES = '''
   register: result
 
 - debug:
-    var: result.docker_host_facts
+    var: result.host_info
 
 '''
 
@@ -143,7 +143,7 @@ can_talk_to_docker:
     returned: both on success and on error
     type: bool
 
-host_facts:
+host_info:
     description:
       - Facts representing the basic state of the docker host. Matches the C(docker system info) output.
     returned: always
@@ -209,7 +209,7 @@ class DockerHostManager(DockerBaseClass):
 
         listed_objects = ['volumes', 'networks', 'containers', 'images']
 
-        self.results['host_facts'] = self.get_docker_host_facts()
+        self.results['host_info'] = self.get_docker_host_info()
 
         if self.client.module.params['disk_usage']:
             self.results['disk_usage'] = self.get_docker_disk_usage_facts()
@@ -221,7 +221,7 @@ class DockerHostManager(DockerBaseClass):
                 filters = clean_dict_booleans_for_docker_api(client.module.params.get(filter_name))
                 self.results[returned_name] = self.get_docker_items_list(docker_object, filters)
 
-    def get_docker_host_facts(self):
+    def get_docker_host_info(self):
         try:
             return self.client.info()
         except APIError as exc:

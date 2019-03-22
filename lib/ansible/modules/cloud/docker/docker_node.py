@@ -122,7 +122,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-node_facts:
+node:
   description: Information about node after 'update' operation
   returned: success
   type: dict
@@ -253,10 +253,10 @@ class SwarmNodeManager(DockerBaseClass):
                                             node_spec=node_spec)
                 except APIError as exc:
                     self.client.fail("Failed to update node : %s" % to_native(exc))
-            self.results['node_facts'] = self.client.get_node_inspect(node_id=node_info['ID'])
+            self.results['node'] = self.client.get_node_inspect(node_id=node_info['ID'])
             self.results['changed'] = changed
         else:
-            self.results['node_facts'] = node_info
+            self.results['node'] = node_info
             self.results['changed'] = changed
 
 
