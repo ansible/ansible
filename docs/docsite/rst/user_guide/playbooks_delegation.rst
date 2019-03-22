@@ -111,6 +111,105 @@ You can also mix and match the values::
 .. note::
      No matter how small the percentage, the number of hosts per pass will always be 1 or greater.
 
+.. _rolling_tiered_updates:
+
+Rolling Update Tiered
+``````````````````````````
+
+In additoin to the ``serial`` parameter you can also specify updates roll out in a tiered fasion based off an inventory item on hosts. You can use the ``serial_inv_tier`` parameter to specify the item to group nodes by. When using this parameter the ``serial`` parameter will be ignored::
+
+    - name: test play
+      hosts: databases
+      serial_inv_tier: rack_id
+      tasks:
+      - name: task one
+        debug:
+          msg: "{{ inventory_hostname }}"
+      - name: task two
+        debug:
+          msg: "{{ inventory_hostname }}"
+
+In the above example nodes would be grouped based off the inventory item ``rack_id``. Hosts that do not have a value set will go into the same group::
+
+    [databases]
+    db1 rack_id=rack1
+    db2 rack_id=rack1
+    db3 rack_id=rack2
+    db4 rack_id=rack5
+    db5 
+    db6 
+
+The above inventory example would execute like below::
+
+    PLAY [test play] ******************************************
+    
+    TASK [task one] *******************************************
+    ok: [db5] => {
+        "msg": "db5"
+    }
+    ok: [db6] => {
+        "msg": "db6"
+    }
+    
+    TASK [task two] *******************************************
+    ok: [db5] => {
+        "msg": "db5"
+    }
+    ok: [db6] => {
+        "msg": "db6"
+    }
+    
+    PLAY [test play] ******************************************
+    
+    TASK [task one] *******************************************
+    ok: [db4] => {
+        "msg": "db4"
+    }
+    
+    TASK [task two] *******************************************
+    ok: [db4] => {
+        "msg": "db4"
+    }
+    
+    PLAY [test play] ******************************************
+    
+    TASK [task one] *******************************************
+    ok: [db3] => {
+        "msg": "db3"
+    }
+    
+    TASK [task two] *******************************************
+    ok: [db3] => {
+        "msg": "db3"
+    }
+    
+    PLAY [test play] ******************************************
+    
+    TASK [task one] *******************************************
+    ok: [db1] => {
+        "msg": "db1"
+    }
+    ok: [db2] => {
+        "msg": "db2"
+    }
+    
+    TASK [task two] *******************************************
+    ok: [db1] => {
+        "msg": "db1"
+    }
+    ok: [db2] => {
+        "msg": "db2"
+    }
+    
+    PLAY RECAP ************************************************
+    db1  : ok=2    changed=0    unreachable=0    failed=0
+    db2  : ok=2    changed=0    unreachable=0    failed=0
+    db3  : ok=2    changed=0    unreachable=0    failed=0
+    db4  : ok=2    changed=0    unreachable=0    failed=0
+    db5  : ok=2    changed=0    unreachable=0    failed=0
+    db6  : ok=2    changed=0    unreachable=0    failed=0
+
+
 
 .. _maximum_failure_percentage:
 
