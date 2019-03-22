@@ -211,7 +211,7 @@ def map_obj_to_commands(want, have, module):
                                 else:
                                     remove_lines.append('no ' + i)
 
-                    elif 'port-object' in group_type and 'service' in have_group_type:
+                    elif 'port-object' in group_type and 'port' in have_group_type:
                         commands.append('object-group service {0} {1}'.format(name, protocol))
                         for i in lines:
                             if i not in have_lines:
@@ -304,6 +304,9 @@ def main():
     commands = map_obj_to_commands(want, have, module)
 
     result['commands'] = commands
+    result['want'] = want
+    result['have'] = have
+
 
     if commands:
         if not module.check_mode:
