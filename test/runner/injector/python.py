@@ -11,8 +11,8 @@ def main():
     name = os.path.basename(__file__)
     args = [sys.executable]
 
-    coverage_config = os.environ.get('_ANSIBLE_COVERAGE_CONFIG')
-    coverage_output = os.environ.get('_ANSIBLE_COVERAGE_OUTPUT')
+    coverage_config = os.environ.get('COVERAGE_CONF')
+    coverage_output = os.environ.get('COVERAGE_FILE')
 
     if coverage_config:
         if coverage_output:
