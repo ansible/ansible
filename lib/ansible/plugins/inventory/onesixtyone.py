@@ -118,11 +118,11 @@ class InventoryModule(BaseInventoryPlugin):
         try:
             # Using gevent to parallelize reverse dns lookups and adding entries to inventory
             jobs = [gevent.spawn(self._add_device, self, device) for device in self._discovery()]
-            gevent.joinall(jobs, timeout=20)            
-        
+            gevent.joinall(jobs, timeout=20)
+
         # Exception raised by gevent
         except LoopExit as e:
-            raise AnsibleParserError('gevent library exception, this should not happen: %s', to_native(e))
+            raise AnsibleParserError('gevent library exception, this should not happen: %s' % to_native(e))
 
     def _match_platform(self, text):
         """ Matches platforms against text in sysDescr and return the platform.
