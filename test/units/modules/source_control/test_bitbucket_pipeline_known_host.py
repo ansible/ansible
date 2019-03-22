@@ -20,7 +20,7 @@ class TestBucketPipelineKnownHostModule(ModuleTestCase):
                     'client_secret': 'XXX',
                     'username': 'name',
                     'repository': 'repo',
-                    'hostname': 'bitbucket.org',
+                    'name': 'bitbucket.org',
                     'state': 'present',
                 })
                 self.module.main()
@@ -39,7 +39,7 @@ class TestBucketPipelineKnownHostModule(ModuleTestCase):
                     'client_secret': 'XXX',
                     'username': 'name',
                     'repository': 'repo',
-                    'hostname': 'bitbucket.org',
+                    'name': 'bitbucket.org',
                     'public_key': 'public',
                     'state': 'present',
                 })
@@ -69,7 +69,7 @@ class TestBucketPipelineKnownHostModule(ModuleTestCase):
                     'client_secret': 'XXX',
                     'username': 'name',
                     'repository': 'repo',
-                    'hostname': 'bitbucket.org',
+                    'name': 'bitbucket.org',
                     'state': 'present',
                 })
                 self.module.main()
@@ -87,7 +87,7 @@ class TestBucketPipelineKnownHostModule(ModuleTestCase):
                     'client_secret': 'XXX',
                     'username': 'name',
                     'repository': 'repo',
-                    'hostname': 'bitbucket.org',
+                    'name': 'bitbucket.org',
                     'state': 'present',
                     '_ansible_check_mode': True,
                 })
@@ -117,7 +117,7 @@ class TestBucketPipelineKnownHostModule(ModuleTestCase):
                     'client_secret': 'XXX',
                     'username': 'name',
                     'repository': 'repo',
-                    'hostname': 'bitbucket.org',
+                    'name': 'bitbucket.org',
                     'state': 'absent',
                 })
                 self.module.main()
@@ -135,7 +135,7 @@ class TestBucketPipelineKnownHostModule(ModuleTestCase):
                     'client_secret': 'XXX',
                     'username': 'name',
                     'repository': 'repo',
-                    'hostname': 'bitbucket.org',
+                    'name': 'bitbucket.org',
                     'state': 'absent',
                 })
                 self.module.main()
@@ -164,7 +164,7 @@ class TestBucketPipelineKnownHostModule(ModuleTestCase):
                     'client_secret': 'XXX',
                     'username': 'name',
                     'repository': 'repo',
-                    'hostname': 'bitbucket.org',
+                    'name': 'bitbucket.org',
                     'state': 'absent',
                     '_ansible_check_mode': True,
                 })

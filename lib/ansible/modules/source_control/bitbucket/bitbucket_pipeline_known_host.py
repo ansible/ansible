@@ -44,7 +44,7 @@ options:
       - Repository owner.
     type: str
     required: true
-  hostname:
+  name:
     description:
       - Hostname of the known host.
     type: str
@@ -69,7 +69,7 @@ EXAMPLES = r'''
   bitbucket_pipeline_known_host:
     repository: 'bitbucket-repo'
     username: bitbucket_username
-    hostname: '{{ item }}'
+    name: '{{ item }}'
     state: present
   with_items:
     - bitbucket.org
@@ -79,14 +79,14 @@ EXAMPLES = r'''
   bitbucket_pipeline_known_host:
     repository: bitbucket-repo
     username: bitbucket_username
-    hostname: bitbucket.org
+    name: bitbucket.org
     state: absent
 
 - name: Specify public key file
   bitbucket_pipeline_known_host:
     repository: bitbucket-repo
     username: bitbucket_username
-    hostname: bitbucket.org
+    name: bitbucket.org
     public_key: '{{lookup("file", "bitbucket.pub") }}'
     state: absent
 '''
@@ -110,7 +110,7 @@ BITBUCKET_API_ENDPOINTS = {
 def get_existing_known_host(module, bitbucket):
     """
     Search for a host in Bitbucket pipelines known hosts
-    with the name specified in module param `hostname`
+    with the name specified in module param `name`
 
     :param module: instance of the :class:`AnsibleModule`
     :param bitbucket: instance of the :class:`BitbucketHelper`
@@ -152,7 +152,7 @@ def get_existing_known_host(module, bitbucket):
         if info['status'] != 200:
             module.fail_json(msg='Failed to retrieve list of known hosts: {0}'.format(info))
 
-        host = next(filter(lambda v: v['hostname'] == module.params['hostname'], content['values']), None)
+        host = next(filter(lambda v: v['hostname'] == module.params['name'], content['values']), None)
 
         if host is not None:
             return host
@@ -202,7 +202,7 @@ def get_host_key(module, hostname):
 
 
 def create_known_host(module, bitbucket):
-    hostname = module.params['hostname']
+    hostname = module.params['name']
     key_type, key = 'ssh-rsa', module.params['public_key']
 
     if key is None:
@@ -242,7 +242,7 @@ def delete_known_host(module, bitbucket, known_host_uuid):
 
     if info['status'] != 204:
         module.fail_json(msg='Failed to delete known host `{hostname}`: {info}'.format(
-            hostname=module.params['hostname'],
+            hostname=module.params['name'],
             info=info,
         ))
 
@@ -252,7 +252,7 @@ def main():
     argument_spec.update(
         repository=dict(type='str', required=True),
         username=dict(type='str', required=True),
-        hostname=dict(type='str', required=True),
+        name=dict(type='str', required=True),
         public_key=dict(type='str'),
         state=dict(type='str', choices=['present', 'absent'], required=True),
     )
