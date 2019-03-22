@@ -274,7 +274,11 @@ class CloudWatchEventRule(object):
                 if 'task_definition_arn' in target['ecs_parameters']:
                     target_request['EcsParameters']['TaskDefinitionArn'] = ecs_parameters['task_definition_arn']
                 if 'task_count' in target['ecs_parameters']:
-                    target_request['EcsParameters']['TaskCount'] = ecs_parameters['task_count'] if type(ecs_parameters['task_count']) in [int, long] else long(ecs_parameters['task_count'])
+                    target_request['EcsParameters'][
+                        'TaskCount'] = ecs_parameters[
+                            'task_count'] if isinstance(
+                                ecs_parameters['task_count'], int) else int(
+                                    ecs_parameters['task_count'])
             targets_request.append(target_request)
         return targets_request
 
