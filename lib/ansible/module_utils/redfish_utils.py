@@ -786,6 +786,35 @@ class RedfishUtils(object):
     def get_multi_boot_order(self):
         return self.aggregate(self.get_boot_order)
 
+    def get_boot_override(self):
+        result = {}
+
+        properties = ["BootSourceOverrideEnabled", "BootSourceOverrideTarget",
+                      "BootSourceOverrideMode", "UefiTargetBootSourceOverride"]
+
+        response = self.get_request(self.root_uri + self.systems_uris[0])
+        if response['ret'] is False:
+            return response
+        result['ret'] = True
+        data = response['data']
+
+        if 'Boot' not in data:
+            return {'ret': False, 'msg': "Key Boot not found"}
+
+        boot = data['Boot']
+
+        result['boot_override'] = {}
+        if "BootSourceOverrideEnabled" in boot:
+            if boot["BootSourceOverrideEnabled"] is not False:
+                for property in properties:
+                    if property in boot:
+                        if boot[property] is not None:
+                            result['boot_override'][property] = boot[property]
+        else:
+            return {'ret': False, 'msg': "No boot override is enabled."}
+
+        return result
+
     def set_bios_default_settings(self):
         result = {}
         key = "Bios"
