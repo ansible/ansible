@@ -38,7 +38,7 @@ DOCUMENTATION = """
         type: bool
         default: 'no'
       subkey:
-        description: Return a specific subkey of the password.
+        description: Return a specific subkey of the password. subkey=password will always return the first line.
         default: password
       userpass:
         description: Specify a password to save, instead of a generated one.
