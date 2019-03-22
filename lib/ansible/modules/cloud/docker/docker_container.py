@@ -1276,15 +1276,14 @@ class TaskParameters(DockerBaseClass):
                 if self.client.option_minimal_versions[value]['supported']:
                     result[key] = getattr(self, value)
 
-        if self.networks_cli_compatible and self.networks is not None:
+        if self.networks_cli_compatible and self.networks:
+            network = self.networks[0]
+            params = dict()
+            for para in ('ipv4_address', 'ipv6_address', 'links', 'aliases'):
+                if network.get(para):
+                    params[para] = network[para]
             network_config = dict()
-            if self.networks:
-                network = self.networks[0]
-                params = dict()
-                for para in ('ipv4_address', 'ipv6_address', 'links', 'aliases'):
-                    if network.get(para):
-                        params[para] = network[para]
-                network_config[network['name']] = self.client.create_endpoint_config(params)
+            network_config[network['name']] = self.client.create_endpoint_config(params)
             result['networking_config'] = self.client.create_networking_config(network_config)
         return result
 
@@ -2965,7 +2964,7 @@ def main():
         supports_check_mode=True,
         min_docker_api_version='1.20',
     )
-    if client.module.params['networks_cli_compatible'] is None and client.module.params['networks'] is not None:
+    if client.module.params['networks_cli_compatible'] is None and client.module.params['networks']:
         client.module.deprecate(
             'Please note that docker_container handles networks slightly different than docker CLI. '
             'If you specify networks, the default network will still be attached as the first network. '

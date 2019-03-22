@@ -281,7 +281,7 @@
       force_kill: yes
     diff: no
 
-  - name: networks_cli_compatible=yes, no networks
+  - name: networks_cli_compatible=yes, empty networks list specified
     docker_container:
       image: alpine:3.8
       command: '/bin/sh -c "sleep 10m"'
@@ -291,7 +291,7 @@
       networks_cli_compatible: yes
     register: networks_3
 
-  - name: networks_cli_compatible=yes, no networks
+  - name: networks_cli_compatible=yes, empty networks list specified
     docker_container:
       image: alpine:3.8
       command: '/bin/sh -c "sleep 10m"'
@@ -301,15 +301,15 @@
       networks_cli_compatible: yes
     register: networks_4
 
-  - name: networks_cli_compatible=yes, add a network
+  - name: networks_cli_compatible=yes, empty networks list specified, purge_networks
     docker_container:
       image: alpine:3.8
       command: '/bin/sh -c "sleep 10m"'
       name: "{{ cname }}"
       state: started
-      networks:
-      - name: "{{ nname_1 }}"
+      networks: []
       networks_cli_compatible: yes
+      purge_networks: yes
     register: networks_5
 
   - name: cleanup
@@ -337,6 +337,16 @@
       networks_cli_compatible: yes
     register: networks_7
 
+  - name: networks_cli_compatible=yes, networks not specified, purge_networks
+    docker_container:
+      image: alpine:3.8
+      command: '/bin/sh -c "sleep 10m"'
+      name: "{{ cname }}"
+      state: started
+      networks_cli_compatible: yes
+      purge_networks: yes
+    register: networks_8
+
   - name: cleanup
     docker_container:
       name: "{{ cname }}"
@@ -358,16 +368,17 @@
       - networks_2.container.NetworkSettings.Networks | length == 2
       - nname_1 in networks_2.container.NetworkSettings.Networks
       - nname_2 in networks_1.container.NetworkSettings.Networks
-      # networks_3 has no networks
+      # networks_3 has networks 'bridge'
       - networks_3 is changed
-      - networks_3.container.NetworkSettings.Networks | length == 0
-      # networks_4 has no networks
+      - networks_3.container.NetworkSettings.Networks | length == 1
+      - "'default' in networks_3.container.NetworkSettings.Networks or 'bridge' in networks_3.container.NetworkSettings.Networks"
+      # networks_4 has networks 'bridge'
       - networks_4 is not changed
-      - networks_4.container.NetworkSettings.Networks | length == 0
-      # networks_5 has networks nname_1
+      - networks_4.container.NetworkSettings.Networks | length == 1
+      - "'default' in networks_4.container.NetworkSettings.Networks or 'bridge' in networks_4.container.NetworkSettings.Networks"
+      # networks_5 has no networks
       - networks_5 is changed
-      - networks_5.container.NetworkSettings.Networks | length == 1
-      - nname_1 in networks_5.container.NetworkSettings.Networks
+      - networks_5.container.NetworkSettings.Networks | length == 0
       # networks_6 has networks 'bridge'
       - networks_6 is changed
       - networks_6.container.NetworkSettings.Networks | length == 1
@@ -376,6 +387,9 @@
       - networks_7 is not changed
       - networks_7.container.NetworkSettings.Networks | length == 1
       - "'default' in networks_7.container.NetworkSettings.Networks or 'bridge' in networks_7.container.NetworkSettings.Networks"
+      # networks_8 has no networks
+      - networks_8 is changed
+      - networks_8.container.NetworkSettings.Networks | length == 0
 
   when: docker_py_version is version('1.10.0', '>=')
 
