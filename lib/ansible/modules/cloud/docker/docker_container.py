@@ -2985,7 +2985,7 @@ def main():
             '(You can specify purge_networks to remove all networks not explicitly listed.) '
             'This behavior will change in Ansible 2.12. You can change the behavior now by setting '
             'the new `networks_cli_compatible` option to `yes`, and remove this warning by setting '
-            'it to `no`.',
+            'it to `no`',
             version='2.12'
         )
 
