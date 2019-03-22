@@ -45,12 +45,14 @@ EXAMPLES = '''
   register: self_heal_status
 - debug:
     var: self_heal_status
-# status along with the number of files still in process:
-- gluster_heal_facts:
+
+- name: Gather rebalance facts about all gluster hosts in the cluster
+  gluster_heal_facts:
     name: test_volume
-    status_filter: self-heal
+    status_filter: rebalance
+  register: rebalance_status
 - debug:
-    var: gluster_hosts
+    var: rebalance_status
 '''
 
 RETURN = '''
