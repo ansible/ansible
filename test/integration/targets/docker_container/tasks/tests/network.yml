@@ -145,6 +145,7 @@
       - name: bridge
       - name: "{{ nname_1 }}"
       networks_cli_compatible: no
+      force_kill: yes
     register: networks_3
 
   - name: networks_cli_compatible=no, networks, purge_networks (idempotency)
@@ -181,6 +182,7 @@
       networks:
       - name: bridge
       networks_cli_compatible: no
+      force_kill: yes
     register: networks_6
 
   - name: networks_cli_compatible=no, networks, purge_networks (more networks)
@@ -193,8 +195,8 @@
       networks:
       - name: bridge
       - name: "{{ nname_2 }}"
-      force_kill: yes
       networks_cli_compatible: no
+      force_kill: yes
     register: networks_7
 
   - name: cleanup
@@ -310,6 +312,7 @@
       networks: []
       networks_cli_compatible: yes
       purge_networks: yes
+      force_kill: yes
     register: networks_5
 
   - name: cleanup
@@ -326,6 +329,7 @@
       name: "{{ cname }}"
       state: started
       networks_cli_compatible: yes
+      force_kill: yes
     register: networks_6
 
   - name: networks_cli_compatible=yes, networks not specified
@@ -345,6 +349,7 @@
       state: started
       networks_cli_compatible: yes
       purge_networks: yes
+      force_kill: yes
     register: networks_8
 
   - name: cleanup
@@ -457,6 +462,7 @@
       networks_cli_compatible: yes
       comparisons:
         networks: allow_more_present
+      force_kill: yes
     register: networks_5
 
   - name: different networks, comparisons=strict
@@ -470,6 +476,7 @@
       networks_cli_compatible: yes
       comparisons:
         networks: strict
+      force_kill: yes
     register: networks_6
 
   - name: less networks, comparisons=strict
@@ -482,6 +489,7 @@
       networks_cli_compatible: yes
       comparisons:
         networks: strict
+      force_kill: yes
     register: networks_7
 
   - name: cleanup
