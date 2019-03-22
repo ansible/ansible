@@ -636,9 +636,8 @@ class AnsibleModule(object):
         self._set_fallbacks()
 
         # append to legal_inputs and then possibly check against them
-        alias_warnings = []
         try:
-            self.aliases = self._handle_aliases(alias_warnings=alias_warnings)
+            self.aliases = self._handle_aliases()
         except (ValueError, TypeError) as e:
             # Use exceptions here because it isn't safe to call fail_json until no_log is processed
             print('\n{"failed": true, "msg": "Module alias error: %s"}' % to_native(e))
@@ -686,16 +685,13 @@ class AnsibleModule(object):
         self._set_defaults(pre=False)
 
         # deal with options sub-spec
-        self._handle_options(alias_warnings=alias_warnings)
+        self._handle_options()
 
         if not self.no_log:
             self._log_invocation()
 
         # finally, make sure we're in a sane working dir
         self._set_cwd()
-
-        for option, alias in alias_warnings:
-            self.warn('Both option %s and its alias %s are set.' % (option, alias))
 
         # Do this at the end so that logging parameters have been set up
         # This is to warn third party module authors that the functionatlity is going away.
@@ -1417,14 +1413,17 @@ class AnsibleModule(object):
             self.fail_json(msg="An unknown error was encountered while attempting to validate the locale: %s" %
                            to_native(e), exception=traceback.format_exc())
 
-    def _handle_aliases(self, spec=None, param=None, alias_warnings=None):
+    def _handle_aliases(self, spec=None, param=None, option_prefix=''):
         if spec is None:
             spec = self.argument_spec
         if param is None:
             param = self.params
 
         # this uses exceptions as it happens before we can safely call fail_json
+        alias_warnings = []
         alias_results, self._legal_inputs = handle_aliases(spec, param, alias_warnings=alias_warnings)
+        for option, alias in alias_warnings:
+            self._warnings.append('Both option %s and its alias %s are set.' % (option_prefix + option, option_prefix + alias))
         return alias_results
 
     def _handle_no_log_values(self, spec=None, param=None):
@@ -1669,7 +1668,7 @@ class AnsibleModule(object):
     def _check_type_bits(self, value):
         return check_type_bits(value)
 
-    def _handle_options(self, argument_spec=None, params=None, prefix='', alias_warnings=None):
+    def _handle_options(self, argument_spec=None, params=None, prefix=''):
         ''' deal with options to create sub spec '''
         if argument_spec is None:
             argument_spec = self.argument_spec
@@ -1706,10 +1705,7 @@ class AnsibleModule(object):
                     new_prefix += '.'
 
                     self._set_fallbacks(spec, param)
-                    alias_warnings_ = []
-                    options_aliases = self._handle_aliases(spec, param, alias_warnings=alias_warnings_)
-                    for option, alias in alias_warnings_:
-                        alias_warnings.append((new_prefix + option, new_prefix + alias))
+                    options_aliases = self._handle_aliases(spec, param, option_prefix=new_prefix)
 
                     self._handle_no_log_values(spec, param)
                     options_legal_inputs = list(spec.keys()) + list(options_aliases.keys())
@@ -1735,7 +1731,7 @@ class AnsibleModule(object):
                     self._set_defaults(pre=False, spec=spec, param=param)
 
                     # handle multi level options (sub argspec)
-                    self._handle_options(spec, param, new_prefix, alias_warnings)
+                    self._handle_options(spec, param, new_prefix)
                 self._options_context.pop()
 
     def _get_wanted_type(self, wanted, k):
