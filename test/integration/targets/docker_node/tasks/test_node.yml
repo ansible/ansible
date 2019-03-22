@@ -80,10 +80,10 @@
          - 'set_as_manager_2 is not changed'
          - 'set_as_manager_3 is not changed'
          - 'set_as_manager_4 is not changed'
-         - 'set_as_manager_1.node_facts.Spec.Role == "manager"'
-         - 'set_as_manager_2.node_facts.Spec.Role == "manager"'
-         - 'set_as_manager_3.node_facts.Spec.Role == "manager"'
-         - 'set_as_manager_4.node_facts.Spec.Role == "manager"'
+         - 'set_as_manager_1.node.Spec.Role == "manager"'
+         - 'set_as_manager_2.node.Spec.Role == "manager"'
+         - 'set_as_manager_3.node.Spec.Role == "manager"'
+         - 'set_as_manager_4.node.Spec.Role == "manager"'
 
 ####################################################################
 ## Set node as swarm worker ########################################
@@ -147,7 +147,7 @@
          - 'set_as_paused_2 is changed'
          - 'set_as_paused_3 is not changed'
          - 'set_as_paused_4 is not changed'
-         - 'set_as_paused_2.node_facts.Spec.Availability == "pause"'
+         - 'set_as_paused_2.node.Spec.Availability == "pause"'
 
 ####################################################################
 ## Set node as drained #############################################
@@ -186,7 +186,7 @@
          - 'output_drain_2 is changed'
          - 'output_drain_3 is not changed'
          - 'output_drain_4 is not changed'
-         - 'output_drain_2.node_facts.Spec.Availability == "drain"'
+         - 'output_drain_2.node.Spec.Availability == "drain"'
 
 
 ####################################################################
@@ -226,7 +226,7 @@
          - 'output_active_2 is changed'
          - 'output_active_3 is not changed'
          - 'output_active_4 is not changed'
-         - 'output_active_2.node_facts.Spec.Availability == "active"'
+         - 'output_active_2.node.Spec.Availability == "active"'
 
 ####################################################################
 ## Add single label ###############################################
@@ -269,8 +269,8 @@
          - 'output_add_single_label_2 is changed'
          - 'output_add_single_label_3 is not changed'
          - 'output_add_single_label_4 is not changed'
-         - 'output_add_single_label_2.node_facts.Spec.Labels | length == 1'
-         - 'output_add_single_label_2.node_facts.Spec.Labels.label1 == "value1"'
+         - 'output_add_single_label_2.node.Spec.Labels | length == 1'
+         - 'output_add_single_label_2.node.Spec.Labels.label1 == "value1"'
 
 ####################################################################
 ## Add multiple labels #############################################
@@ -329,9 +329,9 @@
          - 'output_add_multiple_labels_2 is changed'
          - 'output_add_multiple_labels_3 is not changed'
          - 'output_add_multiple_labels_4 is not changed'
-         - 'output_add_multiple_labels_2.node_facts.Spec.Labels | length == 6'
-         - 'output_add_multiple_labels_2.node_facts.Spec.Labels.label1 == "value1"'
-         - 'output_add_multiple_labels_2.node_facts.Spec.Labels.label6 == "value6"'
+         - 'output_add_multiple_labels_2.node.Spec.Labels | length == 6'
+         - 'output_add_multiple_labels_2.node.Spec.Labels.label1 == "value1"'
+         - 'output_add_multiple_labels_2.node.Spec.Labels.label6 == "value6"'
 
 ####################################################################
 ## Update label value ##############################################
@@ -374,9 +374,9 @@
          - 'output_update_label_2 is changed'
          - 'output_update_label_3 is not changed'
          - 'output_update_label_4 is not changed'
-         - 'output_update_label_2.node_facts.Spec.Labels | length == 6'
-         - 'output_update_label_2.node_facts.Spec.Labels.label1 == "value1111"'
-         - 'output_update_label_2.node_facts.Spec.Labels.label5 == "value5"'
+         - 'output_update_label_2.node.Spec.Labels | length == 6'
+         - 'output_update_label_2.node.Spec.Labels.label1 == "value1111"'
+         - 'output_update_label_2.node.Spec.Labels.label5 == "value5"'
 
 ####################################################################
 ## Update multiple labels values ###################################
@@ -423,10 +423,10 @@
          - 'output_update_labels_2 is changed'
          - 'output_update_labels_3 is not changed'
          - 'output_update_labels_4 is not changed'
-         - 'output_update_labels_2.node_facts.Spec.Labels | length == 6'
-         - 'output_update_labels_2.node_facts.Spec.Labels.label1 == "value1111"'
-         - 'output_update_labels_2.node_facts.Spec.Labels.label3 == "value3333"'
-         - 'output_update_labels_2.node_facts.Spec.Labels.label5 == "value5"'
+         - 'output_update_labels_2.node.Spec.Labels | length == 6'
+         - 'output_update_labels_2.node.Spec.Labels.label1 == "value1111"'
+         - 'output_update_labels_2.node.Spec.Labels.label3 == "value3333"'
+         - 'output_update_labels_2.node.Spec.Labels.label5 == "value5"'
 
 ####################################################################
 ## Remove single label #############################################
@@ -469,10 +469,10 @@
          - 'output_remove_label_2 is changed'
          - 'output_remove_label_3 is not changed'
          - 'output_remove_label_4 is not changed'
-         - 'output_remove_label_2.node_facts.Spec.Labels | length == 5'
-         - '"label1" not in output_remove_label_2.node_facts.Spec.Labels'
-         - 'output_remove_label_2.node_facts.Spec.Labels.label3 == "value3333"'
-         - 'output_remove_label_2.node_facts.Spec.Labels.label5 == "value5"'
+         - 'output_remove_label_2.node.Spec.Labels | length == 5'
+         - '"label1" not in output_remove_label_2.node.Spec.Labels'
+         - 'output_remove_label_2.node.Spec.Labels.label3 == "value3333"'
+         - 'output_remove_label_2.node.Spec.Labels.label5 == "value5"'
 
 
 ####################################################################
@@ -516,10 +516,10 @@
          - 'output_remove_nonexist_label_2 is not changed'
          - 'output_remove_nonexist_label_3 is not changed'
          - 'output_remove_nonexist_label_4 is not changed'
-         - 'output_remove_nonexist_label_2.node_facts.Spec.Labels | length == 5'
-         - '"label1" not in output_remove_nonexist_label_2.node_facts.Spec.Labels'
-         - 'output_remove_nonexist_label_2.node_facts.Spec.Labels.label3 == "value3333"'
-         - 'output_remove_nonexist_label_2.node_facts.Spec.Labels.label5 == "value5"'
+         - 'output_remove_nonexist_label_2.node.Spec.Labels | length == 5'
+         - '"label1" not in output_remove_nonexist_label_2.node.Spec.Labels'
+         - 'output_remove_nonexist_label_2.node.Spec.Labels.label3 == "value3333"'
+         - 'output_remove_nonexist_label_2.node.Spec.Labels.label5 == "value5"'
 
 ####################################################################
 ## Remove multiple labels ##########################################
@@ -566,10 +566,10 @@
          - 'output_remove_label_2 is changed'
          - 'output_remove_label_3 is not changed'
          - 'output_remove_label_4 is not changed'
-         - 'output_remove_label_2.node_facts.Spec.Labels | length == 3'
-         - '"label1" not in output_remove_label_2.node_facts.Spec.Labels'
-         - '"label2" not in output_remove_label_2.node_facts.Spec.Labels'
-         - 'output_remove_label_2.node_facts.Spec.Labels.label5 == "value5"'
+         - 'output_remove_label_2.node.Spec.Labels | length == 3'
+         - '"label1" not in output_remove_label_2.node.Spec.Labels'
+         - '"label2" not in output_remove_label_2.node.Spec.Labels'
+         - 'output_remove_label_2.node.Spec.Labels.label5 == "value5"'
 
 ####################################################################
 ## Remove multiple labels, mix assigned and not assigned  ##########
@@ -616,10 +616,10 @@
         - 'output_remove_mix_labels_2 is changed'
         - 'output_remove_mix_labels_3 is not changed'
         - 'output_remove_mix_labels_4 is not changed'
-        - 'output_remove_mix_labels_2.node_facts.Spec.Labels | length == 2'
-        - '"label1" not in output_remove_mix_labels_2.node_facts.Spec.Labels'
-        - '"label4" not in output_remove_mix_labels_2.node_facts.Spec.Labels'
-        - 'output_remove_mix_labels_2.node_facts.Spec.Labels.label5 == "value5"'
+        - 'output_remove_mix_labels_2.node.Spec.Labels | length == 2'
+        - '"label1" not in output_remove_mix_labels_2.node.Spec.Labels'
+        - '"label4" not in output_remove_mix_labels_2.node.Spec.Labels'
+        - 'output_remove_mix_labels_2.node.Spec.Labels.label5 == "value5"'
 
 ####################################################################
 ## Add and remove labels ###########################################
@@ -674,9 +674,9 @@
         - 'output_add_del_labels_2 is changed'
         - 'output_add_del_labels_3 is not changed'
         - 'output_add_del_labels_4 is not changed'
-        - 'output_add_del_labels_2.node_facts.Spec.Labels | length == 3'
-        - '"label5" not in output_add_del_labels_2.node_facts.Spec.Labels'
-        - 'output_add_del_labels_2.node_facts.Spec.Labels.label8 == "value8"'
+        - 'output_add_del_labels_2.node.Spec.Labels | length == 3'
+        - '"label5" not in output_add_del_labels_2.node.Spec.Labels'
+        - 'output_add_del_labels_2.node.Spec.Labels.label8 == "value8"'
 
 ####################################################################
 ## Add and remove labels with label in both lists ##################
@@ -735,10 +735,10 @@
         - 'output_add_del_overlap_lables_2 is changed'
         - 'output_add_del_overlap_lables_3 is not changed'
         - 'output_add_del_overlap_lables_4 is not changed'
-        - 'output_add_del_overlap_lables_2.node_facts.Spec.Labels | length == 3'
-        - '"label7" not in output_add_del_overlap_lables_2.node_facts.Spec.Labels'
-        - 'output_add_del_overlap_lables_2.node_facts.Spec.Labels.label6 == "value6666"'
-        - 'output_add_del_overlap_lables_2.node_facts.Spec.Labels.label22 == "value22"'
+        - 'output_add_del_overlap_lables_2.node.Spec.Labels | length == 3'
+        - '"label7" not in output_add_del_overlap_lables_2.node.Spec.Labels'
+        - 'output_add_del_overlap_lables_2.node.Spec.Labels.label6 == "value6666"'
+        - 'output_add_del_overlap_lables_2.node.Spec.Labels.label22 == "value22"'
 
 ####################################################################
 ## Replace labels #############################################
@@ -789,9 +789,9 @@
         - 'output_replace_labels_2 is changed'
         - 'output_replace_labels_3 is not changed'
         - 'output_replace_labels_4 is not changed'
-        - 'output_replace_labels_2.node_facts.Spec.Labels | length == 2'
-        - '"label6" not in output_replace_labels_2.node_facts.Spec.Labels'
-        - 'output_replace_labels_2.node_facts.Spec.Labels.label12 == "value12"'
+        - 'output_replace_labels_2.node.Spec.Labels | length == 2'
+        - '"label6" not in output_replace_labels_2.node.Spec.Labels'
+        - 'output_replace_labels_2.node.Spec.Labels.label12 == "value12"'
 
 ####################################################################
 ## Remove all labels #############################################
@@ -830,7 +830,7 @@
         - 'output_remove_labels_2 is changed'
         - 'output_remove_labels_3 is not changed'
         - 'output_remove_labels_4 is not changed'
-        - 'output_remove_labels_2.node_facts.Spec.Labels | length == 0'
+        - 'output_remove_labels_2.node.Spec.Labels | length == 0'
 
   always:
   - name: Cleanup

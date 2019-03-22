@@ -15,7 +15,7 @@
   - name: assert reading docker host facts when docker is running
     assert:
       that:
-         - 'output.host_facts.Name is string'
+         - 'output.host_info.Name is string'
          - 'output.containers is not defined'
          - 'output.networks is not defined'
          - 'output.volumes is not defined'
@@ -55,7 +55,7 @@
   - name: assert reading docker host facts when docker is running and list containers
     assert:
       that:
-         - 'output.host_facts.Name is string'
+         - 'output.host_info.Name is string'
          - 'output.networks is not defined'
          - 'output.volumes is not defined'
          - 'output.images is not defined'
@@ -72,7 +72,7 @@
   - name: assert reading docker host facts when docker is running and list containers with verbose output
     assert:
       that:
-         - 'output.host_facts.Name is string'
+         - 'output.host_info.Name is string'
          - 'output.networks is not defined'
          - 'output.volumes is not defined'
          - 'output.images is not defined'
@@ -88,7 +88,7 @@
   - name: assert reading docker host facts when docker is running and list images
     assert:
       that:
-         - 'output.host_facts.Name is string'
+         - 'output.host_info.Name is string'
          - 'output.containers is not defined'
          - 'output.networks is not defined'
          - 'output.volumes is not defined'
@@ -105,7 +105,7 @@
   - name: assert reading docker host facts when docker is running and list images with verbose output
     assert:
       that:
-         - 'output.host_facts.Name is string'
+         - 'output.host_info.Name is string'
          - 'output.containers is not defined'
          - 'output.networks is not defined'
          - 'output.volumes is not defined'
@@ -121,7 +121,7 @@
   - name: assert reading docker host facts when docker is running and list networks
     assert:
       that:
-         - 'output.host_facts.Name is string'
+         - 'output.host_info.Name is string'
          - 'output.containers is not defined'
          - 'output.networks[0].Id is string'
          - 'output.networks[0].Created is not defined'
@@ -138,7 +138,7 @@
   - name: assert reading docker host facts when docker is running and list networks with verbose output
     assert:
       that:
-         - 'output.host_facts.Name is string'
+         - 'output.host_info.Name is string'
          - 'output.containers is not defined'
          - 'output.networks[0].Id is string'
          - 'output.networks[0].Created is string'
@@ -154,7 +154,7 @@
   - name: assert reading docker host facts when docker is running and list volumes
     assert:
       that:
-         - 'output.host_facts.Name is string'
+         - 'output.host_info.Name is string'
          - 'output.containers is not defined'
          - 'output.networks is not defined'
          - 'output.volumes[0].Name is string'
@@ -171,7 +171,7 @@
   - name: assert reading docker host facts when docker is running and list volumes with verbose output
     assert:
       that:
-         - 'output.host_facts.Name is string'
+         - 'output.host_info.Name is string'
          - 'output.containers is not defined'
          - 'output.networks is not defined'
          - 'output.volumes[0].Name is string'
@@ -187,7 +187,7 @@
   - name: assert reading docker host facts when docker is running and get disk usage
     assert:
       that:
-         - 'output.host_facts.Name is string'
+         - 'output.host_info.Name is string'
          - 'output.containers is not defined'
          - 'output.networks is not defined'
          - 'output.volumes is not defined'
@@ -204,7 +204,7 @@
   - name: assert reading docker host facts when docker is running and get disk usage with verbose output
     assert:
       that:
-         - 'output.host_facts.Name is string'
+         - 'output.host_info.Name is string'
          - 'output.containers is not defined'
          - 'output.networks is not defined'
          - 'output.volumes is not defined'
@@ -224,7 +224,7 @@
   - name: assert reading docker host facts when docker is running, disk usage and get lists together
     assert:
       that:
-         - 'output.host_facts.Name is string'
+         - 'output.host_info.Name is string'
          - 'output.containers[0].Image is string'
          - 'output.containers[0].ImageID is not defined'
          - 'output.networks[0].Id is string'
@@ -249,7 +249,7 @@
   - name: assert reading docker host facts when docker is running and get disk usage with verbose output
     assert:
       that:
-         - 'output.host_facts.Name is string'
+         - 'output.host_info.Name is string'
          - 'output.containers[0].Image is string'
          - 'output.containers[0].ImageID is string'
          - 'output.networks[0].Id is string'
