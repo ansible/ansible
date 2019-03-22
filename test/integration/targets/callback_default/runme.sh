@@ -85,38 +85,38 @@ export ANSIBLE_FORCE_COLOR=0
 export ANSIBLE_NOCOLOR=1
 
 # Default settings
-export DISPLAY_SKIPPED_HOSTS=1
+export ANSIBLE_DISPLAY_SKIPPED_HOSTS=1
 export ANSIBLE_DISPLAY_OK_HOSTS=1
 export ANSIBLE_DISPLAY_FAILED_STDERR=0
 
 run_test default
 
 # Hide skipped
-export DISPLAY_SKIPPED_HOSTS=0
+export ANSIBLE_DISPLAY_SKIPPED_HOSTS=0
 
 run_test hide_skipped
 
 # Hide skipped/ok
-export DISPLAY_SKIPPED_HOSTS=0
+export ANSIBLE_DISPLAY_SKIPPED_HOSTS=0
 export ANSIBLE_DISPLAY_OK_HOSTS=0
 
 run_test hide_skipped_ok
 
 # Hide ok
-export DISPLAY_SKIPPED_HOSTS=1
+export ANSIBLE_DISPLAY_SKIPPED_HOSTS=1
 export ANSIBLE_DISPLAY_OK_HOSTS=0
 
 run_test hide_ok
 
 # Failed to stderr
-export DISPLAY_SKIPPED_HOSTS=1
+export ANSIBLE_DISPLAY_SKIPPED_HOSTS=1
 export ANSIBLE_DISPLAY_OK_HOSTS=1
 export ANSIBLE_DISPLAY_FAILED_STDERR=1
 
 run_test failed_to_stderr
 
 # Default settings with unreachable tasks
-export DISPLAY_SKIPPED_HOSTS=1
+export ANSIBLE_DISPLAY_SKIPPED_HOSTS=1
 export ANSIBLE_DISPLAY_OK_HOSTS=1
 export ANSIBLE_DISPLAY_FAILED_STDERR=1
 

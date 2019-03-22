@@ -761,7 +761,13 @@ DEFAULT_LIBVIRT_LXC_NOSECLABEL:
   description:
     - "This setting causes libvirt to connect to lxc containers by passing --noseclabel to virsh.
       This is necessary when running on systems which do not have SELinux."
-  env: [{name: LIBVIRT_LXC_NOSECLABEL}]
+  env:
+  - name: LIBVIRT_LXC_NOSECLABEL
+    deprecated:
+      why: environment variables without "ANSIBLE_" prefix are deprecated
+      version: "2.12"
+      alternatives: the "ANSIBLE_LIBVIRT_LXC_NOSECLABEL" environment variable
+  - name: ANSIBLE_LIBVIRT_LXC_NOSECLABEL
   ini:
   - {key: libvirt_lxc_noseclabel, section: selinux}
   type: boolean
@@ -1304,7 +1310,13 @@ DISPLAY_SKIPPED_HOSTS:
   name: Show skipped results
   default: True
   description: "Toggle to control displaying skipped task/host entries in a task in the default callback"
-  env: [{name: DISPLAY_SKIPPED_HOSTS}]
+  env:
+  - name: DISPLAY_SKIPPED_HOSTS
+    deprecated:
+      why: environment variables without "ANSIBLE_" prefix are deprecated
+      version: "2.12"
+      alternatives: the "ANSIBLE_DISPLAY_SKIPPED_HOSTS" environment variable
+  - name: ANSIBLE_DISPLAY_SKIPPED_HOSTS
   ini:
   - {key: display_skipped_hosts, section: defaults}
   type: boolean
@@ -1593,7 +1605,13 @@ NETWORK_GROUP_MODULES:
   name: Network module families
   default: [eos, nxos, ios, iosxr, junos, enos, ce, vyos, sros, dellos9, dellos10, dellos6, asa, aruba, aireos, bigip, ironware, onyx, netconf]
   description: 'TODO: write it'
-  env: [{name: NETWORK_GROUP_MODULES}]
+  env:
+  - name: NETWORK_GROUP_MODULES
+    deprecated:
+      why: environment variables without "ANSIBLE_" prefix are deprecated
+      version: "2.12"
+      alternatives: the "ANSIBLE_NETWORK_GROUP_MODULES" environment variable
+  - name: ANSIBLE_NETWORK_GROUP_MODULES
   ini:
   - {key: network_group_modules, section: defaults}
   type: list
