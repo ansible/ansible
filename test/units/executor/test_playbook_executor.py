@@ -40,8 +40,10 @@ class TestPlaybookExecutor(unittest.TestCase):
         # And cleanup after ourselves too
         co.GlobalCLIArgs._Singleton__instance = None
 
-    def mock_host(self,name,vars={}):
-        return MagicMock(name=name,vars=vars)
+    def mock_host(self, name, vars=None):
+        if vars is None:
+            vars = {}
+        return MagicMock(name=name, vars=vars)
 
     def test_get_serialized_batches(self):
         fake_loader = DictDataLoader({
@@ -146,7 +148,7 @@ class TestPlaybookExecutor(unittest.TestCase):
         play = playbook.get_plays()[0]
         play.post_validate(templar)
         hosts = []
-        for id in range(0,10):
+        for id in range(0, 10):
             hosts.append(self.mock_host("host%i" % id))
         mock_inventory.get_hosts.return_value = hosts
         self.assertEqual(pbe._get_serialized_batches(play), [hosts])
@@ -156,13 +158,13 @@ class TestPlaybookExecutor(unittest.TestCase):
         play = playbook.get_plays()[0]
         play.post_validate(templar)
         hosts = []
-        for id in range(0,3):
-            hosts.append(self.mock_host("host%i" % id, { "test": "group1" }))
-        for id in range(3,7):
-            hosts.append(self.mock_host("host%i" % id, { "test": "group2" }))
-        for id in range(7,8):
-            hosts.append(self.mock_host("host%i" % id, { "test": "group3" }))
-        for id in range(8,10):
+        for id in range(0, 3):
+            hosts.append(self.mock_host("host%i" % id, {"test": "group1"}))
+        for id in range(3, 7):
+            hosts.append(self.mock_host("host%i" % id, {"test": "group2"}))
+        for id in range(7, 8):
+            hosts.append(self.mock_host("host%i" % id, {"test": "group3"}))
+        for id in range(8, 10):
             hosts.append(self.mock_host("host%i" % id))
         mock_inventory.get_hosts.return_value = hosts
         # need to ensure the same elements exist. order does not matter

@@ -281,7 +281,6 @@ class PlaybookExecutor:
 
         return serialized_batches
 
-
     def _get_batches_from_int(self, play):
         # make sure we have a unique list of hosts
         all_hosts = self._inventory.get_hosts(play.hosts, order=play.order)
