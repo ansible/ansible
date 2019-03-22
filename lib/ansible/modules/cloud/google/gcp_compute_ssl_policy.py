@@ -403,10 +403,10 @@ class SslPolicyWarningsArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({u'code': item.get('code'), u'message': item.get('message')})
+        return remove_nones_from_dict({})
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({u'code': item.get(u'code'), u'message': item.get(u'message')})
+        return remove_nones_from_dict({})
 
 
 if __name__ == '__main__':
