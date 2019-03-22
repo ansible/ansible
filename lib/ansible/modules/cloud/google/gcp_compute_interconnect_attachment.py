@@ -484,10 +484,10 @@ class InterconnectAttachmentPrivateinterconnectinfo(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({u'tag8021q': self.request.get('tag8021q')})
+        return remove_nones_from_dict({})
 
     def from_response(self):
-        return remove_nones_from_dict({u'tag8021q': self.request.get(u'tag8021q')})
+        return remove_nones_from_dict({})
 
 
 if __name__ == '__main__':
