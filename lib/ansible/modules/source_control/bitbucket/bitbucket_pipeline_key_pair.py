@@ -20,7 +20,7 @@ module: bitbucket_pipeline_key_pair
 short_description: Manages Bitbucket pipelines ssh keys
 description:
   - Create, update and delete Bitbucket pipelines ssh keys.
-version_added: "2.7"
+version_added: "2.8"
 author:
   - Evgeniy Krysanov (@catcombo)
 options:
