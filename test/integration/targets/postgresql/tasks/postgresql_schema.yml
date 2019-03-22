@@ -223,6 +223,7 @@
     login_user: "{{ pg_user }}"
     query: "SELECT schema_name,schema_owner FROM information_schema.schemata WHERE schema_name = 'acme' AND schema_owner = '{{ db_user2 }}'"
   register: result
+  ignore_errors: yes
 
 - assert:
     that:
