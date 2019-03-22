@@ -20,7 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import jinja2
-from ansible.compat.tests import unittest
+from units.compat import unittest
 
 from ansible.template import _escape_backslashes, _count_newlines_from_end
 

@@ -26,38 +26,30 @@ version_added: "2.4"
 short_description: Manages timeout mode of NetStream on HUAWEI CloudEngine switches.
 description:
     - Manages timeout mode of NetStream on HUAWEI CloudEngine switches.
-author: YangYang (@CloudEngine-Ansible)
+author: YangYang (@QijunPan)
 options:
     timeout_interval:
         description:
             - Netstream timeout interval.
               If is active type the interval is 1-60.
               If is inactive ,the interval is 5-600.
-        required: false
         default: 30
     type:
         description:
             - Specifies the packet type of netstream timeout active interval.
-        required: false
         choices: ['ip', 'vxlan']
-        default: null
     state:
         description:
             - Specify desired state of the resource.
-        required: false
         choices: ['present', 'absent']
         default: present
     timeout_type:
         description:
             - Netstream timeout type.
-        required: false
         choices: ['active', 'inactive', 'tcp-session', 'manual']
-        default: null
     manual_slot:
         description:
             -  Specifies the slot number of netstream manual timeout.
-        required: false
-        default: null
 """
 
 EXAMPLES = '''
@@ -195,13 +187,13 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_config, load_config
-from ansible.module_utils.ce import ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import get_config, load_config
+from ansible.module_utils.network.cloudengine.ce import ce_argument_spec
 
 
 class NetStreamAging(object):

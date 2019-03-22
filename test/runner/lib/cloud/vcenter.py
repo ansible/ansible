@@ -6,6 +6,7 @@ import os
 from lib.cloud import (
     CloudProvider,
     CloudEnvironment,
+    CloudEnvironmentConfig,
 )
 
 from lib.util import (
@@ -21,13 +22,6 @@ from lib.docker_util import (
     get_docker_container_id,
 )
 
-try:
-    # noinspection PyPep8Naming
-    import ConfigParser as configparser
-except ImportError:
-    # noinspection PyUnresolvedReferences
-    import configparser
-
 
 class VcenterProvider(CloudProvider):
     """VMware vcenter/esx plugin. Sets up cloud resources for tests."""
@@ -37,10 +31,13 @@ class VcenterProvider(CloudProvider):
         """
         :type args: TestConfig
         """
-        super(VcenterProvider, self).__init__(args, config_extension='.ini')
+        super(VcenterProvider, self).__init__(args)
 
         # The simulator must be pinned to a specific version to guarantee CI passes with the version used.
-        self.image = 'ansible/ansible:vcenter-simulator@sha256:1a92e84f477ae4c45f9070a5419a0fc2b46abaecdb5bc396826741bca65ce028'
+        if os.environ.get('ANSIBLE_VCSIM_CONTAINER'):
+            self.image = os.environ.get('ANSIBLE_VCSIM_CONTAINER')
+        else:
+            self.image = 'quay.io/ansible/vcenter-test-container:1.4.0'
         self.container_name = ''
 
     def filter(self, targets, exclude):
@@ -118,7 +115,9 @@ class VcenterProvider(CloudProvider):
             else:
                 publish_ports = []
 
-            docker_pull(self.args, self.image)
+            if not os.environ.get('ANSIBLE_VCSIM_CONTAINER'):
+                docker_pull(self.args, self.image)
+
             docker_run(
                 self.args,
                 self.image,
@@ -146,11 +145,19 @@ class VcenterProvider(CloudProvider):
 
 class VcenterEnvironment(CloudEnvironment):
     """VMware vcenter/esx environment plugin. Updates integration test environment after delegation."""
-    def configure_environment(self, env, cmd):
+    def get_environment_config(self):
         """
-        :type env: dict[str, str]
-        :type cmd: list[str]
+        :rtype: CloudEnvironmentConfig
         """
+        env_vars = dict(
+            VCENTER_HOST=self._get_cloud_config('vcenter_host'),
+        )
 
-        # Send the container IP down to the integration test(s)
-        env['vcenter_host'] = self._get_cloud_config('vcenter_host')
+        ansible_vars = dict(
+            vcsim=self._get_cloud_config('vcenter_host'),
+        )
+
+        return CloudEnvironmentConfig(
+            env_vars=env_vars,
+            ansible_vars=ansible_vars,
+        )

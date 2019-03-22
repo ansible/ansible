@@ -1,0 +1,2 @@
+bugfixes:
+- slurp - Fix issues when using paths on Windows with glob like characters, e.g. ``[``, ``]``

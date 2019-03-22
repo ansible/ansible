@@ -28,37 +28,28 @@ short_description: Manages a system startup information on HUAWEI CloudEngine sw
 description:
     - Manages a system startup information on HUAWEI CloudEngine switches.
 author:
-    - Li Yanfeng (@CloudEngine-Ansible)
+    - Li Yanfeng (@QijunPan)
 options:
     cfg_file:
         description:
             - Name of the configuration file that is applied for the next startup.
               The value is a string of 5 to 255 characters.
-        required: false
         default: present
     software_file:
         description:
             - File name of the system software that is applied for the next startup.
               The value is a string of 5 to 255 characters.
-        required: false
-        default: null
     patch_file:
         description:
             - Name of the patch file that is applied for the next startup.
-        required: false
-        default: null
     slot:
         description:
             - Position of the device.The value is a string of 1 to 32 characters.
               The possible value of slot is all, slave-board, or the specific slotID.
-        required: false
-        default: null
     action:
         description:
             - Display the startup information.
-        required: false
         choices: ['display']
-        default: null
 
 '''
 
@@ -105,7 +96,7 @@ RETURN = '''
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 proposed:
     description: k/v pairs of parameters passed into module
@@ -141,7 +132,7 @@ updates:
 
 import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_nc_config, ce_argument_spec, run_commands
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, ce_argument_spec, run_commands
 
 
 CE_NC_GET_STARTUP_INFO = """

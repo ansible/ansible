@@ -28,97 +28,70 @@ short_description: Manages STP configuration on HUAWEI CloudEngine switches.
 description:
     - Manages STP configurations on HUAWEI CloudEngine switches.
 author:
-    - wangdezhuang (@CloudEngine-Ansible)
+    - wangdezhuang (@QijunPan)
 options:
     state:
         description:
             - Specify desired state of the resource.
-        required: false
         default: present
         choices: ['present', 'absent']
     stp_mode:
         description:
             - Set an operation mode for the current MSTP process.
               The mode can be STP, RSTP, or MSTP.
-        required: false
-        default: null
         choices: ['stp', 'rstp', 'mstp']
     stp_enable:
         description:
             - Enable or disable STP on a switch.
-        required: false
-        default: null
         choices: ['enable', 'disable']
     stp_converge:
         description:
             - STP convergence mode.
               Fast means set STP aging mode to Fast.
               Normal means set STP aging mode to Normal.
-        required: false
-        default: null
         choices: ['fast', 'normal']
     bpdu_protection:
         description:
             - Configure BPDU protection on an edge port.
               This function prevents network flapping caused by attack packets.
-        required: false
-        default: null
         choices: ['enable', 'disable']
     tc_protection:
         description:
             - Configure the TC BPDU protection function for an MSTP process.
-        required: false
-        default: null
         choices: ['enable', 'disable']
     tc_protection_interval:
         description:
             - Set the time the MSTP device takes to handle the maximum number of TC BPDUs
               and immediately refresh forwarding entries.
               The value is an integer ranging from 1 to 600, in seconds.
-        required: false
-        default: null
     tc_protection_threshold:
         description:
             - Set the maximum number of TC BPDUs that the MSTP can handle.
               The value is an integer ranging from 1 to 255. The default value is 1 on the switch.
-        required: false
-        default: null
     interface:
         description:
             - Interface name.
               If the value is C(all), will apply configuration to all interfaces.
               if the value is a special name, only support input the full name.
-        required: false
-        default: null
     edged_port:
         description:
             - Set the current port as an edge port.
-        required: false
-        default: null
         choices: ['enable', 'disable']
     bpdu_filter:
         description:
             - Specify a port as a BPDU filter port.
-        required: false
-        default: null
         choices: ['enable', 'disable']
     cost:
         description:
             - Set the path cost of the current port.
               The default instance is 0.
-        required: false
-        default: null
     root_protection:
         description:
             - Enable root protection on the current port.
-        required: false
-        default: null
         choices: ['enable', 'disable']
     loop_protection:
         description:
             - Enable loop protection on the current port.
-        required: false
-        default: null
         choices: ['enable', 'disable']
 '''
 
@@ -167,7 +140,7 @@ RETURN = '''
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 proposed:
     description: k/v pairs of parameters passed into module
@@ -194,7 +167,7 @@ updates:
 
 import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_config, load_config, ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import get_config, load_config, ce_argument_spec
 
 
 class Stp(object):

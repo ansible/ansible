@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python
 #
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -21,13 +21,14 @@ description:
   - Reads data out of XenAPI, can be used instead of multiple xe commands.
 author:
     - Andy Hill (@andyhky)
-    - Tim Rupp
+    - Tim Rupp (@caphrim007)
+    - Robin Lee (@cheese)
 options: {}
 '''
 
 EXAMPLES = '''
 - name: Gather facts from xenserver
-  xenserver:
+  xenserver_facts:
 
 - name: Print running VMs
   debug:
@@ -45,7 +46,6 @@ EXAMPLES = '''
 # }
 '''
 
-import platform
 
 HAVE_XENAPI = False
 try:
@@ -54,6 +54,7 @@ try:
 except ImportError:
     pass
 
+from ansible.module_utils import distro
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -69,8 +70,7 @@ class XenServerFacts:
 
     @property
     def version(self):
-        # Be aware! Deprecated in Python 2.6!
-        result = platform.dist()[1]
+        result = distro.linux_distribution()[1]
         return result
 
     @property
@@ -91,11 +91,8 @@ def get_xenapi_session():
 
 def get_networks(session):
     recs = session.xenapi.network.get_all_records()
-    xs_networks = {}
-    networks = change_keys(recs, key='uuid')
-    for network in networks.values():
-        xs_networks[network['name_label']] = network
-    return xs_networks
+    networks = change_keys(recs, key='name_label')
+    return networks
 
 
 def get_pifs(session):
@@ -132,10 +129,18 @@ def change_keys(recs, key='uuid', filter_func=None):
         if filter_func is not None and not filter_func(rec):
             continue
 
+        for param_name, param_value in rec.items():
+            # param_value may be of type xmlrpc.client.DateTime,
+            # which is not simply convertable to str.
+            # Use 'value' attr to get the str value,
+            # following an example in xmlrpc.client.DateTime document
+            if hasattr(param_value, "value"):
+                rec[param_name] = param_value.value
         new_recs[rec[key]] = rec
         new_recs[rec[key]]['ref'] = ref
 
     return new_recs
+
 
 def get_host(session):
     """Get the host"""
@@ -143,27 +148,22 @@ def get_host(session):
     # We only have one host, so just return its entry
     return session.xenapi.host.get_record(host_recs[0])
 
+
 def get_vms(session):
-    xs_vms = {}
-    recs = session.xenapi.VM.get_all()
+    recs = session.xenapi.VM.get_all_records()
     if not recs:
         return None
-
-    vms = change_keys(recs, key='uuid')
-    for vm in vms.values():
-        xs_vms[vm['name_label']] = vm
-    return xs_vms
+    vms = change_keys(recs, key='name_label')
+    return vms
 
 
 def get_srs(session):
-    xs_srs = {}
-    recs = session.xenapi.SR.get_all()
+    recs = session.xenapi.SR.get_all_records()
     if not recs:
         return None
-    srs = change_keys(recs, key='uuid')
-    for sr in srs.values():
-        xs_srs[sr['name_label']] = sr
-    return xs_srs
+    srs = change_keys(recs, key='name_label')
+    return srs
+
 
 def main():
     module = AnsibleModule({})
@@ -201,7 +201,7 @@ def main():
     if xs_srs:
         data['xs_srs'] = xs_srs
 
-    module.exit_json(ansible=data)
+    module.exit_json(ansible_facts=data)
 
 
 if __name__ == '__main__':

@@ -21,9 +21,10 @@ from __future__ import (absolute_import, division)
 __metaclass__ = type
 
 from collections import defaultdict
+import pprint
 
 # for testing
-from ansible.compat.tests import unittest
+from units.compat import unittest
 
 from ansible.module_utils.facts import collector
 
@@ -54,34 +55,22 @@ class TestFindCollectorsForPlatform(unittest.TestCase):
 
 
 class TestSelectCollectorNames(unittest.TestCase):
+
+    def _assert_equal_detail(self, obj1, obj2, msg=None):
+        msg = 'objects are not equal\n%s\n\n!=\n\n%s' % (pprint.pformat(obj1), pprint.pformat(obj2))
+        return self.assertEqual(obj1, obj2, msg)
+
     def test(self):
-        collector_names = set(['distribution', 'all_ipv4_addresses',
-                               'local', 'pkg_mgr'])
+        collector_names = ['distribution', 'all_ipv4_addresses',
+                           'local', 'pkg_mgr']
         all_fact_subsets = self._all_fact_subsets()
-        all_collector_classes = self._all_collector_classes()
         res = collector.select_collector_classes(collector_names,
-                                                 all_fact_subsets,
-                                                 all_collector_classes)
+                                                 all_fact_subsets)
 
         expected = [default_collectors.DistributionFactCollector,
                     default_collectors.PkgMgrFactCollector]
 
-        self.assertEqual(res, expected)
-
-    def test_reverse(self):
-        collector_names = set(['distribution', 'all_ipv4_addresses',
-                               'local', 'pkg_mgr'])
-        all_fact_subsets = self._all_fact_subsets()
-        all_collector_classes = self._all_collector_classes()
-        all_collector_classes.reverse()
-        res = collector.select_collector_classes(collector_names,
-                                                 all_fact_subsets,
-                                                 all_collector_classes)
-
-        expected = [default_collectors.PkgMgrFactCollector,
-                    default_collectors.DistributionFactCollector]
-
-        self.assertEqual(res, expected)
+        self._assert_equal_detail(res, expected)
 
     def test_default_collectors(self):
         platform_info = {'system': 'Generic'}
@@ -95,14 +84,22 @@ class TestSelectCollectorNames(unittest.TestCase):
         collector_names = collector.get_collector_names(valid_subsets=all_valid_subsets,
                                                         aliases_map=aliases_map,
                                                         platform_info=platform_info)
-        collector.select_collector_classes(collector_names,
-                                           all_fact_subsets,
-                                           default_collectors.collectors)
+        complete_collector_names = collector._solve_deps(collector_names, all_fact_subsets)
 
-    def _all_collector_classes(self):
-        return [default_collectors.DistributionFactCollector,
-                default_collectors.PkgMgrFactCollector,
-                default_collectors.LinuxNetworkCollector]
+        dep_map = collector.build_dep_data(complete_collector_names, all_fact_subsets)
+
+        ordered_deps = collector.tsort(dep_map)
+        ordered_collector_names = [x[0] for x in ordered_deps]
+
+        res = collector.select_collector_classes(ordered_collector_names,
+                                                 all_fact_subsets)
+
+        self.assertTrue(res.index(default_collectors.ServiceMgrFactCollector) >
+                        res.index(default_collectors.DistributionFactCollector),
+                        res)
+        self.assertTrue(res.index(default_collectors.ServiceMgrFactCollector) >
+                        res.index(default_collectors.PlatformFactCollector),
+                        res)
 
     def _all_fact_subsets(self, data=None):
         all_fact_subsets = defaultdict(list)
@@ -269,36 +266,255 @@ class TestGetCollectorNames(unittest.TestCase):
         minimal_gather_subset = frozenset(['my_fact'])
 
         self.assertRaisesRegexp(TypeError,
-                                'Bad subset .* given to Ansible.*allowed\:.*all,.*my_fact.*',
+                                r'Bad subset .* given to Ansible.*allowed\:.*all,.*my_fact.*',
                                 collector.get_collector_names,
                                 valid_subsets=valid_subsets,
                                 minimal_gather_subset=minimal_gather_subset,
                                 gather_subset=['my_fact', 'not_a_valid_gather_subset'])
 
 
+class TestFindUnresolvedRequires(unittest.TestCase):
+    def test(self):
+        names = ['network', 'virtual', 'env']
+        all_fact_subsets = {'env': [default_collectors.EnvFactCollector],
+                            'network': [default_collectors.LinuxNetworkCollector],
+                            'virtual': [default_collectors.LinuxVirtualCollector]}
+        res = collector.find_unresolved_requires(names, all_fact_subsets)
+        # pprint.pprint(res)
+
+        self.assertIsInstance(res, set)
+        self.assertEqual(res, set(['platform', 'distribution']))
+
+    def test_resolved(self):
+        names = ['network', 'virtual', 'env', 'platform', 'distribution']
+        all_fact_subsets = {'env': [default_collectors.EnvFactCollector],
+                            'network': [default_collectors.LinuxNetworkCollector],
+                            'distribution': [default_collectors.DistributionFactCollector],
+                            'platform': [default_collectors.PlatformFactCollector],
+                            'virtual': [default_collectors.LinuxVirtualCollector]}
+        res = collector.find_unresolved_requires(names, all_fact_subsets)
+        # pprint.pprint(res)
+
+        self.assertIsInstance(res, set)
+        self.assertEqual(res, set())
+
+
+class TestBuildDepData(unittest.TestCase):
+    def test(self):
+        names = ['network', 'virtual', 'env']
+        all_fact_subsets = {'env': [default_collectors.EnvFactCollector],
+                            'network': [default_collectors.LinuxNetworkCollector],
+                            'virtual': [default_collectors.LinuxVirtualCollector]}
+        res = collector.build_dep_data(names, all_fact_subsets)
+
+        # pprint.pprint(dict(res))
+        self.assertIsInstance(res, defaultdict)
+        self.assertEqual(dict(res),
+                         {'network': set(['platform', 'distribution']),
+                          'virtual': set(),
+                          'env': set()})
+
+
+class TestSolveDeps(unittest.TestCase):
+    def test_no_solution(self):
+        unresolved = set(['required_thing1', 'required_thing2'])
+        all_fact_subsets = {'env': [default_collectors.EnvFactCollector],
+                            'network': [default_collectors.LinuxNetworkCollector],
+                            'virtual': [default_collectors.LinuxVirtualCollector]}
+
+        self.assertRaises(collector.CollectorNotFoundError,
+                          collector._solve_deps,
+                          unresolved,
+                          all_fact_subsets)
+
+    def test(self):
+        unresolved = set(['env', 'network'])
+        all_fact_subsets = {'env': [default_collectors.EnvFactCollector],
+                            'network': [default_collectors.LinuxNetworkCollector],
+                            'virtual': [default_collectors.LinuxVirtualCollector],
+                            'platform': [default_collectors.PlatformFactCollector],
+                            'distribution': [default_collectors.DistributionFactCollector]}
+        res = collector.resolve_requires(unresolved, all_fact_subsets)
+
+        res = collector._solve_deps(unresolved, all_fact_subsets)
+
+        self.assertIsInstance(res, set)
+        for goal in unresolved:
+            self.assertIn(goal, res)
+
+
+class TestResolveRequires(unittest.TestCase):
+    def test_no_resolution(self):
+        unresolved = ['required_thing1', 'required_thing2']
+        all_fact_subsets = {'env': [default_collectors.EnvFactCollector],
+                            'network': [default_collectors.LinuxNetworkCollector],
+                            'virtual': [default_collectors.LinuxVirtualCollector]}
+        self.assertRaisesRegexp(collector.UnresolvedFactDep,
+                                'unresolved fact dep.*required_thing2',
+                                collector.resolve_requires,
+                                unresolved, all_fact_subsets)
+
+    def test(self):
+        unresolved = ['env', 'network']
+        all_fact_subsets = {'env': [default_collectors.EnvFactCollector],
+                            'network': [default_collectors.LinuxNetworkCollector],
+                            'virtual': [default_collectors.LinuxVirtualCollector]}
+        res = collector.resolve_requires(unresolved, all_fact_subsets)
+        for goal in unresolved:
+            self.assertIn(goal, res)
+
+    def test_exception(self):
+        unresolved = ['required_thing1']
+        all_fact_subsets = {}
+        try:
+            collector.resolve_requires(unresolved, all_fact_subsets)
+        except collector.UnresolvedFactDep as exc:
+            self.assertIn(unresolved[0], '%s' % exc)
+
+
+class TestTsort(unittest.TestCase):
+    def test(self):
+        dep_map = {'network': set(['distribution', 'platform']),
+                   'virtual': set(),
+                   'platform': set(['what_platform_wants']),
+                   'what_platform_wants': set(),
+                   'network_stuff': set(['network'])}
+
+        res = collector.tsort(dep_map)
+        # pprint.pprint(res)
+
+        self.assertIsInstance(res, list)
+        names = [x[0] for x in res]
+        self.assertTrue(names.index('network_stuff') > names.index('network'))
+        self.assertTrue(names.index('platform') > names.index('what_platform_wants'))
+        self.assertTrue(names.index('network') > names.index('platform'))
+
+    def test_cycles(self):
+        dep_map = {'leaf1': set(),
+                   'leaf2': set(),
+                   'node1': set(['node2']),
+                   'node2': set(['node3']),
+                   'node3': set(['node1'])}
+
+        self.assertRaises(collector.CycleFoundInFactDeps,
+                          collector.tsort,
+                          dep_map)
+
+    def test_just_nodes(self):
+        dep_map = {'leaf1': set(),
+                   'leaf4': set(),
+                   'leaf3': set(),
+                   'leaf2': set()}
+
+        res = collector.tsort(dep_map)
+        self.assertIsInstance(res, list)
+        names = [x[0] for x in res]
+        # not a lot to assert here, any order of the
+        # results is valid
+        self.assertEqual(set(names), set(dep_map.keys()))
+
+    def test_self_deps(self):
+        dep_map = {'node1': set(['node1']),
+                   'node2': set(['node2'])}
+        self.assertRaises(collector.CycleFoundInFactDeps,
+                          collector.tsort,
+                          dep_map)
+
+    def test_unsolvable(self):
+        dep_map = {'leaf1': set(),
+                   'node2': set(['leaf2'])}
+
+        res = collector.tsort(dep_map)
+        self.assertIsInstance(res, list)
+        names = [x[0] for x in res]
+        self.assertEqual(set(names), set(dep_map.keys()))
+
+    def test_chain(self):
+        dep_map = {'leaf1': set(['leaf2']),
+                   'leaf2': set(['leaf3']),
+                   'leaf3': set(['leaf4']),
+                   'leaf4': set(),
+                   'leaf5': set(['leaf1'])}
+        res = collector.tsort(dep_map)
+        self.assertIsInstance(res, list)
+        names = [x[0] for x in res]
+        self.assertEqual(set(names), set(dep_map.keys()))
+
+    def test_multi_pass(self):
+        dep_map = {'leaf1': set(),
+                   'leaf2': set(['leaf3', 'leaf1', 'leaf4', 'leaf5']),
+                   'leaf3': set(['leaf4', 'leaf1']),
+                   'leaf4': set(['leaf1']),
+                   'leaf5': set(['leaf1'])}
+        res = collector.tsort(dep_map)
+        self.assertIsInstance(res, list)
+        names = [x[0] for x in res]
+        self.assertEqual(set(names), set(dep_map.keys()))
+        self.assertTrue(names.index('leaf1') < names.index('leaf2'))
+        for leaf in ('leaf2', 'leaf3', 'leaf4', 'leaf5'):
+            self.assertTrue(names.index('leaf1') < names.index(leaf))
+
+
 class TestCollectorClassesFromGatherSubset(unittest.TestCase):
+    maxDiff = None
+
     def _classes(self,
                  all_collector_classes=None,
                  valid_subsets=None,
                  minimal_gather_subset=None,
                  gather_subset=None,
-                 gather_timeout=None):
+                 gather_timeout=None,
+                 platform_info=None):
+        platform_info = platform_info or {'system': 'Linux'}
         return collector.collector_classes_from_gather_subset(all_collector_classes=all_collector_classes,
                                                               valid_subsets=valid_subsets,
                                                               minimal_gather_subset=minimal_gather_subset,
                                                               gather_subset=gather_subset,
-                                                              gather_timeout=gather_timeout)
+                                                              gather_timeout=gather_timeout,
+                                                              platform_info=platform_info)
 
     def test_no_args(self):
         res = self._classes()
         self.assertIsInstance(res, list)
         self.assertEqual(res, [])
 
-    def test(self):
+    def test_not_all(self):
         res = self._classes(all_collector_classes=default_collectors.collectors,
                             gather_subset=['!all'])
         self.assertIsInstance(res, list)
         self.assertEqual(res, [])
+
+    def test_all(self):
+        res = self._classes(all_collector_classes=default_collectors.collectors,
+                            gather_subset=['all'])
+        self.assertIsInstance(res, list)
+
+    def test_hardware(self):
+        res = self._classes(all_collector_classes=default_collectors.collectors,
+                            gather_subset=['hardware'])
+        self.assertIsInstance(res, list)
+        self.assertIn(default_collectors.PlatformFactCollector, res)
+        self.assertIn(default_collectors.LinuxHardwareCollector, res)
+
+        self.assertTrue(res.index(default_collectors.LinuxHardwareCollector) >
+                        res.index(default_collectors.PlatformFactCollector))
+
+    def test_network(self):
+        res = self._classes(all_collector_classes=default_collectors.collectors,
+                            gather_subset=['network'])
+        self.assertIsInstance(res, list)
+        self.assertIn(default_collectors.DistributionFactCollector, res)
+        self.assertIn(default_collectors.PlatformFactCollector, res)
+        self.assertIn(default_collectors.LinuxNetworkCollector, res)
+
+        self.assertTrue(res.index(default_collectors.LinuxNetworkCollector) >
+                        res.index(default_collectors.PlatformFactCollector))
+        self.assertTrue(res.index(default_collectors.LinuxNetworkCollector) >
+                        res.index(default_collectors.DistributionFactCollector))
+
+        # self.assertEqual(set(res, [default_collectors.DistributionFactCollector,
+        #                       default_collectors.PlatformFactCollector,
+        #                       default_collectors.LinuxNetworkCollector])
 
     def test_env(self):
         res = self._classes(all_collector_classes=default_collectors.collectors,
@@ -341,7 +557,7 @@ class TestCollectorClassesFromGatherSubset(unittest.TestCase):
         # something claims 'unknown_collector' is a valid gather_subset, but there is
         # no FactCollector mapped to 'unknown_collector'
         self.assertRaisesRegexp(TypeError,
-                                'Bad subset.*unknown_collector.*given to Ansible.*allowed\:.*all,.*env.*',
+                                r'Bad subset.*unknown_collector.*given to Ansible.*allowed\:.*all,.*env.*',
                                 self._classes,
                                 all_collector_classes=default_collectors.collectors,
                                 gather_subset=['env', 'unknown_collector'])

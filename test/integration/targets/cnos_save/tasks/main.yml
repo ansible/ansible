@@ -1,0 +1,18 @@
+# This contain sample template execution tasks
+---
+- name: Test Save
+  cnos_save:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_save_{{ inventory_hostname }}_output.txt 
+  with_items: "{{cnos_save_data1}}"
+
+- name: Test Reset to factory
+  cnos_factory:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_save_{{ inventory_hostname }}_output.txt 
+  with_items: "{{cnos_save_data2}}"
+
+- name: Test Again save
+  cnos_save:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_save_{{ inventory_hostname }}_output.txt 
+  with_items: "{{cnos_save_data3}}"
+
+- name: Test Reload
+  cnos_reload:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_save_{{ inventory_hostname }}_output.txt 
+  with_items: "{{cnos_save_data4}}"
+# Completed file

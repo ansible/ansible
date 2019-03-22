@@ -1,0 +1,5 @@
+---
+minor_changes:
+  - "docker_network - Minimum docker-py version increased from ``1.8.0`` to ``1.10.0``."
+  - "docker_network - Minimum docker server version increased from ``1.9.0`` to ``1.10.0``."
+  - "docker_network - Minimum docker API version explcitly set to ``1.22``."

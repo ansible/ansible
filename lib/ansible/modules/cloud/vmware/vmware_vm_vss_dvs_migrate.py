@@ -1,17 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2015, Joseph Callen <jcallen () csc.com>
+# Copyright: (c) 2015, Joseph Callen <jcallen () csc.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -20,7 +18,8 @@ short_description: Migrates a virtual machine from a standard vswitch to distrib
 description:
     - Migrates a virtual machine from a standard vswitch to distributed
 version_added: 2.0
-author: "Joseph Callen (@jcpowermac)"
+author:
+- Joseph Callen (@jcpowermac)
 notes:
     - Tested on vSphere 5.5
 requirements:
@@ -40,13 +39,13 @@ extends_documentation_fragment: vmware.documentation
 
 EXAMPLES = '''
 - name: Migrate VCSA to vDS
-  local_action:
-    module: vmware_vm_vss_dvs_migrate
-    hostname: vcenter_ip_or_hostname
-    username: vcenter_username
-    password: vcenter_password
-    vm_name: virtual_machine_name
-    dvportgroup_name: distributed_portgroup_name
+  vmware_vm_vss_dvs_migrate:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    vm_name: '{{ vm_name }}'
+    dvportgroup_name: '{{ distributed_portgroup_name }}'
+  delegate_to: localhost
 '''
 
 try:

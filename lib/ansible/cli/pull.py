@@ -1,24 +1,10 @@
-# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+# Copyright: (c) 2018, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-########################################################
 import datetime
 import os
 import platform
@@ -28,20 +14,19 @@ import socket
 import sys
 import time
 
+from ansible import constants as C
+from ansible import context
 from ansible.cli import CLI
+from ansible.cli.arguments import optparse_helpers as opt_help
 from ansible.errors import AnsibleOptionsError
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.six.moves import shlex_quote
 from ansible.plugins.loader import module_loader
 from ansible.utils.cmd_functions import run_cmd
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
-
-########################################################
 
 class PullCLI(CLI):
     ''' is used to up a remote copy of ansible on each managed node,
@@ -57,6 +42,7 @@ class PullCLI(CLI):
 
     DEFAULT_REPO_TYPE = 'git'
     DEFAULT_PLAYBOOK = 'local.yml'
+    REPO_CHOICES = ('git', 'subversion', 'hg', 'bzr')
     PLAYBOOK_ERRORS = {
         1: 'File does not exist',
         2: 'File is not readable',
@@ -67,35 +53,35 @@ class PullCLI(CLI):
                                  "look for a playbook based on the host's fully-qualified domain name,"
                                  'on the host hostname and finally a playbook named *local.yml*.', }
 
-    def _get_inv_cli(self):
+    SKIP_INVENTORY_DEFAULTS = True
 
+    @staticmethod
+    def _get_inv_cli():
         inv_opts = ''
-        if getattr(self.options, 'inventory'):
-            for inv in self.options.inventory:
+        if context.CLIARGS.get('inventory', False):
+            for inv in context.CLIARGS['inventory']:
                 if isinstance(inv, list):
                     inv_opts += " -i '%s' " % ','.join(inv)
                 elif ',' in inv or os.path.exists(inv):
                     inv_opts += ' -i %s ' % inv
 
-        if not inv_opts:
-            inv_opts = " -i localhost, "
-
         return inv_opts
 
-    def parse(self):
+    def init_parser(self):
         ''' create an options parser for bin/ansible '''
 
-        self.parser = CLI.base_parser(
+        super(PullCLI, self).init_parser(
             usage='%prog -U <repository> [options] [<playbook.yml>]',
-            connect_opts=True,
-            vault_opts=True,
-            runtask_opts=True,
-            subset_opts=True,
-            inventory_opts=True,
-            module_opts=True,
-            runas_prompt_opts=True,
-            desc="pulls playbooks from a VCS repo and executes them for the local host",
-        )
+            desc="pulls playbooks from a VCS repo and executes them for the local host")
+
+        # Do not add check_options as there's a conflict with --checkout/-C
+        opt_help.add_connect_options(self.parser)
+        opt_help.add_vault_options(self.parser)
+        opt_help.add_runtask_options(self.parser)
+        opt_help.add_subset_options(self.parser)
+        opt_help.add_inventory_options(self.parser)
+        opt_help.add_module_options(self.parser)
+        opt_help.add_runas_prompt_options(self.parser)
 
         # options unique to pull
         self.parser.add_option('--purge', default=False, action='store_true', help='purge checkout after playbook run')
@@ -114,7 +100,8 @@ class PullCLI(CLI):
         self.parser.add_option('--accept-host-key', default=False, dest='accept_host_key', action='store_true',
                                help='adds the hostkey for the repo url if not already added')
         self.parser.add_option('-m', '--module-name', dest='module_name', default=self.DEFAULT_REPO_TYPE,
-                               help='Repository module name, which ansible will use to check out the repo. Default is %s.' % self.DEFAULT_REPO_TYPE)
+                               help='Repository module name, which ansible will use to check out the repo. Choices are %s. Default is %s.'
+                                    % (self.REPO_CHOICES, self.DEFAULT_REPO_TYPE))
         self.parser.add_option('--verify-commit', dest='verify', default=False, action='store_true',
                                help='verify GPG signature of checked out commit, if it fails abort running the playbook. '
                                     'This needs the corresponding VCS module to support such an operation')
@@ -122,35 +109,42 @@ class PullCLI(CLI):
                                help='modified files in the working repository will be discarded')
         self.parser.add_option('--track-subs', dest='tracksubs', default=False, action='store_true',
                                help='submodules will track the latest changes. This is equivalent to specifying the --remote flag to git submodule update')
+        # add a subset of the check_opts flag group manually, as the full set's
+        # shortcodes conflict with above --checkout/-C
         self.parser.add_option("--check", default=False, dest='check', action='store_true',
                                help="don't make any changes; instead, try to predict some of the changes that may occur")
+        self.parser.add_option("--diff", default=C.DIFF_ALWAYS, dest='diff', action='store_true',
+                               help="when changing (small) files and templates, show the differences in those files; works great with --check")
 
-        # for pull we don't want a default
-        self.parser.set_defaults(inventory=None)
+    def post_process_args(self, options, args):
+        options, args = super(PullCLI, self).post_process_args(options, args)
 
-        super(PullCLI, self).parse()
-
-        if not self.options.dest:
+        if not options.dest:
             hostname = socket.getfqdn()
             # use a hostname dependent directory, in case of $HOME on nfs
-            self.options.dest = os.path.join('~/.ansible/pull', hostname)
-        self.options.dest = os.path.expandvars(os.path.expanduser(self.options.dest))
+            options.dest = os.path.join('~/.ansible/pull', hostname)
+        options.dest = os.path.expandvars(os.path.expanduser(options.dest))
 
-        if self.options.sleep:
+        if os.path.exists(options.dest) and not os.path.isdir(options.dest):
+            raise AnsibleOptionsError("%s is not a valid or accessible directory." % options.dest)
+
+        if options.sleep:
             try:
-                secs = random.randint(0, int(self.options.sleep))
-                self.options.sleep = secs
+                secs = random.randint(0, int(options.sleep))
+                options.sleep = secs
             except ValueError:
-                raise AnsibleOptionsError("%s is not a number." % self.options.sleep)
+                raise AnsibleOptionsError("%s is not a number." % options.sleep)
 
-        if not self.options.url:
+        if not options.url:
             raise AnsibleOptionsError("URL for repository not specified, use -h for help")
 
-        if self.options.module_name not in self.SUPPORTED_REPO_MODULES:
-            raise AnsibleOptionsError("Unsupported repo module %s, choices are %s" % (self.options.module_name, ','.join(self.SUPPORTED_REPO_MODULES)))
+        if options.module_name not in self.SUPPORTED_REPO_MODULES:
+            raise AnsibleOptionsError("Unsupported repo module %s, choices are %s" % (options.module_name, ','.join(self.SUPPORTED_REPO_MODULES)))
 
-        display.verbosity = self.options.verbosity
-        self.validate_conflicts(vault_opts=True)
+        display.verbosity = options.verbosity
+        self.validate_conflicts(options, vault_opts=True)
+
+        return options, args
 
     def run(self):
         ''' use Runner lib to do SSH things '''
@@ -168,93 +162,122 @@ class PullCLI(CLI):
         host = socket.getfqdn()
         limit_opts = 'localhost,%s,127.0.0.1' % ','.join(set([host, node, host.split('.')[0], node.split('.')[0]]))
         base_opts = '-c local '
-        if self.options.verbosity > 0:
-            base_opts += ' -%s' % ''.join(["v" for x in range(0, self.options.verbosity)])
+        if context.CLIARGS['verbosity'] > 0:
+            base_opts += ' -%s' % ''.join(["v" for x in range(0, context.CLIARGS['verbosity'])])
 
         # Attempt to use the inventory passed in as an argument
         # It might not yet have been downloaded so use localhost as default
         inv_opts = self._get_inv_cli()
+        if not inv_opts:
+            inv_opts = " -i localhost, "
+            # avoid interpreter discovery since we already know which interpreter to use on localhost
+            inv_opts += '-e %s ' % shlex_quote('ansible_python_interpreter=%s' % sys.executable)
 
-        # FIXME: enable more repo modules hg/svn?
-        if self.options.module_name == 'git':
-            repo_opts = "name=%s dest=%s" % (self.options.url, self.options.dest)
-            if self.options.checkout:
-                repo_opts += ' version=%s' % self.options.checkout
+        # SCM specific options
+        if context.CLIARGS['module_name'] == 'git':
+            repo_opts = "name=%s dest=%s" % (context.CLIARGS['url'], context.CLIARGS['dest'])
+            if context.CLIARGS['checkout']:
+                repo_opts += ' version=%s' % context.CLIARGS['checkout']
 
-            if self.options.accept_host_key:
+            if context.CLIARGS['accept_host_key']:
                 repo_opts += ' accept_hostkey=yes'
 
-            if self.options.private_key_file:
-                repo_opts += ' key_file=%s' % self.options.private_key_file
+            if context.CLIARGS['private_key_file']:
+                repo_opts += ' key_file=%s' % context.CLIARGS['private_key_file']
 
-            if self.options.verify:
+            if context.CLIARGS['verify']:
                 repo_opts += ' verify_commit=yes'
 
-            if self.options.clean:
-                repo_opts += ' force=yes'
-
-            if self.options.tracksubs:
+            if context.CLIARGS['tracksubs']:
                 repo_opts += ' track_submodules=yes'
 
-            if not self.options.fullclone:
+            if not context.CLIARGS['fullclone']:
                 repo_opts += ' depth=1'
+        elif context.CLIARGS['module_name'] == 'subversion':
+            repo_opts = "repo=%s dest=%s" % (context.CLIARGS['url'], context.CLIARGS['dest'])
+            if context.CLIARGS['checkout']:
+                repo_opts += ' revision=%s' % context.CLIARGS['checkout']
+            if not context.CLIARGS['fullclone']:
+                repo_opts += ' export=yes'
+        elif context.CLIARGS['module_name'] == 'hg':
+            repo_opts = "repo=%s dest=%s" % (context.CLIARGS['url'], context.CLIARGS['dest'])
+            if context.CLIARGS['checkout']:
+                repo_opts += ' revision=%s' % context.CLIARGS['checkout']
+        elif context.CLIARGS['module_name'] == 'bzr':
+            repo_opts = "name=%s dest=%s" % (context.CLIARGS['url'], context.CLIARGS['dest'])
+            if context.CLIARGS['checkout']:
+                repo_opts += ' version=%s' % context.CLIARGS['checkout']
+        else:
+            raise AnsibleOptionsError('Unsupported (%s) SCM module for pull, choices are: %s'
+                                      % (context.CLIARGS['module_name'],
+                                         ','.join(self.REPO_CHOICES)))
 
-        path = module_loader.find_plugin(self.options.module_name)
+        # options common to all supported SCMS
+        if context.CLIARGS['clean']:
+            repo_opts += ' force=yes'
+
+        path = module_loader.find_plugin(context.CLIARGS['module_name'])
         if path is None:
-            raise AnsibleOptionsError(("module '%s' not found.\n" % self.options.module_name))
+            raise AnsibleOptionsError(("module '%s' not found.\n" % context.CLIARGS['module_name']))
 
         bin_path = os.path.dirname(os.path.abspath(sys.argv[0]))
         # hardcode local and inventory/host as this is just meant to fetch the repo
-        cmd = '%s/ansible %s %s -m %s -a "%s" all -l "%s"' % (bin_path, inv_opts, base_opts, self.options.module_name, repo_opts, limit_opts)
-
-        for ev in self.options.extra_vars:
-            cmd += ' -e "%s"' % ev
+        cmd = '%s/ansible %s %s -m %s -a "%s" all -l "%s"' % (bin_path, inv_opts, base_opts,
+                                                              context.CLIARGS['module_name'],
+                                                              repo_opts, limit_opts)
+        for ev in context.CLIARGS['extra_vars']:
+            cmd += ' -e %s' % shlex_quote(ev)
 
         # Nap?
-        if self.options.sleep:
-            display.display("Sleeping for %d seconds..." % self.options.sleep)
-            time.sleep(self.options.sleep)
+        if context.CLIARGS['sleep']:
+            display.display("Sleeping for %d seconds..." % context.CLIARGS['sleep'])
+            time.sleep(context.CLIARGS['sleep'])
 
         # RUN the Checkout command
         display.debug("running ansible with VCS module to checkout repo")
         display.vvvv('EXEC: %s' % cmd)
-        rc, out, err = run_cmd(cmd, live=True)
+        rc, b_out, b_err = run_cmd(cmd, live=True)
 
         if rc != 0:
-            if self.options.force:
+            if context.CLIARGS['force']:
                 display.warning("Unable to update repository. Continuing with (forced) run of playbook.")
             else:
                 return rc
-        elif self.options.ifchanged and '"changed": true' not in out:
+        elif context.CLIARGS['ifchanged'] and b'"changed": true' not in b_out:
             display.display("Repository has not changed, quitting.")
             return 0
 
-        playbook = self.select_playbook(self.options.dest)
+        playbook = self.select_playbook(context.CLIARGS['dest'])
         if playbook is None:
             raise AnsibleOptionsError("Could not find a playbook to run.")
 
         # Build playbook command
         cmd = '%s/ansible-playbook %s %s' % (bin_path, base_opts, playbook)
-        if self.options.vault_password_files:
-            for vault_password_file in self.options.vault_password_files:
+        if context.CLIARGS['vault_password_files']:
+            for vault_password_file in context.CLIARGS['vault_password_files']:
                 cmd += " --vault-password-file=%s" % vault_password_file
+        if context.CLIARGS['vault_ids']:
+            for vault_id in context.CLIARGS['vault_ids']:
+                cmd += " --vault-id=%s" % vault_id
 
-        for ev in self.options.extra_vars:
-            cmd += ' -e "%s"' % ev
-        if self.options.ask_sudo_pass or self.options.ask_su_pass or self.options.become_ask_pass:
+        for ev in context.CLIARGS['extra_vars']:
+            cmd += ' -e %s' % shlex_quote(ev)
+        if context.CLIARGS['become_ask_pass']:
             cmd += ' --ask-become-pass'
-        if self.options.skip_tags:
-            cmd += ' --skip-tags "%s"' % to_native(u','.join(self.options.skip_tags))
-        if self.options.tags:
-            cmd += ' -t "%s"' % to_native(u','.join(self.options.tags))
-        if self.options.subset:
-            cmd += ' -l "%s"' % self.options.subset
+        if context.CLIARGS['skip_tags']:
+            cmd += ' --skip-tags "%s"' % to_native(u','.join(context.CLIARGS['skip_tags']))
+        if context.CLIARGS['tags']:
+            cmd += ' -t "%s"' % to_native(u','.join(context.CLIARGS['tags']))
+        if context.CLIARGS['subset']:
+            cmd += ' -l "%s"' % context.CLIARGS['subset']
         else:
             cmd += ' -l "%s"' % limit_opts
-        if self.options.check:
+        if context.CLIARGS['check']:
             cmd += ' -C'
+        if context.CLIARGS['diff']:
+            cmd += ' -D'
 
-        os.chdir(self.options.dest)
+        os.chdir(context.CLIARGS['dest'])
 
         # redo inventory options as new files might exist now
         inv_opts = self._get_inv_cli()
@@ -264,46 +287,48 @@ class PullCLI(CLI):
         # RUN THE PLAYBOOK COMMAND
         display.debug("running ansible-playbook to do actual work")
         display.debug('EXEC: %s' % cmd)
-        rc, out, err = run_cmd(cmd, live=True)
+        rc, b_out, b_err = run_cmd(cmd, live=True)
 
-        if self.options.purge:
+        if context.CLIARGS['purge']:
             os.chdir('/')
             try:
-                shutil.rmtree(self.options.dest)
+                shutil.rmtree(context.CLIARGS['dest'])
             except Exception as e:
-                display.error("Failed to remove %s: %s" % (self.options.dest, str(e)))
+                display.error(u"Failed to remove %s: %s" % (context.CLIARGS['dest'], to_text(e)))
 
         return rc
 
-    def try_playbook(self, path):
+    @staticmethod
+    def try_playbook(path):
         if not os.path.exists(path):
             return 1
         if not os.access(path, os.R_OK):
             return 2
         return 0
 
-    def select_playbook(self, path):
+    @staticmethod
+    def select_playbook(path):
         playbook = None
-        if len(self.args) > 0 and self.args[0] is not None:
-            playbook = os.path.join(path, self.args[0])
-            rc = self.try_playbook(playbook)
+        if context.CLIARGS['args'] and context.CLIARGS['args'][0] is not None:
+            playbook = os.path.join(path, context.CLIARGS['args'][0])
+            rc = PullCLI.try_playbook(playbook)
             if rc != 0:
-                display.warning("%s: %s" % (playbook, self.PLAYBOOK_ERRORS[rc]))
+                display.warning("%s: %s" % (playbook, PullCLI.PLAYBOOK_ERRORS[rc]))
                 return None
             return playbook
         else:
             fqdn = socket.getfqdn()
             hostpb = os.path.join(path, fqdn + '.yml')
             shorthostpb = os.path.join(path, fqdn.split('.')[0] + '.yml')
-            localpb = os.path.join(path, self.DEFAULT_PLAYBOOK)
+            localpb = os.path.join(path, PullCLI.DEFAULT_PLAYBOOK)
             errors = []
             for pb in [hostpb, shorthostpb, localpb]:
-                rc = self.try_playbook(pb)
+                rc = PullCLI.try_playbook(pb)
                 if rc == 0:
                     playbook = pb
                     break
                 else:
-                    errors.append("%s: %s" % (pb, self.PLAYBOOK_ERRORS[rc]))
+                    errors.append("%s: %s" % (pb, PullCLI.PLAYBOOK_ERRORS[rc]))
             if playbook is None:
                 display.warning("\n".join(errors))
             return playbook

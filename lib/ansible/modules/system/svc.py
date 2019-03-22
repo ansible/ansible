@@ -1,34 +1,32 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# (c) 2015, Brian Coca <bcoca@ansible.com>
+# Copyright: (c) 2015, Brian Coca <bcoca@ansible.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = '''
 ---
 module: svc
-author: "Brian Coca (@bcoca)"
+author:
+- Brian Coca (@bcoca)
 version_added: "1.9"
-short_description:  Manage daemontools services.
+short_description:  Manage daemontools services
 description:
     - Controls daemontools services on remote hosts using the svc utility.
 options:
     name:
-        required: true
         description:
             - Name of the service to manage.
+        type: str
+        required: true
     state:
-        required: false
-        choices: [ started, stopped, restarted, reloaded, once, killed ]
         description:
             - C(Started)/C(stopped) are idempotent actions that will not run
               commands unless necessary.  C(restarted) will always bounce the
@@ -36,58 +34,59 @@ options:
               C(reloaded) will send a sigusr1 (svc -1).
               C(once) will run a normally downed svc once (svc -o), not really
               an idempotent operation.
+        type: str
+        choices: [ killed, once, reloaded, restarted, started, stopped ]
     downed:
-        required: false
-        choices: [ "yes", "no" ]
-        default: no
         description:
             - Should a 'down' file exist or not, if it exists it disables auto startup.
-              defaults to no. Downed does not imply stopped.
+              Defaults to no. Downed does not imply stopped.
+        type: bool
+        default: no
     enabled:
-        required: false
-        choices: [ "yes", "no" ]
         description:
-            - Wheater the service is enabled or not, if disabled it also implies stopped.
-              Make note that a service can be enabled and downed (no auto restart).
+            - Whether the service is enabled or not, if disabled it also implies stopped.
+              Take note that a service can be enabled and downed (no auto restart).
+        type: bool
     service_dir:
-        required: false
+        description:
+            - Directory svscan watches for services
+        type: str
         default: /service
-        description:
-            - directory svscan watches for services
     service_src:
-        required: false
         description:
-            - directory where services are defined, the source of symlinks to service_dir.
+            - Directory where services are defined, the source of symlinks to service_dir.
+        type: str
+        default: /etc/service
 '''
 
 EXAMPLES = '''
-# Example action to start svc dnscache, if not running
- - svc:
+- name: Start svc dnscache, if not running
+  svc:
     name: dnscache
     state: started
 
-# Example action to stop svc dnscache, if running
- - svc:
+- name: Stop svc dnscache, if running
+  svc:
     name: dnscache
     state: stopped
 
-# Example action to kill svc dnscache, in all cases
- - svc:
+- name: Kill svc dnscache, in all cases
+  svc:
     name: dnscache
     state: killed
 
-# Example action to restart svc dnscache, in all cases
- - svc:
+- name: Restart svc dnscache, in all cases
+  svc:
     name: dnscache
     state: restarted
 
-# Example action to reload svc dnscache, in all cases
- - svc:
+- name: Reload svc dnscache, in all cases
+  svc:
     name: dnscache
     state: reloaded
 
-# Example using alt svc directory location
- - svc:
+- name: Using alternative svc directory location
+  svc:
     name: dnscache
     state: reloaded
     service_dir: /var/service
@@ -119,38 +118,36 @@ def _load_dist_subclass(cls, *args, **kwargs):
 
     return super(cls, subclass).__new__(subclass)
 
+
 class Svc(object):
     """
     Main class that handles daemontools, can be subclassed and overridden in case
     we want to use a 'derivative' like encore, s6, etc
     """
 
-
-    #def __new__(cls, *args, **kwargs):
+    # def __new__(cls, *args, **kwargs):
     #    return _load_dist_subclass(cls, args, kwargs)
 
-
-
     def __init__(self, module):
-        self.extra_paths = [ '/command', '/usr/local/bin' ]
+        self.extra_paths = ['/command', '/usr/local/bin']
         self.report_vars = ['state', 'enabled', 'downed', 'svc_full', 'src_full', 'pid', 'duration', 'full_state']
 
-        self.module         = module
+        self.module = module
 
-        self.name           = module.params['name']
-        self.service_dir    = module.params['service_dir']
-        self.service_src    = module.params['service_src']
-        self.enabled        = None
-        self.downed         = None
-        self.full_state     = None
-        self.state          = None
-        self.pid            = None
-        self.duration       = None
+        self.name = module.params['name']
+        self.service_dir = module.params['service_dir']
+        self.service_src = module.params['service_src']
+        self.enabled = None
+        self.downed = None
+        self.full_state = None
+        self.state = None
+        self.pid = None
+        self.duration = None
 
-        self.svc_cmd        = module.get_bin_path('svc', opt_dirs=self.extra_paths)
-        self.svstat_cmd     = module.get_bin_path('svstat', opt_dirs=self.extra_paths)
-        self.svc_full = '/'.join([ self.service_dir, self.name ])
-        self.src_full = '/'.join([ self.service_src, self.name ])
+        self.svc_cmd = module.get_bin_path('svc', opt_dirs=self.extra_paths)
+        self.svstat_cmd = module.get_bin_path('svstat', opt_dirs=self.extra_paths)
+        self.svc_full = '/'.join([self.service_dir, self.name])
+        self.src_full = '/'.join([self.service_src, self.name])
 
         self.enabled = os.path.lexists(self.svc_full)
         if self.enabled:
@@ -159,7 +156,6 @@ class Svc(object):
         else:
             self.downed = os.path.lexists('%s/down' % self.src_full)
             self.state = 'stopped'
-
 
     def enable(self):
         if os.path.exists(self.src_full):
@@ -175,11 +171,11 @@ class Svc(object):
             os.unlink(self.svc_full)
         except OSError as e:
             self.module.fail_json(path=self.svc_full, msg='Error while unlinking: %s' % to_native(e))
-        self.execute_command([self.svc_cmd,'-dx',self.src_full])
+        self.execute_command([self.svc_cmd, '-dx', self.src_full])
 
         src_log = '%s/log' % self.src_full
         if os.path.exists(src_log):
-            self.execute_command([self.svc_cmd,'-dx',src_log])
+            self.execute_command([self.svc_cmd, '-dx', src_log])
 
     def get_status(self):
         (rc, out, err) = self.execute_command([self.svstat_cmd, self.svc_full])
@@ -189,11 +185,11 @@ class Svc(object):
         else:
             self.full_state = out
 
-            m = re.search('\(pid (\d+)\)', out)
+            m = re.search(r'\(pid (\d+)\)', out)
             if m:
                 self.pid = m.group(1)
 
-            m = re.search('(\d+) seconds', out)
+            m = re.search(r'(\d+) seconds', out)
             if m:
                 self.duration = m.group(1)
 
@@ -245,19 +241,19 @@ class Svc(object):
             states[k] = self.__dict__[k]
         return states
 
+
 # ===========================================
 # Main control flow
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(required=True),
-            state = dict(choices=['started', 'stopped', 'restarted', 'killed', 'reloaded', 'once']),
-            enabled = dict(required=False, type='bool'),
-            downed = dict(required=False, type='bool'),
-            dist = dict(required=False, default='daemontools'),
-            service_dir = dict(required=False, default='/service'),
-            service_src = dict(required=False, default='/etc/service'),
+        argument_spec=dict(
+            name=dict(type='str', required=True),
+            state=dict(type='str', choices=['killed', 'once', 'reloaded', 'restarted', 'started', 'stopped']),
+            enabled=dict(type='bool'),
+            downed=dict(type='bool'),
+            service_dir=dict(type='str', default='/service'),
+            service_src=dict(type='str', default='/etc/service'),
         ),
         supports_check_mode=True,
     )
@@ -281,12 +277,12 @@ def main():
                 else:
                     svc.disable()
             except (OSError, IOError) as e:
-                module.fail_json(msg="Could change service link: %s" % to_native(e))
+                module.fail_json(msg="Could not change service link: %s" % to_native(e))
 
     if state is not None and state != svc.state:
         changed = True
         if not module.check_mode:
-            getattr(svc,state[:-2])()
+            getattr(svc, state[:-2])()
 
     if downed is not None and downed != svc.downed:
         changed = True
@@ -298,11 +294,9 @@ def main():
                 else:
                     os.unlink(d_file)
             except (OSError, IOError) as e:
-                module.fail_json(msg="Could change downed file: %s " % (to_native(e)))
+                module.fail_json(msg="Could not change downed file: %s " % (to_native(e)))
 
     module.exit_json(changed=changed, svc=svc.report())
-
-
 
 
 if __name__ == '__main__':

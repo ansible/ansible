@@ -1,0 +1,203 @@
+- name: download single file (check)
+  win_get_url:
+    url: https://{{ httpbin_host }}/base64/SG93IG5vdyBicm93biBjb3c=
+    dest: '{{ testing_dir }}\output.txt'
+  check_mode: yes
+  register: http_download_check
+
+- name: get result of download single file (check)
+  win_stat:
+    path: '{{ testing_dir }}\output.txt'
+  register: http_download_result_check
+
+- name: assert download single file (check)
+  assert:
+    that:
+    - http_download_check is not failed
+    - http_download_check is changed
+    - http_download_check.url
+    - http_download_check.dest
+    - not http_download_result_check.stat.exists
+
+- name: download single file
+  win_get_url:
+    url: https://{{ httpbin_host }}/base64/SG93IG5vdyBicm93biBjb3c=
+    dest: '{{ testing_dir }}\output.txt'
+  register: http_download
+
+- name: get result of download single file
+  win_stat:
+    path: '{{ testing_dir }}\output.txt'
+  register: http_download_result
+
+- name: assert download single file
+  assert:
+    that:
+    - http_download is not failed
+    - http_download is changed
+    - http_download.url
+    - http_download.dest
+    - http_download_result.stat.exists
+
+- name: download single file (idempotent)
+  win_get_url:
+    url: https://{{ httpbin_host }}/base64/SG93IG5vdyBicm93biBjb3c=
+    dest: '{{ testing_dir }}\output.txt'
+  register: http_download_again
+
+- name: assert download single file (idempotent)
+  assert:
+    that:
+    - not http_download_again is changed
+
+# Cannot use httpbin as the Last-Modified date is generated dynamically
+- name: download file for force=no tests
+  win_get_url:
+    url: https://s3.amazonaws.com/ansible-ci-files/test/integration/roles/test_win_get_url/SlimFTPd.exe
+    dest: '{{ testing_dir }}\output'
+
+- name: download single file with force no
+  win_get_url:
+    url: https://s3.amazonaws.com/ansible-ci-files/test/integration/roles/test_win_get_url/SlimFTPd.exe
+    dest: '{{ testing_dir }}\output'
+    force: no
+  register: http_download_no_force
+
+- name: assert download single file with force no
+  assert:
+    that:
+    - http_download_no_force is not changed
+
+- name: manually change the content and last modified time on FTP source to older datetime
+  win_shell: |
+      $path = '{{ testing_dir }}\output'
+      Set-Content -LiteralPath $path -Value 'abc'
+      (Get-Item -LiteralPath $path).LastWriteTime = (Get-Date -Date "01/01/1970")
+
+- name: download newer file with force no
+  win_get_url:
+    url: https://s3.amazonaws.com/ansible-ci-files/test/integration/roles/test_win_get_url/SlimFTPd.exe
+    dest: '{{ testing_dir }}\output'
+    force: no
+  register: http_download_newer_no_force
+
+- name: assert download newer file with force no
+  assert:
+    that:
+    - http_download_newer_no_force is changed
+
+- name: download file to directory
+  win_get_url:
+    url: https://{{ httpbin_host }}/image/png
+    dest: '{{ testing_dir }}'
+  register: http_download_to_directory
+
+- name: get result of download to directory
+  win_stat:
+    path: '{{ testing_dir }}\png'
+  register: http_download_to_directory_result
+
+- name: assert download file to directory
+  assert:
+    that:
+    - http_download_to_directory is changed
+    - http_download_to_directory_result.stat.exists
+
+- name: download to path with env var
+  win_get_url:
+    url: https://{{ httpbin_host }}/image/jpeg
+    dest: '%TEST_WIN_GET_URL%\jpeg.jpg'
+  register: http_download_with_env
+  environment:
+    TEST_WIN_GET_URL: '{{ testing_dir }}'
+
+- name: get result of download to path with env var
+  win_stat:
+    path: '{{ testing_dir }}\jpeg.jpg'
+  register: http_download_with_env_result
+
+- name: assert download to path with env var
+  assert:
+    that:
+    - http_download_with_env is changed
+    - http_download_with_env_result.stat.exists
+
+- name: fail when link returns 404
+  win_get_url:
+    url: https://{{ httpbin_host }}/status/404
+    dest: '{{ testing_dir }}\skynet_module.html'
+  ignore_errors: yes
+  register: fail_download_404
+
+- name: assert fail when link returns 404
+  assert:
+    that:
+    - fail_download_404 is not changed
+    - fail_download_404 is failed
+    - fail_download_404.status_code == 404
+
+- name: fail when dest is an invalid path
+  win_get_url:
+    url: https://{{ httpbin_host }}/base64/YQ==
+    dest: Q:\Filez\Cyberdyne.html
+  register: fail_invalid_path
+  failed_when: '"The path ''Q:\Filez'' does not exist for destination ''Q:\Filez\Cyberdyne.html''" not in fail_invalid_path.msg'
+
+- name: test basic authentication
+  win_get_url:
+    url: http://{{ httpbin_host }}/basic-auth/username/password
+    dest: '{{ testing_dir }}\basic.txt'
+    url_username: username
+    url_password: password
+  register: basic_auth
+
+- name: assert test basic authentication
+  assert:
+    that:
+    - basic_auth is changed
+    - basic_auth.status_code == 200
+
+# httpbin hidden-basic-auth returns 404 not found on auth failure which stops the automatic auth handler from working.
+# Setting force_basic_auth=yes means the Basic auth header is sent in the original request not after a 401 response
+- name: test force basic authentication
+  win_get_url:
+    url: http://{{ httpbin_host }}/hidden-basic-auth/username/password
+    dest: '{{ testing_dir }}\force-basic.txt'
+    url_username: username
+    url_password: password
+    force_basic_auth: yes
+  register: force_basic_auth
+
+- name: assert test force basic auth
+  assert:
+    that:
+    - force_basic_auth is changed
+    - force_basic_auth.status_code == 200
+
+- name: timeout request
+  win_get_url:
+    url: https://{{ httpbin_host }}/delay/7
+    dest: '{{ testing_dir }}\timeout.txt'
+    timeout: 3
+  register: timeout_req
+  failed_when: timeout_req.msg != "Error requesting 'https://" + httpbin_host + "/delay/7'. The operation has timed out"
+
+- name: send request with headers
+  win_get_url:
+    url: https://{{ httpbin_host }}/headers
+    dest: '{{ testing_dir }}\headers.txt'
+    headers:
+      testing: 123
+  register: headers
+
+- name: get result of send request with headers
+  slurp:
+    path: '{{ testing_dir }}\headers.txt'
+  register: headers_actual
+
+- name: assert send request with headers
+  assert:
+    that:
+    - headers is changed
+    - headers.status_code == 200
+    - (headers_actual.content | b64decode | from_json).headers.Testing == '123'

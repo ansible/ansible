@@ -40,37 +40,27 @@ options:
     snooping:
         description:
             - Enables/disables IGMP snooping on the switch.
-        required: false
-        default: null
-        choices: ['true', 'false']
+        type: bool
     group_timeout:
         description:
             - Group membership timeout value for all VLANs on the device.
               Accepted values are integer in range 1-10080, I(never) and
               I(default).
-        required: false
-        default: null
     link_local_grp_supp:
         description:
             - Global link-local groups suppression.
-        required: false
-        default: null
-        choices: ['true', 'false']
+        type: bool
     report_supp:
         description:
             - Global IGMPv1/IGMPv2 Report Suppression.
-        required: false
-        default: null
+        type: bool
     v3_report_supp:
         description:
             - Global IGMPv3 Report Suppression and Proxy Reporting.
-        required: false
-        default: null
-        choices: ['true', 'false']
+        type: bool
     state:
         description:
             - Manage the state of the resource.
-        required: false
         default: present
         choices: ['present','default']
 '''
@@ -105,15 +95,15 @@ commands:
 
 import re
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
-def execute_show_command(command, module):
+def execute_show_command(command, module, output='text'):
     command = {
         'command': command,
-        'output': 'text',
+        'output': output,
     }
 
     return run_commands(module, [command])
@@ -130,53 +120,51 @@ def flatten_list(command_lists):
 
 
 def get_group_timeout(config):
-    command = 'ip igmp snooping group-timeout'
-    REGEX = re.compile(r'(?:{0}\s)(?P<value>.*)$'.format(command), re.M)
-    value = ''
-    if command in config:
-        value = REGEX.search(config).group('value')
-    return value
-
-
-def get_snooping(config):
-    REGEX = re.compile(r'{0}$'.format('no ip igmp snooping'), re.M)
-    value = False
-    try:
-        if REGEX.search(config):
-            value = False
-    except TypeError:
-        value = True
+    match = re.search(r'  Group timeout configured: (\S+)', config, re.M)
+    if match:
+        value = match.group(1)
+    else:
+        value = ''
     return value
 
 
 def get_igmp_snooping(module):
-    command = 'show run all | include igmp.snooping'
+    command = 'show ip igmp snooping'
     existing = {}
-    body = execute_show_command(command, module)[0]
+
+    try:
+        body = execute_show_command(command, module, output='json')[0]
+    except IndexError:
+        body = []
 
     if body:
-        split_body = body.splitlines()
-
-        if 'no ip igmp snooping' in split_body:
-            existing['snooping'] = False
-        else:
+        snooping = str(body.get('enabled')).lower()
+        if snooping == 'true' or snooping == 'enabled':
             existing['snooping'] = True
+        else:
+            existing['snooping'] = False
 
-        if 'no ip igmp snooping report-suppression' in split_body:
-            existing['report_supp'] = False
-        elif 'ip igmp snooping report-suppression' in split_body:
+        report_supp = str(body.get('grepsup')).lower()
+        if report_supp == 'true' or report_supp == 'enabled':
             existing['report_supp'] = True
+        else:
+            existing['report_supp'] = False
 
-        if 'no ip igmp snooping link-local-groups-suppression' in split_body:
-            existing['link_local_grp_supp'] = False
-        elif 'ip igmp snooping link-local-groups-suppression' in split_body:
+        link_local_grp_supp = str(body.get('glinklocalgrpsup')).lower()
+        if link_local_grp_supp == 'true' or link_local_grp_supp == 'enabled':
             existing['link_local_grp_supp'] = True
+        else:
+            existing['link_local_grp_supp'] = False
 
-        if 'ip igmp snooping v3-report-suppression' in split_body:
+        v3_report_supp = str(body.get('gv3repsup')).lower()
+        if v3_report_supp == 'true' or v3_report_supp == 'enabled':
             existing['v3_report_supp'] = True
         else:
             existing['v3_report_supp'] = False
 
+    command = 'show ip igmp snooping'
+    body = execute_show_command(command, module)[0]
+    if body:
         existing['group_timeout'] = get_group_timeout(body)
 
     return existing
@@ -193,9 +181,13 @@ def config_igmp_snooping(delta, existing, default=False):
 
     commands = []
     command = None
+    gt_command = None
     for key, value in delta.items():
         if value:
             if default and key == 'group_timeout':
+                if existing.get(key):
+                    gt_command = 'no ' + CMDS.get(key).format(existing.get(key))
+            elif value == 'default' and key == 'group_timeout':
                 if existing.get(key):
                     command = 'no ' + CMDS.get(key).format(existing.get(key))
             else:
@@ -207,6 +199,9 @@ def config_igmp_snooping(delta, existing, default=False):
             commands.append(command)
         command = None
 
+    if gt_command:
+        # ensure that group-timeout command is configured last
+        commands.append(gt_command)
     return commands
 
 
@@ -225,6 +220,19 @@ def get_igmp_snooping_defaults():
                    if value is not None)
 
     return default
+
+
+def igmp_snooping_gt_dependency(command, existing, module):
+    # group-timeout will fail if igmp snooping is disabled
+    gt = [i for i in command if i.startswith('ip igmp snooping group-timeout')]
+    if gt:
+        if 'no ip igmp snooping' in command or (existing['snooping'] is False and 'ip igmp snooping' not in command):
+            msg = "group-timeout cannot be enabled or changed when ip igmp snooping is disabled"
+            module.fail_json(msg=msg)
+        else:
+            # ensure that group-timeout command is configured last
+            command.remove(gt[0])
+            command.append(gt[0])
 
 
 def main():
@@ -260,22 +268,23 @@ def main():
                     if value is not None)
 
     existing = get_igmp_snooping(module)
-    end_state = existing
 
     commands = []
     if state == 'present':
         delta = dict(
             set(proposed.items()).difference(existing.items())
-            )
+        )
         if delta:
             command = config_igmp_snooping(delta, existing)
             if command:
+                if group_timeout:
+                    igmp_snooping_gt_dependency(command, existing, module)
                 commands.append(command)
     elif state == 'default':
         proposed = get_igmp_snooping_defaults()
         delta = dict(
             set(proposed.items()).difference(existing.items())
-            )
+        )
         if delta:
             command = config_igmp_snooping(delta, existing, default=True)
             if command:
@@ -291,6 +300,7 @@ def main():
         results['commands'] = cmds
 
     module.exit_json(**results)
+
 
 if __name__ == '__main__':
     main()

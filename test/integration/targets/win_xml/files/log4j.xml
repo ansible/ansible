@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/" debug="false">
+  <appender name="stdout" class="org.apache.log4j.ConsoleAppender" >
+    <layout class="org.apache.log4j.PatternLayout">
+      <param name="ConversionPattern" value="[%d{dd/MM/yy hh:mm:ss:sss z}] %5p %c{2}: %m%n"/>
+    </layout>
+  </appender>
+
+  <appender name="file" class="org.apache.log4j.DailyRollingFileAppender">
+    <param name="append" value="true" />
+    <param name="encoding" value="UTF-8" />
+    <param name="file" value="mylogfile.log" />
+    <param name="DatePattern" value="'.'yyyy-MM-dd" />
+    <layout class="org.apache.log4j.PatternLayout">
+      <param name="ConversionPattern" value="[%-25d{ISO8601}] %-5p %x %C{1} -- %m\n" />
+    </layout>
+  </appender>
+
+  <logger name="org.springframework.security.web.FilterChainProxy" additivity="false">
+    <level value="error"/>
+    <appender-ref ref="file" />
+    </logger>
+
+  <logger name="org.springframework.security.web.context.HttpSessionSecurityContextRepository" additivity="false">
+    <level value="error"/>
+    <appender-ref ref="file" />
+  </logger>
+
+  <logger name="org.springframework.security.web.context.SecurityContextPersistenceFilter" additivity="false">
+    <level value="error"/>
+    <appender-ref ref="file" />
+  </logger>
+
+  <logger name="org.springframework.security.web.access.intercept" additivity="false">
+    <level value="error"/>
+    <appender-ref ref="stdout" />
+  </logger>
+
+  <logger name="org.apache.commons.digester" additivity="false">
+    <level value="info"/>
+    <appender-ref ref="stdout" />
+  </logger>
+
+  <root>
+    <priority value="debug"/>
+    <appender-ref ref="stdout"/>
+  </root>
+</log4j:configuration>

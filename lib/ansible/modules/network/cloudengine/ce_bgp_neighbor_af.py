@@ -28,7 +28,7 @@ short_description: Manages BGP neighbor Address-family configuration on HUAWEI C
 description:
     - Manages BGP neighbor Address-family configurations on HUAWEI CloudEngine switches.
 author:
-    - wangdezhuang (@CloudEngine-Ansible)
+    - wangdezhuang (@QijunPan)
 options:
     vrf_name:
         description:
@@ -48,64 +48,54 @@ options:
         description:
             - If the value is true, advertised IRB routes are distinguished.
               If the value is false, advertised IRB routes are not distinguished.
-        required: false
         default: no_use
         choices: ['no_use','true','false']
     advertise_arp:
         description:
             - If the value is true, advertised ARP routes are distinguished.
               If the value is false, advertised ARP routes are not distinguished.
-        required: false
         default: no_use
         choices: ['no_use','true','false']
     advertise_remote_nexthop:
         description:
             - If the value is true, the remote next-hop attribute is advertised to peers.
               If the value is false, the remote next-hop attribute is not advertised to any peers.
-        required: false
         default: no_use
         choices: ['no_use','true','false']
     advertise_community:
         description:
             - If the value is true, the community attribute is advertised to peers.
               If the value is false, the community attribute is not advertised to peers.
-        required: false
         default: no_use
         choices: ['no_use','true','false']
     advertise_ext_community:
         description:
             - If the value is true, the extended community attribute is advertised to peers.
               If the value is false, the extended community attribute is not advertised to peers.
-        required: false
         default: no_use
         choices: ['no_use','true','false']
     discard_ext_community:
         description:
             - If the value is true, the extended community attribute in the peer route information is discarded.
               If the value is false, the extended community attribute in the peer route information is not discarded.
-        required: false
         default: no_use
         choices: ['no_use','true','false']
     allow_as_loop_enable:
         description:
             - If the value is true, repetitive local AS numbers are allowed.
               If the value is false, repetitive local AS numbers are not allowed.
-        required: false
         default: no_use
         choices: ['no_use','true','false']
     allow_as_loop_limit:
         description:
             - Set the maximum number of repetitive local AS number.
               The value is an integer ranging from 1 to 10.
-        required: false
-        default: null
     keep_all_routes:
         description:
             - If the value is true, the system stores all route update messages received from all peers (groups)
               after BGP connection setup.
               If the value is false, the system stores only BGP update messages that are received from peers
               and pass the configured import policy.
-        required: false
         default: no_use
         choices: ['no_use','true','false']
     nexthop_configure:
@@ -114,21 +104,16 @@ options:
               local, The next hop is changed to the local IP address.
               invariable, Prevent the device from changing the next hop of each imported IGP route
               when advertising it to its BGP peers.
-        required: false
-        default: null
         choices: ['null', 'local', 'invariable']
     preferred_value:
         description:
             - Assign a preferred value for the routes learned from a specified peer.
               The value is an integer ranging from 0 to 65535.
-        required: false
-        default: null
     public_as_only:
         description:
             - If the value is true, sent BGP update messages carry only the public AS number but do not carry
               private AS numbers.
               If the value is false, sent BGP update messages can carry private AS numbers.
-        required: false
         default: no_use
         choices: ['no_use','true','false']
     public_as_only_force:
@@ -136,39 +121,31 @@ options:
             - If the value is true, sent BGP update messages carry only the public AS number but do not carry
               private AS numbers.
               If the value is false, sent BGP update messages can carry private AS numbers.
-        required: false
         default: no_use
         choices: ['no_use','true','false']
     public_as_only_limited:
         description:
             - Limited use public as number.
-        required: false
         default: no_use
         choices: ['no_use','true','false']
     public_as_only_replace:
         description:
             - Private as replaced by public as number.
-        required: false
         default: no_use
         choices: ['no_use','true','false']
     public_as_only_skip_peer_as:
         description:
             - Public as only skip peer as.
-        required: false
         default: no_use
         choices: ['no_use','true','false']
     route_limit:
         description:
             - Configure the maximum number of routes that can be accepted from a peer.
               The value is an integer ranging from 1 to 4294967295.
-        required: false
-        default: null
     route_limit_percent:
         description:
             - Specify the percentage of routes when a router starts to generate an alarm.
               The value is an integer ranging from 1 to 100.
-        required: false
-        default: null
     route_limit_type:
         description:
             - Noparameter, After the number of received routes exceeds the threshold and the timeout
@@ -179,32 +156,24 @@ options:
               maximum number of routes allowed have been received.
               IdleTimeout, After the number of received routes exceeds the threshold and the timeout timer
               expires, the connection that is interrupted is automatically re-established.
-        required: false
-        default: null
         choices: ['noparameter', 'alertOnly', 'idleForever', 'idleTimeout']
     route_limit_idle_timeout:
         description:
             - Specify the value of the idle-timeout timer to automatically reestablish the connections after
               they are cut off when the number of routes exceeds the set threshold.
               The value is an integer ranging from 1 to 1200.
-        required: false
-        default: null
     rt_updt_interval:
         description:
             - Specify the minimum interval at which Update packets are sent. The value is an integer, in seconds.
               The value is an integer ranging from 0 to 600.
-        required: false
-        default: null
     redirect_ip:
         description:
             - Redirect ip.
-        required: false
         default: no_use
         choices: ['no_use','true','false']
     redirect_ip_vaildation:
         description:
             - Redirect ip vaildation.
-        required: false
         default: no_use
         choices: ['no_use','true','false']
     reflect_client:
@@ -212,7 +181,6 @@ options:
             - If the value is true, the local device functions as the route reflector and a peer functions
               as a client of the route reflector.
               If the value is false, the route reflector and client functions are not configured.
-        required: false
         default: no_use
         choices: ['no_use','true','false']
     substitute_as_enable:
@@ -221,89 +189,64 @@ options:
               the local AS number is enabled.
               If the value is false, the function to replace a specified peer's AS number in the AS-Path attribute with
               the local AS number is disabled.
-        required: false
         default: no_use
         choices: ['no_use','true','false']
     import_rt_policy_name:
         description:
             - Specify the filtering policy applied to the routes learned from a peer.
               The value is a string of 1 to 40 characters.
-        required: false
-        default: null
     export_rt_policy_name:
         description:
             - Specify the filtering policy applied to the routes to be advertised to a peer.
               The value is a string of 1 to 40 characters.
-        required: false
-        default: null
     import_pref_filt_name:
         description:
             - Specify the IPv4 filtering policy applied to the routes received from a specified peer.
               The value is a string of 1 to 169 characters.
-        required: false
-        default: null
     export_pref_filt_name:
         description:
             - Specify the IPv4 filtering policy applied to the routes to be advertised to a specified peer.
               The value is a string of 1 to 169 characters.
-        required: false
-        default: null
     import_as_path_filter:
         description:
             - Apply an AS_Path-based filtering policy to the routes received from a specified peer.
               The value is an integer ranging from 1 to 256.
-        required: false
-        default: null
     export_as_path_filter:
         description:
             - Apply an AS_Path-based filtering policy to the routes to be advertised to a specified peer.
               The value is an integer ranging from 1 to 256.
-        required: false
-        default: null
     import_as_path_name_or_num:
         description:
             - A routing strategy based on the AS path list for routing received by a designated peer.
-        required: false
-        default: null
     export_as_path_name_or_num:
         description:
             - Application of a AS path list based filtering policy to the routing of a specified peer.
-        required: false
-        default: null
     import_acl_name_or_num:
         description:
             - Apply an IPv4 ACL-based filtering policy to the routes received from a specified peer.
               The value is a string of 1 to 32 characters.
-        required: false
-        default: null
     export_acl_name_or_num:
         description:
             - Apply an IPv4 ACL-based filtering policy to the routes to be advertised to a specified peer.
               The value is a string of 1 to 32 characters.
-        required: false
-        default: null
     ipprefix_orf_enable:
         description:
             - If the value is true, the address prefix-based Outbound Route Filter (ORF) capability is
               enabled for peers.
               If the value is false, the address prefix-based Outbound Route Filter (ORF) capability is
               disabled for peers.
-        required: false
         default: no_use
         choices: ['no_use','true','false']
     is_nonstd_ipprefix_mod:
         description:
             - If the value is true, Non-standard capability codes are used during capability negotiation.
               If the value is false, RFC-defined standard ORF capability codes are used during capability negotiation.
-        required: false
         default: no_use
         choices: ['no_use','true','false']
     orftype:
         description:
             - ORF Type.
               The value is an integer ranging from 0 to 65535.
-        required: false
-        default: null
     orf_mode:
         description:
             - ORF mode.
@@ -311,35 +254,26 @@ options:
               receive, ORF for incoming packets.
               send, ORF for outgoing packets.
               both, ORF for incoming and outgoing packets.
-        required: false
-        default: null
         choices: ['null', 'receive', 'send', 'both']
     soostring:
         description:
             - Configure the Site-of-Origin (SoO) extended community attribute.
               The value is a string of 3 to 21 characters.
-        required: false
-        default: null
     default_rt_adv_enable:
         description:
             - If the value is true, the function to advertise default routes to peers is enabled.
               If the value is false, the function to advertise default routes to peers is disabled.
-        required: false
         default: no_use
         choices: ['no_use','true', 'false']
     default_rt_adv_policy:
         description:
             - Specify the name of a used policy. The value is a string.
               The value is a string of 1 to 40 characters.
-        required: false
-        default: null
     default_rt_match_mode:
         description:
             - null, Null.
               matchall, Advertise the default route if all matching conditions are met.
               matchany, Advertise the default route if any matching condition is met.
-        required: false
-        default: null
         choices: ['null', 'matchall', 'matchany']
     add_path_mode:
         description:
@@ -347,34 +281,27 @@ options:
               receive, Support receiving Add-Path routes.
               send, Support sending Add-Path routes.
               both, Support receiving and sending Add-Path routes.
-        required: false
-        default: null
         choices: ['null', 'receive', 'send', 'both']
     adv_add_path_num:
         description:
             - The number of addPath advertise route.
               The value is an integer ranging from 2 to 64.
-        required: false
-        default: null
     origin_as_valid:
         description:
             - If the value is true, Application results of route announcement.
               If the value is false, Routing application results are not notified.
-        required: false
         default: no_use
         choices: ['no_use','true', 'false']
     vpls_enable:
         description:
             - If the value is true, vpls enable.
               If the value is false, vpls disable.
-        required: false
         default: no_use
         choices: ['no_use','true', 'false']
     vpls_ad_disable:
         description:
             - If the value is true, enable vpls-ad.
               If the value is false, disable vpls-ad.
-        required: false
         default: no_use
         choices: ['no_use','true', 'false']
     update_pkt_standard_compatible:
@@ -383,7 +310,6 @@ options:
               the message has no label.
               If the value is false, When the vpnv4 multicast neighbor receives and updates the message,
               the message has label.
-        required: false
         default: no_use
         choices: ['no_use','true', 'false']
 '''
@@ -427,7 +353,7 @@ RETURN = '''
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 proposed:
     description: k/v pairs of parameters passed into module
@@ -461,7 +387,7 @@ updates:
 
 import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_nc_config, set_nc_config, ce_argument_spec, check_ip_addr
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec, check_ip_addr
 
 # get bgp peer af
 CE_GET_BGP_PEER_AF_HEADER = """

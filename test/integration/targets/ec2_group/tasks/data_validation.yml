@@ -1,0 +1,44 @@
+---
+- block:
+    - name: set up aws connection info
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
+      no_log: yes
+    - name: Create a group with only the default rule
+      ec2_group:
+        name: '{{ec2_group_name}}-input-tests'
+        vpc_id: '{{ vpc_result.vpc.id }}'
+        description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
+
+    - name: Run through some common weird port specs
+      ec2_group:
+        name: '{{ec2_group_name}}-input-tests'
+        description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
+        rules:
+          - "{{ item }}"
+      with_items:
+        - proto: tcp
+          from_port: "8182"
+          to_port: 8182
+          cidr_ipv6: "64:ff9b::/96"
+          rule_desc: Mixed string and non-string ports
+        - proto: tcp
+          ports:
+          - "9000"
+          - 9001
+          - 9002-9005
+          cidr_ip: "1.2.3.0/24"
+  always:
+    - name: tidy up input testing group
+      ec2_group:
+        name: '{{ec2_group_name}}-input-tests'
+        vpc_id: '{{ vpc_result.vpc.id }}'
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: yes

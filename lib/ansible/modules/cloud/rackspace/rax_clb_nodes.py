@@ -62,9 +62,7 @@ options:
   wait:
     required: false
     default: "no"
-    choices:
-      - "yes"
-      - "no"
+    type: bool
     description:
       - Wait for the load balancer to become active before returning
   wait_timeout:
@@ -77,7 +75,9 @@ options:
     description:
       - Weight of node
 author: "Lukasz Kawczynski (@neuroid)"
-extends_documentation_fragment: rackspace
+extends_documentation_fragment:
+  - rackspace
+  - rackspace.openstack
 '''
 
 EXAMPLES = '''
@@ -124,7 +124,6 @@ from ansible.module_utils.rax import rax_argument_spec, rax_clb_node_to_dict, ra
 
 
 def _activate_virtualenv(path):
-    path = os.path.expanduser(path)
     activate_this = os.path.join(path, 'bin', 'activate_this.py')
     with open(activate_this) as f:
         code = compile(f.read(), activate_this, 'exec')
@@ -159,7 +158,7 @@ def main():
             port=dict(type='int'),
             state=dict(default='present', choices=['present', 'absent']),
             type=dict(choices=['primary', 'secondary']),
-            virtualenv=dict(),
+            virtualenv=dict(type='path'),
             wait=dict(default=False, type='bool'),
             wait_timeout=dict(default=30, type='int'),
             weight=dict(type='int'),

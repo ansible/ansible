@@ -1,7 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# (c) 2017, Gaudenz Steinlin <gaudenz.steinlin@cloudscale.ch>
+# Copyright: (c) 2017, Gaudenz Steinlin <gaudenz.steinlin@cloudscale.ch>
+# Copyright: (c) 2019, René Moser <mail@renemoser.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -18,37 +19,38 @@ DOCUMENTATION = '''
 module: cloudscale_server
 short_description: Manages servers on the cloudscale.ch IaaS service
 description:
-  - Create, start, stop and delete servers on the cloudscale.ch IaaS service.
-  - All operations are performed using the cloudscale.ch public API v1.
-  - "For details consult the full API documentation: U(https://www.cloudscale.ch/en/api/v1)."
-  - An valid API token is required for all operations. You can create as many tokens as you like using the cloudscale.ch control panel at
-    U(https://control.cloudscale.ch).
+  - Create, update, start, stop and delete servers on the cloudscale.ch IaaS service.
 notes:
-  - Instead of the api_token parameter the CLOUDSCALE_API_TOKEN environment variable can be used.
-  - To create a new server at least the C(name), C(ssh_key), C(image) and C(flavor) options are required.
-  - If more than one server with the name given by the C(name) option exists, execution is aborted.
-  - Once a server is created all parameters except C(state) are read-only. You can't change the name, flavor or any other property. This is a limitation
-    of the cloudscale.ch API. The module will silently ignore differences between the configured parameters and the running server if a server with the
-    correct name or UUID exists. Only state changes will be applied.
-version_added: 2.3
-author: "Gaudenz Steinlin <gaudenz.steinlin@cloudscale.ch>"
+  - Since version 2.8, I(uuid) and I(name) or not mututally exclusive anymore.
+  - If I(uuid) option is provided, it takes precedence over I(name) for server selection. This allows to update the server's name.
+  - If no I(uuid) option is provided, I(name) is used for server selection. If more than one server with this name exists, execution is aborted.
+  - Only the I(name) and I(flavor) are evaluated for the update.
+  - The option I(force=true) must be given to allow the reboot of existing running servers for applying the changes.
+version_added: '2.3'
+author:
+  - Gaudenz Steinlin (@gaudenz)
+  - René Moser (@resmo)
 options:
   state:
     description:
-      - State of the server
-    default: running
+      - State of the server.
     choices: [ running, stopped, absent ]
+    default: running
+    type: str
   name:
     description:
       - Name of the Server.
-      - Either C(name) or C(uuid) are required. These options are mutually exclusive.
+      - Either I(name) or I(uuid) are required.
+    type: str
   uuid:
     description:
       - UUID of the server.
-      - Either C(name) or C(uuid) are required. These options are mutually exclusive.
+      - Either I(name) or I(uuid) are required.
+    type: str
   flavor:
     description:
       - Flavor of the server.
+    type: str
   image:
     description:
       - Image used to create the server.
@@ -56,36 +58,54 @@ options:
     description:
       - Size of the root volume in GB.
     default: 10
+    type: int
   bulk_volume_size_gb:
     description:
       - Size of the bulk storage volume in GB.
       - No bulk storage volume if not set.
+    type: int
   ssh_keys:
     description:
        - List of SSH public keys.
        - Use the full content of your .pub file here.
+    type: list
+  password:
+    description:
+       - Password for the server.
+    type: str
+    version_added: '2.8'
   use_public_network:
     description:
       - Attach a public network interface to the server.
-    default: True
+    default: yes
+    type: bool
   use_private_network:
     description:
       - Attach a private network interface to the server.
-    default: False
+    default: no
+    type: bool
   use_ipv6:
     description:
       - Enable IPv6 on the public network interface.
-    default: True
+    default: yes
+    type: bool
   anti_affinity_with:
     description:
       - UUID of another server to create an anti-affinity group with.
+    type: str
   user_data:
     description:
       - Cloud-init configuration (cloud-config) data to use for the server.
-  api_token:
+    type: str
+  api_timeout:
+    version_added: '2.5'
+  force:
     description:
-      - cloudscale.ch API token.
-      - This can also be passed in the CLOUDSCALE_API_TOKEN environment variable.
+      - Allow to stop the running server for updating if necessary.
+    default: no
+    type: bool
+    version_added: '2.8'
+extends_documentation_fragment: cloudscale
 '''
 
 EXAMPLES = '''
@@ -111,6 +131,19 @@ EXAMPLES = '''
     anti_affinity_with: '{{ server1.uuid }}'
     api_token: xxxxxx
 
+# Force to update the flavor of a running server
+- name: Start cloudscale.ch server
+  cloudscale_server:
+    name: my-shiny-cloudscale-server
+    image: debian-8
+    flavor: flex-8
+    force: yes
+    ssh_keys: ssh-rsa XXXXXXXXXX...XXXX ansible@cloudscale
+    use_private_network: True
+    bulk_volume_size_gb: 100
+    api_token: xxxxxx
+  register: server1
+
 # Stop the first server
 - name: Stop my first server
   cloudscale_server:
@@ -134,7 +167,7 @@ EXAMPLES = '''
     ssh_keys: ssh-rsa XXXXXXXXXXX ansible@cloudscale
     api_token: xxxxxx
   register: server
-  until: server.ssh_fingerprints
+  until: server.ssh_fingerprints is defined and server.ssh_fingerprints
   retries: 60
   delay: 2
 '''
@@ -143,32 +176,32 @@ RETURN = '''
 href:
   description: API URL to get details about this server
   returned: success when not state == absent
-  type: string
+  type: str
   sample: https://api.cloudscale.ch/v1/servers/cfde831a-4e87-4a75-960f-89b0148aa2cc
 uuid:
   description: The unique identifier for this server
   returned: success
-  type: string
+  type: str
   sample: cfde831a-4e87-4a75-960f-89b0148aa2cc
 name:
   description: The display name of the server
   returned: success
-  type: string
+  type: str
   sample: its-a-me-mario.cloudscale.ch
 state:
   description: The current status of the server
   returned: success
-  type: string
+  type: str
   sample: running
 flavor:
   description: The flavor that has been used for this server
   returned: success when not state == absent
-  type: string
+  type: str
   sample: flex-8
 image:
   description: The image used for booting this server
   returned: success when not state == absent
-  type: string
+  type: str
   sample: debian-8
 volumes:
   description: List of volumes attached to the server
@@ -193,98 +226,66 @@ ssh_host_keys:
 anti_affinity_with:
   description: List of servers in the same anti-affinity group
   returned: success when not state == absent
-  type: string
+  type: str
   sample: []
 '''
 
-import json
-import os
 from datetime import datetime, timedelta
 from time import sleep
+from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six.moves.urllib.parse import urlencode
-from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.cloudscale import AnsibleCloudscaleBase, cloudscale_argument_spec
 
-
-API_URL = 'https://api.cloudscale.ch/v1/'
-TIMEOUT_WAIT = 30
 ALLOWED_STATES = ('running',
                   'stopped',
                   'absent',
                   )
 
 
-class AnsibleCloudscaleServer(object):
+class AnsibleCloudscaleServer(AnsibleCloudscaleBase):
 
-    def __init__(self, module, api_token):
-        self._module = module
-        self._auth_header = {'Authorization': 'Bearer %s' % api_token}
-
-        # Check if server already exists and load properties
-        uuid = self._module.params['uuid']
-        name = self._module.params['name']
+    def __init__(self, module):
+        super(AnsibleCloudscaleServer, self).__init__(module)
 
         # Initialize server dictionary
-        self.info = {'uuid': uuid, 'name': name, 'state': 'absent'}
+        self._info = {}
 
-        servers = self.list_servers()
-        matching_server = []
-        for s in servers:
-            if uuid:
-                # Look for server by UUID if given
-                if s['uuid'] == uuid:
-                    self.info = self._transform_state(s)
-                    break
-            else:
-                # Look for server by name
-                if s['name'] == name:
-                    matching_server.append(s)
+    def _init_server_container(self):
+        return {
+            'uuid': self._module.params.get('uuid') or self._info.get('uuid'),
+            'name': self._module.params.get('name') or self._info.get('name'),
+            'state': 'absent',
+        }
+
+    def _get_server_info(self, refresh=False):
+        if self._info and not refresh:
+            return self._info
+
+        self._info = self._init_server_container()
+
+        uuid = self._info.get('uuid')
+        if uuid is not None:
+            server_info = self._get('servers/%s' % uuid)
+            if server_info:
+                self._info = self._transform_state(server_info)
+
         else:
-            if len(matching_server) == 1:
-                self.info = self._transform_state(matching_server[0])
-            elif len(matching_server) > 1:
-                self._module.fail_json(msg="More than one server with name '%s' exists. "
-                                       "Use the 'uuid' parameter to identify the server" % name)
+            name = self._info.get('name')
+            if name is not None:
+                servers = self._get('servers') or []
+                matching_server = []
+                for server in servers:
+                    if server['name'] == name:
+                        matching_server.append(server)
 
-    def _get(self, api_call):
-        resp, info = fetch_url(self._module, API_URL + api_call, headers=self._auth_header)
+                if len(matching_server) == 1:
+                    self._info = self._transform_state(matching_server[0])
+                elif len(matching_server) > 1:
+                    self._module.fail_json(msg="More than one server with name '%s' exists. "
+                                           "Use the 'uuid' parameter to identify the server." % name)
 
-        if info['status'] == 200:
-            return json.loads(resp.read())
-        else:
-            self._module.fail_json(msg='Failure while calling the cloudscale.ch API with GET for '
-                                       '"%s": %s' % (api_call, info['body']))
-
-    def _post(self, api_call, data=None):
-        if data is not None:
-            data = urlencode(data)
-
-        resp, info = fetch_url(self._module,
-                               API_URL + api_call,
-                               headers=self._auth_header,
-                               method='POST',
-                               data=data)
-
-        if info['status'] == 201:
-            return json.loads(resp.read())
-        elif info['status'] == 204:
-            return None
-        else:
-            self._module.fail_json(msg='Failure while calling the cloudscale.ch API with POST for '
-                                       '"%s": %s' % (api_call, info['body']))
-
-    def _delete(self, api_call):
-        resp, info = fetch_url(self._module,
-                               API_URL + api_call,
-                               headers=self._auth_header,
-                               method='DELETE')
-
-        if info['status'] == 204:
-            return None
-        else:
-            self._module.fail_json(msg='Failure while calling the cloudscale.ch API with DELETE for '
-                                       '"%s": %s' % (api_call, info['body']))
+        return self._info
 
     @staticmethod
     def _transform_state(server):
@@ -295,143 +296,179 @@ class AnsibleCloudscaleServer(object):
             server['state'] = 'absent'
         return server
 
-    def update_info(self):
-
-        # If we don't have a UUID (yet) there is nothing to update
-        if 'uuid' not in self.info:
-            return
-
-        # Can't use _get here because we want to handle 404
-        resp, info = fetch_url(self._module,
-                               API_URL + 'servers/' + self.info['uuid'],
-                               headers=self._auth_header)
-        if info['status'] == 200:
-            self.info = self._transform_state(json.loads(resp.read()))
-        elif info['status'] == 404:
-            self.info = {'uuid': self.info['uuid'],
-                         'name': self.info.get('name', None),
-                         'state': 'absent'}
-        else:
-            self._module.fail_json(msg='Failure while calling the cloudscale.ch API for '
-                                       'update_info: %s' % info['body'])
-
-    def wait_for_state(self, states):
+    def _wait_for_state(self, states):
         start = datetime.now()
-        while datetime.now() - start < timedelta(seconds=TIMEOUT_WAIT):
-            self.update_info()
-            if self.info['state'] in states:
-                return True
+        timeout = self._module.params['api_timeout'] * 2
+        while datetime.now() - start < timedelta(seconds=timeout):
+            server_info = self._get_server_info(refresh=True)
+            if server_info.get('state') in states:
+                return server_info
             sleep(1)
 
-        self._module.fail_json(msg='Timeout while waiting for a state change on server %s to states %s. Current state is %s'
-                               % (self.info['name'], states, self.info['state']))
+        # Timeout succeeded
+        if server_info.get('name') is not None:
+            msg = "Timeout while waiting for a state change on server %s to states %s. " \
+                  "Current state is %s." % (server_info.get('name'), states, server_info.get('state'))
+        else:
+            name_uuid = self._module.params.get('name') or self._module.params.get('uuid')
+            msg = 'Timeout while waiting to find the server %s' % name_uuid
 
-    def create_server(self):
-        data = self._module.params.copy()
+        self._module.fail_json(msg=msg)
 
-        # check for required parameters to create a server
-        missing_parameters = []
-        for p in ('name', 'ssh_keys', 'image', 'flavor'):
-            if p not in data or not data[p]:
-                missing_parameters.append(p)
+    def _start_stop_server(self, server_info, target_state="running", ignore_diff=False):
+        actions = {
+            'stopped': 'stop',
+            'running': 'start',
+        }
 
-        if len(missing_parameters) > 0:
-            self._module.fail_json(msg='Missing required parameter(s) to create a new server: %s' %
-                                   ' '.join(missing_parameters))
+        server_state = server_info.get('state')
+        if server_state != target_state:
+            self._result['changed'] = True
 
-        # Sanitize data dictionary
-        for k, v in data.items():
+            if not ignore_diff:
+                self._result['diff']['before'].update({
+                    'state': server_info.get('state'),
+                })
+                self._result['diff']['after'].update({
+                    'state': target_state,
+                })
+            if not self._module.check_mode:
+                self._post('servers/%s/%s' % (server_info['uuid'], actions[target_state]))
+                server_info = self._wait_for_state((target_state, ))
 
-            # Remove items not relevant to the create server call
-            if k in ('api_token', 'uuid', 'state'):
-                del data[k]
-                continue
+        return server_info
 
-            # Remove None values, these don't get correctly translated by urlencode
-            if v is None:
-                del data[k]
-                continue
+    def _update_param(self, param_key, server_info, requires_stop=False):
+        param_value = self._module.params.get(param_key)
+        if param_value is None:
+            return server_info
 
-        self.info = self._transform_state(self._post('servers', data))
-        self.wait_for_state(('running', ))
+        if 'slug' in server_info[param_key]:
+            server_v = server_info[param_key]['slug']
+        else:
+            server_v = server_info[param_key]
 
-    def delete_server(self):
-        self._delete('servers/%s' % self.info['uuid'])
-        self.wait_for_state(('absent', ))
+        if server_v != param_value:
+            # Set the diff output
+            self._result['diff']['before'].update({param_key: server_v})
+            self._result['diff']['after'].update({param_key: param_value})
 
-    def start_server(self):
-        self._post('servers/%s/start' % self.info['uuid'])
-        self.wait_for_state(('running', ))
+            if server_info.get('state') == "running":
+                if requires_stop and not self._module.params.get('force'):
+                    self._module.warn("Some changes won't be applied to running servers. "
+                                      "Use force=yes to allow the server '%s' to be stopped/started." % server_info['name'])
+                    return server_info
 
-    def stop_server(self):
-        self._post('servers/%s/stop' % self.info['uuid'])
-        self.wait_for_state(('stopped', ))
+            # Either the server is stopped or change is forced
+            self._result['changed'] = True
+            if not self._module.check_mode:
 
-    def list_servers(self):
-        return self._get('servers')
+                if requires_stop:
+                    self._start_stop_server(server_info, target_state="stopped", ignore_diff=True)
+
+                patch_data = {
+                    param_key: param_value,
+                }
+
+                # Response is 204: No Content
+                self._patch('servers/%s' % server_info['uuid'], patch_data)
+
+                # State changes to "changing" after update, waiting for stopped/running
+                server_info = self._wait_for_state(('stopped', 'running'))
+
+        return server_info
+
+    def _create_server(self, server_info):
+        self._result['changed'] = True
+
+        data = deepcopy(self._module.params)
+        for i in ('uuid', 'state', 'force', 'api_timeout', 'api_token'):
+            del data[i]
+
+        self._result['diff']['before'] = self._init_server_container()
+        self._result['diff']['after'] = deepcopy(data)
+        if not self._module.check_mode:
+            self._post('servers', data)
+            server_info = self._wait_for_state(('running', ))
+        return server_info
+
+    def _update_server(self, server_info):
+
+        previous_state = server_info.get('state')
+
+        server_info = self._update_param('flavor', server_info, requires_stop=True)
+        server_info = self._update_param('name', server_info)
+
+        if previous_state == "running":
+            server_info = self._start_stop_server(server_info, target_state="running", ignore_diff=True)
+
+        return server_info
+
+    def present_server(self):
+        server_info = self._get_server_info()
+
+        if server_info.get('state') != "absent":
+
+            # If target state is stopped, stop before an potential update and force would not be required
+            if self._module.params.get('state') == "stopped":
+                server_info = self._start_stop_server(server_info, target_state="stopped")
+
+            server_info = self._update_server(server_info)
+
+            if self._module.params.get('state') == "running":
+                server_info = self._start_stop_server(server_info, target_state="running")
+        else:
+            server_info = self._create_server(server_info)
+            server_info = self._start_stop_server(server_info, target_state=self._module.params.get('state'))
+
+        return server_info
+
+    def absent_server(self):
+        server_info = self._get_server_info()
+        if server_info.get('state') != "absent":
+            self._result['changed'] = True
+            self._result['diff']['before'] = deepcopy(server_info)
+            self._result['diff']['after'] = self._init_server_container()
+            if not self._module.check_mode:
+                self._delete('servers/%s' % server_info['uuid'])
+                server_info = self._wait_for_state(('absent', ))
+        return server_info
 
 
 def main():
+    argument_spec = cloudscale_argument_spec()
+    argument_spec.update(dict(
+        state=dict(default='running', choices=ALLOWED_STATES),
+        name=dict(),
+        uuid=dict(),
+        flavor=dict(),
+        image=dict(),
+        volume_size_gb=dict(type='int', default=10),
+        bulk_volume_size_gb=dict(type='int'),
+        ssh_keys=dict(type='list'),
+        password=dict(no_log=True),
+        use_public_network=dict(type='bool', default=True),
+        use_private_network=dict(type='bool', default=False),
+        use_ipv6=dict(type='bool', default=True),
+        anti_affinity_with=dict(),
+        user_data=dict(),
+        force=dict(type='bool', default=False)
+    ))
+
     module = AnsibleModule(
-        argument_spec=dict(
-            state=dict(default='running', choices=ALLOWED_STATES),
-            name=dict(),
-            uuid=dict(),
-            flavor=dict(),
-            image=dict(),
-            volume_size_gb=dict(type='int', default=10),
-            bulk_volume_size_gb=dict(type='int'),
-            ssh_keys=dict(type='list'),
-            use_public_network=dict(type='bool', default=True),
-            use_private_network=dict(type='bool', default=False),
-            use_ipv6=dict(type='bool', default=True),
-            anti_affinity_with=dict(),
-            user_data=dict(),
-            api_token=dict(no_log=True),
-        ),
+        argument_spec=argument_spec,
         required_one_of=(('name', 'uuid'),),
-        mutually_exclusive=(('name', 'uuid'),),
         supports_check_mode=True,
     )
 
-    api_token = module.params['api_token'] or os.environ.get('CLOUDSCALE_API_TOKEN')
+    cloudscale_server = AnsibleCloudscaleServer(module)
+    if module.params['state'] == "absent":
+        server = cloudscale_server.absent_server()
+    else:
+        server = cloudscale_server.present_server()
 
-    if not api_token:
-        module.fail_json(msg='The api_token module parameter or the CLOUDSCALE_API_TOKEN '
-                             'environment varialbe are required for this module.')
-
-    target_state = module.params['state']
-    server = AnsibleCloudscaleServer(module, api_token)
-    # The server could be in a changeing or error state.
-    # Wait for one of the allowed states before doing anything.
-    # If an allowed state can't be reached, this module fails.
-    if not server.info['state'] in ALLOWED_STATES:
-        server.wait_for_state(ALLOWED_STATES)
-    current_state = server.info['state']
-
-    if module.check_mode:
-        module.exit_json(changed=not target_state == current_state,
-                         **server.info)
-
-    changed = False
-    if current_state == 'absent' and target_state == 'running':
-        server.create_server()
-        changed = True
-    elif current_state == 'absent' and target_state == 'stopped':
-        server.create_server()
-        server.stop_server()
-        changed = True
-    elif current_state == 'stopped' and target_state == 'running':
-        server.start_server()
-        changed = True
-    elif current_state in ('running', 'stopped') and target_state == 'absent':
-        server.delete_server()
-        changed = True
-    elif current_state == 'running' and target_state == 'stopped':
-        server.stop_server()
-        changed = True
-
-    module.exit_json(changed=changed, **server.info)
+    result = cloudscale_server.get_result(server)
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':

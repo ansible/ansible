@@ -27,77 +27,60 @@ version_added: "2.4"
 short_description: Manages BFD session view configuration on HUAWEI CloudEngine devices.
 description:
     - Manages BFD session view configuration on HUAWEI CloudEngine devices.
-author: QijunPan (@CloudEngine-Ansible)
+author: QijunPan (@QijunPan)
 options:
     session_name:
         description:
             - Specifies the name of a BFD session.
               The value is a string of 1 to 15 case-sensitive characters without spaces.
         required: true
-        default: null
     local_discr:
         description:
             - Specifies the local discriminator of a BFD session.
               The value is an integer that ranges from 1 to 16384.
-        required: false
-        default: null
     remote_discr:
         description:
             - Specifies the remote discriminator of a BFD session.
               The value is an integer that ranges from 1 to 4294967295.
-        required: false
-        default: null
     min_tx_interval:
         description:
             - Specifies the minimum interval for receiving BFD packets.
               The value is an integer that ranges from 50 to 1000, in milliseconds.
-        required: false
-        default: null
     min_rx_interval:
         description:
             - Specifies the minimum interval for sending BFD packets.
               The value is an integer that ranges from 50 to 1000, in milliseconds.
-        required: false
-        default: null
     detect_multi:
         description:
             - Specifies the local detection multiplier of a BFD session.
               The value is an integer that ranges from 3 to 50.
-        required: false
-        default: null
     wtr_interval:
         description:
             - Specifies the WTR time of a BFD session.
               The value is an integer that ranges from 1 to 60, in minutes.
               The default value is 0.
-        required: false
-        default: null
     tos_exp:
         description:
             - Specifies a priority for BFD control packets.
               The value is an integer ranging from 0 to 7.
               The default value is 7, which is the highest priority.
-        required: false
-        default: null
     admin_down:
         description:
             - Enables the BFD session to enter the AdminDown state.
               By default, a BFD session is enabled.
               The default value is bool type.
-        required: false
-        default: false
+        type: bool
+        default: 'no'
     description:
         description:
             - Specifies the description of a BFD session.
               The value is a string of 1 to 51 case-sensitive characters with spaces.
-        required: false
-        default: null
     state:
         description:
             - Determines whether the config should be present or not on the device.
-        required: false
         default: present
         choices: ['present', 'absent']
+extends_documentation_fragment: ce
 """
 
 EXAMPLES = '''
@@ -198,14 +181,14 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 
 import sys
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_nc_config, set_nc_config, ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec
 
 
 CE_NC_GET_BFD = """

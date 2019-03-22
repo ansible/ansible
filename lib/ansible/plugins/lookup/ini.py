@@ -11,32 +11,32 @@ DOCUMENTATION = """
     short_description: read data from a ini file
     description:
       - "The ini lookup reads the contents of a file in INI format C(key1=value1).
-        This plugin retrieve the value on the right side after the equal sign C('=') of a given section C([section])."
+        This plugin retrieves the value on the right side after the equal sign C('=') of a given section C([section])."
       - "You can also read a property file which - in this case - does not contain section."
     options:
       _terms:
-        description: they key(s) too look up
+        description: The key(s) to look up
         required: True
-    type:
-      description: ini Type of the file. 'properties' refers to the Java properties files.
-      default: 'ini'
-      choices: ['ini', 'properties']
-    file:
-      description: Name of the file to load
-      default: ansible.ini
-    section:
-      default: global
-      description: section where to lookup for key.
-    re:
-      default: False
-      type: boolean
-      description:  Flag to indicate if the key supplied is a regexp.
-    encoding:
-      default: utf-8
-      description:  Text encoding to use.
-    default:
-      description: return value if the key is not in the ini file
-      default: ''
+      type:
+        description: Type of the file. 'properties' refers to the Java properties files.
+        default: 'ini'
+        choices: ['ini', 'properties']
+      file:
+        description: Name of the file to load.
+        default: ansible.ini
+      section:
+        default: global
+        description: Section where to lookup the key.
+      re:
+        default: False
+        type: boolean
+        description: Flag to indicate if the key supplied is a regexp.
+      encoding:
+        default: utf-8
+        description:  Text encoding to use.
+      default:
+        description: Return value if the key is not in the ini file.
+        default: ''
 """
 
 EXAMPLES = """
@@ -49,10 +49,7 @@ EXAMPLES = """
 - debug:
     msg: "{{ item }}"
   with_ini:
-    - value[1-2]
-    - section: section1
-    - file: "lookup.ini"
-    - re: true
+    - '.* section=section1 file=test.ini re=True'
 """
 
 RETURN = """
@@ -62,12 +59,12 @@ _raw:
 """
 import os
 import re
-from collections import MutableSequence
 from io import StringIO
 
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils.six.moves import configparser
 from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common._collections_compat import MutableSequence
 from ansible.plugins.lookup import LookupBase
 
 
@@ -129,13 +126,16 @@ class LookupModule(LookupBase):
             try:
                 for param in params[1:]:
                     name, value = param.split('=')
-                    assert(name in paramvals)
+                    if name not in paramvals:
+                        raise AnsibleAssertionError('%s not in paramvals' %
+                                                    name)
                     paramvals[name] = value
             except (ValueError, AssertionError) as e:
                 raise AnsibleError(e)
 
             # Retrieve file path
-            path = self.find_file_in_search_path(variables, 'files', paramvals['file'])
+            path = self.find_file_in_search_path(variables, 'files',
+                                                 paramvals['file'])
 
             # Create StringIO later used to parse ini
             config = StringIO()
@@ -146,12 +146,14 @@ class LookupModule(LookupBase):
 
             # Open file using encoding
             contents, show_data = self._loader._get_file_contents(path)
-            contents = to_text(contents, errors='surrogate_or_strict', encoding=paramvals['encoding'])
+            contents = to_text(contents, errors='surrogate_or_strict',
+                               encoding=paramvals['encoding'])
             config.write(contents)
             config.seek(0, os.SEEK_SET)
 
             self.cp.readfp(config)
-            var = self.get_value(key, paramvals['section'], paramvals['default'], paramvals['re'])
+            var = self.get_value(key, paramvals['section'],
+                                 paramvals['default'], paramvals['re'])
             if var is not None:
                 if isinstance(var, MutableSequence):
                     for v in var:

@@ -1,431 +1,506 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright 2016 F5 Networks Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2016, F5 Networks Inc.
+# GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: bigip_sys_global
-short_description: Manage BIG-IP global settings.
+short_description: Manage BIG-IP global settings
 description:
   - Manage BIG-IP global settings.
-version_added: "2.3"
+version_added: 2.3
 options:
   banner_text:
     description:
       - Specifies the text to present in the advisory banner.
+    type: str
   console_timeout:
     description:
       - Specifies the number of seconds of inactivity before the system logs
         off a user that is logged on.
+    type: int
   gui_setup:
     description:
-      - C(enable) or C(disabled) the Setup utility in the browser-based
-        Configuration utility
-    choices:
-      - enabled
-      - disabled
+      - C(yes) or C(no) the Setup utility in the browser-based
+        Configuration utility.
+    type: bool
   lcd_display:
     description:
-      - Specifies, when C(enabled), that the system menu displays on the
+      - Specifies, when C(yes), that the system menu displays on the
         LCD screen on the front of the unit. This setting has no effect
         when used on the VE platform.
-    choices:
-      - enabled
-      - disabled
+    type: bool
   mgmt_dhcp:
     description:
       - Specifies whether or not to enable DHCP client on the management
         interface
-    choices:
-      - enabled
-      - disabled
+    type: bool
   net_reboot:
     description:
-      - Specifies, when C(enabled), that the next time you reboot the system,
+      - Specifies, when C(yes), that the next time you reboot the system,
         the system boots to an ISO image on the network, rather than an
         internal media drive.
-    choices:
-      - enabled
-      - disabled
+    type: bool
   quiet_boot:
     description:
-      - Specifies, when C(enabled), that the system suppresses informational
-        text on the console during the boot cycle. When C(disabled), the
+      - Specifies, when C(yes), that the system suppresses informational
+        text on the console during the boot cycle. When C(no), the
         system presents messages and informational text on the console during
         the boot cycle.
+    type: bool
   security_banner:
     description:
       - Specifies whether the system displays an advisory message on the
         login screen.
-    choices:
-      - enabled
-      - disabled
+    type: bool
   state:
     description:
       - The state of the variable on the system. When C(present), guarantees
         that an existing variable is set to C(value).
-    required: false
-    default: present
+    type: str
     choices:
       - present
-notes:
-  - Requires the f5-sdk Python package on the host. This is as easy as pip
-    install f5-sdk.
+    default: present
 extends_documentation_fragment: f5
-requirements:
-  - f5-sdk
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Disable the setup utility
   bigip_sys_global:
-      gui_setup: "disabled"
-      password: "secret"
-      server: "lb.mydomain.com"
-      user: "admin"
-      state: "present"
+    gui_setup: no
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 '''
 
-RETURN = '''
+RETURN = r'''
 banner_text:
-    description: The new text to present in the advisory banner.
-    returned: changed
-    type: string
-    sample: "This is a corporate device. Do not touch."
+  description: The new text to present in the advisory banner.
+  returned: changed
+  type: str
+  sample: This is a corporate device. Do not touch.
 console_timeout:
-    description: >
-      The new number of seconds of inactivity before the system
+  description:
+    - The new number of seconds of inactivity before the system
       logs off a user that is logged on.
-    returned: changed
-    type: int
-    sample: 600
+  returned: changed
+  type: int
+  sample: 600
 gui_setup:
-    description: The new setting for the Setup utility.
-    returned: changed
-    type: string
-    sample: enabled
+  description: The new setting for the Setup utility.
+  returned: changed
+  type: bool
+  sample: yes
 lcd_display:
-    description: The new setting for displaying the system menu on the LCD.
-    returned: changed
-    type: string
-    sample: enabled
+  description: The new setting for displaying the system menu on the LCD.
+  returned: changed
+  type: bool
+  sample: yes
 mgmt_dhcp:
-    description: >
-      The new setting for whether the mgmt interface should DHCP
-      or not
-    returned: changed
-    type: string
-    sample: enabled
+  description: The new setting for whether the mgmt interface should DHCP or not.
+  returned: changed
+  type: bool
+  sample: yes
 net_reboot:
-    description: >
-      The new setting for whether the system should boot to an ISO on the
-      network or not
-    returned: changed
-    type: string
-    sample: enabled
+  description: The new setting for whether the system should boot to an ISO on the network or not.
+  returned: changed
+  type: bool
+  sample: yes
 quiet_boot:
-    description: >
-      The new setting for whether the system should suppress information to
+  description:
+    - The new setting for whether the system should suppress information to
       the console during boot or not.
-    returned: changed
-    type: string
-    sample: enabled
+  returned: changed
+  type: bool
+  sample: yes
 security_banner:
-    description: >
-      The new setting for whether the system should display an advisory message
-      on the login screen or not
-    returned: changed
-    type: string
-    sample: enabled
+  description:
+    - The new setting for whether the system should display an advisory message
+      on the login screen or not.
+  returned: changed
+  type: bool
+  sample: yes
 '''
 
+from ansible.module_utils.basic import AnsibleModule
+
 try:
-    from f5.bigip.contexts import TransactionContextManager
-    from f5.bigip import ManagementRoot
-    from icontrol.session import iControlUnexpectedHTTPError
-    HAS_F5SDK = True
+    from library.module_utils.network.f5.bigip import F5RestClient
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import f5_argument_spec
+    from library.module_utils.network.f5.common import flatten_boolean
 except ImportError:
-    HAS_F5SDK = False
+    from ansible.module_utils.network.f5.bigip import F5RestClient
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.network.f5.common import flatten_boolean
 
 
-class BigIpSysGlobalManager(object):
-    def __init__(self, *args, **kwargs):
-        self.changed_params = dict()
-        self.params = kwargs
-        self.api = None
+class Parameters(AnsibleF5Parameters):
+    api_map = {
+        'guiSecurityBanner': 'security_banner',
+        'guiSecurityBannerText': 'banner_text',
+        'guiSetup': 'gui_setup',
+        'lcdDisplay': 'lcd_display',
+        'mgmtDhcp': 'mgmt_dhcp',
+        'netReboot': 'net_reboot',
+        'quietBoot': 'quiet_boot',
+        'consoleInactivityTimeout': 'console_timeout',
+    }
 
-    def apply_changes(self):
-        result = dict()
+    api_attributes = [
+        'guiSecurityBanner',
+        'guiSecurityBannerText',
+        'guiSetup',
+        'lcdDisplay',
+        'mgmtDhcp',
+        'netReboot',
+        'quietBoot',
+        'consoleInactivityTimeout',
+    ]
 
-        changed = self.apply_to_running_config()
+    returnables = [
+        'security_banner',
+        'banner_text',
+        'gui_setup',
+        'lcd_display',
+        'mgmt_dhcp',
+        'net_reboot',
+        'quiet_boot',
+        'console_timeout',
+    ]
 
-        result.update(**self.changed_params)
-        result.update(dict(changed=changed))
-        return result
+    updatables = [
+        'security_banner',
+        'banner_text',
+        'gui_setup',
+        'lcd_display',
+        'mgmt_dhcp',
+        'net_reboot',
+        'quiet_boot',
+        'console_timeout',
+    ]
 
-    def apply_to_running_config(self):
+    @property
+    def security_banner(self):
+        return flatten_boolean(self._values['security_banner'])
+
+    @property
+    def gui_setup(self):
+        return flatten_boolean(self._values['gui_setup'])
+
+    @property
+    def lcd_display(self):
+        return flatten_boolean(self._values['lcd_display'])
+
+    @property
+    def mgmt_dhcp(self):
+        return flatten_boolean(self._values['mgmt_dhcp'])
+
+    @property
+    def net_reboot(self):
+        return flatten_boolean(self._values['net_reboot'])
+
+    @property
+    def quiet_boot(self):
+        return flatten_boolean(self._values['quiet_boot'])
+
+
+class ApiParameters(Parameters):
+    pass
+
+
+class ModuleParameters(Parameters):
+    pass
+
+
+class Changes(Parameters):
+    def to_return(self):
+        result = {}
         try:
-            self.api = self.connect_to_bigip(**self.params)
-            return self.update_sys_global_settings()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
-
-    def connect_to_bigip(self, **kwargs):
-        return ManagementRoot(kwargs['server'],
-                              kwargs['user'],
-                              kwargs['password'],
-                              port=kwargs['server_port'])
-
-    def read_sys_global_information(self):
-        settings = self.load_sys_global()
-        return self.format_sys_global_information(settings)
-
-    def load_sys_global(self):
-        return self.api.tm.sys.global_settings.load()
-
-    def get_changed_parameters(self):
-        result = dict()
-        current = self.read_sys_global_information()
-        if self.security_banner_is_changed(current):
-            result['guiSecurityBanner'] = self.params['security_banner']
-        if self.banner_text_is_changed(current):
-            result['guiSecurityBannerText'] = self.params['banner_text']
-        if self.gui_setup_is_changed(current):
-            result['guiSetup'] = self.params['gui_setup']
-        if self.lcd_display_is_changed(current):
-            result['lcdDisplay'] = self.params['lcd_display']
-        if self.mgmt_dhcp_is_changed(current):
-            result['mgmtDhcp'] = self.params['mgmt_dhcp']
-        if self.net_reboot_is_changed(current):
-            result['netReboot'] = self.params['net_reboot']
-        if self.quiet_boot_is_changed(current):
-            result['quietBoot'] = self.params['quiet_boot']
-        if self.console_timeout_is_changed(current):
-            result['consoleInactivityTimeout'] = self.params['console_timeout']
+            for returnable in self.returnables:
+                result[returnable] = getattr(self, returnable)
+            result = self._filter_params(result)
+        except Exception:
+            pass
         return result
 
-    def security_banner_is_changed(self, current):
-        if self.params['security_banner'] is None:
-            return False
-        if 'security_banner' not in current:
-            return True
-        if self.params['security_banner'] == current['security_banner']:
-            return False
-        else:
-            return True
 
-    def banner_text_is_changed(self, current):
-        if self.params['banner_text'] is None:
-            return False
-        if 'banner_text' not in current:
-            return True
-        if self.params['banner_text'] == current['banner_text']:
-            return False
-        else:
-            return True
+class UsableChanges(Changes):
+    @property
+    def security_banner(self):
+        if self._values['security_banner'] is None:
+            return None
+        if self._values['security_banner'] == 'yes':
+            return 'enabled'
+        return 'disabled'
 
-    def gui_setup_is_changed(self, current):
-        if self.params['gui_setup'] is None:
-            return False
-        if 'gui_setup' not in current:
-            return True
-        if self.params['gui_setup'] == current['gui_setup']:
-            return False
-        else:
-            return True
+    @property
+    def gui_setup(self):
+        if self._values['gui_setup'] is None:
+            return None
+        if self._values['gui_setup'] == 'yes':
+            return 'enabled'
+        return 'disabled'
 
-    def lcd_display_is_changed(self, current):
-        if self.params['lcd_display'] is None:
-            return False
-        if 'lcd_display' not in current:
-            return True
-        if self.params['lcd_display'] == current['lcd_display']:
-            return False
-        else:
-            return True
+    @property
+    def lcd_display(self):
+        if self._values['lcd_display'] is None:
+            return None
+        if self._values['lcd_display'] == 'yes':
+            return 'enabled'
+        return 'disabled'
 
-    def mgmt_dhcp_is_changed(self, current):
-        if self.params['mgmt_dhcp'] is None:
-            return False
-        if 'mgmt_dhcp' not in current:
-            return True
-        if self.params['mgmt_dhcp'] == current['mgmt_dhcp']:
-            return False
-        else:
-            return True
+    @property
+    def mgmt_dhcp(self):
+        if self._values['mgmt_dhcp'] is None:
+            return None
+        if self._values['mgmt_dhcp'] == 'yes':
+            return 'enabled'
+        return 'disabled'
 
-    def net_reboot_is_changed(self, current):
-        if self.params['net_reboot'] is None:
-            return False
-        if 'net_reboot' not in current:
-            return True
-        if self.params['net_reboot'] == current['net_reboot']:
-            return False
-        else:
-            return True
+    @property
+    def net_reboot(self):
+        if self._values['net_reboot'] is None:
+            return None
+        if self._values['net_reboot'] == 'yes':
+            return 'enabled'
+        return 'disabled'
 
-    def quiet_boot_is_changed(self, current):
-        if self.params['quiet_boot'] is None:
-            return False
-        if 'quiet_boot' not in current:
-            return True
-        if self.params['quiet_boot'] == current['quiet_boot']:
-            return False
-        else:
-            return True
+    @property
+    def quiet_boot(self):
+        if self._values['quiet_boot'] is None:
+            return None
+        if self._values['quiet_boot'] == 'yes':
+            return 'enabled'
+        return 'disabled'
 
-    def console_timeout_is_changed(self, current):
-        if self.params['console_timeout'] is None:
-            return False
-        if 'console_timeout' not in current:
-            return True
-        if self.params['console_timeout'] == current['console_timeout']:
-            return False
-        else:
-            return True
 
-    def format_sys_global_information(self, settings):
+class ReportableChanges(Changes):
+    @property
+    def security_banner(self):
+        return flatten_boolean(self._values['security_banner'])
+
+    @property
+    def gui_setup(self):
+        return flatten_boolean(self._values['gui_setup'])
+
+    @property
+    def lcd_display(self):
+        return flatten_boolean(self._values['lcd_display'])
+
+    @property
+    def mgmt_dhcp(self):
+        return flatten_boolean(self._values['mgmt_dhcp'])
+
+    @property
+    def net_reboot(self):
+        return flatten_boolean(self._values['net_reboot'])
+
+    @property
+    def quiet_boot(self):
+        return flatten_boolean(self._values['quiet_boot'])
+
+
+class Difference(object):
+    def __init__(self, want, have=None):
+        self.want = want
+        self.have = have
+
+    def compare(self, param):
+        try:
+            result = getattr(self, param)
+            return result
+        except AttributeError:
+            return self.__default(param)
+
+    def __default(self, param):
+        want = getattr(self.want, param)
+        try:
+            have = getattr(self.have, param)
+            if want != have:
+                return want
+        except AttributeError:
+            return want
+
+
+class ModuleManager(object):
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = F5RestClient(**self.module.params)
+        self.want = ModuleParameters(params=self.module.params)
+        self.have = ApiParameters()
+        self.changes = UsableChanges()
+
+    def _set_changed_options(self):
+        changed = {}
+        for key in Parameters.returnables:
+            if getattr(self.want, key) is not None:
+                changed[key] = getattr(self.want, key)
+        if changed:
+            self.changes = UsableChanges(params=changed)
+
+    def _update_changed_options(self):
+        diff = Difference(self.want, self.have)
+        updatables = Parameters.updatables
+        changed = dict()
+        for k in updatables:
+            change = diff.compare(k)
+            if change is None:
+                continue
+            else:
+                if isinstance(change, dict):
+                    changed.update(change)
+                else:
+                    changed[k] = change
+        if changed:
+            self.changes = UsableChanges(params=changed)
+            return True
+        return False
+
+    def should_update(self):
+        result = self._update_changed_options()
+        if result:
+            return True
+        return False
+
+    def exec_module(self):
         result = dict()
-        if hasattr(settings, 'guiSecurityBanner'):
-            result['security_banner'] = str(settings.guiSecurityBanner)
-        if hasattr(settings, 'guiSecurityBannerText'):
-            result['banner_text'] = str(settings.guiSecurityBannerText)
-        if hasattr(settings, 'guiSetup'):
-            result['gui_setup'] = str(settings.guiSetup)
-        if hasattr(settings, 'lcdDisplay'):
-            result['lcd_display'] = str(settings.lcdDisplay)
-        if hasattr(settings, 'mgmtDhcp'):
-            result['mgmt_dhcp'] = str(settings.mgmtDhcp)
-        if hasattr(settings, 'netReboot'):
-            result['net_reboot'] = str(settings.netReboot)
-        if hasattr(settings, 'quietBoot'):
-            result['quiet_boot'] = str(settings.quietBoot)
-        if hasattr(settings, 'consoleInactivityTimeout'):
-            result['console_timeout'] = int(settings.consoleInactivityTimeout)
+
+        changed = self.present()
+
+        reportable = ReportableChanges(params=self.changes.to_return())
+        changes = reportable.to_return()
+        result.update(**changes)
+        result.update(dict(changed=changed))
+        self._announce_deprecations(result)
         return result
 
-    def update_sys_global_settings(self):
-        params = self.get_changed_parameters()
-        if params:
-            self.changed_params = camel_dict_to_snake_dict(params)
-            if self.params['check_mode']:
-                return True
-        else:
+    def _announce_deprecations(self, result):
+        warnings = result.pop('__warnings', [])
+        for warning in warnings:
+            self.module.deprecate(
+                msg=warning['msg'],
+                version=warning['version']
+            )
+
+    def present(self):
+        return self.update()
+
+    def update(self):
+        self.have = self.read_current_from_device()
+        if not self.should_update():
             return False
-        self.update_sys_global_settings_on_device(params)
+        if self.module.check_mode:
+            return True
+        self.update_on_device()
         return True
 
-    def update_sys_global_settings_on_device(self, params):
-        tx = self.api.tm.transactions.transaction
-        with TransactionContextManager(tx) as api:
-            r = api.tm.sys.global_settings.load()
-            r.update(**params)
+    def read_current_from_device(self):
+        uri = "https://{0}:{1}/mgmt/tm/sys/global-settings/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return ApiParameters(params=response)
+
+    def update_on_device(self):
+        params = self.changes.api_params()
+        uri = "https://{0}:{1}/mgmt/tm/sys/global-settings/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
 
-class BigIpSysGlobalModuleConfig(object):
+class ArgumentSpec(object):
     def __init__(self):
-        self.argument_spec = dict()
-        self.meta_args = dict()
         self.supports_check_mode = True
         self.states = ['present']
-        self.on_off_choices = ['enabled', 'disabled']
-
-        self.initialize_meta_args()
-        self.initialize_argument_spec()
-
-    def initialize_meta_args(self):
-        args = dict(
+        argument_spec = dict(
             security_banner=dict(
-                required=False,
-                choices=self.on_off_choices,
-                default=None
+                type='bool'
             ),
-            banner_text=dict(required=False, default=None),
+            banner_text=dict(),
             gui_setup=dict(
-                required=False,
-                choices=self.on_off_choices,
-                default=None
+                type='bool'
             ),
             lcd_display=dict(
-                required=False,
-                choices=self.on_off_choices,
-                default=None
+                type='bool'
             ),
             mgmt_dhcp=dict(
-                required=False,
-                choices=self.on_off_choices,
-                default=None
+                type='bool'
             ),
             net_reboot=dict(
-                required=False,
-                choices=self.on_off_choices,
-                default=None
+                type='bool'
             ),
             quiet_boot=dict(
-                required=False,
-                choices=self.on_off_choices,
-                default=None
+                type='bool'
             ),
-            console_timeout=dict(required=False, type='int', default=None),
-            state=dict(default='present', choices=['present'])
+            console_timeout=dict(
+                type='int'
+            ),
+            state=dict(
+                default='present', choices=['present']
+            )
         )
-        self.meta_args = args
-
-    def initialize_argument_spec(self):
-        self.argument_spec = f5_argument_spec()
-        self.argument_spec.update(self.meta_args)
-
-    def create(self):
-        return AnsibleModule(
-            argument_spec=self.argument_spec,
-            supports_check_mode=self.supports_check_mode
-        )
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
 
 
 def main():
-    if not HAS_F5SDK:
-        raise F5ModuleError("The python f5-sdk module is required")
+    spec = ArgumentSpec()
 
-    config = BigIpSysGlobalModuleConfig()
-    module = config.create()
+    module = AnsibleModule(
+        argument_spec=spec.argument_spec,
+        supports_check_mode=spec.supports_check_mode
+    )
 
     try:
-        obj = BigIpSysGlobalManager(
-            check_mode=module.check_mode, **module.params
-        )
-        result = obj.apply_changes()
+        mm = ModuleManager(module=module)
+        results = mm.exec_module()
+        module.exit_json(**results)
+    except F5ModuleError as ex:
+        module.fail_json(msg=str(ex))
 
-        module.exit_json(**result)
-    except F5ModuleError as e:
-        module.fail_json(msg=str(e))
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict
-from ansible.module_utils.f5_utils import *
 
 if __name__ == '__main__':
     main()

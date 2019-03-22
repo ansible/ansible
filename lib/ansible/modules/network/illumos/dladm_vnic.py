@@ -37,7 +37,7 @@ options:
               do not persist across reboots.
         required: false
         default: false
-        choices: [ "true", "false" ]
+        type: bool
     mac:
         description:
             - Sets the VNIC's MAC address. Must be valid unicast MAC address.
@@ -84,27 +84,27 @@ RETURN = '''
 name:
     description: VNIC name
     returned: always
-    type: string
+    type: str
     sample: "vnic0"
 link:
     description: VNIC underlying link name
     returned: always
-    type: string
+    type: str
     sample: "igb0"
 state:
     description: state of the target
     returned: always
-    type: string
+    type: str
     sample: "present"
 temporary:
     description: VNIC's persistence
     returned: always
-    type: boolean
+    type: bool
     sample: "True"
 mac:
     description: MAC address to use for VNIC
     returned: if mac is specified
-    type: string
+    type: str
     sample: "00:00:5E:00:53:42"
 vlan:
     description: VLAN to use for VNIC

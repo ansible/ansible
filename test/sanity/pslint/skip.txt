@@ -1,0 +1,8 @@
+test/integration/targets/win_ping/library/win_ping_syntax_error.ps1
+test/integration/targets/win_dsc/files/xTestDsc/1.0.0/DSCResources/ANSIBLE_xSetReboot/ANSIBLE_xSetReboot.psm1
+test/integration/targets/win_dsc/files/xTestDsc/1.0.0/xTestDsc.psd1
+test/integration/targets/win_dsc/files/xTestDsc/1.0.0/DSCResources/ANSIBLE_xTestResource/ANSIBLE_xTestResource.psm1
+test/integration/targets/win_dsc/files/xTestDsc/1.0.1/xTestDsc.psd1
+test/integration/targets/win_dsc/files/xTestDsc/1.0.1/DSCResources/ANSIBLE_xTestResource/ANSIBLE_xTestResource.psm1
+test/integration/targets/win_psmodule/files/module/template.psd1
+test/integration/targets/win_psmodule/files/module/template.psm1

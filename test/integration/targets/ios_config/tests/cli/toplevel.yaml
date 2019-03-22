@@ -1,16 +1,14 @@
 ---
-- debug: msg="START cli/toplevel.yaml"
+- debug: msg="START cli/toplevel.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   ios_config:
     lines: ['hostname {{ shorter_hostname }}']
     match: none
-    authorize: yes
 
 - name: configure top level command
   ios_config:
     lines: ['hostname foo']
-    authorize: yes
   register: result
 
 - assert:
@@ -21,7 +19,6 @@
 - name: configure top level command idempotent check
   ios_config:
     lines: ['hostname foo']
-    authorize: yes
   register: result
 
 - assert:
@@ -32,6 +29,5 @@
   ios_config:
     lines: ['hostname {{ shorter_hostname }}']
     match: none
-    authorize: yes
 
-- debug: msg="END cli/toplevel.yaml"
+- debug: msg="END cli/toplevel.yaml on connection={{ ansible_connection }}"

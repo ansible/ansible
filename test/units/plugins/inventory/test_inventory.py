@@ -23,8 +23,8 @@ import string
 import textwrap
 
 from ansible import constants as C
-from ansible.compat.tests import mock
-from ansible.compat.tests import unittest
+from units.compat import mock
+from units.compat import unittest
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text
 from units.mock.path import mock_unfrackpath_noop
@@ -113,7 +113,7 @@ class TestInventory(unittest.TestCase):
             )
 
 
-class IniInventory(unittest.TestCase):
+class TestInventoryPlugins(unittest.TestCase):
 
     def test_empty_inventory(self):
         inventory = self._get_inventory('')
@@ -168,13 +168,21 @@ class IniInventory(unittest.TestCase):
         ---
         all:
             hosts:
-                test1
-                test2
+                test1:
+                test2:
         """)}
         C.INVENTORY_ENABLED = ['yaml']
         fake_loader = DictDataLoader(inventory_content)
         im = InventoryManager(loader=fake_loader, sources=filename)
         self.assertTrue(im._inventory.hosts)
+        self.assertIn('test1', im._inventory.hosts)
+        self.assertIn('test2', im._inventory.hosts)
+        self.assertIn(im._inventory.get_host('test1'), im._inventory.groups['all'].hosts)
+        self.assertIn(im._inventory.get_host('test2'), im._inventory.groups['all'].hosts)
+        self.assertEqual(len(im._inventory.groups['all'].hosts), 2)
+        self.assertIn(im._inventory.get_host('test1'), im._inventory.groups['ungrouped'].hosts)
+        self.assertIn(im._inventory.get_host('test2'), im._inventory.groups['ungrouped'].hosts)
+        self.assertEqual(len(im._inventory.groups['ungrouped'].hosts), 2)
 
     def _get_inventory(self, inventory_content):
 
@@ -190,6 +198,6 @@ class IniInventory(unittest.TestCase):
         all_hosts = set(host.name for host in inventory.groups['all'].get_hosts())
         self.assertEqual(set(['host1', 'host2', 'host3', 'host4', 'host5']), all_hosts)
         ungrouped_hosts = set(host.name for host in inventory.groups['ungrouped'].get_hosts())
-        self.assertEqual(set(['host1', 'host2', 'host3']), ungrouped_hosts)
+        self.assertEqual(set(['host1', 'host2']), ungrouped_hosts)
         servers_hosts = set(host.name for host in inventory.groups['servers'].get_hosts())
         self.assertEqual(set(['host3', 'host4', 'host5']), servers_hosts)

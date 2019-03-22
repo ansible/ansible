@@ -35,12 +35,6 @@ options:
       - Specify the number of seconds that LLDP information is held before it is
         discarded. The multiplier value is used in combination with the
         C(interval) value.
-  enable:
-    description:
-      - If value is C(True) it enable LLDP protocol on remote device, if value
-        is C(False) it disables LLDP protocol.
-    default: present
-    choices: [True, False]
   state:
     description:
       - Value of C(present) ensures given LLDP configuration
@@ -55,13 +49,16 @@ options:
     description:
       - Specifies whether or not the configuration is active or deactivated
     default: True
-    choices: [True, False]
+    type: bool
 requirements:
   - ncclient (>=v0.5.2)
 notes:
   - This module requires the netconf system service be enabled on
     the remote device being managed.
   - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
+  - Recommended connection is C(netconf). See L(the Junos OS Platform Options,../network/user_guide/platform_junos.html).
+  - This module also works with C(local) connections for legacy playbooks.
+extends_documentation_fragment: junos
 """
 
 EXAMPLES = """
@@ -92,7 +89,7 @@ RETURN = """
 diff.prepared:
   description: Configuration difference before and after applying change.
   returned: when configuration is changed and diff option is enabled.
-  type: string
+  type: str
   sample: >
         [edit]
         +  protocols {
@@ -104,14 +101,9 @@ diff.prepared:
 import collections
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.junos import junos_argument_spec, check_args
-from ansible.module_utils.junos import load_config, map_params_to_obj, map_obj_to_ele
-from ansible.module_utils.junos import commit_configuration, discard_changes, locked_config
-
-try:
-    from lxml.etree import tostring
-except ImportError:
-    from xml.etree.ElementTree import tostring
+from ansible.module_utils.network.junos.junos import junos_argument_spec, tostring
+from ansible.module_utils.network.junos.junos import load_config, map_params_to_obj, map_obj_to_ele
+from ansible.module_utils.network.junos.junos import commit_configuration, discard_changes, locked_config
 
 USE_PERSISTENT_CONNECTION = True
 
@@ -156,8 +148,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
-
     result = {'changed': False}
 
     if warnings:

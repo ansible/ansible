@@ -3,6 +3,9 @@ from __future__ import absolute_import, print_function
 
 import abc
 import atexit
+import datetime
+import json
+import time
 import os
 import platform
 import random
@@ -40,12 +43,13 @@ def initialize_cloud_plugins():
 
 def get_cloud_platforms(args, targets=None):
     """
-    :type args: IntegrationConfig
+    :type args: TestConfig
     :type targets: tuple[IntegrationTarget] | None
     :rtype: list[str]
     """
-    if args.list_targets:
-        return []
+    if isinstance(args, IntegrationConfig):
+        if args.list_targets:
+            return []
 
     if targets is None:
         cloud_platforms = set(args.metadata.cloud_config or [])
@@ -128,9 +132,30 @@ def cloud_init(args, targets):
 
     args.metadata.cloud_config = {}
 
+    results = {}
+
     for provider in get_cloud_providers(args, targets):
         args.metadata.cloud_config[provider.platform] = {}
+
+        start_time = time.time()
         provider.setup()
+        end_time = time.time()
+
+        results[provider.platform] = dict(
+            platform=provider.platform,
+            setup_seconds=int(end_time - start_time),
+            targets=[t.name for t in targets],
+        )
+
+    if not args.explain and results:
+        results_path = 'test/results/data/%s-%s.json' % (args.command, re.sub(r'[^0-9]', '-', str(datetime.datetime.utcnow().replace(microsecond=0))))
+
+        data = dict(
+            clouds=results,
+        )
+
+        with open(results_path, 'w') as results_fd:
+            results_fd.write(json.dumps(data, sort_keys=True, indent=4))
 
 
 class CloudBase(ABC):
@@ -140,6 +165,7 @@ class CloudBase(ABC):
     _CONFIG_PATH = 'config_path'
     _RESOURCE_PREFIX = 'resource_prefix'
     _MANAGED = 'managed'
+    _SETUP_EXECUTED = 'setup_executed'
 
     def __init__(self, args):
         """
@@ -147,6 +173,20 @@ class CloudBase(ABC):
         """
         self.args = args
         self.platform = self.__module__.split('.')[2]
+
+    @property
+    def setup_executed(self):
+        """
+        :rtype: bool
+        """
+        return self._get_cloud_config(self._SETUP_EXECUTED, False)
+
+    @setup_executed.setter
+    def setup_executed(self, value):
+        """
+        :type value: bool
+        """
+        self._set_cloud_config(self._SETUP_EXECUTED, value)
 
     @property
     def config_path(self):
@@ -190,11 +230,15 @@ class CloudBase(ABC):
         """
         self._set_cloud_config(self._MANAGED, value)
 
-    def _get_cloud_config(self, key):
+    def _get_cloud_config(self, key, default=None):
         """
         :type key: str
+        :type default: str | int | bool | None
         :rtype: str | int | bool
         """
+        if default is not None:
+            return self.args.metadata.cloud_config[self.platform].get(key, default)
+
         return self.args.metadata.cloud_config[self.platform][key]
 
     def _set_cloud_config(self, key, value):
@@ -209,7 +253,7 @@ class CloudProvider(CloudBase):
     """Base class for cloud provider plugins. Sets up cloud resources before delegation."""
     TEST_DIR = 'test/integration'
 
-    def __init__(self, args, config_extension='.yml'):
+    def __init__(self, args, config_extension='.ini'):
         """
         :type args: IntegrationConfig
         :type config_extension: str
@@ -326,18 +370,29 @@ class CloudProvider(CloudBase):
                 os.environ['SHIPPABLE_JOB_NUMBER'],
             )
 
-        node = re.sub(r'[^a-zA-Z0-9]+', '-', platform.node().split('.')[0])
+        node = re.sub(r'[^a-zA-Z0-9]+', '-', platform.node().split('.')[0]).lower()
 
         return 'ansible-test-%s-%d' % (node, random.randint(10000000, 99999999))
 
 
 class CloudEnvironment(CloudBase):
     """Base class for cloud environment plugins. Updates integration test environment after delegation."""
+    def setup_once(self):
+        """Run setup if it has not already been run."""
+        if self.setup_executed:
+            return
+
+        self.setup()
+        self.setup_executed = True
+
+    def setup(self):
+        """Setup which should be done once per environment instead of once per test target."""
+        pass
+
     @abc.abstractmethod
-    def configure_environment(self, env, cmd):
+    def get_environment_config(self):
         """
-        :type env: dict[str, str]
-        :type cmd: list[str]
+        :rtype: CloudEnvironmentConfig
         """
         pass
 
@@ -348,9 +403,17 @@ class CloudEnvironment(CloudBase):
         """
         pass
 
-    @property
-    def inventory_hosts(self):
+
+class CloudEnvironmentConfig(object):
+    """Configuration for the environment."""
+    def __init__(self, env_vars=None, ansible_vars=None, module_defaults=None, callback_plugins=None):
         """
-        :rtype: str | None
+        :type env_vars: dict[str, str] | None
+        :type ansible_vars: dict[str, any] | None
+        :type module_defaults: dict[str, dict[str, any]] | None
+        :type callback_plugins: list[str] | None
         """
-        return None
+        self.env_vars = env_vars
+        self.ansible_vars = ansible_vars
+        self.module_defaults = module_defaults
+        self.callback_plugins = callback_plugins

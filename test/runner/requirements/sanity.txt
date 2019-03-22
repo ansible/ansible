@@ -3,9 +3,9 @@ jinja2
 mock
 paramiko
 pycodestyle
-pylint
+pylint ; python_version >= '3.5' # pylint 2.0.0 and later require python 3+
 pytest
-rstcheck
+rstcheck ; python_version >= '2.7' # rstcheck requires python 2.7+
 sphinx
 virtualenv
 voluptuous

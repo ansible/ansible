@@ -19,15 +19,17 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import collections
-
 from jinja2.runtime import Undefined
 
+from ansible.module_utils.common._collections_compat import Mapping
 from ansible.template import Templar
 
 STATIC_VARS = [
     'ansible_version',
     'ansible_play_hosts',
+    'ansible_dependent_role_names',
+    'ansible_play_role_names',
+    'ansible_role_names',
     'inventory_hostname',
     'inventory_hostname_short',
     'inventory_file',
@@ -41,16 +43,11 @@ STATIC_VARS = [
     'ungrouped',
 ]
 
-try:
-    from hashlib import sha1
-except ImportError:
-    from sha import sha as sha1
-
-__all__ = ['HostVars']
+__all__ = ['HostVars', 'HostVarsVars']
 
 
 # Note -- this is a Mapping, not a MutableMapping
-class HostVars(collections.Mapping):
+class HostVars(Mapping):
     ''' A special view of vars_cache that adds values from the inventory when needed. '''
 
     def __init__(self, inventory, variable_manager, loader):
@@ -59,7 +56,6 @@ class HostVars(collections.Mapping):
         self._loader = loader
         self._variable_manager = variable_manager
         variable_manager._hostvars = self
-        self._cached_result = dict()
 
     def set_variable_manager(self, variable_manager):
         self._variable_manager = variable_manager
@@ -85,11 +81,9 @@ class HostVars(collections.Mapping):
 
     def __getitem__(self, host_name):
         data = self.raw_get(host_name)
-        sha1_hash = sha1(str(data).encode('utf-8')).hexdigest()
-        if sha1_hash not in self._cached_result:
-            templar = Templar(variables=data, loader=self._loader)
-            self._cached_result[sha1_hash] = templar.template(data, fail_on_undefined=False, static_vars=STATIC_VARS)
-        return self._cached_result[sha1_hash]
+        if isinstance(data, Undefined):
+            return data
+        return HostVarsVars(data, loader=self._loader)
 
     def set_host_variable(self, host, varname, value):
         self._variable_manager.set_host_variable(host, varname, value)
@@ -116,3 +110,28 @@ class HostVars(collections.Mapping):
         for host in self._inventory.hosts:
             out[host] = self.get(host)
         return repr(out)
+
+
+class HostVarsVars(Mapping):
+
+    def __init__(self, variables, loader):
+        self._vars = variables
+        self._loader = loader
+
+    def __getitem__(self, var):
+        templar = Templar(variables=self._vars, loader=self._loader)
+        foo = templar.template(self._vars[var], fail_on_undefined=False, static_vars=STATIC_VARS)
+        return foo
+
+    def __contains__(self, var):
+        return (var in self._vars)
+
+    def __iter__(self):
+        for var in self._vars.keys():
+            yield var
+
+    def __len__(self):
+        return len(self._vars.keys())
+
+    def __repr__(self):
+        return repr(self._vars)

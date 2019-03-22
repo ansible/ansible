@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # this is a windows documentation stub.  actual code lives in the .ps1
@@ -11,39 +11,43 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = r'''
 ---
 module: win_scheduled_task_stat
 version_added: "2.5"
-short_description: Returns information about a Windows Scheduled Task
+short_description: Get information about Windows Scheduled Tasks
 description:
 - Will return whether the folder and task exists.
 - Returns the names of tasks in the folder specified.
-- If C(name) is set and exists, will return information on the task itself.
 - Use M(win_scheduled_task) to configure a scheduled task.
 options:
   path:
     description: The folder path where the task lives.
+    type: str
     default: \
   name:
-    description: The name of the scheduled task to get information for.
+    description:
+    - The name of the scheduled task to get information for.
+    - If C(name) is set and exists, will return information on the task itself.
+    type: str
+seealso:
+- module: win_scheduled_task
 author:
 - Jordan Borean (@jborean93)
 '''
 
 EXAMPLES = r'''
-- name: get information about a folder
+- name: Get information about a folder
   win_scheduled_task_stat:
     path: \folder name
   register: task_folder_stat
 
-- name: get information about a task in the root folder
+- name: Get information about a task in the root folder
   win_scheduled_task_stat:
     name: task name
   register: task_stat
 
-- name: get information about a task in a custom folder
+- name: Get information about a task in a custom folder
   win_scheduled_task_stat:
     path: \folder name
     name: task name
@@ -67,8 +71,8 @@ actions:
 folder_exists:
   description: Whether the folder set at path exists.
   returned: always
-  type: boolean
-  sample: True
+  type: bool
+  sample: true
 folder_task_count:
   description: The number of tasks that exist in the folder.
   returned: always
@@ -170,12 +174,12 @@ settings:
         command of the Context menu.
       returned: ''
       type: bool
-      sample: True
+      sample: true
     allow_hard_terminate:
       description: Whether the task can terminated by using TerminateProcess.
       returned: ''
       type: bool
-      sample: True
+      sample: true
     compatibility:
       description: The compatibility level of the task
       returned: ''
@@ -192,18 +196,18 @@ settings:
         running on battery power.
       returned: ''
       type: bool
-      sample: False
+      sample: false
     disallow_start_on_remote_app_session:
       description: Whether the task will not be started when in a remote app
         session.
       returned: ''
       type: bool
-      sample: True
+      sample: true
     enabled:
       description: Whether the task is enabled.
       returned: ''
       type: bool
-      sample: True
+      sample: true
     execution_time_limit:
       description: The amount of time allowed to complete the task.
       returned: ''
@@ -213,13 +217,16 @@ settings:
       description: Whether the task is hidden in the UI.
       returned: ''
       type: bool
-      sample: False
+      sample: false
     idle_settings:
       description: The idle settings of the task.
       returned: ''
-      type: dictionary
+      type: dict
       sample: {
-          "idle_settings": "PT1H"
+          "idle_duration": "PT10M",
+          "restart_on_idle": false,
+          "stop_on_idle_end": true,
+          "wait_timeout": "PT1H"
       }
     maintenance_settings:
       description: The maintenance settings of the task.
@@ -235,9 +242,10 @@ settings:
     network_settings:
       description: The network settings of the task.
       returned: ''
-      type: dictionary
+      type: dict
       sample: {
-          "network_settings": null
+          "id": null,
+          "name": null
       }
     priority:
       description: The priority level of the task.
@@ -261,40 +269,40 @@ settings:
         state.
       returned: ''
       type: bool
-      sample: True
+      sample: true
     run_only_if_network_available:
       description: Whether the task will run only when a network is available.
       returned: ''
       type: bool
-      sample: False
+      sample: false
     start_when_available:
       description: Whether the task can start at any time after its scheduled
         time has passed.
       returned: ''
       type: bool
-      sample: False
+      sample: false
     stop_if_going_on_batteries:
       description: Whether the task will be stopped if the computer begins to
         run on battery power.
       returned: ''
       type: bool
-      sample: True
+      sample: true
     use_unified_scheduling_engine:
       description: Whether the task will use the unifed scheduling engine.
       returned: ''
       type: bool
-      sample: False
+      sample: false
     volatile:
       description: Whether thet ask is volatile.
       returned: ''
       type: bool
-      sample: False
+      sample: false
     wake_to_run:
       description: Whether the task will wake the computer when it is time to
         run the task.
       returned: ''
       type: bool
-      sample: False
+      sample: false
 state:
   description: Details on the state of the task
   returned: name is specified and task exists
@@ -329,8 +337,8 @@ state:
 task_exists:
   description: Whether the task at the folder exists.
   returned: name is specified
-  type: boolean
-  sample: True
+  type: bool
+  sample: true
 triggers:
   description: A list of triggers.
   returned: name is specified and task exists
@@ -343,7 +351,9 @@ triggers:
           "execution_time_limit": null,
           "id": null,
           "repetition": {
-              "repetition": false
+              "duration": null,
+              "interval": null,
+              "stop_at_duration_end": false
           },
           "start_boundary": null,
           "type": "TASK_TRIGGER_BOOT"
@@ -357,7 +367,9 @@ triggers:
           "months_of_year": "june,december",
           "random_delay": null,
           "repetition": {
-              "repetition": false
+              "duration": null,
+              "interval": null,
+              "stop_at_duration_end": false
           },
           "run_on_last_day_of_month": true,
           "start_boundary": "2017-09-20T03:44:38",

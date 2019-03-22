@@ -14,22 +14,27 @@ DOCUMENTATION = '''
 ---
 module: ecs_service_facts
 short_description: list or describe services in ecs
-notes:
-    - for details of the parameters and returns see U(http://boto3.readthedocs.org/en/latest/reference/services/ecs.html)
 description:
     - Lists or describes services in ecs.
 version_added: "2.1"
 author:
     - "Mark Chance (@java1guy)"
     - "Darek Kaczynski (@kaczynskid)"
-requirements: [ json, boto, botocore, boto3 ]
+requirements: [ json, botocore, boto3 ]
 options:
     details:
         description:
             - Set this to true if you want detailed information about the services.
         required: false
         default: 'false'
-        choices: ['true', 'false']
+        type: bool
+    events:
+        description:
+            - Whether to return ECS service events. Only has an effect if C(details) is true.
+        required: false
+        default: 'true'
+        type: bool
+        version_added: "2.6"
     cluster:
         description:
             - The cluster ARNS in which to list the services.
@@ -37,7 +42,7 @@ options:
         default: 'default'
     service:
         description:
-            - The service to get details for (required if details is true)
+            - One or more services to get details for
         required: false
 extends_documentation_fragment:
     - aws
@@ -67,7 +72,7 @@ services:
         clusterArn:
             description: The Amazon Resource Name (ARN) of the of the cluster that hosts the service.
             returned: always
-            type: string
+            type: str
         desiredCount:
             description: The desired number of instantiations of the task definition to keep running on the service.
             returned: always
@@ -80,11 +85,11 @@ services:
                 loadBalancerName:
                     description: the name
                     returned: always
-                    type: string
+                    type: str
                 containerName:
                     description: The name of the container to associate with the load balancer.
                     returned: always
-                    type: string
+                    type: str
                 containerPort:
                     description: The port on the container to associate with the load balancer.
                     returned: always
@@ -100,44 +105,36 @@ services:
         serviceArn:
             description: The Amazon Resource Name (ARN) that identifies the service. The ARN contains the arn:aws:ecs namespace, followed by the region of the service, the AWS account ID of the service owner, the service namespace, and then the service name. For example, arn:aws:ecs:region :012345678910 :service/my-service .
             returned: always
-            type: string
+            type: str
         serviceName:
             description: A user-generated string used to identify the service
             returned: always
-            type: string
+            type: str
         status:
             description: The valid values are ACTIVE, DRAINING, or INACTIVE.
             returned: always
-            type: string
+            type: str
         taskDefinition:
             description: The ARN of a task definition to use for tasks in the service.
             returned: always
-            type: string
+            type: str
         deployments:
             description: list of service deployments
             returned: always
             type: list of complex
         events:
-            description: lost of service events
-            returned: always
+            description: list of service events
+            returned: when events is true
             type: list of complex
 '''  # NOQA
 
 try:
-    import boto
     import botocore
-    HAS_BOTO = True
 except ImportError:
-    HAS_BOTO = False
+    pass  # handled by AnsibleAWSModule
 
-try:
-    import boto3
-    HAS_BOTO3 = True
-except ImportError:
-    HAS_BOTO3 = False
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import ec2_argument_spec, AWSRetry
 
 
 class EcsServiceManager:
@@ -145,44 +142,46 @@ class EcsServiceManager:
 
     def __init__(self, module):
         self.module = module
+        self.ecs = module.client('ecs')
 
+    @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
+    def list_services_with_backoff(self, **kwargs):
+        paginator = self.ecs.get_paginator('list_services')
         try:
-            # self.ecs = boto3.client('ecs')
-            region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-            if not region:
-                module.fail_json(msg="Region must be specified as a parameter, in EC2_REGION or AWS_REGION environment variables or in boto configuration file")
-            self.ecs = boto3_conn(module, conn_type='client', resource='ecs', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-        except boto.exception.NoAuthHandlerFound as e:
-            self.module.fail_json(msg="Can't authorize connection - %s" % str(e))
+            return paginator.paginate(**kwargs).build_full_result()
+        except botocore.exceptions.ClientError as e:
+            if e.response['Error']['Code'] == 'ClusterNotFoundException':
+                self.module.fail_json_aws(e, "Could not find cluster to list services")
+            else:
+                raise
 
-    # def list_clusters(self):
-    #   return self.client.list_clusters()
-    # {'failures': [],
-    # 'ResponseMetadata': {'HTTPStatusCode': 200, 'RequestId': 'ce7b5880-1c41-11e5-8a31-47a93a8a98eb'},
-    # 'clusters': [{'activeServicesCount': 0, 'clusterArn': 'arn:aws:ecs:us-west-2:777110527155:cluster/default',
-    #               'status': 'ACTIVE', 'pendingTasksCount': 0, 'runningTasksCount': 0, 'registeredContainerInstancesCount': 0, 'clusterName': 'default'}]}
-    # {'failures': [{'arn': 'arn:aws:ecs:us-west-2:777110527155:cluster/bogus', 'reason': 'MISSING'}],
-    # 'ResponseMetadata': {'HTTPStatusCode': 200, 'RequestId': '0f66c219-1c42-11e5-8a31-47a93a8a98eb'},
-    # 'clusters': []}
+    @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
+    def describe_services_with_backoff(self, **kwargs):
+        return self.ecs.describe_services(**kwargs)
 
     def list_services(self, cluster):
         fn_args = dict()
         if cluster and cluster is not None:
             fn_args['cluster'] = cluster
-        response = self.ecs.list_services(**fn_args)
-        relevant_response = dict(services = response['serviceArns'])
+        try:
+            response = self.list_services_with_backoff(**fn_args)
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            self.module.fail_json_aws(e, msg="Couldn't list ECS services")
+        relevant_response = dict(services=response['serviceArns'])
         return relevant_response
 
     def describe_services(self, cluster, services):
         fn_args = dict()
         if cluster and cluster is not None:
             fn_args['cluster'] = cluster
-        fn_args['services']=services.split(",")
-        response = self.ecs.describe_services(**fn_args)
-        relevant_response = dict(services = map(self.extract_service_from, response['services']))
-        if 'failures' in response and len(response['failures'])>0:
-            relevant_response['services_not_running'] = response['failures']
-        return relevant_response
+        fn_args['services'] = services
+        try:
+            response = self.describe_services_with_backoff(**fn_args)
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            self.module.fail_json_aws(e, msg="Couldn't describe ECS services")
+        running_services = [self.extract_service_from(service) for service in response.get('services', [])]
+        services_not_running = response.get('failures', [])
+        return running_services, services_not_running
 
     def extract_service_from(self, service):
         # some fields are datetime which is not JSON serializable
@@ -194,40 +193,51 @@ class EcsServiceManager:
                 if 'updatedAt' in d:
                     d['updatedAt'] = str(d['updatedAt'])
         if 'events' in service:
-            for e in service['events']:
-                if 'createdAt' in e:
-                    e['createdAt'] = str(e['createdAt'])
+            if not self.module.params['events']:
+                del service['events']
+            else:
+                for e in service['events']:
+                    if 'createdAt' in e:
+                        e['createdAt'] = str(e['createdAt'])
         return service
+
+
+def chunks(l, n):
+    """Yield successive n-sized chunks from l."""
+    """ https://stackoverflow.com/a/312464 """
+    for i in range(0, len(l), n):
+        yield l[i:i + n]
+
 
 def main():
 
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        details=dict(required=False, type='bool', default=False ),
-        cluster=dict(required=False, type='str' ),
-        service=dict(required=False, type='str' )
+        details=dict(type='bool', default=False),
+        events=dict(type='bool', default=True),
+        cluster=dict(),
+        service=dict(type='list')
     ))
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+    module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
 
-    if not HAS_BOTO:
-        module.fail_json(msg='boto is required.')
-
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 is required.')
-
-    show_details = module.params.get('details', False)
+    show_details = module.params.get('details')
 
     task_mgr = EcsServiceManager(module)
     if show_details:
-        if 'service' not in module.params or not module.params['service']:
-            module.fail_json(msg="service must be specified for ecs_service_facts")
-        ecs_facts = task_mgr.describe_services(module.params['cluster'], module.params['service'])
+        if module.params['service']:
+            services = module.params['service']
+        else:
+            services = task_mgr.list_services(module.params['cluster'])['services']
+        ecs_facts = dict(services=[], services_not_running=[])
+        for chunk in chunks(services, 10):
+            running_services, services_not_running = task_mgr.describe_services(module.params['cluster'], chunk)
+            ecs_facts['services'].extend(running_services)
+            ecs_facts['services_not_running'].extend(services_not_running)
     else:
         ecs_facts = task_mgr.list_services(module.params['cluster'])
 
-    ecs_facts_result = dict(changed=False, ansible_facts=ecs_facts)
-    module.exit_json(**ecs_facts_result)
+    module.exit_json(changed=False, ansible_facts=ecs_facts, **ecs_facts)
 
 
 if __name__ == '__main__':

@@ -3,19 +3,11 @@
 # Copyright (c) 2014 Hewlett-Packard Development Company, L.P.
 # Copyright (c) 2013, Benno Joy <benno@ansible.com>
 # Copyright (c) 2013, John Dewey <john@dewey.ws>
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -36,19 +28,14 @@ options:
     description:
       - Name that has to be given to the key pair
     required: true
-    default: None
   public_key:
     description:
       - The public key that would be uploaded to nova and injected into VMs
         upon creation.
-    required: false
-    default: None
   public_key_file:
     description:
       - Path to local file containing ssh public key. Mutually exclusive
         with public_key.
-    required: false
-    default: None
   state:
     description:
       - Should the resource be present or absent.
@@ -57,8 +44,6 @@ options:
   availability_zone:
     description:
       - Ignored. Present for backwards compatibility
-    required: false
-requirements: []
 '''
 
 EXAMPLES = '''
@@ -80,27 +65,24 @@ RETURN = '''
 id:
     description: Unique UUID.
     returned: success
-    type: string
+    type: str
 name:
     description: Name given to the keypair.
     returned: success
-    type: string
+    type: str
 public_key:
     description: The public key value for the keypair.
     returned: success
-    type: string
+    type: str
 private_key:
     description: The private key value for the keypair.
     returned: Only when a keypair is generated for the user (e.g., when creating one
               and a public key is not specified).
-    type: string
+    type: str
 '''
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def _system_state_change(module, keypair):
@@ -114,11 +96,11 @@ def _system_state_change(module, keypair):
 
 def main():
     argument_spec = openstack_full_argument_spec(
-        name            = dict(required=True),
-        public_key      = dict(default=None),
-        public_key_file = dict(default=None),
-        state           = dict(default='present',
-                               choices=['absent', 'present']),
+        name=dict(required=True),
+        public_key=dict(default=None),
+        public_key_file=dict(default=None),
+        state=dict(default='present',
+                   choices=['absent', 'present']),
     )
 
     module_kwargs = openstack_module_kwargs(
@@ -128,19 +110,16 @@ def main():
                            supports_check_mode=True,
                            **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
     state = module.params['state']
     name = module.params['name']
     public_key = module.params['public_key']
 
     if module.params['public_key_file']:
-        public_key = open(module.params['public_key_file']).read()
-        public_key = public_key.rstrip()
+        with open(module.params['public_key_file']) as public_key_fh:
+            public_key = public_key_fh.read().rstrip()
 
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.openstack_cloud(**module.params)
         keypair = cloud.get_keypair(name)
 
         if module.check_mode:
@@ -169,11 +148,9 @@ def main():
                 module.exit_json(changed=True)
             module.exit_json(changed=False)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
-# this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
+
 if __name__ == '__main__':
     main()

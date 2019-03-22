@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = """
@@ -36,34 +36,27 @@ options:
   ec2_elbs:
     description:
       - List of ELB names, required for registration. The ec2_elbs fact should be used if there was a previous de-register.
-    required: false
-    default: None
   enable_availability_zone:
     description:
       - Whether to enable the availability zone of the instance on the target ELB if the availability zone has not already
         been enabled. If set to no, the task will fail if the availability zone is not enabled on the ELB.
-    required: false
-    default: yes
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'yes'
   wait:
     description:
       - Wait for instance registration or deregistration to complete successfully before returning.
-    required: false
-    default: yes
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'yes'
   validate_certs:
     description:
       - When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
-    required: false
-    default: "yes"
-    choices: ["yes", "no"]
-    aliases: []
+    type: bool
+    default: 'yes'
     version_added: "1.5"
   wait_timeout:
     description:
       - Number of seconds to wait for an instance to change state. If 0 then this module may return an error if a transient error occurs.
         If non-zero then any transient errors are ignored until the timeout is reached. Ignored when wait=no.
-    required: false
     default: 0
     version_added: "1.6"
 extends_documentation_fragment:
@@ -90,7 +83,7 @@ post_tasks:
       instance_id: "{{ ansible_ec2_instance_id }}"
       ec2_elbs: "{{ item }}"
       state: present
-    with_items: "{{ ec2_elbs }}"
+    loop: "{{ ec2_elbs }}"
 """
 
 import time
@@ -133,6 +126,10 @@ class ElbManager:
                 # balancer. Ignore it and try the next one.
                 continue
 
+            # The instance is not associated with any load balancer so nothing to do
+            if not self._get_instance_lbs():
+                return
+
             lb.deregister_instances([self.instance_id])
 
             # The ELB is changing state in some way. Either an instance that's
@@ -167,7 +164,7 @@ class ElbManager:
         found = False
         for lb in self.lbs:
             if lb.name == lbtest:
-                found=True
+                found = True
                 break
         return found
 
@@ -326,7 +323,7 @@ def main():
     argument_spec.update(dict(
         state={'required': True},
         instance_id={'required': True},
-        ec2_elbs={'default': None, 'required': False, 'type':'list'},
+        ec2_elbs={'default': None, 'required': False, 'type': 'list'},
         enable_availability_zone={'default': True, 'required': False, 'type': 'bool'},
         wait={'required': False, 'default': True, 'type': 'bool'},
         wait_timeout={'required': False, 'default': 0, 'type': 'int'}
@@ -335,6 +332,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
+        supports_check_mode=True
     )
 
     if not HAS_BOTO:
@@ -359,13 +357,14 @@ def main():
     if ec2_elbs is not None:
         for elb in ec2_elbs:
             if not elb_man.exists(elb):
-                msg="ELB %s does not exist" % elb
+                msg = "ELB %s does not exist" % elb
                 module.fail_json(msg=msg)
 
-    if module.params['state'] == 'present':
-        elb_man.register(wait, enable_availability_zone, timeout)
-    elif module.params['state'] == 'absent':
-        elb_man.deregister(wait, timeout)
+    if not module.check_mode:
+        if module.params['state'] == 'present':
+            elb_man.register(wait, enable_availability_zone, timeout)
+        elif module.params['state'] == 'absent':
+            elb_man.deregister(wait, timeout)
 
     ansible_facts = {'ec2_elbs': [lb.name for lb in elb_man.lbs]}
     ec2_facts_result = dict(changed=elb_man.changed, ansible_facts=ansible_facts)

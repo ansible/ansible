@@ -15,6 +15,9 @@ description:
   - Create, delete, or modify a Direct Connect link aggregation group.
 version_added: "2.4"
 author: "Sloane Hertel (@s-hertel)"
+extends_documentation_fragment:
+    - aws
+    - ec2
 requirements:
   - boto3
   - botocore
@@ -47,12 +50,14 @@ options:
     description:
       - This allows the minimum number of links to be set to 0, any hosted connections disassociated,
         and any virtual interfaces associated to the LAG deleted.
+    type: bool
   connection_id:
     description:
       - A connection ID to link with the link aggregation group upon creation.
   delete_with_disassociation:
     description:
       - To be used with I(state=absent) to delete connections after disassociating them with the LAG.
+    type: bool
   wait:
     description:
       - Whether or not to wait for the operation to complete. May be useful when waiting for virtual interfaces
@@ -148,7 +153,8 @@ region:
 from ansible.module_utils.ec2 import (camel_dict_to_snake_dict, ec2_argument_spec, HAS_BOTO3,
                                       get_aws_connection_info, boto3_conn, AWSRetry)
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.aws.direct_connect import (delete_connection,
+from ansible.module_utils.aws.direct_connect import (DirectConnectError,
+                                                     delete_connection,
                                                      delete_virtual_interface,
                                                      disassociate_connection_and_lag)
 import traceback
@@ -156,16 +162,9 @@ import time
 
 try:
     import botocore
-except:
+except Exception:
     pass
     # handled by imported HAS_BOTO3
-
-
-class DirectConnectError(Exception):
-    def __init__(self, msg, last_traceback, response):
-        self.msg = msg
-        self.last_traceback = last_traceback
-        self.response = response
 
 
 def lag_status(client, lag_id):
@@ -190,7 +189,7 @@ def lag_exists(client, lag_id=None, lag_name=None, verify=True):
             failed_op = "Failed to describe DirectConnect link aggregation groups."
         raise DirectConnectError(msg=failed_op,
                                  last_traceback=traceback.format_exc(),
-                                 response=e.response)
+                                 exception=e)
 
     match = []  # List of LAG IDs that are exact matches
     lag = []  # List of LAG data that are exact matches
@@ -225,7 +224,9 @@ def lag_exists(client, lag_id=None, lag_name=None, verify=True):
 
 def create_lag(client, num_connections, location, bandwidth, name, connection_id):
     if not name:
-        raise DirectConnectError(msg="Failed to create a Direct Connect link aggregation group: name required.")
+        raise DirectConnectError(msg="Failed to create a Direct Connect link aggregation group: name required.",
+                                 last_traceback=None,
+                                 exception="")
 
     parameters = dict(numberOfConnections=num_connections,
                       location=location,
@@ -238,7 +239,7 @@ def create_lag(client, num_connections, location, bandwidth, name, connection_id
     except botocore.exceptions.ClientError as e:
         raise DirectConnectError(msg="Failed to create DirectConnect link aggregation group {0}".format(name),
                                  last_traceback=traceback.format_exc(),
-                                 response=e.response)
+                                 exception=e)
 
     return lag['lagId']
 
@@ -249,7 +250,7 @@ def delete_lag(client, lag_id):
     except botocore.exceptions.ClientError as e:
         raise DirectConnectError(msg="Failed to delete Direct Connect link aggregation group {0}.".format(lag_id),
                                  last_traceback=traceback.format_exc(),
-                                 response=e.response)
+                                 exception=e)
 
 
 @AWSRetry.backoff(tries=5, delay=2, backoff=2.0, catch_extra_error_codes=['DirectConnectClientException'])
@@ -267,10 +268,12 @@ def update_lag(client, lag_id, lag_name, min_links, num_connections, wait, wait_
     start = time.time()
 
     if min_links and min_links > num_connections:
-        raise DirectConnectError(msg="The number of connections {0} must be greater than the minimum number of links "
-                                     "{1} to update the LAG {2}".format(num_connections, min_links, lag_id),
-                                     last_traceback=None,
-                                     response=None)
+        raise DirectConnectError(
+            msg="The number of connections {0} must be greater than the minimum number of links "
+                "{1} to update the LAG {2}".format(num_connections, min_links, lag_id),
+            last_traceback=None,
+            exception=None
+        )
 
     while True:
         try:
@@ -283,7 +286,7 @@ def update_lag(client, lag_id, lag_name, min_links, num_connections, wait, wait_
                 msg += "Unable to set the min number of links to {0} while the LAG connections are being requested".format(min_links)
             raise DirectConnectError(msg=msg,
                                      last_traceback=traceback.format_exc(),
-                                     response=e.response)
+                                     exception=e)
         else:
             break
 
@@ -296,7 +299,9 @@ def lag_changed(current_status, name, min_links):
 def ensure_present(client, num_connections, lag_id, lag_name, location, bandwidth, connection_id, min_links, wait, wait_timeout):
     exists = lag_exists(client, lag_id, lag_name)
     if not exists and lag_id:
-        raise DirectConnectError(msg="The Direct Connect link aggregation group {0} does not exist.".format(lag_id), last_traceback=None, response="")
+        raise DirectConnectError(msg="The Direct Connect link aggregation group {0} does not exist.".format(lag_id),
+                                 last_traceback=None,
+                                 exception="")
 
     # the connection is found; get the latest state and see if it needs to be updated
     if exists:
@@ -320,7 +325,7 @@ def describe_virtual_interfaces(client, lag_id):
     except botocore.exceptions.ClientError as e:
         raise DirectConnectError(msg="Failed to describe any virtual interfaces associated with LAG: {0}".format(lag_id),
                                  last_traceback=traceback.format_exc(),
-                                 response=e.response)
+                                 exception=e)
     return response.get('virtualInterfaces', [])
 
 
@@ -338,7 +343,7 @@ def disassociate_vis(client, lag_id, virtual_interfaces):
         except botocore.exceptions.ClientError as e:
             raise DirectConnectError(msg="Could not delete virtual interface {0} to delete link aggregation group {1}.".format(vi, lag_id),
                                      last_traceback=traceback.format_exc(),
-                                     response=e.response)
+                                     exception=e)
 
 
 def ensure_absent(client, lag_id, lag_name, force_delete, delete_with_disassociation, wait, wait_timeout):
@@ -355,10 +360,10 @@ def ensure_absent(client, lag_id, lag_name, force_delete, delete_with_disassocia
     if any((latest_status['minimumLinks'], virtual_interfaces, connections)) and not force_delete:
         raise DirectConnectError(msg="There are a minimum number of links, hosted connections, or associated virtual interfaces for LAG {0}. "
                                      "To force deletion of the LAG use delete_force: True (if the LAG has virtual interfaces they will be deleted). "
-                                     "Optionally, to ensure hosted connections are deleted after disassocation use delete_with_disassocation: True "
+                                     "Optionally, to ensure hosted connections are deleted after disassociation use delete_with_disassociation: True "
                                      "and wait: True (as Virtual Interfaces may take a few moments to delete)".format(lag_id),
                                  last_traceback=None,
-                                 response=None)
+                                 exception=None)
 
     # update min_links to be 0 so we can remove the LAG
     update_lag(client, lag_id, None, 0, len(connections), wait, wait_timeout)
@@ -377,7 +382,7 @@ def ensure_absent(client, lag_id, lag_name, force_delete, delete_with_disassocia
         try:
             delete_lag(client, lag_id)
         except DirectConnectError as e:
-            if ('until its Virtual Interfaces are deleted' in e.response) and (time.time() - start_time < wait_timeout) and wait:
+            if ('until its Virtual Interfaces are deleted' in e.exception) and (time.time() - start_time < wait_timeout) and wait:
                 continue
         else:
             return True
@@ -416,6 +421,7 @@ def main():
                             endpoint=ec2_url, **aws_connect_kwargs)
 
     state = module.params.get('state')
+    response = {}
     try:
         if state == 'present':
             changed, lag_id = ensure_present(connection,
@@ -437,12 +443,9 @@ def main():
                                     delete_with_disassociation=module.params.get("delete_with_disassociation"),
                                     wait=module.params.get('wait'),
                                     wait_timeout=module.params.get('wait_timeout'))
-            response = {}
     except DirectConnectError as e:
-        if e.response:
-            module.fail_json(msg=e.msg, exception=e.last_traceback, **e.response)
-        elif e.last_traceback:
-            module.fail_json(msg=e.msg, exception=e.last_traceback)
+        if e.last_traceback:
+            module.fail_json(msg=e.msg, exception=e.last_traceback, **camel_dict_to_snake_dict(e.exception))
         else:
             module.fail_json(msg=e.msg)
 

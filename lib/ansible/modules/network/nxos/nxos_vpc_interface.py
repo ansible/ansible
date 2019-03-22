@@ -47,18 +47,16 @@ options:
   vpc:
     description:
       - VPC group/id that will be configured on associated portchannel.
-    required: false
-    default: null
   peer_link:
     description:
       - Set to true/false for peer link config on associated portchannel.
-    required: false
-    default: null
+    type: bool
   state:
     description:
       - Manages desired state of the resource.
     required: true
     choices: ['present','absent']
+    default: present
 '''
 
 EXAMPLES = '''
@@ -75,8 +73,8 @@ commands:
     sample: ["interface port-channel100", "vpc 10"]
 '''
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -131,7 +129,7 @@ def get_existing_portchannel_to_vpc_mappings(module):
 
 def peer_link_exists(module):
     found = False
-    run = get_config(module, flags=['section vpc'])
+    run = get_config(module, flags=['vpc'])
 
     vpc_list = run.split('\n')
     for each in vpc_list:
@@ -193,12 +191,15 @@ def get_portchannel_vpc_config(module, portchannel):
 def get_commands_to_config_vpc_interface(portchannel, delta, config_value, existing):
     commands = []
 
-    if delta.get('peer-link') is False and existing.get('peer-link') is True:
-        command = 'no vpc peer-link'
+    if not delta.get('peer-link') and existing.get('peer-link'):
         commands.append('no vpc peer-link')
         commands.insert(0, 'interface port-channel{0}'.format(portchannel))
 
-    elif delta.get('peer-link') or not existing.get('vpc'):
+    elif delta.get('peer-link') and not existing.get('peer-link'):
+        commands.append('vpc peer-link')
+        commands.insert(0, 'interface port-channel{0}'.format(portchannel))
+
+    elif delta.get('vpc') and not existing.get('vpc'):
         command = 'vpc {0}'.format(config_value)
         commands.append(command)
         commands.insert(0, 'interface port-channel{0}'.format(portchannel))
@@ -262,9 +263,10 @@ def main():
     active_peer_link = None
 
     if portchannel not in get_portchannel_list(module):
-        module.fail_json(msg="The portchannel you are trying to make a"
-                             " VPC or PL is not created yet. "
-                             "Create it first!")
+        if not portchannel.isdigit() or int(portchannel) not in get_portchannel_list(module):
+            module.fail_json(msg="The portchannel you are trying to make a"
+                                 " VPC or PL is not created yet. "
+                                 "Create it first!")
     if vpc:
         mapping = get_existing_portchannel_to_vpc_mappings(module)
 

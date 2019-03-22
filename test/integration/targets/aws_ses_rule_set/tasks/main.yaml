@@ -1,0 +1,36 @@
+---
+- include_tasks: inactive-rule-set-tests.yaml
+
+# ============================================================
+# There can only be a single active rule set, tests that
+# relies on the active state of the rule cannot be run in
+# parallel.
+# To prevent failures due to parallel runs in the integration
+# builds, the below block creates a lock to ensure that only
+# one process will be running these tests in the same region
+# and same AWS account.
+# See obtain-lock.yaml for explanation of how the lock is
+# constructed.
+# ============================================================
+- name: Active Rule Set Tests
+  block:
+    - name: Obtain Lock
+      include_tasks: obtain-lock-wrapper.yaml
+      # Use of loop here is a workaround for lack of support for
+      # do-until loops on includes. See:
+      # https://github.com/ansible/ansible/issues/17098
+      loop: "{{ range(0, max_obtain_lock_attempts, 1)|list }}"
+      loop_control:
+        loop_var: obtain_lock_attempt
+
+      # Because of the above workaround we have to explicitly check
+      # that the lock was obtained
+    - name: Check Obtained Lock
+      assert:
+        msg: "Could not obtain lock after {{ max_obtain_lock_attempts }} attempts."
+        that: won_lock|bool
+
+    - include_tasks: active-rule-set-tests.yaml
+
+  always:
+    - include_tasks: cleanup-lock.yaml

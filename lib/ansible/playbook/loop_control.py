@@ -20,14 +20,16 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.playbook.attribute import FieldAttribute
-from ansible.playbook.base import Base
+from ansible.playbook.base import FieldAttributeBase
 
 
-class LoopControl(Base):
+class LoopControl(FieldAttributeBase):
 
-    _loop_var = FieldAttribute(isa='str')
+    _loop_var = FieldAttribute(isa='str', default='item')
+    _index_var = FieldAttribute(isa='str')
     _label = FieldAttribute(isa='str')
-    _pause = FieldAttribute(isa='int')
+    _pause = FieldAttribute(isa='float', default=0)
+    _extended = FieldAttribute(isa='bool')
 
     def __init__(self):
         super(LoopControl, self).__init__()

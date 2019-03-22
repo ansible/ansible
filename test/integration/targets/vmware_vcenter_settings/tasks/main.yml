@@ -1,0 +1,118 @@
+# Test code for the vmware_vcenter_settings module.
+# Copyright: (c) 2018, Christian Kotte <christian.kotte@gmx.de>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
+- name: kill vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/killall
+
+- name: start vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/spawn?cluster=2
+  register: vcsim_instance
+
+- debug:
+    var: vcsim_instance
+
+- name: Wait for vcsim server to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
+
+- name: get datacenter
+  uri:
+    url: http://{{ vcsim }}:5000/govc_find?filter=DC
+  register: datacenters
+
+- name: get a datacenter
+  set_fact:
+    dc1: "{{ datacenters.json[0] | basename }}"
+
+- name: Configure general settings in check mode
+  vmware_vcenter_settings:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance.json.username }}"
+    password: "{{ vcsim_instance.json.password }}"
+    database:
+      max_connections: 50
+      task_cleanup: true
+      task_retention: 180
+      event_cleanup: true
+      event_retention: 180
+    runtime_settings:
+      unique_id: 7
+      managed_address: 192.168.1.0
+      vcenter_server_name: "{{ inventory_hostname }}"
+    user_directory:
+      timeout: 120
+      query_limit: true
+      query_limit_size: 100000
+      validation: true
+      validation_period: 1440
+    mail:
+      server: mail.example.local
+      sender: vcenter@{{ inventory_hostname }}
+    snmp_receivers:
+      snmp_receiver_1_url: localhost
+      snmp_receiver_1_enabled: true
+      snmp_receiver_1_port: 162
+      snmp_receiver_1_community: public
+    timeout_settings:
+      normal_operations: 30
+      long_operations: 120
+    logging_options: info
+    validate_certs: no
+  register: all_settings_results_check_mode
+  check_mode: yes
+
+- debug: msg="{{ all_settings_results_check_mode }}"
+
+- name: ensure general settings were configured
+  assert:
+    that:
+        - all_settings_results_check_mode.changed
+
+- name: Configure general settings
+  vmware_vcenter_settings:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance.json.username }}"
+    password: "{{ vcsim_instance.json.password }}"
+    database:
+      max_connections: 50
+      task_cleanup: true
+      task_retention: 180
+      event_cleanup: true
+      event_retention: 180
+    runtime_settings:
+      unique_id: 7
+      managed_address: 192.168.1.0
+      vcenter_server_name: "{{ inventory_hostname }}"
+    user_directory:
+      timeout: 120
+      query_limit: true
+      query_limit_size: 100000
+      validation: true
+      validation_period: 1440
+    mail:
+      server: mail.example.local
+      sender: vcenter@{{ inventory_hostname }}
+    snmp_receivers:
+      snmp_receiver_1_url: localhost
+      snmp_receiver_1_enabled: true
+      snmp_receiver_1_port: 162
+      snmp_receiver_1_community: public
+    timeout_settings:
+      normal_operations: 30
+      long_operations: 120
+    logging_options: info
+    validate_certs: no
+  register: all_settings_results
+
+- debug: msg="{{ all_settings_results }}"

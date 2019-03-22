@@ -8,7 +8,7 @@
 - name: Assert that configuring a handler with missing tcp parameters fails
   assert:
     that:
-      - failure | failed
+      - failure is failed
       - "'the following are missing: socket' in failure['msg']"
 
 - name: Configure a tcp handler
@@ -20,17 +20,16 @@
       port: 8000
   register: handler
 
-- name: Retrieve configuration file stat
-  stat:
-    path: "{{ handler['file'] }}"
-  register: handler_stat
+- name: Retrieve configuration file
+  slurp:
+    src: "{{ handler['file'] }}"
+  register: handler_config
 
 - name: Validate tcp handler return data
   assert:
     that:
-      - "handler | success"
-      - "handler | changed"
-      - "handler_stat.stat.exists == true"
+      - "handler is successful"
+      - "handler is changed"
       - "handler['name'] == 'tcp'"
       - "handler['file'] == '/etc/sensu/conf.d/handlers/tcp.json'"
       - "handler['config']['type'] == 'tcp'"
@@ -41,7 +40,7 @@
 
 - name: Assert that the handler configuration file is actually configured properly
   vars:
-    config: "{{ lookup('file', handler['file']) | from_json }}"
+    config: "{{ handler_config.content | b64decode | from_json }}"
   assert:
     that:
       - "'tcp' in config['handlers']"

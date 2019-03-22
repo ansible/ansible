@@ -26,8 +26,8 @@ short_description: register a task definition in ecs
 description:
     - Registers or deregisters task definitions in the Amazon Web Services (AWS) EC2 Container Service (ECS)
 version_added: "2.0"
-author: Mark Chance(@Java1Guy)
-requirements: [ json, boto, botocore, boto3 ]
+author: Mark Chance (@Java1Guy)
+requirements: [ json, botocore, boto3 ]
 options:
     state:
         description:
@@ -46,6 +46,12 @@ options:
         description:
             - A revision number for the task definition
         required: False
+    force_create:
+        description:
+            - Always create new task definition
+        required: False
+        version_added: 2.5
+        type: bool
     containers:
         description:
             - A list of containers definitions
@@ -53,9 +59,10 @@ options:
     network_mode:
         description:
             - The Docker networking mode to use for the containers in the task.
+            - C(awsvpc) mode was added in Ansible 2.5
         required: false
         default: bridge
-        choices: [ 'bridge', 'host', 'none' ]
+        choices: [ 'bridge', 'host', 'none', 'awsvpc' ]
         version_added: 2.3
     task_role_arn:
         description:
@@ -63,10 +70,33 @@ options:
               the permissions that are specified in this role.
         required: false
         version_added: 2.3
+    execution_role_arn:
+        description:
+            - The Amazon Resource Name (ARN) of the task execution role that the Amazon ECS container agent and the Docker daemon can assume.
+        required: false
+        version_added: 2.7
     volumes:
         description:
             - A list of names of volumes to be attached
         required: False
+    launch_type:
+        description:
+            - The launch type on which to run your task
+        required: false
+        version_added: 2.7
+        choices: ["EC2", "FARGATE"]
+    cpu:
+        description:
+            - The number of cpu units used by the task. If using the EC2 launch type, this field is optional and any value can be used.
+              If using the Fargate launch type, this field is required and you must use one of [256, 512, 1024, 2048, 4096]
+        required: false
+        version_added: 2.7
+    memory:
+        description:
+            - The amount (in MiB) of memory used by the task. If using the EC2 launch type, this field is optional and any value can be used.
+              If using the Fargate launch type, this field is required and is limited by the cpu
+        required: false
+        version_added: 2.7
 extends_documentation_fragment:
     - aws
     - ec2
@@ -87,6 +117,11 @@ EXAMPLES = '''
       portMappings:
       - containerPort: 80
         hostPort: 80
+      logConfiguration:
+        logDriver: awslogs
+        options:
+          awslogs-group: ecs
+          awslogs-region: us-west-2
     - name: busybox
       command:
         - >
@@ -107,6 +142,36 @@ EXAMPLES = '''
     family: test-cluster-taskdef
     state: present
   register: task_output
+
+- name: Create task definition
+  ecs_taskdefinition:
+    family: nginx
+    containers:
+    - name: nginx
+      essential: true
+      image: "nginx"
+      portMappings:
+      - containerPort: 8080
+        hostPort:      8080
+      cpu: 512
+      memory: 1024
+    state: present
+
+- name: Create task definition
+  ecs_taskdefinition:
+    family: nginx
+    containers:
+    - name: nginx
+      essential: true
+      image: "nginx"
+      portMappings:
+      - containerPort: 8080
+        hostPort:      8080
+    launch_type: FARGATE
+    cpu: 512
+    memory: 1024
+    state: present
+    network_mode: awsvpc
 '''
 RETURN = '''
 taskdefinition:
@@ -114,21 +179,17 @@ taskdefinition:
     type: dict
     returned: always
 '''
-try:
-    import boto
-    import botocore
-    HAS_BOTO = True
-except ImportError:
-    HAS_BOTO = False
 
 try:
-    import boto3
+    import botocore
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import boto3_conn, camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils._text import to_text
+
 
 class EcsTaskManager:
     """Handles ECS Tasks"""
@@ -136,13 +197,8 @@ class EcsTaskManager:
     def __init__(self, module):
         self.module = module
 
-        try:
-            region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-            if not region:
-                module.fail_json(msg="Region must be specified as a parameter, in EC2_REGION or AWS_REGION environment variables or in boto configuration file")
-            self.ecs = boto3_conn(module, conn_type='client', resource='ecs', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-        except boto.exception.NoAuthHandlerFound as e:
-            module.fail_json(msg="Can't authorize connection - " % str(e))
+        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
+        self.ecs = boto3_conn(module, conn_type='client', resource='ecs', region=region, endpoint=ec2_url, **aws_connect_kwargs)
 
     def describe_task(self, task_name):
         try:
@@ -151,7 +207,7 @@ class EcsTaskManager:
         except botocore.exceptions.ClientError:
             return None
 
-    def register_task(self, family, task_role_arn, network_mode, container_definitions, volumes):
+    def register_task(self, family, task_role_arn, execution_role_arn, network_mode, container_definitions, volumes, launch_type, cpu, memory):
         validated_containers = []
 
         # Ensures the number parameters are int as required by boto
@@ -165,15 +221,31 @@ class EcsTaskManager:
                     for port in ('hostPort', 'containerPort'):
                         if port in port_mapping:
                             port_mapping[port] = int(port_mapping[port])
+                    if network_mode == 'awsvpc' and 'hostPort' in port_mapping:
+                        if port_mapping['hostPort'] != port_mapping.get('containerPort'):
+                            self.module.fail_json(msg="In awsvpc network mode, host port must be set to the same as "
+                                                  "container port or not be set")
 
             validated_containers.append(container)
 
+        params = dict(
+            family=family,
+            taskRoleArn=task_role_arn,
+            networkMode=network_mode,
+            containerDefinitions=container_definitions,
+            volumes=volumes
+        )
+        if cpu:
+            params['cpu'] = cpu
+        if memory:
+            params['memory'] = memory
+        if launch_type:
+            params['requiresCompatibilities'] = [launch_type]
+        if execution_role_arn:
+            params['executionRoleArn'] = execution_role_arn
+
         try:
-            response = self.ecs.register_task_definition(family=family,
-                                                         taskRoleArn=task_role_arn,
-                                                         networkMode=network_mode,
-                                                         containerDefinitions=container_definitions,
-                                                         volumes=volumes)
+            response = self.ecs.register_task_definition(**params)
         except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
 
@@ -182,7 +254,7 @@ class EcsTaskManager:
     def describe_task_definitions(self, family):
         data = {
             "taskDefinitionArns": [],
-            "nextToken":  None
+            "nextToken": None
         }
 
         def fetch():
@@ -217,22 +289,27 @@ class EcsTaskManager:
 
 
 def main():
-
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
         state=dict(required=True, choices=['present', 'absent']),
         arn=dict(required=False, type='str'),
         family=dict(required=False, type='str'),
         revision=dict(required=False, type='int'),
+        force_create=dict(required=False, default=False, type='bool'),
         containers=dict(required=False, type='list'),
-        network_mode=dict(required=False, default='bridge', choices=['bridge', 'host', 'none'], type='str'),
+        network_mode=dict(required=False, default='bridge', choices=['bridge', 'host', 'none', 'awsvpc'], type='str'),
         task_role_arn=dict(required=False, default='', type='str'),
-        volumes=dict(required=False, type='list')))
+        execution_role_arn=dict(required=False, default='', type='str'),
+        volumes=dict(required=False, type='list'),
+        launch_type=dict(required=False, choices=['EC2', 'FARGATE']),
+        cpu=dict(),
+        memory=dict(required=False, type='str')
+    ))
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
-
-    if not HAS_BOTO:
-        module.fail_json(msg='boto is required.')
+    module = AnsibleAWSModule(argument_spec=argument_spec,
+                              supports_check_mode=True,
+                              required_if=[('launch_type', 'FARGATE', ['cpu', 'memory'])]
+                              )
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required.')
@@ -241,10 +318,18 @@ def main():
     task_mgr = EcsTaskManager(module)
     results = dict(changed=False)
 
-    for container in module.params['containers']:
-        if 'environment' in container:
-            for environment in container['environment']:
-                environment['value'] = str(environment['value'])
+    if module.params['launch_type']:
+        if not module.botocore_at_least('1.8.4'):
+            module.fail_json(msg='botocore needs to be version 1.8.4 or higher to use launch_type')
+
+    if module.params['execution_role_arn']:
+        if not module.botocore_at_least('1.10.44'):
+            module.fail_json(msg='botocore needs to be version 1.10.44 or higher to use execution_role_arn')
+
+    if module.params['containers']:
+        for container in module.params['containers']:
+            for environment in container.get('environment', []):
+                environment['value'] = to_text(environment['value'])
 
     if module.params['state'] == 'present':
         if 'containers' not in module.params or not module.params['containers']:
@@ -252,6 +337,11 @@ def main():
 
         if 'family' not in module.params or not module.params['family']:
             module.fail_json(msg="To use task definitions, a family must be specified")
+
+        network_mode = module.params['network_mode']
+        launch_type = module.params['launch_type']
+        if launch_type == 'FARGATE' and network_mode != 'awsvpc':
+            module.fail_json(msg="To use FARGATE launch type, network_mode must be awsvpc")
 
         family = module.params['family']
         existing_definitions_in_family = task_mgr.describe_task_definitions(module.params['family'])
@@ -301,8 +391,11 @@ def main():
 
                 return True
 
-            def _task_definition_matches(requested_volumes, requested_containers, existing_task_definition):
+            def _task_definition_matches(requested_volumes, requested_containers, requested_task_role_arn, existing_task_definition):
                 if td['status'] != "ACTIVE":
+                    return None
+
+                if requested_task_role_arn != td.get('taskRoleArn', ""):
                     return None
 
                 existing_volumes = td.get('volumes', []) or []
@@ -344,14 +437,15 @@ def main():
 
             # No revision explicitly specified. Attempt to find an active, matching revision that has all the properties requested
             for td in existing_definitions_in_family:
-                requested_volumes = module.params.get('volumes', []) or []
-                requested_containers = module.params.get('containers', []) or []
-                existing = _task_definition_matches(requested_volumes, requested_containers, td)
+                requested_volumes = module.params['volumes'] or []
+                requested_containers = module.params['containers'] or []
+                requested_task_role_arn = module.params['task_role_arn']
+                existing = _task_definition_matches(requested_volumes, requested_containers, requested_task_role_arn, td)
 
                 if existing:
                     break
 
-        if existing:
+        if existing and not module.params.get('force_create'):
             # Awesome. Have an existing one. Nothing to do.
             results['taskdefinition'] = existing
         else:
@@ -360,9 +454,13 @@ def main():
                 volumes = module.params.get('volumes', []) or []
                 results['taskdefinition'] = task_mgr.register_task(module.params['family'],
                                                                    module.params['task_role_arn'],
+                                                                   module.params['execution_role_arn'],
                                                                    module.params['network_mode'],
                                                                    module.params['containers'],
-                                                                   volumes)
+                                                                   volumes,
+                                                                   module.params['launch_type'],
+                                                                   module.params['cpu'],
+                                                                   module.params['memory'])
             results['changed'] = True
 
     elif module.params['state'] == 'absent':
@@ -371,7 +469,7 @@ def main():
             if 'arn' in module.params and module.params['arn'] is not None:
                 task_to_describe = module.params['arn']
             elif 'family' in module.params and module.params['family'] is not None and 'revision' in module.params and \
-                            module.params['revision'] is not None:
+                    module.params['revision'] is not None:
                 task_to_describe = module.params['family'] + ":" + str(module.params['revision'])
             else:
                 module.fail_json(msg="To use task definitions, an arn or family and revision must be specified")
@@ -391,6 +489,7 @@ def main():
                 results['changed'] = True
 
     module.exit_json(**results)
+
 
 if __name__ == '__main__':
     main()

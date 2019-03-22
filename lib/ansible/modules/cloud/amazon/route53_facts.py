@@ -15,12 +15,12 @@ DOCUMENTATION = '''
 module: route53_facts
 short_description: Retrieves route53 details using AWS methods
 description:
-    - Gets various details related to Route53 zone, record set or health check details
+    - Gets various details related to Route53 zone, record set or health check details.
 version_added: "2.0"
 options:
   query:
     description:
-      - specifies the query action to take
+      - specifies the query action to take.
     required: True
     choices: [
             'change',
@@ -33,17 +33,20 @@ options:
   change_id:
     description:
       - The ID of the change batch request.
-        The value that you specify here is the value that
+      - The value that you specify here is the value that
         ChangeResourceRecordSets returned in the Id element
         when you submitted the request.
+      - Required if C(query) is set to C(change).
     required: false
   hosted_zone_id:
     description:
-      - The Hosted Zone ID of the DNS zone
+      - The Hosted Zone ID of the DNS zone.
+      - Required if C(query) is set to C(hosted_zone) and C(hosted_zone_method) is set to C(details).
+      - Required if C(query) is set to C(record_sets).
     required: false
   max_items:
     description:
-      - Maximum number of items to return for various get/list requests
+      - Maximum number of items to return for various get/list requests.
     required: false
   next_marker:
     description:
@@ -51,35 +54,39 @@ options:
         number of entries - EG 100 or the number specified by max_items.
         If the number of entries exceeds this maximum another request can be sent
         using the NextMarker entry from the first response to get the next page
-        of results"
+        of results."
     required: false
   delegation_set_id:
     description:
-      - The DNS Zone delegation set ID
+      - The DNS Zone delegation set ID.
     required: false
   start_record_name:
     description:
       - "The first name in the lexicographic ordering of domain names that you want
-        the list_command: record_sets to start listing from"
+        the list_command: record_sets to start listing from."
     required: false
   type:
     description:
       - The type of DNS record
     required: false
-    choices: [ 'A', 'CNAME', 'MX', 'AAAA', 'TXT', 'PTR', 'SRV', 'SPF', 'NS' ]
+    choices: [ 'A', 'CNAME', 'MX', 'AAAA', 'TXT', 'PTR', 'SRV', 'SPF', 'CAA', 'NS' ]
   dns_name:
     description:
       - The first name in the lexicographic ordering of domain names that you want
-        the list_command to start listing from
+        the list_command to start listing from.
     required: false
   resource_id:
     description:
-      - The ID/s of the specified resource/s
+      - The ID/s of the specified resource/s.
+      - Required if C(query) is set to C(health_check) and C(health_check_method) is to C(tags).
+      - Required if C(query) is set to C(hosted_zone) and C(hosted_zone_method) is to C(tags).
     required: false
     aliases: ['resource_ids']
   health_check_id:
     description:
-      - The ID of the health check
+      - The ID of the health check.
+      - Required if C(query) is set to C(health_check) and
+        C(health_check_method) is set to C(details) or C(status) or C(failure_reason).
     required: false
   hosted_zone_method:
     description:
@@ -110,8 +117,10 @@ options:
         'tags',
         ]
     default: 'list'
-author: Karen Cheng(@Etherdaemon)
-extends_documentation_fragment: aws
+author: Karen Cheng (@Etherdaemon)
+extends_documentation_fragment:
+  - aws
+  - ec2
 '''
 
 EXAMPLES = '''
@@ -161,12 +170,28 @@ EXAMPLES = '''
     query: hosted_zone
     max_items: 1
   register: first_facts
+
 - name: example for using next_marker
   route53_facts:
     query: hosted_zone
     next_marker: "{{ first_facts.NextMarker }}"
     max_items: 1
   when: "{{ 'NextMarker' in first_facts }}"
+
+- name: retrieve host entries starting with host1.workshop.test.io
+  block:
+    - name: grab zone id
+      route53_zone:
+        zone: "test.io"
+      register: AWSINFO
+
+    - name: grab Route53 record information
+      route53_facts:
+        type: A
+        query: record_sets
+        hosted_zone_id: "{{ AWSINFO.zone_id }}"
+        start_record_name: "host1.workshop.test.io"
+      register: RECORDS
 '''
 try:
     import boto
@@ -183,6 +208,7 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils._text import to_native
 
 
 def get_hosted_zone(client, module):
@@ -193,8 +219,7 @@ def get_hosted_zone(client, module):
     else:
         module.fail_json(msg="Hosted Zone Id is required")
 
-    results = client.get_hosted_zone(**params)
-    return results
+    return client.get_hosted_zone(**params)
 
 
 def reusable_delegation_set_details(client, module):
@@ -226,8 +251,7 @@ def list_hosted_zones(client, module):
     if module.params.get('delegation_set_id'):
         params['DelegationSetId'] = module.params.get('delegation_set_id')
 
-    results = client.list_hosted_zones(**params)
-    return results
+    return client.list_hosted_zones(**params)
 
 
 def list_hosted_zones_by_name(client, module):
@@ -242,8 +266,7 @@ def list_hosted_zones_by_name(client, module):
     if module.params.get('max_items'):
         params['MaxItems'] = module.params.get('max_items')
 
-    results = client.list_hosted_zones_by_name(**params)
-    return results
+    return client.list_hosted_zones_by_name(**params)
 
 
 def change_details(client, module):
@@ -259,8 +282,7 @@ def change_details(client, module):
 
 
 def checker_ip_range_details(client, module):
-    results = client.get_checker_ip_ranges()
-    return results
+    return client.get_checker_ip_ranges()
 
 
 def get_count(client, module):
@@ -303,8 +325,7 @@ def get_resource_tags(client, module):
     else:
         params['ResourceType'] = 'hostedzone'
 
-    results = client.list_tags_for_resources(**params)
-    return results
+    return client.list_tags_for_resources(**params)
 
 
 def list_health_checks(client, module):
@@ -316,8 +337,7 @@ def list_health_checks(client, module):
     if module.params.get('next_marker'):
         params['Marker'] = module.params.get('next_marker')
 
-    results = client.list_health_checks(**params)
-    return results
+    return client.list_health_checks(**params)
 
 
 def record_sets_details(client, module):
@@ -339,8 +359,7 @@ def record_sets_details(client, module):
     elif module.params.get('type'):
         params['StartRecordType'] = module.params.get('type')
 
-    results = client.list_resource_record_sets(**params)
-    return results
+    return client.list_resource_record_sets(**params)
 
 
 def health_check_details(client, module):
@@ -388,7 +407,7 @@ def main():
         delegation_set_id=dict(),
         start_record_name=dict(),
         type=dict(choices=[
-            'A', 'CNAME', 'MX', 'AAAA', 'TXT', 'PTR', 'SRV', 'SPF', 'NS'
+            'A', 'CNAME', 'MX', 'AAAA', 'TXT', 'PTR', 'SRV', 'SPF', 'CAA', 'NS'
         ]),
         dns_name=dict(),
         resource_id=dict(type='list', aliases=['resource_ids']),
@@ -422,11 +441,8 @@ def main():
     if not (HAS_BOTO or HAS_BOTO3):
         module.fail_json(msg='json and boto/boto3 is required.')
 
-    try:
-        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-        route53 = boto3_conn(module, conn_type='client', resource='route53', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-    except boto.exception.NoAuthHandlerFound as e:
-        module.fail_json(msg="Can't authorize connection - %s " % str(e))
+    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
+    route53 = boto3_conn(module, conn_type='client', resource='route53', region=region, endpoint=ec2_url, **aws_connect_kwargs)
 
     invocations = {
         'change': change_details,
@@ -436,7 +452,12 @@ def main():
         'record_sets': record_sets_details,
         'reusable_delegation_set': reusable_delegation_set_details,
     }
-    results = invocations[module.params.get('query')](route53, module)
+
+    results = dict(changed=False)
+    try:
+        results = invocations[module.params.get('query')](route53, module)
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json(msg=to_native(e))
 
     module.exit_json(**results)
 

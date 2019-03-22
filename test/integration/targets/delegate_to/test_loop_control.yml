@@ -1,0 +1,16 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Test delegate_to with loop_control
+      ping:
+      delegate_to: "{{ item }}"
+      with_items:
+        - localhost
+      loop_control:
+        label: "{{ item }}"
+      register: out
+
+    - name: Check if delegated_host was templated properly
+      assert:
+        that:
+          - out.results[0]['_ansible_delegated_vars']['ansible_delegated_host'] == 'localhost'

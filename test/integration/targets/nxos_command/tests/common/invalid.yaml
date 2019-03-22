@@ -1,0 +1,28 @@
+---
+- debug: msg="START common/invalid.yaml on connection={{ ansible_connection }}"
+
+- name: run invalid command
+  nxos_command:
+    commands: ['show foo']
+    provider: "{{ connection }}"
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.failed == true"
+
+- name: run commands that include invalid command
+  nxos_command:
+    commands:
+      - show version
+      - show foo
+    provider: "{{ connection }}"
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.failed == true"
+
+- debug: msg="END common/invalid.yaml on connection={{ ansible_connection }}"

@@ -1,22 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# (c) 2015, René Moser <mail@renemoser.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2015, René Moser <mail@renemoser.net>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -40,104 +27,90 @@ options:
     description:
       - Account the user will be created under.
       - Required on C(state=present).
-    required: false
-    default: null
   password:
     description:
       - Password of the user to be created.
       - Required on C(state=present).
       - Only considered on creation and will not be updated if user exists.
-    required: false
-    default: null
   first_name:
     description:
       - First name of the user.
       - Required on C(state=present).
-    required: false
-    default: null
   last_name:
     description:
       - Last name of the user.
       - Required on C(state=present).
-    required: false
-    default: null
   email:
     description:
       - Email of the user.
       - Required on C(state=present).
-    required: false
-    default: null
   timezone:
     description:
       - Timezone of the user.
-    required: false
-    default: null
   keys_registered:
     description:
       - If API keys of the user should be generated.
       - "Note: Keys can not be removed by the API again."
-    required: false
-    default: null
     version_added: "2.4"
+    type: bool
+    default: no
   domain:
     description:
       - Domain the user is related to.
-    required: false
-    default: 'ROOT'
+    default: ROOT
   state:
     description:
       - State of the user.
       - C(unlocked) is an alias for C(enabled).
-    required: false
-    default: 'present'
-    choices: [ 'present', 'absent', 'enabled', 'disabled', 'locked', 'unlocked' ]
+    default: present
+    choices: [ present, absent, enabled, disabled, locked, unlocked ]
   poll_async:
     description:
       - Poll async jobs until job has finished.
-    required: false
-    default: true
+    type: bool
+    default: yes
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# create an user in domain 'CUSTOMERS'
-local_action:
-  module: cs_user
-  account: developers
-  username: johndoe
-  password: S3Cur3
-  last_name: Doe
-  first_name: John
-  email: john.doe@example.com
-  domain: CUSTOMERS
+- name: Create an user in domain 'CUSTOMERS'
+  local_action:
+    module: cs_user
+    account: developers
+    username: johndoe
+    password: S3Cur3
+    last_name: Doe
+    first_name: John
+    email: john.doe@example.com
+    domain: CUSTOMERS
 
-# Lock an existing user in domain 'CUSTOMERS'
-local_action:
-  module: cs_user
-  username: johndoe
-  domain: CUSTOMERS
-  state: locked
+- name: Lock an existing user in domain 'CUSTOMERS'
+  local_action:
+    module: cs_user
+    username: johndoe
+    domain: CUSTOMERS
+    state: locked
 
-# Disable an existing user in domain 'CUSTOMERS'
-local_action:
-  module: cs_user
-  username: johndoe
-  domain: CUSTOMERS
-  state: disabled
+- name: Disable an existing user in domain 'CUSTOMERS'
+  local_action:
+    module: cs_user
+    username: johndoe
+    domain: CUSTOMERS
+    state: disabled
 
-# Enable/unlock an existing user in domain 'CUSTOMERS'
-local_action:
-  module: cs_user
-  username: johndoe
-  domain: CUSTOMERS
-  state: enabled
+- name: Enable/unlock an existing user in domain 'CUSTOMERS'
+  local_action:
+    module: cs_user
+    username: johndoe
+    domain: CUSTOMERS
+    state: enabled
 
-# Remove an user in domain 'CUSTOMERS'
-local_action:
-  module: cs_user
-  name: customer_xy
-  domain: CUSTOMERS
-  state: absent
+- name: Remove an user in domain 'CUSTOMERS'
+  local_action:
+    module: cs_user
+    name: customer_xy
+    domain: CUSTOMERS
+    state: absent
 '''
 
 RETURN = '''
@@ -145,67 +118,67 @@ RETURN = '''
 id:
   description: UUID of the user.
   returned: success
-  type: string
+  type: str
   sample: 87b1e0ce-4e01-11e4-bb66-0050569e64b8
 username:
   description: Username of the user.
   returned: success
-  type: string
+  type: str
   sample: johndoe
 fist_name:
   description: First name of the user.
   returned: success
-  type: string
+  type: str
   sample: John
 last_name:
   description: Last name of the user.
   returned: success
-  type: string
+  type: str
   sample: Doe
 email:
   description: Emailof the user.
   returned: success
-  type: string
+  type: str
   sample: john.doe@example.com
 user_api_key:
   description: API key of the user.
   returned: success
-  type: string
+  type: str
   sample: JLhcg8VWi8DoFqL2sSLZMXmGojcLnFrOBTipvBHJjySODcV4mCOo29W2duzPv5cALaZnXj5QxDx3xQfaQt3DKg
 user_api_secret:
   description: API secret of the user.
   returned: success
-  type: string
+  type: str
   sample: FUELo3LB9fa1UopjTLPdqLv_6OXQMJZv9g9N4B_Ao3HFz8d6IGFCV9MbPFNM8mwz00wbMevja1DoUNDvI8C9-g
 account:
   description: Account name of the user.
   returned: success
-  type: string
+  type: str
   sample: developers
 account_type:
   description: Type of the account.
   returned: success
-  type: string
+  type: str
   sample: user
 timezone:
   description: Timezone of the user.
   returned: success
-  type: string
+  type: str
   sample: enabled
 created:
   description: Date the user was created.
   returned: success
-  type: string
+  type: str
   sample: Doe
 state:
   description: State of the user.
   returned: success
-  type: string
+  type: str
   sample: enabled
 domain:
   description: Domain the user is related.
   returned: success
-  type: string
+  type: str
   sample: ROOT
 '''
 
@@ -245,13 +218,14 @@ class AnsibleCloudStackUser(AnsibleCloudStack):
         if not self.user:
             args = {
                 'domainid': self.get_domain('id'),
+                'fetch_list': True,
             }
 
             users = self.query_api('listUsers', **args)
 
             if users:
                 user_name = self.module.params.get('username')
-                for u in users['user']:
+                for u in users:
                     if user_name.lower() == u['username'].lower():
                         self.user = u
                         break
@@ -400,6 +374,13 @@ class AnsibleCloudStackUser(AnsibleCloudStack):
                     if value == user['accounttype']:
                         self.result['account_type'] = key
                         break
+
+            # secretkey has been removed since CloudStack 4.10 from listUsers API
+            if self.module.params.get('keys_registered') and 'apikey' in user and 'secretkey' not in user:
+                user_keys = self.query_api('getUserKeys', id=user['id'])
+                if user_keys:
+                    self.result['user_api_secret'] = user_keys['userkeys'].get('secretkey')
+
         return self.result
 
 
@@ -415,7 +396,7 @@ def main():
         last_name=dict(),
         password=dict(no_log=True),
         timezone=dict(),
-        keys_registered=dict(type='bool'),
+        keys_registered=dict(type='bool', default=False),
         poll_async=dict(type='bool', default=True),
     ))
 
@@ -429,16 +410,16 @@ def main():
 
     state = module.params.get('state')
 
-    if state in ['absent']:
+    if state == 'absent':
         user = acs_acc.absent_user()
 
     elif state in ['enabled', 'unlocked']:
         user = acs_acc.enable_user()
 
-    elif state in ['disabled']:
+    elif state == 'disabled':
         user = acs_acc.disable_user()
 
-    elif state in ['locked']:
+    elif state == 'locked':
         user = acs_acc.lock_user()
 
     else:

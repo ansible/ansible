@@ -15,6 +15,8 @@ DOCUMENTATION = """
       - 'Arguments can be specified as key=value pair strings or as a shortcut form of the arguments string is also accepted: [start-]end[/stride][:format].'
       - 'Numerical values can be specified in decimal, hexadecimal (0x3f8) or octal (0600).'
       - Starting at version 1.9.2, negative strides are allowed.
+      - Generated items are strings. Use Jinja2 filters to convert items to preferred type, e.g. ``{{ 1 + item|int }}``.
+      - See also Jinja2 ``range`` filter as an alternative.
     options:
       start:
         description: number at which to start the sequence
@@ -32,7 +34,7 @@ DOCUMENTATION = """
         description: increments between sequence numbers, the default is 1 unless the end is less than the start, then it is -1.
         type: number
       format:
-        description: return a string with the generated number formated in
+        description: return a string with the generated number formatted in
 """
 
 EXAMPLES = """
@@ -62,7 +64,9 @@ EXAMPLES = """
 
 RETURN = """
   _list:
-    description: generated sequence of numbers or strings
+    description:
+      - A list containing generated sequence of items
+    type: list
 """
 
 from re import compile as re_compile, IGNORECASE

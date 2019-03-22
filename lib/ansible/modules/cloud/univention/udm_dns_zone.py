@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 
-# Copyright (c) 2016, Adfinis SyGroup AG
+# Copyright: (c) 2016, Adfinis SyGroup AG
 # Tobias Rueetschi <tobias.ruetschi@adfinis-sygroup.ch>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -18,7 +18,8 @@ DOCUMENTATION = '''
 ---
 module: udm_dns_zone
 version_added: "2.2"
-author: "Tobias Rueetschi (@2-B)"
+author:
+- Tobias Rüetschi (@keachi)
 short_description: Manage dns zones on a univention corporate server
 description:
     - "This module allows to manage dns zones on a univention corporate server (UCS).
@@ -111,91 +112,91 @@ from ansible.module_utils.univention_umc import (
 def convert_time(time):
     """Convert a time in seconds into the biggest unit"""
     units = [
-        (24 * 60 * 60 , 'days'),
-        (60 * 60      , 'hours'),
-        (60           , 'minutes'),
-        (1            , 'seconds'),
+        (24 * 60 * 60, 'days'),
+        (60 * 60, 'hours'),
+        (60, 'minutes'),
+        (1, 'seconds'),
     ]
 
     if time == 0:
         return ('0', 'seconds')
     for unit in units:
         if time >= unit[0]:
-            return ('{}'.format(time // unit[0]), unit[1])
+            return ('{0}'.format(time // unit[0]), unit[1])
 
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            type        = dict(required=True,
-                               type='str'),
-            zone        = dict(required=True,
-                               aliases=['name'],
-                               type='str'),
-            nameserver  = dict(default=[],
-                               type='list'),
-            interfaces  = dict(default=[],
-                               type='list'),
-            refresh     = dict(default=3600,
-                               type='int'),
-            retry       = dict(default=1800,
-                               type='int'),
-            expire      = dict(default=604800,
-                               type='int'),
-            ttl         = dict(default=600,
-                               type='int'),
-            contact     = dict(default='',
-                               type='str'),
-            mx          = dict(default=[],
-                               type='list'),
-            state       = dict(default='present',
-                               choices=['present', 'absent'],
-                               type='str')
+        argument_spec=dict(
+            type=dict(required=True,
+                      type='str'),
+            zone=dict(required=True,
+                      aliases=['name'],
+                      type='str'),
+            nameserver=dict(default=[],
+                            type='list'),
+            interfaces=dict(default=[],
+                            type='list'),
+            refresh=dict(default=3600,
+                         type='int'),
+            retry=dict(default=1800,
+                       type='int'),
+            expire=dict(default=604800,
+                        type='int'),
+            ttl=dict(default=600,
+                     type='int'),
+            contact=dict(default='',
+                         type='str'),
+            mx=dict(default=[],
+                    type='list'),
+            state=dict(default='present',
+                       choices=['present', 'absent'],
+                       type='str')
         ),
         supports_check_mode=True,
-        required_if = ([
+        required_if=([
             ('state', 'present', ['nameserver', 'interfaces'])
         ])
     )
-    type        = module.params['type']
-    zone        = module.params['zone']
-    nameserver  = module.params['nameserver']
-    interfaces  = module.params['interfaces']
-    refresh     = module.params['refresh']
-    retry       = module.params['retry']
-    expire      = module.params['expire']
-    ttl         = module.params['ttl']
-    contact     = module.params['contact']
-    mx          = module.params['mx']
-    state       = module.params['state']
-    changed     = False
+    type = module.params['type']
+    zone = module.params['zone']
+    nameserver = module.params['nameserver']
+    interfaces = module.params['interfaces']
+    refresh = module.params['refresh']
+    retry = module.params['retry']
+    expire = module.params['expire']
+    ttl = module.params['ttl']
+    contact = module.params['contact']
+    mx = module.params['mx']
+    state = module.params['state']
+    changed = False
 
     obj = list(ldap_search(
-        '(&(objectClass=dNSZone)(zoneName={}))'.format(zone),
+        '(&(objectClass=dNSZone)(zoneName={0}))'.format(zone),
         attr=['dNSZone']
     ))
 
     exists = bool(len(obj))
-    container = 'cn=dns,{}'.format(base_dn())
-    dn = 'zoneName={},{}'.format(zone, container)
+    container = 'cn=dns,{0}'.format(base_dn())
+    dn = 'zoneName={0},{1}'.format(zone, container)
     if contact == '':
-        contact = 'root@{}.'.format(zone)
+        contact = 'root@{0}.'.format(zone)
 
     if state == 'present':
         try:
             if not exists:
-                obj = umc_module_for_add('dns/{}'.format(type), container)
+                obj = umc_module_for_add('dns/{0}'.format(type), container)
             else:
-                obj = umc_module_for_edit('dns/{}'.format(type), dn)
-            obj['zone']         = zone
-            obj['nameserver']   = nameserver
-            obj['a']            = interfaces
-            obj['refresh']      = convert_time(refresh)
-            obj['retry']        = convert_time(retry)
-            obj['expire']       = convert_time(expire)
-            obj['ttl']          = convert_time(ttl)
-            obj['contact']      = contact
-            obj['mx']           = mx
+                obj = umc_module_for_edit('dns/{0}'.format(type), dn)
+            obj['zone'] = zone
+            obj['nameserver'] = nameserver
+            obj['a'] = interfaces
+            obj['refresh'] = convert_time(refresh)
+            obj['retry'] = convert_time(retry)
+            obj['expire'] = convert_time(expire)
+            obj['ttl'] = convert_time(ttl)
+            obj['contact'] = contact
+            obj['mx'] = mx
             diff = obj.diff()
             if exists:
                 for k in obj.keys():
@@ -210,18 +211,18 @@ def main():
                     obj.modify()
         except Exception as e:
             module.fail_json(
-                msg='Creating/editing dns zone {} failed: {}'.format(zone, e)
+                msg='Creating/editing dns zone {0} failed: {1}'.format(zone, e)
             )
 
     if state == 'absent' and exists:
         try:
-            obj = umc_module_for_edit('dns/{}'.format(type), dn)
+            obj = umc_module_for_edit('dns/{0}'.format(type), dn)
             if not module.check_mode:
                 obj.remove()
             changed = True
         except Exception as e:
             module.fail_json(
-                msg='Removing dns zone {} failed: {}'.format(zone, e)
+                msg='Removing dns zone {0} failed: {1}'.format(zone, e)
             )
 
     module.exit_json(

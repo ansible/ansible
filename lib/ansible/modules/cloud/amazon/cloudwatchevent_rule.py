@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: cloudwatchevent_rule
 short_description: Manage CloudWatch Event rules and targets
@@ -20,6 +20,7 @@ description:
 version_added: "2.2"
 extends_documentation_fragment:
   - aws
+  - ec2
 author: "Jim Dalton (@jsdalton) <jim.dalton@gmail.com>"
 requirements:
   - python >= 2.6
@@ -89,7 +90,7 @@ EXAMPLES = '''
 
 - cloudwatchevent_rule:
     name: MyDisabledCronTask
-    schedule_expression: "cron(5 minutes)"
+    schedule_expression: "rate(5 minutes)"
     description: Run my disabled scheduled task
     state: disabled
     targets:
@@ -395,19 +396,11 @@ class CloudWatchEventRuleManager(object):
 
 def get_cloudwatchevents_client(module):
     """Returns a boto3 client for accessing CloudWatch Events"""
-    try:
-        region, ec2_url, aws_conn_kwargs = get_aws_connection_info(module,
-                                                                   boto3=True)
-        if not region:
-            module.fail_json(msg="Region must be specified as a parameter, in \
-                             EC2_REGION or AWS_REGION environment variables \
-                             or in boto configuration file")
-        return boto3_conn(module, conn_type='client',
-                          resource='events',
-                          region=region, endpoint=ec2_url,
-                          **aws_conn_kwargs)
-    except botocore.exceptions.ProfileNotFound as e:
-        module.fail_json(msg=str(e))
+    region, ec2_url, aws_conn_kwargs = get_aws_connection_info(module, boto3=True)
+    return boto3_conn(module, conn_type='client',
+                      resource='events',
+                      region=region, endpoint=ec2_url,
+                      **aws_conn_kwargs)
 
 
 def main():

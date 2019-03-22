@@ -1,0 +1,223 @@
+---
+######## DS record tests #################
+
+- name: "Test: DS record creation"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: DS
+    key_tag: 54592
+    algorithm: 8
+    hash_type: 2
+    value: 6A95688429A7796533165ACEFBE91BD115DAD747AA4E1D5DCA70DF040C68216F
+    ttl: 150
+  register: cloudflare_dns
+
+- name: "Validate: DS record creation"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
+      - cloudflare_dns.result.record.content == "54592\t8\t2\t6A95688429A7796533165ACEFBE91BD115DAD747AA4E1D5DCA70DF040C68216F"
+      - cloudflare_dns.result.record.ttl == 150
+      - cloudflare_dns.result.record.type == "DS"
+      - cloudflare_dns.result.record.name == "{{ cloudflare_dns_record }}.{{ cloudflare_zone }}"
+      - cloudflare_dns.result.record.zone_name == "{{ cloudflare_zone }}"
+      - cloudflare_dns.result.record.data.key_tag == 54592
+      - cloudflare_dns.result.record.data.algorithm == 8
+      - cloudflare_dns.result.record.data.digest_type == 2
+      - cloudflare_dns.result.record.data.digest == "6A95688429A7796533165ACEFBE91BD115DAD747AA4E1D5DCA70DF040C68216F"
+
+- name: "Test: DS record idempotency"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: DS
+    key_tag: 54592
+    algorithm: 8
+    hash_type: 2
+    value: 6A95688429A7796533165ACEFBE91BD115DAD747AA4E1D5DCA70DF040C68216F
+    ttl: 150
+  register: cloudflare_dns
+
+- name: "Validate: DS record idempotency"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed
+
+- name: "Test: DS record update"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: DS
+    key_tag: 54592
+    algorithm: 8
+    hash_type: 2
+    value: 6A95688429A7796533165ACEFBE91BD115DAD747AA4E1D5DCA70DF040C68216F
+    ttl: 300
+  register: cloudflare_dns
+
+- name: "Validate: DS record update"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
+      - cloudflare_dns.result.record.ttl == 300
+
+- name: "Test: DS record duplicate (create new record)"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: DS
+    key_tag: 24397
+    algorithm: 8
+    hash_type: 2
+    value: 8A5E62E004BFA4CF4B42BE9405C39EBA1AC5A91BDE181FB73E935ECC1F3F5556
+    ttl: 300
+  register: cloudflare_dns
+
+- name: "Validate: DS record duplicate (create new record)"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
+      - cloudflare_dns.result.record.content == "24397\t8\t2\t8A5E62E004BFA4CF4B42BE9405C39EBA1AC5A91BDE181FB73E935ECC1F3F5556"
+      - cloudflare_dns.result.record.ttl == 300
+      - cloudflare_dns.result.record.type == "DS"
+      - cloudflare_dns.result.record.name == "{{ cloudflare_dns_record }}.{{ cloudflare_zone }}"
+      - cloudflare_dns.result.record.zone_name == "{{ cloudflare_zone }}"
+      - cloudflare_dns.result.record.data.key_tag == 24397
+      - cloudflare_dns.result.record.data.algorithm == 8
+      - cloudflare_dns.result.record.data.digest_type == 2
+      - cloudflare_dns.result.record.data.digest == "8A5E62E004BFA4CF4B42BE9405C39EBA1AC5A91BDE181FB73E935ECC1F3F5556"
+
+- name: "Test: DS record duplicate (old record present)"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: DS
+    key_tag: 54592
+    algorithm: 8
+    hash_type: 2
+    value: 6A95688429A7796533165ACEFBE91BD115DAD747AA4E1D5DCA70DF040C68216F
+    ttl: 300
+  register: cloudflare_dns
+
+- name: "Validate: DS record duplicate (old record present)"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed
+      - cloudflare_dns.result.record.content == "54592\t8\t2\t6A95688429A7796533165ACEFBE91BD115DAD747AA4E1D5DCA70DF040C68216F"
+      - cloudflare_dns.result.record.ttl == 300
+      - cloudflare_dns.result.record.type == "DS"
+      - cloudflare_dns.result.record.name == "{{ cloudflare_dns_record }}.{{ cloudflare_zone }}"
+      - cloudflare_dns.result.record.zone_name == "{{ cloudflare_zone }}"
+      - cloudflare_dns.result.record.data.key_tag == 54592
+      - cloudflare_dns.result.record.data.algorithm == 8
+      - cloudflare_dns.result.record.data.digest_type == 2
+      - cloudflare_dns.result.record.data.digest == "6A95688429A7796533165ACEFBE91BD115DAD747AA4E1D5DCA70DF040C68216F"
+
+- name: "Test: DS record duplicate (make new record solo)"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: DS
+    key_tag: 24397
+    algorithm: 8
+    hash_type: 2
+    value: 8A5E62E004BFA4CF4B42BE9405C39EBA1AC5A91BDE181FB73E935ECC1F3F5556
+    ttl: 300
+    solo: true
+  register: cloudflare_dns
+
+- name: "Validate: DS record duplicate (make new record solo)"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
+      - cloudflare_dns.result.record.content == "24397\t8\t2\t8A5E62E004BFA4CF4B42BE9405C39EBA1AC5A91BDE181FB73E935ECC1F3F5556"
+      - cloudflare_dns.result.record.ttl == 300
+      - cloudflare_dns.result.record.type == "DS"
+      - cloudflare_dns.result.record.name == "{{ cloudflare_dns_record }}.{{ cloudflare_zone }}"
+      - cloudflare_dns.result.record.zone_name == "{{ cloudflare_zone }}"
+      - cloudflare_dns.result.record.data.key_tag == 24397
+      - cloudflare_dns.result.record.data.algorithm == 8
+      - cloudflare_dns.result.record.data.digest_type == 2
+      - cloudflare_dns.result.record.data.digest == "8A5E62E004BFA4CF4B42BE9405C39EBA1AC5A91BDE181FB73E935ECC1F3F5556"
+
+- name: "Test: DS record duplicate (old record absent)"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: DS
+    key_tag: 54592
+    algorithm: 8
+    hash_type: 2
+    value: 6A95688429A7796533165ACEFBE91BD115DAD747AA4E1D5DCA70DF040C68216F
+    ttl: 300
+    state: absent
+  register: cloudflare_dns
+
+- name: "Validate: DS record duplicate (old record absent)"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed
+
+- name: "Test: DS record deletion"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: DS
+    key_tag: 24397
+    algorithm: 8
+    hash_type: 2
+    value: 8A5E62E004BFA4CF4B42BE9405C39EBA1AC5A91BDE181FB73E935ECC1F3F5556
+    ttl: 300
+    state: absent
+  register: cloudflare_dns
+
+- name: "Validate: DS record deletion"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
+
+- name: "Test: DS record deletion succeeded"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: DS
+    key_tag: 24397
+    algorithm: 8
+    hash_type: 2
+    value: 8A5E62E004BFA4CF4B42BE9405C39EBA1AC5A91BDE181FB73E935ECC1F3F5556
+    ttl: 300
+    state: absent
+  register: cloudflare_dns
+
+- name: "Validate: DS record deletion succeeded"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed

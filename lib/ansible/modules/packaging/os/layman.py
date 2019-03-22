@@ -37,11 +37,9 @@ options:
       - An URL of the alternative overlays list that defines the overlay to install.
         This list will be fetched and saved under C(${overlay_defs})/${name}.xml), where
         C(overlay_defs) is readed from the Layman's configuration.
-    required: false
   state:
     description:
       - Whether to install (C(present)), sync (C(updated)), or uninstall (C(absent)) the overlay.
-    required: false
     default: present
     choices: [present, absent, updated]
   validate_certs:
@@ -49,9 +47,8 @@ options:
       - If C(no), SSL certificates will not be validated. This should only be
         set to C(no) when no other option exists.  Prior to 1.9.3 the code
         defaulted to C(no).
-    required: false
+    type: bool
     default: 'yes'
-    choices: ['yes', 'no']
     version_added: '1.9.3'
 '''
 
@@ -83,14 +80,22 @@ EXAMPLES = '''
 '''
 
 import shutil
+import traceback
+
 from os import path
 
+LAYMAN_IMP_ERR = None
 try:
     from layman.api import LaymanAPI
     from layman.config import BareConfig
     HAS_LAYMAN_API = True
 except ImportError:
+    LAYMAN_IMP_ERR = traceback.format_exc()
     HAS_LAYMAN_API = False
+
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.urls import fetch_url
+
 
 USERAGENT = 'ansible-httpget'
 
@@ -158,8 +163,8 @@ def install_overlay(module, name, list_url=None):
 
     if not layman.is_repo(name):
         if not list_url:
-            raise ModuleError("Overlay '%s' is not on the list of known " \
-                "overlays and URL of the remote list was not provided." % name)
+            raise ModuleError("Overlay '%s' is not on the list of known "
+                              "overlays and URL of the remote list was not provided." % name)
 
         overlay_defs = layman_conf.get_option('overlay_defs')
         dest = path.join(overlay_defs, name + '.xml')
@@ -209,7 +214,7 @@ def sync_overlay(name):
     layman = init_layman()
 
     if not layman.sync(name):
-        messages = [ str(item[1]) for item in layman.sync_results[2] ]
+        messages = [str(item[1]) for item in layman.sync_results[2]]
         raise ModuleError(messages)
 
 
@@ -227,17 +232,17 @@ def sync_overlays():
 def main():
     # define module
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(required=True),
-            list_url = dict(aliases=['url']),
-            state = dict(default="present", choices=['present', 'absent', 'updated']),
-            validate_certs = dict(required=False, default=True, type='bool'),
+        argument_spec=dict(
+            name=dict(required=True),
+            list_url=dict(aliases=['url']),
+            state=dict(default="present", choices=['present', 'absent', 'updated']),
+            validate_certs=dict(required=False, default=True, type='bool'),
         ),
         supports_check_mode=True
     )
 
     if not HAS_LAYMAN_API:
-        module.fail_json(msg='Layman is not installed')
+        module.fail_json(msg=missing_required_lib('Layman'), exception=LAYMAN_IMP_ERR)
 
     state, name, url = (module.params[key] for key in ['state', 'name', 'list_url'])
 
@@ -262,8 +267,5 @@ def main():
         module.exit_json(changed=changed, name=name)
 
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 if __name__ == '__main__':
     main()

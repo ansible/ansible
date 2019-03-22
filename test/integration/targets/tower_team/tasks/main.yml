@@ -1,0 +1,45 @@
+- name: Attempt to add a Tower team to a non-existant Organization
+  tower_team:
+    name: Test Team
+    organization: Missing Organization
+    state: present
+  register: result
+  ignore_errors: yes
+
+- name: Assert a meaningful error was provided for the failed Tower team creation
+  assert:
+    that:
+      - "'The requested object could not be found.' in result.msg"
+
+- name: Create a Tower team
+  tower_team:
+    name: Test Team
+    organization: Default
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Delete a Tower team
+  tower_team:
+    name: Test Team
+    organization: Default
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Check module fails with correct msg
+  tower_team:
+    name: Test Team
+    organization: Non Existing Org
+    state: present
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      - "result.msg =='Failed to update team, organization not found: The requested object could not be found.'"

@@ -5,9 +5,11 @@
       - name: ansibletest1
       - name: ansibletest2
       - name: ansibletest3
+      - name: ansibletest4
+      - name: ansibletest5
+      - name: ansibletest6
     state: absent
-    authorize: yes
-  register: result
+    provider: "{{ cli }}"
 
 - name: Create user (SetUp)
   ios_user:
@@ -15,7 +17,7 @@
     privilege: 15
     role: network-operator
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -28,7 +30,7 @@
     aggregate:
       - name: ansibletest2
       - name: ansibletest3
-    authorize: yes
+    provider: "{{ cli }}"
     state: present
     view: network-admin
   register: result
@@ -44,7 +46,7 @@
     privilege: 15
     role: network-operator
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -57,7 +59,7 @@
     aggregate:
       - name: ansibletest2
       - name: ansibletest3
-    authorize: yes
+    provider: "{{ cli }}"
     state: present
     view: network-admin
   register: result
@@ -67,19 +69,62 @@
       - 'result.changed == false'
       - 'result.commands | length == 0'
 
+- name: Create user with password_type (password)
+  ios_user:
+    name: ansibleuser4
+    password_type: password
+    configured_password: testpass
+    state: present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - "'username ansibleuser4 password' in result.commands[0]"
+
+- name: Create user with password_type (secret)
+  ios_user:
+    name: ansibleuser5
+    password_type: secret
+    configured_password: testpass
+    state: present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - "'username ansibleuser5 secret' in result.commands[0]"
+
+- name: Create user with hashed_password
+  ios_user:
+    name: ansibleuser6
+    hashed_password:
+      type: 5
+      value: $3$8JcDilcYgFZi.yz4ApaqkHG2.8/
+    state: present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - "'username ansibleuser6 secret' in result.commands[0]"
+
 - name: tearDown
   ios_user:
     aggregate:
       - name: ansibletest1
       - name: ansibletest2
       - name: ansibletest3
+      - name: ansibletest4
+      - name: ansibletest5
+      - name: ansibletest6
     state: absent
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
     that:
       - 'result.changed == true'
-      - '"no username ansibletest1" in result.commands[0]'
-      - '"no username ansibletest2" in result.commands[1]'
-      - '"no username ansibletest3" in result.commands[2]'
+      - '"no username ansibletest1" in result.commands[0]["command"]'
+      - '"no username ansibletest2" in result.commands[1]["command"]'
+      - '"no username ansibletest3" in result.commands[2]["command"]'

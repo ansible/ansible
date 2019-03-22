@@ -29,7 +29,7 @@ import sys
 import json
 try:
     import configparser
-except:
+except Exception:
     from six.moves import configparser
 
 # Set up defaults

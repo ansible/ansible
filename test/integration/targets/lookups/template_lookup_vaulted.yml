@@ -1,0 +1,13 @@
+# https://github.com/ansible/ansible/issues/34209
+- hosts: localhost
+  gather_facts: no
+  vars:
+      hello_world: Hello World
+  tasks:
+    - name: Test that template lookup can handle vaulted templates
+      set_fact:
+        vaulted_hello_world: "{{ lookup('template', 'vaulted_hello.j2') }}"
+
+    - assert:
+        that:
+          - "vaulted_hello_world|trim == 'Unvaulted Hello World!'"

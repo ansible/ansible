@@ -1,0 +1,15 @@
+<ul class="wy-breadcrumbs">
+  <li><a href="{{ pathto(master_doc) }}">Docs</a> &raquo;</li>
+  <li><a href="">{{ title }}</a></li>
+  {% if pagename.endswith('_module') %}
+    <li class="wy-breadcrumbs-aside">
+      <a href="https://github.com/ansible/ansible/edit/devel/lib/ansible/modules/{{ meta.get('source', '') }}?description=%23%23%23%23%23%20SUMMARY%0A%3C!---%20Your%20description%20here%20--%3E%0A%0A%0A%23%23%23%23%23%20ISSUE%20TYPE%0A-%20Docs%20Pull%20Request%0A%0A%2Blabel:%20docsite_pr" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  {% elif (not 'list_of' in pagename) and (not 'category' in pagename) %}
+    <li class="wy-breadcrumbs-aside">
+      <a href="https://github.com/ansible/ansible/edit/devel/docs/docsite/rst/{{ pagename }}.rst?description=%23%23%23%23%23%20SUMMARY%0A%3C!---%20Your%20description%20here%20--%3E%0A%0A%0A%23%23%23%23%23%20ISSUE%20TYPE%0A-%20Docs%20Pull%20Request%0A%0A%2Blabel:%20docsite_pr" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  {% endif %}
+</ul>
+<hr/>
+

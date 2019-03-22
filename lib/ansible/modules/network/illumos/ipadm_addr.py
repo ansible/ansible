@@ -45,6 +45,7 @@ options:
               IP addresses do not persist across reboots.
         required: false
         default: false
+        type: bool
     wait:
         description:
             - Specifies the time in seconds we wait for obtaining address via DHCP.
@@ -59,49 +60,49 @@ options:
 '''
 
 EXAMPLES = '''
-name: Configure IP address 10.0.0.1 on e1000g0
-ipadm_addr: addr=10.0.0.1/32 addrobj=e1000g0/v4 state=present
+- name: Configure IP address 10.0.0.1 on e1000g0
+  ipadm_addr: addr=10.0.0.1/32 addrobj=e1000g0/v4 state=present
 
-name: Delete addrobj
-ipadm_addr: addrobj=e1000g0/v4 state=absent
+- name: Delete addrobj
+  ipadm_addr: addrobj=e1000g0/v4 state=absent
 
-name: Configure link-local IPv6 address
-ipadm_addr: addtype=addrconf addrobj=vnic0/v6
+- name: Configure link-local IPv6 address
+  ipadm_addr: addtype=addrconf addrobj=vnic0/v6
 
-name: Configure address via DHCP and wait 180 seconds for address obtaining
-ipadm_addr: addrobj=vnic0/dhcp addrtype=dhcp wait=180
+- name: Configure address via DHCP and wait 180 seconds for address obtaining
+  ipadm_addr: addrobj=vnic0/dhcp addrtype=dhcp wait=180
 '''
 
 RETURN = '''
 addrobj:
     description: address object name
     returned: always
-    type: string
+    type: str
     sample: bge0/v4
 state:
     description: state of the target
     returned: always
-    type: string
+    type: str
     sample: present
 temporary:
     description: specifies if operation will persist across reboots
     returned: always
-    type: boolean
+    type: bool
     sample: True
 addrtype:
     description: address type
     returned: always
-    type: string
+    type: str
     sample: static
 address:
     description: IP address
     returned: only if addrtype is 'static'
-    type: string
+    type: str
     sample: 1.3.3.7/32
 wait:
     description: time we wait for DHCP
     returned: only if addrtype is 'dhcp'
-    type: string
+    type: str
     sample: 10
 '''
 

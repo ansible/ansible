@@ -28,51 +28,37 @@ short_description: Manages MLAG interfaces on HUAWEI CloudEngine switches.
 description:
     - Manages MLAG interface attributes on HUAWEI CloudEngine switches.
 author:
-    - Li Yanfeng (@CloudEngine-Ansible)
+    - Li Yanfeng (@QijunPan)
 options:
     eth_trunk_id:
         description:
             - Name of the local M-LAG interface. The value is ranging from 0 to 511.
-        required: false
-        default: null
     dfs_group_id:
         description:
             - ID of a DFS group.The value is 1.
-        required: false
         default: present
     mlag_id:
         description:
             - ID of the M-LAG. The value is an integer that ranges from 1 to 2048.
-        required: false
-        default: null
     mlag_system_id:
         description:
             - M-LAG global LACP system MAC address. The value is a string of 0 to 255 characters. The default value
               is the MAC address of the Ethernet port of MPU.
-        required: false
-        default: null
     mlag_priority_id:
         description:
             - M-LAG global LACP system priority. The value is an integer ranging from 0 to 65535.
               The default value is 32768.
-        required: false
-        default: null
     interface:
         description:
             - Name of the interface that enters the Error-Down state when the peer-link fails.
               The value is a string of 1 to 63 characters.
-        required: false
-        default: null
     mlag_error_down:
         description:
             - Configure the interface on the slave device to enter the Error-Down state.
-        required: false
-        default: null
         choices: ['enable','disable']
     state:
         description:
             - Specify desired state of the resource.
-        required: false
         default: present
         choices: ['present','absent']
 
@@ -121,7 +107,7 @@ RETURN = '''
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 proposed:
     description: k/v pairs of parameters passed into module
@@ -158,8 +144,8 @@ updates:
 import re
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import load_config
-from ansible.module_utils.ce import get_nc_config, set_nc_config, ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import load_config
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec
 
 CE_NC_GET_MLAG_INFO = """
 <filter type="subtree">

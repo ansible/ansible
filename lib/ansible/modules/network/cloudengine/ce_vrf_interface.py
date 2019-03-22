@@ -27,7 +27,7 @@ version_added: "2.4"
 short_description: Manages interface specific VPN configuration on HUAWEI CloudEngine switches.
 description:
     - Manages interface specific VPN configuration of HUAWEI CloudEngine switches.
-author: Zhijin Zhou (@CloudEngine-Ansible)
+author: Zhijin Zhou (@QijunPan)
 notes:
     - Ensure that a VPN instance has been created and the IPv4 address family has been enabled for the VPN instance.
 options:
@@ -115,14 +115,14 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 
 
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import ce_argument_spec, get_nc_config, set_nc_config
+from ansible.module_utils.network.cloudengine.ce import ce_argument_spec, get_nc_config, set_nc_config
 
 CE_NC_GET_VRF = """
 <filter type="subtree">
@@ -511,6 +511,7 @@ def main():
     argument_spec.update(ce_argument_spec)
     vrf_intf = VrfInterface(argument_spec)
     vrf_intf.work()
+
 
 if __name__ == '__main__':
     main()

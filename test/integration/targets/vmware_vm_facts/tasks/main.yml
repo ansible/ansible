@@ -1,31 +1,7 @@
 # Test code for the vmware_vm_facts module
-# (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
-
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-
-- name: make sure pyvmomi is installed
-  pip:
-    name: pyvmomi
-    state: latest
-
-- name: store the vcenter container ip
-  set_fact:
-    vcsim: "{{ lookup('env', 'vcenter_host') }}"
-- debug: var=vcsim
+# Copyright: (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
+# Copyright, (c) 2018, Fedor Vompe <f.vompe@comptek.ru>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 - name: Wait for Flask controller to come up online
   wait_for:
@@ -35,10 +11,11 @@
 
 - name: kill vcsim
   uri:
-    url: "{{ 'http://' + vcsim + ':5000/killall' }}"
+    url: http://{{ vcsim }}:5000/killall
+
 - name: start vcsim
   uri:
-    url: "{{ 'http://' + vcsim + ':5000/spawn?cluster=2' }}"
+    url: http://{{ vcsim }}:5000/spawn?cluster=2
   register: vcsim_instance
 
 - name: Wait for Flask controller to come up online
@@ -49,8 +26,7 @@
 
 - debug: var=vcsim_instance
 
-# Testcase 0001: Get detail of vms from given esxi
-- name: get facts about available vms
+- name: Get facts about available vms
   vmware_vm_facts:
     validate_certs: false
     hostname: "{{ vcsim }}"
@@ -58,16 +34,43 @@
     password: "{{ vcsim_instance['json']['password'] }}"
   register: vm_facts_0001
 
-- debug: var="{{ vm_facts_0001['virtual_machines'].keys() }}"
-
-- name: get all VMs
-  uri:
-    url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=VM' }}"
-  register: host_info_result
-
-- name: verify if VM exists
+- name: Verify if VM facts exist
   assert:
     that:
-      - "{{ item | basename in vm_facts_0001['virtual_machines'].keys()}}"
+      - "item.esxi_hostname is defined"
+      - "item.guest_fullname is defined"
+      - "item.ip_address is defined"
+      - "item.mac_address is defined"
+      - "item.power_state is defined"
+      - "item.uuid is defined"
+      - "item.vm_network is defined"
   with_items:
-    - "{{ host_info_result['json'] }}"
+    - "{{ vm_facts_0001.virtual_machines | json_query(query) }}"
+  vars:
+    query: "[?guest_name=='DC0_H0_VM0']"
+
+
+- name: Get facts about available vms in check mode
+  vmware_vm_facts:
+    validate_certs: false
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+  register: vm_facts_0001
+  check_mode: yes
+
+- name: Verify if VM facts exist in check mode
+  assert:
+    that:
+      - "item.esxi_hostname is defined"
+      - "item.guest_fullname is defined"
+      - "item.ip_address is defined"
+      - "item.mac_address is defined"
+      - "item.power_state is defined"
+      - "item.uuid is defined"
+      - "item.vm_network is defined"
+      - "item.attributes is defined"
+  with_items:
+    - "{{ vm_facts_0001.virtual_machines | json_query(query) }}"
+  vars:
+    query: "[?guest_name=='DC0_H0_VM0']"

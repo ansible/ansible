@@ -25,7 +25,7 @@ description:
   because you lack the authority to make it so, or because not everyone
   agrees to a common approach.
 - If you cannot automate a specific step, but the step is non-blocking,
-  sending out an email to the responsible party to make him perform his
+  sending out an email to the responsible party to make them perform their
   part of the bargain is an elegant way to put the responsibility in
   someone else's lap.
 - Of course sending out a mail can be equally useful as a way to notify
@@ -36,66 +36,81 @@ options:
   from:
     description:
     - The email-address the mail is sent from. May contain address and phrase.
+    type: str
     default: root
   to:
     description:
     - The email-address(es) the mail is being sent to.
     - This is a list, which may contain address and phrase portions.
+    type: list
     default: root
+    aliases: [ recipients ]
   cc:
     description:
     - The email-address(es) the mail is being copied to.
     - This is a list, which may contain address and phrase portions.
+    type: list
   bcc:
     description:
     - The email-address(es) the mail is being 'blind' copied to.
     - This is a list, which may contain address and phrase portions.
+    type: list
   subject:
     description:
     - The subject of the email being sent.
-    required: true
+    required: yes
+    type: str
   body:
     description:
     - The body of the email being sent.
+    type: str
     default: $subject
   username:
     description:
     - If SMTP requires username.
+    type: str
     version_added: '1.9'
   password:
     description:
     - If SMTP requires password.
+    type: str
     version_added: '1.9'
   host:
     description:
     - The mail server.
+    type: str
     default: localhost
   port:
     description:
     - The mail server port.
     - This must be a valid integer between 1 and 65534
+    type: int
     default: 25
     version_added: '1.0'
   attach:
     description:
     - A list of pathnames of files to attach to the message.
     - Attached files will have their content-type set to C(application/octet-stream).
+    type: list
     default: []
     version_added: '1.0'
   headers:
     description:
     - A list of headers which should be added to the message.
     - Each individual header is specified as C(header=value) (see example below).
+    type: list
     default: []
     version_added: '1.0'
   charset:
     description:
     - The character set of email being sent.
+    type: str
     default: utf-8
   subtype:
     description:
     - The minor mime type, can be either C(plain) or C(html).
     - The major type is always C(text).
+    type: str
     choices: [ html, plain ]
     default: plain
     version_added: '2.0'
@@ -107,12 +122,14 @@ options:
     - If C(never), the connection will not attempt to setup a secure SSL/TLS session, before sending
     - If C(starttls), the connection will try to upgrade to a secure SSL/TLS connection, before sending.
       If it is unable to do so it will fail.
+    type: str
     choices: [ always, never, starttls, try ]
     default: try
     version_added: '2.3'
   timeout:
     description:
     - Sets the timeout in seconds for connection attempts.
+    type: int
     default: 20
     version_added: '2.3'
 '''
@@ -193,6 +210,7 @@ from email.mime.text import MIMEText
 from email.header import Header
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY3
 from ansible.module_utils._text import to_native
 
 
@@ -244,50 +262,50 @@ def main():
     if not body:
         body = subject
 
-    smtp = smtplib.SMTP(timeout=timeout)
-
-    if secure in ('never', 'starttls', 'try'):
-        try:
-            code, smtpmessage = smtp.connect(host, port=port)
-        except smtplib.SMTPException as e:
-            if secure == 'try':
-                try:
+    try:
+        if secure != 'never':
+            try:
+                if PY3:
+                    smtp = smtplib.SMTP_SSL(host=host, port=port, timeout=timeout)
+                else:
                     smtp = smtplib.SMTP_SSL(timeout=timeout)
-                    code, smtpmessage = smtp.connect(host, port=port)
-                    secure_state = True
-                except ssl.SSLError as e:
+                code, smtpmessage = smtp.connect(host, port)
+                secure_state = True
+            except ssl.SSLError as e:
+                if secure == 'always':
                     module.fail_json(rc=1, msg='Unable to start an encrypted session to %s:%s: %s' %
-                                     (host, port, to_native(e)), exception=traceback.format_exc())
-            else:
-                module.fail_json(rc=1, msg='Unable to Connect to %s:%s: %s' %
-                                 (host, port, to_native(e)), exception=traceback.format_exc())
+                                               (host, port, to_native(e)), exception=traceback.format_exc())
+            except Exception:
+                pass
 
-    if (secure == 'always'):
-        try:
-            smtp = smtplib.SMTP_SSL(timeout=timeout)
-            code, smtpmessage = smtp.connect(host, port=port)
-            secure_state = True
-        except ssl.SSLError as e:
-            module.fail_json(rc=1, msg='Unable to start an encrypted session to %s:%s: %s' %
-                             (host, port, to_native(e)), exception=traceback.format_exc())
+        if not secure_state:
+            if PY3:
+                smtp = smtplib.SMTP(host=host, port=port, timeout=timeout)
+            else:
+                smtp = smtplib.SMTP(timeout=timeout)
+            code, smtpmessage = smtp.connect(host, port)
+
+    except smtplib.SMTPException as e:
+        module.fail_json(rc=1, msg='Unable to Connect %s:%s: %s' % (host, port, to_native(e)), exception=traceback.format_exc())
+
+    try:
+        smtp.ehlo()
+    except smtplib.SMTPException as e:
+        module.fail_json(rc=1, msg='Helo failed for host %s:%s: %s' % (host, port, to_native(e)), exception=traceback.format_exc())
 
     if int(code) > 0:
-        try:
-            smtp.ehlo()
-        except smtplib.SMTPException as e:
-            module.fail_json(rc=1, msg='Helo failed for host %s:%s: %s' %
-                             (host, port, to_native(e)), exception=traceback.format_exc())
-
-        if secure in ('starttls', 'try'):
+        if not secure_state and secure in ('starttls', 'try'):
             if smtp.has_extn('STARTTLS'):
                 try:
                     smtp.starttls()
-                    smtp.ehlo()
-                    auth_flag = smtp.has_extn('AUTH')
                     secure_state = True
                 except smtplib.SMTPException as e:
                     module.fail_json(rc=1, msg='Unable to start an encrypted session to %s:%s: %s' %
                                      (host, port, to_native(e)), exception=traceback.format_exc())
+                try:
+                    smtp.ehlo()
+                except smtplib.SMTPException as e:
+                    module.fail_json(rc=1, msg='Helo failed for host %s:%s: %s' % (host, port, to_native(e)), exception=traceback.format_exc())
             else:
                 if secure == 'starttls':
                     module.fail_json(rc=1, msg='StartTLS is not offered on server %s:%s' % (host, port))
@@ -318,7 +336,7 @@ def main():
                 h_key, h_val = hdr.split('=')
                 h_val = to_native(Header(h_val, charset))
                 msg.add_header(h_key, h_val)
-            except:
+            except Exception:
                 module.warn("Skipping header '%s', unable to parse" % hdr)
 
     if 'X-Mailer' not in msg:
@@ -373,6 +391,7 @@ def main():
         module.exit_json(msg='Failed to send mail to at least one recipient', result=result)
 
     module.exit_json(msg='Mail sent successfully', result=result)
+
 
 if __name__ == '__main__':
     main()

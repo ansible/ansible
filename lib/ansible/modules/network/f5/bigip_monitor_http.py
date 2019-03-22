@@ -1,112 +1,77 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# (c) 2013, serge van Ginderachter <serge@vanginderachter.be>
-# based on Matt Hite's bigip_pool module
-# (c) 2013, Matt Hite <mhite@hotmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2017, F5 Networks Inc.
+# GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: bigip_monitor_http
-short_description: "Manages F5 BIG-IP LTM http monitors"
-description:
-  - Manages F5 BIG-IP LTM monitors via iControl SOAP API
-version_added: "1.4"
-author:
-  - Serge van Ginderachter (@srvg)
-  - Tim Rupp (@caphrim007)
-notes:
-  - "Requires BIG-IP software version >= 11"
-  - "F5 developed module 'bigsuds' required (see http://devcentral.f5.com)"
-  - "Best run as a local_action in your playbook"
-  - "Monitor API documentation: https://devcentral.f5.com/wiki/iControl.LocalLB__Monitor.ashx"
-requirements:
-  - bigsuds
+short_description: Manages F5 BIG-IP LTM http monitors
+description: Manages F5 BIG-IP LTM http monitors.
+version_added: 2.5
 options:
-  state:
-    description:
-      - Monitor state
-    required: false
-    default: 'present'
-    choices:
-      - present
-      - absent
   name:
     description:
-      - Monitor name
-    required: true
-    default: null
-    aliases:
-      - monitor
-  partition:
-    description:
-      - Partition for the monitor
-    required: false
-    default: 'Common'
+      - Monitor name.
+    type: str
+    required: True
   parent:
     description:
-      - The parent template of this monitor template
-    required: false
-    default: 'http'
-  parent_partition:
+      - The parent template of this monitor template. Once this value has
+        been set, it cannot be changed. By default, this value is the C(http)
+        parent on the C(Common) partition.
+    type: str
+    default: /Common/http
+  description:
     description:
-      - Partition for the parent monitor
-    required: false
-    default: 'Common'
+      - The description of the monitor.
+    type: str
+    version_added: 2.7
   send:
     description:
-      - The send string for the monitor call
-    required: true
-    default: none
+      - The send string for the monitor call. When creating a new monitor, if
+        this value is not provided, the default C(GET /\r\n) will be used.
+    type: str
   receive:
     description:
-      - The receive string for the monitor call
-    required: true
-    default: none
+      - The receive string for the monitor call.
+    type: str
   receive_disable:
     description:
-      - The receive disable string for the monitor call
-    required: true
-    default: none
+      - This setting works like C(receive), except that the system marks the node
+        or pool member disabled when its response matches the C(receive_disable)
+        string but not C(receive). To use this setting, you must specify both
+        C(receive_disable) and C(receive).
+    type: str
   ip:
     description:
-      - IP address part of the ipport definition. The default API setting
-        is "0.0.0.0".
-    required: false
-    default: none
+      - IP address part of the IP/port definition. If this parameter is not
+        provided when creating a new monitor, then the default value will be
+        '*'.
+    type: str
   port:
     description:
-      - Port address part of the ip/port definition. The default API
-        setting is 0.
-    required: false
-    default: none
+      - Port address part of the IP/port definition. If this parameter is not
+        provided when creating a new monitor, then the default value will be
+        '*'. Note that if specifying an IP address, a value between 1 and 65535
+        must be specified.
+    type: str
   interval:
     description:
-      - The interval specifying how frequently the monitor instance
-        of this template will run. By default, this interval is used for up and
-        down states. The default API setting is 5.
-    required: false
-    default: none
+      - The interval specifying how frequently the monitor instance of this
+        template will run. If this parameter is not provided when creating
+        a new monitor, then the default value will be 5. This value B(must)
+        be less than the C(timeout) value.
+    type: int
   timeout:
     description:
       - The number of seconds in which the node or service must respond to
@@ -114,335 +79,677 @@ options:
         period, it is considered up. If the target does not respond within
         the set time period, it is considered down. You can change this
         number to any number you want, however, it should be 3 times the
-        interval number of seconds plus 1 second. The default API setting
-        is 16.
-    required: false
-    default: none
+        interval number of seconds plus 1 second. If this parameter is not
+        provided when creating a new monitor, then the default value will be 16.
+    type: int
   time_until_up:
     description:
       - Specifies the amount of time in seconds after the first successful
         response before a node will be marked up. A value of 0 will cause a
         node to be marked up immediately after a valid response is received
-        from the node. The default API setting is 0.
-    required: false
-    default: none
+        from the node. If this parameter is not provided when creating
+        a new monitor, then the default value will be 0.
+    type: int
+  target_username:
+    description:
+      - Specifies the user name, if the monitored target requires authentication.
+    type: str
+  target_password:
+    description:
+      - Specifies the password, if the monitored target requires authentication.
+    type: str
+  reverse:
+    description:
+      - Specifies whether the monitor operates in reverse mode.
+      - When the monitor is in reverse mode, a successful receive string match
+        marks the monitored object down instead of up. You can use the
+        this mode only if you configure the C(receive) option.
+      - This parameter is not compatible with the C(time_until_up) parameter. If
+        C(time_until_up) is specified, it must be C(0). Or, if it already exists, it
+        must be C(0).
+    type: bool
+    version_added: 2.8
+  partition:
+    description:
+      - Device partition to manage resources on.
+    type: str
+    default: Common
+    version_added: 2.5
+  state:
+    description:
+      - When C(present), ensures that the monitor exists.
+      - When C(absent), ensures the monitor is removed.
+    type: str
+    choices:
+      - present
+      - absent
+    default: present
+    version_added: 2.5
+notes:
+  - Requires BIG-IP software version >= 12
 extends_documentation_fragment: f5
+author:
+  - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
-EXAMPLES = '''
-- name: BIGIP F5 | Create HTTP Monitor
+EXAMPLES = r'''
+- name: Create HTTP Monitor
   bigip_monitor_http:
-      state: "present"
-      server: "lb.mydomain.com"
-      user: "admin"
-      password: "secret"
-      name: "my_http_monitor"
-      send: "http string to send"
-      receive: "http string to receive"
+    state: present
+    ip: 10.10.10.10
+    name: my_http_monitor
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
-- name: BIGIP F5 | Remove HTTP Monitor
+- name: Remove HTTP Monitor
   bigip_monitor_http:
-    state: "absent"
-    server: "lb.mydomain.com"
-    user: "admin"
-    password: "secret"
-    name: "my_http_monitor"
+    state: absent
+    name: my_http_monitor
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
+  delegate_to: localhost
+
+- name: Include a username and password in the HTTP monitor
+  bigip_monitor_http:
+    state: absent
+    name: my_http_monitor
+    target_username: monitor_user
+    target_password: monitor_pass
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 '''
 
-TEMPLATE_TYPE = 'TTYPE_HTTP'
-DEFAULT_PARENT_TYPE = 'http'
+RETURN = r'''
+parent:
+  description: New parent template of the monitor.
+  returned: changed
+  type: str
+  sample: http
+description:
+  description: The description of the monitor.
+  returned: changed
+  type: str
+  sample: Important_Monitor
+ip:
+  description: The new IP of IP/port definition.
+  returned: changed
+  type: str
+  sample: 10.12.13.14
+interval:
+  description: The new interval in which to run the monitor check.
+  returned: changed
+  type: int
+  sample: 2
+timeout:
+  description: The new timeout in which the remote system must respond to the monitor.
+  returned: changed
+  type: int
+  sample: 10
+time_until_up:
+  description: The new time in which to mark a system as up after first successful response.
+  returned: changed
+  type: int
+  sample: 2
+reverse:
+  description: Whether the monitor operates in reverse mode.
+  returned: changed
+  type: bool
+  sample: yes
+'''
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import env_fallback
+
+try:
+    from library.module_utils.network.f5.bigip import F5RestClient
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import fq_name
+    from library.module_utils.network.f5.common import f5_argument_spec
+    from library.module_utils.network.f5.common import transform_name
+    from library.module_utils.network.f5.common import flatten_boolean
+    from library.module_utils.network.f5.ipaddress import is_valid_ip
+    from library.module_utils.network.f5.compare import cmp_str_with_none
+except ImportError:
+    from ansible.module_utils.network.f5.bigip import F5RestClient
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import fq_name
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.network.f5.common import transform_name
+    from ansible.module_utils.network.f5.common import flatten_boolean
+    from ansible.module_utils.network.f5.ipaddress import is_valid_ip
+    from ansible.module_utils.network.f5.compare import cmp_str_with_none
 
 
-def check_monitor_exists(module, api, monitor, parent):
-    # hack to determine if monitor exists
-    result = False
-    try:
-        ttype = api.LocalLB.Monitor.get_template_type(template_names=[monitor])[0]
-        parent2 = api.LocalLB.Monitor.get_parent_template(template_names=[monitor])[0]
-        if ttype == TEMPLATE_TYPE and parent == parent2:
-            result = True
+class Parameters(AnsibleF5Parameters):
+    api_map = {
+        'timeUntilUp': 'time_until_up',
+        'defaultsFrom': 'parent',
+        'recv': 'receive',
+        'recvDisable': 'receive_disable',
+    }
+
+    api_attributes = [
+        'timeUntilUp',
+        'defaultsFrom',
+        'interval',
+        'timeout',
+        'recv',
+        'send',
+        'destination',
+        'username',
+        'password',
+        'recvDisable',
+        'description',
+        'reverse',
+    ]
+
+    returnables = [
+        'parent',
+        'send',
+        'receive',
+        'ip',
+        'port',
+        'interval',
+        'timeout',
+        'time_until_up',
+        'receive_disable',
+        'description',
+        'reverse',
+    ]
+
+    updatables = [
+        'destination',
+        'send',
+        'receive',
+        'interval',
+        'timeout',
+        'time_until_up',
+        'target_username',
+        'target_password',
+        'receive_disable',
+        'description',
+        'reverse',
+    ]
+
+    @property
+    def destination(self):
+        if self.ip is None and self.port is None:
+            return None
+        destination = '{0}:{1}'.format(self.ip, self.port)
+        return destination
+
+    @destination.setter
+    def destination(self, value):
+        ip, port = value.split(':')
+        self._values['ip'] = ip
+        self._values['port'] = port
+
+    @property
+    def interval(self):
+        if self._values['interval'] is None:
+            return None
+
+        # Per BZ617284, the BIG-IP UI does not raise a warning about this.
+        # So I do
+        if 1 > int(self._values['interval']) > 86400:
+            raise F5ModuleError(
+                "Interval value must be between 1 and 86400"
+            )
+        return int(self._values['interval'])
+
+    @property
+    def timeout(self):
+        if self._values['timeout'] is None:
+            return None
+        return int(self._values['timeout'])
+
+    @property
+    def ip(self):
+        if self._values['ip'] is None:
+            return None
+        if self._values['ip'] in ['*', '0.0.0.0']:
+            return '*'
+        elif is_valid_ip(self._values['ip']):
+            return self._values['ip']
         else:
-            module.fail_json(msg='Monitor already exists, but has a different type (%s) or parent(%s)' % (ttype, parent))
-    except bigsuds.OperationFailed as e:
-        if "was not found" in str(e):
-            result = False
-        else:
-            # genuine exception
-            raise
-    return result
+            raise F5ModuleError(
+                "The provided 'ip' parameter is not an IP address."
+            )
+
+    @property
+    def port(self):
+        if self._values['port'] is None:
+            return None
+        elif self._values['port'] == '*':
+            return '*'
+        return int(self._values['port'])
+
+    @property
+    def time_until_up(self):
+        if self._values['time_until_up'] is None:
+            return None
+        return int(self._values['time_until_up'])
+
+    @property
+    def parent(self):
+        if self._values['parent'] is None:
+            return None
+        result = fq_name(self.partition, self._values['parent'])
+        return result
+
+    @property
+    def type(self):
+        return 'http'
+
+    @property
+    def username(self):
+        return self._values['target_username']
+
+    @property
+    def password(self):
+        return self._values['target_password']
+
+    @property
+    def reverse(self):
+        return flatten_boolean(self._values['reverse'])
 
 
-def create_monitor(api, monitor, template_attributes):
-    try:
-        api.LocalLB.Monitor.create_template(
-            templates=[{
-                'template_name': monitor,
-                'template_type': TEMPLATE_TYPE
-            }],
-            template_attributes=[template_attributes]
-        )
-    except bigsuds.OperationFailed as e:
-        if "already exists" in str(e):
-            return False
-        else:
-            # genuine exception
-            raise
-    return True
+class ApiParameters(Parameters):
+    @property
+    def description(self):
+        if self._values['description'] in [None, 'none']:
+            return None
+        return self._values['description']
 
 
-def delete_monitor(api, monitor):
-    try:
-        api.LocalLB.Monitor.delete_template(template_names=[monitor])
-    except bigsuds.OperationFailed as e:
-        # maybe it was deleted since we checked
-        if "was not found" in str(e):
-            return False
-        else:
-            # genuine exception
-            raise
-    return True
+class ModuleParameters(Parameters):
+    @property
+    def description(self):
+        if self._values['description'] is None:
+            return None
+        elif self._values['description'] in ['none', '']:
+            return ''
+        return self._values['description']
 
 
-def check_string_property(api, monitor, str_property):
-    try:
-        template_prop = api.LocalLB.Monitor.get_template_string_property(
-            [monitor], [str_property['type']]
-        )[0]
-        return str_property == template_prop
-    except bigsuds.OperationFailed as e:
-        # happens in check mode if not created yet
-        if "was not found" in str(e):
+class Changes(Parameters):
+    def to_return(self):
+        result = {}
+        try:
+            for returnable in self.returnables:
+                result[returnable] = getattr(self, returnable)
+            result = self._filter_params(result)
+        except Exception:
+            pass
+        return result
+
+
+class UsableChanges(Changes):
+    @property
+    def reverse(self):
+        if self._values['reverse'] is None:
+            return None
+        elif self._values['reverse'] == 'yes':
+            return 'enabled'
+        return 'disabled'
+
+
+class ReportableChanges(Changes):
+    @property
+    def reverse(self):
+        return flatten_boolean(self._values['reverse'])
+
+
+class Difference(object):
+    def __init__(self, want, have=None):
+        self.want = want
+        self.have = have
+
+    def compare(self, param):
+        try:
+            result = getattr(self, param)
+            return result
+        except AttributeError:
+            result = self.__default(param)
+            return result
+
+    @property
+    def parent(self):
+        if self.want.parent != self.have.parent:
+            raise F5ModuleError(
+                "The parent monitor cannot be changed"
+            )
+
+    @property
+    def destination(self):
+        if self.want.ip is None and self.want.port is None:
+            return None
+        if self.want.port is None:
+            self.want.update({'port': self.have.port})
+        if self.want.ip is None:
+            self.want.update({'ip': self.have.ip})
+
+        if self.want.port in [None, '*'] and self.want.ip != '*':
+            raise F5ModuleError(
+                "Specifying an IP address requires that a port number be specified"
+            )
+
+        if self.want.destination != self.have.destination:
+            return self.want.destination
+
+    @property
+    def interval(self):
+        if self.want.timeout is not None and self.want.interval is not None:
+            if self.want.interval >= self.want.timeout:
+                raise F5ModuleError(
+                    "Parameter 'interval' must be less than 'timeout'."
+                )
+        elif self.want.timeout is not None:
+            if self.have.interval >= self.want.timeout:
+                raise F5ModuleError(
+                    "Parameter 'interval' must be less than 'timeout'."
+                )
+        elif self.want.interval is not None:
+            if self.want.interval >= self.have.timeout:
+                raise F5ModuleError(
+                    "Parameter 'interval' must be less than 'timeout'."
+                )
+        if self.want.interval != self.have.interval:
+            return self.want.interval
+
+    def __default(self, param):
+        attr1 = getattr(self.want, param)
+        try:
+            attr2 = getattr(self.have, param)
+            if attr1 != attr2:
+                return attr1
+        except AttributeError:
+            return attr1
+
+    @property
+    def description(self):
+        return cmp_str_with_none(self.want.description, self.have.description)
+
+    @property
+    def receive_disable(self):
+        return cmp_str_with_none(self.want.receive_disable, self.have.receive_disable)
+
+
+class ModuleManager(object):
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = F5RestClient(**self.module.params)
+        self.want = ModuleParameters(params=self.module.params)
+        self.have = ApiParameters()
+        self.changes = UsableChanges()
+
+    def _set_changed_options(self):
+        changed = {}
+        for key in Parameters.returnables:
+            if getattr(self.want, key) is not None:
+                changed[key] = getattr(self.want, key)
+        if changed:
+            self.changes = UsableChanges(params=changed)
+
+    def _update_changed_options(self):
+        diff = Difference(self.want, self.have)
+        updatables = Parameters.updatables
+        changed = dict()
+        for k in updatables:
+            change = diff.compare(k)
+            if change is None:
+                continue
+            else:
+                if isinstance(change, dict):
+                    changed.update(change)
+                else:
+                    changed[k] = change
+        if changed:
+            self.changes = UsableChanges(params=changed)
             return True
-        else:
-            # genuine exception
-            raise
+        return False
 
-
-def set_string_property(api, monitor, str_property):
-    api.LocalLB.Monitor.set_template_string_property(
-        template_names=[monitor],
-        values=[str_property]
-    )
-
-
-def check_integer_property(api, monitor, int_property):
-    try:
-        template_prop = api.LocalLB.Monitor.get_template_integer_property(
-            [monitor], [int_property['type']]
-        )[0]
-        return int_property == template_prop
-    except bigsuds.OperationFailed as e:
-        # happens in check mode if not created yet
-        if "was not found" in str(e):
+    def should_update(self):
+        result = self._update_changed_options()
+        if result:
             return True
+        return False
+
+    def exec_module(self):
+        changed = False
+        result = dict()
+        state = self.want.state
+
+        if state == "present":
+            changed = self.present()
+        elif state == "absent":
+            changed = self.absent()
+
+        reportable = ReportableChanges(params=self.changes.to_return())
+        changes = reportable.to_return()
+        result.update(**changes)
+        result.update(dict(changed=changed))
+        self._announce_deprecations(result)
+        return result
+
+    def _announce_deprecations(self, result):
+        warnings = result.pop('__warnings', [])
+        for warning in warnings:
+            self.client.module.deprecate(
+                msg=warning['msg'],
+                version=warning['version']
+            )
+
+    def present(self):
+        if self.exists():
+            return self.update()
         else:
-            # genuine exception
-            raise
+            return self.create()
 
-
-def set_integer_property(api, monitor, int_property):
-    api.LocalLB.Monitor.set_template_integer_property(
-        template_names=[monitor],
-        values=[int_property]
-    )
-
-
-def update_monitor_properties(api, module, monitor, template_string_properties, template_integer_properties):
-    changed = False
-    for str_property in template_string_properties:
-        if str_property['value'] is not None and not check_string_property(api, monitor, str_property):
-            if not module.check_mode:
-                set_string_property(api, monitor, str_property)
-            changed = True
-    for int_property in template_integer_properties:
-        if int_property['value'] is not None and not check_integer_property(api, monitor, int_property):
-            if not module.check_mode:
-                set_integer_property(api, monitor, int_property)
-            changed = True
-
-    return changed
-
-
-def get_ipport(api, monitor):
-    return api.LocalLB.Monitor.get_template_destination(template_names=[monitor])[0]
-
-
-def set_ipport(api, monitor, ipport):
-    try:
-        api.LocalLB.Monitor.set_template_destination(
-            template_names=[monitor], destinations=[ipport]
+    def exists(self):
+        uri = "https://{0}:{1}/mgmt/tm/ltm/monitor/http/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        return True, ""
-    except bigsuds.OperationFailed as e:
-        if "Cannot modify the address type of monitor" in str(e):
-            return False, "Cannot modify the address type of monitor if already assigned to a pool."
-        else:
-            # genuine exception
-            raise
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
+
+    def update(self):
+        self.have = self.read_current_from_device()
+        if not self.should_update():
+            return False
+        if self.want.reverse == 'enabled':
+            if not self.want.receive and not self.have.receive:
+                raise F5ModuleError(
+                    "A 'receive' string must be specified when setting 'reverse'."
+                )
+            if self.want.time_until_up != 0 and self.have.time_until_up != 0:
+                raise F5ModuleError(
+                    "Monitors with the 'reverse' attribute are not currently compatible with 'time_until_up'."
+                )
+        if self.module.check_mode:
+            return True
+        self.update_on_device()
+        return True
+
+    def remove(self):
+        if self.module.check_mode:
+            return True
+        self.remove_from_device()
+        if self.exists():
+            raise F5ModuleError("Failed to delete the monitor.")
+        return True
+
+    def create(self):
+        self._set_changed_options()
+        if self.want.reverse == 'enabled':
+            if self.want.time_until_up != 0:
+                raise F5ModuleError(
+                    "Monitors with the 'reverse' attribute are not currently compatible with 'time_until_up'."
+                )
+            if not self.want.receive:
+                raise F5ModuleError(
+                    "A 'receive' string must be specified when setting 'reverse'."
+                )
+        self._set_default_creation_values()
+        if self.module.check_mode:
+            return True
+        self.create_on_device()
+        return True
+
+    def _set_default_creation_values(self):
+        if self.want.timeout is None:
+            self.want.update({'timeout': 16})
+        if self.want.interval is None:
+            self.want.update({'interval': 5})
+        if self.want.time_until_up is None:
+            self.want.update({'time_until_up': 0})
+        if self.want.ip is None:
+            self.want.update({'ip': '*'})
+        if self.want.port is None:
+            self.want.update({'port': '*'})
+        if self.want.send is None:
+            self.want.update({'send': 'GET /\r\n'})
+
+    def create_on_device(self):
+        params = self.changes.api_params()
+        params['name'] = self.want.name
+        params['partition'] = self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/monitor/http/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
+        )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+    def update_on_device(self):
+        params = self.changes.api_params()
+        uri = "https://{0}:{1}/mgmt/tm/ltm/monitor/http/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
+        )
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+    def absent(self):
+        if self.exists():
+            return self.remove()
+        return False
+
+    def remove_from_device(self):
+        uri = "https://{0}:{1}/mgmt/tm/ltm/monitor/http/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
+        )
+        resp = self.client.api.delete(uri)
+        if resp.status == 200:
+            return True
+
+    def read_current_from_device(self):
+        uri = "https://{0}:{1}/mgmt/tm/ltm/monitor/http/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return ApiParameters(params=response)
+
+
+class ArgumentSpec(object):
+    def __init__(self):
+        self.supports_check_mode = True
+        argument_spec = dict(
+            name=dict(required=True),
+            parent=dict(default='/Common/http'),
+            description=dict(),
+            send=dict(),
+            receive=dict(),
+            receive_disable=dict(),
+            ip=dict(),
+            port=dict(),
+            interval=dict(type='int'),
+            reverse=dict(type='bool'),
+            timeout=dict(type='int'),
+            time_until_up=dict(type='int'),
+            target_username=dict(),
+            target_password=dict(no_log=True),
+            state=dict(
+                default='present',
+                choices=['present', 'absent']
+            ),
+            partition=dict(
+                default='Common',
+                fallback=(env_fallback, ['F5_PARTITION'])
+            )
+        )
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
 
 
 def main():
-    argument_spec = f5_argument_spec()
-
-    meta_args = dict(
-        name=dict(required=True),
-        parent=dict(default=DEFAULT_PARENT_TYPE),
-        parent_partition=dict(default='Common'),
-        send=dict(required=False),
-        receive=dict(required=False),
-        receive_disable=dict(required=False),
-        ip=dict(required=False),
-        port=dict(required=False, type='int'),
-        interval=dict(required=False, type='int'),
-        timeout=dict(required=False, type='int'),
-        time_until_up=dict(required=False, type='int', default=0)
-    )
-    argument_spec.update(meta_args)
+    spec = ArgumentSpec()
 
     module = AnsibleModule(
-        argument_spec=argument_spec,
-        supports_check_mode=True
+        argument_spec=spec.argument_spec,
+        supports_check_mode=spec.supports_check_mode,
     )
 
-    server = module.params['server']
-    server_port = module.params['server_port']
-    user = module.params['user']
-    password = module.params['password']
-    state = module.params['state']
-    partition = module.params['partition']
-    validate_certs = module.params['validate_certs']
-
-    parent_partition = module.params['parent_partition']
-    name = module.params['name']
-    parent = fq_name(parent_partition, module.params['parent'])
-    monitor = fq_name(partition, name)
-    send = module.params['send']
-    receive = module.params['receive']
-    receive_disable = module.params['receive_disable']
-    ip = module.params['ip']
-    port = module.params['port']
-    interval = module.params['interval']
-    timeout = module.params['timeout']
-    time_until_up = module.params['time_until_up']
-
-    # end monitor specific stuff
-
-    api = bigip_api(server, user, password, validate_certs, port=server_port)
-    monitor_exists = check_monitor_exists(module, api, monitor, parent)
-
-    # ipport is a special setting
-    if monitor_exists:
-        cur_ipport = get_ipport(api, monitor)
-        if ip is None:
-            ip = cur_ipport['ipport']['address']
-        if port is None:
-            port = cur_ipport['ipport']['port']
-    else:
-        if interval is None:
-            interval = 5
-        if timeout is None:
-            timeout = 16
-        if ip is None:
-            ip = '0.0.0.0'
-        if port is None:
-            port = 0
-        if send is None:
-            send = ''
-        if receive is None:
-            receive = ''
-        if receive_disable is None:
-            receive_disable = ''
-
-    # define and set address type
-    if ip == '0.0.0.0' and port == 0:
-        address_type = 'ATYPE_STAR_ADDRESS_STAR_PORT'
-    elif ip == '0.0.0.0' and port != 0:
-        address_type = 'ATYPE_STAR_ADDRESS_EXPLICIT_PORT'
-    elif ip != '0.0.0.0' and port != 0:
-        address_type = 'ATYPE_EXPLICIT_ADDRESS_EXPLICIT_PORT'
-    else:
-        address_type = 'ATYPE_UNSET'
-
-    ipport = {'address_type': address_type,
-              'ipport': {'address': ip,
-                         'port': port}}
-
-    template_attributes = {'parent_template': parent,
-                           'interval': interval,
-                           'timeout': timeout,
-                           'dest_ipport': ipport,
-                           'is_read_only': False,
-                           'is_directly_usable': True}
-
-    # monitor specific stuff
-    template_string_properties = [{'type': 'STYPE_SEND',
-                                   'value': send},
-                                  {'type': 'STYPE_RECEIVE',
-                                   'value': receive},
-                                  {'type': 'STYPE_RECEIVE_DRAIN',
-                                   'value': receive_disable}]
-
-    template_integer_properties = [
-        {
-            'type': 'ITYPE_INTERVAL',
-            'value': interval
-        },
-        {
-            'type': 'ITYPE_TIMEOUT',
-            'value': timeout
-        },
-        {
-            'type': 'ITYPE_TIME_UNTIL_UP',
-            'value': time_until_up
-        }
-    ]
-
-    # main logic, monitor generic
-
     try:
-        result = {'changed': False}  # default
+        mm = ModuleManager(module=module)
+        results = mm.exec_module()
+        module.exit_json(**results)
+    except F5ModuleError as ex:
+        module.fail_json(msg=str(ex))
 
-        if state == 'absent':
-            if monitor_exists:
-                if not module.check_mode:
-                    # possible race condition if same task
-                    # on other node deleted it first
-                    result['changed'] |= delete_monitor(api, monitor)
-                else:
-                    result['changed'] |= True
-        else:
-            # check for monitor itself
-            if not monitor_exists:
-                if not module.check_mode:
-                    # again, check changed status here b/c race conditions
-                    # if other task already created it
-                    result['changed'] |= create_monitor(api, monitor, template_attributes)
-                else:
-                    result['changed'] |= True
-
-            # check for monitor parameters
-            # whether it already existed, or was just created, now update
-            # the update functions need to check for check mode but
-            # cannot update settings if it doesn't exist which happens in check mode
-            result['changed'] |= update_monitor_properties(api, module, monitor,
-                                                           template_string_properties,
-                                                           template_integer_properties)
-
-            # we just have to update the ipport if monitor already exists and it's different
-            if monitor_exists and cur_ipport != ipport:
-                set_ipport(api, monitor, ipport)
-                result['changed'] |= True
-            # else: monitor doesn't exist (check mode) or ipport is already ok
-    except Exception as e:
-        module.fail_json(msg="received exception: %s" % e)
-
-    module.exit_json(**result)
-
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.f5_utils import *
 
 if __name__ == '__main__':
     main()

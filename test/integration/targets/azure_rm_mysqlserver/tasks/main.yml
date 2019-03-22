@@ -1,0 +1,640 @@
+- name: Prepare random number
+  set_fact:
+    rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+  run_once: yes
+
+- name: Create instance of MySQL Server -- check mode
+  azure_rm_mysqlserver:
+    resource_group: "{{ resource_group }}"
+    name: mysqlsrv{{ rpfx }}
+    sku:
+      name: B_Gen5_1
+      tier: Basic
+    location: westus2
+    storage_mb: 51200
+    version: 5.6
+    enforce_ssl: True
+    admin_username: zimxyz
+    admin_password: Testpasswordxyz12!
+  check_mode: yes
+  register: output
+- name: Assert the resource instance is well created
+  assert:
+    that:
+      - output.changed
+
+- name: Create instance of MySQL Server
+  azure_rm_mysqlserver:
+    resource_group: "{{ resource_group }}"
+    name: mysqlsrv{{ rpfx }}
+    sku:
+      name: B_Gen5_1
+      tier: Basic
+    location: westus2
+    storage_mb: 51200
+    version: 5.6
+    enforce_ssl: True
+    admin_username: zimxyz
+    admin_password: Testpasswordxyz12!
+  register: output
+- name: Assert the resource instance is well created
+  assert:
+    that:
+      - output.changed
+      - output.state == 'Ready'
+
+- name: Create again instance of MySQL Server
+  azure_rm_mysqlserver:
+    resource_group: "{{ resource_group }}"
+    name: mysqlsrv{{ rpfx }}
+    sku:
+      name: B_Gen5_1
+      tier: Basic
+    location: westus2
+    storage_mb: 51200
+    version: 5.6
+    enforce_ssl: True
+    admin_username: zimxyz
+    admin_password: Testpasswordxyz12!
+  register: output
+- name: Assert the state has not changed
+  assert:
+    that:
+      - output.changed == false
+      - output.state == 'Ready'
+
+- name: Update instance of MySQL Server, change storage size
+  azure_rm_mysqlserver:
+    resource_group: "{{ resource_group }}"
+    name: mysqlsrv{{ rpfx }}
+    sku:
+      name: B_Gen5_1
+      tier: Basic
+    location: westus2
+    storage_mb: 128000
+    version: 5.6
+    enforce_ssl: True
+    admin_username: zimxyz
+    admin_password: Testpasswordxyz12!
+  register: output
+- name: Assert the state has not changed
+  assert:
+    that:
+      - output.changed
+      - output.state == 'Ready'
+- debug:
+    var: output
+
+- name: Gather facts MySQL Server
+  azure_rm_mysqlserver_facts:
+    resource_group: "{{ resource_group }}"
+    name: mysqlsrv{{ rpfx }}
+  register: output
+- name: Assert that storage size is correct
+  assert:
+    that:
+      - output.servers[0]['storage_mb'] == 128000
+
+- name: Create second instance of MySQL Server
+  azure_rm_mysqlserver:
+    resource_group: "{{ resource_group }}"
+    name: mysqlsrv{{ rpfx }}second
+    sku:
+      name: B_Gen5_1
+      tier: Basic
+    location: westus2
+    storage_mb: 51200
+    version: 5.6
+    enforce_ssl: True
+    admin_username: zimxyz
+    admin_password: Testpasswordxyz12!
+    tags:
+      aaa: bbb
+
+- name: Create second instance of MySQL Server
+  azure_rm_mysqlserver:
+    resource_group: "{{ resource_group }}"
+    name: mysqlsrv{{ rpfx }}second
+    sku:
+      name: B_Gen5_1
+      tier: Basic
+    location: westus2
+    storage_mb: 51200
+    version: 5.6
+    enforce_ssl: True
+    admin_username: zimxyz
+    admin_password: Testpasswordxyz12!
+    tags:
+      ccc: ddd
+
+- name: Gather facts MySQL Server
+  azure_rm_mysqlserver_facts:
+    resource_group: "{{ resource_group }}"
+    name: mysqlsrv{{ rpfx }}second
+  register: output 
+
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.servers[0]['id'] != None
+      - output.servers[0]['name'] != None
+      - output.servers[0]['location'] != None
+      - output.servers[0]['sku']['name'] != None
+      - output.servers[0]['sku']['tier'] != None
+      - output.servers[0]['sku']['capacity'] != None
+      - output.servers[0]['version'] != None
+      - output.servers[0]['user_visible_state'] != None
+      - output.servers[0]['fully_qualified_domain_name'] != None
+      - output.servers[0]['tags']['aaa'] == 'bbb'
+      - output.servers[0]['tags']['ccc'] == 'ddd'
+
+- name: Gather facts MySQL Server
+  azure_rm_mysqlserver_facts:
+    resource_group: "{{ resource_group }}"
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.servers[0]['id'] != None
+      - output.servers[0]['name'] != None
+      - output.servers[0]['location'] != None
+      - output.servers[0]['sku']['name'] != None
+      - output.servers[0]['sku']['tier'] != None
+      - output.servers[0]['sku']['capacity'] != None
+      - output.servers[0]['version'] != None
+      - output.servers[0]['user_visible_state'] != None
+      - output.servers[0]['fully_qualified_domain_name'] != None
+      - output.servers[1]['id'] != None
+      - output.servers[1]['name'] != None
+      - output.servers[1]['location'] != None
+      - output.servers[1]['sku']['name'] != None
+      - output.servers[1]['sku']['tier'] != None
+      - output.servers[1]['sku']['capacity'] != None
+      - output.servers[1]['version'] != None
+      - output.servers[1]['user_visible_state'] != None
+      - output.servers[1]['fully_qualified_domain_name'] != None
+
+#
+# azure_rm_mysqldatabase tests below
+#
+- name: Create instance of MySQL Database -- check mode
+  azure_rm_mysqldatabase:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: testdatabase
+  check_mode: yes
+  register: output
+- name: Assert the resource instance is well created
+  assert:
+    that:
+      - output.changed
+
+- name: Create instance of MySQL Database
+  azure_rm_mysqldatabase:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: testdatabase
+    collation: latin1_swedish_ci
+    charset: latin1
+  register: output
+- name: Assert the resource instance is well created
+  assert:
+    that:
+      - output.changed
+      - output.name == 'testdatabase'
+
+- name: Create again instance of MySQL Database
+  azure_rm_mysqldatabase:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: testdatabase
+    collation: latin1_swedish_ci
+    charset: latin1
+  register: output
+- name: Assert the state has not changed
+  assert:
+    that:
+      - output.changed == false
+      - output.name == 'testdatabase'
+
+- name: Try to update database without force_update
+  azure_rm_mysqldatabase:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: testdatabase
+    collation: latin1_czech_ci
+    charset: latin1
+  ignore_errors: yes
+  register: output
+- name: Assert that nothing has changed
+  assert:
+    that:
+      - output.changed == False
+
+- name: Update instance of database using force_update
+  azure_rm_mysqldatabase:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: testdatabase
+    collation: latin1_czech_ci
+    charset: latin1
+    force_update: yes
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed
+      - output.name == 'testdatabase'
+
+- name: Create second instance of MySQL Database
+  azure_rm_mysqldatabase:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: testdatabase2
+
+- name: Gather facts MySQL Database
+  azure_rm_mysqldatabase_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: testdatabase
+  register: output 
+
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.databases[0]['server_name'] != None
+      - output.databases[0]['name'] != None
+      - output.databases[0]['charset'] != None
+      - output.databases[0]['collation'] != None
+
+- name: Gather facts MySQL Database
+  azure_rm_mysqldatabase_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.databases[0]['server_name'] != None
+      - output.databases[0]['name'] != None
+      - output.databases[0]['charset'] != None
+      - output.databases[0]['collation'] != None
+      - output.databases[1]['server_name'] != None
+      - output.databases[1]['name'] != None
+      - output.databases[1]['charset'] != None
+      - output.databases[1]['collation'] != None
+
+- name: Delete instance of MySQL Database -- check mode
+  azure_rm_mysqldatabase:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: testdatabase
+    state: absent
+  check_mode: yes
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed
+
+- name: Delete instance of MySQL Database
+  azure_rm_mysqldatabase:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: testdatabase
+    state: absent
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed
+
+- name: Delete unexisting instance of MySQL Database
+  azure_rm_mysqldatabase:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: testdatabase
+    state: absent
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed == false
+
+#
+# azure_rm_firewallrule tests below
+#
+- name: Create instance of Firewall Rule -- check mode
+  azure_rm_mysqlfirewallrule:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: firewallrule{{ rpfx }}
+    start_ip_address: 172.28.10.136
+    end_ip_address: 172.28.10.138
+  check_mode: yes
+  register: output
+- name: Assert the resource instance is well created
+  assert:
+    that:
+      - output.changed
+
+- name: Create instance of Firewall Rule
+  azure_rm_mysqlfirewallrule:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: firewallrule{{ rpfx }}
+    start_ip_address: 172.28.10.136
+    end_ip_address: 172.28.10.138
+  register: output
+- name: Assert the resource instance is well created
+  assert:
+    that:
+      - output.changed
+
+- name: Create again instance of Firewall Rule
+  azure_rm_mysqlfirewallrule:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: firewallrule{{ rpfx }}
+    start_ip_address: 172.28.10.136
+    end_ip_address: 172.28.10.138
+  register: output
+- name: Assert the state has not changed
+  assert:
+    that:
+      - output.changed == false
+
+- name: Delete instance of Firewall Rule -- check mode
+  azure_rm_mysqlfirewallrule:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: firewallrule{{ rpfx }}
+    state: absent
+  check_mode: yes
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed
+
+- name: Create instance of Firewall Rule -- second
+  azure_rm_mysqlfirewallrule:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: firewallrule{{ rpfx }}second
+    start_ip_address: 172.28.10.136
+    end_ip_address: 172.28.10.138
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed
+
+- name: Gather facts MySQL Firewall Rule
+  azure_rm_mysqlfirewallrule_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: firewallrule{{ rpfx }}
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.rules[0].id != None
+      - output.rules[0].server_name != None
+      - output.rules[0].name != None
+      - output.rules[0].start_ip_address != None
+      - output.rules[0].end_ip_address != None
+      - "output.rules | length == 1"
+
+- name: Gather facts MySQL Firewall Rule
+  azure_rm_mysqlfirewallrule_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.rules[0].id != None
+      - output.rules[0].server_name != None
+      - output.rules[0].name != None
+      - output.rules[0].start_ip_address != None
+      - output.rules[0].end_ip_address != None
+      - output.rules[1].id != None
+      - output.rules[1].name != None
+      - output.rules[1].start_ip_address != None
+      - output.rules[1].end_ip_address != None
+      - "output.rules | length == 2"
+
+- name: Delete instance of Firewall Rule
+  azure_rm_mysqlfirewallrule:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: firewallrule{{ rpfx }}
+    state: absent
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed
+
+- name: Delete unexisting instance of Firewall Rule
+  azure_rm_mysqlfirewallrule:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: firewallrule{{ rpfx }}
+    state: absent
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed == false
+
+- name: Delete instance of Firewall Rule - second
+  azure_rm_mysqlfirewallrule:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: firewallrule{{ rpfx }}second
+    state: absent
+
+- name: Gather facts MySQL Firewall Rule
+  azure_rm_mysqlfirewallrule_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: firewallrule{{ rpfx }}
+  register: output
+- name: Assert that empty list was returned
+  assert:
+    that:
+      - output.changed == False
+      - "output.rules | length == 0"
+
+#
+# configuration
+#
+- name: Create instance of Configuration -- check mode
+  azure_rm_mysqlconfiguration:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: event_scheduler
+    value: "ON"
+  check_mode: yes
+  register: output
+- name: Assert that change was registered
+  assert:
+    that:
+      - output.changed
+
+- name: Try to delete default configuraion
+  azure_rm_mysqlconfiguration_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: event_scheduler
+  register: output
+- name: Get facts of event_scheduler
+  debug:
+    var: output
+
+- name: Try to delete default configuraion
+  azure_rm_mysqlconfiguration:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: event_scheduler
+    state: absent
+  register: output
+- name: Assert that change was registered
+  assert:
+    that:
+      - not output.changed
+
+- name: Try to change default configuraion
+  azure_rm_mysqlconfiguration:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: event_scheduler
+    value: "ON"
+  register: output
+- name: Assert that change was registered
+  assert:
+    that:
+      - output.changed
+
+- name: Try to change default configuration -- idempotent
+  azure_rm_mysqlconfiguration:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: event_scheduler
+    value: "ON"
+  register: output
+- name: Assert that change was registered
+  assert:
+    that:
+      - not output.changed
+
+- name: Try to reset configuration
+  azure_rm_mysqlconfiguration:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: event_scheduler
+    state: absent
+  register: output
+- name: Assert that change was registered
+  assert:
+    that:
+      - output.changed
+
+- name: Try to reset configuration -- idempotent
+  azure_rm_mysqlconfiguration:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: event_scheduler
+    state: absent
+  register: output
+- name: Assert that change was registered
+  assert:
+    that:
+      - not output.changed
+
+- name: Gather facts MySQL Configuration
+  azure_rm_mysqlconfiguration_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: event_scheduler
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.settings[0].id != None
+      - output.settings[0].name != None
+      - output.settings[0].value != None
+      - output.settings[0].description != None
+      - output.settings[0].source != None
+      - output.settings | length == 1
+
+- name: Gather facts MySQL Configuration
+  azure_rm_mysqlconfiguration_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.settings[0].id != None
+      - output.settings[0].name != None
+      - output.settings[0].value != None
+      - output.settings[0].description != None
+      - output.settings[0].source != None
+      - output.settings | length > 1
+
+#
+# clean up azure_rm_mysqlserver test
+#
+
+- name: Delete instance of MySQL Server -- check mode
+  azure_rm_mysqlserver:
+    resource_group: "{{ resource_group }}"
+    name: mysqlsrv{{ rpfx }}
+    state: absent
+  check_mode: yes
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed
+
+- name: Delete instance of MySQL Server
+  azure_rm_mysqlserver:
+    resource_group: "{{ resource_group }}"
+    name: mysqlsrv{{ rpfx }}
+    state: absent
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed
+
+- name: Delete unexisting instance of MySQL Server
+  azure_rm_mysqlserver:
+    resource_group: "{{ resource_group }}"
+    name: mysqlsrv{{ rpfx }}
+    state: absent
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed == false
+
+- name: Delete second instance of MySQL Server
+  azure_rm_mysqlserver:
+    resource_group: "{{ resource_group }}"
+    name: mysqlsrv{{ rpfx }}second
+    state: absent
+  async: 400
+  poll: 0

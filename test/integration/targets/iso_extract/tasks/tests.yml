@@ -28,7 +28,7 @@
 
 - assert:
     that:
-    - iso_extract_test0|changed == true
+    - iso_extract_test0 is changed == true
 
 - name: Extract the iso again
   iso_extract:
@@ -42,11 +42,11 @@
 - name: Test iso_extract_test0_again (normal mode)
   assert:
     that:
-    - iso_extract_test0_again|changed == false
+    - iso_extract_test0_again is changed == false
   when: not in_check_mode
 
 - name: Test iso_extract_test0_again (check-mode)
   assert:
     that:
-    - iso_extract_test0_again|changed == true
+    - iso_extract_test0_again is changed == true
   when: in_check_mode

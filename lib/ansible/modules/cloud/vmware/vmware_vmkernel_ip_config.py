@@ -1,17 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2015, Joseph Callen <jcallen () csc.com>
+# Copyright: (c) 2015, Joseph Callen <jcallen () csc.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -20,7 +18,9 @@ short_description: Configure the VMkernel IP Address
 description:
     - Configure the VMkernel IP Address
 version_added: 2.0
-author: "Joseph Callen (@jcpowermac), Russell Teague (@mtnbikenc)"
+author:
+- Joseph Callen (@jcpowermac)
+- Russell Teague (@mtnbikenc)
 notes:
     - Tested on vSphere 5.5
 requirements:
@@ -46,14 +46,14 @@ EXAMPLES = '''
 # Example command from Ansible Playbook
 
 - name: Configure IP address on ESX host
-  local_action:
-    module: vmware_vmkernel_ip_config
-    hostname: esxi_hostname
-    username: esxi_username
-    password: esxi_password
+  vmware_vmkernel_ip_config:
+    hostname: '{{ esxi_hostname }}'
+    username: '{{ esxi_username }}'
+    password: '{{ esxi_password }}'
     vmk_name: vmk0
     ip_address: 10.0.0.10
     subnet_mask: 255.255.255.0
+  delegate_to: localhost
 '''
 
 try:
@@ -87,8 +87,8 @@ def main():
 
     argument_spec = vmware_argument_spec()
     argument_spec.update(dict(vmk_name=dict(required=True, type='str'),
-                         ip_address=dict(required=True, type='str'),
-                         subnet_mask=dict(required=True, type='str')))
+                              ip_address=dict(required=True, type='str'),
+                              subnet_mask=dict(required=True, type='str')))
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
 

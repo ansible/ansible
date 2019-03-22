@@ -36,6 +36,14 @@ def isnotanumber(x):
         return False
 
 
+def contains(seq, value):
+    '''Opposite of the ``in`` test, allowing use as a test in filters like ``selectattr``
+
+    .. versionadded:: 2.8
+    '''
+    return value in seq
+
+
 class TestModule:
     ''' Ansible math jinja2 tests '''
 
@@ -43,6 +51,12 @@ class TestModule:
         return {
             # set theory
             'issubset': issubset,
+            'subset': issubset,
             'issuperset': issuperset,
+            'superset': issuperset,
+            'contains': contains,
+
+            # numbers
             'isnan': isnotanumber,
+            'nan': isnotanumber,
         }

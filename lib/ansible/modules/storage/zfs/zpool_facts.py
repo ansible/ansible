@@ -45,71 +45,77 @@ options:
 
 EXAMPLES = '''
 # Gather facts about ZFS pool rpool
-zpool_facts: pool=rpool
+- zpool_facts: pool=rpool
 
 # Gather space usage about all imported ZFS pools
-zpool_facts: properties='free,size'
-debug: msg='ZFS pool {{ item.name }} has {{ item.free }} free space out of {{ item.size }}.'
-with_items: '{{ ansible_zfs_pools }}'
+- zpool_facts: properties='free,size'
+
+- debug: msg='ZFS pool {{ item.name }} has {{ item.free }} free space out of {{ item.size }}.'
+  with_items: '{{ ansible_zfs_pools }}'
 '''
 
 RETURN = '''
+ansible_facts:
+    description: Dictionary containing all the detailed information about the ZFS pool facts
+    returned: always
+    type: complex
+    contains:
+        ansible_zfs_pools:
+            description: ZFS pool facts
+            returned: always
+            type: str
+            sample:
+                {
+                    "allocated": "3.46G",
+                    "altroot": "-",
+                    "autoexpand": "off",
+                    "autoreplace": "off",
+                    "bootfs": "rpool/ROOT/openindiana",
+                    "cachefile": "-",
+                    "capacity": "6%",
+                    "comment": "-",
+                    "dedupditto": "0",
+                    "dedupratio": "1.00x",
+                    "delegation": "on",
+                    "expandsize": "-",
+                    "failmode": "wait",
+                    "feature@async_destroy": "enabled",
+                    "feature@bookmarks": "enabled",
+                    "feature@edonr": "enabled",
+                    "feature@embedded_data": "active",
+                    "feature@empty_bpobj": "active",
+                    "feature@enabled_txg": "active",
+                    "feature@extensible_dataset": "enabled",
+                    "feature@filesystem_limits": "enabled",
+                    "feature@hole_birth": "active",
+                    "feature@large_blocks": "enabled",
+                    "feature@lz4_compress": "active",
+                    "feature@multi_vdev_crash_dump": "enabled",
+                    "feature@sha512": "enabled",
+                    "feature@skein": "enabled",
+                    "feature@spacemap_histogram": "active",
+                    "fragmentation": "3%",
+                    "free": "46.3G",
+                    "freeing": "0",
+                    "guid": "15729052870819522408",
+                    "health": "ONLINE",
+                    "leaked": "0",
+                    "listsnapshots": "off",
+                    "name": "rpool",
+                    "readonly": "off",
+                    "size": "49.8G",
+                    "version": "-"
+                }
 name:
     description: ZFS pool name
     returned: always
-    type: string
+    type: str
     sample: rpool
 parsable:
     description: if parsable output should be provided in machine friendly format.
     returned: if 'parsable' is set to True
-    type: boolean
+    type: bool
     sample: True
-zfs_pools:
-    description: ZFS pool facts
-    returned: always
-    type: string
-    sample:
-            {
-                "allocated": "3.46G",
-                "altroot": "-",
-                "autoexpand": "off",
-                "autoreplace": "off",
-                "bootfs": "rpool/ROOT/openindiana",
-                "cachefile": "-",
-                "capacity": "6%",
-                "comment": "-",
-                "dedupditto": "0",
-                "dedupratio": "1.00x",
-                "delegation": "on",
-                "expandsize": "-",
-                "failmode": "wait",
-                "feature@async_destroy": "enabled",
-                "feature@bookmarks": "enabled",
-                "feature@edonr": "enabled",
-                "feature@embedded_data": "active",
-                "feature@empty_bpobj": "active",
-                "feature@enabled_txg": "active",
-                "feature@extensible_dataset": "enabled",
-                "feature@filesystem_limits": "enabled",
-                "feature@hole_birth": "active",
-                "feature@large_blocks": "enabled",
-                "feature@lz4_compress": "active",
-                "feature@multi_vdev_crash_dump": "enabled",
-                "feature@sha512": "enabled",
-                "feature@skein": "enabled",
-                "feature@spacemap_histogram": "active",
-                "fragmentation": "3%",
-                "free": "46.3G",
-                "freeing": "0",
-                "guid": "15729052870819522408",
-                "health": "ONLINE",
-                "leaked": "0",
-                "listsnapshots": "off",
-                "name": "rpool",
-                "readonly": "off",
-                "size": "49.8G",
-                "version": "-"
-            }
 '''
 
 from collections import defaultdict

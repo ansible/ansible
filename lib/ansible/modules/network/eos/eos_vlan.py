@@ -45,7 +45,15 @@ options:
     required: true
   interfaces:
     description:
-      - List of interfaces that should be associated to the VLAN.
+      - List of interfaces that should be associated to the VLAN. The name of interface is
+        case sensitive and should be in expanded format and not abbreviated.
+  associated_interfaces:
+    description:
+      - This is a intent option and checks the operational state of the for given vlan C(name)
+        for associated interfaces. The name of interface is case sensitive and should be in
+        expanded format and not abbreviated. If the value in the C(associated_interfaces)
+        does not match with the operational state of vlan interfaces on device it will result in failure.
+    version_added: "2.5"
   delay:
     description:
       - Delay the play should wait to check for declarative intent params values.
@@ -56,11 +64,13 @@ options:
     description:
       - Purge VLANs not defined in the I(aggregate) parameter.
     default: no
+    type: bool
   state:
     description:
       - State of the VLAN configuration.
     default: present
     choices: ['present', 'absent', 'active', 'suspend']
+extends_documentation_fragment: eos
 """
 
 EXAMPLES = """
@@ -75,6 +85,13 @@ EXAMPLES = """
     vlan_id: 4000
     state: present
     interfaces:
+      - Ethernet1
+      - Ethernet2
+
+- name: Check if interfaces is assigned to vlan
+  eos_vlan:
+    vlan_id: 4000
+    associated_interfaces:
       - Ethernet1
       - Ethernet2
 
@@ -110,9 +127,9 @@ import time
 from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network_common import remove_default_spec
-from ansible.module_utils.eos import load_config, run_commands
-from ansible.module_utils.eos import eos_argument_spec, check_args
+from ansible.module_utils.network.common.utils import remove_default_spec
+from ansible.module_utils.network.eos.eos import load_config, run_commands
+from ansible.module_utils.network.eos.eos import eos_argument_spec, check_args
 
 
 def search_obj_in_list(vlan_id, lst):
@@ -140,7 +157,8 @@ def map_obj_to_commands(updates, module):
         elif state == 'present':
             if not obj_in_have:
                 commands.append('vlan %s' % w['vlan_id'])
-                commands.append('name %s' % w['name'])
+                if w['name']:
+                    commands.append('name %s' % w['name'])
 
                 if w['interfaces']:
                     for i in w['interfaces']:
@@ -172,13 +190,15 @@ def map_obj_to_commands(updates, module):
         else:
             if not obj_in_have:
                 commands.append('vlan %s' % w['vlan_id'])
-                commands.append('name %s' % w['name'])
+                if w['name']:
+                    commands.append('name %s' % w['name'])
                 commands.append('state %s' % w['state'])
-            elif obj_in_have['name'] != w['name'] or obj_in_have['state'] != w['state']:
+            elif (w['name'] and obj_in_have['name'] != w['name']) or obj_in_have['state'] != w['state']:
                 commands.append('vlan %s' % w['vlan_id'])
 
-                if obj_in_have['name'] != w['name']:
-                    commands.append('name %s' % w['name'])
+                if w['name']:
+                    if obj_in_have['name'] != w['name']:
+                        commands.append('name %s' % w['name'])
 
                 if obj_in_have['state'] != w['state']:
                     commands.append('state %s' % w['state'])
@@ -194,24 +214,22 @@ def map_obj_to_commands(updates, module):
 
 def map_config_to_obj(module):
     objs = []
-    output = run_commands(module, ['show vlan'])
-    lines = output[0].strip().splitlines()[2:]
+    vlans = run_commands(module, ['show vlan configured-ports | json'])
 
-    for l in lines:
-        splitted_line = re.split(r'\s{2,}', l.strip())
+    for vlan in vlans[0]['vlans']:
         obj = {}
-        obj['vlan_id'] = splitted_line[0]
-        obj['name'] = splitted_line[1]
-        obj['state'] = splitted_line[2]
+        obj['vlan_id'] = vlan
+        obj['name'] = vlans[0]['vlans'][vlan]['name']
+        obj['state'] = vlans[0]['vlans'][vlan]['status']
+        obj['interfaces'] = []
+
+        interfaces = vlans[0]['vlans'][vlan]
+
+        for interface in interfaces['interfaces']:
+            obj['interfaces'].append(interface)
 
         if obj['state'] == 'suspended':
             obj['state'] = 'suspend'
-
-        obj['interfaces'] = []
-        if len(splitted_line) > 3:
-
-            for i in splitted_line[3].split(','):
-                obj['interfaces'].append(i.strip().replace('Et', 'Ethernet'))
 
         objs.append(obj)
 
@@ -227,6 +245,12 @@ def map_params_to_obj(module):
                 if item.get(key) is None:
                     item[key] = module.params[key]
 
+            if item.get('interfaces'):
+                item['interfaces'] = [intf.replace(" ", "") for intf in item.get('interfaces') if intf]
+
+            if item.get('associated_interfaces'):
+                item['associated_interfaces'] = [intf.replace(" ", "") for intf in item.get('associated_interfaces') if intf]
+
             d = item.copy()
             d['vlan_id'] = str(d['vlan_id'])
 
@@ -236,23 +260,35 @@ def map_params_to_obj(module):
             'vlan_id': str(module.params['vlan_id']),
             'name': module.params['name'],
             'state': module.params['state'],
-            'interfaces': module.params['interfaces']
+            'interfaces': [intf.replace(" ", "") for intf in module.params['interfaces']] if module.params['interfaces'] else [],
+            'associated_interfaces': [intf.replace(" ", "") for intf in
+                                      module.params['associated_interfaces']] if module.params['associated_interfaces'] else []
+
         })
 
     return obj
 
 
-def check_declarative_intent_params(want, module):
-    if module.params['interfaces']:
-        time.sleep(module.params['delay'])
-        have = map_config_to_obj(module)
+def check_declarative_intent_params(want, module, result):
+    have = None
+    is_delay = False
 
-        for w in want:
-            for i in w['interfaces']:
-                obj_in_have = search_obj_in_list(w['vlan_id'], have)
+    for w in want:
+        if w.get('associated_interfaces') is None:
+            continue
 
-                if obj_in_have and 'interfaces' in obj_in_have and i not in obj_in_have['interfaces']:
-                    module.fail_json(msg="Interface %s not configured on vlan %s" % (i, w['vlan_id']))
+        if result['changed'] and not is_delay:
+            time.sleep(module.params['delay'])
+            is_delay = True
+
+        if have is None:
+            have = map_config_to_obj(module)
+
+        for i in w['associated_interfaces']:
+            obj_in_have = search_obj_in_list(w['vlan_id'], have)
+
+            if obj_in_have and 'interfaces' in obj_in_have and i not in obj_in_have['interfaces']:
+                module.fail_json(msg="Interface %s not configured on vlan %s" % (i, w['vlan_id']))
 
 
 def main():
@@ -262,6 +298,7 @@ def main():
         vlan_id=dict(type='int'),
         name=dict(),
         interfaces=dict(type='list'),
+        associated_interfaces=dict(type='list'),
         delay=dict(default=10, type='int'),
         state=dict(default='present',
                    choices=['present', 'absent', 'active', 'suspend'])
@@ -310,10 +347,10 @@ def main():
         result['session_name'] = response.get('session')
         result['changed'] = True
 
-    if result['changed']:
-        check_declarative_intent_params(want, module)
+    check_declarative_intent_params(want, module, result)
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

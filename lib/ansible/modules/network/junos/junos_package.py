@@ -33,7 +33,6 @@ options:
         The I(src) argument can be either a localized path or a full
         path to the package file to install.
     required: true
-    default: null
     aliases: ['package']
   version:
     description:
@@ -41,8 +40,6 @@ options:
         version of the package that should be installed on the remote
         device.  If the I(version) argument is not specified, then
         the version is extracts from the I(src) filename.
-    required: false
-    default: null
   reboot:
     description:
       - In order for a package to take effect, the remote device must be
@@ -50,25 +47,49 @@ options:
         to reboot the device once the updated package has been installed.
         If disabled or the remote package does not need to be changed,
         the device will not be started.
-    required: true
-    default: true
-    choices: ['true', 'false']
+    type: bool
+    default: 'yes'
   no_copy:
     description:
       - The I(no_copy) argument is responsible for instructing the remote
         device on where to install the package from.  When enabled, the
         package is transferred to the remote device prior to installing.
-    required: false
-    default: false
-    choices: ['true', 'false']
+    type: bool
+    default: 'no'
+  validate:
+    description:
+      - The I(validate) argument is responsible for instructing the remote
+        device to skip checking the current device configuration
+        compatibility with the package being installed. When set to false
+        validation is not performed.
+    version_added: 2.5
+    type: bool
+    default: 'yes'
   force:
     description:
       - The I(force) argument instructs the module to bypass the package
         version check and install the packaged identified in I(src) on
         the remote device.
-    required: true
-    default: false
-    choices: ['true', 'false']
+    type: bool
+    default: 'no'
+  force_host:
+    description:
+      - The I(force_host) argument controls the way software package or
+        bundle is added on remote JUNOS host and is applicable
+        for JUNOS QFX5100 device. If the value is set to C(True) it
+        will ignore any warnings while adding the host software package or bundle.
+    type: bool
+    default: False
+    version_added: 2.8
+  issu:
+    description:
+      - The I(issu) argument is a boolean flag when set to C(True) allows
+        unified in-service software upgrade (ISSU) feature which enables
+        you to upgrade between two different Junos OS releases with no
+        disruption on the control plane and with minimal disruption of traffic.
+    type: bool
+    default: False
+    version_added: 2.8
 requirements:
   - junos-eznc
   - ncclient (>=v0.5.2)
@@ -76,6 +97,7 @@ notes:
   - This module requires the netconf system service be enabled on
     the remote device being managed.
   - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
+  - Works with C(local) connections only.
 """
 
 EXAMPLES = """
@@ -92,8 +114,8 @@ EXAMPLES = """
     reboot: no
 """
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.junos import junos_argument_spec, get_param
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.network.junos.junos import junos_argument_spec, get_param
+from ansible.module_utils._text import to_native
 
 try:
     from jnpr.junos import Device
@@ -124,9 +146,8 @@ def connect(module):
         device = Device(host, **kwargs)
         device.open()
         device.timeout = get_param(module, 'timeout') or 10
-    except ConnectError:
-        exc = get_exception()
-        module.fail_json('unable to connect to %s: %s' % (host, str(exc)))
+    except ConnectError as exc:
+        module.fail_json(msg='unable to connect to %s: %s' % (host, to_native(exc)))
 
     return device
 
@@ -135,12 +156,16 @@ def install_package(module, device):
     junos = SW(device)
     package = module.params['src']
     no_copy = module.params['no_copy']
+    validate = module.params['validate']
+    force_host = module.params['force_host']
+    issu = module.params['issu']
 
     def progress_log(dev, report):
         module.log(report)
 
     module.log('installing package')
-    result = junos.install(package, progress=progress_log, no_copy=no_copy)
+    result = junos.install(package, progress=progress_log, no_copy=no_copy,
+                           validate=validate, force_host=force_host, issu=issu)
 
     if not result:
         module.fail_json(msg='Unable to install package on device')
@@ -158,8 +183,11 @@ def main():
         version=dict(),
         reboot=dict(type='bool', default=True),
         no_copy=dict(default=False, type='bool'),
+        validate=dict(default=True, type='bool'),
         force=dict(type='bool', default=False),
-        transport=dict(default='netconf', choices=['netconf'])
+        transport=dict(default='netconf', choices=['netconf']),
+        force_host=dict(type='bool', default=False),
+        issu=dict(type='bool', default=False)
     )
 
     argument_spec.update(junos_argument_spec)

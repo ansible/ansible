@@ -46,9 +46,7 @@ options:
               protocols in maintenance mode (using the isolate command).
               When C(system_mode_maintenance=false) it puts all enabled
               protocols in normal mode (using the no isolate command).
-        required: false
-        default: null
-        choices: ['true','false']
+        type: bool
     system_mode_maintenance_dont_generate_profile:
         description:
             - When C(system_mode_maintenance_dont_generate_profile=true) it
@@ -61,32 +59,29 @@ options:
               commands configured in a normal-mode profile. Use this option if
               you want the system to use a normal-mode profile that
               you have created.
-        required: false
-        default: null
-        choices: ['true','false']
+        type: bool
     system_mode_maintenance_timeout:
         description:
             - Keeps the switch in maintenance mode for a specified
               number of minutes. Range is 5-65535.
-        required: false
-        default: null
     system_mode_maintenance_shutdown:
         description:
             - Shuts down all protocols, vPC domains, and interfaces except
               the management interface (using the shutdown command).
               This option is disruptive while C(system_mode_maintenance)
               (which uses the isolate command) is not.
-        required: false
-        default: null
-        choices: ['true','false']
+        type: bool
     system_mode_maintenance_on_reload_reset_reason:
         description:
             - Boots the switch into maintenance mode automatically in the
-              event of a specified system crash.
-        required: false
-        default: null
+              event of a specified system crash. Note that not all reset
+              reasons are applicable for all platforms. Also if reset
+              reason is set to match_any, it is not idempotent as it turns
+              on all reset reasons. If reset reason is match_any and state
+              is absent, it turns off all the reset reasons.
         choices: ['hw_error','svc_failure','kern_failure','wdog_timeout',
-                  'fatal_error','lc_failure','match_any','manual_reload']
+                  'fatal_error','lc_failure','match_any','manual_reload',
+                  'any_other', 'maintenance']
     state:
         description:
             - Specify desired state of the resource.
@@ -149,7 +144,7 @@ RETURN = '''
 final_system_mode:
     description: describe the last system mode
     returned: verbose mode
-    type: string
+    type: str
     sample: normal
 updates:
     description: commands sent to the device
@@ -159,30 +154,20 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 
 import re
-from ansible.module_utils.nxos import get_config, load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import get_capabilities, nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
-
-def execute_show_command(command, module, command_type='cli_show_ascii'):
-    cmds = [command]
-    provider = module.params['provider']
-    if provider['transport'] == 'cli':
-        body = run_commands(module, cmds)
-    elif provider['transport'] == 'nxapi':
-        body = run_commands(module, cmds)
-
-    return body
 
 
 def get_system_mode(module):
-    command = 'show system mode'
-    body = execute_show_command(command, module)[0]
-    if 'normal' in body.lower():
+    command = {'command': 'show system mode', 'output': 'text'}
+    body = run_commands(module, [command])[0]
+    if body and 'normal' in body.lower():
         mode = 'normal'
     else:
         mode = 'maintenance'
@@ -190,15 +175,15 @@ def get_system_mode(module):
 
 
 def get_maintenance_timeout(module):
-    command = 'show maintenance timeout'
-    body = execute_show_command(command, module)[0]
+    command = {'command': 'show maintenance timeout', 'output': 'text'}
+    body = run_commands(module, [command])[0]
     timeout = body.split()[4]
     return timeout
 
 
 def get_reset_reasons(module):
-    command = 'show maintenance on-reload reset-reasons'
-    body = execute_show_command(command, module)[0]
+    command = {'command': 'show maintenance on-reload reset-reasons', 'output': 'text'}
+    body = run_commands(module, [command])[0]
     return body
 
 
@@ -231,8 +216,13 @@ def get_commands(module, state, mode):
             commands.append('no system mode maintenance timeout {0}'.format(
                             module.params['system_mode_maintenance_timeout']))
 
-    elif module.params['system_mode_maintenance_shutdown'] is True:
+    elif (module.params['system_mode_maintenance_shutdown'] and
+            mode == 'normal'):
         commands.append('system mode maintenance shutdown')
+    elif (module.params[
+          'system_mode_maintenance_shutdown'] is False and
+          mode == 'maintenance'):
+        commands.append('no system mode maintenance')
 
     elif module.params['system_mode_maintenance_on_reload_reset_reason']:
         reset_reasons = get_reset_reasons(module)
@@ -260,39 +250,38 @@ def main():
     argument_spec = dict(
         system_mode_maintenance=dict(required=False, type='bool'),
         system_mode_maintenance_dont_generate_profile=dict(required=False,
-                                                               type='bool'),
+                                                           type='bool'),
         system_mode_maintenance_timeout=dict(required=False, type='str'),
         system_mode_maintenance_shutdown=dict(required=False, type='bool'),
         system_mode_maintenance_on_reload_reset_reason=dict(required=False,
-                choices=['hw_error','svc_failure','kern_failure',
-                         'wdog_timeout','fatal_error','lc_failure',
-                         'match_any','manual_reload']),
+                                                            choices=['hw_error', 'svc_failure', 'kern_failure',
+                                                                     'wdog_timeout', 'fatal_error', 'lc_failure',
+                                                                     'match_any', 'manual_reload', 'any_other',
+                                                                     'maintenance']),
         state=dict(choices=['absent', 'present', 'default'],
-                       default='present', required=False)
+                   default='present', required=False)
     )
 
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
-                                mutually_exclusive=[[
-                                    'system_mode_maintenance',
-                                    'system_mode_maintenance_dont_generate_profile',
-                                    'system_mode_maintenance_timeout',
-                                    'system_mode_maintenance_shutdown',
-                                    'system_mode_maintenance_on_reload_reset_reason'
-                                ]],
-                                required_one_of=[[
-                                    'system_mode_maintenance',
-                                    'system_mode_maintenance_dont_generate_profile',
-                                    'system_mode_maintenance_timeout',
-                                    'system_mode_maintenance_shutdown',
-                                    'system_mode_maintenance_on_reload_reset_reason'
-                                ]],
-                                supports_check_mode=True)
+                           mutually_exclusive=[[
+                               'system_mode_maintenance',
+                               'system_mode_maintenance_dont_generate_profile',
+                               'system_mode_maintenance_timeout',
+                               'system_mode_maintenance_shutdown',
+                               'system_mode_maintenance_on_reload_reset_reason'
+                           ]],
+                           required_one_of=[[
+                               'system_mode_maintenance',
+                               'system_mode_maintenance_dont_generate_profile',
+                               'system_mode_maintenance_timeout',
+                               'system_mode_maintenance_shutdown',
+                               'system_mode_maintenance_on_reload_reset_reason'
+                           ]],
+                           supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
-
 
     state = module.params['state']
     mode = get_system_mode(module)

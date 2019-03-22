@@ -27,32 +27,23 @@ version_added: "2.4"
 short_description: Manages VLAN resources and attributes on Huawei CloudEngine switches.
 description:
     - Manages VLAN configurations on Huawei CloudEngine switches.
-author: QijunPan (@CloudEngine-Ansible)
+author: QijunPan (@QijunPan)
 options:
     vlan_id:
         description:
             - Single VLAN ID, in the range from 1 to 4094.
-        required: false
-        default: null
     vlan_range:
         description:
             - Range of VLANs such as C(2-10) or C(2,5,10-15), etc.
-        required: false
-        default: null
     name:
         description:
-            - Name of VLAN, in the range from 1 to 31.
-        required: false
-        default: null
+            - Name of VLAN, minimum of 1 character, maximum of 31 characters.
     description:
         description:
-            - Specify VLAN description, in the range from 1 to 80.
-        required: false
-        default: null
+            - Specify VLAN description, minimum of 1 character, maximum of 80 characters.
     state:
         description:
             - Manage the state of the resource.
-        required: false
         default: present
         choices: ['present','absent']
 '''
@@ -134,13 +125,13 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 
 import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_nc_config, set_nc_config, execute_nc_action, ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, execute_nc_action, ce_argument_spec
 
 CE_NC_CREATE_VLAN = """
 <config>
@@ -294,7 +285,7 @@ class Vlan(object):
 
     def init_module(self):
         """
-        init ansilbe NetworkModule.
+        init ansible NetworkModule.
         """
 
         required_one_of = [["vlan_id", "vlan_range"]]

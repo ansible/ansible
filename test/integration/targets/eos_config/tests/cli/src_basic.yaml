@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/src_basic.yaml"
+- debug: msg="START cli/src_basic.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   eos_config:
@@ -9,12 +9,12 @@
     parents:
       - interface Ethernet2
     match: none
-    provider: "{{ cli }}"
+  become: yes
 
 - name: configure device with config
   eos_config:
     src: basic/config.j2
-    provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -27,7 +27,7 @@
   eos_config:
     src: basic/config.j2
     defaults: yes
-    provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -36,4 +36,4 @@
 # https://github.com/ansible/ansible-modules-core/issues/4807
       - "result.updates is not defined"
 
-- debug: msg="END cli/src_basic.yaml"
+- debug: msg="END cli/src_basic.yaml on connection={{ ansible_connection }}"

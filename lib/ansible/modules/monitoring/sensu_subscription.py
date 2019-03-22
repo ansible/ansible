@@ -40,11 +40,11 @@ options:
     description:
       - Create a backup file (if yes), including the timestamp information so you
       - can get the original file back if you somehow clobbered it incorrectly.
-    choices: [ 'yes', 'no' ]
+    type: bool
     required: false
     default: no
 requirements: [ ]
-author: Anders Ingemann
+author: Anders Ingemann (@andsens)
 '''
 
 RETURN = '''
@@ -64,6 +64,8 @@ EXAMPLES = '''
 - name: unsubscribe from common checks
   sensu_subscription: name=common state=absent
 '''
+
+import json
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
@@ -75,14 +77,9 @@ def sensu_subscription(module, path, name, state='present', backup=False):
     reasons = []
 
     try:
-        import json
-    except ImportError:
-        import simplejson as json
-
-    try:
         config = json.load(open(path))
     except IOError as e:
-        if e.errno is 2:  # File not found, non-fatal
+        if e.errno == 2:  # File not found, non-fatal
             if state == 'absent':
                 reasons.append('file did not exist and state is `absent\'')
                 return changed, reasons
@@ -135,9 +132,9 @@ def sensu_subscription(module, path, name, state='present', backup=False):
 
 
 def main():
-    arg_spec = {'name':   {'type': 'str', 'required': True},
-                'path':   {'type': 'str', 'default': '/etc/sensu/conf.d/subscriptions.json'},
-                'state':  {'type': 'str', 'default': 'present', 'choices': ['present', 'absent']},
+    arg_spec = {'name': {'type': 'str', 'required': True},
+                'path': {'type': 'str', 'default': '/etc/sensu/conf.d/subscriptions.json'},
+                'state': {'type': 'str', 'default': 'present', 'choices': ['present', 'absent']},
                 'backup': {'type': 'bool', 'default': 'no'},
                 }
 

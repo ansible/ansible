@@ -1,0 +1,25 @@
+# This contain sample config Roll Back execution tasks
+---
+
+- name: Test Rollback of config - Running config
+  cnos_rollback: host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_rollback_{{ inventory_hostname }}_output.txt configType='{{item.configType}}' protocol='{{item.protocol}}' serverip='{{item.serverip}}' rcpath='{{item.rcpath}}' serverusername='{{item.serverusername}}' serverpassword='{{item.serverpassword}}'
+  with_items: "{{test_rollback_data1}}"
+  
+- name: Test Rollback of config - Startup config
+  cnos_rollback: host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_rollback_{{ inventory_hostname }}_output.txt configType='{{item.configType}}' protocol='{{item.protocol}}' serverip='{{item.serverip}}' rcpath='{{item.rcpath}}' serverusername='{{item.serverusername}}' serverpassword='{{item.serverpassword}}'
+  with_items: "{{test_rollback_data2}}"
+ 
+#Root folder will be different for SFTP/SCP and TFTP
+#The following task is commented. 
+#Before trying this, please change in /etc/ansible/hosts file 
+#and place an config file with reference to your tftp-root folder 
+
+#- name: Test Rollback of config - Running config - TFTP
+#  cnos_rollback: host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_rollback_{{ inventory_hostname }}_output.txt configType='{{item.configType}}' protocol='{{item.protocol}}' serverip='{{item.serverip}}' rcpath={{ hostvars[inventory_hostname]['rcpath']}}
+#  with_items: "{{test_rollback_data3}}"
+  
+#- name: Test Rollback of config - Startup config - TFTP
+#  cnos_rollback: host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_rollback_{{ inventory_hostname }}_output.txt configType='{{item.configType}}' protocol='{{item.protocol}}' serverip='{{item.serverip}}' rcpath={{ hostvars[inventory_hostname]['rcpath']}} 
+#  with_items: "{{test_rollback_data4}}"
+
+# Completed file

@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: netapp_e_volume_copy
-short_description: Create volume copy pairs
+short_description: NetApp E-Series create volume copy pairs
 description:
     - Create and delete snapshots images on volume groups for NetApp E-series storage arrays.
 version_added: '2.2'
@@ -65,7 +65,7 @@ options:
         description:
             - Defines if a copy pair will be created if it does not exist.
             - If set to True destination_volume_id and source_volume_id are required.
-        choices: [True, False]
+        type: bool
         default: True
     start_stop_copy:
         description:
@@ -84,21 +84,21 @@ EXAMPLES = """
 msg:
     description: Success message
     returned: success
-    type: string
+    type: str
     sample: Json facts for the volume copy that was created.
 """
 RETURN = """
 msg:
     description: Success message
     returned: success
-    type: string
+    type: str
     sample: Created Volume Copy Pair with ID
 """
 
 import json
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 from ansible.module_utils.netapp import request
 
 HEADERS = {
@@ -284,9 +284,8 @@ def main():
     if params['search_volume_id'] is not None:
         try:
             potential_targets, potential_sources = find_valid_copy_pair_targets_and_sources(params)
-        except:
-            e = get_exception()
-            module.fail_json(msg="Failed to find valid copy pair candidates. Error [%s]" % str(e))
+        except Exception as e:
+            module.fail_json(msg="Failed to find valid copy pair candidates. Error [%s]" % to_native(e))
 
         module.exit_json(changed=False,
                          msg=' Valid source devices found: %s Valid target devices found: %s' % (len(potential_sources), len(potential_targets)),

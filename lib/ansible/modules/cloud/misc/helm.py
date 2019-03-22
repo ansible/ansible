@@ -16,60 +16,46 @@ DOCUMENTATION = '''
 module: helm
 short_description: Manages Kubernetes packages with the Helm package manager
 version_added: "2.4"
-author: "Flavio Percoco (flaper87)"
+author: "Flavio Percoco (@flaper87)"
 description:
-   - Install, upgrade, delete and list packages with the Helm package manage
+   - Install, upgrade, delete and list packages with the Helm package manager.
 requirements:
   - "pyhelm"
   - "grpcio"
 options:
   host:
     description:
-      - Tiller's server host
-    required: false
+      - Tiller's server host.
     default: "localhost"
   port:
     description:
-      - Tiller's server port
-    required: false
+      - Tiller's server port.
     default: 44134
   namespace:
     description:
-      - Kubernetes namespace where the chart should be installed
-    required: false
+      - Kubernetes namespace where the chart should be installed.
     default: "default"
   name:
     description:
-      - Release name to manage
-    required: false
-    default: null
+      - Release name to manage.
   state:
     description:
       - Whether to install C(present), remove C(absent), or purge C(purged) a package.
-    required: false
     choices: ['absent', 'purged', 'present']
-    default: "installed"
+    default: "present"
   chart:
     description: |
-      A map describing the chart to install. For example:
-      chart:
-        name: memcached
-        version: 0.4.0
-        source:
-          type: repo
-          location: https://kubernetes-charts.storage.googleapis.com
-    required: false
+      A map describing the chart to install. See examples for available options.
     default: {}
   values:
     description:
       - A map of value options for the chart.
-    required: false
     default: {}
   disable_hooks:
     description:
-      - Whether to disable hooks during the uninstall process
-    required: false
-    default: false
+      - Whether to disable hooks during the uninstall process.
+    type: bool
+    default: 'no'
 '''
 
 RETURN = ''' # '''
@@ -84,7 +70,7 @@ EXAMPLES = '''
       source:
         type: repo
         location: https://kubernetes-charts.storage.googleapis.com
-    state: installed
+    state: present
     name: my-memcached
     namespace: default
 
@@ -93,6 +79,29 @@ EXAMPLES = '''
     host: localhost
     state: absent
     name: my-memcached
+
+- name: Install helm chart from a git repo
+  helm:
+    host: localhost
+    chart:
+      source:
+        type: git
+        location: https://github.com/user/helm-chart.git
+    state: present
+    name: my-example
+    namespace: default
+
+- name: Install helm chart from a git repo specifying path
+  helm:
+    host: localhost
+    chart:
+      source:
+        type: git
+        location: https://github.com/helm/charts.git
+        path: stable/memcached
+    state: present
+    name: my-memcached
+    namespace: default
 '''
 
 try:
@@ -115,14 +124,19 @@ def install(module, tserver):
     namespace = module.params['namespace']
 
     chartb = chartbuilder.ChartBuilder(chart)
-    try:
+    r_matches = (x for x in tserver.list_releases()
+                 if x.name == name and x.namespace == namespace)
+    installed_release = next(r_matches, None)
+    if installed_release:
+        if installed_release.chart.metadata.version != chart['version']:
+            tserver.update_release(chartb.get_helm_chart(), False,
+                                   namespace, name=name, values=values)
+            changed = True
+    else:
         tserver.install_release(chartb.get_helm_chart(), namespace,
                                 dry_run=False, name=name,
                                 values=values)
         changed = True
-    except grpc._channel._Rendezvous as exc:
-        if "already exists" not in str(exc):
-            raise exc
 
     return dict(changed=changed)
 

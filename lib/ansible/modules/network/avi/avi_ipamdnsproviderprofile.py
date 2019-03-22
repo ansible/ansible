@@ -1,25 +1,11 @@
 #!/usr/bin/python
 #
-# Created on Aug 25, 2016
 # @author: Gaurav Rastogi (grastogi@avinetworks.com)
 #          Eric Anderson (eanderson@avinetworks.com)
 # module_check: supported
 #
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2017 Gaurav Rastogi, <grastogi@avinetworks.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -29,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: avi_ipamdnsproviderprofile
-author: Gaurav Rastogi (grastogi@avinetworks.com)
+author: Gaurav Rastogi (@grastogi23) <grastogi@avinetworks.com>
 
 short_description: Module for setup of IpamDnsProviderProfile Avi RESTful Object
 description:
@@ -42,10 +28,35 @@ options:
         description:
             - The state that should be applied on the entity.
         default: present
-        choices: ["absent","present"]
+        choices: ["absent", "present"]
+    avi_api_update_method:
+        description:
+            - Default method for object update is HTTP PUT.
+            - Setting to patch will override that behavior to use HTTP PATCH.
+        version_added: "2.5"
+        default: put
+        choices: ["put", "patch"]
+    avi_api_patch_op:
+        description:
+            - Patch operation to use when using avi_api_update_method as patch.
+        version_added: "2.5"
+        choices: ["add", "replace", "delete"]
+    allocate_ip_in_vrf:
+        description:
+            - If this flag is set, only allocate ip from networks in the virtual service vrf.
+            - Applicable for avi vantage ipam only.
+            - Field introduced in 17.2.4.
+            - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        version_added: "2.5"
+        type: bool
     aws_profile:
         description:
             - Provider details if type is aws.
+    azure_profile:
+        description:
+            - Provider details if type is microsoft azure.
+            - Field introduced in 17.2.1.
+        version_added: "2.5"
     custom_profile:
         description:
             - Provider details if type is custom.
@@ -76,7 +87,7 @@ options:
         description:
             - Provider type for the ipam/dns provider profile.
             - Enum options - IPAMDNS_TYPE_INFOBLOX, IPAMDNS_TYPE_AWS, IPAMDNS_TYPE_OPENSTACK, IPAMDNS_TYPE_GCP, IPAMDNS_TYPE_INFOBLOX_DNS, IPAMDNS_TYPE_CUSTOM,
-            - IPAMDNS_TYPE_CUSTOM_DNS, IPAMDNS_TYPE_INTERNAL, IPAMDNS_TYPE_INTERNAL_DNS, IPAMDNS_TYPE_AWS_DNS.
+            - IPAMDNS_TYPE_CUSTOM_DNS, IPAMDNS_TYPE_AZURE, IPAMDNS_TYPE_INTERNAL, IPAMDNS_TYPE_INTERNAL_DNS, IPAMDNS_TYPE_AWS_DNS, IPAMDNS_TYPE_AZURE_DNS.
         required: true
     url:
         description:
@@ -88,13 +99,12 @@ extends_documentation_fragment:
     - avi
 '''
 
-
-EXAMPLES = '''
+EXAMPLES = """
   - name: Create IPAM DNS provider setting
     avi_ipamdnsproviderprofile:
-      controller: ''
-      username: ''
-      password: ''
+      controller: '{{ controller }}'
+      username: '{{ username }}'
+      password: '{{ password }}'
       internal_profile:
         dns_service_domain:
         - domain_name: ashish.local
@@ -109,7 +119,8 @@ EXAMPLES = '''
       name: Ashish-DNS
       tenant_ref: Demo
       type: IPAMDNS_TYPE_INTERNAL
-'''
+"""
+
 RETURN = '''
 obj:
     description: IpamDnsProviderProfile (api/ipamdnsproviderprofile) object
@@ -119,7 +130,7 @@ obj:
 
 from ansible.module_utils.basic import AnsibleModule
 try:
-    from ansible.module_utils.avi import (
+    from ansible.module_utils.network.avi.avi import (
         avi_common_argument_spec, HAS_AVI, avi_ansible_api)
 except ImportError:
     HAS_AVI = False
@@ -129,7 +140,12 @@ def main():
     argument_specs = dict(
         state=dict(default='present',
                    choices=['absent', 'present']),
+        avi_api_update_method=dict(default='put',
+                                   choices=['put', 'patch']),
+        avi_api_patch_op=dict(choices=['add', 'replace', 'delete']),
+        allocate_ip_in_vrf=dict(type='bool',),
         aws_profile=dict(type='dict',),
+        azure_profile=dict(type='dict',),
         custom_profile=dict(type='dict',),
         gcp_profile=dict(type='dict',),
         infoblox_profile=dict(type='dict',),
@@ -151,6 +167,7 @@ def main():
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'ipamdnsproviderprofile',
                            set([]))
+
 
 if __name__ == '__main__':
     main()

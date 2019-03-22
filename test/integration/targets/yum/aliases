@@ -1,2 +1,4 @@
 destructive
-posix/ci/group1
+shippable/posix/group4
+skip/freebsd
+skip/osx

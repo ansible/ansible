@@ -1,5 +1,5 @@
 ---
-- debug: msg="START netconf/rpc.yaml"
+- debug: msg="START netconf/rpc.yaml on connection={{ ansible_connection }}"
 
 - name: Execute RPC on device
   junos_rpc:
@@ -69,4 +69,4 @@
     that:
       - "result.failed == true"
 
-- debug: msg="END netconf/rpc.yaml"
+- debug: msg="END netconf/rpc.yaml on connection={{ ansible_connection }}"

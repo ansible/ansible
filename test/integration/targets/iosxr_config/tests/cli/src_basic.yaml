@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/src_basic.yaml"
+- debug: msg="START cli/src_basic.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   iosxr_config:
@@ -32,4 +32,4 @@
 # https://github.com/ansible/ansible-modules-core/issues/4807
       - "result.updates is not defined"
 
-- debug: msg="END cli/src_basic.yaml"
+- debug: msg="END cli/src_basic.yaml on connection={{ ansible_connection }}"

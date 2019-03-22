@@ -28,12 +28,11 @@ short_description: Manages base ACL configuration on HUAWEI CloudEngine switches
 description:
     - Manages base ACL configurations on HUAWEI CloudEngine switches.
 author:
-    - wangdezhuang (@CloudEngine-Ansible)
+    - wangdezhuang (@QijunPan)
 options:
     state:
         description:
             - Specify desired state of the resource.
-        required: false
         default: present
         choices: ['present','absent','delete_acl']
     acl_name:
@@ -47,84 +46,59 @@ options:
         description:
             - ACL number.
               The value is an integer ranging from 2000 to 2999.
-        required: false
-        default: null
     acl_step:
         description:
             - ACL step.
               The value is an integer ranging from 1 to 20. The default value is 5.
-        required: false
-        default: null
     acl_description:
         description:
             - ACL description.
               The value is a string of 1 to 127 characters.
-        required: false
-        default: null
     rule_name:
         description:
             - Name of a basic ACL rule.
               The value is a string of 1 to 32 characters.
               The value is case-insensitive, and cannot contain spaces or begin with an underscore (_).
-        required: false
-        default: null
     rule_id:
         description:
             - ID of a basic ACL rule in configuration mode.
               The value is an integer ranging from 0 to 4294967294.
-        required: false
-        default: null
     rule_action:
         description:
             - Matching mode of basic ACL rules.
-        required: false
-        default: null
         choices: ['permit','deny']
     source_ip:
         description:
             - Source IP address.
               The value is a string of 0 to 255 characters.The default value is 0.0.0.0.
               The value is in dotted decimal notation.
-        required: false
-        default: null
     src_mask:
         description:
             - Mask of a source IP address.
               The value is an integer ranging from 1 to 32.
-        required: false
-        default: null
     frag_type:
         description:
             - Type of packet fragmentation.
-        required: false
-        default: null
         choices: ['fragment', 'clear_fragment']
     vrf_name:
         description:
             - VPN instance name.
               The value is a string of 1 to 31 characters.The default value is _public_.
-        required: false
-        default: null
     time_range:
         description:
             - Name of a time range in which an ACL rule takes effect.
               The value is a string of 1 to 32 characters.
               The value is case-insensitive, and cannot contain spaces. The name must start with an uppercase
               or lowercase letter. In addition, the word "all" cannot be specified as a time range name.
-        required: false
-        default: null
     rule_description:
         description:
             - Description about an ACL rule.
               The value is a string of 1 to 127 characters.
-        required: false
-        default: null
     log_flag:
         description:
             - Flag of logging matched data packets.
-        required: false
-        default: false
-        choices: ['true', 'false']
+        type: bool
+        default: 'no'
 '''
 
 EXAMPLES = '''
@@ -186,7 +160,7 @@ RETURN = '''
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 proposed:
     description: k/v pairs of parameters passed into module
@@ -212,7 +186,7 @@ updates:
 
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_nc_config, set_nc_config, ce_argument_spec, check_ip_addr
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec, check_ip_addr
 
 # get acl
 CE_GET_ACL_HEADER = """

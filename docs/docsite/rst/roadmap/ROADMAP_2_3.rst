@@ -1,6 +1,6 @@
-============================
-Ansible by Red Hat, Core 2.3
-============================
+===========
+Ansible 2.3
+===========
 **Target: Mid April 2017**
 
 .. contents:: Topics
@@ -118,9 +118,9 @@ Lead by mattclay
 
   Some new issues have also appeared, which are currently being worked on.
 
-- *Enable Remaining Tests:* Implement fixes for OS X, FreeBSD and Python 3 to enable the remaining blacklisted tests for CI.
+- *Enable Remaining Tests:* Implement fixes for macOS, FreeBSD and Python 3 to enable the remaining blacklisted tests for CI.
 
-  **Ongoing:** More tests have been enabled for OS X, FreeBSD and Python 3. However, work still remains to enable more tests.
+  **Ongoing:** More tests have been enabled for macOS, FreeBSD and Python 3. However, work still remains to enable more tests.
 
 - *Windows Server 2016:* Add Windows Server 2016 to CI when official AMIs become available.
 
@@ -145,7 +145,7 @@ Amazon
 Lead by ryansb
 
 - Improve ec2.py integration tests **(partial, more to do in 2.4)**
-- ELB version 2 **(pushed - needs_revision [PR](https://github.com/ansible/ansible/pull/19491))**
+- ELB version 2 **(pushed - needs_revision)** `PR <https://github.com/ansible/ansible/pull/19491>`_
 - CloudFormation YAML, cross-stack reference, and roles support **(done)**
 - ECS module refactor **(done)**
 - AWS module unit testing w/ placebo (boto3 only) **(pushed 2.4)**
@@ -163,4 +163,4 @@ ansible-ssh
 
   - https://github.com/2ndQuadrant/ansible-ssh
   - https://github.com/haad/ansible-ssh
-  - https://github.com/mlvnd/ansible-ssh
+  - https://github.com/mlvnd/ansible-tools

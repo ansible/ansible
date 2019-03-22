@@ -26,19 +26,20 @@ options:
         description:
             - IP tunnel interface name.
         required: true
-        aliases: [ "tunnel", "link" ]
     temporary:
         description:
             - Specifies that the IP tunnel interface is temporary. Temporary IP tunnel
               interfaces do not persist across reboots.
         required: false
         default: false
+        type: bool
     type:
         description:
             - Specifies the type of tunnel to be created.
         required: false
         default: "ipv4"
         choices: [ "ipv4", "ipv6", "6to4" ]
+        aliases: ['tunnel_type']
     local_address:
         description:
             - Literat IP address or hostname corresponding to the tunnel source.
@@ -58,49 +59,49 @@ options:
 '''
 
 EXAMPLES = '''
-name: Create IPv4 tunnel interface 'iptun0'
-dladm_iptun: name=iptun0 local_address=192.0.2.23 remote_address=203.0.113.10 state=present
+- name: Create IPv4 tunnel interface 'iptun0'
+  dladm_iptun: name=iptun0 local_address=192.0.2.23 remote_address=203.0.113.10 state=present
 
-name: Change IPv4 tunnel remote address
-dladm_iptun: name=iptun0 type=ipv4 local_address=192.0.2.23 remote_address=203.0.113.11
+- name: Change IPv4 tunnel remote address
+  dladm_iptun: name=iptun0 type=ipv4 local_address=192.0.2.23 remote_address=203.0.113.11
 
-name: Create IPv6 tunnel interface 'tun0'
-dladm_iptun: name=tun0 type=ipv6 local_address=192.0.2.23 remote_address=203.0.113.42
+- name: Create IPv6 tunnel interface 'tun0'
+  dladm_iptun: name=tun0 type=ipv6 local_address=192.0.2.23 remote_address=203.0.113.42
 
-name: Remove 'iptun0' tunnel interface
-dladm_iptun: name=iptun0 state=absent
+- name: Remove 'iptun0' tunnel interface
+  dladm_iptun: name=iptun0 state=absent
 '''
 
 RETURN = '''
 name:
     description: tunnel interface name
     returned: always
-    type: string
+    type: str
     sample: iptun0
 state:
     description: state of the target
     returned: always
-    type: string
+    type: str
     sample: present
 temporary:
     description: specifies if operation will persist across reboots
     returned: always
-    type: boolean
+    type: bool
     sample: True
 local_address:
     description: local IP address
     returned: always
-    type: string
+    type: str
     sample: 1.1.1.1/32
 remote_address:
     description: remote IP address
     returned: always
-    type: string
+    type: str
     sample: 2.2.2.2/32
 type:
     description: tunnel type
     returned: always
-    type: string
+    type: str
     sample: ipv4
 '''
 
@@ -204,7 +205,6 @@ class IPTun(object):
             self.module.fail_json(msg='Failed to query tunnel interface %s properties' % self.name,
                                   err=err,
                                   rc=rc)
-
 
 
 def main():

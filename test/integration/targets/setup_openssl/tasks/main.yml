@@ -1,3 +1,4 @@
+---
 - name: Incluse OS-specific variables
   include_vars: '{{ ansible_os_family }}.yml'
   when: not ansible_os_family == "Darwin"
@@ -6,13 +7,13 @@
   become: True
   package:
     name: '{{ pyopenssl_package_name_python3 }}'
-  when: not ansible_os_family == 'Darwin' and  ansible_python_version|version_compare('3.0', '>=')
+  when: not ansible_os_family == 'Darwin' and  ansible_python_version is version('3.0', '>=')
 
 - name: Install pyOpenSSL
   become: True
   package:
     name: '{{ pyopenssl_package_name }}'
-  when: not ansible_os_family == 'Darwin' and ansible_python_version|version_compare('3.0', '<')
+  when: not ansible_os_family == 'Darwin' and ansible_python_version is version('3.0', '<')
 
 - name: Install pyOpenSSL
   become: True
@@ -21,7 +22,7 @@
   when:  ansible_os_family == 'Darwin'
 
 - name: register pyOpenSSL version
-  command: python -c 'import OpenSSL; print(OpenSSL.__version__)'
+  command: "{{ ansible_python.executable }} -c 'import OpenSSL; print(OpenSSL.__version__)'"
   register: pyopenssl_version
 
 - name: register openssl version
@@ -29,5 +30,5 @@
   register: openssl_version
 
 - name: register cryptography version
-  command: python -c 'import cryptography; print(cryptography.__version__)'
+  command: "{{ ansible_python.executable }} -c 'import cryptography; print(cryptography.__version__)'"
   register: cryptography_version

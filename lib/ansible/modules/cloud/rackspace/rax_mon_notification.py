@@ -43,7 +43,7 @@ options:
       http://docs.rackspace.com/cm/api/v1.0/cm-devguide/content/
       service-notification-types-crud.html for details.
     required: true
-author: Ash Wilson
+author: Ash Wilson (@smashwilson)
 extends_documentation_fragment: rackspace.openstack
 '''
 
@@ -137,6 +137,7 @@ def notification(module, state, label, notification_type, details):
         module.exit_json(changed=changed, notification=notification_dict)
     else:
         module.exit_json(changed=changed)
+
 
 def main():
     argument_spec = rax_argument_spec()

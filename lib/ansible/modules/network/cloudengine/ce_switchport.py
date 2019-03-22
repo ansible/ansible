@@ -27,7 +27,7 @@ version_added: "2.4"
 short_description: Manages Layer 2 switchport interfaces on HUAWEI CloudEngine switches.
 description:
     - Manages Layer 2 switchport interfaces on HUAWEI CloudEngine switches.
-author: QijunPan (@CloudEngine-Ansible)
+author: QijunPan (@QijunPan)
 notes:
     - When C(state=absent), VLANs can be added/removed from trunk links and
       the existing access VLAN can be 'unconfigured' to just having VLAN 1
@@ -42,33 +42,23 @@ options:
         description:
             - Full name of the interface, i.e. 40GE1/0/22.
         required: true
-        default: null
     mode:
         description:
             - The link type of an interface.
-        required: false
-        default: null
         choices: ['access','trunk']
     access_vlan:
         description:
             - If C(mode=access), used as the access VLAN ID, in the range from 1 to 4094.
-        required: false
-        default: null
     native_vlan:
         description:
             - If C(mode=trunk), used as the trunk native VLAN ID, in the range from 1 to 4094.
-        required: false
-        default: null
     trunk_vlans:
         description:
             - If C(mode=trunk), used as the VLAN range to ADD or REMOVE
               from the trunk, such as 2-10 or 2,5,10-15, etc.
-        required: false
-        default: null
     state:
         description:
             - Manage the state of the resource.
-        required: false
         default: present
         choices: ['present', 'absent', 'unconfigured']
 '''
@@ -151,13 +141,13 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 
 import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_nc_config, set_nc_config, ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec
 
 CE_NC_GET_INTF = """
 <filter type="subtree">
@@ -719,7 +709,7 @@ class SwitchPort(object):
         # get interface info
         self.intf_info = self.get_interface_dict(self.interface)
         if not self.intf_info:
-            self.module.fail_json(msg='Error: Interface does not exists.')
+            self.module.fail_json(msg='Error: Interface does not exist.')
 
         if not self.is_l2switchport():
             self.module.fail_json(
@@ -764,7 +754,7 @@ class SwitchPort(object):
 
         self.check_params()
         if not self.intf_info:
-            self.module.fail_json(msg='Error: interface does not exists.')
+            self.module.fail_json(msg='Error: interface does not exist.')
 
         self.get_existing()
         self.get_proposed()

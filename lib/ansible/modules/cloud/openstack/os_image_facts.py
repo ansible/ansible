@@ -1,19 +1,11 @@
 #!/usr/bin/python
 
 # Copyright (c) 2015 Hewlett-Packard Development Company, L.P.
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -28,15 +20,15 @@ author: "Davide Agnello (@dagnello)"
 description:
     - Retrieve facts about a image image from OpenStack.
 notes:
-    - Facts are placed in the C(openstack) variable.
+    - Facts are placed in the C(openstack_image) variable.
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 options:
    image:
      description:
         - Name or ID of the image
-     required: true
+     required: false
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
@@ -48,13 +40,21 @@ EXAMPLES = '''
 - name: Gather facts about a previously created image named image1
   os_image_facts:
     auth:
-      auth_url: https://your_api_url.com:9000/v2.0
+      auth_url: https://identity.example.com
       username: user
       password: password
       project_name: someproject
     image: image1
 
 - name: Show openstack facts
+  debug:
+    var: openstack_image
+
+# Show all available Openstack images
+- name: Retrieve all available Openstack images
+  os_image_facts:
+
+- name: Show images
   debug:
     var: openstack_image
 '''
@@ -68,27 +68,27 @@ openstack_image:
         id:
             description: Unique UUID.
             returned: success
-            type: string
+            type: str
         name:
             description: Name given to the image.
             returned: success
-            type: string
+            type: str
         status:
             description: Image status.
             returned: success
-            type: string
+            type: str
         created_at:
             description: Image created at timestamp.
             returned: success
-            type: string
+            type: str
         deleted:
             description: Image deleted flag.
             returned: success
-            type: boolean
+            type: bool
         container_format:
             description: Container format of the image.
             returned: success
-            type: string
+            type: str
         min_ram:
             description: Min amount of RAM required for this image.
             returned: success
@@ -96,11 +96,11 @@ openstack_image:
         disk_format:
             description: Disk format of the image.
             returned: success
-            type: string
+            type: str
         updated_at:
             description: Image updated at timestamp.
             returned: success
-            type: string
+            type: str
         properties:
             description: Additional properties associated with the image.
             returned: success
@@ -112,58 +112,55 @@ openstack_image:
         protected:
             description: Image protected flag.
             returned: success
-            type: boolean
+            type: bool
         checksum:
             description: Checksum for the image.
             returned: success
-            type: string
+            type: str
         owner:
             description: Owner for the image.
             returned: success
-            type: string
+            type: str
         is_public:
             description: Is public flag of the image.
             returned: success
-            type: boolean
+            type: bool
         deleted_at:
             description: Image deleted at timestamp.
             returned: success
-            type: string
+            type: str
         size:
             description: Size of the image.
             returned: success
             type: int
 '''
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def main():
 
     argument_spec = openstack_full_argument_spec(
-        image=dict(required=True),
+        image=dict(required=False),
     )
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.openstack_cloud(**module.params)
-        image = cloud.get_image(module.params['image'])
-        module.exit_json(changed=False, ansible_facts=dict(
-            openstack_image=image))
+        if module.params['image']:
+            image = cloud.get_image(module.params['image'])
+            module.exit_json(changed=False, ansible_facts=dict(
+                openstack_image=image))
+        else:
+            images = cloud.list_images()
+            module.exit_json(changed=False, ansible_facts=dict(
+                openstack_image=images))
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
-# this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
+
 if __name__ == '__main__':
     main()

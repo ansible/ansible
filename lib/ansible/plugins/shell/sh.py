@@ -1,22 +1,19 @@
-# (c) 2014, Chris Church <chris@ninemoreminutes.com>
-#
-# This file is part of Ansible.
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2014, Chris Church <chris@ninemoreminutes.com>
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = '''
+name: sh
+plugin_type: shell
+short_description: "POSIX shell (/bin/sh)"
+version_added: historical
+description:
+  - This shell plugin is the one you want to use on most Unix systems, it is the most compatible and widely installed shell.
+extends_documentation_fragment:
+  - shell_common
+'''
 
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.plugins.shell import ShellBase
@@ -26,10 +23,16 @@ class ShellModule(ShellBase):
 
     # Common shell filenames that this plugin handles.
     # Note: sh is the default shell plugin so this plugin may also be selected
+    # This code needs to be SH-compliant. BASH-isms will not work if /bin/sh points to a non-BASH shell.
+
     # if the filename is not listed in any Shell plugin.
     COMPATIBLE_SHELLS = frozenset(('sh', 'zsh', 'bash', 'dash', 'ksh'))
     # Family of shells this has.  Must match the filename without extension
     SHELL_FAMILY = 'sh'
+
+    # commonly used
+    ECHO = 'echo'
+    COMMAND_SEP = ';'
 
     # How to end lines in a python script one-liner
     _SHELL_EMBEDDED_PY_EOL = '\n'
@@ -42,22 +45,16 @@ class ShellModule(ShellBase):
     _SHELL_GROUP_RIGHT = ')'
 
     def checksum(self, path, python_interp):
-        # The following test needs to be SH-compliant.  BASH-isms will
-        # not work if /bin/sh points to a non-BASH shell.
-        #
         # In the following test, each condition is a check and logical
         # comparison (|| or &&) that sets the rc value.  Every check is run so
-        # the last check in the series to fail will be the rc that is
-        # returned.
+        # the last check in the series to fail will be the rc that is returned.
         #
         # If a check fails we error before invoking the hash functions because
         # hash functions may successfully take the hash of a directory on BSDs
-        # (UFS filesystem?) which is not what the rest of the ansible code
-        # expects
+        # (UFS filesystem?) which is not what the rest of the ansible code expects
         #
-        # If all of the available hashing methods fail we fail with an rc of
-        # 0.  This logic is added to the end of the cmd at the bottom of this
-        # function.
+        # If all of the available hashing methods fail we fail with an rc of 0.
+        # This logic is added to the end of the cmd at the bottom of this function.
 
         # Return codes:
         # checksum: success!

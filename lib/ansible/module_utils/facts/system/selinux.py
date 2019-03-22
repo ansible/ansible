@@ -26,9 +26,11 @@ try:
 except ImportError:
     HAVE_SELINUX = False
 
-SELINUX_MODE_DICT = {1: 'enforcing',
-                     0: 'permissive',
-                     -1: 'disabled'}
+SELINUX_MODE_DICT = {
+    1: 'enforcing',
+    0: 'permissive',
+    -1: 'disabled'
+}
 
 
 class SelinuxFactCollector(BaseFactCollector):
@@ -39,17 +41,20 @@ class SelinuxFactCollector(BaseFactCollector):
         facts_dict = {}
         selinux_facts = {}
 
-        # This is weird. The value of the facts 'selinux' key can be False or a dict
+        # If selinux library is missing, only set the status and selinux_python_present since
+        # there is no way to tell if SELinux is enabled or disabled on the system
+        # without the library.
         if not HAVE_SELINUX:
-            facts_dict['selinux'] = False
+            selinux_facts['status'] = 'Missing selinux Python library'
+            facts_dict['selinux'] = selinux_facts
             facts_dict['selinux_python_present'] = False
             return facts_dict
 
+        # Set a boolean for testing whether the Python library is present
         facts_dict['selinux_python_present'] = True
 
         if not selinux.is_selinux_enabled():
             selinux_facts['status'] = 'disabled'
-        # NOTE: this could just return in the above clause and the rest of this is up an indent -akl
         else:
             selinux_facts['status'] = 'enabled'
 

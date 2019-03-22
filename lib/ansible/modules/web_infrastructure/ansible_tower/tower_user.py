@@ -30,13 +30,9 @@ options:
     first_name:
       description:
         - First name of the user.
-      required: False
-      default: null
     last_name:
       description:
         - Last name of the user.
-      required: False
-      default: null
     email:
       description:
         - Email address of the user.
@@ -44,22 +40,19 @@ options:
     password:
       description:
         - Password of the user.
-      required: False
-      default: null
     superuser:
       description:
         - User is a system wide administator.
-      required: False
-      default: False
+      type: bool
+      default: 'no'
     auditor:
       description:
         - User is a system wide auditor.
-      required: False
-      default: False
+      type: bool
+      default: 'no'
     state:
       description:
         - Desired state of the resource.
-      required: False
       default: "present"
       choices: ["present", "absent"]
 extends_documentation_fragment: tower
@@ -78,11 +71,11 @@ EXAMPLES = '''
     tower_config_file: "~/tower_cli.cfg"
 '''
 
-from ansible.module_utils.ansible_tower import tower_argument_spec, tower_auth_config, tower_check_mode, HAS_TOWER_CLI
+from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, tower_check_mode
 
 try:
     import tower_cli
-    import tower_cli.utils.exceptions as exc
+    import tower_cli.exceptions as exc
 
     from tower_cli.conf import settings
 except ImportError:
@@ -90,8 +83,7 @@ except ImportError:
 
 
 def main():
-    argument_spec = tower_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         username=dict(required=True),
         first_name=dict(),
         last_name=dict(),
@@ -100,12 +92,9 @@ def main():
         superuser=dict(type='bool', default=False),
         auditor=dict(type='bool', default=False),
         state=dict(choices=['present', 'absent'], default='present'),
-    ))
+    )
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
-
-    if not HAS_TOWER_CLI:
-        module.fail_json(msg='ansible-tower-cli required for this module')
+    module = TowerModule(argument_spec=argument_spec, supports_check_mode=True)
 
     username = module.params.get('username')
     first_name = module.params.get('first_name')
@@ -130,13 +119,12 @@ def main():
                 json_output['id'] = result['id']
             elif state == 'absent':
                 result = user.delete(username=username)
-        except (exc.ConnectionError, exc.BadRequest) as excinfo:
+        except (exc.ConnectionError, exc.BadRequest, exc.AuthError) as excinfo:
             module.fail_json(msg='Failed to update the user: {0}'.format(excinfo), changed=False)
 
     json_output['changed'] = result['changed']
     module.exit_json(**json_output)
 
 
-from ansible.module_utils.basic import AnsibleModule
 if __name__ == '__main__':
     main()

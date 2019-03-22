@@ -9,8 +9,6 @@ DOCUMENTATION = """
     author: Jan-Piet Mens (@jpmens) <jpmens(at)gmail.com>
     version_added: "0.9"
     short_description: read the value of environment variables
-    requirements:
-      - dns/dns.resolver (python library)
     description:
         - Allows you to query the environment variables available on the controller when you invoked Ansible.
     options:
@@ -26,7 +24,7 @@ EXAMPLES = """
 RETURN = """
   _list:
     description:
-      - values returned by the DNS TXT record.
+      - values from the environment variables.
     type: list
 """
 import os

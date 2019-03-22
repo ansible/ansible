@@ -1,0 +1,2 @@
+minor_changes:
+  - 'add ``STRING_CONVERSION_ACTION`` option to warn, error, or ignore when a module parameter is string type but the value from YAML is not a string type and it is converted (https://github.com/ansible/ansible/issues/50503)'

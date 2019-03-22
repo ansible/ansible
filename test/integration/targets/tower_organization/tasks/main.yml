@@ -1,0 +1,13 @@
+- name: confirm Tower version w/ check mode
+  tower_organization:
+    name: Default
+  check_mode: yes
+  register: result
+
+- assert:
+    that:
+      - "result.tower_version == '{{ tower_version }}'"
+
+- name: Make sure the default Default organization exists
+  tower_organization:
+    name: Default

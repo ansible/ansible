@@ -29,29 +29,27 @@ author: "Nathaniel Case (@qalthos)"
 short_description: Manage VyOS configuration on remote device
 description:
   - This module provides configuration file management of VyOS
-    devices.  It provides arguments for managing both the
-    configuration file and state of the active configuration.   All
+    devices. It provides arguments for managing both the
+    configuration file and state of the active configuration. All
     configuration statements are based on `set` and `delete` commands
     in the device configuration.
 extends_documentation_fragment: vyos
 notes:
   - Tested against VYOS 1.1.7
+  - Abbreviated commands are NOT idempotent, see
+    L(Network FAQ,../network/user_guide/faq.html#why-do-the-config-modules-always-return-changed-true-with-abbreviated-commands).
 options:
   lines:
     description:
       - The ordered set of configuration lines to be managed and
         compared with the existing configuration on the remote
         device.
-    required: false
-    default: null
   src:
     description:
       - The C(src) argument specifies the path to the source config
         file to load.  The source config file can either be in
         bracket format or set format.  The source file can include
         Jinja2 template variables.
-    required: no
-    default: null
   match:
     description:
       - The C(match) argument controls the method used to match
@@ -60,24 +58,23 @@ options:
         deltas are loaded.  If the C(match) argument is set to C(none)
         the active configuration is ignored and the configuration is
         always loaded.
-    required: false
     default: line
     choices: ['line', 'none']
   backup:
     description:
       - The C(backup) argument will backup the current devices active
         configuration to the Ansible control host prior to making any
-        changes.  The backup file will be located in the backup folder
-        in the root of the playbook
-    required: false
-    default: false
-    choices: ['yes', 'no']
+        changes. If the C(backup_options) value is not given, the
+        backup file will be located in the backup folder in the playbook
+        root directory or role root directory, if playbook is part of an
+        ansible role. If the directory does not exist, it is created.
+    type: bool
+    default: 'no'
   comment:
     description:
       - Allows a commit description to be specified to be included
         when the configuration is committed.  If the configuration is
         not changed or committed, this argument is ignored.
-    required: false
     default: 'configured by vyos_config'
   config:
     description:
@@ -85,17 +82,36 @@ options:
         to compare against the desired configuration.  If this value
         is not specified, the module will automatically retrieve the
         current active configuration from the remote device.
-    required: false
-    default: null
   save:
     description:
       - The C(save) argument controls whether or not changes made
         to the active configuration are saved to disk.  This is
         independent of committing the config.  When set to True, the
         active configuration is saved.
-    required: false
-    default: false
-    choices: ['yes', 'no']
+    type: bool
+    default: 'no'
+  backup_options:
+    description:
+      - This is a dict object containing configurable options related to backup file path.
+        The value of this option is read only when C(backup) is set to I(yes), if C(backup) is set
+        to I(no) this option will be silently ignored.
+    suboptions:
+      filename:
+        description:
+          - The filename to be used to store the backup configuration. If the the filename
+            is not given it will be generated based on the hostname, current time and date
+            in format defined by <hostname>_config.<current-date>@<current-time>
+      dir_path:
+        description:
+          - This option provides the path ending with directory name in which the backup
+            configuration file will be stored. If the directory does not exist it will be first
+            created and the filename is either the value of C(filename) or default filename
+            as described in C(filename) options description. If the path value is not given
+            in that case a I(backup) directory will be created in the current working directory
+            and backup configuration will be copied in C(filename) within I(backup) directory.
+        type: path
+    type: dict
+    version_added: "2.8"
 """
 
 EXAMPLES = """
@@ -110,6 +126,23 @@ EXAMPLES = """
   vyos_config:
     src: vyos.cfg
     backup: yes
+
+- name: render a Jinja2 template onto the VyOS router
+  vyos_config:
+    src: vyos_template.j2
+
+- name: for idempotency, use full-form commands
+  vyos_config:
+    lines:
+      # - set int eth eth2 description 'OUTSIDE'
+      - set interface ethernet eth2 description 'OUTSIDE'
+
+- name: configurable backup path
+  vyos_config:
+    backup: yes
+    backup_options:
+      filename: backup.cfg
+      dir_path: /home/user
 """
 
 RETURN = """
@@ -123,13 +156,39 @@ filtered:
   returned: always
   type: list
   sample: ['...', '...']
+backup_path:
+  description: The full path to the backup file
+  returned: when backup is yes
+  type: str
+  sample: /playbooks/ansible/backup/vyos_config.2016-07-16@22:28:34
+filename:
+  description: The name of the backup file
+  returned: when backup is yes and filename is not specified in backup options
+  type: str
+  sample: vyos_config.2016-07-16@22:28:34
+shortname:
+  description: The full path to the backup file excluding the timestamp
+  returned: when backup is yes and filename is not specified in backup options
+  type: str
+  sample: /playbooks/ansible/backup/vyos_config
+date:
+  description: The date extracted from the backup file name
+  returned: when backup is yes
+  type: str
+  sample: "2016-07-16"
+time:
+  description: The time extracted from the backup file name
+  returned: when backup is yes
+  type: str
+  sample: "22:28:34"
 """
 import re
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import NetworkConfig
-from ansible.module_utils.vyos import load_config, get_config, run_commands
-from ansible.module_utils.vyos import vyos_argument_spec
+from ansible.module_utils.connection import ConnectionError
+from ansible.module_utils.network.vyos.vyos import load_config, get_config, run_commands
+from ansible.module_utils.network.vyos.vyos import vyos_argument_spec, get_connection
 
 
 DEFAULT_COMMENT = 'configured by vyos_config'
@@ -139,35 +198,18 @@ CONFIG_FILTERS = [
 ]
 
 
-def config_to_commands(config):
-    set_format = config.startswith('set') or config.startswith('delete')
-    candidate = NetworkConfig(indent=4, contents=config)
-    if not set_format:
-        candidate = [c.line for c in candidate.items]
-        commands = list()
-        # this filters out less specific lines
-        for item in candidate:
-            for index, entry in enumerate(commands):
-                if item.startswith(entry):
-                    del commands[index]
-                    break
-            commands.append(item)
-
-        commands = ['set %s' % cmd.replace(' {', '') for cmd in commands]
-
-    else:
-        commands = str(candidate).split('\n')
-
-    return commands
-
-
 def get_candidate(module):
     contents = module.params['src'] or module.params['lines']
 
-    if module.params['lines']:
-        contents = '\n'.join(contents)
+    if module.params['src']:
+        contents = format_commands(contents.splitlines())
 
-    return config_to_commands(contents)
+    contents = '\n'.join(contents)
+    return contents
+
+
+def format_commands(commands):
+    return [line for line in commands if len(line.strip()) > 0]
 
 
 def diff_config(commands, config):
@@ -200,11 +242,15 @@ def diff_config(commands, config):
 
 def sanitize_config(config, result):
     result['filtered'] = list()
+    index_to_filter = list()
     for regex in CONFIG_FILTERS:
         for index, line in enumerate(list(config)):
             if regex.search(line):
                 result['filtered'].append(line)
-                del config[index]
+                index_to_filter.append(index)
+    # Delete all filtered configs
+    for filter_index in sorted(index_to_filter, reverse=True):
+        del config[filter_index]
 
 
 def run(module, result):
@@ -216,7 +262,13 @@ def run(module, result):
     candidate = get_candidate(module)
 
     # create loadable config that includes only the configuration updates
-    commands = diff_config(candidate, config)
+    connection = get_connection(module)
+    try:
+        response = connection.get_diff(candidate=candidate, running=config, diff_match=module.params['match'])
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+
+    commands = response.get('config_diff')
     sanitize_config(commands, result)
 
     result['commands'] = commands
@@ -224,8 +276,9 @@ def run(module, result):
     commit = not module.check_mode
     comment = module.params['comment']
 
+    diff = None
     if commands:
-        load_config(module, commands, commit=commit, comment=comment)
+        diff = load_config(module, commands, commit=commit, comment=comment)
 
         if result.get('filtered'):
             result['warnings'].append('Some configuration commands were '
@@ -233,8 +286,15 @@ def run(module, result):
 
         result['changed'] = True
 
+    if module._diff:
+        result['diff'] = {'prepared': diff}
+
 
 def main():
+    backup_spec = dict(
+        filename=dict(),
+        dir_path=dict(type='path')
+    )
     argument_spec = dict(
         src=dict(type='path'),
         lines=dict(type='list'),
@@ -246,6 +306,7 @@ def main():
         config=dict(),
 
         backup=dict(type='bool', default=False),
+        backup_options=dict(type='dict', options=backup_spec),
         save=dict(type='bool', default=False),
     )
 

@@ -28,47 +28,35 @@ options:
   command:
     description:
       - The command you would like to perform against the cluster.
-    required: false
-    default: null
     choices: ['ping', 'kv_test', 'join', 'plan', 'commit']
   config_dir:
     description:
       - The path to the riak configuration directory
-    required: false
     default: /etc/riak
   http_conn:
     description:
       - The ip address and port that is listening for Riak HTTP queries
-    required: false
     default: 127.0.0.1:8098
   target_node:
     description:
       - The target node for certain operations (join, ping)
-    required: false
     default: riak@127.0.0.1
   wait_for_handoffs:
     description:
       - Number of seconds to wait for handoffs to complete.
-    required: false
-    default: null
   wait_for_ring:
     description:
       - Number of seconds to wait for all nodes to agree on the ring.
-    required: false
-    default: null
   wait_for_service:
     description:
       - Waits for a riak service to come online before continuing.
-    required: false
-    default: None
     choices: ['kv']
   validate_certs:
     description:
       - If C(no), SSL certificates will not be validated. This should only be used
         on personally controlled sites using self-signed certificates.
-    required: false
+    type: bool
     default: 'yes'
-    choices: ['yes', 'no']
     version_added: 1.5.1
 '''
 
@@ -102,6 +90,7 @@ def ring_check(module, riak_admin_bin):
     else:
         return False
 
+
 def main():
 
     module = AnsibleModule(
@@ -115,9 +104,8 @@ def main():
             wait_for_ring=dict(default=False, type='int'),
             wait_for_service=dict(
                 required=False, default=None, choices=['kv']),
-            validate_certs = dict(default='yes', type='bool'))
+            validate_certs=dict(default='yes', type='bool'))
     )
-
 
     command = module.params.get('command')
     http_conn = module.params.get('http_conn')
@@ -126,8 +114,7 @@ def main():
     wait_for_ring = module.params.get('wait_for_ring')
     wait_for_service = module.params.get('wait_for_service')
 
-
-    #make sure riak commands are on the path
+    # make sure riak commands are on the path
     riak_bin = module.get_bin_path('riak')
     riak_admin_bin = module.get_bin_path('riak-admin')
 
@@ -144,22 +131,22 @@ def main():
     # here we attempt to load those stats,
     try:
         stats = json.loads(stats_raw)
-    except:
+    except Exception:
         module.fail_json(msg='Could not parse Riak stats.')
 
     node_name = stats['nodename']
     nodes = stats['ring_members']
     ring_size = stats['ring_creation_size']
-    rc, out, err = module.run_command([riak_bin, 'version'] )
+    rc, out, err = module.run_command([riak_bin, 'version'])
     version = out.strip()
 
     result = dict(node_name=node_name,
-              nodes=nodes,
-              ring_size=ring_size,
-              version=version)
+                  nodes=nodes,
+                  ring_size=ring_size,
+                  version=version)
 
     if command == 'ping':
-        cmd = '%s ping %s' % ( riak_bin, target_node )
+        cmd = '%s ping %s' % (riak_bin, target_node)
         rc, out, err = module.run_command(cmd)
         if rc == 0:
             result['ping'] = out
@@ -219,7 +206,7 @@ def main():
                 module.fail_json(msg='Timeout waiting for handoffs.')
 
     if wait_for_service:
-        cmd = [riak_admin_bin, 'wait_for_service', 'riak_%s' % wait_for_service, node_name ]
+        cmd = [riak_admin_bin, 'wait_for_service', 'riak_%s' % wait_for_service, node_name]
         rc, out, err = module.run_command(cmd)
         result['service'] = out
 

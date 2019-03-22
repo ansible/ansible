@@ -10,16 +10,21 @@ DOCUMENTATION = '''
     version_added: "2.4"
     short_description: Uses Jinja2 to construct vars and groups based on existing inventory.
     description:
-        - Uses a YAML configuration file to define var expresisions and group conditionals
+        - Uses a YAML configuration file with a valid YAML or C(.config) extension to define var expressions and group conditionals
         - The Jinja2 conditionals that qualify a host for membership.
-        - The JInja2 exprpessions are calculated and assigned to the variables
+        - The Jinja2 expressions are calculated and assigned to the variables
         - Only variables already available from previous inventories or the fact cache can be used for templating.
-        - When `strict` is False, failed expressions will be ignored (assumes vars were missing).
+        - When I(strict) is False, failed expressions will be ignored (assumes vars were missing).
+    options:
+        plugin:
+            description: token that ensures this is a source file for the 'constructed' plugin.
+            required: True
+            choices: ['constructed']
     extends_documentation_fragment:
       - constructed
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
     # inventory.config file in YAML format
     plugin: constructed
     strict: False
@@ -43,25 +48,39 @@ EXAMPLES = '''
         multi_group: (group_names|intersection(['alpha', 'beta', 'omega']))|length >= 2
 
     keyed_groups:
-        # this creates a group per distro (distro_CentOS, distro_Debian) and assigns the hosts that have matching values to it
+        # this creates a group per distro (distro_CentOS, distro_Debian) and assigns the hosts that have matching values to it,
+        # using the default separator "_"
         - prefix: distro
           key: ansible_distribution
 
+        # the following examples assume the first inventory is from contrib/inventory/ec2.py
         # this creates a group per ec2 architecture and assign hosts to the matching ones (arch_x86_64, arch_sparc, etc)
         - prefix: arch
           key: ec2_architecture
+
+        # this creates a group per ec2 region like "us_west_1"
+        - prefix: ""
+          separator: ""
+          key: ec2_region
+
+        # this creates a common parent group for all ec2 availability zones
+        - key: ec2_placement
+          parent_group: all_ec2_zones
 '''
 
 import os
 
+from ansible import constants as C
 from ansible.errors import AnsibleParserError
-from ansible.plugins.inventory import BaseInventoryPlugin
+from ansible.inventory.helpers import get_group_vars
+from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
 from ansible.module_utils._text import to_native
 from ansible.utils.vars import combine_vars
+from ansible.vars.fact_cache import FactCache
 
 
-class InventoryModule(BaseInventoryPlugin):
-    """ constructs groups and vars using Jinaj2 template expressions """
+class InventoryModule(BaseInventoryPlugin, Constructable):
+    """ constructs groups and vars using Jinja2 template expressions """
 
     NAME = 'constructed'
 
@@ -69,13 +88,15 @@ class InventoryModule(BaseInventoryPlugin):
 
         super(InventoryModule, self).__init__()
 
+        self._cache = FactCache()
+
     def verify_file(self, path):
 
         valid = False
         if super(InventoryModule, self).verify_file(path):
             file_name, ext = os.path.splitext(path)
 
-            if not ext or ext == '.config':
+            if not ext or ext in ['.config'] + C.YAML_FILENAME_EXTENSIONS:
                 valid = True
 
         return valid
@@ -83,36 +104,34 @@ class InventoryModule(BaseInventoryPlugin):
     def parse(self, inventory, loader, path, cache=False):
         ''' parses the inventory file '''
 
-        super(InventoryModule, self).parse(inventory, loader, path, cache=True)
+        super(InventoryModule, self).parse(inventory, loader, path, cache=cache)
 
-        try:
-            data = self.loader.load_from_file(path)
-        except Exception as e:
-            raise AnsibleParserError("Unable to parse %s: %s" % (to_native(path), to_native(e)))
+        self._read_config_data(path)
 
-        if not data:
-            raise AnsibleParserError("%s is empty" % (to_native(path)))
-        elif data.get('plugin') != self.NAME:
-            raise AnsibleParserError("%s is not a constructed groups config file, plugin entry must be 'constructed'" % (to_native(path)))
-
-        strict = data.get('strict', False)
+        strict = self.get_option('strict')
+        fact_cache = FactCache()
         try:
             # Go over hosts (less var copies)
             for host in inventory.hosts:
 
                 # get available variables to templar
-                hostvars = inventory.hosts[host].get_vars()
-                if host in inventory.cache:  # adds facts if cache is active
-                    hostvars = combine_vars(hostvars, inventory.cache[host])
+                hostvars = combine_vars(get_group_vars(inventory.hosts[host].get_groups()), inventory.hosts[host].get_vars())
+                if host in fact_cache:  # adds facts if cache is active
+                    hostvars = combine_vars(hostvars, fact_cache[host])
 
                 # create composite vars
-                self._set_composite_vars(data.get('compose'), hostvars, host, strict=strict)
+                self._set_composite_vars(self.get_option('compose'), hostvars, host, strict=strict)
+
+                # refetch host vars in case new ones have been created above
+                hostvars = combine_vars(get_group_vars(inventory.hosts[host].get_groups()), inventory.hosts[host].get_vars())
+                if host in self._cache:  # adds facts if cache is active
+                    hostvars = combine_vars(hostvars, self._cache[host])
 
                 # constructed groups based on conditionals
-                self._add_host_to_composed_groups(data.get('groups'), hostvars, host, strict=strict)
+                self._add_host_to_composed_groups(self.get_option('groups'), hostvars, host, strict=strict)
 
                 # constructed groups based variable values
-                self._add_host_to_keyed_groups(data.get('keyed_groups'), hostvars, host, strict=strict)
+                self._add_host_to_keyed_groups(self.get_option('keyed_groups'), hostvars, host, strict=strict)
 
         except Exception as e:
             raise AnsibleParserError("failed to parse %s: %s " % (to_native(path), to_native(e)))

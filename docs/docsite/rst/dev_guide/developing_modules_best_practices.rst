@@ -1,193 +1,174 @@
+.. _developing_modules_best_practices:
 .. _module_dev_conventions:
 
-Conventions, Best Practices, and Pitfalls
-`````````````````````````````````````````
+*******************************
+Conventions, tips, and pitfalls
+*******************************
 
-As a reminder from the example code above, here are some basic conventions
-and guidelines:
+.. contents:: Topics
+   :local:
 
-* If the module is addressing an object, the parameter for that object should be called 'name' whenever possible, or accept 'name' as an alias.
+As you design and develop modules, follow these basic conventions and tips for clean, usable code:
 
-* If you have a company module that returns facts specific to your installations, a good name for this module is `site_facts`.
+Scoping your module(s)
+======================
 
-* Modules accepting boolean status should generally accept 'yes', 'no', 'true', 'false', or anything else a user may likely throw at them.  The AnsibleModule common code supports this with "type='bool'".
+Especially if you want to contribute your module(s) back to Ansible Core, make sure each module includes enough logic and functionality, but not too much. If you're finding these guidelines tricky, consider :ref:`whether you really need to write a module <module_dev_should_you>` at all.
 
-* Include a minimum of dependencies if possible.  If there are dependencies, document them at the top of the module file, and have the module raise JSON error messages when the import fails.
+* Each module should have a concise and well-defined functionality. Basically, follow the UNIX philosophy of doing one thing well.
+* Do not add ``list`` or ``info`` state options to an existing module - create a new ``_facts`` module.
+* Modules should not require that a user know all the underlying options of an API/tool to be used. For instance, if the legal values for a required module parameter cannot be documented, the module does not belong in Ansible Core.
+* Modules should encompass much of the logic for interacting with a resource. A lightweight wrapper around a complex API forces users to offload too much logic into their playbooks. If you want to connect Ansible to a complex API, :ref:`create multiple modules <developing_modules_in_groups>` that interact with smaller individual pieces of the API.
+* Avoid creating a module that does the work of other modules; this leads to code duplication and divergence, and makes things less uniform, unpredictable and harder to maintain. Modules should be the building blocks. If you are asking 'how can I have a module execute other modules' ... you want to write a role.
 
-* Modules must be self-contained in one file to be auto-transferred by ansible.
+Designing module interfaces
+===========================
 
-* If packaging modules in an RPM, they only need to be installed on the control machine and should be dropped into /usr/share/ansible.  This is entirely optional and up to you.
+* If your module is addressing an object, the parameter for that object should be called ``name`` whenever possible, or accept ``name`` as an alias.
+* Modules accepting boolean status should accept ``yes``, ``no``, ``true``, ``false``, or anything else a user may likely throw at them. The AnsibleModule common code supports this with ``type='bool'``.
+* Avoid ``action``/``command``, they are imperative and not declarative, there are other ways to express the same thing.
 
-* Modules must output valid JSON only. The top level return type must be a hash (dictionary) although they can be nested.  Lists or simple scalar values are not supported, though they can be trivially contained inside a dictionary.
+General guidelines & tips
+=========================
 
-* In the event of failure, a key of 'failed' should be included, along with a string explanation in 'msg'.  Modules that raise tracebacks (stacktraces) are generally considered 'poor' modules, though Ansible can deal with these returns and will automatically convert anything unparseable into a failed result.  If you are using the AnsibleModule common Python code, the 'failed' element will be included for you automatically when you call 'fail_json'.
+* Each module should be self-contained in one file, so it can be be auto-transferred by Ansible.
+* Module name MUST use underscores instead of hyphens or spaces as a word separator. Using hyphens and spaces will prevent Ansible from importing your module.
+* Always use the ``hacking/test-module`` script when developing modules - it will warn you about common pitfalls.
+* If you have a local module that returns facts specific to your installations, a good name for this module is ``site_facts``.
+* Eliminate or minimize dependencies. If your module has dependencies, document them at the top of the module file and raise JSON error messages when dependency import fails.
+* Don't write to files directly; use a temporary file and then use the ``atomic_move`` function from ``ansible.module_utils.basic`` to move the updated temporary file into place. This prevents data corruption and ensures that the correct context for the file is kept.
+* Avoid creating caches. Ansible is designed without a central server or authority, so you cannot guarantee it will not run with different permissions, options or locations. If you need a central authority, have it on top of Ansible (for example, using bastion/cm/ci server or tower); do not try to build it into modules.
+* If you package your module(s) in an RPM, install the modules on the control machine in ``/usr/share/ansible``. Packaging modules in RPMs is optional.
 
-* Return codes from modules are actually not significant, but continue on with 0=success and non-zero=failure for reasons of future proofing.
+Functions and Methods
+=====================
 
-* As results from many hosts will be aggregated at once, modules should return only relevant output.  Returning the entire contents of a log file is generally bad form.
+* Each function should be concise and should describe a meaningful amount of work.
+* "Don't repeat yourself" is generally a good philosophy.
+* Function names should use underscores: ``my_function_name``.
+* Each function's name should describes what it does.
+* Each function should have a docstring.
+* If your code is too nested, that's usually a sign the loop body could benefit from being a function. Parts of our existing code are not the best examples of this at times.
 
+Python tips
+===========
 
-.. _debugging_ansiblemodule_based_modules:
-
-Debugging AnsibleModule-based modules
-`````````````````````````````````````
-
-.. tip::
-
-    If you're using the :file:`hacking/test-module` script then most of this
-    is taken care of for you.  If you need to do some debugging of the module
-    on the remote machine that the module will actually run on or when the
-    module is used in a playbook then you may need to use this information
-    instead of relying on test-module.
-
-Starting with Ansible-2.1.0, AnsibleModule-based modules are put together as
-a zip file consisting of the module file and the various python module
-boilerplate inside of a wrapper script instead of as a single file with all of
-the code concatenated together.  Without some help, this can be harder to
-debug as the file needs to be extracted from the wrapper in order to see
-what's actually going on in the module.  Luckily the wrapper script provides
-some helper methods to do just that.
-
-If you are using Ansible with the :envvar:`ANSIBLE_KEEP_REMOTE_FILES`
-environment variables to keep the remote module file, here's a sample of how
-your debugging session will start:
-
-.. code-block:: shell-session
-
-    $ ANSIBLE_KEEP_REMOTE_FILES=1 ansible localhost -m ping -a 'data=debugging_session' -vvv
-    <127.0.0.1> ESTABLISH LOCAL CONNECTION FOR USER: badger
-    <127.0.0.1> EXEC /bin/sh -c '( umask 77 && mkdir -p "` echo $HOME/.ansible/tmp/ansible-tmp-1461434734.35-235318071810595 `" && echo "` echo $HOME/.ansible/tmp/ansible-tmp-1461434734.35-235318071810595 `" )'
-    <127.0.0.1> PUT /var/tmp/tmpjdbJ1w TO /home/badger/.ansible/tmp/ansible-tmp-1461434734.35-235318071810595/ping
-    <127.0.0.1> EXEC /bin/sh -c 'LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 LC_MESSAGES=en_US.UTF-8 /usr/bin/python /home/badger/.ansible/tmp/ansible-tmp-1461434734.35-235318071810595/ping'
-    localhost | SUCCESS => {
-        "changed": false,
-        "invocation": {
-            "module_args": {
-                "data": "debugging_session"
-            },
-            "module_name": "ping"
-        },
-        "ping": "debugging_session"
-    }
-
-Setting :envvar:`ANSIBLE_KEEP_REMOTE_FILES` to ``1`` tells Ansible to keep the
-remote module files instead of deleting them after the module finishes
-executing.  Giving Ansible the ``-vvv`` option makes Ansible more verbose.
-That way it prints the file name of the temporary module file for you to see.
-
-If you want to examine the wrapper file you can.  It will show a small python
-script with a large, base64 encoded string.  The string contains the module
-that is going to be executed.  Run the wrapper's explode command to turn the
-string into some python files that you can work with:
-
-.. code-block:: shell-session
-
-    $ python /home/badger/.ansible/tmp/ansible-tmp-1461434734.35-235318071810595/ping explode
-    Module expanded into:
-    /home/badger/.ansible/tmp/ansible-tmp-1461434734.35-235318071810595/debug_dir
-
-When you look into the debug_dir you'll see a directory structure like this::
-
-    ├── ansible_module_ping.py
-    ├── args
-    └── ansible
-        ├── __init__.py
-        └── module_utils
-            ├── basic.py
-            └── __init__.py
-
-* :file:`ansible_module_ping.py` is the code for the module itself.  The name
-  is based on the name of the module with a prefix so that we don't clash with
-  any other python module names.  You can modify this code to see what effect
-  it would have on your module.
-
-* The :file:`args` file contains a JSON string.  The string is a dictionary
-  containing the module arguments and other variables that Ansible passes into
-  the module to change its behaviour.  If you want to modify the parameters
-  that are passed to the module, this is the file to do it in.
-
-* The :file:`ansible` directory contains code from
-  :mod:`ansible.module_utils` that is used by the module.  Ansible includes
-  files for any :`module:`ansible.module_utils` imports in the module but not
-  any files from any other module.  So if your module uses
-  :mod:`ansible.module_utils.url` Ansible will include it for you, but if
-  your module includes :mod:`requests` then you'll have to make sure that
-  the python requests library is installed on the system before running the
-  module.  You can modify files in this directory if you suspect that the
-  module is having a problem in some of this boilerplate code rather than in
-  the module code you have written.
-
-Once you edit the code or arguments in the exploded tree you need some way to
-run it.  There's a separate wrapper subcommand for this:
-
-.. code-block:: shell-session
-
-    $ python /home/badger/.ansible/tmp/ansible-tmp-1461434734.35-235318071810595/ping execute
-    {"invocation": {"module_args": {"data": "debugging_session"}}, "changed": false, "ping": "debugging_session"}
-
-This subcommand takes care of setting the PYTHONPATH to use the exploded
-:file:`debug_dir/ansible/module_utils` directory and invoking the script using
-the arguments in the :file:`args` file.  You can continue to run it like this
-until you understand the problem.  Then you can copy it back into your real
-module file and test that the real module works via :command:`ansible` or
-:command:`ansible-playbook`.
-
-.. note::
-
-    The wrapper provides one more subcommand, ``excommunicate``.  This
-    subcommand is very similar to ``execute`` in that it invokes the exploded
-    module on the arguments in the :file:`args`.  The way it does this is
-    different, however.  ``excommunicate`` imports the :func:`main`
-    function from the module and then calls that.  This makes excommunicate
-    execute the module in the wrapper's process.  This may be useful for
-    running the module under some graphical debuggers but it is very different
-    from the way the module is executed by Ansible itself.  Some modules may
-    not work with ``excommunicate`` or may behave differently than when used
-    with Ansible normally.  Those are not bugs in the module; they're
-    limitations of ``excommunicate``.  Use at your own risk.
-
-
-Module Paths
-````````````
-
-If you are having trouble getting your module "found" by ansible, be
-sure it is in the :envvar:`ANSIBLE_LIBRARY` environment variable.
-
-If you have a fork of one of the ansible module projects, do something like this::
-
-    ANSIBLE_LIBRARY=~/ansible-modules-core
-
-And this will make the items in your fork be loaded ahead of what ships with Ansible.  Just be sure
-to make sure you're not reporting bugs on versions from your fork!
-
-To be safe, if you're working on a variant on something in Ansible's normal distribution, it's not
-a bad idea to give it a new name while you are working on it, to be sure you know you're pulling
-your version.
-
-Common Pitfalls
-```````````````
-
-You should never do this in a module:
+* When fetching URLs, use ``fetch_url`` or ``open_url`` from ``ansible.module_utils.urls``. Do not use ``urllib2``, which does not natively verify TLS certificates and so is insecure for https.
+* Include a ``main`` function that wraps the normal execution.
+* Call your ``main`` function from a conditional so you can import it into unit tests - for example:
 
 .. code-block:: python
 
-    print("some status message")
+    if __name__ == '__main__':
+        main()
 
-Because the output is supposed to be valid JSON.
+.. _shared_code:
 
-Modules must not output anything on standard error, because the system will merge
-standard out with standard error and prevent the JSON from parsing. Capturing standard
-error and returning it as a variable in the JSON on standard out is fine, and is, in fact,
-how the command module is implemented.
+Importing and using shared code
+===============================
 
-If a module returns stderr or otherwise fails to produce valid JSON, the actual output
-will still be shown in Ansible, but the command will not succeed.
+* Use shared code whenever possible - don't reinvent the wheel. Ansible offers the ``AnsibleModule`` common Python code, plus :ref:`utilities <appendix_module_utilities>` for many common use cases and patterns.
+* Import ``ansible.module_utils`` code in the same place as you import other libraries.
+* Do NOT use wildcards (*) for importing other python modules; instead, list the function(s) you are importing (for example, ``from some.other_python_module.basic import otherFunction``).
+* Import custom packages in ``try``/``except``, capture any import errors, and handle them with ``fail_json()`` in ``main()``. For example:
 
-Don't write to files directly; use a temporary file and then use the `atomic_move` function from `ansible.module_utils.basic` to move the updated temporary file into place. This prevents data corruption and ensures that the correct context for the file is kept.
+.. code-block:: python
 
-Avoid creating a module that does the work of other modules; this leads to code duplication and divergence, and makes things less uniform, unpredictable and harder to maintain. Modules should be the building blocks. Instead of creating a module that does the work of other modules, use Plays and Roles instead.  
+    import traceback
 
-Avoid creating 'caches'. Ansible is designed without a central server or authority, so you cannot guarantee it will not run with different permissions, options or locations. If you need a central authority, have it on top of Ansible (for example, using bastion/cm/ci server or tower); do not try to build it into modules.
+    from ansible.basic import missing_required_lib
 
-Always use the hacking/test-module script when developing modules and it will warn
-you about these kind of things.
+    LIB_IMP_ERR = None
+    try:
+        import foo
+        HAS_LIB = True
+    except:
+        HAS_LIB = False
+        LIB_IMP_ERR = traceback.format_exc()
+
+
+Then in ``main()``, just after the argspec, do
+
+.. code-block:: python
+
+    if not HAS_LIB:
+        module.fail_json(msg=missing_required_lib("foo"),
+                         exception=LIB_IMP_ERR)
+
+
+And document the dependency in the ``requirements`` section of your module's :ref:`documentation_block`.
+
+.. _module_failures:
+
+Handling module failures
+========================
+
+When your module fails, help users understand what went wrong. If you are using the ``AnsibleModule`` common Python code, the ``failed`` element will be included for you automatically when you call ``fail_json``. For polite module failure behavior:
+
+* Include a key of ``failed`` along with a string explanation in ``msg``. If you don't do this, Ansible will use standard return codes: 0=success and non-zero=failure.
+* Don't raise a traceback (stacktrace). Ansible can deal with stacktraces and automatically converts anything unparseable into a failed result, but raising a stacktrace on module failure is not user-friendly.
+* Do not use ``sys.exit()``. Use ``fail_json()`` from the module object.
+
+Handling exceptions (bugs) gracefully
+=====================================
+
+* Validate upfront--fail fast and return useful and clear error messages.
+* Use defensive programming--use a simple design for your module, handle errors gracefully, and avoid direct stacktraces.
+* Fail predictably--if we must fail, do it in a way that is the most expected. Either mimic the underlying tool or the general way the system works.
+* Give out a useful message on what you were doing and add exception messages to that.
+* Avoid catchall exceptions, they are not very useful unless the underlying API gives very good error messages pertaining the attempted action.
+
+.. _module_output:
+
+Creating correct and informative module output
+==============================================
+
+Modules must output valid JSON only. Follow these guidelines for creating correct, useful module output:
+
+* Make your top-level return type a hash (dictionary).
+* Nest complex return values within the top-level hash.
+* Incorporate any lists or simple scalar values within the top-level return hash.
+* Do not send module output to standard error, because the system will merge standard out with standard error and prevent the JSON from parsing.
+* Capture standard error and return it as a variable in the JSON on standard out. This is how the command module is implemented.
+* Never do ``print("some status message")`` in a module, because it will not produce valid JSON output.
+* Always return useful data, even when there is no change.
+* Be consistent about returns (some modules are too random), unless it is detrimental to the state/action.
+* Make returns reusable--most of the time you don't want to read it, but you do want to process it and re-purpose it.
+* Return diff if in diff mode. This is not required for all modules, as it won't make sense for certain ones, but please include it when applicable.
+* Enable your return values to be serialized as JSON with Python's standard `JSON encoder and decoder <https://docs.python.org/3/library/json.html>`_ library. Basic python types (strings, int, dicts, lists, etc) are serializable.
+* Do not return an object via exit_json(). Instead, convert the fields you need from the object into the fields of a dictionary and return the dictionary.
+* Results from many hosts will be aggregated at once, so your module should return only relevant output. Returning the entire contents of a log file is generally bad form.
+
+If a module returns stderr or otherwise fails to produce valid JSON, the actual output will still be shown in Ansible, but the command will not succeed.
+
+.. _module_conventions:
+
+Following Ansible conventions
+=============================
+
+Ansible conventions offer a predictable user interface across all modules, playbooks, and roles. To follow Ansible conventions in your module development:
+
+* Use consistent names across modules (yes, we have many legacy deviations - don't make the problem worse!).
+* Use consistent parameters (arguments) within your module(s).
+* Normalize parameters with other modules - if Ansible and the API your module connects to use different names for the same parameter, add aliases to your parameters so the user can choose which names to use in tasks and playbooks.
+* Return facts from ``*_facts`` modules in the ``ansible_facts`` field of the :ref:`result dictionary<common_return_values>` so other modules can access them.
+* Implement ``check_mode`` in all ``*_facts`` modules. Playbooks which conditionalize based on fact information will only conditionalize correctly in ``check_mode`` if the facts are returned in ``check_mode``. Usually you can add ``check_mode=True`` when instantiating ``AnsibleModule``.
+* Use module-specific environment variables. For example, if you use the helpers in ``module_utils.api`` for basic authentication with ``module_utils.urls.fetch_url()`` and you fall back on environment variables for default values, use a module-specific environment variable like :code:`API_<MODULENAME>_USERNAME` to avoid conflict between modules.
+* Keep module options simple and focused - if you're loading a lot of choices/states on an existing option, consider adding a new, simple option instead.
+* Keep options small when possible. Passing a large data structure to an option might save us a few tasks, but it adds a complex requirement that we cannot easily validate before passing on to the module.
+* If you want to pass complex data to an option, write an expert module that allows this, along with several smaller modules that provide a more 'atomic' operation against the underlying APIs and services. Complex operations require complex data. Let the user choose whether to reflect that complexity in tasks and plays or in  vars files.
+* Implement declarative operations (not CRUD) so the user can ignore existing state and focus on final state. For example, use ``started/stopped``, ``present/absent``.
+* Strive for a consistent final state (aka idempotency). If running your module twice in a row against the same system would result in two different states, see if you can redesign or rewrite to achieve consistent final state. If you can't, document the behavior and the reasons for it.
+* Provide consistent return values within the standard Ansible return structure, even if NA/None are used for keys normally returned under other options.
+* Follow additional guidelines that apply to families of modules if applicable. For example, AWS modules should follow `the Amazon guidelines <https://github.com/ansible/ansible/blob/devel/lib/ansible/modules/cloud/amazon/GUIDELINES.md>`_
+
+Module Security
+===============
+
+* Avoid passing user input from the shell.
+* Always check return codes.
+* You must always use ``module.run_command``, not ``subprocess`` or ``Popen`` or ``os.system``.
+* Avoid using the shell unless absolutely necessary.
+* If you must use the shell, you must pass ``use_unsafe_shell=True`` to ``module.run_command``.
+* If any variables in your module can come from user input with ``use_unsafe_shell=True``, you must wrap them with ``pipes.quote(x)``.
+* When fetching URLs, use ``fetch_url`` or ``open_url`` from ``ansible.module_utils.urls``. Do not use ``urllib2``, which does not natively verify TLS certificates and so is insecure for https.

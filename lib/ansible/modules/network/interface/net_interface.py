@@ -22,6 +22,7 @@ short_description: Manage Interface on network devices
 description:
   - This module provides declarative management of Interfaces
     on network devices.
+extends_documentation_fragment: network_agnostic
 options:
   name:
     description:
@@ -47,9 +48,13 @@ options:
   tx_rate:
     description:
       - Transmit rate in bits per second (bps).
+      - This is state check parameter only.
+      - Supports conditionals, see L(Conditionals in Networking Modules,../network/user_guide/network_working_with_command_output.html)
   rx_rate:
     description:
       - Receiver rate in bits per second (bps).
+      - This is state check parameter only.
+      - Supports conditionals, see L(Conditionals in Networking Modules,../network/user_guide/network_working_with_command_output.html)
   delay:
     description:
       - Time in seconds to wait before checking for the operational state on remote

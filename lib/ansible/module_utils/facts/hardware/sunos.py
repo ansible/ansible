@@ -20,7 +20,7 @@ import re
 
 from ansible.module_utils.six.moves import reduce
 
-from ansible.module_utils.basic import bytes_to_human
+from ansible.module_utils.common.text.formatters import bytes_to_human
 
 from ansible.module_utils.facts.utils import get_file_content, get_mount_size
 
@@ -168,17 +168,38 @@ class SunOSHardware(Hardware):
     def get_dmi_facts(self):
         dmi_facts = {}
 
-        uname_path = self.module.get_bin_path("prtdiag")
-        rc, out, err = self.module.run_command(uname_path)
+        # On Solaris 8 the prtdiag wrapper is absent from /usr/sbin,
+        # but that's okay, because we know where to find the real thing:
+        rc, platform, err = self.module.run_command('/usr/bin/uname -i')
+        platform_sbin = '/usr/platform/' + platform.rstrip() + '/sbin'
+
+        prtdiag_path = self.module.get_bin_path("prtdiag", opt_dirs=[platform_sbin])
+        rc, out, err = self.module.run_command(prtdiag_path)
         """
         rc returns 1
         """
         if out:
             system_conf = out.split('\n')[0]
-            found = re.search(r'(\w+\sEnterprise\s\w+)', system_conf)
 
+            # If you know of any other manufacturers whose names appear in
+            # the first line of prtdiag's output, please add them here:
+            vendors = [
+                "Fujitsu",
+                "Oracle Corporation",
+                "QEMU",
+                "Sun Microsystems",
+                "VMware, Inc.",
+            ]
+            vendor_regexp = "|".join(map(re.escape, vendors))
+            system_conf_regexp = (r'System Configuration:\s+'
+                                  + r'(' + vendor_regexp + r')\s+'
+                                  + r'(?:sun\w+\s+)?'
+                                  + r'(.+)')
+
+            found = re.match(system_conf_regexp, system_conf)
             if found:
-                dmi_facts['product_name'] = found.group(1)
+                dmi_facts['system_vendor'] = found.group(1)
+                dmi_facts['product_name'] = found.group(2)
 
         return dmi_facts
 
@@ -199,6 +220,7 @@ class SunOSHardware(Hardware):
         # sderr:0:sd0,err:Vendor  ATA
 
         device_facts = {}
+        device_facts['devices'] = {}
 
         disk_stats = {
             'Product': 'product',
@@ -263,3 +285,5 @@ class SunOSHardware(Hardware):
 class SunOSHardwareCollector(HardwareCollector):
     _fact_class = SunOSHardware
     _platform = 'SunOS'
+
+    required_facts = set(['platform'])

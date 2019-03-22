@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = """
@@ -39,39 +39,25 @@ options:
   default_visibility_timeout:
     description:
       - The default visibility timeout in seconds.
-    required: false
-    default: null
   message_retention_period:
     description:
       - The message retention period in seconds.
-    required: false
-    default: null
   maximum_message_size:
     description:
       - The maximum message size in bytes.
-    required: false
-    default: null
   delivery_delay:
     description:
       - The delivery delay in seconds.
-    required: false
-    default: null
   receive_message_wait_time:
     description:
       - The receive message wait time in seconds.
-    required: false
-    default: null
   policy:
     description:
       - The json dict policy to attach to queue
-    required: false
-    default: null
     version_added: "2.1"
   redrive_policy:
     description:
       - json dict with the redrive_policy (see example)
-    required: false
-    default: null
     version_added: "2.2"
 extends_documentation_fragment:
     - aws
@@ -101,12 +87,12 @@ message_retention_period:
     sample: 345600
 name:
     description: Name of the SQS Queue
-    type: string
+    type: str
     returned: always
     sample: "queuename-987d2de0"
 queue_arn:
     description: The queue's Amazon resource name (ARN).
-    type: string
+    type: str
     returned: on successful creation or update of the queue
     sample: 'arn:aws:sqs:us-east-1:199999999999:queuename-987d2de0'
 receive_message_wait_time:
@@ -116,7 +102,7 @@ receive_message_wait_time:
     sample: 0
 region:
     description: Region that the queue was created within
-    type: string
+    type: str
     returned: always
     sample: 'us-east-1'
 '''
@@ -233,12 +219,12 @@ def update_sqs_queue(queue,
 
 
 def set_queue_attribute(queue, attribute, value, check_mode=False):
-    if not value:
+    if not value and value != 0:
         return False
 
     try:
         existing_value = queue.get_attributes(attributes=attribute)[attribute]
-    except:
+    except Exception:
         existing_value = ''
 
     # convert dict attributes to JSON strings (sort keys for comparing)

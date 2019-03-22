@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -26,41 +26,37 @@ options:
     description:
         - present to ensure resource is created.
         - absent to remove resource
-    required: false
     default: present
     choices: [ "present", "absent"]
   name:
     description:
         - name of the vgw to be created or deleted
-    required: false
   type:
     description:
         - type of the virtual gateway to be created
-    required: false
     choices: [ "ipsec.1" ]
   vpn_gateway_id:
     description:
         - vpn gateway id of an existing virtual gateway
-    required: false
   vpc_id:
     description:
         - the vpc-id of a vpc to attach or detach
-    required: false
+  asn:
+    description:
+        - the BGP ASN of the amazon side
+    version_added: "2.6"
   wait_timeout:
     description:
         - number of seconds to wait for status during vpc attach and detach
-    required: false
     default: 320
   tags:
     description:
         - dictionary of resource tags
-    required: false
-    default: null
     aliases: [ "resource_tags" ]
 author: Nick Aslanidis (@naslanidis)
 extends_documentation_fragment:
-  - aws
   - ec2
+  - aws
 '''
 
 EXAMPLES = '''
@@ -108,7 +104,7 @@ RETURN = '''
 result:
   description: The result of the create, or delete action.
   returned: success
-  type: dictionary
+  type: dict
 '''
 
 import time
@@ -121,8 +117,10 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
+from ansible.module_utils.aws.core import is_boto3_error_code
+from ansible.module_utils.aws.waiters import get_waiter
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import HAS_BOTO3, boto3_conn, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.ec2 import HAS_BOTO3, boto3_conn, ec2_argument_spec, get_aws_connection_info, AWSRetry
 from ansible.module_utils._text import to_native
 
 
@@ -146,6 +144,7 @@ def get_vgw_info(vgws):
             vgw_info['vpc_id'] = vgw['VpcAttachments'][0]['VpcId']
 
         return vgw_info
+
 
 def wait_for_status(client, module, vpn_gateway_id, status):
     polling_increment_secs = 15
@@ -172,7 +171,7 @@ def attach_vgw(client, module, vpn_gateway_id):
     params['VpcId'] = module.params.get('vpc_id')
 
     try:
-        response = client.attach_vpn_gateway(VpnGatewayId=vpn_gateway_id, VpcId=params['VpcId'])
+        response = AWSRetry.jittered_backoff()(client.attach_vpn_gateway)(VpnGatewayId=vpn_gateway_id, VpcId=params['VpcId'])
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
@@ -210,10 +209,22 @@ def detach_vgw(client, module, vpn_gateway_id, vpc_id=None):
 def create_vgw(client, module):
     params = dict()
     params['Type'] = module.params.get('type')
+    if module.params.get('asn'):
+        params['AmazonSideAsn'] = module.params.get('asn')
 
     try:
-        response = client.create_vpn_gateway(Type=params['Type'])
-    except botocore.exceptions.ClientError as e:
+        response = client.create_vpn_gateway(**params)
+        get_waiter(
+            client, 'vpn_gateway_exists'
+        ).wait(
+            VpnGatewayIds=[response['VpnGateway']['VpnGatewayId']]
+        )
+    except botocore.exceptions.WaiterError as e:
+        module.fail_json(msg="Failed to wait for Vpn Gateway {0} to be available".format(response['VpnGateway']['VpnGatewayId']),
+                         exception=traceback.format_exc())
+    except is_boto3_error_code('VpnGatewayLimitExceeded'):
+        module.fail_json(msg="Too many VPN gateways exist in this account.", exception=traceback.format_exc())
+    except botocore.exceptions.ClientError as e:  # pylint: disable=duplicate-except
         module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
     result = response
@@ -227,7 +238,7 @@ def delete_vgw(client, module, vpn_gateway_id):
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
-    #return the deleted VpnGatewayId as this is not included in the above response
+    # return the deleted VpnGatewayId as this is not included in the above response
     result = vpn_gateway_id
     return result
 
@@ -236,7 +247,7 @@ def create_tags(client, module, vpn_gateway_id):
     params = dict()
 
     try:
-        response = client.create_tags(Resources=[vpn_gateway_id],Tags=load_tags(module))
+        response = client.create_tags(Resources=[vpn_gateway_id], Tags=load_tags(module))
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
@@ -280,7 +291,7 @@ def find_tags(client, module, resource_id=None):
         try:
             response = client.describe_tags(Filters=[
                 {'Name': 'resource-id', 'Values': [resource_id]}
-                ])
+            ])
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
@@ -295,7 +306,7 @@ def check_tags(client, module, existing_vgw, vpn_gateway_id):
     changed = False
     tags_list = {}
 
-    #format tags for comparison
+    # format tags for comparison
     for tags in existing_vgw[0]['Tags']:
         if tags['Key'] != 'Name':
             tags_list[tags['Key']] = tags['Value']
@@ -307,7 +318,7 @@ def check_tags(client, module, existing_vgw, vpn_gateway_id):
         vgw = find_vgw(client, module)
         changed = True
 
-    #if no tag args are supplied, delete any existing tags with the exception of the name tag
+    # if no tag args are supplied, delete any existing tags with the exception of the name tag
     if params['Tags'] is None and tags_list != {}:
         tags_to_delete = []
         for tags in existing_vgw[0]['Tags']:
@@ -337,37 +348,21 @@ def find_vpc(client, module):
 
 def find_vgw(client, module, vpn_gateway_id=None):
     params = dict()
-    params['Name'] = module.params.get('name')
-    params['Type'] = module.params.get('type')
-    params['State'] = module.params.get('state')
-
-    if params['State'] == 'present':
-        try:
-            response = client.describe_vpn_gateways(Filters=[
-                {'Name': 'type', 'Values': [params['Type']]},
-                {'Name': 'tag:Name', 'Values': [params['Name']]}
-                ])
-        except botocore.exceptions.ClientError as e:
-            module.fail_json(msg=to_native(e), exception=traceback.format_exc())
-
+    if vpn_gateway_id:
+        params['VpnGatewayIds'] = vpn_gateway_id
     else:
-        if vpn_gateway_id:
-            try:
-                response = client.describe_vpn_gateways(VpnGatewayIds=vpn_gateway_id)
-            except botocore.exceptions.ClientError as e:
-                module.fail_json(msg=to_native(e), exception=traceback.format_exc())
+        params['Filters'] = [
+            {'Name': 'type', 'Values': [module.params.get('type')]},
+            {'Name': 'tag:Name', 'Values': [module.params.get('name')]},
+        ]
+        if module.params.get('state') == 'present':
+            params['Filters'].append({'Name': 'state', 'Values': ['pending', 'available']})
+    try:
+        response = client.describe_vpn_gateways(**params)
+    except botocore.exceptions.ClientError as e:
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
-        else:
-            try:
-                response = client.describe_vpn_gateways(Filters=[
-                    {'Name': 'type', 'Values': [params['Type']]},
-                    {'Name': 'tag:Name', 'Values': [params['Name']]}
-                    ])
-            except botocore.exceptions.ClientError as e:
-                module.fail_json(msg=to_native(e), exception=traceback.format_exc())
-
-    result = response['VpnGateways']
-    return result
+    return sorted(response['VpnGateways'], key=lambda k: k['VpnGatewayId'])
 
 
 def ensure_vgw_present(client, module):
@@ -384,40 +379,33 @@ def ensure_vgw_present(client, module):
     params['Tags'] = module.params.get('tags')
     params['VpnGatewayIds'] = module.params.get('vpn_gateway_id')
 
-    # Check that a name argument has been supplied.
-    if not module.params.get('name'):
-        module.fail_json(msg='A name is required when a status of \'present\' is suppled')
+    # check that the vpc_id exists. If not, an exception is thrown
+    if params['VpcId']:
+        vpc = find_vpc(client, module)
 
     # check if a gateway matching our module args already exists
     existing_vgw = find_vgw(client, module)
 
-    if existing_vgw != [] and existing_vgw[0]['State'] != 'deleted':
+    if existing_vgw != []:
         vpn_gateway_id = existing_vgw[0]['VpnGatewayId']
         vgw, changed = check_tags(client, module, existing_vgw, vpn_gateway_id)
 
         # if a vpc_id was provided, check if it exists and if it's attached
         if params['VpcId']:
 
-            # check that the vpc_id exists. If not, an exception is thrown
-            vpc = find_vpc(client, module)
             current_vpc_attachments = existing_vgw[0]['VpcAttachments']
 
             if current_vpc_attachments != [] and current_vpc_attachments[0]['State'] == 'attached':
-                if current_vpc_attachments[0]['VpcId'] == params['VpcId'] and current_vpc_attachments[0]['State'] == 'attached':
-                    changed = False
-                else:
-
+                if current_vpc_attachments[0]['VpcId'] != params['VpcId'] or current_vpc_attachments[0]['State'] != 'attached':
                     # detach the existing vpc from the virtual gateway
                     vpc_to_detach = current_vpc_attachments[0]['VpcId']
                     detach_vgw(client, module, vpn_gateway_id, vpc_to_detach)
                     time.sleep(5)
                     attached_vgw = attach_vgw(client, module, vpn_gateway_id)
-                    vgw = find_vgw(client, module, [vpn_gateway_id])
                     changed = True
             else:
                 # attach the vgw to the supplied vpc
                 attached_vgw = attach_vgw(client, module, vpn_gateway_id)
-                vgw = find_vgw(client, module, [vpn_gateway_id])
                 changed = True
 
         # if params['VpcId'] is not provided, check the vgw is attached to a vpc. if so, detach it.
@@ -431,8 +419,6 @@ def ensure_vgw_present(client, module):
                     detach_vgw(client, module, vpn_gateway_id, vpc_to_detach)
                     changed = True
 
-                vgw = find_vgw(client, module, [vpn_gateway_id])
-
     else:
         # create a new vgw
         new_vgw = create_vgw(client, module)
@@ -442,15 +428,13 @@ def ensure_vgw_present(client, module):
         # tag the new virtual gateway
         create_tags(client, module, vpn_gateway_id)
 
-        # return current state of the vgw
-        vgw = find_vgw(client, module, [vpn_gateway_id])
-
         # if a vpc-id was supplied, attempt to attach it to the vgw
         if params['VpcId']:
             attached_vgw = attach_vgw(client, module, vpn_gateway_id)
             changed = True
-            vgw = find_vgw(client, module, [vpn_gateway_id])
 
+    # return current state of the vgw
+    vgw = find_vgw(client, module, [vpn_gateway_id])
     result = get_vgw_info(vgw)
     return changed, result
 
@@ -502,7 +486,7 @@ def ensure_vgw_absent(client, module):
             deleted_vgw = "Nothing to do"
 
     else:
-        #Check that a name and type argument has been supplied if no vgw-id
+        # Check that a name and type argument has been supplied if no vgw-id
         if not module.params.get('name') or not module.params.get('type'):
             module.fail_json(msg='A name and type is required when no vgw-id and a status of \'absent\' is suppled')
 
@@ -518,7 +502,7 @@ def ensure_vgw_absent(client, module):
                         # detach the vpc from the vgw
                         detach_vgw(client, module, vpn_gateway_id, params['VpcId'])
 
-                        #now that the vpc has been detached, delete the vgw
+                        # now that the vpc has been detached, delete the vgw
                         deleted_vgw = delete_vgw(client, module, vpn_gateway_id)
                         changed = True
 
@@ -528,7 +512,7 @@ def ensure_vgw_absent(client, module):
                     detach_vgw(client, module, vpn_gateway_id, vpc_to_detach)
                     changed = True
 
-                    #now that the vpc has been detached, delete the vgw
+                    # now that the vpc has been detached, delete the vgw
                     deleted_vgw = delete_vgw(client, module, vpn_gateway_id)
 
             else:
@@ -552,12 +536,14 @@ def main():
         name=dict(),
         vpn_gateway_id=dict(),
         vpc_id=dict(),
+        asn=dict(type='int'),
         wait_timeout=dict(type='int', default=320),
         type=dict(default='ipsec.1', choices=['ipsec.1']),
         tags=dict(default=None, required=False, type='dict', aliases=['resource_tags']),
-        )
     )
-    module = AnsibleModule(argument_spec=argument_spec)
+    )
+    module = AnsibleModule(argument_spec=argument_spec,
+                           required_if=[['state', 'present', ['name']]])
 
     if not HAS_BOTO3:
         module.fail_json(msg='json and boto3 is required.')

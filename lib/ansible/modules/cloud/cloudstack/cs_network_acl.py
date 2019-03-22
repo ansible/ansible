@@ -2,21 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # (c) 2017, René Moser <mail@renemoser.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -28,72 +14,69 @@ module: cs_network_acl
 short_description: Manages network access control lists (ACL) on Apache CloudStack based clouds.
 description:
     - Create and remove network ACLs.
-version_added: "2.4"
-author: "René Moser (@resmo)"
+version_added: '2.4'
+author: René Moser (@resmo)
 options:
   name:
     description:
       - Name of the network ACL.
+    type: str
     required: true
   description:
     description:
       - Description of the network ACL.
-      - If not set, identical to C(name).
-    required: false
-    default: null
+      - If not set, identical to I(name).
+    type: str
   vpc:
     description:
       - VPC the network ACL is related to.
+    type: str
     required: true
   state:
     description:
       - State of the network ACL.
-    required: false
-    default: 'present'
-    choices: [ 'present', 'absent' ]
+    type: str
+    default: present
+    choices: [ present, absent ]
   domain:
     description:
       - Domain the network ACL rule is related to.
-    required: false
-    default: null
+    type: str
   account:
     description:
       - Account the network ACL rule is related to.
-    required: false
-    default: null
+    type: str
   project:
     description:
       - Name of the project the network ACL is related to.
-    required: false
-    default: null
+    type: str
   zone:
     description:
       - Name of the zone the VPC is related to.
       - If not set, default zone is used.
-    required: false
-    default: null
+    type: str
   poll_async:
     description:
       - Poll async jobs until job has finished.
-    required: false
-    default: true
+    type: bool
+    default: yes
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# create a network ACL
-local_action:
-  module: cs_network_acl
-  name: Webserver ACL
-  description: a more detailed description of the ACL
-  vpc: customers
+- name: create a network ACL
+  cs_network_acl:
+    name: Webserver ACL
+    description: a more detailed description of the ACL
+    vpc: customers
+  delegate_to: localhost
 
-# remove a network ACL
-local_action:
-  module: cs_network_acl
-  name: Webserver ACL
-  vpc: customers
-  state: absent
+- name: remove a network ACL
+  cs_network_acl:
+    name: Webserver ACL
+    vpc: customers
+    state: absent
+  delegate_to: localhost
 '''
 
 RETURN = '''
@@ -101,22 +84,22 @@ RETURN = '''
 name:
   description: Name of the network ACL.
   returned: success
-  type: string
+  type: str
   sample: customer acl
 description:
   description: Description of the network ACL.
   returned: success
-  type: string
+  type: str
   sample: Example description of a network ACL
 vpc:
   description: VPC of the network ACL.
   returned: success
-  type: string
+  type: str
   sample: customer vpc
 zone:
   description: Zone the VPC is related to.
   returned: success
-  type: string
+  type: str
   sample: ch-gva-2
 '''
 

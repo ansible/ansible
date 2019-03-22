@@ -70,10 +70,7 @@ try:
 except ImportError:
     import configparser
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
 try:
     import ovirtsdk4 as sdk
@@ -124,10 +121,10 @@ def create_connection():
     # Create parser and add ovirt section if it doesn't exist:
     config = configparser.SafeConfigParser(
         defaults={
-            'ovirt_url': None,
-            'ovirt_username': None,
-            'ovirt_password': None,
-            'ovirt_ca_file': None,
+            'ovirt_url': os.environ.get('OVIRT_URL'),
+            'ovirt_username': os.environ.get('OVIRT_USERNAME'),
+            'ovirt_password': os.environ.get('OVIRT_PASSWORD'),
+            'ovirt_ca_file': os.environ.get('OVIRT_CAFILE'),
         }
     )
     if not config.has_section('ovirt'):
@@ -138,7 +135,7 @@ def create_connection():
     return sdk.Connection(
         url=config.get('ovirt', 'ovirt_url'),
         username=config.get('ovirt', 'ovirt_username'),
-        password=config.get('ovirt', 'ovirt_password'),
+        password=config.get('ovirt', 'ovirt_password', raw=True),
         ca_file=config.get('ovirt', 'ovirt_ca_file'),
         insecure=config.get('ovirt', 'ovirt_ca_file') is None,
     )
@@ -257,6 +254,7 @@ def main():
             indent=args.pretty * 2,
         )
     )
+
 
 if __name__ == '__main__':
     main()

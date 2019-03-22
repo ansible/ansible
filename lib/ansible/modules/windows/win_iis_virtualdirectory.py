@@ -1,63 +1,53 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2015, Henrik Wallström <henrik@wallstroms.nu>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2015, Henrik Wallström <henrik@wallstroms.nu>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = r'''
 ---
 module: win_iis_virtualdirectory
 version_added: "2.0"
-short_description: Configures a virtual directory in IIS.
+short_description: Configures a virtual directory in IIS
 description:
      - Creates, Removes and configures a virtual directory in IIS.
 options:
   name:
     description:
-      - The name of the virtual directory to create or remove
-    required: true
+      - The name of the virtual directory to create or remove.
+    type: str
+    required: yes
   state:
     description:
-      - Whether to add or remove the specified virtual directory
-    choices:
-      - absent
-      - present
-    required: false
+      - Whether to add or remove the specified virtual directory.
+    type: str
+    choices: [ absent, present ]
     default: present
   site:
     description:
       - The site name under which the virtual directory is created or exists.
-    required: true
+    type: str
+    required: yes
   application:
     description:
       - The application under which the virtual directory is created or exists.
-    required: false
-    default: null
+    type: str
   physical_path:
     description:
-      - The physical path to the folder in which the new virtual directory is created. The specified folder must already exist.
-    required: false
-    default: null
-author: Henrik Wallström
+      - The physical path to the folder in which the new virtual directory is created.
+      - The specified folder must already exist.
+    type: str
+seealso:
+- module: win_iis_webapplication
+- module: win_iis_webapppool
+- module: win_iis_webbinding
+- module: win_iis_website
+author:
+- Henrik Wallström (@henrikwallstrom)
 '''
 
 EXAMPLES = r'''
@@ -66,7 +56,7 @@ EXAMPLES = r'''
     name: somedirectory
     site: somesite
     state: present
-    physical_path: c:\virtualdirectory\some
+    physical_path: C:\virtualdirectory\some
 
 - name: Remove a virtual directory if it exists
   win_iis_virtualdirectory:
@@ -80,5 +70,5 @@ EXAMPLES = r'''
     site: somesite
     application: someapp
     state: present
-    physical_path: c:\virtualdirectory\some
+    physical_path: C:\virtualdirectory\some
 '''

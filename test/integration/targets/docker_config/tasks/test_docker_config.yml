@@ -1,0 +1,133 @@
+---
+- block:
+  - shell: "docker info --format '{% raw %}{{json .}}{% endraw %}' | python -m json.tool"
+
+  - name: Make sure we're not already using Docker swarm
+    docker_swarm:
+      state: absent
+      force: true
+
+  - shell: "docker info --format '{% raw %}{{json .}}{% endraw %}' | python -m json.tool"
+
+  - name: Create a Swarm cluster
+    docker_swarm:
+      state: present
+      advertise_addr: "{{ansible_default_ipv4.address}}"
+
+  - name: Parameter name should be required
+    docker_config:
+      state: present
+    ignore_errors: yes
+    register: output
+
+  - name: assert failure when called with no name
+    assert:
+      that:
+         - 'output.failed'
+         - 'output.msg == "missing required arguments: name"'
+
+  - name: Test parameters
+    docker_config:
+      name: foo
+      state: present
+    ignore_errors: yes
+    register: output
+
+  - name: assert failure when called with no data
+    assert:
+      that:
+         - 'output.failed'
+         - 'output.msg == "state is present but all of the following are missing: data"'
+
+  - name: Create config
+    docker_config:
+      name: db_password
+      data: opensesame!
+      state: present
+    register: output
+
+  - name: Create variable config_id
+    set_fact:
+      config_id: "{{ output.config_id }}"
+
+  - name: Inspect config
+    command: "docker config inspect {{ config_id }}"
+    register: inspect
+
+  - debug: var=inspect
+
+  - name: assert config creation succeeded
+    assert:
+      that:
+         - "'db_password' in inspect.stdout"
+         - "'ansible_key' in inspect.stdout"
+
+  - name: Create config again
+    docker_config:
+      name: db_password
+      data: opensesame!
+      state: present
+    register: output
+
+  - name: assert create config is idempotent
+    assert:
+      that:
+         - not output.changed
+
+  - name: Create config again (base64)
+    docker_config:
+      name: db_password
+      data: b3BlbnNlc2FtZSE=
+      data_is_b64: true
+      state: present
+    register: output
+
+  - name: assert create config (base64) is idempotent
+    assert:
+      that:
+         - not output.changed
+
+  - name: Update config
+    docker_config:
+      name: db_password
+      data: newpassword!
+      state: present
+    register: output
+
+  - name: assert config was updated
+    assert:
+      that:
+         - output.changed
+         - output.config_id != config_id
+
+  - name: Remove config
+    docker_config:
+      name: db_password
+      state: absent
+
+  - name: Check that config is removed
+    command: "docker config inspect {{ config_id }}"
+    register: output
+    ignore_errors: yes
+
+  - name: assert config was removed
+    assert:
+      that:
+        - output.failed
+
+  - name: Remove config
+    docker_config:
+      name: db_password
+      state: absent
+    register: output
+
+  - name: assert remove config is idempotent
+    assert:
+      that:
+        - not output.changed
+
+  always:
+  - name: Remove a Swarm cluster
+    docker_swarm:
+      state: absent
+      force: true

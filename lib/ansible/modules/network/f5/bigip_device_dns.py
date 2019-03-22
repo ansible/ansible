@@ -1,35 +1,24 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright 2016 F5 Networks Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2017, F5 Networks Inc.
+# GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+                    'status': ['stableinterface'],
+                    'supported_by': 'certified'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: bigip_device_dns
 short_description: Manage BIG-IP device DNS settings
 description:
-  - Manage BIG-IP device DNS settings
-version_added: "2.2"
+  - Manage BIG-IP device DNS settings.
+version_added: 2.2
 options:
   cache:
     description:
@@ -37,25 +26,24 @@ options:
         operation each time a lookup is needed. Please note that this applies
         only to Access Policy Manager features, such as ACLs, web application
         rewrites, and authentication.
-    required: false
-    default: disable
+    type: str
     choices:
+       - enabled
+       - disabled
        - enable
        - disable
   name_servers:
     description:
-      - A list of name serverz that the system uses to validate DNS lookups
-  forwarders:
-    description:
-      - A list of BIND servers that the system can use to perform DNS lookups
+      - A list of name servers that the system uses to validate DNS lookups
+    type: list
   search:
     description:
       - A list of domains that the system searches for local domain lookups,
         to resolve local host names.
+    type: list
   ip_version:
     description:
       - Specifies whether the DNS specifies IP addresses using IPv4 or IPv6.
-    required: false
     choices:
       - 4
       - 6
@@ -63,342 +51,502 @@ options:
     description:
       - The state of the variable on the system. When C(present), guarantees
         that an existing variable is set to C(value).
-    required: false
-    default: present
+    type: str
     choices:
       - absent
       - present
-notes:
-  - Requires the f5-sdk Python package on the host. This is as easy as pip
-    install requests
+    default: present
 extends_documentation_fragment: f5
-requirements:
-  - f5-sdk
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Set the DNS settings on the BIG-IP
   bigip_device_dns:
-      name_servers:
-          - 208.67.222.222
-          - 208.67.220.220
-      search:
-          - localdomain
-          - lab.local
-      state: present
-      password: "secret"
-      server: "lb.mydomain.com"
-      user: "admin"
-      validate_certs: "no"
+    name_servers:
+      - 208.67.222.222
+      - 208.67.220.220
+    search:
+      - localdomain
+      - lab.local
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 '''
 
-RETURN = '''
+RETURN = r'''
 cache:
-    description: The new value of the DNS caching
-    returned: changed
-    type: string
-    sample: "enabled"
+  description: The new value of the DNS caching
+  returned: changed
+  type: str
+  sample: enabled
 name_servers:
-    description: List of name servers that were added or removed
-    returned: changed
-    type: list
-    sample: "['192.0.2.10', '172.17.12.10']"
-forwarders:
-    description: List of forwarders that were added or removed
-    returned: changed
-    type: list
-    sample: "['192.0.2.10', '172.17.12.10']"
+  description: List of name servers that were set
+  returned: changed
+  type: list
+  sample: ['192.0.2.10', '172.17.12.10']
 search:
-    description: List of search domains that were added or removed
-    returned: changed
-    type: list
-    sample: "['192.0.2.10', '172.17.12.10']"
+  description: List of search domains that were set
+  returned: changed
+  type: list
+  sample: ['192.0.2.10', '172.17.12.10']
 ip_version:
-    description: IP version that was set that DNS will specify IP addresses in
-    returned: changed
-    type: int
-    sample: 4
+  description: IP version that was set that DNS will specify IP addresses in
+  returned: changed
+  type: int
+  sample: 4
+warnings:
+  description: The list of warnings (if any) generated by module based on arguments
+  returned: always
+  type: list
+  sample: ['...', '...']
 '''
 
+from ansible.module_utils.basic import AnsibleModule
+
 try:
-    from f5.bigip.contexts import TransactionContextManager
-    from f5.bigip import ManagementRoot
-    HAS_F5SDK = True
+    from library.module_utils.network.f5.bigip import F5RestClient
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import fq_name
+    from library.module_utils.network.f5.common import f5_argument_spec
+    from library.module_utils.network.f5.common import is_empty_list
 except ImportError:
-    HAS_F5SDK = False
+    from ansible.module_utils.network.f5.bigip import F5RestClient
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import fq_name
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.network.f5.common import is_empty_list
 
 
-REQUIRED = ['name_servers', 'search', 'forwarders', 'ip_version', 'cache']
-CACHE = ['disable', 'enable']
-IP = [4, 6]
+class Parameters(AnsibleF5Parameters):
+    api_map = {
+        'dns.cache': 'cache',
+        'nameServers': 'name_servers',
+        'include': 'ip_version',
+    }
+
+    api_attributes = [
+        'nameServers', 'search', 'include',
+    ]
+
+    updatables = [
+        'cache', 'name_servers', 'search', 'ip_version',
+    ]
+
+    returnables = [
+        'cache', 'name_servers', 'search', 'ip_version',
+    ]
+
+    absentables = [
+        'name_servers', 'search',
+    ]
 
 
-class BigIpDeviceDns(object):
+class ApiParameters(Parameters):
+    pass
+
+
+class ModuleParameters(Parameters):
+    @property
+    def search(self):
+        search = self._values['search']
+        if search is None:
+            return None
+        if isinstance(search, str) and search != "":
+            result = list()
+            result.append(str(search))
+            return result
+        if is_empty_list(search):
+            return []
+        return search
+
+    @property
+    def name_servers(self):
+        name_servers = self._values['name_servers']
+        if name_servers is None:
+            return None
+        if isinstance(name_servers, str) and name_servers != "":
+            result = list()
+            result.append(str(name_servers))
+            return result
+        if is_empty_list(name_servers):
+            return []
+        return name_servers
+
+    @property
+    def cache(self):
+        if self._values['cache'] is None:
+            return None
+        if str(self._values['cache']) in ['enabled', 'enable']:
+            return 'enable'
+        else:
+            return 'disable'
+
+    @property
+    def ip_version(self):
+        if self._values['ip_version'] == 6:
+            return "options inet6"
+        elif self._values['ip_version'] == 4:
+            return ""
+        else:
+            return None
+
+
+class Changes(Parameters):
+    def to_return(self):
+        result = {}
+        try:
+            for returnable in self.returnables:
+                change = getattr(self, returnable)
+                if isinstance(change, dict):
+                    result.update(change)
+                else:
+                    result[returnable] = change
+            result = self._filter_params(result)
+        except Exception:
+            pass
+        return result
+
+
+class UsableChanges(Changes):
+    pass
+
+
+class ReportableChanges(Changes):
+    @property
+    def ip_version(self):
+        if self._values['ip_version'] == 'options inet6':
+            return 6
+        elif self._values['ip_version'] == "":
+            return 4
+        else:
+            return None
+
+
+class Difference(object):
+    def __init__(self, want, have=None):
+        self.want = want
+        self.have = have
+
+    def compare(self, param):
+        try:
+            result = getattr(self, param)
+            return result
+        except AttributeError:
+            return self.__default(param)
+
+    def __default(self, param):
+        attr1 = getattr(self.want, param)
+        try:
+            attr2 = getattr(self.have, param)
+            if attr1 != attr2:
+                return attr1
+        except AttributeError:
+            return attr1
+
+    @property
+    def ip_version(self):
+        if self.want.ip_version is None:
+            return None
+        if self.want.ip_version == "" and self.have.ip_version is None:
+            return None
+        if self.want.ip_version == self.have.ip_version:
+            return None
+        if self.want.ip_version != self.have.ip_version:
+            return self.want.ip_version
+
+    @property
+    def name_servers(self):
+        state = self.want.state
+        if self.want.name_servers is None:
+            return None
+        if state == 'absent':
+            if self.have.name_servers is None and self.want.name_servers:
+                return None
+            if set(self.want.name_servers) == set(self.have.name_servers):
+                return []
+            if set(self.want.name_servers) != set(self.have.name_servers):
+                return list(set(self.want.name_servers).difference(self.have.name_servers))
+        if not self.want.name_servers:
+            if self.have.name_servers is None:
+                return None
+            if self.have.name_servers is not None:
+                return self.want.name_servers
+        if self.have.name_servers is None:
+            return self.want.name_servers
+        if set(self.want.name_servers) != set(self.have.name_servers):
+            return self.want.name_servers
+
+    @property
+    def search(self):
+        state = self.want.state
+        if self.want.search is None:
+            return None
+        if not self.want.search:
+            if self.have.search is None:
+                return None
+            if self.have.search is not None:
+                return self.want.search
+        if state == 'absent':
+            if self.have.search is None and self.want.search:
+                return None
+            if set(self.want.search) == set(self.have.search):
+                return []
+            if set(self.want.search) != set(self.have.search):
+                return list(set(self.want.search).difference(self.have.search))
+        if self.have.search is None:
+            return self.want.search
+        if set(self.want.search) != set(self.have.search):
+            return self.want.search
+
+
+class ModuleManager(object):
     def __init__(self, *args, **kwargs):
-        if not HAS_F5SDK:
-            raise F5ModuleError("The python f5-sdk module is required")
+        self.module = kwargs.pop('module', None)
+        self.client = F5RestClient(**self.module.params)
+        self.want = ModuleParameters(params=self.module.params)
+        self.have = ApiParameters()
+        self.changes = UsableChanges()
 
-        # The params that change in the module
-        self.cparams = dict()
-
-        # Stores the params that are sent to the module
-        self.params = kwargs
-        self.api = ManagementRoot(kwargs['server'],
-                                  kwargs['user'],
-                                  kwargs['password'],
-                                  port=kwargs['server_port'])
-
-    def flush(self):
-        result = dict()
-        changed = False
-        state = self.params['state']
-
-        if self.dhcp_enabled():
-            raise F5ModuleError(
-                "DHCP on the mgmt interface must be disabled to make use of " +
-                "this module"
+    def _announce_deprecations(self, result):
+        warnings = result.pop('__warnings', [])
+        for warning in warnings:
+            self.module.deprecate(
+                msg=warning['msg'],
+                version=warning['version']
             )
 
-        if state == 'absent':
-            changed = self.absent()
-        else:
-            changed = self.present()
-
-        result.update(**self.cparams)
-        result.update(dict(changed=changed))
-        return result
-
-    def dhcp_enabled(self):
-        r = self.api.tm.sys.dbs.db.load(name='dhclient.mgmt')
-        if r.value == 'enable':
-            return True
-        else:
-            return False
-
-    def read(self):
-        result = dict()
-
-        cache = self.api.tm.sys.dbs.db.load(name='dns.cache')
-        proxy = self.api.tm.sys.dbs.db.load(name='dns.proxy.__iter__')
-        dns = self.api.tm.sys.dns.load()
-
-        result['cache'] = str(cache.value)
-        result['forwarders'] = str(proxy.value).split(' ')
-
-        if hasattr(dns, 'nameServers'):
-            result['name_servers'] = dns.nameServers
-        if hasattr(dns, 'search'):
-            result['search'] = dns.search
-        if hasattr(dns, 'include') and 'options inet6' in dns.include:
-            result['ip_version'] = 6
-        else:
-            result['ip_version'] = 4
-        return result
-
-    def present(self):
-        params = dict()
-        current = self.read()
-
-        # Temporary locations to hold the changed params
-        update = dict(
-            dns=None,
-            forwarders=None,
-            cache=None
-        )
-
-        nameservers = self.params['name_servers']
-        search_domains = self.params['search']
-        ip_version = self.params['ip_version']
-        forwarders = self.params['forwarders']
-        cache = self.params['cache']
-        check_mode = self.params['check_mode']
-
-        if nameservers:
-            if 'name_servers' in current:
-                if nameservers != current['name_servers']:
-                    params['nameServers'] = nameservers
+    def _update_changed_options(self):
+        diff = Difference(self.want, self.have)
+        updatables = Parameters.updatables
+        changed = dict()
+        for k in updatables:
+            change = diff.compare(k)
+            if change is None:
+                continue
             else:
-                params['nameServers'] = nameservers
-
-        if search_domains:
-            if 'search' in current:
-                if search_domains != current['search']:
-                    params['search'] = search_domains
-            else:
-                params['search'] = search_domains
-
-        if ip_version:
-            if 'ip_version' in current:
-                if ip_version != int(current['ip_version']):
-                    if ip_version == 6:
-                        params['include'] = 'options inet6'
-                    elif ip_version == 4:
-                        params['include'] = ''
-            else:
-                if ip_version == 6:
-                    params['include'] = 'options inet6'
-                elif ip_version == 4:
-                    params['include'] = ''
-
-        if params:
-            self.cparams.update(camel_dict_to_snake_dict(params))
-
-            if 'include' in params:
-                del self.cparams['include']
-                if params['include'] == '':
-                    self.cparams['ip_version'] = 4
+                if isinstance(change, dict):
+                    changed.update(change)
                 else:
-                    self.cparams['ip_version'] = 6
+                    changed[k] = change
+        if changed:
+            self.changes = UsableChanges(params=changed)
+            return True
+        return False
 
-            update['dns'] = params.copy()
-            params = dict()
-
-        if forwarders:
-            if 'forwarders' in current:
-                if forwarders != current['forwarders']:
-                    params['forwarders'] = forwarders
+    def _absent_changed_options(self):
+        diff = Difference(self.want, self.have)
+        absentables = Parameters.absentables
+        changed = dict()
+        for k in absentables:
+            change = diff.compare(k)
+            if change is None:
+                continue
             else:
-                params['forwarders'] = forwarders
+                if isinstance(change, dict):
+                    changed.update(change)
+                else:
+                    changed[k] = change
+        if changed:
+            self.changes = UsableChanges(params=changed)
+            return True
+        return False
 
-        if params:
-            self.cparams.update(camel_dict_to_snake_dict(params))
-            update['forwarders'] = ' '.join(params['forwarders'])
-            params = dict()
+    def exec_module(self):
+        changed = False
+        result = dict()
+        state = self.want.state
 
-        if cache:
-            if 'cache' in current:
-                if cache != current['cache']:
-                    params['cache'] = cache
+        if state == "present":
+            changed = self.update()
+        elif state == "absent":
+            changed = self.absent()
 
-        if params:
-            self.cparams.update(camel_dict_to_snake_dict(params))
-            update['cache'] = params['cache']
-            params = dict()
+        reportable = ReportableChanges(params=self.changes.to_return())
+        changes = reportable.to_return()
+        result.update(**changes)
+        result.update(dict(changed=changed))
+        self._announce_deprecations(result)
+        return result
 
-        if self.cparams:
-            changed = True
-            if check_mode:
-                return changed
-        else:
+    def update(self):
+        self.have = self.read_current_from_device()
+        if not self.should_update():
             return False
+        if self.module.check_mode:
+            return True
+        self.update_on_device()
+        return True
 
-        tx = self.api.tm.transactions.transaction
-        with TransactionContextManager(tx) as api:
-            cache = api.tm.sys.dbs.db.load(name='dns.cache')
-            proxy = api.tm.sys.dbs.db.load(name='dns.proxy.__iter__')
-            dns = api.tm.sys.dns.load()
+    def should_update(self):
+        result = self._update_changed_options()
+        if result:
+            return True
+        return False
 
-            # Empty values can be supplied, but you cannot supply the
-            # None value, so we check for that specifically
-            if update['cache'] is not None:
-                cache.update(value=update['cache'])
-            if update['forwarders'] is not None:
-                proxy.update(value=update['forwarders'])
-            if update['dns'] is not None:
-                dns.update(**update['dns'])
-        return changed
+    def should_absent(self):
+        result = self._absent_changed_options()
+        if result:
+            return True
+        return False
 
     def absent(self):
-        params = dict()
-        current = self.read()
-
-        # Temporary locations to hold the changed params
-        update = dict(
-            dns=None,
-            forwarders=None
-        )
-
-        nameservers = self.params['name_servers']
-        search_domains = self.params['search']
-        forwarders = self.params['forwarders']
-        check_mode = self.params['check_mode']
-
-        if forwarders and 'forwarders' in current:
-            set_current = set(current['forwarders'])
-            set_new = set(forwarders)
-
-            forwarders = set_current - set_new
-            if forwarders != set_current:
-                forwarders = list(forwarders)
-                params['forwarders'] = ' '.join(forwarders)
-
-        if params:
-            changed = True
-            self.cparams.update(camel_dict_to_snake_dict(params))
-            update['forwarders'] = params['forwarders']
-            params = dict()
-
-        if nameservers and 'name_servers' in current:
-            set_current = set(current['name_servers'])
-            set_new = set(nameservers)
-
-            nameservers = set_current - set_new
-            if nameservers != set_current:
-                params['nameServers'] = list(nameservers)
-
-        if search_domains and 'search' in current:
-            set_current = set(current['search'])
-            set_new = set(search_domains)
-
-            search_domains = set_current - set_new
-            if search_domains != set_current:
-                params['search'] = list(search_domains)
-
-        if params:
-            changed = True
-            self.cparams.update(camel_dict_to_snake_dict(params))
-            update['dns'] = params.copy()
-            params = dict()
-
-        if not self.cparams:
+        self.have = self.read_current_from_device()
+        if not self.should_absent():
             return False
+        if self.module.check_mode:
+            return True
+        self.absent_on_device()
+        return True
 
-        if check_mode:
-            return changed
+    def read_dns_cache_setting(self):
+        uri = "https://{0}:{1}/mgmt/tm/sys/db/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            'dns.cache'
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
 
-        tx = self.api.tm.transactions.transaction
-        with TransactionContextManager(tx) as api:
-            proxy = api.tm.sys.dbs.db.load(name='dns.proxy.__iter__')
-            dns = api.tm.sys.dns.load()
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return response
 
-            if update['forwarders'] is not None:
-                proxy.update(value=update['forwarders'])
-            if update['dns'] is not None:
-                dns.update(**update['dns'])
-        return changed
+    def read_current_from_device(self):
+        cache = self.read_dns_cache_setting()
+        uri = "https://{0}:{1}/mgmt/tm/sys/dns/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        if cache:
+            response['cache'] = cache['value']
+        return ApiParameters(params=response)
+
+    def update_on_device(self):
+        params = self.changes.api_params()
+        if params:
+            uri = "https://{0}:{1}/mgmt/tm/sys/dns/".format(
+                self.client.provider['server'],
+                self.client.provider['server_port'],
+            )
+            resp = self.client.api.patch(uri, json=params)
+            try:
+                response = resp.json()
+            except ValueError as ex:
+                raise F5ModuleError(str(ex))
+
+            if 'code' in response and response['code'] == 400:
+                if 'message' in response:
+                    raise F5ModuleError(response['message'])
+                else:
+                    raise F5ModuleError(resp.content)
+        if self.want.cache:
+            uri = "https://{0}:{1}/mgmt/tm/sys/db/{2}".format(
+                self.client.provider['server'],
+                self.client.provider['server_port'],
+                'dns.cache'
+            )
+            payload = {"value": self.want.cache}
+            resp = self.client.api.patch(uri, json=payload)
+            try:
+                response = resp.json()
+            except ValueError as ex:
+                raise F5ModuleError(str(ex))
+
+            if 'code' in response and response['code'] == 400:
+                if 'message' in response:
+                    raise F5ModuleError(response['message'])
+                else:
+                    raise F5ModuleError(resp.content)
+
+    def absent_on_device(self):
+        params = self.changes.api_params()
+        uri = "https://{0}:{1}/mgmt/tm/sys/dns/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+
+class ArgumentSpec(object):
+    def __init__(self):
+        self.supports_check_mode = True
+        argument_spec = dict(
+            cache=dict(
+                choices=['disabled', 'enabled', 'disable', 'enable']
+            ),
+            name_servers=dict(
+                type='list'
+            ),
+            search=dict(
+                type='list'
+            ),
+            ip_version=dict(
+                choices=[4, 6],
+                type='int'
+            ),
+            state=dict(
+                default='present',
+                choices=['absent', 'present']
+            )
+        )
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
+        self.required_one_of = [
+            ['name_servers', 'search', 'ip_version', 'cache']
+        ]
 
 
 def main():
-    argument_spec = f5_argument_spec()
+    spec = ArgumentSpec()
 
-    meta_args = dict(
-        cache=dict(required=False, choices=CACHE, default=None),
-        name_servers=dict(required=False, default=None, type='list'),
-        forwarders=dict(required=False, default=None, type='list'),
-        search=dict(required=False, default=None, type='list'),
-        ip_version=dict(required=False, default=None, choices=IP, type='int')
-    )
-    argument_spec.update(meta_args)
     module = AnsibleModule(
-        argument_spec=argument_spec,
-        required_one_of=[REQUIRED],
-        supports_check_mode=True
+        argument_spec=spec.argument_spec,
+        supports_check_mode=spec.supports_check_mode,
+        required_one_of=spec.required_one_of
     )
 
     try:
-        obj = BigIpDeviceDns(check_mode=module.check_mode, **module.params)
-        result = obj.flush()
+        mm = ModuleManager(module=module)
+        results = mm.exec_module()
+        module.exit_json(**results)
+    except F5ModuleError as ex:
+        module.fail_json(msg=str(ex))
 
-        module.exit_json(**result)
-    except F5ModuleError as e:
-        module.fail_json(msg=str(e))
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict
-from ansible.module_utils.f5_utils import *
 
 if __name__ == '__main__':
     main()

@@ -1,0 +1,16 @@
+- hosts:
+    - testhost
+    - testhost2
+  gather_facts: no
+  vars:
+    secondhost: testhost2
+  tasks:
+    - name: Call the first role only on one host
+      include_role:
+        name: role1
+      when: inventory_hostname is match(secondhost)
+
+    - name: Make sure nothing else runs until role1 finishes
+      assert:
+        that:
+          - "'role1_complete' in hostvars[secondhost]"

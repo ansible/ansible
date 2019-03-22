@@ -3,13 +3,15 @@
 # Makefile for Ansible
 #
 # useful targets:
+#   make clean ---------------- clean up
+#   make webdocs -------------- produce ansible doc at docs/docsite/_build/html
 #   make sdist ---------------- produce a tarball
 #   make srpm ----------------- produce a SRPM
 #   make rpm  ----------------- produce RPMs
 #   make deb-src -------------- produce a DEB source
 #   make deb ------------------ produce a DEB
 #   make docs ----------------- rebuild the manpages (results are checked in)
-#   make tests ---------------- run the tests (see https://docs.ansible.com/ansible/dev_guide/testing_units.html for requirements)
+#   make tests ---------------- run the tests (see https://docs.ansible.com/ansible/devel/dev_guide/testing_units.html for requirements)
 #   make pyflakes, make pep8 -- source code checks
 
 ########################################################
@@ -17,26 +19,35 @@
 
 NAME = ansible
 OS = $(shell uname -s)
+PREFIX ?= '/usr/local'
 
-# Manpages are currently built with asciidoc -- would like to move to markdown
 # This doesn't evaluate until it's called. The -D argument is the
 # directory of the target file ($@), kinda like `dirname`.
-
-MANPAGES ?= $(patsubst %.asciidoc.in,%,$(wildcard ./docs/man/man1/ansible*.1.asciidoc.in))
-ifneq ($(shell which a2x 2>/dev/null),)
-ASCII2MAN = a2x -L -D $(dir $@) -d manpage -f manpage $<
-ASCII2HTMLMAN = a2x -L -D docs/html/man/ -d manpage -f xhtml
+MANPAGES ?= $(patsubst %.rst.in,%,$(wildcard ./docs/man/man1/ansible*.1.rst.in))
+ifneq ($(shell which rst2man 2>/dev/null),)
+ASCII2MAN = rst2man $< $@
+else ifneq ($(shell which rst2man.py 2>/dev/null),)
+ASCII2MAN = rst2man.py $< $@
 else
-ASCII2MAN = @echo "ERROR: AsciiDoc 'a2x' command is not installed but is required to build $(MANPAGES)" && exit 1
+ASCII2MAN = @echo "ERROR: rst2man from docutils command is not installed but is required to build $(MANPAGES)" && exit 1
 endif
-GENERATE_CLI = docs/bin/generate_man.py
 
 PYTHON=python
+GENERATE_CLI = $(PYTHON) docs/bin/generate_man.py
+
 SITELIB = $(shell $(PYTHON) -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
 
-# VERSION file provides one place to update the software version
-VERSION := $(shell cat VERSION | cut -f1 -d' ')
-RELEASE := $(shell cat VERSION | cut -f2 -d' ')
+# fetch version from project release.py as single source-of-truth
+VERSION := $(shell $(PYTHON) packaging/release/versionhelper/version_helper.py --raw || echo error)
+ifeq ($(findstring error,$(VERSION)), error)
+$(error "version_helper failed")
+endif
+
+MAJOR_VERSION := $(shell $(PYTHON) packaging/release/versionhelper/version_helper.py --majorversion)
+CODENAME := $(shell $(PYTHON) packaging/release/versionhelper/version_helper.py --codename)
+
+# if a specific release was not requested, set to 1 (RPMs have "fancier" logic for this further down)
+RELEASE ?= 1
 
 # Get the branch information from git
 ifneq ($(shell which git),)
@@ -62,15 +73,16 @@ DEBUILD_OPTS = --source-option="-I"
 DPUT_BIN ?= dput
 DPUT_OPTS ?=
 DEB_DATE := $(shell LC_TIME=C date +"%a, %d %b %Y %T %z")
+DEB_VERSION ?= $(shell $(PYTHON) packaging/release/versionhelper/version_helper.py --debversion)
 ifeq ($(OFFICIAL),yes)
-    DEB_RELEASE = $(RELEASE)ppa
+    DEB_RELEASE ?= $(shell $(PYTHON) packaging/release/versionhelper/version_helper.py --debrelease)ppa
     # Sign OFFICIAL builds using 'DEBSIGN_KEYID'
     # DEBSIGN_KEYID is required when signing
     ifneq ($(DEBSIGN_KEYID),)
         DEBUILD_OPTS += -k$(DEBSIGN_KEYID)
     endif
 else
-    DEB_RELEASE = 100.git$(DATE)$(GITINFO)
+    DEB_RELEASE ?= 100.git$(DATE)$(GITINFO)
     # Do not sign unofficial builds
     DEBUILD_OPTS += -uc -us
     DPUT_OPTS += -u
@@ -90,7 +102,7 @@ PBUILDER_OPTS ?= --debootstrapopts --variant=buildd --architecture $(PBUILDER_AR
 RPMSPECDIR= packaging/rpm
 RPMSPEC = $(RPMSPECDIR)/ansible.spec
 RPMDIST = $(shell rpm --eval '%{?dist}')
-RPMRELEASE = $(RELEASE)
+
 ifneq ($(OFFICIAL),yes)
     RPMRELEASE = 100.git$(DATE)$(GITINFO)
 endif
@@ -98,14 +110,22 @@ ifeq ($(PUBLISH),nightly)
     # https://fedoraproject.org/wiki/Packaging:Versioning#Snapshots
     RPMRELEASE = $(RELEASE).$(DATE)git.$(GIT_HASH)
 endif
-RPMNVR = "$(NAME)-$(VERSION)-$(RPMRELEASE)$(RPMDIST)"
+
+RPMVERSION ?= $(shell $(PYTHON) packaging/release/versionhelper/version_helper.py --baseversion)
+RPMRELEASE ?= $(shell $(PYTHON) packaging/release/versionhelper/version_helper.py --rpmrelease)
+RPMNVR = "$(NAME)-$(RPMVERSION)-$(RPMRELEASE)$(RPMDIST)$(REPOTAG)"
 
 # MOCK build parameters
 MOCK_BIN ?= mock
 MOCK_CFG ?=
 
+# dynamically add repotag define only if specified
+ifneq ($(REPOTAG),)
+    EXTRA_RPM_DEFINES += --define "repotag $(REPOTAG)"
+endif
+
 # ansible-test parameters
-ANSIBLE_TEST ?= test/runner/ansible-test
+ANSIBLE_TEST ?= bin/ansible-test
 TEST_FLAGS ?=
 
 # ansible-test units parameters (make test / make test-py3)
@@ -141,14 +161,15 @@ integration:
 authors:
 	sh hacking/authors.sh
 
-# Regenerate %.1.asciidoc if %.1.asciidoc.in has been modified more
-# recently than %.1.asciidoc.
-%.1.asciidoc: %.1.asciidoc.in
+# Regenerate %.1.rst if %.1.rst.in has been modified more
+# recently than %.1.rst.
+%.1.rst: %.1.rst.in
 	sed "s/%VERSION%/$(VERSION)/" $< > $@
+	rm $<
 
-# Regenerate %.1 if %.1.asciidoc or VERSION has been modified more
-# recently than %.1. (Implicitly runs the %.1.asciidoc recipe)
-%.1: %.1.asciidoc VERSION
+# Regenerate %.1 if %.1.rst or release.py has been modified more
+# recently than %.1. (Implicitly runs the %.1.rst recipe)
+%.1: %.1.rst lib/ansible/release.py
 	$(ASCII2MAN)
 
 .PHONY: loc
@@ -177,7 +198,7 @@ clean:
 	find . -type f \( -name "*.swp" \) -delete
 	@echo "Cleaning up manpage stuff"
 	find ./docs/man -type f -name "*.xml" -delete
-	find ./docs/man -type f -name "*.asciidoc" -delete
+	find ./docs/man -type f -name "*.rst" -delete
 	find ./docs/man/man3 -type f -name "*.3" -delete
 	rm -f ./docs/man/man1/*
 	@echo "Cleaning up output from test runs"
@@ -199,7 +220,6 @@ clean:
 	rm -f AUTHORS.TXT
 	@echo "Cleaning up docsite"
 	$(MAKE) -C docs/docsite clean
-	$(MAKE) -C docs/api clean
 
 .PHONY: python
 python:
@@ -209,23 +229,46 @@ python:
 install:
 	$(PYTHON) setup.py install
 
+install_manpages:
+	gzip -9 $(wildcard ./docs/man/man1/ansible*.1)
+	cp $(wildcard ./docs/man/man1/ansible*.1.gz) $(PREFIX)/man/man1/
+
+.PHONY: sdist_check
+sdist_check:
+	$(PYTHON) packaging/sdist/check-link-behavior.py
+
 .PHONY: sdist
-sdist: clean docs
-	$(PYTHON) setup.py sdist
+sdist: sdist_check clean docs
+	_ANSIBLE_SDIST_FROM_MAKEFILE=1 $(PYTHON) setup.py sdist
+
+# Official releases generate the changelog as the last commit before the release.
+# Snapshots shouldn't result in new checkins so the changelog is generated as
+# part of creating the tarball.
+.PHONY: snapshot
+snapshot: sdist_check clean docs changelog
+	_ANSIBLE_SDIST_FROM_MAKEFILE=1 $(PYTHON) setup.py sdist
 
 .PHONY: sdist_upload
 sdist_upload: clean docs
 	$(PYTHON) setup.py sdist upload 2>&1 |tee upload.log
 
+.PHONY: changelog
+changelog:
+	PYTHONPATH=./lib packaging/release/changelogs/changelog.py release -vv && PYTHONPATH=./lib packaging/release/changelogs/changelog.py generate -vv
+
 .PHONY: rpmcommon
 rpmcommon: sdist
 	@mkdir -p rpm-build
 	@cp dist/*.gz rpm-build/
-	@sed -e 's#^Version:.*#Version: $(VERSION)#' -e 's#^Release:.*#Release: $(RPMRELEASE)%{?dist}$(REPOTAG)#' $(RPMSPEC) >rpm-build/$(NAME).spec
+	@cp $(RPMSPEC) rpm-build/$(NAME).spec
 
 .PHONY: mock-srpm
 mock-srpm: /etc/mock/$(MOCK_CFG).cfg rpmcommon
-	$(MOCK_BIN) -r $(MOCK_CFG) $(MOCK_ARGS) --resultdir rpm-build/  --buildsrpm --spec rpm-build/$(NAME).spec --sources rpm-build/
+	$(MOCK_BIN) -r $(MOCK_CFG) $(MOCK_ARGS) --resultdir rpm-build/ --bootstrap-chroot --old-chroot --buildsrpm --spec rpm-build/$(NAME).spec --sources rpm-build/ \
+	--define "rpmversion $(RPMVERSION)" \
+	--define "upstream_version $(VERSION)" \
+	--define "rpmrelease $(RPMRELEASE)" \
+	$(EXTRA_RPM_DEFINES)
 	@echo "#############################################"
 	@echo "Ansible SRPM is built:"
 	@echo rpm-build/*.src.rpm
@@ -233,7 +276,11 @@ mock-srpm: /etc/mock/$(MOCK_CFG).cfg rpmcommon
 
 .PHONY: mock-rpm
 mock-rpm: /etc/mock/$(MOCK_CFG).cfg mock-srpm
-	$(MOCK_BIN) -r $(MOCK_CFG) $(MOCK_ARGS) --resultdir rpm-build/ --rebuild rpm-build/$(NAME)-*.src.rpm
+	$(MOCK_BIN) -r $(MOCK_CFG) $(MOCK_ARGS) --resultdir rpm-build/ --bootstrap-chroot --old-chroot --rebuild rpm-build/$(NAME)-*.src.rpm \
+	--define "rpmversion $(RPMVERSION)" \
+	--define "upstream_version $(VERSION)" \
+	--define "rpmrelease $(RPMRELEASE)" \
+	$(EXTRA_RPM_DEFINES)
 	@echo "#############################################"
 	@echo "Ansible RPM is built:"
 	@echo rpm-build/*.noarch.rpm
@@ -247,6 +294,10 @@ srpm: rpmcommon
 	--define "_srcrpmdir %{_topdir}" \
 	--define "_specdir $(RPMSPECDIR)" \
 	--define "_sourcedir %{_topdir}" \
+	--define "upstream_version $(VERSION)" \
+	--define "rpmversion $(RPMVERSION)" \
+	--define "rpmrelease $(RPMRELEASE)" \
+	$(EXTRA_RPM_DEFINES) \
 	-bs rpm-build/$(NAME).spec
 	@rm -f rpm-build/$(NAME).spec
 	@echo "#############################################"
@@ -262,8 +313,12 @@ rpm: rpmcommon
 	--define "_srcrpmdir %{_topdir}" \
 	--define "_specdir $(RPMSPECDIR)" \
 	--define "_sourcedir %{_topdir}" \
-	--define "_rpmfilename %%{NAME}-%%{VERSION}-%%{RELEASE}.%%{ARCH}.rpm" \
+	--define "_rpmfilename $(RPMNVR).%%{ARCH}.rpm" \
 	--define "__python `which $(PYTHON)`" \
+	--define "upstream_version $(VERSION)" \
+	--define "rpmversion $(RPMVERSION)" \
+	--define "rpmrelease $(RPMRELEASE)" \
+	$(EXTRA_RPM_DEFINES) \
 	-ba rpm-build/$(NAME).spec
 	@rm -f rpm-build/$(NAME).spec
 	@echo "#############################################"
@@ -277,7 +332,7 @@ debian: sdist
 	    mkdir -p deb-build/$${DIST} ; \
 	    tar -C deb-build/$${DIST} -xvf dist/$(NAME)-$(VERSION).tar.gz ; \
 	    cp -a packaging/debian deb-build/$${DIST}/$(NAME)-$(VERSION)/ ; \
-        sed -ie "s|%VERSION%|$(VERSION)|g;s|%RELEASE%|$(DEB_RELEASE)|;s|%DIST%|$${DIST}|g;s|%DATE%|$(DEB_DATE)|g" deb-build/$${DIST}/$(NAME)-$(VERSION)/debian/changelog ; \
+        sed -ie "s|%VERSION%|$(DEB_VERSION)|g;s|%RELEASE%|$(DEB_RELEASE)|;s|%DIST%|$${DIST}|g;s|%DATE%|$(DEB_DATE)|g" deb-build/$${DIST}/$(NAME)-$(VERSION)/debian/changelog ; \
 	done
 
 .PHONY: deb
@@ -286,12 +341,12 @@ deb: deb-src
 	    PBUILDER_OPTS="$(PBUILDER_OPTS) --distribution $${DIST} --basetgz $(PBUILDER_CACHE_DIR)/$${DIST}-$(PBUILDER_ARCH)-base.tgz --buildresult $(CURDIR)/deb-build/$${DIST}" ; \
 	    $(PBUILDER_BIN) create $${PBUILDER_OPTS} --othermirror "deb http://archive.ubuntu.com/ubuntu $${DIST} universe" ; \
 	    $(PBUILDER_BIN) update $${PBUILDER_OPTS} ; \
-	    $(PBUILDER_BIN) build $${PBUILDER_OPTS} deb-build/$${DIST}/$(NAME)_$(VERSION)-$(DEB_RELEASE)~$${DIST}.dsc ; \
+	    $(PBUILDER_BIN) build $${PBUILDER_OPTS} deb-build/$${DIST}/$(NAME)_$(DEB_VERSION)-$(DEB_RELEASE)~$${DIST}.dsc ; \
 	done
 	@echo "#############################################"
 	@echo "Ansible DEB artifacts:"
 	@for DIST in $(DEB_DIST) ; do \
-	    echo deb-build/$${DIST}/$(NAME)_$(VERSION)-$(DEB_RELEASE)~$${DIST}_amd64.changes ; \
+	    echo deb-build/$${DIST}/$(NAME)_$(DEB_VERSION)-$(DEB_RELEASE)~$${DIST}_amd64.changes ; \
 	done
 	@echo "#############################################"
 
@@ -305,7 +360,7 @@ local_deb: debian
 	@echo "#############################################"
 	@echo "Ansible DEB artifacts:"
 	@for DIST in $(DEB_DIST) ; do \
-	    echo deb-build/$${DIST}/$(NAME)_$(VERSION)-$(DEB_RELEASE)~$${DIST}_amd64.changes ; \
+	    echo deb-build/$${DIST}/$(NAME)_$(DEB_VERSION)-$(DEB_RELEASE)~$${DIST}_amd64.changes ; \
 	done
 	@echo "#############################################"
 
@@ -317,43 +372,42 @@ deb-src: debian
 	@echo "#############################################"
 	@echo "Ansible DEB artifacts:"
 	@for DIST in $(DEB_DIST) ; do \
-	    echo deb-build/$${DIST}/$(NAME)_$(VERSION)-$(DEB_RELEASE)~$${DIST}_source.changes ; \
+	    echo deb-build/$${DIST}/$(NAME)_$(DEB_VERSION)-$(DEB_RELEASE)~$${DIST}_source.changes ; \
 	done
 	@echo "#############################################"
 
 .PHONY: deb-upload
 deb-upload: deb
 	@for DIST in $(DEB_DIST) ; do \
-	    $(DPUT_BIN) $(DPUT_OPTS) $(DEB_PPA) deb-build/$${DIST}/$(NAME)_$(VERSION)-$(DEB_RELEASE)~$${DIST}_amd64.changes ; \
+	    $(DPUT_BIN) $(DPUT_OPTS) $(DEB_PPA) deb-build/$${DIST}/$(NAME)_$(DEB_VERSION)-$(DEB_RELEASE)~$${DIST}_amd64.changes ; \
 	done
 
 .PHONY: deb-src-upload
 deb-src-upload: deb-src
 	@for DIST in $(DEB_DIST) ; do \
-	    $(DPUT_BIN) $(DPUT_OPTS) $(DEB_PPA) deb-build/$${DIST}/$(NAME)_$(VERSION)-$(DEB_RELEASE)~$${DIST}_source.changes ; \
+	    $(DPUT_BIN) $(DPUT_OPTS) $(DEB_PPA) deb-build/$${DIST}/$(NAME)_$(DEB_VERSION)-$(DEB_RELEASE)~$${DIST}_source.changes ; \
 	done
 
 .PHONY: epub
 epub:
-	(cd docs/docsite/; CPUS=$(CPUS) make epub)
+	(cd docs/docsite/; CPUS=$(CPUS) $(MAKE) epub)
 
 # for arch or gentoo, read instructions in the appropriate 'packaging' subdirectory directory
 .PHONY: webdocs
 webdocs:
-	(cd docs/docsite/; CPUS=$(CPUS) make docs)
+	(cd docs/docsite/; CPUS=$(CPUS) $(MAKE) docs)
 
-.PHONY: generate_asciidoc
-generate_asciidoc: lib/ansible/cli/*.py
+.PHONY: generate_rst
+generate_rst: lib/ansible/cli/*.py
 	mkdir -p ./docs/man/man1/ ; \
 	PYTHONPATH=./lib $(GENERATE_CLI) --template-file=docs/templates/man.j2 --output-dir=docs/man/man1/ --output-format man lib/ansible/cli/*.py
 
 
-docs: generate_asciidoc
-	make $(MANPAGES)
+docs: generate_rst
+	$(MAKE) $(MANPAGES)
 
 .PHONY: alldocs
 alldocs: docs webdocs
 
 version:
 	@echo $(VERSION)
-

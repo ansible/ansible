@@ -4,7 +4,7 @@
 
 - name: async fire and forget
   async_test:
-    sleep_delay_sec: 8
+    sleep_delay_sec: 15
   async: 20
   poll: 0
   register: asyncresult
@@ -14,10 +14,12 @@
     that:
     - asyncresult.ansible_job_id is match('\d+\.\d+')
     - asyncresult.started == 1
+    - asyncresult is started
     - asyncresult.finished == 0
+    - asyncresult is not finished
     - asyncresult.results_file is search('\.ansible_async.+\d+\.\d+')
      # ensure that async is actually async- this test will fail if # hosts > forks or if the target host is VERY slow
-    - (lookup('pipe', 'date +%s') | int) - (start_timestamp | int) < 8
+    - (lookup('pipe', 'date +%s') | int) - (start_timestamp | int) < 15
 
 - name: async poll immediate success
   async_test:
@@ -31,7 +33,8 @@
     that:
     - asyncresult.ansible_job_id is match('\d+\.\d+')
     - asyncresult.finished == 1
-    - asyncresult.changed == true
+    - asyncresult is finished
+    - asyncresult is changed
     - asyncresult.ansible_async_watchdog_pid is number
 #    - asyncresult.module_tempdir is search('ansible-tmp-')
     - asyncresult.module_pid is number
@@ -54,7 +57,7 @@
 #- name: validate tempdir response
 #  assert:
 #    that:
-#    - tempdircheck.stdout | search('False')
+#    - tempdircheck.stdout is search('False')
 
 - name: async poll retry
   async_test:
@@ -68,7 +71,8 @@
     that:
     - asyncresult.ansible_job_id is match('\d+\.\d+')
     - asyncresult.finished == 1
-    - asyncresult.changed == true
+    - asyncresult is finished
+    - asyncresult is changed
 #    - asyncresult.module_tempdir is search('ansible-tmp-')
     - asyncresult.module_pid is number
 
@@ -90,7 +94,7 @@
 #- name: validate tempdir response
 #  assert:
 #    that:
-#    - tempdircheck.stdout | search('False')
+#    - tempdircheck.stdout is search('False')
 
 - name: async poll timeout
   async_test:
@@ -105,8 +109,9 @@
     that:
     - asyncresult.ansible_job_id is match('\d+\.\d+')
     - asyncresult.finished == 1
-    - asyncresult.changed == false
-    - asyncresult | failed == true
+    - asyncresult is finished
+    - asyncresult is not changed
+    - asyncresult is failed
     - asyncresult.msg is search('timed out')
 
 - name: async poll graceful module failure
@@ -122,8 +127,9 @@
     that:
     - asyncresult.ansible_job_id is match('\d+\.\d+')
     - asyncresult.finished == 1
-    - asyncresult.changed == true
-    - asyncresult | failed == true
+    - asyncresult is finished
+    - asyncresult is changed
+    - asyncresult is failed
     - asyncresult.msg == 'failed gracefully'
 
 - name: async poll exception module failure
@@ -139,11 +145,66 @@
     that:
     - asyncresult.ansible_job_id is match('\d+\.\d+')
     - asyncresult.finished == 1
-    - asyncresult.changed == false
-    - asyncresult | failed == true
-# TODO: re-enable after catastrophic failure behavior is cleaned up
-#    - asyncresult.msg is search('failing via exception')
+    - asyncresult is finished
+    - asyncresult is not changed
+    - asyncresult is failed
+    - 'asyncresult.msg == "Unhandled exception while executing module: failing via exception"'
 
+- name: echo some non ascii characters
+  win_command: cmd.exe /c echo über den Fußgängerübergang gehen
+  async: 10
+  poll: 1
+  register: nonascii_output
+
+- name: assert echo some non ascii characters
+  assert:
+    that:
+    - nonascii_output is changed
+    - nonascii_output.rc == 0
+    - nonascii_output.stdout_lines|count == 1
+    - nonascii_output.stdout_lines[0] == 'über den Fußgängerübergang gehen'
+    - nonascii_output.stderr == ''
+
+- name: test async with custom async dir
+  win_shell: echo hi
+  register: async_custom_dir
+  async: 5
+  vars:
+    ansible_async_dir: '{{win_output_dir}}'
+
+- name: assert results file is in the remote tmp specified
+  assert:
+    that:
+    - async_custom_dir.results_file == win_output_dir + '\\' + async_custom_dir.ansible_job_id
+
+- name: test async fire and forget with custom async dir
+  win_shell: echo hi
+  register: async_custom_dir_poll
+  async: 5
+  poll: 0
+  vars:
+    ansible_async_dir: '{{win_output_dir}}'
+
+- name: poll with different dir - fail
+  async_status:
+    jid: '{{ async_custom_dir_poll.ansible_job_id }}'
+  register: fail_async_custom_dir_poll
+  ignore_errors: yes
+
+- name: poll with different dir - success
+  async_status:
+    jid: '{{ async_custom_dir_poll.ansible_job_id }}'
+  register: success_async_custom_dir_poll
+  vars:
+    ansible_async_dir: '{{win_output_dir}}'
+
+- name: assert test async fire and forget with custom async dir
+  assert:
+    that:
+    - fail_async_custom_dir_poll.failed
+    - '"could not find job at ''" + nonascii_output.results_file|win_dirname + "''" in fail_async_custom_dir_poll.msg'
+    - not success_async_custom_dir_poll.failed
+    - success_async_custom_dir_poll.results_file == win_output_dir + '\\' + async_custom_dir_poll.ansible_job_id
 
 # FUTURE: figure out why the last iteration of this test often fails on shippable
 #- name: loop async success
@@ -158,7 +219,7 @@
 #  async_status:
 #    jid: "{{ item }}"
 #  register: asyncout
-#  until: asyncout.finished == 1
+#  until: asyncout is finished
 #  retries: 10
 #  delay: 1
 #  with_items: "{{ async_many.results | map(attribute='ansible_job_id') | list }}"
@@ -167,8 +228,9 @@
 #  assert:
 #    that:
 #    - item.finished == 1
+#    - item is finished
 #    - item.slept_sec == 3
-#    - item.changed == true
+#    - item is changed
 #    - item.ansible_job_id is match('\d+\.\d+')
 #  with_items: "{{ asyncout.results }}"
 

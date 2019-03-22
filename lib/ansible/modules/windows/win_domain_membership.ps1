@@ -1,24 +1,9 @@
 #!powershell
 
-# (c) 2017, Red Hat, Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2017, Red Hat, Inc.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# WANT_JSON
-# POWERSHELL_COMMON
+#Requires -Module Ansible.ModuleUtils.Legacy
 
 Set-StrictMode -Version 2
 
@@ -59,6 +44,23 @@ Function Get-DomainMembershipMatch {
         Write-DebugLog ("current domain {0} matches {1}: {2}" -f $current_dns_domain, $dns_domain_name, $domain_match)
 
         return $domain_match
+    }
+    catch [System.Security.Authentication.AuthenticationException] {
+        Write-DebugLog "Failed to get computer domain.  Attempting a different method."
+        Add-Type -AssemblyName System.DirectoryServices.AccountManagement            
+        $user_principal = [System.DirectoryServices.AccountManagement.UserPrincipal]::Current
+        If ($user_principal.ContextType -eq "Machine") {
+            $current_dns_domain = (Get-CimInstance -ClassName Win32_ComputerSystem -Property Domain).Domain
+            
+            $domain_match = $current_dns_domain -eq $dns_domain_name
+
+            Write-DebugLog ("current domain {0} matches {1}: {2}" -f $current_dns_domain, $dns_domain_name, $domain_match)
+
+            return $domain_match
+        }
+        Else {
+            Fail-Json -obj $result -message "Failed to authenticate with domain controller and cannot retrieve the existing domain name: $($_.Exception.Message)"
+        }
     }
     Catch [System.DirectoryServices.ActiveDirectory.ActiveDirectoryObjectNotFoundException] {
         Write-DebugLog "not currently joined to a reachable domain"

@@ -49,32 +49,35 @@ options:
         description:
             - Full name of interface that is being managed for VRRP.
         required: true
+    interval:
+        description:
+            - Time interval between advertisement or 'default' keyword
+        required: false
+        default: 1
+        version_added: 2.6
     priority:
         description:
-            - VRRP priority.
-        required: false
-        default: null
+            - VRRP priority or 'default' keyword
+        default: 100
+    preempt:
+        description:
+            - Enable/Disable preempt.
+        type: bool
+        default: 'yes'
     vip:
         description:
-            - VRRP virtual IP address.
-        required: false
-        default: null
+            - VRRP virtual IP address or 'default' keyword
     authentication:
         description:
-            - Clear text authentication string.
-        required: false
-        default: null
+            - Clear text authentication string or 'default' keyword
     admin_state:
         description:
             - Used to enable or disable the VRRP process.
-        required: false
-        choices: ['shutdown', 'no shutdown']
-        default: no shutdown
-        version_added: "2.2"
+        choices: ['shutdown', 'no shutdown', 'default']
+        default: shutdown
     state:
         description:
             - Specify desired state of the resource.
-        required: false
         default: present
         choices: ['present','absent']
 '''
@@ -113,9 +116,18 @@ commands:
             "authentication text testing", "no shutdown"]
 '''
 
-from ansible.module_utils.nxos import load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import get_capabilities, nxos_argument_spec
+from ansible.module_utils.network.nxos.nxos import get_interface_type
 from ansible.module_utils.basic import AnsibleModule
+
+
+PARAM_TO_DEFAULT_KEYMAP = {
+    'priority': '100',
+    'interval': '1',
+    'vip': '0.0.0.0',
+    'admin_state': 'shutdown',
+}
 
 
 def execute_show_command(command, module):
@@ -141,23 +153,6 @@ def apply_key_map(key_map, table):
             else:
                 new_dict[new_key] = value
     return new_dict
-
-
-def get_interface_type(interface):
-    if interface.upper().startswith('ET'):
-        return 'ethernet'
-    elif interface.upper().startswith('VL'):
-        return 'svi'
-    elif interface.upper().startswith('LO'):
-        return 'loopback'
-    elif interface.upper().startswith('MG'):
-        return 'management'
-    elif interface.upper().startswith('MA'):
-        return 'management'
-    elif interface.upper().startswith('PO'):
-        return 'portchannel'
-    else:
-        return 'unknown'
 
 
 def is_default(interface, module):
@@ -250,12 +245,12 @@ def get_existing_vrrp(interface, group, module, name):
 
         if parsed_vrrp['group'] == group:
             parsed_vrrp['admin_state'] = get_vrr_status(group, module, name)
-
             return parsed_vrrp
+
     return vrrp
 
 
-def get_commands_config_vrrp(delta, group):
+def get_commands_config_vrrp(delta, existing, group):
     commands = []
 
     CMDS = {
@@ -263,32 +258,34 @@ def get_commands_config_vrrp(delta, group):
         'preempt': 'preempt',
         'vip': 'address {0}',
         'interval': 'advertisement-interval {0}',
-        'auth': 'authentication text {0}'
+        'auth': 'authentication text {0}',
+        'admin_state': '{0}',
     }
 
-    vip = delta.get('vip')
-    priority = delta.get('priority')
-    preempt = delta.get('preempt')
-    interval = delta.get('interval')
-    auth = delta.get('authentication')
-    admin_state = delta.get('admin_state')
+    for arg in ['vip', 'priority', 'interval', 'admin_state']:
+        val = delta.get(arg)
+        if val == 'default':
+            val = PARAM_TO_DEFAULT_KEYMAP.get(arg)
+            if val != existing.get(arg):
+                commands.append((CMDS.get(arg)).format(val))
+        elif val:
+            commands.append((CMDS.get(arg)).format(val))
 
-    if vip:
-        commands.append((CMDS.get('vip')).format(vip))
-    if priority:
-        commands.append((CMDS.get('priority')).format(priority))
+    preempt = delta.get('preempt')
+    auth = delta.get('authentication')
+
     if preempt:
         commands.append(CMDS.get('preempt'))
     elif preempt is False:
         commands.append('no ' + CMDS.get('preempt'))
-    if interval:
-        commands.append((CMDS.get('interval')).format(interval))
     if auth:
-        commands.append((CMDS.get('auth')).format(auth))
-    if admin_state:
-        commands.append(admin_state)
+        if auth != 'default':
+            commands.append((CMDS.get('auth')).format(auth))
+        elif existing.get('authentication'):
+            commands.append('no authentication')
 
-    commands.insert(0, 'vrrp {0}'.format(group))
+    if commands:
+        commands.insert(0, 'vrrp {0}'.format(group))
 
     return commands
 
@@ -326,42 +323,41 @@ def main():
     argument_spec = dict(
         group=dict(required=True, type='str'),
         interface=dict(required=True),
+        interval=dict(required=False, type='str'),
         priority=dict(required=False, type='str'),
         preempt=dict(required=False, type='bool'),
         vip=dict(required=False, type='str'),
         admin_state=dict(required=False, type='str',
-                         choices=['shutdown', 'no shutdown'],
-                         default='no shutdown'),
+                         choices=['shutdown', 'no shutdown', 'default'],
+                         default='shutdown'),
         authentication=dict(required=False, type='str'),
-        state=dict(choices=['absent', 'present'], required=False, default='present'),
-        include_defaults=dict(default=False),
-        config=dict(),
-        save=dict(type='bool', default=False)
+        state=dict(choices=['absent', 'present'], required=False, default='present')
     )
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
     results = {'changed': False, 'commands': [], 'warnings': warnings}
 
     state = module.params['state']
     interface = module.params['interface'].lower()
     group = module.params['group']
     priority = module.params['priority']
+    interval = module.params['interval']
     preempt = module.params['preempt']
     vip = module.params['vip']
     authentication = module.params['authentication']
     admin_state = module.params['admin_state']
 
-    transport = module.params['transport']
+    device_info = get_capabilities(module)
+    network_api = device_info.get('network_api', 'nxapi')
 
     if state == 'present' and not vip:
         module.fail_json(msg='the "vip" param is required when state=present')
 
     intf_type = get_interface_type(interface)
-    if (intf_type != 'ethernet' and transport == 'cli'):
+    if (intf_type != 'ethernet' and network_api == 'cliconf'):
         if is_default(interface, module) == 'DNE':
             module.fail_json(msg='That interface does not exist yet. Create '
                                  'it first.', interface=interface)
@@ -375,7 +371,7 @@ def main():
                              'a layer 3 port first.', interface=interface)
 
     args = dict(group=group, priority=priority, preempt=preempt,
-                vip=vip, authentication=authentication,
+                vip=vip, authentication=authentication, interval=interval,
                 admin_state=admin_state)
 
     proposed = dict((k, v) for k, v in args.items() if v is not None)
@@ -389,8 +385,9 @@ def main():
         delta = dict(
             set(proposed.items()).difference(existing.items()))
         if delta:
-            command = get_commands_config_vrrp(delta, group)
-            commands.append(command)
+            command = get_commands_config_vrrp(delta, existing, group)
+            if command:
+                commands.append(command)
     elif state == 'absent':
         if existing:
             commands.append(['no vrrp {0}'.format(group)])

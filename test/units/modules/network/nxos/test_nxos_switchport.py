@@ -19,27 +19,33 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
-
-from ansible.compat.tests.mock import patch
-from ansible.modules.network.nxos import nxos_switchport
+from units.compat.mock import patch
+from ansible.modules.network.nxos import _nxos_switchport
 from .nxos_module import TestNxosModule, load_fixture, set_module_args
 
 
 class TestNxosSwitchportModule(TestNxosModule):
 
-    module = nxos_switchport
+    module = _nxos_switchport
 
     def setUp(self):
-        self.mock_run_commands = patch('ansible.modules.network.nxos.nxos_switchport.run_commands')
+        super(TestNxosSwitchportModule, self).setUp()
+
+        self.mock_run_commands = patch('ansible.modules.network.nxos._nxos_switchport.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
-        self.mock_load_config = patch('ansible.modules.network.nxos.nxos_switchport.load_config')
+        self.mock_load_config = patch('ansible.modules.network.nxos._nxos_switchport.load_config')
         self.load_config = self.mock_load_config.start()
 
+        self.mock_get_capabilities = patch('ansible.modules.network.nxos._nxos_switchport.get_capabilities')
+        self.get_capabilities = self.mock_get_capabilities.start()
+        self.get_capabilities.return_value = {'network_api': 'cliconf'}
+
     def tearDown(self):
+        super(TestNxosSwitchportModule, self).tearDown()
         self.mock_run_commands.stop()
         self.mock_load_config.stop()
+        self.mock_get_capabilities.stop()
 
     def load_fixtures(self, commands=None, device=''):
         def load_from_file(*args, **kwargs):
@@ -48,7 +54,7 @@ class TestNxosSwitchportModule(TestNxosModule):
             for command in commands:
                 filename = str(command).split(' | ')[0].replace(' ', '_')
                 filename = filename.replace('2/1', '')
-                output.append(load_fixture('nxos_switchport', filename))
+                output.append(load_fixture('_nxos_switchport', filename))
             return output
 
         self.run_commands.side_effect = load_from_file

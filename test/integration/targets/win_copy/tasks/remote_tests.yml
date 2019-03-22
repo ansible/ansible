@@ -5,7 +5,7 @@
     dest: fakedest
     remote_src: yes
   register: fail_remote_invalid_source
-  failed_when: "fail_remote_invalid_source.msg != 'Cannot copy src file: fakesource as it does not exist'"
+  failed_when: "'it does not exist' not in fail_remote_invalid_source.msg"
 
 - name: setup source folder for remote tests
   win_copy:
@@ -43,7 +43,7 @@
     dest: '{{test_win_copy_path}}\target\file\foo.txt'
     remote_src: yes
   register: fail_remote_file_parent_dir_file
-  failed_when: fail_remote_file_parent_dir_file.msg != 'object at destination parent dir ' + test_win_copy_path + '\\target\\file is currently a file'
+  failed_when: "'is currently a file' not in fail_remote_file_parent_dir_file.msg"
 
 - name: fail source is a folder dest parent dir is also a file
   win_copy:
@@ -59,7 +59,7 @@
     dest: '{{test_win_copy_path}}\missing-dir\foo.txt'
     remote_src: yes
   register: fail_remote_missing_parent_dir
-  failed_when: "'Destination directory ' + test_win_copy_path + '\\missing-dir does not exist' not in fail_remote_missing_parent_dir.msg"
+  failed_when: "'does not exist' not in fail_remote_missing_parent_dir.msg"
 
 - name: remove target after remote failure tests
   win_file:
@@ -87,7 +87,7 @@
 - name: assert copy single file remote (check mode)
   assert:
     that:
-    - remote_copy_file_check|changed
+    - remote_copy_file_check is changed
     - remote_copy_file_actual_check.stat.exists == False
 
 - name: copy single file remote
@@ -105,7 +105,7 @@
 - name: assert copy single file remote
   assert:
     that:
-    - remote_copy_file|changed
+    - remote_copy_file is changed
     - remote_copy_file.operation == 'file_copy'
     - remote_copy_file.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
     - remote_copy_file.size == 8
@@ -123,7 +123,7 @@
 - name: assert copy single file remote (idempotent)
   assert:
     that:
-    - not remote_copy_file_again|changed
+    - remote_copy_file_again is not changed
 
 - name: copy single file into folder remote (check mode)
   win_copy:
@@ -141,7 +141,7 @@
 - name: assert copy single file into folder remote (check mode)
   assert:
     that:
-    - remote_copy_file_to_folder_check|changed
+    - remote_copy_file_to_folder_check is changed
     - remote_copy_file_to_folder_actual_check.stat.exists == False
 
 - name: copy single file into folder remote
@@ -159,7 +159,7 @@
 - name: assert copy single file into folder remote
   assert:
     that:
-    - remote_copy_file_to_folder|changed
+    - remote_copy_file_to_folder is changed
     - remote_copy_file_to_folder.operation == 'file_copy'
     - remote_copy_file_to_folder.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
     - remote_copy_file_to_folder.size == 8
@@ -177,7 +177,7 @@
 - name: assert copy single file into folder remote
   assert:
     that:
-    - not remote_copy_file_to_folder_again|changed
+    - remote_copy_file_to_folder_again is not changed
 
 - name: copy single file to missing folder (check mode)
   win_copy:
@@ -195,7 +195,7 @@
 - name: assert copy single file to missing folder remote (check mode)
   assert:
     that:
-    - remote_copy_file_to_missing_folder_check|changed
+    - remote_copy_file_to_missing_folder_check is changed
     - remote_copy_file_to_missing_folder_check.operation == 'file_copy'
     - remote_copy_file_to_missing_folder_actual_check.stat.exists == False
 
@@ -214,7 +214,7 @@
 - name: assert copy single file to missing folder remote
   assert:
     that:
-    - remote_copy_file_to_missing_folder|changed
+    - remote_copy_file_to_missing_folder is changed
     - remote_copy_file_to_missing_folder.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
     - remote_copy_file_to_missing_folder.operation == 'file_copy'
     - remote_copy_file_to_missing_folder.size == 8
@@ -242,7 +242,7 @@
 - name: assert copy folder to folder remote (check mode)
   assert:
     that:
-    - remote_copy_folder_to_folder_check|changed
+    - remote_copy_folder_to_folder_check is changed
     - remote_copy_folder_to_folder_check.operation == 'folder_copy'
     - remote_copy_folder_to_folder_actual_check.stat.exists == False
 
@@ -263,7 +263,7 @@
 - name: assert copy folder to folder remote
   assert:
     that:
-    - remote_copy_folder_to_folder|changed
+    - remote_copy_folder_to_folder is changed
     - remote_copy_folder_to_folder.operation == 'folder_copy'
     - remote_copy_folder_to_folder_actual.examined == 11
     - remote_copy_folder_to_folder_actual.matched == 6
@@ -284,7 +284,7 @@
 - name: assert copy folder to folder remote (idempotent)
   assert:
     that:
-    - not remote_copy_folder_to_folder_again|changed
+    - remote_copy_folder_to_folder_again is not changed
 
 - name: change remote file after folder to folder test
   win_copy:
@@ -313,10 +313,10 @@
 - name: assert copy folder after changes
   assert:
     that:
-    - remote_copy_folder_to_folder_after_change|changed
+    - remote_copy_folder_to_folder_after_change is changed
     - remote_copy_folder_to_folder_after_change_actual.matched == 2
-    - remote_copy_folder_to_folder_after_change_actual.files[0].checksum == 'b54ba7f5621240d403f06815f7246006ef8c7d43'
-    - remote_copy_folder_to_folder_after_change_actual.files[1].checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
+    - remote_copy_folder_to_folder_after_change_actual.files[0].checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
+    - remote_copy_folder_to_folder_after_change_actual.files[1].checksum == 'b54ba7f5621240d403f06815f7246006ef8c7d43'
 
 - name: clear target folder before folder contents to remote test
   win_file:
@@ -339,7 +339,7 @@
 - name: assert copy folder content to folder remote with backslash (check mode)
   assert:
     that:
-    - remote_copy_folder_content_backslash_check|changed
+    - remote_copy_folder_content_backslash_check is changed
     - remote_copy_folder_content_backslash_actual_check.stat.exists == False
 
 - name: copy folder contents to folder remote with backslash
@@ -359,7 +359,7 @@
 - name: assert copy folder content to folder remote with backslash
   assert:
     that:
-    - remote_copy_folder_content_backslash|changed
+    - remote_copy_folder_content_backslash is changed
     - remote_copy_folder_content_backslash.operation == 'folder_copy'
     - remote_copy_folder_content_backslash_actual.examined == 10
     - remote_copy_folder_content_backslash_actual.matched == 5
@@ -379,7 +379,7 @@
 - name: assert copy folder content to folder remote with backslash (idempotent)
   assert:
     that:
-    - not remote_copy_folder_content_backslash_again|changed
+    - remote_copy_folder_content_backslash_again is not changed
 
 - name: change remote file after folder content to folder test
   win_copy:
@@ -408,7 +408,64 @@
 - name: assert copy folder content to folder after changes
   assert:
     that:
-    - remote_copy_folder_content_to_folder_after_change|changed
+    - remote_copy_folder_content_to_folder_after_change is changed
     - remote_copy_folder_content_to_folder_after_change_actual.matched == 2
-    - remote_copy_folder_content_to_folder_after_change_actual.files[0].checksum == 'b54ba7f5621240d403f06815f7246006ef8c7d43'
-    - remote_copy_folder_content_to_folder_after_change_actual.files[1].checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
+    - remote_copy_folder_content_to_folder_after_change_actual.files[0].checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
+    - remote_copy_folder_content_to_folder_after_change_actual.files[1].checksum == 'b54ba7f5621240d403f06815f7246006ef8c7d43'
+
+# https://github.com/ansible/ansible/issues/50077
+- name: create empty nested directory
+  win_file:
+    path: '{{ test_win_copy_path }}\source\empty-nested\nested-dir'
+    state: directory
+
+- name: copy empty nested directory (check mode)
+  win_copy:
+    src: '{{ test_win_copy_path }}\source\empty-nested'
+    dest: '{{ test_win_copy_path }}\target'
+    remote_src: True
+  check_mode: True
+  register: copy_empty_dir_check
+
+- name: get result of copy empty nested directory (check mode)
+  win_stat:
+    path: '{{ test_win_copy_path }}\target\empty-nested'
+  register: copy_empty_dir_actual_check
+
+- name: assert copy empty nested directory (check mode)
+  assert:
+    that:
+    - copy_empty_dir_check is changed
+    - copy_empty_dir_check.operation == "folder_copy"
+    - not copy_empty_dir_actual_check.stat.exists
+
+- name: copy empty nested directory
+  win_copy:
+    src: '{{ test_win_copy_path }}\source\empty-nested'
+    dest: '{{ test_win_copy_path }}\target'
+    remote_src: True
+  register: copy_empty_dir
+
+- name: get result of copy empty nested directory
+  win_stat:
+    path: '{{ test_win_copy_path }}\target\empty-nested\nested-dir'
+  register: copy_empty_dir_actual
+
+- name: assert copy empty nested directory
+  assert:
+    that:
+    - copy_empty_dir is changed
+    - copy_empty_dir.operation == "folder_copy"
+    - copy_empty_dir_actual.stat.exists
+
+- name: copy empty nested directory (idempotent)
+  win_copy:
+    src: '{{ test_win_copy_path }}\source\empty-nested'
+    dest: '{{ test_win_copy_path }}\target'
+    remote_src: True
+  register: copy_empty_dir_again
+
+- name: assert copy empty nested directory (idempotent)
+  assert:
+    that:
+    - not copy_empty_dir_again is changed

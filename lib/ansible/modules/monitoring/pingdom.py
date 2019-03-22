@@ -21,7 +21,7 @@ description:
 version_added: "1.2"
 author:
     - "Dylan Silva (@thaumos)"
-    - "Justin Johns"
+    - "Justin Johns (!UNKNOWN)"
 requirements:
     - "This pingdom python library: https://github.com/mbabineau/pingdom-python"
 options:
@@ -29,37 +29,23 @@ options:
         description:
             - Define whether or not the check should be running or paused.
         required: true
-        default: null
         choices: [ "running", "paused" ]
-        aliases: []
     checkid:
         description:
             - Pingdom ID of the check.
         required: true
-        default: null
-        choices: []
-        aliases: []
     uid:
         description:
             - Pingdom user ID.
         required: true
-        default: null
-        choices: []
-        aliases: []
     passwd:
         description:
             - Pingdom user password.
         required: true
-        default: null
-        choices: []
-        aliases: []
     key:
         description:
             - Pingdom API key.
         required: true
-        default: null
-        choices: []
-        aliases: []
 notes:
     - This module does not yet have support to add/remove checks.
 '''
@@ -82,13 +68,17 @@ EXAMPLES = '''
     state: running
 '''
 
+import traceback
+
+PINGDOM_IMP_ERR = None
 try:
     import pingdom
     HAS_PINGDOM = True
-except:
+except Exception:
+    PINGDOM_IMP_ERR = traceback.format_exc()
     HAS_PINGDOM = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 
 def pause(checkid, uid, passwd, key):
@@ -98,7 +88,7 @@ def pause(checkid, uid, passwd, key):
     check = c.get_check(checkid)
     name = check.name
     result = check.status
-    #if result != "paused":             # api output buggy - accept raw exception for now
+    # if result != "paused":             # api output buggy - accept raw exception for now
     #    return (True, name, result)
     return (False, name, result)
 
@@ -110,7 +100,7 @@ def unpause(checkid, uid, passwd, key):
     check = c.get_check(checkid)
     name = check.name
     result = check.status
-    #if result != "up":                 # api output buggy - accept raw exception for now
+    # if result != "up":                 # api output buggy - accept raw exception for now
     #    return (True, name, result)
     return (False, name, result)
 
@@ -128,7 +118,7 @@ def main():
     )
 
     if not HAS_PINGDOM:
-        module.fail_json(msg="Missing required pingdom module (check docs)")
+        module.fail_json(msg=missing_required_lib("pingdom"), exception=PINGDOM_IMP_ERR)
 
     checkid = module.params['checkid']
     state = module.params['state']

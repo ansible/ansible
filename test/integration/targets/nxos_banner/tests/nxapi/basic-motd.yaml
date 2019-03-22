@@ -1,0 +1,29 @@
+---
+- debug: msg="START nxapi/nxos_banner motd test"
+
+- name: setup - remove motd
+  nxos_banner: &remove
+    banner: motd
+    provider: "{{ connection }}"
+    state: absent
+
+- name: Set motd
+  nxos_banner: &motd
+    banner: motd
+    text: |
+      this is my motd banner
+      that has a multiline
+      string
+    provider: "{{ connection }}"
+    state: present
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'banner motd @\nthis is my motd banner\nthat has a multiline\nstring\n@' in result.commands"
+
+- name: teardown - remove motd
+  nxos_banner: *remove
+
+- debug: msg="END nxapi/nxos_banner motd test"

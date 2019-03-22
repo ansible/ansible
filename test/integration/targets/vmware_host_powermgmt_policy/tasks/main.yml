@@ -1,0 +1,123 @@
+# Test code for the vmware_host_powermgmt_policy module.
+# Copyright: (c) 2018, Christian Kotte <christian.kotte@gmx.de>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
+- name: Kill vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/killall
+
+- name: Start vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/spawn?cluster=2
+  register: vcsim_instance
+
+- debug:
+    var: vcsim_instance
+
+- name: Wait for vcsim server to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
+
+- name: Get a list of Cluster from vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/govc_find?filter=CCR
+  register: clusters
+
+- name: Get a cluster
+  set_fact:
+    ccr1: "{{ clusters.json[0] | basename }}"
+
+- name: Get a list of hosts from vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/govc_find?filter=H
+  register: hosts
+
+- name: Get a host
+  set_fact:
+    host1: "{{ hosts.json[0] | basename }}"
+
+- debug: var=ccr1
+- debug: var=host1
+
+# The following test cases aren't supported by vcsim
+- name: Set the Power Management Policy for {{ host1 }}
+  vmware_host_powermgmt_policy:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance.json.username }}"
+    password: "{{ vcsim_instance.json.password }}"
+    esxi_hostname: "{{ host1 }}"
+    policy: high-performance
+    validate_certs: no
+  register: host_result
+
+- debug: msg="{{ host_result }}"
+
+- name: Ensure Power Management Policy for {{ host1 }}
+  assert:
+    that:
+        - host_result is changed
+        - host_result.result is defined
+
+- name: Set the Power Management Policy on all hosts of {{ ccr1 }}
+  vmware_host_powermgmt_policy:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance.json.username }}"
+    password: "{{ vcsim_instance.json.password }}"
+    esxi_hostname: "{{ host1 }}"
+    policy: balanced
+    validate_certs: no
+  register: all_hosts_result
+
+- debug: msg="{{ all_hosts_result }}"
+
+- name: Ensure Power Management Policy is changed for all hosts of {{ ccr1 }}
+  assert:
+    that:
+        - all_hosts_result is changed
+        - all_hosts_result.result is defined
+
+- name: Set the Power Management Policy for {{ host1 }} in check mode
+  vmware_host_powermgmt_policy:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance.json.username }}"
+    password: "{{ vcsim_instance.json.password }}"
+    esxi_hostname: "{{ host1 }}"
+    policy: high-performance
+    validate_certs: no
+  register: host_result
+  check_mode: yes
+
+- debug: msg="{{ host_result }}"
+
+- name: Ensure Power Management Policy for {{ host1 }} in check mode
+  assert:
+    that:
+        - host_result is changed
+        - host_result.result is defined
+
+- name: Set the Power Management Policy on all hosts of {{ ccr1 }} in check mode
+  vmware_host_powermgmt_policy:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance.json.username }}"
+    password: "{{ vcsim_instance.json.password }}"
+    esxi_hostname: "{{ host1 }}"
+    policy: balanced
+    validate_certs: no
+  register: all_hosts_result
+  check_mode: yes
+
+- debug: msg="{{ all_hosts_result }}"
+
+- name: Ensure Power Management Policy is changed for all hosts of {{ ccr1 }} in check mode
+  assert:
+    that:
+        - all_hosts_result is changed
+        - all_hosts_result.result is defined

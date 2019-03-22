@@ -30,72 +30,51 @@ options:
     description:
       description:
         - The description to use for the group.
-      required: False
-      default: null
     inventory:
       description:
         - Inventory the group should be made a member of.
       required: True
     variables:
       description:
-        - Variables to use for the group, use '@' for a file.
-      required: False
-      default: null
+        - Variables to use for the group, use C(@) for a file.
     credential:
       description:
         - Credential to use for the group.
-      required: False
-      default: null
     source:
       description:
         - The source to use for this group.
-      required: False
-      default: null,
       choices: ["manual", "file", "ec2", "rax", "vmware", "gce", "azure", "azure_rm", "openstack", "satellite6" , "cloudforms", "custom"]
     source_regions:
       description:
         - Regions for cloud provider.
-      required: False
-      default: null
     source_vars:
       description:
         - Override variables from source with variables from this field.
-      required: False
-      default: null
     instance_filters:
       description:
         - Comma-separated list of filter expressions for matching hosts.
-      required: False
-      default: null
     group_by:
       description:
         - Limit groups automatically created from inventory source.
-      required: False
-      default: null
     source_script:
       description:
-        - Inventory script to be used when group type is "custom".
-      required: False
-      default: null
+        - Inventory script to be used when group type is C(custom).
     overwrite:
       description:
-        - Delete child roups and hosts not found in source.
-      required: False
-      default: False
+        - Delete child groups and hosts not found in source.
+      type: bool
+      default: 'no'
     overwrite_vars:
       description:
         - Override vars in child groups and hosts with those from external source.
-      required: False
-      default: null
     update_on_launch:
       description:
         - Refresh inventory data from its source each time a job is run.
-      required: False
-      default: False
+      type: bool
+      default: 'no'
     state:
       description:
         - Desired state of the resource.
-      required: False
       default: "present"
       choices: ["present", "absent"]
 extends_documentation_fragment: tower
@@ -114,11 +93,11 @@ EXAMPLES = '''
 
 import os
 
-from ansible.module_utils.ansible_tower import tower_argument_spec, tower_auth_config, tower_check_mode, HAS_TOWER_CLI
+from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, tower_check_mode
 
 try:
     import tower_cli
-    import tower_cli.utils.exceptions as exc
+    import tower_cli.exceptions as exc
 
     from tower_cli.conf import settings
 except ImportError:
@@ -126,8 +105,7 @@ except ImportError:
 
 
 def main():
-    argument_spec = tower_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         name=dict(required=True),
         description=dict(),
         inventory=dict(required=True),
@@ -145,23 +123,21 @@ def main():
         overwrite_vars=dict(),
         update_on_launch=dict(type='bool', default=False),
         state=dict(choices=['present', 'absent'], default='present'),
-    ))
+    )
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
-
-    if not HAS_TOWER_CLI:
-        module.fail_json(msg='ansible-tower-cli required for this module')
+    module = TowerModule(argument_spec=argument_spec, supports_check_mode=True)
 
     name = module.params.get('name')
     inventory = module.params.get('inventory')
     credential = module.params.get('credential')
-    state = module.params.get('state')
+    state = module.params.pop('state')
 
     variables = module.params.get('variables')
     if variables:
         if variables.startswith('@'):
             filename = os.path.expanduser(variables[1:])
-            variables = module.contents_from_file(filename)
+            with open(filename, 'r') as f:
+                variables = f.read()
 
     json_output = {'group': name, 'state': state}
 
@@ -190,13 +166,12 @@ def main():
                 result = group.delete(**params)
         except (exc.NotFound) as excinfo:
             module.fail_json(msg='Failed to update the group, inventory not found: {0}'.format(excinfo), changed=False)
-        except (exc.ConnectionError, exc.BadRequest, exc.NotFound) as excinfo:
+        except (exc.ConnectionError, exc.BadRequest, exc.NotFound, exc.AuthError) as excinfo:
             module.fail_json(msg='Failed to update the group: {0}'.format(excinfo), changed=False)
 
     json_output['changed'] = result['changed']
     module.exit_json(**json_output)
 
 
-from ansible.module_utils.basic import AnsibleModule
 if __name__ == '__main__':
     main()

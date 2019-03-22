@@ -23,9 +23,12 @@ short_description: Add or remove an apt key
 description:
     - Add or remove an I(apt) key, optionally downloading it.
 notes:
-    - doesn't download the key unless it really needs it
-    - as a sanity check, downloaded key id must match the one specified
-    - best practice is to specify the key id and the url
+    - Doesn't download the key unless it really needs it.
+    - As a sanity check, downloaded key id must match the one specified.
+    - "Use full fingerprint (40 characters) key ids to avoid key collisions.
+      To generate a full-fingerprint imported key: C(apt-key adv --list-public-keys --with-fingerprint --with-colons)."
+    - If you specify both the key id and the URL with C(state=present), the task can verify or add the key as needed.
+    - Adding a new key requires an apt cache update (e.g. using the apt module's update_cache option)
 options:
     id:
         description:
@@ -41,7 +44,7 @@ options:
             - The path to a keyfile on the remote server to add to the keyring.
     keyring:
         description:
-            -The path to specific keyring file in /etc/apt/trusted.gpg.d/
+            - The full path to specific keyring file in /etc/apt/trusted.gpg.d/
         version_added: "1.3"
     url:
         description:
@@ -76,13 +79,13 @@ EXAMPLES = '''
 
 - name: Add an Apt signing key, will not download if present
   apt_key:
-    id: 473041FA
+    id: 9FED2BCBDCD29CDF762678CBAED4B06F473041FA
     url: https://ftp-master.debian.org/keys/archive-key-6.0.asc
     state: present
 
 - name: Remove a Apt specific signing key, leading 0x is valid
   apt_key:
-    id: 0x473041FA
+    id: 0x9FED2BCBDCD29CDF762678CBAED4B06F473041FA
     state: absent
 
 # Use armored file since utf-8 string is expected. Must be of "PGP PUBLIC KEY BLOCK" type.
@@ -93,13 +96,13 @@ EXAMPLES = '''
 
 - name: Add an Apt signing key to a specific keyring file
   apt_key:
-    id: 473041FA
+    id: 9FED2BCBDCD29CDF762678CBAED4B06F473041FA
     url: https://ftp-master.debian.org/keys/archive-key-6.0.asc
     keyring: /etc/apt/trusted.gpg.d/debian.gpg
 
 - name: Add Apt signing key on remote server to keyring
   apt_key:
-    id: 473041FA
+    id: 9FED2BCBDCD29CDF762678CBAED4B06F473041FA
     file: /tmp/apt.gpg
     state: present
 '''
@@ -121,7 +124,7 @@ def find_needed_binaries(module):
 
     apt_key_bin = module.get_bin_path('apt-key', required=True)
 
-    ### FIXME: Is there a reason that gpg and grep are checked?  Is it just
+    # FIXME: Is there a reason that gpg and grep are checked?  Is it just
     # cruft or does the apt .deb package not require them (and if they're not
     # installed, /usr/bin/apt-key fails?)
     module.get_bin_path('gpg', required=True)
@@ -174,7 +177,7 @@ def all_keys(module, keyring, short_format):
     results = []
     lines = to_native(out).split('\n')
     for line in lines:
-        if (line.startswith("pub") or line.startswith("sub")) and not "expired" in line:
+        if (line.startswith("pub") or line.startswith("sub")) and "expired" not in line:
             tokens = line.split()
             code = tokens[1]
             (len_type, real_code) = code.split("/")
@@ -213,9 +216,9 @@ def download_key(module, url):
 
 def import_key(module, keyring, keyserver, key_id):
     if keyring:
-        cmd = "%s --keyring %s adv --keyserver %s --recv %s" % (apt_key_bin, keyring, keyserver, key_id)
+        cmd = "%s --keyring %s adv --no-tty --keyserver %s --recv %s" % (apt_key_bin, keyring, keyserver, key_id)
     else:
-        cmd = "%s adv --keyserver %s --recv %s" % (apt_key_bin, keyserver, key_id)
+        cmd = "%s adv --no-tty --keyserver %s --recv %s" % (apt_key_bin, keyserver, key_id)
     for retry in range(5):
         lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
         (rc, out, err) = module.run_command(cmd, environ_update=lang_env)
@@ -261,28 +264,28 @@ def remove_key(module, key_id, keyring):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            id=dict(required=False, default=None),
-            url=dict(required=False),
-            data=dict(required=False),
-            file=dict(required=False, type='path'),
-            key=dict(required=False),
-            keyring=dict(required=False, type='path'),
-            validate_certs=dict(default='yes', type='bool'),
-            keyserver=dict(required=False),
-            state=dict(required=False, choices=['present', 'absent'], default='present')
+            id=dict(type='str'),
+            url=dict(type='str'),
+            data=dict(type='str'),
+            file=dict(type='path'),
+            key=dict(type='str'),
+            keyring=dict(type='path'),
+            validate_certs=dict(type='bool', default=True),
+            keyserver=dict(type='str'),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
         ),
         supports_check_mode=True,
-        mutually_exclusive=(('filename', 'keyserver', 'data', 'url'),),
+        mutually_exclusive=(('data', 'filename', 'keyserver', 'url'),),
     )
 
-    key_id          = module.params['id']
-    url             = module.params['url']
-    data            = module.params['data']
-    filename        = module.params['file']
-    keyring         = module.params['keyring']
-    state           = module.params['state']
-    keyserver       = module.params['keyserver']
-    changed         = False
+    key_id = module.params['id']
+    url = module.params['url']
+    data = module.params['data']
+    filename = module.params['file']
+    keyring = module.params['keyring']
+    state = module.params['state']
+    keyserver = module.params['keyserver']
+    changed = False
 
     fingerprint = short_key_id = key_id
     short_format = False
@@ -304,7 +307,7 @@ def main():
         if fingerprint and fingerprint in keys:
             module.exit_json(changed=False)
         elif fingerprint and fingerprint not in keys and module.check_mode:
-            ### TODO: Someday we could go further -- write keys out to
+            # TODO: Someday we could go further -- write keys out to
             # a temporary file and then extract the key id from there via gpg
             # to decide if the key is installed or not.
             module.exit_json(changed=True)
@@ -322,7 +325,7 @@ def main():
             changed = False
             keys2 = all_keys(module, keyring, short_format)
             if len(keys) != len(keys2):
-                changed=True
+                changed = True
 
             if fingerprint and fingerprint not in keys2:
                 module.fail_json(msg="key does not seem to have been added", id=key_id)

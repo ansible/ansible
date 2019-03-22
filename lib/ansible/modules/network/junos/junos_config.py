@@ -32,8 +32,6 @@ options:
         lines to push into the remote device.  Each line must start with
         either C(set) or C(delete).  This argument is mutually exclusive
         with the I(src) argument.
-    required: false
-    default: null
   src:
     description:
       - The I(src) argument provides a path to the configuration file
@@ -41,8 +39,6 @@ options:
         system path to the configuration file if the value starts with /
         or relative to the root of the implemented role or playbook.
         This argument is mutually exclusive with the I(lines) argument.
-    required: false
-    default: null
     version_added: "2.2"
   src_format:
     description:
@@ -50,8 +46,6 @@ options:
         found int I(src).  If the I(src_format) argument is not provided,
         the module will attempt to determine the format of the configuration
         file specified in I(src).
-    required: false
-    default: null
     choices: ['xml', 'set', 'text', 'json']
     version_added: "2.2"
   rollback:
@@ -61,31 +55,26 @@ options:
         argument.  If the specified rollback identifier does not
         exist on the remote device, the module will fail.  To rollback
         to the most recent commit, set the C(rollback) argument to 0.
-    required: false
-    default: null
   zeroize:
     description:
       - The C(zeroize) argument is used to completely sanitize the
         remote device configuration back to initial defaults.  This
         argument will effectively remove all current configuration
         statements on the remote device.
-    required: false
-    default: null
+    type: bool
   confirm:
     description:
-      - The C(confirm) argument will configure a time out value for
-        the commit to be confirmed before it is automatically
+      - The C(confirm) argument will configure a time out value in minutes
+        for the commit to be confirmed before it is automatically
         rolled back.  If the C(confirm) argument is set to False, this
         argument is silently ignored.  If the value for this argument
         is set to 0, the commit is confirmed immediately.
-    required: false
     default: 0
   comment:
     description:
       - The C(comment) argument specifies a text string to be used
         when committing the configuration.  If the C(confirm) argument
         is set to False, this argument is silently ignored.
-    required: false
     default: configured by junos_config
   replace:
     description:
@@ -97,24 +86,23 @@ options:
         the equivalent, set the I(update) argument to C(replace). This argument
         will be removed in a future release. The C(replace) and C(update) argument
         is mutually exclusive.
-    required: false
-    choices: ['yes', 'no']
-    default: false
+    type: bool
+    default: 'no'
   backup:
     description:
       - This argument will cause the module to create a full backup of
         the current C(running-config) from the remote device before any
-        changes are made.  The backup file is written to the C(backup)
-        folder in the playbook root directory.  If the directory does not
-        exist, it is created.
-    required: false
-    default: no
-    choices: ['yes', 'no']
+        changes are made. If the C(backup_options) value is not given,
+        the backup file is written to the C(backup) folder in the playbook
+        root directory or role root directory, if playbook is part of an
+        ansible role. If the directory does not exist, it is created.
+    type: bool
+    default: 'no'
     version_added: "2.2"
   update:
     description:
       - This argument will decide how to load the configuration
-        data particulary when the candidate configuration and loaded
+        data particularly when the candidate configuration and loaded
         configuration contain conflicting statements. Following are
         accepted values.
         C(merge) combines the data in the loaded configuration with the
@@ -125,26 +113,64 @@ options:
         it with the loaded configuration.
         C(replace) substitutes each hierarchy level in the loaded configuration
         for the corresponding level.
-    required: false
+        C(update) is similar to the override option. The new configuration completely
+        replaces the existing configuration. The difference comes when the configuration
+        is later committed. This option performs a 'diff' between the new candidate
+        configuration and the existing committed configuration. It then only notifies
+        system processes responsible for the changed portions of the configuration, and
+        only marks the actual configuration changes as 'changed'.
     default: merge
-    choices: ['merge', 'override', 'replace']
+    choices: ['merge', 'override', 'replace', 'update']
     version_added: "2.3"
   confirm_commit:
     description:
       - This argument will execute commit operation on remote device.
         It can be used to confirm a previous commit.
-    required: false
-    default: no
-    choices: ['yes', 'no']
+    type: bool
+    default: 'no'
     version_added: "2.4"
+  check_commit:
+    description:
+      - This argument will check correctness of syntax; do not apply changes.
+      - Note that this argument can be used to confirm verified configuration done via commit confirmed operation
+    type: bool
+    default: 'no'
+    version_added: "2.8"
+  backup_options:
+    description:
+      - This is a dict object containing configurable options related to backup file path.
+        The value of this option is read only when C(backup) is set to I(yes), if C(backup) is set
+        to I(no) this option will be silently ignored.
+    suboptions:
+      filename:
+        description:
+          - The filename to be used to store the backup configuration. If the the filename
+            is not given it will be generated based on the hostname, current time and date
+            in format defined by <hostname>_config.<current-date>@<current-time>
+      dir_path:
+        description:
+          - This option provides the path ending with directory name in which the backup
+            configuration file will be stored. If the directory does not exist it will be first
+            created and the filename is either the value of C(filename) or default filename
+            as described in C(filename) options description. If the path value is not given
+            in that case a I(backup) directory will be created in the current working directory
+            and backup configuration will be copied in C(filename) within I(backup) directory.
+        type: path
+    type: dict
+    version_added: "2.8"
 requirements:
   - ncclient (>=v0.5.2)
 notes:
   - This module requires the netconf system service be enabled on
     the remote device being managed.
+  - Abbreviated commands are NOT idempotent, see
+    L(Network FAQ,../network/user_guide/faq.html#why-do-the-config-modules-always-return-changed-true-with-abbreviated-commands).
   - Loading JSON-formatted configuration I(json) is supported
     starting in Junos OS Release 16.1 onwards.
+  - Update C(override) not currently compatible with C(set) notation.
   - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
+  - Recommended connection is C(netconf). See L(the Junos OS Platform Options,../network/user_guide/platform_junos.html).
+  - This module also works with C(local) connections for legacy playbooks.
 """
 
 EXAMPLES = """
@@ -152,7 +178,6 @@ EXAMPLES = """
   junos_config:
     src: srx.cfg
     comment: update config
-    provider: "{{ netconf }}"
 
 - name: load configure lines into device
   junos_config:
@@ -160,42 +185,89 @@ EXAMPLES = """
       - set interfaces ge-0/0/1 unit 0 description "Test interface"
       - set vlans vlan01 description "Test vlan"
     comment: update config
-    provider: "{{ netconf }}"
+
+- name: Set routed VLAN interface (RVI) IPv4 address
+  junos_config:
+    lines:
+      - set vlans vlan01 vlan-id 1
+      - set interfaces irb unit 10 family inet address 10.0.0.1/24
+      - set vlans vlan01 l3-interface irb.10
+
+- name: Check correctness of commit configuration
+  junos_config:
+    check_commit: yes
 
 - name: rollback the configuration to id 10
   junos_config:
     rollback: 10
-    provider: "{{ netconf }}"
 
 - name: zero out the current configuration
   junos_config:
     zeroize: yes
-    provider: "{{ netconf }}"
+
+- name: Set VLAN access and trunking
+  junos_config:
+    lines:
+      - set vlans vlan02 vlan-id 6
+      - set interfaces ge-0/0/6.0 family ethernet-switching interface-mode access vlan members vlan02
+      - set interfaces ge-0/0/6.0 family ethernet-switching interface-mode trunk vlan members vlan02
 
 - name: confirm a previous commit
   junos_config:
     confirm_commit: yes
-    provider: "{{ netconf }}"
+
+- name: for idempotency, use full-form commands
+  junos_config:
+    lines:
+      # - set int ge-0/0/1 unit 0 desc "Test interface"
+      - set interfaces ge-0/0/1 unit 0 description "Test interface"
+
+- name: configurable backup path
+  junos_config:
+    src: srx.cfg
+    backup: yes
+    backup_options:
+      filename: backup.cfg
+      dir_path: /home/user
 """
 
 RETURN = """
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
-  type: string
+  type: str
   sample: /playbooks/ansible/backup/config.2016-07-16@22:28:34
+filename:
+  description: The name of the backup file
+  returned: when backup is yes and filename is not specified in backup options
+  type: str
+  sample: junos01_config.2016-07-16@22:28:34
+shortname:
+  description: The full path to the backup file excluding the timestamp
+  returned: when backup is yes and filename is not specified in backup options
+  type: str
+  sample: /playbooks/ansible/backup/junos01_config
+date:
+  description: The date extracted from the backup file name
+  returned: when backup is yes
+  type: str
+  sample: "2016-07-16"
+time:
+  description: The time extracted from the backup file name
+  returned: when backup is yes
+  type: str
+  sample: "22:28:34"
 """
 import re
 import json
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.junos import get_diff, load_config, get_configuration
-from ansible.module_utils.junos import commit_configuration, discard_changes, locked_config
-from ansible.module_utils.junos import junos_argument_spec
-from ansible.module_utils.junos import check_args as junos_check_args
-from ansible.module_utils.netconf import send_request
+from ansible.module_utils.network.common.netconf import exec_rpc
+from ansible.module_utils.network.junos.junos import get_diff, load_config, get_configuration
+from ansible.module_utils.network.junos.junos import commit_configuration, discard_changes, locked_config
+from ansible.module_utils.network.junos.junos import junos_argument_spec, load_configuration, tostring
 from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_text
 
 try:
     from lxml.etree import Element, fromstring
@@ -217,18 +289,16 @@ DEFAULT_COMMENT = 'configured by junos_config'
 
 
 def check_args(module, warnings):
-    junos_check_args(module, warnings)
-
     if module.params['replace'] is not None:
         module.fail_json(msg='argument replace is deprecated, use update')
 
 
-def zeroize(ele):
-    return send_request(ele, Element('request-system-zeroize'))
+def zeroize(module):
+    return exec_rpc(module, tostring(Element('request-system-zeroize')), ignore_warning=False)
 
 
-def rollback(ele):
-    return get_diff(ele)
+def rollback(ele, id='0'):
+    return get_diff(ele, id)
 
 
 def guess_format(config):
@@ -296,6 +366,10 @@ def configure_device(module, warnings, candidate):
 def main():
     """ main entry point for module execution
     """
+    backup_spec = dict(
+        filename=dict(),
+        dir_path=dict(type='path')
+    )
     argument_spec = dict(
         lines=dict(type='list'),
 
@@ -311,9 +385,11 @@ def main():
         confirm=dict(default=0, type='int'),
         comment=dict(default=DEFAULT_COMMENT),
         confirm_commit=dict(type='bool', default=False),
+        check_commit=dict(type='bool', default=False),
 
         # config operations
         backup=dict(type='bool', default=False),
+        backup_options=dict(type='dict', options=backup_spec),
         rollback=dict(type='int'),
 
         zeroize=dict(default=False, type='bool'),
@@ -346,9 +422,16 @@ def main():
 
         result['__backup__'] = match.text.strip()
 
-    if module.params['rollback']:
+    rollback_id = module.params['rollback']
+    if rollback_id:
+        diff = rollback(module, rollback_id)
         if commit:
-            diff = rollback(module)
+            kwargs = {
+                'comment': module.params['comment']
+            }
+            with locked_config(module):
+                load_configuration(module, rollback=rollback_id)
+                commit_configuration(module, **kwargs)
             if module._diff:
                 result['diff'] = {'prepared': diff}
         result['changed'] = True
@@ -368,10 +451,11 @@ def main():
                             'comment': module.params['comment']
                         }
 
-                        if module.params['confirm'] > 0:
+                        confirm = module.params['confirm']
+                        if confirm > 0:
                             kwargs.update({
                                 'confirm': True,
-                                'confirm_timeout': module.params['confirm']
+                                'confirm_timeout': to_text(confirm, errors='surrogate_then_replace')
                             })
                         commit_configuration(module, **kwargs)
                     else:
@@ -380,6 +464,9 @@ def main():
 
                     if module._diff:
                         result['diff'] = {'prepared': diff}
+
+        elif module.params['check_commit']:
+            commit_configuration(module, check=True)
 
         elif module.params['confirm_commit']:
             with locked_config(module):

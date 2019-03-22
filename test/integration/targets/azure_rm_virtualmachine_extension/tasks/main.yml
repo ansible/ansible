@@ -83,6 +83,47 @@
   assert:
     that: results.changed
 
+- name: Query extension
+  azure_rm_virtualmachineextension_facts:
+    resource_group: "{{ resource_group }}"
+    name: testVMExtension
+    virtual_machine_name: testVM
+  register: results
+- name: Assert that facts are returned
+  assert:
+    that:
+      - results.changed == False
+      - results.extensions[0]['id'] != None
+      - results.extensions[0]['resource_group'] != None
+      - results.extensions[0]['virtual_machine_name'] != None
+      - results.extensions[0]['name'] != None
+      - results.extensions[0]['location'] != None
+      - results.extensions[0]['publisher'] != None
+      - results.extensions[0]['type'] != None
+      - results.extensions[0]['settings'] != None
+      - results.extensions[0]['auto_upgrade_minor_version'] != None
+      - results.extensions[0]['provisioning_state'] != None
+
+- name: List extensions
+  azure_rm_virtualmachineextension_facts:
+    resource_group: "{{ resource_group }}"
+    virtual_machine_name: testVM
+  register: results
+- name: Assert that facts are returned
+  assert:
+    that:
+      - results.changed == False
+      - results.extensions[0]['id'] != None
+      - results.extensions[0]['resource_group'] != None
+      - results.extensions[0]['virtual_machine_name'] != None
+      - results.extensions[0]['name'] != None
+      - results.extensions[0]['location'] != None
+      - results.extensions[0]['publisher'] != None
+      - results.extensions[0]['type'] != None
+      - results.extensions[0]['settings'] != None
+      - results.extensions[0]['auto_upgrade_minor_version'] != None
+      - results.extensions[0]['provisioning_state'] != None
+
 - name: Delete VM Extension
   azure_rm_virtualmachine_extension:
     resource_group: "{{ resource_group }}"
@@ -124,6 +165,7 @@
     name: "{{ storage_account }}"
     type: Standard_LRS
     state: absent
+    force_delete_nonempty: true
 
 - name: Delete Network Security Group that allows SSH
   azure_rm_securitygroup:

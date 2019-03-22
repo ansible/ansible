@@ -7,7 +7,6 @@
     resource_group: "{{ resource_group }}" 
     name: "{{ storage_account }}"
     account_type: Standard_LRS
-    state: present
 
 - name: Create container
   azure_rm_storageblob:
@@ -27,6 +26,10 @@
         val1: foo
         val2: bar
     force: yes 
+
+- name: storage blob seems to have some timing issues
+  wait_for:
+    delay: 10
 
 - name: Upload blob idempotence
   azure_rm_storageblob:

@@ -25,7 +25,7 @@ version_added: "2.4"
 short_description: Manages VPN instance address family on HUAWEI CloudEngine switches.
 description:
     - Manages VPN instance address family of HUAWEI CloudEngine switches.
-author: Yang yang (@CloudEngine-Ansible)
+author: Yang yang (@QijunPan)
 notes:
     - If I(state=absent), the vrf will be removed, regardless of the
       non-required parameters.
@@ -34,45 +34,36 @@ options:
         description:
             - VPN instance.
         required: true
-        default: null
     vrf_aftype:
         description:
             - VPN instance address family.
-        required: false
         choices: ['v4','v6']
         default: v4
     route_distinguisher:
         description:
             - VPN instance route distinguisher,the RD used to distinguish same route prefix from different vpn.
               The RD must be setted before setting vpn_target_value.
-        required: false
     vpn_target_state:
         description:
             - Manage the state of the vpn target.
-        required: false
         choices: ['present','absent']
     vpn_target_type:
         description:
             - VPN instance vpn target type.
-        required: false
         choices: ['export_extcommunity', 'import_extcommunity']
-        default: null
     vpn_target_value:
         description:
             - VPN instance target value. Such as X.X.X.X:number<0-65535> or number<0-65535>:number<0-4294967295>
               or number<0-65535>.number<0-65535>:number<0-65535> or number<65536-4294967295>:number<0-65535>
               but not support 0:0 and 0.0:0.
-        required: false
     evpn:
         description:
             - Is extend vpn or normal vpn.
-        required: false
-        choices: ['true', 'false']
-        default: false
+        type: bool
+        default: 'no'
     state:
         description:
             - Manage the state of the af.
-        required: false
         choices: ['present','absent']
         default: present
 '''
@@ -185,7 +176,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 
@@ -193,7 +184,7 @@ changed:
 import re
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_nc_config, set_nc_config, ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec
 
 CE_NC_GET_VRF = """
 <filter type="subtree">

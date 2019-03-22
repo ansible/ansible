@@ -1,0 +1,129 @@
+---
+- name: Validate that account wasn't created in the first step
+  assert:
+    that:
+      - account_not_created is failed
+      - account_not_created.msg == 'Account does not exist or is deactivated.'
+
+- name: Validate that account was created in the second step (check mode)
+  assert:
+    that:
+      - account_created_check is changed
+      - account_created_check.account_uri is none
+      - "'diff' in account_created_check"
+      - "account_created_check.diff.before == {}"
+      - "'after' in account_created_check.diff"
+      - account_created_check.diff.after.contact | length == 1
+      - account_created_check.diff.after.contact[0] == 'mailto:example@example.org'
+
+- name: Validate that account was created in the second step
+  assert:
+    that:
+      - account_created is changed
+      - account_created.account_uri is not none
+
+- name: Validate that account was created in the second step (idempotency)
+  assert:
+    that:
+      - account_created_idempotent is not changed
+      - account_created_idempotent.account_uri is not none
+
+- name: Validate that email address was changed (check mode)
+  assert:
+    that:
+      - account_modified_check is changed
+      - account_modified_check.account_uri is not none
+      - "'diff' in account_modified_check"
+      - account_modified_check.diff.before.contact | length == 1
+      - account_modified_check.diff.before.contact[0] == 'mailto:example@example.org'
+      - account_modified_check.diff.after.contact | length == 1
+      - account_modified_check.diff.after.contact[0] == 'mailto:example@example.com'
+
+- name: Validate that email address was changed
+  assert:
+    that:
+      - account_modified is changed
+      - account_modified.account_uri is not none
+
+- name: Validate that email address was not changed a second time (idempotency)
+  assert:
+    that:
+      - account_modified_idempotent is not changed
+      - account_modified_idempotent.account_uri is not none
+
+- name: Make sure that with the wrong account URI, the account cannot be changed
+  assert:
+    that:
+      - account_modified_wrong_uri is failed
+
+- name: Validate that email address was cleared (check mode)
+  assert:
+    that:
+      - account_modified_2_check is changed
+      - account_modified_2_check.account_uri is not none
+      - "'diff' in account_modified_2_check"
+      - account_modified_2_check.diff.before.contact | length == 1
+      - account_modified_2_check.diff.before.contact[0] == 'mailto:example@example.com'
+      - account_modified_2_check.diff.after.contact | length == 0
+
+- name: Validate that email address was cleared
+  assert:
+    that:
+      - account_modified_2 is changed
+      - account_modified_2.account_uri is not none
+
+- name: Validate that email address was not cleared a second time (idempotency)
+  assert:
+    that:
+      - account_modified_2_idempotent is not changed
+      - account_modified_2_idempotent.account_uri is not none
+
+- name: Validate that the account key was changed (check mode)
+  assert:
+    that:
+      - account_change_key_check is changed
+      - account_change_key_check.account_uri is not none
+      - "'diff' in account_change_key_check"
+      - account_change_key_check.diff.before.public_account_key != account_change_key_check.diff.after.public_account_key
+
+- name: Validate that the account key was changed
+  assert:
+    that:
+      - account_change_key is changed
+      - account_change_key.account_uri is not none
+
+- name: Validate that the account was deactivated (check mode)
+  assert:
+    that:
+      - account_deactivate_check is changed
+      - account_deactivate_check.account_uri is not none
+      - "'diff' in account_deactivate_check"
+      - "account_deactivate_check.diff.before != {}"
+      - "account_deactivate_check.diff.after == {}"
+
+- name: Validate that the account was deactivated
+  assert:
+    that:
+      - account_deactivate is changed
+      - account_deactivate.account_uri is not none
+
+- name: Validate that the account was really deactivated (idempotency)
+  assert:
+    that:
+      - account_deactivate_idempotent is not changed
+      # The next condition should be true for all conforming ACME servers.
+      # In case it is not true, it could be both an error in acme_account
+      # and in the ACME server.
+      - account_deactivate_idempotent.account_uri is none
+
+- name: Validate that the account is gone (new account key)
+  assert:
+    that:
+      - account_not_created_2 is failed
+      - account_not_created_2.msg == 'Account does not exist or is deactivated.'
+
+- name: Validate that the account is gone (old account key)
+  assert:
+    that:
+      - account_not_created_3 is failed
+      - account_not_created_3.msg == 'Account does not exist or is deactivated.'

@@ -1,0 +1,2 @@
+minor_changes:
+- dnf - added the module option ``install_weak_deps`` to control whether DNF will install weak dependencies

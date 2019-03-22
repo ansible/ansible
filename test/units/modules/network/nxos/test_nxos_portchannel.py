@@ -19,31 +19,37 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
-from ansible.compat.tests.mock import patch
-from ansible.modules.network.nxos import nxos_portchannel
-from .nxos_module import TestNxosModule, load_fixture, set_module_args
+from units.compat.mock import patch
+from ansible.modules.network.nxos import _nxos_portchannel
+from .nxos_module import TestNxosModule, set_module_args
 
 
 class TestNxosPortchannelModule(TestNxosModule):
 
-    module = nxos_portchannel
+    module = _nxos_portchannel
 
     def setUp(self):
-        self.mock_run_commands = patch('ansible.modules.network.nxos.nxos_portchannel.run_commands')
+        super(TestNxosPortchannelModule, self).setUp()
+
+        self.mock_run_commands = patch('ansible.modules.network.nxos._nxos_portchannel.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
-        self.mock_load_config = patch('ansible.modules.network.nxos.nxos_portchannel.load_config')
+        self.mock_load_config = patch('ansible.modules.network.nxos._nxos_portchannel.load_config')
         self.load_config = self.mock_load_config.start()
 
-        self.mock_get_config = patch('ansible.modules.network.nxos.nxos_portchannel.get_config')
+        self.mock_get_config = patch('ansible.modules.network.nxos._nxos_portchannel.get_config')
         self.get_config = self.mock_get_config.start()
 
+        self.mock_get_capabilities = patch('ansible.modules.network.nxos._nxos_portchannel.get_capabilities')
+        self.get_capabilities = self.mock_get_capabilities.start()
+        self.get_capabilities.return_value = {'network_api': 'cliconf'}
+
     def tearDown(self):
+        super(TestNxosPortchannelModule, self).tearDown()
         self.mock_run_commands.stop()
         self.mock_load_config.stop()
         self.mock_get_config.stop()
+        self.mock_get_capabilities.stop()
 
     def load_fixtures(self, commands=None, device=''):
         self.load_config.return_value = None

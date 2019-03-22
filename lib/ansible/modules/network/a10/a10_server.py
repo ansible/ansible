@@ -22,17 +22,19 @@ version_added: 1.8
 short_description: Manage A10 Networks AX/SoftAX/Thunder/vThunder devices' server object.
 description:
     - Manage SLB (Server Load Balancer) server objects on A10 Networks devices via aXAPIv2.
-author: "Eric Chou (@ericchou) 2016, Mischa Peters (@mischapeters) 2014"
+author:
+  - Eric Chou (@ericchou)
+  - Mischa Peters (@mischapeters)
 notes:
     - Requires A10 Networks aXAPI 2.1.
-extends_documentation_fragment: a10
+extends_documentation_fragment:
+  - a10
+  - url
 options:
   partition:
     version_added: "2.3"
     description:
       - set active-partition
-    required: false
-    default: null
   server_name:
     description:
       - The SLB (Server Load Balancer) server name.
@@ -41,13 +43,10 @@ options:
   server_ip:
     description:
       - The SLB server IPv4 address.
-    required: false
-    default: null
     aliases: ['ip', 'address']
   server_status:
     description:
       - The SLB virtual server status.
-    required: false
     default: enabled
     aliases: ['status']
     choices: ['enabled', 'disabled']
@@ -57,22 +56,19 @@ options:
         dictionary which specifies the C(port:) and C(protocol:), but can also optionally
         specify the C(status:). See the examples below for details. This parameter is
         required when C(state) is C(present).
-    required: false
-    default: null
+    aliases: ['port']
   state:
     description:
       - This is to specify the operation to create, update or remove SLB server.
-    required: false
     default: present
     choices: ['present', 'absent']
   validate_certs:
     description:
       - If C(no), SSL certificates will not be validated. This should only be used
         on personally controlled devices using self-signed certificates.
-    required: false
     version_added: 2.3
+    type: bool
     default: 'yes'
-    choices: ['yes', 'no']
 
 '''
 
@@ -97,13 +93,13 @@ RETURN = '''
 content:
   description: the full info regarding the slb_server
   returned: success
-  type: string
+  type: str
   sample: "mynewserver"
 '''
 import json
 
-from ansible.module_utils.a10 import (axapi_call, a10_argument_spec, axapi_authenticate, axapi_failure,
-                                      axapi_get_port_protocol, axapi_enabled_disabled, AXAPI_PORT_PROTOCOLS)
+from ansible.module_utils.network.a10.a10 import (axapi_call, a10_argument_spec, axapi_authenticate, axapi_failure, axapi_get_port_protocol,
+                                                  axapi_enabled_disabled, AXAPI_PORT_PROTOCOLS)
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import url_argument_spec
 
@@ -121,7 +117,7 @@ def validate_ports(module, ports):
         if 'port_num' in item:
             try:
                 item['port_num'] = int(item['port_num'])
-            except:
+            except Exception:
                 module.fail_json(msg="port_num entries in the port definitions must be integers")
         else:
             module.fail_json(msg="port definitions must define the port_num field")

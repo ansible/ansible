@@ -26,13 +26,10 @@ options:
         description:
             - The dot-separated path (aka I(key)) specifying the sysctl variable.
         required: true
-        default: null
         aliases: [ 'key' ]
     value:
         description:
             - Desired value of the sysctl key.
-        required: false
-        default: null
         aliases: [ 'val' ]
     state:
         description:
@@ -42,29 +39,25 @@ options:
     ignoreerrors:
         description:
             - Use this option to ignore errors about unknown keys.
-        choices: [ "yes", "no" ]
-        default: no
+        type: bool
+        default: 'no'
     reload:
         description:
             - If C(yes), performs a I(/sbin/sysctl -p) if the C(sysctl_file) is
               updated. If C(no), does not reload I(sysctl) even if the
               C(sysctl_file) is updated.
-        choices: [ "yes", "no" ]
-        default: "yes"
+        type: bool
+        default: 'yes'
     sysctl_file:
         description:
             - Specifies the absolute path to C(sysctl.conf), if not C(/etc/sysctl.conf).
-        required: false
         default: /etc/sysctl.conf
     sysctl_set:
         description:
             - Verify token value with the sysctl command and set with -w if necessary
-        choices: [ "yes", "no" ]
-        required: false
+        type: bool
+        default: 'no'
         version_added: 1.5
-        default: False
-notes: []
-requirements: []
 author: "David CHANIAL (@davixx) <david.chanial@gmail.com>"
 '''
 
@@ -88,7 +81,7 @@ EXAMPLES = '''
     sysctl_file: /tmp/test_sysctl.conf
     reload: no
 
-# Set ip forwarding on in /proc and do not reload the sysctl file
+# Set ip forwarding on in /proc and verify token value with the sysctl command
 - sysctl:
     name: net.ipv4.ip_forward
     value: 1
@@ -165,6 +158,9 @@ class SysctlModule(object):
             self.write_file = True
         elif self.file_values[thisname] is None and self.args['state'] == "absent":
             self.changed = False
+        elif self.file_values[thisname] and self.args['state'] == "absent":
+            self.changed = True
+            self.write_file = True
         elif self.file_values[thisname] != self.args['value']:
             self.changed = True
             self.write_file = True
@@ -286,7 +282,7 @@ class SysctlModule(object):
             rc, out, err = self.module.run_command(sysctl_args)
 
         if rc != 0:
-            self.module.fail_json(msg="Failed to reload sysctl: %s" % str(out) + str(err))
+            self.module.fail_json(msg="Failed to reload sysctl: %s" % to_native(out) + to_native(err))
 
     # ==============================================================
     #   SYSCTL FILE MANAGEMENT
@@ -301,7 +297,7 @@ class SysctlModule(object):
                 with open(self.sysctl_file, "r") as read_file:
                     lines = read_file.readlines()
             except IOError as e:
-                self.module.fail_json(msg="Failed to open %s: %s" % (self.sysctl_file, to_native(e)))
+                self.module.fail_json(msg="Failed to open %s: %s" % (to_native(self.sysctl_file), to_native(e)))
 
         for line in lines:
             line = line.strip()
@@ -380,20 +376,20 @@ def main():
     )
 
     if module.params['name'] is None:
-        module.fail_json(msg="name can not be None")
+        module.fail_json(msg="name cannot be None")
     if module.params['state'] == 'present' and module.params['value'] is None:
-        module.fail_json(msg="value can not be None")
+        module.fail_json(msg="value cannot be None")
 
     # In case of in-line params
     if module.params['name'] == '':
-        module.fail_json(msg="name can not be blank")
+        module.fail_json(msg="name cannot be blank")
     if module.params['state'] == 'present' and module.params['value'] == '':
-        module.fail_json(msg="value can not be blank")
+        module.fail_json(msg="value cannot be blank")
 
     result = SysctlModule(module)
 
     module.exit_json(changed=result.changed)
 
-# import module snippets
+
 if __name__ == '__main__':
     main()

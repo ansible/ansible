@@ -47,7 +47,6 @@ options:
     description:
       - Name of the VRF. The name 'default' is a valid VRF representing
         the global bgp.
-    required: false
     default: default
   neighbor:
     description:
@@ -71,9 +70,7 @@ options:
         (it adds the disable keyword to the basic command); and inherit
         to remove the command at this level (the command value is
         inherited from a higher BGP layer).
-    required: false
     choices: ['enable','disable', 'inherit']
-    default: null
   additional_paths_send:
     description:
       - Valid values are enable for basic command enablement; disable
@@ -81,9 +78,7 @@ options:
         (it adds the disable keyword to the basic command); and inherit
         to remove the command at this level (the command value is
         inherited from a higher BGP layer).
-    required: false
     choices: ['enable','disable', 'inherit']
-    default: null
   advertise_map_exist:
     description:
       - Conditional route advertisement. This property requires two
@@ -92,8 +87,6 @@ options:
         name, or simply 'default' e.g. ['my_advertise_map',
         'my_exist_map']. This command is mutually exclusive with the
         advertise_map_non_exist property.
-    required: false
-    default: null
   advertise_map_non_exist:
     description:
       - Conditional route advertisement. This property requires two
@@ -102,163 +95,118 @@ options:
         non-exist-map name, or simply 'default' e.g.
         ['my_advertise_map', 'my_non_exist_map']. This command is mutually
         exclusive with the advertise_map_exist property.
-    required: false
-    default: null
   allowas_in:
     description:
       - Activate allowas-in property
-    required: false
-    default: null
+    type: bool
   allowas_in_max:
     description:
-      - Optional max-occurrences value for allowas_in. Valid values are
-        an integer value or 'default'. Can be used independently or in
-        conjunction with allowas_in.
-    required: false
-    default: null
+      - Max-occurrences value for allowas_in. Valid values are
+        an integer value or 'default'. This is mutually exclusive with
+        allowas_in.
   as_override:
     description:
       - Activate the as-override feature.
-    required: false
-    choices: ['true', 'false']
-    default: null
+    type: bool
   default_originate:
     description:
       - Activate the default-originate feature.
-    required: false
-    choices: ['true', 'false']
-    default: null
+    type: bool
   default_originate_route_map:
     description:
-      - Optional route-map for the default_originate property. Can be
-        used independently or in conjunction with C(default_originate).
+      - Route-map for the default_originate property.
         Valid values are a string defining a route-map name,
-        or 'default'.
-    required: false
-    default: null
+        or 'default'. This is mutually exclusive with
+        default_originate.
+  disable_peer_as_check:
+    description:
+      - Disable checking of peer AS-number while advertising
+    type: bool
+    version_added: 2.5
   filter_list_in:
     description:
       - Valid values are a string defining a filter-list name,
         or 'default'.
-    required: false
-    default: null
   filter_list_out:
     description:
       - Valid values are a string defining a filter-list name,
         or 'default'.
-    required: false
-    default: null
   max_prefix_limit:
     description:
       - maximum-prefix limit value. Valid values are an integer value
         or 'default'.
-    required: false
-    default: null
   max_prefix_interval:
     description:
       - Optional restart interval. Valid values are an integer.
         Requires max_prefix_limit. May not be combined with max_prefix_warning.
-    required: false
-    default: null
   max_prefix_threshold:
     description:
       - Optional threshold percentage at which to generate a warning.
         Valid values are an integer value.
         Requires max_prefix_limit.
-    required: false
-    default: null
   max_prefix_warning:
     description:
       - Optional warning-only keyword. Requires max_prefix_limit. May not be
         combined with max_prefix_interval.
-    required: false
-    choices: ['true','false']
-    default: null
+    type: bool
   next_hop_self:
     description:
       - Activate the next-hop-self feature.
-    required: false
-    choices: ['true','false']
-    default: null
+    type: bool
   next_hop_third_party:
     description:
       - Activate the next-hop-third-party feature.
-    required: false
-    choices: ['true','false']
-    default: null
+    type: bool
   prefix_list_in:
     description:
       - Valid values are a string defining a prefix-list name,
         or 'default'.
-    required: false
-    default: null
   prefix_list_out:
     description:
       - Valid values are a string defining a prefix-list name,
         or 'default'.
-    required: false
-    default: null
   route_map_in:
     description:
       - Valid values are a string defining a route-map name,
         or 'default'.
-    required: false
-    default: null
   route_map_out:
     description:
       - Valid values are a string defining a route-map name,
         or 'default'.
-    required: false
-    default: null
   route_reflector_client:
     description:
       - Router reflector client.
-    required: false
-    choices: ['true','false']
-    default: null
+    type: bool
   send_community:
     description:
       - send-community attribute.
-    required: false
     choices: ['none', 'both', 'extended', 'standard', 'default']
-    default: null
   soft_reconfiguration_in:
     description:
       - Valid values are 'enable' for basic command enablement; 'always'
         to add the always keyword to the basic command; and 'inherit' to
         remove the command at this level (the command value is inherited
         from a higher BGP layer).
-    required: false
     choices: ['enable','always','inherit']
-    default: null
   soo:
     description:
       - Site-of-origin. Valid values are a string defining a VPN
         extcommunity or 'default'.
-    required: false
-    default: null
   suppress_inactive:
     description:
       - suppress-inactive feature.
-    required: false
-    choices: ['true','false','default']
-    default: null
+    type: bool
   unsuppress_map:
     description:
       - unsuppress-map. Valid values are a string defining a route-map
         name or 'default'.
-    required: false
-    default: null
   weight:
     description:
       - Weight value. Valid values are an integer value or 'default'.
-    required: false
-    default: null
   state:
     description:
       - Determines whether the config should be present or not
         on the device.
-    required: false
     default: present
     choices: ['present','absent']
 '''
@@ -266,7 +214,7 @@ EXAMPLES = '''
 - name: configure RR client
   nxos_bgp_neighbor_af:
     asn: 65535
-    neighbor: '3.3.3.3'
+    neighbor: '192.0.2.3'
     afi: ipv4
     safi: unicast
     route_reflector_client: true
@@ -278,22 +226,23 @@ commands:
   description: commands sent to the device
   returned: always
   type: list
-  sample: ["router bgp 65535", "neighbor 3.3.3.3",
+  sample: ["router bgp 65535", "neighbor 192.0.2.3",
            "address-family ipv4 unicast", "route-reflector-client"]
 '''
 
 import re
 
-from ansible.module_utils.nxos import get_config, load_config
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
+from ansible.module_utils.network.common.config import CustomNetworkConfig
 
 
 BOOL_PARAMS = [
     'allowas_in',
     'as_override',
     'default_originate',
+    'disable_peer_as_check',
     'next_hop_self',
     'next_hop_third_party',
     'route_reflector_client',
@@ -312,6 +261,7 @@ PARAM_TO_COMMAND_KEYMAP = {
     'as_override': 'as-override',
     'default_originate': 'default-originate',
     'default_originate_route_map': 'default-originate route-map',
+    'disable_peer_as_check': 'disable-peer-as-check',
     'filter_list_in': 'filter-list in',
     'filter_list_out': 'filter-list out',
     'max_prefix_limit': 'maximum-prefix',
@@ -344,6 +294,7 @@ def get_value(arg, config, module):
         'max_prefix_interval',
         'max_prefix_threshold',
         'max_prefix_warning',
+        'send_community',
         'soft_reconfiguration_in'
     ]
     command = PARAM_TO_COMMAND_KEYMAP[arg]
@@ -375,12 +326,6 @@ def get_value(arg, config, module):
         has_cmd_direction_val = re.search(r'{0}\s(?P<value>.*)\s{1}$'.format(*command.split()), config, re.M)
         if has_cmd_direction_val:
             value = has_cmd_direction_val.group('value')
-
-    elif arg == 'send_community':
-        if has_command:
-            value = 'none'
-            if has_command_val:
-                value = has_command_val.group('value')
 
     elif has_command_val:
         value = has_command_val.group('value')
@@ -431,6 +376,20 @@ def get_custom_value(arg, config, module):
                 else:
                     value = 'enable'
 
+    elif arg == 'send_community':
+        value = 'none'
+        for line in splitted_config:
+            if command in line:
+                if 'extended' in line:
+                    if value == 'standard':
+                        value = 'both'
+                    else:
+                        value = 'extended'
+                elif 'both' in line:
+                    value = 'both'
+                else:
+                    value = 'standard'
+
     return value
 
 
@@ -438,7 +397,7 @@ def get_existing(module, args, warnings):
     existing = {}
     netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
 
-    asn_regex = re.compile(r'.*router\sbgp\s(?P<existing_asn>\d+).*', re.S)
+    asn_regex = re.compile(r'.*router\sbgp\s(?P<existing_asn>\d+(\.\d+)?).*', re.S)
     match_asn = asn_regex.match(str(netcfg))
 
     if match_asn:
@@ -480,19 +439,16 @@ def apply_key_map(key_map, table):
 
 def get_default_command(key, value, existing_commands):
     command = ''
-    if key == 'send-community' and existing_commands.get(key) == 'none':
-        command = 'no {0}'.format(key)
-
-    elif existing_commands.get(key):
+    if existing_commands.get(key):
         existing_value = existing_commands.get(key)
         if value == 'inherit':
             if existing_value != 'inherit':
                 command = 'no {0}'.format(key)
         else:
-            if key == 'advertise-map exist':
+            if key == 'advertise-map exist-map':
                 command = 'no advertise-map {0} exist-map {1}'.format(
                     existing_value[0], existing_value[1])
-            elif key == 'advertise-map non-exist':
+            elif key == 'advertise-map non-exist-map':
                 command = 'no advertise-map {0} non-exist-map {1}'.format(
                     existing_value[0], existing_value[1])
             elif key == 'filter-list in':
@@ -520,7 +476,7 @@ def get_default_command(key, value, existing_commands):
     return command
 
 
-def fix_proposed(module, proposed):
+def fix_proposed(module, existing, proposed):
     allowas_in = proposed.get('allowas_in')
     allowas_in_max = proposed.get('allowas_in_max')
 
@@ -529,12 +485,14 @@ def fix_proposed(module, proposed):
     elif allowas_in and allowas_in_max:
         proposed.pop('allowas_in')
 
+    if existing.get('send_community') == 'none' and proposed.get('send_community') == 'default':
+        proposed.pop('send_community')
     return proposed
 
 
 def state_present(module, existing, proposed, candidate):
     commands = list()
-    proposed = fix_proposed(module, proposed)
+    proposed = fix_proposed(module, existing, proposed)
 
     proposed_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, proposed)
     existing_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, existing)
@@ -551,14 +509,15 @@ def state_present(module, existing, proposed, candidate):
                         commands.append(cmd)
 
         elif key.startswith('maximum-prefix'):
-            command = 'maximum-prefix {0}'.format(module.params['max_prefix_limit'])
-            if module.params['max_prefix_threshold']:
-                command += ' {0}'.format(module.params['max_prefix_threshold'])
-            if module.params['max_prefix_interval']:
-                command += ' restart {0}'.format(module.params['max_prefix_interval'])
-            elif module.params['max_prefix_warning']:
-                command += ' warning-only'
-            commands.append(command)
+            if module.params['max_prefix_limit'] != 'default':
+                command = 'maximum-prefix {0}'.format(module.params['max_prefix_limit'])
+                if module.params['max_prefix_threshold']:
+                    command += ' {0}'.format(module.params['max_prefix_threshold'])
+                if module.params['max_prefix_interval']:
+                    command += ' restart {0}'.format(module.params['max_prefix_interval'])
+                elif module.params['max_prefix_warning']:
+                    command += ' warning-only'
+                commands.append(command)
 
         elif value is True:
             commands.append(key)
@@ -586,14 +545,14 @@ def state_present(module, existing, proposed, candidate):
             commands.append(command)
         elif key == 'send-community':
             command = key
-            if value != 'none':
-                command += ' {0}'.format(value)
+            if value in ['standard', 'extended']:
+                commands.append('no ' + key + ' both')
+            command += ' {0}'.format(value)
             commands.append(command)
         else:
             command = '{0} {1}'.format(key, value)
             commands.append(command)
 
-    commands = set(commands)
     if commands:
         parents = ['router bgp {0}'.format(module.params['asn'])]
         if module.params['vrf'] != 'default':
@@ -637,6 +596,7 @@ def main():
         as_override=dict(required=False, type='bool'),
         default_originate=dict(required=False, type='bool'),
         default_originate_route_map=dict(required=False, type='str'),
+        disable_peer_as_check=dict(required=False, type='bool'),
         filter_list_in=dict(required=False, type='str'),
         filter_list_out=dict(required=False, type='str'),
         max_prefix_limit=dict(required=False, type='str'),
@@ -663,7 +623,9 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         mutually_exclusive=[['advertise_map_exist', 'advertise_map_non_exist'],
-                            ['max_prefix_interval', 'max_prefix_warning']],
+                            ['max_prefix_interval', 'max_prefix_warning'],
+                            ['default_originate', 'default_originate_route_map'],
+                            ['allowas_in', 'allowas_in_max']],
         supports_check_mode=True,
     )
 
@@ -708,6 +670,8 @@ def main():
                         value = False
                     else:
                         value = 'default'
+                elif key == 'send_community' and str(value).lower() == 'none':
+                    value = 'default'
             if existing.get(key) != value:
                 proposed[key] = value
 
@@ -719,7 +683,7 @@ def main():
 
     if candidate:
         candidate = candidate.items_text()
-        warnings.extend(load_config(module, candidate))
+        load_config(module, candidate)
         result['changed'] = True
         result['commands'] = candidate
     else:

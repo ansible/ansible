@@ -24,6 +24,7 @@ options:
     description:
         - Name of the parameter to update.
     required: true
+    aliases: [parameter]
   value:
     description:
         - Value of the parameter to be set.
@@ -31,28 +32,21 @@ options:
   db:
     description:
         - Name of the Vertica database.
-    required: false
-    default: null
   cluster:
     description:
         - Name of the Vertica cluster.
-    required: false
     default: localhost
   port:
     description:
         - Vertica cluster port to connect to.
-    required: false
     default: 5433
   login_user:
     description:
         - The username used to authenticate with.
-    required: false
     default: dbadmin
   login_password:
     description:
         - The password used to authenticate with.
-    required: false
-    default: null
 notes:
   - The default authentication assumes that you are either logging in as or sudo'ing
     to the C(dbadmin) account on the host.
@@ -72,24 +66,28 @@ EXAMPLES = """
 """
 import traceback
 
+PYODBC_IMP_ERR = None
 try:
     import pyodbc
 except ImportError:
+    PYODBC_IMP_ERR = traceback.format_exc()
     pyodbc_found = False
 else:
     pyodbc_found = True
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
 
 
 class NotSupportedError(Exception):
     pass
 
+
 class CannotDropError(Exception):
     pass
 
 # module specific functions
+
 
 def get_configuration_facts(cursor, parameter_name=''):
     facts = {}
@@ -110,11 +108,13 @@ def get_configuration_facts(cursor, parameter_name=''):
                 'default_value': row.default_value}
     return facts
 
+
 def check(configuration_facts, parameter_name, current_value):
     parameter_key = parameter_name.lower()
     if current_value and current_value.lower() != configuration_facts[parameter_key]['current_value'].lower():
         return False
     return True
+
 
 def present(configuration_facts, cursor, parameter_name, current_value):
     parameter_key = parameter_name.lower()
@@ -128,6 +128,7 @@ def present(configuration_facts, cursor, parameter_name, current_value):
 
 # module logic
 
+
 def main():
 
     module = AnsibleModule(
@@ -139,10 +140,10 @@ def main():
             port=dict(default='5433'),
             login_user=dict(default='dbadmin'),
             login_password=dict(default=None, no_log=True),
-        ), supports_check_mode = True)
+        ), supports_check_mode=True)
 
     if not pyodbc_found:
-        module.fail_json(msg="The python pyodbc module is required.")
+        module.fail_json(msg=missing_required_lib('pyodbc'), exception=PYODBC_IMP_ERR)
 
     parameter_name = module.params['parameter']
     current_value = module.params['value']
@@ -161,8 +162,8 @@ def main():
             "User={3};"
             "Password={4};"
             "ConnectionLoadBalance={5}"
-            ).format(module.params['cluster'], module.params['port'], db,
-                module.params['login_user'], module.params['login_password'], 'true')
+        ).format(module.params['cluster'], module.params['port'], db,
+                 module.params['login_user'], module.params['login_password'], 'true')
         db_conn = pyodbc.connect(dsn, autocommit=True)
         cursor = db_conn.cursor()
     except Exception as e:

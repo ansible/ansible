@@ -29,8 +29,9 @@ options:
       required: True
     fail_if_not_running:
       description:
-        - Fail loudly if the job_id does not reference a running job.
+        - Fail loudly if the I(job_id) does not reference a running job.
       default: False
+      type: bool
 extends_documentation_fragment: tower
 '''
 
@@ -49,18 +50,16 @@ id:
 status:
     description: status of the cancel request
     returned: success
-    type: string
+    type: str
     sample: canceled
 '''
 
 
-from ansible.module_utils.basic import AnsibleModule
-
-from ansible.module_utils.ansible_tower import tower_auth_config, tower_check_mode, tower_argument_spec, HAS_TOWER_CLI
+from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, tower_check_mode
 
 try:
     import tower_cli
-    import tower_cli.utils.exceptions as exc
+    import tower_cli.exceptions as exc
 
     from tower_cli.conf import settings
 except ImportError:
@@ -68,19 +67,15 @@ except ImportError:
 
 
 def main():
-    argument_spec = tower_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         job_id=dict(type='int', required=True),
         fail_if_not_running=dict(type='bool', default=False),
-    ))
+    )
 
-    module = AnsibleModule(
+    module = TowerModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
-
-    if not HAS_TOWER_CLI:
-        module.fail_json(msg='ansible-tower-cli required for this module')
 
     job_id = module.params.get('job_id')
     json_output = {}
@@ -94,7 +89,7 @@ def main():
         try:
             result = job.cancel(job_id, **params)
             json_output['id'] = job_id
-        except (exc.ConnectionError, exc.BadRequest, exc.TowerCLIError) as excinfo:
+        except (exc.ConnectionError, exc.BadRequest, exc.TowerCLIError, exc.AuthError) as excinfo:
             module.fail_json(msg='Unable to cancel job_id/{0}: {1}'.format(job_id, excinfo), changed=False)
 
     json_output['changed'] = result['changed']

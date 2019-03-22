@@ -28,7 +28,7 @@ short_description: Manages advanced ACL configuration on HUAWEI CloudEngine swit
 description:
     - Manages advanced ACL configurations on HUAWEI CloudEngine switches.
 author:
-    - wangdezhuang (@CloudEngine-Ansible)
+    - wangdezhuang (@QijunPan)
 options:
     state:
         description:
@@ -47,159 +47,107 @@ options:
         description:
             - ACL number.
               The value is an integer ranging from 3000 to 3999.
-        required: false
-        default: null
     acl_step:
         description:
             - ACL step.
               The value is an integer ranging from 1 to 20. The default value is 5.
-        required: false
-        default: null
     acl_description:
         description:
             - ACL description.
               The value is a string of 1 to 127 characters.
-        required: false
-        default: null
     rule_name:
         description:
             - Name of a basic ACL rule.
               The value is a string of 1 to 32 characters.
-        required: false
-        default: null
     rule_id:
         description:
             - ID of a basic ACL rule in configuration mode.
               The value is an integer ranging from 0 to 4294967294.
-        required: false
-        default: null
     rule_action:
         description:
             - Matching mode of basic ACL rules.
-        required: false
-        default: null
         choices: ['permit','deny']
     protocol:
         description:
             - Protocol type.
-        required: false
-        default: null
         choices: ['ip', 'icmp', 'igmp', 'ipinip', 'tcp', 'udp', 'gre', 'ospf']
     source_ip:
         description:
             - Source IP address.
               The value is a string of 0 to 255 characters.The default value is 0.0.0.0.
               The value is in dotted decimal notation.
-        required: false
-        default: null
     src_mask:
         description:
             - Source IP address mask.
               The value is an integer ranging from 1 to 32.
-        required: false
-        default: null
     src_pool_name:
         description:
             - Name of a source pool.
               The value is a string of 1 to 32 characters.
-        required: false
-        default: null
     dest_ip:
         description:
             - Destination IP address.
               The value is a string of 0 to 255 characters.The default value is 0.0.0.0.
               The value is in dotted decimal notation.
-        required: false
-        default: null
     dest_mask:
         description:
             - Destination IP address mask.
               The value is an integer ranging from 1 to 32.
-        required: false
-        default: null
     dest_pool_name:
         description:
             - Name of a destination pool.
               The value is a string of 1 to 32 characters.
-        required: false
-        default: null
     src_port_op:
         description:
             - Range type of the source port.
-        required: false
-        default: null
         choices: ['lt','eq', 'gt', 'range']
     src_port_begin:
         description:
             - Start port number of the source port.
               The value is an integer ranging from 0 to 65535.
-        required: false
-        default: null
     src_port_end:
         description:
             - End port number of the source port.
               The value is an integer ranging from 0 to 65535.
-        required: false
-        default: null
     src_port_pool_name:
         description:
             - Name of a source port pool.
               The value is a string of 1 to 32 characters.
-        required: false
-        default: null
     dest_port_op:
         description:
             - Range type of the destination port.
-        required: false
-        default: null
         choices: ['lt','eq', 'gt', 'range']
     dest_port_begin:
         description:
             - Start port number of the destination port.
               The value is an integer ranging from 0 to 65535.
-        required: false
-        default: null
     dest_port_end:
         description:
             - End port number of the destination port.
               The value is an integer ranging from 0 to 65535.
-        required: false
-        default: null
     dest_port_pool_name:
         description:
             - Name of a destination port pool.
               The value is a string of 1 to 32 characters.
-        required: false
-        default: null
     frag_type:
         description:
             - Type of packet fragmentation.
-        required: false
-        default: null
         choices: ['fragment', 'clear_fragment']
     precedence:
         description:
             - Data packets can be filtered based on the priority field.
               The value is an integer ranging from 0 to 7.
-        required: false
-        default: null
     tos:
         description:
             - ToS value on which data packet filtering is based.
               The value is an integer ranging from 0 to 15.
-        required: false
-        default: null
     dscp:
         description:
             - Differentiated Services Code Point.
               The value is an integer ranging from 0 to 63.
-        required: false
-        default: null
     icmp_name:
         description:
             - ICMP name.
-        required: false
-        default: null
         choices: ['unconfiged', 'echo', 'echo-reply', 'fragmentneed-DFset', 'host-redirect',
                   'host-tos-redirect', 'host-unreachable', 'information-reply', 'information-request',
                   'net-redirect', 'net-tos-redirect', 'net-unreachable', 'parameter-problem',
@@ -210,67 +158,48 @@ options:
         description:
             - ICMP type. This parameter is available only when the packet protocol is ICMP.
               The value is an integer ranging from 0 to 255.
-        required: false
-        default: null
     icmp_code:
         description:
             - ICMP message code. Data packets can be filtered based on the ICMP message code.
               The value is an integer ranging from 0 to 255.
-        required: false
-        default: null
     ttl_expired:
         description:
             - Whether TTL Expired is matched, with the TTL value of 1.
-        required: false
-        default: false
-        choices: ['true', 'false']
+        type: bool
+        default: 'no'
     vrf_name:
         description:
             - VPN instance name.
               The value is a string of 1 to 31 characters.The default value is _public_.
-        required: false
-        default: null
     syn_flag:
         description:
             - TCP flag value.
               The value is an integer ranging from 0 to 63.
-        required: false
-        default: null
     tcp_flag_mask:
         description:
             - TCP flag mask value.
               The value is an integer ranging from 0 to 63.
-        required: false
-        default: null
     established:
         description:
             - Match established connections.
-        required: false
-        default: false
-        choices: ['true', 'false']
+        type: bool
+        default: 'no'
     time_range:
         description:
             - Name of a time range in which an ACL rule takes effect.
-        required: false
-        default: null
     rule_description:
         description:
             - Description about an ACL rule.
-        required: false
-        default: null
     igmp_type:
         description:
             - Internet Group Management Protocol.
-        required: false
-        default: null
         choices: ['host-query', 'mrouter-adver', 'mrouter-solic', 'mrouter-termi', 'mtrace-resp', 'mtrace-route',
                   'v1host-report', 'v2host-report', 'v2leave-group', 'v3host-report']
     log_flag:
         description:
             - Flag of logging matched data packets.
-        required: false
-        default: false
-        choices: ['true', 'false']
+        type: bool
+        default: 'no'
 '''
 
 EXAMPLES = '''
@@ -332,7 +261,7 @@ RETURN = '''
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 proposed:
     description: k/v pairs of parameters passed into module
@@ -358,7 +287,7 @@ updates:
 
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_nc_config, set_nc_config, ce_argument_spec, check_ip_addr
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec, check_ip_addr
 
 
 # get acl

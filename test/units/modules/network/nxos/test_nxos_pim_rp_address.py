@@ -19,9 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.nxos import nxos_pim_rp_address
 from .nxos_module import TestNxosModule, load_fixture, set_module_args
 
@@ -31,6 +29,8 @@ class TestNxosPimRpAddressModule(TestNxosModule):
     module = nxos_pim_rp_address
 
     def setUp(self):
+        super(TestNxosPimRpAddressModule, self).setUp()
+
         self.mock_load_config = patch('ansible.modules.network.nxos.nxos_pim_rp_address.load_config')
         self.load_config = self.mock_load_config.start()
 
@@ -38,6 +38,7 @@ class TestNxosPimRpAddressModule(TestNxosModule):
         self.get_config = self.mock_get_config.start()
 
     def tearDown(self):
+        super(TestNxosPimRpAddressModule, self).tearDown()
         self.mock_load_config.stop()
         self.mock_get_config.stop()
 

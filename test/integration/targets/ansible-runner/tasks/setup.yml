@@ -1,0 +1,17 @@
+- name: Install docutils
+  pip:
+    name: docutils
+
+- name: Install ansible-runner
+  pip:
+    name: ansible-runner
+    version: 1.2.0
+
+- name: Find location of ansible-runner installation
+  command: "'{{ ansible_python_interpreter }}' -c 'import os, ansible_runner; print(os.path.dirname(ansible_runner.__file__))'"
+  register: ansible_runner_path
+
+# work around for https://github.com/ansible/ansible-runner/issues/132
+- name: Set callback path to work around ansible-runner bug
+  set_fact:
+    callback_path: ":{{ ansible_runner_path.stdout }}/callbacks"

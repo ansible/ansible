@@ -1,0 +1,216 @@
+# Test code for the vmware_local_role_manager module
+# Copyright: (c) 2017-2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
+- name: kill vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/killall
+
+- name: start vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/spawn?esx=1
+  register: vcsim_instance
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
+
+- debug: var=vcsim_instance
+
+- name: Create a role without privileges in check mode
+  vmware_local_role_manager:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    local_role_name: SampleRole_0001
+    validate_certs: no
+    state: present
+  register: role_creation
+  check_mode: yes
+
+- name: Verify if role was created
+  assert:
+    that:
+      - role_creation.changed
+
+- name: Create a role without privileges
+  vmware_local_role_manager:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    local_role_name: SampleRole_0001
+    validate_certs: no
+    state: present
+  register: role_creation_0001
+
+- name: Verify if role was created
+  assert:
+    that:
+      - role_creation_0001.changed
+
+- name: Again create a role without privileges
+  vmware_local_role_manager:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    local_role_name: SampleRole_0001
+    validate_certs: no
+    state: present
+  register: role_creation_0001
+
+- name: verify if role is not created again
+  assert:
+    that:
+      - not role_creation_0001.changed
+
+- name: Delete a role
+  vmware_local_role_manager:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    local_role_name: SampleRole_0001
+    validate_certs: no
+    state: absent
+  register: role_creation_0001
+
+- name: Verify if role is not present
+  assert:
+    that:
+      - role_creation_0001.changed
+
+- name: Delete role again
+  vmware_local_role_manager:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    local_role_name: SampleRole_0001
+    validate_certs: no
+    state: absent
+  register: role_creation_0001
+
+- name: Verify if role is absent again
+  assert:
+    that:
+      - not role_creation_0001.changed
+
+- name: Create a role with privileges
+  vmware_local_role_manager:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    local_role_name: SampleRole_0001
+    validate_certs: no
+    local_privilege_ids: ['VirtualMachine.State.RenameSnapshot']
+    state: present
+  register: role_creation_0001
+
+- name: Verify if role is created with privileges
+  assert:
+    that:
+      - role_creation_0001.changed
+
+- name: Add a privilege to existing privileges
+  vmware_local_role_manager:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    local_role_name: SampleRole_0001
+    validate_certs: no
+    local_privilege_ids: ['Folder.Create']
+    action: add
+    state: present
+  register: role_add
+
+- name: Verify if role is updated with updated privileges
+  assert:
+    that:
+      - role_add.changed
+
+- name: Again add a privilege to existing privileges
+  vmware_local_role_manager:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    local_role_name: SampleRole_0001
+    validate_certs: no
+    local_privilege_ids: ['Folder.Create']
+    action: add
+    state: present
+  register: role_add_0002
+
+- name: Verify if role is not updated
+  assert:
+    that:
+      - not role_add_0002.changed
+
+- name: Remove a privilege from existing privileges
+  vmware_local_role_manager:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    local_role_name: SampleRole_0001
+    validate_certs: no
+    local_privilege_ids: ['Folder.Create']
+    action: remove
+  register: role_remove
+
+- name: verify if role is updated with privileges
+  assert:
+    that:
+      - role_remove.changed
+
+- name: Again remove a privilege from existing privileges
+  vmware_local_role_manager:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    local_role_name: SampleRole_0001
+    validate_certs: no
+    local_privilege_ids: ['Folder.Create']
+    action: remove
+  register: role_remove_0002
+
+- name: Verify if role is not updated
+  assert:
+    that:
+      - not role_remove_0002.changed
+
+- name: Set a privilege to an existing role
+  vmware_local_role_manager:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    local_role_name: SampleRole_0001
+    validate_certs: no
+    local_privilege_ids: ['Folder.Create']
+    action: set
+  register: role_set
+
+- name: Verify if role is updated with privileges
+  assert:
+    that:
+      - role_set.changed
+
+- name: Again set a privilege to an existing role
+  vmware_local_role_manager:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    local_role_name: SampleRole_0001
+    validate_certs: no
+    local_privilege_ids: ['Folder.Create']
+    action: set
+  register: role_set_0002
+
+- name: verify if role is not updated
+  assert:
+    that:
+      - not role_set_0002.changed

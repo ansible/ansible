@@ -1,0 +1,2 @@
+bugfixes:
+    - Give user better error messages and more information on verbose about inventory plugin behaviour

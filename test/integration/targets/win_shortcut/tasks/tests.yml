@@ -16,6 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+- name: get current user profile location
+  raw: $env:USERPROFILE
+  check_mode: no
+  register: profile_result
+
+- set_fact:
+    profile_dir: '{{ profile_result.stdout_lines[0] }}'
+
 - name: Add Ansible website link on the desktop
   win_shortcut:
     src: https://ansible.com/
@@ -27,7 +35,7 @@
   assert:
     that:
     - ansible_website_link_add.changed == true
-    - ansible_website_link_add.dest == 'C:\\Users\\Administrator\\Desktop\\Ansible website.url'
+    - ansible_website_link_add.dest == profile_dir + '\Desktop\Ansible website.url'
     - ansible_website_link_add.src == 'https://ansible.com/'
 
 - name: Add Ansible website link on the desktop again
@@ -41,7 +49,7 @@
   assert:
     that:
     - ansible_website_link_add_again.changed == false
-    - ansible_website_link_add_again.dest == 'C:\\Users\\Administrator\\Desktop\\Ansible website.url'
+    - ansible_website_link_add_again.dest == profile_dir + '\Desktop\Ansible website.url'
     - ansible_website_link_add_again.src == 'https://ansible.com/'
   when: not in_check_mode
 
@@ -49,7 +57,7 @@
   assert:
     that:
     - ansible_website_link_add_again.changed == true
-    - ansible_website_link_add_again.dest == 'C:\\Users\\Administrator\\Desktop\\Ansible website.url'
+    - ansible_website_link_add_again.dest == profile_dir + '\Desktop\Ansible website.url'
     - ansible_website_link_add_again.src == 'https://ansible.com/'
   when: in_check_mode
 
@@ -63,14 +71,14 @@
   assert:
     that:
     - ansible_website_link_remove.changed == true
-    - ansible_website_link_remove.dest == 'C:\\Users\\Administrator\\Desktop\\Ansible website.url'
+    - ansible_website_link_remove.dest == profile_dir + '\Desktop\Ansible website.url'
   when: not in_check_mode
 
 - name: Check there was no change (check-mode)
   assert:
     that:
     - ansible_website_link_remove.changed == false
-    - ansible_website_link_remove.dest == 'C:\\Users\\Administrator\\Desktop\\Ansible website.url'
+    - ansible_website_link_remove.dest == profile_dir + '\Desktop\Ansible website.url'
   when: in_check_mode
 
 - name: Remove link again
@@ -83,7 +91,7 @@
   assert:
     that:
     - ansible_website_link_remove_again.changed == false
-    - ansible_website_link_remove_again.dest == 'C:\\Users\\Administrator\\Desktop\\Ansible website.url'
+    - ansible_website_link_remove_again.dest == profile_dir + '\Desktop\Ansible website.url'
 
 - name: Add a regedit shortcut on the desktop
   win_shortcut:
@@ -247,3 +255,113 @@
     that:
     - regedit_shortcut_remove_again.changed == false
     - regedit_shortcut_remove_again.dest == 'C:\\Users\\Public\\Desktop\\Registry Editor.lnk'
+
+- name: Create shortcut to shell path
+  win_shortcut:
+    dest: '%Public%\bin.lnk'
+    src: shell:RecycleBinFolder
+    state: present
+  register: shell_add
+
+- name: Check there was a change
+  assert:
+    that:
+    - shell_add is changed
+    - shell_add.dest == 'C:\\Users\\Public\\bin.lnk'
+    - shell_add.src == 'shell:RecycleBinFolder'
+
+- name: Create shortcut to shell path again
+  win_shortcut:
+    dest: '%Public%\bin.lnk'
+    src: shell:RecycleBinFolder
+    state: present
+  register: shell_add_again
+
+- name: Check there was no change (normal mode)
+  assert:
+    that:
+    - not shell_add_again is changed
+    - shell_add_again.src == 'shell:RecycleBinFolder'
+  when: not in_check_mode
+
+- name: Check there was a change (check-mode)
+  assert:
+    that:
+    - shell_add_again is changed
+  when: in_check_mode
+
+- name: Change shortcut to another shell path
+  win_shortcut:
+    dest: '%Public%\bin.lnk'
+    src: shell:Start Menu
+    state: present
+  register: shell_change
+
+- name: Check there was a change
+  assert:
+    that:
+    - shell_change is changed
+    - shell_change.src == 'shell:Start Menu'
+
+- name: Create shortcut to an executable without run as admin
+  win_shortcut:
+    dest: '%Public%\Desktop\cmd.lnk'
+    src: '%SystemRoot%\System32\cmd.exe'
+    state: present
+  register: shell_exe_limited
+
+- name: Get run as admin flag state
+  win_shell: |
+    $shortcut = "$env:Public\Desktop\cmd.lnk"
+    $flags = [System.BitConverter]::ToUInt32([System.IO.FIle]::ReadAllBytes($shortcut), 20)
+    ($flags -band 0x00002000) -eq 0x00002000
+  register: shell_exe_limited_actual
+
+- name: Check that run as admin flag wasn't set (normal mode)
+  assert:
+    that:
+    - shell_exe_limited is changed
+    - not shell_exe_limited_actual.stdout_lines[0]|bool
+  when: not in_check_mode
+
+- name: Check that exe shortcut results in a change (check-mode)
+  assert:
+    that:
+    - shell_exe_limited is changed
+  when: in_check_mode
+
+- name: Set shortcut to run as admin
+  win_shortcut:
+    dest: '%Public%\Desktop\cmd.lnk'
+    src: '%SystemRoot%\System32\cmd.exe'
+    run_as_admin: True
+    state: present
+  register: shell_exe_admin
+
+- name: Get run as admin flag state
+  win_shell: |
+    $shortcut = "$env:Public\Desktop\cmd.lnk"
+    $flags = [System.BitConverter]::ToUInt32([System.IO.FIle]::ReadAllBytes($shortcut), 20)
+    ($flags -band 0x00002000) -eq 0x00002000
+  register: shell_exe_admin_actual
+
+- name: Check that run as admin flag was set (normal mode)
+  assert:
+    that:
+    - shell_exe_admin is changed
+    - shell_exe_admin_actual.stdout_lines[0]|bool
+  when: not in_check_mode
+
+- name: Set shortcut to run as admin again
+  win_shortcut:
+    dest: '%Public%\Desktop\cmd.lnk'
+    src: '%SystemRoot%\System32\cmd.exe'
+    run_as_admin: True
+    state: present
+  register: shell_exe_admin_again
+
+- name: Check that set run as admin wasn't changed (normal mode)
+  assert:
+    that:
+    - not shell_exe_admin_again is changed
+  when: not in_check_mode

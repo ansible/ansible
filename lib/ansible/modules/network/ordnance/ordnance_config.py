@@ -16,7 +16,7 @@ DOCUMENTATION = """
 ---
 module: ordnance_config
 version_added: "2.3"
-author: "Alexander Turner (alex.turner@ordnance.io)"
+author: "Alexander Turner (@alexanderturner) <alex.turner@ordnance.io>"
 short_description: Manage Ordnance configuration sections
 description:
   - Ordnance router configurations use a simple block indent file syntax
@@ -24,33 +24,27 @@ description:
     an implementation for working with these configuration sections in
     a deterministic way.
 options:
-  commands:
+  lines:
     description:
       - The ordered set of commands that should be configured in the
         section.  The commands must be the exact same commands as found
         in the device running-config.  Be sure to note the configuration
         command syntax as some commands are automatically modified by the
         device config parser.
-    required: false
-    default: null
     aliases: ['commands']
   parents:
     description:
-      - The ordered set of parents that uniquely identify the section
+      - The ordered set of parents that uniquely identify the section or hierarchy
         the commands should be checked against.  If the parents argument
         is omitted, the commands are checked against the set of top
         level or global commands.
-    required: false
-    default: null
   src:
     description:
       - Specifies the source path to the file that contains the configuration
         or configuration template to load.  The path to the source file can
         either be the full path on the Ansible control host or a relative
         path from the playbook or role root directory.  This argument is mutually
-        exclusive with I(lines).
-    required: false
-    default: null
+        exclusive with I(lines), I(parents).
   before:
     description:
       - The ordered set of commands to push on to the command stack if
@@ -58,16 +52,12 @@ options:
         the opportunity to perform configuration commands prior to pushing
         any changes without affecting how the set of commands are matched
         against the system.
-    required: false
-    default: null
   after:
     description:
       - The ordered set of commands to append to the end of the command
         stack if a change needs to be made.  Just like with I(before) this
         allows the playbook designer to append a set of commands to be
         executed after the command set.
-    required: false
-    default: null
   match:
     description:
       - Instructs the module on the way to perform the matching of
@@ -78,7 +68,6 @@ options:
         must be an equal match.  Finally, if match is set to I(none), the
         module will not attempt to compare the source configuration with
         the running configuration on the remote device.
-    required: false
     default: line
     choices: ['line', 'strict', 'exact', 'none']
   replace:
@@ -89,7 +78,6 @@ options:
         mode.  If the replace argument is set to I(block) then the entire
         command block is pushed to the device in configuration mode if any
         line is not correct.
-    required: false
     default: line
     choices: ['line', 'block']
   multiline_delimiter:
@@ -98,7 +86,6 @@ options:
         element to the Ordnance router.  It specifies the character to use
         as the delimiting character.  This only applies to the
         configuration action
-    required: false
     default: "@"
   backup:
     description:
@@ -107,34 +94,29 @@ options:
         changes are made.  The backup file is written to the C(backup)
         folder in the playbook root directory.  If the directory does not
         exist, it is created.
-    required: false
-    default: no
-    choices: ['yes', 'no']
+    type: bool
+    default: 'no'
   config:
     description:
       - The C(config) argument allows the playbook designer to supply
         the base configuration to be used to validate configuration
         changes necessary.  If this argument is provided, the module
         will not download the running-config from the remote node.
-    required: false
-    default: null
   defaults:
     description:
       - This argument specifies whether or not to collect all defaults
         when getting the remote device running config.  When enabled,
         the module will get the current config by issuing the command
         C(show running-config all).
-    required: false
-    default: no
-    choices: ['yes', 'no']
+    type: bool
+    default: 'no'
   save:
     description:
       - The C(save) argument instructs the module to save the running-
         config to the startup-config at the conclusion of the module
         running.  If check mode is specified, this argument is ignored.
-    required: false
-    default: no
-    choices: ['yes', 'no']
+    type: bool
+    default: 'no'
 """
 
 EXAMPLES = """
@@ -181,17 +163,17 @@ updates:
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
-  type: string
+  type: str
   sample: /playbooks/ansible/backup/ordnance_config.2016-07-16@22:28:34
 """
 import re
 import time
 import traceback
 
-from ansible.module_utils.network import NetworkModule, NetworkError
-from ansible.module_utils.netcfg import NetworkConfig, dumps
-from ansible.module_utils.netcli import Command
-from ansible.module_utils.ordnance import get_config
+from ansible.module_utils.network.common.network import NetworkModule, NetworkError
+from ansible.module_utils.network.common.config import NetworkConfig, dumps
+from ansible.module_utils.network.common.parsing import Command
+from ansible.module_utils.network.ordnance.ordnance import get_config
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
 
@@ -205,6 +187,7 @@ def check_args(module, warnings):
         warnings.append('The force argument is deprecated, please use '
                         'match=none instead.  This argument will be '
                         'removed in the future')
+
 
 def extract_banners(config):
     banners = {}
@@ -225,12 +208,14 @@ def extract_banners(config):
     config = re.sub(r'banner \w+ \^C\^C', '!! banner removed', config)
     return (config, banners)
 
+
 def diff_banners(want, have):
     candidate = {}
     for key, value in iteritems(want):
         if value != have.get(key):
             candidate[key] = value
     return candidate
+
 
 def load_banners(module, banners):
     delimiter = module.params['multiline_delimiter']
@@ -242,6 +227,7 @@ def load_banners(module, banners):
         time.sleep(1)
         module.connection.shell.receive()
 
+
 def get_config(module, result):
     contents = module.params['config']
     if not contents:
@@ -250,6 +236,7 @@ def get_config(module, result):
 
     contents, banners = extract_banners(contents)
     return NetworkConfig(indent=1, contents=contents), banners
+
 
 def get_candidate(module):
     candidate = NetworkConfig(indent=1)
@@ -265,6 +252,7 @@ def get_candidate(module):
 
     return candidate, banners
 
+
 def run(module, result):
     match = module.params['match']
     replace = module.params['replace']
@@ -275,7 +263,7 @@ def run(module, result):
     if match != 'none':
         config, have_banners = get_config(module, result)
         path = module.params['parents']
-        configobjs = candidate.difference(config, path=path,match=match,
+        configobjs = candidate.difference(config, path=path, match=match,
                                           replace=replace)
     else:
         configobjs = candidate.items
@@ -311,6 +299,7 @@ def run(module, result):
             module.config.save_config()
         result['changed'] = True
 
+
 def main():
     """ main entry point for module execution
     """
@@ -335,7 +324,8 @@ def main():
         save=dict(default=False, type='bool'),
     )
 
-    mutually_exclusive = [('lines', 'src')]
+    mutually_exclusive = [('lines', 'src'),
+                          ('parents', 'src')]
 
     required_if = [('match', 'strict', ['lines']),
                    ('match', 'exact', ['lines']),

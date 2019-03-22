@@ -25,6 +25,7 @@ __metaclass__ = type
 
 import os
 
+from ansible import context
 from ansible.errors import AnsibleError
 from ansible.module_utils.six import string_types
 
@@ -35,19 +36,18 @@ from ansible.module_utils.six import string_types
 class Galaxy(object):
     ''' Keeps global galaxy info '''
 
-    def __init__(self, options):
+    def __init__(self):
 
-        self.options = options
-        # self.options.roles_path needs to be a list and will be by default
-        roles_path = getattr(self.options, 'roles_path', [])
-        # cli option handling is responsible for making roles_path a list
+        # roles_path needs to be a list and will be by default
+        roles_path = context.CLIARGS.get('roles_path', tuple())
+        # cli option handling is responsible for splitting roles_path
         self.roles_paths = roles_path
 
         self.roles = {}
 
         # load data path for resource usage
         this_dir, this_filename = os.path.split(__file__)
-        type_path = 'container_enabled' if getattr(self.options, 'container_enabled', False) else 'default'
+        type_path = context.CLIARGS.get('role_type', "default")
         self.DATA_PATH = os.path.join(this_dir, 'data', type_path)
 
     @property

@@ -1,0 +1,4 @@
+- name: install supervisord
+  pip:
+    name: supervisor
+    state: present

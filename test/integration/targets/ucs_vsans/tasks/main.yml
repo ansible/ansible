@@ -1,0 +1,127 @@
+# Test code for the UCS modules
+# Copyright 2017, David Soper (@dsoper2)
+
+- name: Test that we have a UCS host, UCS username, and UCS password
+  fail:
+    msg: 'Please define the following variables: ucs_hostname, ucs_username and ucs_password.'
+  when: ucs_hostname is not defined or ucs_username is not defined or ucs_password is not defined
+
+
+# Setup (clean environment)
+- name: VSANs absent
+  ucs_vsans: &vsans_absent
+    hostname: "{{ ucs_hostname }}"
+    username: "{{ ucs_username }}"
+    password: "{{ ucs_password }}"
+    name: vsan110
+    state: absent
+
+
+# Test present (check_mode)
+- name: VSANs present (check_mode)
+  ucs_vsans: &vsans_present
+    hostname: "{{ ucs_hostname }}"
+    username: "{{ ucs_username }}"
+    password: "{{ ucs_password }}"
+    name: vsan110
+    vsan_id: '110'
+    vlan_id: '110'
+  check_mode: yes
+  register: cm_vsans_present
+
+
+# Present (normal mode)
+- name: VSANs present (normal mode)
+  ucs_vsans: *vsans_present
+  register: nm_vsans_present
+
+
+# Test present again (idempotent)
+- name: VSANs present again (check_mode)
+  ucs_vsans: *vsans_present
+  check_mode: yes
+  register: cm_vsans_present_again
+
+
+# Present again (normal mode)
+- name: VSANs present again (normal mode)
+  ucs_vsans: *vsans_present
+  register: nm_vsans_present_again
+
+
+# Verfiy present
+- name: Verify VSANs present results
+  assert:
+    that:
+    - cm_vsans_present.changed == nm_vsans_present.changed == true
+    - cm_vsans_present_again.changed == nm_vsans_present_again.changed == false
+
+
+# Test change (check_mode)
+- name: VSANs VLAN change (check_mode)
+  ucs_vsans: &vsans_change
+    <<: *vsans_present
+    vlan_id: '10'
+  check_mode: yes
+  register: cm_vsans_vlan_change
+
+
+# Change (normal mode)
+- name: VSANs VLAN change (normal mode)
+  ucs_vsans: *vsans_change
+  register: nm_vsans_vlan_change
+
+
+# Test change again (idempotent)
+- name: VSANs VLAN change again (check_mode)
+  ucs_vsans: *vsans_change
+  check_mode: yes
+  register: cm_vsans_vlan_change_again
+
+
+# Change again (normal mode)
+- name: VSANs VLAN change again (normal mode)
+  ucs_vsans: *vsans_change
+  register: nm_vsans_vlan_change_again
+
+
+# Verfiy change
+- name: Verify VSANs change results
+  assert:
+    that:
+    - cm_vsans_vlan_change.changed == nm_vsans_vlan_change.changed == true
+    - cm_vsans_vlan_change_again.changed == nm_vsans_vlan_change_again.changed == false
+
+
+# Teardown (clean environment)
+- name: VSANs absent (check_mode)
+  ucs_vsans: *vsans_absent
+  check_mode: yes
+  register: cm_vsans_absent
+
+
+# Absent (normal mode)
+- name: VSANs absent (normal mode)
+  ucs_vsans: *vsans_absent
+  register: nm_vsans_absent
+
+
+# Test absent again (idempotent)
+- name: VSANs absent again (check_mode)
+  ucs_vsans: *vsans_absent
+  check_mode: yes
+  register: cm_vsans_absent_again
+
+
+# Absent again (normal mode)
+- name: VSANs absent again (normal mode)
+  ucs_vsans: *vsans_absent
+  register: nm_vsans_absent_again
+
+
+# Verfiy absent
+- name: Verify VSANs absent results
+  assert:
+    that:
+    - cm_vsans_absent.changed == nm_vsans_absent.changed == true
+    - cm_vsans_absent_again.changed == nm_vsans_absent_again.changed == false

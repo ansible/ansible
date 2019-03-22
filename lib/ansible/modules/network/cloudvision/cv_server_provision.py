@@ -50,7 +50,6 @@ options:
       - The port number to use when making API calls to the CVP node. This
         will default to the default port for the specified protocol. Port 80
         for http and port 443 for https.
-    default: None
   protocol:
     description:
       - The protocol to use when making API calls to CVP. CVP defaults to https
@@ -89,7 +88,6 @@ options:
         specified does not support this the module will exit out with no
         changes. If a template is specified that requires a port vlan but no
         port vlan is specified the module will exit out with no changes.
-    default: None
   template:
     description:
       - A path to a Jinja formatted template file that contains the
@@ -116,9 +114,8 @@ options:
         change, execute it and wait for the task to complete. If the option
         is False then the task will remain in the Pending state in CVP for
         a network administrator to review and execute.
-    default: False
     type: bool
-notes:
+    default: 'no'
 requirements: [Jinja2, cvprac >= 0.7.0]
 '''
 
@@ -185,14 +182,14 @@ changed:
 currentConfigBlock:
   description: The current config block for the user specified interface
   returned: when action = show
-  type: string
+  type: str
   sample: |
     interface Ethernet4
     !
 newConfigBlock:
   description: The new config block for the user specified interface
   returned: when action = add or remove
-  type: string
+  type: str
   sample: |
     interface Ethernet3
         description example
@@ -202,14 +199,14 @@ oldConfigBlock:
   description: The current config block for the user specified interface
                before any changes are made
   returned: when action = add or remove
-  type: string
+  type: str
   sample: |
     interface Ethernet3
     !
 fullConfig:
   description: The full config of the configlet after being updated
   returned: when action = add or remove
-  type: string
+  type: str
   sample: |
     !
     interface Ethernet3
@@ -219,7 +216,7 @@ fullConfig:
 updateConfigletResponse:
   description: Response returned from CVP when configlet update is triggered
   returned: when action = add or remove and configuration changes
-  type: string
+  type: str
   sample: "Configlet veos1-server successfully updated and task initiated."
 portConfigurable:
   description: Signifies if the user specified port has an entry in the
@@ -236,7 +233,7 @@ switchConfigurable:
 switchInfo:
   description: Information from CVP describing the switch being configured
   returned: success
-  type: dictionary
+  type: dict
   sample: {"architecture": "i386",
            "bootupTimeStamp": 1491264298.21,
            "complianceCode": "0000",
@@ -286,7 +283,7 @@ taskId:
   description: The task ID created by CVP because of changes to configlet
   returned: when action = add or remove, and auto_run = true or false,
             and configuration changes
-  type: string
+  type: str
   sample: "500"
 '''
 

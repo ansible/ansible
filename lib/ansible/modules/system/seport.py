@@ -1,77 +1,95 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
-# (c) 2014, Dan Keder <dan.keder@gmail.com>
+# Copyright: (c) 2014, Dan Keder <dan.keder@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: seport
 short_description: Manages SELinux network port type definitions
 description:
-     - Manages SELinux network port type definitions.
+    - Manages SELinux network port type definitions.
 version_added: "2.0"
 options:
   ports:
     description:
-      - Ports or port ranges, separated by a comma
+      - Ports or port ranges.
+      - Can be a list (since 2.6) or comma separated string.
+    type: list
     required: true
-    default: null
   proto:
     description:
       - Protocol for the specified port.
+    type: str
     required: true
-    default: null
-    choices: [ 'tcp', 'udp' ]
+    choices: [ tcp, udp ]
   setype:
     description:
       - SELinux type for the specified port.
+    type: str
     required: true
-    default: null
   state:
     description:
       - Desired boolean value.
-    required: true
+    type: str
+    choices: [ absent, present ]
     default: present
-    choices: [ 'present', 'absent' ]
   reload:
     description:
       - Reload SELinux policy after commit.
-    required: false
+    type: bool
     default: yes
+  ignore_selinux_state:
+    description:
+    - Run independent of selinux runtime state
+    type: bool
+    default: no
+    version_added: '2.8'
 notes:
-   - The changes are persistent across reboots
-   - Not tested on any debian based system
-requirements: [ 'libselinux-python', 'policycoreutils-python' ]
-author: Dan Keder
+   - The changes are persistent across reboots.
+   - Not tested on any debian based system.
+requirements:
+- libselinux-python
+- policycoreutils-python
+author:
+- Dan Keder (@dankeder)
 '''
 
-EXAMPLES = '''
-# Allow Apache to listen on tcp port 8888
-- seport:
+EXAMPLES = r'''
+- name: Allow Apache to listen on tcp port 8888
+  seport:
     ports: 8888
     proto: tcp
     setype: http_port_t
     state: present
 
-# Allow sshd to listen on tcp port 8991
-- seport:
+- name: Allow sshd to listen on tcp port 8991
+  seport:
     ports: 8991
     proto: tcp
     setype: ssh_port_t
     state: present
 
-# Allow memcached to listen on tcp ports 10000-10100 and 10112
-- seport:
+- name: Allow memcached to listen on tcp ports 10000-10100 and 10112
+  seport:
     ports: 10000-10100,10112
+    proto: tcp
+    setype: memcache_port_t
+    state: present
+
+- name: Allow memcached to listen on tcp ports 10000-10100 and 10112
+  seport:
+    ports:
+      - 10000-10100
+      - 10112
     proto: tcp
     setype: memcache_port_t
     state: present
@@ -79,20 +97,28 @@ EXAMPLES = '''
 
 import traceback
 
+SELINUX_IMP_ERR = None
 try:
     import selinux
-    HAVE_SELINUX=True
+    HAVE_SELINUX = True
 except ImportError:
-    HAVE_SELINUX=False
+    SELINUX_IMP_ERR = traceback.format_exc()
+    HAVE_SELINUX = False
 
+SEOBJECT_IMP_ERR = None
 try:
     import seobject
-    HAVE_SEOBJECT=True
+    HAVE_SEOBJECT = True
 except ImportError:
-    HAVE_SEOBJECT=False
+    SEOBJECT_IMP_ERR = traceback.format_exc()
+    HAVE_SEOBJECT = False
 
-from ansible.module_utils.basic import AnsibleModule, HAVE_SELINUX
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
+
+
+def get_runtime_status(ignore_selinux_state=False):
+    return True if ignore_selinux_state is True else selinux.is_selinux_enabled()
 
 
 def semanage_port_get_ports(seport, setype, proto):
@@ -232,39 +258,29 @@ def semanage_port_del(module, ports, proto, setype, do_reload, sestore=''):
 
 def main():
     module = AnsibleModule(
-        argument_spec={
-            'ports': {
-                'required': True,
-                },
-            'proto': {
-                'required': True,
-                'choices': ['tcp', 'udp'],
-                },
-            'setype': {
-                'required': True,
-                },
-            'state': {
-                'required': True,
-                'choices': ['present', 'absent'],
-                },
-            'reload': {
-                'required': False,
-                'type': 'bool',
-                'default': 'yes',
-                },
-        },
-        supports_check_mode=True
+        argument_spec=dict(
+            ignore_selinux_state=dict(type='bool', default=False),
+            ports=dict(type='list', required=True),
+            proto=dict(type='str', required=True, choices=['tcp', 'udp']),
+            setype=dict(type='str', required=True),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
+            reload=dict(type='bool', default=True),
+        ),
+        supports_check_mode=True,
     )
+
     if not HAVE_SELINUX:
-        module.fail_json(msg="This module requires libselinux-python")
+        module.fail_json(msg=missing_required_lib("libselinux-python"), exception=SELINUX_IMP_ERR)
 
     if not HAVE_SEOBJECT:
-        module.fail_json(msg="This module requires policycoreutils-python")
+        module.fail_json(msg=missing_required_lib("policycoreutils-python"), exception=SEOBJECT_IMP_ERR)
 
-    if not selinux.is_selinux_enabled():
+    ignore_selinux_state = module.params['ignore_selinux_state']
+
+    if not get_runtime_status(ignore_selinux_state):
         module.fail_json(msg="SELinux is disabled on this host.")
 
-    ports = [x.strip() for x in str(module.params['ports']).split(',')]
+    ports = module.params['ports']
     proto = module.params['proto']
     setype = module.params['setype']
     state = module.params['state']

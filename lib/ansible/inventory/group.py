@@ -17,7 +17,44 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from itertools import chain
+
+from ansible import constants as C
 from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_native, to_text
+
+from ansible.utils.display import Display
+
+display = Display()
+
+
+def to_safe_group_name(name, replacer="_", force=False, silent=False):
+    # Converts 'bad' characters in a string to underscores (or provided replacer) so they can be used as Ansible hosts or groups
+
+    warn = ''
+    if name:  # when deserializing we might not have name yet
+        invalid_chars = C.INVALID_VARIABLE_NAMES.findall(name)
+        if invalid_chars:
+            msg = 'invalid character(s) "%s" in group name (%s)' % (to_text(set(invalid_chars)), to_text(name))
+            if C.TRANSFORM_INVALID_GROUP_CHARS not in ('never', 'ignore') or force:
+                name = C.INVALID_VARIABLE_NAMES.sub(replacer, name)
+                if not (silent or C.TRANSFORM_INVALID_GROUP_CHARS == 'silently'):
+                    display.vvvv('Replacing ' + msg)
+                    warn = 'Invalid characters were found in group names and automatically replaced, use -vvvv to see details'
+            else:
+                if C.TRANSFORM_INVALID_GROUP_CHARS == 'never':
+                    display.vvvv('Not replacing %s' % msg)
+                    warn = True
+                    warn = 'Invalid characters were found in group names but not replaced, use -vvvv to see details'
+
+                # remove this message after 2.10 AND changing the default to 'always'
+                display.deprecated('The TRANSFORM_INVALID_GROUP_CHARS settings is set to allow bad characters in group names by default,'
+                                   ' this will change, but still be user configurable on deprecation', version='2.10')
+
+    if warn:
+        display.warning(warn)
+
+    return name
 
 
 class Group:
@@ -28,7 +65,7 @@ class Group:
     def __init__(self, name=None):
 
         self.depth = 0
-        self.name = name
+        self.name = to_safe_group_name(name)
         self.hosts = []
         self._hosts = None
         self.vars = {}
@@ -80,6 +117,51 @@ class Group:
             g.deserialize(parent_data)
             self.parent_groups.append(g)
 
+    def _walk_relationship(self, rel, include_self=False, preserve_ordering=False):
+        '''
+        Given `rel` that is an iterable property of Group,
+        consitituting a directed acyclic graph among all groups,
+        Returns a set of all groups in full tree
+        A   B    C
+        |  / |  /
+        | /  | /
+        D -> E
+        |  /    vertical connections
+        | /     are directed upward
+        F
+        Called on F, returns set of (A, B, C, D, E)
+        '''
+        seen = set([])
+        unprocessed = set(getattr(self, rel))
+        if include_self:
+            unprocessed.add(self)
+        if preserve_ordering:
+            ordered = [self] if include_self else []
+            ordered.extend(getattr(self, rel))
+
+        while unprocessed:
+            seen.update(unprocessed)
+            new_unprocessed = set([])
+
+            for new_item in chain.from_iterable(getattr(g, rel) for g in unprocessed):
+                new_unprocessed.add(new_item)
+                if preserve_ordering:
+                    if new_item not in seen:
+                        ordered.append(new_item)
+
+            new_unprocessed.difference_update(seen)
+            unprocessed = new_unprocessed
+
+        if preserve_ordering:
+            return ordered
+        return seen
+
+    def get_ancestors(self):
+        return self._walk_relationship('parent_groups')
+
+    def get_descendants(self, **kwargs):
+        return self._walk_relationship('child_groups', **kwargs)
+
     @property
     def host_names(self):
         if self._hosts is None:
@@ -96,6 +178,15 @@ class Group:
 
         # don't add if it's already there
         if group not in self.child_groups:
+
+            # prepare list of group's new ancestors this edge creates
+            start_ancestors = group.get_ancestors()
+            new_ancestors = self.get_ancestors()
+            if group in new_ancestors:
+                raise AnsibleError("Adding group '%s' as child to '%s' creates a recursive dependency loop." % (to_native(group.name), to_native(self.name)))
+            new_ancestors.add(self)
+            new_ancestors.difference_update(start_ancestors)
+
             self.child_groups.append(group)
 
             # update the depth of the child
@@ -109,18 +200,28 @@ class Group:
             if self.name not in [g.name for g in group.parent_groups]:
                 group.parent_groups.append(self)
                 for h in group.get_hosts():
-                    h.populate_ancestors()
+                    h.populate_ancestors(additions=new_ancestors)
 
             self.clear_hosts_cache()
 
     def _check_children_depth(self):
 
-        try:
-            for group in self.child_groups:
-                group.depth = max([self.depth + 1, group.depth])
-                group._check_children_depth()
-        except RuntimeError:
-            raise AnsibleError("The group named '%s' has a recursive dependency loop." % self.name)
+        depth = self.depth
+        start_depth = self.depth  # self.depth could change over loop
+        seen = set([])
+        unprocessed = set(self.child_groups)
+
+        while unprocessed:
+            seen.update(unprocessed)
+            depth += 1
+            to_process = unprocessed.copy()
+            unprocessed = set([])
+            for g in to_process:
+                if g.depth < depth:
+                    g.depth = depth
+                    unprocessed.update(g.child_groups)
+            if depth - start_depth > len(seen):
+                raise AnsibleError("The group named '%s' has a recursive dependency loop." % to_native(self.name))
 
     def add_host(self, host):
         if host.name not in self.host_names:
@@ -147,8 +248,8 @@ class Group:
     def clear_hosts_cache(self):
 
         self._hosts_cache = None
-        for g in self.parent_groups:
-            g.clear_hosts_cache()
+        for g in self.get_ancestors():
+            g._hosts_cache = None
 
     def get_hosts(self):
 
@@ -160,36 +261,18 @@ class Group:
 
         hosts = []
         seen = {}
-        for kid in self.child_groups:
-            kid_hosts = kid.get_hosts()
+        for kid in self.get_descendants(include_self=True, preserve_ordering=True):
+            kid_hosts = kid.hosts
             for kk in kid_hosts:
                 if kk not in seen:
                     seen[kk] = 1
                     if self.name == 'all' and kk.implicit:
                         continue
                     hosts.append(kk)
-        for mine in self.hosts:
-            if mine not in seen:
-                seen[mine] = 1
-                if self.name == 'all' and mine.implicit:
-                    continue
-                hosts.append(mine)
         return hosts
 
     def get_vars(self):
         return self.vars.copy()
-
-    def _get_ancestors(self):
-
-        results = {}
-        for g in self.parent_groups:
-            results[g.name] = g
-            results.update(g._get_ancestors())
-        return results
-
-    def get_ancestors(self):
-
-        return self._get_ancestors().values()
 
     def set_priority(self, priority):
         try:

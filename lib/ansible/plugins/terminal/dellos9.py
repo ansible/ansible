@@ -37,7 +37,7 @@ class TerminalModule(TerminalBase):
     ]
 
     terminal_stderr_re = [
-        re.compile(br"% ?Error: (?:(?!\bdoes not exist\b)(?!\balready exists\b)(?!\bHost not found\b)(?!\bnot active\b).)*$"),
+        re.compile(br"% ?Error: (?:(?!\bdoes not exist\b)(?!\balready exists\b)(?!\bHost not found\b)(?!\bnot active\b).)*\n"),
         re.compile(br"% ?Bad secret"),
         re.compile(br"invalid input", re.I),
         re.compile(br"(?:incomplete|ambiguous) command", re.I),
@@ -45,13 +45,17 @@ class TerminalModule(TerminalBase):
         re.compile(br"'[^']' +returned error code: ?\d+"),
     ]
 
+    terminal_initial_prompt = br"\[y/n\]:"
+
+    terminal_initial_answer = b"y"
+
     def on_open_shell(self):
         try:
             self._exec_cli_command(b'terminal length 0')
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to set terminal parameters')
 
-    def on_authorize(self, passwd=None):
+    def on_become(self, passwd=None):
         if self._get_prompt().endswith(b'#'):
             return
 
@@ -65,7 +69,7 @@ class TerminalModule(TerminalBase):
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to elevate privilege to enable mode')
 
-    def on_deauthorize(self):
+    def on_unbecome(self):
         prompt = self._get_prompt()
         if prompt is None:
             # if prompt is None most likely the terminal is hung up at a prompt

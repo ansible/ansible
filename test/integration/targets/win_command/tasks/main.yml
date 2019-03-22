@@ -5,8 +5,8 @@
 - name: validate result
   assert:
     that:
-    - cmdout|success
-    - cmdout|changed
+    - cmdout is successful
+    - cmdout is changed
     - cmdout.cmd == 'whoami /groups'
     - cmdout.delta is match('^\d:(\d){2}:(\d){2}.(\d){6}$')
     - cmdout.end is match('^(\d){4}\-(\d){2}\-(\d){2} (\d){2}:(\d){2}:(\d){2}.(\d){6}$')
@@ -24,11 +24,11 @@
 - name: validate result
   assert:
     that:
-    - cmdout|failed
-    - not cmdout|changed
+    - cmdout is failed
+    - cmdout is not changed
     - cmdout.cmd == 'bogus_command1234'
     - cmdout.rc == 2
-    - "'Could not locate the following executable bogus_command1234' in cmdout.msg"
+    - "\"Could not find file 'bogus_command1234.exe'.\" in cmdout.msg"
 
 - name: execute something with error output
   win_command: cmd /c "echo some output & echo some error 1>&2"
@@ -37,8 +37,8 @@
 - name: validate result
   assert:
     that:
-    - cmdout|success
-    - cmdout|changed
+    - cmdout is successful
+    - cmdout is changed
     - cmdout.cmd == 'cmd /c "echo some output & echo some error 1>&2"'
     - cmdout.delta is match('^\d:(\d){2}:(\d){2}.(\d){6}$')
     - cmdout.end is match('^(\d){4}\-(\d){2}\-(\d){2} (\d){2}:(\d){2}:(\d){2}.(\d){6}$')
@@ -62,8 +62,8 @@
 - name: validate result
   assert:
     that:
-    - cmdout|success
-    - cmdout|changed
+    - cmdout is successful
+    - cmdout is changed
 
 - name: run again with creates, should skip
   win_command: cmd /c "echo $null >> c:\testfile.txt"
@@ -74,8 +74,37 @@
 - name: validate result
   assert:
     that:
-    - cmdout|skipped
+    - cmdout is skipped
     - cmdout.msg is search('exists')
+
+- name: get path of pagefile
+  win_shell: |
+    $pagefile = $null
+    $cs = Get-CimInstance -ClassName Win32_ComputerSystem
+    if ($cs.AutomaticManagedPagefile) {
+        $pagefile = "$($env:SystemRoot.Substring(0, 1)):\pagefile.sys"
+    } else {
+        $pf = Get-CimInstance -ClassName Win32_PageFileSetting
+        if ($pf -ne $null) {
+            $pagefile = $pf[0].Name
+        }
+    }
+    $pagefile
+  register: pagefile_path
+
+- name: test creates with hidden system file, should skip
+  win_command: echo no
+  args:
+    creates: '{{pagefile_path.stdout_lines[0]}}'
+  register: cmdout
+  when: pagefile_path.stdout_lines|count != 0
+
+- name: validate result
+  assert:
+    that:
+    - cmdout is skipped
+    - cmdout.msg is search('exists')
+  when: pagefile_path.stdout_lines|count != 0
 
 - name: ensure testfile is still present
   win_stat:
@@ -96,8 +125,8 @@
 - name: validate result
   assert:
     that:
-    - cmdout|success
-    - cmdout|changed
+    - cmdout is successful
+    - cmdout is changed
 
 - name: run again with removes, should skip
   win_command: cmd /c "del c:\testfile.txt"
@@ -108,7 +137,7 @@
 - name: validate result
   assert:
     that:
-    - cmdout|skipped
+    - cmdout is skipped
     - cmdout.msg is search('does not exist')
 
 - name: run something with known nonzero exit code
@@ -119,7 +148,7 @@
 - name: validate result
   assert:
     that:
-    - cmdout|failed
+    - cmdout is failed
     - cmdout.failed == True # check the failure key explicitly, since failed does magic with RC
     - cmdout.rc == 254
 
@@ -152,7 +181,7 @@
 - name: assert call to argv binary with absolute path
   assert:
     that:
-    - cmdout|changed
+    - cmdout is changed
     - cmdout.rc == 0
     - cmdout.stdout_lines[0] == 'arg1'
     - cmdout.stdout_lines[1] == 'arg 2'
@@ -168,7 +197,7 @@
 - name: assert call to argv binary with relative path
   assert:
     that:
-    - cmdout|changed
+    - cmdout is changed
     - cmdout.rc == 0
     - cmdout.stdout_lines[0] == 'C:\\path\\end\\slash\\'
     - cmdout.stdout_lines[1] == 'ADDLOCAL=msi,example'
@@ -178,3 +207,31 @@
   win_file:
     path: C:\ansible testing
     state: absent
+
+- name: run stdin test
+  win_command: powershell.exe -
+  args:
+    stdin: Write-Host "some input"
+  register: cmdout
+
+- name: assert run stdin test
+  assert:
+    that:
+    - cmdout is changed
+    - cmdout.rc == 0
+    - cmdout.stdout_lines|count == 1
+    - cmdout.stdout_lines[0] == "some input"
+    - cmdout.stderr == ""
+
+- name: echo some non ascii characters
+  win_command: cmd.exe /c echo über den Fußgängerübergang gehen
+  register: nonascii_output
+
+- name: assert echo some non ascii characters
+  assert:
+    that:
+    - nonascii_output is changed
+    - nonascii_output.rc == 0
+    - nonascii_output.stdout_lines|count == 1
+    - nonascii_output.stdout_lines[0] == 'über den Fußgängerübergang gehen'
+    - nonascii_output.stderr == ''

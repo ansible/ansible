@@ -1,0 +1,2 @@
+bugfixes:
+- "docker_container, docker_image, docker_image_facts - also find local image when image name is prefixed with ``docker.io/library/`` or ``docker.io/``."

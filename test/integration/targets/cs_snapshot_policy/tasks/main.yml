@@ -1,0 +1,176 @@
+---
+- name: setup instance
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-snapshot-policy"
+    template: "{{ cs_common_template }}"
+    service_offering: "{{ cs_common_service_offering }}"
+  register: instance
+- name: verify setup instance
+  assert:
+    that:
+    - instance is successful
+
+- name: setup snapshot policy absent
+  cs_snapshot_policy:
+    vm: "{{ cs_resource_prefix }}-vm-snapshot-policy"
+    interval_type: hourly
+    state: absent
+  register: snapshot
+- name: verify setup snapshot policy absent
+  assert:
+    that:
+    - snapshot is successful
+
+- name: create snapshot policy in check mode
+  cs_snapshot_policy:
+    vm: "{{ cs_resource_prefix }}-vm-snapshot-policy"
+    interval_type: hourly
+    schedule: 5
+  check_mode: true
+  register: snapshot
+- name: verify  create snapshot policy in check mode
+  assert:
+    that:
+    - snapshot is changed
+
+- name: create snapshot policy
+  cs_snapshot_policy:
+    vm: "{{ cs_resource_prefix }}-vm-snapshot-policy"
+    interval_type: hourly
+    schedule: 5
+  register: snapshot
+- name: verify  create snapshot policy
+  assert:
+    that:
+    - snapshot is changed
+    - snapshot.schedule == "5"
+    - snapshot.interval_type == "hourly"
+    - snapshot.volume != ""
+
+- name: create snapshot policy idempotence
+  cs_snapshot_policy:
+    vm: "{{ cs_resource_prefix }}-vm-snapshot-policy"
+    interval_type: hourly
+    schedule: 5
+  register: snapshot
+- name: verify create snapshot policy idempotence
+  assert:
+    that:
+    - snapshot is not changed
+    - snapshot.schedule == "5"
+    - snapshot.interval_type == "hourly"
+    - snapshot.volume != ""
+
+- name: update snapshot policy
+  cs_snapshot_policy:
+    vm: "{{ cs_resource_prefix }}-vm-snapshot-policy"
+    interval_type: hourly
+    schedule: 6
+  check_mode: true
+  register: snapshot
+- name: verify update snapshot policy
+  assert:
+    that:
+    - snapshot is changed
+    - snapshot.schedule == "5"
+    - snapshot.interval_type == "hourly"
+    - snapshot.volume != ""
+
+- name: update snapshot policy in check mode
+  cs_snapshot_policy:
+    vm: "{{ cs_resource_prefix }}-vm-snapshot-policy"
+    interval_type: hourly
+    schedule: 6
+    max_snaps: 3
+    time_zone: "Europe/Zurich"
+  check_mode: true
+  register: snapshot
+- name: verify update snapshot policy in check mode
+  assert:
+    that:
+    - snapshot is changed
+    - snapshot.schedule == "5"
+    - snapshot.interval_type == "hourly"
+    - snapshot.volume != ""
+    - snapshot.max_snaps == 8
+    - snapshot.time_zone == "UTC"
+
+- name: update snapshot policy
+  cs_snapshot_policy:
+    vm: "{{ cs_resource_prefix }}-vm-snapshot-policy"
+    interval_type: hourly
+    schedule: 6
+    max_snaps: 3
+    time_zone: "Europe/Zurich"
+  register: snapshot
+- name: verify update snapshot policy
+  assert:
+    that:
+    - snapshot is changed
+    - snapshot.schedule == "6"
+    - snapshot.interval_type == "hourly"
+    - snapshot.volume != ""
+    - snapshot.max_snaps == 3
+    - snapshot.time_zone == "Europe/Zurich"
+
+- name: update snapshot policy idempotence
+  cs_snapshot_policy:
+    vm: "{{ cs_resource_prefix }}-vm-snapshot-policy"
+    interval_type: hourly
+    schedule: 6
+    max_snaps: 3
+    time_zone: "Europe/Zurich"
+  register: snapshot
+- name: verify update snapshot policy idempotence
+  assert:
+    that:
+    - snapshot is not changed
+    - snapshot.schedule == "6"
+    - snapshot.interval_type == "hourly"
+    - snapshot.volume != ""
+    - snapshot.max_snaps == 3
+    - snapshot.time_zone == "Europe/Zurich"
+
+- name: remove snapshot policy in check mode
+  cs_snapshot_policy:
+    vm: "{{ cs_resource_prefix }}-vm-snapshot-policy"
+    interval_type: hourly
+    state: absent
+  check_mode: true
+  register: snapshot
+- name: verify remove snapshot policy in check mode
+  assert:
+    that:
+    - snapshot is changed
+    - snapshot.schedule == "6"
+    - snapshot.interval_type == "hourly"
+    - snapshot.volume != ""
+    - snapshot.max_snaps == 3
+    - snapshot.time_zone == "Europe/Zurich"
+
+- name: remove snapshot policy
+  cs_snapshot_policy:
+    vm: "{{ cs_resource_prefix }}-vm-snapshot-policy"
+    interval_type: hourly
+    state: absent
+  register: snapshot
+- name: verify remove snapshot policy
+  assert:
+    that:
+    - snapshot is changed
+    - snapshot.schedule == "6"
+    - snapshot.interval_type == "hourly"
+    - snapshot.volume != ""
+    - snapshot.max_snaps == 3
+    - snapshot.time_zone == "Europe/Zurich"
+
+- name: remove snapshot policy idempotence
+  cs_snapshot_policy:
+    vm: "{{ cs_resource_prefix }}-vm-snapshot-policy"
+    interval_type: hourly
+    state: absent
+  register: snapshot
+- name: verify remove snapshot policy idempotence
+  assert:
+    that:
+    - snapshot is not changed

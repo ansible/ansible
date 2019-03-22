@@ -19,8 +19,8 @@ DOCUMENTATION = '''
 ---
 module: git_config
 author:
-  - "Matthew Gamble"
-  - "Marius Gedminas"
+  - Matthew Gamble (@djmattyg007)
+  - Marius Gedminas (@mgedmin)
 version_added: 2.1
 requirements: ['git']
 short_description: Read and write git configuration
@@ -28,42 +28,41 @@ description:
   - The C(git_config) module changes git configuration by invoking 'git config'.
     This is needed if you don't want to use M(template) for the entire git
     config file (e.g. because you need to change just C(user.email) in
-    /etc/.git/config).  Solutions involving M(command) are cumbersone or
+    /etc/.git/config).  Solutions involving M(command) are cumbersome or
     don't work correctly in check mode.
 options:
   list_all:
     description:
       - List all settings (optionally limited to a given I(scope))
-    required: false
-    choices: [ "yes", "no" ]
-    default: no
+    type: bool
+    default: 'no'
   name:
     description:
       - The name of the setting. If no value is supplied, the value will
         be read from the config if it has been set.
-    required: false
-    default: null
   repo:
     description:
       - Path to a git repository for reading and writing values from a
         specific repo.
-    required: false
-    default: null
   scope:
     description:
       - Specify which scope to read/set values from. This is required
         when setting config values. If this is set to local, you must
         also specify the repo parameter. It defaults to system only when
         not using I(list_all)=yes.
-    required: false
     choices: [ "local", "global", "system" ]
-    default: null
+  state:
+    description:
+      - "Indicates the setting should be set/unset.
+        This parameter has higher precedence than I(value) parameter:
+        when I(state)=absent and I(value) is defined, I(value) is discarded."
+    choices: [ 'present', 'absent' ]
+    default: 'present'
+    version_added: '2.8'
   value:
     description:
       - When specifying the name of a single setting, supply a value to
         set that setting to the given value.
-    required: false
-    default: null
 '''
 
 EXAMPLES = '''
@@ -77,6 +76,12 @@ EXAMPLES = '''
     name: alias.st
     scope: global
     value: status
+
+# Unset some settings in ~/.gitconfig
+- git_config:
+    name: alias.ci
+    scope: global
+    state: absent
 
 # Or system-wide:
 - git_config:
@@ -134,13 +139,13 @@ RETURN = '''
 config_value:
   description: When list_all=no and value is not set, a string containing the value of the setting in name
   returned: success
-  type: string
+  type: str
   sample: "vim"
 
 config_values:
   description: When list_all=yes, a dict containing key/value pairs of multiple configuration settings
   returned: success
-  type: dictionary
+  type: dict
   sample:
     core.editor: "vim"
     color.ui: "auto"
@@ -148,6 +153,7 @@ config_values:
     alias.remotev: "remote -v"
 '''
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves import shlex_quote
 
 
 def main():
@@ -157,9 +163,10 @@ def main():
             name=dict(type='str'),
             repo=dict(type='path'),
             scope=dict(required=False, type='str', choices=['local', 'global', 'system']),
+            state=dict(required=False, type='str', default='present', choices=['present', 'absent']),
             value=dict(required=False)
         ),
-        mutually_exclusive=[['list_all', 'name'], ['list_all', 'value']],
+        mutually_exclusive=[['list_all', 'name'], ['list_all', 'value'], ['list_all', 'state']],
         required_if=[('scope', 'local', ['repo'])],
         required_one_of=[['list_all', 'name']],
         supports_check_mode=True,
@@ -182,6 +189,12 @@ def main():
         scope = None
     else:
         scope = 'system'
+
+    if params['state'] == 'absent':
+        unset = 'unset'
+        params['value'] = None
+    else:
+        unset = None
 
     if params['value']:
         new_value = params['value']
@@ -220,25 +233,33 @@ def main():
             k, v = value.split('=', 1)
             config_values[k] = v
         module.exit_json(changed=False, msg='', config_values=config_values)
-    elif not new_value:
+    elif not new_value and not unset:
         module.exit_json(changed=False, msg='', config_value=out.rstrip())
+    elif unset and not out:
+        module.exit_json(changed=False, msg='no setting to unset')
     else:
         old_value = out.rstrip()
         if old_value == new_value:
             module.exit_json(changed=False, msg="")
 
     if not module.check_mode:
-        new_value_quoted = "'" + new_value + "'"
-        (rc, out, err) = module.run_command(' '.join(args + [new_value_quoted]), cwd=dir)
+        if unset:
+            args.insert(len(args) - 1, "--" + unset)
+            cmd = ' '.join(args)
+        else:
+            new_value_quoted = shlex_quote(new_value)
+            cmd = ' '.join(args + [new_value_quoted])
+        (rc, out, err) = module.run_command(cmd, cwd=dir)
         if err:
-            module.fail_json(rc=rc, msg=err, cmd=' '.join(args + [new_value_quoted]))
+            module.fail_json(rc=rc, msg=err, cmd=cmd)
+
     module.exit_json(
         msg='setting changed',
         diff=dict(
             before_header=' '.join(args),
             before=old_value + "\n",
             after_header=' '.join(args),
-            after=new_value + "\n"
+            after=(new_value or '') + "\n"
         ),
         changed=True
     )

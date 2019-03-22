@@ -7,7 +7,7 @@
 - name: Validate results of rax_network with no args
   assert:
     that:
-      - rax_network|failed
+      - rax_network is failed
       - 'rax_network.msg == "missing required arguments: label"'
 # ============================================================
 
@@ -23,7 +23,7 @@
 - name: Validate results of rax_network with no args
   assert:
     that:
-      - rax_network|failed
+      - rax_network is failed
       - rax_network.msg == 'No credentials supplied!'
 # ============================================================
 
@@ -41,7 +41,7 @@
 - name: Validate results of rax_network with creds
   assert:
     that:
-      - rax_network|failed
+      - rax_network is failed
       - rax_network.msg.startswith('None is not a valid region')
 # ============================================================
 
@@ -60,7 +60,7 @@
 - name: Validate results of rax_network with creds and region
   assert:
     that:
-      - rax_network|failed
+      - rax_network is failed
       - 'rax_network.msg == "missing required arguments: cidr"'
 # ============================================================
 
@@ -79,8 +79,8 @@
 - name: Validate results of rax_network with creds, region and cidr
   assert:
     that:
-      - rax_network|success
-      - rax_network|changed
+      - rax_network is successful
+      - rax_network is changed
       - rax_network.networks.0.cidr == "172.17.141.0/24"
       - rax_network.networks.0.label == "{{ resource_prefix }}-1"
 
@@ -96,8 +96,8 @@
 - name: Validate delete integration 1
   assert:
     that:
-      - rax_network|changed
-      - rax_network|success
+      - rax_network is changed
+      - rax_network is successful
       - rax_network.networks.0.label == "{{ resource_prefix }}-1"
       - rax_network.networks.0.cidr == "172.17.141.0/24"
 # ============================================================
@@ -117,8 +117,8 @@
 - name: Validate rax_network idempotency 1
   assert:
     that:
-      - rax_network|success
-      - rax_network|changed
+      - rax_network is successful
+      - rax_network is changed
       - rax_network.networks.0.cidr == "172.17.142.0/24"
       - rax_network.networks.0.label == "{{ resource_prefix }}-2"
 
@@ -134,8 +134,8 @@
 - name: Validate rax_network idempotency 2
   assert:
     that:
-      - rax_network|success
-      - not rax_network|changed
+      - rax_network is successful
+      - rax_network is not changed
       - rax_network.networks.0.cidr == "172.17.142.0/24"
       - rax_network.networks.0.label == "{{ resource_prefix }}-2"
 
@@ -151,8 +151,8 @@
 - name: Validate delete integration 2
   assert:
     that:
-      - rax_network|changed
-      - rax_network|success
+      - rax_network is changed
+      - rax_network is successful
       - rax_network.networks.0.label == "{{ resource_prefix }}-2"
       - rax_network.networks.0.cidr == "172.17.142.0/24"
 # ============================================================

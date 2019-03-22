@@ -3,3 +3,6 @@ jinja2
 junit-xml
 paramiko
 pyyaml
+pexpect # for _user test
+ncclient # for Junos
+jxmlease # for Junos

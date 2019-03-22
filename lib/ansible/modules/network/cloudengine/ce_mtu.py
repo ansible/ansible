@@ -27,7 +27,7 @@ version_added: "2.4"
 short_description: Manages MTU settings on HUAWEI CloudEngine switches.
 description:
     - Manages MTU settings on HUAWEI CloudEngine switches.
-author: QijunPan (@CloudEngine-Ansible)
+author: QijunPan (@QijunPan)
 notes:
     - Either C(sysmtu) param is required or C(interface) AND C(mtu) params are req'd.
     - C(state=absent) unconfigures a given MTU if that value is currently present.
@@ -35,31 +35,22 @@ options:
     interface:
         description:
             - Full name of interface, i.e. 40GE1/0/22.
-        required: false
-        default: null
     mtu:
         description:
             - MTU for a specific interface.
               The value is an integer ranging from 46 to 9600, in bytes.
-        required: false
-        default: null
     jumbo_max:
         description:
             - Maximum frame size. The default value is 9216.
               The value is an integer and expressed in bytes. The value range is 1536 to 12224 for the CE12800
               and 1536 to 12288 for ToR switches.
-        required: false
-        default: null
     jumbo_min:
         description:
             - Non-jumbo frame size threshod. The default value is 1518.
               The value is an integer that ranges from 1518 to jumbo_max, in bytes.
-        required: false
-        default: null
     state:
         description:
             - Specify desired state of the resource.
-        required: false
         default: present
         choices: ['present','absent']
 '''
@@ -137,14 +128,14 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 
 import re
 import copy
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import ce_argument_spec, get_config, load_config, get_nc_config, set_nc_config
+from ansible.module_utils.network.cloudengine.ce import ce_argument_spec, get_config, load_config, get_nc_config, set_nc_config
 
 CE_NC_GET_INTF = """
 <filter type="subtree">
@@ -472,7 +463,7 @@ class Mtu(object):
         # get interface info
         self.intf_info = self.get_interface_dict(self.interface)
         if not self.intf_info:
-            self.module.fail_json(msg='Error: interface does not exists.')
+            self.module.fail_json(msg='Error: interface does not exist.')
 
         # check interface
         if self.mtu and self.intf_info['isL2SwitchPort'] == 'true':

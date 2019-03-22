@@ -1,0 +1,5 @@
+FROM alpine:3.7
+ENV INSTALL_PATH /newdata
+RUN mkdir -p $INSTALL_PATH
+
+WORKDIR $INSTALL_PATH

@@ -1,19 +1,11 @@
 #!/usr/bin/python
-# Copyright (c) 2015 Hewlett-Packard Development Company, L.P.
-# Author: Davide Guerri <davide.guerri@hp.com>
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+
+# Copyright: (c) 2015, Hewlett-Packard Development Company, L.P.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -24,7 +16,7 @@ DOCUMENTATION = '''
 ---
 module: os_floating_ip
 version_added: "2.0"
-author: "Davide Guerri <davide.guerri@hp.com>"
+author: Davide Guerri (@dguerri) <davide.guerri@hp.com>
 short_description: Add/Remove floating IP from an instance
 extends_documentation_fragment: openstack
 description:
@@ -38,39 +30,34 @@ options:
    network:
      description:
         - The name or ID of a neutron external network or a nova pool name.
-     required: false
    floating_ip_address:
      description:
         - A floating IP address to attach or to detach. Required only if I(state)
           is absent. When I(state) is present can be used to specify a IP address
           to attach.
-     required: false
    reuse:
      description:
         - When I(state) is present, and I(floating_ip_address) is not present,
           this parameter can be used to specify whether we should try to reuse
           a floating IP address already allocated to the project.
-     required: false
-     default: false
+     type: bool
+     default: 'no'
    fixed_address:
      description:
         - To which fixed IP of server the floating IP address should be
           attached to.
-     required: false
    nat_destination:
      description:
         - The name or id of a neutron private network that the fixed IP to
           attach floating IP is on
-     required: false
-     default: None
      aliases: ["fixed_network", "internal_network"]
      version_added: "2.3"
    wait:
      description:
         - When attaching a floating IP address, specify whether we should
           wait for it to appear as attached.
-     required: false
-     default: false
+     type: bool
+     default: 'no'
    timeout:
      description:
         - Time to wait for an IP address to appear as attached. See wait.
@@ -80,20 +67,18 @@ options:
      description:
        - Should the resource be present or absent.
      choices: [present, absent]
-     required: false
      default: present
    purge:
      description:
         - When I(state) is absent, indicates whether or not to delete the floating
           IP completely, or only detach it from the server. Default is to detach only.
-     required: false
-     default: false
+     type: bool
+     default: 'no'
      version_added: "2.1"
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
-requirements: ["shade"]
+requirements: ["openstacksdk"]
 '''
 
 EXAMPLES = '''
@@ -136,15 +121,8 @@ EXAMPLES = '''
      server: cattle001
 '''
 
-try:
-    import shade
-    from shade import meta
-
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
-from distutils.version import StrictVersion
+from ansible.module_utils.basic import AnsibleModule, remove_values
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def _get_floating_ip(cloud, floating_ip_address):
@@ -174,14 +152,6 @@ def main():
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
-    if (module.params['nat_destination'] and
-            StrictVersion(shade.__version__) < StrictVersion('1.8.0')):
-        module.fail_json(msg="To utilize nat_destination, the installed version of"
-                             "the shade library MUST be >= 1.8.0")
-
     server_name_or_id = module.params['server']
     state = module.params['state']
     network = module.params['network']
@@ -193,9 +163,9 @@ def main():
     timeout = module.params['timeout']
     purge = module.params['purge']
 
-    cloud = shade.openstack_cloud(**module.params)
-
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
+
         server = cloud.get_server(server_name_or_id)
         if server is None:
             module.fail_json(
@@ -211,8 +181,21 @@ def main():
                     network_id = cloud.get_network(name_or_id=network)["id"]
                 else:
                     network_id = None
-                if all([(fixed_address and f_ip.fixed_ip_address == fixed_address) or
-                        (nat_destination and f_ip.internal_network == fixed_address),
+                # check if we have floting ip on given nat_destination network
+                if nat_destination:
+                    nat_floating_addrs = [addr for addr in server.addresses.get(
+                        cloud.get_network(nat_destination)['name'], [])
+                        if addr['addr'] == public_ip and
+                        addr['OS-EXT-IPS:type'] == 'floating']
+
+                    if len(nat_floating_addrs) == 0:
+                        module.fail_json(msg="server {server} already has a "
+                                             "floating-ip on a different "
+                                             "nat-destination than '{nat_destination}'"
+                                         .format(server=server_name_or_id,
+                                                 nat_destination=nat_destination))
+
+                if all([fixed_address, f_ip.fixed_ip_address == fixed_address,
                         network, f_ip.network != network_id]):
                     # Current state definitely conflicts with requirements
                     module.fail_json(msg="server {server} already has a "
@@ -263,13 +246,8 @@ def main():
                 module.exit_json(changed=True)
             module.exit_json(changed=changed, floating_ip=f_ip)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e), extra_data=e.extra_data)
-
-
-# this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
 
 
 if __name__ == '__main__':

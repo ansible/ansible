@@ -38,7 +38,6 @@ options:
     timeout:
       description:
         - Maximum time in seconds to wait for a job to finish.
-      default: null
 extends_documentation_fragment: tower
 '''
 
@@ -47,6 +46,7 @@ EXAMPLES = '''
   tower_job_launch:
     job_template: "My Job Template"
     register: job
+
 - name: Wait for job max 120s
   tower_job_wait:
     job_id: job.id
@@ -67,29 +67,28 @@ elapsed:
 started:
     description: timestamp of when the job started running
     returned: success
-    type: string
+    type: str
     sample: "2017-03-01T17:03:53.200234Z"
 finished:
     description: timestamp of when the job finished running
     returned: success
-    type: string
+    type: str
     sample: "2017-03-01T17:04:04.078782Z"
 status:
     description: current status of job
     returned: success
-    type: string
+    type: str
     sample: successful
 '''
 
 
-from ansible.module_utils.ansible_tower import tower_auth_config, tower_check_mode, tower_argument_spec, HAS_TOWER_CLI
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, tower_check_mode
 from ansible.module_utils.six.moves import cStringIO as StringIO
 
 
 try:
     import tower_cli
-    import tower_cli.utils.exceptions as exc
+    import tower_cli.exceptions as exc
 
     from tower_cli.conf import settings
 except ImportError:
@@ -97,21 +96,17 @@ except ImportError:
 
 
 def main():
-    argument_spec = tower_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         job_id=dict(type='int', required=True),
         timeout=dict(type='int'),
         min_interval=dict(type='float', default=1),
         max_interval=dict(type='float', default=30),
-    ))
+    )
 
-    module = AnsibleModule(
+    module = TowerModule(
         argument_spec,
         supports_check_mode=True
     )
-
-    if not HAS_TOWER_CLI:
-        module.fail_json(msg='ansible-tower-cli required for this module')
 
     json_output = {}
     fail_json = None
@@ -137,7 +132,7 @@ def main():
             json_output['timeout'] = True
         except exc.NotFound as excinfo:
             fail_json = dict(msg='Unable to wait, no job_id {0} found: {1}'.format(job_id, excinfo), changed=False)
-        except (exc.ConnectionError, exc.BadRequest) as excinfo:
+        except (exc.ConnectionError, exc.BadRequest, exc.AuthError) as excinfo:
             fail_json = dict(msg='Unable to wait for job: {0}'.format(excinfo), changed=False)
 
     if fail_json is not None:

@@ -19,11 +19,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.nxos import nxos_vrf_af
-from .nxos_module import TestNxosModule, load_fixture, set_module_args
+from .nxos_module import TestNxosModule, set_module_args
 
 
 class TestNxosVrfafModule(TestNxosModule):
@@ -31,6 +29,8 @@ class TestNxosVrfafModule(TestNxosModule):
     module = nxos_vrf_af
 
     def setUp(self):
+        super(TestNxosVrfafModule, self).setUp()
+
         self.mock_load_config = patch('ansible.modules.network.nxos.nxos_vrf_af.load_config')
         self.load_config = self.mock_load_config.start()
 
@@ -38,6 +38,7 @@ class TestNxosVrfafModule(TestNxosModule):
         self.get_config = self.mock_get_config.start()
 
     def tearDown(self):
+        super(TestNxosVrfafModule, self).tearDown()
         self.mock_load_config.stop()
         self.mock_get_config.stop()
 
@@ -45,18 +46,18 @@ class TestNxosVrfafModule(TestNxosModule):
         self.load_config.return_value = None
 
     def test_nxos_vrf_af_present(self):
-        set_module_args(dict(vrf='ntc', afi='ipv4', safi='unicast', state='present'))
+        set_module_args(dict(vrf='ntc', afi='ipv4', state='present'))
         result = self.execute_module(changed=True)
         self.assertEqual(sorted(result['commands']), sorted(['vrf context ntc',
                                                              'address-family ipv4 unicast']))
 
     def test_nxos_vrf_af_absent(self):
-        set_module_args(dict(vrf='ntc', afi='ipv4', safi='unicast', state='absent'))
+        set_module_args(dict(vrf='ntc', afi='ipv4', state='absent'))
         result = self.execute_module(changed=False)
         self.assertEqual(result['commands'], [])
 
     def test_nxos_vrf_af_route_target(self):
-        set_module_args(dict(vrf='ntc', afi='ipv4', safi='unicast', route_target_both_auto_evpn=True))
+        set_module_args(dict(vrf='ntc', afi='ipv4', route_target_both_auto_evpn=True))
         result = self.execute_module(changed=True)
         self.assertEqual(sorted(result['commands']), sorted(['vrf context ntc',
                                                              'address-family ipv4 unicast',

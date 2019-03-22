@@ -28,14 +28,16 @@ description:
   - Returns information about the specified cache cluster.
 version_added: "2.3"
 author: "Sloane Hertel (@s-hertel)"
+extends_documentation_fragment:
+  - aws
+  - ec2
 requirements: [ boto3, botocore ]
 options:
   group_family:
     description:
       - The name of the cache parameter group family that the cache parameter group can be used with.
         Required when creating a cache parameter group.
-    choices: ['memcached1.4', 'redis2.6', 'redis2.8', 'redis3.2']
-    required: no
+    choices: ['memcached1.4', 'redis2.6', 'redis2.8', 'redis3.2', 'redis4.0']
   name:
     description:
      - A user-specified name for the cache parameter group.
@@ -51,8 +53,6 @@ options:
   values:
     description:
       - A user-specified dictionary of parameters to reset or modify for the cache parameter group.
-    required: no
-    default: None
 """
 
 EXAMPLES = """
@@ -285,7 +285,7 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            group_family=dict(type='str', choices=['memcached1.4', 'redis2.6', 'redis2.8', 'redis3.2']),
+            group_family=dict(type='str', choices=['memcached1.4', 'redis2.6', 'redis2.8', 'redis3.2', 'redis4.0']),
             name=dict(required=True, type='str'),
             description=dict(default='', type='str'),
             state=dict(required=True),
@@ -353,6 +353,7 @@ def main():
     facts_result = dict(changed=changed, elasticache=camel_dict_to_snake_dict(response))
 
     module.exit_json(**facts_result)
+
 
 if __name__ == '__main__':
     main()

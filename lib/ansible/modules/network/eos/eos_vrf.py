@@ -45,14 +45,23 @@ options:
       - Route distinguisher of the VRF
   interfaces:
     description:
-      - List of interfaces to check the VRF has been
-        configured correctly.
+      - Identifies the set of interfaces that
+        should be configured in the VRF. Interfaces must be routed
+        interfaces in order to be placed into a VRF. The name of interface
+        should be in expanded format and not abbreviated.
+  associated_interfaces:
+    description:
+      - This is a intent option and checks the operational state of the for given vrf C(name)
+        for associated interfaces. If the value in the C(associated_interfaces) does not match with
+        the operational state of vrf interfaces on device it will result in failure.
+    version_added: "2.5"
   aggregate:
     description: List of VRFs definitions
   purge:
     description:
       - Purge VRFs not defined in the I(aggregate) parameter.
     default: no
+    type: bool
   delay:
     description:
       - Time in seconds to wait before checking for the operational state on remote
@@ -63,6 +72,7 @@ options:
       - State of the VRF configuration.
     default: present
     choices: ['present', 'absent']
+extends_documentation_fragment: eos
 """
 
 EXAMPLES = """
@@ -114,9 +124,9 @@ import time
 from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network_common import remove_default_spec
-from ansible.module_utils.eos import load_config, run_commands
-from ansible.module_utils.eos import eos_argument_spec, check_args
+from ansible.module_utils.network.common.utils import remove_default_spec
+from ansible.module_utils.network.eos.eos import load_config, run_commands
+from ansible.module_utils.network.eos.eos import eos_argument_spec, check_args
 
 
 def search_obj_in_list(name, lst):
@@ -180,30 +190,45 @@ def map_obj_to_commands(updates, module):
 
 def map_config_to_obj(module):
     objs = []
-    output = run_commands(module, ['show vrf'])
-    lines = output[0].strip().splitlines()[2:]
+    output = run_commands(module, {'command': 'show vrf', 'output': 'text'})
 
-    for l in lines:
-        if not l:
+    lines = output[0].strip().splitlines()[3:]
+
+    out_len = len(lines)
+    index = 0
+    while out_len > index:
+        line = lines[index]
+        if not line:
             continue
 
-        splitted_line = re.split(r'\s{2,}', l.strip())
+        splitted_line = re.split(r'\s{2,}', line.strip())
 
         if len(splitted_line) == 1:
+            index += 1
             continue
         else:
-            obj = {}
+            obj = dict()
             obj['name'] = splitted_line[0]
             obj['rd'] = splitted_line[1]
-            obj['interfaces'] = None
+            obj['interfaces'] = []
 
             if len(splitted_line) > 4:
                 obj['interfaces'] = []
+                interfaces = splitted_line[4]
+                if interfaces.endswith(','):
+                    while interfaces.endswith(','):
+                        # gather all comma separated interfaces
+                        if out_len <= index:
+                            break
+                        index += 1
+                        line = lines[index]
+                        vrf_line = re.split(r'\s{2,}', line.strip())
+                        interfaces += vrf_line[-1]
 
-                for i in splitted_line[4].split(','):
-                    obj['interfaces'].append(i.strip())
-
-            objs.append(obj)
+                for i in interfaces.split(','):
+                    obj['interfaces'].append(i.strip().lower())
+        index += 1
+        objs.append(obj)
 
     return objs
 
@@ -216,28 +241,49 @@ def map_params_to_obj(module):
             for key in item:
                 if item.get(key) is None:
                     item[key] = module.params[key]
+
+            if item.get('interfaces'):
+                item['interfaces'] = [intf.replace(" ", "").lower() for intf in item.get('interfaces') if intf]
+
+            if item.get('associated_interfaces'):
+                item['associated_interfaces'] = [intf.replace(" ", "").lower() for intf in item.get('associated_interfaces') if intf]
+
             obj.append(item.copy())
     else:
         obj.append({
             'name': module.params['name'],
             'state': module.params['state'],
             'rd': module.params['rd'],
-            'interfaces': module.params['interfaces']
+            'interfaces': [intf.replace(" ", "").lower() for intf in module.params['interfaces']] if module.params['interfaces'] else [],
+            'associated_interfaces': [intf.replace(" ", "").lower() for intf in
+                                      module.params['associated_interfaces']] if module.params['associated_interfaces'] else []
+
         })
 
     return obj
 
 
-def check_declarative_intent_params(want, module):
-    if module.params['interfaces']:
-        time.sleep(module.params['delay'])
-        have = map_config_to_obj(module)
+def check_declarative_intent_params(want, module, result):
+    have = None
+    is_delay = False
 
-        for w in want:
-            for i in w['interfaces']:
-                obj_in_have = search_obj_in_list(w['name'], have)
+    for w in want:
+        if w.get('associated_interfaces') is None:
+            continue
 
-                if obj_in_have and 'interfaces' in obj_in_have and i not in obj_in_have['interfaces']:
+        if result['changed'] and not is_delay:
+            time.sleep(module.params['delay'])
+            is_delay = True
+
+        if have is None:
+            have = map_config_to_obj(module)
+
+        for i in w['associated_interfaces']:
+            obj_in_have = search_obj_in_list(w['name'], have)
+
+            if obj_in_have:
+                interfaces = obj_in_have.get('interfaces')
+                if interfaces is not None and i not in interfaces:
                     module.fail_json(msg="Interface %s not configured on vrf %s" % (i, w['name']))
 
 
@@ -247,6 +293,7 @@ def main():
     element_spec = dict(
         name=dict(),
         interfaces=dict(type='list'),
+        associated_interfaces=dict(type='list'),
         delay=dict(default=10, type='int'),
         rd=dict(),
         state=dict(default='present', choices=['present', 'absent'])
@@ -294,10 +341,10 @@ def main():
         result['session_name'] = response.get('session')
         result['changed'] = True
 
-    if result['changed']:
-        check_declarative_intent_params(want, module)
+    check_declarative_intent_params(want, module, result)
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

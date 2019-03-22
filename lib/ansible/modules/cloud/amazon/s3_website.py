@@ -18,35 +18,28 @@ short_description: Configure an s3 bucket as a website
 description:
     - Configure an s3 bucket as a website
 version_added: "2.2"
+requirements: [ boto3 ]
 author: Rob White (@wimnat)
 options:
   name:
     description:
       - "Name of the s3 bucket"
     required: true
-    default: null
   error_key:
     description:
       - "The object key name to use when a 4XX class error occurs. To remove an error key, set to None."
-    required: false
-    default: null
   redirect_all_requests:
     description:
       - "Describes the redirect behavior for every request to this s3 bucket website endpoint"
-    required: false
-    default: null
   region:
     description:
      - >
        AWS region to create the bucket in. If not set then the value of the AWS_REGION and EC2_REGION environment variables are checked,
        followed by the aws_region and ec2_region settings in the Boto config file.  If none of those are set the region defaults to the
        S3 Location: US Standard.
-    required: false
-    default: null
   state:
     description:
       - "Add or remove s3 website configuration"
-    required: false
     default: present
     choices: [ 'present', 'absent' ]
   suffix:
@@ -55,7 +48,6 @@ options:
         Suffix that is appended to a request that is for a directory on the website endpoint (e.g. if the suffix is index.html and you make a request to
         samplebucket/images/ the data that is returned will be for the object with the key name images/index.html). The suffix must not include a slash
         character.
-    required: false
     default: index.html
 
 extends_documentation_fragment:
@@ -95,7 +87,7 @@ index_document:
         suffix:
             description: suffix that is appended to a request that is for a directory on the website endpoint
             returned: success
-            type: string
+            type: str
             sample: index.html
 error_document:
     description: error document
@@ -105,7 +97,7 @@ error_document:
         key:
             description:  object key name to use when a 4XX class error occurs
             returned: when error_document parameter set
-            type: string
+            type: str
             sample: error.html
 redirect_all_requests_to:
     description: where to redirect requests
@@ -115,7 +107,7 @@ redirect_all_requests_to:
         host_name:
             description: name of the host where requests will be redirected.
             returned: when redirect all requests parameter set
-            type: string
+            type: str
             sample: ansible.com
 routing_rules:
     description: routing rules
@@ -126,20 +118,20 @@ routing_rules:
             host_name:
                 description: name of the host where requests will be redirected.
                 returned: when host name set as part of redirect rule
-                type: string
+                type: str
                 sample: ansible.com
         condition:
             key_prefix_equals:
             description: object key name prefix when the redirect is applied. For example, to redirect requests for ExamplePage.html, the key prefix will be
                      ExamplePage.html
             returned: when routing rule present
-            type: string
+            type: str
             sample: docs/
         redirect:
             replace_key_prefix_with:
                 description: object key prefix to use in the redirect request
                 returned: when routing rule present
-                type: string
+                type: str
                 sample: documents/
 '''
 
@@ -179,10 +171,10 @@ def _create_website_configuration(suffix, error_key, redirect_all_requests):
     website_configuration = {}
 
     if error_key is not None:
-        website_configuration['ErrorDocument'] = { 'Key': error_key }
+        website_configuration['ErrorDocument'] = {'Key': error_key}
 
     if suffix is not None:
-        website_configuration['IndexDocument'] = { 'Suffix': suffix }
+        website_configuration['IndexDocument'] = {'Suffix': suffix}
 
     if redirect_all_requests is not None:
         website_configuration['RedirectAllRequestsTo'] = _create_redirect_dict(redirect_all_requests)
@@ -287,10 +279,10 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        mutually_exclusive = [
+        mutually_exclusive=[
             ['redirect_all_requests', 'suffix'],
             ['redirect_all_requests', 'error_key']
-            ])
+        ])
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')

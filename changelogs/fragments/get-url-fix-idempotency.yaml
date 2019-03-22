@@ -1,0 +1,2 @@
+bugfixes:
+- get_url - Don't re-download files unnecessarily when force=no (https://github.com/ansible/ansible/issues/45491)

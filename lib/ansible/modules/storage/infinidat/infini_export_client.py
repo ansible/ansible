@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2016, Gregory Shulov (gregory.shulov@gmail.com)
+# Copyright: (c) 2016, Gregory Shulov (gregory.shulov@gmail.com)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -43,7 +43,7 @@ options:
   no_root_squash:
     description:
       - Don't squash root user to anonymous. Will be set to "no" on creation if not specified explicitly.
-    choices: [ "yes", "no" ]
+    type: bool
     default: no
     required: false
   export:
@@ -83,14 +83,17 @@ EXAMPLES = '''
 
 RETURN = '''
 '''
+import traceback
 
+MUNCH_IMP_ERR = None
 try:
     from munch import Munch, unmunchify
     HAS_MUNCH = True
 except ImportError:
+    MUNCH_IMP_ERR = traceback.format_exc()
     HAS_MUNCH = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.infinibox import HAS_INFINISDK, api_wrapper, get_system, infinibox_argument_spec
 
 
@@ -104,8 +107,8 @@ def get_export(module, system):
 
     try:
         export = system.exports.get(export_path=module.params['export'])
-    except:
-        module.fail_json(msg="Export with export path {} not found".format(module.params['export']))
+    except Exception:
+        module.fail_json(msg="Export with export path {0} not found".format(module.params['export']))
 
     return export
 
@@ -116,11 +119,11 @@ def update_client(module, export):
 
     changed = False
 
-    client         = module.params['client']
-    access_mode    = module.params['access_mode']
+    client = module.params['client']
+    access_mode = module.params['access_mode']
     no_root_squash = module.params['no_root_squash']
 
-    client_list        = export.get_permissions()
+    client_list = export.get_permissions()
     client_not_in_list = True
 
     for index, item in enumerate(client_list):
@@ -154,7 +157,7 @@ def delete_client(module, export):
 
     changed = False
 
-    client      = module.params['client']
+    client = module.params['client']
     client_list = export.get_permissions()
 
     for index, item in enumerate(client_list):
@@ -175,23 +178,23 @@ def main():
     argument_spec = infinibox_argument_spec()
     argument_spec.update(
         dict(
-            client         = dict(required=True),
-            access_mode    = dict(choices=['RO', 'RW'], default='RW'),
-            no_root_squash = dict(type='bool', default='no'),
-            state          = dict(default='present', choices=['present', 'absent']),
-            export         = dict(required=True)
+            client=dict(required=True),
+            access_mode=dict(choices=['RO', 'RW'], default='RW'),
+            no_root_squash=dict(type='bool', default='no'),
+            state=dict(default='present', choices=['present', 'absent']),
+            export=dict(required=True)
         )
     )
 
     module = AnsibleModule(argument_spec, supports_check_mode=True)
 
     if not HAS_INFINISDK:
-        module.fail_json(msg='infinisdk is required for this module')
+        module.fail_json(msg=missing_required_lib('infinisdk'))
     if not HAS_MUNCH:
-        module.fail_json(msg='the python munch library is required for this module')
+        module.fail_json(msg=missing_required_lib('munch'), exception=MUNCH_IMP_ERR)
 
-    system     = get_system(module)
-    export     = get_export(module, system)
+    system = get_system(module)
+    export = get_export(module, system)
 
     if module.params['state'] == 'present':
         update_client(module, export)

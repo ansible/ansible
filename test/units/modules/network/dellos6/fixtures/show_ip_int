@@ -1,0 +1,15 @@
+Default Gateway................................ 0.0.0.0
+L3 MAC Address................................. F8B1.565B.615F
+
+Routing Interfaces:
+
+Interface    State   IP Address      IP Mask         Method
+----------   -----   --------------- --------------- -------
+Vl1          Down    0.0.0.0         0.0.0.0         None
+Vl2          Up      0.0.0.0         0.0.0.0         DHCP
+Vl99         Up      10.99.1.2       255.255.0.0     Manual
+Vl100        Up      192.0.2.3       255.255.255.0   Manual
+Vl999        Up      10.250.1.2      255.255.255.0   Manual
+Vl1010       Up      10.1.1.1        255.255.255.0   Manual
+Vl1681       Up      192.168.100.1   255.255.255.0   Manual
+

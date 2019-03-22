@@ -1,0 +1,6 @@
+---
+subversion_packages:
+- subversion
+- subversion-server
+apache_user: wwwrun
+apache_group: www

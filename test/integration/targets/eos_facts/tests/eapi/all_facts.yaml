@@ -1,15 +1,17 @@
 ---
 - debug: msg="START eapi/all_facts.yaml"
 
+- name: Make sure LLDP is running (setup)
+  eos_config:
+    lines: lldp run
+  become: yes
 
 - name: test getting all facts
   eos_facts:
-    provider: "{{ eapi }}"
     gather_subset:
       - all
+  become: yes
   register: result
-
-
 
 - assert:
     that:

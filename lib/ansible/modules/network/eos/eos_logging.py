@@ -1,23 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Ansible by Red Hat, inc
-#
-# This file is part of Ansible by Red Hat
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright: (c) 2017, Ansible by Red Hat, inc
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -62,6 +48,7 @@ options:
       - State of the logging configuration.
     default: present
     choices: ['present', 'absent']
+extends_documentation_fragment: eos
 """
 
 EXAMPLES = """
@@ -113,12 +100,12 @@ commands:
 
 import re
 
-from copy import deepcopy
 
+from copy import deepcopy
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network_common import remove_default_spec
-from ansible.module_utils.eos import get_config, load_config
-from ansible.module_utils.eos import eos_argument_spec, check_args
+from ansible.module_utils.network.common.utils import remove_default_spec
+from ansible.module_utils.network.eos.eos import get_config, load_config
+from ansible.module_utils.network.eos.eos import eos_argument_spec, check_args
 
 
 DEST_GROUP = ['on', 'host', 'console', 'monitor', 'buffered']
@@ -149,33 +136,67 @@ def map_obj_to_commands(updates, module):
         del w['state']
 
         if state == 'absent' and w in have:
-            if dest == 'host':
-                commands.append('no logging host {}'.format(name))
-            elif dest:
-                commands.append('no logging {}'.format(dest))
-            else:
-                module.fail_json(msg='dest must be among console, monitor, buffered, host, on')
+            if dest:
+                if dest == 'host':
+                    commands.append('no logging host {0}'.format(name))
+
+                elif dest in DEST_GROUP:
+                    commands.append('no logging {0}'.format(dest))
+
+                else:
+                    module.fail_json(msg='dest must be among console, monitor, buffered, host, on')
 
             if facility:
-                commands.append('no logging facility {}'.format(facility))
+                commands.append('no logging facility {0}'.format(facility))
 
         if state == 'present' and w not in have:
             if facility:
-                commands.append('logging facility {}'.format(facility))
+                present = False
+
+                # Iterate over every dictionary in the 'have' list to check if
+                # similar configuration for facility exists or not
+
+                for entry in have:
+                    if not entry['dest'] and entry['facility'] == facility:
+                        present = True
+
+                if not present:
+                    commands.append('logging facility {0}'.format(facility))
 
             if dest == 'host':
-                commands.append('logging host {}'.format(name))
+                commands.append('logging host {0}'.format(name))
 
             elif dest == 'on':
                 commands.append('logging on')
 
             elif dest == 'buffered' and size:
-                commands.append('logging buffered {}'.format(size))
+
+                present = False
+
+                # Deals with the following two cases:
+                # Case 1:       logging buffered <size> <level>
+                #               logging buffered <same-size>
+                #
+                # Case 2:       Same buffered logging configuration
+                #               already exists (i.e., both size &
+                #               level are same)
+
+                for entry in have:
+                    if entry['dest'] == 'buffered' and entry['size'] == size:
+
+                        if not level or entry['level'] == level:
+                            present = True
+
+                if not present:
+                    if size and level:
+                        commands.append('logging buffered {0} {1}'.format(size, level))
+                    else:
+                        commands.append('logging buffered {0}'.format(size))
 
             else:
-                dest_cmd = 'logging {}'.format(dest)
+                dest_cmd = 'logging {0}'.format(dest)
                 if level:
-                    dest_cmd += ' {}'.format(level)
+                    dest_cmd += ' {0}'.format(level)
 
                 commands.append(dest_cmd)
 
@@ -221,11 +242,20 @@ def parse_name(line, dest):
     return name
 
 
-def parse_level(line, dest, module):
+def parse_level(line, dest):
     level = None
 
-    if dest is not 'host':
-        match = re.search(r'logging {} (\S+)'.format(dest), line, re.M)
+    if dest != 'host':
+
+        # Line for buffer logging entry in running-config is of the form:
+        # logging buffered <size> <level>
+
+        if dest == 'buffered':
+            match = re.search(r'logging buffered (?:\d+) (\S+)', line, re.M)
+
+        else:
+            match = re.search(r'logging {0} (\S+)'.format(dest), line, re.M)
+
         if match:
             if match.group(1) in LEVEL_GROUP:
                 level = match.group(1)
@@ -239,19 +269,21 @@ def map_config_to_obj(module):
     data = get_config(module, flags=['section logging'])
 
     for line in data.split('\n'):
+
         match = re.search(r'logging (\S+)', line, re.M)
 
         if match:
             if match.group(1) in DEST_GROUP:
                 dest = match.group(1)
+
             else:
-                pass
+                dest = None
 
             obj.append({'dest': dest,
                         'name': parse_name(line, dest),
                         'size': parse_size(line, dest),
                         'facility': parse_facility(line),
-                        'level': parse_level(line, dest, module)})
+                        'level': parse_level(line, dest)})
 
     return obj
 
@@ -360,8 +392,8 @@ def main():
     if warnings:
         result['warnings'] = warnings
 
-    want = map_params_to_obj(module, required_if=required_if)
     have = map_config_to_obj(module)
+    want = map_params_to_obj(module, required_if=required_if)
 
     commands = map_obj_to_commands((want, have), module)
     result['commands'] = commands
@@ -375,6 +407,7 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

@@ -24,28 +24,21 @@ options:
   cluster:
     description:
       - Name of the cluster running the schema.
-    required: false
     default: localhost
   port:
     description:
       Database port to connect to.
-    required: false
     default: 5433
   db:
     description:
       - Name of the database running the schema.
-    required: false
-    default: null
   login_user:
     description:
       - The username used to authenticate with.
-    required: false
     default: dbadmin
   login_password:
     description:
       - The password used to authenticate with.
-    required: false
-    default: null
 notes:
   - The default authentication assumes that you are either logging in as or sudo'ing
     to the C(dbadmin) account on the host.
@@ -65,14 +58,16 @@ EXAMPLES = """
 """
 import traceback
 
+PYODBC_IMP_ERR = None
 try:
     import pyodbc
 except ImportError:
+    PYODBC_IMP_ERR = traceback.format_exc()
     pyodbc_found = False
 else:
     pyodbc_found = True
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
 
 
@@ -80,6 +75,7 @@ class NotSupportedError(Exception):
     pass
 
 # module specific functions
+
 
 def get_schema_facts(cursor, schema=''):
     facts = {}
@@ -121,6 +117,7 @@ def get_schema_facts(cursor, schema=''):
                 facts[schema_key]['usage_roles'].append(row.role_name)
     return facts
 
+
 def get_user_facts(cursor, user=''):
     facts = {}
     cursor.execute("""
@@ -155,6 +152,7 @@ def get_user_facts(cursor, user=''):
                 facts[user_key]['default_roles'] = row.default_roles.replace(' ', '').split(',')
     return facts
 
+
 def get_role_facts(cursor, role=''):
     facts = {}
     cursor.execute("""
@@ -175,6 +173,7 @@ def get_role_facts(cursor, role=''):
                 facts[role_key]['assigned_roles'] = row.assigned_roles.replace(' ', '').split(',')
     return facts
 
+
 def get_configuration_facts(cursor, parameter=''):
     facts = {}
     cursor.execute("""
@@ -193,6 +192,7 @@ def get_configuration_facts(cursor, parameter=''):
                 'current_value': row.current_value,
                 'default_value': row.default_value}
     return facts
+
 
 def get_node_facts(cursor, schema=''):
     facts = {}
@@ -216,6 +216,7 @@ def get_node_facts(cursor, schema=''):
 
 # module logic
 
+
 def main():
 
     module = AnsibleModule(
@@ -225,10 +226,10 @@ def main():
             db=dict(default=None),
             login_user=dict(default='dbadmin'),
             login_password=dict(default=None, no_log=True),
-        ), supports_check_mode = True)
+        ), supports_check_mode=True)
 
     if not pyodbc_found:
-        module.fail_json(msg="The python pyodbc module is required.")
+        module.fail_json(msg=missing_required_lib('pyodbc'), exception=PYODBC_IMP_ERR)
 
     db = ''
     if module.params['db']:
@@ -243,8 +244,8 @@ def main():
             "User=%s;"
             "Password=%s;"
             "ConnectionLoadBalance=%s"
-            ) % (module.params['cluster'], module.params['port'], db,
-                module.params['login_user'], module.params['login_password'], 'true')
+        ) % (module.params['cluster'], module.params['port'], db,
+             module.params['login_user'], module.params['login_password'], 'true')
         db_conn = pyodbc.connect(dsn, autocommit=True)
         cursor = db_conn.cursor()
     except Exception as e:
@@ -257,11 +258,11 @@ def main():
         configuration_facts = get_configuration_facts(cursor)
         node_facts = get_node_facts(cursor)
         module.exit_json(changed=False,
-            ansible_facts={'vertica_schemas': schema_facts,
-                           'vertica_users': user_facts,
-                           'vertica_roles': role_facts,
-                           'vertica_configuration': configuration_facts,
-                           'vertica_nodes': node_facts})
+                         ansible_facts={'vertica_schemas': schema_facts,
+                                        'vertica_users': user_facts,
+                                        'vertica_roles': role_facts,
+                                        'vertica_configuration': configuration_facts,
+                                        'vertica_nodes': node_facts})
     except NotSupportedError as e:
         module.fail_json(msg=to_native(e), exception=traceback.format_exc())
     except SystemExit:

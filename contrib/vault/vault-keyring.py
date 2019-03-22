@@ -26,7 +26,7 @@
 # This file *MUST* be saved with executable permissions. Otherwise, Ansible
 # will try to parse as a password file and display: "ERROR! Decryption failed"
 #
-# The `keyring` Python module is required: https://pypi.python.org/pypi/keyring
+# The `keyring` Python module is required: https://pypi.org/project/keyring/
 #
 # By default, this script will store the specified password in the keyring of
 # the user that invokes the script. To specify a user keyring, add a [vault]
@@ -65,20 +65,20 @@ import sys
 import getpass
 import keyring
 
-import ansible.constants as C
+from ansible.config.manager import ConfigManager, get_ini_config_value
 
 
 def main():
-    (parser, config_path) = C.load_config_file()
-    if parser.has_option('vault', 'username'):
-        username = parser.get('vault', 'username')
-    else:
-        username = getpass.getuser()
+    config = ConfigManager()
+    username = get_ini_config_value(
+        config._parsers[config._config_file],
+        dict(section='vault', key='username')
+    ) or getpass.getuser()
 
-    if parser.has_option('vault', 'keyname'):
-        keyname = parser.get('vault', 'keyname')
-    else:
-        keyname = 'ansible'
+    keyname = get_ini_config_value(
+        config._parsers[config._config_file],
+        dict(section='vault', key='keyname')
+    ) or 'ansible'
 
     if len(sys.argv) == 2 and sys.argv[1] == 'set':
         intro = 'Storing password in "{}" user keyring using key name: {}\n'
@@ -91,8 +91,8 @@ def main():
             sys.stderr.write('Passwords do not match\n')
             sys.exit(1)
     else:
-        sys.stdout.write('{}\n'.format(keyring.get_password(keyname,
-                                                            username)))
+        sys.stdout.write('{0}\n'.format(keyring.get_password(keyname,
+                                                             username)))
 
     sys.exit(0)
 

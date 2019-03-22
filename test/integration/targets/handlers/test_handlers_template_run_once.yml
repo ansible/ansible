@@ -1,0 +1,12 @@
+- hosts: A,B
+  gather_facts: no
+  tasks:
+    - debug:
+      changed_when: true
+      notify:
+        - handler
+  handlers:
+    - name: handler
+      debug:
+        msg: "handler {{ inventory_hostname }}"
+      run_once: "{{ testvar | default(False) }}"

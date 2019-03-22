@@ -30,10 +30,7 @@ import os
 import hmac
 import re
 
-try:
-    import urlparse
-except ImportError:
-    import urllib.parse as urlparse
+from ansible.module_utils.six.moves.urllib.parse import urlparse
 
 try:
     from hashlib import sha1
@@ -61,7 +58,7 @@ def get_fqdn_and_port(repo_url):
 
     fqdn = None
     port = None
-    ipv6_re = re.compile('(\[[^]]*\])(?::([0-9]+))?')
+    ipv6_re = re.compile(r'(\[[^]]*\])(?::([0-9]+))?')
     if "@" in repo_url and "://" not in repo_url:
         # most likely an user@host:path or user@host/path type URL
         repo_url = repo_url.split("@", 1)[1]
@@ -75,7 +72,7 @@ def get_fqdn_and_port(repo_url):
             fqdn = repo_url.split("/")[0]
     elif "://" in repo_url:
         # this should be something we can parse with urlparse
-        parts = urlparse.urlparse(repo_url)
+        parts = urlparse(repo_url)
         # parts[1] will be empty on python2.4 on ssh:// or git:// urls, so
         # ensure we actually have a parts[1] before continuing.
         if parts[1] != '':
@@ -138,7 +135,7 @@ def not_in_host_file(self, host):
                     hash.update(host)
                     if hash.digest() == kn_host.decode('base64'):
                         return False
-                except:
+                except Exception:
                     # invalid hashed host key, skip it
                     continue
             else:
@@ -167,7 +164,7 @@ def add_host_key(module, fqdn, port=22, key_type="rsa", create_dir=False):
         if create_dir:
             try:
                 os.makedirs(user_ssh_dir, int('700', 8))
-            except:
+            except Exception:
                 module.fail_json(msg="failed to create host key directory: %s" % user_ssh_dir)
         else:
             module.fail_json(msg="%s does not exist" % user_ssh_dir)

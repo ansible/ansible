@@ -17,8 +17,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from ansible.compat.tests.mock import patch, Mock, MagicMock, call
-from .netscaler_module import TestModule, nitro_base_patcher, set_module_args
+from units.compat.mock import patch, Mock, MagicMock, call
+from units.modules.utils import set_module_args
+from .netscaler_module import TestModule, nitro_base_patcher
 
 import sys
 
@@ -53,12 +54,16 @@ class TestNetscalerCSActionModule(TestModule):
         cls.nitro_specific_patcher.stop()
 
     def setUp(self):
+        super(TestNetscalerCSActionModule, self).setUp()
+
         self.nitro_base_patcher.start()
         self.nitro_specific_patcher.start()
 
         # Setup minimal required arguments to pass AnsibleModule argument parsing
 
     def tearDown(self):
+        super(TestNetscalerCSActionModule, self).tearDown()
+
         self.nitro_base_patcher.stop()
         self.nitro_specific_patcher.stop()
 
@@ -67,7 +72,7 @@ class TestNetscalerCSActionModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         self.nitro_base_patcher.stop()
@@ -81,7 +86,7 @@ class TestNetscalerCSActionModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_cs_action
@@ -107,7 +112,7 @@ class TestNetscalerCSActionModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_cs_action
@@ -131,7 +136,7 @@ class TestNetscalerCSActionModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_cs_action
@@ -158,7 +163,7 @@ class TestNetscalerCSActionModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_cs_action
@@ -185,7 +190,7 @@ class TestNetscalerCSActionModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='absent',
         ))
         from ansible.modules.network.netscaler import netscaler_cs_action
@@ -211,7 +216,7 @@ class TestNetscalerCSActionModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
             save_config=False,
         ))
@@ -239,7 +244,7 @@ class TestNetscalerCSActionModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='absent',
             save_config=False,
         ))
@@ -266,7 +271,7 @@ class TestNetscalerCSActionModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_cs_action
@@ -298,7 +303,7 @@ class TestNetscalerCSActionModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_cs_action
@@ -332,7 +337,7 @@ class TestNetscalerCSActionModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='absent',
         ))
         from ansible.modules.network.netscaler import netscaler_cs_action
@@ -366,7 +371,7 @@ class TestNetscalerCSActionModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_cs_action
@@ -400,7 +405,7 @@ class TestNetscalerCSActionModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='absent',
         ))
         from ansible.modules.network.netscaler import netscaler_cs_action
@@ -434,7 +439,7 @@ class TestNetscalerCSActionModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_cs_action
@@ -470,7 +475,7 @@ class TestNetscalerCSActionModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_cs_action
@@ -506,7 +511,7 @@ class TestNetscalerCSActionModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_cs_action
@@ -542,7 +547,7 @@ class TestNetscalerCSActionModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='absent',
         ))
         from ansible.modules.network.netscaler import netscaler_cs_action
@@ -578,7 +583,7 @@ class TestNetscalerCSActionModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='present',
         ))
         from ansible.modules.network.netscaler import netscaler_cs_action
@@ -606,7 +611,7 @@ class TestNetscalerCSActionModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state='absent',
         ))
         from ansible.modules.network.netscaler import netscaler_cs_action

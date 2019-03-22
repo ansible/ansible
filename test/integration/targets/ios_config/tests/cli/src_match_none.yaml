@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/src_match_none.yaml"
+- debug: msg="START cli/src_match_none.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   ios_config:
@@ -9,13 +9,11 @@
     parents:
       - interface Loopback999
     match: none
-    authorize: yes
 
 - name: configure device with config
   ios_config:
     src: basic/config.j2
     match: none
-    authorize: yes
   register: result
 
 - assert:
@@ -28,7 +26,6 @@
 - name: check device with config
   ios_config:
     src: basic/config.j2
-    authorize: yes
   register: result
 
 - assert:
@@ -38,4 +35,4 @@
       - "result.changed == false"
       - "result.updates is not defined"
 
-- debug: msg="END cli/src_match_none.yaml"
+- debug: msg="END cli/src_match_none.yaml on connection={{ ansible_connection }}"

@@ -15,7 +15,7 @@
       experiment: kennedy
   register: result
   ignore_errors: true
-  labels:
+  tags:
     - param-check
 
 - name: "assert failure when param: unknown resource_type"

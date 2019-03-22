@@ -23,19 +23,19 @@ description:
   - Collects a base set of device facts from a remote device that
     is running OS10.  This module prepends all of the
     base network fact keys with C(ansible_net_<fact>).  The facts
-    module always collects a base set of facts from the device
+    module will always collect a base set of facts from the device
     and can enable or disable collection of additional facts.
 extends_documentation_fragment: dellos10
 options:
   gather_subset:
     description:
-      - When supplied, this argument restricts the facts collected
+      - When supplied, this argument will restrict the facts collected
         to a given subset.  Possible values for this argument include
-        all, hardware, config, and interfaces.  You can specify a list of
-        values to include a larger subset.  You can also use values with an initial M(!) to specify that a specific subset should
+        all, hardware, config, and interfaces.  Can specify a list of
+        values to include a larger subset.  Values can also be used
+        with an initial C(M(!)) to specify that a specific subset should
         not be collected.
-    required: false
-    default: '!config'
+    default: [ '!config' ]
 """
 
 EXAMPLES = """
@@ -56,8 +56,8 @@ EXAMPLES = """
 
 RETURN = """
 ansible_net_gather_subset:
-  description: The list of fact subsets collected from the device.
-  returned: Always.
+  description: The list of fact subsets collected from the device
+  returned: always
   type: list
 
 # default
@@ -66,58 +66,58 @@ ansible_net_name:
   returned: Always.
   type: str
 ansible_net_version:
-  description: The operating system version running on the remote device.
-  returned: Always.
+  description: The operating system version running on the remote device
+  returned: always
   type: str
 ansible_net_servicetag:
   description: The service tag number of the remote device.
-  returned: Always.
+  returned: always
   type: str
 ansible_net_model:
   description: The model name returned from the device.
-  returned: Always.
+  returned: always
   type: str
 ansible_net_hostname:
-  description: The configured hostname of the device.
-  returned: Always.
+  description: The configured hostname of the device
+  returned: always
   type: str
 
 # hardware
 ansible_net_cpu_arch:
   description: CPU Architecture of the remote device.
-  returned: When hardware is configured.
+  returned: when hardware is configured
   type: str
 ansible_net_memfree_mb:
-  description: The available free memory on the remote device in MB.
-  returned: When hardware is configured.
+  description: The available free memory on the remote device in Mb
+  returned: when hardware is configured
   type: int
 ansible_net_memtotal_mb:
-  description: The total memory on the remote device in MB.
-  returned: When hardware is configured.
+  description: The total memory on the remote device in Mb
+  returned: when hardware is configured
   type: int
 
 # config
 ansible_net_config:
-  description: The current active config from the device.
-  returned: When config is configured.
+  description: The current active config from the device
+  returned: when config is configured
   type: str
 
 # interfaces
 ansible_net_all_ipv4_addresses:
-  description: All IPv4 addresses configured on the device.
-  returned: When interfaces is configured
+  description: All IPv4 addresses configured on the device
+  returned: when interfaces is configured
   type: list
 ansible_net_all_ipv6_addresses:
-  description: All IPv6 addresses configured on the device.
-  returned: When interfaces is configured.
+  description: All IPv6 addresses configured on the device
+  returned: when interfaces is configured
   type: list
 ansible_net_interfaces:
-  description: A hash of all interfaces running on the system.
-  returned: When interfaces is configured.
+  description: A hash of all interfaces running on the system
+  returned: when interfaces is configured
   type: dict
 ansible_net_neighbors:
-  description: The list of LLDP neighbors from the remote device.
-  returned: When interfaces is configured.
+  description: The list of LLDP neighbors from the remote device
+  returned: when interfaces is configured
   type: dict
 """
 
@@ -128,8 +128,8 @@ try:
 except ImportError:
     import xml.etree.ElementTree as ET
 
-from ansible.module_utils.dellos10 import run_commands
-from ansible.module_utils.dellos10 import dellos10_argument_spec, check_args
+from ansible.module_utils.network.dellos10.dellos10 import run_commands
+from ansible.module_utils.network.dellos10.dellos10 import dellos10_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 
@@ -160,7 +160,7 @@ class Default(FactsBase):
     def populate(self):
         super(Default, self).populate()
         data = self.responses[0]
-        xml_data = ET.fromstring(data)
+        xml_data = ET.fromstring(data.encode('utf8'))
 
         self.facts['name'] = self.parse_name(xml_data)
         self.facts['version'] = self.parse_version(xml_data)
@@ -168,7 +168,7 @@ class Default(FactsBase):
         self.facts['hostname'] = self.parse_hostname(xml_data)
 
         data = self.responses[1]
-        xml_data = ET.fromstring(data)
+        xml_data = ET.fromstring(data.encode('utf8'))
 
         self.facts['servicetag'] = self.parse_servicetag(xml_data)
 
@@ -212,7 +212,7 @@ class Hardware(FactsBase):
 
     COMMANDS = [
         'show version | display-xml',
-        'show processes node-id 1 | grep "Mem:"'
+        'show processes node-id 1 | grep Mem:'
     ]
 
     def populate(self):
@@ -220,7 +220,7 @@ class Hardware(FactsBase):
         super(Hardware, self).populate()
         data = self.responses[0]
 
-        xml_data = ET.fromstring(data)
+        xml_data = ET.fromstring(data.encode('utf8'))
 
         self.facts['cpu_arch'] = self.parse_cpu_arch(xml_data)
 
@@ -277,7 +277,7 @@ class Interfaces(FactsBase):
         for line in int_show_data:
             if pattern in line:
                 if skip is False:
-                    xml_data = ET.fromstring(data)
+                    xml_data = ET.fromstring(data.encode('utf8'))
                     self.populate_interfaces(xml_data)
                     data = ''
                 else:
@@ -286,7 +286,7 @@ class Interfaces(FactsBase):
             data += line
 
         if skip is False:
-            xml_data = ET.fromstring(data)
+            xml_data = ET.fromstring(data.encode('utf8'))
             self.populate_interfaces(xml_data)
 
         self.facts['interfaces'] = self.intf_facts
@@ -299,7 +299,7 @@ class Interfaces(FactsBase):
         for line in lldp_data:
             if pattern in line:
                 if skip is False:
-                    xml_data = ET.fromstring(data)
+                    xml_data = ET.fromstring(data.encode('utf8'))
                     self.populate_neighbors(xml_data)
                     data = ''
                 else:
@@ -308,7 +308,7 @@ class Interfaces(FactsBase):
             data += line
 
         if skip is False:
-            xml_data = ET.fromstring(data)
+            xml_data = ET.fromstring(data.encode('utf8'))
             self.populate_neighbors(xml_data)
 
         self.facts['neighbors'] = self.lldp_facts
@@ -351,14 +351,14 @@ class Interfaces(FactsBase):
             try:
                 intf = self.intf_facts[name]
                 intf['mediatype'] = mediatype
-            except:
+            except Exception:
                 # fanout
                 for subport in range(1, 5):
                     name = "ethernet" + sname + ":" + str(subport)
                     try:
                         intf = self.intf_facts[name]
                         intf['mediatype'] = mediatype
-                    except:
+                    except Exception:
                         # valid case to handle 2x50G
                         pass
 

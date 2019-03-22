@@ -1,0 +1,4 @@
+cloud/azure
+destructive
+shippable/azure/group2
+azure_rm_containerinstance_facts

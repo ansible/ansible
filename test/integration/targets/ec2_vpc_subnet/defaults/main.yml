@@ -1,0 +1,4 @@
+---
+# defaults file for ec2_vpc_subnet
+ec2_vpc_subnet_name: '{{resource_prefix}}'
+ec2_vpc_subnet_description: 'Created by ansible integration tests'

@@ -28,7 +28,7 @@ short_description: Manages EVPN VXLAN Network Identifier (VNI) on HUAWEI CloudEn
 description:
     - Manages Ethernet Virtual Private Network (EVPN) VXLAN Network
       Identifier (VNI) configurations on HUAWEI CloudEngine switches.
-author: Zhijin Zhou (@CloudEngine-Ansible)
+author: Zhijin Zhou (@QijunPan)
 notes:
     - Ensure that EVPN has been configured to serve as the VXLAN control plane when state is present.
     - Ensure that a bridge domain (BD) has existed when state is present.
@@ -50,7 +50,6 @@ options:
     evpn:
         description:
             - Create or delete an EVPN instance for a VXLAN in BD view.
-        required: false
         choices: ['enable','disable']
         default: 'enable'
     route_distinguisher:
@@ -69,14 +68,10 @@ options:
             - 5) 32-bit IP address:2-byte user-defined number. For example, 192.168.122.15:1. An IP address ranges from
               0.0.0.0 to 255.255.255.255, and a user-defined number is an integer ranging from 0 to 65535.
             - 6) 'auto' specifies the RD that is automatically generated.
-        required: false
-        default: null
     vpn_target_both:
         description:
             - Add VPN targets to both the import and export VPN target lists of a BD EVPN instance.
               The format is the same as route_distinguisher.
-        required: false
-        default: null
     vpn_target_import:
         description:
             - Add VPN targets to the import VPN target list of a BD EVPN instance.
@@ -86,12 +81,9 @@ options:
         description:
             - Add VPN targets to the export VPN target list of a BD EVPN instance.
               The format is the same as route_distinguisher.
-        required: false
-        default: null
     state:
         description:
             - Manage the state of the resource.
-        required: false
         choices: ['present','absent']
         default: 'present'
 '''
@@ -252,14 +244,14 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 
 import copy
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_nc_config, set_nc_config, ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec
 
 
 CE_NC_GET_VNI_BD = """

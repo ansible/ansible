@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-#
+
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -25,63 +25,49 @@ options:
     description:
       - The name of the individual account or organization that owns the GitHub repository.
     required: true
-    default: null
     aliases: [ 'account', 'organization' ]
   repo:
     description:
       - The name of the GitHub repository.
     required: true
-    default: null
     aliases: [ 'repository' ]
   name:
     description:
       - The name for the deploy key.
     required: true
-    default: null
     aliases: [ 'title', 'label' ]
   key:
     description:
       - The SSH public key to add to the repository as a deploy key.
     required: true
-    default: null
   read_only:
     description:
       - If C(true), the deploy key will only be able to read repository contents. Otherwise, the deploy key will be able to read and write.
-    required: false
     type: bool
-    default: yes
+    default: 'yes'
   state:
     description:
       - The state of the deploy key.
-    required: false
     default: "present"
     choices: [ "present", "absent" ]
   force:
     description:
       - If C(true), forcefully adds the deploy key by deleting any existing deploy key with the same public key or title.
-    required: false
-    default: no
     type: bool
+    default: 'no'
   username:
     description:
       - The username to authenticate with.
-    required: false
-    default: null
   password:
     description:
       - The password to authenticate with. A personal access token can be used here in place of a password.
-    required: false
-    default: null
   token:
     description:
       - The OAuth2 token or personal access token to authenticate with. Mutually exclusive with I(password).
-    required: false
-    default: null
   otp:
     description:
       - The 6 digit One Time Password for 2-Factor Authentication. Required together with I(username) and I(password).
-    required: false
-    default: null
+    aliases: ['2fa_token']
 requirements:
    - python-requests
 notes:
@@ -143,7 +129,7 @@ RETURN = '''
 msg:
     description: the status message describing what occurred
     returned: always
-    type: string
+    type: str
     sample: "Deploy key added successfully"
 
 http_status_code:
@@ -155,7 +141,7 @@ http_status_code:
 error:
     description: the error message returned by the GitHub API
     returned: failed
-    type: string
+    type: str
     sample: "key is already in use"
 
 id:
@@ -191,7 +177,7 @@ class GithubDeployKey(object):
             if self.otp is not None:
                 self.headers = {"X-GitHub-OTP": self.otp}
         else:
-            self.headers = {"Authorization": "token {}".format(self.token)}
+            self.headers = {"Authorization": "token {0}".format(self.token)}
 
     def get_existing_key(self, key, title, force):
         resp, info = fetch_url(self.module, self.url, headers=self.headers, method="GET")
@@ -240,7 +226,7 @@ class GithubDeployKey(object):
             self.module.fail_json(msg="Failed to add deploy key", http_status_code=status_code, error=err)
 
     def remove_existing_key(self, key_id):
-        resp, info = fetch_url(self.module, self.url + "/{}".format(key_id), headers=self.headers, method="DELETE")
+        resp, info = fetch_url(self.module, self.url + "/{0}".format(key_id), headers=self.headers, method="DELETE")
 
         status_code = info["status"]
 
@@ -292,7 +278,7 @@ def main():
     token = module.params.get('token', None)
     otp = module.params.get('otp', None)
 
-    GITHUB_API_URL = "https://api.github.com/repos/{}/{}/keys".format(owner, repo)
+    GITHUB_API_URL = "https://api.github.com/repos/{0}/{1}/keys".format(owner, repo)
 
     deploy_key = GithubDeployKey(module, GITHUB_API_URL, state, username, password, token, otp)
 

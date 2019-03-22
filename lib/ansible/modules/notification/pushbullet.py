@@ -32,18 +32,13 @@ options:
             - The channel TAG you wish to broadcast a push notification,
               as seen on the "My Channels" > "Edit your channel" at
               Pushbullet page.
-        required: false
-        default: null
     device:
         description:
             - The device NAME you wish to send a push notification,
               as seen on the Pushbullet main page.
-        required: false
-        default: null
     push_type:
         description:
           - Thing you wish to push.
-        required: false
         default: note
         choices: [ "note", "link" ]
     title:
@@ -53,7 +48,6 @@ options:
     body:
         description:
           - Body of the notification, e.g. Details of the fault you're alerting.
-        required: false
 
 notes:
    - Requires pushbullet.py Python package on the remote host.
@@ -74,7 +68,7 @@ EXAMPLES = '''
     device: Chrome
     push_type: link
     title: Ansible Documentation
-    body: http://docs.ansible.com/
+    body: https://docs.ansible.com/
 
 # Sends a push notification to a channel
 - pushbullet:
@@ -90,15 +84,19 @@ EXAMPLES = '''
     body: Error rate on signup service is over 90% for more than 2 minutes
 '''
 
+import traceback
+
+PUSHBULLET_IMP_ERR = None
 try:
     from pushbullet import PushBullet
     from pushbullet.errors import InvalidKeyError, PushError
 except ImportError:
+    PUSHBULLET_IMP_ERR = traceback.format_exc()
     pushbullet_found = False
 else:
     pushbullet_found = True
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 
 # ===========================================
@@ -107,31 +105,31 @@ from ansible.module_utils.basic import AnsibleModule
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            api_key     = dict(type='str', required=True, no_log=True),
-            channel     = dict(type='str', default=None),
-            device      = dict(type='str', default=None),
-            push_type   = dict(type='str', default="note", choices=['note', 'link']),
-            title       = dict(type='str', required=True),
-            body        = dict(type='str', default=None),
-            url         = dict(type='str', default=None),
+        argument_spec=dict(
+            api_key=dict(type='str', required=True, no_log=True),
+            channel=dict(type='str', default=None),
+            device=dict(type='str', default=None),
+            push_type=dict(type='str', default="note", choices=['note', 'link']),
+            title=dict(type='str', required=True),
+            body=dict(type='str', default=None),
+            url=dict(type='str', default=None),
         ),
-        mutually_exclusive = (
+        mutually_exclusive=(
             ['channel', 'device'],
         ),
         supports_check_mode=True
     )
 
-    api_key     = module.params['api_key']
-    channel     = module.params['channel']
-    device      = module.params['device']
-    push_type   = module.params['push_type']
-    title       = module.params['title']
-    body        = module.params['body']
-    url         = module.params['url']
+    api_key = module.params['api_key']
+    channel = module.params['channel']
+    device = module.params['device']
+    push_type = module.params['push_type']
+    title = module.params['title']
+    body = module.params['body']
+    url = module.params['url']
 
     if not pushbullet_found:
-        module.fail_json(msg="Python 'pushbullet.py' module is required. Install via: $ pip install pushbullet.py")
+        module.fail_json(msg=missing_required_lib('pushbullet.py'), exception=PUSHBULLET_IMP_ERR)
 
     # Init pushbullet
     try:

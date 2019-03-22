@@ -18,13 +18,16 @@ class Git(object):
         self.args = args
         self.git = 'git'
 
-    def get_diff(self, args):
+    def get_diff(self, args, git_options=None):
         """
         :type args: list[str]
+        :type git_options: list[str] | None
         :rtype: list[str]
         """
         cmd = ['diff'] + args
-        return self.run_git_split(cmd, '\n', str_errors='replace')
+        if git_options is None:
+            git_options = ['-c', 'core.quotePath=']
+        return self.run_git_split(git_options + cmd, '\n', str_errors='replace')
 
     def get_diff_names(self, args):
         """
@@ -55,6 +58,24 @@ class Git(object):
         """
         cmd = ['symbolic-ref', '--short', 'HEAD']
         return self.run_git(cmd).strip()
+
+    def get_rev_list(self, commits=None, max_count=None):
+        """
+        :type commits: list[str] | None
+        :type max_count: int | None
+        :rtype: list[str]
+        """
+        cmd = ['rev-list']
+
+        if commits:
+            cmd += commits
+        else:
+            cmd += ['HEAD']
+
+        if max_count:
+            cmd += ['--max-count', '%s' % max_count]
+
+        return self.run_git_split(cmd)
 
     def get_branch_fork_point(self, branch):
         """

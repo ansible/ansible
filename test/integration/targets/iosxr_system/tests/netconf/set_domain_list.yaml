@@ -1,0 +1,177 @@
+---
+- debug:
+    msg: "START netconf/set_domain_search.yaml on connection={{ ansible_connection }}"
+
+- name: setup
+  iosxr_config:
+    lines:
+      - no domain list ansible.com
+      - no domain list redhat.com
+      - no domain list eng.ansible.com
+      - no domain vrf ansiblevrf list redhat.com
+      - no domain vrf ansiblevrf list ansible.com
+    match: none
+    provider: "{{ cli }}"
+  connection: network_cli
+
+- name: configure domain_search
+  iosxr_system:
+    domain_search:
+      - ansible.com
+      - redhat.com
+    provider: "{{ netconf }}"
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - "'ansible.com' in result.xml[0]"
+      - "'redhat.com' in result.xml[0]"
+
+- name: configure domain_search with vrf
+  iosxr_system: &domainvrf
+    vrf: ansiblevrf
+    domain_search:
+      - redhat.com
+      - ansible.com
+    provider: "{{ netconf }}"
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - "'ansiblevrf' in result.xml[0]"
+      - "'ansible.com' in result.xml[0]"
+      - "'redhat.com' in result.xml[0]"
+
+- name: verify domain_search with vrf
+  iosxr_system: *domainvrf
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
+
+- name: delete domain_search with vrf
+  iosxr_system: &deldomainvrf
+    vrf: ansiblevrf
+    domain_search:
+      - redhat.com
+    provider: "{{ netconf }}"
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - "'ansiblevrf' in result.xml[0]"
+      - "'ansible.com' in result.xml[0]"
+
+- name: verify delete domain_search with vrf
+  iosxr_system: *deldomainvrf
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
+
+- name: remove one entry
+  iosxr_system:
+    domain_search:
+      - ansible.com
+    provider: "{{ netconf }}"
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - "'redhat.com' in result.xml[0]"
+
+- name: verify remove one entry
+  iosxr_system:
+    domain_search:
+      - ansible.com
+    provider: "{{ netconf }}"
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
+
+- name: add one entry
+  iosxr_system:
+    domain_search:
+      - ansible.com
+      - redhat.com
+    provider: "{{ netconf }}"
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - "'redhat.com' in result.xml[0]"
+
+- name: verify add one entry
+  iosxr_system:
+    domain_search:
+      - ansible.com
+      - redhat.com
+    provider: "{{ netconf }}"
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
+
+- name: add and remove one entry
+  iosxr_system:
+    domain_search:
+      - ansible.com
+      - eng.ansible.com
+    provider: "{{ netconf }}"
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - "'redhat.com' in result.xml[1]"
+      - "'eng.ansible.com' in result.xml[0]"
+      - result.xml|length == 2
+
+- name: verify add and remove one entry
+  iosxr_system:
+    domain_search:
+      - ansible.com
+      - eng.ansible.com
+    provider: "{{ netconf }}"
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
+
+- name: teardown
+  iosxr_config:
+    lines:
+      - no domain list ansible.com
+      - no domain list redhat.com
+      - no domain list eng.ansible.com
+      - no domain vrf ansiblevrf list redhat.com
+      - no domain vrf ansiblevrf list ansible.com
+      - no domain vrf ansiblevrf list eng.ansible.com
+    match: none
+    provider: "{{ cli }}"
+  connection: network_cli
+
+- debug:
+    msg: "END netconf/set_domain_search.yaml on connection={{ ansible_connection }}"

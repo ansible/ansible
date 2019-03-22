@@ -32,27 +32,35 @@ DOCUMENTATION = """
           - name: ANSIBLE_EXECUTABLE
         vars:
           - name: ansible_executable
+        default: /bin/sh
+      chroot_exe:
+        version_added: '2.8'
+        description:
+            - User specified chroot binary
+        ini:
+          - section: chroot_connection
+            key: exe
+        env:
+          - name: ANSIBLE_CHROOT_EXE
+        vars:
+          - name: ansible_chroot_exe
+        default: chroot
 """
 
-import distutils.spawn
 import os
 import os.path
 import subprocess
 import traceback
 
-from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils.basic import is_executable
+from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.six.moves import shlex_quote
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_native
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
+from ansible.utils.display import Display
 
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class Connection(ConnectionBase):
@@ -63,7 +71,9 @@ class Connection(ConnectionBase):
     # su currently has an undiagnosed issue with calculating the file
     # checksums (so copy, for instance, doesn't work right)
     # Have to look into that before re-enabling this
-    become_methods = frozenset(C.BECOME_METHODS).difference(('su',))
+    has_tty = False
+
+    default_user = 'root'
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
@@ -86,9 +96,13 @@ class Connection(ConnectionBase):
         if not (is_executable(chrootsh) or (os.path.lexists(chrootsh) and os.path.islink(chrootsh))):
             raise AnsibleError("%s does not look like a chrootable dir (/bin/sh missing)" % self.chroot)
 
-        self.chroot_cmd = distutils.spawn.find_executable('chroot')
+        if os.path.isabs(self.get_option('chroot_exe')):
+            self.chroot_cmd = self.get_option('chroot_exe')
+        else:
+            self.chroot_cmd = get_bin_path(self.get_option('chroot_exe'))
+
         if not self.chroot_cmd:
-            raise AnsibleError("chroot command not found in PATH")
+            raise AnsibleError("chroot command (%s) not found in PATH" % to_native(self.get_option('chroot_exe')))
 
     def _connect(self):
         ''' connect to the chroot; nothing to do here '''
@@ -105,7 +119,7 @@ class Connection(ConnectionBase):
         compared to exec_command() it looses some niceties like being able to
         return the process's exit code immediately.
         '''
-        executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else '/bin/sh'
+        executable = self.get_option('executable')
         local_cmd = [self.chroot_cmd, self.chroot, executable, '-c', cmd]
 
         display.vvv("EXEC %s" % (local_cmd), host=self.chroot)
@@ -146,13 +160,17 @@ class Connection(ConnectionBase):
         out_path = shlex_quote(self._prefix_login_path(out_path))
         try:
             with open(to_bytes(in_path, errors='surrogate_or_strict'), 'rb') as in_file:
+                if not os.fstat(in_file.fileno()).st_size:
+                    count = ' count=0'
+                else:
+                    count = ''
                 try:
-                    p = self._buffered_exec_command('dd of=%s bs=%s' % (out_path, BUFSIZE), stdin=in_file)
+                    p = self._buffered_exec_command('dd of=%s bs=%s%s' % (out_path, BUFSIZE, count), stdin=in_file)
                 except OSError:
                     raise AnsibleError("chroot connection requires dd command in the chroot")
                 try:
                     stdout, stderr = p.communicate()
-                except:
+                except Exception:
                     traceback.print_exc()
                     raise AnsibleError("failed to transfer file %s to %s" % (in_path, out_path))
                 if p.returncode != 0:
@@ -177,7 +195,7 @@ class Connection(ConnectionBase):
                 while chunk:
                     out_file.write(chunk)
                     chunk = p.stdout.read(BUFSIZE)
-            except:
+            except Exception:
                 traceback.print_exc()
                 raise AnsibleError("failed to transfer file %s to %s" % (in_path, out_path))
             stdout, stderr = p.communicate()

@@ -2,21 +2,11 @@
 # -*- coding: utf-8 -*-
 #
 # (c) 2015, René Moser <mail@renemoser.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -30,144 +20,136 @@ short_description: Manages port forwarding rules on Apache CloudStack based clou
 description:
     - Create, update and remove port forwarding rules.
 version_added: '2.0'
-author: "René Moser (@resmo)"
+author: René Moser (@resmo)
 options:
   ip_address:
     description:
       - Public IP address the rule is assigned to.
+    type: str
     required: true
   vm:
     description:
       - Name of virtual machine which we make the port forwarding rule for.
-      - Required if C(state=present).
-    required: false
-    default: null
+      - Required if I(state=present).
+    type: str
   state:
     description:
       - State of the port forwarding rule.
-    required: false
-    default: 'present'
-    choices: [ 'present', 'absent' ]
+    type: str
+    default: present
+    choices: [ present, absent ]
   protocol:
     description:
       - Protocol of the port forwarding rule.
-    required: false
-    default: 'tcp'
-    choices: [ 'tcp', 'udp' ]
+    type: str
+    default: tcp
+    choices: [ tcp, udp ]
   public_port:
     description:
       - Start public port for this rule.
+    type: int
     required: true
   public_end_port:
     description:
       - End public port for this rule.
-      - If not specified equal C(public_port).
-    required: false
-    default: null
+      - If not specified equal I(public_port).
+    type: int
   private_port:
     description:
       - Start private port for this rule.
+    type: int
     required: true
   private_end_port:
     description:
       - End private port for this rule.
-      - If not specified equal C(private_port).
-    required: false
-    default: null
+      - If not specified equal I(private_port).
+    type: int
   open_firewall:
     description:
       - Whether the firewall rule for public port should be created, while creating the new rule.
       - Use M(cs_firewall) for managing firewall rules.
-    required: false
-    default: false
+    default: no
+    type: bool
   vm_guest_ip:
     description:
       - VM guest NIC secondary IP address for the port forwarding rule.
-    required: false
-    default: false
+    type: str
   network:
     description:
       - Name of the network.
-    required: false
-    default: null
-    version_added: "2.3"
+    type: str
+    version_added: '2.3'
   vpc:
     description:
       - Name of the VPC.
-    required: false
-    default: null
-    version_added: "2.3"
+    version_added: '2.3'
+    type: str
   domain:
     description:
-      - Domain the C(vm) is related to.
-    required: false
-    default: null
+      - Domain the I(vm) is related to.
+    type: str
   account:
     description:
-      - Account the C(vm) is related to.
-    required: false
-    default: null
+      - Account the I(vm) is related to.
+    type: str
   project:
     description:
-      - Name of the project the C(vm) is located in.
-    required: false
-    default: null
+      - Name of the project the I(vm) is located in.
+    type: str
   zone:
     description:
       - Name of the zone in which the virtual machine is in.
       - If not set, default zone is used.
-    required: false
-    default: null
+    type: str
   poll_async:
     description:
       - Poll async jobs until job has finished.
-    required: false
-    default: true
+    default: yes
+    type: bool
   tags:
     description:
-      - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
-      - "To delete all tags, set a empty list e.g. C(tags: [])."
-    required: false
-    default: null
-    aliases: [ 'tag' ]
-    version_added: "2.4"
+      - List of tags. Tags are a list of dictionaries having keys I(key) and I(value).
+      - "To delete all tags, set a empty list e.g. I(tags: [])."
+    type: list
+    aliases: [ tag ]
+    version_added: '2.4'
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# 1.2.3.4:80 -> web01:8080
-- local_action:
-    module: cs_portforward
+- name: 1.2.3.4:80 -> web01:8080
+  cs_portforward:
     ip_address: 1.2.3.4
     vm: web01
     public_port: 80
     private_port: 8080
+  delegate_to: localhost
 
-# forward SSH and open firewall
-- local_action:
-    module: cs_portforward
+- name: forward SSH and open firewall
+  cs_portforward:
     ip_address: '{{ public_ip }}'
     vm: '{{ inventory_hostname }}'
     public_port: '{{ ansible_ssh_port }}'
     private_port: 22
     open_firewall: true
+  delegate_to: localhost
 
-# forward DNS traffic, but do not open firewall
-- local_action:
-    module: cs_portforward
+- name: forward DNS traffic, but do not open firewall
+  cs_portforward:
     ip_address: 1.2.3.4
     vm: '{{ inventory_hostname }}'
     public_port: 53
     private_port: 53
     protocol: udp
+  delegate_to: localhost
 
-# remove ssh port forwarding
-- local_action:
-    module: cs_portforward
+- name: remove ssh port forwarding
+  cs_portforward:
     ip_address: 1.2.3.4
     public_port: 22
     private_port: 22
     state: absent
+  delegate_to: localhost
 '''
 
 RETURN = '''
@@ -175,17 +157,17 @@ RETURN = '''
 id:
   description: UUID of the public IP address.
   returned: success
-  type: string
+  type: str
   sample: a6f7a5fc-43f8-11e5-a151-feff819cdc9f
 ip_address:
   description: Public IP address.
   returned: success
-  type: string
+  type: str
   sample: 1.2.3.4
 protocol:
   description: Protocol.
   returned: success
-  type: string
+  type: str
   sample: tcp
 private_port:
   description: Start port on the virtual machine's IP address.
@@ -196,6 +178,7 @@ private_end_port:
   description: End port on the virtual machine's IP address.
   returned: success
   type: int
+  sample: 80
 public_port:
   description: Start port on the public IP address.
   returned: success
@@ -214,32 +197,32 @@ tags:
 vm_name:
   description: Name of the virtual machine.
   returned: success
-  type: string
+  type: str
   sample: web-01
 vm_display_name:
   description: Display name of the virtual machine.
   returned: success
-  type: string
+  type: str
   sample: web-01
 vm_guest_ip:
   description: IP of the virtual machine.
   returned: success
-  type: string
+  type: str
   sample: 10.101.65.152
 vpc:
   description: Name of the VPC.
   returned: success
-  type: string
+  type: str
   sample: my_vpc
 network:
   description: Name of the network.
   returned: success
-  type: string
+  type: str
   sample: dmz
 '''
 
-# import cloudstack common
-from ansible.module_utils.cloudstack import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.cloudstack import AnsibleCloudStack, cs_argument_spec, cs_required_together
 
 
 class AnsibleCloudStackPortforwarding(AnsibleCloudStack):
@@ -247,37 +230,34 @@ class AnsibleCloudStackPortforwarding(AnsibleCloudStack):
     def __init__(self, module):
         super(AnsibleCloudStackPortforwarding, self).__init__(module)
         self.returns = {
-            'virtualmachinedisplayname':    'vm_display_name',
-            'virtualmachinename':           'vm_name',
-            'ipaddress':                    'ip_address',
-            'vmguestip':                    'vm_guest_ip',
-            'publicip':                     'public_ip',
-            'protocol':                     'protocol',
+            'virtualmachinedisplayname': 'vm_display_name',
+            'virtualmachinename': 'vm_name',
+            'ipaddress': 'ip_address',
+            'vmguestip': 'vm_guest_ip',
+            'publicip': 'public_ip',
+            'protocol': 'protocol',
         }
         # these values will be casted to int
         self.returns_to_int = {
-            'publicport':       'public_port',
-            'publicendport':    'public_end_port',
-            'privateport':      'private_port',
-            'privateendport':   'private_end_port',
+            'publicport': 'public_port',
+            'publicendport': 'public_end_port',
+            'privateport': 'private_port',
+            'privateendport': 'private_end_port',
         }
         self.portforwarding_rule = None
 
-
     def get_portforwarding_rule(self):
         if not self.portforwarding_rule:
-            protocol            = self.module.params.get('protocol')
-            public_port         = self.module.params.get('public_port')
-            public_end_port     = self.get_or_fallback('public_end_port', 'public_port')
-            private_port        = self.module.params.get('private_port')
-            private_end_port    = self.get_or_fallback('private_end_port', 'private_port')
+            protocol = self.module.params.get('protocol')
+            public_port = self.module.params.get('public_port')
 
-            args = {}
-            args['ipaddressid'] = self.get_ip_address(key='id')
-            args['account'] = self.get_account(key='name')
-            args['domainid'] = self.get_domain(key='id')
-            args['projectid'] = self.get_project(key='id')
-            portforwarding_rules = self.cs.listPortForwardingRules(**args)
+            args = {
+                'ipaddressid': self.get_ip_address(key='id'),
+                'account': self.get_account(key='name'),
+                'domainid': self.get_domain(key='id'),
+                'projectid': self.get_project(key='id'),
+            }
+            portforwarding_rules = self.query_api('listPortForwardingRules', **args)
 
             if portforwarding_rules and 'portforwardingrule' in portforwarding_rules:
                 for rule in portforwarding_rules['portforwardingrule']:
@@ -286,7 +266,6 @@ class AnsibleCloudStackPortforwarding(AnsibleCloudStack):
                         self.portforwarding_rule = rule
                         break
         return self.portforwarding_rule
-
 
     def present_portforwarding_rule(self):
         portforwarding_rule = self.get_portforwarding_rule()
@@ -297,88 +276,77 @@ class AnsibleCloudStackPortforwarding(AnsibleCloudStack):
 
         if portforwarding_rule:
             portforwarding_rule = self.ensure_tags(resource=portforwarding_rule, resource_type='PortForwardingRule')
-            self.portforwarding_rule=portforwarding_rule
+            self.portforwarding_rule = portforwarding_rule
 
         return portforwarding_rule
 
-
     def create_portforwarding_rule(self):
-        args = {}
-        args['protocol']            = self.module.params.get('protocol')
-        args['publicport']          = self.module.params.get('public_port')
-        args['publicendport']       = self.get_or_fallback('public_end_port', 'public_port')
-        args['privateport']         = self.module.params.get('private_port')
-        args['privateendport']      = self.get_or_fallback('private_end_port', 'private_port')
-        args['openfirewall']        = self.module.params.get('open_firewall')
-        args['vmguestip']           = self.get_vm_guest_ip()
-        args['ipaddressid']         = self.get_ip_address(key='id')
-        args['virtualmachineid']    = self.get_vm(key='id')
-        args['account']             = self.get_account(key='name')
-        args['domainid']            = self.get_domain(key='id')
-        args['networkid']           = self.get_network(key='id')
+        args = {
+            'protocol': self.module.params.get('protocol'),
+            'publicport': self.module.params.get('public_port'),
+            'publicendport': self.get_or_fallback('public_end_port', 'public_port'),
+            'privateport': self.module.params.get('private_port'),
+            'privateendport': self.get_or_fallback('private_end_port', 'private_port'),
+            'openfirewall': self.module.params.get('open_firewall'),
+            'vmguestip': self.get_vm_guest_ip(),
+            'ipaddressid': self.get_ip_address(key='id'),
+            'virtualmachineid': self.get_vm(key='id'),
+            'account': self.get_account(key='name'),
+            'domainid': self.get_domain(key='id'),
+            'networkid': self.get_network(key='id'),
+        }
 
         portforwarding_rule = None
         self.result['changed'] = True
         if not self.module.check_mode:
-            portforwarding_rule = self.cs.createPortForwardingRule(**args)
+            portforwarding_rule = self.query_api('createPortForwardingRule', **args)
             poll_async = self.module.params.get('poll_async')
             if poll_async:
                 portforwarding_rule = self.poll_job(portforwarding_rule, 'portforwardingrule')
         return portforwarding_rule
 
-
     def update_portforwarding_rule(self, portforwarding_rule):
-        args = {}
-        args['protocol']            = self.module.params.get('protocol')
-        args['publicport']          = self.module.params.get('public_port')
-        args['publicendport']       = self.get_or_fallback('public_end_port', 'public_port')
-        args['privateport']         = self.module.params.get('private_port')
-        args['privateendport']      = self.get_or_fallback('private_end_port', 'private_port')
-        args['vmguestip']           = self.get_vm_guest_ip()
-        args['ipaddressid']         = self.get_ip_address(key='id')
-        args['virtualmachineid']    = self.get_vm(key='id')
-        args['networkid']           = self.get_network(key='id')
+        args = {
+            'protocol': self.module.params.get('protocol'),
+            'publicport': self.module.params.get('public_port'),
+            'publicendport': self.get_or_fallback('public_end_port', 'public_port'),
+            'privateport': self.module.params.get('private_port'),
+            'privateendport': self.get_or_fallback('private_end_port', 'private_port'),
+            'vmguestip': self.get_vm_guest_ip(),
+            'ipaddressid': self.get_ip_address(key='id'),
+            'virtualmachineid': self.get_vm(key='id'),
+            'networkid': self.get_network(key='id'),
+        }
 
         if self.has_changed(args, portforwarding_rule):
             self.result['changed'] = True
             if not self.module.check_mode:
                 # API broken in 4.2.1?, workaround using remove/create instead of update
-                # portforwarding_rule = self.cs.updatePortForwardingRule(**args)
+                # portforwarding_rule = self.query_api('updatePortForwardingRule', **args)
                 self.absent_portforwarding_rule()
-                portforwarding_rule = self.cs.createPortForwardingRule(**args)
+                portforwarding_rule = self.query_api('createPortForwardingRule', **args)
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
                     portforwarding_rule = self.poll_job(portforwarding_rule, 'portforwardingrule')
         return portforwarding_rule
-
 
     def absent_portforwarding_rule(self):
         portforwarding_rule = self.get_portforwarding_rule()
 
         if portforwarding_rule:
             self.result['changed'] = True
-            args = {}
-            args['id'] = portforwarding_rule['id']
-
+            args = {
+                'id': portforwarding_rule['id'],
+            }
             if not self.module.check_mode:
-                res = self.cs.deletePortForwardingRule(**args)
+                res = self.query_api('deletePortForwardingRule', **args)
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
                     self.poll_job(res, 'portforwardingrule')
         return portforwarding_rule
 
-
     def get_result(self, portforwarding_rule):
         super(AnsibleCloudStackPortforwarding, self).get_result(portforwarding_rule)
-
-        network_name = self.get_network(key='name')
-        if network_name:
-            self.result['network'] = network_name
-
-        vpc_name = self.get_vpc(key='name')
-        if vpc_name:
-            self.result['vpc'] = vpc_name
-
         if portforwarding_rule:
             for search_key, return_key in self.returns_to_int.items():
                 if search_key in portforwarding_rule:
@@ -389,24 +357,24 @@ class AnsibleCloudStackPortforwarding(AnsibleCloudStack):
 def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
-        ip_address = dict(required=True),
-        protocol= dict(choices=['tcp', 'udp'], default='tcp'),
-        public_port = dict(type='int', required=True),
-        public_end_port = dict(type='int', default=None),
-        private_port = dict(type='int', required=True),
-        private_end_port = dict(type='int', default=None),
-        state = dict(choices=['present', 'absent'], default='present'),
-        open_firewall = dict(type='bool', default=False),
-        vm_guest_ip = dict(default=None),
-        vm = dict(default=None),
-        vpc = dict(default=None),
-        network = dict(default=None),
-        zone = dict(default=None),
-        domain = dict(default=None),
-        account = dict(default=None),
-        project = dict(default=None),
-        poll_async = dict(type='bool', default=True),
-        tags=dict(type='list', aliases=['tag'], default=None),
+        ip_address=dict(required=True),
+        protocol=dict(choices=['tcp', 'udp'], default='tcp'),
+        public_port=dict(type='int', required=True),
+        public_end_port=dict(type='int'),
+        private_port=dict(type='int', required=True),
+        private_end_port=dict(type='int'),
+        state=dict(choices=['present', 'absent'], default='present'),
+        open_firewall=dict(type='bool', default=False),
+        vm_guest_ip=dict(),
+        vm=dict(),
+        vpc=dict(),
+        network=dict(),
+        zone=dict(),
+        domain=dict(),
+        account=dict(),
+        project=dict(),
+        poll_async=dict(type='bool', default=True),
+        tags=dict(type='list', aliases=['tag']),
     ))
 
     module = AnsibleModule(
@@ -415,22 +383,16 @@ def main():
         supports_check_mode=True
     )
 
-    try:
-        acs_pf = AnsibleCloudStackPortforwarding(module)
-        state = module.params.get('state')
-        if state in ['absent']:
-            pf_rule = acs_pf.absent_portforwarding_rule()
-        else:
-            pf_rule = acs_pf.present_portforwarding_rule()
+    acs_pf = AnsibleCloudStackPortforwarding(module)
+    state = module.params.get('state')
+    if state in ['absent']:
+        pf_rule = acs_pf.absent_portforwarding_rule()
+    else:
+        pf_rule = acs_pf.present_portforwarding_rule()
 
-        result = acs_pf.get_result(pf_rule)
-
-    except CloudStackException as e:
-        module.fail_json(msg='CloudStackException: %s' % str(e))
-
+    result = acs_pf.get_result(pf_rule)
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()

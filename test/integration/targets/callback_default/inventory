@@ -1,0 +1,5 @@
+[local]
+testhost ansible_connection=local ansible_python_interpreter="{{ ansible_playbook_python }}"
+
+[nonexistent]
+testhost5 ansible_host=169.254.199.200  # no connection is ever established with this host

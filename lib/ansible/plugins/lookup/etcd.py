@@ -1,4 +1,5 @@
 # (c) 2013, Jan-Piet Mens <jpmens(at)gmail.com>
+# (m) 2016, Mihai Moldovanu <mihaim@tfm.ro>
 # (m) 2017, Juan Manuel Parrilla <jparrill@redhat.com>
 #
 # This file is part of Ansible
@@ -23,7 +24,7 @@ DOCUMENTATION = '''
         - Jan-Piet Mens (@jpmens)
     lookup: etcd
     version_added: "2.1"
-    short_description: get info from etcd server
+    short_description: get info from an etcd server
     description:
         - Retrieves data from an etcd server
     options:
@@ -33,30 +34,34 @@ DOCUMENTATION = '''
             type: list
             elements: string
             required: True
-        _etcd_url:
+        url:
             description:
                 - Environment variable with the url for the etcd server
             default: 'http://127.0.0.1:4001'
             env:
               - name: ANSIBLE_ETCD_URL
-            yaml:
-              - key: etcd.url
-        _etcd_version:
+        version:
             description:
                 - Environment variable with the etcd protocol version
             default: 'v1'
             env:
               - name: ANSIBLE_ETCD_VERSION
-            yaml:
-              - key: etcd.version
+        validate_certs:
+            description:
+                - toggle checking that the ssl certificates are valid, you normally only want to turn this off with self-signed certs.
+            default: True
+            type: boolean
 '''
 
 EXAMPLES = '''
     - name: "a value from a locally running etcd"
       debug: msg={{ lookup('etcd', 'foo/bar') }}
 
-    - name: "a values from a folder on a locally running etcd"
-      debug: msg={{ lookup('etcd', 'foo') }}
+    - name: "values from multiple folders on a locally running etcd"
+      debug: msg={{ lookup('etcd', 'foo', 'bar', 'baz') }}
+
+    - name: "since Ansible 2.5 you can set server options inline"
+      debug: msg="{{ lookup('etcd', 'foo', version='v2', url='http://192.168.0.27:4001') }}"
 '''
 
 RETURN = '''
@@ -67,29 +72,39 @@ RETURN = '''
         elements: strings
 '''
 
-import os
-
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
 from ansible.plugins.lookup import LookupBase
 from ansible.module_utils.urls import open_url
 
 # this can be made configurable, not should not use ansible.cfg
-ANSIBLE_ETCD_URL = 'http://127.0.0.1:4001'
-if os.getenv('ANSIBLE_ETCD_URL') is not None:
-    ANSIBLE_ETCD_URL = os.environ['ANSIBLE_ETCD_URL']
-
-ANSIBLE_ETCD_VERSION = 'v1'
-if os.getenv('ANSIBLE_ETCD_VERSION') is not None:
-    ANSIBLE_ETCD_VERSION = os.environ['ANSIBLE_ETCD_VERSION']
+#
+# Made module configurable from playbooks:
+# If etcd  v2 running on host 192.168.1.21 on port 2379
+# we can use the following in a playbook to retrieve /tfm/network/config key
+#
+# - debug: msg={{lookup('etcd','/tfm/network/config', url='http://192.168.1.21:2379' , version='v2')}}
+#
+# Example Output:
+#
+# TASK [debug] *******************************************************************
+# ok: [localhost] => {
+#     "msg": {
+#         "Backend": {
+#             "Type": "vxlan"
+#         },
+#         "Network": "172.30.0.0/16",
+#         "SubnetLen": 24
+#     }
+# }
+#
+#
+#
+#
 
 
 class Etcd:
-    def __init__(self, url=ANSIBLE_ETCD_URL, version=ANSIBLE_ETCD_VERSION,
-                 validate_certs=True):
+    def __init__(self, url, version, validate_certs):
         self.url = url
         self.version = version
         self.baseurl = '%s/%s/keys' % (self.url, self.version)
@@ -119,7 +134,7 @@ class Etcd:
         try:
             r = open_url(url, validate_certs=self.validate_certs)
             data = r.read()
-        except:
+        except Exception:
             return None
 
         try:
@@ -137,7 +152,7 @@ class Etcd:
             if 'errorCode' in item:
                 # Here return an error when an unknown entry responds
                 value = "ENOENT"
-        except:
+        except Exception:
             raise
 
         return value
@@ -147,9 +162,13 @@ class LookupModule(LookupBase):
 
     def run(self, terms, variables, **kwargs):
 
-        validate_certs = kwargs.get('validate_certs', True)
+        self.set_options(var_options=variables, direct=kwargs)
 
-        etcd = Etcd(validate_certs=validate_certs)
+        validate_certs = self.get_option('validate_certs')
+        url = self.get_option('url')
+        version = self.get_option('version')
+
+        etcd = Etcd(url=url, version=version, validate_certs=validate_certs)
 
         ret = []
         for term in terms:

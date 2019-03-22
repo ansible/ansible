@@ -1,0 +1,34 @@
+- hosts: localhost
+  connection: local
+  environment: "{{ ansible_test.environment }}"
+
+  tasks:
+    - name: set up aws connection info
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: madeup
+          aws_secret_key: madeup
+          security_token: madeup
+          region: "{{ aws_region }}"
+      no_log: yes
+
+    - name: set up testing target group (type=ip)
+      elb_target_group:
+        name: "ansible-test-{{ resource_prefix | regex_search('([0-9]+)$') }}-tg"
+        health_check_port: 80
+        protocol: http
+        port: 80
+        vpc_id: 'vpc-abcd1234'
+        state: present
+        target_type: ip
+        tags:
+          Description: "Created by {{ resource_prefix }}"
+        <<: *aws_connection_info
+      register: elb_target_group_type_ip
+      ignore_errors: yes
+
+    - name: check that setting up target group with type=ip fails with friendly message
+      assert:
+        that:
+          - elb_target_group_type_ip is failed
+          - "'msg' in elb_target_group_type_ip"

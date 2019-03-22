@@ -39,19 +39,19 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Obezimnaka Boms @ozboms"
+    - "Obezimnaka Boms (@ozboms)"
 
 '''
 
 EXAMPLES = '''
 - name: Get facts for one zone
   azure_rm_dnszone_facts:
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: foobar22
 
 - name: Get facts for all zones in a resource group
   azure_rm_dnszone_facts:
-    resource_group: Testing
+    resource_group: myResourceGroup
 
 - name: Get facts by tags
   azure_rm_dnszone_facts:
@@ -73,14 +73,57 @@ azure_dnszones:
                 },
                 "tags": {}
         }]
+dnszones:
+    description: List of zone dicts, which share the same layout as azure_rm_dnszone module parameter.
+    returned: always
+    type: list
+    contains:
+        id:
+            description:
+                - id of the DNS Zone.
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/dnszones/azure.com"
+        name:
+            description:
+                - name of the DNS Zone.
+            sample: azure.com
+        type:
+            description:
+                - The type of this DNS zone (public or private)
+            sample: private
+        registration_virtual_networks:
+            description:
+                - A list of references to virtual networks that register hostnames in this DNS zone.
+            sample:  ["/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/bar"]
+        resolution_virtual_networks:
+            description:
+                - A list of references to virtual networks that resolve records in this DNS zone.
+            sample:  ["/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/deadbeef"]
+        number_of_record_sets:
+            description:
+                - The current number of record sets in this DNS zone.
+            sample: 2
+        max_number_of_record_sets:
+            description:
+                - The maximum number of record sets that can be created in this DNS zone.
+            sample: 5000
+        name_servers:
+            description:
+                - The name servers for this DNS zone.
+            sample:  [
+                "ns1-03.azure-dns.com.",
+                "ns2-03.azure-dns.net.",
+                "ns3-03.azure-dns.org.",
+                "ns4-03.azure-dns.info."
+            ]
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+from ansible.module_utils._text import to_native
 
 try:
     from msrestazure.azure_exceptions import CloudError
     from azure.common import AzureMissingResourceHttpError, AzureHttpError
-except:
+except Exception:
     # This is handled in azure_rm_common
     pass
 
@@ -118,17 +161,20 @@ class AzureRMDNSZoneFacts(AzureRMModuleBase):
         if self.name and not self.resource_group:
             self.fail("Parameter error: resource group required when filtering by name.")
 
+        results = []
         # list the conditions and what to return based on user input
-
         if self.name is not None:
             # if there is a name, facts about that specific zone
-            self.results['ansible_facts']['azure_dnszones'] = self.get_item()
+            results = self.get_item()
         elif self.resource_group:
             # all the zones listed in that specific resource group
-            self.results['ansible_facts']['azure_dnszones'] = self.list_resource_group()
+            results = self.list_resource_group()
         else:
             # all the zones in a subscription
-            self.results['ansible_facts']['azure_dnszones'] = self.list_items()
+            results = self.list_items()
+
+        self.results['ansible_facts']['azure_dnszones'] = self.serialize_items(results)
+        self.results['dnszones'] = self.curated_items(results)
 
         return self.results
 
@@ -144,7 +190,7 @@ class AzureRMDNSZoneFacts(AzureRMModuleBase):
 
         # serialize result
         if item and self.has_tags(item.tags, self.tags):
-            results = [self.serialize_obj(item, AZURE_OBJECT_CLASS)]
+            results = [item]
         return results
 
     def list_resource_group(self):
@@ -157,7 +203,7 @@ class AzureRMDNSZoneFacts(AzureRMModuleBase):
         results = []
         for item in response:
             if self.has_tags(item.tags, self.tags):
-                results.append(self.serialize_obj(item, AZURE_OBJECT_CLASS))
+                results.append(item)
         return results
 
     def list_items(self):
@@ -170,12 +216,32 @@ class AzureRMDNSZoneFacts(AzureRMModuleBase):
         results = []
         for item in response:
             if self.has_tags(item.tags, self.tags):
-                results.append(self.serialize_obj(item, AZURE_OBJECT_CLASS))
+                results.append(item)
         return results
+
+    def serialize_items(self, raws):
+        return [self.serialize_obj(item, AZURE_OBJECT_CLASS) for item in raws] if raws else []
+
+    def curated_items(self, raws):
+        return [self.zone_to_dict(item) for item in raws] if raws else []
+
+    def zone_to_dict(self, zone):
+        return dict(
+            id=zone.id,
+            name=zone.name,
+            number_of_record_sets=zone.number_of_record_sets,
+            max_number_of_record_sets=zone.max_number_of_record_sets,
+            name_servers=zone.name_servers,
+            tags=zone.tags,
+            type=zone.zone_type.value.lower(),
+            registration_virtual_networks=[to_native(x.id) for x in zone.registration_virtual_networks] if zone.registration_virtual_networks else None,
+            resolution_virtual_networks=[to_native(x.id) for x in zone.resolution_virtual_networks] if zone.resolution_virtual_networks else None
+        )
 
 
 def main():
     AzureRMDNSZoneFacts()
+
 
 if __name__ == '__main__':
     main()

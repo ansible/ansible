@@ -96,6 +96,14 @@ ansible_net_fqdn:
   description: The fully qualified domain name of the device
   returned: always
   type: str
+ansible_net_api:
+  description: The name of the transport
+  returned: always
+  type: str
+ansible_net_python_version:
+  description: The Python version Ansible controller is using
+  returned: always
+  type: str
 
 # hardware
 ansible_net_filesystems:
@@ -135,12 +143,15 @@ ansible_net_neighbors:
   returned: when interfaces is configured
   type: dict
 """
+
+import platform
 import re
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.eos import run_commands
-from ansible.module_utils.eos import eos_argument_spec, check_args
+from ansible.module_utils.network.eos.eos import run_commands, get_capabilities
+from ansible.module_utils.network.eos.eos import eos_argument_spec, check_args
+
 
 class FactsBase(object):
 
@@ -152,21 +163,18 @@ class FactsBase(object):
         self.responses = None
 
     def populate(self):
-        self.responses = run_commands(self.module, list(self.COMMANDS))
+        self.responses = run_commands(self.module, list(self.COMMANDS), check_rc=False)
 
 
 class Default(FactsBase):
 
     SYSTEM_MAP = {
-        'version': 'version',
         'serialNumber': 'serialnum',
-        'modelName': 'model'
     }
 
     COMMANDS = [
         'show version | json',
         'show hostname | json',
-        'bash timeout 5 cat /mnt/flash/boot-config'
     ]
 
     def populate(self):
@@ -177,18 +185,26 @@ class Default(FactsBase):
                 self.facts[value] = data[key]
 
         self.facts.update(self.responses[1])
-        self.facts.update(self.parse_image())
+        self.facts.update(self.platform_facts())
 
-    def parse_image(self):
-        data = self.responses[2]
-        if isinstance(data, dict):
-            data = data['messages'][0]
-        match = re.search(r'SWI=(.+)$', data, re.M)
-        if match:
-            value = match.group(1)
-        else:
-            value = None
-        return dict(image=value)
+    def platform_facts(self):
+        platform_facts = {}
+
+        resp = get_capabilities(self.module)
+        device_info = resp['device_info']
+
+        platform_facts['system'] = device_info['network_os']
+
+        for item in ('model', 'image', 'version', 'platform', 'hostname'):
+            val = device_info.get('network_os_%s' % item)
+            if val:
+                platform_facts[item] = val
+
+        platform_facts['api'] = resp['network_api']
+        platform_facts['python_version'] = platform.python_version()
+
+        return platform_facts
+
 
 class Hardware(FactsBase):
 
@@ -217,6 +233,7 @@ class Hardware(FactsBase):
             memfree_mb=int(values['memFree']) / 1024,
             memtotal_mb=int(values['memTotal']) / 1024
         )
+
 
 class Config(FactsBase):
 
@@ -255,7 +272,8 @@ class Interfaces(FactsBase):
         self.facts['interfaces'] = self.populate_interfaces(data)
 
         data = self.responses[1]
-        self.facts['neighbors'] = self.populate_neighbors(data['lldpNeighbors'])
+        if data:
+            self.facts['neighbors'] = self.populate_neighbors(data['lldpNeighbors'])
 
     def populate_interfaces(self, data):
         facts = dict()
@@ -311,6 +329,7 @@ FACT_SUBSETS = dict(
 )
 
 VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
+
 
 def main():
     """main entry point for module execution

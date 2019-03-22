@@ -1,0 +1,113 @@
+---
+- block:
+    - name: Create a swarm service without name
+      register: output
+      docker_swarm_service:
+        state: present
+      ignore_errors: yes
+
+    - name: assert failure when name not set
+      assert:
+        that:
+          - output is failed
+          - 'output.msg == "missing required arguments: name"'
+
+    - name: Remove an non-existing service
+      register: output
+      docker_swarm_service:
+        state: absent
+        name: non_existing_service
+
+    - name: assert output not changed when deleting non-existing service
+      assert:
+        that:
+          - output is not changed
+
+    - name: create sample service
+      register: output
+      docker_swarm_service:
+        name: test_service
+        endpoint_mode: dnsrr
+        image: busybox
+        resolve_image: no
+        args:
+          - sleep
+          - "3600"
+
+    - name: assert sample service is created
+      assert:
+        that:
+          - output is changed
+
+    - name: change service args
+      register: output
+      docker_swarm_service:
+        name: test_service
+        image: busybox
+        resolve_image: no
+        args:
+          - sleep
+          - "1800"
+
+    - name: assert service args are correct
+      assert:
+        that:
+          - output.swarm_service.args == ['sleep', '1800']
+
+    - name: set service mode to global
+      register: output
+      docker_swarm_service:
+        name: test_service
+        image: busybox
+        resolve_image: no
+        endpoint_mode: vip
+        mode: global
+        args:
+          - sleep
+          - "1800"
+
+    - name: assert service mode changed caused service rebuild
+      assert:
+        that:
+          - output.rebuilt
+
+    - name: add published ports to service
+      register: output
+      docker_swarm_service:
+        name: test_service
+        image: busybox
+        resolve_image: no
+        mode: global
+        args:
+          - sleep
+          - "1800"
+        endpoint_mode: vip
+        publish:
+          - protocol: tcp
+            published_port: 60001
+            target_port: 60001
+          - protocol: udp
+            published_port: 60001
+            target_port: 60001
+
+    - name: fake image key as it is not predictable
+      set_fact:
+        ansible_docker_service_output: "{{ output.swarm_service|combine({'image': 'busybox'}) }}"
+
+    - name: assert service matches expectations
+      assert:
+        that:
+          - ansible_docker_service_output == service_expected_output
+
+    - name: delete sample service
+      register: output
+      docker_swarm_service:
+        name: test_service
+        state: absent
+
+    - name: assert service deletion returns changed
+      assert:
+        that:
+          - output is success
+          - output is changed
+  when: docker_api_version is version('1.24', '>=') and docker_py_version is version('3.0.0', '>=')

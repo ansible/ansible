@@ -1,0 +1,291 @@
+!Current configuration:
+!
+ver V5.8.0fT163
+module 1 ni-mlx-8-port-10g-m
+module 2 br-mlx-24-port-1gf-x
+!
+!
+mirror ethernet 2/20
+!
+lag "LAG" dynamic id 3
+ ports ethernet 1/1
+ primary-port 1/1
+ lacp-timeout short
+ deploy
+!
+!
+!
+
+!
+no spanning-tree
+!
+!
+vlan 1 name DEFAULT-VLAN
+ no untagged ethe 2/1 to 2/2 ethe 2/4 to 2/9
+!
+vlan 150
+!
+vlan 666 name LACP_ISOLATION_CUSTOMER
+!
+vlan 1000
+!
+vlan 2007
+ tagged ethe 2/1
+!
+vlan 4040
+ untagged ethe 1/1
+!
+
+!
+!
+qos-mapping
+!
+default-max-frame-size 9216
+cpu-usage on
+aaa authentication login default tacacs+ local enable
+tacacs-server host 192.0.2.5
+tacacs-server key 2 $X3FSZjgzKGzPIXVd
+!
+!
+enable password-display
+enable super-user-password 8 $1$WV1..Pi2$B6acbjDxeHsof2BKrpyqQ0
+enable aaa console
+logging host 192.0.2.5
+logging facility local7
+logging buffered 5000
+logging console
+username admin password 8 $1$MF/..XD4$MYUy7kcm/1eAuqXnVyvVO1
+username admin history  $1$MF/..XD4$MYUy7kcm/1eAuqXnVyvVO1 $1$KE/..Cs2$WlfErdta9.sG9v5QmbaTd/
+!
+tag-type 9100 ethe 1/4
+tag-type 9100 ethe 2/2
+tag-type 9100 ethe 2/24
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+snmp-server
+snmp-server community 2 $YkAtaSs/fFE6Sz97 ro
+snmp-server max-ifindex-per-module 64
+snmp-server cache size 128
+hostname mlx01.lab
+no transceiver-type-check
+!
+netconf server
+!
+router isis
+ net 49.0001.0100.6900.0006.00
+ fast-flood 4
+ no hello padding
+ is-type level-2
+ log adjacency
+ address-family ipv4 unicast
+  metric-style wide
+  redistribute connected
+ exit-address-family
+
+ address-family ipv6 unicast
+  no adjacency-check
+ exit-address-family
+
+!
+!
+!
+!
+!
+qos-policy
+!
+policy-map CUST-100Mb
+  cir 99992032 cbs 3125000
+!
+policy-map core-to-core-interface
+!
+!
+hqos scheduler-policy core-to-core-interface-4.2G  level level-0
+ shaper-rate 4193280
+ shaper-burst-size 256
+ scheduler-type strict
+!
+!
+!
+hqos scheduler-policy P5  level level-1
+ shaper-rate 10000000
+ shaper-burst-size 10
+ scheduler-type strict
+!
+!
+!
+!
+interface loopback 1
+ ip address 10.69.0.6/32
+ no ip redirect
+!
+!
+interface ethernet 1/1
+ enable
+ load-interval 30
+ bfd interval 100 min-rx 100 multiplier 5
+ ip router isis
+ ip address 10.69.1.6/30
+ ip mtu 9198
+ ipv6 address 2001:db8::1/64
+ isis bfd
+ isis circuit-type level-2
+ isis metric 500
+ isis point-to-point
+!
+interface ethernet 1/2
+ port-name foo
+ enable
+ load-interval 30
+ bfd interval 100 min-rx 100 multiplier 5
+ ip router isis
+ ip address 10.69.1.77/30
+ ip mtu 9198
+ isis circuit-type level-2
+ isis ipv6 metric 250
+ isis point-to-point
+!
+interface ethernet 1/3
+enable
+forward-lacp
+!
+interface ethernet 1/4
+ enable
+ forward-lacp
+!
+interface ethernet 2/1
+ enable
+ mon ethernet 2/20 both
+!
+interface ethernet 2/2
+ enable
+ load-interval 30
+ rate-limit input broadcast unknown-unicast multicast 521216 64000
+ no spanning-tree
+!
+interface ethernet 2/3
+ load-interval 30
+ rate-limit input broadcast unknown-unicast multicast 521216 64000
+ no fdp enable
+ no cdp enable
+ no spanning-tree
+!
+interface ethernet 2/4
+ enable
+ load-interval 30
+ rate-limit input broadcast unknown-unicast multicast 521216 64000
+ no fdp enable
+ no cdp enable
+ no spanning-tree
+!
+interface ethernet 2/13
+ enable
+ load-interval 30
+!
+interface ethernet 2/20
+ enable
+!
+interface ethernet 2/21
+ enable
+!
+interface ethernet 2/24
+ enable
+!
+ip tacacs source-interface loopback 1
+!
+!
+router mpls
+ bfd
+
+ dynamic-bypass
+  enable
+  reoptimize-timer 1800
+
+
+ policy
+  traffic-eng isis level-2
+  handle-isis-neighbor-down
+  cspf-computation-mode use-te-metric
+
+ rsvp
+  rsvp-reliable-messaging
+
+ ldp
+  tunnel-metric 10
+
+ mpls-interface e1/1
+  rsvp-reliable-messaging
+   dynamic-bypass
+    enable
+    name-prefix dyn
+    adaptive
+    cos 1
+
+ mpls-interface e1/2
+  rsvp-reliable-messaging
+   dynamic-bypass
+    enable
+    name-prefix dyn
+    adaptive
+    cos 1
+
+ lsp LSP1
+  to 192.0.2.1
+  no cspf
+  adaptive
+  enable
+
+ lsp LSP3
+  to 192.0.2.3
+  shortcuts isis level2
+  adaptive
+  reoptimize-timer 1800
+  frr
+    facility-backup
+  revert-timer 300
+  enable
+
+ vll TEST-VLL 111 raw-mode cos 1
+  vll-peer 192.0.2.1
+  vlan 2005
+   tagged e 2/1
+
+ vll-local TEST-LOCAL
+  extended-counters on
+  untag e 2/8
+  vlan 5
+   tag e 2/9
+
+ vpls TEST-VPLS 333
+  vpls-peer 192.0.2.3
+  vlan 5
+   untagged ethe 2/4
+  vlan 6
+   tagged ethe 2/5 to 2/6
+   untagged ethe 2/7
+
+!
+!
+!
+lldp enable ports ethe 1/1 to 1/8 ethe 2/1 to 2/24
+lldp run
+!
+!
+!
+!
+!
+end

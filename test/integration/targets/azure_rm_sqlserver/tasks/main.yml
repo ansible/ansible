@@ -1,0 +1,419 @@
+- name: Prepare random number
+  set_fact:
+    random_postfix: "{{ 1000 | random }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+  run_once: yes
+
+- name: Create instance of SQL Server -- check mode
+  azure_rm_sqlserver:
+    resource_group: "{{ resource_group }}"
+    name: "sqlsrv{{ random_postfix }}"
+    location: eastus
+    admin_username: mylogin
+    admin_password: Testpasswordxyz12!
+  check_mode: yes
+  register: output
+- name: Assert the resource instance is well created
+  assert:
+    that:
+      - output.changed
+
+- name: Create instance of SQL Server
+  azure_rm_sqlserver:
+    resource_group: "{{ resource_group }}"
+    name: "sqlsrv{{ random_postfix }}"
+    location: eastus
+    admin_username: mylogin
+    admin_password: Testpasswordxyz12!
+    tags:
+      aaa: bbb
+  register: output
+- name: Assert the resource instance is well created
+  assert:
+    that:
+      - output.changed
+      - output.state == 'Ready'
+
+- name: Create again instance of SQL Server
+  azure_rm_sqlserver:
+    resource_group: "{{ resource_group }}"
+    name: "sqlsrv{{ random_postfix }}"
+    location: eastus
+    admin_username: mylogin
+    admin_password: Testpasswordxyz12!
+  register: output
+- name: Assert the state has not changed
+  assert:
+    that:
+      - output.changed == false
+      - output.state == 'Ready'
+
+# azure_rm_sqlserver_facts tests
+
+- name: Gather facts SQL Server
+  azure_rm_sqlserver_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: "sqlsrv{{ random_postfix }}"
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.servers.sqlsrv{{ random_postfix }}.id != None
+      - output.servers.sqlsrv{{ random_postfix }}.name == "sqlsrv{{ random_postfix }}"
+      - output.servers.sqlsrv{{ random_postfix }}.type != None
+      - output.servers.sqlsrv{{ random_postfix }}.location != None
+      - output.servers.sqlsrv{{ random_postfix }}.kind != None
+      - output.servers.sqlsrv{{ random_postfix }}.version != None
+      - output.servers.sqlsrv{{ random_postfix }}.state != None
+      - output.servers.sqlsrv{{ random_postfix }}.fully_qualified_domain_name != None
+      - output.servers.sqlsrv{{ random_postfix }}.tags.aaa == 'bbb'
+
+- name: Gather facts SQL Server - unexisting
+  azure_rm_sqlserver_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: "unexisting"
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.servers == {}
+
+- name: Gather facts SQL Server - list
+  azure_rm_sqlserver_facts:
+    resource_group: "{{ resource_group }}"
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.servers.sqlsrv{{ random_postfix }}.id != None
+      - output.servers.sqlsrv{{ random_postfix }}.name == "sqlsrv{{ random_postfix }}"
+      - output.servers.sqlsrv{{ random_postfix }}.type != None
+      - output.servers.sqlsrv{{ random_postfix }}.location != None
+      - output.servers.sqlsrv{{ random_postfix }}.kind != None
+      - output.servers.sqlsrv{{ random_postfix }}.version != None
+      - output.servers.sqlsrv{{ random_postfix }}.state != None
+      - output.servers.sqlsrv{{ random_postfix }}.fully_qualified_domain_name != None
+
+# azure_rm_sqldatabase tests
+
+- name: Create instance of SQL Database -- check mode
+  azure_rm_sqldatabase:
+    resource_group: "{{ resource_group }}"
+    server_name: sqlsrv{{ random_postfix }}
+    name: database{{ random_postfix }}
+    location: eastus
+  check_mode: yes
+  register: output
+- name: Assert the resource instance is well created
+  assert:
+    that:
+      - output.changed
+
+- name: Create instance of SQL Database
+  azure_rm_sqldatabase:
+    resource_group: "{{ resource_group }}"
+    server_name: sqlsrv{{ random_postfix }}
+    name: database{{ random_postfix }}
+    location: eastus
+    tags:
+      aaa: bbb
+  register: output
+- name: Assert the resource instance is well created
+  assert:
+    that:
+      - output.changed
+      - output.status == 'Online'
+
+- name: Create again instance of SQL Database
+  azure_rm_sqldatabase:
+    resource_group: "{{ resource_group }}"
+    server_name: sqlsrv{{ random_postfix }}
+    name: database{{ random_postfix }}
+    location: eastus
+    tags:
+      aaa: bbb
+  register: output
+- name: Assert the state has not changed
+  assert:
+    that:
+      - output.changed == false
+      - output.status == 'Online'
+
+# test database facter:
+- name: Create second SQL Database
+  azure_rm_sqldatabase:
+    resource_group: "{{ resource_group }}"
+    server_name: sqlsrv{{ random_postfix }}
+    name: database{{ random_postfix }}second
+    location: eastus
+
+- name: Gather facts SQL Database
+  azure_rm_sqldatabase_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: sqlsrv{{ random_postfix }}
+    name: database{{ random_postfix }}
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.databases[0].id != None
+      - output.databases[0].name != None
+      - output.databases[0].location != None
+      - output.databases[0].sku.name != None
+      - output.databases[0].sku.tier != None
+      - output.databases[0].sku.capacity != None
+      - output.databases[0].kind != None
+      - output.databases[0].status != None
+
+- name: Gather facts SQL Database
+  azure_rm_sqldatabase_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: sqlsrv{{ random_postfix }}
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.databases[0].id != None
+      - output.databases[0].name != None
+      - output.databases[0].location != None
+      - output.databases[0].sku.name != None
+      - output.databases[0].sku.tier != None
+      - output.databases[0].sku.capacity != None
+      - output.databases[0].kind != None
+      - output.databases[0].status != None
+      - output.databases[1].id != None
+      - output.databases[1].name != None
+      - output.databases[1].location != None
+      - output.databases[1].sku.name != None
+      - output.databases[1].sku.tier != None
+      - output.databases[1].sku.capacity != None
+      - output.databases[1].kind != None
+      - output.databases[1].status != None
+
+- name: Delete instance of secondary database
+  azure_rm_sqldatabase:
+    resource_group: "{{ resource_group }}"
+    server_name: sqlsrv{{ random_postfix }}
+    name: database{{ random_postfix }}second
+    state: absent
+
+# clean up databases
+- name: Delete instance of SQL Database -- check mode
+  azure_rm_sqldatabase:
+    resource_group: "{{ resource_group }}"
+    server_name: sqlsrv{{ random_postfix }}
+    name: database{{ random_postfix }}
+    state: absent
+  check_mode: yes
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed
+
+- name: Delete instance of SQL Database
+  azure_rm_sqldatabase:
+    resource_group: "{{ resource_group }}"
+    server_name: sqlsrv{{ random_postfix }}
+    name: database{{ random_postfix }}
+    state: absent
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed
+
+- name: Delete unexisting instance of SQL Database
+  azure_rm_sqldatabase:
+    resource_group: "{{ resource_group }}"
+    server_name: sqlsrv{{ random_postfix }}
+    name: database{{ random_postfix }}
+    state: absent
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed == false
+
+# test database facts without databases
+- name: Gather facts SQL Database
+  azure_rm_sqldatabase_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: sqlsrv{{ random_postfix }}
+    name: database{{ random_postfix }}
+  register: output
+- name: Assert that empty dictionary was returned
+  assert:
+    that:
+      - output.changed == False
+      - output.databases | length == 0
+
+- name: Gather facts SQL Database
+  azure_rm_sqldatabase_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: sqlsrv{{ random_postfix }}
+  register: output
+- name: Assert that empty dictionary was returned (one database is there by default)
+  assert:
+    that:
+      - output.changed == False
+      - output.databases | length == 1
+
+# azure_rm_sqlfirewallrule tests
+
+- name: Create instance of Firewall Rule -- check mode
+  azure_rm_sqlfirewallrule:
+    resource_group: "{{ resource_group }}"
+    server_name: "sqlsrv{{ random_postfix }}"
+    name: firewallrule{{ random_postfix }}
+    start_ip_address: 172.28.10.136
+    end_ip_address: 172.28.10.138
+  check_mode: yes
+  register: output
+- name: Assert the resource instance is well created
+  assert:
+    that:
+      - output.changed
+
+- name: Create instance of Firewall Rule
+  azure_rm_sqlfirewallrule:
+    resource_group: "{{ resource_group }}"
+    server_name: "sqlsrv{{ random_postfix }}"
+    name: firewallrule{{ random_postfix }}
+    start_ip_address: 172.28.10.136
+    end_ip_address: 172.28.10.138
+  register: output
+- name: Assert the resource instance is well created
+  assert:
+    that:
+      - output.changed
+
+- name: Create again instance of Firewall Rule
+  azure_rm_sqlfirewallrule:
+    resource_group: "{{ resource_group }}"
+    server_name: "sqlsrv{{ random_postfix }}"
+    name: firewallrule{{ random_postfix }}
+    start_ip_address: 172.28.10.136
+    end_ip_address: 172.28.10.138
+  register: output
+- name: Assert the state has not changed
+  assert:
+    that:
+      - output.changed == false
+
+#
+# azure_rm_sqlserverfirewallrule_facts
+#
+
+- name: Create Firewall Rule - second
+  azure_rm_sqlfirewallrule:
+    resource_group: "{{ resource_group }}"
+    server_name: sqlsrv{{ random_postfix }}
+    name: firewallrule{{ random_postfix }}second
+    start_ip_address: 172.28.10.136
+    end_ip_address: 172.28.10.138
+
+- name: Gather facts SQL Firewall Rule
+  azure_rm_sqlfirewallrule_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: sqlsrv{{ random_postfix }}
+    name: firewallrule{{ random_postfix }}
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.rules[0].id != None
+      - output.rules[0].resource_group != None
+      - output.rules[0].server_name != None
+      - output.rules[0].name != None
+      - output.rules[0].start_ip_address != None
+      - output.rules[0].end_ip_address != None
+
+- name: Gather facts SQL Firewall Rule
+  azure_rm_sqlfirewallrule_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: sqlsrv{{ random_postfix }}
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.rules[0].id != None
+      - output.rules[0].id != None
+      - output.rules[0].resource_group != None
+      - output.rules[0].server_name != None
+      - output.rules[0].name != None
+      - output.rules[0].start_ip_address != None
+      - output.rules[0].end_ip_address != None
+      - output.rules[1].id != None
+      - output.rules[1].resource_group != None
+      - output.rules[1].server_name != None
+      - output.rules[1].name != None
+      - output.rules[1].start_ip_address != None
+      - output.rules[1].end_ip_address != None
+
+- name: Delete instance of Firewall Rule
+  azure_rm_sqlfirewallrule:
+    resource_group: "{{ resource_group }}"
+    server_name: sqlsrv{{ random_postfix }}
+    name: firewallrule{{ random_postfix }}
+    state: absent
+- name: Delete instance of Firewall Rule
+  azure_rm_sqlfirewallrule:
+    resource_group: "{{ resource_group }}"
+    server_name: sqlsrv{{ random_postfix }}
+    name: firewallrule{{ random_postfix }}second
+    state: absent
+
+- name: Gather facts SQL Firewall Rule
+  azure_rm_sqlfirewallrule_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: sqlsrv{{ random_postfix }}
+    name: firewallrule{{ random_postfix }}
+  register: output
+- name: Assert that empty dictionary was returned
+  assert:
+    that:
+      - output.changed == False
+      - output.rules | length == 0
+
+# finalise & clean up azure_rm_sqlserver test
+
+- name: Delete instance of SQL Server -- check mode
+  azure_rm_sqlserver:
+    resource_group: "{{ resource_group }}"
+    name: "sqlsrv{{ random_postfix }}"
+    state: absent
+  check_mode: yes
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed
+
+- name: Delete instance of SQL Server
+  azure_rm_sqlserver:
+    resource_group: "{{ resource_group }}"
+    name: "sqlsrv{{ random_postfix }}"
+    state: absent
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed
+
+- name: Delete unexisting instance of SQL Server
+  azure_rm_sqlserver:
+    resource_group: "{{ resource_group }}"
+    name: "sqlsrv{{ random_postfix }}"
+    state: absent
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed == false

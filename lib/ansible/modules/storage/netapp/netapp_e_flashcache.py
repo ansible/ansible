@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 module: netapp_e_flashcache
 author: Kevin Hulquest (@hulquest)
 version_added: '2.2'
-short_description: Manage NetApp SSD caches
+short_description: NetApp E-Series manage SSD caches
 description:
 - Create or remove SSD caches on a NetApp E-Series storage array.
 options:
@@ -37,6 +37,7 @@ options:
       default: true
       description:
       - Should https certificates be validated?
+      type: bool
   ssid:
     required: true
     description:
@@ -84,7 +85,7 @@ RETURN = """
 msg:
     description: Success message
     returned: success
-    type: string
+    type: str
     sample: json for newly created flash cache
 """
 import json
@@ -117,7 +118,7 @@ def request(url, data=None, headers=None, method='GET', use_proxy=True,
             data = json.loads(raw_data)
         else:
             raw_data = None
-    except:
+    except Exception:
         if ignore_errors:
             pass
         else:

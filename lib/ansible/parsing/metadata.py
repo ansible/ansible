@@ -191,7 +191,7 @@ def extract_metadata(module_ast=None, module_data=None, offsets=False):
     for root_idx, child in reversed(list(enumerate(module_ast.body))):
         if isinstance(child, ast.Assign):
             for target in child.targets:
-                if target.id == 'ANSIBLE_METADATA':
+                if isinstance(target, ast.Name) and target.id == 'ANSIBLE_METADATA':
                     metadata = ast.literal_eval(child.value)
                     if not offsets:
                         continue

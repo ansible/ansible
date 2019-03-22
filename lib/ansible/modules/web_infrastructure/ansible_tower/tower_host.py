@@ -30,8 +30,6 @@ options:
     description:
       description:
         - The description to use for the host.
-      required: False
-      default: null
     inventory:
       description:
         - Inventory the host should be made a member of.
@@ -39,17 +37,16 @@ options:
     enabled:
       description:
         - If the host should be enabled.
-      required: False
-      default: True
+      type: bool
+      default: 'yes'
     variables:
       description:
-        - Variables to use for the host. Use '@' for a file.
+        - Variables to use for the host. Use C(@) for a file.
     state:
       description:
         - Desired state of the resource.
-      required: False
-      default: "present"
       choices: ["present", "absent"]
+      default: "present"
 extends_documentation_fragment: tower
 '''
 
@@ -62,16 +59,18 @@ EXAMPLES = '''
     inventory: "Local Inventory"
     state: present
     tower_config_file: "~/tower_cli.cfg"
+    variables:
+      example_var: 123
 '''
 
 
 import os
 
-from ansible.module_utils.ansible_tower import tower_argument_spec, tower_auth_config, tower_check_mode, HAS_TOWER_CLI
+from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, tower_check_mode, HAS_TOWER_CLI
 
 try:
     import tower_cli
-    import tower_cli.utils.exceptions as exc
+    import tower_cli.exceptions as exc
 
     from tower_cli.conf import settings
 except ImportError:
@@ -79,19 +78,15 @@ except ImportError:
 
 
 def main():
-    argument_spec = tower_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         name=dict(required=True),
         description=dict(),
         inventory=dict(required=True),
         enabled=dict(type='bool', default=True),
         variables=dict(),
         state=dict(choices=['present', 'absent'], default='present'),
-    ))
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
-
-    if not HAS_TOWER_CLI:
-        module.fail_json(msg='ansible-tower-cli required for this module')
+    )
+    module = TowerModule(argument_spec=argument_spec, supports_check_mode=True)
 
     name = module.params.get('name')
     description = module.params.get('description')
@@ -103,7 +98,8 @@ def main():
     if variables:
         if variables.startswith('@'):
             filename = os.path.expanduser(variables[1:])
-            variables = module.contents_from_file(filename)
+            with open(filename, 'r') as f:
+                variables = f.read()
 
     json_output = {'host': name, 'state': state}
 
@@ -124,13 +120,12 @@ def main():
                 result = host.delete(name=name, inventory=inv['id'])
         except (exc.NotFound) as excinfo:
             module.fail_json(msg='Failed to update host, inventory not found: {0}'.format(excinfo), changed=False)
-        except (exc.ConnectionError, exc.BadRequest) as excinfo:
+        except (exc.ConnectionError, exc.BadRequest, exc.AuthError) as excinfo:
             module.fail_json(msg='Failed to update host: {0}'.format(excinfo), changed=False)
 
     json_output['changed'] = result['changed']
     module.exit_json(**json_output)
 
 
-from ansible.module_utils.basic import AnsibleModule
 if __name__ == '__main__':
     main()

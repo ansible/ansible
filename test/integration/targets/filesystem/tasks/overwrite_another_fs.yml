@@ -1,0 +1,39 @@
+- name: 'Recreate "disk" file'
+  command: 'dd if=/dev/zero of={{ image_file }} bs=1M count={{ fssize }}'
+
+- name: 'Create a swap filesystem'
+  command: 'mkswap {{ dev }}'
+
+- command: 'blkid -c /dev/null -o value -s UUID {{ dev }}'
+  register: uuid
+
+- name: "Check that an existing filesystem (not handled by this module) isn't overwritten when force isn't used"
+  filesystem:
+    dev: '{{ dev }}'
+    fstype: '{{ fstype }}'
+  register: fs_result
+  ignore_errors: True
+
+- command: 'blkid -c /dev/null -o value -s UUID {{ dev }}'
+  register: uuid2
+
+- assert:
+    that:
+      - 'fs_result is failed'
+      - 'uuid.stdout == uuid2.stdout'
+
+- name: "Check that an existing filesystem (not handled by this module) is overwritten when force is used"
+  filesystem:
+    dev: '{{ dev }}'
+    fstype: '{{ fstype }}'
+    force: yes
+  register: fs_result2
+
+- command: 'blkid -c /dev/null -o value -s UUID {{ dev }}'
+  register: uuid3
+
+- assert:
+    that:
+      - 'fs_result2 is successful'
+      - 'fs_result2 is changed'
+      - 'uuid2.stdout != uuid3.stdout'

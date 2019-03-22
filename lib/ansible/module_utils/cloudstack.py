@@ -1,42 +1,25 @@
 # -*- coding: utf-8 -*-
-#
-# (c) 2015, René Moser <mail@renemoser.net>
-#
-# This code is part of Ansible, but is an independent component.
-# This particular file snippet, and this file snippet only, is BSD licensed.
-# Modules you write using this snippet, which is embedded dynamically by Ansible
-# still belong to the author of the module, and may assign their own license
-# to the complete work.
-#
-# Redistribution and use in source and binary forms, with or without modification,
-# are permitted provided that the following conditions are met:
-#
-#    * Redistributions of source code must retain the above copyright
-#      notice, this list of conditions and the following disclaimer.
-#    * Redistributions in binary form must reproduce the above copyright notice,
-#      this list of conditions and the following disclaimer in the documentation
-#      and/or other materials provided with the distribution.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
-# USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# Copyright (c) 2015, René Moser <mail@renemoser.net>
+# Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 import os
 import sys
 import time
+import traceback
 
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_text, to_native
+from ansible.module_utils.basic import missing_required_lib
 
+CS_IMP_ERR = None
 try:
     from cs import CloudStack, CloudStackException, read_config
     HAS_LIB_CS = True
 except ImportError:
+    CS_IMP_ERR = traceback.format_exc()
     HAS_LIB_CS = False
 
 CS_HYPERVISORS = [
@@ -60,8 +43,8 @@ def cs_argument_spec():
         api_key=dict(default=os.environ.get('CLOUDSTACK_KEY')),
         api_secret=dict(default=os.environ.get('CLOUDSTACK_SECRET'), no_log=True),
         api_url=dict(default=os.environ.get('CLOUDSTACK_ENDPOINT')),
-        api_http_method=dict(choices=['get', 'post'], default=os.environ.get('CLOUDSTACK_METHOD') or 'get'),
-        api_timeout=dict(type='int', default=os.environ.get('CLOUDSTACK_TIMEOUT') or 10),
+        api_http_method=dict(choices=['get', 'post'], default=os.environ.get('CLOUDSTACK_METHOD')),
+        api_timeout=dict(type='int', default=os.environ.get('CLOUDSTACK_TIMEOUT')),
         api_region=dict(default=os.environ.get('CLOUDSTACK_REGION') or 'cloudstack'),
     )
 
@@ -70,11 +53,11 @@ def cs_required_together():
     return [['api_key', 'api_secret']]
 
 
-class AnsibleCloudStack(object):
+class AnsibleCloudStack:
 
     def __init__(self, module):
         if not HAS_LIB_CS:
-            module.fail_json(msg="python library cs required: pip install cs")
+            module.fail_json(msg=missing_required_lib('cs'), exception=CS_IMP_ERR)
 
         self.result = {
             'changed': False,
@@ -113,7 +96,7 @@ class AnsibleCloudStack(object):
         ]
 
         self.module = module
-        self._connect()
+        self._cs = None
 
         # Helper for VPCs
         self._vpc_networks_ids = None
@@ -132,7 +115,14 @@ class AnsibleCloudStack(object):
         self.capabilities = None
         self.network_acl = None
 
-    def _connect(self):
+    @property
+    def cs(self):
+        if self._cs is None:
+            api_config = self.get_api_config()
+            self._cs = CloudStack(**api_config)
+        return self._cs
+
+    def get_api_config(self):
         api_region = self.module.params.get('api_region') or os.environ.get('CLOUDSTACK_REGION')
         try:
             config = read_config(api_region)
@@ -143,19 +133,19 @@ class AnsibleCloudStack(object):
             'endpoint': self.module.params.get('api_url') or config.get('endpoint'),
             'key': self.module.params.get('api_key') or config.get('key'),
             'secret': self.module.params.get('api_secret') or config.get('secret'),
-            'timeout': self.module.params.get('api_timeout') or config.get('timeout'),
-            'method': self.module.params.get('api_http_method') or config.get('method'),
+            'timeout': self.module.params.get('api_timeout') or config.get('timeout') or 10,
+            'method': self.module.params.get('api_http_method') or config.get('method') or 'get',
         }
         self.result.update({
             'api_region': api_region,
             'api_url': api_config['endpoint'],
             'api_key': api_config['key'],
-            'api_timeout': api_config['timeout'],
+            'api_timeout': int(api_config['timeout']),
             'api_http_method': api_config['method'],
         })
         if not all([api_config['endpoint'], api_config['key'], api_config['secret']]):
             self.fail_json(msg="Missing api credentials: can not authenticate")
-        self.cs = CloudStack(**api_config)
+        return api_config
 
     def fail_json(self, **kwargs):
         self.result.update(kwargs)
@@ -167,7 +157,7 @@ class AnsibleCloudStack(object):
             value = self.module.params.get(fallback_key)
         return value
 
-    def has_changed(self, want_dict, current_dict, only_keys=None):
+    def has_changed(self, want_dict, current_dict, only_keys=None, skip_diff_for_keys=None):
         result = False
         for key, value in want_dict.items():
 
@@ -181,6 +171,7 @@ class AnsibleCloudStack(object):
 
             if key in current_dict:
                 if isinstance(value, (int, float, long, complex)):
+
                     # ensure we compare the same type
                     if isinstance(value, int):
                         current_dict[key] = int(current_dict[key])
@@ -192,8 +183,9 @@ class AnsibleCloudStack(object):
                         current_dict[key] = complex(current_dict[key])
 
                     if value != current_dict[key]:
-                        self.result['diff']['before'][key] = current_dict[key]
-                        self.result['diff']['after'][key] = value
+                        if skip_diff_for_keys and key not in skip_diff_for_keys:
+                            self.result['diff']['before'][key] = current_dict[key]
+                            self.result['diff']['after'][key] = value
                         result = True
                 else:
                     before_value = to_text(current_dict[key])
@@ -201,18 +193,21 @@ class AnsibleCloudStack(object):
 
                     if self.case_sensitive_keys and key in self.case_sensitive_keys:
                         if before_value != after_value:
-                            self.result['diff']['before'][key] = before_value
-                            self.result['diff']['after'][key] = after_value
+                            if skip_diff_for_keys and key not in skip_diff_for_keys:
+                                self.result['diff']['before'][key] = before_value
+                                self.result['diff']['after'][key] = after_value
                             result = True
 
                     # Test for diff in case insensitive way
                     elif before_value.lower() != after_value.lower():
-                        self.result['diff']['before'][key] = before_value
-                        self.result['diff']['after'][key] = after_value
+                        if skip_diff_for_keys and key not in skip_diff_for_keys:
+                            self.result['diff']['before'][key] = before_value
+                            self.result['diff']['after'][key] = after_value
                         result = True
             else:
-                self.result['diff']['before'][key] = None
-                self.result['diff']['after'][key] = to_text(value)
+                if skip_diff_for_keys and key not in skip_diff_for_keys:
+                    self.result['diff']['before'][key] = None
+                    self.result['diff']['after'][key] = to_text(value)
                 result = True
         return result
 
@@ -233,7 +228,10 @@ class AnsibleCloudStack(object):
                 self.fail_json(msg="Failed: '%s'" % res['errortext'])
 
         except CloudStackException as e:
-            self.fail_json(msg='CloudStackException: %s' % str(e))
+            self.fail_json(msg='CloudStackException: %s' % to_native(e))
+
+        except Exception as e:
+            self.fail_json(msg=to_native(e))
 
         return res
 
@@ -406,7 +404,7 @@ class AnsibleCloudStack(object):
                     return self.vm_default_nic
         self.fail_json(msg="No default IP address of VM '%s' found" % self.module.params.get('vm'))
 
-    def get_vm(self, key=None):
+    def get_vm(self, key=None, filter_zone=True):
         if self.vm:
             return self._get_by_key(key, self.vm)
 
@@ -418,11 +416,12 @@ class AnsibleCloudStack(object):
             'account': self.get_account(key='name'),
             'domainid': self.get_domain(key='id'),
             'projectid': self.get_project(key='id'),
-            'zoneid': self.get_zone(key='id'),
+            'zoneid': self.get_zone(key='id') if filter_zone else None,
+            'fetch_list': True,
         }
         vms = self.query_api('listVirtualMachines', **args)
         if vms:
-            for v in vms['virtualmachine']:
+            for v in vms:
                 if vm.lower() in [v['name'].lower(), v['displayname'].lower(), v['id']]:
                     self.vm = v
                     return self._get_by_key(key, self.vm)
@@ -551,7 +550,7 @@ class AnsibleCloudStack(object):
 
     def query_tags(self, resource, resource_type):
         args = {
-            'resourceids': resource['id'],
+            'resourceid': resource['id'],
             'resourcetype': resource_type,
         }
         tags = self.query_api('listTags', **args)
@@ -637,3 +636,16 @@ class AnsibleCloudStack(object):
             if 'tags' in resource:
                 self.result['tags'] = resource['tags']
         return self.result
+
+    def get_result_and_facts(self, facts_name, resource):
+        result = self.get_result(resource)
+
+        ansible_facts = {
+            facts_name: result.copy()
+        }
+        for k in ['diff', 'changed']:
+            if k in ansible_facts[facts_name]:
+                del ansible_facts[facts_name][k]
+
+        result.update(ansible_facts=ansible_facts)
+        return result

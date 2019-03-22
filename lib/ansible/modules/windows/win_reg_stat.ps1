@@ -1,21 +1,8 @@
 #!powershell
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# WANT_JSON
-# POWERSHELL_COMMON
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+#Requires -Module Ansible.ModuleUtils.Legacy
 
 $ErrorActionPreference = "Stop"
 
@@ -28,122 +15,112 @@ $result = @{
     changed = $false
 }
 
-Function Get-NetHiveName($hive) {
-    # Will also check that the hive passed in the path is a known hive
-    switch ($hive.ToUpper()) {
-        "HKCR" {"ClassesRoot"}
-        "HKCC" {"CurrentConfig"}
-        "HKCU" {"CurrentUser"}
-        "HKLM" {"LocalMachine"}
-        "HKU" {"Users"}
-        default {"unsupported"}
-    }
-}
+Function Get-PropertyValue {
+    param(
+        [Parameter(Mandatory=$true)][Microsoft.Win32.RegistryKey]$Key,
+        [String]$Name
+    )
 
-Function Get-PropertyType($hive, $path, $property) {
-    $type = (Get-Item REGISTRY::$hive\$path).GetValueKind($property)
-    switch ($type) {
-        "Binary" {"REG_BINARY"}
-        "String" {"REG_SZ"}
-        "DWord" {"REG_DWORD"}
-        "QWord" {"REG_QWORD"}
-        "MultiString" {"REG_MULTI_SZ"}
-        "ExpandString" {"REG_EXPAND_SZ"}
-        "None" {"REG_NONE"}
-        default {"Unknown"}
+    $value = $Key.GetValue($Name, $null, [Microsoft.Win32.RegistryValueOptions]::None)
+    if ($null -eq $value) {
+        # Property does not exist or the key's (Default) is not set
+        return $null
     }
-}
 
-Function Get-PropertyObject($hive, $net_hive, $path, $property) {
-    $value = (Get-ItemProperty REGISTRY::$hive\$path).$property
-    $type = Get-PropertyType -hive $hive -path $path -property $property
-    If ($type -eq 'REG_EXPAND_SZ') {
-        $raw_value = [Microsoft.Win32.Registry]::$net_hive.OpenSubKey($path).GetValue($property, $false, [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames)
-    } ElseIf ($type -eq 'REG_BINARY' -or $type -eq 'REG_NONE') {
-        $raw_value = @()
+    $raw_value = $Key.GetValue($Name, $null, [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames)
+
+    if ($Name -eq "") {
+        # The key's (Default) will fail on GetValueKind
+        $type = [Microsoft.Win32.RegistryValueKind]::String
+    } else {
+        $type = $Key.GetValueKind($Name)
+    }
+
+    if ($type -in @([Microsoft.Win32.RegistryValueKind]::Binary, [Microsoft.Win32.RegistryValueKind]::None)) {
+        $formatted_raw_value = [System.Collections.Generic.List`1[String]]@()
         foreach ($byte in $value) {
-            $hex_value = ('{0:x}' -f $byte).PadLeft(2, '0')
-            $raw_value += "0x$hex_value"
+            $formatted_raw_value.Add("0x{0:x2}" -f $byte)
         }
-    } Else {
+        $raw_value = $formatted_raw_value
+    } elseif ($type -eq [Microsoft.Win32.RegistryValueKind]::DWord) {
+        # .NET returns the value as a signed integer, we need to make it unsigned
+        $value = [UInt32]("0x{0:x}" -f $value)
+        $raw_value = $value
+    } elseif ($type -eq [Microsoft.Win32.RegistryValueKind]::QWord) {
+        $value = [UInt64]("0x{0:x}" -f $value)
         $raw_value = $value
     }
 
-    $object = New-Object PSObject @{
-        raw_value = $raw_value
+    $return_type = switch($type.ToString()) {
+        "Binary" { "REG_BINARY" }
+        "String" { "REG_SZ" }
+        "DWord" { "REG_DWORD" }
+        "QWord" { "REG_QWORD" }
+        "MultiString" { "REG_MULTI_SZ" }
+        "ExpandString" { "REG_EXPAND_SZ" }
+        "None" { "REG_NONE" }
+        default { "Unknown - $($type.ToString())" }
+    }
+
+    return @{
+        type = $return_type
         value = $value
-        type = $type
-    }
-
-    $object
-}
-
-Function Test-RegistryProperty($hive, $path, $property) {
-    Try {
-        $type = (Get-Item REGISTRY::$hive\$path).GetValueKind($property)
-    } Catch {
-        $type = $null
-    }
-
-    If ($type -eq $null) {
-        $false
-    } Else {
-        $true
+        raw_value = $raw_value
     }
 }
 
 # Will validate the key parameter to make sure it matches known format
-if ($path -match "^([a-zA-Z_]*):\\(.*)$") {
-    $hive = $matches[1]
-    $reg_path = $matches[2]
-} else {
-    Fail-Json $result "path does not match format 'HIVE:\KEY_PATH'"
+if ($path -notmatch "^HK(CC|CR|CU|LM|U):\\") {
+    Fail-Json -obj $result -message "path: $path is not a valid registry path, see module documentation for examples."
 }
 
-# Used when getting the actual REG_EXPAND_SZ value as well as checking the hive is a known value
-$net_hive = Get-NetHiveName -hive $hive
-if ($net_hive -eq 'unsupported') {
-    Fail-Json $result "the hive in path is '$hive'; must be 'HKCR', 'HKCC', 'HKCU', 'HKLM' or 'HKU'"
+$registry_path = (Split-Path -Path $path -NoQualifier).Substring(1)  # removes the hive: and leading \
+$registry_hive = switch(Split-Path -Path $path -Qualifier) {
+    "HKCR:" { [Microsoft.Win32.Registry]::ClassesRoot }
+    "HKCC:" { [Microsoft.Win32.Registry]::CurrentConfig }
+    "HKCU:" { [Microsoft.Win32.Registry]::CurrentUser }
+    "HKLM:" { [Microsoft.Win32.Registry]::LocalMachine }
+    "HKU" { [Microsoft.Win32.Registry]::Users }
 }
 
-if (Test-Path REGISTRY::$hive\$reg_path) {
-    if ($name -eq $null) {
-        $property_info = @{}
-        $properties = Get-ItemProperty REGISTRY::$hive\$reg_path
+$key = $null
+try {
+    $key = $registry_hive.OpenSubKey($registry_path, $false)
 
-        foreach ($property in $properties.PSObject.Properties) {
-            # Powershell adds in some metadata we need to filter out
-            $real_property = Test-RegistryProperty -hive $hive -path $reg_path -property $property.Name
-            if ($real_property -eq $true) {
-                $property_object = Get-PropertyObject -hive $hive -net_hive $net_hive -path $reg_path -property $property.Name 
-                $property_info.Add($property.Name, $property_object)
+    if ($null -ne $key) {
+        if ($null -eq $name) {
+            $property_info = @{}
+            foreach ($property in $key.GetValueNames()) {
+                $property_info.$property = Get-PropertyValue -Key $key -Name $property
+            }
+
+            # Return the key's (Default) property if it has been defined
+            $default_value = Get-PropertyValue -Key $key -Name ""
+            if ($null -ne $default_value) {
+                $property_info."" = $default_value
+            }
+
+            $result.exists = $true
+            $result.properties = $property_info
+            $result.sub_keys = $key.GetSubKeyNames()
+        } else {
+            $property_value = Get-PropertyValue -Key $key -Name $name
+            if ($null -ne $property_value) {
+                $result.exists = $true
+                $result += $property_value
+            } else {
+                $result.exists = $false
             }
         }
-
-        $sub_keys = @()
-        $sub_keys_raw = Get-ChildItem REGISTRY::$hive\$reg_path -ErrorAction SilentlyContinue
-
-        foreach ($sub_key in $sub_keys_raw) {
-            $sub_keys += $sub_key.PSChildName
-        }
-
-        $result.exists = $true
-        $result.sub_keys = $sub_keys
-        $result.properties = $property_info
     } else {
-        $exists = Test-RegistryProperty -hive $hive -path $reg_path -property $name
-        if ($exists -eq $true) {
-            $propertyObject = Get-PropertyObject -hive $hive -net_hive $net_hive -path $reg_path -property $name
-            $result.exists = $true
-            $result.raw_value = $propertyObject.raw_value
-            $result.value = $propertyObject.value
-            $result.type = $propertyObject.type
-        } else {
-            $result.exists = $false
-        }
+        $result.exists = $false
     }
-} else {
-    $result.exists = $false
+} finally {
+    if ($key) {
+        $key.Dispose()
+    }
+    $registry_hive.Dispose()
 }
 
-Exit-Json $result
+Exit-Json -obj $result
+

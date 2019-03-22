@@ -42,14 +42,10 @@ options:
         description:
             - Name of checkpoint file to create. Mutually exclusive
               with rollback_to.
-        required: false
-        default: null
     rollback_to:
         description:
             - Name of checkpoint file to rollback to. Mutually exclusive
               with checkpoint_file.
-        required: false
-        default: null
 '''
 
 EXAMPLES = '''
@@ -69,17 +65,17 @@ RETURN = '''
 filename:
     description: The filename of the checkpoint/rollback file.
     returned: success
-    type: string
+    type: str
     sample: 'backup.cfg'
 status:
     description: Which operation took place and whether it was successful.
     returned: success
-    type: string
+    type: str
     sample: 'rollback executed'
 '''
 
 
-from ansible.module_utils.nxos import nxos_argument_spec, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, run_commands
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -104,10 +100,7 @@ def rollback(filename, module):
 def main():
     argument_spec = dict(
         checkpoint_file=dict(required=False),
-        rollback_to=dict(required=False),
-        include_defaults=dict(default=True),
-        config=dict(),
-        save=dict(type='bool', default=False)
+        rollback_to=dict(required=False)
     )
 
     argument_spec.update(nxos_argument_spec)

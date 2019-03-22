@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2016, Abdoul Bah (@helldorado) <bahabdoul at gmail.com>
+# Copyright: (c) 2016, Abdoul Bah (@helldorado) <bahabdoul at gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: proxmox_kvm
 short_description: Management of Qemu(KVM) Virtual Machines in Proxmox VE cluster.
@@ -24,22 +24,18 @@ author: "Abdoul Bah (@helldorado) <bahabdoul at gmail.com>"
 options:
   acpi:
     description:
-      - Specify if ACPI should be enables/disabled.
-    required: false
-    default: "yes"
-    choices: [ "yes", "no" ]
+      - Specify if ACPI should be enabled/disabled.
+    type: bool
+    default: 'yes'
   agent:
     description:
-      - Specify if the QEMU GuestAgent should be enabled/disabled.
-    required: false
-    default: null
-    choices: [ "yes", "no" ]
+      - Specify if the QEMU Guest Agent should be enabled/disabled.
+    type: bool
   args:
     description:
       - Pass arbitrary arguments to kvm.
       - This option is for experts only!
     default: "-serial unix:/var/run/qemu-server/VMID.serial,server,nowait"
-    required: false
   api_host:
     description:
       - Specify the target host of the Proxmox VE cluster.
@@ -52,109 +48,81 @@ options:
     description:
       - Specify the password to authenticate with.
       - You can use C(PROXMOX_PASSWORD) environment variable.
-    default: null
-    required: false
   autostart:
     description:
-      - Specify, if the VM should be automatically restarted after crash (currently ignored in PVE API).
-    required: false
-    default: "no"
-    choices: [ "yes", "no" ]
+      - Specify if the VM should be automatically restarted after crash (currently ignored in PVE API).
+    type: bool
+    default: 'no'
   balloon:
     description:
       - Specify the amount of RAM for the VM in MB.
       - Using zero disables the balloon driver.
-    required: false
     default: 0
   bios:
     description:
       - Specify the BIOS implementation.
     choices: ['seabios', 'ovmf']
-    required: false
-    default: null
   boot:
     description:
       - Specify the boot order -> boot on floppy C(a), hard disk C(c), CD-ROM C(d), or network C(n).
       - You can combine to set order.
-    required: false
     default: cnd
   bootdisk:
     description:
       - Enable booting from specified disk. C((ide|sata|scsi|virtio)\d+)
-    required: false
-    default: null
   clone:
     description:
       - Name of VM to be cloned. If C(vmid) is setted, C(clone) can take arbitrary value but required for intiating the clone.
-    required: false
-    default: null
   cores:
     description:
       - Specify number of cores per socket.
-    required: false
     default: 1
   cpu:
     description:
       - Specify emulated CPU type.
-    required: false
     default: kvm64
   cpulimit:
     description:
       - Specify if CPU usage will be limited. Value 0 indicates no CPU limit.
       - If the computer has 2 CPUs, it has total of '2' CPU time
-    required: false
-    default: null
   cpuunits:
     description:
       - Specify CPU weight for a VM.
       - You can disable fair-scheduler configuration by setting this to 0
     default: 1000
-    required: false
   delete:
     description:
       - Specify a list of settings you want to delete.
-    required: false
-    default: null
   description:
     description:
       - Specify the description for the VM. Only used on the configuration web interface.
       - This is saved as comment inside the configuration file.
-    required: false
-    default: null
   digest:
     description:
       - Specify if to prevent changes if current configuration file has different SHA1 digest.
       - This can be used to prevent concurrent modifications.
-    required: false
-    default: null
   force:
     description:
       - Allow to force stop VM.
       - Can be used only with states C(stopped), C(restarted).
-    default: null
-    choices: [ "yes", "no" ]
-    required: false
+    type: bool
   format:
     description:
       - Target drive's backing file's data format.
       - Used only with clone
     default: qcow2
     choices: [ "cloop", "cow", "qcow", "qcow2", "qed", "raw", "vmdk" ]
-    required: false
   freeze:
     description:
       - Specify if PVE should freeze CPU at startup (use 'c' monitor command to start execution).
-    required: false
-    default: null
-    choices: [ "yes", "no" ]
+    type: bool
   full:
     description:
       - Create a full copy of all disk. This is always done when you clone a normal VM.
       - For VM templates, we try to create a linked clone by default.
       - Used only with clone
-    default: yes
-    choices: [ "yes", "no"]
-    required: false
+    type: bool
+    default: 'yes'
   hostpci:
     description:
       - Specify a hash/dictionary of map host pci devices into guest. C(hostpci='{"key":"value", "key":"value"}').
@@ -165,21 +133,15 @@ options:
       - C(rombar=boolean) I(default=1) Specify whether or not the device's ROM will be visible in the guest's memory map.
       - C(x-vga=boolean) I(default=0) Enable vfio-vga device support.
       - /!\ This option allows direct access to host hardware. So it is no longer possible to migrate such machines - use with special care.
-    required: false
-    default: null
   hotplug:
     description:
       - Selectively enable hotplug features.
       - This is a comma separated list of hotplug features C('network', 'disk', 'cpu', 'memory' and 'usb').
       - Value 0 disables hotplug completely and value 1 is an alias for the default C('network,disk,usb').
-    required: false
-    default: null
   hugepages:
     description:
       - Enable/disable hugepages memory.
     choices: ['any', '2', '1024']
-    required: false
-    default: null
   ide:
     description:
       - A hash/dictionary of volume used as IDE hard disk or CD-ROM. C(ide='{"key":"value", "key":"value"}').
@@ -188,85 +150,61 @@ options:
       - C(storage) is the storage identifier where to create the disk.
       - C(size) is the size of the disk in GB.
       - C(format) is the drive's backing file's data format. C(qcow2|raw|subvol).
-    required: false
-    default: null
   keyboard:
     description:
       - Sets the keyboard layout for VNC server.
-    required: false
-    default: null
   kvm:
     description:
       - Enable/disable KVM hardware virtualization.
-    required: false
-    default: "yes"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'yes'
   localtime:
     description:
       - Sets the real time clock to local time.
       - This is enabled by default if ostype indicates a Microsoft OS.
-    required: false
-    default: null
-    choices: [ "yes", "no" ]
+    type: bool
   lock:
     description:
       - Lock/unlock the VM.
     choices: ['migrate', 'backup', 'snapshot', 'rollback']
-    required: false
-    default: null
   machine:
     description:
       - Specifies the Qemu machine type.
       - type => C((pc|pc(-i440fx)?-\d+\.\d+(\.pxe)?|q35|pc-q35-\d+\.\d+(\.pxe)?))
-    required: false
-    default: null
   memory:
     description:
       - Memory size in MB for instance.
-    required: false
     default: 512
   migrate_downtime:
     description:
       - Sets maximum tolerated downtime (in seconds) for migrations.
-    required: false
-    default: null
   migrate_speed:
     description:
       - Sets maximum speed (in MB/s) for migrations.
       - A value of 0 is no limit.
-    required: false
-    default: null
   name:
     description:
       - Specifies the VM name. Only used on the configuration web interface.
       - Required only for C(state=present).
-    default: null
-    required: false
   net:
     description:
       - A hash/dictionary of network interfaces for the VM. C(net='{"key":"value", "key":"value"}').
       - Keys allowed are - C(net[n]) where 0 ≤ n ≤ N.
-      - Values allowed are - C("model="XX:XX:XX:XX:XX:XX",brigde="value",rate="value",tag="value",firewall="1|0",trunks="vlanid"").
+      - Values allowed are - C("model="XX:XX:XX:XX:XX:XX",bridge="value",rate="value",tag="value",firewall="1|0",trunks="vlanid"").
       - Model is one of C(e1000 e1000-82540em e1000-82544gc e1000-82545em i82551 i82557b i82559er ne2k_isa ne2k_pci pcnet rtl8139 virtio vmxnet3).
       - C(XX:XX:XX:XX:XX:XX) should be an unique MAC address. This is automatically generated if not specified.
       - The C(bridge) parameter can be used to automatically add the interface to a bridge device. The Proxmox VE standard bridge is called 'vmbr0'.
       - Option C(rate) is used to limit traffic bandwidth from and to this interface. It is specified as floating point number, unit is 'Megabytes per second'.
       - If you specify no bridge, we create a kvm 'user' (NATed) network device, which provides DHCP and DNS services.
-    default: null
-    required: false
   newid:
     description:
       - VMID for the clone. Used only with clone.
       - If newid is not set, the next available VM ID will be fetched from ProxmoxAPI.
-    default: null
-    required: false
   node:
     description:
       - Proxmox VE node, where the new VM will be created.
       - Only required for C(state=present).
       - For other states, it will be autodiscovered.
-    default: null
-    required: false
   numa:
     description:
       - A hash/dictionaries of NUMA topology. C(numa='{"key":"value", "key":"value"}').
@@ -276,50 +214,36 @@ options:
       - C(hostnodes) Host NUMA nodes to use.
       - C(memory) Amount of memory this NUMA node provides.
       - C(policy) NUMA allocation policy.
-    default: null
-    required: false
   onboot:
     description:
       - Specifies whether a VM will be started during system bootup.
-    default: "yes"
-    choices: [ "yes", "no" ]
-    required: false
+    type: bool
+    default: 'yes'
   ostype:
     description:
       - Specifies guest operating system. This is used to enable special optimization/features for specific operating systems.
       - The l26 is Linux 2.6/3.X Kernel.
     choices: ['other', 'wxp', 'w2k', 'w2k3', 'w2k8', 'wvista', 'win7', 'win8', 'l24', 'l26', 'solaris']
     default: l26
-    required: false
   parallel:
     description:
       - A hash/dictionary of map host parallel devices. C(parallel='{"key":"value", "key":"value"}').
       - Keys allowed are - (parallel[n]) where 0 ≤ n ≤ 2.
       - Values allowed are - C("/dev/parport\d+|/dev/usb/lp\d+").
-    default: null
-    required: false
   pool:
     description:
       - Add the new VM to the specified pool.
-    default: null
-    required: false
   protection:
     description:
       - Enable/disable the protection flag of the VM. This will enable/disable the remove VM and remove disk operations.
-    default: null
-    choices: [ "yes", "no" ]
-    required: false
+    type: bool
   reboot:
     description:
-      - Allow reboot. If set to yes, the VM exit on reboot.
-    default: null
-    choices: [ "yes", "no" ]
-    required: false
+      - Allow reboot. If set to C(yes), the VM exit on reboot.
+    type: bool
   revert:
     description:
       - Revert a pending change.
-    default: null
-    required: false
   sata:
     description:
       - A hash/dictionary of volume used as sata hard disk or CD-ROM. C(sata='{"key":"value", "key":"value"}').
@@ -328,8 +252,6 @@ options:
       - C(storage) is the storage identifier where to create the disk.
       - C(size) is the size of the disk in GB.
       - C(format) is the drive's backing file's data format. C(qcow2|raw|subvol).
-    default: null
-    required: false
   scsi:
     description:
       - A hash/dictionary of volume used as SCSI hard disk or CD-ROM. C(scsi='{"key":"value", "key":"value"}').
@@ -338,129 +260,95 @@ options:
       - C(storage) is the storage identifier where to create the disk.
       - C(size) is the size of the disk in GB.
       - C(format) is the drive's backing file's data format. C(qcow2|raw|subvol).
-    default: null
-    required: false
   scsihw:
     description:
       - Specifies the SCSI controller model.
     choices: ['lsi', 'lsi53c810', 'virtio-scsi-pci', 'virtio-scsi-single', 'megasas', 'pvscsi']
-    required: false
-    default: null
   serial:
     description:
       - A hash/dictionary of serial device to create inside the VM. C('{"key":"value", "key":"value"}').
       - Keys allowed are - serial[n](str; required) where 0 ≤ n ≤ 3.
       - Values allowed are - C((/dev/.+|socket)).
       - /!\ If you pass through a host serial device, it is no longer possible to migrate such machines - use with special care.
-    default: null
-    required: false
   shares:
     description:
       - Rets amount of memory shares for auto-ballooning. (0 - 50000).
       - The larger the number is, the more memory this VM gets.
       - The number is relative to weights of all other running VMs.
       - Using 0 disables auto-ballooning, this means no limit.
-    required: false
-    default: null
   skiplock:
     description:
       - Ignore locks
       - Only root is allowed to use this option.
-    required: false
-    default: null
   smbios:
     description:
       - Specifies SMBIOS type 1 fields.
-    required: false
-    default: null
   snapname:
     description:
       - The name of the snapshot. Used only with clone.
-    default: null
-    required: false
   sockets:
     description:
       - Sets the number of CPU sockets. (1 - N).
-    required: false
     default: 1
   startdate:
     description:
       - Sets the initial date of the real time clock.
       - Valid format for date are C('now') or C('2016-09-25T16:01:21') or C('2016-09-25').
-    required: false
-    default: null
   startup:
     description:
       - Startup and shutdown behavior. C([[order=]\d+] [,up=\d+] [,down=\d+]).
       - Order is a non-negative number defining the general startup order.
       - Shutdown in done with reverse ordering.
-    required: false
-    default: null
   state:
     description:
       - Indicates desired state of the instance.
       - If C(current), the current state of the VM will be fecthed. You can access it with C(results.status)
     choices: ['present', 'started', 'absent', 'stopped', 'restarted','current']
-    required: false
     default: present
   storage:
     description:
       - Target storage for full clone.
-    default: null
-    required: false
   tablet:
     description:
       - Enables/disables the USB tablet device.
-    required: false
-    choices: [ "yes", "no" ]
-    default: "no"
+    type: bool
+    default: 'no'
   target:
     description:
       - Target node. Only allowed if the original VM is on shared storage.
       - Used only with clone
-    default: null
-    required: false
   tdf:
     description:
       - Enables/disables time drift fix.
-    required: false
-    default: null
-    choices: [ "yes", "no" ]
+    type: bool
   template:
     description:
       - Enables/disables the template.
-    required: false
-    default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
   timeout:
     description:
       - Timeout for operations.
     default: 30
-    required: false
   update:
     description:
       - If C(yes), the VM will be update with new value.
       - Cause of the operations of the API and security reasons, I have disabled the update of the following parameters
       - C(net, virtio, ide, sata, scsi). Per example updating C(net) update the MAC address and C(virtio) create always new disk...
-    default: "no"
-    choices: [ "yes", "no" ]
-    required: false
+    type: bool
+    default: 'no'
   validate_certs:
     description:
       - If C(no), SSL certificates will not be validated. This should only be used on personally controlled sites using self-signed certificates.
-    default: "no"
-    choices: [ "yes", "no" ]
-    required: false
+    type: bool
+    default: 'no'
   vcpus:
     description:
       - Sets number of hotplugged vcpus.
-    required: false
-    default: null
   vga:
     description:
       - Select VGA type. If you want to use high resolution modes (>= 1280x1024x16) then you should use option 'std' or 'vmware'.
     choices: ['std', 'cirrus', 'vmware', 'qxl', 'serial0', 'serial1', 'serial2', 'serial3', 'qxl2', 'qxl3', 'qxl4']
-    required: false
     default: std
   virtio:
     description:
@@ -470,19 +358,13 @@ options:
       - C(storage) is the storage identifier where to create the disk.
       - C(size) is the size of the disk in GB.
       - C(format) is the drive's backing file's data format. C(qcow2|raw|subvol).
-    required: false
-    default: null
   vmid:
     description:
       - Specifies the VM ID. Instead use I(name) parameter.
       - If vmid is not set, the next available VM ID will be fetched from ProxmoxAPI.
-    default: null
-    required: false
   watchdog:
     description:
       - Creates a virtual hardware watchdog device.
-    required: false
-    default: null
 requirements: [ "proxmoxer", "requests" ]
 '''
 
@@ -631,7 +513,7 @@ EXAMPLES = '''
     api_host    : helldorado
     name        : spynal
     node        : sabrewulf
-    cpu         : 8
+    cores       : 8
     memory      : 16384
     update      : yes
 
@@ -747,7 +629,7 @@ def get_vminfo(module, proxmox, node, vmid, **kwargs):
     kwargs = dict((k, v) for k, v in kwargs.items() if v is not None)
 
     # Convert all dict in kwargs to elements. For hostpci[n], ide[n], net[n], numa[n], parallel[n], sata[n], scsi[n], serial[n], virtio[n]
-    for k in kwargs.keys():
+    for k in list(kwargs.keys()):
         if isinstance(kwargs[k], dict):
             kwargs.update(kwargs[k])
             del kwargs[k]
@@ -793,7 +675,7 @@ def create_vm(module, proxmox, vmid, newid, node, name, memory, cpu, cores, sock
     valid_clone_params = ['format', 'full', 'pool', 'snapname', 'storage', 'target']
     clone_params = {}
     # Default args for vm. Note: -args option is for experts only. It allows you to pass arbitrary arguments to kvm.
-    vm_args = "-serial unix:/var/run/qemu-server/{}.serial,server,nowait".format(vmid)
+    vm_args = "-serial unix:/var/run/qemu-server/{0}.serial,server,nowait".format(vmid)
 
     proxmox_node = proxmox.nodes(node)
 
@@ -821,7 +703,7 @@ def create_vm(module, proxmox, vmid, newid, node, name, memory, cpu, cores, sock
             del kwargs['net']
 
     # Convert all dict in kwargs to elements. For hostpci[n], ide[n], net[n], numa[n], parallel[n], sata[n], scsi[n], serial[n], virtio[n]
-    for k in kwargs.keys():
+    for k in list(kwargs.keys()):
         if isinstance(kwargs[k], dict):
             kwargs.update(kwargs[k])
             del kwargs[k]
@@ -1027,7 +909,7 @@ def main():
             try:
                 vmid = get_nextvmid(module, proxmox)
             except Exception as e:
-                module.fail_json(msg="Can't get the next vimd for VM {} automatically. Ensure your cluster state is good".format(name))
+                module.fail_json(msg="Can't get the next vmid for VM {0} automatically. Ensure your cluster state is good".format(name))
         else:
             try:
                 if not clone:
@@ -1036,9 +918,9 @@ def main():
                     vmid = get_vmid(proxmox, clone)[0]
             except Exception as e:
                 if not clone:
-                    module.fail_json(msg="VM {} does not exist in cluster.".format(name))
+                    module.fail_json(msg="VM {0} does not exist in cluster.".format(name))
                 else:
-                    module.fail_json(msg="VM {} does not exist in cluster.".format(clone))
+                    module.fail_json(msg="VM {0} does not exist in cluster.".format(clone))
 
     if clone is not None:
         if get_vmid(proxmox, name):
@@ -1051,7 +933,7 @@ def main():
             try:
                 newid = get_nextvmid(module, proxmox)
             except Exception as e:
-                module.fail_json(msg="Can't get the next vimd for VM {} automatically. Ensure your cluster state is good".format(name))
+                module.fail_json(msg="Can't get the next vmid for VM {0} automatically. Ensure your cluster state is good".format(name))
         else:
             vm = get_vm(proxmox, newid)
             if vm:
@@ -1060,15 +942,15 @@ def main():
     if delete is not None:
         try:
             settings(module, proxmox, vmid, node, name, timeout, delete=delete)
-            module.exit_json(changed=True, msg="Settings has deleted on VM {} with vmid {}".format(name, vmid))
+            module.exit_json(changed=True, msg="Settings has deleted on VM {0} with vmid {1}".format(name, vmid))
         except Exception as e:
-            module.fail_json(msg='Unable to delete settings on VM {} with vimd {}: '.format(name, vmid) + str(e))
+            module.fail_json(msg='Unable to delete settings on VM {0} with vmid {1}: '.format(name, vmid) + str(e))
     elif revert is not None:
         try:
             settings(module, proxmox, vmid, node, name, timeout, revert=revert)
-            module.exit_json(changed=True, msg="Settings has reverted on VM {} with vmid {}".format(name, vmid))
+            module.exit_json(changed=True, msg="Settings has reverted on VM {0} with vmid {1}".format(name, vmid))
         except Exception as e:
-            module.fail_json(msg='Unable to revert settings on VM {} with vimd {}: Maybe is not a pending task...   '.format(name, vmid) + str(e))
+            module.fail_json(msg='Unable to revert settings on VM {0} with vmid {1}: Maybe is not a pending task...   '.format(name, vmid) + str(e))
 
     if state == 'present':
         try:
@@ -1149,9 +1031,9 @@ def main():
                 module.exit_json(changed=True, msg="VM %s with vmid %s deployed" % (name, vmid), **results)
         except Exception as e:
             if update:
-                module.fail_json(msg="Unable to update vm {} with vimd {}=".format(name, vmid) + str(e))
+                module.fail_json(msg="Unable to update vm {0} with vmid {1}=".format(name, vmid) + str(e))
             elif clone is not None:
-                module.fail_json(msg="Unable to clone vm {} from vimd {}=".format(name, vmid) + str(e))
+                module.fail_json(msg="Unable to clone vm {0} from vmid {1}=".format(name, vmid) + str(e))
             else:
                 module.fail_json(msg="creation of %s VM %s with vmid %s failed with exception=%s" % (VZ_TYPE, name, vmid, e))
 
@@ -1229,7 +1111,7 @@ def main():
             if status:
                 module.exit_json(changed=False, msg="VM %s with vmid = %s is %s" % (name, vmid, current), **status)
         except Exception as e:
-            module.fail_json(msg="Unable to get vm {} with vmid = {} status: ".format(name, vmid) + str(e))
+            module.fail_json(msg="Unable to get vm {0} with vmid = {1} status: ".format(name, vmid) + str(e))
 
 
 if __name__ == '__main__':

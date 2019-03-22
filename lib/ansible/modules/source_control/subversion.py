@@ -1,115 +1,105 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+# Copyright: (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
 
-
 DOCUMENTATION = '''
 ---
 module: subversion
-short_description: Deploys a subversion repository.
+short_description: Deploys a subversion repository
 description:
    - Deploy given repository URL / revision to dest. If dest exists, update to the specified revision, otherwise perform a checkout.
 version_added: "0.7"
-author: "Dane Summers (@dsummersl) <njharman@gmail.com>"
+author:
+- Dane Summers (@dsummersl) <njharman@gmail.com>
 notes:
    - Requires I(svn) to be installed on the client.
-   - This module does not handle externals
-requirements: []
+   - This module does not handle externals.
 options:
   repo:
     description:
       - The subversion URL to the repository.
     required: true
     aliases: [ name, repository ]
-    default: null
   dest:
     description:
       - Absolute path where the repository should be deployed.
     required: true
-    default: null
   revision:
     description:
       - Specific revision to checkout.
-    required: false
     default: HEAD
     aliases: [ version ]
   force:
     description:
       - If C(yes), modified files will be discarded. If C(no), module will fail if it encounters modified files.
-        Prior to 1.9 the default was `yes`.
-    required: false
+        Prior to 1.9 the default was C(yes).
+    type: bool
     default: "no"
-    choices: [ "yes", "no" ]
+  in_place:
+    description:
+      - If the directory exists, then the working copy will be checked-out over-the-top using
+        svn checkout --force; if force is specified then existing files with different content are reverted
+    type: bool
+    default: "no"
+    version_added: "2.6"
   username:
     description:
-      - --username parameter passed to svn.
-    required: false
-    default: null
+      - C(--username) parameter passed to svn.
   password:
     description:
-      - --password parameter passed to svn.
-    required: false
-    default: null
+      - C(--password) parameter passed to svn.
   executable:
-    required: false
-    default: null
-    version_added: "1.4"
     description:
       - Path to svn executable to use. If not supplied,
         the normal mechanism for resolving binary paths will be used.
+    version_added: "1.4"
   checkout:
-    required: false
-    default: "yes"
-    choices: [ "yes", "no" ]
-    version_added: "2.3"
     description:
-     - If no, do not check out the repository if it does not exist locally
+     - If C(no), do not check out the repository if it does not exist locally.
+    type: bool
+    default: "yes"
+    version_added: "2.3"
   update:
-    required: false
-    default: "yes"
-    choices: [ "yes", "no" ]
-    version_added: "2.3"
     description:
-     - If no, do not retrieve new revisions from the origin repository
+     - If C(no), do not retrieve new revisions from the origin repository.
+    type: bool
+    default: "yes"
+    version_added: "2.3"
   export:
-    required: false
-    default: "no"
-    choices: [ "yes", "no" ]
-    version_added: "1.6"
     description:
       - If C(yes), do export instead of checkout/update.
+    type: bool
+    default: "no"
+    version_added: "1.6"
   switch:
-    required: false
-    default: "yes"
-    choices: [ "yes", "no" ]
-    version_added: "2.0"
     description:
       - If C(no), do not call svn switch before update.
+    default: "yes"
+    version_added: "2.0"
+    type: bool
 '''
 
 EXAMPLES = '''
-# Checkout subversion repository to specified folder.
-- subversion:
+- name: Checkout subversion repository to specified folder
+  subversion:
     repo: svn+ssh://an.example.org/path/to/repo
     dest: /src/checkout
 
-# Export subversion directory to folder
-- subversion:
+- name: Export subversion directory to folder
+  subversion:
     repo: svn+ssh://an.example.org/path/to/repo
     dest: /src/export
 
-# Example just get information about the repository whether or not it has
-# already been cloned locally.
+- name: Get information about the repository whether or not it has already been cloned locally
 - subversion:
     repo: svn+ssh://an.example.org/path/to/repo
     dest: /srv/checkout
@@ -124,8 +114,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 class Subversion(object):
-    def __init__(
-            self, module, dest, repo, revision, username, password, svn_path):
+    def __init__(self, module, dest, repo, revision, username, password, svn_path):
         self.module = module
         self.dest = dest
         self.repo = repo
@@ -148,6 +137,7 @@ class Subversion(object):
             bits.extend(["--password", self.password])
         bits.extend(args)
         rc, out, err = self.module.run_command(bits, check_rc)
+
         if check_rc:
             return out.splitlines()
         else:
@@ -158,9 +148,13 @@ class Subversion(object):
         rc = self._exec(["info", self.dest], check_rc=False)
         return rc == 0
 
-    def checkout(self):
+    def checkout(self, force=False):
         '''Creates new svn working directory if it does not already exist.'''
-        self._exec(["checkout", "-r", self.revision, self.repo, self.dest])
+        cmd = ["checkout"]
+        if force:
+            cmd.append("--force")
+        cmd.extend(["-r", self.revision, self.repo, self.dest])
+        self._exec(cmd)
 
     def export(self, force=False):
         '''Export svn repo to directory'''
@@ -174,15 +168,29 @@ class Subversion(object):
     def switch(self):
         '''Change working directory's repo.'''
         # switch to ensure we are pointing at correct repo.
-        self._exec(["switch", self.repo, self.dest])
+        # it also updates!
+        output = self._exec(["switch", self.repo, self.dest])
+        for line in output:
+            if re.search(r'^[ABDUCGE]\s', line):
+                return True
+        return False
 
     def update(self):
         '''Update existing svn working directory.'''
-        self._exec(["update", "-r", self.revision, self.dest])
+        output = self._exec(["update", "-r", self.revision, self.dest])
+
+        for line in output:
+            if re.search(r'^[ABDUCGE]\s', line):
+                return True
+        return False
 
     def revert(self):
         '''Revert svn working directory.'''
-        self._exec(["revert", "-R", self.dest])
+        output = self._exec(["revert", "-R", self.dest])
+        for line in output:
+            if re.search(r'^Reverted ', line) is None:
+                return True
+        return False
 
     def get_revision(self):
         '''Revision and URL of subversion working directory.'''
@@ -199,7 +207,7 @@ class Subversion(object):
 
     def has_local_mods(self):
         '''True if revisioned files have been added or modified. Unrevisioned files are ignored.'''
-        lines = self._exec(["status", "--quiet", "--ignore-externals",  self.dest])
+        lines = self._exec(["status", "--quiet", "--ignore-externals", self.dest])
         # The --quiet option will return only modified files.
         # Match only revisioned files, i.e. ignore status '?'.
         regex = re.compile(r'^[^?X]')
@@ -218,24 +226,23 @@ class Subversion(object):
         return change, curr, head
 
 
-# ===========================================
-
 def main():
     module = AnsibleModule(
         argument_spec=dict(
             dest=dict(type='path'),
-            repo=dict(required=True, aliases=['name', 'repository']),
-            revision=dict(default='HEAD', aliases=['rev', 'version']),
-            force=dict(default='no', type='bool'),
-            username=dict(required=False),
-            password=dict(required=False, no_log=True),
-            executable=dict(default=None, type='path'),
-            export=dict(default=False, required=False, type='bool'),
-            checkout=dict(default=True, required=False, type='bool'),
-            update=dict(default=True, required=False, type='bool'),
-            switch=dict(default=True, required=False, type='bool'),
+            repo=dict(type='str', required=True, aliases=['name', 'repository']),
+            revision=dict(type='str', default='HEAD', aliases=['rev', 'version']),
+            force=dict(type='bool', default=False),
+            username=dict(type='str'),
+            password=dict(type='str', no_log=True),
+            executable=dict(type='path'),
+            export=dict(type='bool', default=False),
+            checkout=dict(type='bool', default=True),
+            update=dict(type='bool', default=True),
+            switch=dict(type='bool', default=True),
+            in_place=dict(type='bool', default=False),
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     dest = module.params['dest']
@@ -249,6 +256,7 @@ def main():
     switch = module.params['switch']
     checkout = module.params['checkout']
     update = module.params['update']
+    in_place = module.params['in_place']
 
     # We screenscrape a huge amount of svn commands so use C locale anytime we
     # call run_command()
@@ -270,35 +278,47 @@ def main():
             module.exit_json(changed=False)
         if not export and checkout:
             svn.checkout()
+            files_changed = True
         else:
             svn.export(force=force)
+            files_changed = True
     elif svn.is_svn_repo():
         # Order matters. Need to get local mods before switch to avoid false
         # positives. Need to switch before revert to ensure we are reverting to
         # correct repo.
-        if module.check_mode or not update:
+        if not update:
+            module.exit_json(changed=False)
+        if module.check_mode:
             if svn.has_local_mods() and not force:
                 module.fail_json(msg="ERROR: modified files exist in the repository.")
             check, before, after = svn.needs_update()
             module.exit_json(changed=check, before=before, after=after)
+        files_changed = False
         before = svn.get_revision()
         local_mods = svn.has_local_mods()
         if switch:
-            svn.switch()
+            files_changed = svn.switch() or files_changed
         if local_mods:
             if force:
-                svn.revert()
+                files_changed = svn.revert() or files_changed
             else:
                 module.fail_json(msg="ERROR: modified files exist in the repository.")
-        svn.update()
+        files_changed = svn.update() or files_changed
+    elif in_place:
+        before = None
+        svn.checkout(force=True)
+        files_changed = True
+        local_mods = svn.has_local_mods()
+        if local_mods and force:
+            svn.revert()
     else:
-        module.fail_json(msg="ERROR: %s folder already exists, but its not a subversion repository." % (dest, ))
+        module.fail_json(msg="ERROR: %s folder already exists, but its not a subversion repository." % (dest,))
 
     if export:
         module.exit_json(changed=True)
     else:
         after = svn.get_revision()
-        changed = before != after or local_mods
+        changed = files_changed or local_mods
         module.exit_json(changed=changed, before=before, after=after)
 
 

@@ -1,0 +1,26 @@
+---
+- debug:
+    msg: "START cli/prompt.yaml on connection={{ ansible_connection }}"
+
+- name: delete config file on disk to prevent failure of copy task for duplicate
+  iosxr_command:
+    commands:
+        - command: 'delete harddisk:ansible_tmp.txt'
+          prompt: 'Delete harddisk\:/?ansible_tmp\.txt\[confirm\]'
+          answer: ""
+  ignore_errors: yes
+
+- name: copy
+  iosxr_command:
+    commands:
+        - command: 'copy running-config harddisk:ansible_tmp.txt'
+          prompt: 'Destination file name \(control-c to abort\)\: \[\/ansible_tmp.txt\]\?'
+          answer: 'ansible_tmp.txt'
+  register: result
+
+- assert:
+    that:
+      - "result.stdout is defined"
+      - "'ansible_tmp' in result.stdout[0]"
+
+- debug: msg="END cli/prompt.yaml on connection={{ ansible_connection }}"

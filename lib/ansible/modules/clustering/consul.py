@@ -49,86 +49,65 @@ options:
           - Unique name for the service on a node, must be unique per node,
             required if registering a service. May be omitted if registering
             a node level check
-        required: false
     service_id:
         description:
           - the ID for the service, must be unique per node, defaults to the
             service name if the service name is supplied
-        required: false
         default: service_name if supplied
     host:
         description:
           - host of the consul agent defaults to localhost
-        required: false
         default: localhost
     port:
         description:
           - the port on which the consul agent is running
-        required: false
         default: 8500
     scheme:
         description:
           - the protocol scheme on which the consul agent is running
-        required: false
         default: http
         version_added: "2.1"
     validate_certs:
         description:
           - whether to verify the tls certificate of the consul agent
-        required: false
-        default: True
+        type: bool
+        default: 'yes'
         version_added: "2.1"
     notes:
         description:
           - Notes to attach to check when registering it.
-        required: false
-        default: None
     service_port:
         description:
           - the port on which the service is listening. Can optionally be supplied for
             registration of a service, i.e. if service_name or service_id is set
-        required: false
-        default: None
     service_address:
         description:
           - the address to advertise that the service will be listening on.
             This value will be passed as the I(Address) parameter to Consul's
             U(/v1/agent/service/register) API method, so refer to the Consul API
             documentation for further details.
-        required: false
-        default: None
         version_added: "2.1"
     tags:
         description:
           - a list of tags that will be attached to the service registration.
-        required: false
-        default: None
     script:
         description:
           - the script/command that will be run periodically to check the health
             of the service. Scripts require an interval and vise versa
-        required: false
-        default: None
     interval:
         description:
           - the interval at which the service check will be run. This is a number
             with a s or m suffix to signify the units of seconds or minutes e.g
             15s or 1m. If no suffix is supplied, m will be used by default e.g.
             1 will be 1m. Required if the script param is specified.
-        required: false
-        default: None
     check_id:
         description:
           - an ID for the service check, defaults to the check name, ignored if
             part of a service definition.
-        required: false
-        default: None
     check_name:
         description:
           - a name for the service check, defaults to the check id. required if
             standalone, ignored if part of service definition.
-        required: false
-        default: None
     ttl:
         description:
           - checks can be registered with a ttl instead of a script and interval
@@ -138,29 +117,21 @@ options:
             Similar to the interval this is a number with a s or m suffix to
             signify the units of seconds or minutes e.g 15s or 1m. If no suffix
             is supplied, m will be used by default e.g. 1 will be 1m
-        required: false
-        default: None
     http:
         description:
           - checks can be registered with an http endpoint. This means that consul
             will check that the http endpoint returns a successful http status.
             Interval must also be provided with this option.
-        required: false
-        default: None
         version_added: "2.0"
     timeout:
         description:
           - A custom HTTP check timeout. The consul default is 10 seconds.
             Similar to the interval this is a number with a s or m suffix to
             signify the units of seconds or minutes, e.g. 15s or 1m.
-        required: false
-        default: None
         version_added: "2.0"
     token:
         description:
           - the token key indentifying an ACL rule set. May be required to register services.
-        required: false
-        default: None
 """
 
 EXAMPLES = '''
@@ -228,6 +199,16 @@ EXAMPLES = '''
 try:
     import consul
     from requests.exceptions import ConnectionError
+
+    class PatchedConsulAgentService(consul.Consul.Agent.Service):
+        def deregister(self, service_id, token=None):
+            params = {}
+            if token:
+                params['token'] = token
+            return self.agent.http.put(consul.base.CB.bool(),
+                                       '/v1/agent/service/deregister/%s' % service_id,
+                                       params=params)
+
     python_consul_installed = True
 except ImportError:
     python_consul_installed = False
@@ -337,18 +318,20 @@ def remove_service(module, service_id):
     consul_api = get_consul_api(module)
     service = get_service_by_id_or_name(consul_api, service_id)
     if service:
-        consul_api.agent.service.deregister(service_id)
+        consul_api.agent.service.deregister(service_id, token=module.params.get('token'))
         module.exit_json(changed=True, id=service_id)
 
     module.exit_json(changed=False, id=service_id)
 
 
 def get_consul_api(module, token=None):
-    return consul.Consul(host=module.params.get('host'),
-                         port=module.params.get('port'),
-                         scheme=module.params.get('scheme'),
-                         verify=module.params.get('validate_certs'),
-                         token=module.params.get('token'))
+    consulClient = consul.Consul(host=module.params.get('host'),
+                                 port=module.params.get('port'),
+                                 scheme=module.params.get('scheme'),
+                                 verify=module.params.get('validate_certs'),
+                                 token=module.params.get('token'))
+    consulClient.agent.service = PatchedConsulAgentService(consulClient)
+    return consulClient
 
 
 def get_service_by_id_or_name(consul_api, service_id_or_name):
@@ -492,7 +475,7 @@ class ConsulCheck(object):
         if duration:
             duration_units = ['ns', 'us', 'ms', 's', 'm', 'h']
             if not any((duration.endswith(suffix) for suffix in duration_units)):
-                duration = "{}s".format(duration)
+                duration = "{0}s".format(duration)
         return duration
 
     def register(self, consul_api):
@@ -531,13 +514,13 @@ class ConsulCheck(object):
             if attr is None:
                 attr = key
             data[key] = getattr(self, attr)
-        except:
+        except Exception:
             pass
 
 
 def test_dependencies(module):
     if not python_consul_installed:
-        module.fail_json(msg="python-consul required for this module. see http://python-consul.readthedocs.org/en/latest/#installation")
+        module.fail_json(msg="python-consul required for this module. see https://python-consul.readthedocs.io/en/latest/#installation")
 
 
 def main():

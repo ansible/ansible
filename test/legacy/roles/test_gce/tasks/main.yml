@@ -193,7 +193,7 @@
   assert:
     that:
        - 'result.failed'
-       - '{{ result.msg | match("Disk at index 0 does not match:.*") }}'
+       - '{{ result.msg is match("Disk at index 0 does not match:.*") }}'
 
 # ============================================================
 - name: test disks given with name and mode
@@ -230,7 +230,7 @@
   assert:
     that:
        - 'result.failed'
-       - '{{ result.msg | match("Disk at index 0 is in the wrong mode:.*") }}'
+       - '{{ result.msg is match("Disk at index 0 is in the wrong mode:.*") }}'
 
 # ============================================================
 - name: test disks given, state absent (expected changed=true)

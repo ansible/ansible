@@ -45,44 +45,35 @@ options:
     description:
      - vDirect server username, may be set as VDIRECT_USER environment variable.
     required: true
-    default: None
   vdirect_password:
     description:
      - vDirect server password, may be set as VDIRECT_PASSWORD environment variable.
     required: true
-    default: None
   vdirect_secondary_ip:
     description:
      - Secondary vDirect server IP address, may be set as VDIRECT_SECONDARY_IP environment variable.
-    required: false
-    default: None
   vdirect_wait:
     description:
      - Wait for async operation to complete, may be set as VDIRECT_WAIT environment variable.
-    required: false
     type: bool
     default: 'yes'
   vdirect_https_port:
     description:
      - vDirect server HTTPS port number, may be set as VDIRECT_HTTPS_PORT environment variable.
-    required: false
     default: 2189
   vdirect_http_port:
     description:
      - vDirect server HTTP port number, may be set as VDIRECT_HTTP_PORT environment variable.
-    required: false
     default: 2188
   vdirect_timeout:
     description:
      - Amount of time to wait for async operation completion [seconds],
      - may be set as VDIRECT_TIMEOUT environment variable.
-    required: false
     default: 60
   vdirect_use_ssl:
     description:
      - If C(no), an HTTP connection will be used instead of the default HTTPS connection,
      - may be set as VDIRECT_HTTPS or VDIRECT_USE_SSL environment variable.
-    required: false
     type: bool
     default: 'yes'
   vdirect_validate_certs:
@@ -90,7 +81,6 @@ options:
      - If C(no), SSL certificates will not be validated,
      - may be set as VDIRECT_VALIDATE_CERTS or VDIRECT_VERIFY environment variable.
      - This should only set to C(no) used on personally controlled sites using self-signed certificates.
-    required: false
     type: bool
     default: 'yes'
   file_name:
@@ -106,7 +96,7 @@ requirements:
 EXAMPLES = '''
 - name: vdirect_file
   vdirect_file:
-      vdirect_primary_ip: 10.10.10.10
+      vdirect_ip: 10.10.10.10
       vdirect_user: vDirect
       vdirect_password: radware
       file_name: /tmp/get_vlans.vm
@@ -116,7 +106,7 @@ RETURN = '''
 result:
     description: Message detailing upload result
     returned: success
-    type: string
+    type: str
     sample: "Workflow template created"
 '''
 
@@ -141,15 +131,11 @@ WORKFLOW_TEMPLATE_CREATED_SUCCESS = 'Workflow template created'
 WORKFLOW_TEMPLATE_UPDATED_SUCCESS = 'Workflow template updated'
 
 meta_args = dict(
-    vdirect_ip=dict(
-        required=True, fallback=(env_fallback, ['VDIRECT_IP']),
-        default=None),
-    vdirect_user=dict(
-        required=True, fallback=(env_fallback, ['VDIRECT_USER']),
-        default=None),
+    vdirect_ip=dict(required=True, fallback=(env_fallback, ['VDIRECT_IP'])),
+    vdirect_user=dict(required=True, fallback=(env_fallback, ['VDIRECT_USER'])),
     vdirect_password=dict(
         required=True, fallback=(env_fallback, ['VDIRECT_PASSWORD']),
-        default=None, no_log=True, type='str'),
+        no_log=True, type='str'),
     vdirect_secondary_ip=dict(
         required=False, fallback=(env_fallback, ['VDIRECT_SECONDARY_IP']),
         default=None),
@@ -171,8 +157,23 @@ meta_args = dict(
     vdirect_http_port=dict(
         required=False, fallback=(env_fallback, ['VDIRECT_HTTP_PORT']),
         default=2188, type='int'),
-    file_name=dict(required=True, default=None)
+    file_name=dict(required=True)
 )
+
+
+class FileException(Exception):
+    def __init__(self, reason, details):
+        self.reason = reason
+        self.details = details
+
+    def __str__(self):
+        return 'Reason: {0}. Details:{1}.'.format(self.reason, self.details)
+
+
+class InvalidSourceException(FileException):
+    def __init__(self, message):
+        super(InvalidSourceException, self).__init__(
+            'Error parsing file', repr(message))
 
 
 class VdirectFile(object):
@@ -195,34 +196,39 @@ class VdirectFile(object):
             runnable_file = open(fqn, 'r')
             file_content = runnable_file.read()
 
+            result_to_return = CONFIGURATION_TEMPLATE_CREATED_SUCCESS
             result = template.create_from_source(file_content, template_name, fail_if_invalid=True)
             if result[rest_client.RESP_STATUS] == 409:
-                template.upload_source(file_content, template_name, fail_if_invalid=True)
-                result = CONFIGURATION_TEMPLATE_UPDATED_SUCCESS
-            else:
-                result = CONFIGURATION_TEMPLATE_CREATED_SUCCESS
+                result_to_return = CONFIGURATION_TEMPLATE_UPDATED_SUCCESS
+                result = template.upload_source(file_content, template_name, fail_if_invalid=True)
+
+            if result[rest_client.RESP_STATUS] == 400:
+                raise InvalidSourceException(str(result[rest_client.RESP_STR]))
         elif fqn.endswith(WORKFLOW_EXTENSION):
             workflow = rest_client.WorkflowTemplate(self.client)
 
             runnable_file = open(fqn, 'rb')
             file_content = runnable_file.read()
+
+            result_to_return = WORKFLOW_TEMPLATE_CREATED_SUCCESS
             result = workflow.create_template_from_archive(file_content, fail_if_invalid=True)
             if result[rest_client.RESP_STATUS] == 409:
-                workflow.update_archive(file_content, os.path.splitext(os.path.basename(fqn))[0])
-                result = WORKFLOW_TEMPLATE_UPDATED_SUCCESS
-            else:
-                result = WORKFLOW_TEMPLATE_CREATED_SUCCESS
+                result_to_return = WORKFLOW_TEMPLATE_UPDATED_SUCCESS
+                result = workflow.update_archive(file_content, os.path.splitext(os.path.basename(fqn))[0])
+
+            if result[rest_client.RESP_STATUS] == 400:
+                raise InvalidSourceException(str(result[rest_client.RESP_STR]))
         else:
-            result = WRONG_EXTENSION_ERROR
-        return result
+            result_to_return = WRONG_EXTENSION_ERROR
+        return result_to_return
 
 
 def main():
 
-    if not HAS_REST_CLIENT:
-        raise ImportError("The python vdirect-client module is required")
-
     module = AnsibleModule(argument_spec=meta_args)
+
+    if not HAS_REST_CLIENT:
+        module.fail_json(msg="The python vdirect-client module is required")
 
     try:
         vdirect_file = VdirectFile(module.params)
@@ -231,6 +237,7 @@ def main():
         module.exit_json(**result)
     except Exception as e:
         module.fail_json(msg=str(e))
+
 
 if __name__ == '__main__':
     main()

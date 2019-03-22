@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-#
+
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -31,13 +31,9 @@ options:
      - Indicate desired state of the target.
     choices: ['present', 'absent']
     required: true
-  api_token:
-    description:
-     - DigitalOcean api token.
-    required: true
   block_size:
     description:
-    - The size of the Block Storage volume in gigabytes. Required when command=create and state=present.
+    - The size of the Block Storage volume in gigabytes. Required when command=create and state=present. If snapshot_id is included, this will be ignored.
   volume_name:
     description:
     - The name of the Block Storage volume.
@@ -47,22 +43,23 @@ options:
     - Description of the Block Storage volume.
   region:
     description:
-    - The slug of the region where your Block Storage volume should be located in.
+    - The slug of the region where your Block Storage volume should be located in. If snapshot_id is included, this will be ignored.
     required: true
+  snapshot_id:
+    version_added: "2.5"
+    description:
+    - The snapshot id you would like the Block Storage volume created with. If included, region and block_size will be ignored and changed to null.
   droplet_id:
     description:
     - The droplet id you want to operate on. Required when command=attach.
-  timeout:
-    description:
-    - The timeout in seconds used for polling DigitalOcean's API.
-    default: 10
-
+extends_documentation_fragment: digital_ocean.documentation
 notes:
   - Two environment variables can be used, DO_API_KEY and DO_API_TOKEN.
     They both refer to the v2 token.
+  - If snapshot_id is used, region and block_size will be ignored and changed to null.
 
 author:
-    - "Harnek Sidhu (github: @harneksidhu)"
+    - "Harnek Sidhu (@harneksidhu)"
 '''
 
 EXAMPLES = '''
@@ -103,7 +100,7 @@ RETURN = '''
 id:
     description: Unique identifier of a Block Storage volume returned during creation.
     returned: changed
-    type: string
+    type: str
     sample: "69b25d9a-494c-12e6-a5af-001f53126b44"
 '''
 
@@ -130,7 +127,7 @@ class DOBlockStorage(object):
         return v
 
     def poll_action_for_complete_status(self, action_id):
-        url = 'actions/{}'.format(action_id)
+        url = 'actions/{0}'.format(action_id)
         end_time = time.time() + self.module.params['timeout']
         while time.time() < end_time:
             time.sleep(2)
@@ -145,7 +142,7 @@ class DOBlockStorage(object):
         raise DOBlockStorageException('Unable to reach api.digitalocean.com')
 
     def get_attached_droplet_ID(self, volume_name, region):
-        url = 'volumes?name={}&region={}'.format(volume_name, region)
+        url = 'volumes?name={0}&region={1}'.format(volume_name, region)
         response = self.rest.get(url)
         status = response.status_code
         json = response.json
@@ -179,22 +176,30 @@ class DOBlockStorage(object):
             raise DOBlockStorageException(json['message'])
 
     def create_block_storage(self):
-        block_size = self.get_key_or_fail('block_size')
         volume_name = self.get_key_or_fail('volume_name')
-        region = self.get_key_or_fail('region')
+        snapshot_id = self.module.params['snapshot_id']
+        if snapshot_id:
+            self.module.params['block_size'] = None
+            self.module.params['region'] = None
+            block_size = None
+            region = None
+        else:
+            block_size = self.get_key_or_fail('block_size')
+            region = self.get_key_or_fail('region')
         description = self.module.params['description']
         data = {
             'size_gigabytes': block_size,
             'name': volume_name,
             'description': description,
-            'region': region
+            'region': region,
+            'snapshot_id': snapshot_id,
         }
         response = self.rest.post("volumes", data=data)
         status = response.status_code
         json = response.json
         if status == 201:
             self.module.exit_json(changed=True, id=json['volume']['id'])
-        elif status == 409 and json['id'] == 'already_exists':
+        elif status == 409 and json['id'] == 'conflict':
             self.module.exit_json(changed=False)
         else:
             raise DOBlockStorageException(json['message'])
@@ -202,7 +207,7 @@ class DOBlockStorage(object):
     def delete_block_storage(self):
         volume_name = self.get_key_or_fail('volume_name')
         region = self.get_key_or_fail('region')
-        url = 'volumes?name={}&region={}'.format(volume_name, region)
+        url = 'volumes?name={0}&region={1}'.format(volume_name, region)
         attached_droplet_id = self.get_attached_droplet_ID(volume_name, region)
         if attached_droplet_id is not None:
             self.attach_detach_block_storage('detach', volume_name, region, attached_droplet_id)
@@ -254,25 +259,27 @@ def handle_request(module):
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
-            state=dict(choices=['present', 'absent'], required=True),
-            command=dict(choices=['create', 'attach'], required=True),
-            api_token=dict(aliases=['API_TOKEN'], no_log=True),
-            block_size=dict(type='int'),
-            volume_name=dict(type='str', required=True),
-            description=dict(type='str'),
-            region=dict(type='str', required=True),
-            droplet_id=dict(type='int'),
-            timeout=dict(type='int', default=10),
-        ),
+    argument_spec = DigitalOceanHelper.digital_ocean_argument_spec()
+    argument_spec.update(
+        state=dict(choices=['present', 'absent'], required=True),
+        command=dict(choices=['create', 'attach'], required=True),
+        block_size=dict(type='int', required=False),
+        volume_name=dict(type='str', required=True),
+        description=dict(type='str'),
+        region=dict(type='str', required=False),
+        snapshot_id=dict(type='str', required=False),
+        droplet_id=dict(type='int')
     )
+
+    module = AnsibleModule(argument_spec=argument_spec)
+
     try:
         handle_request(module)
     except DOBlockStorageException as e:
         module.fail_json(msg=e.message, exception=traceback.format_exc())
     except KeyError as e:
         module.fail_json(msg='Unable to load %s' % e.message, exception=traceback.format_exc())
+
 
 if __name__ == '__main__':
     main()

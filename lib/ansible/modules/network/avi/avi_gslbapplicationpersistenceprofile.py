@@ -30,7 +30,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: avi_gslbapplicationpersistenceprofile
-author: Gaurav Rastogi (grastogi@avinetworks.com)
+author: Gaurav Rastogi (@grastogi23) <grastogi@avinetworks.com>
 
 short_description: Module for setup of GslbApplicationPersistenceProfile Avi RESTful Object
 description:
@@ -86,7 +86,7 @@ obj:
 
 from ansible.module_utils.basic import AnsibleModule
 try:
-    from ansible.module_utils.avi import (
+    from ansible.module_utils.network.avi.avi import (
         avi_common_argument_spec, HAS_AVI, avi_ansible_api)
 except ImportError:
     HAS_AVI = False
@@ -111,6 +111,7 @@ def main():
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'gslbapplicationpersistenceprofile',
                            set([]))
+
 
 if __name__ == '__main__':
     main()

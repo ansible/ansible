@@ -1,2 +1,2 @@
-posix/ci/group1
-windows/ci/group1
+shippable/posix/group1
+shippable/windows/group1

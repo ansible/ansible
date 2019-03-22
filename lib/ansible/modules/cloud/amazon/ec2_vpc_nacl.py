@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -16,7 +16,7 @@ module: ec2_vpc_nacl
 short_description: create and delete Network ACLs.
 description:
   - Read the AWS documentation for Network ACLS
-    U(http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_ACLs.html)
+    U(https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_ACLs.html)
 version_added: "2.2"
 options:
   name:
@@ -43,13 +43,23 @@ options:
     required: false
   egress:
     description:
-      - A list of rules for outgoing traffic.
-      - Each rule must be specified as a list.
+      - A list of rules for outgoing traffic. Each rule must be specified as a list.
+        Each rule may contain the rule number (integer 1-32766), protocol (one of ['tcp', 'udp', 'icmp', '-1', 'all']),
+        the rule action ('allow' or 'deny') the CIDR of the IPv4 network range to allow or deny,
+        the ICMP type (-1 means all types), the ICMP code (-1 means all codes), the last port in the range for
+        TCP or UDP protocols, and the first port in the range for TCP or UDP protocols.
+        See examples.
+    default: []
     required: false
   ingress:
     description:
-      - List of rules for incoming traffic.
-      - Each rule must be specified as a list.
+      - List of rules for incoming traffic. Each rule must be specified as a list.
+        Each rule may contain the rule number (integer 1-32766), protocol (one of ['tcp', 'udp', 'icmp', '-1', 'all']),
+        the rule action ('allow' or 'deny') the CIDR of the IPv4 network range to allow or deny,
+        the ICMP type (-1 means all types), the ICMP code (-1 means all codes), the last port in the range for
+        TCP or UDP protocols, and the first port in the range for TCP or UDP protocols.
+        See examples.
+    default: []
     required: false
   tags:
     description:
@@ -62,8 +72,10 @@ options:
     required: false
     choices: ['present', 'absent']
     default: present
-author: Mike Mochan(@mmochan)
-extends_documentation_fragment: aws
+author: Mike Mochan (@mmochan)
+extends_documentation_fragment:
+    - aws
+    - ec2
 requirements: [ botocore, boto3, json ]
 '''
 
@@ -81,16 +93,14 @@ EXAMPLES = '''
       CostCode: CC1234
       Project: phoenix
       Description: production DMZ
-    ingress: [
-        # rule no, protocol, allow/deny, cidr, icmp_code, icmp_type,
+    ingress:
+        # rule no, protocol, allow/deny, cidr, icmp_type, icmp_code,
         #                                             port from, port to
-        [100, 'tcp', 'allow', '0.0.0.0/0', null, null, 22, 22],
-        [200, 'tcp', 'allow', '0.0.0.0/0', null, null, 80, 80],
-        [300, 'icmp', 'allow', '0.0.0.0/0', 0, 8],
-    ]
-    egress: [
-        [100, 'all', 'allow', '0.0.0.0/0', null, null, null, null]
-    ]
+        - [100, 'tcp', 'allow', '0.0.0.0/0', null, null, 22, 22]
+        - [200, 'tcp', 'allow', '0.0.0.0/0', null, null, 80, 80]
+        - [300, 'icmp', 'allow', '0.0.0.0/0', 0, 8]
+    egress:
+        - [100, 'all', 'allow', '0.0.0.0/0', null, null, null, null]
     state: 'present'
 
 - name: "Remove the ingress and egress rules - defaults to deny all"
@@ -129,7 +139,7 @@ RETURN = '''
 task:
   description: The result of the create, or delete action.
   returned: success
-  type: dictionary
+  type: dict
 '''
 
 try:
@@ -139,27 +149,17 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
+import traceback
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
 
-
-# Common fields for the default rule that is contained within every VPC NACL.
-DEFAULT_RULE_FIELDS = {
-    'RuleNumber': 32767,
-    'RuleAction': 'deny',
-    'CidrBlock':  '0.0.0.0/0',
-    'Protocol': '-1'
-}
-
-DEFAULT_INGRESS = dict(list(DEFAULT_RULE_FIELDS.items()) + [('Egress', False)])
-DEFAULT_EGRESS = dict(list(DEFAULT_RULE_FIELDS.items()) + [('Egress', True)])
 
 # VPC-supported IANA protocol numbers
 # http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml
 PROTOCOL_NUMBERS = {'all': -1, 'icmp': 1, 'tcp': 6, 'udp': 17, }
 
 
-#Utility methods
+# Utility methods
 def icmp_present(entry):
     if len(entry) == 6 and entry[1] == 'icmp' or entry[1] == 1:
         return True
@@ -225,10 +225,8 @@ def nacls_changed(nacl, client, module):
     nacl_id = nacl['NetworkAcls'][0]['NetworkAclId']
     nacl = describe_network_acl(client, module)
     entries = nacl['NetworkAcls'][0]['Entries']
-    tmp_egress = [entry for entry in entries if entry['Egress'] is True and DEFAULT_EGRESS !=entry]
-    tmp_ingress = [entry for entry in entries if entry['Egress'] is False]
-    egress = [rule for rule in tmp_egress if DEFAULT_EGRESS != rule]
-    ingress = [rule for rule in tmp_ingress if DEFAULT_INGRESS != rule]
+    egress = [rule for rule in entries if rule['Egress'] is True and rule['RuleNumber'] < 32767]
+    ingress = [rule for rule in entries if rule['Egress'] is False and rule['RuleNumber'] < 32767]
     if rules_changed(egress, params['egress'], True, nacl_id, client, module):
         changed = True
     if rules_changed(ingress, params['ingress'], False, nacl_id, client, module):
@@ -241,7 +239,8 @@ def tags_changed(nacl_id, client, module):
     tags = dict()
     if module.params.get('tags'):
         tags = module.params.get('tags')
-    tags['Name'] = module.params.get('name')
+    if module.params.get('name') and not tags.get('Name'):
+        tags['Name'] = module.params['name']
     nacl = find_acl_by_id(nacl_id, client, module)
     if nacl['NetworkAcls']:
         nacl_values = [t.values() for t in nacl['NetworkAcls'][0]['Tags']]
@@ -321,7 +320,7 @@ def construct_acl_entries(nacl, client, module):
         create_network_acl_entry(params, client, module)
 
 
-## Module invocations
+# Module invocations
 def setup_network_acl(client, module):
     changed = False
     nacl = describe_network_acl(client, module)
@@ -372,7 +371,7 @@ def remove_network_acl(client, module):
     return changed, result
 
 
-#Boto3 client methods
+# Boto3 client methods
 def create_network_acl(vpc_id, client, module):
     try:
         if module.check_mode:
@@ -497,7 +496,6 @@ def replace_network_acl_association(nacl_id, subnets, client, module):
 
 
 def replace_network_acl_entry(entries, Egress, nacl_id, client, module):
-    params = dict()
     for entry in entries:
         params = entry
         params['NetworkAclId'] = nacl_id
@@ -520,19 +518,22 @@ def subnets_to_associate(nacl, client, module):
     params = list(module.params.get('subnets'))
     if not params:
         return []
-    if params[0].startswith("subnet-"):
+    all_found = []
+    if any(x.startswith("subnet-") for x in params):
         try:
             subnets = client.describe_subnets(Filters=[
                 {'Name': 'subnet-id', 'Values': params}])
+            all_found.extend(subnets.get('Subnets', []))
         except botocore.exceptions.ClientError as e:
-            module.fail_json(msg=str(e))
-    else:
+            module.fail_json(msg=str(e), exception=traceback.format_exc())
+    if len(params) != len(all_found):
         try:
             subnets = client.describe_subnets(Filters=[
                 {'Name': 'tag:Name', 'Values': params}])
+            all_found.extend(subnets.get('Subnets', []))
         except botocore.exceptions.ClientError as e:
-            module.fail_json(msg=str(e))
-    return [s['SubnetId'] for s in subnets['Subnets'] if s['SubnetId']]
+            module.fail_json(msg=str(e), exception=traceback.format_exc())
+    return list(set(s['SubnetId'] for s in all_found if s.get('SubnetId')))
 
 
 def main():
@@ -544,9 +545,9 @@ def main():
         subnets=dict(required=False, type='list', default=list()),
         tags=dict(required=False, type='dict'),
         ingress=dict(required=False, type='list', default=list()),
-        egress=dict(required=False, type='list', default=list(),),
+        egress=dict(required=False, type='list', default=list()),
         state=dict(default='present', choices=['present', 'absent']),
-        ),
+    ),
     )
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True,

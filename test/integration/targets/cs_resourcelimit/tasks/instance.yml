@@ -9,7 +9,7 @@
 - name: verify setup instance limits account
   assert:
     that:
-    - rl|success
+    - rl is successful
     - rl.domain == "{{ cs_resource_prefix }}-domain"
     - rl.account == "{{ cs_resource_prefix }}_user"
     - rl.limit == 20
@@ -25,7 +25,7 @@
 - name: verify set instance limits for domain in check mode
   assert:
     that:
-    - rl|changed
+    - rl is changed
     - rl.domain == "{{ cs_resource_prefix }}-domain"
     - rl.limit == 20
     - rl.resource_type == "instance"
@@ -39,7 +39,7 @@
 - name: verify set instance limits for domain
   assert:
     that:
-    - rl|changed
+    - rl is changed
     - rl.domain == "{{ cs_resource_prefix }}-domain"
     - rl.limit == 12
     - rl.resource_type == "instance"
@@ -53,7 +53,7 @@
 - name: verify set instance limits for domain
   assert:
     that:
-    - not rl|changed
+    - rl is not changed
     - rl.domain == "{{ cs_resource_prefix }}-domain"
     - rl.limit == 12
     - rl.resource_type == "instance"
@@ -69,7 +69,7 @@
 - name: verify set instance limits for account in check mode
   assert:
     that:
-    - rl|changed
+    - rl is changed
     - rl.domain == "{{ cs_resource_prefix }}-domain"
     - rl.account == "{{ cs_resource_prefix }}_user"
     - rl.limit != 10
@@ -85,7 +85,7 @@
 - name: verify set instance limits for account
   assert:
     that:
-    - rl|changed
+    - rl is changed
     - rl.domain == "{{ cs_resource_prefix }}-domain"
     - rl.account == "{{ cs_resource_prefix }}_user"
     - rl.limit == 10
@@ -101,7 +101,7 @@
 - name: verify set instance limits for account idempotence
   assert:
     that:
-    - not rl|changed
+    - rl is not changed
     - rl.domain == "{{ cs_resource_prefix }}-domain"
     - rl.account == "{{ cs_resource_prefix }}_user"
     - rl.limit == 10

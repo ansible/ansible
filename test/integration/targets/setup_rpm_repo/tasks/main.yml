@@ -1,0 +1,119 @@
+- block:
+  - name: Install epel repo which is missing on rhel-7 and is needed for rpmfluff
+    package:
+      name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+    when:
+      - ansible_distribution in ['RedHat']
+      - ansible_distribution_major_version is version('7', '==')
+
+  - name: Install rpmfluff and deps
+    package:
+      name: "{{ item }}"
+    with_items:
+      - python{{ ansible_python_version.split(".")[0] }}-rpmfluff
+      - createrepo
+    when:
+      - ansible_distribution in ['Fedora']
+
+  - name: Install rpmfluff and deps
+    package:
+      name: "{{ item }}"
+    with_items:
+      - python-rpmfluff
+      - createrepo_c
+      - createrepo  # used by el6 version of rpmfluff
+    when:
+      - ansible_distribution not in ['Fedora']
+      - ansible_python["version"]["major"] == 2
+
+  - name: Install rpmfluff and deps
+    package:
+      name: "{{ item }}"
+    with_items:
+      - python3-rpmfluff
+      - createrepo_c
+      - createrepo  # used by el6 version of rpmfluff
+    when:
+      - ansible_distribution not in ['Fedora']
+      - ansible_python["version"]["major"] == 3
+      - not (ansible_distribution == 'RedHat' and ansible_distribution_major_version is version('8', '>='))
+
+  - name: Install rpmfluff from pip on RHEL 8 and later
+    pip:
+      name: rpmfluff
+    when:
+      - ansible_distribution == 'RedHat' and ansible_distribution_major_version is version('8', '>=')
+
+  - name: Install packages needed on RHEL 8 and later
+    dnf:
+      name: "{{ item }}"
+    with_items:
+      - createrepo_c
+      - rpm-build
+    when:
+      - ansible_distribution == 'RedHat' and ansible_distribution_major_version is version('8', '>=')
+
+  - name: Copy script for creating a repo
+    copy:
+      src: create-repo.py
+      dest: /tmp/create-repo.py
+      mode: 0755
+
+  - name: Create RPMs and put them into a repo
+    shell: "{{ansible_python_interpreter}} /tmp/create-repo.py {{ ansible_architecture }}"
+    register: repo
+
+  - set_fact:
+      repodir: "{{ repo.stdout_lines[-1] }}"
+
+  - name: Install the repo
+    yum_repository:
+      name: "fake-{{ ansible_architecture }}"
+      description: "fake-{{ ansible_architecture }}"
+      baseurl: "file://{{ repodir }}"
+      gpgcheck: no
+
+  - name: Copy comps.xml file
+    copy:
+      src: comps.xml
+      dest: "{{ repodir }}"
+    register: repodir_comps
+
+  - name: Register comps.xml on repo
+    command: createrepo -g {{ repodir_comps.dest | quote }} {{ repodir | quote }}
+
+  - name: Create RPMs and put them into a repo (i686)
+    shell: "{{ansible_python_interpreter}} /tmp/create-repo.py i686"
+    register: repo_i686
+
+  - set_fact:
+      repodir_i686: "{{ repo_i686.stdout_lines[-1] }}"
+
+  - name: Install the repo (i686)
+    yum_repository:
+      name: "fake-i686"
+      description: "fake-i686"
+      baseurl: "file://{{ repodir_i686 }}"
+      gpgcheck: no
+
+  - name: Create RPMs and put them into a repo (ppc64)
+    shell: "{{ansible_python_interpreter}} /tmp/create-repo.py ppc64"
+    register: repo_ppc64
+
+  - set_fact:
+      repodir_ppc64: "{{ repo_ppc64.stdout_lines[-1] }}"
+
+  - name: Install the repo (ppc64)
+    yum_repository:
+      name: "fake-ppc64"
+      description: "fake-ppc64"
+      baseurl: "file://{{ repodir_ppc64 }}"
+      gpgcheck: no
+
+  - set_fact:
+      repos:
+        - "fake-{{ ansible_architecture }}"
+        - "fake-i686"
+        - "fake-ppc64"
+
+  when: ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux', 'Fedora']

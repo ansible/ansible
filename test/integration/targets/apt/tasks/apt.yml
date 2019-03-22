@@ -1,15 +1,22 @@
-- name: show python version
-  debug: var=ansible_python_version
-
 - name: use python-apt
   set_fact:
     python_apt: python-apt
-  when: ansible_python_version | version_compare('3', '<')
+  when: ansible_python_version is version('3', '<')
 
 - name: use python3-apt
   set_fact:
     python_apt: python3-apt
-  when: ansible_python_version | version_compare('3', '>=')
+  when: ansible_python_version is version('3', '>=')
+
+- name: use Debian mirror
+  set_fact:
+    distro_mirror: http://ftp.debian.org/debian
+  when: ansible_distribution == 'Debian'
+
+- name: use Ubuntu mirror
+  set_fact:
+    distro_mirror: http://archive.ubuntu.com/ubuntu
+  when: ansible_distribution == 'Ubuntu'
 
 # UNINSTALL 'python-apt'
 #  The `apt` module has the smarts to auto-install `python-apt`.  To test, we
@@ -22,7 +29,7 @@
 - name: uninstall {{ python_apt }} with apt
   apt: pkg={{ python_apt }} state=absent purge=yes
   register: apt_result
-  when: dpkg_result|success
+  when: dpkg_result is successful
 
 # UNINSTALL 'hello'
 #   With 'python-apt' uninstalled, the first call to 'apt' should install
@@ -61,9 +68,6 @@
   shell: dpkg-query -l hello
   failed_when: False
   register: dpkg_result
-
-- debug: var=apt_result
-- debug: var=dpkg_result
 
 - name: verify installation of hello
   assert:
@@ -104,9 +108,6 @@
   failed_when: False
   register: dpkg_result
 
-- debug: var=apt_result
-- debug: var=dpkg_result
-
 - name: verify installation of hello
   assert:
     that:
@@ -141,6 +142,18 @@
 - name: uninstall hello with apt
   apt: pkg=hello state=absent purge=yes
 
+- name: install deb file from URL
+  apt: deb="{{ distro_mirror }}/pool/main/h/hello/hello_{{ hello_version.stdout }}_{{ hello_architecture.stdout }}.deb"
+  register: apt_url
+
+- name: verify installation of hello
+  assert:
+    that:
+        - "apt_url.changed"
+
+- name: uninstall hello with apt
+  apt: pkg=hello state=absent purge=yes
+
 - name: force install of deb
   apt: deb="/var/cache/apt/archives/hello_{{ hello_version.stdout }}_{{ hello_architecture.stdout }}.deb" force=true
   register: dpkg_force
@@ -165,8 +178,142 @@
 - name: autoclean during install
   apt: pkg=hello state=present autoclean=yes
 
-- name: autoclean
-  apt: autoclean=yes
+# https://github.com/ansible/ansible/issues/23155
+- name: create a repo file
+  copy:
+    dest: /etc/apt/sources.list.d/non-existing.list
+    content: deb http://ppa.launchpad.net/non-existing trusty main
 
-- name: autoremove
-  apt: autoremove=yes
+- name: test for sane error message
+  apt:
+    update_cache: yes
+  register: apt_result
+  ignore_errors: yes
+
+- name: verify sane error message
+  assert:
+    that:
+      - "'Failed to fetch' in apt_result['msg']"
+      - "'403' in apt_result['msg']"
+
+- name: Clean up
+  file:
+    name: /etc/apt/sources.list.d/non-existing.list
+    state: absent
+
+# https://github.com/ansible/ansible/issues/28907
+- name: Install parent package
+  apt:
+    name: libcaca-dev
+
+- name: Install child package
+  apt:
+    name: libslang2-dev
+
+- shell: apt-mark showmanual | grep libcaca-dev
+  ignore_errors: yes
+  register: parent_output
+
+- name: Check that parent package is marked as installed manually
+  assert:
+    that:
+      - "'libcaca-dev' in parent_output.stdout"
+
+- shell: apt-mark showmanual | grep libslang2-dev
+  ignore_errors: yes
+  register: child_output
+
+- name: Check that child package is marked as installed manually
+  assert:
+    that:
+      - "'libslang2-dev' in child_output.stdout"
+
+- name: Clean up
+  apt:
+    name: "{{ item }}"
+    state: absent
+  with_items:
+    - libcaca-dev
+    - libslang2-dev
+
+# https://github.com/ansible/ansible/issues/38995
+- name: build-dep for a package
+  apt:
+    name: tree
+    state: build-dep
+  register: apt_result
+
+- name: Check the result
+  assert:
+    that:
+      - apt_result is changed
+
+- name: build-dep for a package (idempotency)
+  apt:
+    name: tree
+    state: build-dep
+  register: apt_result
+
+- name: Check the result
+  assert:
+    that:
+      - apt_result is not changed
+
+# check policy_rc_d parameter 
+
+- name: Install unscd but forbid service start
+  apt:
+    name: unscd
+    policy_rc_d: 101
+
+- name: Stop unscd service
+  service:
+    name: unscd
+    state: stopped
+  register: service_unscd_stop
+
+- name: unscd service shouldn't have been stopped by previous task
+  assert:
+    that: service_unscd_stop is not changed
+
+- name: Uninstall unscd
+  apt:
+    name: unscd
+    policy_rc_d: 101
+
+- name: Create incorrect /usr/sbin/policy-rc.d
+  copy:
+    dest: /usr/sbin/policy-rc.d
+    content: apt integration test
+    mode: 0755
+
+- name: Install unscd but forbid service start
+  apt:
+    name: unscd
+    policy_rc_d: 101
+
+- name: Stop unscd service
+  service:
+    name: unscd
+    state: stopped
+  register: service_unscd_stop
+
+- name: unscd service shouldn't have been stopped by previous task
+  assert:
+    that: service_unscd_stop is not changed
+
+- name: Create incorrect /usr/sbin/policy-rc.d
+  copy:
+    dest: /usr/sbin/policy-rc.d
+    content: apt integration test
+    mode: 0755
+  register: policy_rc_d
+
+- name: Check if /usr/sbin/policy-rc.d was correctly backed-up during unscd install
+  assert:
+    that: policy_rc_d is not changed
+
+- name: Delete /usr/sbin/policy-rc.d
+  file:
+    path: /usr/sbin/policy-rc.d
+    state: absent

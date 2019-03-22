@@ -42,9 +42,13 @@ class TerminalModule(TerminalBase):
         re.compile(br"invalid input", re.I),
         re.compile(br"(?:incomplete|ambiguous) command", re.I),
         re.compile(br"connection timed out", re.I),
-        re.compile(br"[^\r\n]+ not found", re.I),
+        # Strings like this regarding VLANs are not errors
+        re.compile(br"[^\r\n]+ not found(?! in current VLAN)", re.I),
         re.compile(br"'[^']' +returned error code: ?\d+"),
-        re.compile(br"[^\r\n]\/bin\/(?:ba)?sh")
+        re.compile(br"[^\r\n](?<! shell )\/bin\/(?:ba)?sh"),
+        re.compile(br"% More than \d+ OSPF instance", re.I),
+        re.compile(br"% Subnet [0-9a-f.:/]+ overlaps", re.I),
+        re.compile(br"Maximum number of pending sessions has been reached"),
     ]
 
     def on_open_shell(self):
@@ -54,7 +58,7 @@ class TerminalModule(TerminalBase):
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to set terminal parameters')
 
-    def on_authorize(self, passwd=None):
+    def on_become(self, passwd=None):
         if self._get_prompt().endswith(b'#'):
             return
 
@@ -62,13 +66,18 @@ class TerminalModule(TerminalBase):
         if passwd:
             cmd[u'prompt'] = to_text(r"[\r\n]?password: $", errors='surrogate_or_strict')
             cmd[u'answer'] = passwd
+            cmd[u'prompt_retry_check'] = True
 
         try:
             self._exec_cli_command(to_bytes(json.dumps(cmd), errors='surrogate_or_strict'))
-        except AnsibleConnectionFailure:
-            raise AnsibleConnectionFailure('unable to elevate privilege to enable mode')
+            prompt = self._get_prompt()
+            if prompt is None or not prompt.endswith(b'#'):
+                raise AnsibleConnectionFailure('failed to elevate privilege to enable mode still at prompt [%s]' % prompt)
+        except AnsibleConnectionFailure as e:
+            prompt = self._get_prompt()
+            raise AnsibleConnectionFailure('unable to elevate privilege to enable mode, at prompt [%s] with error: %s' % (prompt, e.message))
 
-    def on_deauthorize(self):
+    def on_unbecome(self):
         prompt = self._get_prompt()
         if prompt is None:
             # if prompt is None most likely the terminal is hung up at a prompt

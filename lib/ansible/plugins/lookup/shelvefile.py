@@ -10,16 +10,16 @@ DOCUMENTATION = """
     version_added: "2.0"
     short_description: read keys from Python shelve file
     description:
-    optoins:
+      - Read keys from Python shelve file.
+    options:
       _terms:
         description: sets of key value pairs of parameters
-        options:
-          key:
-            description: key to query
-            required: True
-          file:
-            description: path to shelve file
-            required: True
+      key:
+        description: key to query
+        required: True
+      file:
+        description: path to shelve file
+        required: True
 """
 
 EXAMPLES = """
@@ -33,7 +33,7 @@ _list:
 """
 import shelve
 
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.plugins.lookup import LookupBase
 from ansible.module_utils._text import to_bytes, to_text
 
@@ -63,7 +63,8 @@ class LookupModule(LookupBase):
             try:
                 for param in params:
                     name, value = param.split('=')
-                    assert(name in paramvals)
+                    if name not in paramvals:
+                        raise AnsibleAssertionError('%s not in paramvals' % name)
                     paramvals[name] = value
 
             except (ValueError, AssertionError) as e:

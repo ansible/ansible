@@ -28,12 +28,11 @@ short_description: Manages BGP Address-family configuration on HUAWEI CloudEngin
 description:
     - Manages BGP Address-family configurations on HUAWEI CloudEngine switches.
 author:
-    - wangdezhuang (@CloudEngine-Ansible)
+    - wangdezhuang (@QijunPan)
 options:
     state:
         description:
             - Specify desired state of the resource.
-        required: false
         default: present
         choices: ['present','absent']
     vrf_name:
@@ -51,64 +50,50 @@ options:
         description:
             - Specify the maximum number of equal-cost IBGP routes.
               The value is an integer ranging from 1 to 65535.
-        required: false
-        default: null
     ibgp_ecmp_nexthop_changed:
         description:
             - If the value is true, the next hop of an advertised route is changed to the advertiser itself in IBGP
               load-balancing scenarios.
               If the value is false, the next hop of an advertised route is not changed to the advertiser itself in
               IBGP load-balancing scenarios.
-        required: false
         choices: ['no_use','true','false']
         default: no_use
     max_load_ebgp_num:
         description:
             - Specify the maximum number of equal-cost EBGP routes.
               The value is an integer ranging from 1 to 65535.
-        required: false
-        default: null
     ebgp_ecmp_nexthop_changed:
         description:
             - If the value is true, the next hop of an advertised route is changed to the advertiser itself in EBGP
               load-balancing scenarios.
               If the value is false, the next hop of an advertised route is not changed to the advertiser itself in
               EBGP load-balancing scenarios.
-        required: false
         choices: ['no_use','true','false']
         default: no_use
     maximum_load_balance:
         description:
             - Specify the maximum number of equal-cost routes in the BGP routing table.
               The value is an integer ranging from 1 to 65535.
-        required: false
-        default: null
     ecmp_nexthop_changed:
         description:
             - If the value is true, the next hop of an advertised route is changed to the advertiser itself in BGP
               load-balancing scenarios.
               If the value is false, the next hop of an advertised route is not changed to the advertiser itself
               in BGP load-balancing scenarios.
-        required: false
         choices: ['no_use','true','false']
         default: no_use
     default_local_pref:
         description:
             - Set the Local-Preference attribute. The value is an integer.
               The value is an integer ranging from 0 to 4294967295.
-        required: false
-        default: null
     default_med:
         description:
             - Specify the Multi-Exit-Discriminator (MED) of BGP routes.
               The value is an integer ranging from 0 to 4294967295.
-        required: false
-        default: null
     default_rt_import_enable:
         description:
             - If the value is true, importing default routes to the BGP routing table is allowed.
               If the value is false, importing default routes to the BGP routing table is not allowed.
-        required: false
         choices: ['no_use','true','false']
         default: no_use
     router_id:
@@ -116,60 +101,49 @@ options:
             - ID of a router that is in IPv4 address format.
               The value is a string of 0 to 255 characters.
               The value is in dotted decimal notation.
-        required: false
-        default: null
     vrf_rid_auto_sel:
         description:
             - If the value is true, VPN BGP instances are enabled to automatically select router IDs.
               If the value is false, VPN BGP instances are disabled from automatically selecting router IDs.
-        required: false
         choices: ['no_use','true','false']
         default: no_use
     nexthop_third_party:
         description:
             - If the value is true, the third-party next hop function is enabled.
               If the value is false, the third-party next hop function is disabled.
-        required: false
         choices: ['no_use','true','false']
         default: no_use
     summary_automatic:
         description:
             - If the value is true, automatic aggregation is enabled for locally imported routes.
               If the value is false, automatic aggregation is disabled for locally imported routes.
-        required: false
         choices: ['no_use','true','false']
         default: no_use
     auto_frr_enable:
         description:
             - If the value is true, BGP auto FRR is enabled.
               If the value is false, BGP auto FRR is disabled.
-        required: false
         choices: ['no_use','true','false']
         default: no_use
     load_balancing_as_path_ignore:
         description:
             - Load balancing as path ignore.
-        required: false
         choices: ['no_use','true','false']
         default: no_use
     rib_only_enable:
         description:
             - If the value is true, BGP routes cannot be advertised to the IP routing table.
               If the value is false, Routes preferred by BGP are advertised to the IP routing table.
-        required: false
         choices: ['no_use','true','false']
         default: no_use
     rib_only_policy_name:
         description:
             - Specify the name of a routing policy.
               The value is a string of 1 to 40 characters.
-        required: false
-        default: null
     active_route_advertise:
         description:
             - If the value is true, BGP is enabled to advertise only optimal routes in the RM to peers.
               If the value is false, BGP is not enabled to advertise only optimal routes in the RM to peers.
-        required: false
         choices: ['no_use','true','false']
         default: no_use
     as_path_neglect:
@@ -177,7 +151,6 @@ options:
             - If the value is true, the AS path attribute is ignored when BGP selects an optimal route.
               If the value is false, the AS path attribute is not ignored when BGP selects an optimal route.
               An AS path with a smaller length has a higher priority.
-        required: false
         choices: ['no_use','true','false']
         default: no_use
     med_none_as_maximum:
@@ -186,14 +159,12 @@ options:
               MED value of a route if the route's attribute does not carry a MED value.
               If the value is false, the system uses 0 as the MED value of a route if the route's attribute
               does not carry a MED value.
-        required: false
         choices: ['no_use','true','false']
         default: no_use
     router_id_neglect:
         description:
             - If the value is true, the router ID attribute is ignored when BGP selects the optimal route.
               If the value is false, the router ID attribute is not ignored when BGP selects the optimal route.
-        required: false
         choices: ['no_use','true','false']
         default: no_use
     igp_metric_ignore:
@@ -203,7 +174,6 @@ options:
               If the value is false, the metrics of next-hop IGP routes are not compared when BGP selects
               an optimal route.
               A route with a smaller metric has a higher priority.
-        required: false
         choices: ['no_use','true','false']
         default: no_use
     always_compare_med:
@@ -212,91 +182,69 @@ options:
               are compared when BGP selects an optimal route.
               If the value is false, the MEDs of routes learned from peers in different autonomous systems
               are not compared when BGP selects an optimal route.
-        required: false
         choices: ['no_use','true','false']
         default: no_use
     determin_med:
         description:
             - If the value is true, BGP deterministic-MED is enabled.
               If the value is false, BGP deterministic-MED is disabled.
-        required: false
         choices: ['no_use','true','false']
         default: no_use
     preference_external:
         description:
             - Set the protocol priority of EBGP routes.
               The value is an integer ranging from 1 to 255.
-        required: false
-        default: null
     preference_internal:
         description:
             - Set the protocol priority of IBGP routes.
               The value is an integer ranging from 1 to 255.
-        required: false
-        default: null
     preference_local:
         description:
             - Set the protocol priority of a local BGP route.
               The value is an integer ranging from 1 to 255.
-        required: false
-        default: null
     prefrence_policy_name:
         description:
             - Set a routing policy to filter routes so that a configured priority is applied to
               the routes that match the specified policy.
               The value is a string of 1 to 40 characters.
-        required: false
-        default: null
     reflect_between_client:
         description:
             - If the value is true, route reflection is enabled between clients.
               If the value is false, route reflection is disabled between clients.
-        required: false
         choices: ['no_use','true','false']
         default: no_use
     reflector_cluster_id:
         description:
             - Set a cluster ID. Configuring multiple RRs in a cluster can enhance the stability of the network.
               The value is an integer ranging from 1 to 4294967295.
-        required: false
-        default: null
     reflector_cluster_ipv4:
         description:
             - Set a cluster ipv4 address. The value is expressed in the format of an IPv4 address.
-        required: false
-        default: null
     rr_filter_number:
         description:
             - Set the number of the extended community filter supported by an RR group.
               The value is a string of 1 to 51 characters.
-        required: false
-        default: null
     policy_vpn_target:
         description:
             - If the value is true, VPN-Target filtering function is performed for received VPN routes.
               If the value is false, VPN-Target filtering function is not performed for received VPN routes.
-        required: false
         choices: ['no_use','true','false']
         default: no_use
     next_hop_sel_depend_type:
         description:
             - Next hop select depend type.
-        required: false
         choices: ['default','dependTunnel', 'dependIp']
         default: default
     nhp_relay_route_policy_name:
         description:
             - Specify the name of a route-policy for route iteration.
               The value is a string of 1 to 40 characters.
-        required: false
-        default: null
     ebgp_if_sensitive:
         description:
             - If the value is true, after the fast EBGP interface awareness function is enabled,
               EBGP sessions on an interface are deleted immediately when the interface goes Down.
               If the value is false, after the fast EBGP interface awareness function is enabled,
               EBGP sessions on an interface are not deleted immediately when the interface goes Down.
-        required: false
         choices: ['no_use','true','false']
         default: no_use
     reflect_chg_path:
@@ -305,99 +253,77 @@ options:
               based on an export policy.
               If the value is false, the route reflector is disabled from modifying route path attributes
               based on an export policy.
-        required: false
         choices: ['no_use','true','false']
         default: no_use
     add_path_sel_num:
         description:
             - Number of Add-Path routes.
               The value is an integer ranging from 2 to 64.
-        required: false
-        default: null
     route_sel_delay:
         description:
             - Route selection delay.
               The value is an integer ranging from 0 to 3600.
-        required: false
-        default: null
     allow_invalid_as:
         description:
             - Allow routes with BGP origin AS validation result Invalid to be selected.
               If the value is true, invalid routes can participate in route selection.
               If the value is false, invalid routes cannot participate in route selection.
-        required: false
         choices: ['no_use','true','false']
         default: no_use
     policy_ext_comm_enable:
         description:
             - If the value is true, modifying extended community attributes is allowed.
               If the value is false, modifying extended community attributes is not allowed.
-        required: false
         choices: ['no_use','true','false']
         default: no_use
     supernet_uni_adv:
         description:
             - If the value is true, the function to advertise supernetwork unicast routes is enabled.
               If the value is false, the function to advertise supernetwork unicast routes is disabled.
-        required: false
         choices: ['no_use','true','false']
         default: no_use
     supernet_label_adv:
         description:
             - If the value is true, the function to advertise supernetwork label is enabled.
               If the value is false, the function to advertise supernetwork label is disabled.
-        required: false
         choices: ['no_use','true','false']
         default: no_use
     ingress_lsp_policy_name:
         description:
             - Ingress lsp policy name.
-        required: false
-        default: null
     originator_prior:
         description:
             - Originator prior.
-        required: false
         choices: ['no_use','true','false']
         default: no_use
     lowest_priority:
         description:
             - If the value is true, enable reduce priority to advertise route.
               If the value is false, disable reduce priority to advertise route.
-        required: false
         choices: ['no_use','true','false']
         default: no_use
     relay_delay_enable:
         description:
             - If the value is true, relay delay enable.
               If the value is false, relay delay disable.
-        required: false
         choices: ['no_use','true','false']
         default: no_use
     import_protocol:
         description:
             - Routing protocol from which routes can be imported.
-        required: false
         choices: ['direct', 'ospf', 'isis', 'static', 'rip', 'ospfv3', 'ripng']
-        default: null
     import_process_id:
         description:
             - Process ID of an imported routing protocol.
               The value is an integer ranging from 0 to 4294967295.
-        required: false
-        default: null
     network_address:
         description:
             - Specify the IP address advertised by BGP.
               The value is a string of 0 to 255 characters.
-        required: false
-        default: null
     mask_len:
         description:
             - Specify the mask length of an IP address.
               The value is an integer ranging from 0 to 128.
-        required: false
-        default: null
 '''
 
 EXAMPLES = '''
@@ -471,7 +397,7 @@ RETURN = '''
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 proposed:
     description: k/v pairs of parameters passed into module
@@ -498,7 +424,7 @@ updates:
 
 import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_nc_config, set_nc_config, ce_argument_spec, check_ip_addr
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec, check_ip_addr
 
 # get bgp address family
 CE_GET_BGP_ADDRESS_FAMILY_HEADER = """

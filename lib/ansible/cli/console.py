@@ -1,19 +1,7 @@
-# (c) 2014, Nandor Sivok <dominis@haxor.hu>
-# (c) 2016, Redhat Inc
-#
-# ansible-console is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# ansible-console is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright: (c) 2014, Nandor Sivok <dominis@haxor.hu>
+# Copyright: (c) 2016, Redhat Inc
+# Copyright: (c) 2018, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -37,22 +25,20 @@ import os
 import sys
 
 from ansible import constants as C
+from ansible import context
 from ansible.cli import CLI
-from ansible.errors import AnsibleError
+from ansible.cli.arguments import optparse_helpers as opt_help
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.parsing.splitter import parse_kv
 from ansible.playbook.play import Play
-from ansible.plugins.loader import module_loader
+from ansible.plugins.loader import module_loader, fragment_loader
 from ansible.utils import plugin_docs
 from ansible.utils.color import stringc
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class ConsoleCLI(CLI, cmd.Cmd):
@@ -61,6 +47,9 @@ class ConsoleCLI(CLI, cmd.Cmd):
     modules = []
     ARGUMENTS = {'host-pattern': 'A name of a group in the inventory, a shell-like glob '
                                  'selecting hosts in inventory or any combination of the two separated by commas.'}
+
+    # use specific to console, but fallback to highlight for backwards compatibility
+    NORMAL_PROMPT = C.COLOR_CONSOLE_PROMPT or C.COLOR_HIGHLIGHT
 
     def __init__(self, args):
 
@@ -76,32 +65,43 @@ class ConsoleCLI(CLI, cmd.Cmd):
         self.passwords = dict()
 
         self.modules = None
+        self.cwd = '*'
+
+        # Defaults for these are set from the CLI in run()
+        self.remote_user = None
+        self.become = None
+        self.become_user = None
+        self.become_method = None
+        self.check_mode = None
+        self.diff = None
+        self.forks = None
+
         cmd.Cmd.__init__(self)
 
-    def parse(self):
-        self.parser = CLI.base_parser(
+    def init_parser(self):
+        super(ConsoleCLI, self).init_parser(
             usage='%prog [<host-pattern>] [options]',
-            runas_opts=True,
-            inventory_opts=True,
-            connect_opts=True,
-            check_opts=True,
-            vault_opts=True,
-            fork_opts=True,
-            module_opts=True,
             desc="REPL console for executing Ansible tasks.",
             epilog="This is not a live session/connection, each task executes in the background and returns it's results."
         )
+        opt_help.add_runas_options(self.parser)
+        opt_help.add_inventory_options(self.parser)
+        opt_help.add_connect_options(self.parser)
+        opt_help.add_check_options(self.parser)
+        opt_help.add_vault_options(self.parser)
+        opt_help.add_fork_options(self.parser)
+        opt_help.add_module_options(self.parser)
+        opt_help.add_basedir_options(self.parser)
 
         # options unique to shell
         self.parser.add_option('--step', dest='step', action='store_true',
                                help="one-step-at-a-time: confirm each task before running")
 
-        self.parser.set_defaults(cwd='*')
-
-        super(ConsoleCLI, self).parse()
-
-        display.verbosity = self.options.verbosity
-        self.validate_conflicts(runas_opts=True, vault_opts=True, fork_opts=True)
+    def post_process_args(self, options, args):
+        options, args = super(ConsoleCLI, self).post_process_args(options, args)
+        display.verbosity = options.verbosity
+        self.validate_conflicts(options, runas_opts=True, vault_opts=True, fork_opts=True)
+        return options, args
 
     def get_names(self):
         return dir(self)
@@ -113,22 +113,23 @@ class ConsoleCLI(CLI, cmd.Cmd):
             self.do_exit(self)
 
     def set_prompt(self):
-        login_user = self.options.remote_user or getpass.getuser()
-        self.selected = self.inventory.list_hosts(self.options.cwd)
-        prompt = "%s@%s (%d)[f:%s]" % (login_user, self.options.cwd, len(self.selected), self.options.forks)
-        if self.options.become and self.options.become_user in [None, 'root']:
+        login_user = self.remote_user or getpass.getuser()
+        self.selected = self.inventory.list_hosts(self.cwd)
+        prompt = "%s@%s (%d)[f:%s]" % (login_user, self.cwd, len(self.selected), self.forks)
+        if self.become and self.become_user in [None, 'root']:
             prompt += "# "
             color = C.COLOR_ERROR
         else:
             prompt += "$ "
-            color = C.COLOR_HIGHLIGHT
+            color = self.NORMAL_PROMPT
         self.prompt = stringc(prompt, color)
 
     def list_modules(self):
         modules = set()
-        if self.options.module_path is not None:
-            for i in self.options.module_path.split(os.pathsep):
-                module_loader.add_directory(i)
+        if context.CLIARGS['module_path']:
+            for path in context.CLIARGS['module_path']:
+                if path:
+                    module_loader.add_directory(path)
 
         module_paths = module_loader._get_paths()
         for path in module_paths:
@@ -164,7 +165,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
         if arg.startswith("#"):
             return False
 
-        if not self.options.cwd:
+        if not self.cwd:
             display.error("No host found")
             return False
 
@@ -179,16 +180,20 @@ class ConsoleCLI(CLI, cmd.Cmd):
             module = 'shell'
             module_args = arg
 
-        self.options.module_name = module
-
         result = None
         try:
-            check_raw = self.options.module_name in ('command', 'shell', 'script', 'raw')
+            check_raw = module in ('command', 'shell', 'script', 'raw')
             play_ds = dict(
                 name="Ansible Shell",
-                hosts=self.options.cwd,
+                hosts=self.cwd,
                 gather_facts='no',
-                tasks=[dict(action=dict(module=module, args=parse_kv(module_args, check_raw=check_raw)))]
+                tasks=[dict(action=dict(module=module, args=parse_kv(module_args, check_raw=check_raw)))],
+                remote_user=self.remote_user,
+                become=self.become,
+                become_user=self.become_user,
+                become_method=self.become_method,
+                check_mode=self.check_mode,
+                diff=self.diff,
             )
             play = Play().load(play_ds, variable_manager=self.variable_manager, loader=self.loader)
         except Exception as e:
@@ -204,11 +209,11 @@ class ConsoleCLI(CLI, cmd.Cmd):
                     inventory=self.inventory,
                     variable_manager=self.variable_manager,
                     loader=self.loader,
-                    options=self.options,
                     passwords=self.passwords,
                     stdout_callback=cb,
                     run_additional_callbacks=C.DEFAULT_LOAD_CALLBACK_PLUGINS,
                     run_tree=False,
+                    forks=self.forks,
                 )
 
                 result = self._tqm.run(play)
@@ -251,7 +256,13 @@ class ConsoleCLI(CLI, cmd.Cmd):
         if not arg:
             display.display('Usage: forks <number>')
             return
-        self.options.forks = int(arg)
+
+        forks = int(arg)
+        if forks <= 0:
+            display.display('forks must be greater than or equal to 1')
+            return
+
+        self.forks = forks
         self.set_prompt()
 
     do_serial = do_forks
@@ -274,11 +285,11 @@ class ConsoleCLI(CLI, cmd.Cmd):
             cd webservers:dbservers:&staging:!phoenix
         """
         if not arg:
-            self.options.cwd = '*'
+            self.cwd = '*'
         elif arg in '/*':
-            self.options.cwd = 'all'
+            self.cwd = 'all'
         elif self.inventory.get_hosts(arg):
-            self.options.cwd = arg
+            self.cwd = arg
         else:
             display.display("no host matched")
 
@@ -296,8 +307,8 @@ class ConsoleCLI(CLI, cmd.Cmd):
     def do_become(self, arg):
         """Toggle whether plays run with become"""
         if arg:
-            self.options.become = boolean(arg, strict=False)
-            display.v("become changed to %s" % self.options.become)
+            self.become = boolean(arg, strict=False)
+            display.v("become changed to %s" % self.become)
             self.set_prompt()
         else:
             display.display("Please specify become value, e.g. `become yes`")
@@ -305,7 +316,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
     def do_remote_user(self, arg):
         """Given a username, set the remote user plays are run by"""
         if arg:
-            self.options.remote_user = arg
+            self.remote_user = arg
             self.set_prompt()
         else:
             display.display("Please specify a remote user, e.g. `remote_user root`")
@@ -313,33 +324,33 @@ class ConsoleCLI(CLI, cmd.Cmd):
     def do_become_user(self, arg):
         """Given a username, set the user that plays are run by when using become"""
         if arg:
-            self.options.become_user = arg
+            self.become_user = arg
         else:
             display.display("Please specify a user, e.g. `become_user jenkins`")
-            display.v("Current user is %s" % self.options.become_user)
+            display.v("Current user is %s" % self.become_user)
         self.set_prompt()
 
     def do_become_method(self, arg):
         """Given a become_method, set the privilege escalation method when using become"""
         if arg:
-            self.options.become_method = arg
-            display.v("become_method changed to %s" % self.options.become_method)
+            self.become_method = arg
+            display.v("become_method changed to %s" % self.become_method)
         else:
             display.display("Please specify a become_method, e.g. `become_method su`")
 
     def do_check(self, arg):
         """Toggle whether plays run with check mode"""
         if arg:
-            self.options.check = boolean(arg, strict=False)
-            display.v("check mode changed to %s" % self.options.check)
+            self.check_mode = boolean(arg, strict=False)
+            display.v("check mode changed to %s" % self.check_mode)
         else:
             display.display("Please specify check mode value, e.g. `check yes`")
 
     def do_diff(self, arg):
         """Toggle whether plays run with diff"""
         if arg:
-            self.options.diff = boolean(arg, strict=False)
-            display.v("diff mode changed to %s" % self.options.diff)
+            self.diff = boolean(arg, strict=False)
+            display.v("diff mode changed to %s" % self.diff)
         else:
             display.display("Please specify a diff value , e.g. `diff yes`")
 
@@ -354,12 +365,12 @@ class ConsoleCLI(CLI, cmd.Cmd):
         if module_name in self.modules:
             in_path = module_loader.find_plugin(module_name)
             if in_path:
-                oc, a, _, _ = plugin_docs.get_docstring(in_path)
+                oc, a, _, _ = plugin_docs.get_docstring(in_path, fragment_loader)
                 if oc:
                     display.display(oc['short_description'])
                     display.display('Parameters:')
                     for opt in oc['options'].keys():
-                        display.display('  ' + stringc(opt, C.COLOR_HIGHLIGHT) + ' ' + oc['options'][opt]['description'][0])
+                        display.display('  ' + stringc(opt, self.NORMAL_PROMPT) + ' ' + oc['options'][opt]['description'][0])
                 else:
                     display.error('No documentation found for %s.' % module_name)
             else:
@@ -369,10 +380,10 @@ class ConsoleCLI(CLI, cmd.Cmd):
         mline = line.partition(' ')[2]
         offs = len(mline) - len(text)
 
-        if self.options.cwd in ('all', '*', '\\'):
+        if self.cwd in ('all', '*', '\\'):
             completions = self.hosts + self.groups
         else:
-            completions = [x.name for x in self.inventory.list_hosts(self.options.cwd)]
+            completions = [x.name for x in self.inventory.list_hosts(self.cwd)]
 
         return [to_native(s)[offs:] for s in completions if to_native(s).startswith(to_native(mline))]
 
@@ -386,7 +397,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
     def module_args(self, module_name):
         in_path = module_loader.find_plugin(module_name)
-        oc, a, _, _ = plugin_docs.get_docstring(in_path)
+        oc, a, _, _ = plugin_docs.get_docstring(in_path, fragment_loader)
         return list(oc['options'].keys())
 
     def run(self):
@@ -397,11 +408,20 @@ class ConsoleCLI(CLI, cmd.Cmd):
         becomepass = None
 
         # hosts
-        if len(self.args) != 1:
+        if len(context.CLIARGS['args']) != 1:
             self.pattern = 'all'
         else:
-            self.pattern = self.args[0]
-        self.options.cwd = self.pattern
+            self.pattern = context.CLIARGS['args'][0]
+        self.cwd = self.pattern
+
+        # Defaults from the command line
+        self.remote_user = context.CLIARGS['remote_user']
+        self.become = context.CLIARGS['become']
+        self.become_user = context.CLIARGS['become_user']
+        self.become_method = context.CLIARGS['become_method']
+        self.check_mode = context.CLIARGS['check']
+        self.diff = context.CLIARGS['diff']
+        self.forks = context.CLIARGS['forks']
 
         # dynamically add modules as commands
         self.modules = self.list_modules()
@@ -409,31 +429,12 @@ class ConsoleCLI(CLI, cmd.Cmd):
             setattr(self, 'do_' + module, lambda arg, module=module: self.default(module + ' ' + arg))
             setattr(self, 'help_' + module, lambda module=module: self.helpdefault(module))
 
-        self.normalize_become_options()
         (sshpass, becomepass) = self.ask_passwords()
         self.passwords = {'conn_pass': sshpass, 'become_pass': becomepass}
 
-        self.loader, self.inventory, self.variable_manager = self._play_prereqs(self.options)
+        self.loader, self.inventory, self.variable_manager = self._play_prereqs()
 
-        default_vault_ids = C.DEFAULT_VAULT_IDENTITY_LIST
-        vault_ids = self.options.vault_ids
-        vault_ids = default_vault_ids + vault_ids
-        vault_secrets = self.setup_vault_secrets(self.loader,
-                                                 vault_ids=vault_ids,
-                                                 vault_password_files=self.options.vault_password_files,
-                                                 ask_vault_pass=self.options.ask_vault_pass)
-        self.loader.set_vault_secrets(vault_secrets)
-
-        no_hosts = False
-        if len(self.inventory.list_hosts()) == 0:
-            # Empty inventory
-            no_hosts = True
-            display.warning("provided hosts list is empty, only localhost is available")
-
-        self.inventory.subset(self.options.subset)
-        hosts = self.inventory.list_hosts(self.pattern)
-        if len(hosts) == 0 and not no_hosts:
-            raise AnsibleError("Specified hosts and/or --limit does not match any hosts")
+        hosts = self.get_host_list(self.inventory, context.CLIARGS['subset'], self.pattern)
 
         self.groups = self.inventory.list_groups()
         self.hosts = [x.name for x in hosts]

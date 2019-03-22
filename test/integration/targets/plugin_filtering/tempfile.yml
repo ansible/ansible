@@ -1,0 +1,9 @@
+---
+- hosts: testhost
+  gather_facts: False
+  tasks:
+  - tempfile:
+    register: temp_result
+  - file:
+      state: absent
+      path: '{{ temp_result["path"] }}'

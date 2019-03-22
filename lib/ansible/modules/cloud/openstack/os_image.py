@@ -2,21 +2,13 @@
 
 # Copyright (c) 2015 Hewlett-Packard Development Company, L.P.
 # Copyright (c) 2013, Benno Joy <benno@ansible.com>
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-#TODO(mordred): we need to support "location"(v1) and "locations"(v2)
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+# TODO(mordred): we need to support "location"(v1) and "locations"(v2)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -35,70 +27,50 @@ description:
 options:
    name:
      description:
-        - Name that has to be given to the image
+        - The name of the image when uploading - or the name/ID of the image if deleting
      required: true
-     default: None
    id:
      version_added: "2.4"
      description:
-        - The Id of the image
-     required: false
-     default: None
+        - The ID of the image when uploading an image
    checksum:
      version_added: "2.5"
      description:
         - The checksum of the image
-     required: false
-     default: None
    disk_format:
      description:
         - The format of the disk that is getting uploaded
-     required: false
      default: qcow2
    container_format:
      description:
         - The format of the container
-     required: false
      default: bare
    owner:
      description:
         - The owner of the image
-     required: false
-     default: None
    min_disk:
      description:
         - The minimum disk space (in GB) required to boot this image
-     required: false
-     default: None
    min_ram:
      description:
         - The minimum ram (in MB) required to boot this image
-     required: false
-     default: None
    is_public:
      description:
         - Whether the image can be accessed publicly. Note that publicizing an image requires admin role by default.
-     required: false
+     type: bool
      default: 'yes'
    filename:
      description:
         - The path to the file which has to be uploaded
-     required: false
-     default: None
    ramdisk:
      description:
         - The name of an existing ramdisk image that will be associated with this image
-     required: false
-     default: None
    kernel:
      description:
         - The name of an existing kernel image that will be associated with this image
-     required: false
-     default: None
    properties:
      description:
         - Additional properties to be associated with this image
-     required: false
      default: {}
    state:
      description:
@@ -108,15 +80,14 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
-requirements: ["shade"]
+requirements: ["openstacksdk"]
 '''
 
 EXAMPLES = '''
 # Upload an image from a local file named cirros-0.3.0-x86_64-disk.img
 - os_image:
     auth:
-      auth_url: http://localhost/auth/v2.0
+      auth_url: https://identity.example.com
       username: admin
       password: passme
       project_name: admin
@@ -132,49 +103,43 @@ EXAMPLES = '''
       distro: ubuntu
 '''
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def main():
 
     argument_spec = openstack_full_argument_spec(
-        name              = dict(required=True),
-        id                = dict(default=None),
-        checksum          = dict(default=None),
-        disk_format       = dict(default='qcow2', choices=['ami', 'ari', 'aki', 'vhd', 'vmdk', 'raw', 'qcow2', 'vdi', 'iso', 'vhdx', 'ploop']),
-        container_format  = dict(default='bare', choices=['ami', 'aki', 'ari', 'bare', 'ovf', 'ova', 'docker']),
-        owner             = dict(default=None),
-        min_disk          = dict(type='int', default=0),
-        min_ram           = dict(type='int', default=0),
-        is_public         = dict(type='bool', default=False),
-        filename          = dict(default=None),
-        ramdisk           = dict(default=None),
-        kernel            = dict(default=None),
-        properties        = dict(type='dict', default={}),
-        state             = dict(default='present', choices=['absent', 'present']),
+        name=dict(required=True),
+        id=dict(default=None),
+        checksum=dict(default=None),
+        disk_format=dict(default='qcow2', choices=['ami', 'ari', 'aki', 'vhd', 'vmdk', 'raw', 'qcow2', 'vdi', 'iso', 'vhdx', 'ploop']),
+        container_format=dict(default='bare', choices=['ami', 'aki', 'ari', 'bare', 'ovf', 'ova', 'docker']),
+        owner=dict(default=None),
+        min_disk=dict(type='int', default=0),
+        min_ram=dict(type='int', default=0),
+        is_public=dict(type='bool', default=False),
+        filename=dict(default=None),
+        ramdisk=dict(default=None),
+        kernel=dict(default=None),
+        properties=dict(type='dict', default={}),
+        state=dict(default='present', choices=['absent', 'present']),
     )
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.openstack_cloud(**module.params)
 
         changed = False
         if module.params['checksum']:
-            image = cloud.get_image(name_or_id=None,filters={'checksum': module.params['checksum']})
+            image = cloud.get_image(name_or_id=None, filters={'checksum': module.params['checksum']})
         else:
             image = cloud.get_image(name_or_id=module.params['name'])
 
         if module.params['state'] == 'present':
             if not image:
-                kwargs={}
+                kwargs = {}
                 if module.params['id'] is not None:
                     kwargs['id'] = module.params['id']
                 image = cloud.create_image(
@@ -212,12 +177,9 @@ def main():
                 changed = True
             module.exit_json(changed=changed)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e), extra_data=e.extra_data)
 
-# this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
 
 if __name__ == "__main__":
     main()

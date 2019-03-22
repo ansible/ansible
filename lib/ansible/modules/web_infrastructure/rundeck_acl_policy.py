@@ -88,7 +88,7 @@ RETURN = '''
 rundeck_response:
     description: Rundeck response when a failure occurs.
     returned: failed
-    type: string
+    type: str
 before:
     description: dictionnary containing ACL policy informations before modification.
     returned: success
@@ -102,6 +102,7 @@ after:
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
+from ansible.module_utils._text import to_text
 import json
 
 
@@ -130,9 +131,9 @@ class RundeckACLManager:
         self.handle_http_code_if_needed(info)
         if resp is not None:
             resp = resp.read()
-            if resp != "":
+            if resp != b"":
                 try:
-                    json_resp = json.loads(resp)
+                    json_resp = json.loads(to_text(resp, errors='surrogate_or_strict'))
                     return json_resp, info
                 except ValueError as e:
                     self.module.fail_json(msg="Rundeck response was not a valid JSON. Exception was: %s. "
@@ -219,6 +220,7 @@ def main():
         rundeck.create_or_update_acl()
     elif module.params['state'] == 'absent':
         rundeck.remove_acl()
+
 
 if __name__ == '__main__':
     main()

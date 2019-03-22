@@ -1,5 +1,5 @@
 ---
-- debug: msg="START netconf_xml/bad_operator.yaml"
+- debug: msg="START netconf_xml/bad_operator.yaml on connection={{ ansible_connection }}"
 
 - name: test bad operator with xml encoding
   junos_command:
@@ -18,4 +18,4 @@
       - "result.failed == true"
       - "result.msg is defined"
 
-- debug: msg="END netconf_xml/bad_operator.yaml"
+- debug: msg="END netconf_xml/bad_operator.yaml on connection={{ ansible_connection }}"

@@ -1,11 +1,11 @@
 #!powershell
-# This file is part of Ansible
 
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-#Requires -Module Ansible.ModuleUtils.Legacy.psm1
-#Requires -Module Ansible.ModuleUtils.CommandUtil.psm1
+#Requires -Module Ansible.ModuleUtils.Legacy
+#Requires -Module Ansible.ModuleUtils.CommandUtil
+#Requires -Module Ansible.ModuleUtils.FileUtil
 
 # TODO: add check mode support
 
@@ -18,6 +18,7 @@ $raw_command_line = Get-AnsibleParam -obj $params -name "_raw_params" -type "str
 $chdir = Get-AnsibleParam -obj $params -name "chdir" -type "path"
 $creates = Get-AnsibleParam -obj $params -name "creates" -type "path"
 $removes = Get-AnsibleParam -obj $params -name "removes" -type "path"
+$stdin = Get-AnsibleParam -obj $params -name "stdin" -type 'str"'
 
 $raw_command_line = $raw_command_line.Trim()
 
@@ -26,17 +27,27 @@ $result = @{
     cmd = $raw_command_line
 }
 
-If($creates -and $(Test-Path -Path $creates)) {
+if ($creates -and $(Test-AnsiblePath -Path $creates)) {
     Exit-Json @{msg="skipped, since $creates exists";cmd=$raw_command_line;changed=$false;skipped=$true;rc=0}
 }
 
-If($removes -and -not $(Test-Path -Path $removes)) {
+if ($removes -and -not $(Test-AnsiblePath -Path $removes)) {
     Exit-Json @{msg="skipped, since $removes does not exist";cmd=$raw_command_line;changed=$false;skipped=$true;rc=0}
+}
+
+$command_args = @{
+    command = $raw_command_line
+}
+if ($chdir) {
+    $command_args['working_directory'] = $chdir
+}
+if ($stdin) {
+    $command_args['stdin'] = $stdin
 }
 
 $start_datetime = [DateTime]::UtcNow
 try {
-    $command_result = Run-Command -command $raw_command_line -working_directory $chdir
+    $command_result = Run-Command @command_args
 } catch {
     $result.changed = $false
     try {

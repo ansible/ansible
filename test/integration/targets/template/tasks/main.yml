@@ -32,24 +32,42 @@
   template: src=foo.j2 dest={{output_dir}}/foo.templated mode=0644
   register: template_result
 
-- assert: 
-    that: 
-        - "'changed' in template_result" 
-        - "'dest' in template_result" 
-        - "'group' in template_result" 
-        - "'gid' in template_result" 
-        - "'md5sum' in template_result" 
+- assert:
+    that:
+        - "'changed' in template_result"
+        - "'dest' in template_result"
+        - "'group' in template_result"
+        - "'gid' in template_result"
+        - "'md5sum' in template_result"
         - "'checksum' in template_result"
-        - "'owner' in template_result" 
-        - "'size' in template_result" 
-        - "'src' in template_result" 
-        - "'state' in template_result" 
-        - "'uid' in template_result" 
+        - "'owner' in template_result"
+        - "'size' in template_result"
+        - "'src' in template_result"
+        - "'state' in template_result"
+        - "'uid' in template_result"
 
 - name: verify that the file was marked as changed
-  assert: 
-    that: 
+  assert:
+    that:
       - "template_result.changed == true"
+
+# Basic template with non-ascii names
+- name: Check that non-ascii source and dest work
+  template:
+    src: 'café.j2'
+    dest: '{{ output_dir }}/café.txt'
+  register: template_results
+
+- name: Check that the resulting file exists
+  stat:
+    path: '{{ output_dir }}/café.txt'
+  register: stat_results
+
+- name: Check that template created the right file
+  assert:
+    that:
+      - 'template_results is changed'
+      - 'stat_results.stat["exists"]'
 
 # test for import with context on jinja-2.9 See https://github.com/ansible/ansible/issues/20494
 - name: fill in a template using import with context ala issue 20494
@@ -68,6 +86,21 @@
     that:
         - 'diff_result.stdout == ""'
         - "diff_result.rc == 0"
+
+# test for nested include https://github.com/ansible/ansible/issues/34886
+- name: test if parent variables are defined in nested include
+  template: src=for_loop.j2 dest={{output_dir}}/for_loop.templated mode=0644
+
+- name: save templated output
+  shell: "cat {{output_dir}}/for_loop.templated"
+  register: for_loop_out
+- debug: var=for_loop_out
+- name: verify variables got templated
+  assert:
+    that:
+        - '"foo" in for_loop_out.stdout'
+        - '"bar" in for_loop_out.stdout'
+        - '"bam" in for_loop_out.stdout'
 
 # test for 'import as' on jinja-2.9 See https://github.com/ansible/ansible/issues/20494
 - name: fill in a template using import as ala fails2 case in issue 20494
@@ -104,6 +137,93 @@
     that:
         - 'import_as_with_context_diff_result.stdout == ""'
         - "import_as_with_context_diff_result.rc == 0"
+
+# VERIFY trim_blocks
+
+- name: Render a template with "trim_blocks" set to False
+  template:
+    src: trim_blocks.j2
+    dest: "{{output_dir}}/trim_blocks_false.templated"
+    trim_blocks: False
+  register: trim_blocks_false_result
+
+- name: Get checksum of known good trim_blocks_false.expected
+  stat:
+    path: "{{role_path}}/files/trim_blocks_false.expected"
+  register: trim_blocks_false_good
+
+- name: Verify templated trim_blocks_false matches known good using checksum
+  assert:
+    that:
+        - "trim_blocks_false_result.checksum == trim_blocks_false_good.stat.checksum"
+
+- name: Render a template with "trim_blocks" set to True
+  template:
+    src: trim_blocks.j2
+    dest: "{{output_dir}}/trim_blocks_true.templated"
+    trim_blocks: True
+  register: trim_blocks_true_result
+
+- name: Get checksum of known good trim_blocks_true.expected
+  stat:
+    path: "{{role_path}}/files/trim_blocks_true.expected"
+  register: trim_blocks_true_good
+
+- name: Verify templated trim_blocks_true matches known good using checksum
+  assert:
+    that:
+        - "trim_blocks_true_result.checksum == trim_blocks_true_good.stat.checksum"
+
+# VERIFY lstrip_blocks
+
+- name: Check support for lstrip_blocks in Jinja2
+  shell: "{{ ansible_python.executable }} -c 'import jinja2; jinja2.defaults.LSTRIP_BLOCKS'"
+  register: lstrip_block_support
+  ignore_errors: True
+
+- name: Render a template with "lstrip_blocks" set to False
+  template:
+    src: lstrip_blocks.j2
+    dest: "{{output_dir}}/lstrip_blocks_false.templated"
+    lstrip_blocks: False
+  register: lstrip_blocks_false_result
+
+- name: Get checksum of known good lstrip_blocks_false.expected
+  stat:
+    path: "{{role_path}}/files/lstrip_blocks_false.expected"
+  register: lstrip_blocks_false_good
+
+- name: Verify templated lstrip_blocks_false matches known good using checksum
+  assert:
+    that:
+        - "lstrip_blocks_false_result.checksum == lstrip_blocks_false_good.stat.checksum"
+
+- name: Render a template with "lstrip_blocks" set to True
+  template:
+    src: lstrip_blocks.j2
+    dest: "{{output_dir}}/lstrip_blocks_true.templated"
+    lstrip_blocks: True
+  register: lstrip_blocks_true_result
+  ignore_errors: True
+
+- name: Verify exception is thrown if Jinja2 does not support lstrip_blocks but lstrip_blocks is used
+  assert:
+    that:
+      - "lstrip_blocks_true_result.failed"
+      - 'lstrip_blocks_true_result.msg is search(">=2.7")'
+  when: "lstrip_block_support is failed"
+
+- name: Get checksum of known good lstrip_blocks_true.expected
+  stat:
+    path: "{{role_path}}/files/lstrip_blocks_true.expected"
+  register: lstrip_blocks_true_good
+  when: "lstrip_block_support is successful"
+
+- name: Verify templated lstrip_blocks_true matches known good using checksum
+  assert:
+    that:
+        - "lstrip_blocks_true_result.checksum == lstrip_blocks_true_good.stat.checksum"
+  when: "lstrip_block_support is successful"
 
 # VERIFY CONTENTS
 
@@ -258,10 +378,10 @@
   register: templated
 
 - name: verify that the file was marked as changed in check mode but was not created
-  assert: 
-    that: 
+  assert:
+    that:
       - "not templated.stat.exists"
-      - "template_result|changed"
+      - "template_result is changed"
 
 - name: fill in a basic template
   template: src=short.j2 dest={{output_dir}}/short.templated
@@ -272,13 +392,13 @@
   check_mode: True
 
 - name: verify that the file was marked as not changes in check mode
-  assert: 
-    that: 
-      - "not template_result|changed"
+  assert:
+    that:
+      - "template_result is not changed"
       - "'templated_var_loaded' in lookup('file', '{{output_dir | expanduser}}/short.templated')"
 
 - name: change var for the template
-  set_fact: 
+  set_fact:
     templated_var: "changed"
 
 - name: fill in a basic template with changed var in check mode
@@ -287,10 +407,10 @@
   check_mode: True
 
 - name: verify that the file was marked as changed in check mode but the content was not changed
-  assert: 
-    that: 
+  assert:
+    that:
       - "'templated_var_loaded' in lookup('file', '{{output_dir | expanduser }}/short.templated')"
-      - "template_result|changed"
+      - "template_result is changed"
 
 # Create a template using a child template, to ensure that variables
 # are passed properly from the parent to subtemplate context (issue #20063)
@@ -304,7 +424,7 @@
 - name: verify that the parent and subtemplate creation worked
   assert:
     that:
-    - "template_result|changed"
+    - "template_result is changed"
 
 #
 # template module can overwrite a file that's been hard linked
@@ -368,7 +488,7 @@
 - name: verify that the file was marked as changed (Unix)
   assert:
     that:
-      - 'template_result|changed'
+      - 'template_result is changed'
 
 - name: fill in a basic template again (Unix)
   template:
@@ -379,7 +499,7 @@
 - name: verify that the template was not changed (Unix)
   assert:
     that:
-      - 'not template_result2|changed'
+      - 'template_result2 is not changed'
 
 # VERIFY UNIX CONTENTS
 - name: copy known good into place (Unix)
@@ -414,7 +534,7 @@
 - name: verify that the file was marked as changed (DOS)
   assert:
     that:
-      - 'template_result|changed'
+      - 'template_result is changed'
 
 - name: fill in a basic template again (DOS)
   template:
@@ -426,7 +546,7 @@
 - name: verify that the template was not changed (DOS)
   assert:
     that:
-      - 'not template_result2|changed'
+      - 'template_result2 is not changed'
 
 # VERIFY DOS CONTENTS
 - name: copy known good into place (DOS)
@@ -467,6 +587,99 @@
   register: diff_result
 
 - name: verify templated file matches known good (Unix)
+  assert:
+    that:
+        - 'diff_result.stdout == ""'
+        - "diff_result.rc == 0"
+
+# Check that mode=preserve works with template
+- name: Create a template which has strange permissions
+  copy:
+    content: !unsafe '{{ ansible_managed }}\n'
+    dest: '{{ output_dir }}/foo-template.j2'
+    mode: 0547
+  delegate_to: localhost
+
+- name: Use template with mode=preserve
+  template:
+    src: '{{ output_dir }}/foo-template.j2'
+    dest: '{{ output_dir }}/foo-templated.txt'
+    mode: 'preserve'
+  register: template_results
+
+- name: Get permissions from the templated file
+  stat:
+    path: '{{ output_dir }}/foo-templated.txt'
+  register: stat_results
+
+- name: Check that the resulting file has the correct permissions
+  assert:
+    that:
+      - 'template_results is changed'
+      - 'template_results.mode == "0547"'
+      - 'stat_results.stat["mode"] == "0547"'
+
+# Test output_encoding
+- name: Prepare the list of encodings we want to check, including empty string for defaults
+  set_fact:
+    template_encoding_1252_encodings: ['', 'utf-8', 'windows-1252']
+
+- name: Copy known good encoding_1252_*.expected into place
+  copy:
+    src: 'encoding_1252_{{ item | default("utf-8", true) }}.expected'
+    dest: '{{ output_dir }}/encoding_1252_{{ item }}.expected'
+  loop: '{{ template_encoding_1252_encodings }}'
+
+- name: Generate the encoding_1252_* files from templates using various encoding combinations
+  template:
+    src: 'encoding_1252.j2'
+    dest: '{{ output_dir }}/encoding_1252_{{ item }}.txt'
+    output_encoding: '{{ item }}'
+  loop: '{{ template_encoding_1252_encodings }}'
+
+- name: Compare the encoding_1252_* templated files to known good
+  command: diff -u {{ output_dir }}/encoding_1252_{{ item }}.expected {{ output_dir }}/encoding_1252_{{ item }}.txt
+  register: encoding_1252_diff_result
+  loop: '{{ template_encoding_1252_encodings }}'
+
+- name: Check that nested undefined values return Undefined
+  vars:
+    dict_var:
+      bar: {}
+    list_var:
+      - foo: {}
+  assert:
+    that:
+      - dict_var is defined
+      - dict_var.bar is defined
+      - dict_var.bar.baz is not defined
+      - dict_var.bar.baz | default('DEFAULT') == 'DEFAULT'
+      - dict_var.bar.baz.abc is not defined
+      - dict_var.bar.baz.abc | default('DEFAULT') == 'DEFAULT'
+      - dict_var.baz is not defined
+      - dict_var.baz.abc is not defined
+      - dict_var.baz.abc | default('DEFAULT') == 'DEFAULT'
+      - list_var.0 is defined
+      - list_var.1 is not defined
+      - list_var.0.foo is defined
+      - list_var.0.foo.bar is not defined
+      - list_var.0.foo.bar | default('DEFAULT') == 'DEFAULT'
+      - list_var.1.foo is not defined
+      - list_var.1.foo | default('DEFAULT') == 'DEFAULT'
+
+- template:
+    src: template_destpath_test.j2
+    dest: "{{ output_dir }}/template_destpath.templated"
+
+- copy:
+    content: "{{ output_dir}}/template_destpath.templated\n"
+    dest: "{{ output_dir }}/template_destpath.expected"
+
+- name: compare templated file to known good template_destpath
+  shell: diff -uw {{output_dir}}/template_destpath.templated {{output_dir}}/template_destpath.expected
+  register: diff_result
+
+- name: verify templated template_destpath matches known good
   assert:
     that:
         - 'diff_result.stdout == ""'

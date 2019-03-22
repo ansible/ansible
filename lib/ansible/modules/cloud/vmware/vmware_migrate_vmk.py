@@ -1,17 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2015, Joseph Callen <jcallen () csc.com>
+# Copyright: (c) 2015, Joseph Callen <jcallen () csc.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -20,7 +18,9 @@ short_description: Migrate a VMK interface from VSS to VDS
 description:
     - Migrate a VMK interface from VSS to VDS
 version_added: 2.0
-author: "Joseph Callen (@jcpowermac), Russell Teague (@mtnbikenc)"
+author:
+- Joseph Callen (@jcpowermac)
+- Russell Teague (@mtnbikenc)
 notes:
     - Tested on vSphere 5.5
 requirements:
@@ -55,20 +55,18 @@ extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-# Example from Ansible playbook
-
-    - name: Migrate Management vmk
-      local_action:
-        module: vmware_migrate_vmk
-        hostname: vcsa_host
-        username: vcsa_user
-        password: vcsa_pass
-        esxi_hostname: esxi_hostname
-        device: vmk1
-        current_switch_name: temp_vswitch
-        current_portgroup_name: esx-mgmt
-        migrate_switch_name: dvSwitch
-        migrate_portgroup_name: Management
+- name: Migrate Management vmk
+  vmware_migrate_vmk:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    esxi_hostname: "{{ esxi_hostname }}"
+    device: vmk1
+    current_switch_name: temp_vswitch
+    current_portgroup_name: esx-mgmt
+    migrate_switch_name: dvSwitch
+    migrate_portgroup_name: Management
+  delegate_to: localhost
 '''
 try:
     from pyVmomi import vim, vmodl
@@ -82,6 +80,7 @@ from ansible.module_utils.vmware import (vmware_argument_spec, find_dvs_by_name,
 
 
 class VMwareMigrateVmk(object):
+
     def __init__(self, module):
         self.module = module
         self.host_system = None
@@ -158,7 +157,7 @@ class VMwareMigrateVmk(object):
 
         for vnic in self.host_system.configManager.networkSystem.networkInfo.vnic:
             if vnic.device == self.device:
-                #self.vnic = vnic
+                # self.vnic = vnic
                 if vnic.spec.distributedVirtualPort is None:
                     if vnic.portgroup == self.current_portgroup_name:
                         return "migrate_vss_vds"

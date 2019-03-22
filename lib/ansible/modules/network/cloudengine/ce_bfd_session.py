@@ -28,62 +28,48 @@ short_description: Manages BFD session configuration on HUAWEI CloudEngine devic
 description:
     - Manages BFD session configuration, creates a BFD session or deletes a specified BFD session
       on HUAWEI CloudEngine devices.
-author: QijunPan (@CloudEngine-Ansible)
+author: QijunPan (@QijunPan)
 options:
     session_name:
         description:
             - Specifies the name of a BFD session.
               The value is a string of 1 to 15 case-sensitive characters without spaces.
         required: true
-        default: null
     create_type:
         description:
             - BFD session creation mode, the currently created BFD session
               only supports static or static auto-negotiation mode.
-        required: false
-        default: null
         choices: ['static', 'auto']
     addr_type:
         description:
             - Specifies the peer IP address type.
-        required: false
-        default: null
         choices: ['ipv4']
     out_if_name:
         description:
             - Specifies the type and number of the interface bound to the BFD session.
-        required: false
-        default: null
     dest_addr:
         description:
             - Specifies the peer IP address bound to the BFD session.
-        required: false
-        default: null
     src_addr:
         description:
             - Indicates the source IP address carried in BFD packets.
-        required: false
-        default: null
     vrf_name:
         description:
             - Specifies the name of a Virtual Private Network (VPN) instance that is bound to a BFD session.
               The value is a string of 1 to 31 case-sensitive characters, spaces not supported.
               When double quotation marks are used around the string, spaces are allowed in the string.
               The value _public_ is reserved and cannot be used as the VPN instance name.
-        required: false
-        default: null
     use_default_ip:
         description:
             - Indicates the default multicast IP address that is bound to a BFD session.
               By default, BFD uses the multicast IP address 224.0.0.184.
               You can set the multicast IP address by running the default-ip-address command.
               The value is a bool type.
-        required: false
-        default: false
+        type: bool
+        default: 'no'
     state:
         description:
             - Determines whether the config should be present or not on the device.
-        required: false
         default: present
         choices: ['present', 'absent']
 """
@@ -172,7 +158,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 
@@ -180,7 +166,7 @@ import sys
 import socket
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_nc_config, set_nc_config, ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec, check_ip_addr
 
 
 CE_NC_GET_BFD = """
@@ -225,26 +211,6 @@ def is_valid_ip_vpn(vpname):
 
     if len(vpname) < 1 or len(vpname) > 31:
         return False
-
-    return True
-
-
-def check_ip_addr(ipaddr):
-    """check ip address, Supports IPv4 and IPv6"""
-
-    if not ipaddr or '\x00' in ipaddr:
-        return False
-
-    try:
-        res = socket.getaddrinfo(ipaddr, 0, socket.AF_UNSPEC,
-                                 socket.SOCK_STREAM,
-                                 0, socket.AI_NUMERICHOST)
-        return bool(res)
-    except socket.gaierror:
-        err = sys.exc_info()[1]
-        if err.args[0] == socket.EAI_NONAME:
-            return False
-        raise
 
     return True
 

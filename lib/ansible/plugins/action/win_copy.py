@@ -11,18 +11,20 @@ import base64
 import json
 import os
 import os.path
+import shutil
 import tempfile
 import traceback
 import zipfile
 
-from ansible.errors import AnsibleError
+from ansible import constants as C
+from ansible.errors import AnsibleError, AnsibleFileNotFound
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum
 
 
-def _walk_dirs(topdir, base_path=None, local_follow=False, trailing_slash_detector=None, checksum_check=False):
+def _walk_dirs(topdir, loader, decrypt=True, base_path=None, local_follow=False, trailing_slash_detector=None, checksum_check=False):
     """
     Walk a filesystem tree returning enough information to copy the files.
     This is similar to the _walk_dirs function in ``copy.py`` but returns
@@ -30,6 +32,8 @@ def _walk_dirs(topdir, base_path=None, local_follow=False, trailing_slash_detect
     a local file if wanted.
 
     :arg topdir: The directory that the filesystem tree is rooted at
+    :arg loader: The self._loader object from ActionBase
+    :kwarg decrypt: Whether to decrypt a file encrypted with ansible-vault
     :kwarg base_path: The initial directory structure to strip off of the
         files for the destination directory.  If this is None (the default),
         the base_path is set to ``top_dir``.
@@ -100,7 +104,7 @@ def _walk_dirs(topdir, base_path=None, local_follow=False, trailing_slash_detect
 
                 if os.path.islink(filepath):
                     # Dereference the symlnk
-                    real_file = os.path.realpath(filepath)
+                    real_file = loader.get_real_file(os.path.realpath(filepath), decrypt=decrypt)
                     if local_follow and os.path.isfile(real_file):
                         # Add the file pointed to by the symlink
                         r_files['files'].append(
@@ -115,11 +119,12 @@ def _walk_dirs(topdir, base_path=None, local_follow=False, trailing_slash_detect
                         r_files['symlinks'].append({"src": os.readlink(filepath), "dest": dest_filepath})
                 else:
                     # Just a normal file
+                    real_file = loader.get_real_file(filepath, decrypt=decrypt)
                     r_files['files'].append(
                         {
-                            "src": filepath,
+                            "src": real_file,
                             "dest": dest_filepath,
-                            "checksum": _get_local_checksum(checksum_check, filepath)
+                            "checksum": _get_local_checksum(checksum_check, real_file)
                         }
                     )
 
@@ -215,7 +220,7 @@ class ActionModule(ActionBase):
 
     def _create_content_tempfile(self, content):
         ''' Create a tempfile containing defined content '''
-        fd, content_tempfile = tempfile.mkstemp()
+        fd, content_tempfile = tempfile.mkstemp(dir=C.DEFAULT_LOCAL_TMP)
         f = os.fdopen(fd, 'wb')
         content = to_bytes(content)
         try:
@@ -228,9 +233,9 @@ class ActionModule(ActionBase):
         return content_tempfile
 
     def _create_zip_tempfile(self, files, directories):
-        tmpdir = tempfile.mkdtemp()
+        tmpdir = tempfile.mkdtemp(dir=C.DEFAULT_LOCAL_TMP)
         zip_file_path = os.path.join(tmpdir, "win_copy.zip")
-        zip_file = zipfile.ZipFile(zip_file_path, "w")
+        zip_file = zipfile.ZipFile(zip_file_path, "w", zipfile.ZIP_STORED, True)
 
         # encoding the file/dir name with base64 so Windows can unzip a unicode
         # filename and get the right name, Windows doesn't handle unicode names
@@ -255,14 +260,13 @@ class ActionModule(ActionBase):
         if content is not None:
             os.remove(content_tempfile)
 
-    def _copy_single_file(self, local_file, dest, source_rel, task_vars):
+    def _copy_single_file(self, local_file, dest, source_rel, task_vars, tmp, backup):
         if self._play_context.check_mode:
             module_return = dict(changed=True)
             return module_return
 
         # copy the file across to the server
-        tmp_path = self._make_tmp_path()
-        tmp_src = self._connection._shell.join_path(tmp_path, 'source')
+        tmp_src = self._connection._shell.join_path(tmp, 'source')
         self._transfer_file(local_file, tmp_src)
 
         copy_args = self._task.args.copy()
@@ -270,20 +274,26 @@ class ActionModule(ActionBase):
             dict(
                 dest=dest,
                 src=tmp_src,
-                original_basename=source_rel,
-                mode="single"
+                _original_basename=source_rel,
+                _copy_mode="single",
+                backup=backup,
             )
         )
         copy_args.pop('content', None)
 
-        copy_result = self._execute_module(module_name="copy", module_args=copy_args, task_vars=task_vars)
-        self._remove_tmp_path(tmp_path)
+        copy_result = self._execute_module(module_name="copy",
+                                           module_args=copy_args,
+                                           task_vars=task_vars)
 
         return copy_result
 
-    def _copy_zip_file(self, dest, files, directories, task_vars):
+    def _copy_zip_file(self, dest, files, directories, task_vars, tmp, backup):
         # create local zip file containing all the files and directories that
         # need to be copied to the server
+        if self._play_context.check_mode:
+            module_return = dict(changed=True)
+            return module_return
+
         try:
             zip_file = self._create_zip_tempfile(files, directories)
         except Exception as e:
@@ -297,15 +307,9 @@ class ActionModule(ActionBase):
 
         zip_path = self._loader.get_real_file(zip_file)
 
-        if self._play_context.check_mode:
-            module_return = dict(changed=True)
-            os.remove(zip_path)
-            os.removedirs(os.path.dirname(zip_path))
-            return module_return
-
-        # send zip file to remote, file must end in .zip so Com Shell.Application works
-        tmp_path = self._make_tmp_path()
-        tmp_src = self._connection._shell.join_path(tmp_path, 'source.zip')
+        # send zip file to remote, file must end in .zip so
+        # Com Shell.Application works
+        tmp_src = self._connection._shell.join_path(tmp, 'source.zip')
         self._transfer_file(zip_path, tmp_src)
 
         # run the explode operation of win_copy on remote
@@ -314,15 +318,15 @@ class ActionModule(ActionBase):
             dict(
                 src=tmp_src,
                 dest=dest,
-                mode="explode"
+                _copy_mode="explode",
+                backup=backup,
             )
         )
         copy_args.pop('content', None)
-        os.remove(zip_path)
-        os.removedirs(os.path.dirname(zip_path))
-
-        module_return = self._execute_module(module_args=copy_args, task_vars=task_vars)
-        self._remove_tmp_path(tmp_path)
+        module_return = self._execute_module(module_name='copy',
+                                             module_args=copy_args,
+                                             task_vars=task_vars)
+        shutil.rmtree(os.path.dirname(zip_path))
         return module_return
 
     def run(self, tmp=None, task_vars=None):
@@ -331,13 +335,16 @@ class ActionModule(ActionBase):
             task_vars = dict()
 
         result = super(ActionModule, self).run(tmp, task_vars)
+        del tmp  # tmp no longer has any effect
 
         source = self._task.args.get('src', None)
         content = self._task.args.get('content', None)
         dest = self._task.args.get('dest', None)
         remote_src = boolean(self._task.args.get('remote_src', False), strict=False)
-        follow = boolean(self._task.args.get('follow', False), strict=False)
+        local_follow = boolean(self._task.args.get('local_follow', False), strict=False)
         force = boolean(self._task.args.get('force', True), strict=False)
+        decrypt = boolean(self._task.args.get('decrypt', True), strict=False)
+        backup = boolean(self._task.args.get('backup', False), strict=False)
 
         result['src'] = source
         result['dest'] = dest
@@ -369,17 +376,18 @@ class ActionModule(ActionBase):
                 source = content_tempfile
             except Exception as err:
                 result['failed'] = True
-                result['msg'] = "could not write content temp file: %s" % to_native(err)
+                result['msg'] = "could not write content tmp file: %s" % to_native(err)
                 return result
         # all actions should occur on the remote server, run win_copy module
         elif remote_src:
             new_module_args = self._task.args.copy()
             new_module_args.update(
                 dict(
-                    mode="remote",
+                    _copy_mode="remote",
                     dest=dest,
                     src=source,
-                    force=force
+                    force=force,
+                    backup=backup,
                 )
             )
             new_module_args.pop('content', None)
@@ -412,7 +420,7 @@ class ActionModule(ActionBase):
             result['operation'] = 'folder_copy'
 
             # Get a list of the files we want to replicate on the remote side
-            source_files = _walk_dirs(source, local_follow=follow,
+            source_files = _walk_dirs(source, self._loader, decrypt=decrypt, local_follow=local_follow,
                                       trailing_slash_detector=self._connection._shell.path_has_trailing_slash,
                                       checksum_check=force)
 
@@ -425,6 +433,14 @@ class ActionModule(ActionBase):
         # Source is a file, add details to source_files dict
         else:
             result['operation'] = 'file_copy'
+
+            # If the local file does not exist, get_real_file() raises AnsibleFileNotFound
+            try:
+                source_full = self._loader.get_real_file(source, decrypt=decrypt)
+            except AnsibleFileNotFound as e:
+                result['failed'] = True
+                result['msg'] = "could not find src=%s, %s" % (source_full, to_text(e))
+                return result
 
             original_basename = os.path.basename(source)
             result['original_basename'] = original_basename
@@ -440,58 +456,67 @@ class ActionModule(ActionBase):
                 filename = os.path.basename(unix_path)
                 check_dest = os.path.dirname(unix_path)
 
-            file_checksum = _get_local_checksum(force, source)
+            file_checksum = _get_local_checksum(force, source_full)
             source_files['files'].append(
                 dict(
-                    src=source,
+                    src=source_full,
                     dest=filename,
                     checksum=file_checksum
                 )
             )
             result['checksum'] = file_checksum
-            result['size'] = os.path.getsize(to_bytes(source, errors='surrogate_or_strict'))
+            result['size'] = os.path.getsize(to_bytes(source_full, errors='surrogate_or_strict'))
 
         # find out the files/directories/symlinks that we need to copy to the server
         query_args = self._task.args.copy()
         query_args.update(
             dict(
-                mode="query",
+                _copy_mode="query",
                 dest=check_dest,
                 force=force,
                 files=source_files['files'],
                 directories=source_files['directories'],
-                symlinks=source_files['symlinks']
+                symlinks=source_files['symlinks'],
             )
         )
+        # src is not required for query, will fail path validation is src has unix allowed chars
+        query_args.pop('src', None)
 
         query_args.pop('content', None)
-        query_return = self._execute_module(module_args=query_args, task_vars=task_vars)
+        query_return = self._execute_module(module_args=query_args,
+                                            task_vars=task_vars)
 
         if query_return.get('failed') is True:
             result.update(query_return)
             return result
 
+        if len(query_return['files']) > 0 or len(query_return['directories']) > 0 and self._connection._shell.tmpdir is None:
+            self._connection._shell.tmpdir = self._make_tmp_path()
+
         if len(query_return['files']) == 1 and len(query_return['directories']) == 0:
             # we only need to copy 1 file, don't mess around with zips
             file_src = query_return['files'][0]['src']
             file_dest = query_return['files'][0]['dest']
-            copy_result = self._copy_single_file(file_src, dest, file_dest, task_vars)
-
+            result.update(self._copy_single_file(file_src, dest, file_dest,
+                                                 task_vars, self._connection._shell.tmpdir, backup))
+            if result.get('failed') is True:
+                result['msg'] = "failed to copy file %s: %s" % (file_src, result['msg'])
             result['changed'] = True
-            if copy_result.get('failed') is True:
-                result['failed'] = True
-                result['msg'] = "failed to copy file %s: %s" % (file_src, copy_result['msg'])
+
         elif len(query_return['files']) > 0 or len(query_return['directories']) > 0:
             # either multiple files or directories need to be copied, compress
             # to a zip and 'explode' the zip on the server
             # TODO: handle symlinks
-            result.update(self._copy_zip_file(dest, source_files['files'], source_files['directories'], task_vars))
+            result.update(self._copy_zip_file(dest, source_files['files'],
+                                              source_files['directories'],
+                                              task_vars, self._connection._shell.tmpdir, backup))
             result['changed'] = True
         else:
             # no operations need to occur
             result['failed'] = False
             result['changed'] = False
 
-        # remove the content temp file if it was created
+        # remove the content tmp file and remote tmp file if it was created
         self._remove_tempfile_if_content_defined(content, content_tempfile)
+        self._remove_tmp_path(self._connection._shell.tmpdir)
         return result

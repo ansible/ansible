@@ -1,26 +1,12 @@
 #!/usr/bin/python
 #
-# Created on Aug 25, 2016
 # @author: Gaurav Rastogi (grastogi@avinetworks.com)
 #          Eric Anderson (eanderson@avinetworks.com)
 # module_check: supported
 # Avi Version: 17.1.1
 #
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2017 Gaurav Rastogi, <grastogi@avinetworks.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -30,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: avi_sslprofile
-author: Gaurav Rastogi (grastogi@avinetworks.com)
+author: Gaurav Rastogi (@grastogi23) <grastogi@avinetworks.com>
 
 short_description: Module for setup of SSLProfile Avi RESTful Object
 description:
@@ -43,7 +29,19 @@ options:
         description:
             - The state that should be applied on the entity.
         default: present
-        choices: ["absent","present"]
+        choices: ["absent", "present"]
+    avi_api_update_method:
+        description:
+            - Default method for object update is HTTP PUT.
+            - Setting to patch will override that behavior to use HTTP PATCH.
+        version_added: "2.5"
+        default: put
+        choices: ["put", "patch"]
+    avi_api_patch_op:
+        description:
+            - Patch operation to use when using avi_api_update_method as patch.
+        version_added: "2.5"
+        choices: ["add", "replace", "delete"]
     accepted_ciphers:
         description:
             - Ciphers suites represented as defined by U(http://www.openssl.org/docs/apps/ciphers.html).
@@ -70,6 +68,7 @@ options:
         description:
             - Enable ssl session re-use.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
+        type: bool
     name:
         description:
             - Name of the object.
@@ -78,10 +77,12 @@ options:
         description:
             - Prefer the ssl cipher ordering presented by the client during the ssl handshake over the one specified in the ssl profile.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     send_close_notify:
         description:
             - Send 'close notify' alert message for a clean shutdown of the ssl connection.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
+        type: bool
     ssl_rating:
         description:
             - Sslrating settings for sslprofile.
@@ -89,12 +90,20 @@ options:
         description:
             - The amount of time before an ssl session expires.
             - Default value when not specified in API or module is interpreted by Avi Controller as 86400.
+            - Units(SEC).
     tags:
         description:
             - List of tag.
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
+    type:
+        description:
+            - Ssl profile type.
+            - Enum options - SSL_PROFILE_TYPE_APPLICATION, SSL_PROFILE_TYPE_SYSTEM.
+            - Field introduced in 17.2.8.
+            - Default value when not specified in API or module is interpreted by Avi Controller as SSL_PROFILE_TYPE_APPLICATION.
+        version_added: "2.6"
     url:
         description:
             - Avi controller URL of the object.
@@ -105,13 +114,12 @@ extends_documentation_fragment:
     - avi
 '''
 
-
-EXAMPLES = '''
+EXAMPLES = """
   - name: Create SSL profile with list of allowed ciphers
     avi_sslprofile:
-      controller: ''
-      username: ''
-      password: ''
+      controller: '{{ controller }}'
+      username: '{{ username }}'
+      password: '{{ password }}'
       accepted_ciphers: >
         ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-SHA:ECDHE-ECDSA-AES256-SHA:
         ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-SHA256:ECDHE-ECDSA-AES256-SHA384:
@@ -149,7 +157,8 @@ EXAMPLES = '''
         performance_rating: SSL_SCORE_EXCELLENT
         security_score: '100.0'
       tenant_ref: Demo
-'''
+"""
+
 RETURN = '''
 obj:
     description: SSLProfile (api/sslprofile) object
@@ -159,7 +168,7 @@ obj:
 
 from ansible.module_utils.basic import AnsibleModule
 try:
-    from ansible.module_utils.avi import (
+    from ansible.module_utils.network.avi.avi import (
         avi_common_argument_spec, HAS_AVI, avi_ansible_api)
 except ImportError:
     HAS_AVI = False
@@ -169,6 +178,9 @@ def main():
     argument_specs = dict(
         state=dict(default='present',
                    choices=['absent', 'present']),
+        avi_api_update_method=dict(default='put',
+                                   choices=['put', 'patch']),
+        avi_api_patch_op=dict(choices=['add', 'replace', 'delete']),
         accepted_ciphers=dict(type='str',),
         accepted_versions=dict(type='list',),
         cipher_enums=dict(type='list',),
@@ -182,6 +194,7 @@ def main():
         ssl_session_timeout=dict(type='int',),
         tags=dict(type='list',),
         tenant_ref=dict(type='str',),
+        type=dict(type='str',),
         url=dict(type='str',),
         uuid=dict(type='str',),
     )
@@ -194,6 +207,7 @@ def main():
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'sslprofile',
                            set([]))
+
 
 if __name__ == '__main__':
     main()

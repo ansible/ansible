@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/toplevel.yaml"
+- debug: msg="START cli/toplevel.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   iosxr_config:
@@ -30,4 +30,4 @@
     commands: ['hostname {{ inventory_hostname_short }}']
     match: none
 
-- debug: msg="END cli/toplevel.yaml"
+- debug: msg="END cli/toplevel.yaml on connection={{ ansible_connection }}"

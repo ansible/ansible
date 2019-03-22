@@ -1,0 +1,21 @@
+{
+    "eth0": {
+        "address": "fc00::1",
+        "address_family": "inet6",
+        "down": [],
+        "method": "static",
+        "post-up": [
+            "echo configuring ipv6"
+        ],
+        "pre-up": [],
+        "up": []
+    },
+    "lo": {
+        "address_family": "inet",
+        "down": [],
+        "method": "loopback",
+        "post-up": [],
+        "pre-up": [],
+        "up": []
+    }
+}

@@ -1,0 +1,44 @@
+- debug:
+    msg: '{{ role_name }}'
+- debug:
+    msg: '{{ role_path|basename }}'
+- import_tasks: setup.yml
+
+- include_vars: "{{ lookup('first_found', search) }}"
+  vars:
+    search:
+      files:
+        - '{{ ansible_distribution }}-{{ ansible_distribution_version }}.yml'
+        - 'default.yml'
+      paths:
+        - '../vars/'
+
+- include_tasks: create_device.yml
+  vars:
+    image_file: '{{ ansible_user_dir }}/ansible_testing/img'
+    fstype: '{{ item.0.key }}'
+    fssize: '{{ item.0.value.fssize }}'
+    grow: '{{ item.0.value.grow }}'
+    action: '{{ item.1 }}'
+  when:
+    - 'not (item.0.key == "btrfs" and ansible_system == "FreeBSD")' # btrfs not available on FreeBSD
+    # On Ubuntu trusty, blkid is unable to identify filesystem smaller than 256Mo, see
+    # https://www.kernel.org/pub/linux/utils/util-linux/v2.21/v2.21-ChangeLog
+    # https://anonscm.debian.org/cgit/collab-maint/pkg-util-linux.git/commit/?id=04f7020eadf31efc731558df92daa0a1c336c46c
+    - 'not (item.0.key == "btrfs" and (ansible_distribution == "Ubuntu" and ansible_distribution_release == "trusty"))'
+    - 'not (item.0.key == "btrfs" and (ansible_distribution == "RedHat" and ansible_distribution_major_version|int >= 8))'
+    - 'not (item.0.key == "lvm" and ansible_system == "FreeBSD")' # LVM not available on FreeBSD
+    - 'not (item.0.key == "lvm" and ansible_virtualization_type == "docker")' # Tests use losetup which can not be used inside unprivileged container
+    - 'not (item.0.key == "ocfs2" and ansible_os_family != "Debian")' # ocfs2 only available on Debian based distributions
+    - 'not (item.0.key == "f2fs" and ansible_system == "FreeBSD")'
+    # f2fs-tools package not available with RHEL/CentOS
+    - 'not (item.0.key == "f2fs" and ansible_distribution in ["CentOS", "RedHat"])'
+    # On Ubuntu trusty, blkid (2.20.1) is unable to identify F2FS filesystem. blkid handles F2FS since v2.23, see:
+    # https://mirrors.edge.kernel.org/pub/linux/utils/util-linux/v2.23/v2.23-ReleaseNotes
+    - 'not (item.0.key == "f2fs" and ansible_distribution == "Ubuntu" and ansible_distribution_version is version("14.04", "<="))'
+    - 'not (item.1 == "overwrite_another_fs" and ansible_system == "FreeBSD")'
+
+    # The xfsprogs package on newer versions of OpenSUSE (15+) require Python 3, we skip this on our Python 2 container
+    # OpenSUSE 42.3 Python2 and the other py3 containers are not affected so we will continue to run that
+    - 'not (item.0.key == "xfs" and ansible_os_family == "Suse" and ansible_python.version.major == 2 and ansible_distribution_major_version|int != 42)'
+  loop: "{{ query('dict', tested_filesystems)|product(['create_fs', 'overwrite_another_fs'])|list }}"

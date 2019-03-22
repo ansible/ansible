@@ -1,9 +1,9 @@
 ---
-- debug: msg="START cli/invalid.yaml"
+- debug: msg="START cli/invalid.yaml on connection={{ ansible_connection }}"
 
 - name: run invalid command
   iosxr_command:
-    commands: ['show foo']
+    commands: {command: 'show foo', prompt: 'fooprompt', answer: 'yes'}
   register: result
   ignore_errors: yes
 
@@ -15,7 +15,7 @@
   iosxr_command:
     commands:
       - show version
-      - show foo
+      - {command: 'show foo', prompt: 'fooprompt', answer: 'yes'}
   register: result
   ignore_errors: yes
 
@@ -23,4 +23,4 @@
     that:
       - "result.failed"
 
-- debug: msg="END cli/invalid.yaml"
+- debug: msg="END cli/invalid.yaml on connection={{ ansible_connection }}"

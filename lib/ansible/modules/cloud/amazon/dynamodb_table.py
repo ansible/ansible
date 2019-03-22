@@ -28,7 +28,6 @@ options:
   state:
     description:
       - Create or delete the table
-    required: false
     choices: ['present', 'absent']
     default: 'present'
   name:
@@ -39,34 +38,26 @@ options:
     description:
       - Name of the hash key.
       - Required when C(state=present).
-    required: false
-    default: null
   hash_key_type:
     description:
       - Type of the hash key.
-    required: false
     choices: ['STRING', 'NUMBER', 'BINARY']
     default: 'STRING'
   range_key_name:
     description:
       - Name of the range key.
-    required: false
-    default: null
   range_key_type:
     description:
       - Type of the range key.
-    required: false
     choices: ['STRING', 'NUMBER', 'BINARY']
     default: 'STRING'
   read_capacity:
     description:
       - Read throughput capacity (units) to provision.
-    required: false
     default: 1
   write_capacity:
     description:
       - Write throughput capacity (units) to provision.
-    required: false
     default: 1
   indexes:
     description:
@@ -74,20 +65,16 @@ options:
       - "required options: ['name', 'type', 'hash_key_name']"
       - "valid types: ['all', 'global_all', 'global_include', 'global_keys_only', 'include', 'keys_only']"
       - "other options: ['hash_key_type', 'range_key_name', 'range_key_type', 'includes', 'read_capacity', 'write_capacity']"
-    required: false
     default: []
     version_added: "2.1"
   tags:
     version_added: "2.4"
     description:
       - a hash/dictionary of tags to add to the new instance or for starting/stopping instance by tag; '{"key":"value"}' and '{"key":"value","key":"value"}'
-    required: false
-    default: null
   wait_for_active_timeout:
     version_added: "2.4"
     description:
       - how long before wait gives up, in seconds. only used when tags is set
-    required: false
     default: 60
 extends_documentation_fragment:
     - aws
@@ -141,7 +128,7 @@ RETURN = '''
 table_status:
     description: The current status of the table.
     returned: success
-    type: string
+    type: str
     sample: ACTIVE
 '''
 
@@ -184,7 +171,7 @@ INDEX_OPTIONS = INDEX_REQUIRED_OPTIONS + ['hash_key_type', 'range_key_name', 'ra
 INDEX_TYPE_OPTIONS = ['all', 'global_all', 'global_include', 'global_keys_only', 'include', 'keys_only']
 
 
-def create_or_update_dynamo_table(connection, module, boto3_dynamodb=None, boto3_sts=None):
+def create_or_update_dynamo_table(connection, module, boto3_dynamodb=None, boto3_sts=None, region=None):
     table_name = module.params.get('name')
     hash_key_name = module.params.get('hash_key_name')
     hash_key_type = module.params.get('hash_key_type')
@@ -193,7 +180,6 @@ def create_or_update_dynamo_table(connection, module, boto3_dynamodb=None, boto3
     read_capacity = module.params.get('read_capacity')
     write_capacity = module.params.get('write_capacity')
     all_indexes = module.params.get('indexes')
-    region = module.params.get('region')
     tags = module.params.get('tags')
     wait_for_active_timeout = module.params.get('wait_for_active_timeout')
 
@@ -223,7 +209,6 @@ def create_or_update_dynamo_table(connection, module, boto3_dynamodb=None, boto3
 
     try:
         table = Table(table_name, connection=connection)
-
 
         if dynamo_table_exists(table):
             result['changed'] = update_dynamo_table(table, throughput=throughput, check_mode=module.check_mode, global_indexes=global_indexes)
@@ -350,7 +335,7 @@ def has_throughput_changed(table, new_throughput):
         return False
 
     return new_throughput['read'] != table.throughput['read'] or \
-           new_throughput['write'] != table.throughput['write']
+        new_throughput['write'] != table.throughput['write']
 
 
 def get_schema_param(hash_key_name, hash_key_type, range_key_name, range_key_type):
@@ -398,6 +383,7 @@ def validate_index(index, module):
     if index['type'] not in INDEX_TYPE_OPTIONS:
         module.fail_json(msg='%s is not a valid index type, must be one of %s' % (index['type'], INDEX_TYPE_OPTIONS))
 
+
 def get_indexes(all_indexes):
     indexes = []
     global_indexes = []
@@ -430,7 +416,6 @@ def get_indexes(all_indexes):
     return indexes, global_indexes
 
 
-
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
@@ -443,8 +428,8 @@ def main():
         read_capacity=dict(default=1, type='int'),
         write_capacity=dict(default=1, type='int'),
         indexes=dict(default=[], type='list'),
-        tags = dict(type='dict'),
-        wait_for_active_timeout = dict(default=60, type='int'),
+        tags=dict(type='dict'),
+        wait_for_active_timeout=dict(default=60, type='int'),
     ))
 
     module = AnsibleModule(
@@ -474,14 +459,14 @@ def main():
                 module.fail_json(msg='boto3 connection does not have tag_resource(), likely due to using an old version')
             boto3_sts = boto3_conn(module, conn_type='client', resource='sts', region=region, endpoint=ec2_url, **aws_connect_kwargs)
         except botocore.exceptions.NoCredentialsError as e:
-            module.fail_json(msg='cannot connect to AWS', exception=traceback.format_exc(e))
+            module.fail_json(msg='cannot connect to AWS', exception=traceback.format_exc())
     else:
         boto3_dynamodb = None
         boto3_sts = None
 
     state = module.params.get('state')
     if state == 'present':
-        create_or_update_dynamo_table(connection, module, boto3_dynamodb, boto3_sts)
+        create_or_update_dynamo_table(connection, module, boto3_dynamodb, boto3_sts, region)
     elif state == 'absent':
         delete_dynamo_table(connection, module)
 

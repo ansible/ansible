@@ -22,15 +22,8 @@ __metaclass__ = type
 import os
 import json
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch
-from ansible.module_utils import basic
-from ansible.module_utils._text import to_bytes
+from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase
 
-
-def set_module_args(args):
-    args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
-    basic._ANSIBLE_ARGS = to_bytes(args)
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
@@ -47,22 +40,14 @@ def load_fixture(name):
 
     try:
         data = json.loads(data)
-    except:
+    except Exception:
         pass
 
     fixture_data[path] = data
     return data
 
 
-class AnsibleExitJson(Exception):
-    pass
-
-
-class AnsibleFailJson(Exception):
-    pass
-
-
-class TestVyosModule(unittest.TestCase):
+class TestVyosModule(ModuleTestCase):
 
     def execute_module(self, failed=False, changed=False, commands=None, sort=True, defaults=False):
         self.load_fixtures(commands)
@@ -83,27 +68,16 @@ class TestVyosModule(unittest.TestCase):
         return result
 
     def failed(self):
-        def fail_json(*args, **kwargs):
-            kwargs['failed'] = True
-            raise AnsibleFailJson(kwargs)
-
-        with patch.object(basic.AnsibleModule, 'fail_json', fail_json):
-            with self.assertRaises(AnsibleFailJson) as exc:
-                self.module.main()
+        with self.assertRaises(AnsibleFailJson) as exc:
+            self.module.main()
 
         result = exc.exception.args[0]
         self.assertTrue(result['failed'], result)
         return result
 
     def changed(self, changed=False):
-        def exit_json(*args, **kwargs):
-            if 'changed' not in kwargs:
-                kwargs['changed'] = False
-            raise AnsibleExitJson(kwargs)
-
-        with patch.object(basic.AnsibleModule, 'exit_json', exit_json):
-            with self.assertRaises(AnsibleExitJson) as exc:
-                self.module.main()
+        with self.assertRaises(AnsibleExitJson) as exc:
+            self.module.main()
 
         result = exc.exception.args[0]
         self.assertEqual(result['changed'], changed, result)

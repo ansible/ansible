@@ -22,10 +22,8 @@ options:
   config_drive:
     description:
       - Attach read-only configuration drive to server as label config-2
-    default: no
-    choices:
-      - "yes"
-      - "no"
+    type: bool
+    default: 'no'
     version_added: 1.8
   cooldown:
     description:
@@ -42,7 +40,6 @@ options:
   files:
     description:
       - 'Files to insert into the instance. Hash of C(remotepath: localpath)'
-    default: null
   flavor:
     description:
       - flavor to use for the instance
@@ -54,7 +51,6 @@ options:
   key_name:
     description:
       - key pair to use on the instance
-    default: null
   loadbalancers:
     description:
       - List of load balancer C(id) and C(port) hashes
@@ -66,7 +62,6 @@ options:
   meta:
     description:
       - A hash of metadata to associate with the instance
-    default: null
   min_entities:
     description:
       - The minimum number of entities that are allowed in the scaling group.
@@ -104,16 +99,16 @@ options:
     description:
       - wait for the scaling group to finish provisioning the minimum amount of
         servers
-    default: "no"
-    choices:
-      - "yes"
-      - "no"
+    type: bool
+    default: 'no'
   wait_timeout:
     description:
       - how long before wait gives up, in seconds
     default: 300
 author: "Matt Martz (@sivel)"
-extends_documentation_fragment: rackspace
+extends_documentation_fragment:
+  - rackspace
+  - rackspace.openstack
 '''
 
 EXAMPLES = '''

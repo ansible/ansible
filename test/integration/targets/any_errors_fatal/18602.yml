@@ -1,0 +1,21 @@
+---
+  - hosts: localhost
+    any_errors_fatal: true
+    tasks:
+      - block:
+          - debug: msg='i execute normally'
+          - name: EXPECTED FAILURE primary block command
+            command: /bin/false
+          - debug: msg='i never execute, cause ERROR!'
+        rescue:
+          - name: rescue block debug
+            debug: msg='I caught an error'
+          - name: EXPECTED FAILURE rescue block command
+            command: /bin/false
+          - debug: msg='I also never execute :-('
+        always:
+          - name: A debug task in the always block
+            debug: msg="this always executes"
+
+          - set_fact:
+              always_ran: true

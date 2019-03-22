@@ -27,66 +27,49 @@ version_added: "2.4"
 short_description: Manages BFD global configuration on HUAWEI CloudEngine devices.
 description:
     - Manages BFD global configuration on HUAWEI CloudEngine devices.
-author: QijunPan (@CloudEngine-Ansible)
+author: QijunPan (@QijunPan)
 options:
     bfd_enable:
         description:
             - Enables the global Bidirectional Forwarding Detection (BFD) function.
-        required: false
-        default: null
         choices: ['enable', 'disable']
     default_ip:
         description:
             - Specifies the default multicast IP address.
               The value ranges from 224.0.0.107 to 224.0.0.250.
-        required: false
-        default: null
     tos_exp_dynamic:
         description:
             - Indicates the priority of BFD control packets for dynamic BFD sessions.
               The value is an integer ranging from 0 to 7.
               The default priority is 7, which is the highest priority of BFD control packets.
-        required: false
-        default: null
     tos_exp_static:
         description:
             - Indicates the priority of BFD control packets for static BFD sessions.
               The value is an integer ranging from 0 to 7.
               The default priority is 7, which is the highest priority of BFD control packets.
-        required: false
-        default: null
     damp_init_wait_time:
         description:
             - Specifies an initial flapping suppression time for a BFD session.
               The value is an integer ranging from 1 to 3600000, in milliseconds.
               The default value is 2000.
-        required: false
-        default: null
     damp_max_wait_time:
         description:
             - Specifies a maximum flapping suppression time for a BFD session.
               The value is an integer ranging from 1 to 3600000, in milliseconds.
               The default value is 15000.
-        required: false
-        default: null
     damp_second_wait_time:
         description:
             - Specifies a secondary flapping suppression time for a BFD session.
               The value is an integer ranging from 1 to 3600000, in milliseconds.
               The default value is 5000.
-        required: false
-        default: null
     delay_up_time:
         description:
             - Specifies the delay before a BFD session becomes Up.
               The value is an integer ranging from 1 to 600, in seconds.
               The default value is 0, indicating that a BFD session immediately becomes Up.
-        required: false
-        default: null
     state:
         description:
             - Determines whether the config should be present or not on the device.
-        required: false
         default: present
         choices: ['present', 'absent']
 """
@@ -187,7 +170,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 
@@ -195,7 +178,7 @@ import sys
 import socket
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_nc_config, set_nc_config, ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec, check_ip_addr
 
 CE_NC_GET_BFD = """
     <filter type="subtree">
@@ -217,24 +200,6 @@ CE_NC_GET_BFD_GLB = """
           <delayUpTimer></delayUpTimer>
         </bfdSchGlobal>
 """
-
-
-def check_ip_addr(ipaddr):
-    """check ip address, Supports IPv4 and IPv6"""
-
-    if not ipaddr or '\x00' in ipaddr:
-        return False
-
-    try:
-        res = socket.getaddrinfo(ipaddr, 0, socket.AF_UNSPEC,
-                                 socket.SOCK_STREAM,
-                                 0, socket.AI_NUMERICHOST)
-        return bool(res)
-    except socket.gaierror:
-        err = sys.exc_info()[1]
-        if err.args[0] == socket.EAI_NONAME:
-            return False
-        raise
 
 
 def check_default_ip(ipaddr):

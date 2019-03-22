@@ -23,20 +23,22 @@ import sys
 import copy
 
 from ansible import constants as C
-from ansible.plugins.action.normal import ActionModule as _ActionModule
-from ansible.module_utils.aruba import aruba_provider_spec
-from ansible.module_utils.network_common import load_provider
+from ansible.module_utils._text import to_text
+from ansible.module_utils.connection import Connection
+from ansible.plugins.action.network import ActionModule as ActionNetworkModule
+from ansible.module_utils.network.aruba.aruba import aruba_provider_spec
+from ansible.module_utils.network.common.utils import load_provider
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
-class ActionModule(_ActionModule):
+class ActionModule(ActionNetworkModule):
 
     def run(self, tmp=None, task_vars=None):
+        del tmp  # tmp no longer has any effect
+
+        self._config_module = True if self._task.action == 'aruba_config' else False
 
         if self._play_context.connection != 'local':
             return dict(
@@ -55,10 +57,11 @@ class ActionModule(_ActionModule):
         pc.remote_user = provider['username'] or self._play_context.connection_user
         pc.password = provider['password'] or self._play_context.password
         pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
-        pc.timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
+        command_timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
 
-        display.vvv('using connection plugin %s' % pc.connection, pc.remote_addr)
+        display.vvv('using connection plugin %s (was local)' % pc.connection, pc.remote_addr)
         connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
+        connection.set_options(direct={'persistent_command_timeout': command_timeout})
 
         socket_path = connection.run()
         display.vvvv('socket_path: %s' % socket_path, pc.remote_addr)
@@ -69,10 +72,11 @@ class ActionModule(_ActionModule):
 
         # make sure we are in the right cli context which should be
         # enable mode and not config module
-        rc, out, err = connection.exec_command('prompt()')
-        if str(out).strip().endswith(')#'):
+        conn = Connection(socket_path)
+        out = conn.get_prompt()
+        if to_text(out, errors='surrogate_then_replace').strip().endswith(')#'):
             display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
-            connection.exec_command('exit')
+            conn.send_command('exit')
 
         task_vars['ansible_socket'] = socket_path
 
@@ -80,5 +84,5 @@ class ActionModule(_ActionModule):
             self._play_context.become = False
             self._play_context.become_method = None
 
-        result = super(ActionModule, self).run(tmp, task_vars)
+        result = super(ActionModule, self).run(task_vars=task_vars)
         return result

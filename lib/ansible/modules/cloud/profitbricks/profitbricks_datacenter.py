@@ -47,7 +47,7 @@ options:
       - wait for the datacenter to be created before returning
     required: false
     default: "yes"
-    choices: [ "yes", "no" ]
+    type: bool
   wait_timeout:
     description:
       - how long before wait gives up, in seconds
@@ -60,7 +60,7 @@ options:
     choices: [ "present", "absent" ]
 
 requirements: [ "profitbricks" ]
-author: Matt Baldwin (baldwin@stackpointcloud.com)
+author: Matt Baldwin (@baldwinSPC) <baldwin@stackpointcloud.com>
 '''
 
 EXAMPLES = '''
@@ -95,7 +95,7 @@ LOCATIONS = ['us/las',
              'de/fkb']
 
 uuid_match = re.compile(
-    '[\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{12}', re.I)
+    r'[\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{12}', re.I)
 
 
 def _wait_for_completion(profitbricks, promise, wait_timeout, msg):
@@ -118,13 +118,15 @@ def _wait_for_completion(profitbricks, promise, wait_timeout, msg):
     raise Exception(
         'Timed out waiting for async operation ' + msg + ' "' + str(
             promise['requestId']
-            ) + '" to complete.')
+        ) + '" to complete.')
+
 
 def _remove_datacenter(module, profitbricks, datacenter):
     try:
         profitbricks.delete_datacenter(datacenter)
     except Exception as e:
         module.fail_json(msg="failed to remove the datacenter: %s" % str(e))
+
 
 def create_datacenter(module, profitbricks):
     """
@@ -148,7 +150,7 @@ def create_datacenter(module, profitbricks):
         name=name,
         location=location,
         description=description
-        )
+    )
 
     try:
         datacenter_response = profitbricks.create_datacenter(datacenter=i)
@@ -165,6 +167,7 @@ def create_datacenter(module, profitbricks):
 
     except Exception as e:
         module.fail_json(msg="failed to create the new datacenter: %s" % str(e))
+
 
 def remove_datacenter(module, profitbricks):
     """
@@ -196,6 +199,7 @@ def remove_datacenter(module, profitbricks):
                 changed = True
 
     return changed
+
 
 def main():
     module = AnsibleModule(

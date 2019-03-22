@@ -1,0 +1,3 @@
+---
+bugfixes:
+- k8s modules and plugins now bubble up error message when the openshift python client fails to import.

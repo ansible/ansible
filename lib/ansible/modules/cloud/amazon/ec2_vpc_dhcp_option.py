@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = """
@@ -35,38 +35,26 @@ options:
   domain_name:
     description:
       - The domain name to set in the DHCP option sets
-    required: false
-    default: None
   dns_servers:
     description:
       - A list of hosts to set the DNS servers for the VPC to. (Should be a
         list of IP addresses rather than host names.)
-    required: false
-    default: None
   ntp_servers:
     description:
       - List of hosts to advertise as NTP servers for the VPC.
-    required: false
-    default: None
   netbios_name_servers:
     description:
       - List of hosts to advertise as NetBIOS servers.
-    required: false
-    default: None
   netbios_node_type:
     description:
       - NetBIOS node type to advertise in the DHCP options.
         The AWS recommendation is to use 2 (when using netbios name services)
-        http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_DHCP_Options.html
-    required: false
-    default: None
+        U(https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_DHCP_Options.html)
   vpc_id:
     description:
       - VPC ID to associate with the requested DHCP option set.
         If no vpc id is provided, and no matching option set is found then a new
         DHCP option set is created.
-    required: false
-    default: None
   delete_old:
     description:
       - Whether to delete the old VPC DHCP option set when associating a new one.
@@ -74,21 +62,19 @@ options:
         want to quickly roll back to the old option set. Note that this setting
         will be ignored, and the old DHCP option set will be preserved, if it
         is in use by any other VPC. (Otherwise, AWS will return an error.)
-    required: false
-    default: true
+    type: bool
+    default: 'yes'
   inherit_existing:
     description:
       - For any DHCP options not specified in these parameters, whether to
         inherit them from the options set already applied to vpc_id, or to
         reset them to be empty.
-    required: false
-    default: false
+    type: bool
+    default: 'no'
   tags:
     description:
       - Tags to be applied to a VPC options set if a new one is created, or
         if the resource_id is provided. (options must match)
-    required: False
-    default: None
     aliases: [ 'resource_tags']
     version_added: "2.1"
   dhcp_options_id:
@@ -96,19 +82,18 @@ options:
       - The resource_id of an existing DHCP options set.
         If this is specified, then it will override other settings, except tags
         (which will be updated to match)
-    required: False
-    default: None
     version_added: "2.1"
   state:
     description:
       - create/assign or remove the DHCP options.
         If state is set to absent, then a DHCP options set matched either
         by id, or tags and options will be removed if possible.
-    required: False
     default: present
     choices: [ 'absent', 'present' ]
     version_added: "2.1"
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 requirements:
     - boto
 """
@@ -129,7 +114,7 @@ new_options:
       domain-name: "my.example.com"
 dhcp_options_id:
     description: The aws resource id of the primary DCHP options set created, found or removed
-    type: string
+    type: str
     returned: when available
 changed:
     description: Whether the dhcp options were changed
@@ -202,7 +187,7 @@ EXAMPLES = """
 
 import collections
 import traceback
-
+from time import sleep, time
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import HAS_BOTO, connect_to_aws, ec2_argument_spec, get_aws_connection_info
 
@@ -216,6 +201,18 @@ def get_resource_tags(vpc_conn, resource_id):
     return dict((t.name, t.value) for t in vpc_conn.get_all_tags(filters={'resource-id': resource_id}))
 
 
+def retry_not_found(to_call, *args, **kwargs):
+    start_time = time()
+    while time() < start_time + 300:
+        try:
+            return to_call(*args, **kwargs)
+        except EC2ResponseError as e:
+            if e.error_code == 'InvalidDhcpOptionID.NotFound':
+                sleep(3)
+                continue
+            raise e
+
+
 def ensure_tags(module, vpc_conn, resource_id, tags, add_only, check_mode):
     try:
         cur_tags = get_resource_tags(vpc_conn, resource_id)
@@ -224,16 +221,17 @@ def ensure_tags(module, vpc_conn, resource_id, tags, add_only, check_mode):
 
         to_delete = dict((k, cur_tags[k]) for k in cur_tags if k not in tags)
         if to_delete and not add_only:
-            vpc_conn.delete_tags(resource_id, to_delete, dry_run=check_mode)
+            retry_not_found(vpc_conn.delete_tags, resource_id, to_delete, dry_run=check_mode)
 
         to_add = dict((k, tags[k]) for k in tags if k not in cur_tags)
         if to_add:
-            vpc_conn.create_tags(resource_id, to_add, dry_run=check_mode)
+            retry_not_found(vpc_conn.create_tags, resource_id, to_add, dry_run=check_mode)
 
         latest_tags = get_resource_tags(vpc_conn, resource_id)
         return {'changed': True, 'tags': latest_tags}
     except EC2ResponseError as e:
         module.fail_json(msg="Failed to modify tags: %s" % e.message, exception=traceback.format_exc())
+
 
 def fetch_dhcp_options_for_vpc(vpc_conn, vpc_id):
     """
@@ -284,10 +282,11 @@ def main():
         inherit_existing=dict(type='bool', default=False),
         tags=dict(type='dict', default=None, aliases=['resource_tags']),
         state=dict(type='str', default='present', choices=['present', 'absent'])
-        )
+    )
     )
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+
     params = module.params
     found = False
     changed = False
@@ -312,17 +311,17 @@ def main():
             new_options['ntp-servers'] = params['ntp_servers']
         if params['domain_name'] is not None:
             # needs to be a list for comparison with boto objects later
-            new_options['domain-name'] = [ params['domain_name'] ]
+            new_options['domain-name'] = [params['domain_name']]
         if params['netbios_node_type'] is not None:
             # needs to be a list for comparison with boto objects later
-            new_options['netbios-node-type'] = [ str(params['netbios_node_type']) ]
+            new_options['netbios-node-type'] = [str(params['netbios_node_type'])]
         # If we were given a vpc_id then we need to look at the options on that
         if params['vpc_id']:
             existing_options = fetch_dhcp_options_for_vpc(connection, params['vpc_id'])
             # if we've been asked to inherit existing options, do that now
             if params['inherit_existing']:
                 if existing_options:
-                    for option in [ 'domain-name-servers', 'netbios-name-servers', 'ntp-servers', 'domain-name', 'netbios-node-type']:
+                    for option in ['domain-name-servers', 'netbios-name-servers', 'ntp-servers', 'domain-name', 'netbios-node-type']:
                         if existing_options.options.get(option) and new_options[option] != [] and (not new_options[option] or [''] == new_options[option]):
                             new_options[option] = existing_options.options.get(option)
 
@@ -336,7 +335,7 @@ def main():
     # Now let's cover the case where there are existing options that we were told about by id
     # If a dhcp_options_id was supplied we don't look at options inside, just set tags (if given)
     else:
-        supplied_options = connection.get_all_dhcp_options(filters={'dhcp-options-id':params['dhcp_options_id']})
+        supplied_options = connection.get_all_dhcp_options(filters={'dhcp-options-id': params['dhcp_options_id']})
         if len(supplied_options) != 1:
             if params['state'] != 'absent':
                 module.fail_json(msg=" a dhcp_options_id was supplied, but does not exist")
@@ -373,6 +372,17 @@ def main():
                 new_options['ntp-servers'],
                 new_options['netbios-name-servers'],
                 new_options['netbios-node-type'])
+
+            # wait for dhcp option to be accessible
+            found_dhcp_opt = False
+            start_time = time()
+            try:
+                found_dhcp_opt = retry_not_found(connection.get_all_dhcp_options, dhcp_options_ids=[dhcp_option.id])
+            except EC2ResponseError as e:
+                module.fail_json(msg="Failed to describe DHCP options", exception=traceback.format_exc)
+            if not found_dhcp_opt:
+                module.fail_json(msg="Failed to wait for {0} to be available.".format(dhcp_option.id))
+
             changed = True
             if params['tags']:
                 ensure_tags(module, connection, dhcp_option.id, params['tags'], False, module.check_mode)

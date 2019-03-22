@@ -1,0 +1,114 @@
+---
+- debug: msg="START TRANSPORT:CLI nxos_l3_interface sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+# Select interface for test
+- set_fact: testint2="{{ nxos_int2 }}"
+- set_fact: testint3="{{ nxos_int3 }}"
+
+- set_fact: ipv6_address=""
+- set_fact: ipv6_address="33:db::2/8"
+  when: ipv6_supported
+
+- name: Setup - remove address from interface prior to testing(Part1)
+  nxos_config:
+    lines:
+      - no ip address 192.168.22.1/24
+    parents: no switchport
+    before: "interface {{ testint2 }}"
+  ignore_errors: yes
+
+- name: Setup - remove address from interface prior to testing(Part2)
+  nxos_config:
+    lines:
+      - no ip address 192.168.20.1/24
+      - no ipv6 address 33:db::2/8
+    parents: no switchport
+    before: "interface {{ testint3 }}"
+  ignore_errors: yes
+
+- name: Setup - Ensure interfaces are layer3
+  nxos_interface:
+    aggregate:
+      - name: "{{ testint2 }}"
+      - name: "{{ testint3 }}"
+    mode: layer3
+
+- name: Configure ipv4 address to interface
+  nxos_l3_interface: &conf
+    name: "{{ testint2 }}"
+    ipv4: 192.168.22.1/24
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: Configure ipv4 address to interface(Idempotence)
+  nxos_l3_interface: *conf
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Remove ipv4 address from interface
+  nxos_l3_interface: &rm
+    name: "{{ testint2 }}"
+    ipv4: 192.168.22.1/24
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: Remove ipv4 address from interface(Idempotence)
+  nxos_l3_interface: *rm
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Configure address to interfaces aggregate
+  nxos_l3_interface: &conf_agg
+    aggregate:
+      - { name: "{{ testint2 }}", ipv4: 192.168.22.1/24 }
+      - { name: "{{ testint3 }}", ipv4: 192.168.20.1/24, ipv6: "{{ ipv6_address }}" }
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: Configure address to interfaces aggregate(Idempotence)
+  nxos_l3_interface: *conf_agg
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Remove address from interfaces aggregate
+  nxos_l3_interface: &rm_agg
+    aggregate:
+      - { name: "{{ testint2 }}", ipv4: 192.168.22.1/24 }
+      - { name: "{{ testint3 }}", ipv4: 192.168.20.1/24, ipv6: "{{ ipv6_address }}" }
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: Remove address from interfaces aggregate(Idempotence)
+  nxos_l3_interface: *rm_agg
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- debug: msg="END TRANSPORT:CLI nxos_l3_interface sanity test"

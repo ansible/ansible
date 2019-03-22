@@ -1,0 +1,36 @@
+[MESSAGES CONTROL]
+
+disable=
+    too-few-public-methods,
+    too-many-arguments,
+    too-many-branches,
+    too-many-instance-attributes,
+    too-many-lines,
+    too-many-locals,
+    too-many-nested-blocks,
+    too-many-return-statements,
+    too-many-statements,
+    unnecessary-pass,
+    unused-import,
+    useless-object-inheritance,
+    consider-using-dict-comprehension,
+    consider-using-set-comprehension,
+
+[BASIC]
+
+bad-names=foo,
+          bar,
+          baz,
+          toto,
+          tutu,
+          tata,
+          _,
+
+good-names=i,
+           j,
+           k,
+           ex,
+           Run,
+
+method-rgx=[a-z_][a-z0-9_]{2,40}$
+function-rgx=[a-z_][a-z0-9_]{2,40}$

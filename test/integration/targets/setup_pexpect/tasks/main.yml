@@ -1,0 +1,4 @@
+- name: Install pexpect
+  pip:
+    name: pexpect
+    state: present

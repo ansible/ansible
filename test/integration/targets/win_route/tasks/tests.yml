@@ -7,15 +7,20 @@
     state: present
   register: route
 
-- name: check if route successfully addedd
+- name: check if route successfully added
   win_shell: (Get-CimInstance win32_ip4PersistedrouteTable -Filter "Destination = '{{ destination_ip_address }}'").Caption
   register: route_added
 
-- name: test if route successfully addedd
+- name: check route default gateway
+  win_shell: (Get-CimInstance win32_ip4PersistedrouteTable -Filter "Destination = '{{ destination_ip_address }}'").NextHop
+  register: route_gateway
+
+- name: test if route successfully added
   assert:
     that:
-      - route|changed
+      - route is changed
       - route_added.stdout_lines[0] == "{{ destination_ip_address }}"
+      - route_gateway.stdout_lines[0] == "{{ default_gateway }}"
 
 - name: add a static route to test idempotency
   win_route:
@@ -28,7 +33,7 @@
 - name: test idempotency
   assert:
     that:
-      - not idempotent_route|changed
+      - idempotent_route is not changed
       - idempotent_route.output == "Static route already exists"
 
 - name: remove route
@@ -44,7 +49,7 @@
 - name: test route is removed
   assert:
     that:
-      - route_removed|changed
+      - route_removed is changed
       - check_route_removed.stdout == ''
 
 - name: remove static route to test idempotency
@@ -56,7 +61,7 @@
 - name: test idempotency
   assert:
     that:
-      - not idempotent_route_removed|changed
+      - idempotent_route_removed is not changed
       - idempotent_route_removed.output == "No route to remove"
 
 - name: add route to wrong ip address
@@ -71,4 +76,4 @@
 - name: test route to wrong ip address
   assert:
     that:
-      - wrong_ip|failed
+      - wrong_ip is failed

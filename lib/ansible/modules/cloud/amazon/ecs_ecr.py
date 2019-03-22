@@ -1,18 +1,12 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# -*- coding: utf-8 -*
+
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -26,6 +20,7 @@ version_added: "2.3"
 short_description: Manage Elastic Container Registry repositories
 description:
     - Manage Elastic Container Registry repositories
+requirements: [ boto3 ]
 options:
     name:
         description:
@@ -46,11 +41,13 @@ options:
               setting another policy in the future.
         required: false
         default: false
+        type: bool
     delete_policy:
         description:
             - if yes, remove the policy from the repository
         required: false
         default: false
+        type: bool
     state:
         description:
             - create or destroy the repository
@@ -59,7 +56,9 @@ options:
         default: 'present'
 author:
  - David M. Lee (@leedm777)
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+  - aws
+  - ec2
 '''
 
 EXAMPLES = '''
@@ -102,15 +101,15 @@ EXAMPLES = '''
 
 RETURN = '''
 state:
-    type: string
+    type: str
     description: The asserted state of the repository (present, absent)
     returned: always
 created:
-    type: boolean
+    type: bool
     description: If true, the repository was created
     returned: always
 name:
-    type: string
+    type: str
     description: The name of the repository
     returned: "when state == 'absent'"
 repository:
@@ -126,19 +125,17 @@ repository:
 '''
 
 import json
-import time
-import inspect
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
+import traceback
 
 try:
-    import boto3
     from botocore.exceptions import ClientError
-
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
+    pass  # Taken care of by ec2.HAS_BOTO3
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import (HAS_BOTO3, boto3_conn, boto_exception, ec2_argument_spec,
+                                      get_aws_connection_info, compare_policies)
+from ansible.module_utils.six import string_types
 
 
 def build_kwargs(registry_id):
@@ -161,6 +158,9 @@ class EcsEcr:
 
         self.ecr = boto3_conn(module, conn_type='client',
                               resource='ecr', region=region,
+                              endpoint=ec2_url, **aws_connect_kwargs)
+        self.sts = boto3_conn(module, conn_type='client',
+                              resource='sts', region=region,
                               endpoint=ec2_url, **aws_connect_kwargs)
         self.check_mode = module.check_mode
         self.changed = False
@@ -191,10 +191,14 @@ class EcsEcr:
             raise
 
     def create_repository(self, registry_id, name):
+        if registry_id:
+            default_registry_id = self.sts.get_caller_identity().get('Account')
+            if registry_id != default_registry_id:
+                raise Exception('Cannot create repository in registry {0}.'
+                                'Would be created in {1} instead.'.format(
+                                    registry_id, default_registry_id))
         if not self.check_mode:
-            repo = self.ecr.create_repository(
-                repositoryName=name, **build_kwargs(registry_id)).get(
-                'repository')
+            repo = self.ecr.create_repository(repositoryName=name).get('repository')
             self.changed = True
             return repo
         else:
@@ -215,9 +219,9 @@ class EcsEcr:
             if self.get_repository(registry_id, name) is None:
                 printable = name
                 if registry_id:
-                    printable = '{}:{}'.format(registry_id, name)
+                    printable = '{0}:{1}'.format(registry_id, name)
                 raise Exception(
-                    'could not find repository {}'.format(printable))
+                    'could not find repository {0}'.format(printable))
             return
 
     def delete_repository(self, registry_id, name):
@@ -245,6 +249,15 @@ class EcsEcr:
                 self.skipped = True
                 return policy
             return None
+
+
+def sort_lists_of_strings(policy):
+    for statement_index in range(0, len(policy.get('Statement', []))):
+        for key in policy['Statement'][statement_index]:
+            value = policy['Statement'][statement_index][key]
+            if isinstance(value, list) and all(isinstance(item, string_types) for item in value):
+                policy['Statement'][statement_index][key] = sorted(value)
+    return policy
 
 
 def run(ecr, params, verbosity):
@@ -289,23 +302,25 @@ def run(ecr, params, verbosity):
 
             elif policy_text is not None:
                 try:
-                    policy = sort_json_policy_dict(policy)
+                    # Sort any lists containing only string types
+                    policy = sort_lists_of_strings(policy)
+
                     if verbosity >= 2:
                         result['policy'] = policy
                     original_policy = ecr.get_repository_policy(
                         registry_id, name)
 
                     if original_policy:
-                        original_policy = sort_json_policy_dict(original_policy)
+                        original_policy = sort_lists_of_strings(original_policy)
 
                     if verbosity >= 3:
                         result['original_policy'] = original_policy
 
-                    if original_policy != policy:
+                    if compare_policies(original_policy, policy):
                         ecr.set_repository_policy(
                             registry_id, name, policy_text, force_set_policy)
                         result['changed'] = True
-                except:
+                except Exception:
                     # Some failure w/ the policy. It's helpful to know what the
                     # policy is.
                     result['policy'] = policy_text

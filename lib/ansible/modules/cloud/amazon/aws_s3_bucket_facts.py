@@ -53,6 +53,7 @@ except ImportError:
     pass  # will be detected by imported HAS_BOTO3
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 from ansible.module_utils.ec2 import (boto3_conn, ec2_argument_spec, HAS_BOTO3, camel_dict_to_snake_dict,
                                       get_aws_connection_info)
 
@@ -67,7 +68,7 @@ def get_bucket_list(module, connection):
     try:
         buckets = camel_dict_to_snake_dict(connection.list_buckets())['buckets']
     except botocore.exceptions.ClientError as e:
-        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     return buckets
 
@@ -90,16 +91,8 @@ def main():
 
     # Set up connection
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=HAS_BOTO3)
-
-    # Set up connection
-    if region:
-        try:
-            connection = boto3_conn(module, conn_type='client', resource='s3', region=region, endpoint=ec2_url,
-                                    **aws_connect_params)
-        except (botocore.exceptions.NoCredentialsError, botocore.exceptions.ProfileNotFound) as e:
-            module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-    else:
-        module.fail_json(msg="AWS region must be specified (like: us-east-1)")
+    connection = boto3_conn(module, conn_type='client', resource='s3', region=region, endpoint=ec2_url,
+                            **aws_connect_params)
 
     # Gather results
     result['buckets'] = get_bucket_list(module, connection)

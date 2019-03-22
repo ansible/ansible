@@ -1,7 +1,10 @@
-# Copyright: Ansible Project
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# # There is no actual shell module source, when you use 'shell' in ansible,
+# There is no actual shell module source, when you use 'shell' in ansible,
 # it runs the 'command' module with special arguments and it behaves differently.
 # See the command source and the comment "#USE_SHELL".
 
@@ -14,74 +17,88 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'core'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: shell
-short_description: Execute commands in nodes.
+short_description: Execute shell commands on targets
 description:
      - The C(shell) module takes the command name followed by a list of space-delimited arguments.
-       It is almost exactly like the M(command) module but runs
+     - It is almost exactly like the M(command) module but runs
        the command through a shell (C(/bin/sh)) on the remote node.
      - For Windows targets, use the M(win_shell) module instead.
 version_added: "0.2"
 options:
   free_form:
     description:
-      - The shell module takes a free form command to run, as a string.  There's not an actual
-        option named "free form".  See the examples!
-    required: true
-    default: null
+      - The shell module takes a free form command to run, as a string.
+      - There is no actual parameter named 'free form'.
+      - See the examples on how to use this module.
+    required: yes
+    type: str
   creates:
     description:
-      - a filename, when it already exists, this step will B(not) be run.
-    required: no
-    default: null
+      - A filename, when it already exists, this step will B(not) be run.
+    type: path
   removes:
     description:
-      - a filename, when it does not exist, this step will B(not) be run.
+      - A filename, when it does not exist, this step will B(not) be run.
+    type: path
     version_added: "0.8"
-    required: no
-    default: null
   chdir:
     description:
-      - cd into this directory before running the command
-    required: false
-    default: null
+      - Change into this directory before running the command.
+    type: path
     version_added: "0.6"
   executable:
     description:
-      - change the shell used to execute the command. Should be an absolute path to the executable.
-    required: false
-    default: null
+      - Change the shell used to execute the command.
+      - This expects an absolute path to the executable.
+    type: path
     version_added: "0.9"
   warn:
     description:
-      - if command warnings are on in ansible.cfg, do not warn about this particular line if set to no/false.
-    required: false
-    default: True
+      - Whether to enable task warnings.
+    type: bool
+    default: yes
     version_added: "1.8"
   stdin:
-    version_added: "2.4"
     description:
       - Set the stdin of the command directly to the specified value.
-    required: false
-    default: null
+    type: str
+    version_added: "2.4"
+  stdin_add_newline:
+    description:
+      - Whether to append a newline to stdin data.
+    type: bool
+    default: yes
+    version_added: "2.8"
 notes:
-   -  If you want to execute a command securely and predictably, it may be
-      better to use the M(command) module instead. Best practices when writing
-      playbooks will follow the trend of using M(command) unless the C(shell)
-      module is explicitly required. When running ad-hoc commands, use your best
-      judgement.
-   -  To sanitize any variables passed to the shell module, you should use
-      "{{ var | quote }}" instead of just "{{ var }}" to make sure they don't include evil things like semicolons.
-   - For Windows targets, use the M(win_shell) module instead.
-requirements: [ ]
+  - If you want to execute a command securely and predictably, it may be
+    better to use the M(command) module instead. Best practices when writing
+    playbooks will follow the trend of using M(command) unless the C(shell)
+    module is explicitly required. When running ad-hoc commands, use your best
+    judgement.
+  - Check mode is supported when passing C(creates) or C(removes). If running
+    in check mode and either of these are specified, the module will check for
+    the existence of the file and report the correct changed status. If these
+    are not supplied, the task will be skipped.
+  - To sanitize any variables passed to the shell module, you should use
+    C({{ var | quote }}) instead of just C({{ var }}) to make sure they
+    do not include evil things like semicolons.
+  - An alternative to using inline shell scripts with this module is to use
+    the M(script) module possibly together with the M(template) module.
+  - For rebooting systems, use the M(reboot) or M(win_reboot) module.
+seealso:
+- module: command
+- module: raw
+- module: script
+- module: win_shell
 author:
     - Ansible Core Team
     - Michael DeHaan
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Execute the command in remote shell; stdout goes to the specified file on the remote.
   shell: somescript.sh >> somelog.txt
 
@@ -112,55 +129,61 @@ EXAMPLES = '''
     spawn ssh admin@{{ cimc_host }}
 
     expect "password:"
-    send "{{ cimc_password }}\\n"
+    send "{{ cimc_password }}\n"
 
-    expect "\\n{{ cimc_name }}"
-    send "connect host\\n"
+    expect "\n{{ cimc_name }}"
+    send "connect host\n"
 
     expect "pxeboot.n12"
-    send "\\n"
+    send "\n"
 
     exit 0
   args:
     executable: /usr/bin/expect
   delegate_to: localhost
+
+# Disabling warnings
+- name: Using curl to connect to a host via SOCKS proxy (unsupported in uri). Ordinarily this would throw a warning.
+  shell: curl --socks5 localhost:9000 http://www.ansible.com
+  args:
+    warn: no
 '''
 
-RETURN = '''
+RETURN = r'''
 msg:
     description: changed
     returned: always
-    type: boolean
+    type: bool
     sample: True
 start:
     description: The command execution start time
     returned: always
-    type: string
+    type: str
     sample: '2016-02-25 09:18:26.429568'
 end:
     description: The command execution end time
     returned: always
-    type: string
+    type: str
     sample: '2016-02-25 09:18:26.755339'
 delta:
     description: The command execution delta time
     returned: always
-    type: string
+    type: str
     sample: '0:00:00.325771'
 stdout:
     description: The command standard output
     returned: always
-    type: string
+    type: str
     sample: 'Clustering node rabbit@slave1 with rabbit@master ...'
 stderr:
     description: The command standard error
     returned: always
-    type: string
+    type: str
     sample: 'ls: cannot access foo: No such file or directory'
 cmd:
     description: The command executed by the task
     returned: always
-    type: string
+    type: str
     sample: 'rabbitmqctl join_cluster rabbit@master'
 rc:
     description: The command return code (0 means success)

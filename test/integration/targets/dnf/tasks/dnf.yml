@@ -11,7 +11,7 @@
 # some dnf python files after the package is uninstalled.
 - name: uninstall python2-dnf with shell
   shell: dnf -y remove python2-dnf
-  when: rpm_result|success
+  when: rpm_result is successful
 
 # UNINSTALL
 #   With 'python2-dnf' uninstalled, the first call to 'dnf' should install
@@ -50,6 +50,7 @@
   dnf:
     name: sos
     state: present
+    update_cache: True
   register: dnf_result
 
 - name: check sos with rpm
@@ -83,8 +84,8 @@
         - "not dnf_result.changed"
 
 # Multiple packages
-- name: uninstall sos and sharutils
-  dnf: name=sos,sharutils state=removed
+- name: uninstall sos and pciutils
+  dnf: name=sos,pciutils state=removed
   register: dnf_result
 
 - name: check sos with rpm
@@ -92,19 +93,19 @@
   failed_when: False
   register: rpm_sos_result
 
-- name: check sharutils with rpm
-  shell: rpm -q sharutils
+- name: check pciutils with rpm
+  shell: rpm -q pciutils
   failed_when: False
-  register: rpm_sharutils_result
+  register: rpm_pciutils_result
 
 - name: verify packages installed
   assert:
     that:
         - "rpm_sos_result.rc != 0"
-        - "rpm_sharutils_result.rc != 0"
+        - "rpm_pciutils_result.rc != 0"
 
-- name: install sos and sharutils as comma separated
-  dnf: name=sos,sharutils state=present
+- name: install sos and pciutils as comma separated
+  dnf: name=sos,pciutils state=present
   register: dnf_result
 
 - name: check sos with rpm
@@ -112,10 +113,10 @@
   failed_when: False
   register: rpm_sos_result
 
-- name: check sharutils with rpm
-  shell: rpm -q sharutils
+- name: check pciutils with rpm
+  shell: rpm -q pciutils
   failed_when: False
-  register: rpm_sharutils_result
+  register: rpm_pciutils_result
 
 - name: verify packages installed
   assert:
@@ -123,17 +124,17 @@
         - "not dnf_result.failed | default(False)"
         - "dnf_result.changed"
         - "rpm_sos_result.rc == 0"
-        - "rpm_sharutils_result.rc == 0"
+        - "rpm_pciutils_result.rc == 0"
 
-- name: uninstall sos and sharutils
-  dnf: name=sos,sharutils state=removed
+- name: uninstall sos and pciutils
+  dnf: name=sos,pciutils state=removed
   register: dnf_result
 
-- name: install sos and sharutils as list
+- name: install sos and pciutils as list
   dnf:
     name:
       - sos
-      - sharutils
+      - pciutils
     state: present
   register: dnf_result
 
@@ -142,10 +143,10 @@
   failed_when: False
   register: rpm_sos_result
 
-- name: check sharutils with rpm
-  shell: rpm -q sharutils
+- name: check pciutils with rpm
+  shell: rpm -q pciutils
   failed_when: False
-  register: rpm_sharutils_result
+  register: rpm_pciutils_result
 
 - name: verify packages installed
   assert:
@@ -153,17 +154,17 @@
         - "not dnf_result.failed | default(False)"
         - "dnf_result.changed"
         - "rpm_sos_result.rc == 0"
-        - "rpm_sharutils_result.rc == 0"
+        - "rpm_pciutils_result.rc == 0"
 
-- name: uninstall sos and sharutils
+- name: uninstall sos and pciutils
   dnf:
-    name: "sos,sharutils"
+    name: "sos,pciutils"
     state: removed
   register: dnf_result
 
-- name: install sos and sharutils as comma separated with spaces
+- name: install sos and pciutils as comma separated with spaces
   dnf:
-    name: "sos, sharutils"
+    name: "sos, pciutils"
     state: present
   register: dnf_result
 
@@ -173,9 +174,9 @@
   register: rpm_sos_result
 
 - name: check sos with rpm
-  shell: rpm -q sharutils
+  shell: rpm -q pciutils
   failed_when: False
-  register: rpm_sharutils_result
+  register: rpm_pciutils_result
 
 - name: verify packages installed
   assert:
@@ -183,16 +184,16 @@
         - "not dnf_result.failed | default(False)"
         - "dnf_result.changed"
         - "rpm_sos_result.rc == 0"
-        - "rpm_sharutils_result.rc == 0"
+        - "rpm_pciutils_result.rc == 0"
 
-- name: uninstall sos and sharutils
+- name: uninstall sos and pciutils
   dnf:
     name:
       - sos
-      - sharutils
+      - pciutils
     state: removed
 
-- name: install non-existent rpm 
+- name: install non-existent rpm
   dnf:
     name: "{{ item }}"
   with_items:
@@ -203,7 +204,7 @@
 - name: check non-existent rpm install failed
   assert:
     that:
-      - non_existent_rpm|failed
+      - non_existent_rpm is failed
 
 # Install in installroot='/'.  This should be identical to default
 - name: install sos in /
@@ -232,66 +233,123 @@
   dnf: name=sos installroot='/'
   register: dnf_result
 
-# GROUP INSTALL
-# Using 'Books and Guides' because it is only 5 packages and a 7.3 M download on Fedora 26.
-# It also doesn't install anything that will tamper with our Python environment.
-- name: install Books and Guides group
+- name: uninstall sos for downloadonly test
   dnf:
-    name: "@Books and Guides"
+    name: sos
+    state: absent
+
+- name: Test download_only
+  dnf:
+    name: sos
+    state: latest
+    download_only: true
+  register: dnf_result
+
+- name: verify download of sos (part 1 -- dnf "install" succeeded)
+  assert:
+    that:
+        - "dnf_result is success"
+        - "dnf_result is changed"
+
+- name: uninstall sos (noop)
+  dnf:
+    name: sos
+    state: absent
+  register: dnf_result
+
+- name: verify download of sos (part 2 -- nothing removed during uninstall)
+  assert:
+    that:
+        - "dnf_result is success"
+        - "not dnf_result is changed"
+
+- name: uninstall sos for downloadonly/downloaddir test
+  dnf:
+    name: sos
+    state: absent
+
+- name: Test download_only/download_dir
+  dnf:
+    name: sos
+    state: latest
+    download_only: true
+    download_dir: "/var/tmp/packages"
+  register: dnf_result
+
+- name: verify dnf output
+  assert:
+    that:
+        - "dnf_result is success"
+        - "dnf_result is changed"
+
+- command: "ls /var/tmp/packages"
+  register: ls_out
+
+- name: Verify specified download_dir was used
+  assert:
+    that:
+      - "'sos' in ls_out.stdout"
+
+# GROUP INSTALL
+- name: install Custom Group group
+  dnf:
+    name: "@Custom Group"
     state: present
   register: dnf_result
+
+- name: check foo with rpm
+  command: rpm -q foo
+  failed_when: False
+  register: foo_result
 
 - name: verify installation of the group
   assert:
     that:
-        - "not dnf_result.failed | default(False)"
-        - "dnf_result.changed"
-
-- name: verify dnf module outputs
-  assert:
-    that:
-        - "'changed' in dnf_result"
-        - "'results' in dnf_result"
+    - not dnf_result is failed
+    - dnf_result is changed
+    - "'results' in dnf_result"
+    - foo_result.rc == 0
 
 - name: install the group again
   dnf:
-    name: "@Books and Guides"
+    name: "@Custom Group"
     state: present
   register: dnf_result
 
 - name: verify nothing changed
   assert:
     that:
-        - "not dnf_result.changed"
+    - not dnf_result is changed
+    - "'msg' in dnf_result"
 
-- name: verify dnf module outputs
-  assert:
-    that:
-        - "'changed' in dnf_result"
-        - "'msg' in dnf_result"
+- name: verify that bar is not installed
+  dnf:
+    name: bar
+    state: absent
 
 - name: install the group again but also with a package that is not yet installed
   dnf:
     name:
-      - "@Books and Guides"
-      - bc
+      - "@Custom Group"
+      - bar
     state: present
   register: dnf_result
 
-- name: verify bc is installed
-  assert:
-    that:
-        - "dnf_result.changed"
+- name: check bar with rpm
+  command: rpm -q bar
+  failed_when: False
+  register: bar_result
 
-- name: verify dnf module outputs
+- name: verify bar is installed
   assert:
     that:
-        - "'changed' in dnf_result"
-        - "'results' in dnf_result"
+    - dnf_result is changed
+    - "'results' in dnf_result"
+    - bar_result.rc == 0
 
 - name: try to install the group again, with --check to check 'changed'
   dnf:
-    name: "@Books and Guides"
+    name: "@Custom Group"
     state: present
   check_mode: yes
   register: dnf_result
@@ -299,40 +357,36 @@
 - name: verify nothing changed
   assert:
     that:
-        - "not dnf_result.changed"
+    - not dnf_result is changed
+    - "'msg' in dnf_result"
 
-- name: verify dnf module outputs
-  assert:
-    that:
-        - "'changed' in dnf_result"
-        - "'msg' in dnf_result"
+- name: remove bar after test
+  dnf:
+    name: bar
+    state: absent
 
 # cleanup until https://github.com/ansible/ansible/issues/27377 is resolved
-- shell: dnf -y group install "Books and Guides" && dnf -y group remove "Books and Guides"
+- shell: 'dnf -y group install "Custom Group" && dnf -y group remove "Custom Group"'
+  register: shell_dnf_result
 
 # GROUP UPGRADE - this will go to the same method as group install
 # but through group_update - it is its invocation we're testing here
 # see commit 119c9e5d6eb572c4a4800fbe8136095f9063c37b
-- name: install latest Books and Guides
+- name: install latest Custom Group
   dnf:
-    name: "@Books and Guides"
+    name: "@Custom Group"
     state: latest
   register: dnf_result
 
 - name: verify installation of the group
   assert:
     that:
-        - "not dnf_result.failed | default(False)"
-        - "dnf_result.changed"
-
-- name: verify dnf module outputs
-  assert:
-    that:
-        - "'changed' in dnf_result"
-        - "'results' in dnf_result"
+    - not dnf_result is failed
+    - dnf_result is changed
+    - "'results' in dnf_result"
 
 # cleanup until https://github.com/ansible/ansible/issues/27377 is resolved
-- shell: dnf -y group install "Books and Guides" && dnf -y group remove "Books and Guides"
+- shell: dnf -y group install "Custom Group" && dnf -y group remove "Custom Group"
 
 - name: try to install non existing group
   dnf:
@@ -345,7 +399,7 @@
   assert:
     that:
         - "not dnf_result.changed"
-        - "dnf_result|failed"
+        - "dnf_result is failed"
 
 - name: verify dnf module outputs
   assert:
@@ -363,7 +417,7 @@
 - name: verify installation failed
   assert:
     that:
-        - "dnf_result|failed"
+        - "dnf_result is failed"
         - "not dnf_result.changed"
 
 - name: verify dnf module outputs
@@ -374,7 +428,7 @@
 
 - name: try to install from non existing url
   dnf:
-    name: http://non-existing.com/non-existing-1.0.0.fc26.noarch.rpm
+    name: https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/dnf/non-existing-1.0.0.fc26.noarch.rpm
     state: present
   register: dnf_result
   ignore_errors: yes
@@ -382,7 +436,7 @@
 - name: verify installation failed
   assert:
     that:
-        - "dnf_result|failed"
+        - "dnf_result is failed"
         - "not dnf_result.changed"
 
 - name: verify dnf module outputs
@@ -393,20 +447,255 @@
 
 # ENVIRONMENT UPGRADE
 # see commit de299ef77c03a64a8f515033a79ac6b7db1bc710
-- name: install Web Server environment
+- name: install Custom Environment Group
   dnf:
-    name: "@Web Server"
+    name: "@Custom Environment Group"
     state: latest
   register: dnf_result
+
+- name: check bar with rpm
+  command: rpm -q bar
+  register: bar_result
 
 - name: verify installation of the environment
   assert:
     that:
-        - "not dnf_result.failed | default(False)"
-        - "dnf_result.changed"
+    - not dnf_result is failed
+    - dnf_result is changed
+    - "'results' in dnf_result"
+    - bar_result.rc == 0
+
+# Fedora 28 (DNF 2) does not support this, just remove the package itself
+- name: remove bar package on Fedora 28
+  dnf:
+    name: bar
+    state: absent
+  when: ansible_distribution == 'Fedora' and ansible_distribution_major_version|int <= 28
+
+# cleanup until https://github.com/ansible/ansible/issues/27377 is resolved
+- name: remove Custom Environment Group
+  shell: dnf -y group install "Custom Environment Group" && dnf -y group remove "Custom Environment Group"
+  when: not (ansible_distribution == 'Fedora' and ansible_distribution_major_version|int <= 28)
+
+# https://github.com/ansible/ansible/issues/39704
+- name: install non-existent rpm, state=latest
+  dnf:
+    name: non-existent-rpm
+    state: latest
+  ignore_errors: yes
+  register: dnf_result
+
+- name: verify the result
+  assert:
+    that:
+        - "dnf_result is failed"
+        - "'non-existent-rpm' in dnf_result['failures'][0]"
+        - "'No package non-existent-rpm available' in dnf_result['failures'][0]"
+        - "'Failed to install some of the specified packages' in dnf_result['msg']"
+
+- name: use latest to install httpd
+  dnf:
+    name: httpd
+    state: latest
+  register: dnf_result
+
+- name: verify httpd was installed
+  assert:
+    that:
+      - "'changed' in dnf_result"
+
+- name: uninstall httpd
+  dnf:
+    name: httpd
+    state: removed
+
+- name: update httpd only if it exists
+  dnf:
+    name: httpd
+    state: latest
+    update_only: yes
+  register: dnf_result
+
+- name: verify httpd not installed
+  assert:
+    that:
+      - "not dnf_result is changed"
+
+- name: try to install not compatible arch rpm, should fail
+  dnf:
+    name: https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/dnf/banner-1.3.4-3.el7.ppc64le.rpm
+    state: present
+  register: dnf_result
+  ignore_errors: True
+
+- name: verify that dnf failed
+  assert:
+    that:
+        - "not dnf_result is changed"
+        - "dnf_result is failed"
+
+# setup for testing installing an RPM from url
+
+- set_fact:
+    pkg_name: fpaste
+
+- name: cleanup
+  dnf:
+    name: "{{ pkg_name }}"
+    state: absent
+
+- set_fact:
+    pkg_url: https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/dnf/fpaste-0.3.9.1-1.fc27.noarch.rpm
+# setup end
+
+- name: download an rpm
+  get_url:
+    url: "{{ pkg_url }}"
+    dest: "/tmp/{{ pkg_name }}.rpm"
+
+- name: install the downloaded rpm
+  dnf:
+    name: "/tmp/{{ pkg_name }}.rpm"
+    state: present
+  register: dnf_result
+
+- name: verify installation
+  assert:
+    that:
+        - "dnf_result is success"
+        - "dnf_result is changed"
+
+- name: install the downloaded rpm again
+  dnf:
+    name: "/tmp/{{ pkg_name }}.rpm"
+    state: present
+  register: dnf_result
+
+- name: verify installation
+  assert:
+    that:
+        - "dnf_result is success"
+        - "not dnf_result is changed"
+
+- name: clean up
+  dnf:
+    name: "{{ pkg_name }}"
+    state: absent
+
+- name: install from url
+  dnf:
+    name: "{{ pkg_url }}"
+    state: present
+  register: dnf_result
+
+- name: verify installation
+  assert:
+    that:
+        - "dnf_result is success"
+        - "dnf_result is changed"
+        - "dnf_result is not failed"
 
 - name: verify dnf module outputs
   assert:
     that:
         - "'changed' in dnf_result"
         - "'results' in dnf_result"
+
+- name: Create a temp RPM file which does not contain nevra information
+  file:
+    name: "/tmp/non_existent_pkg.rpm"
+    state: touch
+
+- name: Try installing RPM file which does not contain nevra information
+  dnf:
+    name: "/tmp/non_existent_pkg.rpm"
+    state: present
+  register: no_nevra_info_result
+  ignore_errors: yes
+
+- name: Verify RPM failed to install
+  assert:
+    that:
+      - "'changed' in no_nevra_info_result"
+      - "'msg' in no_nevra_info_result"
+
+- name: Delete a temp RPM file
+  file:
+    name: "/tmp/non_existent_pkg.rpm"
+    state: absent
+
+- name: uninstall lsof
+  dnf:
+    name: lsof
+    state: removed
+
+- name: check lsof with rpm
+  shell: rpm -q lsof
+  ignore_errors: True
+  register: rpm_lsof_result
+
+- name: verify lsof is uninstalled
+  assert:
+    that:
+      - "rpm_lsof_result is failed"
+
+- name: create conf file that excludes lsof
+  copy:
+    content: |
+      [main]
+      exclude=lsof*
+    dest: '{{ output_dir }}/test-dnf.conf'
+  register: test_dnf_copy
+
+- block:
+  # begin test case where disable_excludes is supported
+  - name: Try install lsof without disable_excludes
+    dnf: name=lsof state=latest conf_file={{ test_dnf_copy.dest }}
+    register: dnf_lsof_result
+    ignore_errors: True
+
+  - name: verify lsof did not install because it is in exclude list
+    assert:
+      that:
+        - "dnf_lsof_result is failed"
+
+  - name: install lsof with disable_excludes
+    dnf: name=lsof state=latest disable_excludes=all conf_file={{ test_dnf_copy.dest }}
+    register: dnf_lsof_result_using_excludes
+
+  - name: verify lsof did install using disable_excludes=all
+    assert:
+      that:
+        - "dnf_lsof_result_using_excludes is success"
+        - "dnf_lsof_result_using_excludes is changed"
+        - "dnf_lsof_result_using_excludes is not failed"
+  always:
+  - name: remove exclude lsof conf file
+    file:
+      path: '{{ output_dir }}/test-dnf.conf'
+      state: absent
+
+# end test case where disable_excludes is supported
+
+- name: Test "dnf install /usr/bin/vi"
+  block:
+    - name: Clean vim-minimal
+      dnf:
+        name: vim-minimal
+        state: absent
+
+    - name: Install vim-minimal by specifying "/usr/bin/vi"
+      dnf:
+        name: /usr/bin/vi
+        state: present
+
+    - name: Get rpm output
+      command: rpm -q vim-minimal
+      register: rpm_output
+
+    - name: Check installation was successful
+      assert:
+        that:
+          - "'vim-minimal' in rpm_output.stdout"
+  when:
+    - ansible_distribution == 'Fedora'

@@ -21,54 +21,79 @@ description:
   - Create/remove Docker volumes.
   - Performs largely the same function as the "docker volume" CLI subcommand.
 options:
-  name:
+  volume_name:
     description:
       - Name of the volume to operate on.
-    required: true
+    type: str
+    required: yes
     aliases:
-      - volume_name
+      - name
 
   driver:
     description:
       - Specify the type of volume. Docker provides the C(local) driver, but 3rd party drivers can also be used.
+    type: str
     default: local
 
   driver_options:
     description:
       - "Dictionary of volume settings. Consult docker docs for valid options and values:
         U(https://docs.docker.com/engine/reference/commandline/volume_create/#driver-specific-options)"
+    type: dict
 
   labels:
     description:
-      - List of labels to set for the volume
+      - Dictionary of label key/values to set for the volume
+    type: dict
 
   force:
     description:
       - With state C(present) causes the volume to be deleted and recreated if the volume already
         exist and the driver, driver options or labels differ. This will cause any data in the existing
         volume to be lost.
+      - Deprecated. Will be removed in Ansible 2.12. Set I(recreate) to C(options-changed) instead
+        for the same behavior of setting I(force) to C(yes).
     type: bool
-    default: 'no'
+    default: no
+
+  recreate:
+    version_added: "2.8"
+    description:
+      - Controls when a volume will be recreated when I(state) is C(present). Please
+        note that recreating an existing volume will cause I(any data in the existing volume
+        to be lost!) The volume will be deleted and a new volume with the same name will be
+        created.
+      - The value C(always) forces the volume to be always recreated.
+      - The value C(never) makes sure the volume will not be recreated.
+      - The value C(options-changed) makes sure the volume will be recreated if the volume
+        already exist and the driver, driver options or labels differ.
+    type: str
+    default: never
+    choices:
+    - always
+    - never
+    - options-changed
 
   state:
     description:
       - C(absent) deletes the volume.
       - C(present) creates the volume, if it does not already exist.
+    type: str
     default: present
     choices:
       - absent
       - present
 
 extends_documentation_fragment:
-    - docker
+  - docker
+  - docker.docker_py_1_documentation
 
 author:
-    - Alex Grönholm (@agronholm)
+  - Alex Grönholm (@agronholm)
 
 requirements:
-    - "python >= 2.6"
-    - "docker-py >= 1.10.0"
-    - "The docker server >= 1.9.0"
+  - "L(Docker SDK for Python,https://docker-py.readthedocs.io/en/stable/) >= 1.10.0 (use L(docker-py,https://pypi.org/project/docker-py/) for Python 2.6)"
+  - "The docker server >= 1.9.0"
 '''
 
 EXAMPLES = '''
@@ -90,8 +115,11 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-facts:
-    description: Volume inspection results for the affected volume.
+volume:
+    description:
+    - Volume inspection results for the affected volume.
+    - Note that facts are part of the registered vars since Ansible 2.8. For compatibility reasons, the facts
+      are also accessible directly as C(docker_volume). Note that the returned fact will be removed in Ansible 2.12.
     returned: success
     type: dict
     sample: {}
@@ -100,10 +128,14 @@ facts:
 try:
     from docker.errors import APIError
 except ImportError:
-    # missing docker-py handled in ansible.module_utils.docker
+    # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
 
-from ansible.module_utils.docker_common import DockerBaseClass, AnsibleDockerClient
+from ansible.module_utils.docker.common import (
+    DockerBaseClass,
+    AnsibleDockerClient,
+    DifferenceTracker,
+)
 from ansible.module_utils.six import iteritems, text_type
 
 
@@ -117,10 +149,21 @@ class TaskParameters(DockerBaseClass):
         self.driver_options = None
         self.labels = None
         self.force = None
+        self.recreate = None
         self.debug = None
 
         for key, value in iteritems(client.module.params):
             setattr(self, key, value)
+
+        if self.force is not None:
+            if self.recreate != 'never':
+                client.fail('Cannot use the deprecated "force" '
+                            'option when "recreate" is set. Please stop '
+                            'using the force option.')
+            client.module.warn('The "force" option of docker_volume has been deprecated '
+                               'in Ansible 2.8. Please use the "recreate" '
+                               'option, which provides the same functionality as "force".')
+            self.recreate = 'options-changed' if self.force else 'never'
 
 
 class DockerVolumeManager(object):
@@ -134,6 +177,8 @@ class DockerVolumeManager(object):
             u'actions': []
         }
         self.diff = self.client.module._diff
+        self.diff_tracker = DifferenceTracker()
+        self.diff_result = dict()
 
         self.existing_volume = self.get_existing_volume()
 
@@ -143,11 +188,19 @@ class DockerVolumeManager(object):
         elif state == 'absent':
             self.absent()
 
+        if self.diff or self.check_mode or self.parameters.debug:
+            if self.diff:
+                self.diff_result['before'], self.diff_result['after'] = self.diff_tracker.get_before_after()
+            self.results['diff'] = self.diff_result
+
     def get_existing_volume(self):
         try:
             volumes = self.client.volumes()
         except APIError as e:
             self.client.fail(text_type(e))
+
+        if volumes[u'Volumes'] is None:
+            return None
 
         for volume in volumes[u'Volumes']:
             if volume['Name'] == self.parameters.volume_name:
@@ -161,23 +214,28 @@ class DockerVolumeManager(object):
 
         :return: list of options that differ
         """
-        differences = []
+        differences = DifferenceTracker()
         if self.parameters.driver and self.parameters.driver != self.existing_volume['Driver']:
-            differences.append('driver')
+            differences.add('driver', parameter=self.parameters.driver, active=self.existing_volume['Driver'])
         if self.parameters.driver_options:
             if not self.existing_volume.get('Options'):
-                differences.append('driver_options')
+                differences.add('driver_options',
+                                parameter=self.parameters.driver_options,
+                                active=self.existing_volume.get('Options'))
             else:
                 for key, value in iteritems(self.parameters.driver_options):
                     if (not self.existing_volume['Options'].get(key) or
                             value != self.existing_volume['Options'][key]):
-                        differences.append('driver_options.%s' % key)
+                        differences.add('driver_options.%s' % key,
+                                        parameter=value,
+                                        active=self.existing_volume['Options'].get(key))
         if self.parameters.labels:
             existing_labels = self.existing_volume.get('Labels', {})
-            all_labels = set(self.parameters.labels) | set(existing_labels)
-            for label in all_labels:
+            for label in self.parameters.labels:
                 if existing_labels.get(label) != self.parameters.labels.get(label):
-                    differences.append('labels.%s' % label)
+                    differences.add('labels.%s' % label,
+                                    parameter=self.parameters.labels.get(label),
+                                    active=existing_labels.get(label))
 
         return differences
 
@@ -185,10 +243,15 @@ class DockerVolumeManager(object):
         if not self.existing_volume:
             if not self.check_mode:
                 try:
-                    resp = self.client.create_volume(self.parameters.volume_name,
-                                                     driver=self.parameters.driver,
-                                                     driver_opts=self.parameters.driver_options,
-                                                     labels=self.parameters.labels)
+                    params = dict(
+                        driver=self.parameters.driver,
+                        driver_opts=self.parameters.driver_options,
+                    )
+
+                    if self.parameters.labels is not None:
+                        params['labels'] = self.parameters.labels
+
+                    resp = self.client.create_volume(self.parameters.volume_name, **params)
                     self.existing_volume = self.client.inspect_volume(resp['Name'])
                 except APIError as e:
                     self.client.fail(text_type(e))
@@ -208,25 +271,30 @@ class DockerVolumeManager(object):
             self.results['changed'] = True
 
     def present(self):
-        differences = []
+        differences = DifferenceTracker()
         if self.existing_volume:
             differences = self.has_different_config()
 
-        if differences and self.parameters.force:
+        self.diff_tracker.add('exists', parameter=True, active=self.existing_volume is not None)
+        if (not differences.empty and self.parameters.recreate == 'options-changed') or self.parameters.recreate == 'always':
             self.remove_volume()
             self.existing_volume = None
 
         self.create_volume()
 
         if self.diff or self.check_mode or self.parameters.debug:
-            self.results['diff'] = differences
+            self.diff_result['differences'] = differences.get_legacy_docker_diffs()
+            self.diff_tracker.merge(differences)
 
         if not self.check_mode and not self.parameters.debug:
             self.results.pop('actions')
 
-        self.results['ansible_facts'] = {u'docker_volume': self.get_existing_volume()}
+        volume_facts = self.get_existing_volume()
+        self.results['ansible_facts'] = {u'docker_volume': volume_facts}
+        self.results['volume'] = volume_facts
 
     def absent(self):
+        self.diff_tracker.add('exists', parameter=False, active=self.existing_volume is not None)
         self.remove_volume()
 
 
@@ -236,14 +304,23 @@ def main():
         state=dict(type='str', default='present', choices=['present', 'absent']),
         driver=dict(type='str', default='local'),
         driver_options=dict(type='dict', default={}),
-        labels=dict(type='list'),
-        force=dict(type='bool', default=False),
+        labels=dict(type='dict'),
+        force=dict(type='bool', removed_in_version='2.12'),
+        recreate=dict(type='str', default='never', choices=['always', 'never', 'options-changed']),
         debug=dict(type='bool', default=False)
+    )
+
+    option_minimal_versions = dict(
+        labels=dict(docker_py_version='1.10.0', docker_api_version='1.23'),
     )
 
     client = AnsibleDockerClient(
         argument_spec=argument_spec,
-        supports_check_mode=True
+        supports_check_mode=True,
+        min_docker_version='1.10.0',
+        min_docker_api_version='1.21',
+        # "The docker server >= 1.9.0"
+        option_minimal_versions=option_minimal_versions,
     )
 
     cm = DockerVolumeManager(client)

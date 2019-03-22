@@ -1,0 +1,2 @@
+bugfixes:
+- "docker_container - fixing race condition when ``detach`` and ``auto_remove`` are both ``true``."

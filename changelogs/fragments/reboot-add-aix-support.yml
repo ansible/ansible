@@ -1,0 +1,2 @@
+bugfixes:
+  - reboot - add support for rebooting AIX (https://github.com/ansible/ansible/issues/49712)

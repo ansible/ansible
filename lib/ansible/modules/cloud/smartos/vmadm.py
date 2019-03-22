@@ -78,6 +78,11 @@ options:
     required: false
     description:
       - Domain value for C(/etc/hosts).
+  docker:
+    required: false
+    description:
+      - Docker images need this flag enabled along with the I(brand) set to C(lx).
+    version_added: "2.5"
   filesystems:
       required: false
       description:
@@ -321,17 +326,17 @@ RETURN = '''
 uuid:
   description: UUID of the managed VM.
   returned: always
-  type: string
+  type: str
   sample: 'b217ab0b-cf57-efd8-cd85-958d0b80be33'
 alias:
   description: Alias of the managed VM.
   returned: When addressing a VM by alias.
-  type: string
+  type: str
   sample: 'dns-zone'
 state:
   description: State of the target, after execution.
   returned: success
-  type: string
+  type: str
   sample: 'running'
 '''
 
@@ -607,7 +612,7 @@ def main():
         ],
         'bool': [
             'archive_on_delete', 'autoboot', 'debug', 'delegate_dataset',
-            'firewall_enabled', 'force', 'indestructible_delegated',
+            'docker', 'firewall_enabled', 'force', 'indestructible_delegated',
             'indestructible_zoneroot', 'maintain_resolvers', 'nowait'
         ],
         'int': [
@@ -685,7 +690,7 @@ def main():
         uuid = get_vm_uuid(module, p['name'])
         # Bit of a chicken and egg problem here for VMs with state == deleted.
         # If they're going to be removed in this play, we have to lookup the
-        # uuid. If they're already deleted there's nothing to looup.
+        # uuid. If they're already deleted there's nothing to lookup.
         # So if state == deleted and get_vm_uuid() returned '', the VM is already
         # deleted and there's nothing else to do.
         if uuid is None and vm_state == 'deleted':

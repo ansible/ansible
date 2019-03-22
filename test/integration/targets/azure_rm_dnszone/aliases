@@ -1,3 +1,6 @@
 cloud/azure
-posix/ci/cloud/group2/azure
+shippable/azure/group2
 destructive
+azure_rm_dnszone_facts
+azure_rm_dnsrecordset
+azure_rm_dnsrecordset_facts

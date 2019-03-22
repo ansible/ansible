@@ -16,7 +16,7 @@
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -44,7 +44,7 @@ options:
   state:
     description:
       - Register or deregister the instance
-    required: true
+    default: present
     choices: ['present', 'absent']
   name:
     description:
@@ -54,8 +54,6 @@ options:
     description:
       - Instance type to use for the instance
     required: true
-    default: null
-    aliases: []
   image_id:
     description:
       - The AMI unique identifier to be used for the group
@@ -87,7 +85,8 @@ options:
   instance_monitoring:
     description:
       - Specifies whether instances are launched with detailed monitoring.
-    default: false
+    type: bool
+    default: 'no'
   assign_public_ip:
     description:
       - Used for Auto Scaling groups that launch instances into an Amazon Virtual Private Cloud. Specifies whether to assign a public IP address
@@ -151,7 +150,7 @@ EXAMPLES = '''
     volumes:
     - device_name: /dev/sda1
       volume_size: 100
-      device_type: io1
+      volume_type: io1
       iops: 3000
       delete_on_termination: true
       encrypted: true
@@ -168,11 +167,214 @@ EXAMPLES = '''
     volumes:
     - device_name: /dev/sda1
       volume_size: 120
-      device_type: io1
+      volume_type: io1
       iops: 3000
       delete_on_termination: true
 
+# create a launch configuration to omit the /dev/sdf EBS device that is included in the AMI image
+
+- ec2_lc:
+    name: special
+    image_id: ami-XXX
+    key_name: default
+    security_groups: ['group', 'group2' ]
+    instance_type: t1.micro
+    volumes:
+    - device_name: /dev/sdf
+      no_device: true
 '''
+
+RETURN = '''
+arn:
+  description: The Amazon Resource Name of the launch configuration.
+  returned: when I(state=present)
+  type: str
+  sample: arn:aws:autoscaling:us-east-1:148830907657:launchConfiguration:888d9b58-d93a-40c4-90cf-759197a2621a:launchConfigurationName/launch_config_name
+changed:
+  description: Whether the state of the launch configuration has changed.
+  returned: always
+  type: bool
+  sample: false
+created_time:
+  description: The creation date and time for the launch configuration.
+  returned: when I(state=present)
+  type: str
+  sample: '2017-11-03 23:46:44.841000'
+image_id:
+  description: The ID of the Amazon Machine Image used by the launch configuration.
+  returned: when I(state=present)
+  type: str
+  sample: ami-9be6f38c
+instance_type:
+  description: The instance type for the instances.
+  returned: when I(state=present)
+  type: str
+  sample: t1.micro
+name:
+  description: The name of the launch configuration.
+  returned: when I(state=present)
+  type: str
+  sample: launch_config_name
+result:
+  description: The specification details for the launch configuration.
+  returned: when I(state=present)
+  type: complex
+  contains:
+    PlacementTenancy:
+      description: The tenancy of the instances, either default or dedicated.
+      returned: when I(state=present)
+      type: str
+      sample: default
+    associate_public_ip_address:
+      description: (EC2-VPC) Indicates whether to assign a public IP address to each instance.
+      returned: when I(state=present)
+      type: NoneType
+      sample: null
+    block_device_mappings:
+      description: A block device mapping, which specifies the block devices.
+      returned: when I(state=present)
+      type: complex
+      contains:
+        device_name:
+          description: The device name exposed to the EC2 instance (for example, /dev/sdh or xvdh).
+          returned: when I(state=present)
+          type: str
+          sample: /dev/sda1
+        ebs:
+          description: The information about the Amazon EBS volume.
+          returned: when I(state=present)
+          type: complex
+          contains:
+            snapshot_id:
+              description: The ID of the snapshot.
+              returned: when I(state=present)
+              type: NoneType
+              sample: null
+            volume_size:
+              description: The volume size, in GiB.
+              returned: when I(state=present)
+              type: str
+              sample: '100'
+        virtual_name:
+          description: The name of the virtual device (for example, ephemeral0).
+          returned: when I(state=present)
+          type: NoneType
+          sample: null
+    classic_link_vpc_id:
+      description: The ID of a ClassicLink-enabled VPC to link your EC2-Classic instances to.
+      returned: when I(state=present)
+      type: NoneType
+      sample: null
+    classic_link_vpc_security_groups:
+      description: The IDs of one or more security groups for the VPC specified in ClassicLinkVPCId.
+      returned: when I(state=present)
+      type: list
+      sample: []
+    created_time:
+      description: The creation date and time for the launch configuration.
+      returned: when I(state=present)
+      type: str
+      sample: '2017-11-03 23:46:44.841000'
+    delete_on_termination:
+      description: Indicates whether the volume is deleted on instance termination.
+      returned: when I(state=present)
+      type: bool
+      sample: true
+    ebs_optimized:
+      description: Indicates whether the instance is optimized for EBS I/O (true) or not (false).
+      returned: when I(state=present)
+      type: bool
+      sample: false
+    image_id:
+      description: The ID of the Amazon Machine Image used by the launch configuration.
+      returned: when I(state=present)
+      type: str
+      sample: ami-9be6f38c
+    instance_monitoring:
+      description: Indicates whether instances in this group are launched with detailed (true) or basic (false) monitoring.
+      returned: when I(state=present)
+      type: bool
+      sample: true
+    instance_profile_name:
+      description: The name or Amazon Resource Name (ARN) of the instance profile associated with the IAM role for the instance.
+      returned: when I(state=present)
+      type: str
+      sample: null
+    instance_type:
+      description: The instance type for the instances.
+      returned: when I(state=present)
+      type: str
+      sample: t1.micro
+    iops:
+      description: The number of I/O operations per second (IOPS) to provision for the volume.
+      returned: when I(state=present)
+      type: NoneType
+      sample: null
+    kernel_id:
+      description: The ID of the kernel associated with the AMI.
+      returned: when I(state=present)
+      type: str
+      sample: ''
+    key_name:
+      description: The name of the key pair.
+      returned: when I(state=present)
+      type: str
+      sample: testkey
+    launch_configuration_arn:
+      description: The Amazon Resource Name (ARN) of the launch configuration.
+      returned: when I(state=present)
+      type: str
+      sample: arn:aws:autoscaling:us-east-1:148830907657:launchConfiguration:888d9b58-d93a-40c4-90cf-759197a2621a:launchConfigurationName/launch_config_name
+    member:
+      description: ""
+      returned: when I(state=present)
+      type: str
+      sample: "\n      "
+    name:
+      description: The name of the launch configuration.
+      returned: when I(state=present)
+      type: str
+      sample: launch_config_name
+    ramdisk_id:
+      description: The ID of the RAM disk associated with the AMI.
+      returned: when I(state=present)
+      type: str
+      sample: ''
+    security_groups:
+      description: The security groups to associate with the instances.
+      returned: when I(state=present)
+      type: list
+      sample:
+      - sg-5e27db2f
+    spot_price:
+      description: The price to bid when launching Spot Instances.
+      returned: when I(state=present)
+      type: NoneType
+      sample: null
+    use_block_device_types:
+      description: Indicates whether to suppress a device mapping.
+      returned: when I(state=present)
+      type: bool
+      sample: false
+    user_data:
+      description: The user data available to the instances.
+      returned: when I(state=present)
+      type: str
+      sample: ''
+    volume_type:
+      description: The volume type (one of standard, io1, gp2).
+      returned: when I(state=present)
+      type: NoneType
+      sample: null
+security_groups:
+  description: The security groups to associate with the instances.
+  returned: when I(state=present)
+  type: list
+  sample:
+  - sg-5e27db2f
+
+'''
+
 
 import traceback
 from ansible.module_utils.ec2 import (get_aws_connection_info, ec2_argument_spec, ec2_connect, camel_dict_to_snake_dict, get_ec2_security_group_ids_from_names,
@@ -187,12 +389,26 @@ except ImportError:
 
 
 def create_block_device_meta(module, volume):
-    MAX_IOPS_TO_SIZE_RATIO = 30
-    if 'snapshot' not in volume and 'ephemeral' not in volume:
+    # device_type has been used historically to represent volume_type,
+    # however ec2_vol uses volume_type, as does the BlockDeviceType, so
+    # we add handling for either/or but not both
+    if 'device_type' in volume:
+        if 'volume_type' in volume:
+            module.fail_json(msg='device_type is a deprecated name for volume_type. '
+                             'Do not use both device_type and volume_type')
+        else:
+            module.deprecate('device_type is deprecated for block devices - use volume_type instead',
+                             version=2.9)
+
+    # rewrite device_type key to volume_type
+    if 'device_type' in volume:
+        volume['volume_type'] = volume.pop('device_type')
+
+    if 'snapshot' not in volume and 'ephemeral' not in volume and 'no_device' not in volume:
         if 'volume_size' not in volume:
             module.fail_json(msg='Size must be specified when creating a new volume or modifying the root volume')
     if 'snapshot' in volume:
-        if 'device_type' in volume and volume.get('device_type') == 'io1' and 'iops' not in volume:
+        if volume.get('volume_type') == 'io1' and 'iops' not in volume:
             module.fail_json(msg='io1 volumes must have an iops value set')
     if 'ephemeral' in volume:
         if 'snapshot' in volume:
@@ -206,7 +422,7 @@ def create_block_device_meta(module, volume):
     if 'device_name' in volume:
         return_object['DeviceName'] = volume.get('device_name')
 
-    if 'no_device' is volume:
+    if 'no_device' in volume:
         return_object['NoDevice'] = volume.get('no_device')
 
     if any(key in volume for key in ['snapshot', 'volume_size', 'volume_type', 'delete_on_termination', 'ips', 'encrypted']):
@@ -216,7 +432,7 @@ def create_block_device_meta(module, volume):
         return_object['Ebs']['SnapshotId'] = volume.get('snapshot')
 
     if 'volume_size' in volume:
-        return_object['Ebs']['VolumeSize'] = volume.get('volume_size')
+        return_object['Ebs']['VolumeSize'] = int(volume.get('volume_size', 0))
 
     if 'volume_type' in volume:
         return_object['Ebs']['VolumeType'] = volume.get('volume_type')
@@ -254,7 +470,7 @@ def create_launch_config(connection, module):
     classic_link_vpc_id = module.params.get('classic_link_vpc_id')
     classic_link_vpc_security_groups = module.params.get('classic_link_vpc_security_groups')
 
-    block_device_mapping = {}
+    block_device_mapping = []
 
     convert_list = ['image_id', 'instance_type', 'instance_type', 'instance_id', 'placement_tenancy', 'key_name', 'kernel_id', 'ramdisk_id', 'spot_price']
 
@@ -271,9 +487,9 @@ def create_launch_config(connection, module):
         for volume in volumes:
             if 'device_name' not in volume:
                 module.fail_json(msg='Device name must be set for volume')
-            # Minimum volume size is 1GB. We'll use volume size explicitly set to 0 to be a signal not to create this volume
+            # Minimum volume size is 1GiB. We'll use volume size explicitly set to 0 to be a signal not to create this volume
             if 'volume_size' not in volume or int(volume['volume_size']) > 0:
-                block_device_mapping.update(create_block_device_meta(module, volume))
+                block_device_mapping.append(create_block_device_meta(module, volume))
 
     try:
         launch_configs = connection.describe_launch_configurations(LaunchConfigurationNames=[name]).get('LaunchConfigurations')
@@ -291,14 +507,14 @@ def create_launch_config(connection, module):
     if classic_link_vpc_id is not None:
         launch_config['ClassicLinkVPCId'] = classic_link_vpc_id
 
-    if instance_monitoring:
+    if instance_monitoring is not None:
         launch_config['InstanceMonitoring'] = {'Enabled': instance_monitoring}
 
     if classic_link_vpc_security_groups is not None:
         launch_config['ClassicLinkVPCSecurityGroups'] = classic_link_vpc_security_groups
 
     if block_device_mapping:
-        launch_config['BlockDeviceMappings'] = [block_device_mapping]
+        launch_config['BlockDeviceMappings'] = block_device_mapping
 
     if instance_profile_name is not None:
         launch_config['IamInstanceProfile'] = instance_profile_name
@@ -323,7 +539,7 @@ def create_launch_config(connection, module):
             module.fail_json(msg="Failed to create launch configuration", exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     result = (dict((k, v) for k, v in launch_config.items()
-              if k not in ['Connection', 'CreatedTime', 'InstanceMonitoring', 'BlockDeviceMappings']))
+                   if k not in ['Connection', 'CreatedTime', 'InstanceMonitoring', 'BlockDeviceMappings']))
 
     result['CreatedTime'] = to_text(launch_config.get('CreatedTime'))
 
@@ -394,7 +610,7 @@ def main():
             classic_link_vpc_security_groups=dict(type='list'),
             classic_link_vpc_id=dict(),
             vpc_id=dict(),
-            placement_tenancy=dict(default='default', choices=['default', 'dedicated'])
+            placement_tenancy=dict(choices=['default', 'dedicated'])
         )
     )
 

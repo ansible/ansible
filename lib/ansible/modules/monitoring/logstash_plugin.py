@@ -28,30 +28,22 @@ options:
     state:
         description:
             - Apply plugin state.
-        required: False
         choices: ["present", "absent"]
         default: present
     plugin_bin:
         description:
             - Specify logstash-plugin to use for plugin management.
-        required: False
         default: /usr/share/logstash/bin/logstash-plugin
     proxy_host:
         description:
             - Proxy host to use during plugin installation.
-        required: False
-        default: None
     proxy_port:
         description:
             - Proxy port to use during plugin installation.
-        required: False
-        default: None
     version:
         description:
             - Specify plugin Version of the plugin to install.
               If plugin exists with previous version, it will NOT be updated.
-        required: False
-        default: None
 '''
 
 EXAMPLES = '''
@@ -70,6 +62,13 @@ EXAMPLES = '''
   logstash_plugin:
     state: absent
     name: logstash-filter-multiline
+
+- name: install Logstash plugin with alternate heap size
+  logstash_plugin:
+    state: present
+    name: logstash-input-beats
+  environment:
+    LS_JAVA_OPTS: "-Xms256m -Xmx256m"
 '''
 
 from ansible.module_utils.basic import AnsibleModule

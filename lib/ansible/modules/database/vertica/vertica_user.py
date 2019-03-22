@@ -30,69 +30,51 @@ options:
   profile:
     description:
       - Sets the user's profile.
-    required: false
-    default: null
   resource_pool:
     description:
       - Sets the user's resource pool.
-    required: false
-    default: null
   password:
     description:
       - The user's password encrypted by the MD5 algorithm.
       - The password must be generated with the format C("md5" + md5[password + username]),
         resulting in a total of 35 characters. An easy way to do this is by querying
         the Vertica database with select 'md5'||md5('<user_password><user_name>').
-    required: false
-    default: null
   expired:
     description:
       - Sets the user's password expiration.
-    required: false
-    default: null
+    type: bool
   ldap:
     description:
       - Set to true if users are authenticated via LDAP.
       - The user will be created with password expired and set to I($ldap$).
-    required: false
-    default: null
+    type: bool
   roles:
     description:
       - Comma separated list of roles to assign to the user.
     aliases: ['role']
-    required: false
-    default: null
   state:
     description:
       - Whether to create C(present), drop C(absent) or lock C(locked) a user.
-    required: false
     choices: ['present', 'absent', 'locked']
     default: present
   db:
     description:
       - Name of the Vertica database.
-    required: false
-    default: null
   cluster:
     description:
       - Name of the Vertica cluster.
-    required: false
     default: localhost
   port:
     description:
       - Vertica cluster port to connect to.
-    required: false
     default: 5433
   login_user:
     description:
       - The username used to authenticate with.
-    required: false
     default: dbadmin
   login_password:
     description:
       - The password used to authenticate with.
-    required: false
-    default: null
 notes:
   - The default authentication assumes that you are either logging in as or sudo'ing
     to the C(dbadmin) account on the host.
@@ -120,24 +102,28 @@ EXAMPLES = """
 """
 import traceback
 
+PYODBC_IMP_ERR = None
 try:
     import pyodbc
 except ImportError:
+    PYODBC_IMP_ERR = traceback.format_exc()
     pyodbc_found = False
 else:
     pyodbc_found = True
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
 
 
 class NotSupportedError(Exception):
     pass
 
+
 class CannotDropError(Exception):
     pass
 
 # module specific functions
+
 
 def get_user_facts(cursor, user=''):
     facts = {}
@@ -173,6 +159,7 @@ def get_user_facts(cursor, user=''):
                 facts[user_key]['default_roles'] = row.default_roles.replace(' ', '').split(',')
     return facts
 
+
 def update_roles(user_facts, cursor, user,
                  existing_all, existing_default, required):
     del_roles = list(set(existing_all) - set(required))
@@ -183,6 +170,7 @@ def update_roles(user_facts, cursor, user,
         cursor.execute("grant {0} to {1}".format(','.join(new_roles), user))
     if required:
         cursor.execute("alter user {0} default role {1}".format(user, ','.join(required)))
+
 
 def check(user_facts, user, profile, resource_pool,
           locked, password, expired, ldap, roles):
@@ -198,12 +186,13 @@ def check(user_facts, user, profile, resource_pool,
     if password and password != user_facts[user_key]['password']:
         return False
     if (expired is not None and expired != (user_facts[user_key]['expired'] == 'True') or
-           ldap is not None and ldap != (user_facts[user_key]['expired'] == 'True')):
+            ldap is not None and ldap != (user_facts[user_key]['expired'] == 'True')):
         return False
-    if roles and (sorted(roles) != sorted(user_facts[user_key]['roles']) or \
-            sorted(roles) != sorted(user_facts[user_key]['default_roles'])):
+    if roles and (sorted(roles) != sorted(user_facts[user_key]['roles']) or
+                  sorted(roles) != sorted(user_facts[user_key]['default_roles'])):
         return False
     return True
+
 
 def present(user_facts, cursor, user, profile, resource_pool,
             locked, password, expired, ldap, roles):
@@ -267,20 +256,21 @@ def present(user_facts, cursor, user, profile, resource_pool,
             changed = True
         if changed:
             cursor.execute(' '.join(query_fragments))
-        if roles and (sorted(roles) != sorted(user_facts[user_key]['roles']) or \
-               sorted(roles) != sorted(user_facts[user_key]['default_roles'])):
+        if roles and (sorted(roles) != sorted(user_facts[user_key]['roles']) or
+                      sorted(roles) != sorted(user_facts[user_key]['default_roles'])):
             update_roles(user_facts, cursor, user,
-                user_facts[user_key]['roles'], user_facts[user_key]['default_roles'], roles)
+                         user_facts[user_key]['roles'], user_facts[user_key]['default_roles'], roles)
             changed = True
         if changed:
             user_facts.update(get_user_facts(cursor, user))
         return changed
 
+
 def absent(user_facts, cursor, user, roles):
     user_key = user.lower()
     if user_key in user_facts:
         update_roles(user_facts, cursor, user,
-            user_facts[user_key]['roles'], user_facts[user_key]['default_roles'], [])
+                     user_facts[user_key]['roles'], user_facts[user_key]['default_roles'], [])
         try:
             cursor.execute("drop user {0}".format(user_facts[user_key]['name']))
         except pyodbc.Error:
@@ -291,6 +281,7 @@ def absent(user_facts, cursor, user, roles):
         return False
 
 # module logic
+
 
 def main():
 
@@ -309,10 +300,10 @@ def main():
             port=dict(default='5433'),
             login_user=dict(default='dbadmin'),
             login_password=dict(default=None, no_log=True),
-        ), supports_check_mode = True)
+        ), supports_check_mode=True)
 
     if not pyodbc_found:
-        module.fail_json(msg="The python pyodbc module is required.")
+        module.fail_json(msg=missing_required_lib('pyodbc'), exception=PYODBC_IMP_ERR)
 
     user = module.params['user']
     profile = module.params['profile']
@@ -348,8 +339,8 @@ def main():
             "User={3};"
             "Password={4};"
             "ConnectionLoadBalance={5}"
-            ).format(module.params['cluster'], module.params['port'], db,
-                module.params['login_user'], module.params['login_password'], 'true')
+        ).format(module.params['cluster'], module.params['port'], db,
+                 module.params['login_user'], module.params['login_password'], 'true')
         db_conn = pyodbc.connect(dsn, autocommit=True)
         cursor = db_conn.cursor()
     except Exception as e:
@@ -359,7 +350,7 @@ def main():
         user_facts = get_user_facts(cursor)
         if module.check_mode:
             changed = not check(user_facts, user, profile, resource_pool,
-                locked, password, expired, ldap, roles)
+                                locked, password, expired, ldap, roles)
         elif state == 'absent':
             try:
                 changed = absent(user_facts, cursor, user, roles)
@@ -368,7 +359,7 @@ def main():
         elif state in ['present', 'locked']:
             try:
                 changed = present(user_facts, cursor, user, profile, resource_pool,
-                    locked, password, expired, ldap, roles)
+                                  locked, password, expired, ldap, roles)
             except pyodbc.Error as e:
                 module.fail_json(msg=to_native(e), exception=traceback.format_exc())
     except NotSupportedError as e:

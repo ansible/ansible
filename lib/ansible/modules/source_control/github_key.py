@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#
+
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -30,21 +30,17 @@ options:
   pubkey:
     description:
       - SSH public key value. Required when C(state=present).
-    required: false
-    default: none
   state:
     description:
       - Whether to remove a key, ensure that it exists, or update its value.
     choices: ['present', 'absent']
     default: 'present'
-    required: false
   force:
     description:
       - The default is C(yes), which will replace the existing remote key
         if it's different than C(pubkey). If C(no), the key will only be
         set if no key with the given C(name) exists.
-    required: false
-    choices: ['yes', 'no']
+    type: bool
     default: 'yes'
 
 author: Robert Estelle (@erydo)
@@ -187,7 +183,7 @@ def ensure_key_present(module, session, name, pubkey, force, check_mode):
         if new_signature == existing_signature and key['title'] != name:
             module.fail_json(msg=(
                 "another key with the same content is already registered "
-                "under the name |{}|").format(key['title']))
+                "under the name |{0}|").format(key['title']))
 
     if matching_keys and force and matching_keys[0]['key'].split(' ')[1] != new_signature:
         delete_keys(session, matching_keys, check_mode=check_mode)

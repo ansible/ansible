@@ -1,0 +1,25 @@
+---
+- hosts: testhost
+  gather_facts: false
+  tasks:
+    - name: Static imports should expose vars at parse time, not at execution time
+      assert:
+        that:
+          - static_defaults_var == 'static_defaults'
+          - static_vars_var == 'static_vars'
+    - import_role:
+        name: static
+    - assert:
+        that:
+          - static_tasks_var == 'static_tasks'
+          - static_defaults_var == 'static_defaults'
+          - static_vars_var == 'static_vars'
+
+- hosts: testhost
+  gather_facts: false
+  tasks:
+    - name: Ensure vars from import_roles do not bleed between plays
+      assert:
+        that:
+          - static_defaults_var is undefined
+          - static_vars_var is undefined

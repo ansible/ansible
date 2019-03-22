@@ -17,7 +17,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from ansible.compat.tests.mock import patch, Mock, MagicMock, call
+from units.compat.mock import patch, Mock, MagicMock, call
 
 import sys
 
@@ -25,7 +25,8 @@ if sys.version_info[:2] != (2, 6):
     import requests
 
 
-from .netscaler_module import TestModule, nitro_base_patcher, set_module_args
+from units.modules.utils import set_module_args
+from .netscaler_module import TestModule, nitro_base_patcher
 
 
 class TestNetscalerServicegroupModule(TestModule):
@@ -64,17 +65,19 @@ class TestNetscalerServicegroupModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state=state,
         ))
 
     def setUp(self):
+        super(TestNetscalerServicegroupModule, self).setUp()
         self.nitro_base_patcher.start()
         self.nitro_specific_patcher.start()
 
         # Setup minimal required arguments to pass AnsibleModule argument parsing
 
     def tearDown(self):
+        super(TestNetscalerServicegroupModule, self).tearDown()
         self.nitro_base_patcher.stop()
         self.nitro_specific_patcher.stop()
 
@@ -158,12 +161,15 @@ class TestNetscalerServicegroupModule(TestModule):
         m = MagicMock(return_value=servicegroup_proxy_mock)
         servicegroup_exists_mock = Mock(side_effect=[False, True])
 
+        servicegroup_servicegroupmember_binding_mock = Mock(count=Mock(return_value=0))
+
         with patch.multiple(
             'ansible.modules.network.netscaler.netscaler_servicegroup',
             ConfigProxy=m,
             servicegroup_exists=servicegroup_exists_mock,
             servicemembers_identical=Mock(side_effect=[False, True]),
             do_state_change=Mock(return_value=Mock(errorcode=0)),
+            servicegroup_servicegroupmember_binding=servicegroup_servicegroupmember_binding_mock,
             nitro_exception=self.MockException,
         ):
             self.module = netscaler_servicegroup

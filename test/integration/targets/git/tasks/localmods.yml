@@ -1,39 +1,37 @@
----
-
 # test for https://github.com/ansible/ansible-modules-core/pull/5505
-- name: prepare old git repo
+- name: LOCALMODS | prepare old git repo
   shell: rm -rf localmods; mkdir localmods; cd localmods; git init; echo "1" > a; git add a; git commit -m "1"
   args:
     chdir: "{{repo_dir}}"
 
-- name: checkout old repo
+- name: LOCALMODS | checkout old repo
   git:
     repo: '{{ repo_dir }}/localmods'
     dest: '{{ checkout_dir }}'
 
-- name: "update repo"
+- name: LOCALMODS | "update repo"
   shell: echo "2" > a; git commit -a -m "2"
   args:
     chdir: "{{repo_dir}}/localmods"
 
-- name: "add local mods"
+- name: LOCALMODS | "add local mods"
   shell: echo "3" > a
   args:
     chdir: "{{ checkout_dir }}"
 
-- name: fetch with local mods without force (should fail)
+- name: LOCALMODS | fetch with local mods without force (should fail)
   git:
     repo: '{{ repo_dir }}/localmods'
     dest: '{{ checkout_dir }}'
   register: git_fetch
   ignore_errors: yes
 
-- name: check fetch with localmods failed
+- name: LOCALMODS | check fetch with localmods failed
   assert:
     that:
-      - git_fetch|failed
+      - git_fetch is failed
 
-- name: fetch with local mods with force
+- name: LOCALMODS | fetch with local mods with force
   git:
     repo: '{{ repo_dir }}/localmods'
     dest: '{{ checkout_dir }}'
@@ -41,38 +39,43 @@
   register: git_fetch_force
   ignore_errors: yes
 
-- name: check update arrived
+- name: LOCALMODS | get "a" file
+  slurp:
+    src: '{{ checkout_dir }}/a'
+  register: a_file
+
+- name: LOCALMODS | check update arrived
   assert:
     that:
-      - "{{ lookup('file', checkout_dir+'/a' )}} == 2"
-      - git_fetch_force|changed
+      - "{{ a_file.content | b64decode | trim }} == 2"
+      - git_fetch_force is changed
 
-- name: clear checkout_dir
+- name: LOCALMODS | clear checkout_dir
   file: state=absent path={{ checkout_dir }}
 
 # localmods and shallow clone
-- name: prepare old git repo
+- name: LOCALMODS | prepare old git repo
   shell: rm -rf localmods; mkdir localmods; cd localmods; git init; echo "1" > a; git add a; git commit -m "1"
   args:
     chdir: "{{repo_dir}}"
 
-- name: checkout old repo
+- name: LOCALMODS | checkout old repo
   git:
     repo: '{{ repo_dir }}/localmods'
     dest: '{{ checkout_dir }}'
     depth: 1
 
-- name: "update repo"
+- name: LOCALMODS | "update repo"
   shell: echo "2" > a; git commit -a -m "2"
   args:
     chdir: "{{repo_dir}}/localmods"
 
-- name: "add local mods"
+- name: LOCALMODS | "add local mods"
   shell: echo "3" > a
   args:
     chdir: "{{ checkout_dir }}"
 
-- name: fetch with local mods without force (should fail)
+- name: LOCALMODS | fetch with local mods without force (should fail)
   git:
     repo: '{{ repo_dir }}/localmods'
     dest: '{{ checkout_dir }}'
@@ -80,12 +83,12 @@
   register: git_fetch
   ignore_errors: yes
 
-- name: check fetch with localmods failed
+- name: LOCALMODS | check fetch with localmods failed
   assert:
     that:
-      - git_fetch|failed
+      - git_fetch is failed
 
-- name: fetch with local mods with force
+- name: LOCALMODS | fetch with local mods with force
   git:
     repo: '{{ repo_dir }}/localmods'
     dest: '{{ checkout_dir }}'
@@ -94,11 +97,16 @@
   register: git_fetch_force
   ignore_errors: yes
 
-- name: check update arrived
+- name: LOCALMODS | get "a" file
+  slurp:
+    src: '{{ checkout_dir }}/a'
+  register: a_file
+
+- name: LOCALMODS | check update arrived
   assert:
     that:
-      - "{{ lookup('file', checkout_dir+'/a' )}} == 2"
-      - git_fetch_force|changed
+      - "{{ a_file.content | b64decode | trim }} == 2"
+      - git_fetch_force is changed
 
-- name: clear checkout_dir
+- name: LOCALMODS | clear checkout_dir
   file: state=absent path={{ checkout_dir }}

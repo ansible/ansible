@@ -1,9 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Ansible module to manage Big Monitoring Fabric service chains
-# (c) 2016, Ted Elhourani <ted@bigswitch.com>
+# Copyright: (c) 2016, Ted Elhourani <ted@bigswitch.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# Ansible module to manage Big Monitoring Fabric service chains
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -42,7 +43,7 @@ options:
         on personally controlled devices using self-signed certificates.
     required: false
     default: true
-    choices: [true, false]
+    type: bool
   access_token:
     description:
      - Bigmon access token. If this isn't set, the environment variable C(BIGSWITCH_ACCESS_TOKEN) is used.
@@ -65,7 +66,7 @@ import os
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.bigswitch_utils import Rest
+from ansible.module_utils.network.bigswitch.bigswitch import Rest
 from ansible.module_utils._text import to_native
 
 
@@ -80,15 +81,15 @@ def chain(module):
     controller = module.params['controller']
 
     rest = Rest(module,
-                {'content-type': 'application/json', 'Cookie': 'session_cookie='+access_token},
-                'https://'+controller+':8443/api/v1/data/controller/applications/bigchain')
+                {'content-type': 'application/json', 'Cookie': 'session_cookie=' + access_token},
+                'https://' + controller + ':8443/api/v1/data/controller/applications/bigchain')
 
     if None in (name, state, controller):
         module.fail_json(msg='parameter `name` is missing')
 
     response = rest.get('chain?config=true', data={})
     if response.status_code != 200:
-        module.fail_json(msg="failed to obtain existing chain config: {}".format(response.json['description']))
+        module.fail_json(msg="failed to obtain existing chain config: {0}".format(response.json['description']))
 
     config_present = False
     matching = [chain for chain in response.json if chain['name'] == name]
@@ -106,14 +107,15 @@ def chain(module):
         if response.status_code == 204:
             module.exit_json(changed=True)
         else:
-            module.fail_json(msg="error creating chain '{}': {}".format(name, response.json['description']))
+            module.fail_json(msg="error creating chain '{0}': {1}".format(name, response.json['description']))
 
     if state in ('absent'):
         response = rest.delete('chain[name="%s"]' % name, data={})
         if response.status_code == 204:
             module.exit_json(changed=True)
         else:
-            module.fail_json(msg="error deleting chain '{}': {}".format(name, response.json['description']))
+            module.fail_json(msg="error deleting chain '{0}': {1}".format(name, response.json['description']))
+
 
 def main():
     module = AnsibleModule(

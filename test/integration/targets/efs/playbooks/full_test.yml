@@ -1,0 +1,9 @@
+- hosts: localhost
+  connection: local
+  environment: "{{ ansible_test.environment }}"
+
+  vars:
+    resource_prefix: 'ansible-testing'
+
+  roles:
+    - efs

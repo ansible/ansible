@@ -28,58 +28,45 @@ short_description: Manages information center trap configuration on HUAWEI Cloud
 description:
     - Manages information center trap configurations on HUAWEI CloudEngine switches.
 author:
-    - wangdezhuang (@CloudEngine-Ansible)
+    - wangdezhuang (@QijunPan)
 options:
     state:
         description:
             - Specify desired state of the resource.
-        required: false
         default: present
         choices: ['present','absent']
     trap_time_stamp:
         description:
             - Timestamp format of alarm information.
-        required: false
-        default: null
         choices: ['date_boot', 'date_second', 'date_tenthsecond', 'date_millisecond', 'shortdate_second',
                   'shortdate_tenthsecond', 'shortdate_millisecond', 'formatdate_second', 'formatdate_tenthsecond',
                   'formatdate_millisecond']
     trap_buff_enable:
         description:
             - Whether a trap buffer is enabled to output information.
-        required: false
         default: no_use
         choices: ['no_use','true','false']
     trap_buff_size:
         description:
             - Size of a trap buffer.
               The value is an integer ranging from 0 to 1024. The default value is 256.
-        required: false
-        default: null
     module_name:
         description:
             - Module name of the rule.
               The value is a string of 1 to 31 case-insensitive characters. The default value is default.
               Please use lower-case letter, such as [aaa, acl, arp, bfd].
-        required: false
-        default: null
     channel_id:
         description:
             - Number of a channel.
               The value is an integer ranging from 0 to 9. The default value is 0.
-        required: false
-        default: null
     trap_enable:
         description:
             - Whether a device is enabled to output alarms.
-        required: false
         default: no_use
         choices: ['no_use','true','false']
     trap_level:
         description:
             - Trap level permitted to output.
-        required: false
-        default: null
         choices: ['emergencies', 'alert', 'critical', 'error', 'warning', 'notification',
                   'informational', 'debugging']
 '''
@@ -137,7 +124,7 @@ RETURN = '''
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 proposed:
     description: k/v pairs of parameters passed into module
@@ -163,7 +150,7 @@ updates:
 
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_nc_config, set_nc_config, ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec
 
 
 # get info center trap global

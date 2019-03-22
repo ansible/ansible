@@ -1,105 +1,96 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-#
-# This file is part of Ansible
-#
+
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-#
 # Cronvar Plugin: The goal of this plugin is to provide an idempotent
 # method for set cron variable values.  It should play well with the
 # existing cron module as well as allow for manually added variables.
 # Each variable entered will be preceded with a comment describing the
 # variable so that it can be found later.  This is required to be
 # present in order for this plugin to find/modify the variable
-#
+
 # This module is based on the crontab module.
-#
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = """
+DOCUMENTATION = r'''
 ---
 module: cronvar
 short_description: Manage variables in crontabs
 description:
-  - Use this module to manage crontab variables. This module allows
-    you to create, update, or delete cron variable definitions.
+  - Use this module to manage crontab variables.
+  - This module allows you to create, update, or delete cron variable definitions.
 version_added: "2.0"
 options:
   name:
     description:
       - Name of the crontab variable.
-    default: null
-    required: true
+    type: str
+    required: yes
   value:
     description:
-      - The value to set this variable to.  Required if state=present.
-    required: false
-    default: null
+      - The value to set this variable to.
+      - Required if C(state=present).
+    type: str
   insertafter:
-    required: false
-    default: null
     description:
-      - Used with C(state=present). If specified, the variable will be inserted
-        after the variable specified.
+      - If specified, the variable will be inserted after the variable specified.
+      - Used with C(state=present).
+    type: str
   insertbefore:
-    required: false
-    default: null
     description:
       - Used with C(state=present). If specified, the variable will be inserted
         just before the variable specified.
+    type: str
   state:
     description:
       - Whether to ensure that the variable is present or absent.
-    required: false
+    type: str
+    choices: [ absent, present ]
     default: present
-    choices: [ "present", "absent" ]
   user:
     description:
       - The specific user whose crontab should be modified.
-    required: false
-    default: root
+      - This parameter defaults to C(root) when unset.
+    type: str
   cron_file:
     description:
       - If specified, uses this file instead of an individual user's crontab.
-        Without a leading /, this is assumed to be in /etc/cron.d.  With a leading
-        /, this is taken as absolute.
-    required: false
-    default: null
+      - Without a leading C(/), this is assumed to be in I(/etc/cron.d).
+      - With a leading C(/), this is taken as absolute.
+    type: str
   backup:
     description:
       - If set, create a backup of the crontab before it is modified.
         The location of the backup is returned in the C(backup) variable by this module.
-    required: false
-    default: false
+    type: bool
+    default: no
 requirements:
   - cron
-author: "Doug Luce (@dougluce)"
-"""
+author:
+- Doug Luce (@dougluce)
+'''
 
-EXAMPLES = '''
-# Ensure a variable exists.
-# Creates an entry like "EMAIL=doug@ansibmod.con.com"
-- cronvar:
+EXAMPLES = r'''
+- name: Ensure entry like "EMAIL=doug@ansibmod.con.com" exists
+  cronvar:
     name: EMAIL
     value: doug@ansibmod.con.com
 
-# Make sure a variable is gone.  This will remove any variable named
-# "LEGACY"
-- cronvar:
+- name: Ensure a variable does not exist. This may remove any variable named "LEGACY"
+  cronvar:
     name: LEGACY
     state: absent
 
-# Adds a variable to a file under /etc/cron.d
-- cronvar:
+- name: Add a variable to a file under /etc/cron.d
+  cronvar:
     name: LOGFILE
     value: /var/log/yum-autoupdate.log
     user: root
@@ -117,7 +108,6 @@ import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
 
-
 CRONCMD = "/usr/bin/crontab"
 
 
@@ -132,11 +122,12 @@ class CronVar(object):
         user      - the user of the crontab (defaults to root)
         cron_file - a cron file under /etc/cron.d
     """
+
     def __init__(self, module, user=None, cron_file=None):
         self.module = module
         self.user = user
         self.lines = None
-        self.wordchars = ''.join(chr(x) for x in range(128) if chr(x) not in ('=', "'", '"', ))
+        self.wordchars = ''.join(chr(x) for x in range(128) if chr(x) not in ('=', "'", '"',))
 
         if cron_file:
             self.cron_file = ""
@@ -161,21 +152,20 @@ class CronVar(object):
             except IOError:
                 # cron file does not exist
                 return
-            except:
+            except Exception:
                 raise CronVarError("Unexpected error:", sys.exc_info()[0])
         else:
             # using safely quoted shell for now, but this really should be two non-shell calls instead.  FIXME
             (rc, out, err) = self.module.run_command(self._read_user_execute(), use_unsafe_shell=True)
 
-            if rc != 0 and rc != 1: # 1 can mean that there are no jobs.
+            if rc != 0 and rc != 1:  # 1 can mean that there are no jobs.
                 raise CronVarError("Unable to read crontab")
 
             lines = out.splitlines()
             count = 0
             for l in lines:
-                if count > 2 or (not re.match( r'# DO NOT EDIT THIS FILE - edit the master and reinstall.', l) and
-                                 not re.match( r'# \(/tmp/.*installed on.*\)', l) and
-                                 not re.match( r'# \(.*version.*\)', l)):
+                if count > 2 or (not re.match(r'# DO NOT EDIT THIS FILE - edit the master and reinstall.', l
+                                              ) and not re.match(r'# \(/tmp/.*installed on.*\)', l) and not re.match(r'# \(.*version.*\)', l)):
                     self.lines.append(l)
                 count += 1
 
@@ -217,7 +207,7 @@ class CronVar(object):
         except OSError:
             # cron file does not exist
             return False
-        except:
+        except Exception:
             raise CronVarError("Unexpected error:", sys.exc_info()[0])
 
     def parse_for_var(self, line):
@@ -258,7 +248,7 @@ class CronVar(object):
             newlines = []
             for l in self.lines:
                 try:
-                    (varname, _) = self.parse_for_var(l) # Throws if not a var line
+                    (varname, _) = self.parse_for_var(l)  # Throws if not a var line
                     if varname == insertbefore:
                         newlines.append("%s=%s" % (name, value))
                         newlines.append(l)
@@ -266,7 +256,7 @@ class CronVar(object):
                         newlines.append(l)
                         newlines.append("%s=%s" % (name, value))
                     else:
-                        raise CronVarError # Append.
+                        raise CronVarError  # Append.
                 except CronVarError:
                     newlines.append(l)
 
@@ -279,9 +269,9 @@ class CronVar(object):
         newlines = []
         for l in self.lines:
             try:
-                (varname, _) = self.parse_for_var(l) # Throws if not a var line
+                (varname, _) = self.parse_for_var(l)  # Throws if not a var line
                 if varname != name:
-                    raise CronVarError # Append.
+                    raise CronVarError  # Append.
                 if not remove:
                     newlines.append("%s=%s" % (name, value))
             except CronVarError:
@@ -310,10 +300,10 @@ class CronVar(object):
             elif platform.system() == 'AIX':
                 return "%s -l %s" % (pipes.quote(CRONCMD), pipes.quote(self.user))
             elif platform.system() == 'HP-UX':
-                return "%s %s %s" % (CRONCMD , '-l', pipes.quote(self.user))
+                return "%s %s %s" % (CRONCMD, '-l', pipes.quote(self.user))
             elif pwd.getpwuid(os.getuid())[0] != self.user:
                 user = '-u %s' % pipes.quote(self.user)
-        return "%s %s %s" % (CRONCMD , user, '-l')
+        return "%s %s %s" % (CRONCMD, user, '-l')
 
     def _write_execute(self, path):
         """
@@ -325,9 +315,10 @@ class CronVar(object):
                 return "chown %s %s ; su '%s' -c '%s %s'" % (pipes.quote(self.user), pipes.quote(path), pipes.quote(self.user), CRONCMD, pipes.quote(path))
             elif pwd.getpwuid(os.getuid())[0] != self.user:
                 user = '-u %s' % pipes.quote(self.user)
-        return "%s %s %s" % (CRONCMD , user, pipes.quote(path))
+        return "%s %s %s" % (CRONCMD, user, pipes.quote(path))
 
-#==================================================
+
+# ==================================================
 
 def main():
     # The following example playbooks:
@@ -346,14 +337,14 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(required=True),
-            value=dict(required=False),
-            user=dict(required=False),
-            cron_file=dict(required=False),
-            insertafter=dict(default=None),
-            insertbefore=dict(default=None),
-            state=dict(default='present', choices=['present', 'absent']),
-            backup=dict(default=False, type='bool'),
+            name=dict(type='str', required=True),
+            value=dict(type='str'),
+            user=dict(type='str'),
+            cron_file=dict(type='str'),
+            insertafter=dict(type='str'),
+            insertbefore=dict(type='str'),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
+            backup=dict(type='bool', default=False),
         ),
         mutually_exclusive=[['insertbefore', 'insertafter']],
         supports_check_mode=False,
@@ -373,7 +364,7 @@ def main():
     res_args = dict()
 
     # Ensure all files generated are only writable by the owning user.  Primarily relevant for the cron_file option.
-    os.umask(int('022',8))
+    os.umask(int('022', 8))
     cronvar = CronVar(module, user, cron_file)
 
     module.debug('cronvar instantiated - name: "%s"' % name)

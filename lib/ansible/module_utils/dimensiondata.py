@@ -24,12 +24,14 @@
 
 import os
 import re
+import traceback
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.six.moves import configparser
 from os.path import expanduser
 from uuid import UUID
 
+LIBCLOUD_IMP_ERR = None
 try:
     from libcloud.common.dimensiondata import API_ENDPOINTS, DimensionDataAPIException, DimensionDataStatus
     from libcloud.compute.base import Node, NodeLocation
@@ -40,6 +42,7 @@ try:
 
     HAS_LIBCLOUD = True
 except ImportError:
+    LIBCLOUD_IMP_ERR = traceback.format_exc()
     HAS_LIBCLOUD = False
 
 # MCP 2.x version patten for location (datacenter) names.
@@ -69,9 +72,7 @@ class DimensionDataModule(object):
         self.module = module
 
         if not HAS_LIBCLOUD:
-            self.module.fail_json(msg='libcloud is required for this module.')
-
-            return
+            self.module.fail_json(msg=missing_required_lib('libcloud'), exception=LIBCLOUD_IMP_ERR)
 
         # Credentials are common to all Dimension Data modules.
         credentials = self.get_credentials()
@@ -80,7 +81,7 @@ class DimensionDataModule(object):
 
         # Region and location are common to all Dimension Data modules.
         region = self.module.params['region']
-        self.region = 'dd-{}'.format(region)
+        self.region = 'dd-{0}'.format(region)
         self.location = self.module.params['location']
 
         libcloud.security.VERIFY_SSL_CERT = self.module.params['validate_certs']
@@ -125,8 +126,6 @@ class DimensionDataModule(object):
         if not HAS_LIBCLOUD:
             self.module.fail_json(msg='libcloud is required for this module.')
 
-            return None
-
         user_id = None
         key = None
 
@@ -136,8 +135,6 @@ class DimensionDataModule(object):
                 self.module.fail_json(
                     msg='"mcp_user" parameter was specified, but not "mcp_password" (either both must be specified, or neither).'
                 )
-
-                return None
 
             user_id = self.module.params['mcp_user']
             key = self.module.params['mcp_password']

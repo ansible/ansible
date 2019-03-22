@@ -1,200 +1,161 @@
 #!powershell
-# This file is part of Ansible
-#
-# Copyright 2017, Dag Wieers (@dagwieers) <dag@wieers.com>
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# WANT_JSON
-# POWERSHELL_COMMON
+# Copyright: (c) 2017, Dag Wieers (@dagwieers) <dag@wieers.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+#AnsibleRequires -CSharpUtil Ansible.Basic
+#Requires -Module Ansible.ModuleUtils.ArgvParser
+#Requires -Module Ansible.ModuleUtils.CommandUtil
 
 # See also: https://technet.microsoft.com/en-us/sysinternals/pxexec.aspx
 
-$params = Parse-Args $args
-
-$command = Get-AnsibleParam -obj $params -name "command" -type "str" -failifempty $true
-$executable = Get-AnsibleParam -obj $params -name "executable" -type "path" -default "psexec.exe"
-$hostnames = Get-AnsibleParam -obj $params -name "hostnames" -type "list"
-$username = Get-AnsibleParam -obj $params -name "username" -type "str"
-$password = Get-AnsibleParam -obj $params -name "password" -type "str"
-$chdir = Get-AnsibleParam -obj $params -name "chdir" -type "path"
-$wait = Get-AnsibleParam -obj $params -name "wait" -type "bool" -default $true
-$nobanner = Get-AnsibleParam -obj $params -name "nobanner" -type "bool" -default $false
-$noprofile = Get-AnsibleParam -obj $params -name "noprofile" -type "bool" -default $false
-$elevated = Get-AnsibleParam -obj $params -name "elevated" -type "bool" -default $false
-$limited = Get-AnsibleParam -obj $params -name "limited" -type "bool" -default $false
-$system = Get-AnsibleParam -obj $params -name "system" -type "bool" -default $false
-$interactive = Get-AnsibleParam -obj $params -name "interactive" -type "bool" -default $false
-$priority = Get-AnsibleParam -obj $params -name "priority" -type "str" -validateset "background","low","belownormal","abovenormal","high","realtime"
-$timeout = Get-AnsibleParam -obj $params -name "timeout" -type "int"
-$extra_opts = Get-AnsibleParam -obj $params -name "extra_opts" -type "list"
-
-$result = @{
-    changed = $true
-}
-
-If (-Not (Get-Command $executable -ErrorAction SilentlyContinue)) {
-    Fail-Json $result "Executable '$executable' was not found."
-}
-
-$util_def = @'
-using System;
-using System.ComponentModel;
-using System.IO;
-using System.Threading;
-
-namespace Ansible.Command {
-
-    public static class NativeUtil {
-
-        public static void GetProcessOutput(StreamReader stdoutStream, StreamReader stderrStream, out string stdout, out string stderr) {
-            var sowait = new EventWaitHandle(false, EventResetMode.ManualReset);
-            var sewait = new EventWaitHandle(false, EventResetMode.ManualReset);
-
-            string so = null, se = null;
-
-            ThreadPool.QueueUserWorkItem((s)=> {
-                so = stdoutStream.ReadToEnd();
-                sowait.Set();
-            });
-
-            ThreadPool.QueueUserWorkItem((s) => {
-                se = stderrStream.ReadToEnd();
-                sewait.Set();
-            });
-
-            foreach(var wh in new WaitHandle[] { sowait, sewait })
-                wh.WaitOne();
-
-            stdout = so;
-            stderr = se;
-        }
+$spec = @{
+    options = @{
+        command = @{ type='str'; required=$true }
+        executable = @{ type='path'; default='psexec.exe' }
+        hostnames = @{ type='list' }
+        username = @{ type='str' }
+        password = @{ type='str'; no_log=$true }
+        chdir = @{ type='path' }
+        wait = @{ type='bool'; default=$true }
+        nobanner = @{ type='bool'; default=$false }
+        noprofile = @{ type='bool'; default=$false }
+        elevated = @{ type='bool'; default=$false }
+        limited = @{ type='bool'; default=$false }
+        system = @{ type='bool'; default=$false }
+        interactive = @{ type='bool'; default=$false }
+        session = @{ type='int' }
+        priority = @{ type='str'; choices=@( 'background', 'low', 'belownormal', 'abovenormal', 'high', 'realtime' ) }
+        timeout = @{ type='int' }
+        extra_opts = @{ type='list'; removed_in_version = '2.10' }
     }
 }
-'@
 
-$util_type = Add-Type -TypeDefinition $util_def
+$module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
 
-$arguments = ""
+$command = $module.Params.command
+$executable = $module.Params.executable
+$hostnames = $module.Params.hostnames
+$username = $module.Params.username
+$password = $module.Params.password
+$chdir = $module.Params.chdir
+$wait = $module.Params.wait
+$nobanner = $module.Params.nobanner
+$noprofile = $module.Params.noprofile
+$elevated = $module.Params.elevated
+$limited = $module.Params.limited
+$system = $module.Params.system
+$interactive = $module.Params.interactive
+$session = $module.Params.session
+$priority = $module.Params.Priority
+$timeout = $module.Params.timeout
+$extra_opts = $module.Params.extra_opts
+
+$module.Result.changed = $true
+
+If (-Not (Get-Command $executable -ErrorAction SilentlyContinue)) {
+    $module.FailJson("Executable '$executable' was not found.")
+}
+
+$arguments = [System.Collections.Generic.List`1[String]]@($executable)
 
 If ($nobanner -eq $true) {
-    $arguments += " -nobanner"
+    $arguments.Add("-nobanner")
 }
 
 # Support running on local system if no hostname is specified
 If ($hostnames) {
-  $arguments += " \\" + $($hostnames | sort -Unique) -join ','
+    $hostname_argument = ($hostnames | sort -Unique) -join ','
+    $arguments.Add("\\$hostname_argument")
 }
 
 # Username is optional
-If ($username -ne $null) {
-    $arguments += " -u `"$username`""
+If ($null -ne $username) {
+    $arguments.Add("-u")
+    $arguments.Add($username)
 }
 
 # Password is optional
-If ($password -ne $null) {
-    $arguments += " -p `"$password`""
+If ($null -ne $password) {
+    $arguments.Add("-p")
+    $arguments.Add($password)
 }
 
-If ($chdir -ne $null) {
-    $arguments += " -w `"$chdir`""
+If ($null -ne $chdir) {
+    $arguments.Add("-w")
+    $arguments.Add($chdir)
 }
 
 If ($wait -eq $false) {
-    $arguments += " -d"
+    $arguments.Add("-d")
 }
 
 If ($noprofile -eq $true) {
-    $arguments += " -e"
+    $arguments.Add("-e")
 }
 
 If ($elevated -eq $true) {
-    $arguments += " -h"
+    $arguments.Add("-h")
 }
 
 If ($system -eq $true) {
-    $arguments += " -s"
+    $arguments.Add("-s")
 }
 
 If ($interactive -eq $true) {
-    $arguments += " -i"
+    $arguments.Add("-i")
+    If ($null -ne $session) {
+        $arguments.Add($session)
+    }
 }
 
 If ($limited -eq $true) {
-    $arguments += " -l"
+    $arguments.Add("-l")
 }
 
-If ($priority -ne $null) {
-    $arguments += " -$priority"
+If ($null -ne $priority) {
+    $arguments.Add("-$priority")
 }
 
-If ($timeout -ne $null) {
-    $arguments += " -n $timeout"
+If ($null -ne $timeout) {
+    $arguments.Add("-n")
+    $arguments.Add($timeout)
 }
 
 # Add additional advanced options
 If ($extra_opts) {
     ForEach ($opt in $extra_opts) {
-        $arguments += " $opt"
+        $arguments.Add($opt)
     }
 }
 
-$arguments += " -accepteula"
+$arguments.Add("-accepteula")
 
-$proc = New-Object System.Diagnostics.Process
-$psi = $proc.StartInfo
-$psi.FileName = $executable
-$psi.Arguments = "$arguments $command"
-$psi.RedirectStandardOutput = $true
-$psi.RedirectStandardError = $true
-$psi.UseShellExecute = $false
+$argument_string = Argv-ToString -arguments $arguments
 
-$result.psexec_command = "$executable$arguments $command"
+# Add the command at the end of the argument string, we don't want to escape
+# that as psexec doesn't expect it to be one arg
+$argument_string += " $command"
 
 $start_datetime = [DateTime]::UtcNow
+$module.Result.psexec_command = $argument_string
 
-Try {
-    $proc.Start() | Out-Null # will always return $true for non shell-exec cases
-} Catch [System.ComponentModel.Win32Exception] {
-    # fail nicely for "normal" error conditions
-    # FUTURE: this probably won't work on Nano Server
-    $excep = $_
-    $result.rc = $excep.Exception.NativeErrorCode
-    Fail-Json $result $excep.Exception.Message
-}
-
-$stdout = $stderr = [string] $null
-
-[Ansible.Command.NativeUtil]::GetProcessOutput($proc.StandardOutput, $proc.StandardError, [ref] $stdout, [ref] $stderr) | Out-Null
-
-$result.stdout = $stdout
-$result.stderr = $stderr
-
-$proc.WaitForExit() | Out-Null
-
-If ($wait -eq $true) {
-    $result.rc = $proc.ExitCode
-} else {
-    $result.rc = 0
-    $result.pid = $proc.ExitCode
-}
+$command_result = Run-Command -command $argument_string
 
 $end_datetime = [DateTime]::UtcNow
 
-$result.start = $start_datetime.ToString("yyyy-MM-dd hh:mm:ss.ffffff")
-$result.end = $end_datetime.ToString("yyyy-MM-dd hh:mm:ss.ffffff")
-$result.delta = $($end_datetime - $start_datetime).ToString("h\:mm\:ss\.ffffff")
+$module.Result.stdout = $command_result.stdout
+$module.Result.stderr = $command_result.stderr
 
-Exit-Json $result
+If ($wait -eq $true) {
+    $module.Result.rc = $command_result.rc
+} else {
+    $module.Result.rc = 0
+    $module.Result.pid = $command_result.rc
+}
 
+$module.Result.start = $start_datetime.ToString("yyyy-MM-dd hh:mm:ss.ffffff")
+$module.Result.end = $end_datetime.ToString("yyyy-MM-dd hh:mm:ss.ffffff")
+$module.Result.delta = $($end_datetime - $start_datetime).ToString("h\:mm\:ss\.ffffff")
+
+$module.ExitJson()

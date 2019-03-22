@@ -58,7 +58,7 @@ EXAMPLES = '''
 
 RETURN = '''
 ovirt_clusters:
-    description: "List of dictionaries describing the clusters. Cluster attribues are mapped to dictionary keys,
+    description: "List of dictionaries describing the clusters. Cluster attributes are mapped to dictionary keys,
                   all clusters attributes can be found at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/cluster."
     returned: On success.
     type: list
@@ -80,9 +80,6 @@ def main():
         pattern=dict(default='', required=False),
     )
     module = AnsibleModule(argument_spec)
-
-    if module._name == 'ovirt_clusters_facts':
-        module.deprecate("The 'ovirt_clusters_facts' module is being renamed 'ovirt_cluster_facts'", version=2.8)
 
     check_sdk(module)
 

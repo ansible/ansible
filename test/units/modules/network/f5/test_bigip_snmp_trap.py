@@ -1,64 +1,55 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2017 F5 Networks Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 F5 Networks Inc.
+# GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
 import json
+import pytest
 import sys
 
-from nose.plugins.skip import SkipTest
 if sys.version_info < (2, 7):
-    raise SkipTest("F5 Ansible modules require Python >= 2.7")
+    pytestmark = pytest.mark.skip("F5 Ansible modules require Python >= 2.7")
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, DEFAULT, Mock
-from ansible.module_utils import basic
-from ansible.module_utils._text import to_bytes
-from ansible.module_utils.f5_utils import AnsibleF5Client
+from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.bigip_snmp_trap import NetworkedParameters
-    from library.bigip_snmp_trap import NonNetworkedParameters
-    from library.bigip_snmp_trap import ModuleManager
-    from library.bigip_snmp_trap import NetworkedManager
-    from library.bigip_snmp_trap import NonNetworkedManager
-    from library.bigip_snmp_trap import ArgumentSpec
+    from library.modules.bigip_snmp_trap import V2Parameters
+    from library.modules.bigip_snmp_trap import V1Parameters
+    from library.modules.bigip_snmp_trap import ModuleManager
+    from library.modules.bigip_snmp_trap import V2Manager
+    from library.modules.bigip_snmp_trap import V1Manager
+    from library.modules.bigip_snmp_trap import ArgumentSpec
+
+    # In Ansible 2.8, Ansible changed import paths.
+    from test.units.compat import unittest
+    from test.units.compat.mock import Mock
+    from test.units.compat.mock import patch
+    from test.units.compat.mock import DEFAULT
+
+    from test.units.modules.utils import set_module_args
 except ImportError:
-    try:
-        from ansible.modules.network.f5.bigip_snmp_trap import NetworkedParameters
-        from ansible.modules.network.f5.bigip_snmp_trap import NonNetworkedParameters
-        from ansible.modules.network.f5.bigip_snmp_trap import ModuleManager
-        from ansible.modules.network.f5.bigip_snmp_trap import NetworkedManager
-        from ansible.modules.network.f5.bigip_snmp_trap import NonNetworkedManager
-        from ansible.modules.network.f5.bigip_snmp_trap import ArgumentSpec
-    except ImportError:
-        raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
+    from ansible.modules.network.f5.bigip_snmp_trap import V2Parameters
+    from ansible.modules.network.f5.bigip_snmp_trap import V1Parameters
+    from ansible.modules.network.f5.bigip_snmp_trap import ModuleManager
+    from ansible.modules.network.f5.bigip_snmp_trap import V2Manager
+    from ansible.modules.network.f5.bigip_snmp_trap import V1Manager
+    from ansible.modules.network.f5.bigip_snmp_trap import ArgumentSpec
+
+    # Ansible 2.8 imports
+    from units.compat import unittest
+    from units.compat.mock import Mock
+    from units.compat.mock import patch
+    from units.compat.mock import DEFAULT
+
+    from units.modules.utils import set_module_args
+
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
-
-
-def set_module_args(args):
-    args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
-    basic._ANSIBLE_ARGS = to_bytes(args)
 
 
 def load_fixture(name):
@@ -88,11 +79,8 @@ class TestParameters(unittest.TestCase):
             destination='10.10.10.10',
             port=1000,
             network='other',
-            password='password',
-            server='localhost',
-            user='admin'
         )
-        p = NetworkedParameters(args)
+        p = V2Parameters(params=args)
         assert p.name == 'foo'
         assert p.snmp_version == '1'
         assert p.community == 'public'
@@ -108,11 +96,8 @@ class TestParameters(unittest.TestCase):
             destination='10.10.10.10',
             port=1000,
             network='other',
-            password='password',
-            server='localhost',
-            user='admin'
         )
-        p = NonNetworkedParameters(args)
+        p = V1Parameters(params=args)
         assert p.name == 'foo'
         assert p.snmp_version == '1'
         assert p.community == 'public'
@@ -129,7 +114,7 @@ class TestParameters(unittest.TestCase):
             version=1,
             port=1000
         )
-        p = NetworkedParameters(args)
+        p = V2Parameters(params=args)
         assert p.name == 'foo'
         assert p.snmp_version == '1'
         assert p.community == 'public'
@@ -138,8 +123,6 @@ class TestParameters(unittest.TestCase):
         assert p.network == 'other'
 
 
-@patch('ansible.module_utils.f5_utils.AnsibleF5Client._get_mgmt_root',
-       return_value=True)
 class TestManager(unittest.TestCase):
 
     def setUp(self):
@@ -153,29 +136,31 @@ class TestManager(unittest.TestCase):
             destination='10.10.10.10',
             port=1000,
             network='other',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Override methods to force specific logic in the module to happen
-        mm = ModuleManager(client)
-        mm.is_version_non_networked = Mock(return_value=False)
+        m0 = ModuleManager(module=module)
+        m0.is_version_without_network = Mock(return_value=False)
+        m0.is_version_with_default_network = Mock(return_value=True)
 
         patches = dict(
             create_on_device=DEFAULT,
             exists=DEFAULT
         )
-        with patch.multiple(NetworkedManager, **patches) as mo:
+        with patch.multiple(V2Manager, **patches) as mo:
             mo['create_on_device'].side_effect = Mock(return_value=True)
             mo['exists'].side_effect = Mock(return_value=False)
-            results = mm.exec_module()
+            results = m0.exec_module()
 
         assert results['changed'] is True
         assert results['port'] == 1000
@@ -188,29 +173,30 @@ class TestManager(unittest.TestCase):
             community='public',
             destination='10.10.10.10',
             port=1000,
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Override methods to force specific logic in the module to happen
-        mm = ModuleManager(client)
-        mm.is_version_non_networked = Mock(return_value=True)
+        m0 = ModuleManager(module=module)
+        m0.is_version_without_network = Mock(return_value=True)
 
         patches = dict(
             create_on_device=DEFAULT,
             exists=DEFAULT
         )
-        with patch.multiple(NonNetworkedManager, **patches) as mo:
+        with patch.multiple(V1Manager, **patches) as mo:
             mo['create_on_device'].side_effect = Mock(return_value=True)
             mo['exists'].side_effect = Mock(return_value=False)
-            results = mm.exec_module()
+            results = m0.exec_module()
 
         assert results['changed'] is True
         assert results['port'] == 1000

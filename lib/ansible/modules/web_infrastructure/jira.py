@@ -46,7 +46,6 @@ options:
       - The password to log-in with.
 
   project:
-    aliases: [ prj ]
     required: false
     description:
       - The project for this operation. Required for issue creation.
@@ -117,6 +116,14 @@ options:
     description:
       - Set timeout, in seconds, on requests to JIRA API.
     default: 10
+
+  validate_certs:
+    required: false
+    version_added: 2.5
+    description:
+      - Require valid SSL certificates (set to `false` if you'd like to use self-signed certificates)
+    default: true
+    type: bool
 
 notes:
   - "Currently this only works with basic-auth."
@@ -227,6 +234,7 @@ EXAMPLES = """
 import base64
 import json
 import sys
+from ansible.module_utils._text import to_text, to_bytes
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
@@ -243,7 +251,8 @@ def request(url, user, passwd, timeout, data=None, method=None):
     # resulting in unexpected results. To work around this we manually
     # inject the basic-auth header up-front to ensure that JIRA treats
     # the requests as authorized for this user.
-    auth = base64.encodestring('%s:%s' % (user, passwd)).replace('\n', '')
+    auth = to_text(base64.b64encode(to_bytes('{0}:{1}'.format(user, passwd), errors='surrogate_or_strict')))
+
     response, info = fetch_url(module, url, data=data, method=method, timeout=timeout,
                                headers={'Content-Type': 'application/json',
                                         'Authorization': "Basic %s" % auth})
@@ -254,7 +263,7 @@ def request(url, user, passwd, timeout, data=None, method=None):
     body = response.read()
 
     if body:
-        return json.loads(body)
+        return json.loads(to_text(body, errors='surrogate_or_strict'))
     else:
         return {}
 
@@ -275,8 +284,10 @@ def create(restbase, user, passwd, params):
     createfields = {
         'project': {'key': params['project']},
         'summary': params['summary'],
-        'description': params['description'],
         'issuetype': {'name': params['issuetype']}}
+
+    if params['description']:
+        createfields['description'] = params['description']
 
     # Merge in any additional or overridden fields
     if params['fields']:
@@ -359,8 +370,9 @@ def link(restbase, user, passwd, params):
 
     return ret
 
+
 # Some parameters are required depending on the operation:
-OP_REQUIRED = dict(create=['project', 'issuetype', 'summary', 'description'],
+OP_REQUIRED = dict(create=['project', 'issuetype', 'summary'],
                    comment=['issue', 'comment'],
                    edit=[],
                    fetch=['issue'],
@@ -391,6 +403,7 @@ def main():
             inwardissue=dict(),
             outwardissue=dict(),
             timeout=dict(type='float', default=10),
+            validate_certs=dict(default=True, type='bool'),
         ),
         supports_check_mode=False
     )

@@ -1,43 +1,25 @@
+# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
 # (c) 2015 Toshio Kuratomi <tkuratomi@ansible.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
-# Make coding more python3-ish
+# (c) 2017, Peter Sprygada <psprygad@redhat.com>
+# (c) 2017 Ansible Project
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import fcntl
-import gettext
 import os
 import shlex
+
 from abc import abstractmethod, abstractproperty
 from functools import wraps
 
 from ansible import constants as C
-from ansible.errors import AnsibleError
-from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins import AnsiblePlugin
-from ansible.plugins.loader import shell_loader
+from ansible.utils.display import Display
+from ansible.plugins.loader import connection_loader, get_shell_plugin
+from ansible.utils.path import unfrackpath
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 __all__ = ['ConnectionBase', 'ensure_connect']
@@ -62,24 +44,32 @@ class ConnectionBase(AnsiblePlugin):
     has_pipelining = False
     has_native_async = False  # eg, winrm
     always_pipeline_modules = False  # eg, winrm
-    become_methods = C.BECOME_METHODS
+    has_tty = True  # for interacting with become plugins
     # When running over this connection type, prefer modules written in a certain language
     # as discovered by the specified file extension.  An empty string as the
     # language means any language.
     module_implementation_preferences = ('',)
     allow_executable = True
 
-    def __init__(self, play_context, new_stdin, *args, **kwargs):
+    # the following control whether or not the connection supports the
+    # persistent connection framework or not
+    supports_persistence = False
+    force_persistence = False
+
+    default_user = None
+
+    def __init__(self, play_context, new_stdin, shell=None, *args, **kwargs):
 
         super(ConnectionBase, self).__init__()
 
         # All these hasattrs allow subclasses to override these parameters
         if not hasattr(self, '_play_context'):
+            # Backwards compat: self._play_context isn't really needed, using set_options/get_option
             self._play_context = play_context
         if not hasattr(self, '_new_stdin'):
             self._new_stdin = new_stdin
-        # Backwards compat: self._display isn't really needed, just import the global display and use that.
         if not hasattr(self, '_display'):
+            # Backwards compat: self._display isn't really needed, just import the global display and use that.
             self._display = display
         if not hasattr(self, '_connected'):
             self._connected = False
@@ -87,47 +77,30 @@ class ConnectionBase(AnsiblePlugin):
         self.success_key = None
         self.prompt = None
         self._connected = False
+        self._socket_path = None
 
-        # load the shell plugin for this action/connection
-        if play_context.shell:
-            shell_type = play_context.shell
-        elif hasattr(self, '_shell_type'):
-            shell_type = getattr(self, '_shell_type')
-        else:
-            shell_type = 'sh'
-            shell_filename = os.path.basename(self._play_context.executable)
-            for shell in shell_loader.all():
-                if shell_filename in shell.COMPATIBLE_SHELLS:
-                    shell_type = shell.SHELL_FAMILY
-                    break
+        # helper plugins
+        self._shell = shell
 
-        self._shell = shell_loader.get(shell_type)
+        # we always must have shell
         if not self._shell:
-            raise AnsibleError("Invalid shell type specified (%s), or the plugin for that shell type is missing." % shell_type)
+            shell_type = play_context.shell if play_context.shell else getattr(self, '_shell_type', None)
+            self._shell = get_shell_plugin(shell_type=shell_type, executable=self._play_context.executable)
+
+        self.become = None
+
+    def set_become_plugin(self, plugin):
+        self.become = plugin
 
     @property
     def connected(self):
         '''Read-only property holding whether the connection to the remote host is active or closed.'''
         return self._connected
 
-    def _become_method_supported(self):
-        ''' Checks if the current class supports this privilege escalation method '''
-
-        if self._play_context.become_method in self.become_methods:
-            return True
-
-        raise AnsibleError("Internal Error: this connection module does not support running commands via %s" % self._play_context.become_method)
-
-    def set_host_overrides(self, host, hostvars=None):
-        '''
-        An optional method, which can be used to set connection plugin parameters
-        from variables set on the host (or groups to which the host belongs)
-
-        Any connection plugin using this should first initialize its attributes in
-        an overridden `def __init__(self):`, and then use `host.get_vars()` to find
-        variables which may be used to set those attributes in this method.
-        '''
-        pass
+    @property
+    def socket_path(self):
+        '''Read-only property holding the connection socket path for this remote host'''
+        return self._socket_path
 
     @staticmethod
     def _split_ssh_args(argstring):
@@ -156,10 +129,6 @@ class ConnectionBase(AnsiblePlugin):
     @abstractmethod
     def _connect(self):
         """Connect to the host we've been initialized with"""
-
-        # Check if PE is supported
-        if self._play_context.become:
-            self._become_method_supported()
 
     @ensure_connect
     @abstractmethod
@@ -190,13 +159,13 @@ class ConnectionBase(AnsiblePlugin):
             processed on the remote machine, not on the local machine so no
             shell is needed on the local machine.  (Example, ``/bin/sh``)
         :ConnectionCommand: This is the command that connects us to the remote
-            machine to run the rest of the command.  ``ansible_ssh_user``,
+            machine to run the rest of the command.  ``ansible_user``,
             ``ansible_ssh_host`` and so forth are fed to this piece of the
             command to connect to the correct host (Examples ``ssh``,
             ``chroot``)
         :UsersLoginShell: This shell may or may not be created depending on
             the ConnectionCommand used by the connection plugin.  This is the
-            shell that the ``ansible_ssh_user`` has configured as their login
+            shell that the ``ansible_user`` has configured as their login
             shell.  In traditional UNIX parlance, this is the last field of
             a user's ``/etc/passwd`` entry   We do not specifically try to run
             the ``UsersLoginShell`` when we connect.  Instead it is implicit
@@ -246,31 +215,6 @@ class ConnectionBase(AnsiblePlugin):
         """Terminate the connection"""
         pass
 
-    def check_become_success(self, b_output):
-        b_success_key = to_bytes(self._play_context.success_key)
-        for b_line in b_output.splitlines(True):
-            if b_success_key == b_line.rstrip():
-                return True
-        return False
-
-    def check_password_prompt(self, b_output):
-        if self._play_context.prompt is None:
-            return False
-        elif isinstance(self._play_context.prompt, string_types):
-            b_prompt = to_bytes(self._play_context.prompt).strip()
-            b_lines = b_output.splitlines()
-            return any(l.strip().startswith(b_prompt) for l in b_lines)
-        else:
-            return self._play_context.prompt(b_output)
-
-    def check_incorrect_password(self, b_output):
-        b_incorrect_password = to_bytes(gettext.dgettext(self._play_context.become_method, C.BECOME_ERROR_STRINGS[self._play_context.become_method]))
-        return b_incorrect_password and b_incorrect_password in b_output
-
-    def check_missing_password(self, b_output):
-        b_missing_password = to_bytes(gettext.dgettext(self._play_context.become_method, C.BECOME_MISSING_STRINGS[self._play_context.become_method]))
-        return b_missing_password and b_missing_password in b_output
-
     def connection_lock(self):
         f = self._play_context.connection_lockfd
         display.vvvv('CONNECTION: pid %d waiting for lock on %d' % (os.getpid(), f), host=self._play_context.remote_addr)
@@ -284,3 +228,154 @@ class ConnectionBase(AnsiblePlugin):
 
     def reset(self):
         display.warning("Reset is not implemented for this connection")
+
+    # NOTE: these password functions are all become specific, the name is
+    # confusing as it does not handle 'protocol passwords'
+    # DEPRECATED:
+    # These are kept for backwards compatiblity
+    # Use the methods provided by the become plugins instead
+    def check_become_success(self, b_output):
+        display.deprecated(
+            "Connection.check_become_success is deprecated, calling code should be using become plugins instead",
+            version="2.12"
+        )
+        return self.become.check_success(b_output)
+
+    def check_password_prompt(self, b_output):
+        display.deprecated(
+            "Connection.check_password_prompt is deprecated, calling code should be using become plugins instead",
+            version="2.12"
+        )
+        return self.become.check_password_prompt(b_output)
+
+    def check_incorrect_password(self, b_output):
+        display.deprecated(
+            "Connection.check_incorrect_password is deprecated, calling code should be using become plugins instead",
+            version="2.12"
+        )
+        return self.become.check_incorrect_password(b_output)
+
+    def check_missing_password(self, b_output):
+        display.deprecated(
+            "Connection.check_missing_password is deprecated, calling code should be using become plugins instead",
+            version="2.12"
+        )
+        return self.become.check_missing_password(b_output)
+
+
+class NetworkConnectionBase(ConnectionBase):
+    """
+    A base class for network-style connections.
+    """
+
+    force_persistence = True
+    # Do not use _remote_is_local in other connections
+    _remote_is_local = True
+
+    def __init__(self, play_context, new_stdin, *args, **kwargs):
+        super(NetworkConnectionBase, self).__init__(play_context, new_stdin, *args, **kwargs)
+        self._messages = []
+
+        self._network_os = self._play_context.network_os
+
+        self._local = connection_loader.get('local', play_context, '/dev/null')
+        self._local.set_options()
+
+        self._sub_plugin = {}
+        self._cached_variables = (None, None, None)
+
+        # reconstruct the socket_path and set instance values accordingly
+        self._ansible_playbook_pid = kwargs.get('ansible_playbook_pid')
+        self._update_connection_state()
+
+    def __getattr__(self, name):
+        try:
+            return self.__dict__[name]
+        except KeyError:
+            if not name.startswith('_'):
+                plugin = self._sub_plugin.get('obj')
+                if plugin:
+                    method = getattr(plugin, name, None)
+                    if method is not None:
+                        return method
+            raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, name))
+
+    def exec_command(self, cmd, in_data=None, sudoable=True):
+        return self._local.exec_command(cmd, in_data, sudoable)
+
+    def queue_message(self, level, message):
+        """
+        Adds a message to the queue of messages waiting to be pushed back to the controller process.
+
+        :arg level: A string which can either be the name of a method in display, or 'log'. When
+            the messages are returned to task_executor, a value of log will correspond to
+            ``display.display(message, log_only=True)``, while another value will call ``display.[level](message)``
+        """
+        self._messages.append((level, message))
+
+    def pop_messages(self):
+        messages, self._messages = self._messages, []
+        return messages
+
+    def put_file(self, in_path, out_path):
+        """Transfer a file from local to remote"""
+        return self._local.put_file(in_path, out_path)
+
+    def fetch_file(self, in_path, out_path):
+        """Fetch a file from remote to local"""
+        return self._local.fetch_file(in_path, out_path)
+
+    def reset(self):
+        '''
+        Reset the connection
+        '''
+        if self._socket_path:
+            self.queue_message('vvvv', 'resetting persistent connection for socket_path %s' % self._socket_path)
+            self.close()
+        self.queue_message('vvvv', 'reset call on connection instance')
+
+    def close(self):
+        if self._connected:
+            self._connected = False
+
+    def set_options(self, task_keys=None, var_options=None, direct=None):
+        super(NetworkConnectionBase, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
+        if self.get_option('persistent_log_messages'):
+            warning = "Persistent connection logging is enabled for %s. This will log ALL interactions" % self._play_context.remote_addr
+            logpath = getattr(C, 'DEFAULT_LOG_PATH')
+            if logpath is not None:
+                warning += " to %s" % logpath
+            self.queue_message('warning', "%s and WILL NOT redact sensitive configuration like passwords. USE WITH CAUTION!" % warning)
+
+        if self._sub_plugin.get('obj') and self._sub_plugin.get('type') != 'external':
+            try:
+                self._sub_plugin['obj'].set_options(task_keys=task_keys, var_options=var_options, direct=direct)
+            except AttributeError:
+                pass
+
+    def _update_connection_state(self):
+        '''
+        Reconstruct the connection socket_path and check if it exists
+
+        If the socket path exists then the connection is active and set
+        both the _socket_path value to the path and the _connected value
+        to True.  If the socket path doesn't exist, leave the socket path
+        value to None and the _connected value to False
+        '''
+        ssh = connection_loader.get('ssh', class_only=True)
+        control_path = ssh._create_control_path(
+            self._play_context.remote_addr, self._play_context.port,
+            self._play_context.remote_user, self._play_context.connection,
+            self._ansible_playbook_pid
+        )
+
+        tmp_path = unfrackpath(C.PERSISTENT_CONTROL_PATH_DIR)
+        socket_path = unfrackpath(control_path % dict(directory=tmp_path))
+
+        if os.path.exists(socket_path):
+            self._connected = True
+            self._socket_path = socket_path
+
+    def _log_messages(self, message):
+        if self.get_option('persistent_log_messages'):
+            self.queue_message('log', message)

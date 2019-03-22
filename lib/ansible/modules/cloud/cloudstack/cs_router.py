@@ -2,21 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # (c) 2016, René Moser <mail@renemoser.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -29,83 +15,86 @@ module: cs_router
 short_description: Manages routers on Apache CloudStack based clouds.
 description:
     - Start, restart, stop and destroy routers.
-    - C(state=present) is not able to create routers, use M(cs_network) instead.
-version_added: "2.2"
-author: "René Moser (@resmo)"
+    - I(state=present) is not able to create routers, use M(cs_network) instead.
+version_added: '2.2'
+author: René Moser (@resmo)
 options:
   name:
     description:
       - Name of the router.
+    type: str
     required: true
   service_offering:
     description:
       - Name or id of the service offering of the router.
-    required: false
-    default: null
+    type: str
   domain:
     description:
       - Domain the router is related to.
-    required: false
-    default: null
+    type: str
   account:
     description:
       - Account the router is related to.
-    required: false
-    default: null
+    type: str
   project:
     description:
       - Name of the project the router is related to.
-    required: false
-    default: null
+    type: str
   zone:
     description:
       - Name of the zone the router is deployed in.
       - If not set, all zones are used.
-    required: false
-    default: null
-    version_added: "2.4"
+    type: str
+    version_added: '2.4'
   state:
     description:
       - State of the router.
-    required: false
-    default: 'present'
-    choices: [ 'present', 'absent', 'started', 'stopped', 'restarted' ]
+    type: str
+    default: present
+    choices: [ present, absent, started, stopped, restarted ]
+  poll_async:
+    description:
+      - Poll async jobs until job has finished.
+    default: yes
+    type: bool
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
 # Ensure the router has the desired service offering, no matter if
 # the router is running or not.
-- local_action:
-    module: cs_router
+- name: Present router
+  cs_router:
     name: r-40-VM
     service_offering: System Offering for Software Router
+  delegate_to: localhost
 
-# Ensure started
-- local_action:
-    module: cs_router
+- name: Ensure started
+  cs_router:
     name: r-40-VM
     state: started
+  delegate_to: localhost
 
 # Ensure started with desired service offering.
 # If the service offerings changes, router will be rebooted.
-- local_action:
-    module: cs_router
+- name: Ensure started with desired service offering
+  cs_router:
     name: r-40-VM
     service_offering: System Offering for Software Router
     state: started
+  delegate_to: localhost
 
-# Ensure stopped
-- local_action:
-    module: cs_router
+- name: Ensure stopped
+  cs_router:
     name: r-40-VM
     state: stopped
+  delegate_to: localhost
 
-# Remove a router
-- local_action:
-    module: cs_router
+- name: Remove a router
+  cs_router:
     name: r-40-VM
     state: absent
+  delegate_to: localhost
 '''
 
 RETURN = '''
@@ -113,22 +102,22 @@ RETURN = '''
 id:
   description: UUID of the router.
   returned: success
-  type: string
+  type: str
   sample: 04589590-ac63-4ffc-93f5-b698b8ac38b6
 name:
   description: Name of the router.
   returned: success
-  type: string
+  type: str
   sample: r-40-VM
 created:
   description: Date of the router was created.
   returned: success
-  type: string
+  type: str
   sample: 2014-12-01T14:57:57+0100
 template_version:
   description: Version of the system VM template.
   returned: success
-  type: string
+  type: str
   sample: 4.5.1
 requires_upgrade:
   description: Whether the router needs to be upgraded to the new template.
@@ -138,37 +127,37 @@ requires_upgrade:
 redundant_state:
   description: Redundant state of the router.
   returned: success
-  type: string
+  type: str
   sample: UNKNOWN
 role:
   description: Role of the router.
   returned: success
-  type: string
+  type: str
   sample: VIRTUAL_ROUTER
 zone:
   description: Name of zone the router is in.
   returned: success
-  type: string
+  type: str
   sample: ch-gva-2
 service_offering:
   description: Name of the service offering the router has.
   returned: success
-  type: string
+  type: str
   sample: System Offering For Software Router
 state:
   description: State of the router.
   returned: success
-  type: string
+  type: str
   sample: Active
 domain:
   description: Domain the router is related to.
   returned: success
-  type: string
+  type: str
   sample: ROOT
 account:
   description: Account the router is related to.
   returned: success
-  type: string
+  type: str
   sample: admin
 '''
 
@@ -217,7 +206,8 @@ class AnsibleCloudStackRouter(AnsibleCloudStack):
                 'projectid': self.get_project(key='id'),
                 'account': self.get_account(key='name'),
                 'domainid': self.get_domain(key='id'),
-                'listall': True
+                'listall': True,
+                'fetch_list': True,
             }
 
             if self.module.params.get('zone'):
@@ -225,7 +215,7 @@ class AnsibleCloudStackRouter(AnsibleCloudStack):
 
             routers = self.query_api('listRouters', **args)
             if routers:
-                for r in routers['router']:
+                for r in routers:
                     if router.lower() in [r['name'].lower(), r['id']]:
                         self.router = r
                         break

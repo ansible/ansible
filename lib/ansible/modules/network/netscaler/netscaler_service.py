@@ -120,6 +120,7 @@ options:
         description:
             - "Monitor the health of this service"
         default: yes
+        type: bool
 
     maxreq:
         description:
@@ -133,6 +134,7 @@ options:
             - "Use the transparent cache redirection virtual server to forward requests to the cache server."
             - "Note: Do not specify this parameter if you set the Cache Type parameter."
         default: no
+        type: bool
 
     cip:
         choices:
@@ -164,6 +166,7 @@ options:
                 setting (available in the enable ns mode and disable ns mode CLI commands, or in the System >
                 Settings > Configure modes > Configure Modes dialog box). However, you can override this setting
                 after you create the service.
+        type: bool
 
     pathmonitor:
         description:
@@ -179,15 +182,18 @@ options:
                 Use the proxy port as the source port when initiating connections with the server. With the NO
                 setting, the client-side connection port is used as the source port for the server-side connection.
             - "Note: This parameter is available only when the Use Source IP (USIP) parameter is set to YES."
+        type: bool
 
     sp:
         description:
             - "Enable surge protection for the service."
+        type: bool
 
     rtspsessionidremap:
         description:
             - "Enable RTSP session ID mapping for the service."
         default: off
+        type: bool
 
     clttimeout:
         description:
@@ -215,14 +221,17 @@ options:
     cka:
         description:
             - "Enable client keep-alive for the service."
+        type: bool
 
     tcpb:
         description:
             - "Enable TCP buffering for the service."
+        type: bool
 
     cmp:
         description:
             - "Enable compression for the service."
+        type: bool
 
     maxbandwidth:
         description:
@@ -236,7 +245,7 @@ options:
                 Use Layer 2 mode to bridge the packets sent to this service if it is marked as DOWN. If the service
                 is DOWN, and this parameter is disabled, the packets are dropped.
         default: no
-
+        type: bool
     monthreshold:
         description:
             - >-
@@ -327,6 +336,7 @@ options:
                 Shut down gracefully, not accepting any new connections, and disabling the service when all of its
                 connections are closed.
         default: no
+        type: bool
 
     monitor_bindings:
         description:
@@ -416,8 +426,8 @@ except ImportError as e:
     PYTHON_SDK_IMPORTED = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netscaler import (ConfigProxy, get_nitro_client, netscaler_common_arguments,
-                                            log, loglines, get_immutables_intersection)
+from ansible.module_utils.network.netscaler.netscaler import (ConfigProxy, get_nitro_client, netscaler_common_arguments, log, loglines,
+                                                              get_immutables_intersection)
 
 
 def service_exists(client, module):

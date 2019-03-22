@@ -1,0 +1,154 @@
+# Test code for the ACI modules
+# Copyright: (c) 2017, Bruno Calogero <brunocalogero@hotmail.com>
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Test that we have an ACI APIC host, ACI username and ACI password
+  fail:
+    msg: 'Please define the following variables: aci_hostname, aci_username and aci_password.'
+  when: aci_hostname is not defined or aci_username is not defined or aci_password is not defined
+
+- name: delete Switch Policy Leaf profile for kick off
+  aci_switch_policy_leaf_profile:
+    host: "{{ aci_hostname }}"
+    username: "{{ aci_username }}"
+    password: "{{ aci_password }}"
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    leaf_profile: swleafprftest
+    state: absent
+
+- name: delete Interface Policy Leaf profile for kick off
+  aci_interface_policy_leaf_profile:
+    host: "{{ aci_hostname }}"
+    username: "{{ aci_username }}"
+    password: "{{ aci_password }}"
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    leaf_interface_profile: leafintprftest
+    state: absent
+
+- name: Ensuring Switch Policy Leaf profile exists for kick off
+  aci_switch_policy_leaf_profile: &aci_switch_policy_leaf_profile_present
+    host: "{{ aci_hostname }}"
+    username: "{{ aci_username }}"
+    password: "{{ aci_password }}"
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
+    leaf_profile: swleafprftest
+    state: present
+  register: leaf_profile_present
+
+- name: Ensuring Interface Policy Leaf profile exists for kick off
+  aci_interface_policy_leaf_profile: &aci_interface_policy_leaf_profile_present
+    host: "{{ aci_hostname }}"
+    username: "{{ aci_username }}"
+    password: "{{ aci_password }}"
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    leaf_interface_profile: leafintprftest
+    state: present
+  register: leaf_profile_present
+
+- name: Bind an Interface Selector to a Switch Policy Leaf Profile - check mode works
+  aci_interface_selector_to_switch_policy_leaf_profile: &aci_interface_selector_to_switch_policy_leaf_profile_present
+    <<: *aci_switch_policy_leaf_profile_present
+    interface_selector: leafintprftest
+  check_mode: yes
+  register: intftoleaf_check_mode_present
+
+- name: Bind an Interface Selector to a Switch Policy Leaf Profile - creation works
+  aci_interface_selector_to_switch_policy_leaf_profile:
+    <<: *aci_interface_selector_to_switch_policy_leaf_profile_present
+  register: intftoleaf_present
+
+- name: Bind an Interface Selector to a Switch Policy Leaf Profile - idempotency works
+  aci_interface_selector_to_switch_policy_leaf_profile:
+    <<: *aci_interface_selector_to_switch_policy_leaf_profile_present
+  register: intftoleaf_idempotent
+
+# TODO: also test for errors
+- name: present assertions
+  assert:
+    that:
+    - intftoleaf_check_mode_present is changed
+    - intftoleaf_present is changed
+    - intftoleaf_present.previous == []
+    - 'intftoleaf_present.sent == {"infraRsAccPortP": {"attributes": {"tDn": "uni/infra/accportprof-leafintprftest"}}}'
+    - intftoleaf_idempotent is not changed
+    - intftoleaf_idempotent.sent == {}
+
+- name: Query an interface selector profile associated with a switch policy leaf profile
+  aci_interface_selector_to_switch_policy_leaf_profile:
+    <<: *aci_switch_policy_leaf_profile_present
+    interface_selector: leafintprftest
+    state: query
+  register: binding_query
+
+- name: query assertions
+  assert:
+    that:
+      - binding_query is not changed
+      - binding_query.current | length >= 1
+      - '"api/mo/uni/infra/nprof-swleafprftest/rsaccPortP-[uni/infra/accportprof-leafintprftest].json" in binding_query.url'
+
+- name: Remove binding of interface access port selector and Interface Policy Leaf Profile - check mode
+  aci_interface_selector_to_switch_policy_leaf_profile: &aci_interface_selector_to_switch_policy_leaf_profile_absent
+    <<: *aci_switch_policy_leaf_profile_present
+    interface_selector: leafintprftest
+    state: absent
+  check_mode: yes
+  register: intftoleaf_check_mode_absent
+
+- name: Remove binding of interface access port selector and Interface Policy Leaf Profile - delete works
+  aci_interface_selector_to_switch_policy_leaf_profile:
+    <<: *aci_interface_selector_to_switch_policy_leaf_profile_absent
+  register: intftoleaf_absent
+
+- name: Remove binding of interface access port selector and Interface Policy Leaf Profile - idempotency works
+  aci_interface_selector_to_switch_policy_leaf_profile:
+    <<: *aci_interface_selector_to_switch_policy_leaf_profile_absent
+  register: intftoleaf_absent_idempotent
+
+- name: Remove binding of interface access port selector and Interface Policy Leaf Profile - check mode
+  aci_interface_selector_to_switch_policy_leaf_profile:
+    <<: *aci_switch_policy_leaf_profile_present
+    state: absent
+  ignore_errors: yes
+  register: intftoleaf_absent_missing_param
+
+- name: absent assertions
+  assert:
+    that:
+      - intftoleaf_check_mode_absent is changed
+      - intftoleaf_check_mode_absent.previous != []
+      - intftoleaf_absent is changed
+      - intftoleaf_absent.previous == intftoleaf_check_mode_absent.previous
+      - intftoleaf_absent_idempotent is not changed
+      - intftoleaf_absent_idempotent.previous == []
+      - intftoleaf_absent_missing_param is failed
+      - 'intftoleaf_absent_missing_param.msg == "state is absent but all of the following are missing: interface_selector"'
+
+- name: Remove an interface selector associated with a Switch Policy Leaf Profile - Clean up
+  aci_interface_selector_to_switch_policy_leaf_profile:
+    <<: *aci_interface_selector_to_switch_policy_leaf_profile_absent
+    state: absent
+
+- name: delete Switch Policy Leaf profile - Clean up
+  aci_switch_policy_leaf_profile:
+    <<: *aci_switch_policy_leaf_profile_present
+    state: absent
+
+- name: delete Interface Policy Leaf profile - Clean up
+  aci_interface_policy_leaf_profile:
+    <<: *aci_interface_policy_leaf_profile_present
+    leaf_interface_profile: leafintprftest
+    state: absent

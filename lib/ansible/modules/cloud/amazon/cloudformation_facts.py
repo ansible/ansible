@@ -26,33 +26,31 @@ options:
     stack_name:
         description:
           - The name or id of the CloudFormation stack. Gathers facts for all stacks by default.
-        required: false
-        default: null
     all_facts:
         description:
             - Get all stack information for the stack
-        required: false
-        default: false
+        type: bool
+        default: 'no'
     stack_events:
         description:
             - Get stack events for the stack
-        required: false
-        default: false
+        type: bool
+        default: 'no'
     stack_template:
         description:
             - Get stack template body for the stack
-        required: false
-        default: false
+        type: bool
+        default: 'no'
     stack_resources:
         description:
             - Get stack resources for the stack
-        required: false
-        default: false
+        type: bool
+        default: 'no'
     stack_policy:
         description:
             - Get stack policy for the stack
-        required: false
-        default: false
+        type: bool
+        default: 'no'
 extends_documentation_fragment:
     - aws
     - ec2
@@ -69,6 +67,17 @@ EXAMPLES = '''
 - debug:
     msg: "{{ ansible_facts['cloudformation']['my-cloudformation-stack'] }}"
 
+# Get stack outputs, when you have the stack name available as a fact
+- set_fact:
+    stack_name: my-awesome-stack
+
+- cloudformation_facts:
+    stack_name: "{{ stack_name }}"
+  register: my_stack
+
+- debug:
+    msg: "{{ my_stack.ansible_facts.cloudformation[stack_name].stack_outputs }}"
+
 # Get all stack information about a stack
 - cloudformation_facts:
     stack_name: my-cloudformation-stack
@@ -79,6 +88,13 @@ EXAMPLES = '''
     stack_name: my-cloudformation-stack
     stack_resources: true
     stack_policy: true
+
+# Fail if the stack doesn't exist
+- name: try to get facts about a stack but fail if it doesn't exist
+  cloudformation_facts:
+    stack_name: nonexistent-stack
+    all_facts: yes
+  failed_when: cloudformation['nonexistent-stack'] is undefined
 
 # Example dictionary outputs for stack_outputs, stack_parameters and stack_resources:
 # "stack_outputs": {
@@ -102,38 +118,38 @@ EXAMPLES = '''
 RETURN = '''
 stack_description:
     description: Summary facts about the stack
-    returned: always
+    returned: if the stack exists
     type: dict
 stack_outputs:
     description: Dictionary of stack outputs keyed by the value of each output 'OutputKey' parameter and corresponding value of each
                  output 'OutputValue' parameter
-    returned: always
+    returned: if the stack exists
     type: dict
 stack_parameters:
     description: Dictionary of stack parameters keyed by the value of each parameter 'ParameterKey' parameter and corresponding value of
                  each parameter 'ParameterValue' parameter
-    returned: always
+    returned: if the stack exists
     type: dict
 stack_events:
     description: All stack events for the stack
-    returned: only if all_facts or stack_events is true
+    returned: only if all_facts or stack_events is true and the stack exists
     type: list
 stack_policy:
     description: Describes the stack policy for the stack
-    returned: only if all_facts or stack_policy is true
+    returned: only if all_facts or stack_policy is true and the stack exists
     type: dict
 stack_template:
     description: Describes the stack template for the stack
-    returned: only if all_facts or stack_template is true
+    returned: only if all_facts or stack_template is true and the stack exists
     type: dict
 stack_resource_list:
     description: Describes stack resources for the stack
-    returned: only if all_facts or stack_resourses is true
+    returned: only if all_facts or stack_resourses is true and the stack exists
     type: list
 stack_resources:
     description: Dictionary of stack resources keyed by the value of each resource 'LogicalResourceId' parameter and corresponding value of each
                  resource 'PhysicalResourceId' parameter
-    returned: only if all_facts or stack_resourses is true
+    returned: only if all_facts or stack_resourses is true and the stack exists
     type: dict
 '''
 
@@ -148,6 +164,7 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
+from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import (get_aws_connection_info, ec2_argument_spec, boto3_conn,
                                       camel_dict_to_snake_dict, AWSRetry, boto3_tag_list_to_ansible_dict)
@@ -180,22 +197,25 @@ class CloudFormationServiceManager:
             kwargs = {'StackName': stack_name} if stack_name else {}
             func = partial(self.client.describe_stacks, **kwargs)
             response = self.paginated_response(func, 'Stacks')
-            if response:
+            if response is not None:
                 return response
             self.module.fail_json(msg="Error describing stack(s) - an empty response was returned")
         except Exception as e:
-            self.module.fail_json(msg="Error describing stack(s) - " + str(e), exception=traceback.format_exc())
+            if 'does not exist' in e.response['Error']['Message']:
+                # missing stack, don't bail.
+                return {}
+            self.module.fail_json(msg="Error describing stack - " + to_native(e), exception=traceback.format_exc())
 
     def list_stack_resources(self, stack_name):
         try:
-            func = partial(self.client.list_stack_resources,StackName=stack_name)
+            func = partial(self.client.list_stack_resources, StackName=stack_name)
             return self.paginated_response(func, 'StackResourceSummaries')
         except Exception as e:
             self.module.fail_json(msg="Error listing stack resources - " + str(e), exception=traceback.format_exc())
 
     def describe_stack_events(self, stack_name):
         try:
-            func = partial(self.client.describe_stack_events,StackName=stack_name)
+            func = partial(self.client.describe_stack_events, StackName=stack_name)
             return self.paginated_response(func, 'StackEvents')
         except Exception as e:
             self.module.fail_json(msg="Error describing stack events - " + str(e), exception=traceback.format_exc())
@@ -222,7 +242,7 @@ class CloudFormationServiceManager:
         Returns expanded response for paginated operations.
         The 'result_key' is used to define the concatenated results that are combined from each paginated response.
         '''
-        args=dict()
+        args = dict()
         if next_token:
             args['NextToken'] = next_token
         response = func(**args)
@@ -232,12 +252,14 @@ class CloudFormationServiceManager:
             return result
         return result + self.paginated_response(func, result_key, next_token)
 
+
 def to_dict(items, key, value):
     ''' Transforms a list of items to a Key/Value dictionary '''
     if items:
         return dict(zip([i[key] for i in items], [i[value] for i in items]))
     else:
         return dict()
+
 
 def main():
     argument_spec = ec2_argument_spec()

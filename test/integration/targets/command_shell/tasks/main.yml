@@ -1,20 +1,7 @@
 # Test code for the command and shell modules.
-# (c) 2014, Richard Isaacson <richard.c.isaacson@gmail.com>
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2014, Richard Isaacson <richard.c.isaacson@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 - name: use command to execute sudo
   command: sudo -h
@@ -42,8 +29,8 @@
 - name: assert tar warning was reported
   assert:
     that:
-      - "tar.warnings | length() == 1"
-      - "'Consider using unarchive module rather than running tar' in tar.warnings[0]"
+      - tar.warnings | length() == 1
+      - '"Consider using the unarchive module rather than running ''tar''" in tar.warnings[0]'
 
 - name: use command to execute chown
   command: chown -h
@@ -53,78 +40,134 @@
 - name: assert chown warning was reported
   assert:
     that:
-      - "chown.warnings | length() == 1"
-      - "'Consider using file module with owner rather than running chown' in chown.warnings[0]"
+      - chown.warnings | length() == 1
+      - '"Consider using the file module with owner rather than running ''chown''" in chown.warnings[0]'
 
 - name: use command with unsupported executable arg
-  command: ls /dev/null executable=/bogus
+  command: ls /dev/null
+  args:
+    executable: /bogus
   register: executable
 
 - name: assert executable warning was reported
   assert:
     that:
-      - "executable.stdout == '/dev/null'"
-      - "executable.warnings | length() == 1"
+      - executable.stdout == '/dev/null'
+      - executable.warnings | length() == 1
       - "'no longer supported' in executable.warnings[0]"
 
+# The warning isn't on the task since it comes from the action plugin. Not sure
+# how to test for that.
+#
+# - name: Use command with reboot
+#   command: sleep 2 && /not/shutdown -r now
+#   ignore_errors: yes
+#   register: reboot
+
+# - name: Assert that reboot warning was issued
+#   assert:
+#     that:
+#       - '"Consider using the reboot module" in reboot.warnings[0]'
+
 - name: use command with no command
-  command: chdir=/
+  command:
+  args:
+    chdir: /
   register: no_command
   ignore_errors: true
 
 - name: assert executable fails with no command
   assert:
     that:
-      - "no_command.failed == true"
-      - "no_command.msg == 'no command given'"
-      - "no_command.rc == 256"
+      - no_command is failed
+      - no_command.msg == 'no command given'
+      - no_command.rc == 256
 
-- set_fact: output_dir_test={{output_dir}}/test_command_shell
+- name: use argv
+  command:
+    argv:
+      - echo
+      - testing
+  register: argv_command
+  ignore_errors: true
+
+- name: assert executable works with argv
+  assert:
+    that:
+      - "argv_command.stdout == 'testing'"
+
+- name: use argv and command string
+  command: echo testing
+  args:
+    argv:
+      - echo
+      - testing
+  register: argv_and_string_command
+  ignore_errors: true
+
+- name: assert executable fails with both argv and command string
+  assert:
+    that:
+      - argv_and_string_command is failed
+      - argv_and_string_command.msg == 'only command or argv can be given, not both'
+      - argv_and_string_command.rc == 256
+
+- set_fact:
+    output_dir_test: "{{ output_dir }}/test_command_shell"
 
 - name: make sure our testing sub-directory does not exist
-  file: path="{{ output_dir_test }}" state=absent
+  file:
+    path: "{{ output_dir_test }}"
+    state: absent
 
 - name: create our testing sub-directory
-  file: path="{{ output_dir_test }}" state=directory
+  file:
+    path: "{{ output_dir_test }}"
+    state: directory
 
 - name: prep our test script
-  copy: src=test.sh dest="{{ output_dir_test }}" mode=0755
+  copy:
+    src: test.sh
+    dest: "{{ output_dir_test }}"
+    mode: '0755'
 
 - name: prep our test script
-  copy: src=create_afile.sh dest="{{ output_dir_test }}" mode=0755
+  copy:
+    src: create_afile.sh
+    dest: "{{ output_dir_test }}"
+    mode: '0755'
 
 - name: prep our test script
-  copy: src=remove_afile.sh dest="{{ output_dir_test }}" mode=0755
+  copy:
+    src: remove_afile.sh
+    dest: "{{ output_dir_test }}"
+    mode: '0755'
 
 - name: locate bash
   shell: which bash
   register: bash
-
-- name: locate sha1sum/shasum
-  shell: which sha1sum || which shasum
-  register: sha1sum
 
 ##
 ## command
 ##
 
 - name: execute the test.sh script via command
-  command: "{{output_dir_test | expanduser}}/test.sh"
+  command: "{{ output_dir_test }}/test.sh"
   register: command_result0
 
 - name: assert that the script executed correctly
   assert:
     that:
-      - "command_result0.rc == 0"
-      - "command_result0.stderr == ''"
-      - "command_result0.stdout == 'win'"
+      - command_result0.rc == 0
+      - command_result0.stderr == ''
+      - command_result0.stdout == 'win'
 
 # executable
 
 # FIXME doesn't have the expected stdout.
 
 #- name: execute the test.sh script with executable via command
-#  command: "{{output_dir_test | expanduser}}/test.sh executable={{ bash.stdout }}"
+#  command: "{{output_dir_test }}/test.sh executable={{ bash.stdout }}"
 #  register: command_result1
 #
 #- name: assert that the script executed correctly with command
@@ -137,55 +180,69 @@
 # chdir
 
 - name: execute the test.sh script with chdir via command
-  command: ./test.sh chdir="{{output_dir_test | expanduser}}"
+  command: ./test.sh
+  args:
+    chdir: "{{ output_dir_test }}"
   register: command_result2
 
 - name: assert that the script executed correctly with chdir
   assert:
     that:
-      - "command_result2.rc == 0"
-      - "command_result2.stderr == ''"
-      - "command_result2.stdout == 'win'"
+      - command_result2.rc == 0
+      - command_result2.stderr == ''
+      - command_result2.stdout == 'win'
 
 # creates
 
 - name: verify that afile.txt is absent
-  file: path={{output_dir_test}}/afile.txt state=absent
+  file:
+    path: "{{ output_dir_test }}/afile.txt"
+    state: absent
 
 - name: create afile.txt with create_afile.sh via command
-  command: "{{output_dir_test | expanduser}}/create_afile.sh {{output_dir_test | expanduser}}/afile.txt creates={{output_dir_test | expanduser}}/afile.txt"
+  command: "{{ output_dir_test }}/create_afile.sh {{output_dir_test }}/afile.txt"
+  args:
+    creates: "{{ output_dir_test }}/afile.txt"
 
 - name: verify that afile.txt is present
-  file: path={{output_dir_test}}/afile.txt state=file
+  file:
+    path: "{{ output_dir_test }}/afile.txt"
+    state: file
 
 - name: re-run previous command using creates with globbing
-  command: "{{output_dir_test | expanduser}}/create_afile.sh {{output_dir_test | expanduser}}/afile.txt creates={{output_dir_test | expanduser}}/afile.*"
+  command: "{{ output_dir_test }}/create_afile.sh {{ output_dir_test }}/afile.txt"
+  args:
+    creates: "{{ output_dir_test }}/afile.*"
   register: command_result3
 
 - name: assert that creates with globbing is working
   assert:
     that:
-      - "command_result3.changed != True"
+      - command_result3 is not changed
 
 # removes
 
 - name: remove afile.txt with remote_afile.sh via command
-  command: "{{output_dir_test | expanduser}}/remove_afile.sh {{output_dir_test | expanduser}}/afile.txt removes={{output_dir_test | expanduser}}/afile.txt"
+  command: "{{ output_dir_test }}/remove_afile.sh {{ output_dir_test }}/afile.txt"
+  args:
+    removes: "{{ output_dir_test }}/afile.txt"
 
 - name: verify that afile.txt is absent
   file: path={{output_dir_test}}/afile.txt state=absent
 
 - name: re-run previous command using removes with globbing
-  command: "{{output_dir_test | expanduser}}/remove_afile.sh {{output_dir_test | expanduser}}/afile.txt removes={{output_dir_test | expanduser}}/afile.*"
+  command: "{{ output_dir_test }}/remove_afile.sh {{ output_dir_test }}/afile.txt"
+  args:
+    removes: "{{ output_dir_test }}/afile.*"
   register: command_result4
 
 - name: assert that removes with globbing is working
   assert:
     that:
-      - "command_result4.changed != True"
+      - command_result4.changed != True
 
 - name: pass stdin to cat via command
-  command: "cat"
+  command: cat
   args:
     stdin: 'foobar'
   register: command_result5
@@ -193,10 +250,10 @@
 - name: assert that stdin is passed
   assert:
     that:
-      - "command_result5.stdout == 'foobar'"
+      - command_result5.stdout == 'foobar'
 
 - name: send to stdin literal multiline block
-  command: "{{ sha1sum.stdout }}"
+  command: "{{ ansible_python.executable }} -c 'import hashlib, sys; print(hashlib.sha1((sys.stdin.buffer if hasattr(sys.stdin, \"buffer\") else sys.stdin).read()).hexdigest())'"
   args:
     stdin: |-
       this is the first line
@@ -209,29 +266,31 @@
 - name: assert the multiline input was passed correctly
   assert:
     that:
-      - "command_result6.stdout == '9cd0697c6a9ff6689f0afb9136fa62e0b3fee903  -'"
+      - "command_result6.stdout == '9cd0697c6a9ff6689f0afb9136fa62e0b3fee903'"
 
 ##
 ## shell
 ##
 
-- name: execute the test.sh script
-  shell: "{{output_dir_test | expanduser}}/test.sh"
+- name: Execute the test.sh script
+  shell: "{{ output_dir_test }}/test.sh"
   register: shell_result0
 
-- name: assert that the script executed correctly
+- name: Assert that the script executed correctly
   assert:
     that:
-      - "shell_result0.rc == 0"
-      - "shell_result0.stderr == ''"
-      - "shell_result0.stdout == 'win'"
+    - shell_result0 is changed
+    - shell_result0.cmd == '{{ output_dir_test }}/test.sh'
+    - shell_result0.rc == 0
+    - shell_result0.stderr == ''
+    - shell_result0.stdout == 'win'
 
 # executable
 
 # FIXME doesn't pass the expected stdout
 
 #- name: execute the test.sh script
-#  shell: "{{output_dir_test | expanduser}}/test.sh executable={{ bash.stdout }}"
+#  shell: "{{output_dir_test }}/test.sh executable={{ bash.stdout }}"
 #  register: shell_result1
 #
 #- name: assert that the shell executed correctly
@@ -243,34 +302,47 @@
 
 # chdir
 
-- name: execute the test.sh script with chdir
-  shell: ./test.sh chdir="{{output_dir_test | expanduser}}"
+- name: Execute the test.sh script with chdir
+  shell: ./test.sh
+  args:
+    chdir: "{{ output_dir_test }}"
   register: shell_result2
 
-- name: assert that the shell executed correctly with chdir
+- name: Assert that the shell executed correctly with chdir
   assert:
     that:
-      - "shell_result2.rc == 0"
-      - "shell_result2.stderr == ''"
-      - "shell_result2.stdout == 'win'"
+    - shell_result2 is changed
+    - shell_result2.cmd == './test.sh'
+    - shell_result2.rc == 0
+    - shell_result2.stderr == ''
+    - shell_result2.stdout == 'win'
 
 # creates
 
-- name: verify that afile.txt is absent
-  file: path={{output_dir_test}}/afile.txt state=absent
+- name: Verify that afile.txt is absent
+  file:
+    path: "{{ output_dir_test }}/afile.txt"
+    state: absent
 
-- name: execute the test.sh script with chdir
-  shell: "{{output_dir_test | expanduser}}/test.sh > {{output_dir_test | expanduser}}/afile.txt creates={{output_dir_test | expanduser}}/afile.txt"
+- name: Execute the test.sh script with chdir
+  shell: "{{ output_dir_test }}/test.sh > {{ output_dir_test }}/afile.txt"
+  args:
+    chdir: "{{ output_dir_test }}"
+    creates: "{{ output_dir_test }}/afile.txt"
 
-- name: verify that afile.txt is present
-  file: path={{output_dir_test}}/afile.txt state=file
+- name: Verify that afile.txt is present
+  file:
+    path: "{{ output_dir_test }}/afile.txt"
+    state: file
 
 # multiline
 
-- name: remove test file previously created
-  file: path={{output_dir_test | expanduser}}/afile.txt state=absent
+- name: Remove test file previously created
+  file:
+    path: "{{ output_dir_test }}/afile.txt"
+    state: absent
 
-- name: execute a shell command using a literal multiline block
+- name: Execute a shell command using a literal multiline block
   args:
     executable: "{{ bash.stdout }}"
   shell: |
@@ -278,30 +350,97 @@
     "multiline echo" \
     "with a new line
     in quotes" \
-    | {{ sha1sum.stdout }} \
-    | tr -s ' ' \
-    | cut -f1 -d ' '
+    | {{ ansible_python.executable }} -c 'import hashlib, sys; print(hashlib.sha1((sys.stdin.buffer if hasattr(sys.stdin, "buffer") else sys.stdin).read()).hexdigest())'
     echo "this is a second line"
   register: shell_result5
 
-- name: assert the multiline shell command ran as expected
+- name: Assert the multiline shell command ran as expected
   assert:
     that:
-      - "shell_result5.changed"
-      - "shell_result5.stdout == '5575bb6b71c9558db0b6fbbf2f19909eeb4e3b98\nthis is a second line'"
+    - shell_result5 is changed
+    - shell_result5.rc == 0
+    - shell_result5.cmd == 'echo this is a "multiline echo" "with a new line\nin quotes" | ' + ansible_python.executable + ' -c \'import hashlib, sys; print(hashlib.sha1((sys.stdin.buffer if hasattr(sys.stdin, "buffer") else sys.stdin).read()).hexdigest())\'\necho "this is a second line"\n'
+    - shell_result5.stdout == '5575bb6b71c9558db0b6fbbf2f19909eeb4e3b98\nthis is a second line'
 
-- name: execute a shell command using a literal multiline block with arguments in it
+- name: Execute a shell command using a literal multiline block with arguments in it
   shell: |
     executable="{{ bash.stdout }}"
-    creates={{output_dir_test | expanduser}}/afile.txt
+    creates={{ output_dir_test }}/afile.txt
     echo "test"
   register: shell_result6
 
-- name: assert the multiline shell command with arguments in it run as expected
+- name: Assert the multiline shell command with arguments in it run as expected
   assert:
     that:
-      - "shell_result6.changed"
-      - "shell_result6.stdout == 'test'"
+    - shell_result6 is changed
+    - shell_result6.rc == 0
+    - shell_result6.cmd == 'echo "test"\n'
+    - shell_result6.stdout == 'test'
+
+- name: Execute a shell command using a multiline block where whitespaces matter
+  shell: |
+    cat <<EOF
+    One
+      Two
+        Three
+    EOF
+  register: shell_result7
+
+- name: Assert the multiline shell command outputs with whitespaces preserved
+  assert:
+    that:
+    - shell_result7 is changed
+    - shell_result7.rc == 0
+    - shell_result7.cmd == 'cat <<EOF\nOne\n  Two\n    Three\nEOF\n'
+    - shell_result7.stdout == 'One\n  Two\n    Three'
+
+- name: execute a shell command with no trailing newline to stdin
+  shell: cat > {{output_dir_test }}/afile.txt
+  args:
+    stdin: test
+    stdin_add_newline: no
+
+- name: make sure content matches expected
+  copy:
+    dest: "{{output_dir_test }}/afile.txt"
+    content: test
+  register: shell_result7
+  failed_when:
+    - shell_result7 is failed or
+      shell_result7 is changed
+
+- name: execute a shell command with trailing newline to stdin
+  shell: cat > {{output_dir_test }}/afile.txt
+  args:
+    stdin: test
+    stdin_add_newline: yes
+
+- name: make sure content matches expected
+  copy:
+    dest: "{{output_dir_test }}/afile.txt"
+    content: |
+        test
+  register: shell_result8
+  failed_when:
+    - shell_result8 is failed or
+      shell_result8 is changed
+
+- name: execute a shell command with trailing newline to stdin, default
+  shell: cat > {{output_dir_test }}/afile.txt
+  args:
+    stdin: test
+
+- name: make sure content matches expected
+  copy:
+    dest: "{{output_dir_test }}/afile.txt"
+    content: |
+        test
+  register: shell_result9
+  failed_when:
+    - shell_result9 is failed or
+      shell_result9 is changed
 
 - name: remove the previously created file
-  file: path={{output_dir_test}}/afile.txt state=absent
+  file:
+    path: "{{ output_dir_test }}/afile.txt"
+    state: absent

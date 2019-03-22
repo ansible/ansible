@@ -1,0 +1,4 @@
+- name: uninstall supervisord
+  pip:
+    name: supervisor
+    state: absent

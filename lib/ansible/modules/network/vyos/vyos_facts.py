@@ -95,13 +95,23 @@ ansible_net_gather_subset:
   description: The list of subsets gathered by the module
   returned: always
   type: list
+ansible_net_api:
+  description: The name of the transport
+  returned: always
+  type: str
+ansible_net_python_version:
+  description: The Python version Ansible controller is using
+  returned: always
+  type: str
 """
+
+import platform
 import re
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.vyos import run_commands
-from ansible.module_utils.vyos import vyos_argument_spec
+from ansible.module_utils.network.vyos.vyos import run_commands, get_capabilities
+from ansible.module_utils.network.vyos.vyos import vyos_argument_spec
 
 
 class FactsBase(object):
@@ -121,33 +131,36 @@ class Default(FactsBase):
 
     COMMANDS = [
         'show version',
-        'show host name',
     ]
 
     def populate(self):
         super(Default, self).populate()
         data = self.responses[0]
-
-        self.facts['version'] = self.parse_version(data)
         self.facts['serialnum'] = self.parse_serialnum(data)
-        self.facts['model'] = self.parse_model(data)
-
-        self.facts['hostname'] = self.responses[1]
-
-    def parse_version(self, data):
-        match = re.search(r'Version:\s*(\S+)', data)
-        if match:
-            return match.group(1)
-
-    def parse_model(self, data):
-        match = re.search(r'HW model:\s*(\S+)', data)
-        if match:
-            return match.group(1)
+        self.facts.update(self.platform_facts())
 
     def parse_serialnum(self, data):
         match = re.search(r'HW S/N:\s+(\S+)', data)
         if match:
             return match.group(1)
+
+    def platform_facts(self):
+        platform_facts = {}
+
+        resp = get_capabilities(self.module)
+        device_info = resp['device_info']
+
+        platform_facts['system'] = device_info['network_os']
+
+        for item in ('model', 'image', 'version', 'platform', 'hostname'):
+            val = device_info.get('network_os_%s' % item)
+            if val:
+                platform_facts[item] = val
+
+        platform_facts['api'] = resp['network_api']
+        platform_facts['python_version'] = platform.python_version()
+
+        return platform_facts
 
 
 class Config(FactsBase):

@@ -16,22 +16,24 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- include: setup.yml
-- include: setup-local-repos.yml
+- include_tasks: setup.yml
+- include_tasks: setup-local-repos.yml
 
-- include: formats.yml
-- include: missing_hostkey.yml
-- include: no-destination.yml
-- include: specific-revision.yml
-- include: submodules.yml
-- include: change-repo-url.yml
-- include: depth.yml
-- include: checkout-new-tag.yml
-- include: gpg-verification.yml
-  when: >
-    not gpg_version.stderr and
-    gpg_version.stdout and
-    git_version.stdout | version_compare("2.1.0", '>=')
-- include: localmods.yml
-- include: reset-origin.yml
-- include: ambiguous-ref.yml
+- include_tasks: formats.yml
+- include_tasks: missing_hostkey.yml
+- include_tasks: no-destination.yml
+- include_tasks: specific-revision.yml
+- include_tasks: submodules.yml
+- include_tasks: change-repo-url.yml
+- include_tasks: depth.yml
+- include_tasks: checkout-new-tag.yml
+- include_tasks: gpg-verification.yml
+  when:
+    - not gpg_version.stderr
+    - gpg_version.stdout
+    - git_version.stdout is version("2.1.0", '>=')
+- include_tasks: localmods.yml
+- include_tasks: reset-origin.yml
+- include_tasks: ambiguous-ref.yml
+- include_tasks: archive.yml
+- include_tasks: separate-git-dir.yml

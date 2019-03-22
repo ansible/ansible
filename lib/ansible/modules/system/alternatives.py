@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2014, Gabe Mulley <gabe.mulley@gmail.com>
-# (c) 2015, David Wittman <dwittman@gmail.com>
+# Copyright: (c) 2014, Gabe Mulley <gabe.mulley@gmail.com>
+# Copyright: (c) 2015, David Wittman <dwittman@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -14,54 +14,56 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: alternatives
 short_description: Manages alternative programs for common commands
 description:
-    - Manages symbolic links using the 'update-alternatives' tool
+    - Manages symbolic links using the 'update-alternatives' tool.
     - Useful when multiple programs are installed but provide similar functionality (e.g. different editors).
 version_added: "1.6"
 author:
-    - "David Wittman (@DavidWittman)"
-    - "Gabe Mulley (@mulby)"
+    - David Wittman (@DavidWittman)
+    - Gabe Mulley (@mulby)
 options:
   name:
     description:
       - The generic name of the link.
+    type: str
     required: true
   path:
     description:
       - The path to the real executable that the link should point to.
+    type: path
     required: true
   link:
     description:
       - The path to the symbolic link that should point to the real executable.
       - This option is always required on RHEL-based distributions. On Debian-based distributions this option is
         required when the alternative I(name) is unknown to the system.
-    required: false
+    type: path
   priority:
     description:
-      - The priority of the alternative
-    required: false
+      - The priority of the alternative.
+    type: int
     default: 50
     version_added: "2.2"
 requirements: [ update-alternatives ]
 '''
 
-EXAMPLES = '''
-- name: correct java version selected
+EXAMPLES = r'''
+- name: Correct java version selected
   alternatives:
     name: java
     path: /usr/lib/jvm/java-7-openjdk-amd64/jre/bin/java
 
-- name: alternatives link created
+- name: Alternatives link created
   alternatives:
     name: hadoop-conf
     link: /etc/hadoop/conf
     path: /etc/hadoop/conf.ansible
 
-- name: make java 32 bit an alternative with low priority
+- name: Make java 32 bit an alternative with low priority
   alternatives:
     name: java
     path: /usr/lib/jvm/java-7-openjdk-i386/jre/bin/java
@@ -79,11 +81,10 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(required=True),
-            path=dict(required=True, type='path'),
-            link=dict(required=False, type='path'),
-            priority=dict(required=False, type='int',
-                          default=50),
+            name=dict(type='str', required=True),
+            path=dict(type='path', required=True),
+            link=dict(type='path'),
+            priority=dict(type='int', default=50),
         ),
         supports_check_mode=True,
     )
@@ -159,6 +160,7 @@ def main():
             module.fail_json(msg=str(dir(cpe)))
     else:
         module.exit_json(changed=False)
+
 
 if __name__ == '__main__':
     main()

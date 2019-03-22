@@ -1,21 +1,7 @@
-# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -28,26 +14,30 @@ from functools import partial
 from jinja2.exceptions import UndefinedError
 
 from ansible import constants as C
+from ansible import context
 from ansible.module_utils.six import iteritems, string_types, with_metaclass
 from ansible.module_utils.parsing.convert_bool import boolean
-from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable
+from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable, AnsibleAssertionError
 from ansible.module_utils._text import to_text, to_native
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.parsing.dataloader import DataLoader
+from ansible.utils.display import Display
+from ansible.utils.sentinel import Sentinel
 from ansible.utils.vars import combine_vars, isidentifier, get_unique_id
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 def _generic_g(prop_name, self):
     try:
-        return self._attributes[prop_name]
+        value = self._attributes[prop_name]
     except KeyError:
         raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, prop_name))
+
+    if value is Sentinel:
+        value = self._attr_defaults[prop_name]
+
+    return value
 
 
 def _generic_g_method(prop_name, self):
@@ -62,14 +52,18 @@ def _generic_g_method(prop_name, self):
 
 def _generic_g_parent(prop_name, self):
     try:
-        value = self._attributes[prop_name]
-        if value is None and not self._squashed and not self._finalized:
+        if self._squashed or self._finalized:
+            value = self._attributes[prop_name]
+        else:
             try:
                 value = self._get_parent_attribute(prop_name)
             except AttributeError:
-                pass
+                value = self._attributes[prop_name]
     except KeyError:
         raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, prop_name))
+
+    if value is Sentinel:
+        value = self._attr_defaults[prop_name]
 
     return value
 
@@ -121,7 +115,13 @@ class BaseMeta(type):
 
                     dst_dict[attr_name] = property(getter, setter, deleter)
                     dst_dict['_valid_attrs'][attr_name] = value
-                    dst_dict['_attributes'][attr_name] = value.default
+                    dst_dict['_attributes'][attr_name] = Sentinel
+                    dst_dict['_attr_defaults'][attr_name] = value.default
+
+                    if value.alias is not None:
+                        dst_dict[value.alias] = property(getter, setter, deleter)
+                        dst_dict['_valid_attrs'][value.alias] = value
+                        dst_dict['_alias_attrs'][value.alias] = attr_name
 
         def _process_parents(parents, dst_dict):
             '''
@@ -136,8 +136,10 @@ class BaseMeta(type):
                     _process_parents(parent.__bases__, new_dst_dict)
 
         # create some additional class attributes
-        dct['_attributes'] = dict()
-        dct['_valid_attrs'] = dict()
+        dct['_attributes'] = {}
+        dct['_attr_defaults'] = {}
+        dct['_valid_attrs'] = {}
+        dct['_alias_attrs'] = {}
 
         # now create the attributes based on the FieldAttributes
         # available, including from parent (and grandparent) objects
@@ -147,31 +149,7 @@ class BaseMeta(type):
         return super(BaseMeta, cls).__new__(cls, name, parents, dct)
 
 
-class Base(with_metaclass(BaseMeta, object)):
-
-    # connection/transport
-    _connection  = FieldAttribute(isa='string')
-    _port        = FieldAttribute(isa='int')
-    _remote_user = FieldAttribute(isa='string')
-
-    # variables
-    _vars = FieldAttribute(isa='dict', priority=100, inherit=False)
-
-    # flags and misc. settings
-    _environment         = FieldAttribute(isa='list')
-    _no_log              = FieldAttribute(isa='bool')
-    _always_run          = FieldAttribute(isa='bool')
-    _run_once            = FieldAttribute(isa='bool')
-    _ignore_errors       = FieldAttribute(isa='bool')
-    _check_mode          = FieldAttribute(isa='bool')
-    _diff                = FieldAttribute(isa='bool')
-    _any_errors_fatal     = FieldAttribute(isa='bool', default=C.ANY_ERRORS_FATAL, always_post_validate=True)
-
-    # param names which have been deprecated/removed
-    DEPRECATED_ATTRIBUTES = [
-        'sudo', 'sudo_user', 'sudo_pass', 'sudo_exe', 'sudo_flags',
-        'su', 'su_user', 'su_pass', 'su_exe', 'su_flags',
-    ]
+class FieldAttributeBase(with_metaclass(BaseMeta, object)):
 
     def __init__(self):
 
@@ -192,7 +170,11 @@ class Base(with_metaclass(BaseMeta, object)):
         # it was initialized as a class param in the meta class, so we
         # need a unique object here (all members contained within are
         # unique already).
-        self._attributes = self._attributes.copy()
+        self._attributes = self.__class__._attributes.copy()
+        self._attr_defaults = self.__class__._attr_defaults.copy()
+        for key, value in self._attr_defaults.items():
+            if callable(value):
+                self._attr_defaults[key] = value()
 
         # and init vars, avoid using defaults in field declaration as it lives across plays
         self.vars = dict()
@@ -223,7 +205,8 @@ class Base(with_metaclass(BaseMeta, object)):
     def load_data(self, ds, variable_manager=None, loader=None):
         ''' walk the input datastructure and assign any values '''
 
-        assert ds is not None, 'ds (%s) should not be None but it is.' % ds
+        if ds is None:
+            raise AnsibleAssertionError('ds (%s) should not be None but it is.' % ds)
 
         # cache the datastructure internally
         setattr(self, '_ds', ds)
@@ -248,12 +231,15 @@ class Base(with_metaclass(BaseMeta, object)):
         # so that certain fields can be loaded before others, if they are dependent.
         for name, attr in sorted(iteritems(self._valid_attrs), key=operator.itemgetter(1)):
             # copy the value over unless a _load_field method is defined
+            target_name = name
+            if name in self._alias_attrs:
+                target_name = self._alias_attrs[name]
             if name in ds:
                 method = getattr(self, '_load_%s' % name, None)
                 if method:
-                    self._attributes[name] = method(name, ds[name])
+                    self._attributes[target_name] = method(name, ds[name])
                 else:
-                    self._attributes[name] = ds[name]
+                    self._attributes[target_name] = ds[name]
 
         # run early, non-critical validation
         self.validate()
@@ -272,6 +258,12 @@ class Base(with_metaclass(BaseMeta, object)):
 
     def get_variable_manager(self):
         return self._variable_manager
+
+    def _validate_debugger(self, attr, name, value):
+        valid_values = frozenset(('always', 'on_failed', 'on_unreachable', 'on_skipped', 'never'))
+        if value and isinstance(value, string_types) and value not in valid_values:
+            raise AnsibleParserError("'%s' is not a valid value for debugger. Must be one of %s" % (value, ', '.join(valid_values)), obj=self.get_ds())
+        return value
 
     def _validate_attributes(self, ds):
         '''
@@ -292,13 +284,16 @@ class Base(with_metaclass(BaseMeta, object)):
             # walk all fields in the object
             for (name, attribute) in iteritems(self._valid_attrs):
 
+                if name in self._alias_attrs:
+                    name = self._alias_attrs[name]
+
                 # run validator only if present
                 method = getattr(self, '_validate_%s' % name, None)
                 if method:
                     method(attribute, name, getattr(self, name))
                 else:
                     # and make sure the attribute is of the type it should be
-                    value = getattr(self, name)
+                    value = self._attributes[name]
                     if value is not None:
                         if attribute.isa == 'string' and isinstance(value, (list, dict)):
                             raise AnsibleParserError(
@@ -327,7 +322,10 @@ class Base(with_metaclass(BaseMeta, object)):
         new_me = self.__class__()
 
         for name in self._valid_attrs.keys():
+            if name in self._alias_attrs:
+                continue
             new_me._attributes[name] = shallowcopy(self._attributes[name])
+            new_me._attr_defaults[name] = shallowcopy(self._attr_defaults[name])
 
         new_me._loader = self._loader
         new_me._variable_manager = self._variable_manager
@@ -352,6 +350,13 @@ class Base(with_metaclass(BaseMeta, object)):
         omit_value = templar._available_variables.get('omit')
 
         for (name, attribute) in iteritems(self._valid_attrs):
+
+            if attribute.static:
+                value = getattr(self, name)
+                if templar.is_template(value):
+                    display.warning('"%s" is not templatable, but we found: %s, '
+                                    'it will not be templated and will be used "as is".' % (name, value))
+                continue
 
             if getattr(self, name) is None:
                 if not attribute.required:
@@ -379,7 +384,10 @@ class Base(with_metaclass(BaseMeta, object)):
                 # if this evaluated to the omit value, set the value back to
                 # the default specified in the FieldAttribute and move on
                 if omit_value is not None and value == omit_value:
-                    setattr(self, name, attribute.default)
+                    if callable(attribute.default):
+                        setattr(self, name, attribute.default())
+                    else:
+                        setattr(self, name, attribute.default)
                     continue
 
                 # and make sure the attribute is of the type it should be
@@ -398,18 +406,11 @@ class Base(with_metaclass(BaseMeta, object)):
                         if isinstance(value, string_types) and '%' in value:
                             value = value.replace('%', '')
                         value = float(value)
-                    elif attribute.isa in ('list', 'barelist'):
+                    elif attribute.isa == 'list':
                         if value is None:
                             value = []
                         elif not isinstance(value, list):
-                            if isinstance(value, string_types) and attribute.isa == 'barelist':
-                                display.deprecated(
-                                    "Using comma separated values for a list has been deprecated. "
-                                    "You should instead use the correct YAML syntax for lists. "
-                                )
-                                value = value.split(',')
-                            else:
-                                value = [value]
+                            value = [value]
                         if attribute.listof is not None:
                             for item in value:
                                 if not isinstance(item, attribute.listof):
@@ -443,14 +444,15 @@ class Base(with_metaclass(BaseMeta, object)):
                 # and assign the massaged value back to the attribute field
                 setattr(self, name, value)
             except (TypeError, ValueError) as e:
+                value = getattr(self, name)
                 raise AnsibleParserError("the field '%s' has an invalid value (%s), and could not be converted to an %s."
                                          "The error was: %s" % (name, value, attribute.isa, e), obj=self.get_ds(), orig_exc=e)
             except (AnsibleUndefinedVariable, UndefinedError) as e:
                 if templar._fail_on_undefined_errors and name != 'name':
                     if name == 'args':
-                        msg= "The task includes an option with an undefined variable. The error was: %s" % (to_native(e))
+                        msg = "The task includes an option with an undefined variable. The error was: %s" % (to_native(e))
                     else:
-                        msg= "The field '%s' has an invalid value, which includes an undefined variable. The error was: %s" % (name, to_native(e))
+                        msg = "The field '%s' has an invalid value, which includes an undefined variable. The error was: %s" % (name, to_native(e))
                     raise AnsibleParserError(msg, obj=self.get_ds(), orig_exc=e)
 
         self._finalized = True
@@ -470,9 +472,9 @@ class Base(with_metaclass(BaseMeta, object)):
         try:
             if isinstance(ds, dict):
                 _validate_variable_keys(ds)
-                return ds
+                return combine_vars(self.vars, ds)
             elif isinstance(ds, list):
-                all_vars = dict()
+                all_vars = self.vars
                 for item in ds:
                     if not isinstance(item, dict):
                         raise ValueError
@@ -501,6 +503,12 @@ class Base(with_metaclass(BaseMeta, object)):
         if not isinstance(new_value, list):
             new_value = [new_value]
 
+        # Due to where _extend_value may run for some attributes
+        # it is possible to end up with Sentinel in the list of values
+        # ensure we strip them
+        value[:] = [v for v in value if v is not Sentinel]
+        new_value[:] = [v for v in new_value if v is not Sentinel]
+
         if prepend:
             combined = new_value + value
         else:
@@ -512,10 +520,10 @@ class Base(with_metaclass(BaseMeta, object)):
         '''
         Dumps all attributes to a dictionary
         '''
-        attrs = dict()
+        attrs = {}
         for (name, attribute) in iteritems(self._valid_attrs):
             attr = getattr(self, name)
-            if attribute.isa == 'class' and attr is not None and hasattr(attr, 'serialize'):
+            if attribute.isa == 'class' and hasattr(attr, 'serialize'):
                 attrs[name] = attr.serialize()
             else:
                 attrs[name] = attr
@@ -561,15 +569,54 @@ class Base(with_metaclass(BaseMeta, object)):
         and extended.
         '''
 
-        assert isinstance(data, dict), 'data (%s) should be a dict but is a %s' % (data, type(data))
+        if not isinstance(data, dict):
+            raise AnsibleAssertionError('data (%s) should be a dict but is a %s' % (data, type(data)))
 
         for (name, attribute) in iteritems(self._valid_attrs):
             if name in data:
                 setattr(self, name, data[name])
             else:
-                setattr(self, name, attribute.default)
+                if callable(attribute.default):
+                    setattr(self, name, attribute.default())
+                else:
+                    setattr(self, name, attribute.default)
 
         # restore the UUID field
         setattr(self, '_uuid', data.get('uuid'))
         self._finalized = data.get('finalized', False)
         self._squashed = data.get('squashed', False)
+
+
+class Base(FieldAttributeBase):
+
+    _name = FieldAttribute(isa='string', default='', always_post_validate=True, inherit=False)
+
+    # connection/transport
+    _connection = FieldAttribute(isa='string', default=context.cliargs_deferred_get('connection'))
+    _port = FieldAttribute(isa='int')
+    _remote_user = FieldAttribute(isa='string', default=context.cliargs_deferred_get('remote_user'))
+
+    # variables
+    _vars = FieldAttribute(isa='dict', priority=100, inherit=False)
+
+    # module default params
+    _module_defaults = FieldAttribute(isa='list', extend=True, prepend=True)
+
+    # flags and misc. settings
+    _environment = FieldAttribute(isa='list', extend=True, prepend=True)
+    _no_log = FieldAttribute(isa='bool')
+    _run_once = FieldAttribute(isa='bool')
+    _ignore_errors = FieldAttribute(isa='bool')
+    _ignore_unreachable = FieldAttribute(isa='bool')
+    _check_mode = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('check'))
+    _diff = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('diff'))
+    _any_errors_fatal = FieldAttribute(isa='bool', default=C.ANY_ERRORS_FATAL)
+
+    # explicitly invoke a debugger on tasks
+    _debugger = FieldAttribute(isa='string')
+
+    # param names which have been deprecated/removed
+    DEPRECATED_ATTRIBUTES = [
+        'sudo', 'sudo_user', 'sudo_pass', 'sudo_exe', 'sudo_flags',
+        'su', 'su_user', 'su_pass', 'su_exe', 'su_flags',
+    ]

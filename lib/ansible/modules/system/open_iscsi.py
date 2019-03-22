@@ -1,24 +1,23 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2013, Serge van Ginderachter <serge@vanginderachter.be>
+# Copyright: (c) 2013, Serge van Ginderachter <serge@vanginderachter.be>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: open_iscsi
-author: "Serge van Ginderachter (@srvg)"
+author:
+- Serge van Ginderachter (@srvg)
 version_added: "1.4"
-short_description: Manage iscsi targets with open-iscsi
+short_description: Manage iSCSI targets with Open-iSCSI
 description:
     - Discover targets on given portal, (dis)connect targets, mark targets to
       manually or auto start, return device nodes of connected targets.
@@ -26,85 +25,80 @@ requirements:
     - open_iscsi library and tools (iscsiadm)
 options:
     portal:
-        required: false
-        aliases: [ip]
         description:
-        - the ip address of the iscsi target
+        - The IP address of the iSCSI target.
+        type: str
+        aliases: [ ip ]
     port:
-        required: false
+        description:
+        - The port on which the iSCSI target process listens.
+        type: str
         default: 3260
-        description:
-        - the port on which the iscsi target process listens
     target:
-        required: false
-        aliases: [name, targetname]
         description:
-        - the iscsi target name
+        - The iSCSI target name.
+        type: str
+        aliases: [ name, targetname ]
     login:
-        required: false
-        choices: [true, false]
         description:
-        - whether the target node should be connected
+        - Whether the target node should be connected.
+        type: bool
+        aliases: [ state ]
     node_auth:
-        required: false
+        description:
+        - The value for C(discovery.sendtargets.auth.authmethod).
+        type: str
         default: CHAP
-        description:
-        - discovery.sendtargets.auth.authmethod
     node_user:
-        required: false
         description:
-        - discovery.sendtargets.auth.username
+        - The value for C(discovery.sendtargets.auth.username).
+        type: str
     node_pass:
-        required: false
         description:
-        - discovery.sendtargets.auth.password
+        - The value for C(discovery.sendtargets.auth.password).
+        type: str
     auto_node_startup:
-        aliases: [automatic]
-        required: false
-        choices: [true, false]
         description:
-        - whether the target node should be automatically connected at startup
+        - Whether the target node should be automatically connected at startup.
+        type: bool
+        aliases: [ automatic ]
     discover:
-        required: false
-        choices: [true, false]
         description:
-        - whether the list of target nodes on the portal should be
-          (re)discovered and added to the persistent iscsi database.
-          Keep in mind that iscsiadm discovery resets configurtion, like node.startup
-          to manual, hence combined with auto_node_startup=yes will always return
+        - Whether the list of target nodes on the portal should be
+          (re)discovered and added to the persistent iSCSI database.
+        - Keep in mind that C(iscsiadm) discovery resets configuration, like C(node.startup)
+          to manual, hence combined with C(auto_node_startup=yes) will always return
           a changed state.
+        type: bool
     show_nodes:
-        required: false
-        choices: [true, false]
         description:
-        - whether the list of nodes in the persistent iscsi database should be
-          returned by the module
+        - Whether the list of nodes in the persistent iSCSI database should be returned by the module.
+        type: bool
 '''
 
-EXAMPLES = '''
-# perform a discovery on 10.1.2.3 and show available target nodes
-- open_iscsi:
+EXAMPLES = r'''
+- name: Perform a discovery on 10.1.2.3 and show available target nodes
+  open_iscsi:
     show_nodes: yes
     discover: yes
     portal: 10.1.2.3
 
-# discover targets on portal and login to the one available
-# (only works if exactly one target is exported to the initiator)
-- open_iscsi:
+# NOTE: Only works if exactly one target is exported to the initiator
+- name: Discover targets on portal and login to the one available
+  open_iscsi:
     portal: '{{ iscsi_target }}'
     login: yes
     discover: yes
 
-# description: connect to the named target, after updating the local
-# persistent database (cache)
-- open_iscsi:
+- name: Connect to the named target, after updating the local persistent database (cache)
+  open_iscsi:
     login: yes
-    target: 'iqn.1986-03.com.sun:02:f8c1f9e0-c3ec-ec84-c9c9-8bfb0cd5de3d'
+    target: iqn.1986-03.com.sun:02:f8c1f9e0-c3ec-ec84-c9c9-8bfb0cd5de3d
 
-# description: discconnect from the cached named target
-- open_iscsi:
+- name: Discconnect from the cached named target
+  open_iscsi:
     login: no
-    target: 'iqn.1986-03.com.sun:02:f8c1f9e0-c3ec-ec84-c9c9-8bfb0cd5de3d'
+    target: iqn.1986-03.com.sun:02:f8c1f9e0-c3ec-ec84-c9c9-8bfb0cd5de3d
 '''
 
 import glob
@@ -113,19 +107,16 @@ import time
 
 from ansible.module_utils.basic import AnsibleModule
 
-
 ISCSIADM = 'iscsiadm'
 
 
 def compare_nodelists(l1, l2):
-
     l1.sort()
     l2.sort()
     return l1 == l2
 
 
 def iscsi_get_cached_nodes(module, portal=None):
-
     cmd = '%s --mode node' % iscsiadm_cmd
     (rc, out, err) = module.run_command(cmd)
 
@@ -156,7 +147,6 @@ def iscsi_get_cached_nodes(module, portal=None):
 
 
 def iscsi_discover(module, portal, port):
-
     cmd = '%s --mode discovery --type sendtargets --portal %s:%s' % (iscsiadm_cmd, portal, port)
     (rc, out, err) = module.run_command(cmd)
 
@@ -165,7 +155,6 @@ def iscsi_discover(module, portal, port):
 
 
 def target_loggedon(module, target):
-
     cmd = '%s --mode session' % iscsiadm_cmd
     (rc, out, err) = module.run_command(cmd)
 
@@ -177,8 +166,7 @@ def target_loggedon(module, target):
         module.fail_json(cmd=cmd, rc=rc, msg=err)
 
 
-def target_login(module, target):
-
+def target_login(module, target, portal=None, port=None):
     node_auth = module.params['node_auth']
     node_user = module.params['node_user']
     node_pass = module.params['node_pass']
@@ -194,6 +182,9 @@ def target_login(module, target):
                 module.fail_json(cmd=cmd, rc=rc, msg=err)
 
     cmd = '%s --mode node --targetname %s --login' % (iscsiadm_cmd, target)
+    if portal is not None and port is not None:
+        cmd += ' --portal %s:%s' % (portal, port)
+
     (rc, out, err) = module.run_command(cmd)
 
     if rc > 0:
@@ -201,7 +192,6 @@ def target_login(module, target):
 
 
 def target_logout(module, target):
-
     cmd = '%s --mode node --targetname %s --logout' % (iscsiadm_cmd, target)
     (rc, out, err) = module.run_command(cmd)
 
@@ -210,7 +200,6 @@ def target_logout(module, target):
 
 
 def target_device_node(module, target):
-
     # if anyone know a better way to find out which devicenodes get created for
     # a given target...
 
@@ -227,7 +216,6 @@ def target_device_node(module, target):
 
 
 def target_isauto(module, target):
-
     cmd = '%s --mode node --targetname %s' % (iscsiadm_cmd, target)
     (rc, out, err) = module.run_command(cmd)
 
@@ -242,7 +230,6 @@ def target_isauto(module, target):
 
 
 def target_setauto(module, target):
-
     cmd = '%s --mode node --targetname %s --op=update --name node.startup --value automatic' % (iscsiadm_cmd, target)
     (rc, out, err) = module.run_command(cmd)
 
@@ -251,7 +238,6 @@ def target_setauto(module, target):
 
 
 def target_setmanual(module, target):
-
     cmd = '%s --mode node --targetname %s --op=update --name node.startup --value manual' % (iscsiadm_cmd, target)
     (rc, out, err) = module.run_command(cmd)
 
@@ -260,29 +246,28 @@ def target_setmanual(module, target):
 
 
 def main():
-
     # load ansible module object
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
 
             # target
-            portal = dict(required=False, aliases=['ip']),
-            port = dict(required=False, default=3260),
-            target = dict(required=False, aliases=['name', 'targetname']),
-            node_auth = dict(required=False, default='CHAP'),
-            node_user = dict(required=False),
-            node_pass = dict(required=False, no_log=True),
+            portal=dict(type='str', aliases=['ip']),
+            port=dict(type='str', default=3260),
+            target=dict(type='str', aliases=['name', 'targetname']),
+            node_auth=dict(type='str', default='CHAP'),
+            node_user=dict(type='str'),
+            node_pass=dict(type='str', no_log=True),
 
             # actions
-            login = dict(type='bool', aliases=['state']),
-            auto_node_startup = dict(type='bool', aliases=['automatic']),
-            discover = dict(type='bool', default=False),
-            show_nodes = dict(type='bool', default=False)
+            login=dict(type='bool', aliases=['state']),
+            auto_node_startup=dict(type='bool', aliases=['automatic']),
+            discover=dict(type='bool', default=False),
+            show_nodes=dict(type='bool', default=False),
         ),
 
         required_together=[['discover_user', 'discover_pass'],
                            ['node_user', 'node_pass']],
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     global iscsiadm_cmd
@@ -307,7 +292,7 @@ def main():
 
     if discover:
         if portal is None:
-            module.fail_json(msg = "Need to specify at least the portal (ip) to discover")
+            module.fail_json(msg="Need to specify at least the portal (ip) to discover")
         elif check:
             nodes = cached
         else:
@@ -322,7 +307,7 @@ def main():
     if login is not None or automatic is not None:
         if target is None:
             if len(nodes) > 1:
-                module.fail_json(msg = "Need to specify a target")
+                module.fail_json(msg="Need to specify a target")
             else:
                 target = nodes[0]
         else:
@@ -333,7 +318,7 @@ def main():
                     check_target = True
                     break
             if not check_target:
-                module.fail_json(msg = "Specified target not found")
+                module.fail_json(msg="Specified target not found")
 
     if show_nodes:
         result['nodes'] = nodes
@@ -346,7 +331,7 @@ def main():
                 result['devicenodes'] = target_device_node(module, target)
         elif not check:
             if login:
-                target_login(module, target)
+                target_login(module, target, portal, port)
                 # give udev some time
                 time.sleep(1)
                 result['devicenodes'] = target_device_node(module, target)

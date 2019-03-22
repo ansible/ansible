@@ -16,6 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+- name: install rsync
+  package:
+    name: rsync
+  when: ansible_distribution != "MacOSX"
+
 - name: cleanup old files
   shell: rm -rf {{output_dir}}/*
 
@@ -173,6 +178,14 @@
         - "sync_result.results[0].msg.endswith('+ foo.txt\n')"
         - "sync_result.results[1].msg.endswith('+ bar.txt\n')"
 
+- name: Cleanup
+  file:
+    state: absent
+    path: "{{output_dir}}/{{item}}.result"
+  with_items:
+    - foo.txt
+    - bar.txt
+
 - name: synchronize files using rsync_path (issue#7182)
   synchronize: src={{output_dir}}/foo.txt dest={{output_dir}}/foo.rsync_path rsync_path="sudo rsync"
   register: sync_result
@@ -187,3 +200,74 @@
         - "'msg' in sync_result"
         - "sync_result.msg.startswith('>f+')"
         - "sync_result.msg.endswith('+ foo.txt\n')"
+
+- name: Cleanup
+  file:
+    state: absent
+    path: "{{output_dir}}/{{item}}"
+  with_items:
+    - foo.rsync_path
+
+- name: add subdirectories for link-dest test
+  file:
+    path: "{{output_dir}}/{{item}}/"
+    state: directory
+    mode: 0755
+  with_items:
+    - directory_a
+    - directory_b
+
+- name: copy foo.txt into the first directory
+  synchronize:
+    src: "{{output_dir}}/foo.txt"
+    dest: "{{output_dir}}/{{item}}/foo.txt"
+  with_items:
+    - directory_a
+
+- name: synchronize files using link_dest
+  synchronize:
+    src: "{{output_dir}}/directory_a/foo.txt"
+    dest: "{{output_dir}}/directory_b/foo.txt"
+    link_dest:
+      - "{{output_dir}}/directory_a"
+  register: sync_result
+
+- name: get stat information for directory_a
+  stat:
+    path: "{{ output_dir }}/directory_a/foo.txt"
+  register: stat_result_a
+
+- name: get stat information for directory_b
+  stat:
+    path: "{{ output_dir }}/directory_b/foo.txt"
+  register: stat_result_b
+
+- assert:
+    that:
+        - "'changed' in sync_result"
+        - "sync_result.changed == true"
+        - "stat_result_a.stat.inode == stat_result_b.stat.inode"
+
+- name: synchronize files using link_dest that would be recursive
+  synchronize:
+    src: "{{output_dir}}/foo.txt"
+    dest: "{{output_dir}}/foo.result"
+    link_dest:
+      - "{{output_dir}}"
+  register: sync_result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - sync_result is not changed
+      - sync_result is failed
+
+- name: Cleanup
+  file:
+    state: absent
+    path: "{{output_dir}}/{{item}}"
+  with_items:
+    - "directory_b/foo.txt"
+    - "directory_a/foo.txt"
+    - "directory_a"
+    - "directory_b"

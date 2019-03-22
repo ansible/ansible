@@ -1,8 +1,9 @@
 #!/usr/bin/python
-#
-# (c) Quentin Stafford-Fraser and Andy Baker 2015
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2015, Quentin Stafford-Fraser and Andy Baker
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-#
+
 # Create webfaction mailbox using Ansible and the Webfaction API
 
 from __future__ import absolute_import, division, print_function
@@ -19,7 +20,7 @@ DOCUMENTATION = '''
 module: webfaction_mailbox
 short_description: Add or remove mailboxes on Webfaction
 description:
-    - Add or remove mailboxes on a Webfaction account. Further documentation at http://github.com/quentinsf/ansible-webfaction.
+    - Add or remove mailboxes on a Webfaction account. Further documentation at https://github.com/quentinsf/ansible-webfaction.
 author: Quentin Stafford-Fraser (@quentinsf)
 version_added: "2.0"
 notes:
@@ -27,7 +28,7 @@ notes:
       You can run playbooks that use this on a local machine, or on a Webfaction host, or elsewhere, since the scripts use the remote webfaction API.
       The location is not important. However, running them on multiple hosts I(simultaneously) is best avoided. If you don't specify I(localhost) as
       your host, you may want to add C(serial: 1) to the plays.
-    - See `the webfaction API <http://docs.webfaction.com/xmlrpc-api/>`_ for more info.
+    - See `the webfaction API <https://docs.webfaction.com/xmlrpc-api/>`_ for more info.
 options:
 
     mailbox_name:
@@ -39,12 +40,10 @@ options:
         description:
             - The password for the mailbox
         required: true
-        default: null
 
     state:
         description:
             - Whether the mailbox should exist
-        required: false
         choices: ['present', 'absent']
         default: "present"
 
@@ -69,12 +68,12 @@ EXAMPLES = '''
       login_password={{webfaction_passwd}}
 '''
 
-import xmlrpclib
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves import xmlrpc_client
 
 
-webfaction = xmlrpclib.ServerProxy('https://api.webfaction.com/')
+webfaction = xmlrpc_client.ServerProxy('https://api.webfaction.com/')
 
 
 def main():
@@ -128,7 +127,7 @@ def main():
             result.update(webfaction.delete_mailbox(session_id, mailbox_name))
 
     else:
-        module.fail_json(msg="Unknown state specified: {}".format(site_state))
+        module.fail_json(msg="Unknown state specified: {0}".format(site_state))
 
     module.exit_json(changed=True, result=result)
 

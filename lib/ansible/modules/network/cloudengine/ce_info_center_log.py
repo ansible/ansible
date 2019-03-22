@@ -28,58 +28,45 @@ short_description: Manages information center log configuration on HUAWEI CloudE
 description:
     - Setting the Timestamp Format of Logs.
       Configuring the Device to Output Logs to the Log Buffer.
-author: QijunPan (@CloudEngine-Ansible)
+author: QijunPan (@QijunPan)
 options:
     log_time_stamp:
         description:
             - Sets the timestamp format of logs.
-        required: false
-        default: null
         choices: ['date_boot', 'date_second', 'date_tenthsecond', 'date_millisecond',
                   'shortdate_second', 'shortdate_tenthsecond', 'shortdate_millisecond',
                   'formatdate_second', 'formatdate_tenthsecond', 'formatdate_millisecond']
     log_buff_enable:
         description:
             - Enables the Switch to send logs to the log buffer.
-        required: false
         default: no_use
         choices: ['no_use','true', 'false']
     log_buff_size:
         description:
             - Specifies the maximum number of logs in the log buffer.
               The value is an integer that ranges from 0 to 10240. If logbuffer-size is 0, logs are not displayed.
-        required: false
-        default: null
     module_name:
         description:
             - Specifies the name of a module.
               The value is a module name in registration logs.
-        required: false
-        default: null
     channel_id:
         description:
             - Specifies a channel ID.
               The value is an integer ranging from 0 to 9.
-        required: false
-        default: null
     log_enable:
         description:
             - Indicates whether log filtering is enabled.
-        required: false
         default: no_use
         choices: ['no_use','true', 'false']
     log_level:
         description:
             - Specifies a log severity.
-        required: false
-        default: null
         choices: ['emergencies', 'alert', 'critical', 'error',
                   'warning', 'notification', 'informational', 'debugging']
     state:
         description:
             - Determines whether the config should be present or not
               on the device.
-        required: false
         default: present
         choices: ['present', 'absent']
 """
@@ -148,13 +135,13 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_nc_config, set_nc_config, ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec
 
 
 CE_NC_GET_LOG = """

@@ -1,3 +1,7 @@
+:orphan:
+
+.. _testing_integration:
+
 *****************
 Integration tests
 *****************
@@ -21,15 +25,32 @@ It provides tab completion in ``bash`` for the ``ansible-test`` test runner.
 Configuration
 =============
 
+ansible-test command
+--------------------
+
+The example below assumes ``bin/`` is in your ``$PATH``. An easy way to achieve that
+is to initialize your environment with the ``env-setup`` command::
+
+    source hacking/env-setup
+    ansible-test --help
+
+You can also call ``ansible-test`` with the full path::
+
+    bin/ansible-test --help
+
+integration_config.yml
+----------------------
+
 Making your own version of ``integration_config.yml`` can allow for setting some
 tunable parameters to help run the tests better in your environment.  Some
-tests (e.g. cloud) will only run when access credentials are provided.  For
-more information about supported credentials, refer to ``credentials.template``.
+tests (e.g. cloud) will only run when access credentials are provided.  For more
+information about supported credentials, refer to the various ``cloud-config-*.template``
+files in the ``test/integration/`` directory.
 
 Prerequisites
 =============
 
-The tests will assume things like hg, svn, and git are installed and in path.  Some tests
+Some tests assume things like hg, svn, and git are installed, and in path.  Some tests
 (such as those for Amazon Web Services) need separate definitions, which will be covered
 later in this document.
 
@@ -43,7 +64,7 @@ outside of those test subdirectories.  They will also not reconfigure or bounce 
 
 .. note:: Running integration tests within Docker
 
-   To protect your system from any potential changes caused by integration tests, and to ensure the a sensible set of dependencies are available we recommend that you always run integration tests with the ``--docker`` option. See the `list of supported docker images <https://github.com/ansible/ansible/blob/devel/test/runner/completion/docker.txt>`_ for options.
+   To protect your system from any potential changes caused by integration tests, and to ensure a sensible set of dependencies are available we recommend that you always run integration tests with the ``--docker`` option. See the `list of supported docker images <https://github.com/ansible/ansible/blob/devel/test/runner/completion/docker.txt>`_ for options.
 
 .. note:: Avoiding pulling new Docker images
 
@@ -51,15 +72,19 @@ outside of those test subdirectories.  They will also not reconfigure or bounce 
 
 Run as follows for all POSIX platform tests executed by our CI system::
 
-    test/runner/ansible-test integration --docker fedora25 -v posix/ci/
+    ansible-test integration --docker fedora29 -v shippable/
 
-You can select specific tests as well, such as for individual modules::
+You can target a specific tests as well, such as for individual modules::
 
-    test/runner/ansible-test integration -v ping
+    ansible-test integration -v ping
 
-By installing ``argcomplete`` you can obtain a full list by doing::
+Use the following command to list all the available targets::
 
-    test/runner/ansible-test integration <tab><tab>
+    ansible-test integration --list-targets
+
+.. note:: Bash users
+
+   If you use ``bash`` with ``argcomplete``, obtain a full list by doing: ``ansible-test integration <tab><tab>``
 
 Destructive Tests
 =================
@@ -67,7 +92,7 @@ Destructive Tests
 These tests are allowed to install and remove some trivial packages.  You will likely want to devote these
 to a virtual environment, such as Docker.  They won't reformat your filesystem::
 
-    test/runner/ansible-test integration --docker fedora25 -v destructive/
+    ansible-test integration --docker fedora29 -v destructive/
 
 Windows Tests
 =============
@@ -90,7 +115,7 @@ Define Windows inventory::
 
 Run the Windows tests executed by our CI system::
 
-    test/runner/ansible-test windows-integration -v windows/ci/
+    ansible-test windows-integration -v shippable/
 
 Tests in Docker containers
 ==========================
@@ -109,12 +134,12 @@ Running Integration Tests
 
 To run all CI integration test targets for POSIX platforms in a Ubuntu 16.04 container::
 
-    test/runner/ansible-test integration -v posix/ci/ --docker
+    ansible-test integration --docker ubuntu1604 -v shippable/
 
 You can also run specific tests or select a different Linux distribution.
 For example, to run tests for the ``ping`` module on a Ubuntu 14.04 container::
 
-    test/runner/ansible-test integration -v ping --docker ubuntu1404
+    ansible-test integration -v ping --docker ubuntu1404
 
 Container Images
 ----------------
@@ -126,11 +151,8 @@ Most container images are for testing with Python 2:
 
   - centos6
   - centos7
-  - fedora24
-  - fedora25
-  - opensuse42.1
-  - opensuse42.2
-  - ubuntu1204
+  - fedora28
+  - opensuse15py2
   - ubuntu1404
   - ubuntu1604
 
@@ -139,13 +161,17 @@ Python 3
 
 To test with Python 3 use the following images:
 
+  - fedora29
+  - opensuse15
   - ubuntu1604py3
+  - ubuntu1804
+
 
 Legacy Cloud Tests
 ==================
 
 Some of the cloud tests run as normal integration tests, and others run as legacy tests; see the
-:doc:`testing_integration_legacy` page for more information.
+:ref:`testing_integration_legacy` page for more information.
 
 
 Other configuration for Cloud Tests
@@ -161,11 +187,17 @@ IAM policies for AWS
 
 Ansible needs fairly wide ranging powers to run the tests in an AWS account.  This rights can be provided to a dedicated user. These need to be configured before running the test.
 
-testing-iam-policy.json.j2
---------------------------
+testing-policies
+----------------
 
-The testing-iam-policy.json.j2 file contains a policy which can be given to the user
-running the tests to minimize the rights of that user.  Please note that while this policy does limit the user to one region, this does not fully restrict the user (primarily due to the limitations of the Amazon ARN notation). The user will still have wide privileges for viewing account definitions, and will also able to manage some resources that are not related to testing (for example, AWS lambdas with different names).  Tests should not be run in a primary production account in any case.
+``hacking/aws_config/testing_policies`` contains a set of policies that are required for all existing AWS module tests.
+The ``hacking/aws_config/setup_iam.yml`` playbook can be used to add all of those policies to an IAM group (using
+``-e iam_group=GROUP_NAME``. Once the group is created, you'll need to create a user and make the user a member of the
+group. The policies are designed to minimize the rights of that user.  Please note that while this policy does limit
+the user to one region, this does not fully restrict the user (primarily due to the limitations of the Amazon ARN
+notation). The user will still have wide privileges for viewing account definitions, and will also able to manage
+some resources that are not related to testing (for example, AWS lambdas with different names).  Tests should not
+be run in a primary production account in any case.
 
 Other Definitions required
 --------------------------
@@ -178,93 +210,64 @@ privileges.
 Network Tests
 =============
 
-This page details the specifics around testing Ansible Networking modules.
-
-
-.. important:: Network testing requirements for Ansible 2.4
-
-   Starting with Ansible 2.4, all network modules MUST include corresponding unit tests to defend functionality.
-   The unit tests must be added in the same PR that includes the new network module, or extends functionality.
-   Integration tests, although not required, are a welcome addition.
-   How to do this is explained in the rest of this document.
-
-
-Network integration tests can be ran by doing::
-
-    cd test/integration
-    ANSIBLE_ROLES_PATH=targets ansible-playbook network-all.yaml
-
-
-.. note::
-
-  * To run the network tests you will need a number of test machines and suitably configured inventory file. A sample is included in ``test/integration/inventory.network``
-  * As with the rest of the integration tests, they can be found grouped by module in ``test/integration/targets/MODULENAME/``
-
-To filter a set of test cases set ``limit_to`` to the name of the group, generally this is the name of the module::
-
-   ANSIBLE_ROLES_PATH=targets ansible-playbook -i inventory.network network-all.yaml -e "limit_to=eos_command"
-
-
-To filter a singular test case set the tags options to eapi or cli, set limit_to to the test group,
-and test_cases to the name of the test::
-
-   ANSIBLE_ROLES_PATH=targets ansible-playbook -i inventory.network network-all.yaml --tags="cli" -e "limit_to=eos_command test_case=notequal"
-
-
+Starting with Ansible 2.4, all network modules MUST include unit tests that cover all functionality. You must add unit tests for each new network module and for each added feature. Please submit the unit tests and the code in a single PR. Integration tests are also strongly encouraged.
 
 Writing network integration tests
 ---------------------------------
 
-Test cases are added to roles based on the module being testing. Test cases
-should include both cli and API test cases. Cli test cases should be
-added to ``test/integration/targets/modulename/tests/cli`` and API tests should be added to
-``test/integration/targets/modulename/tests/eapi``, or ``nxapi``.
-
-In addition to positive testing, negative tests are required to ensure user friendly warnings & errors are generated, rather than backtraces, for example:
-
-.. code-block: yaml
-
-   - name: test invalid subset (foobar)
-     eos_facts:
-       provider: "{{ cli }}"
-       gather_subset:
-         - "foobar"
-     register: result
-     ignore_errors: true
-
-   - assert:
-       that:
-         # Failures shouldn't return changes
-         - "result.changed == false"
-         # It's a failure
-         - "result.failed == true"
-         # Sensible Failure message
-         - "'Subset must be one of' in result.msg"
+For guidance on writing network test see the `adding tests for Network modules guide <https://github.com/ansible/community/blob/master/group-network/network_test.rst>`_.
 
 
-Conventions
-```````````
+Running network integration tests locally
+-----------------------------------------
 
-- Each test case should generally follow the pattern:
+Ansible uses Shippable to run an integration test suite on every PR, including new tests introduced by that PR. To find and fix problems in network modules, run the network integration test locally before you submit a PR.
 
-  setup —> test —> assert —> test again (idempotent) —> assert —> teardown (if needed) -> done
+To run the network integration tests, use a command in the form::
 
-  This keeps test playbooks from becoming monolithic and difficult to
-  troubleshoot.
+    ansible-test network-integration --inventory /path/to/inventory tests_to_run
 
-- Include a name for each task that is not an assertion. (It's OK to add names
-  to assertions too. But to make it easy to identify the broken task within a failed
-  test, at least provide a helpful name for each task.)
+First, define a network inventory file::
 
-- Files containing test cases must end in `.yaml`
+    cd test/integration
+    cp inventory.network.template inventory.networking
+    ${EDITOR:-vi} inventory.networking
+    # Add in machines for the platform(s) you wish to test
+
+To run all Network tests for a particular platform::
+
+    ansible-test network-integration --inventory  /path/to/ansible/test/integration/inventory.networking vyos_.*
+
+This example will run against all vyos modules. Note that ``vyos_.*`` is a regex match, not a bash wildcard - include the `.` if you modify this example.
 
 
-Adding a new Network Platform
-`````````````````````````````
+To run integration tests for a specific module::
 
-A top level playbook is required such as ``ansible/test/integration/eos.yaml`` which needs to be references by ``ansible/test/integration/network-all.yaml``
+    ansible-test network-integration --inventory  /path/to/ansible/test/integration/inventory.networking vyos_vlan
+
+To run a single test case on a specific module::
+
+    # Only run vyos_vlan/tests/cli/basic.yaml
+    ansible-test network-integration --inventory  /path/to/ansible/test/integration/inventory.networking vyos_vlan --testcase basic
+
+To run integration tests for a specific transport::
+
+    # Only run nxapi test
+    ansible-test network-integration --inventory  /path/to/ansible/test/integration/inventory.networking  --tags="nxapi" nxos_.*
+
+    # Skip any cli tests
+    ansible-test network-integration --inventory  /path/to/ansible/test/integration/inventory.networking  --skip-tags="cli" nxos_.*
+
+See `test/integration/targets/nxos_bgp/tasks/main.yaml <https://github.com/ansible/ansible/blob/devel/test/integration/targets/nxos_bgp/tasks/main.yaml>`_ for how this is implemented in the tests.
+
+For more options::
+
+    ansible-test network-integration --help
+
+If you need additional help or feedback, reach out in ``#ansible-network`` on Freenode.
+
 
 Where to find out more
 ======================
 
-If you'd like to know more about the plans for improving testing Ansible then why not join the `Testing Working Group <https://github.com/ansible/community/blob/master/meetings/README.md>`_.
+If you'd like to know more about the plans for improving testing Ansible, join the `Testing Working Group <https://github.com/ansible/community/blob/master/meetings/README.md>`_.

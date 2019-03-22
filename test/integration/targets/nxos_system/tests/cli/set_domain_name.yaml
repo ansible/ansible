@@ -5,12 +5,10 @@
   nxos_config:
     lines: no ip domain-name eng.ansible.com
     match: none
-    provider: "{{ cli }}"
 
 - name: configure domain_name
   nxos_system:
     domain_name: eng.ansible.com
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -20,7 +18,6 @@
 - name: verify domain_name
   nxos_system:
     domain_name: eng.ansible.com
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -31,6 +28,5 @@
   nxos_config:
     lines: no ip domain-name eng.ansible.com
     match: none
-    provider: "{{ cli }}"
 
 - debug: msg="END cli/set_domain_name.yaml"

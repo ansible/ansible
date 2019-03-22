@@ -1,0 +1,79 @@
+# Test code for the vmware_cluster_facts module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
+- name: kill vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/killall
+
+- name: start vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/spawn?cluster=2
+  register: vcsim_instance
+
+- debug:
+    var: vcsim_instance
+
+- name: Wait for vcsim server to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
+
+- name: get a list of Cluster from vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/govc_find?filter=CCR
+  register: clusters
+
+- name: get a cluster
+  set_fact:
+    ccr1: "{{ clusters.json[0] | basename }}"
+
+- debug: var=ccr1
+
+- name: get a list of datacenter
+  uri:
+    url: http://{{ vcsim }}:5000/govc_find?filter=DC
+  register: datacenters
+
+- name: get a datacenter
+  set_fact:
+    dc1: "{{ datacenters.json[0] | basename }}"
+
+- debug: var=dc1
+
+- name: gather facts about all clusters in given datacenter
+  vmware_cluster_facts:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance.json.username }}"
+    password: "{{ vcsim_instance.json.password }}"
+    datacenter: "{{ dc1 }}"
+    validate_certs: False
+  register: all_cluster_result
+
+- name: ensure facts are gathered for all cluster
+  assert:
+    that:
+        - all_cluster_result.clusters
+        - not all_cluster_result.changed
+
+- name: gather facts about given cluster
+  vmware_cluster_facts:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance.json.username }}"
+    password: "{{ vcsim_instance.json.password }}"
+    cluster_name: "{{ ccr1 }}"
+    validate_certs: False
+  register: cluster_result
+
+- name: ensure facts are gathered for the given cluster
+  assert:
+    that:
+        - cluster_result.clusters
+        - not cluster_result.changed

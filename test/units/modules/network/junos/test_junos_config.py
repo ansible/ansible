@@ -20,9 +20,11 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.junos import junos_config
-from .junos_module import TestJunosModule, load_fixture, set_module_args
+from units.modules.utils import set_module_args
+from ansible.module_utils._text import to_text
+from .junos_module import TestJunosModule, load_fixture
 
 
 class TestJunosConfigModule(TestJunosModule):
@@ -30,16 +32,21 @@ class TestJunosConfigModule(TestJunosModule):
     module = junos_config
 
     def setUp(self):
+        super(TestJunosConfigModule, self).setUp()
+
         self.mock_get_config = patch('ansible.modules.network.junos.junos_config.get_configuration')
         self.get_config = self.mock_get_config.start()
 
         self.mock_load_config = patch('ansible.modules.network.junos.junos_config.load_config')
         self.load_config = self.mock_load_config.start()
 
-        self.mock_lock_configuration = patch('ansible.module_utils.junos.lock_configuration')
+        self.mock_load_configuration = patch('ansible.modules.network.junos.junos_config.load_configuration')
+        self.load_configuration = self.mock_load_configuration.start()
+
+        self.mock_lock_configuration = patch('ansible.module_utils.network.junos.junos.lock_configuration')
         self.lock_configuration = self.mock_lock_configuration.start()
 
-        self.mock_unlock_configuration = patch('ansible.module_utils.junos.unlock_configuration')
+        self.mock_unlock_configuration = patch('ansible.module_utils.network.junos.junos.unlock_configuration')
         self.unlock_configuration = self.mock_unlock_configuration.start()
 
         self.mock_commit_configuration = patch('ansible.modules.network.junos.junos_config.commit_configuration')
@@ -48,17 +55,31 @@ class TestJunosConfigModule(TestJunosModule):
         self.mock_get_diff = patch('ansible.modules.network.junos.junos_config.get_diff')
         self.get_diff = self.mock_get_diff.start()
 
-        self.mock_send_request = patch('ansible.modules.network.junos.junos_config.send_request')
-        self.send_request = self.mock_send_request.start()
+        self.mock_conn = patch('ansible.module_utils.connection.Connection')
+        self.conn = self.mock_conn.start()
+
+        self.mock_netconf = patch('ansible.module_utils.network.junos.junos.NetconfConnection')
+        self.netconf_conn = self.mock_netconf.start()
+
+        self.mock_exec_rpc = patch('ansible.modules.network.junos.junos_config.exec_rpc')
+        self.exec_rpc = self.mock_exec_rpc.start()
+
+        self.mock_netconf_rpc = patch('ansible.module_utils.network.common.netconf.NetconfConnection')
+        self.netconf_rpc = self.mock_netconf_rpc.start()
 
     def tearDown(self):
+        super(TestJunosConfigModule, self).tearDown()
         self.mock_get_config.stop()
         self.mock_load_config.stop()
         self.mock_lock_configuration.stop()
         self.mock_unlock_configuration.stop()
         self.mock_commit_configuration.stop()
         self.mock_get_diff.stop()
-        self.mock_send_request.stop()
+        self.load_configuration.stop()
+        self.mock_conn.stop()
+        self.mock_netconf.stop()
+        self.mock_exec_rpc.stop()
+        self.mock_netconf_rpc.stop()
 
     def load_fixtures(self, commands=None, format='text', changed=False):
         self.get_config.return_value = load_fixture('get_configuration_rpc_reply.txt')
@@ -98,12 +119,17 @@ class TestJunosConfigModule(TestJunosModule):
         set_module_args(dict(src=src, confirm=40))
         self.execute_module(changed=True)
         args, kwargs = self.commit_configuration.call_args
-        self.assertEqual(kwargs['confirm_timeout'], 40)
+        self.assertEqual(kwargs['confirm_timeout'], to_text(40))
 
     def test_junos_config_rollback(self):
-        set_module_args(dict(rollback=10))
+        rollback = 10
+        set_module_args(dict(rollback=rollback))
         self.execute_module(changed=True)
         self.assertEqual(self.get_diff.call_count, 1)
+        self.assertEqual(self.load_configuration.call_count, 1)
+        self.assertEqual(self.commit_configuration.call_count, 1)
+        load_configuration_args = self.load_configuration.call_args
+        self.assertEqual(rollback, load_configuration_args[1].get('rollback'))
 
     def test_junos_config_src_text(self):
         src = load_fixture('junos_config.text', content='str')
@@ -149,7 +175,7 @@ class TestJunosConfigModule(TestJunosModule):
         src = load_fixture('junos_config.json', content='str')
         set_module_args(dict(zeroize='yes'))
         self.execute_module(changed=True)
-        self.assertEqual(self.send_request.call_count, 1)
+        self.assertEqual(self.exec_rpc.call_count, 1)
 
     def test_junos_config_src_format_xml(self):
         src = load_fixture('junos_config.json', content='str')

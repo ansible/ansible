@@ -5,7 +5,7 @@
 
 - name: "set gpg2 binary name"
   set_fact:
-    gpg2_bin: '{{ "gpg2" if gpg2_check|success else "gpg" }}'
+    gpg2_bin: '{{ "gpg2" if gpg2_check is successful else "gpg" }}'
 
 - name: "remove previous password files and directory"
   file: dest={{item}} state=absent

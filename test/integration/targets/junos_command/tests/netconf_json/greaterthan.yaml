@@ -1,5 +1,5 @@
 ---
-- debug: msg="START netconf_json/greaterthan.yaml"
+- debug: msg="START netconf_json/greaterthan.yaml on connection={{ ansible_connection }}"
 
 - name: test gt operator
   junos_command:
@@ -35,4 +35,4 @@
       - "result.stdout is defined"
       - "result.stdout_lines is defined"
 
-- debug: msg="END netconf_json/greaterthan.yaml"
+- debug: msg="END netconf_json/greaterthan.yaml on connection={{ ansible_connection }}"

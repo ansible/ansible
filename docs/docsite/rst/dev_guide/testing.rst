@@ -1,17 +1,23 @@
+.. _developing_testing:
+
 ***************
 Testing Ansible
 ***************
 
 .. contents:: Topics
+   :local:
 
-Introduction
-============
 
-This document describes:
+Why test your Ansible contributions?
+====================================
 
-* how Ansible is tested
-* how to test Ansible locally
-* how to extend the testing capabilities
+If you're a developer, one of the most valuable things you can do is to look at GitHub issues and help fix bugs, since bug-fixing is almost always prioritized over feature development.  Even for non-developers, helping to test pull requests for bug fixes and features is still immensely valuable.
+
+Ansible users who understand how to write playbooks and roles should be able to test their work.  GitHub pull requests will automatically run a variety of tests (e.g., Shippable) that show bugs in action.  However, contributors must also test their work outside of the automated GitHub checks and show evidence of these tests in the PR to ensure that their work will be more likely to be reviewed and merged.
+
+Read on to learn how Ansible is tested, how to test your contributions locally, and how to extend testing capabilities.
+
+
 
 Types of tests
 ==============
@@ -19,23 +25,28 @@ Types of tests
 At a high level we have the following classifications of tests:
 
 :compile:
-  * :doc:`testing_compile`
+  * :ref:`testing_compile`
   * Test python code against a variety of Python versions.
 :sanity:
-  * :doc:`testing_sanity`
+  * :ref:`testing_sanity`
   * Sanity tests are made up of scripts and tools used to perform static code analysis.
   * The primary purpose of these tests is to enforce Ansible coding standards and requirements.
 :integration:
-  * :doc:`testing_integration`
+  * :ref:`testing_integration`
   * Functional tests of modules and Ansible core functionality.
 :units:
-  * :doc:`testing_units`
+  * :ref:`testing_units`
   * Tests directly against individual parts of the code base.
 
 
-If you're a developer, one of the most valuable things you can do is look at the GitHub issues list and help fix bugs.  We almost always prioritize bug fixing over feature development, so helping to fix bugs is one of the best things you can do.
+If you're a developer, one of the most valuable things you can do is look at the GitHub
+issues list and help fix bugs.  We almost always prioritize bug fixing over feature
+development.
 
-Even if you're not a developer, helping to test pull requests for bug fixes and features is still immensely valuable.
+Even for non developers, helping to test pull requests for bug fixes and features is still
+immensely valuable.  Ansible users who understand writing playbooks and roles should be
+able to add integration tests and so GitHub pull requests with integration tests that show
+bugs in action will also be a great way to help.
 
 
 Testing within GitHub & Shippable
@@ -46,7 +57,6 @@ Organization
 ------------
 
 When Pull Requests (PRs) are created they are tested using Shippable, a Continuous Integration (CI) tool. Results are shown at the end of every PR.
-
 
 When Shippable detects an error and it can be linked back to a file that has been modified in the PR then the relevant lines will be added as a GitHub comment. For example::
 
@@ -69,7 +79,6 @@ Then run the tests detailed in the GitHub comment::
   ansible-test sanity --test pep8
   ansible-test sanity --test validate-modules
 
-
 If there isn't a GitHub comment stating what's failed you can inspect the results by clicking on the "Details" button under the "checks have failed" message at the end of the PR.
 
 Rerunning a failing CI job
@@ -90,10 +99,6 @@ If the issue persists, please contact us in ``#ansible-devel`` on Freenode IRC.
 
 How to test a PR
 ================
-
-If you're a developer, one of the most valuable things you can do is look at the GitHub issues list and help fix bugs.  We almost always prioritize bug fixing over feature development, so helping to fix bugs is one of the best things you can do.
-
-Even if you're not a developer, helping to test pull requests for bug fixes and features is still immensely valuable.
 
 Ideally, code should add tests that prove that the code works. That's not always possible and tests are not always comprehensive, especially when a user doesn't have access to a wide variety of platforms, or is using an API or web service. In these cases, live testing against real equipment can be more valuable than automation that runs against simulated interfaces. In any case, things should always be tested manually the first time as well.
 
@@ -188,8 +193,25 @@ If the PR does not resolve the issue, or if you see any failures from the unit/i
    |   some other output
    |   \```
 
+Code Coverage Online
+````````````````````
+
+`The online code coverage reports <https://codecov.io/gh/ansible/ansible>`_ are a good way
+to identify areas for testing improvement in Ansible.  By following red colors you can
+drill down through the reports to find files which have no tests at all.  Adding both
+integration and unit tests which show clearly how code should work, verify important
+Ansible functions and increase testing coverage in areas where there is none is a valuable
+way to help improve Ansible.
+
+The code coverage reports only cover the ``devel`` branch of Ansible where new feature
+development takes place.  Pull requests and new code will be missing from the codecov.io
+coverage reports so local reporting is needed.  Most ``ansible-test`` commands allow you
+to collect code coverage, this is particularly useful to indicate where to extend
+testing. See :doc:`testing_running_locally` for more information.
+
+
 Want to know more about testing?
 ================================
 
-If you'd like to know more about the plans for improving testing Ansible then why not join the `Testing Working Group <https://github.com/ansible/community/blob/master/meetings/README.md>`_.
-
+If you'd like to know more about the plans for improving testing Ansible then why not join the
+`Testing Working Group <https://github.com/ansible/community/blob/master/meetings/README.md>`_.

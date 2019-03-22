@@ -1,0 +1,32 @@
+---
+- debug: msg="START nxapi/nxos_banner exec test"
+
+- block:
+    - name: setup - remove exec
+      nxos_banner: &remove
+        banner: exec
+        provider: "{{ connection }}"
+        state: absent
+
+    - name: Set exec
+      nxos_banner: &exec
+        banner: exec
+        text: |
+          this is my exec banner
+          that has a multiline
+          string
+        provider: "{{ connection }}"
+        state: present
+      register: result
+
+    - assert:
+        that:
+          - "result.changed == true"
+          - "'banner exec @\nthis is my exec banner\nthat has a multiline\nstring\n@' in result.commands"
+
+    - name: teardown - remove exec
+      nxos_banner: *remove
+
+  when: platform is match("N7K")
+
+- debug: msg="END nxapi/nxos_banner exec test"

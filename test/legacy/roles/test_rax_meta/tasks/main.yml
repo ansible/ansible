@@ -7,7 +7,7 @@
 - name: Validate results of rax_meta with no args
   assert:
     that:
-      - rax_meta|failed
+      - rax_meta is failed
       - 'rax_meta.msg == "one of the following is required: address,id,name"'
 # ============================================================
 
@@ -25,7 +25,7 @@
 - name: Validate results of rax_meta with only creds
   assert:
     that:
-      - rax_meta|failed
+      - rax_meta is failed
       - rax_meta.msg.startswith('None is not a valid region')
 # ============================================================
 
@@ -43,7 +43,7 @@
 - name: Validate rax_meta creds, region and address
   assert:
     that:
-      - rax_meta|failed
+      - rax_meta is failed
       - rax_meta.msg == 'Failed to find a server matching provided search parameters'
 # ============================================================
 
@@ -62,7 +62,7 @@
 - name: Validate rax_meta creds, region and id
   assert:
     that:
-      - rax_meta|failed
+      - rax_meta is failed
       - rax_meta.msg == 'Failed to find a server matching provided search parameters'
 # ============================================================
 
@@ -81,7 +81,7 @@
 - name: Validate rax_meta creds, region and name
   assert:
     that:
-      - rax_meta|failed
+      - rax_meta is failed
       - rax_meta.msg == 'Failed to find a server matching provided search parameters'
 # ============================================================
 
@@ -102,7 +102,7 @@
 - name: Validate rax_meta creds, region, address, id and name
   assert:
     that:
-      - rax_meta|failed
+      - rax_meta is failed
       - "rax_meta.msg == 'parameters are mutually exclusive: [\\'address\\', \\'id\\', \\'name\\']'"
 # ============================================================
 
@@ -125,8 +125,8 @@
 - name: Validate build
   assert:
     that:
-      - rax|success
-      - rax|changed
+      - rax is successful
+      - rax is changed
       - rax.action == 'create'
       - rax.instances|length == 1
       - rax.instances[0].name == "{{ resource_prefix }}-rax_meta"
@@ -147,7 +147,7 @@
 - name: Validate rax_meta creds, region, and valid public IPv4 address
   assert:
     that:
-      - rax_meta|success
+      - rax_meta is successful
       - rax_meta.meta == {}
 # ============================================================
 
@@ -165,7 +165,7 @@
 - name: Validate rax_meta creds, region, and valid public IPv6 address
   assert:
     that:
-      - rax_meta|success
+      - rax_meta is successful
       - rax_meta.meta == {}
 # ============================================================
 
@@ -184,7 +184,7 @@
 - name: Validate rax_meta creds, region, and valid private IPv4 address
   assert:
     that:
-      - rax_meta|success
+      - rax_meta is successful
       - rax_meta.meta == {}
 # ============================================================
 
@@ -203,7 +203,7 @@
 - name: Validate rax_meta creds, region, and valid ID
   assert:
     that:
-      - rax_meta|success
+      - rax_meta is successful
       - rax_meta.meta == {}
 # ============================================================
 
@@ -222,7 +222,7 @@
 - name: Validate rax_meta creds, region, and valid name
   assert:
     that:
-      - rax_meta|success
+      - rax_meta is successful
       - rax_meta.meta == {}
 # ============================================================
 
@@ -243,8 +243,8 @@
 - name: Validate rax_meta creds, region, and valid ID set foo=bar
   assert:
     that:
-      - rax_meta|success
-      - rax_meta|changed
+      - rax_meta is successful
+      - rax_meta is changed
       - "rax_meta.meta == {'foo': 'bar'}"
 # ============================================================
 
@@ -265,7 +265,7 @@
 - name: Validate rax_meta creds, region, and valid ID set bar=baz
   assert:
     that:
-      - rax_meta|success
+      - rax_meta is successful
       - "rax_meta.meta == {'bar': 'baz'}"
 # ============================================================
 
@@ -286,8 +286,8 @@
 - name: Validate rax_meta creds, region, and valid ID set bar=baz
   assert:
     that:
-      - rax_meta|success
-      - not rax_meta|changed
+      - rax_meta is successful
+      - rax_meta is not changed
       - "rax_meta.meta == {'bar': 'baz'}"
 # ============================================================
 
@@ -306,8 +306,8 @@
 - name: Validate rax_meta creds, region, and valid ID delete meta
   assert:
     that:
-      - rax_meta|success
-      - rax_meta|changed
+      - rax_meta is successful
+      - rax_meta is changed
       - rax_meta.meta == {}
 # ============================================================
 
@@ -329,8 +329,8 @@
 - name: "Validate delete"
   assert:
     that:
-      - rax|changed
-      - rax|success
+      - rax is changed
+      - rax is successful
       - rax.action == 'delete'
       - rax.success[0].name == "{{ resource_prefix }}-rax_meta"
 # ============================================================

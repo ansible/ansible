@@ -46,6 +46,7 @@ options:
     description:
       - Whether the value in I(change) is a percent value
     default: false
+    type: bool
   name:
     description:
       - Name to give the policy
@@ -69,7 +70,9 @@ options:
       - absent
     default: present
 author: "Matt Martz (@sivel)"
-extends_documentation_fragment: rackspace
+extends_documentation_fragment:
+  - rackspace
+  - rackspace.openstack
 '''
 
 EXAMPLES = '''

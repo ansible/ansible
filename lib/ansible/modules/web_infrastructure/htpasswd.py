@@ -53,7 +53,7 @@ options:
       - Whether the user entry should be present or not
   create:
     required: false
-    choices: [ "yes", "no" ]
+    type: bool
     default: "yes"
     description:
       - Used with C(state=present). If specified, the file will be created
@@ -65,6 +65,7 @@ notes:
   - "On RHEL or CentOS: Enable EPEL, then install I(python-passlib)."
 requirements: [ passlib>=1.6 ]
 author: "Ansible Core Team"
+extends_documentation_fragment: files
 """
 
 EXAMPLES = """
@@ -94,13 +95,18 @@ EXAMPLES = """
 
 import os
 import tempfile
+import traceback
 from distutils.version import LooseVersion
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils._text import to_native
 
+PASSLIB_IMP_ERR = None
 try:
     from passlib.apache import HtpasswdFile, htpasswd_context
     from passlib.context import CryptContext
     import passlib
 except ImportError:
+    PASSLIB_IMP_ERR = traceback.format_exc()
     passlib_installed = False
 else:
     passlib_installed = True
@@ -216,7 +222,7 @@ def main():
     check_mode = module.check_mode
 
     if not passlib_installed:
-        module.fail_json(msg="This module requires the passlib Python library")
+        module.fail_json(msg=missing_required_lib("passlib"), exception=PASSLIB_IMP_ERR)
 
     # Check file for blank lines in effort to avoid "need more than 1 value to unpack" error.
     try:
@@ -261,14 +267,9 @@ def main():
 
         check_file_attrs(module, changed, msg)
         module.exit_json(msg=msg, changed=changed)
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg=str(e))
+    except Exception as e:
+        module.fail_json(msg=to_native(e))
 
-
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
 
 if __name__ == '__main__':
     main()

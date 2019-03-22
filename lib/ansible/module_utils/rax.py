@@ -51,7 +51,7 @@ SERVICE_NET_ID = "11111111-1111-1111-1111-111111111111"
 
 def rax_slugify(value):
     """Prepend a key with rax_ and normalize the key name"""
-    return 'rax_%s' % (re.sub('[^\w-]', '_', value).lower().lstrip('_'))
+    return 'rax_%s' % (re.sub(r'[^\w-]', '_', value).lower().lstrip('_'))
 
 
 def rax_clb_node_to_dict(obj):
@@ -217,7 +217,7 @@ def rax_find_loadbalancer(module, rax_module, loadbalancer):
     clb = rax_module.cloud_loadbalancers
     try:
         found = clb.get(loadbalancer)
-    except:
+    except Exception:
         found = []
         for lb in clb.list():
             if loadbalancer == lb.name:

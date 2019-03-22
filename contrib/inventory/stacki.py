@@ -49,14 +49,11 @@ import sys
 import yaml
 from distutils.version import StrictVersion
 
-try:
-    import json
-except:
-    import simplejson as json
+import json
 
 try:
     import requests
-except:
+except Exception:
     sys.exit('requests package is required for this inventory script')
 
 
@@ -173,7 +170,7 @@ def main():
                 config = yaml.safe_load(stream)
                 break
         if not config:
-            sys.stderr.write("No config file found at {}\n".format(config_files))
+            sys.stderr.write("No config file found at {0}\n".format(config_files))
             sys.exit(1)
         client, auth_creds = stack_auth(config['stacki']['auth'])
         header = stack_build_header(auth_creds)

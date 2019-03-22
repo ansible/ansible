@@ -31,38 +31,30 @@ options:
             - Requires a I(api_url) parameter (example https://10.0.0.10:8443).
             - Requires a I(api_version) parameter (example v4_0).
         required: true
-        default: null
     type:
         description:
             - The type of entity you want to work on (example Enterprise).
             - This should match the objects CamelCase class name in VSPK-Python.
-            - This Class name can be found on U(https://nuagenetworks.github.io/vspkdoc/html/index.html).
+            - This Class name can be found on U(https://nuagenetworks.github.io/vspkdoc/index.html).
         required: true
-        default: null
     id:
         description:
             - The ID of the entity you want to work on.
             - In combination with I(command=find), it will only return the single entity.
             - In combination with I(state), it will either update or delete this entity.
             - Will take precedence over I(match_filter) and I(properties) whenever an entity needs to be found.
-        required: false
-        default: null
     parent_id:
         description:
             - The ID of the parent of the entity you want to work on.
             - When I(state) is specified, the entity will be gathered from this parent, if it exists, unless an I(id) is specified.
             - When I(command=find) is specified, the entity will be searched for in this parent, unless an I(id) is specified.
             - If specified, I(parent_type) also needs to be specified.
-        required: false
-        default: null
     parent_type:
         description:
             - The type of parent the ID is specified for (example Enterprise).
             - This should match the objects CamelCase class name in VSPK-Python.
-            - This Class name can be found on U(https://nuagenetworks.github.io/vspkdoc/html/index.html).
+            - This Class name can be found on U(https://nuagenetworks.github.io/vspkdoc/index.html).
             - If specified, I(parent_id) also needs to be specified.
-        required: false
-        default: null
     state:
         description:
             - Specifies the desired state of the entity.
@@ -70,8 +62,6 @@ options:
             - If I(state=present), in case the relationship with the parent is a member relationship, will assign the entity as a member of the parent.
             - If I(state=absent), in case the relationship with the parent is a member relationship, will unassign the entity as a member of the parent.
             - Either I(state) or I(command) needs to be defined, both can not be defined at the same time.
-        required: false
-        default: null
         choices:
             - present
             - absent
@@ -89,8 +79,6 @@ options:
               the module will exit with an error.
             - With I(command=wait_for_job), the job will always be returned, even if the state is ERROR situation.
             - Either I(state) or I(command) needs to be defined, both can not be defined at the same time.
-        required: false
-        default: null
         choices:
             - find
             - change_password
@@ -100,14 +88,10 @@ options:
         description:
             - A filter used when looking (both in I(command) and I(state) for entities, in the format the Nuage VSP API expects.
             - If I(match_filter) is defined, it will take precedence over the I(properties), but not on the I(id)
-        required: false
-        default: null
     properties:
         description:
             - Properties are the key, value pairs of the different properties an entity has.
             - If no I(id) and no I(match_filter) is specified, these are used to find or determine if the entity exists.
-        required: false
-        default: null
     children:
         description:
             - Can be used to specify a set of child entities.
@@ -116,8 +100,6 @@ options:
             - The function of each of these properties is the same as in the general task definition.
             - This can be used recursively
             - Only useable in case I(state=present).
-        required: false
-        default: null
 notes:
     - Check mode is supported, but with some caveats. It will not do any changes, and if possible try to determine if it is able do what is requested.
     - In case a parent id is provided from a previous task, it might be empty and if a search is possible on root, it will do so, which can impact performance.
@@ -185,7 +167,7 @@ EXAMPLES = '''
     state: present
     properties:
       name: "{{ enterprise_new_name }}-basic"
-  when: nuage_check_enterprise | failed
+  when: nuage_check_enterprise is failed
 
 # Creating a User in an Enterprise
 - name: Create admin user
@@ -338,7 +320,7 @@ RETURN = '''
 id:
     description: The id of the entity that was found, created, updated or assigned.
     returned: On state=present and command=find in case one entity was found.
-    type: string
+    type: str
     sample: bae07d8d-d29c-4e2b-b6ba-621b4807a333
 entities:
     description: A list of entities handled. Each element is the to_dict() of the entity.

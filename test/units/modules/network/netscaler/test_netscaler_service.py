@@ -17,7 +17,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from ansible.compat.tests.mock import patch, Mock, MagicMock, call
+from units.compat.mock import patch, Mock, MagicMock, call
 
 import sys
 
@@ -25,7 +25,8 @@ if sys.version_info[:2] != (2, 6):
     import requests
 
 
-from .netscaler_module import TestModule, nitro_base_patcher, set_module_args
+from units.modules.utils import set_module_args
+from .netscaler_module import TestModule, nitro_base_patcher
 
 
 class TestNetscalerServiceModule(TestModule):
@@ -60,17 +61,19 @@ class TestNetscalerServiceModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
             state=state,
         ))
 
     def setUp(self):
+        super(TestNetscalerServiceModule, self).setUp()
         self.nitro_base_patcher.start()
         self.nitro_specific_patcher.start()
 
         # Setup minimal required arguments to pass AnsibleModule argument parsing
 
     def tearDown(self):
+        super(TestNetscalerServiceModule, self).tearDown()
         self.nitro_base_patcher.stop()
         self.nitro_specific_patcher.stop()
 

@@ -27,7 +27,7 @@ version_added: "2.4"
 short_description: Manages netstream export on HUAWEI CloudEngine switches.
 description:
     - Configure NetStream flow statistics exporting and versions for exported packets on HUAWEI CloudEngine switches.
-author: Zhijin Zhou (@CloudEngine-Ansible)
+author: Zhijin Zhou (@QijunPan)
 notes:
 options:
     type:
@@ -35,52 +35,37 @@ options:
             - Specifies NetStream feature.
         required: true
         choices: ['ip', 'vxlan']
-        default: null
     source_ip:
         description:
             - Specifies source address which can be IPv6 or IPv4 of the exported NetStream packet.
-        required: false
-        default: null
     host_ip:
         description:
             - Specifies destination address which can be IPv6 or IPv4 of the exported NetStream packet.
-        required: false
-        default: null
     host_port:
         description:
             - Specifies the destination UDP port number of the exported packets.
               The value is an integer that ranges from 1 to 65535.
-        required: false
-        default: null
     host_vpn:
         description:
             - Specifies the VPN instance of the exported packets carrying flow statistics.
               Ensure the VPN instance has been created on the device.
-        required: false
-        default: null
     version:
         description:
             - Sets the version of exported packets.
-        required: false
         choices: ['5', '9']
-        default: null
     as_option:
         description:
             - Specifies the AS number recorded in the statistics as the original or the peer AS number.
-        required: false
         choices: ['origin', 'peer']
-        default: null
     bgp_nexthop:
         description:
             - Configures the statistics to carry BGP next hop information. Currently, only V9 supports the exported
               packets carrying BGP next hop information.
-        required: false
         choices: ['enable','disable']
         default: 'disable'
     state:
         description:
             - Manage the state of the resource.
-        required: false
         choices: ['present','absent']
         default: present
 '''
@@ -199,14 +184,14 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 
 import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_config, load_config
-from ansible.module_utils.ce import ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import get_config, load_config
+from ansible.module_utils.network.cloudengine.ce import ce_argument_spec
 
 
 def is_ipv4_addr(ip_addr):

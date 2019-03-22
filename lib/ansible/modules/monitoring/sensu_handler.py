@@ -24,87 +24,66 @@ options:
     description:
       - Whether the handler should be present or not
     choices: [ 'present', 'absent' ]
-    required: False
     default: present
   name:
     description:
       - A unique name for the handler. The name cannot contain special characters or spaces.
     required: True
-    default: null
   type:
     description:
       - The handler type
     choices: [ 'pipe', 'tcp', 'udp', 'transport', 'set' ]
     required: True
-    default: null
   filter:
     description:
       - The Sensu event filter (name) to use when filtering events for the handler.
-    required: False
-    default: null
   filters:
     description:
       - An array of Sensu event filters (names) to use when filtering events for the handler.
       - Each array item must be a string.
-    required: False
-    default: null
   severities:
     description:
       - An array of check result severities the handler will handle.
       - 'NOTE: event resolution bypasses this filtering.'
     choices: [ 'warning', 'critical', 'unknown' ]
-    required: False
-    default: null
   mutator:
     description:
       - The Sensu event mutator (name) to use to mutate event data for the handler.
-    required: False
-    default: null
   timeout:
     description:
       - The handler execution duration timeout in seconds (hard stop).
       - Only used by pipe and tcp handler types.
-    required: False
     default: 10
   handle_silenced:
     description:
       - If events matching one or more silence entries should be handled.
-    required: False
-    default: False
+    type: bool
+    default: 'no'
   handle_flapping:
     description:
       - If events in the flapping state should be handled.
-    required: False
-    default: False
+    type: bool
+    default: 'no'
   command:
     description:
       - The handler command to be executed.
       - The event data is passed to the process via STDIN.
       - 'NOTE: the command attribute is only required for Pipe handlers (i.e. handlers configured with "type": "pipe").'
-    required: False
-    default: null
   socket:
     description:
       - The socket definition scope, used to configure the TCP/UDP handler socket.
       - 'NOTE: the socket attribute is only required for TCP/UDP handlers (i.e. handlers configured with "type": "tcp" or "type": "udp").'
-    required: False
-    default: null
   pipe:
     description:
       - The pipe definition scope, used to configure the Sensu transport pipe.
       - 'NOTE: the pipe attribute is only required for Transport handlers (i.e. handlers configured with "type": "transport").'
-    required: False
-    default: null
   handlers:
     description:
       - An array of Sensu event handlers (names) to use for events using the handler set.
       - Each array item must be a string.
       - 'NOTE: the handlers attribute is only required for handler sets (i.e. handlers configured with "type": "set").'
-    required: True
-    default: null
 notes:
   - Check mode is supported
-requirements: [ ]
 '''
 
 EXAMPLES = '''
@@ -161,12 +140,12 @@ config:
 file:
   description: Path to the handler configuration file
   returned: success
-  type: string
+  type: str
   sample: "/etc/sensu/conf.d/handlers/irc.json"
 name:
   description: Name of the handler
   returned: success
-  type: string
+  type: str
   sample: "irc"
 '''
 
@@ -279,6 +258,7 @@ def main():
     except (OSError, IOError) as e:
         module.fail_json(msg='Unable to write file {0}: {1}'.format(path,
                                                                     str(e)))
+
 
 if __name__ == '__main__':
     main()

@@ -29,7 +29,7 @@ short_description: Manages global DLDP configuration on HUAWEI CloudEngine switc
 description:
     - Manages global DLDP configuration on HUAWEI CloudEngine switches.
 author:
-    - Zhijin Zhou (@CloudEngine-Ansible)
+    - Zhijin Zhou (@QijunPan)
 notes:
     - The relevant configurations will be deleted if DLDP is disabled using enable=disable.
     - When using auth_mode=none, it will restore the default DLDP authentication mode. By default,
@@ -42,40 +42,28 @@ options:
     enable:
         description:
             - Set global DLDP enable state.
-        required: false
-        default: null
         choices: ['enable', 'disable']
     work_mode:
         description:
             - Set global DLDP work-mode.
-        required: false
-        default: null
         choices: ['enhance', 'normal']
     time_internal:
         description:
             - Specifies the interval for sending Advertisement packets.
               The value is an integer ranging from 1 to 100, in seconds.
               The default interval for sending Advertisement packets is 5 seconds.
-        required: false
-        default: null
     auth_mode:
         description:
             - Specifies authentication algorithm of DLDP.
-        required: false
-        default: null
         choices: ['md5', 'simple', 'sha', 'hmac-sha256', 'none']
     auth_pwd:
         description:
             - Specifies authentication password.
               The value is a string of 1 to 16 case-sensitive plaintexts or 24/32/48/108/128 case-sensitive encrypted
               characters. The string excludes a question mark (?).
-        required: false
-        default: null
     reset:
         description:
             - Specify whether reset DLDP state of disabled interfaces.
-        required: false
-        default: null
         choices: ['enable', 'disable']
 '''
 
@@ -169,14 +157,14 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 
 import copy
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import ce_argument_spec, set_nc_config, get_nc_config, execute_nc_action
+from ansible.module_utils.network.cloudengine.ce import ce_argument_spec, set_nc_config, get_nc_config, execute_nc_action
 
 CE_NC_ACTION_RESET_DLDP = """
 <action>

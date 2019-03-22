@@ -1,64 +1,76 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright 2016 F5 Networks Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2016, F5 Networks Inc.
+# GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: bigip_routedomain
 short_description: Manage route domains on a BIG-IP
 description:
-  - Manage route domains on a BIG-IP
-version_added: "2.2"
+  - Manage route domains on a BIG-IP.
+version_added: 2.2
 options:
+  name:
+    description:
+      - The name of the route domain.
+    type: str
+    version_added: 2.5
   bwc_policy:
     description:
       - The bandwidth controller for the route domain.
+    type: str
   connection_limit:
     description:
       - The maximum number of concurrent connections allowed for the
         route domain. Setting this to C(0) turns off connection limits.
+    type: int
   description:
     description:
       - Specifies descriptive text that identifies the route domain.
+    type: str
   flow_eviction_policy:
     description:
       - The eviction policy to use with this route domain. Apply an eviction
         policy to provide customized responses to flow overflows and slow
         flows on the route domain.
+    type: str
   id:
     description:
       - The unique identifying integer representing the route domain.
-    required: true
+      - This field is required when creating a new route domain.
+      - In version 2.5, this value is no longer used to reference a route domain when
+        making modifications to it (for instance during update and delete operations).
+        Instead, the C(name) parameter is used. In version 2.6, the C(name) value will
+        become a required parameter.
+    type: int
   parent:
     description:
-      Specifies the route domain the system searches when it cannot
-      find a route in the configured domain.
-    required: false
+      - Specifies the route domain the system searches when it cannot
+        find a route in the configured domain.
+    type: str
+  partition:
+    description:
+      - Partition to create the route domain on. Partitions cannot be updated
+        once they are created.
+    type: str
+    default: Common
+    version_added: 2.5
   routing_protocol:
     description:
       - Dynamic routing protocols for the system to use in the route domain.
+    type: list
     choices:
+      - none
       - BFD
       - BGP
       - IS-IS
@@ -70,456 +82,650 @@ options:
   service_policy:
     description:
       - Service policy to associate with the route domain.
+    type: str
   state:
     description:
       - Whether the route domain should exist or not.
-    required: false
-    default: present
+    type: str
     choices:
       - present
       - absent
+    default: present
   strict:
     description:
-      - Specifies whether the system enforces cross-routing restrictions
-        or not.
-    choices:
-      - enabled
-      - disabled
+      - Specifies whether the system enforces cross-routing restrictions or not.
+    type: bool
   vlans:
     description:
-      - VLANs for the system to use in the route domain
-notes:
-  - Requires the f5-sdk Python package on the host. This is as easy as
-    pip install f5-sdk.
+      - VLANs for the system to use in the route domain.
+    type: list
+  fw_enforced_policy:
+    description:
+      - Specifies AFM policy to be attached to route domain.
+    type: str
+    version_added: 2.8
 extends_documentation_fragment: f5
-requirements:
-  - f5-sdk
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Create a route domain
   bigip_routedomain:
-      id: "1234"
-      password: "secret"
-      server: "lb.mydomain.com"
-      state: "present"
-      user: "admin"
+    name: foo
+    id: 1234
+    state: present
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
 - name: Set VLANs on the route domain
   bigip_routedomain:
-      id: "1234"
-      password: "secret"
-      server: "lb.mydomain.com"
-      state: "present"
-      user: "admin"
-      vlans:
-          - net1
-          - foo
+    name: bar
+    state: present
+    vlans:
+      - net1
+      - foo
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 '''
 
-RETURN = '''
+RETURN = r'''
 id:
-    description: The ID of the route domain that was changed
-    returned: changed
-    type: int
-    sample: 2
+  description: The ID of the route domain that was changed.
+  returned: changed
+  type: int
+  sample: 2
 description:
-    description: The description of the route domain
-    returned: changed
-    type: string
-    sample: "route domain foo"
+  description: The description of the route domain.
+  returned: changed
+  type: str
+  sample: route domain foo
 strict:
-    description: The new strict isolation setting
-    returned: changed
-    type: string
-    sample: "enabled"
+  description: The new strict isolation setting.
+  returned: changed
+  type: str
+  sample: enabled
 parent:
-    description: The new parent route domain
-    returned: changed
-    type: int
-    sample: 0
+  description: The new parent route domain.
+  returned: changed
+  type: int
+  sample: 0
 vlans:
-    description: List of new VLANs the route domain is applied to
-    returned: changed
-    type: list
-    sample: ['/Common/http-tunnel', '/Common/socks-tunnel']
+  description: List of new VLANs the route domain is applied to.
+  returned: changed
+  type: list
+  sample: ['/Common/http-tunnel', '/Common/socks-tunnel']
 routing_protocol:
-    description: List of routing protocols applied to the route domain
-    returned: changed
-    type: list
-    sample: ['bfd', 'bgp']
+  description: List of routing protocols applied to the route domain.
+  returned: changed
+  type: list
+  sample: ['bfd', 'bgp']
 bwc_policy:
-    description: The new bandwidth controller
-    returned: changed
-    type: string
-    sample: /Common/foo
+  description: The new bandwidth controller.
+  returned: changed
+  type: str
+  sample: /Common/foo
 connection_limit:
-    description: The new connection limit for the route domain
-    returned: changed
-    type: int
-    sample: 100
+  description: The new connection limit for the route domain.
+  returned: changed
+  type: int
+  sample: 100
 flow_eviction_policy:
-    description: The new eviction policy to use with this route domain
-    returned: changed
-    type: string
-    sample: /Common/default-eviction-policy
+  description: The new eviction policy to use with this route domain.
+  returned: changed
+  type: str
+  sample: /Common/default-eviction-policy
 service_policy:
-    description: The new service policy to use with this route domain
-    returned: changed
-    type: string
-    sample: /Common-my-service-policy
+  description: The new service policy to use with this route domain.
+  returned: changed
+  type: str
+  sample: /Common-my-service-policy
+fw_enforced_policy:
+  description: Specfies AFM policy to be attached to route domain.
+  returned: changed
+  type: str
+  sample: /Common/afm-blocking-policy
 '''
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import env_fallback
+
 try:
-    from f5.bigip import ManagementRoot
-    from icontrol.session import iControlUnexpectedHTTPError
-    HAS_F5SDK = True
+    from library.module_utils.network.f5.bigip import F5RestClient
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import fq_name
+    from library.module_utils.network.f5.common import transform_name
+    from library.module_utils.network.f5.common import f5_argument_spec
+    from library.module_utils.network.f5.compare import cmp_simple_list
 except ImportError:
-    HAS_F5SDK = False
+    from ansible.module_utils.network.f5.bigip import F5RestClient
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import fq_name
+    from ansible.module_utils.network.f5.common import transform_name
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.network.f5.compare import cmp_simple_list
 
-PROTOCOLS = [
-    'BFD', 'BGP', 'IS-IS', 'OSPFv2', 'OSPFv3', 'PIM', 'RIP', 'RIPng'
-]
 
-STRICTS = ['enabled', 'disabled']
+class Parameters(AnsibleF5Parameters):
+    api_map = {
+        'connectionLimit': 'connection_limit',
+        'servicePolicy': 'service_policy',
+        'bwcPolicy': 'bwc_policy',
+        'flowEvictionPolicy': 'flow_eviction_policy',
+        'routingProtocol': 'routing_protocol',
+        'fwEnforcedPolicy': 'fw_enforced_policy',
+        'fwEnforcedPolicyReference': 'fw_policy_link',
+    }
+
+    api_attributes = [
+        'connectionLimit',
+        'description',
+        'strict',
+        'parent',
+        'servicePolicy',
+        'bwcPolicy',
+        'flowEvictionPolicy',
+        'routingProtocol',
+        'vlans',
+        'id',
+        'fwEnforcedPolicy',
+        'fwEnforcedPolicyReference',
+    ]
+
+    returnables = [
+        'description',
+        'strict',
+        'parent',
+        'service_policy',
+        'bwc_policy',
+        'flow_eviction_policy',
+        'routing_protocol',
+        'vlans',
+        'connection_limit',
+        'id',
+    ]
+
+    updatables = [
+        'description',
+        'strict',
+        'parent',
+        'service_policy',
+        'bwc_policy',
+        'flow_eviction_policy',
+        'routing_protocol',
+        'vlans',
+        'connection_limit',
+        'id',
+        'fw_enforced_policy',
+        'fw_policy_link',
+    ]
+
+    @property
+    def connection_limit(self):
+        if self._values['connection_limit'] is None:
+            return None
+        return int(self._values['connection_limit'])
+
+    @property
+    def id(self):
+        if self._values['id'] is None:
+            return None
+        return int(self._values['id'])
 
 
-class BigIpRouteDomain(object):
-    def __init__(self, *args, **kwargs):
-        if not HAS_F5SDK:
-            raise F5ModuleError("The python f5-sdk module is required")
-
-        # The params that change in the module
-        self.cparams = dict()
-
-        kwargs['name'] = str(kwargs['id'])
-
-        # Stores the params that are sent to the module
-        self.params = kwargs
-        self.api = ManagementRoot(kwargs['server'],
-                                  kwargs['user'],
-                                  kwargs['password'],
-                                  port=kwargs['server_port'])
-
-    def absent(self):
-        if not self.exists():
-            return False
-
-        if self.params['check_mode']:
+class ApiParameters(Parameters):
+    @property
+    def strict(self):
+        if self._values['strict'] is None:
+            return None
+        if self._values['strict'] == 'enabled':
             return True
+        return False
 
-        rd = self.api.tm.net.route_domains.route_domain.load(
-            name=self.params['name']
+    @property
+    def domains(self):
+        domains = self.read_domains_from_device()
+        result = [x['fullPath'] for x in domains['items']]
+        return result
+
+    def read_domains_from_device(self):
+        uri = "https://{0}:{1}/mgmt/tm/net/route-domain/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
         )
-        rd.delete()
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
 
-        if self.exists():
-            raise F5ModuleError("Failed to delete the route domain")
-        else:
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return response
+
+
+class ModuleParameters(Parameters):
+    @property
+    def bwc_policy(self):
+        if self._values['bwc_policy'] is None:
+            return None
+        return fq_name(self.partition, self._values['bwc_policy'])
+
+    @property
+    def flow_eviction_policy(self):
+        if self._values['flow_eviction_policy'] is None:
+            return None
+        return fq_name(self.partition, self._values['flow_eviction_policy'])
+
+    @property
+    def service_policy(self):
+        if self._values['service_policy'] is None:
+            return None
+        return fq_name(self.partition, self._values['service_policy'])
+
+    @property
+    def parent(self):
+        if self._values['parent'] is None:
+            return None
+        result = fq_name(self.partition, self._values['parent'])
+        return result
+
+    @property
+    def vlans(self):
+        if self._values['vlans'] is None:
+            return None
+        if len(self._values['vlans']) == 1 and self._values['vlans'][0] == '':
+            return ''
+        return [fq_name(self.partition, x) for x in self._values['vlans']]
+
+    @property
+    def name(self):
+        if self._values['name'] is None:
+            return str(self.id)
+        return self._values['name']
+
+    @property
+    def routing_protocol(self):
+        if self._values['routing_protocol'] is None:
+            return None
+        if len(self._values['routing_protocol']) == 1 and self._values['routing_protocol'][0] in ['', 'none']:
+            return ''
+        return self._values['routing_protocol']
+
+    @property
+    def fw_enforced_policy(self):
+        if self._values['fw_enforced_policy'] is None:
+            return None
+        if self._values['fw_enforced_policy'] in ['none', '']:
+            return None
+        name = self._values['fw_enforced_policy']
+        return fq_name(self.partition, name)
+
+    @property
+    def fw_policy_link(self):
+        policy = self.fw_enforced_policy
+        if policy is None:
+            return None
+        tmp = policy.split('/')
+        link = dict(link='https://localhost/mgmt/tm/security/firewall/policy/~{0}~{1}'.format(tmp[1], tmp[2]))
+        return link
+
+
+class Changes(Parameters):
+    def to_return(self):
+        result = {}
+        try:
+            for returnable in self.returnables:
+                result[returnable] = getattr(self, returnable)
+            result = self._filter_params(result)
+        except Exception:
+            pass
+        return result
+
+
+class UsableChanges(Changes):
+    @property
+    def strict(self):
+        if self._values['strict'] is None:
+            return None
+        if self._values['strict']:
+            return 'enabled'
+        return 'disabled'
+
+
+class ReportableChanges(Changes):
+    @property
+    def strict(self):
+        if self._values['strict'] is None:
+            return None
+        if self._values['strict'] == 'enabled':
+            return 'yes'
+        return 'no'
+
+
+class Difference(object):
+    def __init__(self, want, have=None):
+        self.want = want
+        self.have = have
+
+    def compare(self, param):
+        try:
+            result = getattr(self, param)
+            return result
+        except AttributeError:
+            return self.__default(param)
+
+    def __default(self, param):
+        attr1 = getattr(self.want, param)
+        try:
+            attr2 = getattr(self.have, param)
+            if attr1 != attr2:
+                return attr1
+        except AttributeError:
+            return attr1
+
+    @property
+    def routing_protocol(self):
+        return cmp_simple_list(self.want.routing_protocol, self.have.routing_protocol)
+
+    @property
+    def vlans(self):
+        return cmp_simple_list(self.want.vlans, self.have.vlans)
+
+    @property
+    def fw_policy_link(self):
+        if self.want.fw_enforced_policy is None:
+            return None
+        if self.want.fw_enforced_policy == self.have.fw_enforced_policy:
+            return None
+        if self.want.fw_policy_link != self.have.fw_policy_link:
+            return self.want.fw_policy_link
+
+
+class ModuleManager(object):
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = F5RestClient(**self.module.params)
+        self.want = ModuleParameters(params=self.module.params, client=self.client)
+        self.have = ApiParameters(client=self.client)
+        self.changes = UsableChanges()
+
+    def _set_changed_options(self):
+        changed = {}
+        for key in Parameters.returnables:
+            if getattr(self.want, key) is not None:
+                changed[key] = getattr(self.want, key)
+        if changed:
+            self.changes = UsableChanges(params=changed)
+
+    def _update_changed_options(self):
+        diff = Difference(self.want, self.have)
+        updatables = Parameters.updatables
+        changed = dict()
+        for k in updatables:
+            change = diff.compare(k)
+            if change is None:
+                continue
+            else:
+                if isinstance(change, dict):
+                    changed.update(change)
+                else:
+                    changed[k] = change
+        if changed:
+            self.changes = UsableChanges(params=changed)
             return True
+        return False
+
+    def should_update(self):
+        result = self._update_changed_options()
+        if result:
+            return True
+        return False
+
+    def exec_module(self):
+        changed = False
+        result = dict()
+        state = self.want.state
+
+        if state == "present":
+            changed = self.present()
+        elif state == "absent":
+            changed = self.absent()
+
+        reportable = ReportableChanges(params=self.changes.to_return())
+        changes = reportable.to_return()
+        result.update(**changes)
+        result.update(dict(changed=changed))
+        self._announce_deprecations(result)
+        return result
+
+    def _announce_deprecations(self, result):
+        warnings = result.pop('__warnings', [])
+        for warning in warnings:
+            self.client.module.deprecate(
+                msg=warning['msg'],
+                version=warning['version']
+            )
 
     def present(self):
         if self.exists():
             return self.update()
         else:
-            if self.params['check_mode']:
-                return True
             return self.create()
 
-    def read(self):
-        """Read information and transform it
-
-        The values that are returned by BIG-IP in the f5-sdk can have encoding
-        attached to them as well as be completely missing in some cases.
-
-        Therefore, this method will transform the data from the BIG-IP into a
-        format that is more easily consumable by the rest of the class and the
-        parameters that are supported by the module.
-        """
-        p = dict()
-        r = self.api.tm.net.route_domains.route_domain.load(
-            name=self.params['name']
-        )
-
-        p['id'] = int(r.id)
-        p['name'] = str(r.name)
-
-        if hasattr(r, 'connectionLimit'):
-            p['connection_limit'] = int(r.connectionLimit)
-        if hasattr(r, 'description'):
-            p['description'] = str(r.description)
-        if hasattr(r, 'strict'):
-            p['strict'] = str(r.strict)
-        if hasattr(r, 'parent'):
-            p['parent'] = r.parent
-        if hasattr(r, 'vlans'):
-            p['vlans'] = list(set([str(x) for x in r.vlans]))
-        if hasattr(r, 'routingProtocol'):
-            p['routing_protocol'] = list(set([str(x) for x in r.routingProtocol]))
-        if hasattr(r, 'flowEvictionPolicy'):
-            p['flow_eviction_policy'] = str(r.flowEvictionPolicy)
-        if hasattr(r, 'bwcPolicy'):
-            p['bwc_policy'] = str(r.bwcPolicy)
-        if hasattr(r, 'servicePolicy'):
-            p['service_policy'] = str(r.servicePolicy)
-        return p
-
-    def domains(self):
-        result = []
-
-        domains = self.api.tm.net.route_domains.get_collection()
-        for domain in domains:
-            # Just checking for the addition of the partition here for
-            # different versions of BIG-IP
-            if '/' + self.params['partition'] + '/' in domain.name:
-                result.append(domain.name)
-            else:
-                full_name = '/%s/%s' % (self.params['partition'], domain.name)
-                result.append(full_name)
-        return result
-
-    def create(self):
-        params = dict()
-        params['id'] = self.params['id']
-        params['name'] = self.params['name']
-
-        partition = self.params['partition']
-        description = self.params['description']
-        strict = self.params['strict']
-        parent = self.params['parent']
-        bwc_policy = self.params['bwc_policy']
-        vlans = self.params['vlans']
-        routing_protocol = self.params['routing_protocol']
-        connection_limit = self.params['connection_limit']
-        flow_eviction_policy = self.params['flow_eviction_policy']
-        service_policy = self.params['service_policy']
-
-        if description is not None:
-            params['description'] = description
-
-        if strict is not None:
-            params['strict'] = strict
-
-        if parent is not None:
-            parent = '/%s/%s' % (partition, parent)
-            if parent in self.domains():
-                params['parent'] = parent
-            else:
-                raise F5ModuleError(
-                    "The parent route domain was not found"
-                )
-
-        if bwc_policy is not None:
-            policy = '/%s/%s' % (partition, bwc_policy)
-            params['bwcPolicy'] = policy
-
-        if vlans is not None:
-            params['vlans'] = []
-            for vlan in vlans:
-                vname = '/%s/%s' % (partition, vlan)
-                params['vlans'].append(vname)
-
-        if routing_protocol is not None:
-            params['routingProtocol'] = []
-            for protocol in routing_protocol:
-                if protocol in PROTOCOLS:
-                    params['routingProtocol'].append(protocol)
-                else:
-                    raise F5ModuleError(
-                        "routing_protocol must be one of: %s" % (PROTOCOLS)
-                    )
-
-        if connection_limit is not None:
-            params['connectionLimit'] = connection_limit
-
-        if flow_eviction_policy is not None:
-            policy = '/%s/%s' % (partition, flow_eviction_policy)
-            params['flowEvictionPolicy'] = policy
-
-        if service_policy is not None:
-            policy = '/%s/%s' % (partition, service_policy)
-            params['servicePolicy'] = policy
-
-        self.api.tm.net.route_domains.route_domain.create(**params)
-        exists = self.api.tm.net.route_domains.route_domain.exists(
-            name=self.params['name']
-        )
-
-        if exists:
-            return True
-        else:
-            raise F5ModuleError(
-                "An error occurred while creating the route domain"
-            )
+    def absent(self):
+        if self.exists():
+            return self.remove()
+        return False
 
     def update(self):
-        changed = False
-        params = dict()
-        current = self.read()
-
-        check_mode = self.params['check_mode']
-        partition = self.params['partition']
-        description = self.params['description']
-        strict = self.params['strict']
-        parent = self.params['parent']
-        bwc_policy = self.params['bwc_policy']
-        vlans = self.params['vlans']
-        routing_protocol = self.params['routing_protocol']
-        connection_limit = self.params['connection_limit']
-        flow_eviction_policy = self.params['flow_eviction_policy']
-        service_policy = self.params['service_policy']
-
-        if description is not None:
-            if 'description' in current:
-                if description != current['description']:
-                    params['description'] = description
-            else:
-                params['description'] = description
-
-        if strict is not None:
-            if strict != current['strict']:
-                params['strict'] = strict
-
-        if parent is not None:
-            parent = '/%s/%s' % (partition, parent)
-            if 'parent' in current:
-                if parent != current['parent']:
-                    params['parent'] = parent
-            else:
-                params['parent'] = parent
-
-        if bwc_policy is not None:
-            policy = '/%s/%s' % (partition, bwc_policy)
-            if 'bwc_policy' in current:
-                if policy != current['bwc_policy']:
-                    params['bwcPolicy'] = policy
-            else:
-                params['bwcPolicy'] = policy
-
-        if vlans is not None:
-            tmp = set()
-            for vlan in vlans:
-                vname = '/%s/%s' % (partition, vlan)
-                tmp.add(vname)
-            tmp = list(tmp)
-            if 'vlans' in current:
-                if tmp != current['vlans']:
-                    params['vlans'] = tmp
-            else:
-                params['vlans'] = tmp
-
-        if routing_protocol is not None:
-            tmp = set()
-            for protocol in routing_protocol:
-                if protocol in PROTOCOLS:
-                    tmp.add(protocol)
-                else:
-                    raise F5ModuleError(
-                        "routing_protocol must be one of: %s" % (PROTOCOLS)
-                    )
-            tmp = list(tmp)
-            if 'routing_protocol' in current:
-                if tmp != current['routing_protocol']:
-                    params['routingProtocol'] = tmp
-            else:
-                params['routingProtocol'] = tmp
-
-        if connection_limit is not None:
-            if connection_limit != current['connection_limit']:
-                params['connectionLimit'] = connection_limit
-
-        if flow_eviction_policy is not None:
-            policy = '/%s/%s' % (partition, flow_eviction_policy)
-            if 'flow_eviction_policy' in current:
-                if policy != current['flow_eviction_policy']:
-                    params['flowEvictionPolicy'] = policy
-            else:
-                params['flowEvictionPolicy'] = policy
-
-        if service_policy is not None:
-            policy = '/%s/%s' % (partition, service_policy)
-            if 'service_policy' in current:
-                if policy != current['service_policy']:
-                    params['servicePolicy'] = policy
-            else:
-                params['servicePolicy'] = policy
-
-        if params:
-            changed = True
-            self.cparams = camel_dict_to_snake_dict(params)
-            if check_mode:
-                return changed
-        else:
-            return changed
-
-        try:
-            rd = self.api.tm.net.route_domains.route_domain.load(
-                name=self.params['name']
+        self.have = self.read_current_from_device()
+        if not self.should_update():
+            return False
+        if self.want.parent and self.want.parent not in self.have.domains:
+            raise F5ModuleError(
+                "The parent route domain was not found."
             )
-            rd.update(**params)
-            rd.refresh()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(e)
+        if self.module.check_mode:
+            return True
+        self.update_on_device()
+        return True
 
+    def remove(self):
+        if self.module.check_mode:
+            return True
+        self.remove_from_device()
+        if self.exists():
+            raise F5ModuleError("Failed to delete the resource.")
+        return True
+
+    def create(self):
+        if self.want.id is None:
+            raise F5ModuleError(
+                "The 'id' parameter is required when creating new route domains."
+            )
+        if self.want.parent and self.want.parent not in self.have.domains:
+            raise F5ModuleError(
+                "The parent route domain was not found."
+            )
+        self._set_changed_options()
+        if self.module.check_mode:
+            return True
+        self.create_on_device()
         return True
 
     def exists(self):
-        return self.api.tm.net.route_domains.route_domain.exists(
-            name=self.params['name']
+        uri = "https://{0}:{1}/mgmt/tm/net/route-domain/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name),
         )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
 
-    def flush(self):
-        result = dict()
-        state = self.params['state']
+    def create_on_device(self):
+        params = self.changes.api_params()
+        params['name'] = self.want.name
+        params['partition'] = self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/net/route-domain/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
 
-        if state == "present":
-            changed = self.present()
-            current = self.read()
-            result.update(current)
-        elif state == "absent":
-            changed = self.absent()
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        if self.want.fw_enforced_policy:
+            payload = dict(
+                fwEnforcedPolicy=self.want.fw_enforced_policy,
+                fwEnforcedPolicyReference=self.want.fw_policy_link
+            )
+            uri = "https://{0}:{1}/mgmt/tm/net/route-domain/{2}".format(
+                self.client.provider['server'],
+                self.client.provider['server_port'],
+                transform_name(self.want.partition, self.want.name),
+            )
+            resp = self.client.api.patch(uri, json=payload)
 
-        result.update(dict(changed=changed))
-        return result
+            try:
+                response = resp.json()
+            except ValueError as ex:
+                raise F5ModuleError(str(ex))
+
+            if 'code' in response and response['code'] in [400, 403]:
+                if 'message' in response:
+                    raise F5ModuleError(response['message'])
+                else:
+                    raise F5ModuleError(resp.content)
+        return True
+
+    def update_on_device(self):
+        params = self.changes.api_params()
+        uri = "https://{0}:{1}/mgmt/tm/net/route-domain/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name),
+        )
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+    def remove_from_device(self):
+        uri = "https://{0}:{1}/mgmt/tm/net/route-domain/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name),
+        )
+        response = self.client.api.delete(uri)
+        if response.status == 200:
+            return True
+        raise F5ModuleError(response.content)
+
+    def read_current_from_device(self):
+        uri = "https://{0}:{1}/mgmt/tm/net/route-domain/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name),
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return ApiParameters(params=response, client=self.client)
+
+
+class ArgumentSpec(object):
+    def __init__(self):
+        self.supports_check_mode = True
+        argument_spec = dict(
+            name=dict(),
+            id=dict(type='int'),
+            description=dict(),
+            strict=dict(type='bool'),
+            parent=dict(),
+            vlans=dict(type='list'),
+            routing_protocol=dict(
+                type='list',
+                choices=['BFD', 'BGP', 'IS-IS', 'OSPFv2', 'OSPFv3', 'PIM', 'RIP', 'RIPng', 'none']
+            ),
+            bwc_policy=dict(),
+            connection_limit=dict(type='int'),
+            flow_eviction_policy=dict(),
+            service_policy=dict(),
+            fw_enforced_policy=dict(),
+            partition=dict(
+                default='Common',
+                fallback=(env_fallback, ['F5_PARTITION'])
+            ),
+            state=dict(
+                default='present',
+                choices=['present', 'absent']
+            )
+        )
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
+        self.required_one_of = [
+            ['name', 'id']
+        ]
 
 
 def main():
-    argument_spec = f5_argument_spec()
-
-    meta_args = dict(
-        id=dict(required=True, type='int'),
-        description=dict(required=False, default=None),
-        strict=dict(required=False, default=None, choices=STRICTS),
-        parent=dict(required=False, type='int', default=None),
-        vlans=dict(required=False, default=None, type='list'),
-        routing_protocol=dict(required=False, default=None, type='list'),
-        bwc_policy=dict(required=False, type='str', default=None),
-        connection_limit=dict(required=False, type='int', default=None),
-        flow_eviction_policy=dict(required=False, type='str', default=None),
-        service_policy=dict(required=False, type='str', default=None)
-    )
-    argument_spec.update(meta_args)
+    spec = ArgumentSpec()
 
     module = AnsibleModule(
-        argument_spec=argument_spec,
-        supports_check_mode=True
+        argument_spec=spec.argument_spec,
+        supports_check_mode=spec.supports_check_mode,
+        required_one_of=spec.required_one_of
     )
 
     try:
-        obj = BigIpRouteDomain(check_mode=module.check_mode, **module.params)
-        result = obj.flush()
+        mm = ModuleManager(module=module)
+        results = mm.exec_module()
+        module.exit_json(**results)
+    except F5ModuleError as ex:
+        module.fail_json(msg=str(ex))
 
-        module.exit_json(**result)
-    except F5ModuleError as e:
-        module.fail_json(msg=str(e))
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict
-from ansible.module_utils.f5_utils import *
 
 if __name__ == '__main__':
     main()

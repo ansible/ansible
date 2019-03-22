@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION='''
+DOCUMENTATION = '''
 module: rax_clb_ssl
 short_description: Manage SSL termination for a Rackspace Cloud Load Balancer.
 description:
@@ -35,6 +35,7 @@ options:
     - If set to "false", temporarily disable SSL termination without discarding
     - existing credentials.
     default: true
+    type: bool
   private_key:
     description:
     - The private SSL key as a string in PEM format.
@@ -53,21 +54,26 @@ options:
     description:
     - If "true", the load balancer will *only* accept secure traffic.
     default: false
+    type: bool
   https_redirect:
     description:
     - If "true", the load balancer will redirect HTTP traffic to HTTPS.
     - Requires "secure_traffic_only" to be true. Incurs an implicit wait if SSL
     - termination is also applied or removed.
+    type: bool
   wait:
     description:
     - Wait for the balancer to be in state "running" before turning.
     default: false
+    type: bool
   wait_timeout:
     description:
     - How long before "wait" gives up, in seconds.
     default: 300
-author: Ash Wilson
-extends_documentation_fragment: rackspace
+author: Ash Wilson (@smashwilson)
+extends_documentation_fragment:
+  - rackspace
+  - rackspace.openstack
 '''
 
 EXAMPLES = '''
@@ -100,7 +106,8 @@ from ansible.module_utils.rax import (rax_argument_spec,
                                       rax_required_together,
                                       rax_to_dict,
                                       setup_rax_module,
-                                     )
+                                      )
+
 
 def cloud_load_balancer_ssl(module, loadbalancer, state, enabled, private_key,
                             certificate, intermediate_certificate, secure_port,
@@ -221,6 +228,7 @@ def cloud_load_balancer_ssl(module, loadbalancer, state, enabled, private_key,
         module.exit_json(**result)
     else:
         module.fail_json(**result)
+
 
 def main():
     argument_spec = rax_argument_spec()

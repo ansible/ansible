@@ -1,0 +1,76 @@
+---
+# https://www.rabbitmq.com/install-debian.html#apt-pinning
+- name: Pin erlang version that rabbitmq supports
+  copy:
+    dest: /etc/apt/preferences.d/erlang
+    content: |
+        Package: erlang*
+        Pin: version 1:20.3.8.14-1
+        Pin-Priority: 1000
+
+        Package: esl-erlang
+        Pin: version 1:20.3.6
+        Pin-Priority: 1000
+
+- name: Install https transport for apt
+  apt:
+    name: apt-transport-https
+    state: latest
+    force: yes
+
+- name: Add Erlang Solutions public GPG key
+  apt_key:
+    url: https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/setup_rabbitmq/erlang_solutions.asc
+    state: present
+
+- name: Add Erlang Solutions repository
+  apt_repository:
+    repo: "deb https://packages.erlang-solutions.com/ubuntu {{ ansible_distribution_release }} contrib"
+    filename: 'erlang-solutions'
+    state: present
+    update_cache: yes
+
+- name: Add RabbitMQ public GPG key
+  apt_key:
+    url: https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/setup_rabbitmq/rabbitmq-release-signing-key.asc
+    state: present
+
+- name: Add RabbitMQ repository
+  apt_repository:
+    repo: "deb https://dl.bintray.com/rabbitmq/debian {{ ansible_distribution_release }} main"
+    filename: rabbitmq
+    state: present
+    update_cache: yes
+
+# Required by the rabbitmq modules that uses the management API
+- name: Install requests
+  pip:
+    name: requests
+
+- name: Install RabbitMQ Server
+  apt:
+    name: rabbitmq-server
+    state: latest
+
+- name: Install RabbitMQ TLS dependencies
+  apt:
+    name: "{{ item }}"
+    state: latest
+  loop:
+    - erlang-asn1
+    - erlang-crypto
+    - erlang-public-key
+    - erlang-ssl
+
+- name: Ensure TLS config
+  copy:
+    src: rabbitmq.conf
+    dest: /etc/rabbitmq/rabbitmq.conf
+
+- name: Start RabbitMQ service
+  service:
+    name: rabbitmq-server
+    state: started
+
+- name: Enable management
+  command: rabbitmq-plugins enable --online rabbitmq_management

@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 # This file is part of Networklore's snmp library for Ansible
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -6,18 +7,17 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: snmp_facts
 version_added: "1.9"
-author: "Patrick Ogenstad (@ogenstad)"
-short_description: Retrieve facts for a device using SNMP.
+author:
+- Patrick Ogenstad (@ogenstad)
+short_description: Retrieve facts for a device using SNMP
 description:
     - Retrieve facts for a device using SNMP, the facts will be
       inserted to the ansible_facts key.
@@ -26,56 +26,64 @@ requirements:
 options:
     host:
         description:
-            - Set to target snmp server (normally {{inventory_hostname}})
+            - Set to target snmp server (normally C({{ inventory_hostname }})).
+        type: str
         required: true
     version:
         description:
-            - SNMP Version to use, v2/v2c or v3
-        choices: [ 'v2', 'v2c', 'v3' ]
+            - SNMP Version to use, v2/v2c or v3.
+        type: str
         required: true
+        choices: [ v2, v2c, v3 ]
     community:
         description:
-            - The SNMP community string, required if version is v2/v2c
-        required: false
+            - The SNMP community string, required if version is v2/v2c.
+        type: str
     level:
         description:
-            - Authentication level, required if version is v3
-        choices: [ 'authPriv', 'authNoPriv' ]
-        required: false
+            - Authentication level.
+            - Required if version is v3.
+        type: str
+        choices: [ authNoPriv, authPriv ]
     username:
         description:
-            - Username for SNMPv3, required if version is v3
-        required: false
+            - Username for SNMPv3.
+            - Required if version is v3.
+        type: str
     integrity:
         description:
-            - Hashing algorithm, required if version is v3
-        choices: [ 'md5', 'sha' ]
-        required: false
+            - Hashing algorithm.
+            - Required if version is v3.
+        type: str
+        choices: [ md5, sha ]
     authkey:
         description:
-            - Authentication key, required if version is v3
-        required: false
+            - Authentication key.
+            - Required if version is v3.
+        type: str
     privacy:
         description:
-            - Encryption algorithm, required if level is authPriv
-        choices: [ 'des', 'aes' ]
-        required: false
+            - Encryption algorithm.
+            - Required if level is authPriv.
+        type: str
+        choices: [ aes, des ]
     privkey:
         description:
-            - Encryption key, required if version is authPriv
-        required: false
+            - Encryption key.
+            - Required if version is authPriv.
+        type: str
 '''
 
-EXAMPLES = '''
-# Gather facts with SNMP version 2
-- snmp_facts:
+EXAMPLES = r'''
+- name: Gather facts with SNMP version 2
+  snmp_facts:
     host: '{{ inventory_hostname }}'
     version: v2c
     community: public
   delegate_to: local
 
-# Gather facts using SNMP version 3
-- snmp_facts:
+- name: Gather facts using SNMP version 3
+  snmp_facts:
     host: '{{ inventory_hostname }}'
     version: v3
     level: authPriv
@@ -87,47 +95,126 @@ EXAMPLES = '''
   delegate_to: localhost
 '''
 
+RETURN = r'''
+ansible_sysdescr:
+  description: A textual description of the entity.
+  returned: success
+  type: str
+  sample: Linux ubuntu-user 4.4.0-93-generic #116-Ubuntu SMP Fri Aug 11 21:17:51 UTC 2017 x86_64
+ansible_sysobjectid:
+  description: The vendor's authoritative identification of the network management subsystem contained in the entity.
+  returned: success
+  type: str
+  sample: 1.3.6.1.4.1.8072.3.2.10
+ansible_sysuptime:
+  description: The time (in hundredths of a second) since the network management portion of the system was last re-initialized.
+  returned: success
+  type: int
+  sample: 42388
+ansible_syscontact:
+  description: The textual identification of the contact person for this managed node, together with information on how to contact this person.
+  returned: success
+  type: str
+  sample: Me <me@example.org>
+ansible_sysname:
+  description: An administratively-assigned name for this managed node.
+  returned: success
+  type: str
+  sample: ubuntu-user
+ansible_syslocation:
+  description: The physical location of this node (e.g., `telephone closet, 3rd floor').
+  returned: success
+  type: str
+  sample: Sitting on the Dock of the Bay
+ansible_all_ipv4_addresses:
+  description: List of all IPv4 addresses.
+  returned: success
+  type: list
+  sample: ["127.0.0.1", "172.17.0.1"]
+ansible_interfaces:
+  description: Dictionary of each network interface and its metadata.
+  returned: success
+  type: dict
+  sample: {
+    "1": {
+        "adminstatus": "up",
+        "description": "",
+        "ifindex": "1",
+        "ipv4": [
+            {
+                "address": "127.0.0.1",
+                "netmask": "255.0.0.0"
+            }
+        ],
+        "mac": "",
+        "mtu": "65536",
+        "name": "lo",
+        "operstatus": "up",
+        "speed": "65536"
+    },
+    "2": {
+        "adminstatus": "up",
+        "description": "",
+        "ifindex": "2",
+        "ipv4": [
+            {
+                "address": "192.168.213.128",
+                "netmask": "255.255.255.0"
+            }
+        ],
+        "mac": "000a305a52a1",
+        "mtu": "1500",
+        "name": "Intel Corporation 82545EM Gigabit Ethernet Controller (Copper)",
+        "operstatus": "up",
+        "speed": "1500"
+    }
+  }
+'''
+
 import binascii
+import traceback
 from collections import defaultdict
 
+PYSNMP_IMP_ERR = None
 try:
     from pysnmp.entity.rfc3413.oneliner import cmdgen
     has_pysnmp = True
-except:
+except Exception:
+    PYSNMP_IMP_ERR = traceback.format_exc()
     has_pysnmp = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_text
 
 
 class DefineOid(object):
 
-    def __init__(self,dotprefix=False):
+    def __init__(self, dotprefix=False):
         if dotprefix:
             dp = "."
         else:
             dp = ""
 
         # From SNMPv2-MIB
-        self.sysDescr    = dp + "1.3.6.1.2.1.1.1.0"
+        self.sysDescr = dp + "1.3.6.1.2.1.1.1.0"
         self.sysObjectId = dp + "1.3.6.1.2.1.1.2.0"
-        self.sysUpTime   = dp + "1.3.6.1.2.1.1.3.0"
-        self.sysContact  = dp + "1.3.6.1.2.1.1.4.0"
-        self.sysName     = dp + "1.3.6.1.2.1.1.5.0"
+        self.sysUpTime = dp + "1.3.6.1.2.1.1.3.0"
+        self.sysContact = dp + "1.3.6.1.2.1.1.4.0"
+        self.sysName = dp + "1.3.6.1.2.1.1.5.0"
         self.sysLocation = dp + "1.3.6.1.2.1.1.6.0"
 
         # From IF-MIB
-        self.ifIndex       = dp + "1.3.6.1.2.1.2.2.1.1"
-        self.ifDescr       = dp + "1.3.6.1.2.1.2.2.1.2"
-        self.ifMtu         = dp + "1.3.6.1.2.1.2.2.1.4"
-        self.ifSpeed       = dp + "1.3.6.1.2.1.2.2.1.5"
+        self.ifIndex = dp + "1.3.6.1.2.1.2.2.1.1"
+        self.ifDescr = dp + "1.3.6.1.2.1.2.2.1.2"
+        self.ifMtu = dp + "1.3.6.1.2.1.2.2.1.4"
+        self.ifSpeed = dp + "1.3.6.1.2.1.2.2.1.5"
         self.ifPhysAddress = dp + "1.3.6.1.2.1.2.2.1.6"
         self.ifAdminStatus = dp + "1.3.6.1.2.1.2.2.1.7"
-        self.ifOperStatus  = dp + "1.3.6.1.2.1.2.2.1.8"
-        self.ifAlias       = dp + "1.3.6.1.2.1.31.1.1.1.18"
+        self.ifOperStatus = dp + "1.3.6.1.2.1.2.2.1.8"
+        self.ifAlias = dp + "1.3.6.1.2.1.31.1.1.1.18"
 
         # From IP-MIB
-        self.ipAdEntAddr    = dp + "1.3.6.1.2.1.4.20.1.1"
+        self.ipAdEntAddr = dp + "1.3.6.1.2.1.4.20.1.1"
         self.ipAdEntIfIndex = dp + "1.3.6.1.2.1.4.20.1.2"
         self.ipAdEntNetMask = dp + "1.3.6.1.2.1.4.20.1.3"
 
@@ -141,6 +228,7 @@ def decode_hex(hexstring):
     else:
         return hexstring
 
+
 def decode_mac(hexstring):
 
     if len(hexstring) != 14:
@@ -150,16 +238,18 @@ def decode_mac(hexstring):
     else:
         return hexstring
 
+
 def lookup_adminstatus(int_adminstatus):
     adminstatus_options = {
         1: 'up',
         2: 'down',
         3: 'testing'
-        }
+    }
     if int_adminstatus in adminstatus_options:
         return adminstatus_options[int_adminstatus]
     else:
         return ""
+
 
 def lookup_operstatus(int_operstatus):
     operstatus_options = {
@@ -170,38 +260,43 @@ def lookup_operstatus(int_operstatus):
         5: 'dormant',
         6: 'notPresent',
         7: 'lowerLayerDown'
-        }
+    }
     if int_operstatus in operstatus_options:
         return operstatus_options[int_operstatus]
     else:
         return ""
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            host=dict(required=True),
-            version=dict(required=True, choices=['v2', 'v2c', 'v3']),
-            community=dict(required=False, default=False),
-            username=dict(required=False),
-            level=dict(required=False, choices=['authNoPriv', 'authPriv']),
-            integrity=dict(required=False, choices=['md5', 'sha']),
-            privacy=dict(required=False, choices=['des', 'aes']),
-            authkey=dict(required=False),
-            privkey=dict(required=False),
-            removeplaceholder=dict(required=False)),
-        required_together = ( ['username','level','integrity','authkey'],['privacy','privkey'],),
-        supports_check_mode=False)
+            host=dict(type='str', required=True),
+            version=dict(type='str', required=True, choices=['v2', 'v2c', 'v3']),
+            community=dict(type='str'),
+            username=dict(type='str'),
+            level=dict(type='str', choices=['authNoPriv', 'authPriv']),
+            integrity=dict(type='str', choices=['md5', 'sha']),
+            privacy=dict(type='str', choices=['aes', 'des']),
+            authkey=dict(type='str'),
+            privkey=dict(type='str'),
+        ),
+        required_together=(
+            ['username', 'level', 'integrity', 'authkey'],
+            ['privacy', 'privkey'],
+        ),
+        supports_check_mode=False,
+    )
 
     m_args = module.params
 
     if not has_pysnmp:
-        module.fail_json(msg='Missing required pysnmp module (check docs)')
+        module.fail_json(msg=missing_required_lib('pysnmp'), exception=PYSNMP_IMP_ERR)
 
     cmdGen = cmdgen.CommandGenerator()
 
     # Verify that we receive a community when using snmp v2
     if m_args['version'] == "v2" or m_args['version'] == "v2c":
-        if m_args['community'] is False:
+        if m_args['community'] is None:
             module.fail_json(msg='Community not set when using snmp version 2')
 
     if m_args['version'] == "v3":
@@ -210,7 +305,6 @@ def main():
 
         if m_args['level'] == "authPriv" and m_args['privacy'] is None:
             module.fail_json(msg='Privacy algorithm not set when using authPriv')
-
 
         if m_args['integrity'] == "sha":
             integrity_proto = cmdgen.usmHMACSHAAuthProtocol
@@ -240,7 +334,8 @@ def main():
     # Use v without a prefix to use with return values
     v = DefineOid(dotprefix=False)
 
-    Tree = lambda: defaultdict(Tree)
+    def Tree():
+        return defaultdict(Tree)
 
     results = Tree()
 
@@ -255,7 +350,6 @@ def main():
         cmdgen.MibVariable(p.sysLocation,),
         lookupMib=False
     )
-
 
     if errorIndication:
         module.fail_json(msg=str(errorIndication))
@@ -294,7 +388,6 @@ def main():
         lookupMib=False
     )
 
-
     if errorIndication:
         module.fail_json(msg=str(errorIndication))
 
@@ -317,7 +410,7 @@ def main():
             if v.ifMtu in current_oid:
                 ifIndex = int(current_oid.rsplit('.', 1)[-1])
                 results['ansible_interfaces'][ifIndex]['mtu'] = current_val
-            if v.ifMtu in current_oid:
+            if v.ifSpeed in current_oid:
                 ifIndex = int(current_oid.rsplit('.', 1)[-1])
                 results['ansible_interfaces'][ifIndex]['speed'] = current_val
             if v.ifPhysAddress in current_oid:
@@ -351,10 +444,10 @@ def main():
     for ipv4_network in ipv4_networks:
         current_interface = ipv4_networks[ipv4_network]['interface']
         current_network = {
-            'address':  ipv4_networks[ipv4_network]['address'],
-            'netmask':  ipv4_networks[ipv4_network]['netmask']
-            }
-        if not current_interface in interface_to_ipv4:
+            'address': ipv4_networks[ipv4_network]['address'],
+            'netmask': ipv4_networks[ipv4_network]['netmask']
+        }
+        if current_interface not in interface_to_ipv4:
             interface_to_ipv4[current_interface] = []
             interface_to_ipv4[current_interface].append(current_network)
         else:

@@ -1,0 +1,15 @@
+# Test code for the ACI modules
+# Copyright: (c) 2018, Dag Wieers (dagwieers) <dag@wieers.com>
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Test that we have an ACI APIC host, ACI username and ACI password
+  fail:
+    msg: 'Please define the following variables: aci_hostname, aci_username and aci_password.'
+  when: aci_hostname is not defined or aci_username is not defined or aci_password is not defined
+
+- include_tasks: static.yml
+  when: static is not defined or static
+
+- include_tasks: dynamic.yml
+  when: dynamic is not defined or dynamic

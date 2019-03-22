@@ -43,7 +43,8 @@ options:
       - The set of username objects to be configured on the remote
         VyOS device. The list entries can either be the username or
         a hash of username and properties. This argument is mutually
-        exclusive with the C(name) argument. alias C(users).
+        exclusive with the C(name) argument.
+    aliases: ['users', 'collection']
   name:
     description:
       - The username to be configured on the VyOS device.
@@ -74,6 +75,7 @@ options:
     description:
       - The C(level) argument configures the level of the user when logged
         into the system. This argument accepts string values admin or operator.
+    aliases: ['role']
   purge:
     description:
       - Instructs the module to consider the
@@ -91,6 +93,7 @@ options:
         in the device active configuration
     default: present
     choices: ['present', 'absent']
+extends_documentation_fragment: vyos
 """
 
 EXAMPLES = """
@@ -133,10 +136,10 @@ from copy import deepcopy
 from functools import partial
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network_common import remove_default_spec
-from ansible.module_utils.vyos import get_config, load_config
+from ansible.module_utils.network.common.utils import remove_default_spec
+from ansible.module_utils.network.vyos.vyos import get_config, load_config
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.vyos import vyos_argument_spec
+from ansible.module_utils.network.vyos.vyos import vyos_argument_spec
 
 
 def validate_level(value, module):
@@ -331,6 +334,7 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

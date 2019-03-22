@@ -1,0 +1,89 @@
+---
+- name: test change RDS settings (check mode)
+  win_rds_settings:
+    max_connections: 50
+    certificate_hash: '{{rds_cert_thumbprint.stdout_lines[0]}}'
+    ssl_bridging: https_https
+    enable_only_messaging_capable_clients: yes
+  register: configure_rds_check
+  check_mode: yes
+
+- name: get result of change RDS settings (check mode)
+  win_shell: |
+    Import-Module RemoteDesktopServices
+    (Get-Item RDS:\GatewayServer\MaxConnections).CurrentValue
+    (Get-Item RDS:\GatewayServer\SSLCertificate\Thumbprint).CurrentValue
+    (Get-Item RDS:\GatewayServer\SSLBridging).CurrentValue
+    (Get-Item RDS:\GatewayServer\EnableOnlyMessagingCapableClients).CurrentValue
+  register: configure_rds_actual_check
+
+- name: assert results of change RDS settings (check mode)
+  assert:
+    that:
+    - configure_rds_check.changed == true
+    - configure_rds_actual_check.stdout_lines[0] != "50"
+    - configure_rds_actual_check.stdout_lines[1] != rds_cert_thumbprint.stdout_lines[0]
+    - configure_rds_actual_check.stdout_lines[2] == "0"
+    - configure_rds_actual_check.stdout_lines[3] == "0"
+
+- name: test change RDS settings
+  win_rds_settings:
+    max_connections: 50
+    certificate_hash: '{{rds_cert_thumbprint.stdout_lines[0]}}'
+    ssl_bridging: https_https
+    enable_only_messaging_capable_clients: yes
+  register: configure_rds
+
+- name: get result of change RDS settings
+  win_shell: |
+    Import-Module RemoteDesktopServices
+    (Get-Item RDS:\GatewayServer\MaxConnections).CurrentValue
+    (Get-Item RDS:\GatewayServer\SSLCertificate\Thumbprint).CurrentValue
+    (Get-Item RDS:\GatewayServer\SSLBridging).CurrentValue
+    (Get-Item RDS:\GatewayServer\EnableOnlyMessagingCapableClients).CurrentValue
+  register: configure_rds_actual
+
+- name: assert results of change RDS settings
+  assert:
+    that:
+    - configure_rds.changed == true
+    - configure_rds_actual.stdout_lines[0] == "50"
+    - configure_rds_actual.stdout_lines[1] == rds_cert_thumbprint.stdout_lines[0]
+    - configure_rds_actual.stdout_lines[2] == "2"
+    - configure_rds_actual.stdout_lines[3] == "1"
+
+- name: test change RDS settings (idempotent)
+  win_rds_settings:
+    max_connections: 50
+    certificate_hash: '{{rds_cert_thumbprint.stdout_lines[0]}}'
+    ssl_bridging: https_https
+    enable_only_messaging_capable_clients: yes
+  register: configure_rds_again
+
+- name: assert results of change RDS settings (idempotent)
+  assert:
+    that:
+    - configure_rds_again.changed == false
+
+- name: test disable connection limit
+  win_rds_settings:
+    max_connections: -1
+  register: disable_limit
+
+- name: get result of disable connection limit
+  win_shell: |
+    Import-Module RemoteDesktopServices
+    (Get-Item RDS:\GatewayServer\MaxConnections).CurrentValue -eq (Get-Item RDS:\GatewayServer\MaxConnectionsAllowed).CurrentValue
+  register: disable_limit_actual
+
+- name: assert results of disable connection limit
+  assert:
+    that:
+    - disable_limit.changed == true
+    - disable_limit_actual.stdout_lines[0] == "True"
+
+- name: fail with invalid certificate thumbprint
+  win_rds_settings:
+    certificate_hash: 72E8BD0216FA14100192A3E8B7B150C65B4B0817
+  register: fail_invalid_cert
+  failed_when: fail_invalid_cert.msg is not search('Unable to locate certificate')

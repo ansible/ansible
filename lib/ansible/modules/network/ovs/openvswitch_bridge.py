@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#coding: utf-8 -*-
+# coding: utf-8 -*-
 
 # (c) 2013, David Stygstra <david.stygstra@gmail.com>
 # Portions copyright @ 2015 VMware, Inc.
@@ -30,46 +30,34 @@ options:
             - Name of bridge or fake bridge to manage
     parent:
         version_added: "2.3"
-        required: false
-        default: None
         description:
             - Bridge parent of the fake bridge to manage
     vlan:
         version_added: "2.3"
-        required: false
-        default: None
         description:
             - The VLAN id of the fake bridge to manage (must be between 0 and
               4095). This parameter is required if I(parent) parameter is set.
     state:
-        required: false
         default: "present"
         choices: [ present, absent ]
         description:
             - Whether the bridge should exist
     timeout:
-        required: false
         default: 5
         description:
             - How long to wait for ovs-vswitchd to respond
     external_ids:
         version_added: 2.0
-        required: false
-        default: None
         description:
             - A dictionary of external-ids. Omitting this parameter is a No-op.
               To  clear all external-ids pass an empty value.
     fail_mode:
         version_added: 2.0
-        default: None
-        required: false
         choices : [secure, standalone]
         description:
             - Set bridge fail-mode. The default value (None) is a No-op.
     set:
         version_added: 2.3
-        required: false
-        default: None
         description:
             - Run set command after bridge configuration. This parameter is
               non-idempotent, play will always return I(changed) state if
@@ -109,6 +97,7 @@ def _fail_mode_to_str(text):
     else:
         return text.strip()
 
+
 def _external_ids_to_dict(text):
     if not text:
         return None
@@ -121,6 +110,7 @@ def _external_ids_to_dict(text):
                 d[k] = v
 
         return d
+
 
 def map_obj_to_commands(want, have, module):
     commands = list()
@@ -156,7 +146,7 @@ def map_obj_to_commands(want, have, module):
             command = templatized_command % module.params
 
             if want['parent']:
-                templatized_command =  "%(parent)s %(vlan)s"
+                templatized_command = "%(parent)s %(vlan)s"
                 command += " " + templatized_command % module.params
 
             if want['set']:
@@ -175,7 +165,7 @@ def map_obj_to_commands(want, have, module):
             if want['external_ids']:
                 for k, v in iteritems(want['external_ids']):
                     templatized_command = ("%(ovs-vsctl)s -t %(timeout)s"
-                                        " br-set-external-id %(bridge)s")
+                                           " br-set-external-id %(bridge)s")
                     command = templatized_command % module.params
                     command += " " + k + " " + v
                     commands.append(command)

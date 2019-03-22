@@ -1,0 +1,3 @@
+#pip packages required to build docssite
+sphinx
+PyYAML

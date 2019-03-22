@@ -12,103 +12,103 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
 
-
-DOCUMENTATION = """
+DOCUMENTATION = r'''
 ---
 module: blockinfile
-author:
-    - 'YAEGASHI Takeshi (@yaegashi)'
-extends_documentation_fragment:
-    - files
-    - validate
-short_description: Insert/update/remove a text block
-                   surrounded by marker lines.
+short_description: Insert/update/remove a text block surrounded by marker lines
 version_added: '2.0'
 description:
-  - This module will insert/update/remove a block of multi-line text
-    surrounded by customizable marker lines.
+- This module will insert/update/remove a block of multi-line text surrounded by customizable marker lines.
+author:
+- Yaegashi Takeshi (@yaegashi)
 options:
   path:
+    description:
+    - The file to modify.
+    - Before Ansible 2.3 this option was only usable as I(dest), I(destfile) and I(name).
+    type: path
+    required: yes
     aliases: [ dest, destfile, name ]
-    required: true
-    description:
-      - The file to modify.
-      - Before 2.3 this option was only usable as I(dest), I(destfile) and I(name).
   state:
-    required: false
-    choices: [ present, absent ]
+    description:
+    - Whether the block should be there or not.
+    type: str
+    choices: [ absent, present ]
     default: present
-    description:
-      - Whether the block should be there or not.
   marker:
-    required: false
+    description:
+    - The marker line template.
+    - C({mark}) will be replaced with the values C(in marker_begin) (default="BEGIN") and C(marker_end) (default="END").
+    - Using a custom marker without the C({mark}) variable may result in the block being repeatedly inserted on subsequent playbook runs.
+    type: str
     default: '# {mark} ANSIBLE MANAGED BLOCK'
-    description:
-      - The marker line template.
-        "{mark}" will be replaced with "BEGIN" or "END".
   block:
-    aliases: [ content ]
-    required: false
+    description:
+    - The text to insert inside the marker lines.
+    - If it is missing or an empty string, the block will be removed as if C(state) were specified to C(absent).
+    type: str
     default: ''
-    description:
-      - The text to insert inside the marker lines.
-        If it's missing or an empty string,
-        the block will be removed as if C(state) were specified to C(absent).
+    aliases: [ content ]
   insertafter:
-    required: false
+    description:
+    - If specified, the block will be inserted after the last match of specified regular expression.
+    - A special value is available; C(EOF) for inserting the block at the end of the file.
+    - If specified regular expression has no matches, C(EOF) will be used instead.
+    type: str
+    choices: [ EOF, '*regex*' ]
     default: EOF
-    description:
-      - If specified, the block will be inserted after the last match of
-        specified regular expression. A special value is available; C(EOF) for
-        inserting the block at the end of the file.  If specified regular
-        expression has no matches, C(EOF) will be used instead.
-    choices: [ 'EOF', '*regex*' ]
   insertbefore:
-    required: false
-    default: None
     description:
-      - If specified, the block will be inserted before the last match of
-        specified regular expression. A special value is available; C(BOF) for
-        inserting the block at the beginning of the file.  If specified regular
-        expression has no matches, the block will be inserted at the end of the
-        file.
-    choices: [ 'BOF', '*regex*' ]
+    - If specified, the block will be inserted before the last match of specified regular expression.
+    - A special value is available; C(BOF) for inserting the block at the beginning of the file.
+    - If specified regular expression has no matches, the block will be inserted at the end of the file.
+    type: str
+    choices: [ BOF, '*regex*' ]
   create:
-    required: false
-    default: 'no'
-    choices: [ 'yes', 'no' ]
     description:
-      - Create a new file if it doesn't exist.
+    - Create a new file if it does not exist.
+    type: bool
+    default: no
   backup:
-    required: false
-    default: 'no'
-    choices: [ 'yes', 'no' ]
     description:
-      - Create a backup file including the timestamp information so you can
-        get the original file back if you somehow clobbered it incorrectly.
-  follow:
-    required: false
-    default: "no"
-    choices: [ "yes", "no" ]
+    - Create a backup file including the timestamp information so you can
+      get the original file back if you somehow clobbered it incorrectly.
+    type: bool
+    default: no
+  marker_begin:
     description:
-      - 'This flag indicates that filesystem links, if they exist, should be followed.'
-    version_added: "2.1"
+    - This will be inserted at C({mark}) in the opening ansible block marker.
+    type: str
+    default: BEGIN
+    version_added: '2.5'
+  marker_end:
+    required: false
+    description:
+    - This will be inserted at C({mark}) in the closing ansible block marker.
+    type: str
+    default: END
+    version_added: '2.5'
 notes:
   - This module supports check mode.
   - When using 'with_*' loops be aware that if you do not set a unique mark the block will be overwritten on each iteration.
   - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
-"""
+  - Option I(follow) has been removed in Ansible 2.5, because this module modifies the contents of the file so I(follow=no) doesn't make sense.
+  - When more then one block should be handled in one file you must change the I(marker) per task.
+extends_documentation_fragment:
+- files
+- validate
+'''
 
-EXAMPLES = r"""
-# Before 2.3, option 'dest' or 'name' was used instead of 'path'
-- name: insert/update "Match User" configuration block in /etc/ssh/sshd_config
+EXAMPLES = r'''
+# Before Ansible 2.3, option 'dest' or 'name' was used instead of 'path'
+- name: Insert/Update "Match User" configuration block in /etc/ssh/sshd_config
   blockinfile:
     path: /etc/ssh/sshd_config
     block: |
       Match User ansible-agent
       PasswordAuthentication no
 
-- name: insert/update eth0 configuration stanza in /etc/network/interfaces
+- name: Insert/Update eth0 configuration stanza in /etc/network/interfaces
         (it might be better to copy files into /etc/network/interfaces.d/)
   blockinfile:
     path: /etc/network/interfaces
@@ -117,26 +117,27 @@ EXAMPLES = r"""
           address 192.0.2.23
           netmask 255.255.255.0
 
-- name: insert/update configuration using a local file
+- name: Insert/Update configuration using a local file and validate it
   blockinfile:
     block: "{{ lookup('file', './local/ssh_config') }}"
-    dest: "/etc/ssh/ssh_config"
+    dest: /etc/ssh/ssh_config
     backup: yes
+    validate: /usr/sbin/sshd -T -f %s
 
-- name: insert/update HTML surrounded by custom markers after <body> line
+- name: Insert/Update HTML surrounded by custom markers after <body> line
   blockinfile:
     path: /var/www/html/index.html
     marker: "<!-- {mark} ANSIBLE MANAGED BLOCK -->"
     insertafter: "<body>"
-    content: |
+    block: |
       <h1>Welcome to {{ ansible_hostname }}</h1>
       <p>Last updated on {{ ansible_date_time.iso8601 }}</p>
 
-- name: remove HTML as well as surrounding markers
+- name: Remove HTML as well as surrounding markers
   blockinfile:
     path: /var/www/html/index.html
     marker: "<!-- {mark} ANSIBLE MANAGED BLOCK -->"
-    content: ""
+    block: ""
 
 - name: Add mappings to /etc/hosts
   blockinfile:
@@ -145,10 +146,10 @@ EXAMPLES = r"""
       {{ item.ip }} {{ item.name }}
     marker: "# {mark} ANSIBLE MANAGED BLOCK {{ item.name }}"
   with_items:
-    - { name: host1, ip: 10.10.1.10 }
-    - { name: host2, ip: 10.10.1.11 }
-    - { name: host3, ip: 10.10.1.12 }
-"""
+  - { name: host1, ip: 10.10.1.10 }
+  - { name: host2, ip: 10.10.1.11 }
+  - { name: host3, ip: 10.10.1.12 }
+'''
 
 import re
 import os
@@ -160,7 +161,7 @@ from ansible.module_utils._text import to_bytes
 
 def write_changes(module, contents, path):
 
-    tmpfd, tmpfile = tempfile.mkstemp()
+    tmpfd, tmpfile = tempfile.mkstemp(dir=module.tmpdir)
     f = os.fdopen(tmpfd, 'wb')
     f.write(contents)
     f.close()
@@ -195,15 +196,17 @@ def check_file_attrs(module, changed, message, diff):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            path=dict(required=True, aliases=['dest', 'destfile', 'name'], type='path'),
-            state=dict(default='present', choices=['absent', 'present']),
-            marker=dict(default='# {mark} ANSIBLE MANAGED BLOCK', type='str'),
-            block=dict(default='', type='str', aliases=['content']),
-            insertafter=dict(default=None),
-            insertbefore=dict(default=None),
-            create=dict(default=False, type='bool'),
-            backup=dict(default=False, type='bool'),
-            validate=dict(default=None, type='str'),
+            path=dict(type='path', required=True, aliases=['dest', 'destfile', 'name']),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
+            marker=dict(type='str', default='# {mark} ANSIBLE MANAGED BLOCK'),
+            block=dict(type='str', default='', aliases=['content']),
+            insertafter=dict(type='str'),
+            insertbefore=dict(type='str'),
+            create=dict(type='bool', default=False),
+            backup=dict(type='bool', default=False),
+            validate=dict(type='str'),
+            marker_begin=dict(type='str', default='BEGIN'),
+            marker_end=dict(type='str', default='END'),
         ),
         mutually_exclusive=[['insertbefore', 'insertafter']],
         add_file_common_args=True,
@@ -212,8 +215,6 @@ def main():
 
     params = module.params
     path = params['path']
-    if module.boolean(params.get('follow', None)):
-        path = os.path.realpath(path)
 
     if os.path.isdir(path):
         module.fail_json(rc=256,
@@ -224,6 +225,12 @@ def main():
         if not module.boolean(params['create']):
             module.fail_json(rc=257,
                              msg='Path %s does not exist !' % path)
+        destpath = os.path.dirname(path)
+        if not os.path.exists(destpath) and not module.check_mode:
+            try:
+                os.makedirs(destpath)
+            except Exception as e:
+                module.fail_json(msg='Error creating %s Error code: %s Error description: %s' % (destpath, e[0], e[1]))
         original = None
         lines = []
     else:
@@ -259,8 +266,8 @@ def main():
     else:
         insertre = None
 
-    marker0 = re.sub(b(r'{mark}'), b('BEGIN'), marker)
-    marker1 = re.sub(b(r'{mark}'), b('END'), marker)
+    marker0 = re.sub(b(r'{mark}'), b(params['marker_begin']), marker)
+    marker1 = re.sub(b(r'{mark}'), b(params['marker_end']), marker)
     if present and block:
         # Escape seqeuences like '\n' need to be handled in Ansible 1.x
         if module.ansible_version.startswith('1.'):
@@ -287,13 +294,13 @@ def main():
             elif insertafter is not None:
                 n0 += 1
         elif insertbefore is not None:
-            n0 = 0           # insertbefore=BOF
+            n0 = 0  # insertbefore=BOF
         else:
             n0 = len(lines)  # insertafter=EOF
     elif n0 < n1:
-        lines[n0:n1+1] = []
+        lines[n0:n1 + 1] = []
     else:
-        lines[n1:n0+1] = []
+        lines[n1:n0 + 1] = []
         n0 = n1
 
     lines[n0:n0] = blocklines
@@ -303,7 +310,7 @@ def main():
         if original is None or original.endswith(b('\n')):
             result += b('\n')
     else:
-        result = ''
+        result = b''
 
     if module._diff:
         diff['after'] = result
@@ -324,7 +331,9 @@ def main():
     if changed and not module.check_mode:
         if module.boolean(params['backup']) and path_exists:
             module.backup_local(path)
-        write_changes(module, result, path)
+        # We should always follow symlinks so that we change the real file
+        real_path = os.path.realpath(params['path'])
+        write_changes(module, result, real_path)
 
     if module.check_mode and not path_exists:
         module.exit_json(changed=changed, msg=msg, diff=diff)

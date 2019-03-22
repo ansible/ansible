@@ -1,0 +1,2 @@
+minor_changes:
+- Add parameters to module vmware_guest for conversion of disk to thin or thick when vm is cloned or deployed with template or virtual machine.

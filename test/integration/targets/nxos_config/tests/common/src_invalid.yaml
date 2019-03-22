@@ -1,5 +1,5 @@
 ---
-- debug: msg="START {{ connection.transport }}/src_invalid.yaml"
+- debug: msg="START common/src_invalid.yaml on connection={{ ansible_connection }}"
 
 
 # Defend https://github.com/ansible/ansible-modules-core/issues/4797
@@ -12,8 +12,7 @@
 
 - assert:
     that:
-      - "result.changed == false"
       - "result.failed == true"
       - "result.msg == 'path specified in src not found'"
 
-- debug: msg="END {{ connection.transport }}/src_invalid.yaml"
+- debug: msg="END common/src_invalid.yaml on connection={{ ansible_connection }}"

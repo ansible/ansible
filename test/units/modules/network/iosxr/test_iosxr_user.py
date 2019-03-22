@@ -19,11 +19,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.iosxr import iosxr_user
-from .iosxr_module import TestIosxrModule, load_fixture, set_module_args
+from units.modules.utils import set_module_args
+from .iosxr_module import TestIosxrModule, load_fixture
 
 
 class TestIosxrUserModule(TestIosxrModule):
@@ -31,19 +30,28 @@ class TestIosxrUserModule(TestIosxrModule):
     module = iosxr_user
 
     def setUp(self):
+        super(TestIosxrUserModule, self).setUp()
+
         self.mock_get_config = patch('ansible.modules.network.iosxr.iosxr_user.get_config')
         self.get_config = self.mock_get_config.start()
 
         self.mock_load_config = patch('ansible.modules.network.iosxr.iosxr_user.load_config')
         self.load_config = self.mock_load_config.start()
 
+        self.mock_is_cliconf = patch('ansible.modules.network.iosxr.iosxr_user.is_cliconf')
+        self.is_cliconf = self.mock_is_cliconf.start()
+
     def tearDown(self):
+        super(TestIosxrUserModule, self).tearDown()
+
         self.mock_get_config.stop()
         self.mock_load_config.stop()
+        self.mock_is_cliconf.stop()
 
     def load_fixtures(self, commands=None, transport='cli'):
         self.get_config.return_value = load_fixture('iosxr_user_config.cfg')
         self.load_config.return_value = dict(diff=None, session='session')
+        self.is_cliconf.return_value = True
 
     def test_iosxr_user_delete(self):
         set_module_args(dict(name='ansible', state='absent'))
@@ -79,3 +87,8 @@ class TestIosxrUserModule(TestIosxrModule):
         set_module_args(dict(name='ansible', configured_password='test', update_password='always'))
         result = self.execute_module(changed=True)
         self.assertEqual(result['commands'], ['username ansible secret test'])
+
+    def test_iosxr_user_admin_mode(self):
+        set_module_args(dict(name='ansible-2', configured_password='test-2', admin=True))
+        result = self.execute_module(changed=True)
+        self.assertEqual(result['commands'], ['username ansible-2', 'username ansible-2 secret test-2'])

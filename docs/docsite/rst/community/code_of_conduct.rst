@@ -1,3 +1,5 @@
+.. _code_of_conduct:
+
 *************************
 Community Code of Conduct
 *************************

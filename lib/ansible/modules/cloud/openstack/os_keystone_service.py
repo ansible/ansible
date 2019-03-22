@@ -1,18 +1,10 @@
 #!/usr/bin/python
 # Copyright 2016 Sam Yaple
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -38,13 +30,11 @@ options:
    description:
      description:
         - Description of the service
-     required: false
-     default: None
    enabled:
      description:
         - Is the service enabled
-     required: false
-     default: True
+     type: bool
+     default: 'yes'
    service_type:
      description:
         - The type of service
@@ -57,10 +47,9 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 '''
 
 EXAMPLES = '''
@@ -87,38 +76,33 @@ service:
     contains:
         id:
             description: Service ID.
-            type: string
+            type: str
             sample: "3292f020780b4d5baf27ff7e1d224c44"
         name:
             description: Service name.
-            type: string
+            type: str
             sample: "glance"
         service_type:
             description: Service type.
-            type: string
+            type: str
             sample: "image"
         description:
             description: Service description.
-            type: string
+            type: str
             sample: "OpenStack Image Service"
         enabled:
             description: Service status.
-            type: boolean
+            type: bool
             sample: True
 id:
     description: The service ID.
     returned: On success when I(state) is 'present'
-    type: string
+    type: str
     sample: "3292f020780b4d5baf27ff7e1d224c44"
 '''
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
-from distutils.version import StrictVersion
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def _needs_update(module, service):
@@ -157,27 +141,20 @@ def main():
                            supports_check_mode=True,
                            **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-    if StrictVersion(shade.__version__) < StrictVersion('1.6.0'):
-        module.fail_json(msg="To utilize this module, the installed version of"
-                             "the shade library MUST be >=1.6.0")
-
     description = module.params['description']
     enabled = module.params['enabled']
     name = module.params['name']
     state = module.params['state']
     service_type = module.params['service_type']
 
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.operator_cloud(**module.params)
-
         services = cloud.search_services(name_or_id=name,
                                          filters=dict(type=service_type))
 
         if len(services) > 1:
             module.fail_json(msg='Service name %s and type %s are not unique' %
-                (name, service_type))
+                             (name, service_type))
         elif len(services) == 1:
             service = services[0]
         else:
@@ -188,8 +165,8 @@ def main():
 
         if state == 'present':
             if service is None:
-                service = cloud.create_service(name=name,
-                    description=description, type=service_type, enabled=True)
+                service = cloud.create_service(name=name, description=description,
+                                               type=service_type, enabled=True)
                 changed = True
             else:
                 if _needs_update(module, service):
@@ -203,17 +180,15 @@ def main():
 
         elif state == 'absent':
             if service is None:
-                changed=False
+                changed = False
             else:
                 cloud.delete_service(service.id)
-                changed=True
+                changed = True
             module.exit_json(changed=changed)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
 if __name__ == '__main__':
     main()

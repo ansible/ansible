@@ -27,63 +27,46 @@ version_added: "2.4"
 short_description: Manages global attributes of VXLAN and bridge domain on HUAWEI CloudEngine devices.
 description:
     - Manages global attributes of VXLAN and bridge domain on HUAWEI CloudEngine devices.
-author: QijunPan (@CloudEngine-Ansible)
+author: QijunPan (@QijunPan)
 options:
     bridge_domain_id:
         description:
             - Specifies a bridge domain ID.
               The value is an integer ranging from 1 to 16777215.
-        required: false
-        default: null
     tunnel_mode_vxlan:
         description:
             - Set the tunnel mode to VXLAN when configuring the VXLAN feature.
-        required: false
         choices: ['enable', 'disable']
-        default: null
     nvo3_prevent_loops:
         description:
             - Loop prevention of VXLAN traffic in non-enhanced mode.
               When the device works in non-enhanced mode,
               inter-card forwarding of VXLAN traffic may result in loops.
-        required: false
         choices: ['enable', 'disable']
-        default: null
     nvo3_acl_extend:
         description:
             - Enabling or disabling the VXLAN ACL extension function.
-        required: false
         choices: ['enable', 'disable']
-        default: null
     nvo3_gw_enhanced:
         description:
             - Configuring the Layer 3 VXLAN Gateway to Work in Non-loopback Mode.
-        required: false
         choices: ['l2', 'l3']
-        default: null
     nvo3_service_extend:
         description:
             - Enabling or disabling the VXLAN service extension function.
-        required: false
         choices: ['enable', 'disable']
-        default: null
     nvo3_eth_trunk_hash:
         description:
             - Eth-Trunk from load balancing VXLAN packets in optimized mode.
-        required: false
         choices: ['enable','disable']
-        default: null
     nvo3_ecmp_hash:
         description:
             - Load balancing of VXLAN packets through ECMP in optimized mode.
-        required: false
         choices: ['enable', 'disable']
-        default: null
     state:
         description:
             - Determines whether the config should be present or not
               on the device.
-        required: false
         default: present
         choices: ['present', 'absent']
 """
@@ -135,15 +118,15 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 
 import re
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_config, load_config, get_nc_config
-from ansible.module_utils.ce import ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import get_config, load_config, get_nc_config
+from ansible.module_utils.network.cloudengine.ce import ce_argument_spec
 
 
 CE_NC_GET_BRIDGE_DOMAIN = """

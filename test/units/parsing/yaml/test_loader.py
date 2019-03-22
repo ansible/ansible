@@ -22,12 +22,11 @@ __metaclass__ = type
 
 from io import StringIO
 
-from collections import Sequence, Set, Mapping
-
-from ansible.compat.tests import unittest
+from units.compat import unittest
 
 from ansible import errors
 from ansible.module_utils.six import text_type, binary_type
+from ansible.module_utils.common._collections_compat import Sequence, Set, Mapping
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.parsing import vault
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
@@ -201,7 +200,7 @@ class TestAnsibleLoaderVault(unittest.TestCase, YamlTestUtils):
             self.vault.decrypt(ciphertext)
         except Exception as e:
             self.assertIsInstance(e, errors.AnsibleError)
-            self.assertEqual(e.message, 'Decryption failed (no vault secrets would found that could decrypt)')
+            self.assertEqual(e.message, 'Decryption failed (no vault secrets were found that could decrypt)')
 
     def _encrypt_plaintext(self, plaintext):
         # Construct a yaml repr of a vault by hand

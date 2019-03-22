@@ -1,16 +1,15 @@
 #!/usr/bin/python
-#
-# Copyright: Ansible Project
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -19,93 +18,72 @@ version_added: "2.0"
 short_description: add or remove tag(s) to/from GCE instances
 description:
     - This module can add or remove tags U(https://cloud.google.com/compute/docs/label-or-tag-resources#tags)
-      to/from GCE instances.  Use 'instance_pattern' to update multiple instances in a specify zone
+      to/from GCE instances.  Use 'instance_pattern' to update multiple instances in a specify zone.
 options:
   instance_name:
     description:
-      - The name of the GCE instance to add/remove tags.  Required if instance_pattern is not specified.
-    required: false
-    default: null
-    aliases: []
+      - The name of the GCE instance to add/remove tags.
+      - Required if C(instance_pattern) is not specified.
   instance_pattern:
     description:
       - The pattern of GCE instance names to match for adding/removing tags.  Full-Python regex is supported.
         See U(https://docs.python.org/2/library/re.html) for details.
-        If instance_name is not specified, this field is required.
-    required: false
-    default: null
-    aliases: []
+      - If C(instance_name) is not specified, this field is required.
     version_added: "2.3"
   tags:
     description:
-      - comma-separated list of tags to add or remove
-    required: true
-    default: null
-    aliases: []
+      - Comma-separated list of tags to add or remove.
+    required: yes
   state:
     description:
-      - desired state of the tags
-    required: false
-    default: "present"
-    choices: ["present", "absent"]
-    aliases: []
+      - Desired state of the tags.
+    choices: [ absent, present ]
+    default: present
   zone:
     description:
-      - the zone of the disk specified by source
-    required: false
-    default: "us-central1-a"
-    aliases: []
+      - The zone of the disk specified by source.
+    default: us-central1-a
   service_account_email:
     description:
-      - service account email
-    required: false
-    default: null
-    aliases: []
+      - Service account email.
   pem_file:
     description:
-      - path to the pem file associated with the service account email
-    required: false
-    default: null
-    aliases: []
+      - Path to the PEM file associated with the service account email.
   project_id:
     description:
-      - your GCE project ID
-    required: false
-    default: null
-    aliases: []
-
+      - Your GCE project ID.
 requirements:
-    - "python >= 2.6"
-    - "apache-libcloud >= 0.17.0"
+    - python >= 2.6
+    - apache-libcloud >= 0.17.0
 notes:
  - Either I(instance_name) or I(instance_pattern) is required.
 author:
- - Do Hoang Khiem (dohoangkhiem@gmail.com)
+ - Do Hoang Khiem (@dohoangkhiem) <(dohoangkhiem@gmail.com>
  - Tom Melendez (@supertom)
 '''
 
 EXAMPLES = '''
-# Add tags 'http-server', 'https-server', 'staging' to instance name 'staging-server' in zone us-central1-a.
-- gce_tag:
+- name: Add tags to instance
+  gce_tag:
     instance_name: staging-server
     tags: http-server,https-server,staging
     zone: us-central1-a
     state: present
 
-# Remove tags 'foo', 'bar' from instance 'test-server' in default zone (us-central1-a)
-- gce_tag:
+- name: Remove tags from instance in default zone (us-central1-a)
+  gce_tag:
     instance_name: test-server
     tags: foo,bar
     state: absent
 
-# Add tags 'foo', 'bar' to instances in zone that match pattern
-- gce_tag:
+- name: Add tags to instances in zone that match pattern
+  gce_tag:
     instance_pattern: test-server-*
     tags: foo,bar
     zone: us-central1-a
     state: present
-
 '''
+
 import re
 import traceback
 
@@ -128,13 +106,16 @@ def _union_items(baselist, comparelist):
     """Combine two lists, removing duplicates."""
     return list(set(baselist) | set(comparelist))
 
+
 def _intersect_items(baselist, comparelist):
     """Return matching items in both lists."""
     return list(set(baselist) & set(comparelist))
 
+
 def _get_changed_items(baselist, comparelist):
     """Return changed items as they relate to baselist."""
     return list(set(baselist) & set(set(baselist) ^ set(comparelist)))
+
 
 def modify_tags(gce, module, node, tags, state='present'):
     """Modify tags on an instance."""
@@ -164,24 +145,25 @@ def modify_tags(gce, module, node, tags, state='present'):
     except (GoogleBaseError, InvalidRequestError) as e:
         module.fail_json(msg=str(e), changed=False)
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            instance_name=dict(required=False),
-            instance_pattern=dict(required=False),
+            instance_name=dict(type='str'),
+            instance_pattern=dict(type='str'),
             tags=dict(type='list', required=True),
-            state=dict(default='present', choices=['present', 'absent']),
-            zone=dict(default='us-central1-a'),
-            service_account_email=dict(),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
+            zone=dict(type='str', default='us-central1-a'),
+            service_account_email=dict(type='str'),
             pem_file=dict(type='path'),
-            project_id=dict(),
+            project_id=dict(type='str'),
         ),
         mutually_exclusive=[
-            [ 'instance_name', 'instance_pattern' ]
+            ['instance_name', 'instance_pattern']
         ],
         required_one_of=[
-            [ 'instance_name', 'instance_pattern' ]
-        ]
+            ['instance_name', 'instance_pattern']
+        ],
     )
 
     instance_name = module.params.get('instance_name')

@@ -21,17 +21,15 @@ options:
   peer_connection_ids:
     description:
       - Get details of specific vpc peer IDs
-    required: false
-    default: None
   filters:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
-        See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeVpcPeeringConnections.html)
+        See U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeVpcPeeringConnections.html)
         for possible filters.
-    required: false
-    default: None
-author: Karen Cheng(@Etherdaemon)
-extends_documentation_fragment: aws
+author: Karen Cheng (@Etherdaemon)
+extends_documentation_fragment:
+  - aws
+  - ec2
 '''
 
 EXAMPLES = '''
@@ -76,7 +74,8 @@ except ImportError:
     pass  # will be picked up by imported HAS_BOTO3
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import (ec2_argument_spec, boto3_conn, get_aws_connection_info,
+from ansible.module_utils.ec2 import (boto3_tag_list_to_ansible_dict,
+                                      ec2_argument_spec, boto3_conn, get_aws_connection_info,
                                       ansible_dict_to_boto3_filter_list, HAS_BOTO3, camel_dict_to_snake_dict)
 
 
@@ -130,7 +129,12 @@ def main():
     except botocore.exceptions.NoCredentialsError as e:
         module.fail_json(msg=str(e))
 
+    # Turn the boto3 result in to ansible friendly_snaked_names
     results = [camel_dict_to_snake_dict(peer) for peer in get_vpc_peers(ec2, module)]
+
+    # Turn the boto3 result in to ansible friendly tag dictionary
+    for peer in results:
+        peer['tags'] = boto3_tag_list_to_ansible_dict(peer.get('tags', []))
 
     module.exit_json(result=results)
 

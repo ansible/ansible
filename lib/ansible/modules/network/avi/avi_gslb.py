@@ -1,26 +1,12 @@
 #!/usr/bin/python
 #
-# Created on Aug 25, 2016
 # @author: Gaurav Rastogi (grastogi@avinetworks.com)
 #          Eric Anderson (eanderson@avinetworks.com)
 # module_check: supported
 # Avi Version: 17.1.1
 #
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2017 Gaurav Rastogi, <grastogi@avinetworks.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -30,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: avi_gslb
-author: Gaurav Rastogi (grastogi@avinetworks.com)
+author: Gaurav Rastogi (@grastogi23) <grastogi@avinetworks.com>
 
 short_description: Module for setup of Gslb Avi RESTful Object
 description:
@@ -43,11 +29,23 @@ options:
         description:
             - The state that should be applied on the entity.
         default: present
-        choices: ["absent","present"]
+        choices: ["absent", "present"]
+    avi_api_update_method:
+        description:
+            - Default method for object update is HTTP PUT.
+            - Setting to patch will override that behavior to use HTTP PATCH.
+        version_added: "2.5"
+        default: put
+        choices: ["put", "patch"]
+    avi_api_patch_op:
+        description:
+            - Patch operation to use when using avi_api_update_method as patch.
+        version_added: "2.5"
+        choices: ["add", "replace", "delete"]
     clear_on_max_retries:
         description:
-            - Max retries after which the remote site is treatedas a fresh start.
-            - In fresh start all the configsare downloaded.
+            - Max retries after which the remote site is treated as a fresh start.
+            - In fresh start all the configs are downloaded.
             - Allowed values are 1-1024.
             - Default value when not specified in API or module is interpreted by Avi Controller as 20.
     client_ip_addr_group:
@@ -68,10 +66,23 @@ options:
             - Field introduced in 17.1.3.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
         version_added: "2.4"
+        type: bool
     leader_cluster_uuid:
         description:
             - Mark this site as leader of gslb configuration.
             - This site is the one among the avi sites.
+        required: true
+    maintenance_mode:
+        description:
+            - This field disables the configuration operations on the leader for all federated objects.
+            - Cud operations on gslb, gslbservice, gslbgeodbprofile and other federated objects will be rejected.
+            - The rest-api disabling helps in upgrade scenarios where we don't want configuration sync operations to the gslb member when the member is being
+            - upgraded.
+            - This configuration programmatically blocks the leader from accepting new gslb configuration when member sites are undergoing upgrade.
+            - Field introduced in 17.2.1.
+            - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        version_added: "2.5"
+        type: bool
     name:
         description:
             - Name for the gslb object.
@@ -81,6 +92,7 @@ options:
             - Frequency with which group members communicate.
             - Allowed values are 1-3600.
             - Default value when not specified in API or module is interpreted by Avi Controller as 15.
+            - Units(SEC).
     sites:
         description:
             - Select avi site member belonging to this gslb.
@@ -99,8 +111,8 @@ options:
             - Uuid of the gslb object.
     view_id:
         description:
-            - The view-id is used in maintenance mode to differentiate partitioned groups while they havethe same gslb namespace.
-            - Each partitioned groupwill be able to operate independently by using theview-id.
+            - The view-id is used in change-leader mode to differentiate partitioned groups while they have the same gslb namespace.
+            - Each partitioned group will be able to operate independently by using the view-id.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.
 extends_documentation_fragment:
     - avi
@@ -125,7 +137,7 @@ obj:
 
 from ansible.module_utils.basic import AnsibleModule
 try:
-    from ansible.module_utils.avi import (
+    from ansible.module_utils.network.avi.avi import (
         avi_common_argument_spec, HAS_AVI, avi_ansible_api)
 except ImportError:
     HAS_AVI = False
@@ -135,12 +147,16 @@ def main():
     argument_specs = dict(
         state=dict(default='present',
                    choices=['absent', 'present']),
+        avi_api_update_method=dict(default='put',
+                                   choices=['put', 'patch']),
+        avi_api_patch_op=dict(choices=['add', 'replace', 'delete']),
         clear_on_max_retries=dict(type='int',),
         client_ip_addr_group=dict(type='dict',),
         description=dict(type='str',),
         dns_configs=dict(type='list',),
         is_federated=dict(type='bool',),
-        leader_cluster_uuid=dict(type='str',),
+        leader_cluster_uuid=dict(type='str', required=True),
+        maintenance_mode=dict(type='bool',),
         name=dict(type='str', required=True),
         send_interval=dict(type='int',),
         sites=dict(type='list',),
@@ -159,6 +175,7 @@ def main():
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'gslb',
                            set([]))
+
 
 if __name__ == '__main__':
     main()

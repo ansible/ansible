@@ -11,7 +11,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -33,14 +33,11 @@ options:
     blob:
         description:
             - Name of a blob object within the container.
-        required: false
-        default: null
         aliases:
             - blob_name
     blob_type:
         description:
             - Type of Blob Object.
-        required: false
         default: block
         choices:
             - block
@@ -55,46 +52,32 @@ options:
     content_type:
         description:
             - Set the blob content-type header. For example, 'image/png'.
-        default: null
-        required: false
     cache_control:
         description:
             - Set the blob cache-control header.
-        required: false
-        default: null
     content_disposition:
         description:
             - Set the blob content-disposition header.
-        required: false
-        default: null
     content_encoding:
         description:
             - Set the blob encoding header.
-        required: false
-        default: null
     content_language:
         description:
             - Set the blob content-language header.
-        required: false
-        default: null
     content_md5:
         description:
             - Set the blob md5 hash value.
-        required: false
-        default: null
     dest:
         description:
-            - Destination file path. Use with state 'present' to download a blob.
+            - Destination file path. Use with state C(present) to download a blob.
         aliases:
             - destination
-        required: false
-        default: null
     force:
         description:
             - Overwrite existing blob or file when uploading or downloading. Force deletion of a container
               that contains blobs.
-        default: false
-        required: false
+        type: bool
+        default: no
     resource_group:
         description:
             - Name of the resource group to use.
@@ -103,24 +86,21 @@ options:
             - resource_group_name
     src:
         description:
-            - Source file path. Use with state 'present' to upload a blob.
+            - Source file path. Use with state C(present) to upload a blob.
         aliases:
             - source
-        required: false
-        default: null
     state:
         description:
             - Assert the state of a container or blob.
-            - Use state 'absent' with a container value only to delete a container. Include a blob value to remove
+            - Use state C(absent) with a container value only to delete a container. Include a blob value to remove
               a specific blob. A container will not be deleted, if it contains blobs. Use the force option to override,
               deleting the container and all associated blobs.
-            - Use state 'present' to create or update a container and upload or download a blob. If the container
+            - Use state C(present) to create or update a container and upload or download a blob. If the container
               does not exist, it will be created. If it exists, it will be updated with configuration options. Provide
               a blob name and either src or dest to upload or download. Provide a src path to upload and a dest path
               to download. If a blob (uploading) or a file (downloading) already exists, it will not be overwritten
               unless the force parameter is true.
         default: present
-        required: false
         choices:
             - absent
             - present
@@ -128,8 +108,6 @@ options:
         description:
             - Determine a container's level of public access. By default containers are private. Can only be set at
               time of container creation.
-        required: false
-        default: null
         choices:
             - container
             - blob
@@ -147,14 +125,14 @@ author:
 EXAMPLES = '''
 - name: Remove container foo
   azure_rm_storageblob:
-    resource_group: testing
+    resource_group: myResourceGroup
     storage_account_name: clh0002
     container: foo
     state: absent
 
 - name: Create container foo and upload a file
   azure_rm_storageblob:
-    resource_group: Testing
+    resource_group: myResourceGroup
     storage_account_name: clh0002
     container: foo
     blob: graylog.png
@@ -164,7 +142,7 @@ EXAMPLES = '''
 
 - name: Download the file
   azure_rm_storageblob:
-    resource_group: Testing
+    resource_group: myResourceGroup
     storage_account_name: clh0002
     container: foo
     blob: graylog.png
@@ -221,12 +199,12 @@ class AzureRMStorageBlob(AzureRMModuleBase):
         self.module_arg_spec = dict(
             storage_account_name=dict(required=True, type='str', aliases=['account_name', 'storage_account']),
             blob=dict(type='str', aliases=['blob_name']),
-            blob_type=dict(type='str', default='block', choices=['block','page']),
+            blob_type=dict(type='str', default='block', choices=['block', 'page']),
             container=dict(required=True, type='str', aliases=['container_name']),
-            dest=dict(type='str'),
+            dest=dict(type='path', aliases=['destination']),
             force=dict(type='bool', default=False),
             resource_group=dict(required=True, type='str', aliases=['resource_group_name']),
-            src=dict(type='str'),
+            src=dict(type='str', aliases=['source']),
             state=dict(type='str', default='present', choices=['absent', 'present']),
             public_access=dict(type='str', choices=['container', 'blob']),
             content_type=dict(type='str'),
@@ -296,7 +274,7 @@ class AzureRMStorageBlob(AzureRMModuleBase):
                 if self.src and self.src_is_valid():
                     if self.blob_obj and not self.force:
                         self.log("Cannot upload to {0}. Blob with that name already exists. "
-                            "Use the force option".format(self.blob))
+                                 "Use the force option".format(self.blob))
                     else:
                         self.upload_blob()
                 elif self.dest and self.dest_is_valid():
@@ -329,7 +307,7 @@ class AzureRMStorageBlob(AzureRMModuleBase):
         return self.results
 
     def get_container(self):
-        result  = dict()
+        result = {}
         container = None
         if self.container:
             try:
@@ -365,7 +343,7 @@ class AzureRMStorageBlob(AzureRMModuleBase):
                     content_language=blob.properties.content_settings.content_language,
                     content_disposition=blob.properties.content_settings.content_disposition,
                     cache_control=blob.properties.content_settings.cache_control,
-                    content_md5 =blob.properties.content_settings.content_md5
+                    content_md5=blob.properties.content_settings.content_md5
                 )
             )
         return result
@@ -443,8 +421,6 @@ class AzureRMStorageBlob(AzureRMModuleBase):
 
     def dest_is_valid(self):
         if not self.check_mode:
-            self.dest = os.path.expanduser(self.dest)
-            self.dest = os.path.expandvars(self.dest)
             if not os.path.basename(self.dest):
                 # dest is a directory
                 if os.path.isdir(self.dest):
@@ -453,7 +429,7 @@ class AzureRMStorageBlob(AzureRMModuleBase):
                 else:
                     try:
                         self.log('Attempting to makedirs {0}'.format(self.dest))
-                        os.makddirs(self.dest)
+                        os.makedirs(self.dest)
                     except IOError as exc:
                         self.fail("Failed to create directory {0} - {1}".format(self.dest, str(exc)))
                     self.dest += self.blob
@@ -568,6 +544,7 @@ class AzureRMStorageBlob(AzureRMModuleBase):
 
 def main():
     AzureRMStorageBlob()
+
 
 if __name__ == '__main__':
     main()

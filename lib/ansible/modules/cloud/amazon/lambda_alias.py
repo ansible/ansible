@@ -52,8 +52,8 @@ options:
 requirements:
     - boto3
 extends_documentation_fragment:
-    - aws
-
+  - aws
+  - ec2
 '''
 
 EXAMPLES = '''
@@ -120,22 +120,22 @@ RETURN = '''
 alias_arn:
     description: Full ARN of the function, including the alias
     returned: success
-    type: string
+    type: str
     sample: arn:aws:lambda:us-west-2:123456789012:function:myFunction:dev
 description:
     description: A short description of the alias
     returned: success
-    type: string
+    type: str
     sample: The development stage for my hot new app
 function_version:
     description: The qualifier that the alias refers to
     returned: success
-    type: string
+    type: str
     sample: $LATEST
 name:
     description: The name of the alias assigned
     returned: success
-    type: string
+    type: str
     sample: dev
 '''
 
@@ -235,7 +235,7 @@ def validate_params(module, aws):
     function_name = module.params['function_name']
 
     # validate function name
-    if not re.search('^[\w\-:]+$', function_name):
+    if not re.search(r'^[\w\-:]+$', function_name):
         module.fail_json(
             msg='Function name {0} is invalid. Names must contain only alphanumeric characters and hyphens.'.format(function_name)
         )

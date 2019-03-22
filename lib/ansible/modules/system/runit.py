@@ -1,36 +1,34 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-#
-# (c) 2015, Brian Coca <bcoca@ansible.com>
+
+# Copyright: (c) 2015, Brian Coca <bcoca@ansible.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
-
 # This is a modification of @bcoca's `svc` module
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: runit
-author: "James Sumners (@jsumners)"
+author:
+- James Sumners (@jsumners)
 version_added: "2.3"
-short_description:  Manage runit services.
+short_description: Manage runit services
 description:
     - Controls runit services on remote hosts using the sv utility.
 options:
     name:
-        required: true
         description:
             - Name of the service to manage.
+        type: str
+        required: yes
     state:
-        required: false
-        choices: [ started, stopped, restarted, killed, reloaded, once ]
         description:
             - C(started)/C(stopped) are idempotent actions that will not run
               commands unless necessary.  C(restarted) will always bounce the
@@ -38,51 +36,52 @@ options:
               C(reloaded) will send a HUP (sv reload).
               C(once) will run a normally downed sv once (sv once), not really
               an idempotent operation.
+        type: str
+        choices: [ killed, once, reloaded, restarted, started, stopped ]
     enabled:
-        required: false
-        choices: [ "yes", "no" ]
         description:
-            - Wheater the service is enabled or not, if disabled it also implies stopped.
+            - Whether the service is enabled or not, if disabled it also implies stopped.
+        type: bool
     service_dir:
-        required: false
-        default: /var/service
         description:
             - directory runsv watches for services
+        type: str
+        default: /var/service
     service_src:
-        required: false
-        default: /etc/sv
         description:
             - directory where services are defined, the source of symlinks to service_dir.
+        type: str
+        default: /etc/sv
 '''
 
-EXAMPLES = '''
-# Example action to start sv dnscache, if not running
- - runit:
+EXAMPLES = r'''
+- name: Start sv dnscache, if not running
+  runit:
     name: dnscache
     state: started
 
-# Example action to stop sv dnscache, if running
- - runit:
+- name: Stop sv dnscache, if running
+  runit:
     name: dnscache
     state: stopped
 
-# Example action to kill sv dnscache, in all cases
- - runit:
+- name: Kill sv dnscache, in all cases
+  runit:
     name: dnscache
     state: killed
 
-# Example action to restart sv dnscache, in all cases
- - runit:
+- name: Restart sv dnscache, in all cases
+  runit:
     name: dnscache
     state: restarted
 
-# Example action to reload sv dnscache, in all cases
- - runit:
+- name: Reload sv dnscache, in all cases
+  runit:
     name: dnscache
     state: reloaded
 
-# Example using alt sv directory location
- - runit:
+- name: Use alternative sv directory location
+  runit:
     name: dnscache
     state: reloaded
     service_dir: /run/service
@@ -90,7 +89,6 @@ EXAMPLES = '''
 
 import os
 import re
-import traceback
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
@@ -114,44 +112,41 @@ def _load_dist_subclass(cls, *args, **kwargs):
 
     return super(cls, subclass).__new__(subclass)
 
+
 class Sv(object):
     """
     Main class that handles daemontools, can be subclassed and overridden in case
     we want to use a 'derivative' like encore, s6, etc
     """
 
-
-    #def __new__(cls, *args, **kwargs):
+    # def __new__(cls, *args, **kwargs):
     #    return _load_dist_subclass(cls, args, kwargs)
 
-
-
     def __init__(self, module):
-        self.extra_paths = [ ]
+        self.extra_paths = []
         self.report_vars = ['state', 'enabled', 'svc_full', 'src_full', 'pid', 'duration', 'full_state']
 
-        self.module         = module
+        self.module = module
 
-        self.name           = module.params['name']
-        self.service_dir    = module.params['service_dir']
-        self.service_src    = module.params['service_src']
-        self.enabled        = None
-        self.full_state     = None
-        self.state          = None
-        self.pid            = None
-        self.duration       = None
+        self.name = module.params['name']
+        self.service_dir = module.params['service_dir']
+        self.service_src = module.params['service_src']
+        self.enabled = None
+        self.full_state = None
+        self.state = None
+        self.pid = None
+        self.duration = None
 
-        self.svc_cmd        = module.get_bin_path('sv', opt_dirs=self.extra_paths)
-        self.svstat_cmd     = module.get_bin_path('sv', opt_dirs=self.extra_paths)
-        self.svc_full = '/'.join([ self.service_dir, self.name ])
-        self.src_full = '/'.join([ self.service_src, self.name ])
+        self.svc_cmd = module.get_bin_path('sv', opt_dirs=self.extra_paths, required=True)
+        self.svstat_cmd = module.get_bin_path('sv', opt_dirs=self.extra_paths)
+        self.svc_full = '/'.join([self.service_dir, self.name])
+        self.src_full = '/'.join([self.service_src, self.name])
 
         self.enabled = os.path.lexists(self.svc_full)
         if self.enabled:
             self.get_status()
         else:
             self.state = 'stopped'
-
 
     def enable(self):
         if os.path.exists(self.src_full):
@@ -163,7 +158,7 @@ class Sv(object):
             self.module.fail_json(msg="Could not find source for service to enable (%s)." % self.src_full)
 
     def disable(self):
-        self.execute_command([self.svc_cmd,'force-stop',self.src_full])
+        self.execute_command([self.svc_cmd, 'force-stop', self.src_full])
         try:
             os.unlink(self.svc_full)
         except OSError as e:
@@ -176,18 +171,22 @@ class Sv(object):
             self.full_state = self.state = err
         else:
             self.full_state = out
+            # full_state *may* contain information about the logger:
+            # "down: /etc/service/service-without-logger: 1s, normally up\n"
+            # "down: /etc/service/updater: 127s, normally up; run: log: (pid 364) 263439s\n"
+            full_state_no_logger = self.full_state.split("; ")[0]
 
-            m = re.search('\(pid (\d+)\)', out)
+            m = re.search(r'\(pid (\d+)\)', full_state_no_logger)
             if m:
                 self.pid = m.group(1)
 
-            m = re.search(' (\d+)s', out)
+            m = re.search(r' (\d+)s', full_state_no_logger)
             if m:
                 self.duration = m.group(1)
 
-            if re.search('run:', out):
+            if re.search(r'^run:', full_state_no_logger):
                 self.state = 'started'
-            elif re.search('down:', out):
+            elif re.search(r'^down:', full_state_no_logger):
                 self.state = 'stopped'
             else:
                 self.state = 'unknown'
@@ -230,7 +229,7 @@ class Sv(object):
         try:
             (rc, out, err) = self.module.run_command(' '.join(cmd))
         except Exception as e:
-            self.module.fail_json(msg="failed to execute: %s" % to_native(e), exception=traceback.format_exc())
+            self.module.fail_json(msg="failed to execute: %s" % to_native(e))
         return (rc, out, err)
 
     def report(self):
@@ -240,18 +239,16 @@ class Sv(object):
             states[k] = self.__dict__[k]
         return states
 
-# ===========================================
-# Main control flow
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(required=True),
-            state = dict(choices=['started', 'stopped', 'restarted', 'killed', 'reloaded', 'once']),
-            enabled = dict(required=False, type='bool'),
-            dist = dict(required=False, default='runit'),
-            service_dir = dict(required=False, default='/var/service'),
-            service_src = dict(required=False, default='/etc/sv'),
+        argument_spec=dict(
+            name=dict(type='str', required=True),
+            state=dict(type='str', choices=['killed', 'once', 'reloaded', 'restarted', 'started', 'stopped']),
+            enabled=dict(type='bool'),
+            dist=dict(type='str', default='runit'),
+            service_dir=dict(type='str', default='/var/service'),
+            service_src=dict(type='str', default='/etc/sv'),
         ),
         supports_check_mode=True,
     )
@@ -274,12 +271,12 @@ def main():
                 else:
                     sv.disable()
             except (OSError, IOError) as e:
-                module.fail_json(msg="Could not change service link: %s" % to_native(e), exception=traceback.format_exc())
+                module.fail_json(msg="Could not change service link: %s" % to_native(e))
 
     if state is not None and state != sv.state:
         changed = True
         if not module.check_mode:
-            getattr(sv,state)()
+            getattr(sv, state)()
 
     module.exit_json(changed=changed, sv=sv.report())
 

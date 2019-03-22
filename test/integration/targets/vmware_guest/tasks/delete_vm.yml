@@ -1,0 +1,84 @@
+# Test code for the vmware_guest module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
+- name: kill vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/killall
+- name: start vcsim with no folders
+  uri:
+    url: http://{{ vcsim }}:5000/spawn?datacenter=1&cluster=1&folder=0
+  register: vcsim_instance
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
+
+- name: get a list of VMS from vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/govc_find?filter=VM
+  register: vmlist
+
+- debug: var=vcsim_instance
+- debug: var=vmlist
+
+- name: get a guest
+  set_fact:
+    guest1: "{{ vmlist.json[0] | basename }}"
+
+- vmware_vm_facts:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    validate_certs: no
+  register: vm_details
+
+- name: store the vcenter container ip
+  set_fact:
+    vm_powerstate: "{{ item.power_state }}"
+  with_items:
+    - "{{ vm_details.virtual_machines| json_query(query) }}"
+  vars:
+    query: "[?guest_name == '{{ guest1 }}' ]"
+
+- debug: var=vm_powerstate
+
+- vmware_guest:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    validate_certs: no
+    name: "{{ guest1 }}"
+    state: poweredon
+  when: "vm_powerstate != 'poweredOn'"
+  register: vmware_guest_poweron_state
+
+- debug: var=vmware_guest_poweron_state
+
+- name: Delete VM
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: "{{ guest1 }}"
+    datacenter: "{{ guest1.split('_')[0] }}"
+    state: absent
+  register: delete_vm
+  ignore_errors: yes
+
+- debug: var=delete_vm
+
+- name: assert that changes were made
+  assert:
+    that:
+      - "not delete_vm.changed"
+      - "delete_vm.msg"

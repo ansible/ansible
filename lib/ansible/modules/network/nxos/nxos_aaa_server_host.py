@@ -33,7 +33,7 @@ description:
 author: Jason Edelman (@jedelman8)
 notes:
     - Tested against NXOSv 7.3.(0)D1(1) on VIRL
-    - Changes to the AAA server host key (shared secret) are not idempotent.
+    - Changes to the host key (shared secret) are not idempotent for type 0.
     - If C(state=absent) removes the whole host configuration.
 options:
     server_type:
@@ -47,41 +47,29 @@ options:
         required: true
     key:
         description:
-            - Shared secret for the specified host.
-        required: false
-        default: null
+            - Shared secret for the specified host or keyword 'default'.
     encrypt_type:
         description:
             - The state of encryption applied to the entered key.
               O for clear text, 7 for encrypted. Type-6 encryption is
               not supported.
-        required: false
-        default: null
         choices: ['0', '7']
     host_timeout:
         description:
-            - Timeout period for specified host, in seconds. Range is 1-60.
-        required: false
-        default: null
+            - Timeout period for specified host, in seconds or keyword 'default.
+              Range is 1-60.
     auth_port:
         description:
-            - Alternate UDP port for RADIUS authentication.
-        required: false
-        default: null
+            - Alternate UDP port for RADIUS authentication or keyword 'default'.
     acct_port:
         description:
-            - Alternate UDP port for RADIUS accounting.
-        required: false
-        default: null
+            - Alternate UDP port for RADIUS accounting or keyword 'default'.
     tacacs_port:
         description:
-            - Alternate TCP port TACACS Server.
-        required: false
-        default: null
+            - Alternate TCP port TACACS Server or keyword 'default'.
     state:
         description:
             - Manage the state of the resource.
-        required: false
         default: present
         choices: ['present','absent']
 '''
@@ -94,9 +82,6 @@ EXAMPLES = '''
         address: 1.2.3.4
         acct_port: 2084
         host_timeout: 10
-        host: "{{ inventory_hostname }}"
-        username: "{{ un }}"
-        password: "{{ pwd }}"
 
 # Radius Server Host Key Configuration
   - name: "Radius Server Host Key Configuration"
@@ -106,9 +91,6 @@ EXAMPLES = '''
         address: 1.2.3.4
         key: hello
         encrypt_type: 7
-        host:  inventory_hostname }}
-        username: "{{ un }}"
-        password: "{{ pwd }}"
 
 # TACACS Server Host Configuration
   - name: "Tacacs Server Host Configuration"
@@ -118,9 +100,7 @@ EXAMPLES = '''
         tacacs_port: 89
         host_timeout: 10
         address: 5.6.7.8
-        host:  inventory_hostname }}
-        username:  un }}
-        password:  pwd }}
+
 '''
 
 RETURN = '''
@@ -150,24 +130,24 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 import re
 
-from ansible.module_utils.nxos import load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import get_capabilities, nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 
-def execute_show_command(command, module, command_type='cli_show'):
-    provider = module.params['provider']
-    if provider['transport'] == 'cli':
-        if 'show run' not in command:
-            command += ' | json'
+def execute_show_command(command, module):
+    device_info = get_capabilities(module)
+    network_api = device_info.get('network_api', 'nxapi')
+
+    if network_api == 'cliconf':
         cmds = [command]
         body = run_commands(module, cmds)
-    elif provider['transport'] == 'nxapi':
+    elif network_api == 'nxapi':
         cmds = {'command': command, 'output': 'text'}
         body = run_commands(module, cmds)
 
@@ -184,40 +164,36 @@ def flatten_list(command_lists):
     return flat_command_list
 
 
-def _match_dict(match_list, key_map):
-    no_blanks = []
-    match_dict = {}
-
-    for match_set in match_list:
-        match_set = tuple(v for v in match_set if v)
-        no_blanks.append(match_set)
-
-    for info in no_blanks:
-        words = info[0].strip().split()
-        length = len(words)
-        alt_key = key_map.get(words[0])
-        first = alt_key or words[0]
-        last = words[length - 1]
-        match_dict[first] = last.replace('\"', '')
-
-    return match_dict
-
-
 def get_aaa_host_info(module, server_type, address):
     aaa_host_info = {}
     command = 'show run | inc {0}-server.host.{1}'.format(server_type, address)
 
-    body = execute_show_command(command, module, command_type='cli_show_ascii')
-
-    if body[0]:
+    body = execute_show_command(command, module)[0]
+    if body:
         try:
-            pattern = ('(acct-port \d+)|(timeout \d+)|(auth-port \d+)|'
-                       '(key 7 "\w+")|( port \d+)')
-            raw_match = re.findall(pattern, body[0])
-            aaa_host_info = _match_dict(raw_match, {'acct-port': 'acct_port',
-                                                    'auth-port': 'auth_port',
-                                                    'port': 'tacacs_port',
-                                                    'timeout': 'host_timeout'})
+            if 'radius' in body:
+                pattern = (r'\S+ host \S+(?:\s+key 7\s+(\S+))?(?:\s+auth-port (\d+))?'
+                           r'(?:\s+acct-port (\d+))?(?:\s+authentication)?'
+                           r'(?:\s+accounting)?(?:\s+timeout (\d+))?')
+                match = re.search(pattern, body)
+                aaa_host_info['key'] = match.group(1)
+                if aaa_host_info['key']:
+                    aaa_host_info['key'] = aaa_host_info['key'].replace('"', '')
+                    aaa_host_info['encrypt_type'] = '7'
+                aaa_host_info['auth_port'] = match.group(2)
+                aaa_host_info['acct_port'] = match.group(3)
+                aaa_host_info['host_timeout'] = match.group(4)
+            elif 'tacacs' in body:
+                pattern = (r'\S+ host \S+(?:\s+key 7\s+(\S+))?(?:\s+port (\d+))?'
+                           r'(?:\s+timeout (\d+))?')
+                match = re.search(pattern, body)
+                aaa_host_info['key'] = match.group(1)
+                if aaa_host_info['key']:
+                    aaa_host_info['key'] = aaa_host_info['key'].replace('"', '')
+                    aaa_host_info['encrypt_type'] = '7'
+                aaa_host_info['tacacs_port'] = match.group(2)
+                aaa_host_info['host_timeout'] = match.group(3)
+
             aaa_host_info['server_type'] = server_type
             aaa_host_info['address'] = address
         except TypeError:
@@ -228,35 +204,41 @@ def get_aaa_host_info(module, server_type, address):
     return aaa_host_info
 
 
-def config_aaa_host(server_type, address, params, clear=False):
+def config_aaa_host(server_type, address, params, existing):
     cmds = []
-
-    if clear:
-        cmds.append('no {0}-server host {1}'.format(server_type, address))
-
     cmd_str = '{0}-server host {1}'.format(server_type, address)
+    cmd_no_str = 'no ' + cmd_str
 
     key = params.get('key')
     enc_type = params.get('encrypt_type', '')
-    host_timeout = params.get('host_timeout')
-    auth_port = params.get('auth_port')
-    acct_port = params.get('acct_port')
-    port = params.get('tacacs_port')
 
-    if auth_port:
-        cmd_str += ' auth-port {0}'.format(auth_port)
-    if acct_port:
-        cmd_str += ' acct-port {0}'.format(acct_port)
-    if port:
-        cmd_str += ' port {0}'.format(port)
-    if host_timeout:
-        cmd_str += ' timeout {0}'.format(host_timeout)
+    defval = False
+    nondef = False
+
     if key:
-        cmds.append('{0}-server host {1} key {2} {3}'.format(server_type,
-                                                             address,
-                                                             enc_type, key))
+        if key != 'default':
+            cmds.append(cmd_str + ' key {0} {1}'.format(enc_type, key))
+        else:
+            cmds.append(cmd_no_str + ' key 7 {0}'.format(existing.get('key')))
 
-    cmds.append(cmd_str)
+    locdict = {'auth_port': 'auth-port', 'acct_port': 'acct-port',
+               'tacacs_port': 'port', 'host_timeout': 'timeout'}
+
+    # platform CLI needs the keywords in the following order
+    for key in ['auth_port', 'acct_port', 'tacacs_port', 'host_timeout']:
+        item = params.get(key)
+        if item:
+            if item != 'default':
+                cmd_str += ' {0} {1}'.format(locdict.get(key), item)
+                nondef = True
+            else:
+                cmd_no_str += ' {0} 1'.format(locdict.get(key))
+                defval = True
+    if defval:
+        cmds.append(cmd_no_str)
+    if nondef or not existing:
+        cmds.append(cmd_str)
+
     return cmds
 
 
@@ -276,11 +258,9 @@ def main():
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
-                                supports_check_mode=True)
+                           supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
-
 
     server_type = module.params['server_type']
     address = module.params['address']
@@ -311,29 +291,25 @@ def main():
         module.fail_json(msg='auth_port and acct_port can only be used'
                              'when server_type=radius')
 
-
     existing = get_aaa_host_info(module, server_type, address)
     end_state = existing
 
     commands = []
+    delta = {}
     if state == 'present':
-        host_timeout = proposed.get('host_timeout')
-        if host_timeout:
-            try:
-                if int(host_timeout) < 1 or int(host_timeout) > 60:
-                    raise ValueError
-            except ValueError:
-                module.fail_json(
-                    msg='host_timeout must be an integer between 1 and 60')
+        if not existing:
+            delta = proposed
+        else:
+            for key, value in proposed.items():
+                if key == 'encrypt_type':
+                    delta[key] = value
+                if value != existing.get(key):
+                    if value != 'default' or existing.get(key):
+                        delta[key] = value
 
-        delta = dict(
-            set(proposed.items()).difference(existing.items()))
-        if delta:
-            union = existing.copy()
-            union.update(delta)
-            command = config_aaa_host(server_type, address, union)
-            if command:
-                commands.append(command)
+        command = config_aaa_host(server_type, address, delta, existing)
+        if command:
+            commands.append(command)
 
     elif state == 'absent':
         intersect = dict(

@@ -1,0 +1,49 @@
+# vyos.py in plugins and module_utils/network covered by these as well
+# remove_default_spec() hit by multiple plays
+
+# hit ComplexList
+- name: get output for single command
+  vyos_command:
+    commands:
+      - show version
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
+      - result.stdout is defined
+      - result.stdout_lines is defined
+
+# hit conditional() - used for declarative intent
+# Note, this can't be run on AWS because fully testing the vyos_interface dependencies
+# requires the ability to create and remove interfaces other than eth0
+- name: enable eth1
+  vyos_interface:
+    name: eth1
+    enabled: True
+    state: present
+  register: result
+
+- name: Check intent arguments
+  vyos_interface:
+    name: eth1
+    state: up
+  register: result
+
+- name: Check intent arguments (failed condition)
+  vyos_interface:
+    name: eth1
+    state: down
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+      - "result.failed == true"
+      - "'state eq(down)' in result.failed_conditions"
+
+- name: Config + intent
+  vyos_interface:
+    name: eth1
+    enabled: False
+    state: down

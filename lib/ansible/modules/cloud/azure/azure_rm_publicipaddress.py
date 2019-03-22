@@ -11,7 +11,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -36,36 +36,59 @@ options:
             - Control whether the assigned Public IP remains permanently assigned to the object. If not
               set to 'Static', the IP address my changed anytime an associated virtual machine is power cycled.
         choices:
-            - Dynamic
+            - dynamic
+            - static
             - Static
-        default: Dynamic
-        required: false
-    domain_name_label:
+            - Dynamic
+        default: dynamic
+    domain_name:
         description:
             - The customizable portion of the FQDN assigned to public IP address. This is an explicit setting. If
               no value is provided, any existing value will be removed on an existing public IP.
         aliases:
             - domain_name_label
-        required: false
-        default: null
     name:
         description:
             - Name of the Public IP.
         required: true
     state:
         description:
-            - Assert the state of the Public IP. Use 'present' to create or update a and
-              'absent' to delete.
+            - Assert the state of the Public IP. Use C(present) to create or update a and
+              C(absent) to delete.
         default: present
         choices:
             - absent
             - present
-        required: false
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
-        default: resource_group location
-        required: false
+    sku:
+        description:
+            - The public IP address SKU.
+        choices:
+            - basic
+            - standard
+            - Basic
+            - Standard
+        version_added: 2.6
+    ip_tags:
+        description:
+            - List of IpTag associated with the public IP address.
+            - Each element should contain type:value pair.
+        version_added: 2.8
+    idle_timeout:
+        description:
+            - Idle timeout in minutes.
+        type: int
+        version_added: 2.8
+    version:
+        description:
+            - The public IP address version.
+        choices:
+            - ipv4
+            - ipv6
+        default: ipv4
+        version_added: 2.8
 
 extends_documentation_fragment:
     - azure
@@ -79,14 +102,14 @@ author:
 EXAMPLES = '''
     - name: Create a public ip address
       azure_rm_publicipaddress:
-        resource_group: testing
+        resource_group: myResourceGroup
         name: my_public_ip
-        allocation_method: Static
+        allocation_method: static
         domain_name: foobar
 
     - name: Delete public ip
       azure_rm_publicipaddress:
-        resource_group: testing
+        resource_group: myResourceGroup
         name: my_public_ip
         state: absent
 '''
@@ -104,17 +127,17 @@ state:
         "location": "westus",
         "name": "publicip002",
         "provisioning_state": "Succeeded",
-        "public_ip_allocation_method": "Static",
+        "public_ip_allocation_method": "static",
         "tags": {},
         "type": "Microsoft.Network/publicIPAddresses"
     }
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+from ansible.module_utils._text import to_native
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.network.models import PublicIPAddress, PublicIPAddressDnsSettings
 except ImportError:
     # This is handled in azure_rm_common
     pass
@@ -126,18 +149,28 @@ def pip_to_dict(pip):
         type=pip.type,
         location=pip.location,
         tags=pip.tags,
-        public_ip_allocation_method=pip.public_ip_allocation_method,
+        public_ip_allocation_method=pip.public_ip_allocation_method.lower(),
+        public_ip_address_version=pip.public_ip_address_version.lower(),
         dns_settings=dict(),
         ip_address=pip.ip_address,
         idle_timeout_in_minutes=pip.idle_timeout_in_minutes,
         provisioning_state=pip.provisioning_state,
-        etag=pip.etag
+        etag=pip.etag,
+        sku=pip.sku.name
     )
     if pip.dns_settings:
         result['dns_settings']['domain_name_label'] = pip.dns_settings.domain_name_label
         result['dns_settings']['fqdn'] = pip.dns_settings.fqdn
         result['dns_settings']['reverse_fqdn'] = pip.dns_settings.reverse_fqdn
+    if pip.ip_tags:
+        result['ip_tags'] = [dict(type=to_native(x.ip_tag_type), value=to_native(x.tag)) for x in pip.ip_tags]
     return result
+
+
+ip_tag_spec = dict(
+    type=dict(type='str', required=True),
+    value=dict(type='str', required=True)
+)
 
 
 class AzureRMPublicIPAddress(AzureRMModuleBase):
@@ -149,8 +182,12 @@ class AzureRMPublicIPAddress(AzureRMModuleBase):
             name=dict(type='str', required=True),
             state=dict(type='str', default='present', choices=['present', 'absent']),
             location=dict(type='str'),
-            allocation_method=dict(type='str', default='Dynamic', choices=['Dynamic', 'Static']),
+            version=dict(type='str', default='ipv4', choices=['ipv4', 'ipv6']),
+            allocation_method=dict(type='str', default='dynamic', choices=['Dynamic', 'Static', 'dynamic', 'static']),
             domain_name=dict(type='str', aliases=['domain_name_label']),
+            sku=dict(type='str', choices=['Basic', 'Standard', 'basic', 'standard']),
+            ip_tags=dict(type='list', elements='dict', options=ip_tag_spec),
+            idle_timeout=dict(type='int')
         )
 
         self.resource_group = None
@@ -160,6 +197,10 @@ class AzureRMPublicIPAddress(AzureRMModuleBase):
         self.tags = None
         self.allocation_method = None
         self.domain_name = None
+        self.sku = None
+        self.version = None
+        self.ip_tags = None
+        self.idle_timeout = None
 
         self.results = dict(
             changed=False,
@@ -178,6 +219,11 @@ class AzureRMPublicIPAddress(AzureRMModuleBase):
         changed = False
         pip = None
 
+        # capitalize the sku and allocation_method. basic => Basic, Basic => Basic.
+        self.allocation_method = self.allocation_method.capitalize() if self.allocation_method else None
+        self.sku = self.sku.capitalize() if self.sku else None
+        self.version = 'IPv4' if self.version == 'ipv4' else 'IPv6'
+
         resource_group = self.get_resource_group(self.resource_group)
         if not self.location:
             # Set default location
@@ -190,15 +236,36 @@ class AzureRMPublicIPAddress(AzureRMModuleBase):
             self.log("PIP {0} exists".format(self.name))
             if self.state == 'present':
                 results = pip_to_dict(pip)
-                if self.domain_name != results['dns_settings'].get('domain_name_label'):
+                domain_lable = results['dns_settings'].get('domain_name_label')
+                if self.domain_name is not None and ((self.domain_name or domain_lable) and self.domain_name != domain_lable):
                     self.log('CHANGED: domain_name_label')
                     changed = True
-                    results['dns_settings']['domain_name_label'] =self.domain_name
+                    results['dns_settings']['domain_name_label'] = self.domain_name
 
-                if self.allocation_method != results['public_ip_allocation_method']:
+                if self.allocation_method.lower() != results['public_ip_allocation_method'].lower():
                     self.log("CHANGED: allocation_method")
                     changed = True
                     results['public_ip_allocation_method'] = self.allocation_method
+
+                if self.sku and self.sku != results['sku']:
+                    self.log("CHANGED: sku")
+                    changed = True
+                    results['sku'] = self.sku
+
+                if self.version.lower() != results['public_ip_address_version'].lower():
+                    self.log("CHANGED: version")
+                    changed = True
+                    results['public_ip_address_version'] = self.version
+
+                if self.idle_timeout and self.idle_timeout != results['idle_timeout_in_minutes']:
+                    self.log("CHANGED: idle_timeout")
+                    changed = True
+                    results['idle_timeout_in_minutes'] = self.idle_timeout
+
+                if str(self.ip_tags or []) != str(results.get('ip_tags') or []):
+                    self.log("CHANGED: ip_tags")
+                    changed = True
+                    results['ip_tags'] = self.ip_tags
 
                 update_tags, results['tags'] = self.update_tags(results['tags'])
                 if update_tags:
@@ -223,25 +290,30 @@ class AzureRMPublicIPAddress(AzureRMModuleBase):
             if self.state == 'present':
                 if not pip:
                     self.log("Create new Public IP {0}".format(self.name))
-                    pip = PublicIPAddress(
+                    pip = self.network_models.PublicIPAddress(
                         location=self.location,
-                        public_ip_allocation_method=self.allocation_method,
+                        public_ip_address_version=self.version,
+                        public_ip_allocation_method=self.allocation_method if self.version == 'IPv4' else None,
+                        sku=self.network_models.PublicIPAddressSku(name=self.sku) if self.sku else None,
+                        idle_timeout_in_minutes=self.idle_timeout if self.idle_timeout and self.idle_timeout > 0 else None
                     )
+                    if self.ip_tags:
+                        pip.ip_tags = [self.network_models.IpTag(ip_tag_type=x.type, tag=x.value) for x in self.ip_tags]
                     if self.tags:
                         pip.tags = self.tags
                     if self.domain_name:
-                        pip.dns_settings = PublicIPAddressDnsSettings(
+                        pip.dns_settings = self.network_models.PublicIPAddressDnsSettings(
                             domain_name_label=self.domain_name
                         )
                 else:
                     self.log("Update Public IP {0}".format(self.name))
-                    pip = PublicIPAddress(
+                    pip = self.network_models.PublicIPAddress(
                         location=results['location'],
                         public_ip_allocation_method=results['public_ip_allocation_method'],
                         tags=results['tags']
                     )
                     if self.domain_name:
-                        pip.dns_settings = PublicIPAddressDnsSettings(
+                        pip.dns_settings = self.network_models.PublicIPAddressDnsSettings(
                             domain_name_label=self.domain_name
                         )
                 self.results['state'] = self.create_or_update_pip(pip)
@@ -272,6 +344,7 @@ class AzureRMPublicIPAddress(AzureRMModuleBase):
 
 def main():
     AzureRMPublicIPAddress()
+
 
 if __name__ == '__main__':
     main()

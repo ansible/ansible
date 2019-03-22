@@ -1,0 +1,9 @@
+fail_json message: Error: interface eth0 not found
+options:
+{
+    "address_family": "inet6",
+    "iface": "eth0",
+    "option": "post-up",
+    "state": "present",
+    "value": "XXXX_ipv6"
+}

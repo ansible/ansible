@@ -1,23 +1,9 @@
 #!powershell
-# (c) 2017, Dag Wieers <dag@wieers.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# WANT_JSON
-# POWERSHELL_COMMON
+# Copyright: (c) 2017, Dag Wieers (@dagwieers) <dag@wieers.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+#AnsibleRequires -CSharpUtil Ansible.Basic
 
 Function New-TempFile {
     Param ([string]$path, [string]$prefix, [string]$suffix, [string]$type, [bool]$checkmode)
@@ -30,40 +16,56 @@ Function New-TempFile {
         $randomname = [System.IO.Path]::GetRandomFileName()
         $temppath = (Join-Path -Path $path -ChildPath "$prefix$randomname$suffix")
         Try {
-            New-Item -Path $temppath -ItemType $type -WhatIf:$checkmode | Out-Null
+            $file = New-Item -Path $temppath -ItemType $type -WhatIf:$checkmode
+            # Makes sure we get the full absolute path of the created temp file and not a relative or DOS 8.3 dir
+            if (-not $checkmode) {
+                $temppath = $file.FullName
+            } else {
+                # Just rely on GetFulLpath for check mode
+                $temppath = [System.IO.Path]::GetFullPath($temppath)
+            }
         } Catch {
             $temppath = $null
-            $error = $_.Exception.Message
+            $error = $_
         }
-    } until ($temppath -ne $null -or $attempt -ge 5)
+    } until (($null -ne $temppath) -or ($attempt -ge 5))
 
     # If it fails 5 times, something is wrong and we have to report the details
-    if ($temppath -eq $null) {
-        Fail-Json @{} "No random temporary file worked in $attempt attempts. Error: $error"
+    if ($null -eq $temppath) {
+        $module.FailJson("No random temporary file worked in $attempt attempts. Error: $($error.Exception.Message)", $error)
     }
 
-    return $temppath
+    return $temppath.ToString()
 }
 
-$ErrorActionPreference = "Stop"
+$spec = @{
+    options = @{
+        path = @{ type='path'; default='%TEMP%'; aliases=@( 'dest' ) }
+        state = @{ type='str'; default='file'; choices=@( 'directory', 'file') }
+        prefix = @{ type='str'; default='ansible.' }
+        suffix = @{ type='str' }
+    }
+    supports_check_mode = $true
+}
 
-$params = Parse-Args $args -supports_check_mode $true
-$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
+$module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
 
-$path = Get-AnsibleParam -obj $params -name "path" -type "path" -default "%TEMP%" -aliases "dest"
-$state = Get-AnsibleParam -obj $params -name "state" -type "string" -default "file" -validateset "file","directory"
-$prefix = Get-AnsibleParam -obj $params -name "prefix" -type "string" -default "ansible."
-$suffix = Get-AnsibleParam -obj $params -name "suffix" -type "string"
+$path = $module.Params.path
+$state = $module.Params.state
+$prefix = $module.Params.prefix
+$suffix = $module.Params.suffix
 
 # Expand environment variables on non-path types
-$prefix = Expand-Environment($prefix)
-$suffix = Expand-Environment($suffix)
-
-$result = @{
-    changed = $true
-    state = $state
+if ($null -ne $prefix) {
+    $prefix = [System.Environment]::ExpandEnvironmentVariables($prefix)
+}
+if ($null -ne $suffix) {
+    $suffix = [System.Environment]::ExpandEnvironmentVariables($suffix)
 }
 
-$result.path = New-TempFile -Path $path -Prefix $prefix -Suffix $suffix -Type $state -CheckMode $check_mode
+$module.Result.changed = $true
+$module.Result.state = $state
 
-Exit-Json $result
+$module.Result.path = New-TempFile -Path $path -Prefix $prefix -Suffix $suffix -Type $state -CheckMode $module.CheckMode
+
+$module.ExitJson()

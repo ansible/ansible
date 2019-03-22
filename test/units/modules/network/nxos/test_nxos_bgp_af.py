@@ -19,9 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.nxos import nxos_bgp_af
 from .nxos_module import TestNxosModule, load_fixture, set_module_args
 
@@ -31,6 +29,8 @@ class TestNxosBgpAfModule(TestNxosModule):
     module = nxos_bgp_af
 
     def setUp(self):
+        super(TestNxosBgpAfModule, self).setUp()
+
         self.mock_load_config = patch('ansible.modules.network.nxos.nxos_bgp_af.load_config')
         self.load_config = self.mock_load_config.start()
 
@@ -38,6 +38,7 @@ class TestNxosBgpAfModule(TestNxosModule):
         self.get_config = self.mock_get_config.start()
 
     def tearDown(self):
+        super(TestNxosBgpAfModule, self).tearDown()
         self.mock_load_config.stop()
         self.mock_get_config.stop()
 
@@ -88,7 +89,9 @@ class TestNxosBgpAfModule(TestNxosModule):
                              dampening_half_time=5, dampening_suppress_time=2000,
                              dampening_reuse_time=1900, dampening_max_suppress_time=10))
         result = self.execute_module(failed=True)
-        self.assertEqual(result['msg'], 'dampening_routemap cannot be used with the dampening_half_time param')
+        self.assertEqual(result['msg'], 'parameters are mutually exclusive: dampening_routemap|dampening_half_time, '
+                                        'dampening_routemap|dampening_suppress_time, dampening_routemap|dampening_reuse_time, '
+                                        'dampening_routemap|dampening_max_suppress_time')
 
     def test_nxos_bgp_af_client(self):
         set_module_args(dict(asn=65535, afi='ipv4', safi='unicast',

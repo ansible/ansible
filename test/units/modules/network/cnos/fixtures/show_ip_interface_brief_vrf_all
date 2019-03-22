@@ -1,0 +1,10 @@
+Interface       IP-Address      Admin-Status Link-Status VRF
+Ethernet1/5     20.131.1.1      up           down        default
+Ethernet1/6     20.131.2.1      up           down        default
+Ethernet1/7     20.141.1.1      up           down        default
+Ethernet1/8     20.141.2.1      up           down        default
+Ethernet1/11    1.1.1.2         up           down        default
+Ethernet1/12    100.10.10.10    up           down        default
+Ethernet1/13    10.241.107.54   up           down        default
+mgmt0           10.241.107.39   up           up          management
+

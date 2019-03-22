@@ -24,7 +24,7 @@ author: Jasper Lievisse Adriaanse (@jasperla)
 options:
     force:
         required: false
-        choices: [ yes, no ]
+        type: bool
         description:
           - Force a given operation (where supported by imgadm(1M)).
     pool:
@@ -99,17 +99,17 @@ RETURN = '''
 source:
     description: Source that is managed.
     returned: When not managing an image.
-    type: string
+    type: str
     sample: https://datasets.project-fifo.net
 uuid:
     description: UUID for an image operated on.
     returned: When not managing an image source.
-    type: string
+    type: str
     sample: 70e3ae72-96b6-11e6-9056-9737fd4d0764
 state:
     description: State of the target, after execution.
     returned: success
-    type: string
+    type: str
     sample: 'present'
 '''
 
@@ -145,7 +145,7 @@ class Imgadm(object):
 
     # Helper method to massage stderr
     def errmsg(self, stderr):
-        match = re.match('^imgadm .*?: error \(\w+\): (.*): .*', stderr)
+        match = re.match(r'^imgadm .*?: error \(\w+\): (.*): .*', stderr)
         if match:
             return match.groups()[0]
         else:
@@ -236,7 +236,7 @@ class Imgadm(object):
             if rc != 0:
                 self.module.fail_json(msg='Failed to import image: {0}'.format(self.errmsg(stderr)))
 
-            regex = 'Image {0} \(.*\) is already installed, skipping'.format(self.uuid)
+            regex = r'Image {0} \(.*\) is already installed, skipping'.format(self.uuid)
             if re.match(regex, stdout):
                 self.changed = False
 

@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: netapp_e_storagepool
-short_description: Manage disk groups and disk pools
+short_description: NetApp E-Series manage disk groups and disk pools
 version_added: '2.2'
 description:
     - Create or remove disk groups and disk pools for NetApp E-series storage arrays.
@@ -57,6 +57,7 @@ options:
   criteria_drive_require_fde:
     description:
     - Whether full disk encryption ability is required for drives to be added to the storage pool
+    type: bool
   raid_level:
     required: true
     choices: ['raidAll', 'raid0', 'raid1', 'raid3', 'raid5', 'raid6', 'raidDiskPool']
@@ -64,12 +65,12 @@ options:
     - "Only required when the requested state is 'present'.  The RAID level of the storage pool to be created."
   erase_secured_drives:
     required: false
-    choices: ['true', 'false']
+    type: bool
     description:
     - Whether to erase secured disks before adding to storage pool
   secure_pool:
     required: false
-    choices: ['true', 'false']
+    type: bool
     description:
     - Whether to convert to a secure storage pool. Will only work if all drives in the pool are security capable.
   reserve_drive_count:
@@ -81,6 +82,7 @@ options:
     default: False
     description:
     - Prior to removing a storage pool, delete all volumes in the pool.
+    type: bool
 author: Kevin Hulquest (@hulquest)
 
 '''
@@ -99,7 +101,7 @@ RETURN = '''
 msg:
     description: Success message
     returned: success
-    type: string
+    type: str
     sample: Json facts for the pool that was created.
 '''
 
@@ -109,7 +111,7 @@ from traceback import format_exc
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netapp import request, eseries_host_argument_spec
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 
 
 def select(predicate, iterable):
@@ -121,12 +123,14 @@ def select(predicate, iterable):
             yield x
 
 
+def _identity(obj):
+    return obj
+
+
 class GroupBy(object):
     # python 2, 3 generic grouping.
     def __init__(self, iterable, key=None):
-        if key is None:
-            key = lambda x: x
-        self.keyfunc = key
+        self.keyfunc = key if key else _identity
         self.it = iter(iterable)
         self.tgtkey = self.currkey = self.currvalue = object()
 
@@ -143,7 +147,10 @@ class GroupBy(object):
     def _grouper(self, tgtkey):
         while self.currkey == tgtkey:
             yield self.currvalue
-            self.currvalue = next(self.it)  # Exit on StopIteration
+            try:
+                self.currvalue = next(self.it)  # Exit on StopIteration
+            except StopIteration:
+                return
             self.currkey = self.keyfunc(self.currvalue)
 
 
@@ -378,17 +385,15 @@ class NetAppESeriesStoragePool(object):
             (rc, resp) = request(self.api_url + "/storage-systems/%s/storage-pools" % (self.ssid),
                                  headers=dict(Accept="application/json"), url_username=self.api_usr,
                                  url_password=self.api_pwd, validate_certs=self.validate_certs)
-        except Exception:
-            err = get_exception()
+        except Exception as err:
             rc = err.args[0]
             if rc == 404 and self.state == 'absent':
                 self.module.exit_json(
                     msg="Storage pool [%s] did not exist." % (self.name))
             else:
-                err = get_exception()
                 self.module.exit_json(
                     msg="Failed to get storage pools. Array id [%s].  Error[%s]. State[%s]. RC[%s]." %
-                        (self.ssid, str(err), self.state, rc))
+                        (self.ssid, to_native(err), self.state, rc))
 
         self.debug("searching for storage pool '%s'", storage_pool_name)
 
@@ -433,10 +438,9 @@ class NetAppESeriesStoragePool(object):
             (rc, drives_resp) = request(self.api_url + "/storage-systems/%s/drives" % (self.ssid), method='GET',
                                         url_username=self.api_usr, url_password=self.api_pwd,
                                         validate_certs=self.validate_certs)
-        except:
-            err = get_exception()
+        except Exception as err:
             self.module.exit_json(
-                msg="Failed to fetch disk drives. Array id [%s].  Error[%s]." % (self.ssid, str(err)))
+                msg="Failed to fetch disk drives. Array id [%s].  Error[%s]." % (self.ssid, to_native(err)))
 
         try:
             candidate_set = self.filter_drives(drives_resp,
@@ -449,10 +453,9 @@ class NetAppESeriesStoragePool(object):
                                                interface_type=self.criteria_drive_interface_type,
                                                fde_required=self.criteria_drive_require_fde
                                                )
-        except:
-            err = get_exception()
+        except Exception as err:
             self.module.fail_json(
-                msg="Failed to allocate adequate drive count. Id [%s]. Error [%s]." % (self.ssid, str(err)))
+                msg="Failed to allocate adequate drive count. Id [%s]. Error [%s]." % (self.ssid, to_native(err)))
 
         disk_ids = [d['id'] for d in candidate_set]
 
@@ -476,13 +479,12 @@ class NetAppESeriesStoragePool(object):
                                  url_username=self.api_usr, url_password=self.api_pwd,
                                  validate_certs=self.validate_certs,
                                  timeout=120)
-        except:
-            err = get_exception()
+        except Exception as err:
             pool_id = self.pool_detail['id']
             self.module.exit_json(
                 msg="Failed to create storage pool. Pool id [%s]. Array id [%s].  Error[%s]." % (pool_id,
                                                                                                  self.ssid,
-                                                                                                 str(err)))
+                                                                                                 to_native(err)))
 
         self.pool_detail = self.get_storage_pool(self.name)
 
@@ -494,13 +496,12 @@ class NetAppESeriesStoragePool(object):
                     data=json.dumps(secure_pool_data), headers=self.post_headers, method='POST',
                     url_username=self.api_usr,
                     url_password=self.api_pwd, validate_certs=self.validate_certs, timeout=120, ignore_errors=True)
-            except:
-                err = get_exception()
+            except Exception as err:
                 pool_id = self.pool_detail['id']
                 self.module.exit_json(
                     msg="Failed to update storage pool. Pool id [%s]. Array id [%s].  Error[%s]." % (pool_id,
                                                                                                      self.ssid,
-                                                                                                     str(err)))
+                                                                                                     to_native(err)))
 
     @property
     def needs_raid_level_migration(self):
@@ -525,12 +526,11 @@ class NetAppESeriesStoragePool(object):
                 data=json.dumps(sp_raid_migrate_req), headers=self.post_headers, method='POST',
                 url_username=self.api_usr,
                 url_password=self.api_pwd, validate_certs=self.validate_certs, timeout=120)
-        except:
-            err = get_exception()
+        except Exception as err:
             pool_id = self.pool_detail['id']
             self.module.exit_json(
                 msg="Failed to change the raid level of storage pool. Pool id [%s]. Array id [%s].  Error[%s]." % (
-                    pool_id, self.ssid, str(err)))
+                    pool_id, self.ssid, to_native(err)))
 
     @property
     def sp_drives(self, exclude_hotspares=True):
@@ -541,11 +541,10 @@ class NetAppESeriesStoragePool(object):
                 (rc, resp) = request(self.api_url + "/storage-systems/%s/drives" % (self.ssid), method='GET',
                                      url_username=self.api_usr, url_password=self.api_pwd,
                                      validate_certs=self.validate_certs)
-            except:
-                err = get_exception()
+            except Exception as err:
                 pool_id = self.pool_detail['id']
                 self.module.exit_json(
-                    msg="Failed to fetch disk drives. Pool id [%s]. Array id [%s].  Error[%s]." % (pool_id, self.ssid, str(err)))
+                    msg="Failed to fetch disk drives. Pool id [%s]. Array id [%s].  Error[%s]." % (pool_id, self.ssid, to_native(err)))
 
             sp_id = self.pool_detail['id']
             if exclude_hotspares:
@@ -584,12 +583,11 @@ class NetAppESeriesStoragePool(object):
                                                                                 self.pool_detail['id']),
                 method='GET', url_username=self.api_usr, url_password=self.api_pwd, validate_certs=self.validate_certs,
                 timeout=120)
-        except:
-            err = get_exception()
+        except Exception as err:
             pool_id = self.pool_detail['id']
             self.module.exit_json(
                 msg="Failed to fetch candidate drives for storage pool. Pool id [%s]. Array id [%s].  Error[%s]." % (
-                    pool_id, self.ssid, str(err)))
+                    pool_id, self.ssid, to_native(err)))
 
         current_drive_count = len(self.sp_drives)
         current_capacity_bytes = int(self.pool_detail['totalRaidedSpace'])  # TODO: is this the right attribute to use?
@@ -647,14 +645,12 @@ class NetAppESeriesStoragePool(object):
                                                                                 self.pool_detail['id']),
                 data=json.dumps(sp_expand_req), headers=self.post_headers, method='POST', url_username=self.api_usr,
                 url_password=self.api_pwd, validate_certs=self.validate_certs, timeout=120)
-        except:
-            err = get_exception()
+        except Exception as err:
             pool_id = self.pool_detail['id']
             self.module.exit_json(
                 msg="Failed to add drives to storage pool. Pool id [%s]. Array id [%s].  Error[%s]." % (pool_id,
                                                                                                         self.ssid,
-                                                                                                        str(
-                                                                                                            err)))
+                                                                                                        to_native(err)))
 
             # TODO: check response
             # TODO: support blocking wait?
@@ -673,12 +669,11 @@ class NetAppESeriesStoragePool(object):
                                                                                    self.pool_detail['id']),
                 data=json.dumps(drive_list), headers=self.post_headers, method='POST', url_username=self.api_usr,
                 url_password=self.api_pwd, validate_certs=self.validate_certs, timeout=120)
-        except:
-            err = get_exception()
+        except Exception as err:
             pool_id = self.pool_detail['id']
             self.module.exit_json(
                 msg="Failed to remove drives from storage pool. Pool id [%s]. Array id [%s].  Error[%s]." % (
-                    pool_id, self.ssid, str(err)))
+                    pool_id, self.ssid, to_native(err)))
 
     def update_reserve_drive_count(self, qty):
         data = dict(reservedDriveCount=qty)
@@ -687,14 +682,12 @@ class NetAppESeriesStoragePool(object):
                 self.api_url + "/storage-systems/%s/storage-pools/%s" % (self.ssid, self.pool_detail['id']),
                 data=json.dumps(data), headers=self.post_headers, method='POST', url_username=self.api_usr,
                 url_password=self.api_pwd, validate_certs=self.validate_certs, timeout=120)
-        except:
-            err = get_exception()
+        except Exception as err:
             pool_id = self.pool_detail['id']
             self.module.exit_json(
                 msg="Failed to update reserve drive count. Pool id [%s]. Array id [%s].  Error[%s]." % (pool_id,
                                                                                                         self.ssid,
-                                                                                                        str(
-                                                                                                            err)))
+                                                                                                        to_native(err)))
 
     def apply(self):
         changed = False
@@ -775,11 +768,10 @@ class NetAppESeriesStoragePool(object):
                                 data=json.dumps(secure_pool_data), headers=self.post_headers, method='POST',
                                 url_username=self.api_usr, url_password=self.api_pwd,
                                 validate_certs=self.validate_certs, timeout=120, ignore_errors=True)
-                        except:
-                            err = get_exception()
+                        except Exception as err:
                             self.module.exit_json(
                                 msg="Failed to delete storage pool. Pool id [%s]. Array id [%s].  Error[%s]." % (
-                                    pool_id, self.ssid, str(err)))
+                                    pool_id, self.ssid, to_native(err)))
 
                         if int(retc) == 422:
                             self.module.fail_json(
@@ -797,12 +789,11 @@ class NetAppESeriesStoragePool(object):
                         method='DELETE',
                         url_username=self.api_usr, url_password=self.api_pwd, validate_certs=self.validate_certs,
                         timeout=120)
-                except:
-                    err = get_exception()
+                except Exception as err:
                     self.module.exit_json(
                         msg="Failed to delete storage pool. Pool id [%s]. Array id [%s].  Error[%s]." % (pool_id,
                                                                                                          self.ssid,
-                                                                                                         str(err)))
+                                                                                                         to_native(err)))
 
         self.module.exit_json(changed=changed, **self.pool_detail)
 
@@ -811,9 +802,8 @@ def main():
     sp = NetAppESeriesStoragePool()
     try:
         sp.apply()
-    except Exception:
-        e = get_exception()
-        sp.debug("Exception in apply(): \n%s", format_exc(e))
+    except Exception as e:
+        sp.debug("Exception in apply(): \n%s", format_exc())
         raise
 
 

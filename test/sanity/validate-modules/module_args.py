@@ -17,101 +17,117 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import imp
+import json
+import os
+import subprocess
 import sys
 
-from modulefinder import ModuleFinder
+from contextlib import contextmanager
 
-import mock
+from ansible.module_utils.six import reraise
 
-
-MODULE_CLASSES = [
-    'ansible.module_utils.basic.AnsibleModule',
-    'ansible.module_utils.vca.VcaAnsibleModule',
-    'ansible.module_utils.nxos.NetworkModule',
-    'ansible.module_utils.eos.NetworkModule',
-    'ansible.module_utils.ios.NetworkModule',
-    'ansible.module_utils.iosxr.NetworkModule',
-    'ansible.module_utils.junos.NetworkModule',
-    'ansible.module_utils.openswitch.NetworkModule',
-]
+from utils import find_executable
 
 
 class AnsibleModuleCallError(RuntimeError):
     pass
 
 
-def add_mocks(filename):
-    gp = mock.patch('ansible.module_utils.basic.get_platform').start()
-    gp.return_value = 'linux'
+class AnsibleModuleImportError(ImportError):
+    pass
 
-    module_mock = mock.MagicMock()
-    mocks = []
-    for module_class in MODULE_CLASSES:
-        mocks.append(
-            mock.patch('ansible.module_utils.basic.AnsibleModule',
-                       new=module_mock)
-        )
-    for m in mocks:
-        p = m.start()
-        p.side_effect = AnsibleModuleCallError()
 
-    finder = ModuleFinder()
+class _FakeAnsibleModuleInit:
+    def __init__(self):
+        self.args = tuple()
+        self.kwargs = {}
+        self.called = False
+
+    def __call__(self, *args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
+        self.called = True
+        raise AnsibleModuleCallError('AnsibleModuleCallError')
+
+
+def _fake_load_params():
+    pass
+
+
+@contextmanager
+def setup_env(filename):
+    # Used to clean up imports later
+    pre_sys_modules = list(sys.modules.keys())
+
+    fake = _FakeAnsibleModuleInit()
+    module = __import__('ansible.module_utils.basic').module_utils.basic
+    _original_init = module.AnsibleModule.__init__
+    _original_load_params = module._load_params
+    setattr(module.AnsibleModule, '__init__', fake)
+    setattr(module, '_load_params', _fake_load_params)
+
     try:
-        finder.run_script(filename)
-    except:
-        pass
+        yield fake
+    finally:
+        setattr(module.AnsibleModule, '__init__', _original_init)
+        setattr(module, '_load_params', _original_load_params)
 
-    sys_mock = mock.MagicMock()
-    sys_mock.__version__ = '0.0.0'
-    sys_mocks = []
-    for module, sources in finder.badmodules.items():
-        if module in sys.modules:
-            continue
-        if [s for s in sources if s[:7] in ['ansible', '__main_']]:
-            parts = module.split('.')
-            for i in range(len(parts)):
-                dotted = '.'.join(parts[:i + 1])
-                # Never mock out ansible or ansible.module_utils
-                # we may get here if a specific module_utils file needed mocked
-                if dotted in ('ansible', 'ansible.module_utils',):
-                    continue
-                sys.modules[dotted] = sys_mock
-                sys_mocks.append(dotted)
-
-    return module_mock, mocks, sys_mocks
+        # Clean up imports to prevent issues with mutable data being used in modules
+        for k in list(sys.modules.keys()):
+            # It's faster if we limit to items in ansible.module_utils
+            # But if this causes problems later, we should remove it
+            if k not in pre_sys_modules and k.startswith('ansible.module_utils.'):
+                del sys.modules[k]
 
 
-def remove_mocks(mocks, sys_mocks):
-    for m in mocks:
-        m.stop()
+def get_ps_argument_spec(filename):
+    # This uses a very small skeleton of Ansible.Basic.AnsibleModule to return the argspec defined by the module. This
+    # is pretty rudimentary and will probably require something better going forward.
+    pwsh = find_executable('pwsh')
+    if not pwsh:
+        raise FileNotFoundError('Required program for PowerShell arg spec inspection "pwsh" not found.')
 
-    for m in sys_mocks:
+    script_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'ps_argspec.ps1')
+    proc = subprocess.Popen([script_path, filename], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
+    stdout, stderr = proc.communicate()
+
+    if proc.returncode != 0:
+        raise AnsibleModuleImportError(stderr.decode('utf-8'))
+
+    kwargs = json.loads(stdout)
+
+    # the validate-modules code expects the options spec to be under the argument_spec key not options as set in PS
+    kwargs['argument_spec'] = kwargs.pop('options', {})
+
+    return kwargs['argument_spec'], (), kwargs
+
+
+def get_py_argument_spec(filename):
+    with setup_env(filename) as fake:
         try:
-            del sys.modules[m]
-        except KeyError:
+            # We use ``module`` here instead of ``__main__``
+            # which helps with some import issues in this tool
+            # where modules may import things that conflict
+            mod = imp.load_source('module', filename)
+            if not fake.called:
+                mod.main()
+        except AnsibleModuleCallError:
             pass
+        except Exception as e:
+            reraise(AnsibleModuleImportError, AnsibleModuleImportError('%s' % e), sys.exc_info()[2])
+
+    try:
+        try:
+            # for ping kwargs == {'argument_spec':{'data':{'type':'str','default':'pong'}}, 'supports_check_mode':True}
+            return fake.kwargs['argument_spec'], fake.args, fake.kwargs
+        except KeyError:
+            return fake.args[0], fake.args, fake.kwargs
+    except TypeError:
+        return {}, (), {}
 
 
 def get_argument_spec(filename):
-    module_mock, mocks, sys_mocks = add_mocks(filename)
-
-    try:
-        mod = imp.load_source('module', filename)
-        if not module_mock.call_args:
-            mod.main()
-    except AnsibleModuleCallError:
-        pass
-    except Exception:
-        # We can probably remove this branch, it is here for use while testing
-        pass
-
-    remove_mocks(mocks, sys_mocks)
-
-    try:
-        args, kwargs = module_mock.call_args
-        try:
-            return kwargs['argument_spec']
-        except KeyError:
-            return args[0]
-    except TypeError:
-        return {}
+    if filename.endswith('.py'):
+        return get_py_argument_spec(filename)
+    else:
+        return get_ps_argument_spec(filename)

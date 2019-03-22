@@ -38,21 +38,19 @@ import tempfile
 import shutil
 
 from ansible.errors import AnsibleError
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class Connection(object):
     ''' Func-based connections '''
 
+    has_pipelining = False
+
     def __init__(self, runner, host, port, *args, **kwargs):
         self.runner = runner
         self.host = host
-        self.has_pipelining = False
         # port is unused, this go on func
         self.port = port
 

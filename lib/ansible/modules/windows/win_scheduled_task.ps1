@@ -1,9 +1,8 @@
 #!powershell
-# This file is part of Ansible
 
-# Copyright 2015, Peter Mounce <public@neverrunwithscissors.com>
-# Michael Perzel <michaelperzel@gmail.com>
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2015, Peter Mounce <public@neverrunwithscissors.com>
+# Copyright: (c) 2015, Michael Perzel <michaelperzel@gmail.com>
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
@@ -14,6 +13,7 @@ $ErrorActionPreference = "Stop"
 $params = Parse-Args -arguments $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 $diff_mode = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -default $false
+$_remote_tmp = Get-AnsibleParam $params "_ansible_remote_tmp" -type "path" -default $env:TMP
 
 $name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
 $path = Get-AnsibleParam -obj $params -name "path" -type "str" -default "\"
@@ -62,18 +62,6 @@ $start_when_available = Get-AnsibleParam -obj $params -name "start_when_availabl
 $stop_if_going_on_batteries = Get-AnsibleParam -obj $params -name "stop_if_going_on_batteries" -type "bool"
 $wake_to_run = Get-AnsibleParam -obj $params -name "wake_to_run" -type "bool"
 
-# deprecated action arguments - use actions instead
-$old_arguments = Get-AnsibleParam -obj $params -name "arguments" -type "str" -aliases "argument"
-$old_executable = Get-AnsibleParam -obj $params -name "executable" -type "path" -failifempty ($old_arguments -ne $null) -aliases "execute"
-
-# deprecated principal arguments - use logon_type instead
-$store_password = Get-AnsibleParam -obj $params -name "store_password" -type "bool"
-
-# deprecated trigger arguments - use triggers instead
-$old_days_of_week = Get-AnsibleParam -obj $params -name "days_of_week" -type "list"
-$old_frequency = Get-AnsibleParam -obj $params -name "frequency" -type "str"
-$old_time = Get-AnsibleParam -obj $params -name "time" -type "str"
-
 $result = @{
     changed = $false
 }
@@ -82,7 +70,7 @@ if ($diff_mode) {
     $result.diff = @{}
 }
 
-Add-Type -TypeDefinition @"
+$task_enums = @"
 public enum TASK_ACTION_TYPE // https://msdn.microsoft.com/en-us/library/windows/desktop/aa383553(v=vs.85).aspx
 {
     TASK_ACTION_EXEC          = 0,
@@ -136,26 +124,14 @@ public enum TASK_TRIGGER_TYPE2 // https://msdn.microsoft.com/en-us/library/windo
 }
 "@
 
+$original_tmp = $env:TMP
+$env:TMP = $_remote_tmp
+Add-Type -TypeDefinition $task_enums
+$env:TMP = $original_tmp
+
 ########################
 ### HELPER FUNCTIONS ###
 ########################
-Function ConvertTo-HashtableFromPsCustomObject($object) {
-    if ($object -is [Hashtable]) {
-        return ,$object
-    }
-
-    $hashtable = @{}
-    $object | Get-Member -MemberType *Property | % {
-        $value = $object.$($_.Name)
-        if ($value -is [PSObject]) {
-            $value = ConvertTo-HashtableFromPsCustomObject -object $value
-        }
-        $hashtable.$($_.Name) = $value
-    }
-
-    return ,$hashtable
-}
-
 Function Convert-SnakeToPascalCase($snake) {
     # very basic function to convert snake_case to PascalCase for use in COM
     # objects
@@ -196,6 +172,15 @@ Function Compare-Properties($property_name, $parent_property, $map, $enum_map=$n
     }
 
     return ,$changes
+}
+
+Function Set-PropertyForComObject($com_object, $name, $arg, $value) {
+    $com_name = Convert-SnakeToPascalCase -snake $arg
+    try {
+        $com_object.$com_name = $value
+    } catch {
+        Fail-Json -obj $result -message "failed to set $name property '$com_name' to '$value': $($_.Exception.Message)"
+    }
 }
 
 Function Compare-PropertyList {
@@ -266,11 +251,21 @@ Function Compare-PropertyList {
             # we have more properties than before,just add to the new
             # properties list
             $diff_list = [System.Collections.ArrayList]@()
+
             foreach ($property_arg in $total_args) {
                 if ($new_property.ContainsKey($property_arg)) {
                     $com_name = Convert-SnakeToPascalCase -snake $property_arg
                     $property_value = $new_property.$property_arg
-                    [void]$diff_list.Add("+$com_name=$property_value")
+
+                    if ($property_value -is [Hashtable]) {
+                        foreach ($kv in $property_value.GetEnumerator()) {
+                            $sub_com_name = Convert-SnakeToPascalCase -snake $kv.Key
+                            $sub_property_value = $kv.Value
+                            [void]$diff_list.Add("+$com_name.$sub_com_name=$sub_property_value")
+                        }
+                    } else {
+                        [void]$diff_list.Add("+$com_name=$property_value")
+                    }
                 }
             }
 
@@ -285,7 +280,16 @@ Function Compare-PropertyList {
                     if ($new_property.ContainsKey($property_arg)) {
                         $com_name = Convert-SnakeToPascalCase -snake $property_arg
                         $property_value = $new_property.$property_arg
-                        [void]$diff_list.Add("+$com_name=$property_value")
+
+                        if ($property_value -is [Hashtable]) {
+                            foreach ($kv in $property_value.GetEnumerator()) {
+                                $sub_com_name = Convert-SnakeToPascalCase -snake $kv.Key
+                                $sub_property_value = $kv.Value
+                                [void]$diff_list.Add("+$com_name.$sub_com_name=$sub_property_value")
+                            }
+                        } else {
+                            [void]$diff_list.Add("+$com_name=$property_value")
+                        }
                     }
                 }
             } else {
@@ -295,14 +299,31 @@ Function Compare-PropertyList {
                 [void]$diff_list.Add("+Type=$type")
                 foreach ($property_arg in $total_args) {
                     $com_name = Convert-SnakeToPascalCase -snake $property_arg
+                    $property_value = $new_property.$property_arg
                     $existing_value = $existing_property.$com_name
-                    $new_value = $new_property.$property_arg
 
-                    if ($existing_value -ne $null) {
-                        [void]$diff_list.Add("-$com_name=$existing_value")
-                    }
-                    if ($new_value -ne $null) {
-                        [void]$diff_list.Add("+$com_name=$new_value")
+                    if ($property_value -is [Hashtable]) {
+                        foreach ($kv in $property_value.GetEnumerator()) {
+                            $sub_property_value = $kv.Value
+                            $sub_com_name = Convert-SnakeToPascalCase -snake $kv.Key
+                            $sub_existing_value = $existing_property.$com_name.$sub_com_name
+
+                            if ($sub_property_value -ne $null) {
+                                [void]$diff_list.Add("+$com_name.$sub_com_name=$sub_property_value")
+                            }
+
+                            if ($sub_existing_value -ne $null) {
+                                [void]$diff_list.Add("-$com_name.$sub_com_name=$sub_existing_value")
+                            }
+                        }
+                    } else {
+                        if ($property_value -ne $null) {
+                            [void]$diff_list.Add("+$com_name=$property_value")
+                        }
+
+                        if ($existing_value -ne $null) {
+                            [void]$diff_list.Add("-$com_name=$existing_value")
+                        }
                     }
                 }
             }
@@ -313,15 +334,27 @@ Function Compare-PropertyList {
             $diff_list = [System.Collections.ArrayList]@()
 
             foreach ($property_arg in $total_args) {
-                $new_value = $new_property.$property_arg
                 $com_name = Convert-SnakeToPascalCase -snake $property_arg
+                $property_value = $new_property.$property_arg
                 $existing_value = $existing_property.$com_name
+                
+                if ($property_value -is [Hashtable]) {
+                    foreach ($kv in $property_value.GetEnumerator()) {
+                        $sub_property_value = $kv.Value
+                        
+                        if ($sub_property_value -ne $null) {
+                            $sub_com_name = Convert-SnakeToPascalCase -snake $kv.Key
+                            $sub_existing_value = $existing_property.$com_name.$sub_com_name
 
-                if ($new_value -ne $null) {
-                    if ($new_value -cne $existing_value) {
-                        [void]$diff_list.Add("-$com_name=$existing_value")
-                        [void]$diff_list.Add("+$com_name=$new_value")
+                            if ($sub_property_value -cne $sub_existing_value) {
+                                [void]$diff_list.Add("-$com_name.$sub_com_name=$sub_existing_value")
+                                [void]$diff_list.Add("+$com_name.$sub_com_name=$sub_property_value")
+                            }
+                        }
                     }
+                } elseif ($property_value -ne $null -and $property_value -cne $existing_value) {
+                    [void]$diff_list.Add("-$com_name=$existing_value")
+                    [void]$diff_list.Add("+$com_name=$property_value")
                 }
             }
 
@@ -334,13 +367,18 @@ Function Compare-PropertyList {
         $new_object = $collection.Create($type)
         foreach ($property_arg in $total_args) {
             $new_value = $new_property.$property_arg
-            if ($new_value -ne $null) {
+            if ($new_value -is [Hashtable]) {
                 $com_name = Convert-SnakeToPascalCase -snake $property_arg
-                try {
-                    $new_object.$com_name = $new_value
-                } catch {
-                    Fail-Json -obj $result -message "failed to set $property_name property '$com_name' to '$new_value': $($_.Exception.Message)"
+                $new_object_property = $new_object.$com_name
+    
+                foreach ($kv in $new_value.GetEnumerator()) {
+                    $value = $kv.Value
+                    if ($value -ne $null) {
+                        Set-PropertyForComObject -com_object $new_object_property -name $property_name -arg $kv.Key -value $value
+                    }
                 }
+            } elseif ($new_value -ne $null) {
+                Set-PropertyForComObject -com_object $new_object -name $property_name -arg $property_arg -value $new_value
             }
         }
     }
@@ -543,52 +581,51 @@ Function Compare-Triggers($task_definition) {
         $task_triggers.Clear()
     }
 
-    # TODO: solve repetition, takes in a COM object
     $map = @{
         [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_BOOT = @{
             mandatory = @()
-            optional = @('delay', 'enabled', 'end_boundary', 'execution_time_limit', 'start_boundary')
+            optional = @('delay', 'enabled', 'end_boundary', 'execution_time_limit', 'start_boundary', 'repetition')
         }
         [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_DAILY = @{
             mandatory = @('start_boundary')
-            optional = @('days_interval', 'enabled', 'end_boundary', 'execution_time_limit', 'random_delay')
+            optional = @('days_interval', 'enabled', 'end_boundary', 'execution_time_limit', 'random_delay', 'repetition')
         }
         [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_EVENT = @{
             mandatory = @('subscription')
             # TODO: ValueQueries is a COM object
-            optional = @('delay', 'enabled', 'end_boundary', 'execution_time_limit', 'start_boundary')
+            optional = @('delay', 'enabled', 'end_boundary', 'execution_time_limit', 'start_boundary', 'repetition')
         }
         [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_IDLE = @{
             mandatory = @()
-            optional = @('enabled', 'end_boundary', 'execution_time_limit', 'start_boundary')
+            optional = @('enabled', 'end_boundary', 'execution_time_limit', 'start_boundary', 'repetition')
         }
         [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_LOGON = @{
             mandatory = @()
-            optional = @('delay', 'enabled', 'end_boundary', 'execution_time_limit', 'start_boundary', 'user_id')
+            optional = @('delay', 'enabled', 'end_boundary', 'execution_time_limit', 'start_boundary', 'user_id', 'repetition')
         }
         [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_MONTHLYDOW = @{
             mandatory = @('start_boundary')
-            optional = @('days_of_week', 'enabled', 'end_boundary', 'execution_time_limit', 'months_of_year', 'random_delay', 'run_on_last_week_of_month', 'weeks_of_month')
+            optional = @('days_of_week', 'enabled', 'end_boundary', 'execution_time_limit', 'months_of_year', 'random_delay', 'run_on_last_week_of_month', 'weeks_of_month', 'repetition')
         }
         [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_MONTHLY = @{
             mandatory = @('days_of_month', 'start_boundary')
-            optional = @('enabled', 'end_boundary', 'execution_time_limit', 'months_of_year', 'random_delay', 'run_on_last_day_of_month', 'start_boundary')
+            optional = @('enabled', 'end_boundary', 'execution_time_limit', 'months_of_year', 'random_delay', 'run_on_last_day_of_month', 'start_boundary', 'repetition')
         }
         [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_REGISTRATION = @{
             mandatory = @()
-            optional = @('delay', 'enabled', 'end_boundary', 'execution_time_limit', 'start_boundary')
+            optional = @('delay', 'enabled', 'end_boundary', 'execution_time_limit', 'start_boundary', 'repetition')
         }
         [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_TIME = @{
             mandatory = @('start_boundary')
-            optional = @('enabled', 'end_boundary', 'execution_time_limit', 'random_delay')
+            optional = @('enabled', 'end_boundary', 'execution_time_limit', 'random_delay', 'repetition')
         }
         [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_WEEKLY = @{
             mandatory = @('days_of_week', 'start_boundary')
-            optional = @('enabled', 'end_boundary', 'execution_time_limit', 'random_delay', 'weeks_interval')
+            optional = @('enabled', 'end_boundary', 'execution_time_limit', 'random_delay', 'weeks_interval', 'repetition')
         }
         [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_SESSION_STATE_CHANGE = @{
             mandatory = @('days_of_week', 'start_boundary')
-            optional = @('delay', 'enabled', 'end_boundary', 'execution_time_limit', 'state_change', 'user_id')
+            optional = @('delay', 'enabled', 'end_boundary', 'execution_time_limit', 'state_change', 'user_id', 'repetition')
         }
     }
     $changes = Compare-PropertyList -collection $task_triggers -property_name "trigger" -new $triggers -existing $existing_triggers -map $map -enum TASK_TRIGGER_TYPE2
@@ -614,6 +651,17 @@ Function Test-TaskExists($task_folder, $name) {
     return $task
 }
 
+Function Test-XmlDurationFormat($key, $value) {
+    # validate value is in the Duration Data Type format
+    # PnYnMnDTnHnMnS
+    try {
+        $time_span = [System.Xml.XmlConvert]::ToTimeSpan($value)
+        return $time_span
+    } catch [System.FormatException] {
+        Fail-Json -obj $result -message "trigger option '$key' must be in the XML duration format but was '$value'"
+    }
+}
+
 ######################################
 ### VALIDATION/BUILDING OF OPTIONS ###
 ######################################
@@ -627,34 +675,10 @@ if ($group) {
     $group_sid = Convert-ToSID -account_name $group
 }
 
-# Convert the older arguments to the newer format if required
-if ($old_executable -ne $null) {
-    Add-DeprecationWarning -obj $result -message "executable option is deprecated, please use the actions list option instead" -version 2.7
-    if ($actions -ne $null) {
-        Fail-Json -obj $result -message "actions and executable are mutually exclusive, use actions by itself instead"
-    }
-
-    $new_action = @{ path = $old_executable }
-    if ($old_arguments -ne $null) {
-        Add-DeprecationWarning -obj $result -message "arguments option is deprecated, please use the actions list option instead" -version 2.7
-        $new_action.arguments = $old_arguments
-    }
-    $actions = @($new_action)
-}
-
 # validate store_password and logon_type
 if ($logon_type -ne $null) {
     $full_enum_name = "TASK_LOGON_$($logon_type.ToUpper())"
     $logon_type = [TASK_LOGON_TYPE]::$full_enum_name
-}
-if ($store_password -ne $null) {
-    Add-DeprecationWarning -obj $result -message "store_password option is deprecated, please use logon_type: password instead" -version 2.7
-    if ($logon_type -ne $null) {
-        Fail-Json -obj $result -message "logon_type and store_password are mutually exclusive, use logon_type=password instead"
-    }
-    if ($store_password -eq $true -and $password -ne $null) {
-        $logon_type = [TASK_LOGON_TYPE]::TASK_LOGON_PASSWORD
-    }
 }
 
 # now validate the logon_type option with the other parameters
@@ -690,7 +714,7 @@ if ($run_level -ne $null) {
 
 # manually add the only support action type for each action - also convert PSCustomObject to Hashtable
 for ($i = 0; $i -lt $actions.Count; $i++) {
-    $action = ConvertTo-HashtableFromPsCustomObject -object $actions[$i]
+    $action = $actions[$i]
     $action.type = [TASK_ACTION_TYPE]::TASK_ACTION_EXEC
     if (-not $action.ContainsKey("path")) {
         Fail-Json -obj $result -message "action entry must contain the key 'path'"
@@ -698,50 +722,9 @@ for ($i = 0; $i -lt $actions.Count; $i++) {
     $actions[$i] = $action
 }
 
-# convert deprecated trigger args to new format
-$deprecated_trigger = $null
-if ($old_frequency -ne $null) {
-    # once, daily, weekly
-    Add-DeprecationWarning -obj $result -message "" -version 2.7
-    if ($triggers.Count -eq 0) {
-        $deprecated_trigger = @{type = $null}
-        switch ($frequency) {
-            once { $deprecated_trigger.type = [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_TIME }
-            daily { $deprecated_trigger.type = [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_DAILY }
-            weekly { $deprecated_trigger.type = [TASK_TRIGGER_TYPE2]::TASK_TRIGGER_WEEKLY }
-        }
-    } else {
-        Add-Warning -obj $result -message "the trigger list is already specified, ignoring the frequency option as it is deprecated"
-    }
-}
-if ($old_days_of_week -ne $null) {
-    Add-DeprecationWarning -obj $result -message "days_of_week is deprecated, use the triggers list with 'monthlydow' type" -version 2.7
-    if ($triggers.Count -eq 0) {
-        $deprecated_trigger.days_of_week = $old_days_of_week
-    } else {
-        Add-Warning -obj $result -message "the trigger list is already specified, ignoring the days_of_week option as it is deprecated"
-    }
-}
-if ($old_time -ne $null) {
-    Add-DeprecationWarning -obj $result -message "old_time is deprecated, use the triggers list to specify the 'start_boundary'" -version 2.7
-    if ($triggers.Count -eq 0) {
-        try {
-            $old_time_cast = [datetime]$old_time
-        } catch [System.InvalidCastException] {
-            Fail-Json -obj $result -message "failed to convert time '$old_time' to the DateTime format"
-        }
-        $deprecated_trigger.start_boundary = ($old_time_cast | Get-Date -Format s)
-    } else {
-        Add-Warning -obj $result -message "the trigger list is already specified, ignoring the time option as it is deprecated"
-    }
-}
-if ($deprecated_trigger -ne $null) {
-    $triggers += $deprecated_trgger
-}
-
 # convert and validate the triggers - and convert PSCustomObject to Hashtable
 for ($i = 0; $i -lt $triggers.Count; $i++) {
-    $trigger = ConvertTo-HashtableFromPsCustomObject -object $triggers[$i]
+    $trigger = $triggers[$i]
     $valid_trigger_types = @('event', 'time', 'daily', 'weekly', 'monthly', 'monthlydow', 'idle', 'registration', 'boot', 'logon', 'session_state_change')
     if (-not $trigger.ContainsKey("type")) {
         Fail-Json -obj $result -message "a trigger entry must contain a key 'type' with a value of '$($valid_trigger_types -join "', '")'"
@@ -774,15 +757,30 @@ for ($i = 0; $i -lt $triggers.Count; $i++) {
 
     $time_properties = @('execution_time_limit', 'delay', 'random_delay')
     foreach ($property_name in $time_properties) {
-        # validate the duration is in the Duration Data Type format
-        # PnYnMnDTnHnMnS
         if ($trigger.ContainsKey($property_name)) {
             $time_span = $trigger.$property_name
-            try {
-                [void][System.Xml.XmlConvert]::ToTimeSpan($time_span)
-            } catch [System.FormatException] {
-                Fail-Json -obj $result -message "trigger option '$property_name' must be in the XML duration format but was '$time_span'"
-            }
+            Test-XmlDurationFormat -key $property_name -value $time_span
+        }
+    }
+
+    if ($trigger.ContainsKey("repetition")) {
+        if ($trigger.repetition -is [Array]) {
+            Add-DeprecationWarning -obj $result -message "repetition is a list, should be defined as a dict" -version "2.12"
+            $trigger.repetition = $trigger.repetition[0]
+        }
+
+        $interval_timespan = $null
+        if ($trigger.repetition.ContainsKey("interval") -and $trigger.repetition.interval -ne $null) {
+            $interval_timespan = Test-XmlDurationFormat -key "interval" -value $trigger.repetition.interval
+        }
+
+        $duration_timespan = $null
+        if ($trigger.repetition.ContainsKey("duration") -and $trigger.repetition.duration -ne $null) {
+            $duration_timespan = Test-XmlDurationFormat -key "duration" -value $trigger.repetition.duration
+        }
+
+        if ($interval_timespan -ne $null -and $duration_timespan -ne $null -and $interval_timespan -gt $duration_timespan) {
+            Fail-Json -obj $result -message "trigger repetition option 'interval' value '$($trigger.repetition.interval)' must be less than or equal to 'duration' value '$($trigger.repetition.duration)'"
         }
     }
 

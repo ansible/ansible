@@ -1,0 +1,106 @@
+- name: Create an SCM Credential
+  tower_credential:
+    name: SCM Credential for Project
+    organization: Default
+    kind: scm
+
+- name: Create a Project
+  tower_project:
+    name: my-project
+    organization: Default
+    state: present
+    scm_credential: SCM Credential for Project
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Delete a Project
+  tower_project:
+    name: my-project
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: create a project directory for manual project
+  import_tasks: create_project_dir.yml
+
+- name: Create a manual project
+  tower_project:
+    name: manual project
+    organization: Default
+    scm_type: manual
+    local_path: "manual_test_project"
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Create a git project without credentials
+  tower_project:
+    name: git project
+    organization: Default
+    scm_type: git
+    scm_url: https://github.com/ansible/ansible
+
+- name: "Create {{ item }}"
+  tower_organization:
+    name: "{{ item }}"
+  loop:
+    - TestOrg1
+    - TestOrg2
+
+- name: "Create credential"
+  tower_credential:
+    kind: scm
+    name: TestCred1
+    organization: "{{ item }}"
+  loop:
+    - TestOrg2
+    - TestOrg1
+
+- name: Create project TestProject
+  tower_project:
+    name: TestProject
+    organization: TestOrg1
+    scm_type: git
+    scm_url: "https://github.com/ansible/ansible"
+    scm_credential: TestCred1
+  register: multi_org_cred_project
+
+- assert:
+    that:
+      - "multi_org_cred_project is changed"
+
+- name: Check module fails with correct msg
+  tower_project:
+    name: TestProject
+    organization: Non Existing Org
+    scm_type: git
+    scm_url: "https://github.com/ansible/ansible"
+    scm_credential: TestCred1
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      - "result.msg == 'Failed to update project, organization not found: Non Existing Org'"
+
+- name: Check module fails with correct msg
+  tower_project:
+    name: TestProject
+    organization: TestOrg1
+    scm_type: git
+    scm_url: "https://github.com/ansible/ansible"
+    scm_credential: Non Existing Credential
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      - "result.msg =='Failed to update project, credential not found: Non Existing Credential'"

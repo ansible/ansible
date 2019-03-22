@@ -76,7 +76,7 @@ def openstack_find_nova_addresses(addresses, ext_tag, key_name=None):
 
 def openstack_full_argument_spec(**kwargs):
     spec = dict(
-        cloud=dict(default=None),
+        cloud=dict(default=None, type='raw'),
         auth_type=dict(default=None),
         auth=dict(default=None, type='dict', no_log=True),
         region_name=dict(default=None),
@@ -88,9 +88,9 @@ def openstack_full_argument_spec(**kwargs):
         wait=dict(default=True, type='bool'),
         timeout=dict(default=180, type='int'),
         api_timeout=dict(default=None, type='int'),
-        endpoint_type=dict(
-            default='public', choices=['public', 'internal', 'admin']
-        )
+        interface=dict(
+            default='public', choices=['public', 'internal', 'admin'],
+            aliases=['endpoint_type']),
     )
     spec.update(kwargs)
     return spec
@@ -106,3 +106,53 @@ def openstack_module_kwargs(**kwargs):
                 ret[key] = kwargs[key]
 
     return ret
+
+
+def openstack_cloud_from_module(module, min_version='0.12.0'):
+    from distutils.version import StrictVersion
+    try:
+        # Due to the name shadowing we should import other way
+        import importlib
+        sdk = importlib.import_module('openstack')
+    except ImportError:
+        module.fail_json(msg='openstacksdk is required for this module')
+
+    if min_version:
+        if StrictVersion(sdk.version.__version__) < StrictVersion(min_version):
+            module.fail_json(
+                msg="To utilize this module, the installed version of"
+                    "the openstacksdk library MUST be >={min_version}".format(
+                        min_version=min_version))
+
+    cloud_config = module.params.pop('cloud', None)
+    try:
+        if isinstance(cloud_config, dict):
+            fail_message = (
+                "A cloud config dict was provided to the cloud parameter"
+                " but also a value was provided for {param}. If a cloud"
+                " config dict is provided, {param} should be"
+                " excluded.")
+            for param in (
+                    'auth', 'region_name', 'verify',
+                    'cacert', 'key', 'api_timeout', 'auth_type'):
+                if module.params[param] is not None:
+                    module.fail_json(msg=fail_message.format(param=param))
+            # For 'interface' parameter, fail if we receive a non-default value
+            if module.params['interface'] != 'public':
+                module.fail_json(msg=fail_message.format(param='interface'))
+            return sdk, sdk.connect(**cloud_config)
+        else:
+            return sdk, sdk.connect(
+                cloud=cloud_config,
+                auth_type=module.params['auth_type'],
+                auth=module.params['auth'],
+                region_name=module.params['region_name'],
+                verify=module.params['verify'],
+                cacert=module.params['cacert'],
+                key=module.params['key'],
+                api_timeout=module.params['api_timeout'],
+                interface=module.params['interface'],
+            )
+    except sdk.exceptions.SDKException as e:
+        # Probably a cloud configuration/login error
+        module.fail_json(msg=str(e))

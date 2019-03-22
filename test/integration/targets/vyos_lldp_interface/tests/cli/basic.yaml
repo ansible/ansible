@@ -1,4 +1,6 @@
 ---
+- debug: msg="START cli/basic.yaml on connection={{ ansible_connection }}"
+
 - name: Make sure LLDP is not running before tests
   vyos_config:
     lines: delete service lldp

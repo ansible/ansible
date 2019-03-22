@@ -30,12 +30,12 @@ from ansible.plugins.terminal import TerminalBase
 class TerminalModule(TerminalBase):
 
     terminal_stdout_re = [
-        re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
-        re.compile(r"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
+        re.compile(br"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
+        re.compile(br"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
     ]
 
     terminal_stderr_re = [
-        re.compile(r"error:", re.I),
+        re.compile(br"error:", re.I),
         re.compile(br"Removing.* not allowed, it is being used")
     ]
 
@@ -50,7 +50,7 @@ class TerminalModule(TerminalBase):
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to disable terminal pager')
 
-    def on_authorize(self, passwd=None):
+    def on_become(self, passwd=None):
         if self._get_prompt().strip().endswith(b'#'):
             return
 
@@ -58,7 +58,7 @@ class TerminalModule(TerminalBase):
         if passwd:
             # Note: python-3.5 cannot combine u"" and r"" together.  Thus make
             # an r string and use to_text to ensure it's text on both py2 and py3.
-            cmd[u'prompt'] = to_text(r"[\r\n]?password: $", errors='surrogate_or_strict')
+            cmd[u'prompt'] = to_text(r"[\r\n]?[Pp]assword: $", errors='surrogate_or_strict')
             cmd[u'answer'] = passwd
 
         try:

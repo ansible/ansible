@@ -1,0 +1,2 @@
+bugfixes:
+    - "ansible-doc, --json now is 'type intelligent' and reinstated --all option"

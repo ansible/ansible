@@ -1,43 +1,31 @@
 #!powershell
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# WANT_JSON
-# POWERSHELL_COMMON
+# Copyright: (c) 2016, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+#Requires -Module Ansible.ModuleUtils.Legacy
 
 $ErrorActionPreference = "Stop"
 
 $params = Parse-Args -arguments $args -supports_check_mode $true
+$_remote_tmp = Get-AnsibleParam $params "_ansible_remote_tmp" -type "path" -default $env:TMP
 
 $paths = Get-AnsibleParam -obj $params -name 'paths' -failifempty $true
 
-$age = Get-AnsibleParam -obj $params -name 'age' -failifempty $false -default $null
-$age_stamp = Get-AnsibleParam -obj $params -name 'age_stamp' -failifempty $false -default 'mtime' -ValidateSet 'mtime','ctime','atime'
-$file_type = Get-AnsibleParam -obj $params -name 'file_type' -failifempty $false -default 'file' -ValidateSet 'file','directory'
-$follow = Get-AnsibleParam -obj $params -name 'follow' -type "bool" -failifempty $false -default $false
-$hidden = Get-AnsibleParam -obj $params -name 'hidden' -type "bool" -failifempty $false -default $false
-$patterns = Get-AnsibleParam -obj $params -name 'patterns' -failifempty $false -default $null
-$recurse = Get-AnsibleParam -obj $params -name 'recurse' -type "bool" -failifempty $false -default $false
-$size = Get-AnsibleParam -obj $params -name 'size' -failifempty $false -default $null
-$use_regex = Get-AnsibleParam -obj $params -name 'use_regex' -type "bool" -failifempty $false -default $false
-$get_checksum = Get-AnsibleParam -obj $params -name 'get_checksum' -type "bool" -failifempty $false -default $true
-$checksum_algorithm = Get-AnsibleParam -obj $params -name 'checksum_algorithm' -failifempty $false -default 'sha1' -ValidateSet 'md5', 'sha1', 'sha256', 'sha384', 'sha512'
+$age = Get-AnsibleParam -obj $params -name 'age'
+$age_stamp = Get-AnsibleParam -obj $params -name 'age_stamp' -default 'mtime' -ValidateSet 'mtime','ctime','atime'
+$file_type = Get-AnsibleParam -obj $params -name 'file_type' -default 'file' -ValidateSet 'file','directory'
+$follow = Get-AnsibleParam -obj $params -name 'follow' -type "bool" -default $false
+$hidden = Get-AnsibleParam -obj $params -name 'hidden' -type "bool" -default $false
+$patterns = Get-AnsibleParam -obj $params -name 'patterns'
+$recurse = Get-AnsibleParam -obj $params -name 'recurse' -type "bool" -default $false
+$size = Get-AnsibleParam -obj $params -name 'size'
+$use_regex = Get-AnsibleParam -obj $params -name 'use_regex' -type "bool" -default $false
+$get_checksum = Get-AnsibleParam -obj $params -name 'get_checksum' -type "bool" -default $true
+$checksum_algorithm = Get-AnsibleParam -obj $params -name 'checksum_algorithm' -default 'sha1' -ValidateSet 'md5', 'sha1', 'sha256', 'sha384', 'sha512'
 
 $result = @{
     files = @()
-    warnings = @()
     examined = 0
     matched = 0
     changed = $false
@@ -82,18 +70,21 @@ namespace Ansible.Command {
     }
 }
 "@
+$original_tmp = $env:TMP
+$env:TMP = $_remote_tmp
 Add-Type -TypeDefinition $symlink_util
+$env:TMP = $original_tmp
 
 Function Assert-Age($info) {
     $valid_match = $true
 
-    if ($age -ne $null) {
+    if ($null -ne $age) {
         $seconds_per_unit = @{'s'=1; 'm'=60; 'h'=3600; 'd'=86400; 'w'=604800}
         $seconds_pattern = '^(-?\d+)(s|m|h|d|w)?$'
         $match = $age -match $seconds_pattern
         if ($match) {
             [int]$specified_seconds = $matches[1]
-            if ($matches[2] -eq $null) {
+            if ($null -eq $matches[2]) {
                 $chosen_unit = 's'
             } else {
                 $chosen_unit = $matches[2]
@@ -121,7 +112,7 @@ Function Assert-Age($info) {
                 }
             }
         } else {
-            Fail-Json $result "failed to process age"
+            throw "failed to process age for file $($info.FullName)"
         }
     }
 
@@ -157,7 +148,7 @@ Function Assert-Hidden($info) {
 Function Assert-Pattern($info) {
     $valid_match = $false
 
-    if ($patterns -ne $null) {
+    if ($null -ne $patterns) {
         foreach ($pattern in $patterns) {
             if ($use_regex -eq $true) {
                 # Use -match for regex matching
@@ -181,13 +172,13 @@ Function Assert-Pattern($info) {
 Function Assert-Size($info) {
     $valid_match = $true
 
-    if ($size -ne $null) {
+    if ($null -ne $size) {
         $bytes_per_unit = @{'b'=1; 'k'=1024; 'm'=1024*1024; 'g'=1024*1024*1024; 't'=1024*1024*1024*1024}
         $size_pattern = '^(-?\d+)(b|k|m|g|t)?$'
         $match = $size -match $size_pattern
         if ($match) {
             [int]$specified_size = $matches[1] 
-            if ($matches[2] -eq $null) {
+            if ($null -eq $matches[2]) {
                 $chosen_byte = 'b'
             } else {
                 $chosen_byte = $matches[2]
@@ -204,7 +195,7 @@ Function Assert-Size($info) {
                 }
             }
         } else {
-            Fail-Json $result "failed to process size"
+            throw "failed to process size for file $($info.FullName)"
         }
     }
 
@@ -264,26 +255,35 @@ Function Get-FileStat($file) {
         $isdir = $true
 
         $share_info = Get-WmiObject -Class Win32_Share -Filter "Path='$($file.Fullname -replace '\\', '\\')'"
-        if ($share_info -ne $null) {
+        if ($null -ne $share_info) {
             $isshared = $true
             $file_stat.sharename = $share_info.Name
         }
         
         # only get the size of a directory if there are files (not directories) inside the folder
-        $dir_files_sum = Get-ChildItem $file.FullName -Recurse | Where-Object { -not $_.PSIsContainer }
+        # Get-ChildItem -LiteralPath does not work properly on older OS', use .NET instead
+        $dir_files = @()
+        try {
+            $dir_files = $file.EnumerateFiles("*", [System.IO.SearchOption]::AllDirectories)
+        } catch [System.IO.DirectoryNotFoundException] { # Broken ReparsePoint/Symlink, cannot enumerate
+        } catch [System.UnauthorizedAccessException] {}  # No ListDirectory permissions, Get-ChildItem ignored this
 
-        if ($dir_files_sum -eq $null -or ($dir_files_sum.PSObject.Properties.name -contains 'length' -eq $false)) {
-            $file_stat.size = 0
-        } else {
-            $file_stat.size = ($dir_files_sum | Measure-Object -property length -sum).Sum
+        $size = 0
+        foreach ($dir_file in $dir_files) {
+            $size += $dir_file.Length
         }
+        $file_stat.size = $size
     } else {
         $file_stat.size = $file.length
         $file_stat.extension = $file.Extension
 
         if ($get_checksum) {
-            $checksum = Get-FileChecksum -path $path -algorithm $checksum_algorithm
-            $file_stat.checksum = $checksum
+            try {
+                $checksum = Get-FileChecksum -path $path -algorithm $checksum_algorithm
+                $file_stat.checksum = $checksum
+            } catch {
+                throw "failed to get checksum for file $($file.FullName)"
+            }
         }
     }
 
@@ -296,8 +296,17 @@ Function Get-FileStat($file) {
 
 Function Get-FilesInFolder($path) {
     $items = @()
-    foreach ($item in (Get-ChildItem -Force -Path $path -ErrorAction SilentlyContinue)) {
-        if ($item.PSIsContainer -and $recurse) {
+
+    # Get-ChildItem -LiteralPath can bomb out on older OS', use .NET instead
+    $dir = New-Object -TypeName System.IO.DirectoryInfo -ArgumentList $path
+    $dir_files = @()
+    try {
+        $dir_files = $dir.EnumerateFileSystemInfos("*", [System.IO.SearchOption]::TopDirectoryOnly)
+    } catch [System.IO.DirectoryNotFoundException] { # Broken ReparsePoint/Symlink, cannot enumerate
+    } catch [System.UnauthorizedAccessException] {}  # No ListDirectory permissions, Get-ChildItem ignored this
+
+    foreach ($item in $dir_files) {
+        if ($item -is [System.IO.DirectoryInfo] -and $recurse) {
             if (($item.Attributes -like '*ReparsePoint*' -and $follow) -or ($item.Attributes -notlike '*ReparsePoint*')) {
                 # File is a link and we want to follow a link OR file is not a link
                 $items += $item.FullName
@@ -316,8 +325,8 @@ Function Get-FilesInFolder($path) {
 
 $paths_to_check = @()
 foreach ($path in $paths) {
-    if (Test-Path $path) {
-        if ((Get-Item -Force $path).PSIsContainer) {
+    if (Test-Path -LiteralPath $path) {
+        if ((Get-Item -LiteralPath $path -Force).PSIsContainer) {
             $paths_to_check += Get-FilesInFolder -path $path
         } else {
             Fail-Json $result "Argument path $path is a file not a directory"
@@ -326,11 +335,17 @@ foreach ($path in $paths) {
         Fail-Json $result "Argument path $path does not exist cannot get information on"
     }
 }
-$paths_to_check = $paths_to_check | Select-Object -Unique
+$paths_to_check = $paths_to_check | Select-Object -Unique | Sort-Object
 
 foreach ($path in $paths_to_check) {
-    $file = Get-Item -Force -Path $path
-    $info = Get-FileStat -file $file
+    try {
+        $file = Get-Item -LiteralPath $path -Force
+        $info = Get-FileStat -file $file
+    } catch {
+        Add-Warning -obj $result -message "win_find failed to check some files, these files were ignored and will not be part of the result output"
+        break
+    }
+
     $new_examined = $result.examined + 1
     $result.examined = $new_examined
 

@@ -1,0 +1,31 @@
+---
+- debug: msg="START vyos cli/net_linkagg.yaml on connection={{ ansible_connection }}"
+
+# Add minimal testcase to check args are passed correctly to
+# implementation module and module run is successful.
+
+- name: Remove linkagg - set
+  net_linkagg:
+    name: bond0
+    state: absent
+
+- name: Create linkagg using platform agnostic module
+  net_linkagg:
+    name: bond0
+    members:
+      - eth1
+    state: present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"set interfaces bonding bond0 mode 802.3ad" in result.commands'
+      - '"set interfaces ethernet eth1 bond-group bond0" in result.commands'
+
+- name: Remove linkagg - teardown
+  net_linkagg:
+    name: bond0
+    state: absent
+
+- debug: msg="END vyos cli/net_linkagg.yaml on connection={{ ansible_connection }}"

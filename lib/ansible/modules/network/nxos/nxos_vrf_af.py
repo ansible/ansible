@@ -42,26 +42,15 @@ options:
       - Address-Family Identifier (AFI).
     required: true
     choices: ['ipv4', 'ipv6']
-    default: null
-  safi:
-    description:
-      - Sub Address-Family Identifier (SAFI).
-      - Deprecated in 2.4
-    required: true
-    choices: ['unicast', 'multicast']
-    default: null
   route_target_both_auto_evpn:
     description:
       - Enable/Disable the EVPN route-target 'auto' setting for both
         import and export target communities.
-    required: false
-    choices: ['true', 'false']
-    default: null
+    type: bool
   state:
     description:
       - Determines whether the config should be present or
         not on the device.
-    required: false
     default: present
     choices: ['present','absent']
 '''
@@ -81,10 +70,10 @@ commands:
     type: list
     sample: ["vrf context ntc", "address-family ipv4 unicast"]
 '''
-from ansible.module_utils.nxos import get_config, load_config
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import NetworkConfig
+from ansible.module_utils.network.common.config import NetworkConfig
 
 
 def main():
@@ -93,9 +82,6 @@ def main():
         afi=dict(required=True, choices=['ipv4', 'ipv6']),
         route_target_both_auto_evpn=dict(required=False, type='bool'),
         state=dict(choices=['present', 'absent'], default='present'),
-
-        m_facts=dict(default=False, type='bool', removed_in_version="2.4"),
-        safi=dict(choices=['unicast', 'multicast'], removed_in_version="2.4"),
     )
 
     argument_spec.update(nxos_argument_spec)
@@ -126,14 +112,14 @@ def main():
 
         if current:
             have = 'route-target both auto evpn' in current
-            want = bool(module.params['route_target_both_auto_evpn'])
-
-            if want and not have:
-                commands.append('address-family %s unicast' % module.params['afi'])
-                commands.append('route-target both auto evpn')
-            elif have and not want:
-                commands.append('address-family %s unicast' % module.params['afi'])
-                commands.append('no route-target both auto evpn')
+            if module.params['route_target_both_auto_evpn'] is not None:
+                want = bool(module.params['route_target_both_auto_evpn'])
+                if want and not have:
+                    commands.append('address-family %s unicast' % module.params['afi'])
+                    commands.append('route-target both auto evpn')
+                elif have and not want:
+                    commands.append('address-family %s unicast' % module.params['afi'])
+                    commands.append('no route-target both auto evpn')
 
         else:
             commands.append('address-family %s unicast' % module.params['afi'])

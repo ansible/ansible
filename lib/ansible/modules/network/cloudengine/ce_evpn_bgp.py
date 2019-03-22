@@ -27,7 +27,7 @@ short_description: Manages BGP EVPN configuration on HUAWEI CloudEngine switches
 description:
     - This module offers the ability to configure a BGP EVPN peer relationship on HUAWEI CloudEngine switches.
 author:
-    - Li Yanfeng (@CloudEngine-Ansible)
+    - Li Yanfeng (@QijunPan)
 options:
     bgp_instance:
         description:
@@ -36,48 +36,33 @@ options:
     as_number:
         description:
             - Specifies integral AS number. The value is an integer ranging from 1 to 4294967295.
-        required: False
-        default: null
     peer_address:
         description:
             - Specifies the IPv4 address of a BGP EVPN peer. The value is in dotted decimal notation.
-        required: False
-        default: null
     peer_group_name:
         description:
             - Specify the name of a peer group that BGP peers need to join.
               The value is a string of 1 to 47 case-sensitive characters, spaces not supported.
-        required: False
-        default: null
     peer_enable:
         description:
             - Enable or disable a BGP device to exchange routes with a specified peer or peer group in the address
               family view.
-        required: False
-        default: null
         choices: ['true','false']
     advertise_router_type:
         description:
             - Configures a device to advertise routes to its BGP EVPN peers.
-        required: False
-        default: null
         choices: ['arp','irb']
     vpn_name:
         description:
             - Associates a specified VPN instance with the IPv4 address family.
               The value is a string of 1 to 31 case-sensitive characters, spaces not supported.
-        required: False
-        default: null
     advertise_l2vpn_evpn:
         description:
             - Enable or disable a device to advertise IP routes imported to a VPN instance to its EVPN instance.
-        required: False
-        default: null
         choices: ['enable','disable']
     state:
         description:
             - Manage the state of the resource.
-        required: False
         default: present
         choices: ['present','absent']
 '''
@@ -140,7 +125,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 end_state:
     description: k/v pairs of configuration after module execution
@@ -151,8 +136,8 @@ end_state:
 
 import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_config, load_config
-from ansible.module_utils.ce import ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import get_config, load_config
+from ansible.module_utils.network.cloudengine.ce import ce_argument_spec
 
 
 def is_config_exist(cmp_cfg, test_cfg):

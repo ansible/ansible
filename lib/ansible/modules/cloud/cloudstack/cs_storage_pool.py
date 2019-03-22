@@ -61,7 +61,8 @@ options:
   managed:
     description:
       - Whether the storage pool should be managed by CloudStack.
-      - Only considere on creation.
+      - Only considered on creation.
+    type: bool
   hypervisor:
     description:
       - Required when creating a zone scoped pool.
@@ -82,7 +83,7 @@ options:
   allocation_state:
     description:
       - Allocation state of the storage pool.
-    choices: [ enabled, disabled ]
+    choices: [ enabled, disabled, maintenance ]
   state:
     description:
       - State of the storage pool.
@@ -111,7 +112,6 @@ EXAMPLES = '''
     pod: pod01
     storage_url: rbd://admin:SECRET@ceph-the-mons.domain/poolname
     provider: DefaultPrimary
-    name: Ceph RBD
     scope: cluster
     allocation_state: disabled
 
@@ -124,7 +124,6 @@ EXAMPLES = '''
     pod: pod01
     storage_url: rbd://admin:SECRET@ceph-the-mons.domain/poolname
     provider: DefaultPrimary
-    name: Ceph RBD
     scope: cluster
     allocation_state: maintenance
 
@@ -140,12 +139,12 @@ RETURN = '''
 id:
   description: UUID of the pool.
   returned: success
-  type: string
+  type: str
   sample: a3fca65a-7db1-4891-b97c-48806a978a96
 created:
   description: Date of the pool was created.
   returned: success
-  type: string
+  type: str
   sample: 2014-12-01T14:57:57+0100
 capacity_iops:
   description: IOPS CloudStack can provision from this storage pool
@@ -155,17 +154,17 @@ capacity_iops:
 zone:
   description: The name of the zone.
   returned: success
-  type: string
+  type: str
   sample: Zone01
 cluster:
   description: The name of the cluster.
   returned: when scope is cluster
-  type: string
+  type: str
   sample: Cluster01
 pod:
   description: The name of the pod.
   returned: when scope is cluster
-  type: string
+  type: str
   sample: Cluster01
 disk_size_allocated:
   description: The pool's currently allocated disk space.
@@ -185,32 +184,32 @@ disk_size_used:
 scope:
   description: The scope of the storage pool.
   returned: success
-  type: string
+  type: str
   sample: cluster
 hypervisor:
   description: Hypervisor related to this storage pool.
   returned: when available
-  type: string
+  type: str
   sample: KVM
 state:
   description: The state of the storage pool as returned by the API.
   returned: success
-  type: string
+  type: str
   sample: Up
 allocation_state:
   description: The state of the storage pool.
   returned: success
-  type: string
+  type: str
   sample: enabled
 path:
   description: The storage pool path used in the storage_url.
   returned: success
-  type: string
+  type: str
   sample: poolname
 overprovision_factor:
   description: The overprovision factor of the storage pool.
   returned: success
-  type: string
+  type: str
   sample: 2.0
 suitable_for_migration:
   description: Whether the storage pool is suitable to migrate a volume or not.

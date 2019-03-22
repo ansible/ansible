@@ -24,6 +24,7 @@ import pytest
 import ansible.errors
 
 from ansible.executor import module_common as amc
+from ansible.executor.interpreter_discovery import InterpreterDiscoveryRequiredError
 from ansible.module_utils.six import PY2
 
 
@@ -93,26 +94,38 @@ class TestSlurp(object):
         assert amc._slurp('some_file') == '#!/usr/bin/python\ndef test(args):\nprint("hi")\n'
 
 
+@pytest.fixture
+def templar():
+    class FakeTemplar(object):
+        def template(self, template_string, *args, **kwargs):
+            return template_string
+
+    return FakeTemplar()
+
+
 class TestGetShebang(object):
     """Note: We may want to change the API of this function in the future.  It isn't a great API"""
-    def test_no_interpreter_set(self):
-        assert amc._get_shebang(u'/usr/bin/python', {}) == (None, u'/usr/bin/python')
+    def test_no_interpreter_set(self, templar):
+        # normally this would return /usr/bin/python, but so long as we're defaulting to auto python discovery, we'll get
+        # an InterpreterDiscoveryRequiredError here instead
+        with pytest.raises(InterpreterDiscoveryRequiredError):
+            amc._get_shebang(u'/usr/bin/python', {}, templar)
 
-    def test_non_python_interpreter(self):
-        assert amc._get_shebang(u'/usr/bin/ruby', {}) == (None, u'/usr/bin/ruby')
+    def test_non_python_interpreter(self, templar):
+        assert amc._get_shebang(u'/usr/bin/ruby', {}, templar) == (None, u'/usr/bin/ruby')
 
-    def test_interpreter_set_in_task_vars(self):
-        assert amc._get_shebang(u'/usr/bin/python', {u'ansible_python_interpreter': u'/usr/bin/pypy'}) == \
+    def test_interpreter_set_in_task_vars(self, templar):
+        assert amc._get_shebang(u'/usr/bin/python', {u'ansible_python_interpreter': u'/usr/bin/pypy'}, templar) == \
             (u'#!/usr/bin/pypy', u'/usr/bin/pypy')
 
-    def test_non_python_interpreter_in_task_vars(self):
-        assert amc._get_shebang(u'/usr/bin/ruby', {u'ansible_ruby_interpreter': u'/usr/local/bin/ruby'}) == \
+    def test_non_python_interpreter_in_task_vars(self, templar):
+        assert amc._get_shebang(u'/usr/bin/ruby', {u'ansible_ruby_interpreter': u'/usr/local/bin/ruby'}, templar) == \
             (u'#!/usr/local/bin/ruby', u'/usr/local/bin/ruby')
 
-    def test_with_args(self):
-        assert amc._get_shebang(u'/usr/bin/python', {u'ansible_python_interpreter': u'/usr/bin/python3'}, args=('-tt', '-OO')) == \
+    def test_with_args(self, templar):
+        assert amc._get_shebang(u'/usr/bin/python', {u'ansible_python_interpreter': u'/usr/bin/python3'}, templar, args=('-tt', '-OO')) == \
             (u'#!/usr/bin/python3 -tt -OO', u'/usr/bin/python3')
 
-    def test_python_via_env(self):
-        assert amc._get_shebang(u'/usr/bin/python', {u'ansible_python_interpreter': u'/usr/bin/env python'}) == \
+    def test_python_via_env(self, templar):
+        assert amc._get_shebang(u'/usr/bin/python', {u'ansible_python_interpreter': u'/usr/bin/env python'}, templar) == \
             (u'#!/usr/bin/env python', u'/usr/bin/env python')

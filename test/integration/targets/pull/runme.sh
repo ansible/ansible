@@ -11,6 +11,8 @@ repo_dir="${temp_dir}/repo"
 pull_dir="${temp_dir}/pull"
 temp_log="${temp_dir}/pull.log"
 
+ansible-playbook setup.yml
+
 cp -av "pull-integration-test" "${repo_dir}"
 cd "${repo_dir}"
 (
@@ -21,16 +23,34 @@ cd "${repo_dir}"
     git commit -m "Initial commit."
 )
 
+function pass_tests {
+	# test for https://github.com/ansible/ansible/issues/13688
+	if ! grep MAGICKEYWORD "${temp_log}"; then
+	    echo "Missing MAGICKEYWORD in output."
+	    exit 1
+	fi
+
+	# test for https://github.com/ansible/ansible/issues/13681
+	if egrep '127\.0\.0\.1.*ok' "${temp_log}"; then
+	    echo "Found host 127.0.0.1 in output. Only localhost should be present."
+	    exit 1
+	fi
+	# make sure one host was run
+	if ! egrep 'localhost.*ok' "${temp_log}"; then
+	    echo "Did not find host localhost in output."
+	    exit 1
+	fi
+}
+
 ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${repo_dir}" "$@" | tee "${temp_log}"
 
-# test for https://github.com/ansible/ansible/issues/13688
-if ! grep MAGICKEYWORD "${temp_log}"; then
-    echo "Missing MAGICKEYWORD in output."
-    exit 1
-fi
+pass_tests
 
-# test for https://github.com/ansible/ansible/issues/13681
-if grep '127\.0\.0\.1' "${temp_log}"; then
-    echo "Found host 127.0.0.1 in output. Only localhost should be present."
-    exit 1
-fi
+# ensure complex extra vars work
+PASSWORD='test'
+USER=${USER:-'broken_docker'}
+JSON_EXTRA_ARGS='{"docker_registries_login": [{ "docker_password": "'"${PASSWORD}"'", "docker_username": "'"${USER}"'", "docker_registry_url":"repository-manager.company.com:5001"}], "docker_registries_logout": [{ "docker_password": "'"${PASSWORD}"'", "docker_username": "'"${USER}"'", "docker_registry_url":"repository-manager.company.com:5001"}] }'
+
+ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${repo_dir}" -e "${JSON_EXTRA_ARGS}" "$@" --tags untagged,test_ev | tee "${temp_log}"
+
+pass_tests

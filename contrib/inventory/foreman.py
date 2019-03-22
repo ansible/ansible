@@ -46,6 +46,8 @@ if LooseVersion(requests.__version__) < LooseVersion('1.1.0'):
 
 from requests.auth import HTTPBasicAuth
 
+from ansible.module_utils._text import to_text
+
 
 def json_format_dict(data, pretty=False):
     """Converts a dict to a JSON object and dumps it as a formatted string"""
@@ -84,7 +86,7 @@ class ForemanInventory(object):
         try:
             self.foreman_url = config.get('foreman', 'url')
             self.foreman_user = config.get('foreman', 'user')
-            self.foreman_pw = config.get('foreman', 'password')
+            self.foreman_pw = config.get('foreman', 'password', raw=True)
             self.foreman_ssl_verify = config.getboolean('foreman', 'ssl_verify')
         except (ConfigParser.NoOptionError, ConfigParser.NoSectionError) as e:
             print("Error parsing configuration: %s" % e, file=sys.stderr)
@@ -113,6 +115,11 @@ class ForemanInventory(object):
         except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
             self.want_hostcollections = False
 
+        try:
+            self.want_ansible_ssh_host = config.getboolean('ansible', 'want_ansible_ssh_host')
+        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+            self.want_ansible_ssh_host = False
+
         # Do we want parameters to be interpreted if possible as JSON? (no by default)
         try:
             self.rich_params = config.getboolean('ansible', 'rich_params')
@@ -139,6 +146,10 @@ class ForemanInventory(object):
             self.cache_max_age = config.getint('cache', 'max_age')
         except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
             self.cache_max_age = 60
+        try:
+            self.scan_new_hosts = config.getboolean('cache', 'scan_new_hosts')
+        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+            self.scan_new_hosts = False
 
         return True
 
@@ -225,10 +236,6 @@ class ForemanInventory(object):
 
         return params
 
-    def _get_facts_by_id(self, hid):
-        url = "%s/api/v2/hosts/%s/facts" % (self.foreman_url, hid)
-        return self._get_json(url)
-
     def _get_facts(self, host):
         """Fetch all host facts of the host"""
         if not self.want_facts:
@@ -264,16 +271,18 @@ class ForemanInventory(object):
         >>> ForemanInventory.to_safe("foo-bar baz")
         'foo_barbaz'
         '''
-        regex = "[^A-Za-z0-9\_]"
+        regex = r"[^A-Za-z0-9\_]"
         return re.sub(regex, "_", word.replace(" ", ""))
 
-    def update_cache(self):
+    def update_cache(self, scan_only_new_hosts=False):
         """Make calls to foreman and save the output in a cache"""
 
         self.groups = dict()
         self.hosts = dict()
 
         for host in self._get_hosts():
+            if host['name'] in self.cache.keys() and scan_only_new_hosts:
+                continue
             dns_name = host['name']
 
             host_data = self._get_host_data_by_id(host['id'])
@@ -283,20 +292,32 @@ class ForemanInventory(object):
             group = 'hostgroup'
             val = host.get('%s_title' % group) or host.get('%s_name' % group)
             if val:
-                safe_key = self.to_safe('%s%s_%s' % (self.group_prefix, group, val.lower()))
+                safe_key = self.to_safe('%s%s_%s' % (
+                    to_text(self.group_prefix),
+                    group,
+                    to_text(val).lower()
+                ))
                 self.inventory[safe_key].append(dns_name)
 
             # Create ansible groups for environment, location and organization
             for group in ['environment', 'location', 'organization']:
                 val = host.get('%s_name' % group)
                 if val:
-                    safe_key = self.to_safe('%s%s_%s' % (self.group_prefix, group, val.lower()))
+                    safe_key = self.to_safe('%s%s_%s' % (
+                        to_text(self.group_prefix),
+                        group,
+                        to_text(val).lower()
+                    ))
                     self.inventory[safe_key].append(dns_name)
 
             for group in ['lifecycle_environment', 'content_view']:
                 val = host.get('content_facet_attributes', {}).get('%s_name' % group)
                 if val:
-                    safe_key = self.to_safe('%s%s_%s' % (self.group_prefix, group, val.lower()))
+                    safe_key = self.to_safe('%s%s_%s' % (
+                        to_text(self.group_prefix),
+                        group,
+                        to_text(val).lower()
+                    ))
                     self.inventory[safe_key].append(dns_name)
 
             params = self._resolve_params(host_params)
@@ -305,7 +326,7 @@ class ForemanInventory(object):
             # attributes.
             groupby = dict()
             for k, v in params.items():
-                groupby[k] = self.to_safe(str(v))
+                groupby[k] = self.to_safe(to_text(v))
 
             # The name of the ansible groups is given by group_patterns:
             for pattern in self.group_patterns:
@@ -387,6 +408,8 @@ class ForemanInventory(object):
             self.load_facts_from_cache()
             self.load_hostcollections_from_cache()
             self.load_cache_from_cache()
+            if self.scan_new_hosts:
+                self.update_cache(True)
 
     def get_host_info(self):
         """Get variables about a specific host"""
@@ -416,6 +439,8 @@ class ForemanInventory(object):
                     'foreman': self.cache[hostname],
                     'foreman_params': self.params[hostname],
                 }
+                if self.want_ansible_ssh_host and 'ip' in self.cache[hostname]:
+                    self.inventory['_meta']['hostvars'][hostname]['ansible_ssh_host'] = self.cache[hostname]['ip']
                 if self.want_facts:
                     self.inventory['_meta']['hostvars'][hostname]['foreman_facts'] = self.facts[hostname]
 
@@ -431,6 +456,7 @@ class ForemanInventory(object):
         self.get_inventory()
         self._print_data()
         return True
+
 
 if __name__ == '__main__':
     sys.exit(not ForemanInventory().run())

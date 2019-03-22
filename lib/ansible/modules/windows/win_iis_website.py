@@ -1,102 +1,73 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2015, Henrik Wallström <henrik@wallstroms.nu>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2015, Henrik Wallström <henrik@wallstroms.nu>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = r'''
 ---
 module: win_iis_website
 version_added: "2.0"
-short_description: Configures a IIS Web site.
+short_description: Configures a IIS Web site
 description:
-     - Creates, Removes and configures a IIS Web site
+     - Creates, Removes and configures a IIS Web site.
 options:
   name:
     description:
-      - Names of web site
-    required: true
-    default: null
-    aliases: []
+      - Names of web site.
+    type: str
+    required: yes
   site_id:
     description:
-      - Explicitly set the IIS numeric ID for a site. Note that this value cannot be changed after the website has been created.
-    required: false
+      - Explicitly set the IIS numeric ID for a site.
+      - Note that this value cannot be changed after the website has been created.
+    type: str
     version_added: "2.1"
-    default: null
   state:
     description:
       - State of the web site
-    choices:
-      - started
-      - restarted
-      - stopped
-      - absent
-    required: false
-    default: null
-    aliases: []
+    type: str
+    choices: [ absent, started, stopped, restarted ]
   physical_path:
     description:
-      - The physical path on the remote host to use for the new site. The specified folder must already exist.
-    required: false
-    default: null
-    aliases: []
+      - The physical path on the remote host to use for the new site.
+      - The specified folder must already exist.
+    type: str
   application_pool:
     description:
       - The application pool in which the new site executes.
-    required: false
-    default: null
-    aliases: []
+    type: str
   port:
     description:
       - The port to bind to / use for the new site.
-    required: false
-    default: null
-    aliases: []
+    type: int
   ip:
     description:
       - The IP address to bind to / use for the new site.
-    required: false
-    default: null
-    aliases: []
+    type: str
   hostname:
     description:
       - The host header to bind to / use for the new site.
-    required: false
-    default: null
-    aliases: []
+    type: str
   ssl:
     description:
       - Enables HTTPS binding on the site..
-    required: false
-    default: null
-    aliases: []
+    type: str
   parameters:
     description:
       - Custom site Parameters from string where properties are separated by a pipe and property name/values by colon Ex. "foo:1|bar:2"
-    required: false
-    default: null
-    aliases: []
-author: Henrik Wallström
+    type: str
+seealso:
+- module: win_iis_virtualdirectory
+- module: win_iis_webapplication
+- module: win_iis_webapppool
+- module: win_iis_webbinding
+author:
+- Henrik Wallström (@henrikwallstrom)
 '''
 
 EXAMPLES = r'''
@@ -105,14 +76,14 @@ EXAMPLES = r'''
 
 - name: Acme IIS site
   win_iis_website:
-    name: "Acme"
+    name: Acme
     state: started
     port: 80
     ip: 127.0.0.1
     hostname: acme.local
-    application_pool: "acme"
-    physical_path: c:\sites\acme
-    parameters: logfile.directory:c:\sites\logs
+    application_pool: acme
+    physical_path: C:\sites\acme
+    parameters: logfile.directory:C:\sites\logs
   register: website
 
 # Remove Default Web Site and the standard port 80 binding
@@ -143,8 +114,8 @@ EXAMPLES = r'''
 # $ ansible -i hosts -m win_iis_website -a "name='Default Web Site' state=stopped" host
 
 # This creates a new site.
-# $ ansible -i hosts -m win_iis_website -a "name=acme physical_path=c:\\sites\\acme" host
+# $ ansible -i hosts -m win_iis_website -a "name=acme physical_path=C:\\sites\\acme" host
 
 # Change logfile.
-# $ ansible -i hosts -m win_iis_website -a "name=acme physical_path=c:\\sites\\acme" host
+# $ ansible -i hosts -m win_iis_website -a "name=acme physical_path=C:\\sites\\acme" host
 '''

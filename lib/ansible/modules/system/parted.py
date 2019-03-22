@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2016, Fabrizio Colonna <colofabrix@tin.it>
+# Copyright: (c) 2016, Fabrizio Colonna <colofabrix@tin.it>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -13,10 +13,10 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 author:
- - "Fabrizio Colonna (@ColOfAbRiX)"
+ - Fabrizio Colonna (@ColOfAbRiX)
 module: parted
 short_description: Configure block device partitions
 version_added: "2.3"
@@ -24,11 +24,6 @@ description:
   - This module allows configuring block device partition using the C(parted)
     command line tool. For a full description of the fields and the options
     check the GNU parted manual.
-notes:
-  - When fetching information about a new disk and when the version of parted
-    installed on the system is before version 3.1, the module queries the kernel
-    through C(/sys/) to obtain disk information. In this case the units CHS and
-    CYL are not supported.
 requirements:
   - This module requires parted version 1.8.3 and above.
   - If the version of parted is below 3.1, it requires a Linux version running
@@ -36,70 +31,79 @@ requirements:
 options:
   device:
     description: The block device (disk) where to operate.
+    type: str
     required: True
   align:
     description: Set alignment for newly created partitions.
-    choices: ['none', 'cylinder', 'minimal', 'optimal']
+    type: str
+    choices: [ cylinder, minimal, none, optimal ]
     default: optimal
   number:
     description:
-     - The number of the partition to work with or the number of the partition
-       that will be created. Required when performing any action on the disk,
-       except fetching information.
+    - The number of the partition to work with or the number of the partition
+      that will be created.
+    - Required when performing any action on the disk, except fetching information.
+    type: int
   unit:
     description:
-     - Selects the current default unit that Parted will use to display
-       locations and capacities on the disk and to interpret those given by the
-       user if they are not suffixed by an unit. When fetching information about
-       a disk, it is always recommended to specify a unit.
-    choices: [
-       's', 'B', 'KB', 'KiB', 'MB', 'MiB', 'GB', 'GiB', 'TB', 'TiB', '%', 'cyl',
-       'chs', 'compact'
-    ]
+    - Selects the current default unit that Parted will use to display
+      locations and capacities on the disk and to interpret those given by the
+      user if they are not suffixed by an unit.
+    - When fetching information about a disk, it is always recommended to specify a unit.
+    type: str
+    choices: [ s, B, KB, KiB, MB, MiB, GB, GiB, TB, TiB, '%', cyl, chs, compact ]
     default: KiB
   label:
     description: Creates a new disk label.
-    choices: [
-       'aix', 'amiga', 'bsd', 'dvh', 'gpt', 'loop', 'mac', 'msdos', 'pc98',
-       'sun'
-    ]
+    type: str
+    choices: [ aix, amiga, bsd, dvh, gpt, loop, mac, msdos, pc98, sun ]
     default: msdos
   part_type:
     description:
-     - Is one of 'primary', 'extended' or 'logical' and may be specified only
-       with 'msdos' or 'dvh' partition tables. A name must be specified for a
-       'gpt' partition table. Neither part-type nor name may be used with a
-       'sun' partition table.
-    choices: ['primary', 'extended', 'logical']
+    - May be specified only with 'msdos' or 'dvh' partition tables.
+    - A C(name) must be specified for a 'gpt' partition table.
+    - Neither C(part_type) nor C(name) may be used with a 'sun' partition table.
+    type: str
+    choices: [ extended, logical, primary ]
     default: primary
   part_start:
     description:
-     - Where the partition will start as offset from the beginning of the disk,
-       that is, the "distance" from the start of the disk. The distance can be
-       specified with all the units supported by parted (except compat) and
-       it is case sensitive. E.g. C(10GiB), C(15%).
+    - Where the partition will start as offset from the beginning of the disk,
+      that is, the "distance" from the start of the disk.
+    - The distance can be specified with all the units supported by parted
+      (except compat) and it is case sensitive, e.g. C(10GiB), C(15%).
+    type: str
     default: 0%
   part_end :
     description:
-     - Where the partition will end as offset from the beginning of the disk,
-       that is, the "distance" from the start of the disk. The distance can be
-       specified with all the units supported by parted (except compat) and
-       it is case sensitive. E.g. C(10GiB), C(15%).
+    - Where the partition will end as offset from the beginning of the disk,
+      that is, the "distance" from the start of the disk.
+    - The distance can be specified with all the units supported by parted
+      (except compat) and it is case sensitive, e.g. C(10GiB), C(15%).
+    type: str
     default: 100%
   name:
     description:
-     - Sets the name for the partition number (GPT, Mac, MIPS and PC98 only).
+    - Sets the name for the partition number (GPT, Mac, MIPS and PC98 only).
+    type: str
   flags:
     description: A list of the flags that has to be set on the partition.
+    type: list
   state:
     description:
-     - If to create or delete a partition. If set to C(info) the module will
-       only return the device information.
-    choices: ['present', 'absent', 'info']
+    - Whether to create or delete a partition.
+    - If set to C(info) the module will only return the device information.
+    type: str
+    choices: [ absent, present, info ]
     default: info
+notes:
+  - When fetching information about a new disk and when the version of parted
+    installed on the system is before version 3.1, the module queries the kernel
+    through C(/sys/) to obtain disk information. In this case the units CHS and
+    CYL are not supported.
 '''
 
-RETURN = '''
+RETURN = r'''
 partition_info:
   description: Current partition information
   returned: success
@@ -142,46 +146,46 @@ partition_info:
       }
 '''
 
-EXAMPLES = """
-# Create a new primary partition
-- parted:
+EXAMPLES = r'''
+- name: Create a new primary partition
+  parted:
     device: /dev/sdb
     number: 1
     state: present
 
-# Remove partition number 1
-- parted:
+- name: Remove partition number 1
+  parted:
     device: /dev/sdb
     number: 1
     state: absent
 
-# Create a new primary partition with a size of 1GiB
-- parted:
+- name: Create a new primary partition with a size of 1GiB
+  parted:
     device: /dev/sdb
     number: 1
     state: present
     part_end: 1GiB
 
-# Create a new primary partition for LVM
-- parted:
+- name: Create a new primary partition for LVM
+  parted:
     device: /dev/sdb
     number: 2
     flags: [ lvm ]
     state: present
     part_start: 1GiB
 
-# Read device information (always use unit when probing)
-- parted: device=/dev/sdb unit=MiB
+# Example on how to read info and reuse it in subsequent task
+- name: Read device information (always use unit when probing)
+  parted: device=/dev/sdb unit=MiB
   register: sdb_info
 
-# Remove all partitions from disk
-- parted:
+- name: Remove all partitions from disk
+  parted:
     device: /dev/sdb
-    number: "{{ item.num }}"
+    number: '{{ item.num }}'
     state: absent
-  with_items:
-   - "{{ sdb_info.partitions }}"
-"""
+  loop: '{{ sdb_info.partitions }}'
+'''
 
 
 from ansible.module_utils.basic import AnsibleModule
@@ -192,7 +196,7 @@ import os
 
 # Reference prefixes (International System of Units and IEC)
 units_si = ['B', 'KB', 'MB', 'GB', 'TB']
-units_iec = ['B', 'KiB', 'MiB', 'GiB', 'TiB']
+units_iec = ['KiB', 'MiB', 'GiB', 'TiB']
 parted_units = units_si + units_iec + ['s', '%', 'cyl', 'chs', 'compact']
 
 
@@ -327,7 +331,7 @@ def format_disk_size(size_bytes, unit):
 
     # Shortcut
     if size_bytes == 0:
-        return 0.0
+        return 0.0, 'b'
 
     # Cases where we default to 'compact'
     if unit in ['', 'compact', 'cyl', 'chs']:
@@ -531,54 +535,31 @@ def main():
     output_script = ""
     script = ""
     module = AnsibleModule(
-        argument_spec={
-            'device': {'required': True, 'type': 'str'},
-            'align': {
-                'default': 'optimal',
-                'choices': ['none', 'cylinder', 'minimal', 'optimal'],
-                'type': 'str'
-            },
-            'number': {'default': None, 'type': 'int'},
+        argument_spec=dict(
+            device=dict(type='str', required=True),
+            align=dict(type='str', default='optimal', choices=['cylinder', 'minimal', 'none', 'optimal']),
+            number=dict(type='int'),
 
             # unit <unit> command
-            'unit': {
-                'default': 'KiB',
-                'choices': parted_units,
-                'type': 'str'
-            },
+            unit=dict(type='str', default='KiB', choices=parted_units),
 
             # mklabel <label-type> command
-            'label': {
-                'default': 'msdos',
-                'choices': [
-                    'aix', 'amiga', 'bsd', 'dvh', 'gpt', 'loop', 'mac', 'msdos',
-                    'pc98', 'sun'
-                ],
-                'type': 'str'
-            },
+            label=dict(type='str', default='msdos', choices=['aix', 'amiga', 'bsd', 'dvh', 'gpt', 'loop', 'mac', 'msdos', 'pc98', 'sun']),
 
             # mkpart <part-type> [<fs-type>] <start> <end> command
-            'part_type': {
-                'default': 'primary',
-                'choices': ['primary', 'extended', 'logical'],
-                'type': 'str'
-            },
-            'part_start': {'default': '0%', 'type': 'str'},
-            'part_end': {'default': '100%', 'type': 'str'},
+            part_type=dict(type='str', default='primary', choices=['extended', 'logical', 'primary']),
+            part_start=dict(type='str', default='0%'),
+            part_end=dict(type='str', default='100%'),
 
             # name <partition> <name> command
-            'name': {'type': 'str'},
+            name=dict(type='str'),
 
             # set <partition> <flag> <state> command
-            'flags': {'type': 'list'},
+            flags=dict(type='list'),
 
             # rm/mkpart command
-            'state': {
-                'choices': ['present', 'absent', 'info'],
-                'default': 'info',
-                'type': 'str'
-            }
-        },
+            state=dict(type='str', default='info', choices=['absent', 'info', 'present']),
+        ),
         required_if=[
             ['state', 'present', ['number']],
             ['state', 'absent', ['number']],
@@ -658,10 +639,18 @@ def main():
 
             # Assign name to the partition
             if name is not None and partition.get('name', None) != name:
-                script += "name %s %s " % (number, name)
+                # Wrap double quotes in single quotes so the shell doesn't strip
+                # the double quotes as those need to be included in the arg
+                # passed to parted
+                script += 'name %s \'"%s"\' ' % (number, name)
 
             # Manage flags
             if flags:
+                # Parted infers boot with esp, if you assign esp, boot is set
+                # and if boot is unset, esp is also unset.
+                if 'esp' in flags and 'boot' not in flags:
+                    flags.append('boot')
+
                 # Compute only the changes in flags status
                 flags_off = list(set(partition['flags']) - set(flags))
                 flags_on = list(set(flags) - set(partition['flags']))

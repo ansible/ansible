@@ -52,27 +52,8 @@ options:
                  config file.
     choices: [ "MEMORY", "DISK", "RUNTIME", "CONFIG" ]
     required: True
-  login_user:
-    description:
-      - The username used to authenticate to ProxySQL admin interface.
-    default: None
-  login_password:
-    description:
-      - The password used to authenticate to ProxySQL admin interface.
-    default: None
-  login_host:
-    description:
-      - The host used to connect to ProxySQL admin interface.
-    default: '127.0.0.1'
-  login_port:
-    description:
-      - The port used to connect to ProxySQL admin interface.
-    default: 6032
-  config_file:
-    description:
-      - Specify a config file from which login_user and login_password are to
-        be read.
-    default: ''
+extends_documentation_fragment:
+  - proxysql.connectivity
 '''
 
 EXAMPLES = '''
@@ -80,7 +61,7 @@ EXAMPLES = '''
 # This example saves the mysql users config from memory to disk. It uses
 # supplied credentials to connect to the proxysql admin interface.
 
-- proxysql_global_variables:
+- proxysql_manage_config:
     login_user: 'admin'
     login_password: 'admin'
     action: "SAVE"
@@ -91,7 +72,7 @@ EXAMPLES = '''
 # This example loads the mysql query rules config from memory to to runtime. It
 # uses supplied credentials to connect to the proxysql admin interface.
 
-- proxysql_global_variables:
+- proxysql_manage_config:
     config_file: '~/proxysql.cnf'
     action: "LOAD"
     config_settings: "MYSQL QUERY RULES"
@@ -115,15 +96,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.mysql import mysql_connect
+from ansible.module_utils.mysql import mysql_connect, mysql_driver, mysql_driver_fail_msg
 from ansible.module_utils._text import to_native
-
-try:
-    import MySQLdb
-except ImportError:
-    MYSQLDB_FOUND = False
-else:
-    MYSQLDB_FOUND = True
 
 # ===========================================
 # proxysql module specific support methods.
@@ -159,10 +133,8 @@ def perform_checks(module):
                           " with the CONFIG config_layer")
             module.fail_json(msg=msg_string % module.params["direction"])
 
-    if not MYSQLDB_FOUND:
-        module.fail_json(
-            msg="the python mysqldb module is required"
-        )
+    if mysql_driver is None:
+        module.fail_json(msg=mysql_driver_fail_msg)
 
 
 def manage_config(manage_config_settings, cursor):
@@ -220,7 +192,7 @@ def main():
                                login_user,
                                login_password,
                                config_file)
-    except MySQLdb.Error as e:
+    except mysql_driver.Error as e:
         module.fail_json(
             msg="unable to connect to ProxySQL Admin Module.. %s" % to_native(e)
         )
@@ -233,12 +205,13 @@ def main():
     try:
         result['changed'] = manage_config(manage_config_settings,
                                           cursor)
-    except MySQLdb.Error as e:
+    except mysql_driver.Error as e:
         module.fail_json(
             msg="unable to manage config.. %s" % to_native(e)
         )
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

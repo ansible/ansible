@@ -3,6 +3,7 @@
   iosxr_banner:
     banner: motd
     state: absent
+    provider: "{{ cli }}"
 
 - name: Set motd
   iosxr_banner:
@@ -11,6 +12,7 @@
       this is my motd banner
       that has a multiline
       string
+    provider: "{{ cli }}"
     state: present
   register: result
 
@@ -30,6 +32,7 @@
       this is my motd banner
       that has a multiline
       string
+    provider: "{{ cli }}"
     state: present
   register: result
 

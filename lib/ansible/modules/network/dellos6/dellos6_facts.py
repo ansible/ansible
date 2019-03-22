@@ -17,25 +17,25 @@ DOCUMENTATION = """
 ---
 module: dellos6_facts
 version_added: "2.2"
-author: "Abirami N(@abirami-n)"
+author: "Abirami N (@abirami-n)"
 short_description: Collect facts from remote devices running Dell EMC Networking OS6
 description:
   - Collects a base set of device facts from a remote device that
     is running OS6.  This module prepends all of the
     base network fact keys with C(ansible_net_<fact>).  The facts
-    module always collects a base set of facts from the device
+    module will always collect a base set of facts from the device
     and can enable or disable collection of additional facts.
 extends_documentation_fragment: dellos6
 options:
   gather_subset:
     description:
-      - When specified, this argument restricts the facts collected
+      - When supplied, this argument will restrict the facts collected
         to a given subset.  Possible values for this argument include
-        all, hardware, config, and interfaces.  You can specify a list of
-        values to include a larger subset.  You can also use values with an initial M(!) to specify that a specific subset should
+        all, hardware, config, and interfaces. Can specify a list of
+        values to include a larger subset.  Values can also be used
+        with an initial C(M(!)) to specify that a specific subset should
         not be collected.
-    required: false
-    default: '!config'
+    default: [ '!config' ]
 """
 
 EXAMPLES = """
@@ -57,30 +57,30 @@ EXAMPLES = """
 RETURN = """
 ansible_net_gather_subset:
   description: The list of fact subsets collected from the device.
-  returned: Always.
+  returned: always.
   type: list
 
 # default
 ansible_net_model:
   description: The model name returned from the device.
-  returned: Always.
+  returned: always.
   type: str
 ansible_net_serialnum:
   description: The serial number of the remote device.
-  returned: Always.
+  returned: always.
   type: str
 ansible_net_version:
   description: The operating system version running on the remote device.
-  returned: Always.
+  returned: always.
   type: str
 ansible_net_hostname:
   description: The configured hostname of the device.
-  returned: Always.
-  type: string
+  returned: always.
+  type: str
 ansible_net_image:
   description: The image file that the device is running.
-  returned: Always
-  type: string
+  returned: always
+  type: str
 
 # hardware
 ansible_net_memfree_mb:
@@ -112,8 +112,8 @@ ansible_net_neighbors:
 import re
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.dellos6 import run_commands
-from ansible.module_utils.dellos6 import dellos6_argument_spec, check_args
+from ansible.module_utils.network.dellos6.dellos6 import run_commands
+from ansible.module_utils.network.dellos6.dellos6 import dellos6_argument_spec, check_args
 from ansible.module_utils.six import iteritems
 
 
@@ -147,13 +147,24 @@ class Default(FactsBase):
         self.facts['serialnum'] = self.parse_serialnum(data)
         self.facts['model'] = self.parse_model(data)
         self.facts['image'] = self.parse_image(data)
-        hdata = self.responses[0]
+        hdata = self.responses[1]
         self.facts['hostname'] = self.parse_hostname(hdata)
 
     def parse_version(self, data):
+        facts = dict()
         match = re.search(r'HW Version(.+)\s(\d+)', data)
-        if match:
-            return match.group(2)
+        temp, temp_next = data.split('---- ----------- ----------- -------------- --------------')
+        for en in temp_next.splitlines():
+            if en == '':
+                continue
+            match_image = re.search(r'^(\S+)\s+(\S+)\s+(\S+)\s+(\S+)', en)
+            version = match_image.group(4)
+            facts["Version"] = list()
+            fact = dict()
+            fact['HW Version'] = match.group(2)
+            fact['SW Version'] = match_image.group(4)
+            facts["Version"].append(fact)
+        return facts
 
     def parse_hostname(self, data):
         match = re.search(r'\S+\s(\S+)', data, re.M)
@@ -185,7 +196,7 @@ class Hardware(FactsBase):
     def populate(self):
         super(Hardware, self).populate()
         data = self.responses[0]
-        match = re.findall('\s(\d+)\s', data)
+        match = re.findall(r'\s(\d+)\s', data)
         if match:
             self.facts['memtotal_mb'] = int(match[0]) // 1024
             self.facts['memfree_mb'] = int(match[1]) // 1024
@@ -207,7 +218,8 @@ class Interfaces(FactsBase):
         'show interfaces transceiver properties',
         'show ip int',
         'show lldp',
-        'show lldp remote-device all'
+        'show lldp remote-device all',
+        'show version'
     ]
 
     def populate(self):
@@ -218,28 +230,41 @@ class Interfaces(FactsBase):
         desc = self.responses[1]
         properties = self.responses[2]
         vlan = self.responses[3]
-        vlan_info = self.parse_vlan(vlan)
+        version_info = self.responses[6]
+        vlan_info = self.parse_vlan(vlan, version_info)
         self.facts['interfaces'] = self.populate_interfaces(interfaces, desc, properties)
         self.facts['interfaces'].update(vlan_info)
         if 'LLDP is not enabled' not in self.responses[4]:
             neighbors = self.responses[5]
             self.facts['neighbors'] = self.parse_neighbors(neighbors)
 
-    def parse_vlan(self, vlan):
+    def parse_vlan(self, vlan, version_info):
         facts = dict()
-        vlan_info, vlan_info_next = vlan.split('----------   -----   --------------- --------------- -------')
-        for en in vlan_info_next.splitlines():
-            if en == '':
-                continue
-            match = re.search('^(\S+)\s+(\S+)\s+(\S+)', en)
-            intf = match.group(1)
-            if intf not in facts:
-                facts[intf] = list()
+        if "N11" in version_info:
+            match = re.search(r'IP Address(.+)\s([0-9.]*)\n', vlan)
+            mask = re.search(r'Subnet Mask(.+)\s([0-9.]*)\n', vlan)
+            vlan_id_match = re.search(r'Management VLAN ID(.+)\s(\d+)', vlan)
+            vlan_id = "Vl" + vlan_id_match.group(2)
+            if vlan_id not in facts:
+                facts[vlan_id] = list()
             fact = dict()
-            matc = re.search('^([\w+\s\d]*)\s+(\S+)\s+(\S+)', en)
-            fact['address'] = matc.group(2)
-            fact['masklen'] = matc.group(3)
-            facts[intf].append(fact)
+            fact['address'] = match.group(2)
+            fact['masklen'] = mask.group(2)
+            facts[vlan_id].append(fact)
+        else:
+            vlan_info, vlan_info_next = vlan.split('----------   -----   --------------- --------------- -------')
+            for en in vlan_info_next.splitlines():
+                if en == '':
+                    continue
+                match = re.search(r'^(\S+)\s+(\S+)\s+(\S+)', en)
+                intf = match.group(1)
+                if intf not in facts:
+                    facts[intf] = list()
+                fact = dict()
+                matc = re.search(r'^([\w+\s\d]*)\s+(\S+)\s+(\S+)', en)
+                fact['address'] = matc.group(2)
+                fact['masklen'] = matc.group(3)
+                facts[intf].append(fact)
         return facts
 
     def populate_interfaces(self, interfaces, desc, properties):
@@ -299,14 +324,14 @@ class Interfaces(FactsBase):
             desc_val, desc_info = desc_next.split('Port')
         for en in desc_val.splitlines():
             if key in en:
-                match = re.search('^(\S+)\s+(\S+)', en)
+                match = re.search(r'^(\S+)\s+(\S+)', en)
                 if match.group(2) in ['Full', 'N/A']:
                     return "Null"
                 else:
                     return match.group(2)
 
     def parse_macaddress(self, data):
-        match = re.search(r'Burned MAC Address(.+)\s([A-Z0-9.]*)\n', data)
+        match = re.search(r'Burned In MAC Address(.+)\s([A-Z0-9.]*)\n', data)
         if match:
             return match.group(2)
 
@@ -331,7 +356,7 @@ class Interfaces(FactsBase):
         for en in mediatype_next.splitlines():
             if key in en:
                 flag = 0
-                match = re.search('^(\S+)\s+(\S+)\s+(\S+)', en)
+                match = re.search(r'^(\S+)\s+(\S+)\s+(\S+)', en)
                 if match:
                     strval = match.group(3)
                     return strval
@@ -344,7 +369,7 @@ class Interfaces(FactsBase):
         for en in type_val_next.splitlines():
             if key in en:
                 flag = 0
-                match = re.search('^(\S+)\s+(\S+)\s+(\S+)', en)
+                match = re.search(r'^(\S+)\s+(\S+)\s+(\S+)', en)
                 if match:
                     strval = match.group(2)
                     return strval

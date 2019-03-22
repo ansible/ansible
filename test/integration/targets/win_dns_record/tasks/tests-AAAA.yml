@@ -1,0 +1,186 @@
+- name: 'TYPE=AAAA - creation (check mode)'
+  win_dns_record: {zone: '{{ win_dns_record_zone }}', name: test1, value: '2001:db8::1', type: AAAA}
+  register: cmd_result
+  check_mode: yes
+
+- name: 'TYPE=AAAA - creation get results (check mode)'
+  win_command: powershell.exe "If (Get-DnsServerResourceRecord -ZoneName '{{ win_dns_record_zone }}' -Name 'test1' -RRType AAAA -Node -ErrorAction:Ignore) { 'exists' } else { 'absent' }"
+  register: cmd_result_actual
+  changed_when: false
+
+- name: 'TYPE=AAAA - creation check results (check mode)'
+  assert:
+    that:
+      - cmd_result is changed
+      - cmd_result_actual.stdout == 'absent\r\n'
+
+- name: 'TYPE=AAAA - creation'
+  win_dns_record: {zone: '{{ win_dns_record_zone }}', name: test1, value: '2001:db8::1', type: AAAA}
+  register: cmd_result
+
+- name: 'TYPE=AAAA - creation get results'
+  win_command: powershell.exe "Get-DnsServerResourceRecord -ZoneName '{{ win_dns_record_zone }}' -Name 'test1' -RRType AAAA -Node -ErrorAction:Ignore | Select -ExpandProperty RecordData | Select -ExpandProperty IPv6Address | Select -ExpandProperty IPAddressToString"
+  register: cmd_result_actual
+  changed_when: false
+
+- name: 'TYPE=AAAA - creation check results'
+  assert:
+    that:
+      - cmd_result is changed
+      - cmd_result_actual.stdout == '2001:db8::1\r\n'
+
+- name: 'TYPE=AAAA - creation (idempotent)'
+  win_dns_record: {zone: '{{ win_dns_record_zone }}', name: test1, value: '2001:db8::1', type: AAAA}
+  register: cmd_result
+
+- name: 'TYPE=AAAA - creation get results (idempotent)'
+  win_command: powershell.exe "Get-DnsServerResourceRecord -ZoneName '{{ win_dns_record_zone }}' -Name 'test1' -RRType AAAA -Node -ErrorAction:Ignore | Select -ExpandProperty RecordData | Select -ExpandProperty IPv6Address | Select -ExpandProperty IPAddressToString"
+  register: cmd_result_actual
+  changed_when: false
+
+- name: 'TYPE=AAAA - creation check results (idempotent)'
+  assert:
+    that:
+      - cmd_result is not changed
+      - cmd_result_actual.stdout == '2001:db8::1\r\n'
+
+
+- name: 'TYPE=AAAA - update address (check mode)'
+  win_dns_record: {zone: '{{ win_dns_record_zone }}', name: test1, value: '2001:db8::2', type: AAAA}
+  register: cmd_result
+  check_mode: yes
+
+- name: 'TYPE=AAAA - update address get results (check mode)'
+  win_command: powershell.exe "Get-DnsServerResourceRecord -ZoneName '{{ win_dns_record_zone }}' -Name 'test1' -RRType AAAA -Node -ErrorAction:Ignore | Select -ExpandProperty RecordData | Select -ExpandProperty IPv6Address | Select -ExpandProperty IPAddressToString"
+  register: cmd_result_actual
+  changed_when: false
+
+- name: 'TYPE=AAAA - update address check results (check mode)'
+  assert:
+    that:
+      - cmd_result is changed
+      - cmd_result_actual.stdout == '2001:db8::1\r\n'
+
+- name: 'TYPE=AAAA - update address'
+  win_dns_record: {zone: '{{ win_dns_record_zone }}', name: test1, value: '2001:db8::2', type: AAAA}
+  register: cmd_result
+
+- name: 'TYPE=AAAA - update address get results'
+  win_command: powershell.exe "Get-DnsServerResourceRecord -ZoneName '{{ win_dns_record_zone }}' -Name 'test1' -RRType AAAA -Node -ErrorAction:Ignore | Select -ExpandProperty RecordData | Select -ExpandProperty IPv6Address | Select -ExpandProperty IPAddressToString"
+  register: cmd_result_actual
+  changed_when: false
+
+- name: 'TYPE=AAAA - update address check results'
+  assert:
+    that:
+      - cmd_result is changed
+      - cmd_result_actual.stdout == '2001:db8::2\r\n'
+
+- name: 'TYPE=AAAA - update address (idempotent)'
+  win_dns_record: {zone: '{{ win_dns_record_zone }}', name: test1, value: '2001:db8::2', type: AAAA}
+  register: cmd_result
+
+- name: 'TYPE=AAAA - update address get results (idempotent)'
+  win_command: powershell.exe "Get-DnsServerResourceRecord -ZoneName '{{ win_dns_record_zone }}' -Name 'test1' -RRType AAAA -Node -ErrorAction:Ignore | Select -ExpandProperty RecordData | Select -ExpandProperty IPv6Address | Select -ExpandProperty IPAddressToString"
+  register: cmd_result_actual
+  changed_when: false
+
+- name: 'TYPE=AAAA - update address check results (idempotent)'
+  assert:
+    that:
+      - cmd_result is not changed
+      - cmd_result_actual.stdout == '2001:db8::2\r\n'
+
+
+- name: 'TYPE=AAAA - update TTL (check mode)'
+  win_dns_record: {zone: '{{ win_dns_record_zone }}', name: test1, value: '2001:db8::2', ttl: 7200, type: AAAA}
+  register: cmd_result
+  check_mode: yes
+
+- name: 'TYPE=AAAA - update TTL get results (check mode)'
+  win_command: powershell.exe "Get-DnsServerResourceRecord -ZoneName '{{ win_dns_record_zone }}' -Name 'test1' -RRType AAAA -Node -ErrorAction:Ignore | Select -ExpandProperty TimeToLive | Select -ExpandProperty TotalSeconds"
+  register: cmd_result_actual
+  changed_when: false
+
+- name: 'TYPE=AAAA - update TTL check results (check mode)'
+  assert:
+    that:
+      - cmd_result is changed
+      - cmd_result_actual.stdout == '3600\r\n'
+
+- name: 'TYPE=AAAA - update TTL'
+  win_dns_record: {zone: '{{ win_dns_record_zone }}', name: test1, value: '2001:db8::2', ttl: 7200, type: AAAA}
+  register: cmd_result
+
+- name: 'TYPE=AAAA - update TTL get results'
+  win_command: powershell.exe "Get-DnsServerResourceRecord -ZoneName '{{ win_dns_record_zone }}' -Name 'test1' -RRType AAAA -Node -ErrorAction:Ignore | Select -ExpandProperty TimeToLive | Select -ExpandProperty TotalSeconds"
+  register: cmd_result_actual
+  changed_when: false
+
+- name: 'TYPE=AAAA - update TTL check results'
+  assert:
+    that:
+      - cmd_result is changed
+      - cmd_result_actual.stdout == '7200\r\n'
+
+- name: 'TYPE=AAAA - update address (idempotent)'
+  win_dns_record: {zone: '{{ win_dns_record_zone }}', name: test1, value: '2001:db8::2', ttl: 7200, type: AAAA}
+  register: cmd_result
+
+- name: 'TYPE=AAAA - update address get results (idempotent)'
+  win_command: powershell.exe "Get-DnsServerResourceRecord -ZoneName '{{ win_dns_record_zone }}' -Name 'test1' -RRType AAAA -Node -ErrorAction:Ignore | Select -ExpandProperty TimeToLive | Select -ExpandProperty TotalSeconds"
+  register: cmd_result_actual
+  changed_when: false
+
+- name: 'TYPE=AAAA - update address check results (idempotent)'
+  assert:
+    that:
+      - cmd_result is not changed
+      - cmd_result_actual.stdout == '7200\r\n'
+
+
+- name: 'TYPE=AAAA - remove record (check mode)'
+  win_dns_record: {zone: '{{ win_dns_record_zone }}', name: test1, type: AAAA, state: absent}
+  register: cmd_result
+  check_mode: yes
+
+- name: 'TYPE=AAAA - remove record get results (check mode)'
+  win_command: powershell.exe "If (Get-DnsServerResourceRecord -ZoneName '{{ win_dns_record_zone }}' -Name 'test1' -RRType AAAA -Node -ErrorAction:Ignore) { 'exists' } else { 'absent' }"
+  register: cmd_result_actual
+  changed_when: false
+
+- name: 'TYPE=AAAA - remove record check results (check mode)'
+  assert:
+    that:
+      - cmd_result is changed
+      - cmd_result_actual.stdout == 'exists\r\n'
+
+- name: 'TYPE=AAAA - remove record'
+  win_dns_record: {zone: '{{ win_dns_record_zone }}', name: test1, type: AAAA, state: absent}
+  register: cmd_result
+
+- name: 'TYPE=AAAA - remove record get results'
+  win_command: powershell.exe "If (Get-DnsServerResourceRecord -ZoneName '{{ win_dns_record_zone }}' -Name 'test1' -RRType AAAA -Node -ErrorAction:Ignore) { 'exists' } else { 'absent' }"
+  register: cmd_result_actual
+  changed_when: false
+
+- name: 'TYPE=AAAA - remove record check results'
+  assert:
+    that:
+      - cmd_result is changed
+      - cmd_result_actual.stdout == 'absent\r\n'
+
+- name: 'TYPE=AAAA - remove record (idempotent)'
+  win_dns_record: {zone: '{{ win_dns_record_zone }}', name: test1, type: AAAA, state: absent}
+  register: cmd_result
+
+- name: 'TYPE=AAAA - remove record get results (idempotent)'
+  win_command: powershell.exe "If (Get-DnsServerResourceRecord -ZoneName '{{ win_dns_record_zone }}' -Name 'test1' -RRType AAAA -Node -ErrorAction:Ignore) { 'exists' } else { 'absent' }"
+  register: cmd_result_actual
+  changed_when: false
+
+- name: 'TYPE=AAAA - remove record check results (idempotent)'
+  assert:
+    that:
+      - cmd_result is not changed
+      - cmd_result_actual.stdout == 'absent\r\n'

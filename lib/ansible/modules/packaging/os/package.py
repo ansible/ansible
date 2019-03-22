@@ -19,7 +19,7 @@ DOCUMENTATION = '''
 module: package
 version_added: 2.0
 author:
-    - Ansible Inc
+    - Ansible Core Team
 short_description: Generic OS package manager
 description:
      - Installs, upgrade and removes packages using the underlying OS package manager.
@@ -32,7 +32,7 @@ options:
     required: true
   state:
     description:
-      - Whether to install (C(present), C(latest)), or remove (C(absent)) a package.
+      - Whether to install (C(present)), or remove (C(absent)) a package. Other states depend on the underlying package module, i.e C(latest).
     required: true
   use:
     description:
@@ -47,10 +47,10 @@ notes:
     - For Windows targets, use the M(win_package) module instead.
 '''
 EXAMPLES = '''
-- name: install the latest version of ntpdate
+- name: install ntpdate
   package:
     name: ntpdate
-    state: latest
+    state: present
 
 # This uses a variable as this changes per distribution.
 - name: remove the apache package

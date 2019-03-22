@@ -1,0 +1,365 @@
+{
+    "fmgr_waf_profile_modify": [
+        {
+            "paramgram_used": {
+                "comment": "Created by Ansible Module TEST",
+                "name": "Ansible_WAF_Profile",
+                "adom": "root",
+                "address-list": {
+                    "blocked-address": null,
+                    "status": null,
+                    "severity": null,
+                    "blocked-log": null,
+                    "trusted-address": null
+                },
+                "constraint": {
+                    "header-length": {
+                        "action": null,
+                        "status": null,
+                        "length": null,
+                        "log": null,
+                        "severity": null
+                    },
+                    "content-length": {
+                        "action": null,
+                        "status": null,
+                        "length": null,
+                        "log": null,
+                        "severity": null
+                    },
+                    "max-cookie": {
+                        "action": null,
+                        "status": null,
+                        "max-cookie": null,
+                        "log": null,
+                        "severity": null
+                    },
+                    "url-param-length": {
+                        "action": null,
+                        "status": null,
+                        "length": null,
+                        "log": null,
+                        "severity": null
+                    },
+                    "hostname": {
+                        "action": null,
+                        "status": null,
+                        "log": null,
+                        "severity": null
+                    },
+                    "line-length": {
+                        "action": null,
+                        "status": null,
+                        "length": null,
+                        "log": null,
+                        "severity": null
+                    },
+                    "exception": {
+                        "regex": null,
+                        "header-length": null,
+                        "content-length": null,
+                        "max-cookie": null,
+                        "pattern": null,
+                        "hostname": null,
+                        "line-length": null,
+                        "max-range-segment": null,
+                        "url-param-length": null,
+                        "version": null,
+                        "param-length": null,
+                        "malformed": null,
+                        "address": null,
+                        "max-url-param": null,
+                        "max-header-line": null,
+                        "method": null
+                    },
+                    "max-range-segment": {
+                        "action": null,
+                        "status": null,
+                        "max-range-segment": null,
+                        "severity": null,
+                        "log": null
+                    },
+                    "version": {
+                        "action": null,
+                        "status": null,
+                        "log": null,
+                        "severity": null
+                    },
+                    "param-length": {
+                        "action": null,
+                        "status": null,
+                        "length": null,
+                        "log": null,
+                        "severity": null
+                    },
+                    "malformed": {
+                        "action": null,
+                        "status": null,
+                        "log": null,
+                        "severity": null
+                    },
+                    "max-url-param": {
+                        "action": null,
+                        "status": null,
+                        "max-url-param": null,
+                        "log": null,
+                        "severity": null
+                    },
+                    "max-header-line": {
+                        "action": null,
+                        "status": null,
+                        "max-header-line": null,
+                        "log": null,
+                        "severity": null
+                    },
+                    "method": {
+                        "action": null,
+                        "status": null,
+                        "log": null,
+                        "severity": null
+                    }
+                },
+                "extended-log": null,
+                "url-access": {
+                    "action": null,
+                    "address": null,
+                    "severity": null,
+                    "access-pattern": {
+                        "negate": null,
+                        "pattern": null,
+                        "srcaddr": null,
+                        "regex": null
+                    },
+                    "log": null
+                },
+                "external": null,
+                "signature": {
+                    "custom-signature": {
+                        "status": null,
+                        "direction": null,
+                        "target": null,
+                        "severity": null,
+                        "case-sensitivity": null,
+                        "name": null,
+                        "pattern": null,
+                        "action": null,
+                        "log": null
+                    },
+                    "credit-card-detection-threshold": null,
+                    "main-class": {
+                        "action": null,
+                        "status": null,
+                        "log": null,
+                        "severity": null
+                    },
+                    "disabled-signature": null,
+                    "disabled-sub-class": null
+                },
+                "method": {
+                    "status": null,
+                    "severity": null,
+                    "default-allowed-methods": null,
+                    "log": null,
+                    "method-policy": {
+                        "regex": null,
+                        "pattern": null,
+                        "allowed-methods": null,
+                        "address": null
+                    }
+                },
+                "mode": "delete"
+            },
+            "datagram_sent": {},
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/root/obj/waf/profile/Ansible_WAF_Profile"
+            },
+            "post_method": "delete"
+        },
+        {
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/root/obj/waf/profile"
+            },
+            "datagram_sent": {
+                "comment": "Created by Ansible Module TEST",
+                "name": "Ansible_WAF_Profile"
+            },
+            "paramgram_used": {
+                "comment": "Created by Ansible Module TEST",
+                "adom": "root",
+                "address-list": {
+                    "blocked-address": null,
+                    "status": null,
+                    "severity": null,
+                    "blocked-log": null,
+                    "trusted-address": null
+                },
+                "extended-log": null,
+                "url-access": {
+                    "action": null,
+                    "severity": null,
+                    "log": null,
+                    "access-pattern": {
+                        "negate": null,
+                        "pattern": null,
+                        "srcaddr": null,
+                        "regex": null
+                    },
+                    "address": null
+                },
+                "external": null,
+                "name": "Ansible_WAF_Profile",
+                "constraint": {
+                    "content-length": {
+                        "action": null,
+                        "status": null,
+                        "length": null,
+                        "log": null,
+                        "severity": null
+                    },
+                    "max-cookie": {
+                        "action": null,
+                        "status": null,
+                        "max-cookie": null,
+                        "log": null,
+                        "severity": null
+                    },
+                    "line-length": {
+                        "action": null,
+                        "status": null,
+                        "length": null,
+                        "log": null,
+                        "severity": null
+                    },
+                    "max-range-segment": {
+                        "action": null,
+                        "severity": null,
+                        "status": null,
+                        "log": null,
+                        "max-range-segment": null
+                    },
+                    "param-length": {
+                        "action": null,
+                        "status": null,
+                        "length": null,
+                        "log": null,
+                        "severity": null
+                    },
+                    "malformed": {
+                        "action": null,
+                        "status": null,
+                        "log": null,
+                        "severity": null
+                    },
+                    "max-url-param": {
+                        "action": null,
+                        "status": null,
+                        "max-url-param": null,
+                        "log": null,
+                        "severity": null
+                    },
+                    "header-length": {
+                        "action": null,
+                        "status": null,
+                        "length": null,
+                        "log": null,
+                        "severity": null
+                    },
+                    "exception": {
+                        "regex": null,
+                        "header-length": null,
+                        "content-length": null,
+                        "max-cookie": null,
+                        "pattern": null,
+                        "hostname": null,
+                        "line-length": null,
+                        "max-range-segment": null,
+                        "url-param-length": null,
+                        "version": null,
+                        "param-length": null,
+                        "malformed": null,
+                        "address": null,
+                        "max-url-param": null,
+                        "max-header-line": null,
+                        "method": null
+                    },
+                    "hostname": {
+                        "action": null,
+                        "status": null,
+                        "log": null,
+                        "severity": null
+                    },
+                    "url-param-length": {
+                        "action": null,
+                        "status": null,
+                        "length": null,
+                        "log": null,
+                        "severity": null
+                    },
+                    "version": {
+                        "action": null,
+                        "status": null,
+                        "log": null,
+                        "severity": null
+                    },
+                    "max-header-line": {
+                        "action": null,
+                        "status": null,
+                        "max-header-line": null,
+                        "log": null,
+                        "severity": null
+                    },
+                    "method": {
+                        "action": null,
+                        "status": null,
+                        "log": null,
+                        "severity": null
+                    }
+                },
+                "mode": "set",
+                "signature": {
+                    "custom-signature": {
+                        "status": null,
+                        "direction": null,
+                        "log": null,
+                        "severity": null,
+                        "target": null,
+                        "action": null,
+                        "pattern": null,
+                        "case-sensitivity": null,
+                        "name": null
+                    },
+                    "credit-card-detection-threshold": null,
+                    "main-class": {
+                        "action": null,
+                        "status": null,
+                        "log": null,
+                        "severity": null
+                    },
+                    "disabled-signature": null,
+                    "disabled-sub-class": null
+                },
+                "method": {
+                    "status": null,
+                    "default-allowed-methods": null,
+                    "method-policy": {
+                        "regex": null,
+                        "pattern": null,
+                        "allowed-methods": null,
+                        "address": null
+                    },
+                    "log": null,
+                    "severity": null
+                }
+            },
+            "post_method": "set"
+        }
+    ]
+}

@@ -42,10 +42,7 @@ from libcloud.compute.types import Provider
 from libcloud.compute.providers import get_driver
 import libcloud.security as sec
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
 
 class LibcloudInventory(object):
@@ -327,7 +324,7 @@ class LibcloudInventory(object):
         used as Ansible groups
         '''
 
-        return re.sub("[^A-Za-z0-9\-]", "_", word)
+        return re.sub(r"[^A-Za-z0-9\-]", "_", word)
 
     def json_format_dict(self, data, pretty=False):
         '''
@@ -343,6 +340,7 @@ class LibcloudInventory(object):
 
 def main():
     LibcloudInventory()
+
 
 if __name__ == '__main__':
     main()

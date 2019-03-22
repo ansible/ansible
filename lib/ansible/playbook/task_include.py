@@ -19,16 +19,17 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import ansible.constants as C
+from ansible.errors import AnsibleParserError
 from ansible.playbook.attribute import FieldAttribute
+from ansible.playbook.block import Block
 from ansible.playbook.task import Task
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import Display
+from ansible.utils.sentinel import Sentinel
 
 __all__ = ['TaskInclude']
+
+display = Display()
 
 
 class TaskInclude(Task):
@@ -37,6 +38,13 @@ class TaskInclude(Task):
     A task include is derived from a regular task to handle the special
     circumstances related to the `- include: ...` task.
     """
+
+    BASE = frozenset(('file', '_raw_params'))  # directly assigned
+    OTHER_ARGS = frozenset(('apply',))  # assigned to matching property
+    VALID_ARGS = BASE.union(OTHER_ARGS)  # all valid args
+    VALID_INCLUDE_KEYWORDS = frozenset(('action', 'args', 'debugger', 'ignore_errors', 'loop', 'loop_control',
+                                        'loop_with', 'name', 'no_log', 'register', 'run_once', 'tags', 'vars',
+                                        'when'))
 
     # =================================================================================
     # ATTRIBUTES
@@ -49,8 +57,41 @@ class TaskInclude(Task):
 
     @staticmethod
     def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
-        t = TaskInclude(block=block, role=role, task_include=task_include)
-        return t.load_data(data, variable_manager=variable_manager, loader=loader)
+        ti = TaskInclude(block=block, role=role, task_include=task_include)
+        task = ti.load_data(data, variable_manager=variable_manager, loader=loader)
+
+        # Validate options
+        my_arg_names = frozenset(task.args.keys())
+
+        # validate bad args, otherwise we silently ignore
+        bad_opts = my_arg_names.difference(TaskInclude.VALID_ARGS)
+        if bad_opts and task.action in ('include_tasks', 'import_tasks'):
+            raise AnsibleParserError('Invalid options for %s: %s' % (task.action, ','.join(list(bad_opts))), obj=data)
+
+        if not task.args.get('_raw_params'):
+            task.args['_raw_params'] = task.args.pop('file', None)
+
+        apply_attrs = task.args.get('apply', {})
+        if apply_attrs and task.action != 'include_tasks':
+            raise AnsibleParserError('Invalid options for %s: apply' % task.action, obj=data)
+        elif not isinstance(apply_attrs, dict):
+            raise AnsibleParserError('Expected a dict for apply but got %s instead' % type(apply_attrs), obj=data)
+
+        return task
+
+    def preprocess_data(self, ds):
+        ds = super(TaskInclude, self).preprocess_data(ds)
+
+        diff = set(ds.keys()).difference(TaskInclude.VALID_INCLUDE_KEYWORDS)
+        for k in diff:
+            # This check doesn't handle ``include`` as we have no idea at this point if it is static or not
+            if ds[k] is not Sentinel and ds['action'] in ('include_tasks', 'include_role'):
+                if C.INVALID_TASK_ATTRIBUTE_FAILED:
+                    raise AnsibleParserError("'%s' is not a valid attribute for a %s" % (k, self.__class__.__name__), obj=ds)
+                else:
+                    display.warning("Ignoring invalid attribute: %s" % k)
+
+        return ds
 
     def copy(self, exclude_parent=False, exclude_tasks=False):
         new_me = super(TaskInclude, self).copy(exclude_parent=exclude_parent, exclude_tasks=exclude_tasks)
@@ -79,3 +120,24 @@ class TaskInclude(Task):
                 del all_vars['when']
 
         return all_vars
+
+    def build_parent_block(self):
+        '''
+        This method is used to create the parent block for the included tasks
+        when ``apply`` is specified
+        '''
+        apply_attrs = self.args.pop('apply', {})
+        if apply_attrs:
+            apply_attrs['block'] = []
+            p_block = Block.load(
+                apply_attrs,
+                play=self._parent._play,
+                task_include=self,
+                role=self._role,
+                variable_manager=self._variable_manager,
+                loader=self._loader,
+            )
+        else:
+            p_block = self
+
+        return p_block

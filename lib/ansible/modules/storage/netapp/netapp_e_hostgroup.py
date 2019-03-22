@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: netapp_e_hostgroup
 version_added: "2.2"
-short_description: Manage NetApp Storage Array Host Groups
+short_description: NetApp E-Series manage array host groups
 author: Kevin Hulquest (@hulquest)
 description:
 - Create, update or destroy host groups on a NetApp E-Series storage array.
@@ -60,7 +60,7 @@ options:
     required: false
     description:
     - The id number of the host group to manage. Either this or C(name) must be supplied.
-  hosts::
+  hosts:
     required: false
     description:
     - a list of host names/labels to add to the group
@@ -79,13 +79,13 @@ RETURN = '''
 clusterRef:
     description: The unique identification value for this object. Other objects may use this reference value to refer to the cluster.
     returned: always except when state is absent
-    type: string
+    type: str
     sample: "3233343536373839303132333100000000000000"
 confirmLUNMappingCreation:
     description: If true, indicates that creation of LUN-to-volume mappings should require careful confirmation from the end-user, since such a mapping
                  will alter the volume access rights of other clusters, in addition to this one.
     returned: always
-    type: boolean
+    type: bool
     sample: false
 hosts:
     description: A list of the hosts that are part of the host group after all operations.
@@ -95,28 +95,28 @@ hosts:
 id:
     description: The id number of the hostgroup
     returned: always except when state is absent
-    type: string
+    type: str
     sample: "3233343536373839303132333100000000000000"
 isSAControlled:
     description: If true, indicates that I/O accesses from this cluster are subject to the storage array's default LUN-to-volume mappings. If false,
                  indicates that I/O accesses from the cluster are subject to cluster-specific LUN-to-volume mappings.
     returned: always except when state is absent
-    type: boolean
+    type: bool
     sample: false
 label:
     description: The user-assigned, descriptive label string for the cluster.
     returned: always
-    type: string
+    type: str
     sample: "MyHostGroup"
 name:
     description: same as label
     returned: always except when state is absent
-    type: string
+    type: str
     sample: "MyHostGroup"
 protectionInformationCapableAccessMethod:
     description: This field is true if the host has a PI capable access method.
     returned: always except when state is absent
-    type: boolean
+    type: bool
     sample: true
 '''
 
@@ -150,7 +150,7 @@ def request(url, data=None, headers=None, method='GET', use_proxy=True,
             data = json.loads(raw_data)
         else:
             raw_data = None
-    except:
+    except Exception:
         if ignore_errors:
             pass
         else:

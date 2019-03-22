@@ -206,12 +206,13 @@ class LinuxNetwork(Network):
                         if secondary:
                             if "ipv4_secondaries" not in interfaces[device]:
                                 interfaces[device]["ipv4_secondaries"] = []
-                            interfaces[device]["ipv4_secondaries"].append({
-                                'address': address,
-                                'broadcast': broadcast,
-                                'netmask': netmask,
-                                'network': network,
-                            })
+                            if device != iface:
+                                interfaces[device]["ipv4_secondaries"].append({
+                                    'address': address,
+                                    'broadcast': broadcast,
+                                    'netmask': netmask,
+                                    'network': network,
+                                })
 
                         # NOTE: default_ipv4 is ref to outside scope
                         # If this is the default address, update default_ipv4
@@ -219,7 +220,7 @@ class LinuxNetwork(Network):
                             default_ipv4['broadcast'] = broadcast
                             default_ipv4['netmask'] = netmask
                             default_ipv4['network'] = network
-                            # NOTE: macadress is ref from outside scope
+                            # NOTE: macaddress is ref from outside scope
                             default_ipv4['macaddress'] = macaddress
                             default_ipv4['mtu'] = interfaces[device]['mtu']
                             default_ipv4['type'] = interfaces[device].get("type", "unknown")
@@ -236,11 +237,11 @@ class LinuxNetwork(Network):
                             scope = words[3]
                         if 'ipv6' not in interfaces[device]:
                             interfaces[device]['ipv6'] = []
-                            interfaces[device]['ipv6'].append({
-                                'address': address,
-                                'prefix': prefix,
-                                'scope': scope
-                            })
+                        interfaces[device]['ipv6'].append({
+                            'address': address,
+                            'prefix': prefix,
+                            'scope': scope
+                        })
                         # If this is the default address, update default_ipv6
                         if 'address' in default_ipv6 and default_ipv6['address'] == address:
                             default_ipv6['prefix'] = prefix
@@ -255,12 +256,20 @@ class LinuxNetwork(Network):
 
             args = [ip_path, 'addr', 'show', 'primary', device]
             rc, primary_data, stderr = self.module.run_command(args, errors='surrogate_then_replace')
+            if rc == 0:
+                parse_ip_output(primary_data)
+            else:
+                # possibly busybox, fallback to running without the "primary" arg
+                # https://github.com/ansible/ansible/issues/50871
+                args = [ip_path, 'addr', 'show', device]
+                rc, data, stderr = self.module.run_command(args, errors='surrogate_then_replace')
+                if rc == 0:
+                    parse_ip_output(data)
 
             args = [ip_path, 'addr', 'show', 'secondary', device]
             rc, secondary_data, stderr = self.module.run_command(args, errors='surrogate_then_replace')
-
-            parse_ip_output(primary_data)
-            parse_ip_output(secondary_data, secondary=True)
+            if rc == 0:
+                parse_ip_output(secondary_data, secondary=True)
 
             interfaces[device].update(self.get_ethtool_data(device))
 
@@ -297,9 +306,9 @@ class LinuxNetwork(Network):
             args = [ethtool_path, '-T', device]
             rc, stdout, stderr = self.module.run_command(args, errors='surrogate_then_replace')
             if rc == 0:
-                data['timestamping'] = [m.lower() for m in re.findall('SOF_TIMESTAMPING_(\w+)', stdout)]
-                data['hw_timestamp_filters'] = [m.lower() for m in re.findall('HWTSTAMP_FILTER_(\w+)', stdout)]
-                m = re.search('PTP Hardware Clock: (\d+)', stdout)
+                data['timestamping'] = [m.lower() for m in re.findall(r'SOF_TIMESTAMPING_(\w+)', stdout)]
+                data['hw_timestamp_filters'] = [m.lower() for m in re.findall(r'HWTSTAMP_FILTER_(\w+)', stdout)]
+                m = re.search(r'PTP Hardware Clock: (\d+)', stdout)
                 if m:
                     data['phc_index'] = int(m.groups()[0])
 
@@ -309,3 +318,4 @@ class LinuxNetwork(Network):
 class LinuxNetworkCollector(NetworkCollector):
     _platform = 'Linux'
     _fact_class = LinuxNetwork
+    required_facts = set(['distribution', 'platform'])

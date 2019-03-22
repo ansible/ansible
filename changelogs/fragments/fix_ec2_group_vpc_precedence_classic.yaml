@@ -1,0 +1,7 @@
+---
+bugfixes:
+  - The patch fixing the regression of no longer preferring matching security
+    groups in the same VPC https://github.com/ansible/ansible/pull/45787
+    (which was also backported to 2.6) broke EC2-Classic accounts.
+    https://github.com/ansible/ansible/pull/46242 removes the assumption that
+    security groups must be in a VPC.

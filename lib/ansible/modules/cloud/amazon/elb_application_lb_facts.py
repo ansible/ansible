@@ -17,6 +17,7 @@ short_description: Gather facts about application ELBs in AWS
 description:
     - Gather facts about application ELBs in AWS
 version_added: "2.4"
+requirements: [ boto3 ]
 author: Rob White (@wimnat)
 options:
   load_balancer_arns:
@@ -49,6 +50,13 @@ EXAMPLES = '''
     names:
       - elb1
       - elb2
+
+# Gather facts about specific ALB
+- elb_application_lb_facts:
+    names: "alb-name"
+    region: "aws-region"
+  register: alb_facts
+- debug: var=alb_facts
 '''
 
 RETURN = '''
@@ -60,17 +68,17 @@ load_balancers:
         access_logs_s3_bucket:
             description: The name of the S3 bucket for the access logs.
             returned: when status is present
-            type: string
+            type: str
             sample: mys3bucket
         access_logs_s3_enabled:
             description: Indicates whether access logs stored in Amazon S3 are enabled.
             returned: when status is present
-            type: string
+            type: str
             sample: true
         access_logs_s3_prefix:
             description: The prefix for the location in the S3 bucket.
             returned: when status is present
-            type: string
+            type: str
             sample: /my/logs
         availability_zones:
             description: The Availability Zones for the load balancer.
@@ -80,47 +88,47 @@ load_balancers:
         canonical_hosted_zone_id:
             description: The ID of the Amazon Route 53 hosted zone associated with the load balancer.
             returned: when status is present
-            type: string
+            type: str
             sample: ABCDEF12345678
         created_time:
             description: The date and time the load balancer was created.
             returned: when status is present
-            type: string
+            type: str
             sample: "2015-02-12T02:14:02+00:00"
         deletion_protection_enabled:
             description: Indicates whether deletion protection is enabled.
             returned: when status is present
-            type: string
+            type: str
             sample: true
         dns_name:
             description: The public DNS name of the load balancer.
             returned: when status is present
-            type: string
+            type: str
             sample: internal-my-elb-123456789.ap-southeast-2.elb.amazonaws.com
         idle_timeout_timeout_seconds:
             description: The idle timeout value, in seconds.
             returned: when status is present
-            type: string
+            type: str
             sample: 60
         ip_address_type:
             description:  The type of IP addresses used by the subnets for the load balancer.
             returned: when status is present
-            type: string
+            type: str
             sample: ipv4
         load_balancer_arn:
             description: The Amazon Resource Name (ARN) of the load balancer.
             returned: when status is present
-            type: string
+            type: str
             sample: arn:aws:elasticloadbalancing:ap-southeast-2:0123456789:loadbalancer/app/my-elb/001122334455
         load_balancer_name:
             description: The name of the load balancer.
             returned: when status is present
-            type: string
+            type: str
             sample: my-elb
         scheme:
             description: Internet-facing or internal load balancer.
             returned: when status is present
-            type: string
+            type: str
             sample: internal
         security_groups:
             description: The IDs of the security groups for the load balancer.
@@ -142,12 +150,12 @@ load_balancers:
         type:
             description: The type of load balancer.
             returned: when status is present
-            type: string
+            type: str
             sample: application
         vpc_id:
             description: The ID of the VPC for the load balancer.
             returned: when status is present
-            type: string
+            type: str
             sample: vpc-0011223344
 '''
 
@@ -257,7 +265,7 @@ def main():
     )
 
     module = AnsibleModule(argument_spec=argument_spec,
-                           mutually_exclusive=['load_balancer_arns', 'names'],
+                           mutually_exclusive=[['load_balancer_arns', 'names']],
                            supports_check_mode=True
                            )
 

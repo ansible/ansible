@@ -1,12 +1,12 @@
 - name: python 2
   set_fact:
     python_suffix: ""
-  when: ansible_python_version | version_compare('3', '<')
+  when: ansible_python_version is version('3', '<')
 
 - name: python 3
   set_fact:
     python_suffix: "-py3"
-  when: ansible_python_version | version_compare('3', '>=')
+  when: ansible_python_version is version('3', '>=')
 
 - include_vars: '{{ item }}'
   with_first_found:
@@ -96,6 +96,12 @@
 # instLangs parameter).
 
 - block:
+  - name: Install langpacks (rhel8 beta)
+    yum:
+      name: glibc-all-langpacks
+      state: present
+    when: ansible_distribution_major_version|int >= 8
+
   - name: Check if locales need to be generated (RedHat)
     shell: "localedef --list-archive | grep -a -q '^{{ locale }}$'"
     register: locale_present
@@ -108,7 +114,7 @@
 
   - name: Generate locale (RedHat)
     command: 'localedef -f ISO-8859-1 -i {{ item.locale }} {{ item.locale }}'
-    when: item|failed
+    when: item is failed
     with_items: '{{ locale_present.results }}'
   when: ansible_os_family == 'RedHat' and ansible_distribution != 'Fedora'
 

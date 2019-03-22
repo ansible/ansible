@@ -39,73 +39,49 @@ options:
   id:
     description:
       - uuid of the existing zone.
-    default: null
-    required: false
   state:
     description:
       - State of the zone.
-    required: false
     default: 'present'
     choices: [ 'present', 'enabled', 'disabled', 'absent' ]
   domain:
     description:
       - Domain the zone is related to.
       - Zone is a public zone if not set.
-    required: false
-    default: null
   network_domain:
     description:
       - Network domain for the zone.
-    required: false
-    default: null
   network_type:
     description:
       - Network type of the zone.
-    required: false
     default: basic
     choices: [ 'basic', 'advanced' ]
   dns1:
     description:
       - First DNS for the zone.
       - Required if C(state=present)
-    required: false
-    default: null
   dns2:
     description:
       - Second DNS for the zone.
-    required: false
-    default: null
   internal_dns1:
     description:
       - First internal DNS for the zone.
       - If not set C(dns1) will be used on C(state=present).
-    required: false
-    default: null
   internal_dns2:
     description:
       - Second internal DNS for the zone.
-    required: false
-    default: null
   dns1_ipv6:
     description:
       - First DNS for IPv6 for the zone.
-    required: false
-    default: null
   dns2_ipv6:
     description:
       - Second DNS for IPv6 for the zone.
-    required: false
-    default: null
   guest_cidr_address:
     description:
       - Guest CIDR address for the zone.
-    required: false
-    default: null
   dhcp_provider:
     description:
       - DHCP provider for the Zone.
-    required: false
-    default: null
 extends_documentation_fragment: cloudstack
 '''
 
@@ -142,62 +118,62 @@ RETURN = '''
 id:
   description: UUID of the zone.
   returned: success
-  type: string
+  type: str
   sample: 04589590-ac63-4ffc-93f5-b698b8ac38b6
 name:
   description: Name of the zone.
   returned: success
-  type: string
+  type: str
   sample: zone01
 dns1:
   description: First DNS for the zone.
   returned: success
-  type: string
+  type: str
   sample: 8.8.8.8
 dns2:
   description: Second DNS for the zone.
   returned: success
-  type: string
+  type: str
   sample: 8.8.4.4
 internal_dns1:
   description: First internal DNS for the zone.
   returned: success
-  type: string
+  type: str
   sample: 8.8.8.8
 internal_dns2:
   description: Second internal DNS for the zone.
   returned: success
-  type: string
+  type: str
   sample: 8.8.4.4
 dns1_ipv6:
   description: First IPv6 DNS for the zone.
   returned: success
-  type: string
+  type: str
   sample: "2001:4860:4860::8888"
 dns2_ipv6:
   description: Second IPv6 DNS for the zone.
   returned: success
-  type: string
+  type: str
   sample: "2001:4860:4860::8844"
 allocation_state:
   description: State of the zone.
   returned: success
-  type: string
+  type: str
   sample: Enabled
 domain:
   description: Domain the zone is related to.
   returned: success
-  type: string
+  type: str
   sample: ROOT
 network_domain:
   description: Network domain for the zone.
   returned: success
-  type: string
+  type: str
   sample: example.com
 network_type:
   description: Network type for the zone.
   returned: success
-  type: string
+  type: str
   sample: basic
 local_storage_enabled:
   description: Local storage offering enabled.
@@ -212,17 +188,17 @@ securitygroups_enabled:
 guest_cidr_address:
   description: Guest CIDR address for the zone
   returned: success
-  type: string
+  type: str
   sample: 10.1.1.0/24
 dhcp_provider:
   description: DHCP provider for the zone
   returned: success
-  type: string
+  type: str
   sample: VirtualRouter
 zone_token:
   description: Zone token
   returned: success
-  type: string
+  type: str
   sample: ccb0a60c-79c8-3230-ab8b-8bdbe8c45bb7
 tags:
   description: List of resource tags associated with the zone.

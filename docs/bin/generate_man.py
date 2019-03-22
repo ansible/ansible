@@ -2,12 +2,12 @@
 
 import optparse
 import os
-import pprint
 import sys
 
 from jinja2 import Environment, FileSystemLoader
 
 from ansible.module_utils._text import to_bytes
+from ansible.utils._build_helpers import update_file_if_different
 
 
 def generate_parser():
@@ -107,7 +107,7 @@ def opts_docs(cli_class_name, cli_module_name):
     # parse the common options
     try:
         cli.parse()
-    except:
+    except Exception:
         pass
 
     # base/common cli info
@@ -154,7 +154,7 @@ def opts_docs(cli_class_name, cli_module_name):
 
         try:
             cli.parse()
-        except:
+        except Exception:
             pass
 
         # FIXME/TODO: needed?
@@ -241,12 +241,12 @@ if __name__ == '__main__':
         if cli_name == 'adhoc':
             cli_class_name = 'AdHocCLI'
             # myclass = 'AdHocCLI'
-            output[cli_name] = 'ansible.1.asciidoc.in'
+            output[cli_name] = 'ansible.1.rst.in'
             cli_bin_name = 'ansible'
         else:
             # myclass = "%sCLI" % libname.capitalize()
             cli_class_name = "%sCLI" % cli_name.capitalize()
-            output[cli_name] = 'ansible-%s.1.asciidoc.in' % cli_name
+            output[cli_name] = 'ansible-%s.1.rst.in' % cli_name
             cli_bin_name = 'ansible-%s' % cli_name
 
         # FIXME:
@@ -255,7 +255,7 @@ if __name__ == '__main__':
 
     cli_list = allvars.keys()
 
-    doc_name_formats = {'man': '%s.1.asciidoc.in',
+    doc_name_formats = {'man': '%s.1.rst.in',
                         'rst': '%s.rst'}
 
     for cli_name in cli_list:
@@ -274,7 +274,4 @@ if __name__ == '__main__':
 
         manpage = template.render(tvars)
         filename = os.path.join(output_dir, doc_name_formats[output_format] % tvars['cli_name'])
-
-        with open(filename, 'wb') as f:
-            f.write(to_bytes(manpage))
-            print("Wrote doc to %s" % filename)
+        update_file_if_different(filename, to_bytes(manpage))

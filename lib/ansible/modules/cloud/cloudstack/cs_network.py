@@ -1,22 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# (c) 2015, René Moser <mail@renemoser.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017, René Moser <mail@renemoser.net>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -30,173 +17,179 @@ short_description: Manages networks on Apache CloudStack based clouds.
 description:
     - Create, update, restart and delete networks.
 version_added: '2.0'
-author: "René Moser (@resmo)"
+author: René Moser (@resmo)
 options:
   name:
     description:
       - Name (case sensitive) of the network.
+    type: str
     required: true
   display_text:
     description:
       - Display text of the network.
-      - If not specified, C(name) will be used as C(display_text).
-    required: false
-    default: null
+      - If not specified, I(name) will be used as I(display_text).
+    type: str
   network_offering:
     description:
       - Name of the offering for the network.
-      - Required if C(state=present).
-    required: false
-    default: null
+      - Required if I(state=present).
+    type: str
   start_ip:
     description:
       - The beginning IPv4 address of the network belongs to.
       - Only considered on create.
-    required: false
-    default: null
+    type: str
   end_ip:
     description:
       - The ending IPv4 address of the network belongs to.
-      - If not specified, value of C(start_ip) is used.
+      - If not specified, value of I(start_ip) is used.
       - Only considered on create.
-    required: false
-    default: null
+    type: str
   gateway:
     description:
       - The gateway of the network.
       - Required for shared networks and isolated networks when it belongs to a VPC.
       - Only considered on create.
-    required: false
-    default: null
+    type: str
   netmask:
     description:
       - The netmask of the network.
       - Required for shared networks and isolated networks when it belongs to a VPC.
       - Only considered on create.
-    required: false
-    default: null
+    type: str
   start_ipv6:
     description:
       - The beginning IPv6 address of the network belongs to.
       - Only considered on create.
-    required: false
-    default: null
+    type: str
   end_ipv6:
     description:
       - The ending IPv6 address of the network belongs to.
-      - If not specified, value of C(start_ipv6) is used.
+      - If not specified, value of I(start_ipv6) is used.
       - Only considered on create.
-    required: false
-    default: null
+    type: str
   cidr_ipv6:
     description:
       - CIDR of IPv6 network, must be at least /64.
       - Only considered on create.
-    required: false
-    default: null
+    type: str
   gateway_ipv6:
     description:
       - The gateway of the IPv6 network.
       - Required for shared networks.
       - Only considered on create.
-    required: false
-    default: null
   vlan:
     description:
       - The ID or VID of the network.
-    required: false
-    default: null
+    type: str
   vpc:
     description:
       - Name of the VPC of the network.
-    required: false
-    default: null
+    type: str
   isolated_pvlan:
     description:
       - The isolated private VLAN for this network.
-    required: false
-    default: null
+    type: str
   clean_up:
     description:
       - Cleanup old network elements.
-      - Only considered on C(state=restarted).
-    required: false
-    default: false
+      - Only considered on I(state=restarted).
+    default: no
+    type: bool
   acl_type:
     description:
-      - Access control type.
+      - Access control type for the network.
+      - If not specified, Cloudstack will default to C(account) for isolated networks
+      - and C(domain) for shared networks.
       - Only considered on create.
-    required: false
-    default: account
-    choices: [ 'account', 'domain' ]
+    type: str
+    choices: [ account, domain ]
+  acl:
+    description:
+      - The name of the access control list for the VPC network tier.
+    type: str
+    version_added: '2.5'
+  subdomain_access:
+    description:
+      - Defines whether to allow subdomains to use networks dedicated to their parent domain(s).
+      - Should be used with I(acl_type=domain).
+      - Only considered on create.
+    type: bool
+    version_added: '2.5'
   network_domain:
     description:
       - The network domain.
-    required: false
-    default: null
+    type: str
   state:
     description:
       - State of the network.
-    required: false
+    type: str
     default: present
-    choices: [ 'present', 'absent', 'restarted' ]
+    choices: [ present, absent, restarted ]
   zone:
     description:
       - Name of the zone in which the network should be deployed.
       - If not set, default zone is used.
-    required: false
-    default: null
+    type: str
   project:
     description:
       - Name of the project the network to be deployed in.
-    required: false
-    default: null
+    type: str
   domain:
     description:
       - Domain the network is related to.
-    required: false
-    default: null
+    type: str
   account:
     description:
       - Account the network is related to.
-    required: false
-    default: null
+    type: str
   poll_async:
     description:
       - Poll async jobs until job has finished.
-    required: false
-    default: true
+    default: yes
+    type: bool
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# create a network
-- local_action:
-    module: cs_network
+- name: Create a network
+  cs_network:
     name: my network
     zone: gva-01
     network_offering: DefaultIsolatedNetworkOfferingWithSourceNatService
     network_domain: example.com
+  delegate_to: localhost
 
-# update a network
-- local_action:
-    module: cs_network
+- name: Create a VPC tier
+  cs_network:
+    name: my VPC tier 1
+    zone: gva-01
+    vpc: my VPC
+    network_offering: DefaultIsolatedNetworkOfferingForVpcNetworks
+    gateway: 10.43.0.1
+    netmask: 255.255.255.0
+    acl: my web acl
+  delegate_to: localhost
+
+- name: Update a network
+  cs_network:
     name: my network
     display_text: network of domain example.local
     network_domain: example.local
+  delegate_to: localhost
 
-# restart a network with clean up
-- local_action:
-    module: cs_network
+- name: Restart a network with clean up
+  cs_network:
     name: my network
     clean_up: yes
     state: restared
+  delegate_to: localhost
 
-# remove a network
-- local_action:
-    module: cs_network
+- name: Remove a network
+  cs_network:
     name: my network
     state: absent
+  delegate_to: localhost
 '''
 
 RETURN = '''
@@ -204,123 +197,159 @@ RETURN = '''
 id:
   description: UUID of the network.
   returned: success
-  type: string
+  type: str
   sample: 04589590-ac63-4ffc-93f5-b698b8ac38b6
 name:
   description: Name of the network.
   returned: success
-  type: string
+  type: str
   sample: web project
 display_text:
   description: Display text of the network.
   returned: success
-  type: string
+  type: str
   sample: web project
 dns1:
   description: IP address of the 1st nameserver.
   returned: success
-  type: string
+  type: str
   sample: 1.2.3.4
 dns2:
   description: IP address of the 2nd nameserver.
   returned: success
-  type: string
+  type: str
   sample: 1.2.3.4
 cidr:
   description: IPv4 network CIDR.
   returned: success
-  type: string
+  type: str
   sample: 10.101.64.0/24
 gateway:
   description: IPv4 gateway.
   returned: success
-  type: string
+  type: str
   sample: 10.101.64.1
 netmask:
   description: IPv4 netmask.
   returned: success
-  type: string
+  type: str
   sample: 255.255.255.0
 cidr_ipv6:
   description: IPv6 network CIDR.
-  returned: success
-  type: string
+  returned: if available
+  type: str
   sample: 2001:db8::/64
 gateway_ipv6:
   description: IPv6 gateway.
-  returned: success
-  type: string
+  returned: if available
+  type: str
   sample: 2001:db8::1
-state:
-  description: State of the network.
-  returned: success
-  type: string
-  sample: Implemented
 zone:
   description: Name of zone.
   returned: success
-  type: string
+  type: str
   sample: ch-gva-2
 domain:
   description: Domain the network is related to.
   returned: success
-  type: string
+  type: str
   sample: ROOT
 account:
   description: Account the network is related to.
   returned: success
-  type: string
+  type: str
   sample: example account
 project:
   description: Name of project.
   returned: success
-  type: string
+  type: str
   sample: Production
 tags:
   description: List of resource tags associated with the network.
   returned: success
-  type: dict
+  type: list
   sample: '[ { "key": "foo", "value": "bar" } ]'
 acl_type:
   description: Access type of the network (Domain, Account).
   returned: success
-  type: string
+  type: str
   sample: Account
+acl:
+  description: Name of the access control list for the VPC network tier.
+  returned: success
+  type: str
+  sample: My ACL
+  version_added: '2.5'
+acl_id:
+  description: ID of the access control list for the VPC network tier.
+  returned: success
+  type: str
+  sample: dfafcd55-0510-4b8c-b6c5-b8cedb4cfd88
+  version_added: '2.5'
 broadcast_domain_type:
   description: Broadcast domain type of the network.
   returned: success
-  type: string
+  type: str
   sample: Vlan
 type:
   description: Type of the network.
   returned: success
-  type: string
+  type: str
   sample: Isolated
 traffic_type:
   description: Traffic type of the network.
   returned: success
-  type: string
+  type: str
   sample: Guest
 state:
   description: State of the network (Allocated, Implemented, Setup).
   returned: success
-  type: string
+  type: str
   sample: Allocated
 is_persistent:
   description: Whether the network is persistent or not.
   returned: success
-  type: boolean
+  type: bool
   sample: false
 network_domain:
   description: The network domain
   returned: success
-  type: string
+  type: str
   sample: example.local
 network_offering:
   description: The network offering name.
   returned: success
-  type: string
+  type: str
   sample: DefaultIsolatedNetworkOfferingWithSourceNatService
+network_offering_display_text:
+  description: The network offering display text.
+  returned: success
+  type: str
+  sample: Offering for Isolated Vpc networks with Source Nat service enabled
+  version_added: '2.5'
+network_offering_conserve_mode:
+  description: Whether the network offering has IP conserve mode enabled or not.
+  returned: success
+  type: bool
+  sample: false
+  version_added: '2.5'
+network_offering_availability:
+  description: The availability of the network offering the network is created from
+  returned: success
+  type: str
+  sample: Optional
+  version_added: '2.5'
+is_system:
+  description: Whether the network is system related or not.
+  returned: success
+  type: bool
+  sample: false
+  version_added: '2.5'
+vpc:
+  description: Name of the VPC.
+  returned: if available
+  type: str
+  sample: My VPC
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -336,8 +365,13 @@ class AnsibleCloudStackNetwork(AnsibleCloudStack):
     def __init__(self, module):
         super(AnsibleCloudStackNetwork, self).__init__(module)
         self.returns = {
-            'networkdomain': 'network domain',
+            'networkdomain': 'network_domain',
             'networkofferingname': 'network_offering',
+            'networkofferingdisplaytext': 'network_offering_display_text',
+            'networkofferingconservemode': 'network_offering_conserve_mode',
+            'networkofferingavailability': 'network_offering_availability',
+            'aclid': 'acl_id',
+            'issystem': 'is_system',
             'ispersistent': 'is_persistent',
             'acltype': 'acl_type',
             'type': 'type',
@@ -353,18 +387,39 @@ class AnsibleCloudStackNetwork(AnsibleCloudStack):
         }
         self.network = None
 
+    def get_network_acl(self, key=None, acl_id=None):
+        if acl_id is not None:
+            args = {
+                'id': acl_id,
+                'vpcid': self.get_vpc(key='id'),
+            }
+        else:
+            acl_name = self.module.params.get('acl')
+            if not acl_name:
+                return
+
+            args = {
+                'name': acl_name,
+                'vpcid': self.get_vpc(key='id'),
+            }
+        network_acls = self.query_api('listNetworkACLLists', **args)
+        if network_acls:
+            acl = network_acls['networkacllist'][0]
+            return self._get_by_key(key, acl)
+
     def get_network_offering(self, key=None):
         network_offering = self.module.params.get('network_offering')
         if not network_offering:
             self.module.fail_json(msg="missing required arguments: network_offering")
 
         args = {
-            'zoneid': self.get_zone(key='id')
+            'zoneid': self.get_zone(key='id'),
+            'fetch_list': True,
         }
 
         network_offerings = self.query_api('listNetworkOfferings', **args)
         if network_offerings:
-            for no in network_offerings['networkoffering']:
+            for no in network_offerings:
                 if network_offering in [no['name'], no['displaytext'], no['id']]:
                     return self._get_by_key(key, no)
         self.module.fail_json(msg="Network offering '%s' not found" % network_offering)
@@ -378,24 +433,30 @@ class AnsibleCloudStackNetwork(AnsibleCloudStack):
         }
         return args
 
-    def get_network(self):
-        if not self.network:
+    def get_network(self, refresh=False):
+        if not self.network or refresh:
             network = self.module.params.get('name')
             args = {
                 'zoneid': self.get_zone(key='id'),
                 'projectid': self.get_project(key='id'),
                 'account': self.get_account(key='name'),
-                'domainid': self.get_domain(key='id')
+                'domainid': self.get_domain(key='id'),
+                'vpcid': self.get_vpc(key='id'),
+                'fetch_list': True,
             }
             networks = self.query_api('listNetworks', **args)
             if networks:
-                for n in networks['network']:
+                for n in networks:
                     if network in [n['name'], n['displaytext'], n['id']]:
                         self.network = n
+                        self.network['acl'] = self.get_network_acl(key='name', acl_id=n.get('aclid'))
                         break
         return self.network
 
     def present_network(self):
+        if self.module.params.get('acl') is not None and self.module.params.get('vpc') is None:
+            self.module.fail_json(msg="Missing required params: vpc")
+
         network = self.get_network()
         if not network:
             network = self.create_network(network)
@@ -415,6 +476,19 @@ class AnsibleCloudStackNetwork(AnsibleCloudStack):
                 poll_async = self.module.params.get('poll_async')
                 if network and poll_async:
                     network = self.poll_job(network, 'network')
+
+        # Skip ACL check if the network is not a VPC tier
+        if network.get('aclid') != self.get_network_acl(key='id'):
+            self.result['changed'] = True
+            if not self.module.check_mode:
+                args = {
+                    'aclid': self.get_network_acl(key='id'),
+                    'networkid': network['id'],
+                }
+                network = self.query_api('replaceNetworkACLList', **args)
+                if self.module.params.get('poll_async'):
+                    self.poll_job(network, 'networkacllist')
+                    network = self.get_network(refresh=True)
         return network
 
     def create_network(self, network):
@@ -423,6 +497,7 @@ class AnsibleCloudStackNetwork(AnsibleCloudStack):
         args = self._get_args()
         args.update({
             'acltype': self.module.params.get('acl_type'),
+            'aclid': self.get_network_acl(key='id'),
             'zoneid': self.get_zone(key='id'),
             'projectid': self.get_project(key='id'),
             'account': self.get_account(key='name'),
@@ -487,6 +562,12 @@ class AnsibleCloudStackNetwork(AnsibleCloudStack):
                     self.poll_job(res, 'network')
             return network
 
+    def get_result(self, network):
+        super(AnsibleCloudStackNetwork, self).get_result(network)
+        if network:
+            self.result['acl'] = self.get_network_acl(key='name', acl_id=network.get('aclid'))
+        return self.result
+
 
 def main():
     argument_spec = cs_argument_spec()
@@ -508,7 +589,9 @@ def main():
         isolated_pvlan=dict(),
         clean_up=dict(type='bool', default=False),
         network_domain=dict(),
+        subdomain_access=dict(type='bool'),
         state=dict(choices=['present', 'absent', 'restarted'], default='present'),
+        acl=dict(),
         acl_type=dict(choices=['account', 'domain']),
         project=dict(),
         domain=dict(),
@@ -529,10 +612,10 @@ def main():
     acs_network = AnsibleCloudStackNetwork(module)
 
     state = module.params.get('state')
-    if state in ['absent']:
+    if state == 'absent':
         network = acs_network.absent_network()
 
-    elif state in ['restarted']:
+    elif state == 'restarted':
         network = acs_network.restart_network()
 
     else:

@@ -15,15 +15,16 @@ DOCUMENTATION = '''
       - "TODO: make this configurable"
     requirements:
      - Whitelist in configuration
-     - A writeable /var/log/ansible/hosts directory by the user executing Ansbile on the controller
+     - A writeable /var/log/ansible/hosts directory by the user executing Ansible on the controller
 '''
 
 import os
 import time
 import json
-from collections import MutableMapping
 
 from ansible.module_utils._text import to_bytes
+from ansible.module_utils.common._collections_compat import MutableMapping
+from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.plugins.callback import CallbackBase
 
 
@@ -61,7 +62,7 @@ class CallbackModule(CallbackBase):
             else:
                 data = data.copy()
                 invocation = data.pop('invocation', None)
-                data = json.dumps(data)
+                data = json.dumps(data, cls=AnsibleJSONEncoder)
                 if invocation is not None:
                     data = json.dumps(invocation) + " => %s " % data
 

@@ -1,9 +1,6 @@
-.PHONY: all compile sanity units
+.PHONY: all sanity units
 
-all: compile sanity units
-
-compile:
-	./ansible-test compile test/runner/ ${TEST_FLAGS}
+all: sanity units
 
 sanity:
 	./ansible-test sanity test/runner/ ${TEST_FLAGS}

@@ -2,19 +2,11 @@
 # coding: utf-8 -*-
 
 # (c) 2015-2016, Hewlett Packard Enterprise Development Company LP
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -36,35 +28,25 @@ options:
     mac:
       description:
         - unique mac address that is used to attempt to identify the host.
-      required: false
-      default: None
     uuid:
       description:
         - globally unique identifier (UUID) to identify the host.
-      required: false
-      default: None
     name:
       description:
         - unique name identifier to identify the host in Ironic.
-      required: false
-      default: None
     ironic_url:
       description:
         - If noauth mode is utilized, this is required to be set to the endpoint URL for the Ironic API.
           Use with "auth" and "auth_type" settings set to None.
-      required: false
-      default: None
     timeout:
       description:
         - A timeout in seconds to tell the role to wait for the node to complete introspection if wait is set to True.
-      required: false
       default: 1200
     availability_zone:
       description:
         - Ignored. Present for backwards compatibility
-      required: false
 
-requirements: ["shade"]
+requirements: ["openstacksdk"]
 '''
 
 RETURN = '''
@@ -75,19 +57,19 @@ ansible_facts:
     contains:
         memory_mb:
             description: Amount of node memory as updated in the node properties
-            type: string
+            type: str
             sample: "1024"
         cpu_arch:
             description: Detected CPU architecture type
-            type: string
+            type: str
             sample: "x86_64"
         local_gb:
             description: Total size of local disk storage as updaed in node properties.
-            type: string
+            type: str
             sample: "10"
         cpus:
             description: Count of cpu cores defined in the updated node properties.
-            type: string
+            type: str
             sample: "1"
 '''
 
@@ -97,13 +79,8 @@ EXAMPLES = '''
     name: "testnode1"
 '''
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
-from distutils.version import StrictVersion
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def _choose_id_value(module):
@@ -126,12 +103,6 @@ def main():
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-    if StrictVersion(shade.__version__) < StrictVersion('1.0.0'):
-        module.fail_json(msg="To utilize this module, the installed version of"
-                             "the shade library MUST be >=1.0.0")
-
     if (module.params['auth_type'] in [None, 'None'] and
             module.params['ironic_url'] is None):
         module.fail_json(msg="Authentication appears to be disabled, "
@@ -143,9 +114,8 @@ def main():
             endpoint=module.params['ironic_url']
         )
 
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.operator_cloud(**module.params)
-
         if module.params['name'] or module.params['uuid']:
             server = cloud.get_machine(_choose_id_value(module))
         elif module.params['mac']:
@@ -166,13 +136,9 @@ def main():
         else:
             module.fail_json(msg="node not found.")
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
-
-# this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
 
 if __name__ == "__main__":
     main()

@@ -1,22 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Daniele Lazzari <lazzari@mailup.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2017, Daniele Lazzari <lazzari@mailup.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # This is a windows documentation stub.  Actual code lives in the .ps1
 # file of the same name.
@@ -29,35 +15,40 @@ DOCUMENTATION = r'''
 ---
 module: win_route
 version_added: "2.4"
-short_description: Add or remove a static route.
+short_description: Add or remove a static route
 description:
     - Add or remove a static route.
 options:
   destination:
     description:
-      - Destination IP address in CIDR format (ip address/prefix length)
-    required: true
+      - Destination IP address in CIDR format (ip address/prefix length).
+    type: str
+    required: yes
   gateway:
     description:
         - The gateway used by the static route.
         - If C(gateway) is not provided it will be set to C(0.0.0.0).
+    type: str
   metric:
     description:
         - Metric used by the static route.
+    type: int
     default: 1
   state:
     description:
-      - If present, it adds a network static route.
-        If absent, it removes a network static route.
+      - If C(absent), it removes a network static route.
+      - If C(present), it adds a network static route.
+    type: str
+    choices: [ absent, present ]
     default: present
 notes:
   - Works only with Windows 2012 R2 and newer.
-author: Daniele Lazzari
+author:
+- Daniele Lazzari (@dlazz)
 '''
 
 EXAMPLES = r'''
 ---
-
 - name: Add a network static route
   win_route:
     destination: 192.168.2.10/32
@@ -74,6 +65,6 @@ RETURN = r'''
 output:
     description: A message describing the task result.
     returned: always
-    type: string
+    type: str
     sample: "Route added"
 '''

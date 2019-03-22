@@ -1,0 +1,163 @@
+---
+- debug: msg="START netconf_get iosxr/basic.yaml on connection={{ ansible_connection }}"
+
+- name: setup interface
+  iosxr_config:
+    commands:
+      - description this is test interface Loopback999
+      - no shutdown
+    parents:
+      - interface Loopback999
+    match: none
+  connection: network_cli
+
+- name: get running interface confiugration with filter
+  netconf_get:
+    source: running
+    filter: <interface-configurations xmlns="http://cisco.com/ns/yang/Cisco-IOS-XR-ifmgr-cfg"></interface-configurations>
+  register: result
+  connection: netconf
+
+- assert:
+    that:
+      - "'<description>this is test interface Loopback999</description>' in result.stdout"
+      - "'<usernames>' not in result.stdout"
+
+- name: test lock=never, get-config, running interface confiugration with filter without lock
+  netconf_get:
+    source: running
+    lock: never
+    filter: <interface-configurations xmlns="http://cisco.com/ns/yang/Cisco-IOS-XR-ifmgr-cfg"></interface-configurations>
+  register: result
+  connection: netconf
+
+- assert:
+    that:
+      - "'<description>this is test interface Loopback999</description>' in result.stdout"
+      - "'<usernames>' not in result.stdout"
+
+- name: test lock=if-supported, get-config, running interface confiugration with filter without lock
+  netconf_get:
+    source: running
+    lock: if-supported
+    filter: <interface-configurations xmlns="http://cisco.com/ns/yang/Cisco-IOS-XR-ifmgr-cfg"></interface-configurations>
+  register: result
+  connection: netconf
+
+- assert:
+    that:
+      - "'<description>this is test interface Loopback999</description>' in result.stdout"
+      - "'<usernames>' not in result.stdout"
+
+- name: Failure scenario, get-config information with lock
+  netconf_get:
+    source: running
+    lock: always
+  register: result
+  ignore_errors: True
+  connection: netconf
+
+- assert:
+    that:
+      - "'<bad-element>running</bad-element>' in result.msg"
+
+- name: Failure scenario, fetch config from startup
+  netconf_get:
+    source: startup
+  register: result
+  ignore_errors: True
+  connection: netconf
+
+- assert:
+    that:
+      - "'startup source is not supported' in result.msg"
+
+- name: test get, information from running datastore without lock
+  netconf_get:
+    lock: never
+    filter: <interface-configurations xmlns="http://cisco.com/ns/yang/Cisco-IOS-XR-ifmgr-cfg"></interface-configurations>
+  register: result
+  connection: netconf
+
+- assert:
+    that:
+      - "'<description>this is test interface Loopback999</description>' in result.stdout"
+
+- name: test get, information from running datastore with lock if supported
+  netconf_get:
+    lock: if-supported
+    filter: <interface-configurations xmlns="http://cisco.com/ns/yang/Cisco-IOS-XR-ifmgr-cfg"></interface-configurations>
+  register: result
+  connection: netconf
+
+- assert:
+    that:
+      - "'<description>this is test interface Loopback999</description>' in result.stdout"
+
+- name: Failure scenario, get information from running with lock
+  netconf_get:
+    lock: always
+  register: result
+  ignore_errors: True
+  connection: netconf
+
+- assert:
+    that:
+      - "'<bad-element>running</bad-element>' in result.msg"
+
+- name: get configuration and state data in json format
+  netconf_get:
+    source: running
+    display: json
+  register: result
+  connection: netconf
+
+- assert:
+    that:
+      - "{{ result['output']['rpc-reply']['data']['aaa'] is defined}}"
+
+- name: get configuration data in xml pretty format
+  netconf_get:
+    source: running
+    display: pretty
+  register: result
+  connection: netconf
+
+- assert:
+    that:
+      - "{{ result['output'] is defined}}"
+
+- name: get configuration data in xml with namespace stripped
+  netconf_get:
+    source: running
+    display: xml
+  register: result
+  connection: netconf
+
+- assert:
+    that:
+      - "{{ result['output'] is defined}}"
+      - "{{ 'xmlns' not in result.output }}"
+
+- name: Failure scenario, unsupported filter
+  netconf_get:
+    filter: configuration/state
+  register: result
+  ignore_errors: True
+  connection: netconf
+
+- assert:
+    that:
+      - "'filter value \\'configuration/state\\' of type xpath is not supported' in result.msg"
+
+- name: setup - teardown
+  iosxr_config:
+    commands:
+      - no description
+      - shutdown
+    parents:
+      - interface Loopback999
+    match: none
+  connection: network_cli
+
+- debug: msg="END netconf_get iosxr/basic.yaml on connection={{ ansible_connection }}"

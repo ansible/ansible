@@ -1,0 +1,6 @@
+- name: Install docker 17
+  zypper:
+    name: docker>=17
+    force: yes
+    disable_gpg_check: yes
+    update_cache: yes

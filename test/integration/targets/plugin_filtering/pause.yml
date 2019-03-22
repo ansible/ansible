@@ -1,0 +1,6 @@
+---
+- hosts: testhost
+  gather_facts: False
+  tasks:
+  - pause:
+      seconds: 1

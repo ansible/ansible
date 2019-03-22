@@ -28,16 +28,21 @@
 
 
 import os
+import traceback
 
+from ansible.module_utils.basic import missing_required_lib
+
+CLIENT_IMP_ERR = None
 try:
     from manageiq_client.api import ManageIQClient
     HAS_CLIENT = True
 except ImportError:
+    CLIENT_IMP_ERR = traceback.format_exc()
     HAS_CLIENT = False
 
 
 def manageiq_argument_spec():
-    return dict(
+    options = dict(
         url=dict(default=os.environ.get('MIQ_URL', None)),
         username=dict(default=os.environ.get('MIQ_USERNAME', None)),
         password=dict(default=os.environ.get('MIQ_PASSWORD', None), no_log=True),
@@ -46,10 +51,16 @@ def manageiq_argument_spec():
         ca_bundle_path=dict(required=False, default=None),
     )
 
+    return dict(
+        manageiq_connection=dict(type='dict',
+                                 apply_defaults=True,
+                                 options=options),
+    )
+
 
 def check_client(module):
     if not HAS_CLIENT:
-        module.fail_json(msg='manageiq_client.api is required for this module')
+        module.fail_json(msg=missing_required_lib('manageiq-client'), exception=CLIENT_IMP_ERR)
 
 
 def validate_connection_params(module):
@@ -143,3 +154,17 @@ class ManageIQ(object):
         except Exception as e:
             self.module.fail_json(msg="failed to find resource {error}".format(error=e))
         return vars(entity)
+
+    def find_collection_resource_or_fail(self, collection_name, **params):
+        """ Searches the collection resource by the collection name and the param passed.
+
+        Returns:
+            the resource as an object if it exists in manageiq, Fail otherwise.
+        """
+        resource = self.find_collection_resource_by(collection_name, **params)
+        if resource:
+            return resource
+        else:
+            msg = "{collection_name} where {params} does not exist in manageiq".format(
+                collection_name=collection_name, params=str(params))
+            self.module.fail_json(msg=msg)

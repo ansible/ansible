@@ -1,9 +1,17 @@
 ---
+# No easy way to know OS type without python or without ansible facts.
+# Run below raw commands and one would succeed with apt/yum on debian/centos
+- name: Install python
+  raw:
+    test -e /usr/bin/python || (apt-get -y update && apt-get install -y python-minimal)
+  become: yes
+  ignore_errors: yes
 
 - name: Install python
   raw:
-    test -e /usr/bin/python || apt-get -y update && apt-get install -y python-minimal
+    test -e /usr/bin/python || (yum -y update && yum install -y python)
   become: yes
+  ignore_errors: yes
 
 # network-integration test are ran with gather_facts: no
 # We need to explicitly call setup so ansible_distribution is set

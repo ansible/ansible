@@ -1,0 +1,395 @@
+# Setup
+- name: Create DB
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_db:
+    state: present
+    name: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+
+- name: Create a user to be owner of objects
+  postgresql_user:
+    name: "{{ db_user3 }}"
+    state: present
+    encrypted: yes
+    password: password
+    role_attr_flags: CREATEDB,LOGIN
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+
+- name: Create a user to be given permissions and other tests
+  postgresql_user:
+    name: "{{ db_user2 }}"
+    state: present
+    encrypted: yes
+    password: password
+    role_attr_flags: LOGIN
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+
+######################################################
+# Test foreign data wrapper and foreign server privs #
+######################################################
+
+# Foreign data wrapper setup
+- name: Create foreign data wrapper extension
+  become: yes
+  become_user: "{{ pg_user }}"
+  shell: echo "CREATE EXTENSION postgres_fdw" | psql -d "{{ db_name }}"
+
+- name: Create dummy foreign data wrapper
+  become: yes
+  become_user: "{{ pg_user }}"
+  shell: echo "CREATE FOREIGN DATA WRAPPER dummy" | psql -d "{{ db_name }}"
+
+- name: Create foreign server
+  become: yes
+  become_user: "{{ pg_user }}"
+  shell: echo "CREATE SERVER dummy_server FOREIGN DATA WRAPPER dummy" | psql -d "{{ db_name }}"
+
+# Test
+- name: Grant foreign data wrapper privileges
+  postgresql_privs:
+    state: present
+    type: foreign_data_wrapper
+    roles: "{{ db_user2 }}"
+    privs: ALL
+    objs: dummy
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+  register: result
+  ignore_errors: yes
+
+# Checks
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: Get foreign data wrapper privileges
+  become: yes
+  become_user: "{{ pg_user }}"
+  shell: echo "{{ fdw_query }}" | psql -d "{{ db_name }}"
+  vars:
+    fdw_query: >
+      SELECT fdwacl FROM pg_catalog.pg_foreign_data_wrapper
+      WHERE fdwname = ANY (ARRAY['dummy']) ORDER BY fdwname
+  register: fdw_result
+
+- assert:
+    that:
+      - "fdw_result.stdout_lines[-1] == '(1 row)'"
+      - "'{{ db_user2 }}' in fdw_result.stdout_lines[-2]"
+
+# Test
+- name: Grant foreign data wrapper privileges second time
+  postgresql_privs:
+    state: present
+    type: foreign_data_wrapper
+    roles: "{{ db_user2 }}"
+    privs: ALL
+    objs: dummy
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+  register: result
+  ignore_errors: yes
+
+# Checks
+- assert:
+    that:
+      - "result.changed == false"
+
+# Test
+- name: Revoke foreign data wrapper privileges
+  postgresql_privs:
+    state: absent
+    type: foreign_data_wrapper
+    roles: "{{ db_user2 }}"
+    privs: ALL
+    objs: dummy
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+  register: result
+  ignore_errors: yes
+
+# Checks
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: Get foreign data wrapper privileges
+  become: yes
+  become_user: "{{ pg_user }}"
+  shell: echo "{{ fdw_query }}" | psql -d "{{ db_name }}"
+  vars:
+    fdw_query: >
+      SELECT fdwacl FROM pg_catalog.pg_foreign_data_wrapper
+      WHERE fdwname = ANY (ARRAY['dummy']) ORDER BY fdwname
+  register: fdw_result
+
+- assert:
+    that:
+      - "fdw_result.stdout_lines[-1] == '(1 row)'"
+      - "'{{ db_user2 }}' not in fdw_result.stdout_lines[-2]"
+
+# Test
+- name: Revoke foreign data wrapper privileges for second time
+  postgresql_privs:
+    state: absent
+    type: foreign_data_wrapper
+    roles: "{{ db_user2 }}"
+    privs: ALL
+    objs: dummy
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+  register: result
+  ignore_errors: yes
+
+# Checks
+- assert:
+    that:
+      - "result.changed == false"
+
+# Test
+- name: Grant foreign server privileges
+  postgresql_privs:
+    state: present
+    type: foreign_server
+    roles: "{{ db_user2 }}"
+    privs: ALL
+    objs: dummy_server
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+  register: result
+  ignore_errors: yes
+
+# Checks
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: Get foreign server privileges
+  become: yes
+  become_user: "{{ pg_user }}"
+  shell: echo "{{ fdw_query }}" | psql -d "{{ db_name }}"
+  vars:
+    fdw_query: >
+      SELECT srvacl FROM pg_catalog.pg_foreign_server
+      WHERE srvname = ANY (ARRAY['dummy_server']) ORDER BY srvname
+  register: fs_result
+
+- assert:
+    that:
+      - "fs_result.stdout_lines[-1] == '(1 row)'"
+      - "'{{ db_user2 }}' in fs_result.stdout_lines[-2]"
+
+# Test
+- name: Grant foreign server privileges for second time
+  postgresql_privs:
+    state: present
+    type: foreign_server
+    roles: "{{ db_user2 }}"
+    privs: ALL
+    objs: dummy_server
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+  register: result
+  ignore_errors: yes
+
+# Checks
+- assert:
+    that:
+      - "result.changed == false"
+
+# Test
+- name: Revoke foreign server privileges
+  postgresql_privs:
+    state: absent
+    type: foreign_server
+    roles: "{{ db_user2 }}"
+    privs: ALL
+    objs: dummy_server
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+  register: result
+  ignore_errors: yes
+
+# Checks
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: Get foreign server privileges
+  become: yes
+  become_user: "{{ pg_user }}"
+  shell: echo "{{ fdw_query }}" | psql -d "{{ db_name }}"
+  vars:
+    fdw_query: >
+      SELECT srvacl FROM pg_catalog.pg_foreign_server
+      WHERE srvname = ANY (ARRAY['dummy_server']) ORDER BY srvname
+  register: fs_result
+
+- assert:
+    that:
+      - "fs_result.stdout_lines[-1] == '(1 row)'"
+      - "'{{ db_user2 }}' not in fs_result.stdout_lines[-2]"
+
+# Test
+- name: Revoke foreign server privileges for second time
+  postgresql_privs:
+    state: absent
+    type: foreign_server
+    roles: "{{ db_user2 }}"
+    privs: ALL
+    objs: dummy_server
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+  register: result
+  ignore_errors: yes
+
+# Checks
+- assert:
+    that:
+      - "result.changed == false"
+
+# Foreign data wrapper cleanup
+- name: Drop foreign server
+  become: yes
+  become_user: "{{ pg_user }}"
+  shell: echo "DROP SERVER dummy_server" | psql -d "{{ db_name }}"
+
+- name: Drop dummy foreign data wrapper
+  become: yes
+  become_user: "{{ pg_user }}"
+  shell: echo "DROP FOREIGN DATA WRAPPER dummy" | psql -d "{{ db_name }}"
+
+- name: Drop foreign data wrapper extension
+  become: yes
+  become_user: "{{ pg_user }}"
+  shell: echo "DROP EXTENSION postgres_fdw" | psql -d "{{ db_name }}"
+
+##########################################
+# Test ALL_IN_SCHEMA for 'function' type #
+##########################################
+
+# Function ALL_IN_SCHEMA Setup
+- name: Create function for test
+  postgresql_query:
+    query: CREATE FUNCTION public.a() RETURNS integer LANGUAGE SQL AS 'SELECT 2';
+    db: "{{ db_name }}"
+    login_user: "{{ db_user3 }}"
+    login_password: password
+
+# Test
+- name: Grant execute to all functions
+  postgresql_privs:
+    type: function
+    state: present
+    privs: EXECUTE
+    roles: "{{ db_user2 }}"
+    objs: ALL_IN_SCHEMA
+    schema: public
+    db: "{{ db_name }}"
+    login_user: "{{ db_user3 }}"
+    login_password: password
+  register: result
+  ignore_errors: yes
+
+# Checks
+- assert:
+    that: result.changed == true
+
+- name: Check that all functions have execute privileges
+  become: yes
+  become_user: "{{ pg_user }}"
+  shell: psql {{ db_name }} -c "SELECT proacl FROM pg_proc WHERE proname = 'a'" -t
+  register: result
+
+- assert:
+    that: "'{{ db_user2 }}=X/{{ db_user3 }}' in '{{ result.stdout_lines[0] }}'"
+
+# Test
+- name: Grant execute to all functions again
+  postgresql_privs:
+    type: function
+    state: present
+    privs: EXECUTE
+    roles: "{{ db_user2 }}"
+    objs: ALL_IN_SCHEMA
+    schema: public
+    db: "{{ db_name }}"
+    login_user: "{{ db_user3 }}"
+    login_password: password
+  register: result
+  ignore_errors: yes
+
+# Checks
+- assert:
+    that: result.changed == false
+
+# Test
+- name: Revoke execute to all functions
+  postgresql_privs:
+    type: function
+    state: absent
+    privs: EXECUTE
+    roles: "{{ db_user2 }}"
+    objs: ALL_IN_SCHEMA
+    schema: public
+    db: "{{ db_name }}"
+    login_user: "{{ db_user3 }}"
+    login_password: password
+  register: result
+  ignore_errors: yes
+
+# Checks
+- assert:
+    that: result.changed == true
+
+# Test
+- name: Revoke execute to all functions again
+  postgresql_privs:
+    type: function
+    state: absent
+    privs: EXECUTE
+    roles: "{{ db_user2 }}"
+    objs: ALL_IN_SCHEMA
+    schema: public
+    db: "{{ db_name }}"
+    login_user: "{{ db_user3 }}"
+    login_password: password
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that: result.changed == false
+
+# Function ALL_IN_SCHEMA cleanup
+- name: Remove function for test
+  postgresql_query:
+    query: DROP FUNCTION public.a();
+    db: "{{ db_name }}"
+    login_user: "{{ db_user3 }}"
+    login_password: password
+
+# Cleanup
+- name: Remove user given permissions
+  postgresql_user:
+    name: "{{ db_user2 }}"
+    state: absent
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+
+- name: Remove user owner of objects
+  postgresql_user:
+    name: "{{ db_user3 }}"
+    state: absent
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+
+- name: Destroy DB
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_db:
+    state: absent
+    name: "{{ db_name }}"
+    login_user: "{{ pg_user }}"

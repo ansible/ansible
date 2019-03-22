@@ -17,7 +17,7 @@
 
 import pytest
 import os
-from . placebo_fixtures import placeboify, maybe_sleep
+from units.utils.amazon_placebo_fixtures import placeboify, maybe_sleep
 from ansible.modules.cloud.amazon import ec2_vpc_vpn
 from ansible.module_utils._text import to_text
 from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn, boto3_tag_list_to_ansible_dict
@@ -96,7 +96,9 @@ def make_params(cgw, vgw, tags=None, filters=None, routes=None):
             'purge_tags': True,
             'tags': tags,
             'filters': filters,
-            'routes': routes}
+            'routes': routes,
+            'delay': 15,
+            'wait_timeout': 600}
 
 
 def make_conn(placeboify, module, connection):
@@ -111,7 +113,7 @@ def make_conn(placeboify, module, connection):
 
 
 def tear_down_conn(placeboify, connection, vpn_connection_id):
-    ec2_vpc_vpn.delete_connection(connection, vpn_connection_id)
+    ec2_vpc_vpn.delete_connection(connection, vpn_connection_id, delay=15, max_attempts=40)
 
 
 def test_find_connection_vpc_conn_id(placeboify, maybe_sleep):
@@ -251,7 +253,7 @@ def test_delete_connection(placeboify, maybe_sleep):
 
 def test_delete_nonexistent_connection(placeboify, maybe_sleep):
     # create parameters and ensure any connection matching (None) is deleted
-    params = {'filters': {'tags': {'ThisConnection': 'DoesntExist'}}}
+    params = {'filters': {'tags': {'ThisConnection': 'DoesntExist'}}, 'delay': 15, 'wait_timeout': 600}
     m, conn = setup_mod_conn(placeboify, params)
     changed, vpn = ec2_vpc_vpn.ensure_absent(conn, m.params)
 

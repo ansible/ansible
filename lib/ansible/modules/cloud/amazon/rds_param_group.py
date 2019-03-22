@@ -26,6 +26,7 @@ version_added: "1.5"
 short_description: manage RDS parameter groups
 description:
      - Creates, modifies, and deletes RDS parameter groups. This module has a dependency on python-boto >= 2.5.
+requirements: [ boto3 ]
 options:
   state:
     description:
@@ -43,52 +44,29 @@ options:
   engine:
     description:
       - The type of database for this group. Required for state=present.
-    choices:
-        - 'aurora5.6'
-        - 'mariadb10.0'
-        - 'mariadb10.1'
-        - 'mysql5.1'
-        - 'mysql5.5'
-        - 'mysql5.6'
-        - 'mysql5.7'
-        - 'oracle-ee-11.2'
-        - 'oracle-ee-12.1'
-        - 'oracle-se-11.2'
-        - 'oracle-se-12.1'
-        - 'oracle-se1-11.2'
-        - 'oracle-se1-12.1'
-        - 'postgres9.3'
-        - 'postgres9.4'
-        - 'postgres9.5'
-        - 'postgres9.6'
-        - 'sqlserver-ee-10.5'
-        - 'sqlserver-ee-11.0'
-        - 'sqlserver-ex-10.5'
-        - 'sqlserver-ex-11.0'
-        - 'sqlserver-ex-12.0'
-        - 'sqlserver-se-10.5'
-        - 'sqlserver-se-11.0'
-        - 'sqlserver-se-12.0'
-        - 'sqlserver-web-10.5'
-        - 'sqlserver-web-11.0'
-        - 'sqlserver-web-12.0'
+      - Please use following command to get list of all supported db engines and their respective versions.
+      - '# aws rds describe-db-engine-versions --query "DBEngineVersions[].DBParameterGroupFamily"'
   immediate:
     description:
       - Whether to apply the changes immediately, or after the next reboot of any associated instances.
     aliases:
       - apply_immediately
+    type: bool
   params:
     description:
       - Map of parameter names and values. Numeric values may be represented as K for kilo (1024), M for mega (1024^2), G for giga (1024^3),
         or T for tera (1024^4), and these values will be expanded into the appropriate number before being set in the parameter group.
+    aliases: [parameters]
   tags:
     description:
       - Dictionary of tags to attach to the parameter group
     version_added: "2.4"
   purge_tags:
     description:
-      - Whether or not to remove tags that do not appear in the I(tags) list. Defaults to false.
+      - Whether or not to remove tags that do not appear in the I(tags) list.
     version_added: "2.4"
+    type: bool
+    default: False
 author:
     - "Scott Anderson (@tastychutney)"
     - "Will Thames (@willthames)"
@@ -101,7 +79,7 @@ EXAMPLES = '''
 # Add or change a parameter group, in this case setting auto_increment_increment to 42 * 1024
 - rds_param_group:
       state: present
-      name: norwegian_blue
+      name: norwegian-blue
       description: 'My Fancy Ex Parrot Group'
       engine: 'mysql5.6'
       params:
@@ -113,25 +91,25 @@ EXAMPLES = '''
 # Remove a parameter group
 - rds_param_group:
       state: absent
-      name: norwegian_blue
+      name: norwegian-blue
 '''
 
 RETURN = '''
 db_parameter_group_name:
     description: Name of DB parameter group
-    type: string
+    type: str
     returned: when state is present
 db_parameter_group_family:
     description: DB parameter group family that this DB parameter group is compatible with.
-    type: string
+    type: str
     returned: when state is present
 db_parameter_group_arn:
     description: ARN of the DB parameter group
-    type: string
+    type: str
     returned: when state is present
 description:
     description: description of the DB parameter group
-    type: string
+    type: str
     returned: when state is present
 errors:
     description: list of errors from attempting to modify parameters that are not modifiable
@@ -157,38 +135,6 @@ try:
     import botocore
 except ImportError:
     pass  # caught by imported HAS_BOTO3
-
-
-VALID_ENGINES = [
-    'aurora5.6',
-    'mariadb10.0',
-    'mariadb10.1',
-    'mysql5.1',
-    'mysql5.5',
-    'mysql5.6',
-    'mysql5.7',
-    'oracle-ee-11.2',
-    'oracle-ee-12.1',
-    'oracle-se-11.2',
-    'oracle-se-12.1',
-    'oracle-se1-11.2',
-    'oracle-se1-12.1',
-    'postgres9.3',
-    'postgres9.4',
-    'postgres9.5',
-    'postgres9.6',
-    'sqlserver-ee-10.5',
-    'sqlserver-ee-11.0',
-    'sqlserver-ex-10.5',
-    'sqlserver-ex-11.0',
-    'sqlserver-ex-12.0',
-    'sqlserver-se-10.5',
-    'sqlserver-se-11.0',
-    'sqlserver-se-12.0',
-    'sqlserver-web-10.5',
-    'sqlserver-web-11.0',
-    'sqlserver-web-12.0',
-]
 
 INT_MODIFIERS = {
     'K': 1024,

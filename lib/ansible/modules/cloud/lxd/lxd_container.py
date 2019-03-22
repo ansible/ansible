@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2016, Hiroaki Nakamura <hnakamur@gmail.com>
+# Copyright: (c) 2016, Hiroaki Nakamura <hnakamur@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -55,6 +55,7 @@ options:
           - Whether or not the container is ephemeral (e.g. true or false).
             See U(https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-1)
         required: false
+        type: bool
     source:
         description:
           - 'The source for the container
@@ -62,8 +63,9 @@ options:
                     "mode": "pull",
                     "server": "https://images.linuxcontainers.org",
                     "protocol": "lxd",
-                    "alias": "ubuntu/xenial/amd64" }).
-            See U(https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-1)'
+                    "alias": "ubuntu/xenial/amd64" }).'
+          - 'See U(https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-1) for complete API documentation.'
+          - 'Note that C(protocol) accepts two choices: C(lxd) or C(simplestreams)'
         required: false
     state:
         choices:
@@ -91,17 +93,25 @@ options:
             starting or restarting.
         required: false
         default: false
+        type: bool
     force_stop:
         description:
           - If this is true, the C(lxd_container) forces to stop the container
             when it stops or restarts the container.
         required: false
         default: false
+        type: bool
     url:
         description:
           - The unix domain socket path or the https URL for the LXD server.
         required: false
         default: unix:/var/lib/lxd/unix.socket
+    snap_url:
+        description:
+          - The unix domain socket path when LXD is installed by snap package manager.
+        required: false
+        default: unix:/var/snap/lxd/common/lxd/unix.socket
+        version_added: '2.8'
     key_file:
         description:
           - The client certificate key file path.
@@ -126,7 +136,7 @@ notes:
   - Containers must have a unique name. If you attempt to create a container
     with a name that already existed in the users namespace the module will
     simply return as "unchanged".
-  - There are two ways to can run commands in containers, using the command
+  - There are two ways to run commands in containers, using the command
     module or using the ansible lxd connection plugin bundled in Ansible >=
     2.1, the later requires python to be installed in the container which can
     be done with the command module.
@@ -151,7 +161,7 @@ EXAMPLES = '''
           type: image
           mode: pull
           server: https://images.linuxcontainers.org
-          protocol: lxd
+          protocol: lxd # if you get a 404, try setting protocol: simplestreams
           alias: ubuntu/xenial/amd64
         profiles: ["default"]
         wait_for_ipv4_addresses: true
@@ -216,7 +226,7 @@ EXAMPLES = '''
         flat: true
 '''
 
-RETURN='''
+RETURN = '''
 addresses:
   description: Mapping from the network device name to a list of IPv4 addresses in the container
   returned: when state is started or restarted
@@ -225,7 +235,7 @@ addresses:
 old_state:
   description: The old state of the container
   returned: when state is started or restarted
-  type: string
+  type: str
   sample: "stopped"
 logs:
   description: The logs of requests and responses.
@@ -288,10 +298,18 @@ class LXDContainerManagement(object):
         self.force_stop = self.module.params['force_stop']
         self.addresses = None
 
-        self.url = self.module.params['url']
         self.key_file = self.module.params.get('key_file', None)
         self.cert_file = self.module.params.get('cert_file', None)
         self.debug = self.module._verbosity >= 4
+
+        try:
+            if os.path.exists(self.module.params['snap_url'].replace('unix:', '')):
+                self.url = self.module.params['snap_url']
+            else:
+                self.url = self.module.params['url']
+        except Exception as e:
+            self.module.fail_json(msg=e.msg)
+
         try:
             self.client = LXDClient(
                 self.url, key_file=self.key_file, cert_file=self.cert_file,
@@ -328,7 +346,7 @@ class LXDContainerManagement(object):
         return ANSIBLE_LXD_STATES[resp_json['metadata']['status']]
 
     def _change_state(self, action, force_stop=False):
-        body_json={'action': action, 'timeout': self.timeout}
+        body_json = {'action': action, 'timeout': self.timeout}
         if force_stop:
             body_json['force'] = True
         return self.client.do('PUT', '/1.0/containers/{0}/state'.format(self.name), body_json=body_json)
@@ -457,9 +475,13 @@ class LXDContainerManagement(object):
             return False
         if key == 'config':
             old_configs = dict((k, v) for k, v in self.old_container_json['metadata'][key].items() if not k.startswith('volatile.'))
+            for k, v in self.config['config'].items():
+                if old_configs[k] != v:
+                    return True
+            return False
         else:
             old_configs = self.old_container_json['metadata'][key]
-        return self.config[key] != old_configs
+            return self.config[key] != old_configs
 
     def _needs_to_apply_container_configs(self):
         return (
@@ -527,6 +549,7 @@ class LXDContainerManagement(object):
                 fail_params['logs'] = e.kwargs['logs']
             self.module.fail_json(**fail_params)
 
+
 def main():
     """Ansible Main module."""
 
@@ -541,9 +564,6 @@ def main():
             ),
             config=dict(
                 type='dict',
-            ),
-            description=dict(
-                type='str',
             ),
             devices=dict(
                 type='dict',
@@ -577,15 +597,19 @@ def main():
                 type='str',
                 default='unix:/var/lib/lxd/unix.socket'
             ),
+            snap_url=dict(
+                type='str',
+                default='unix:/var/snap/lxd/common/lxd/unix.socket'
+            ),
             key_file=dict(
                 type='str',
-                default='{}/.config/lxc/client.key'.format(os.environ['HOME'])
+                default='{0}/.config/lxc/client.key'.format(os.environ['HOME'])
             ),
             cert_file=dict(
                 type='str',
-                default='{}/.config/lxc/client.crt'.format(os.environ['HOME'])
+                default='{0}/.config/lxc/client.crt'.format(os.environ['HOME'])
             ),
-            trust_password=dict( type='str', no_log=True )
+            trust_password=dict(type='str', no_log=True)
         ),
         supports_check_mode=False,
     )

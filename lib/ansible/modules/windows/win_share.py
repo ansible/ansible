@@ -1,11 +1,12 @@
 #!/usr/bin/python
-# Copyright 2015, Hans-Joachim Kliemeck <git@kliemeck.de>
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2015, Hans-Joachim Kliemeck <git@kliemeck.de>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
-
 
 DOCUMENTATION = r'''
 ---
@@ -24,54 +25,55 @@ options:
   name:
     description:
       - Share name.
-    required: True
+    type: str
+    required: yes
   path:
     description:
       - Share directory.
-    required: True
+    type: path
+    required: yes
   state:
     description:
       - Specify whether to add C(present) or remove C(absent) the specified share.
-    choices:
-      - present
-      - absent
+    type: str
+    choices: [ absent, present ]
     default: present
   description:
     description:
-      - Share description
+      - Share description.
+    type: str
   list:
     description:
-      - Specify whether to allow or deny file listing, in case user got no permission on share.
+      - Specify whether to allow or deny file listing, in case user has no permission on share. Also known as Access-Based Enumeration.
     type: bool
-    default: 'no'
+    default: no
   read:
     description:
       - Specify user list that should get read access on share, separated by comma.
+    type: str
   change:
     description:
       - Specify user list that should get read and write access on share, separated by comma.
+    type: str
   full:
     description:
       - Specify user list that should get full access on share, separated by comma.
+    type: str
   deny:
     description:
       - Specify user list that should get no access, regardless of implied access on share, separated by comma.
+    type: str
   caching_mode:
     description:
       - Set the CachingMode for this share.
-    choices:
-      - BranchCache
-      - Documents
-      - Manual
-      - None
-      - Programs
-      - Unknown
-    default: "Manual"
+    type: str
+    choices: [ BranchCache, Documents, Manual, None, Programs, Unknown ]
+    default: Manual
     version_added: "2.3"
   encrypt:
     description: Sets whether to encrypt the traffic to the share or not.
     type: bool
-    default: 'no'
+    default: no
     version_added: "2.4"
 author:
   - Hans-Joachim Kliemeck (@h0nIg)

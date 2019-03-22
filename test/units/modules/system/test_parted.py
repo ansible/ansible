@@ -16,13 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 __metaclass__ = type
-import json
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, call
+from units.compat.mock import patch, call
 from ansible.modules.system import parted as parted_module
-from ansible.modules.system.parted import parse_partition_info, parted
-from ansible.module_utils import basic
-from ansible.module_utils._text import to_bytes
+from ansible.modules.system.parted import parse_partition_info
+from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase, set_module_args
 
 # Example of output : parted -s -m /dev/sdb -- unit 'MB' print
 parted_output1 = """
@@ -92,27 +89,10 @@ parted_dict2 = {
 }
 
 
-class AnsibleExitJson(Exception):
-    pass
-
-
-class AnsibleFailJson(Exception):
-    pass
-
-
-def exit_json(*args, **kwargs):
-    if 'changed' not in kwargs:
-        kwargs['changed'] = False
-    raise AnsibleExitJson(kwargs)
-
-
-def set_module_args(args):
-    args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
-    basic._ANSIBLE_ARGS = to_bytes(args)
-
-
-class TestParted(unittest.TestCase):
+class TestParted(ModuleTestCase):
     def setUp(self):
+        super(TestParted, self).setUp()
+
         self.module = parted_module
         self.mock_check_parted_label = (patch('ansible.modules.system.parted.check_parted_label', return_value=False))
         self.check_parted_label = self.mock_check_parted_label.start()
@@ -127,6 +107,7 @@ class TestParted(unittest.TestCase):
         self.get_bin_path = self.mock_get_bin_path.start()
 
     def tearDown(self):
+        super(TestParted, self).tearDown()
         self.mock_run_command.stop()
         self.mock_get_bin_path.stop()
         self.mock_parted.stop()
@@ -146,22 +127,16 @@ class TestParted(unittest.TestCase):
         return result
 
     def failed(self):
-        def fail_json(*args, **kwargs):
-            kwargs['failed'] = True
-            raise AnsibleFailJson(kwargs)
-
-        with patch.object(basic.AnsibleModule, 'fail_json', fail_json):
-            with self.assertRaises(AnsibleFailJson) as exc:
-                self.module.main()
+        with self.assertRaises(AnsibleFailJson) as exc:
+            self.module.main()
 
         result = exc.exception.args[0]
         self.assertTrue(result['failed'], result)
         return result
 
     def changed(self, changed=False):
-        with patch.object(basic.AnsibleModule, 'exit_json', exit_json):
-            with self.assertRaises(AnsibleExitJson) as exc:
-                self.module.main()
+        with self.assertRaises(AnsibleExitJson) as exc:
+            self.module.main()
 
         result = exc.exception.args[0]
         self.assertEqual(result['changed'], changed, result)
@@ -262,4 +237,4 @@ class TestParted(unittest.TestCase):
             '_ansible_check_mode': True,
         })
         with patch('ansible.modules.system.parted.get_device_info', return_value=parted_dict2):
-            self.execute_module(changed=True, script='unit KiB mklabel gpt mkpart primary 0% 100% unit KiB name 1 lvmpartition set 1 lvm on')
+            self.execute_module(changed=True, script='unit KiB mklabel gpt mkpart primary 0% 100% unit KiB name 1 \'"lvmpartition"\' set 1 lvm on')

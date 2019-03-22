@@ -24,7 +24,7 @@ DOCUMENTATION = """
 ---
 module: ce_config
 version_added: "2.4"
-author: "QijunPan (@CloudEngine-Ansible)"
+author: "QijunPan (@QijunPan)"
 short_description: Manage Huawei CloudEngine configuration sections.
 description:
   - Huawei CloudEngine configurations use a simple block indent file syntax
@@ -39,16 +39,12 @@ options:
         in the device current-configuration.  Be sure to note the configuration
         command syntax as some commands are automatically modified by the
         device config parser.
-    required: false
-    default: null
   parents:
     description:
-      - The ordered set of parents that uniquely identify the section
+      - The ordered set of parents that uniquely identify the section or hierarchy
         the commands should be checked against.  If the parents argument
         is omitted, the commands are checked against the set of top
         level or global commands.
-    required: false
-    default: null
   src:
     description:
       - The I(src) argument provides a path to the configuration file
@@ -57,8 +53,6 @@ options:
         or relative to the root of the implemented role or playbook.
         This argument is mutually exclusive with the I(lines) and
         I(parents) arguments.
-    required: false
-    default: null
   before:
     description:
       - The ordered set of commands to push on to the command stack if
@@ -66,16 +60,12 @@ options:
         the opportunity to perform configuration commands prior to pushing
         any changes without affecting how the set of commands are matched
         against the system.
-    required: false
-    default: null
   after:
     description:
       - The ordered set of commands to append to the end of the command
         stack if a change needs to be made.  Just like with I(before) this
         allows the playbook designer to append a set of commands to be
         executed after the command set.
-    required: false
-    default: null
   match:
     description:
       - Instructs the module on the way to perform the matching of
@@ -86,7 +76,6 @@ options:
         must be an equal match.  Finally, if match is set to I(none), the
         module will not attempt to compare the source configuration with
         the current-configuration on the remote device.
-    required: false
     default: line
     choices: ['line', 'strict', 'exact', 'none']
   replace:
@@ -97,19 +86,17 @@ options:
         mode.  If the replace argument is set to I(block) then the entire
         command block is pushed to the device in configuration mode if any
         line is not correct.
-    required: false
     default: line
     choices: ['line', 'block']
   backup:
     description:
       - This argument will cause the module to create a full backup of
         the current C(current-configuration) from the remote device before any
-        changes are made.  The backup file is written to the C(backup)
-        folder in the playbook root directory.  If the directory does not
-        exist, it is created.
-    required: false
+        changes are made. If the C(backup_options) value is not given,
+        the backup file is written to the C(backup) folder in the playbook
+        root directory. If the directory does not exist, it is created.
     type: bool
-    default: false
+    default: 'no'
   config:
     description:
       - The module, by default, will connect to the remote device and
@@ -119,8 +106,6 @@ options:
         every task in a playbook.  The I(config) argument allows the
         implementer to pass in the configuration to use as the base
         config for comparison.
-    required: false
-    default: null
   defaults:
     description:
       - The I(defaults) argument will influence how the current-configuration
@@ -128,9 +113,8 @@ options:
         the command used to collect the current-configuration is append with
         the all keyword.  When the value is set to false, the command
         is issued without the all keyword.
-    required: false
     type: bool
-    default: false
+    default: 'no'
   save:
     description:
       - The C(save) argument instructs the module to save the
@@ -139,9 +123,30 @@ options:
         no changes are made, the configuration is still saved to the
         startup config.  This option will always cause the module to
         return changed.
-    required: false
     type: bool
-    default: false
+    default: 'no'
+  backup_options:
+    description:
+      - This is a dict object containing configurable options related to backup file path.
+        The value of this option is read only when C(backup) is set to I(yes), if C(backup) is set
+        to I(no) this option will be silently ignored.
+    suboptions:
+      filename:
+        description:
+          - The filename to be used to store the backup configuration. If the the filename
+            is not given it will be generated based on the hostname, current time and date
+            in format defined by <hostname>_config.<current-date>@<current-time>
+      dir_path:
+        description:
+          - This option provides the path ending with directory name in which the backup
+            configuration file will be stored. If the directory does not exist it will be first
+            created and the filename is either the value of C(filename) or default filename
+            as described in C(filename) options description. If the path value is not given
+            in that case a I(backup) directory will be created in the current working directory
+            and backup configuration will be copied in C(filename) within I(backup) directory.
+        type: path
+    type: dict
+    version_added: "2.8"
 """
 
 EXAMPLES = """
@@ -191,6 +196,15 @@ EXAMPLES = """
       before: undo acl 2000
       replace: block
       provider: "{{ cli }}"
+
+  - name: configurable backup path
+    ce_config:
+      lines: sysname {{ inventory_hostname }}
+      provider: "{{ cli }}"
+      backup: yes
+      backup_options:
+        filename: backup.cfg
+        dir_path: /home/user
 """
 
 RETURN = """
@@ -202,14 +216,14 @@ updates:
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
-  type: string
+  type: str
   sample: /playbooks/ansible/backup/ce_config.2016-07-16@22:28:34
 """
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import NetworkConfig, dumps
-from ansible.module_utils.ce import get_config, load_config, run_commands
-from ansible.module_utils.ce import ce_argument_spec
-from ansible.module_utils.ce import check_args as ce_check_args
+from ansible.module_utils.network.common.config import NetworkConfig, dumps
+from ansible.module_utils.network.cloudengine.ce import get_config, load_config, run_commands
+from ansible.module_utils.network.cloudengine.ce import ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import check_args as ce_check_args
 
 
 def check_args(module, warnings):
@@ -271,6 +285,10 @@ def run(module, result):
 def main():
     """ main entry point for module execution
     """
+    backup_spec = dict(
+        filename=dict(),
+        dir_path=dict(type='path')
+    )
     argument_spec = dict(
         src=dict(type='path'),
 
@@ -286,12 +304,14 @@ def main():
         defaults=dict(type='bool', default=False),
 
         backup=dict(type='bool', default=False),
+        backup_options=dict(type='dict', options=backup_spec),
         save=dict(type='bool', default=False),
     )
 
     argument_spec.update(ce_argument_spec)
 
-    mutually_exclusive = [('lines', 'src')]
+    mutually_exclusive = [('lines', 'src'),
+                          ('parents', 'src')]
 
     required_if = [('match', 'strict', ['lines']),
                    ('match', 'exact', ['lines']),

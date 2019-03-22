@@ -74,12 +74,7 @@ from __future__ import print_function
 
 import sys
 import argparse
-
-try:
-    import json
-except:
-    import simplejson as json
-
+import json
 
 try:
     from cs import CloudStack, CloudStackException, read_config
@@ -95,6 +90,7 @@ class CloudStackInventory(object):
         parser = argparse.ArgumentParser()
         parser.add_argument('--host')
         parser.add_argument('--list', action='store_true')
+        parser.add_argument('--tag', help="Filter machines by a tag. Should be in the form key=value.")
         parser.add_argument('--project')
         parser.add_argument('--domain')
 
@@ -117,10 +113,14 @@ class CloudStackInventory(object):
             print(json.dumps(data, indent=2))
 
         elif options.list:
-            data = self.get_list(project_id, domain_id)
+            tags = dict()
+            if options.tag:
+                tags['tags[0].key'], tags['tags[0].value'] = options.tag.split('=')
+            data = self.get_list(project_id, domain_id, **tags)
             print(json.dumps(data, indent=2))
         else:
-            print("usage: --list | --host <hostname> [--project <project>] [--domain <domain_path>]", file=sys.stderr)
+            print("usage: --list [--tag <tag>] | --host <hostname> [--project <project>] [--domain <domain_path>]",
+                  file=sys.stderr)
             sys.exit(1)
 
     def get_domain_id(self, domain):
@@ -141,12 +141,12 @@ class CloudStackInventory(object):
         print("Error: Project %s not found." % project, file=sys.stderr)
         sys.exit(1)
 
-    def get_host(self, name, project_id=None, domain_id=None):
-        hosts = self.cs.listVirtualMachines(projectid=project_id, domainid=domain_id)
+    def get_host(self, name, project_id=None, domain_id=None, **kwargs):
+        hosts = self.cs.listVirtualMachines(projectid=project_id, domainid=domain_id, fetch_list=True, **kwargs)
         data = {}
         if not hosts:
             return data
-        for host in hosts['virtualmachine']:
+        for host in hosts:
             host_name = host['displayname']
             if name == host_name:
                 data['zone'] = host['zonename']
@@ -157,28 +157,39 @@ class CloudStackInventory(object):
                 data['affinity_group'] = host['affinitygroup']
                 data['security_group'] = host['securitygroup']
                 data['cpu_number'] = host['cpunumber']
-                data['cpu_speed'] = host['cpuspeed']
+                if 'cpu_speed' in host:
+                    data['cpu_speed'] = host['cpuspeed']
                 if 'cpuused' in host:
                     data['cpu_used'] = host['cpuused']
                 data['memory'] = host['memory']
                 data['tags'] = host['tags']
-                data['hypervisor'] = host['hypervisor']
+                if 'hypervisor' in host:
+                    data['hypervisor'] = host['hypervisor']
                 data['created'] = host['created']
                 data['nic'] = []
                 for nic in host['nic']:
-                    data['nic'].append({
+                    nicdata = {
                         'ip': nic['ipaddress'],
                         'mac': nic['macaddress'],
                         'netmask': nic['netmask'],
                         'gateway': nic['gateway'],
                         'type': nic['type'],
-                    })
+                    }
+                    if 'ip6address' in nic:
+                        nicdata['ip6'] = nic['ip6address']
+                    if 'gateway' in nic:
+                        nicdata['gateway'] = nic['gateway']
+                    if 'netmask' in nic:
+                        nicdata['netmask'] = nic['netmask']
+                    data['nic'].append(nicdata)
                     if nic['isdefault']:
                         data['default_ip'] = nic['ipaddress']
+                        if 'ip6address' in nic:
+                            data['default_ip6'] = nic['ip6address']
                 break
         return data
 
-    def get_list(self, project_id=None, domain_id=None):
+    def get_list(self, project_id=None, domain_id=None, **kwargs):
         data = {
             'all': {
                 'hosts': [],
@@ -197,10 +208,10 @@ class CloudStackInventory(object):
                         'hosts': []
                     }
 
-        hosts = self.cs.listVirtualMachines(projectid=project_id, domainid=domain_id)
+        hosts = self.cs.listVirtualMachines(projectid=project_id, domainid=domain_id, fetch_list=True, **kwargs)
         if not hosts:
             return data
-        for host in hosts['virtualmachine']:
+        for host in hosts:
             host_name = host['displayname']
             data['all']['hosts'].append(host_name)
             data['_meta']['hostvars'][host_name] = {}
@@ -221,25 +232,36 @@ class CloudStackInventory(object):
             data['_meta']['hostvars'][host_name]['affinity_group'] = host['affinitygroup']
             data['_meta']['hostvars'][host_name]['security_group'] = host['securitygroup']
             data['_meta']['hostvars'][host_name]['cpu_number'] = host['cpunumber']
-            data['_meta']['hostvars'][host_name]['cpu_speed'] = host['cpuspeed']
+            if 'cpuspeed' in host:
+                data['_meta']['hostvars'][host_name]['cpu_speed'] = host['cpuspeed']
             if 'cpuused' in host:
                 data['_meta']['hostvars'][host_name]['cpu_used'] = host['cpuused']
             data['_meta']['hostvars'][host_name]['created'] = host['created']
             data['_meta']['hostvars'][host_name]['memory'] = host['memory']
             data['_meta']['hostvars'][host_name]['tags'] = host['tags']
-            data['_meta']['hostvars'][host_name]['hypervisor'] = host['hypervisor']
+            if 'hypervisor' in host:
+                data['_meta']['hostvars'][host_name]['hypervisor'] = host['hypervisor']
             data['_meta']['hostvars'][host_name]['created'] = host['created']
             data['_meta']['hostvars'][host_name]['nic'] = []
             for nic in host['nic']:
-                data['_meta']['hostvars'][host_name]['nic'].append({
+                nicdata = {
                     'ip': nic['ipaddress'],
                     'mac': nic['macaddress'],
                     'netmask': nic['netmask'],
                     'gateway': nic['gateway'],
                     'type': nic['type'],
-                })
+                }
+                if 'ip6address' in nic:
+                    nicdata['ip6'] = nic['ip6address']
+                if 'gateway' in nic:
+                    nicdata['gateway'] = nic['gateway']
+                if 'netmask' in nic:
+                    nicdata['netmask'] = nic['netmask']
+                data['_meta']['hostvars'][host_name]['nic'].append(nicdata)
                 if nic['isdefault']:
                     data['_meta']['hostvars'][host_name]['default_ip'] = nic['ipaddress']
+                    if 'ip6address' in nic:
+                        data['_meta']['hostvars'][host_name]['default_ip6'] = nic['ip6address']
 
             group_name = ''
             if 'group' in host:

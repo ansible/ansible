@@ -28,12 +28,9 @@ options:
     name:
         description:
             - Name of the package to install, upgrade, or remove.
-        required: false
-        default: null
     state:
         description:
             - Desired state of the package.
-        required: false
         default: "present"
         choices: ["present", "absent", "latest"]
     recurse:
@@ -41,22 +38,19 @@ options:
             - When removing a package, also remove its dependencies, provided
               that they are not required by other packages and were not
               explicitly installed by a user.
-        required: false
-        default: no
-        choices: ["yes", "no"]
+        type: bool
+        default: 'no'
     update_cache:
         description:
             - Whether or not to refresh the master package lists. This can be
               run as part of a package installation or as a separate step.
-        required: false
-        default: yes
-        choices: ["yes", "no"]
+        type: bool
+        default: 'yes'
     upgrade:
         description:
             - Whether or not to upgrade whole system
-        required: false
-        default: no
-        choices: ["yes", "no"]
+        type: bool
+        default: 'no'
 '''
 
 EXAMPLES = '''
@@ -78,7 +72,7 @@ RETURN = '''
 msg:
     description: Message about results
     returned: success
-    type: string
+    type: str
     sample: "System Upgraded"
 packages:
     description: Packages that are affected/would be affected

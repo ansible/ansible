@@ -44,7 +44,7 @@ options:
       - wait for the operation to complete before returning
     required: false
     default: "yes"
-    choices: [ "yes", "no" ]
+    type: bool
   wait_timeout:
     description:
       - how long before wait gives up, in seconds
@@ -57,7 +57,7 @@ options:
     choices: ["present", "absent"]
 
 requirements: [ "profitbricks" ]
-author: Matt Baldwin (baldwin@stackpointcloud.com)
+author: Matt Baldwin (@baldwinSPC) <baldwin@stackpointcloud.com>
 '''
 
 EXAMPLES = '''
@@ -95,7 +95,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 uuid_match = re.compile(
-    '[\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{12}', re.I)
+    r'[\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{12}', re.I)
 
 
 def _wait_for_completion(profitbricks, promise, wait_timeout, msg):
@@ -118,7 +118,8 @@ def _wait_for_completion(profitbricks, promise, wait_timeout, msg):
     raise Exception(
         'Timed out waiting for async operation ' + msg + ' "' + str(
             promise['requestId']
-            ) + '" to complete.')
+        ) + '" to complete.')
+
 
 def attach_volume(module, profitbricks):
     """
@@ -150,7 +151,7 @@ def attach_volume(module, profitbricks):
         server_list = profitbricks.list_servers(datacenter)
         for s in server_list['items']:
             if server == s['properties']['name']:
-                server= s['id']
+                server = s['id']
                 break
 
     # Locate UUID for Volume
@@ -162,6 +163,7 @@ def attach_volume(module, profitbricks):
                 break
 
     return profitbricks.attach_volume(datacenter, server, volume)
+
 
 def detach_volume(module, profitbricks):
     """
@@ -193,7 +195,7 @@ def detach_volume(module, profitbricks):
         server_list = profitbricks.list_servers(datacenter)
         for s in server_list['items']:
             if server == s['properties']['name']:
-                server= s['id']
+                server = s['id']
                 break
 
     # Locate UUID for Volume
@@ -205,6 +207,7 @@ def detach_volume(module, profitbricks):
                 break
 
     return profitbricks.detach_volume(datacenter, server, volume)
+
 
 def main():
     module = AnsibleModule(

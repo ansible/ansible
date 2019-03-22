@@ -1,115 +1,143 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
-# Copyright (c) 2015 Hewlett-Packard Development Company, L.P.
+# Copyright: (c) 2015, Hewlett-Packard Development Company, L.P.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: puppet
 short_description: Runs puppet
 description:
-  - Runs I(puppet) agent or apply in a reliable manner
+  - Runs I(puppet) agent or apply in a reliable manner.
 version_added: "2.0"
 options:
   timeout:
     description:
       - How long to wait for I(puppet) to finish.
-    required: false
+    type: str
     default: 30m
   puppetmaster:
     description:
       - The hostname of the puppetmaster to contact.
-    required: false
-    default: None
+    type: str
   modulepath:
     description:
-      - Path to an alternate location for puppet modules
-    required: false
-    default: None
+      - Path to an alternate location for puppet modules.
+    type: str
     version_added: "2.4"
   manifest:
     description:
       - Path to the manifest file to run puppet apply on.
-    required: false
-    default: None
+    type: str
+  noop:
+    description:
+      - Override puppet.conf noop mode.
+      - When C(yes), run Puppet agent with C(--noop) switch set.
+      - When C(no), run Puppet agent with C(--no-noop) switch set.
+      - When unset (default), use default or puppet.conf value if defined.
+    type: bool
+    version_added: "2.8"
   facts:
     description:
-      - A dict of values to pass in as persistent external facter facts
-    required: false
-    default: None
+      - A dict of values to pass in as persistent external facter facts.
+    type: dict
   facter_basename:
     description:
-      - Basename of the facter output file
-    required: false
+      - Basename of the facter output file.
+    type: str
     default: ansible
   environment:
     description:
       - Puppet environment to be used.
-    required: false
-    default: None
+    type: str
   logdest:
     description:
-      - Where the puppet logs should go, if puppet apply is being used
-    required: false
+    - Where the puppet logs should go, if puppet apply is being used.
+    - C(all) will go to both C(stdout) and C(syslog).
+    type: str
+    choices: [ all, stdout, syslog ]
     default: stdout
-    choices: [ 'stdout', 'syslog' ]
     version_added: "2.1"
   certname:
     description:
       - The name to use when handling certificates.
-    required: false
-    default: None
+    type: str
     version_added: "2.1"
   tags:
     description:
-      - A comma-separated list of puppet tags to be used.
-    required: false
-    default: None
+      - A list of puppet tags to be used.
+    type: list
     version_added: "2.1"
   execute:
     description:
-      - Execute a specific piece of Puppet code. It has no effect with
-        a puppetmaster.
-    required: false
-    default: None
+      - Execute a specific piece of Puppet code.
+      - It has no effect with a puppetmaster.
+    type: str
     version_added: "2.1"
-requirements: [ puppet ]
-author: "Monty Taylor (@emonty)"
+  summarize:
+    description:
+      - Whether to print a transaction summary.
+    type: bool
+    version_added: "2.7"
+  verbose:
+    description:
+      - Print extra information.
+    type: bool
+    version_added: "2.7"
+  debug:
+    description:
+      - Enable full debugging.
+    type: bool
+    version_added: "2.7"
+requirements:
+- puppet
+author:
+- Monty Taylor (@emonty)
 '''
 
-EXAMPLES = '''
-# Run puppet agent and fail if anything goes wrong
-- puppet
+EXAMPLES = r'''
+- name: Run puppet agent and fail if anything goes wrong
+  puppet:
 
-# Run puppet and timeout in 5 minutes
-- puppet:
+- name: Run puppet and timeout in 5 minutes
+  puppet:
     timeout: 5m
 
-# Run puppet using a different environment
-- puppet:
+- name: Run puppet using a different environment
+  puppet:
     environment: testing
 
-# Run puppet using a specific certname
-- puppet:
+- name: Run puppet using a specific certname
+  puppet:
     certname: agent01.example.com
 
-# Run puppet using a specific piece of Puppet code. Has no effect with a
-# puppetmaster.
-- puppet:
-    execute: 'include ::mymodule'
+- name: Run puppet using a specific piece of Puppet code. Has no effect with a puppetmaster
+  puppet:
+    execute: include ::mymodule
 
-# Run puppet using a specific tags
-- puppet:
-    tags: update,nginx
+- name: Run puppet using a specific tags
+  puppet:
+    tags:
+    - update
+    - nginx
+
+- name: Run puppet agent in noop mode
+  puppet:
+    noop: yes
+
+- name: Run a manifest with debug, log to both syslog and stdout, specify module path
+  puppet:
+    modulepath: /etc/puppet/modules:/opt/stack/puppet-modules:/usr/share/openstack-puppet/modules
+    logdest: all
+    manifest: /var/lib/example/puppet_step_config.pp
 '''
 
 import json
@@ -145,28 +173,31 @@ def _write_structured_data(basedir, basename, data):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            timeout=dict(default="30m"),
-            puppetmaster=dict(required=False, default=None),
-            modulepath=dict(required=False, default=None),
-            manifest=dict(required=False, default=None),
-            logdest=dict(
-                required=False, default='stdout',
-                choices=['stdout', 'syslog']),
-            show_diff=dict(
-                # internal code to work with --diff, do not use
-                default=False, aliases=['show-diff'], type='bool'),
-            facts=dict(default=None, type='dict'),
-            facter_basename=dict(default='ansible'),
-            environment=dict(required=False, default=None),
-            certname=dict(required=False, default=None),
-            tags=dict(required=False, default=None, type='list'),
-            execute=dict(required=False, default=None),
+            timeout=dict(type='str', default='30m'),
+            puppetmaster=dict(type='str'),
+            modulepath=dict(type='str'),
+            manifest=dict(type='str'),
+            noop=dict(required=False, type='bool'),
+            logdest=dict(type='str', default='stdout', choices=['all',
+                                                                'stdout',
+                                                                'syslog']),
+            # internal code to work with --diff, do not use
+            show_diff=dict(type='bool', default=False, aliases=['show-diff']),
+            facts=dict(type='dict'),
+            facter_basename=dict(type='str', default='ansible'),
+            environment=dict(type='str'),
+            certname=dict(type='str'),
+            tags=dict(type='list'),
+            execute=dict(type='str'),
+            summarize=dict(type='bool', default=False),
+            debug=dict(type='bool', default=False),
+            verbose=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
         mutually_exclusive=[
             ('puppetmaster', 'manifest'),
             ('puppetmaster', 'manifest', 'execute'),
-            ('puppetmaster', 'modulepath')
+            ('puppetmaster', 'modulepath'),
         ],
     )
     p = module.params
@@ -215,10 +246,8 @@ def main():
 
     if not p['manifest'] and not p['execute']:
         cmd = ("%(base_cmd)s agent --onetime"
-               " --ignorecache --no-daemonize --no-usecacheonfailure --no-splay"
-               " --detailed-exitcodes --verbose --color 0") % dict(
-                   base_cmd=base_cmd,
-                   )
+               " --no-daemonize --no-usecacheonfailure --no-splay"
+               " --detailed-exitcodes --verbose --color 0") % dict(base_cmd=base_cmd)
         if p['puppetmaster']:
             cmd += " --server %s" % pipes.quote(p['puppetmaster'])
         if p['show_diff']:
@@ -231,12 +260,17 @@ def main():
             cmd += " --certname='%s'" % p['certname']
         if module.check_mode:
             cmd += " --noop"
-        else:
-            cmd += " --no-noop"
+        elif 'noop' in p:
+            if p['noop']:
+                cmd += " --noop"
+            else:
+                cmd += " --no-noop"
     else:
         cmd = "%s apply --detailed-exitcodes " % base_cmd
         if p['logdest'] == 'syslog':
             cmd += "--logdest syslog "
+        if p['logdest'] == 'all':
+            cmd += " --logdest syslog --logdest stdout"
         if p['modulepath']:
             cmd += "--modulepath='%s'" % p['modulepath']
         if p['environment']:
@@ -247,12 +281,21 @@ def main():
             cmd += " --tags '%s'" % ','.join(p['tags'])
         if module.check_mode:
             cmd += "--noop "
-        else:
-            cmd += "--no-noop "
+        elif 'noop' in p:
+            if p['noop']:
+                cmd += " --noop"
+            else:
+                cmd += " --no-noop"
         if p['execute']:
             cmd += " --execute '%s'" % p['execute']
         else:
             cmd += pipes.quote(p['manifest'])
+        if p['summarize']:
+            cmd += " --summarize"
+        if p['debug']:
+            cmd += " --debug"
+        if p['verbose']:
+            cmd += " --verbose"
     rc, stdout, stderr = module.run_command(cmd)
 
     if rc == 0:

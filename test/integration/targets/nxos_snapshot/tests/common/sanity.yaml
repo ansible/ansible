@@ -1,0 +1,138 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_snapshot sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- set_fact: snapshot_run="true"
+
+- set_fact: snapshot_run="false"
+  when: titanium and (ansible_connection is match('nxapi'))
+
+- set_fact: snapshot_run="false"
+  when: platform is match('N35')
+
+- set_fact: add_sec="true"
+- set_fact: add_sec="false"
+  when: imagetag is search("D1")
+
+- block:
+  - name: create snapshot
+    nxos_snapshot: &crss1
+      action: create
+      snapshot_name: test_snapshot1
+      description: Ansible
+      save_snapshot_locally: True
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Conf Idempotence"
+    nxos_snapshot: *crss1
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - block:
+    - name: Add section
+      nxos_snapshot: &add
+        action: add
+        section: myshow
+        show_command: show ip interface brief
+        row_id: ROW_intf
+        element_key1: intf-name
+        element_key2: intf-name
+        provider: "{{ connection }}"
+      register: result
+
+    - assert: *true
+  
+    - name: "Conf Idempotence"
+      nxos_snapshot: *add
+      register: result
+
+    - assert: *false
+
+    when: add_sec
+
+  - name: create another snapshot
+    nxos_snapshot: &crss2
+      action: create
+      snapshot_name: test_snapshot2
+      description: row
+      section: myshow
+      show_command: show ip interface brief
+      row_id: ROW_intf
+      element_key1: intf-name
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+  
+  - name: "Conf Idempotence"
+    nxos_snapshot: *crss2
+    register: result
+
+  - assert: *false
+
+  - name: compare snapshots
+    nxos_snapshot:
+      action: compare
+      snapshot1: test_snapshot1
+      snapshot2: test_snapshot2
+      comparison_results_file: compare_snapshots.txt
+      compare_option: summary
+      path: '.'
+      provider: "{{ connection }}"
+
+  - name: delete snapshot
+    nxos_snapshot: &del
+      snapshot_name: test_snapshot2
+      action: delete
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+  
+  - name: "Conf Idempotence"
+    nxos_snapshot: *del
+    register: result
+
+  - assert: *false
+
+  - name: delete all snapshots
+    nxos_snapshot: &delall
+      action: delete_all
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+  
+  - name: "Conf Idempotence"
+    nxos_snapshot: *delall
+    register: result
+
+  - assert: *false
+
+  when: snapshot_run
+
+  always:
+  - name: delete all sections
+    nxos_config:
+      commands:
+        - snapshot section delete myshow
+      match: none
+      provider: "{{ connection }}"
+    ignore_errors: yes
+
+  - name: delete all snapshots
+    nxos_snapshot:
+      action: delete_all
+      provider: "{{ connection }}"
+    ignore_errors: yes
+
+- debug: msg="END connection={{ ansible_connection }} nxos_snapshot sanity test"

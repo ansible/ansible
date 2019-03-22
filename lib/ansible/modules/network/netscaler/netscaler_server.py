@@ -87,6 +87,21 @@ options:
             - "Minimum value = C(0)"
             - "Maximum value = C(4094)"
 
+    graceful:
+        description:
+            - >-
+                Shut down gracefully, without accepting any new connections, and disabling each service when all of
+                its connections are closed.
+            - This option is meaningful only when setting the I(disabled) option to C(true)
+        type: bool
+        version_added: "2.5"
+
+    delay:
+        description:
+            - Time, in seconds, after which all the services configured on the server are disabled.
+            - This option is meaningful only when setting the I(disabled) option to C(true)
+        version_added: "2.5"
+
     disabled:
         description:
             - When set to C(true) the server state will be set to C(disabled).
@@ -144,7 +159,8 @@ except ImportError as e:
     PYTHON_SDK_IMPORTED = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netscaler import ConfigProxy, get_nitro_client, netscaler_common_arguments, log, loglines, get_immutables_intersection
+from ansible.module_utils.network.netscaler.netscaler import ConfigProxy, get_nitro_client, netscaler_common_arguments, log, loglines, \
+    get_immutables_intersection
 
 
 def server_exists(client, module):
@@ -159,8 +175,15 @@ def server_identical(client, module, server_proxy):
     log('Checking if configured server is identical')
     if server.count_filtered(client, 'name:%s' % module.params['name']) == 0:
         return False
-    server_list = server.get_filtered(client, 'name:%s' % module.params['name'])
-    if server_proxy.has_equal_attributes(server_list[0]):
+    diff = diff_list(client, module, server_proxy)
+
+    # Remove options that are not present in nitro server object
+    # These are special options relevant to the disabled action
+    for option in ['graceful', 'delay']:
+        if option in diff:
+            del diff[option]
+
+    if diff == {}:
         return True
     else:
         return False
@@ -196,6 +219,8 @@ def main():
         ),
         comment=dict(type='str'),
         td=dict(type='float'),
+        graceful=dict(type='bool'),
+        delay=dict(type='float')
     )
 
     hand_inserted_arguments = dict(
@@ -250,6 +275,8 @@ def main():
         'translationmask',
         'domainresolveretry',
         'ipv6address',
+        'graceful',
+        'delay',
         'comment',
         'td',
     ]
@@ -288,6 +315,7 @@ def main():
     ]
 
     transforms = {
+        'graceful': ['bool_yes_no'],
         'ipv6address': ['bool_yes_no'],
     }
 

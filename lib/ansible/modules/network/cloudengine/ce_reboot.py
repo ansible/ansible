@@ -27,7 +27,7 @@ version_added: 2.4
 short_description: Reboot a HUAWEI CloudEngine switches.
 description:
     - Reboot a HUAWEI CloudEngine switches.
-author: Gong Jianjun (@CloudEngine-Ansible)
+author: Gong Jianjun (@QijunPan)
 requirements: ["ncclient"]
 options:
     confirm:
@@ -68,13 +68,13 @@ RETURN = '''
 rebooted:
     description: Whether the device was instructed to reboot.
     returned: success
-    type: boolean
+    type: bool
     sample: true
 '''
 
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import execute_nc_action, ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import execute_nc_action, ce_argument_spec
 
 try:
     from ncclient.operations.errors import TimeoutExpiredError

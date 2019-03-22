@@ -27,7 +27,7 @@ version_added: "2.4"
 short_description: Manages configuration of an OSPF instance on HUAWEI CloudEngine switches.
 description:
     - Manages configuration of an OSPF instance on HUAWEI CloudEngine switches.
-author: QijunPan (@CloudEngine-Ansible)
+author: QijunPan (@QijunPan)
 options:
     process_id:
         description:
@@ -39,67 +39,46 @@ options:
             - Specifies the area ID. The area with the area-id being 0 is a backbone area.
               Valid values are a string, formatted as an IP address
               (i.e. "0.0.0.0") or as an integer between 1 and 4294967295.
-        required: false
-        default: null
     addr:
         description:
             - Specifies the address of the network segment where the interface resides.
               The value is in dotted decimal notation.
-        required: false
-        default: null
     mask:
         description:
             - IP network wildcard bits in decimal format between 0 and 32.
-        required: false
-        default: null
     auth_mode:
         description:
             - Specifies the authentication type.
-        required: false
         choices: ['none', 'hmac-sha256', 'md5', 'hmac-md5', 'simple']
-        default: null
     auth_text_simple:
         description:
             - Specifies a password for simple authentication.
               The value is a string of 1 to 8 characters.
-        required: false
-        default: null
     auth_key_id:
         description:
             - Authentication key id when C(auth_mode) is 'hmac-sha256', 'md5' or 'hmac-md5.
               Valid value is an integer is in the range from 1 to 255.
-        required: false
-        default: null
     auth_text_md5:
         description:
             - Specifies a password for MD5, HMAC-MD5, or HMAC-SHA256 authentication.
               The value is a string of 1 to 255 case-sensitive characters, spaces not supported.
-        required: false
-        default: null
     nexthop_addr:
         description:
             - IPv4 address for configure next-hop address's weight.
               Valid values are a string, formatted as an IP address.
-        required: false
-        default: null
     nexthop_weight:
         description:
             - Indicates the weight of the next hop.
               The smaller the value is, the higher the preference of the route is.
               It is an integer that ranges from 1 to 254.
-        required: false
-        default: null
     max_load_balance:
         description:
             - The maximum number of paths for forward packets over multiple paths.
               Valid value is an integer in the range from 1 to 64.
-        required: false
-        default: null
     state:
         description:
             - Determines whether the config should be present or not
               on the device.
-        required: false
         default: present
         choices: ['present','absent']
 '''
@@ -153,13 +132,13 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_nc_config, set_nc_config, ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec
 
 CE_NC_GET_OSPF = """
     <filter type="subtree">

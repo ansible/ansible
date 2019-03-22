@@ -28,59 +28,40 @@ short_description: Manages SNMP community configuration on HUAWEI CloudEngine sw
 description:
     - Manages SNMP community configuration on HUAWEI CloudEngine switches.
 author:
-    - wangdezhuang (@CloudEngine-Ansible)
+    - wangdezhuang (@QijunPan)
 options:
     acl_number:
         description:
             - Access control list number.
-        required: false
-        default: null
     community_name:
         description:
             - Unique name to identify the community.
-        required: false
-        default: null
     access_right:
         description:
             - Access right read or write.
-        required: false
-        default: null
         choices: ['read','write']
     community_mib_view:
         description:
             - Mib view name.
-        required: false
-        default: null
     group_name:
         description:
             - Unique name to identify the SNMPv3 group.
-        required: false
-        default: null
     security_level:
         description:
             - Security level indicating whether to use authentication and encryption.
-        required: false
-        default: null
         choices: ['noAuthNoPriv', 'authentication', 'privacy']
     read_view:
         description:
             - Mib view name for read.
-        required: false
-        default: null
     write_view:
         description:
             - Mib view name for write.
-        required: false
-        default: null
     notify_view:
         description:
             - Mib view name for notification.
-        required: false
-        default: null
     state:
         description:
             - Manage the state of the resource.
-        required: false
         default: present
         choices: ['present','absent']
 '''
@@ -136,7 +117,7 @@ RETURN = '''
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 proposed:
     description: k/v pairs of parameters passed into module
@@ -163,7 +144,7 @@ updates:
 
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_nc_config, set_nc_config, ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec
 
 
 # get snmp commutiny

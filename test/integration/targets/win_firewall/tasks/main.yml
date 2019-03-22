@@ -25,13 +25,13 @@
 
 
   - name: Test in normal mode
-    include: tests.yml
+    import_tasks: tests.yml
     vars:
       in_check_mode: no
 
 
   - name: Test in check-mode
-    include: tests.yml
+    import_tasks: tests.yml
     vars:
       in_check_mode: yes
     check_mode: yes
@@ -46,7 +46,7 @@
   - name: Test firewall_on
     assert:
       that:
-      - firewall_on|changed
+      - firewall_on is changed
       - firewall_on.Domain.enabled
       - firewall_on.Private.enabled
       - firewall_on.Public.enabled

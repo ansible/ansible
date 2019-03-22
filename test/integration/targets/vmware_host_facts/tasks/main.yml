@@ -1,0 +1,28 @@
+- name: kill vcsim
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/killall' }}"
+- name: start vcsim
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/spawn?cluster=2' }}"
+  register: vcsim_instance
+
+- name: get host facts
+  vmware_host_facts:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+  register: facts
+
+- debug: var=facts
+
+- name: get host info
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/govc_host_info' }}"
+  register: host_info_result
+
+- name: verify some data,like ansible_processor
+  assert:
+    that:
+      - facts['ansible_facts']['ansible_hostname'] in host_info_result['json']
+      - facts['ansible_facts']['ansible_processor'] == host_info_result['json'][facts['ansible_facts']['ansible_hostname']]['Processor type']

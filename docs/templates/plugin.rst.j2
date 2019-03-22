@@ -1,25 +1,31 @@
-.. _@{ module }@:
+:source: @{ source }@
+
+{# avoids rST "isn't included in any toctree" errors for module docs #}
+{% if plugin_type == 'module' %}
+:orphan:
+{% endif %}
+
+.. _@{ module }@_@{ plugin_type }@:
+{% for alias in aliases %}
+.. _@{ alias }@_@{ plugin_type }@:
+{% endfor %}
 
 {% if short_description %}
-{% set title = module + ' - ' + short_description|convert_symbols_to_format %}
+{%   set title = module + ' -- ' + short_description | rst_ify %}
 {% else %}
-{% set title = module %}
+{%   set title = module %}
 {% endif %}
-{% set title_len = title|length %}
 
 @{ title }@
-@{ '+' * title_len }@
+@{ '+' * title|length }@
 
 {% if version_added is defined and version_added != '' -%}
 .. versionadded:: @{ version_added | default('') }@
-
-
 {% endif %}
-
 
 .. contents::
    :local:
-   :depth: 2
+   :depth: 1
 
 {# ------------------------------------------
  #
@@ -32,305 +38,425 @@
 
 DEPRECATED
 ----------
-
 {# use unknown here? skip the fields? #}
-:In: version: @{ deprecated['version'] | default('') | string | convert_symbols_to_format }@
-:Why: @{ deprecated['why'] | default('') | convert_symbols_to_format }@
-:Alternative: @{ deprecated['alternative'] | default('')|  convert_symbols_to_format }@
+:Removed in Ansible: version: @{ deprecated['removed_in'] | default('') | string | rst_ify }@
+:Why: @{ deprecated['why'] | default('') | rst_ify }@
+:Alternative: @{ deprecated['alternative'] | default('') | rst_ify }@
 
 
 {% endif %}
 
 Synopsis
 --------
+{% if description -%}
 
-{% if description %}
-
-{% for desc in description -%}
-* @{ desc | convert_symbols_to_format }@
-{% endfor %}
-
+{%   if description is string -%}
+- @{ description | rst_ify }@
+{%   else %}
+{%     for desc in description %}
+- @{ desc | rst_ify }@
+{%     endfor %}
+{%   endif %}
 
 {% endif %}
+
 {% if aliases is defined -%}
-
 Aliases: @{ ','.join(aliases) }@
-
-
-{% endif %}
-{% if requirements %}
-
-Requirements (on host that executes module)
--------------------------------------------
-
-{% if requirements %}
-{% for req in requirements %}
-  * @{ req | convert_symbols_to_format }@
-{% endfor %}
-
 {% endif %}
 
+{% if requirements -%}
+
+Requirements
+------------
+{%   if plugin_type == 'module' %}
+The below requirements are needed on the host that executes this @{ plugin_type }@.
+{%   else %}
+The below requirements are needed on the local master node that executes this @{ plugin_type }@.
+{%   endif %}
+
+{%   for req in requirements %}
+- @{ req | rst_ify }@
+{%   endfor %}
 
 {% endif %}
+
 {% if options -%}
 
-
-Options
--------
-
-.. raw:: html
-
-    <table border=1 cellpadding=4>
-
-    <tr>
-    <th class="head">parameter</th>
-    <th class="head">required</th>
-    <th class="head">default</th>
-    <th class="head">choices</th>
-    <th class="head">comments</th>
-    </tr>
-{% for k in option_keys -%}
-{% set v = options[k] -%}
-{% if not v['suboptions'] %}
-
-    <tr>
-    <td>@{ k }@<br/><div style="font-size: small;">{% if v['version_added'] -%} (added in @{v['version_added']}@){% endif -%}</div></td>
-    <td>{% if v.get('required', False) -%}yes{% else %}no{% endif -%}</td>
-    <td>{% if v['default'] -%}@{ v['default'] }@{% endif -%}</td>
-{% if v.get('type', 'not_bool') == 'bool' %}
-    <td><ul><li>yes</li><li>no</li></ul></td>
-{% else %}
-    <td>{% if v['choices'] -%}<ul>{% for choice in v.get('choices',[]) -%}<li>@{ choice }@</li>{% endfor -%}</ul>{% endif -%}</td>
-{% endif %}
-    <td>
-{% if v.description is string %}
-        <div>@{ v.description | replace('\n', '\n    ') | html_ify }@</div>
-{% else %}
-{% for desc in v.description %}
-        <div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>
-{% endfor %}
-{% endif %}
-{% if 'aliases' in v and v.aliases %}
-        </br><div style="font-size: small;">aliases: @{ v.aliases|join(', ') }@</div>
-{% endif %}
-{% else %}
-
-    <tr>
-    <td rowspan="2">@{ k }@<br/><div style="font-size: small;">{% if v['version_added'] -%} (added in @{v['version_added']}@){% endif -%}</div></td>
-    <td>{% if v.get('required', False) -%}yes{% else -%}no{% endif -%}</td>
-    <td></td>
-    <td></td>
-    <td>
-{% for desc in v.description %}
-        <div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>
-{% endfor %}
-{% if 'aliases' in v and v.aliases %}
-        </br><div style="font-size: small;">aliases: @{ v.aliases|join(', ') }@</div>
-{% endif %}
-    </tr>
-
-    <tr>
-    <td colspan="5">
-        <table border=1 cellpadding=4>
-        <caption><b>Dictionary object @{ k }@</b></caption>
-
-        <tr>
-        <th class="head">parameter</th>
-        <th class="head">required</th>
-        <th class="head">default</th>
-        <th class="head">choices</th>
-        <th class="head">comments</th>
-        </tr>
-{% for k2 in v['suboptions'] %}
-{% set v2 = v['suboptions'] [k2] %}
-
-        <tr>
-        <td>@{ k2 }@<br/><div style="font-size: small;">{% if v2['version_added'] -%} (added in @{v2['version_added']}@){% endif -%}</div></td>
-        <td>{% if v2.get('required', False) -%}yes{% else -%}no{% endif -%}</td>
-        <td>{% if v2['default'] -%}@{ v2['default'] }@{% endif -%}</td>
-{% if v2.get('type', 'not_bool') == 'bool' %}
-        <td><ul><li>yes</li><li>no</li></ul></td>
-{% else %}
-        <td>{% if v2['choices'] -%}<ul>{% for choice in v2.get('choices',[]) -%}<li>@{ choice }@</li>{% endfor -%}</ul>{% endif -%}</td>
-{% endif %}
-        <td>
-{% if v2.description is string %}
-        <div>@{ v2.description | replace('\n', '\n    ') | html_ify }@</div>
-{% else %}
-{% for desc in v2.description %}
-            <div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>
-{% endfor %}
-{% endif %}
-{% if 'aliases' in v and v2.aliases %}
-            </br><div style="font-size: small;">aliases: @{ v2.aliases|join(', ') }@</div>
-{% endif %}
-        </td>
-        </tr>
-{% endfor %}
-
-        </table>
-
-    </td>
-    </tr>
-{% endif %}
-    </td>
-    </tr>
-{% endfor %}
-
-    </table>
-    </br>
-
-{% endif %}
-{% if examples or plainexamples -%}
-
-
-Examples
---------
-
- ::
-
-{% for example in examples %}
-{% if example['description'] %}@{ example['description'] | indent(4, True) }@{% endif %}
-@{ example['code'] | escape | indent(4, True) }@
-{% endfor %}
-{% if plainexamples %}@{ plainexamples | indent(4, True) }@{% endif %}
-{% endif %}
-
-
-{% if returndocs -%}
-
-
-Return Values
--------------
-
-Common return values are documented :ref:`here <common_return_values>`, the following are the fields unique to this module:
+Parameters
+----------
 
 .. raw:: html
 
-    <table border=1 cellpadding=4>
-
-    <tr>
-    <th class="head">name</th>
-    <th class="head">description</th>
-    <th class="head">returned</th>
-    <th class="head">type</th>
-    <th class="head">sample</th>
-    </tr>
-{% for entry in returndocs %}
-
-    <tr>
-    <td>@{ entry }@</td>
-    <td>
-{% if returndocs[entry].description is string %}
-        <div>@{ returndocs[entry].description | replace('\n', '\n    ') | html_ify }@</div>
-{% else %}
-{% for desc in returndocs[entry].description %}
-        <div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>
-{% endfor %}
-{% endif %}
-    </td>
-    <td align=center>@{ returndocs[entry].returned }@</td>
-    <td align=center>@{ returndocs[entry].type }@</td>
-    <td align=center>@{ returndocs[entry].sample | replace('\n', '\n    ') | html_ify }@</td>
-    </tr>
-{% if returndocs[entry].type == 'complex' %}
-
-    <tr>
-    <td>contains:</td>
-    <td colspan=4>
-        <table border=1 cellpadding=2>
-
+    <table  border=0 cellpadding=0 class="documentation-table">
+        {# Pre-compute the nesting depth to allocate columns -#}
+        @{ to_kludge_ns('maxdepth', 1) -}@
+        {% for key, value in options|dictsort recursive -%}
+            @{ to_kludge_ns('maxdepth', [loop.depth, from_kludge_ns('maxdepth')] | max) -}@
+            {% if value.suboptions -%}
+                {% if value.suboptions.items -%}
+                    @{ loop(value.suboptions.items()) -}@
+                {% elif value.suboptions[0].items -%}
+                    @{ loop(value.suboptions[0].items()) -}@
+                {% endif -%}
+            {% endif -%}
+        {% endfor -%}
+        {# Header of the documentation -#}
         <tr>
-        <th class="head">name</th>
-        <th class="head">description</th>
-        <th class="head">returned</th>
-        <th class="head">type</th>
-        <th class="head">sample</th>
+            <th colspan="@{ from_kludge_ns('maxdepth') }@">Parameter</th>
+            <th>Choices/<font color="blue">Defaults</font></th>
+            {% if plugin_type != 'module' %}
+                <th>Configuration</th>
+            {% endif %}
+            <th width="100%">Comments</th>
         </tr>
-{% for sub in returndocs[entry].contains %}
-
-        <tr>
-        <td>@{ sub }@</td>
-        <td>
-{% if returndocs[entry].contains[sub].description is string %}
-            <div>@{ returndocs[entry].contains[sub].description | replace('\n', '\n    ') | html_ify }@</div>
-{% else %}
-{% for desc in returndocs[entry].contains[sub].description %}
-            <div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>
-{% endfor %}
-{% endif %}
-        </td>
-        <td align=center>@{ returndocs[entry].contains[sub].returned }@</td>
-        <td align=center>@{ returndocs[entry].contains[sub].type }@</td>
-        <td align=center>@{ returndocs[entry].contains[sub].sample }@</td>
-        </tr>
-{% endfor %}
-
-        </table>
-    </td>
-    </tr>
-{% endif %}
-{% endfor %}
-
+        {% for key, value in options|dictsort recursive %}
+            <tr>
+                {# indentation based on nesting level #}
+                {% for i in range(1, loop.depth) %}
+                    <td class="elbow-placeholder"></td>
+                {% endfor %}
+                {# parameter name with required and/or introduced label #}
+                <td colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@">
+                    <b>@{ key }@</b>
+                    <div style="font-size: small">
+                        <span style="color: purple">@{ value.type | documented_type }@</span>
+                        {% if value.get('required', False) %} / <span style="color: red">required</span>{% endif %}
+                    </div>
+                    {% if value.version_added %}<div style="font-style: italic; font-size: small; color: darkgreen">added in @{value.version_added}@</div>{% endif %}
+                </td>
+                {# default / choices #}
+                <td>
+                    {# Turn boolean values in 'yes' and 'no' values #}
+                    {% if value.default is sameas true %}
+                        {% set _x = value.update({'default': 'yes'}) %}
+                    {% elif value.default is sameas false %}
+                        {% set _x = value.update({'default': 'no'}) %}
+                    {% endif %}
+                    {% if value.type == 'bool' %}
+                        {% set _x = value.update({'choices': ['no', 'yes']}) %}
+                    {% endif %}
+                    {# Show possible choices and highlight details #}
+                    {% if value.choices %}
+                        <ul style="margin: 0; padding: 0"><b>Choices:</b>
+                            {% for choice in value.choices %}
+                                {# Turn boolean values in 'yes' and 'no' values #}
+                                {% if choice is sameas true %}
+                                    {% set choice = 'yes' %}
+                                {% elif choice is sameas false %}
+                                    {% set choice = 'no' %}
+                                {% endif %}
+                                {% if (value.default is not list and value.default == choice) or (value.default is list and choice in value.default) %}
+                                    <li><div style="color: blue"><b>@{ choice | escape }@</b>&nbsp;&larr;</div></li>
+                                {% else %}
+                                    <li>@{ choice | escape }@</li>
+                                {% endif %}
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                    {# Show default value, when multiple choice or no choices #}
+                    {% if value.default is defined and value.default not in value.choices %}
+                        <b>Default:</b><br/><div style="color: blue">@{ value.default | escape }@</div>
+                    {% endif %}
+                </td>
+                {# configuration #}
+                {% if plugin_type != 'module' %}
+                    <td>
+                        {% if 'ini' in value %}
+                            <div> ini entries:
+                                {% for ini in value.ini %}
+                                    <p>[@{ ini.section }@]<br>@{ ini.key }@ = @{ value.default | default('VALUE') }@</p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        {% if 'env' in value %}
+                            {% for env in value.env %}
+                                <div>env:@{ env.name }@</div>
+                            {% endfor %}
+                        {% endif %}
+                        {% if 'vars' in value %}
+                            {% for myvar in value.vars %}
+                                <div>var: @{ myvar.name }@</div>
+                            {% endfor %}
+                        {% endif %}
+                    </td>
+                {% endif %}
+                {# description #}
+                <td>
+                    {% if value.description is string %}
+                        <div>@{ value.description | replace('\n', '\n    ') | html_ify }@</div>
+                    {% else %}
+                        {% for desc in value.description %}
+                            <div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>
+                        {% endfor %}
+                    {% endif %}
+                    {% if 'aliases' in value and value.aliases %}
+                        <div style="font-size: small; color: darkgreen"><br/>aliases: @{ value.aliases|join(', ') }@</div>
+                    {% endif %}
+                </td>
+            </tr>
+            {% if value.suboptions %}
+                {% if value.suboptions.items %}
+                    @{ loop(value.suboptions|dictsort) }@
+                {% elif value.suboptions[0].items %}
+                    @{ loop(value.suboptions[0]|dictsort) }@
+                {% endif %}
+            {% endif %}
+        {% endfor %}
     </table>
-    </br>
-    </br>
-{% endif %}
+    <br/>
 
+{% endif %}
 
 {% if notes -%}
-
-
 Notes
 -----
 
 .. note::
-{% for note in notes %}
-    - @{ note | convert_symbols_to_format }@
-{% endfor %}
-
-
-{% endif %}
-{% if author is defined -%}
-
-
-Author
-~~~~~~
-
-{% for author_name in author %}
-    * @{ author_name }@
-{% endfor %}
-
+{%   for note in notes %}
+   - @{ note | rst_ify }@
+{%   endfor %}
 
 {% endif %}
-{% if not deprecated %}
-{% set support = { 'core': 'The Ansible Core Team', 'network': 'The Ansible Network Team', 'certified': 'an Ansible Partner', 'community': 'The Ansible Community', 'curated': 'A Third Party'} %}
-{% set module_states = { 'preview': 'it is not guaranteed to have a backwards compatible interface', 'stableinterface': 'the maintainers for this module guarantee that no backward incompatible interface changes will be made'} %}
-{% if metadata %}
-{% if metadata.status %}
 
+{% if seealso -%}
+See Also
+--------
+
+.. seealso::
+
+{% for item in seealso %}
+{%   if item.module is defined and item.description is defined %}
+   :ref:`@{ item.module }@_module`
+       @{ item.description | rst_ify }@
+{%   elif item.module is defined %}
+   :ref:`@{ item.module }@_module`
+      The official documentation on the **@{ item.module }@** module.
+{%   elif item.name is defined and item.link is defined and item.description is defined %}
+   `@{ item.name }@ <@{ item.link }@>`_
+       @{ item.description | rst_ify }@
+{%   elif item.ref is defined and item.description is defined %}
+   :ref:`@{ item.ref }@`
+       @{ item.description | rst_ify }@
+{%   endif %}
+{% endfor %}
+
+{% endif %}
+
+{% if examples or plainexamples -%}
+
+Examples
+--------
+
+.. code-block:: yaml+jinja
+
+{%   for example in examples %}
+{%     if example['description'] %}@{ example['description'] | indent(4, True) }@{% endif %}
+@{ example['code'] | escape | indent(4, True) }@
+{%   endfor %}
+{%   if plainexamples %}@{ plainexamples | indent(4, True) }@{% endif %}
+
+{% endif %}
+
+{% if not returnfacts and returndocs and returndocs.ansible_facts is defined %}
+{%   set returnfacts = returndocs.ansible_facts.contains %}
+{%   set _x = returndocs.pop('ansible_facts', None) %}
+{% endif %}
+
+{% if returnfacts -%}
+
+Returned Facts
+--------------
+Facts returned by this module are added/updated in the ``hostvars`` host facts and can be referenced by name just like any other host fact. They do not need to be registered in order to use them.
+
+.. raw:: html
+
+    <table border=0 cellpadding=0 class="documentation-table">
+        {# Pre-compute the nesting depth to allocate columns #}
+        @{ to_kludge_ns('maxdepth', 1) -}@
+        {% for key, value in returnfacts|dictsort recursive %}
+            @{ to_kludge_ns('maxdepth', [loop.depth, from_kludge_ns('maxdepth')] | max) -}@
+            {% if value.contains -%}
+                {% if value.contains.items -%}
+                    @{ loop(value.contains.items()) -}@
+                {% elif value.contains[0].items -%}
+                    @{ loop(value.contains[0].items()) -}@
+                {% endif -%}
+            {% endif -%}
+        {% endfor -%}
+        <tr>
+            <th colspan="@{ from_kludge_ns('maxdepth') }@">Fact</th>
+            <th>Returned</th>
+            <th width="100%">Description</th>
+        </tr>
+        {% for key, value in returnfacts|dictsort recursive %}
+            <tr>
+                {% for i in range(1, loop.depth) %}
+                    <td class="elbow-placeholder"></td>
+                {% endfor %}
+                <td colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@" colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@">
+                    <b>@{ key }@</b>
+                    <div style="font-size: small; color: purple">@{ value.type | documented_type }@</div>
+                    {% if value.version_added %}<div style="font-style: italic; font-size: small; color: darkgreen">added in @{value.version_added}@</div>{% endif %}
+                </td>
+                <td>@{ value.returned | html_ify }@</td>
+                <td>
+                    {% if value.description is string %}
+                        <div>@{ value.description | html_ify }@
+                        </div>
+                    {% else %}
+                        {% for desc in value.description %}
+                            <div>@{ desc | html_ify }@
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    <br/>
+                    {% if value.sample is defined and value.sample %}
+                        <div style="font-size: smaller"><b>Sample:</b></div>
+                        {# TODO: The sample should be escaped, using | escape or | htmlify, but both mess things up beyond repair with dicts #}
+                        <div style="font-size: smaller; color: blue; word-wrap: break-word; word-break: break-all;">@{ value.sample | replace('\n', '\n    ') | html_ify }@</div>
+                    {% endif %}
+                </td>
+            </tr>
+            {# ---------------------------------------------------------
+             # sadly we cannot blindly iterate through the child dicts,
+             # since in some documentations,
+             # lists are used instead of dicts. This handles both types
+             # ---------------------------------------------------------#}
+            {% if value.contains %}
+                {% if value.contains.items %}
+                    @{ loop(value.contains|dictsort) }@
+                {% elif value.contains[0].items %}
+                    @{ loop(value.contains[0]|dictsort) }@
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+    </table>
+    <br/><br/>
+
+{% endif %}
+
+{% if returndocs -%}
+
+Return Values
+-------------
+Common return values are documented :ref:`here <common_return_values>`, the following are the fields unique to this @{ plugin_type }@:
+
+.. raw:: html
+
+    <table border=0 cellpadding=0 class="documentation-table">
+        @{ to_kludge_ns('maxdepth', 1) -}@
+        {% for key, value in returndocs|dictsort recursive -%}
+            @{ to_kludge_ns('maxdepth', [loop.depth, from_kludge_ns('maxdepth')] | max) -}@
+            {% if value.contains -%}
+                {% if value.contains.items -%}
+                    @{ loop(value.contains.items()) -}@
+                {% elif value.contains[0].items -%}
+                    @{ loop(value.contains[0].items()) -}@
+                {% endif -%}
+            {% endif -%}
+        {% endfor -%}
+        <tr>
+            <th colspan="@{ from_kludge_ns('maxdepth') }@">Key</th>
+            <th>Returned</th>
+            <th width="100%">Description</th>
+        </tr>
+        {% for key, value in returndocs|dictsort recursive %}
+            <tr>
+                {% for i in range(1, loop.depth) %}
+                    <td class="elbow-placeholder">&nbsp;</td>
+                {% endfor %}
+                <td colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@">
+                    <b>@{ key }@</b>
+                    <div style="font-size: small; color: purple">@{ value.type | documented_type }@</div>
+                    {% if value.version_added %}<div style="font-style: italic; font-size: small; color: darkgreen">added in @{value.version_added}@</div>{% endif %}
+                </td>
+                <td>@{ value.returned | html_ify }@</td>
+                <td>
+                    {% if value.description is string %}
+                        <div>@{ value.description | html_ify |indent(4) | trim}@</div>
+                    {% else %}
+                        {% for desc in value.description %}
+                            <div>@{ desc | html_ify |indent(4) | trim}@</div>
+                        {% endfor %}
+                    {% endif %}
+                    <br/>
+                    {% if value.sample is defined and value.sample %}
+                        <div style="font-size: smaller"><b>Sample:</b></div>
+                        {# TODO: The sample should be escaped, using |escape or |htmlify, but both mess things up beyond repair with dicts #}
+                        <div style="font-size: smaller; color: blue; word-wrap: break-word; word-break: break-all;">@{ value.sample | replace('\n', '\n    ') | html_ify }@</div>
+                    {% endif %}
+                </td>
+            </tr>
+            {# ---------------------------------------------------------
+             # sadly we cannot blindly iterate through the child dicts,
+             # since in some documentations,
+             # lists are used instead of dicts. This handles both types
+             # ---------------------------------------------------------#}
+            {% if value.contains %}
+                {% if value.contains.items %}
+                    @{ loop(value.contains|dictsort) }@
+                {% elif value.contains[0].items %}
+                    @{ loop(value.contains[0]|dictsort) }@
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+    </table>
+    <br/><br/>
+
+{% endif %}
 
 Status
-~~~~~~
+------
 
-{% for cur_state in  metadata.status %}
-This module is flagged as **@{cur_state}@** which means that @{module_states[cur_state]}@.
-{% endfor %}
+{% if deprecated %}
 
+- This @{ plugin_type }@ will be removed in version @{ deprecated['removed_in'] | default('') | string | rst_ify }@. *[deprecated]*
+- For more information see `DEPRECATED`_.
+
+{% else %}
+
+{%   set support = { 'core': 'the Ansible Core Team', 'network': 'the Ansible Network Team', 'certified': 'an Ansible Partner', 'community': 'the Ansible Community', 'curated': 'a Third Party'} %}
+{%   set module_states = { 'preview': 'not guaranteed to have a backwards compatible interface', 'stableinterface': 'guaranteed to have no backward incompatible interface changes going forward'} %}
+
+{%   if metadata %}
+{%     if metadata.status %}
+
+{%       for cur_state in metadata.status %}
+- This @{ plugin_type }@ is @{ module_states[cur_state] }@. *[@{ cur_state }@]*
+{%       endfor %}
+
+{%     endif %}
+
+{%     if metadata.supported_by %}
+{%       set supported_by = support[metadata.supported_by] %}
+- This @{ plugin_type }@ is :ref:`maintained by @{ supported_by }@ <modules_support>`. *[@{ metadata.supported_by }@]*
+
+{%       if metadata.supported_by in ('core', 'network') %}
+Red Hat Support
+~~~~~~~~~~~~~~~
+
+More information about Red Hat's support of this @{ plugin_type }@ is available from this `Red Hat Knowledge Base article <https://access.redhat.com/articles/3166901>`_.
+{%       endif %}
+
+{%     endif %}
+
+{%   endif %}
 
 {% endif %}
-{% if metadata.supported_by in ('core', 'network') %}
 
+{% if author is defined -%}
+Authors
+~~~~~~~
 
-Maintenance Info
-~~~~~~~~~~~~~~~~
-
-For more information about Red Hat's this support of this module, please
-refer to this `knowledge base article<https://access.redhat.com/articles/rhel-top-support-policies>`
+{%   for author_name in author %}
+- @{ author_name }@
+{%   endfor %}
 
 {% endif %}
-{% endif %}
-{% endif %}
 
-For help in developing on modules, should you be so inclined, please read :doc:`../../community`, :doc:`../../dev_guide/testing` and :doc:`../../dev_guide/developing_modules`.
-
+.. hint::
+{%   if plugin_type == 'module' %}
+    If you notice any issues in this documentation you can `edit this document <https://github.com/ansible/ansible/edit/devel/lib/ansible/modules/@{ source }@?description=%23%23%23%23%23%20SUMMARY%0A%3C!---%20Your%20description%20here%20--%3E%0A%0A%0A%23%23%23%23%23%20ISSUE%20TYPE%0A-%20Docs%20Pull%20Request%0A%0A%2Blabel:%20docsite_pr>`_ to improve it.
+{% else %}
+    If you notice any issues in this documentation you can `edit this document <https://github.com/ansible/ansible/edit/devel/lib/ansible/plugins/@{ plugin_type }@/@{ source }@?description=%23%23%23%23%23%20SUMMARY%0A%3C!---%20Your%20description%20here%20--%3E%0A%0A%0A%23%23%23%23%23%20ISSUE%20TYPE%0A-%20Docs%20Pull%20Request%0A%0A%2Blabel:%20docsite_pr>`_ to improve it.
+{% endif %}

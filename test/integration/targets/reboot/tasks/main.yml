@@ -1,0 +1,111 @@
+- block:
+    # This block can be removed once we have a mechanism in ansible-test to separate
+    # the control node from the managed node.
+    - block:
+        - name: Write temp file for sanity checking this is not the controller
+          copy:
+            content: 'I am the control node'
+            dest: /tmp/Anything-Nutlike-Nuzzle-Plow-Overdue
+          delegate_to: localhost
+          connection: local
+          when: inventory_hostname == ansible_play_hosts[0]
+
+        - name: See if the temp file exists on the managed node
+          stat:
+            path: /tmp/Anything-Nutlike-Nuzzle-Plow-Overdue
+          register: controller_temp_file
+
+        - name: EXPECT FAILURE | Check if the managed node is the control node
+          assert:
+            msg: >
+              This test must be run manually by modifying the inventory file to point
+              "{{ inventory_hostname }}" at a remote host rather than "{{ ansible_host }}".
+              Skipping reboot test.
+            that:
+              - not controller_temp_file.stat.exists
+
+    - import_tasks: get_boot_time.yml
+
+    - name: Reboot with default settings
+      reboot:
+      register: reboot_result
+
+    - import_tasks: check_reboot.yml
+
+    - import_tasks: get_boot_time.yml
+
+    - name: Reboot with all options
+      reboot:
+        connect_timeout: 30
+        search_paths: /usr/local/bin
+        msg: Rebooting
+        post_reboot_delay: 1
+        pre_reboot_delay: 61
+        test_command: uptime
+        reboot_timeout: 500
+      register: reboot_result
+
+    - import_tasks: check_reboot.yml
+
+    - import_tasks: get_boot_time.yml
+
+    - name: Test with negative values for delays
+      reboot:
+        post_reboot_delay: -0.5
+        pre_reboot_delay: -61
+      register: reboot_result
+
+    - import_tasks: check_reboot.yml
+
+    - name: Use invalid parameter
+      reboot:
+        foo: bar
+      ignore_errors: true
+      register: invalid_parameter
+
+    - name: Ensure task fails with error
+      assert:
+        that:
+        - invalid_parameter is failed
+        - "invalid_parameter.msg == 'Invalid options for reboot: foo'"
+
+    - name: Reboot with test command that fails
+      reboot:
+        test_command: 'FAIL'
+        reboot_timeout: "{{ timeout }}"
+      register: reboot_fail_test
+      failed_when: "reboot_fail_test.msg != 'Timed out waiting for post-reboot test command (timeout=' ~ timeout ~ ')'"
+      vars:
+        timeout: "{{ timeout_value[ansible_facts['distribution'] | lower] | default(60) }}"
+
+    - name: Test molly-guard
+      block:
+        - import_tasks: get_boot_time.yml
+
+        - name: Install molly-guard
+          apt:
+            update_cache: yes
+            name: molly-guard
+            state: present
+
+        - name: Reboot when molly-guard is installed
+          reboot:
+            search_paths: /lib/molly-guard
+          register: reboot_result
+
+        - import_tasks: check_reboot.yml
+
+      when: ansible_facts.distribution in ['Debian', 'Ubuntu']
+      tags:
+        - molly-guard
+
+  always:
+    - name: Cleanup temp file
+      file:
+        path: /tmp/Anything-Nutlike-Nuzzle-Plow-Overdue
+        state: absent
+      delegate_to: localhost
+      connection: local
+      when: inventory_hostname == ansible_play_hosts[0]
+
+  when: ansible_virtualization_type | default('') != 'docker'

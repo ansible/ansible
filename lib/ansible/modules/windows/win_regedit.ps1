@@ -1,30 +1,17 @@
 #!powershell
-# This file is part of Ansible
-#
-# (c) 2015, Adam Keech <akeech@chathamfinancial.com>, Josh Ludwig <jludwig@chathamfinancial.com>
-# (c) 2017, Jordan Borean <jborean93@gmail.com>
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# WANT_JSON
-# POWERSHELL_COMMON
+# Copyright: (c) 2015, Adam Keech <akeech@chathamfinancial.com>
+# Copyright: (c) 2015, Josh Ludwig <jludwig@chathamfinancial.com>
+# Copyright: (c) 2017, Jordan Borean <jborean93@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-$ErrorActionPreference = "Stop"
+#Requires -Module Ansible.ModuleUtils.Legacy
+#Requires -Module Ansible.ModuleUtils.PrivilegeUtil
 
 $params = Parse-Args -arguments $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 $diff_mode = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -default $false
+$_remote_tmp = Get-AnsibleParam $params "_ansible_remote_tmp" -type "path" -default $env:TMP
 
 $path = Get-AnsibleParam -obj $params -name "path" -type "str" -failifempty $true -aliases "key"
 $name = Get-AnsibleParam -obj $params -name "name" -type "str" -aliases "entry","value"
@@ -32,6 +19,7 @@ $data = Get-AnsibleParam -obj $params -name "data"
 $type = Get-AnsibleParam -obj $params -name "type" -type "str" -default "string" -validateset "none","binary","dword","expandstring","multistring","string","qword" -aliases "datatype"
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent"
 $delete_key = Get-AnsibleParam -obj $params -name "delete_key" -type "bool" -default $true
+$hive = Get-AnsibleParam -obj $params -name "hive" -type "path"
 
 $result = @{
     changed = $false
@@ -41,18 +29,86 @@ $result = @{
 
 if ($diff_mode) {
     $result.diff = @{
-        prepared = ""
+        before = ""
+        after = ""
     }
 }
 
-# Fix HCCC:\ PSDrive for pre-2.3 compatibility
-if ($path -match "^HCCC:\\") {
-    Add-DeprecationWarning -obj $result -message "Please use path: HKCC:\... instead of path: $path" -version 2.6
-    $path = $path -replace "HCCC:\\","HKCC:\\"
+$registry_util = @'
+using System;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
+
+namespace Ansible.WinRegedit
+{
+    internal class NativeMethods
+    {
+        [DllImport("advapi32.dll", CharSet = CharSet.Unicode)]
+        public static extern int RegLoadKeyW(
+            UInt32 hKey,
+            string lpSubKey,
+            string lpFile);
+
+        [DllImport("advapi32.dll", CharSet = CharSet.Unicode)]
+        public static extern int RegUnLoadKeyW(
+            UInt32 hKey,
+            string lpSubKey);
+    }
+
+    public class Win32Exception : System.ComponentModel.Win32Exception
+    {
+        private string _msg;
+        public Win32Exception(string message) : this(Marshal.GetLastWin32Error(), message) { }
+        public Win32Exception(int errorCode, string message) : base(errorCode)
+        {
+            _msg = String.Format("{0} ({1}, Win32ErrorCode {2})", message, base.Message, errorCode);
+        }
+        public override string Message { get { return _msg; } }
+        public static explicit operator Win32Exception(string message) { return new Win32Exception(message); }
+    }
+
+    public class Hive : IDisposable
+    {
+        private const UInt32 SCOPE = 0x80000002;  // HKLM
+        private string hiveKey;
+        private bool loaded = false;
+
+        public Hive(string hiveKey, string hivePath)
+        {
+            this.hiveKey = hiveKey;
+            int ret = NativeMethods.RegLoadKeyW(SCOPE, hiveKey, hivePath);
+            if (ret != 0)
+                throw new Win32Exception(ret, String.Format("Failed to load registry hive at {0}", hivePath));
+            loaded = true;
+        }
+
+        public static void UnloadHive(string hiveKey)
+        {
+            int ret = NativeMethods.RegUnLoadKeyW(SCOPE, hiveKey);
+            if (ret != 0)
+                throw new Win32Exception(ret, String.Format("Failed to unload registry hive at {0}", hiveKey));
+        }
+
+        public void Dispose()
+        {
+            if (loaded)
+            {
+                // Make sure the garbage collector disposes all unused handles and waits until it is complete
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+
+                UnloadHive(hiveKey);
+                loaded = false;
+            }
+            GC.SuppressFinalize(this);
+        }
+        ~Hive() { this.Dispose(); }
+    }
 }
+'@
 
 # fire a warning if the property name isn't specified, the (Default) key ($null) can only be a string
-if ($name -eq $null -and $type -ne "string") {
+if ($null -eq $name -and $type -ne "string") {
     Add-Warning -obj $result -message "the data type when name is not specified can only be 'string', the type has automatically been converted"
     $type = "string"
 }
@@ -62,16 +118,13 @@ if ($path -notmatch "^HK(CC|CR|CU|LM|U):\\") {
     Fail-Json $result "path: $path is not a valid powershell path, see module documentation for examples."
 }
 
-# Create the required PSDrives if missing
-$registry_hive = Split-Path -Path $path -Qualifier
-if ($registry_hive -eq "HKCR:" -and (-not (Test-Path HKCR:\))) {
-    New-PSDrive -Name HKCR -PSProvider Registry -Root HKEY_CLASSES_ROOT
-}
-if ($registry_hive -eq "HKU:" -and (-not (Test-Path HKU:\))) {
-    New-PSDrive -Name HKU -PSProvider Registry -Root HKEY_USERS
-}
-if ($registry_hive -eq "HKCC:" -and (-not (Test-Path HKCC:\))) {
-    New-PSDrive -Name HKCC -PSProvider Registry -Root HKEY_CURRENT_CONFIG
+# Add a warning if the path does not contains a \ and is not the leaf path
+$registry_path = (Split-Path -Path $path -NoQualifier).Substring(1)  # removes the hive: and leading \
+$registry_leaf = Split-Path -Path $path -Leaf
+if ($registry_path -ne $registry_leaf -and -not $registry_path.Contains('\')) {
+    $msg = "path is not using '\' as a separator, support for '/' as a separator will be removed in a future Ansible version"
+    Add-DeprecationWarning -obj $result -message $msg -version 2.12
+    $registry_path = $registry_path.Replace('/', '\')
 }
 
 # Simplified version of Convert-HexStringToByteArray from
@@ -106,57 +159,202 @@ Function Convert-RegExportHexStringToByteArray($string) {
     }
 }
 
-Function Test-RegistryProperty($path, $name) {
-    # will validate if the registry key contains the property, returns true
-    # if the property exists and false if the property does not
-    try {
-        $value = (Get-Item -Path $path).GetValue($name)
-        # need to do it this way return ($value -eq $null) does not work
-        if ($value -eq $null) {
-            return $false
-        } else {
-            return $true
-        }
-    } catch [System.Management.Automation.ItemNotFoundException] {
-        # key didn't exist so the property mustn't
-        return $false
-    }
-}
-
 Function Compare-RegistryProperties($existing, $new) {
-    $mismatch = $false
+    # Outputs $true if the property values don't match
     if ($existing -is [Array]) {
-        if ((Compare-Object -ReferenceObject $existing -DifferenceObject $new -SyncWindow 0).Length -ne 0) {
-            $mismatch = $true
-        }
+        (Compare-Object -ReferenceObject $existing -DifferenceObject $new -SyncWindow 0).Length -ne 0
     } else {
-        if ($existing -cne $new) {
-            $mismatch = $true
-        }
+        $existing -cne $new
     }
-
-    return $mismatch
 }
 
-Function Get-DiffValueString($type, $value) {
+Function Get-DiffValue {
+    param(
+        [Parameter(Mandatory=$true)][Microsoft.Win32.RegistryValueKind]$Type,
+        [Parameter(Mandatory=$true)][Object]$Value
+    )
+
+    $diff = @{ type = $Type.ToString(); value = $Value }
+
     $enum = [Microsoft.Win32.RegistryValueKind]
-    if ($type -in @($enum::Binary, $enum::None)) {
-        $hex_values = @()
-        foreach ($dec_value in $value) {
-            $hex_values += "0x$("{0:x2}" -f $dec_value)"
+    if ($Type -in @($enum::Binary, $enum::None)) {
+        $diff.value = [System.Collections.Generic.List`1[String]]@()
+        foreach ($dec_value in $Value) {
+            $diff.value.Add("0x{0:x2}" -f $dec_value)
         }
-        $diff_value = "$($type):[$($hex_values -join ", ")]"
-    } elseif ($type -eq $enum::DWord) {
-        $diff_value = "$($type):0x$("{0:x8}" -f $value)"
-    } elseif ($type -eq $enum::QWord) {
-        $diff_value = "$($type):0x$("{0:x16}" -f $value)"
-    } elseif ($type -eq $enum::MultiString) {
-        $diff_value = "$($type):[$($value -join ", ")]"
-    } else {
-        $diff_value = "$($type):$value"
+    } elseif ($Type -eq $enum::DWord) {
+        $diff.value = "0x{0:x8}" -f $Value
+    } elseif ($Type -eq $enum::QWord) {
+        $diff.value = "0x{0:x16}" -f $Value
     }
 
-    return $diff_value
+    return $diff
+}
+
+Function Set-StateAbsent {
+    param(
+        # Used for diffs and exception messages to match up against Ansible input
+        [Parameter(Mandatory=$true)][String]$PrintPath,
+        [Parameter(Mandatory=$true)][Microsoft.Win32.RegistryKey]$Hive,
+        [Parameter(Mandatory=$true)][String]$Path,
+        [String]$Name,
+        [Switch]$DeleteKey
+    )
+
+    $key = $Hive.OpenSubKey($Path, $true)
+    if ($null -eq $key) {
+        # Key does not exist, no need to delete anything
+        return
+    }
+
+    try {
+        if ($DeleteKey -and -not $Name) {
+            # delete_key=yes is set and name is null/empty, so delete the entire key
+            $key.Dispose()
+            $key = $null
+            if (-not $check_mode) {
+                try {
+                    $Hive.DeleteSubKeyTree($Path, $false)
+                } catch {
+                    Fail-Json -obj $result -message "failed to delete registry key at $($PrintPath): $($_.Exception.Message)"
+                }
+            }
+            $result.changed = $true
+
+            if ($diff_mode) {
+                $result.diff.before = @{$PrintPath = @{}}
+                $result.diff.after = @{}
+            }
+        } else {
+            # delete_key=no or name is not null/empty, delete the property not the full key
+            $property = $key.GetValue($Name)
+            if ($null -eq $property) {
+                # property does not exist
+                return
+            }
+            $property_type = $key.GetValueKind($Name)  # used for the diff
+
+            if (-not $check_mode) {
+                try {
+                    $key.DeleteValue($Name)
+                } catch {
+                    Fail-Json -obj $result -message "failed to delete registry property '$Name' at $($PrintPath): $($_.Exception.Message)"
+                }
+            }
+
+            $result.changed = $true
+            if ($diff_mode) {
+                $diff_value = Get-DiffValue -Type $property_type -Value $property
+                $result.diff.before = @{ $PrintPath = @{ $Name = $diff_value } }
+                $result.diff.after = @{ $PrintPath = @{} }
+            }
+        }
+    } finally {
+        if ($key) {
+            $key.Dispose()
+        }
+    }
+}
+
+Function Set-StatePresent {
+    param(
+        [Parameter(Mandatory=$true)][String]$PrintPath,
+        [Parameter(Mandatory=$true)][Microsoft.Win32.RegistryKey]$Hive,
+        [Parameter(Mandatory=$true)][String]$Path,
+        [String]$Name,
+        [Object]$Data,
+        [Microsoft.Win32.RegistryValueKind]$Type
+    )
+
+    $key = $Hive.OpenSubKey($Path, $true)
+    try {
+        if ($null -eq $key) {
+            # the key does not exist, create it so the next steps work
+            if (-not $check_mode) {
+                try {
+                    $key = $Hive.CreateSubKey($Path)
+                } catch {
+                    Fail-Json -obj $result -message "failed to create registry key at $($PrintPath): $($_.Exception.Message)"
+                }
+            }
+            $result.changed = $true
+
+            if ($diff_mode) {
+                $result.diff.before = @{}
+                $result.diff.after = @{$PrintPath = @{}}
+            }
+        } elseif ($diff_mode) {
+            # Make sure the diff is in an expected state for the key
+            $result.diff.before = @{$PrintPath = @{}}
+            $result.diff.after = @{$PrintPath = @{}}
+        }
+
+        if ($null -eq $key -or $null -eq $Data) {
+            # Check mode and key was created above, we cannot do any more work, or $Data is $null which happens when
+            # we create a new key but haven't explicitly set the data
+            return
+        }
+
+        $property = $key.GetValue($Name, $null, [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames)
+        if ($null -ne $property) {
+            # property exists, need to compare the values and type
+            $existing_type = $key.GetValueKind($name)
+            $change_value = $false
+
+            if ($Type -ne $existing_type) {
+                $change_value = $true
+                $result.data_type_changed = $true
+                $data_mismatch = Compare-RegistryProperties -existing $property -new $Data
+                if ($data_mismatch) {
+                    $result.data_changed = $true
+                }
+            } else {
+                $data_mismatch = Compare-RegistryProperties -existing $property -new $Data
+                if ($data_mismatch) {
+                    $change_value = $true
+                    $result.data_changed = $true
+                }
+            }
+
+            if ($change_value) {
+                if (-not $check_mode) {
+                    try {
+                        $key.SetValue($Name, $Data, $Type)
+                    } catch {
+                        Fail-Json -obj $result -message "failed to change registry property '$Name' at $($PrintPath): $($_.Exception.Message)"
+                    }
+                }
+                $result.changed = $true
+
+                if ($diff_mode) {
+                    $result.diff.before.$PrintPath.$Name = Get-DiffValue -Type $existing_type -Value $property
+                    $result.diff.after.$PrintPath.$Name = Get-DiffValue -Type $Type -Value $Data
+                }
+            } elseif ($diff_mode) {
+                $diff_value = Get-DiffValue -Type $existing_type -Value $property
+                $result.diff.before.$PrintPath.$Name = $diff_value
+                $result.diff.after.$PrintPath.$Name = $diff_value
+            }
+        } else {
+            # property doesn't exist just create a new one
+            if (-not $check_mode) {
+                try {
+                    $key.SetValue($Name, $Data, $Type)
+                } catch {
+                    Fail-Json -obj $result -message "failed to create registry property '$Name' at $($PrintPath): $($_.Exception.Message)"
+                }
+            }
+            $result.changed = $true
+
+            if ($diff_mode) {
+                $result.diff.after.$PrintPath.$Name = Get-DiffValue -Type $Type -Value $Data
+            }
+        }
+    } finally {
+        if ($key) {
+            $key.Dispose()
+        }
+    }
 }
 
 # convert property names "" to $null as "" refers to (Default)
@@ -166,7 +364,7 @@ if ($name -eq "") {
 
 # convert the data to the required format
 if ($type -in @("binary", "none")) {
-    if ($data -eq $null) {
+    if ($null -eq $data) {
         $data = ""
     }
 
@@ -183,7 +381,7 @@ if ($type -in @("binary", "none")) {
     }
 } elseif ($type -in @("dword", "qword")) {
     # dword's and dword's don't allow null values, set to 0
-    if ($data -eq $null) {
+    if ($null -eq $data) {
         $data = 0
     }
 
@@ -213,14 +411,15 @@ if ($type -in @("binary", "none")) {
         }
         $data = [Int64]$data
     }
-} elseif ($type -in @("string", "expandstring")) {
+} elseif ($type -in @("string", "expandstring") -and $name) {
     # a null string or expandstring must be empty quotes
-    if ($data -eq $null) {
+    # Only do this if $name has been defined (not the default key)
+    if ($null -eq $data) {
         $data = ""
     }
 } elseif ($type -eq "multistring") {
     # convert the data for a multistring to a String[] array
-    if ($data -eq $null) {
+    if ($null -eq $data) {
         $data = [String[]]@()
     } elseif ($data -isnot [Array]) {
         $new_data = New-Object -TypeName String[] -ArgumentList 1
@@ -235,138 +434,62 @@ if ($type -in @("binary", "none")) {
     }
 }
 
-
 # convert the type string to the .NET class
 $type = [System.Enum]::Parse([Microsoft.Win32.RegistryValueKind], $type, $true)
 
-if ($state -eq "present") {
-    if (-not (Test-Path -path $path)) {
-        # the key doesn't exist, create it so the next steps work
+$registry_hive = switch(Split-Path -Path $path -Qualifier) {
+    "HKCR:" { [Microsoft.Win32.Registry]::ClassesRoot }
+    "HKCC:" { [Microsoft.Win32.Registry]::CurrentConfig }
+    "HKCU:" { [Microsoft.Win32.Registry]::CurrentUser }
+    "HKLM:" { [Microsoft.Win32.Registry]::LocalMachine }
+    "HKU" { [Microsoft.Win32.Registry]::Users }
+}
+$loaded_hive = $null
+try {
+    if ($hive) {
+        if (-not (Test-Path -LiteralPath $hive)) {
+            Fail-Json -obj $result -message "hive at path '$hive' is not valid or accessible, cannot load hive"
+        }
+
+        $original_tmp = $env:TMP
+        $env:TMP = $_remote_tmp
+        Add-Type -TypeDefinition $registry_util
+        $env:TMP = $original_tmp
+
         try {
-            New-Item -Path $path -Type directory -Force -WhatIf:$check_mode
-        } catch {
-            Fail-Json $result "failed to create registry key at $($path): $($_.Exception.Message)"
+            Set-AnsiblePrivilege -Name SeBackupPrivilege -Value $true
+            Set-AnsiblePrivilege -Name SeRestorePrivilege -Value $true
+        } catch [System.ComponentModel.Win32Exception] {
+            Fail-Json -obj $result -message "failed to enable SeBackupPrivilege and SeRestorePrivilege for the current process: $($_.Exception.Message)"
         }
-        $result.changed = $true
 
-        if ($diff_mode) {
-            $result.diff.prepared += @"
-+[$path]            
-"@
+        if (Test-Path -Path HKLM:\ANSIBLE) {
+            Add-Warning -obj $result -message "hive already loaded at HKLM:\ANSIBLE, had to unload hive for win_regedit to continue"
+            try {
+                [Ansible.WinRegedit.Hive]::UnloadHive("ANSIBLE")
+            } catch [System.ComponentModel.Win32Exception] {
+                Fail-Json -obj $result -message "failed to unload registry hive HKLM:\ANSIBLE from $($hive): $($_.Exception.Message)"
+            }
+        }
+
+        try {
+            $loaded_hive = New-Object -TypeName Ansible.WinRegedit.Hive -ArgumentList "ANSIBLE", $hive
+        } catch [System.ComponentModel.Win32Exception] {
+            Fail-Json -obj $result -message "failed to load registry hive from '$hive' to HKLM:\ANSIBLE: $($_.Exception.Message)"
         }
     }
 
-    if (Test-RegistryProperty -path $path -name $name) {
-        # property exists, need to compare the values and type
-        $existing_key = Get-Item -Path $path
-        $existing_type = $existing_key.GetValueKind($name)
-        $existing_data = $existing_key.GetValue($name, $false, [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames)
-        $change_value = $false
-        
-        if ($type -ne $existing_type) {
-            $change_value = $true
-            $result.data_type_changed = $true
-            $data_mismatch = Compare-RegistryProperties -existing $existing_data -new $data
-            if ($data_mismatch) {
-                $result.data_changed = $true
-            }
-        } else {
-            $data_mismatch = Compare-RegistryProperties -existing $existing_data -new $data
-            if ($data_mismatch) {
-                $change_value = $true
-                $result.data_changed = $true
-            }
-        }
-
-        if ($change_value) {
-            if (-not $check_mode) {
-                try {
-                    (Get-Item -Path $path).OpenSubKey($null, [Microsoft.Win32.RegistryKeyPermissionCheck]::ReadWriteSubTree).SetValue($name, $data, $type)
-                } catch {
-                    Fail-Json $result "failed to change registry property '$name' at $($path): $($_.Exception.Message)"
-                }
-            }
-            $result.changed = $true
-
-            if ($diff_mode) {
-                if ($result.diff.prepared) {
-                    $key_prefix = "+"
-                } else {
-                    $key_prefix = ""
-                }
-                
-                $result.diff.prepared = @"
-$key_prefix[$path]
--"$name" = "$(Get-DiffValueString -type $existing_type -value $existing_data)"
-+"$name" = "$(Get-DiffValueString -type $type -value $data)"
-"@
-            }
-        }
+    if ($state -eq "present") {
+        Set-StatePresent -PrintPath $path -Hive $registry_hive -Path $registry_path -Name $name -Data $data -Type $type
     } else {
-        # property doesn't exist just create a new one
-        if (-not $check_mode) {
-            try {
-                (Get-Item -Path $path).OpenSubKey($null, [Microsoft.Win32.RegistryKeyPermissionCheck]::ReadWriteSubTree).SetValue($name, $data, $type)
-            } catch {
-                Fail-Json $result "failed to change registry property '$name' at $($path): $($_.Exception.Message)"
-            }
-        }
-        $result.changed = $true
-        if ($diff_mode) {
-            if ($result.diff.prepared) {
-                $key_prefix = "+"
-            } else {
-                $key_prefix = ""
-            }
-            
-            $result.diff.prepared = @"
-$key_prefix[$path]
-+"$name" = "$(Get-DiffValueString -type $type -value $data)"
-"@
-        }
+        Set-StateAbsent -PrintPath $path -Hive $registry_hive -Path $registry_path -Name $name -DeleteKey:$delete_key
     }
-} else {
-    if (Test-Path -path $path) {
-        if ($delete_key -and $name -eq $null) {
-            # the clear_key flag is set and name is null so delete the entire key
-            try {
-                Remove-Item -Path $path -Force -Recurse -WhatIf:$check_mode
-            } catch {
-                Fail-Json $result "failed to delete registry key at $($path): $($_.Exception.Message)"
-            }
-            $result.changed = $true
-
-            if ($diff_mode) {
-                $result.diff.prepared += @"
--[$path]
-"@
-            }
-        } else {
-            # the clear_key flag is set or name is not null, check whether we need to delete a property
-            if (Test-RegistryProperty -path $path -name $name) {
-                $existing_key = Get-Item -Path $path
-                $existing_type = $existing_key.GetValueKind($name)
-                $existing_data = $existing_key.GetValue($name, $false, [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames)
-
-                # cannot use Remove-ItemProperty as it fails when deleting the (Default) key ($name = $null)
-                if (-not $check_mode) {
-                    try {
-                        (Get-Item -Path $path).OpenSubKey($null, [Microsoft.Win32.RegistryKeyPermissionCheck]::ReadWriteSubTree).DeleteValue($name)
-                    } catch {
-                        Fail-Json $result "failed to delete registry property '$name' at $($path): $($_.Exception.Message)"
-                    }
-                }
-                $result.changed = $true
-
-                if ($diff_mode) {
-                    $result.diff.prepared += @"
-[$path]
--"$name" = "$(Get-DiffValueString -type $existing_type -value $existing_data)"
-"@
-                }
-            }
-        }
+} finally {
+    $registry_hive.Dispose()
+    if ($loaded_hive) {
+        $loaded_hive.Dispose()
     }
 }
 
 Exit-Json $result
+

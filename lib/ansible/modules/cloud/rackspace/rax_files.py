@@ -24,9 +24,7 @@ options:
     description:
       - Optionally clear existing metadata when applying metadata to existing containers.
         Selecting this option is only appropriate when setting type=meta
-    choices:
-      - "yes"
-      - "no"
+    type: bool
     default: "no"
   container:
     description:
@@ -40,9 +38,11 @@ options:
       - Used to set a container as private, removing it from the CDN.  B(Warning!)
         Private containers, if previously made public, can have live objects
         available until the TTL on cached objects expires
+    type: bool
   public:
     description:
       - Used to set a container as public, available via the Cloud Files CDN
+    type: bool
   region:
     description:
       - Region to create an instance in
@@ -70,7 +70,9 @@ options:
     description:
        - Sets an object to be presented as the HTTP index page when accessed by the CDN URL
 author: "Paul Durivage (@angstwad)"
-extends_documentation_fragment: rackspace
+extends_documentation_fragment:
+  - rackspace
+  - rackspace.openstack
 '''
 
 EXAMPLES = '''

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 
-# Copyright (c) 2016, Adfinis SyGroup AG
+# Copyright: (c) 2016, Adfinis SyGroup AG
 # Tobias Rueetschi <tobias.ruetschi@adfinis-sygroup.ch>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -18,7 +18,8 @@ DOCUMENTATION = '''
 ---
 module: udm_group
 version_added: "2.2"
-author: "Tobias Rueetschi (@2-B)"
+author:
+- Tobias Rüetschi (@keachi)
 short_description: Manage of the posix group
 description:
     - "This module allows to manage user groups on a univention corporate server (UCS).
@@ -87,44 +88,44 @@ from ansible.module_utils.univention_umc import (
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            name        = dict(required=True,
-                               type='str'),
-            description = dict(default=None,
-                               type='str'),
-            position    = dict(default='',
-                               type='str'),
-            ou          = dict(default='',
-                               type='str'),
-            subpath     = dict(default='cn=groups',
-                               type='str'),
-            state       = dict(default='present',
-                               choices=['present', 'absent'],
-                               type='str')
+        argument_spec=dict(
+            name=dict(required=True,
+                      type='str'),
+            description=dict(default=None,
+                             type='str'),
+            position=dict(default='',
+                          type='str'),
+            ou=dict(default='',
+                    type='str'),
+            subpath=dict(default='cn=groups',
+                         type='str'),
+            state=dict(default='present',
+                       choices=['present', 'absent'],
+                       type='str')
         ),
         supports_check_mode=True
     )
-    name        = module.params['name']
+    name = module.params['name']
     description = module.params['description']
-    position    = module.params['position']
-    ou          = module.params['ou']
-    subpath     = module.params['subpath']
-    state       = module.params['state']
-    changed     = False
+    position = module.params['position']
+    ou = module.params['ou']
+    subpath = module.params['subpath']
+    state = module.params['state']
+    changed = False
 
     groups = list(ldap_search(
-        '(&(objectClass=posixGroup)(cn={}))'.format(name),
+        '(&(objectClass=posixGroup)(cn={0}))'.format(name),
         attr=['cn']
     ))
     if position != '':
         container = position
     else:
         if ou != '':
-            ou = 'ou={},'.format(ou)
+            ou = 'ou={0},'.format(ou)
         if subpath != '':
-            subpath = '{},'.format(subpath)
-        container = '{}{}{}'.format(subpath, ou, base_dn())
-    group_dn = 'cn={},{}'.format(name, container)
+            subpath = '{0},'.format(subpath)
+        container = '{0}{1}{2}'.format(subpath, ou, base_dn())
+    group_dn = 'cn={0},{1}'.format(name, container)
 
     exists = bool(len(groups))
 
@@ -134,8 +135,8 @@ def main():
                 grp = umc_module_for_add('groups/group', container)
             else:
                 grp = umc_module_for_edit('groups/group', group_dn)
-            grp['name']         = name
-            grp['description']  = description
+            grp['name'] = name
+            grp['description'] = description
             diff = grp.diff()
             changed = grp.diff() != []
             if not module.check_mode:
@@ -143,9 +144,9 @@ def main():
                     grp.create()
                 else:
                     grp.modify()
-        except:
+        except Exception:
             module.fail_json(
-                msg="Creating/editing group {} in {} failed".format(name, container)
+                msg="Creating/editing group {0} in {1} failed".format(name, container)
             )
 
     if state == 'absent' and exists:
@@ -154,9 +155,9 @@ def main():
             if not module.check_mode:
                 grp.remove()
             changed = True
-        except:
+        except Exception:
             module.fail_json(
-                msg="Removing group {} failed".format(name)
+                msg="Removing group {0} failed".format(name)
             )
 
     module.exit_json(

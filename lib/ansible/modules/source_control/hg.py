@@ -1,24 +1,21 @@
 #!/usr/bin/python
-#-*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
-# (c) 2013, Yeukhon Wong <yeukhon@acm.org>
-# (c) 2014, Nate Coraor <nate@bx.psu.edu>
-#
+# Copyright: (c) 2013, Yeukhon Wong <yeukhon@acm.org>
+# Copyright: (c) 2014, Nate Coraor <nate@bx.psu.edu>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = '''
 ---
 module: hg
-short_description: Manages Mercurial (hg) repositories.
+short_description: Manages Mercurial (hg) repositories
 description:
     - Manages Mercurial (hg) repositories. Supports SSH, HTTP/S and local address.
 version_added: "1.0"
@@ -27,76 +24,67 @@ options:
     repo:
         description:
             - The repository address.
-        required: true
-        default: null
+        required: yes
         aliases: [ name ]
     dest:
         description:
             - Absolute path of where the repository should be cloned to.
               This parameter is required, unless clone and update are set to no
-        required: true
-        default: null
+        required: yes
     revision:
         description:
             - Equivalent C(-r) option in hg command which could be the changeset, revision number,
               branch name or even tag.
-        required: false
-        default: null
         aliases: [ version ]
     force:
         description:
             - Discards uncommitted changes. Runs C(hg update -C).  Prior to
               1.9, the default was `yes`.
-        required: false
-        default: "no"
-        choices: [ "yes", "no" ]
+        type: bool
+        default: 'no'
     purge:
         description:
             - Deletes untracked files. Runs C(hg purge).
-        required: false
-        default: "no"
-        choices: [ "yes", "no" ]
+        type: bool
+        default: 'no'
     update:
-        required: false
-        default: "yes"
-        choices: [ "yes", "no" ]
-        version_added: "2.0"
         description:
             - If C(no), do not retrieve new revisions from the origin repository
+        type: bool
+        default: 'yes'
+        version_added: '2.0'
     clone:
-        required: false
-        default: "yes"
-        choices: [ "yes", "no" ]
-        version_added: "2.3"
         description:
             - If C(no), do not clone the repository if it does not exist locally.
+        type: bool
+        default: 'yes'
+        version_added: '2.3'
     executable:
-        required: false
-        default: null
-        version_added: "1.4"
         description:
             - Path to hg executable to use. If not supplied,
               the normal mechanism for resolving binary paths will be used.
+        version_added: '1.4'
 notes:
-    - "This module does not support push capability. See U(https://github.com/ansible/ansible/issues/31156)."
+    - This module does not support push capability. See U(https://github.com/ansible/ansible/issues/31156).
     - "If the task seems to be hanging, first verify remote host is in C(known_hosts).
       SSH will prompt user to authorize the first contact with a remote host.  To avoid this prompt,
       one solution is to add the remote host public key in C(/etc/ssh/ssh_known_hosts) before calling
       the hg module, with the following command: ssh-keyscan remote_host.com >> /etc/ssh/ssh_known_hosts."
-requirements: [ ]
+    - As per 01 Dec 2018, Bitbucket has dropped support for TLSv1 and TLSv1.1 connections. As such,
+      if the underlying system still uses a Python version below 2.7.9, you will have issues checking out
+      bitbucket repositories. See U(https://bitbucket.org/blog/deprecating-tlsv1-tlsv1-1-2018-12-01).
 '''
 
 EXAMPLES = '''
-# Ensure the current working copy is inside the stable branch and deletes untracked files if any.
-- hg:
+- name: Ensure the current working copy is inside the stable branch and deletes untracked files if any.
+  hg:
     repo: https://bitbucket.org/user/repo1
     dest: /home/user/repo1
     revision: stable
     purge: yes
 
-# Example just get information about the repository whether or not it has
-# already been cloned locally.
-- hg:
+- name: Get information about the repository whether or not it has already been cloned locally.
+  hg:
     repo: git://bitbucket.org/user/repo
     dest: /srv/checkout
     clone: no
@@ -110,7 +98,6 @@ from ansible.module_utils._text import to_native
 
 
 class Hg(object):
-
     def __init__(self, module, dest, repo, revision, hg_path):
         self.module = module
         self.dest = dest
@@ -167,7 +154,7 @@ class Hg(object):
             self.module.fail_json(msg=err)
 
         after = self.has_local_mods()
-        if before != after and not after:   # no more local modification
+        if before != after and not after:  # no more local modification
             return True
 
     def purge(self):
@@ -229,19 +216,20 @@ class Hg(object):
             return True
         return False
 
+
 # ===========================================
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            repo = dict(required=True, aliases=['name']),
-            dest = dict(type='path'),
-            revision = dict(default=None, aliases=['version']),
-            force = dict(default='no', type='bool'),
-            purge = dict(default='no', type='bool'),
-            update = dict(default='yes', type='bool'),
-            clone = dict(default='yes', type='bool'),
-            executable = dict(default=None),
+        argument_spec=dict(
+            repo=dict(type='str', required=True, aliases=['name']),
+            dest=dict(type='path'),
+            revision=dict(type='str', default=None, aliases=['version']),
+            force=dict(type='bool', default=False),
+            purge=dict(type='bool', default=False),
+            update=dict(type='bool', default=True),
+            clone=dict(type='bool', default=True),
+            executable=dict(type='str', default=None),
         ),
     )
     repo = module.params['repo']
@@ -304,7 +292,9 @@ def main():
     after = hg.get_revision()
     if before != after or cleaned:
         changed = True
+
     module.exit_json(before=before, after=after, changed=changed, cleaned=cleaned)
+
 
 if __name__ == '__main__':
     main()

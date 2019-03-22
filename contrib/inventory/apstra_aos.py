@@ -463,38 +463,38 @@ class AosInventory(object):
         # Try to reach all parameters from File, if not available try from ENV
         try:
             self.aos_server = config.get('aos', 'aos_server')
-        except:
+        except Exception:
             if 'AOS_SERVER' in os.environ.keys():
                 self.aos_server = os.environ['AOS_SERVER']
 
         try:
             self.aos_server_port = config.get('aos', 'port')
-        except:
+        except Exception:
             if 'AOS_PORT' in os.environ.keys():
                 self.aos_server_port = os.environ['AOS_PORT']
 
         try:
             self.aos_username = config.get('aos', 'username')
-        except:
+        except Exception:
             if 'AOS_USERNAME' in os.environ.keys():
                 self.aos_username = os.environ['AOS_USERNAME']
 
         try:
             self.aos_password = config.get('aos', 'password')
-        except:
+        except Exception:
             if 'AOS_PASSWORD' in os.environ.keys():
                 self.aos_password = os.environ['AOS_PASSWORD']
 
         try:
             self.aos_blueprint = config.get('aos', 'blueprint')
-        except:
+        except Exception:
             if 'AOS_BLUEPRINT' in os.environ.keys():
                 self.aos_blueprint = os.environ['AOS_BLUEPRINT']
 
         try:
             if config.get('aos', 'blueprint_interface') in ['false', 'no']:
                 self.aos_blueprint_int = False
-        except:
+        except Exception:
             pass
 
     def parse_cli_args(self):
@@ -572,7 +572,7 @@ class AosInventory(object):
           - Converting to lowercase
         """
 
-        rx = re.compile('\W+')
+        rx = re.compile(r'\W+')
         clean_group = rx.sub('_', group_name).lower()
 
         return clean_group
@@ -582,6 +582,7 @@ class AosInventory(object):
         if 'status' in device.value.keys():
             for key, value in device.value['status'].items():
                 self.add_var_to_host(device.name, key, value)
+
 
 # Run the script
 if __name__ == '__main__':

@@ -1,0 +1,205 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_linkagg sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- set_fact: testint1="{{ nxos_int1 }}"
+- set_fact: testint2="{{ nxos_int2 }}"
+
+- name: "Enable feature LACP"
+  nxos_feature:
+    feature: lacp
+    provider: "{{ connection }}"
+    state: enabled
+  ignore_errors: yes
+
+- name: setup - remove config used in test(part1)
+  nxos_config:
+    lines:
+      - no interface port-channel 20
+      - no interface port-channel 100
+    provider: "{{ connection }}"
+
+- name: setup - remove config used in test(part2)
+  nxos_config:
+    lines:
+      - no channel-group 20
+    parents: "{{ item }}"
+  ignore_errors: yes
+  loop:
+    - "interface {{ testint1 }}"
+    - "interface {{ testint2 }}"
+
+- name: Put interface in L2 mode
+  nxos_interface:
+    aggregate:
+    - { name: "{{testint1}}" }
+    - { name: "{{testint2}}" }
+    mode: layer2
+    provider: "{{ connection }}"
+  when: platform is match("N35")
+
+- name: create linkagg
+  nxos_linkagg: &create
+    group: 20
+    provider: "{{ connection }}"
+    state: present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"interface port-channel 20" in result.commands'
+
+- name: create linkagg(Idempotence)
+  nxos_linkagg: *create
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: set link aggregation group to members declaratively
+  nxos_linkagg: &configure_member
+    group: 20
+    mode: active
+    force: True
+    members:
+      - "{{ testint1 }}"
+      - "{{ testint2 }}"
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"interface {{ testint1 }}" in result.commands'
+      - '"channel-group 20 force mode active" in result.commands'
+      - '"interface {{ testint2 }}" in result.commands'
+      - '"channel-group 20 force mode active" in result.commands'
+
+- name: set link aggregation group to members(Idempotence)
+  nxos_linkagg: *configure_member
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: remove link aggregation group from member declaratively
+  nxos_linkagg: &remove_member
+    group: 20
+    mode: active
+    force: True
+    members:
+      - "{{ testint2 }}"
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"interface {{ testint1 }}" in result.commands'
+      - '"no channel-group 20" in result.commands'
+
+- name: remove link aggregation group from member(Idempotence)
+  nxos_linkagg: *remove_member
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: remove linkagg
+  nxos_linkagg: &remove
+    group: 20
+    provider: "{{ connection }}"
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"no interface port-channel 20" in result.commands'
+
+- name: remove linkagg(Idempotence)
+  nxos_linkagg: *remove
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: create aggregate of linkagg definitions
+  nxos_linkagg: &create_agg
+    aggregate:
+      - { group: 20, min_links: 3 }
+      - { group: 100, min_links: 4 }
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"interface port-channel 20" in result.commands'
+      - '"lacp min-links 3" in result.commands'
+      - '"interface port-channel 100" in result.commands'
+      - '"lacp min-links 4" in result.commands'
+
+- name: create aggregate of linkagg definitions(Idempotence)
+  nxos_linkagg: *create_agg
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: remove aggregate of linkagg definitions
+  nxos_linkagg: &remove_agg
+    aggregate:
+      - { group: 20, min_links: 3 }
+      - { group: 100, min_links: 4 }
+    provider: "{{ connection }}"
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"no interface port-channel 20" in result.commands'
+      - '"no interface port-channel 100" in result.commands'
+
+- name: remove aggregate of linkagg definitions(Idempotence)
+  nxos_linkagg: *remove_agg
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+ 
+- name: teardown - remove config used in test(part1)
+  nxos_config:
+    lines:
+      - no interface port-channel 20
+      - no interface port-channel 100
+    provider: "{{ connection }}"
+
+- name: teardown - remove config used in test(part2)
+  nxos_config:
+    lines:
+      - no channel-group 20
+    parents: "{{ item }}"
+    provider: "{{ connection }}"
+  ignore_errors: yes
+  loop:
+    - "interface {{ testint1 }}"
+    - "interface {{ testint2 }}"
+
+- name: "Disable feature LACP"
+  nxos_feature:
+    feature: lacp
+    provider: "{{ connection }}"
+    state: disabled
+    timeout: 60
+
+- debug: msg="END connection={{ ansible_connection }} nxos_linkagg sanity test"

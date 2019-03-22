@@ -11,7 +11,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -29,8 +29,6 @@ options:
     name:
         description:
             - Only show results for a specific security group.
-        required: false
-        default: null
     resource_group:
         description:
             - Name of the resource group to use.
@@ -38,8 +36,6 @@ options:
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
-        required: false
-        default: null
 
 extends_documentation_fragment:
     - azure
@@ -53,12 +49,12 @@ author:
 EXAMPLES = '''
     - name: Get facts for one security group
       azure_rm_securitygroup_facts:
-        resource_group: Testing
+        resource_group: myResourceGroup
         name: secgroup001
 
     - name: Get facts for all security groups
       azure_rm_securitygroup_facts:
-        resource_group: Testing
+        resource_group: myResourceGroup
 
 '''
 
@@ -69,14 +65,14 @@ azure_securitygroups:
     type: list
     example: [{
         "etag": 'W/"d036f4d7-d977-429a-a8c6-879bc2523399"',
-        "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/secgroup001",
+        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/secgroup001",
         "location": "eastus2",
         "name": "secgroup001",
         "properties": {
             "defaultSecurityRules": [
                 {
                     "etag": 'W/"d036f4d7-d977-429a-a8c6-879bc2523399"',
-                    "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/secgroup001/defaultSecurityRules/AllowVnetInBound",
+                    "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/secgroup001/defaultSecurityRules/AllowVnetInBound",
                     "name": "AllowVnetInBound",
                     "properties": {
                         "access": "Allow",
@@ -93,7 +89,7 @@ azure_securitygroups:
                 },
                 {
                     "etag": 'W/"d036f4d7-d977-429a-a8c6-879bc2523399"',
-                    "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/secgroup001/defaultSecurityRules/AllowAzureLoadBalancerInBound",
+                    "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/secgroup001/defaultSecurityRules/AllowAzureLoadBalancerInBound",
                     "name": "AllowAzureLoadBalancerInBound",
                     "properties": {
                         "access": "Allow",
@@ -110,7 +106,7 @@ azure_securitygroups:
                 },
                 {
                     "etag": 'W/"d036f4d7-d977-429a-a8c6-879bc2523399"',
-                    "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/secgroup001/defaultSecurityRules/DenyAllInBound",
+                    "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/secgroup001/defaultSecurityRules/DenyAllInBound",
                     "name": "DenyAllInBound",
                     "properties": {
                         "access": "Deny",
@@ -127,7 +123,7 @@ azure_securitygroups:
                 },
                 {
                     "etag": 'W/"d036f4d7-d977-429a-a8c6-879bc2523399"',
-                    "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/secgroup001/defaultSecurityRules/AllowVnetOutBound",
+                    "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/secgroup001/defaultSecurityRules/AllowVnetOutBound",
                     "name": "AllowVnetOutBound",
                     "properties": {
                         "access": "Allow",
@@ -144,7 +140,7 @@ azure_securitygroups:
                 },
                 {
                     "etag": 'W/"d036f4d7-d977-429a-a8c6-879bc2523399"',
-                    "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/secgroup001/defaultSecurityRules/AllowInternetOutBound",
+                    "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/secgroup001/defaultSecurityRules/AllowInternetOutBound",
                     "name": "AllowInternetOutBound",
                     "properties": {
                         "access": "Allow",
@@ -161,7 +157,7 @@ azure_securitygroups:
                 },
                 {
                     "etag": 'W/"d036f4d7-d977-429a-a8c6-879bc2523399"',
-                    "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/secgroup001/defaultSecurityRules/DenyAllOutBound",
+                    "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/secgroup001/defaultSecurityRules/DenyAllOutBound",
                     "name": "DenyAllOutBound",
                     "properties": {
                         "access": "Deny",
@@ -179,7 +175,7 @@ azure_securitygroups:
             ],
             "networkInterfaces": [
                 {
-                    "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/networkInterfaces/nic004"
+                    "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkInterfaces/nic004"
                 }
             ],
             "provisioningState": "Succeeded",
@@ -194,7 +190,7 @@ azure_securitygroups:
 
 try:
     from msrestazure.azure_exceptions import CloudError
-except:
+except Exception:
     # This is handled in azure_rm_common
     pass
 
@@ -273,6 +269,7 @@ class AzureRMSecurityGroupFacts(AzureRMModuleBase):
 
 def main():
     AzureRMSecurityGroupFacts()
+
 
 if __name__ == '__main__':
     main()

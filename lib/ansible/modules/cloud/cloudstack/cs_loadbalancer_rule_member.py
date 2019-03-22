@@ -1,23 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# (c) 2015, Darren Worrall <darren@iweb.co.uk>
-# (c) 2015, René Moser <mail@renemoser.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2015, Darren Worrall <darren@iweb.co.uk>
+# Copyright (c) 2015, René Moser <mail@renemoser.net>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -32,92 +18,94 @@ description:
     - Add and remove load balancer rule members.
 version_added: '2.0'
 author:
-    - "Darren Worrall (@dazworrall)"
-    - "René Moser (@resmo)"
+    - Darren Worrall (@dazworrall)
+    - René Moser (@resmo)
 options:
   name:
     description:
       - The name of the load balancer rule.
+    type: str
     required: true
   ip_address:
     description:
       - Public IP address from where the network traffic will be load balanced from.
-      - Only needed to find the rule if C(name) is not unique.
-    required: false
-    default: null
-    aliases: [ 'public_ip' ]
+      - Only needed to find the rule if I(name) is not unique.
+    type: str
+    aliases: [ public_ip ]
   vms:
     description:
       - List of VMs to assign to or remove from the rule.
+    type: list
     required: true
-    aliases: [ 'vm' ]
+    aliases: [ vm ]
   state:
     description:
       - Should the VMs be present or absent from the rule.
-    required: false
-    default: 'present'
-    choices: [ 'present', 'absent' ]
+    type: str
+    default: present
+    choices: [ present, absent ]
   project:
     description:
       - Name of the project the firewall rule is related to.
-    required: false
-    default: null
+    type: str
   domain:
     description:
       - Domain the rule is related to.
-    required: false
-    default: null
+    type: str
   account:
     description:
       - Account the rule is related to.
-    required: false
-    default: null
+    type: str
   zone:
     description:
       - Name of the zone in which the rule should be located.
       - If not set, default zone is used.
-    required: false
-    default: null
+    type: str
+  poll_async:
+    description:
+      - Poll async jobs until job has finished.
+    type: bool
+    default: yes
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# Add VMs to an existing load balancer
-- local_action:
-    module: cs_loadbalancer_rule_member
+- name: Add VMs to an existing load balancer
+  cs_loadbalancer_rule_member:
     name: balance_http
     vms:
       - web01
       - web02
+  delegate_to: localhost
 
-# Remove a VM from an existing load balancer
-- local_action:
-    module: cs_loadbalancer_rule_member
+- name: Remove a VM from an existing load balancer
+  cs_loadbalancer_rule_member:
     name: balance_http
     vms:
       - web01
       - web02
     state: absent
+  delegate_to: localhost
 
 # Rolling upgrade of hosts
 - hosts: webservers
   serial: 1
   pre_tasks:
     - name: Remove from load balancer
-      local_action:
-        module: cs_loadbalancer_rule_member
+      cs_loadbalancer_rule_member:
         name: balance_http
         vm: "{{ ansible_hostname }}"
         state: absent
+      delegate_to: localhost
   tasks:
     # Perform update
   post_tasks:
     - name: Add to load balancer
-      local_action:
-        module: cs_loadbalancer_rule_member
+      cs_loadbalancer_rule_member:
         name: balance_http
         vm: "{{ ansible_hostname }}"
         state: present
+      delegate_to: localhost
 '''
 
 RETURN = '''
@@ -125,68 +113,68 @@ RETURN = '''
 id:
   description: UUID of the rule.
   returned: success
-  type: string
+  type: str
   sample: a6f7a5fc-43f8-11e5-a151-feff819cdc9f
 zone:
   description: Name of zone the rule is related to.
   returned: success
-  type: string
+  type: str
   sample: ch-gva-2
 project:
   description: Name of project the rule is related to.
   returned: success
-  type: string
+  type: str
   sample: Production
 account:
   description: Account the rule is related to.
   returned: success
-  type: string
+  type: str
   sample: example account
 domain:
   description: Domain the rule is related to.
   returned: success
-  type: string
+  type: str
   sample: example domain
 algorithm:
   description: Load balancer algorithm used.
   returned: success
-  type: string
-  sample: "source"
+  type: str
+  sample: source
 cidr:
   description: CIDR to forward traffic from.
   returned: success
-  type: string
-  sample: ""
+  type: str
+  sample: 0.0.0.0/0
 name:
   description: Name of the rule.
   returned: success
-  type: string
-  sample: "http-lb"
+  type: str
+  sample: http-lb
 description:
   description: Description of the rule.
   returned: success
-  type: string
-  sample: "http load balancer rule"
+  type: str
+  sample: http load balancer rule
 protocol:
   description: Protocol of the rule.
   returned: success
-  type: string
-  sample: "tcp"
+  type: str
+  sample: tcp
 public_port:
   description: Public port.
   returned: success
-  type: string
+  type: int
   sample: 80
 private_port:
   description: Private IP address.
   returned: success
-  type: string
+  type: int
   sample: 80
 public_ip:
   description: Public IP address.
   returned: success
-  type: string
-  sample: "1.2.3.4"
+  type: str
+  sample: 1.2.3.4
 vms:
   description: Rule members.
   returned: success
@@ -195,13 +183,13 @@ vms:
 tags:
   description: List of resource tags associated with the rule.
   returned: success
-  type: dict
+  type: list
   sample: '[ { "key": "foo", "value": "bar" } ]'
 state:
   description: State of the rule.
   returned: success
-  type: string
-  sample: "Add"
+  type: str
+  sample: Add
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -270,20 +258,21 @@ class AnsibleCloudStackLBRuleMember(AnsibleCloudStack):
         wanted_names = self.module.params.get('vms')
 
         if operation == 'add':
-            cs_func = self.cs.assignToLoadBalancerRule
+            cs_func = 'assignToLoadBalancerRule'
             to_change = set(wanted_names) - set(existing.keys())
         else:
-            cs_func = self.cs.removeFromLoadBalancerRule
+            cs_func = 'removeFromLoadBalancerRule'
             to_change = set(wanted_names) & set(existing.keys())
 
         if not to_change:
             return rule
 
         args = self._get_common_args()
+        args['fetch_list'] = True
         vms = self.query_api('listVirtualMachines', **args)
         to_change_ids = []
         for name in to_change:
-            for vm in vms.get('virtualmachine', []):
+            for vm in vms:
                 if vm['name'] == name:
                     to_change_ids.append(vm['id'])
                     break
@@ -294,7 +283,8 @@ class AnsibleCloudStackLBRuleMember(AnsibleCloudStack):
             self.result['changed'] = True
 
         if to_change_ids and not self.module.check_mode:
-            res = cs_func(
+            res = self.query_api(
+                cs_func,
                 id=rule['id'],
                 virtualmachineids=to_change_ids,
             )

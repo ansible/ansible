@@ -1,0 +1,101 @@
+- block:
+
+  - name: set connection information for all tasks
+    set_fact:
+      aws_connection_info: &aws_connection_info
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+        region: "{{ aws_region }}"
+    no_log: yes
+
+  - name: create NLB with no listeners
+    elb_network_lb:
+      name: "{{ nlb_name }}"
+      subnets: "{{ nlb_subnets }}"
+      state: present
+      <<: *aws_connection_info
+    register: nlb
+
+  - assert:
+      that:
+        - nlb.changed
+
+  - name: re-create NLB with no listeners
+    elb_network_lb:
+      name: "{{ nlb_name }}"
+      subnets: "{{ nlb_subnets }}"
+      state: present
+      <<: *aws_connection_info
+    register: nlb
+
+  - assert:
+      that:
+        - not nlb.changed
+
+  - name: add tags to NLB
+    elb_network_lb:
+      name: "{{ nlb_name }}"
+      subnets: "{{ nlb_subnets }}"
+      state: present
+      tags:
+        created_by: "NLB test {{ resource_prefix }}"
+      <<: *aws_connection_info
+    register: nlb
+
+  - assert:
+      that:
+        - nlb.changed
+        - 'nlb.tags.created_by == "NLB test {{ resource_prefix }}"'
+
+  - name: test tags are not removed if unspecified
+    elb_network_lb:
+      name: "{{ nlb_name }}"
+      subnets: "{{ nlb_subnets }}"
+      state: present
+      <<: *aws_connection_info
+    register: nlb
+
+  - assert:
+      that:
+        - not nlb.changed
+        - 'nlb.tags.created_by == "NLB test {{ resource_prefix }}"'
+
+  - name: remove tags from NLB
+    elb_network_lb:
+      name: "{{ nlb_name }}"
+      subnets: "{{ nlb_subnets }}"
+      state: present
+      tags: {}
+      <<: *aws_connection_info
+    register: nlb
+
+  - assert:
+      that:
+        - nlb.changed
+        - not nlb.tags
+
+  - name: test idempotence
+    elb_network_lb:
+      name: "{{ nlb_name }}"
+      subnets: "{{ nlb_subnets }}"
+      state: present
+      tags: {}
+      <<: *aws_connection_info
+    register: nlb
+
+  - assert:
+      that:
+        - not nlb.changed
+        - not nlb.tags
+
+  - name: destroy NLB with no listeners
+    elb_network_lb:
+      name: "{{ nlb_name }}"
+      state: absent
+      <<: *aws_connection_info
+    register: nlb
+
+  - assert:
+      that:
+        - nlb.changed

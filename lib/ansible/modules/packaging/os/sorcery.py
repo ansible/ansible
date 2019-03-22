@@ -36,9 +36,7 @@ options:
             - multiple names can be given, separated by commas
             - special value '*' in conjunction with states C(latest) or
               C(rebuild) will update or rebuild the whole system respectively
-        required: false
         aliases: ["spell"]
-        default: null
 
     state:
         description:
@@ -47,7 +45,6 @@ options:
             - state C(latest) always triggers C(update_cache=yes)
             - state C(rebuild) implies cast of all specified spells, not only
               those existed before
-        required: false
         choices: ["present", "latest", "absent", "cast", "dispelled", "rebuild"]
         default: "present"
 
@@ -60,31 +57,25 @@ options:
               contains more than one spell
             - providers must be supplied in the form recognized by Sorcery, e.g.
               'openssl(SSL)'
-        required: false
-        default: null
 
     update:
         description:
             - Whether or not to update sorcery scripts at the very first stage
-        required: false
-        choices: ["yes", "no"]
-        default: "no"
+        type: bool
+        default: 'no'
 
     update_cache:
         description:
             - Whether or not to update grimoire collection before casting spells
-        required: false
+        type: bool
+        default: 'no'
         aliases: ["update_codex"]
-        choices: ["yes", "no"]
-        default: "no"
 
     cache_valid_time:
         description:
             - Time in seconds to invalidate grimoire collection on update
             - especially useful for SCM and rsync grimoires
             - makes sense only in pair with C(update_cache)
-        required: false
-        default: null
 '''
 
 
@@ -122,7 +113,7 @@ EXAMPLES = '''
     name: "{{ item.spell }}"
     depends: "{{ item.depends | default(None) }}"
     state: present
-  with_items:
+  loop:
     - { spell: 'vifm', depends: '+file,-gtk+2' }
     - { spell: 'fwknop', depends: 'gpgme' }
     - { spell: 'pv,tnftp,tor' }
@@ -207,7 +198,7 @@ def codex_fresh(codex, module):
 
         try:
             mtime = os.stat(lastupdate_path).st_mtime
-        except:
+        except Exception:
             return False
 
         lastupdate_ts = datetime.datetime.fromtimestamp(mtime)
@@ -231,7 +222,7 @@ def codex_list(module):
     if rc != 0:
         module.fail_json(msg="unable to list grimoire collection, fix your Codex")
 
-    rex = re.compile("^\s*\[\d+\] : (?P<grim>[\w\-\+\.]+) : [\w\-\+\./]+(?: : (?P<ver>[\w\-\+\.]+))?\s*$")
+    rex = re.compile(r"^\s*\[\d+\] : (?P<grim>[\w\-+.]+) : [\w\-+./]+(?: : (?P<ver>[\w\-+.]+))?\s*$")
 
     # drop 4-line header and empty trailing line
     for line in stdout.splitlines()[4:-1]:
@@ -481,7 +472,7 @@ def manage_spells(module):
 
             try:
                 queue_size = os.stat(sorcery_queue).st_size
-            except:
+            except Exception:
                 module.fail_json(msg="failed to read the update queue")
 
             if queue_size != 0:
@@ -607,17 +598,17 @@ def manage_spells(module):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(default=None, aliases=['spell'], type='list'),
-            state = dict(default='present', choices=['present', 'latest',
-                         'absent', 'cast', 'dispelled', 'rebuild']),
-            depends = dict(default=None),
-            update = dict(default=False, type='bool'),
-            update_cache = dict(default=False, aliases=['update_codex'], type='bool'),
-            cache_valid_time = dict(default=0, type='int')
+        argument_spec=dict(
+            name=dict(default=None, aliases=['spell'], type='list'),
+            state=dict(default='present', choices=['present', 'latest',
+                                                   'absent', 'cast', 'dispelled', 'rebuild']),
+            depends=dict(default=None),
+            update=dict(default=False, type='bool'),
+            update_cache=dict(default=False, aliases=['update_codex'], type='bool'),
+            cache_valid_time=dict(default=0, type='int')
         ),
-        required_one_of = [['name', 'update', 'update_cache']],
-        supports_check_mode = True
+        required_one_of=[['name', 'update', 'update_cache']],
+        supports_check_mode=True
     )
 
     if os.geteuid() != 0:

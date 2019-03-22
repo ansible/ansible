@@ -1,119 +1,39 @@
-# test code for the win_feature module
-# (c) 2014, Chris Church <chris@ninemoreminutes.com>
+---
+- name: get powershell version
+  win_shell: $PSVersionTable.PSVersion.Major
+  register: powershell_version
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
-
-- name: check whether servermanager module is available (windows 2008 r2 or later)
-  raw: PowerShell -Command Import-Module ServerManager
-  register: win_feature_has_servermanager
-  ignore_errors: true
-
-
-- name: start with feature absent
-  win_feature:
-    name: "{{ test_win_feature_name }}"
-    state: absent
-  when: (win_feature_has_servermanager|success) and (ansible_powershell_version is defined) and (ansible_powershell_version >= 5)
-
-- name: Invoke DSC with check mode
+- name: expect failure when running on old PS hosts
   win_dsc:
-    resource_name: windowsfeature
-    name: "{{ test_win_feature_name }}"
-  check_mode: yes
-  register: win_dsc_checkmode_result
-  when: (win_feature_has_servermanager|success) and (ansible_powershell_version is defined) and (ansible_powershell_version >= 5)
+    resource_name: File
+  register: fail_dsc_old
+  failed_when: '"This module cannot run as it requires a minimum PowerShell version of 5.0" not in fail_dsc_old.msg'
+  when: powershell_version.stdout_lines[0]|int < 5
 
-- name: check result of Invoke DSC with check mode
-  assert:
-    that:
-      - "win_dsc_checkmode_result|changed"
-      - "win_dsc_checkmode_result|success"
-  when: (win_feature_has_servermanager|success) and (ansible_powershell_version is defined) and (ansible_powershell_version >= 5)
+- name: run tests when PSv5+
+  when: powershell_version.stdout_lines[0]|int >= 5
+  block:
+  - name: add remote temp dir to PSModulePath
+    win_path:
+      name: PSModulePath
+      state: present
+      scope: machine
+      elements:
+      - '{{ remote_tmp_dir }}'
 
-- name: Make sure the feature is still absent
-  win_dsc:
-    resource_name: windowsfeature
-    name: "{{ test_win_feature_name }}"
-    ensure: absent
-  register: win_dsc_1_result
-  when: (win_feature_has_servermanager|success) and (ansible_powershell_version is defined) and (ansible_powershell_version >= 5)
+  - name: copy custom DSC resources to remote temp dir
+    win_copy:
+      src: xTestDsc
+      dest: '{{ remote_tmp_dir }}'
 
-- name: check result of Make sure the feature is still absent
-  assert:
-    that:
-      - "not win_dsc_1_result|changed"
-      - "win_dsc_1_result|success"
-  when: (win_feature_has_servermanager|success) and (ansible_powershell_version is defined) and (ansible_powershell_version >= 5)
+  - name: run tests
+    include_tasks: tests.yml
 
-- name: Install feature for realz
-  win_dsc:
-    resource_name: windowsfeature
-    name: "{{ test_win_feature_name }}"
-  register: win_dsc_2_result
-  when: (win_feature_has_servermanager|success) and (ansible_powershell_version is defined) and (ansible_powershell_version >= 5)
-
-- name: check result of Install feature for realz
-  assert:
-    that:
-      - "win_dsc_2_result|changed"
-      - "win_dsc_2_result|success"
-  when: (win_feature_has_servermanager|success) and (ansible_powershell_version is defined) and (ansible_powershell_version >= 5)
-
-- name: Ensure clean failure
-  win_dsc:
-    resource_name: some_unknown_resource_that_wont_ever_exist
-    name: "{{ test_win_feature_name }}"
-  register: win_dsc_3_result
-  ignore_errors: true
-  when: (win_feature_has_servermanager|success) and (ansible_powershell_version is defined) and (ansible_powershell_version >= 5)
-
-- name: check result of Ensure clean failure
-  assert:
-    that:
-      - "not win_dsc_3_result|changed"
-      - "not win_dsc_3_result|success"
-  when: (win_feature_has_servermanager|success) and (ansible_powershell_version is defined) and (ansible_powershell_version >= 5)
-
-- name: Make sure the feature is absent
-  win_dsc:
-    resource_name: windowsfeature
-    name: "{{ test_win_feature_name }}"
-    ensure: absent
-  register: win_dsc_4_result
-  when: (win_feature_has_servermanager|success) and (ansible_powershell_version is defined) and (ansible_powershell_version >= 5)
-
-- name: check result of Make sure the feature is absent
-  assert:
-    that:
-      - "win_dsc_4_result|changed"
-      - "win_dsc_4_result|success"
-  when: (win_feature_has_servermanager|success) and (ansible_powershell_version is defined) and (ansible_powershell_version >= 5)
-
-- name: Make sure the feature is still absent with no changes
-  win_dsc:
-    resource_name: windowsfeature
-    name: "{{ test_win_feature_name }}"
-    ensure: absent
-  register: win_dsc_5_result
-  when: (win_feature_has_servermanager|success) and (ansible_powershell_version is defined) and (ansible_powershell_version >= 5)
-
-- name: check result of Make sure the feature is absent
-  assert:
-    that:
-      - "not win_dsc_5_result|changed"
-      - "win_dsc_5_result|success"
-  when: (win_feature_has_servermanager|success) and (ansible_powershell_version is defined) and (ansible_powershell_version >= 5)
+  always:
+  - name: remove remote tmp dir from PSModulePath
+    win_path:
+      name: PSModulePath
+      state: absent
+      scope: machine
+      elements:
+      - '{{ remote_tmp_dir }}'

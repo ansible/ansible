@@ -22,8 +22,9 @@ __metaclass__ = type
 
 import os
 
-from ansible.compat.tests import BUILTINS, unittest
-from ansible.compat.tests.mock import mock_open, patch, MagicMock
+from units.compat import unittest
+from units.compat.builtins import BUILTINS
+from units.compat.mock import mock_open, patch, MagicMock
 from ansible.plugins.loader import MODULE_CACHE, PATH_CACHE, PLUGIN_PATH_CACHE, PluginLoader
 
 
@@ -91,3 +92,48 @@ class TestErrors(unittest.TestCase):
 
     def test_plugin__init_config_none(self):
         self.assertPluginLoaderConfigBecomes(None, [])
+
+    def test__load_module_source_no_duplicate_names(self):
+        '''
+        This test simulates importing 2 plugins with the same name,
+        and validating that the import is short circuited if a file with the same name
+        has already been imported
+        '''
+
+        fixture_path = os.path.join(os.path.dirname(__file__), 'loader_fixtures')
+
+        pl = PluginLoader('test', '', 'test', 'test_plugin')
+        one = pl._load_module_source('import_fixture', os.path.join(fixture_path, 'import_fixture.py'))
+        # This line wouldn't even succeed if we didn't short circuit on finding a duplicate name
+        two = pl._load_module_source('import_fixture', '/path/to/import_fixture.py')
+
+        self.assertEqual(one, two)
+
+    @patch('ansible.plugins.loader.glob')
+    @patch.object(PluginLoader, '_get_paths')
+    def test_all_no_duplicate_names(self, gp_mock, glob_mock):
+        '''
+        This test goes along with ``test__load_module_source_no_duplicate_names``
+        and ensures that we ignore duplicate imports on multiple paths
+        '''
+
+        fixture_path = os.path.join(os.path.dirname(__file__), 'loader_fixtures')
+
+        gp_mock.return_value = [
+            fixture_path,
+            '/path/to'
+        ]
+
+        glob_mock.glob.side_effect = [
+            [os.path.join(fixture_path, 'import_fixture.py')],
+            ['/path/to/import_fixture.py']
+        ]
+
+        pl = PluginLoader('test', '', 'test', 'test_plugin')
+        # Aside from needing ``list()`` so we can do a len, ``PluginLoader.all`` returns a generator
+        # so ``list()`` actually causes ``PluginLoader.all`` to run.
+        plugins = list(pl.all())
+        self.assertEqual(len(plugins), 1)
+
+        self.assertIn(os.path.join(fixture_path, 'import_fixture.py'), pl._module_cache)
+        self.assertNotIn('/path/to/import_fixture.py', pl._module_cache)

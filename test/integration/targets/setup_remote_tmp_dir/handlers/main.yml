@@ -1,0 +1,9 @@
+- name: delete temporary directory
+  file:
+    path: "{{ remote_tmp_dir }}"
+    state: absent
+
+- name: delete temporary directory (windows)
+  win_file:
+    path: "{{ remote_tmp_dir }}"
+    state: absent

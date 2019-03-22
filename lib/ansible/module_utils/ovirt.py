@@ -18,7 +18,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import collections
 import inspect
 import os
 import time
@@ -27,11 +26,15 @@ from abc import ABCMeta, abstractmethod
 from datetime import datetime
 from distutils.version import LooseVersion
 
+from ansible.module_utils.cloud import CloudRetry
+from ansible.module_utils.common._collections_compat import Mapping
+
 try:
     from enum import Enum  # enum is a ovirtsdk4 requirement
     import ovirtsdk4 as sdk
     import ovirtsdk4.version as sdk_version
-    HAS_SDK = LooseVersion(sdk_version.VERSION) >= LooseVersion('4.0.0')
+    import ovirtsdk4.types as otypes
+    HAS_SDK = LooseVersion(sdk_version.VERSION) >= LooseVersion('4.2.4')
 except ImportError:
     HAS_SDK = False
 
@@ -48,7 +51,7 @@ BYTES_MAP = {
 def check_sdk(module):
     if not HAS_SDK:
         module.fail_json(
-            msg='ovirtsdk4 version 4.0.0 or higher is required for this module'
+            msg='ovirtsdk4 version 4.2.4 or higher is required for this module'
         )
 
 
@@ -68,7 +71,21 @@ def get_dict_of_struct(struct, connection=None, fetch_nested=False, attributes=N
         nested = False
 
         if isinstance(value, sdk.Struct):
-            return get_dict_of_struct(value)
+            if not fetch_nested or not value.href:
+                return get_dict_of_struct(value)
+
+            # Fetch nested values of struct:
+            try:
+                value = connection.follow_link(value)
+            except sdk.Error:
+                value = None
+            nested_obj = dict(
+                (attr, convert_value(getattr(value, attr)))
+                for attr in attributes if getattr(value, attr, None)
+            )
+            nested_obj['id'] = getattr(value, 'id', None)
+            nested_obj['href'] = getattr(value, 'href', None)
+            return nested_obj
         elif isinstance(value, Enum) or isinstance(value, datetime):
             return str(value)
         elif isinstance(value, list) or isinstance(value, sdk.List):
@@ -89,7 +106,7 @@ def get_dict_of_struct(struct, connection=None, fetch_nested=False, attributes=N
                             (attr, convert_value(getattr(i, attr)))
                             for attr in attributes if getattr(i, attr, None)
                         )
-                        nested_obj['id'] = getattr(i, 'id', None),
+                        nested_obj['id'] = getattr(i, 'id', None)
                         ret.append(nested_obj)
                 elif isinstance(i, Enum):
                     ret.append(str(i))
@@ -135,8 +152,12 @@ def create_connection(auth):
     :return: Python SDK connection
     """
 
+    url = auth.get('url')
+    if url is None and auth.get('hostname') is not None:
+        url = 'https://{0}/ovirt-engine/api'.format(auth.get('hostname'))
+
     return sdk.Connection(
-        url=auth.get('url'),
+        url=url,
         username=auth.get('username'),
         password=auth.get('password'),
         ca_file=auth.get('ca_file', None),
@@ -160,7 +181,7 @@ def convert_to_bytes(param):
     param = ''.join(param.split())
 
     # Convert to bytes:
-    if param[-3].lower() in ['k', 'm', 'g', 't', 'p']:
+    if len(param) > 3 and param[-3].lower() in ['k', 'm', 'g', 't', 'p']:
         return int(param[:-3]) * BYTES_MAP.get(param[-3:].lower(), 1)
     elif param.isdigit():
         return int(param) * 2**10
@@ -218,20 +239,22 @@ def equal(param1, param2, ignore_case=False):
     return True
 
 
-def search_by_attributes(service, **kwargs):
+def search_by_attributes(service, list_params=None, **kwargs):
     """
     Search for the entity by attributes. Nested entities don't support search
     via REST, so in case using search for nested entity we return all entities
     and filter them by specified attributes.
     """
+    list_params = list_params or {}
     # Check if 'list' method support search(look for search parameter):
     if 'search' in inspect.getargspec(service.list)[0]:
         res = service.list(
-            search=' and '.join('{}={}'.format(k, v) for k, v in kwargs.items())
+            search=' and '.join('{0}={1}'.format(k, v) for k, v in kwargs.items()),
+            **list_params
         )
     else:
         res = [
-            e for e in service.list() if len([
+            e for e in service.list(**list_params) if len([
                 k for k, v in kwargs.items() if getattr(e, k, None) == v
             ]) == len(kwargs)
         ]
@@ -269,13 +292,16 @@ def search_by_name(service, name, **kwargs):
     return res[0]
 
 
-def get_entity(service):
+def get_entity(service, get_params=None):
     """
     Ignore SDK Error in case of getting an entity from service.
     """
     entity = None
     try:
-        entity = service.get()
+        if get_params is not None:
+            entity = service.get(**get_params)
+        else:
+            entity = service.get()
     except sdk.Error:
         # We can get here 404, we should ignore it, in case
         # of removing entity for example.
@@ -333,6 +359,7 @@ def wait(
 
 def __get_auth_dict():
     OVIRT_URL = os.environ.get('OVIRT_URL')
+    OVIRT_HOSTNAME = os.environ.get('OVIRT_HOSTNAME')
     OVIRT_USERNAME = os.environ.get('OVIRT_USERNAME')
     OVIRT_PASSWORD = os.environ.get('OVIRT_PASSWORD')
     OVIRT_TOKEN = os.environ.get('OVIRT_TOKEN')
@@ -340,6 +367,8 @@ def __get_auth_dict():
     OVIRT_INSECURE = OVIRT_CAFILE is None
 
     env_vars = None
+    if OVIRT_URL is None and OVIRT_HOSTNAME is not None:
+        OVIRT_URL = 'https://{0}/ovirt-engine/api'.format(OVIRT_HOSTNAME)
     if OVIRT_URL and ((OVIRT_USERNAME and OVIRT_PASSWORD) or OVIRT_TOKEN):
         env_vars = {
             'url': OVIRT_URL,
@@ -499,7 +528,7 @@ class BaseModule(object):
 
     def diff_update(self, after, update):
         for k, v in update.items():
-            if isinstance(v, collections.Mapping):
+            if isinstance(v, Mapping):
                 after[k] = self.diff_update(after.get(k, dict()), v)
             else:
                 after[k] = update[k]
@@ -512,6 +541,7 @@ class BaseModule(object):
         fail_condition=lambda e: False,
         search_params=None,
         update_params=None,
+        _wait=None,
         **kwargs
     ):
         """
@@ -576,29 +606,30 @@ class BaseModule(object):
                 self.post_create(entity)
             self.changed = True
 
-        # Wait for the entity to be created and to be in the defined state:
-        entity_service = self._service.service(entity.id)
-
-        def state_condition(entity):
-            return entity
-
-        if result_state:
+        if not self._module.check_mode:
+            # Wait for the entity to be created and to be in the defined state:
+            entity_service = self._service.service(entity.id)
 
             def state_condition(entity):
-                return entity and entity.status == result_state
+                return entity
 
-        wait(
-            service=entity_service,
-            condition=state_condition,
-            fail_condition=fail_condition,
-            wait=self._module.params['wait'],
-            timeout=self._module.params['timeout'],
-            poll_interval=self._module.params['poll_interval'],
-        )
+            if result_state:
+
+                def state_condition(entity):
+                    return entity and entity.status == result_state
+
+            wait(
+                service=entity_service,
+                condition=state_condition,
+                fail_condition=fail_condition,
+                wait=_wait if _wait is not None else self._module.params['wait'],
+                timeout=self._module.params['timeout'],
+                poll_interval=self._module.params['poll_interval'],
+            )
 
         return {
             'changed': self.changed,
-            'id': entity.id,
+            'id': getattr(entity, 'id', None),
             type(entity).__name__.lower(): get_dict_of_struct(
                 struct=entity,
                 connection=self._connection,
@@ -712,7 +743,7 @@ class BaseModule(object):
 
         if entity is None:
             self._module.fail_json(
-                msg="Entity not found, can't run action '{}'.".format(
+                msg="Entity not found, can't run action '{0}'.".format(
                     action
                 )
             )
@@ -746,18 +777,18 @@ class BaseModule(object):
             'diff': self._diff,
         }
 
-    def wait_for_import(self):
+    def wait_for_import(self, condition=lambda e: True):
         if self._module.params['wait']:
             start = time.time()
             timeout = self._module.params['timeout']
             poll_interval = self._module.params['poll_interval']
             while time.time() < start + timeout:
                 entity = self.search_entity()
-                if entity:
+                if entity and condition(entity):
                     return entity
                 time.sleep(poll_interval)
 
-    def search_entity(self, search_params=None):
+    def search_entity(self, search_params=None, list_params=None):
         """
         Always first try to search by `ID`, if ID isn't specified,
         check if user constructed special search in `search_params`,
@@ -766,10 +797,53 @@ class BaseModule(object):
         entity = None
 
         if 'id' in self._module.params and self._module.params['id'] is not None:
-            entity = get_entity(self._service.service(self._module.params['id']))
+            entity = get_entity(self._service.service(self._module.params['id']), get_params=list_params)
         elif search_params is not None:
-            entity = search_by_attributes(self._service, **search_params)
+            entity = search_by_attributes(self._service, list_params=list_params, **search_params)
         elif self._module.params.get('name') is not None:
-            entity = search_by_attributes(self._service, name=self._module.params['name'])
+            entity = search_by_attributes(self._service, list_params=list_params, name=self._module.params['name'])
 
         return entity
+
+    def _get_major(self, full_version):
+        if full_version is None or full_version == "":
+            return None
+        if isinstance(full_version, otypes.Version):
+            return int(full_version.major)
+        return int(full_version.split('.')[0])
+
+    def _get_minor(self, full_version):
+        if full_version is None or full_version == "":
+            return None
+        if isinstance(full_version, otypes.Version):
+            return int(full_version.minor)
+        return int(full_version.split('.')[1])
+
+
+def _sdk4_error_maybe():
+    """
+    Allow for ovirtsdk4 not being installed.
+    """
+    if HAS_SDK:
+        return sdk.Error
+    return type(None)
+
+
+class OvirtRetry(CloudRetry):
+    base_class = _sdk4_error_maybe()
+
+    @staticmethod
+    def status_code_from_exception(error):
+        return error.code
+
+    @staticmethod
+    def found(response_code, catch_extra_error_codes=None):
+        # This is a list of error codes to retry.
+        retry_on = [
+            # HTTP status: Conflict
+            409,
+        ]
+        if catch_extra_error_codes:
+            retry_on.extend(catch_extra_error_codes)
+
+        return response_code in retry_on

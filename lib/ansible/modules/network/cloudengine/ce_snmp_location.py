@@ -28,17 +28,15 @@ short_description: Manages SNMP location configuration on HUAWEI CloudEngine swi
 description:
     - Manages SNMP location configurations on HUAWEI CloudEngine switches.
 author:
-    - wangdezhuang (@CloudEngine-Ansible)
+    - wangdezhuang (@QijunPan)
 options:
     location:
         description:
             - Location information.
         required: true
-        default: null
     state:
         description:
             - Manage the state of the resource.
-        required: false
         default: present
         choices: ['present','absent']
 '''
@@ -76,7 +74,7 @@ RETURN = '''
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 proposed:
     description: k/v pairs of parameters passed into module
@@ -103,7 +101,7 @@ updates:
 
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_config, load_config, ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import get_config, load_config, ce_argument_spec
 
 
 class SnmpLocation(object):

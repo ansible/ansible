@@ -7,7 +7,7 @@
 - name: Validate results of rax_clb_nodes with no args
   assert:
     that:
-      - rax_clb_nodes|failed
+      - rax_clb_nodes is failed
       - 'rax_clb_nodes.msg == "missing required arguments: load_balancer_id"'
 # ============================================================
 
@@ -23,7 +23,7 @@
 - name: Validate results of rax_clb_nodes with load_balancer_id
   assert:
     that:
-      - rax_clb_nodes|failed
+      - rax_clb_nodes is failed
       - rax_clb_nodes.msg == 'No credentials supplied!'
 # ============================================================
 
@@ -41,7 +41,7 @@
 - name: Validate results of rax_clb_nodes with credentials and load_balancer_id
   assert:
     that:
-      - rax_clb_nodes|failed
+      - rax_clb_nodes is failed
       - rax_clb_nodes.msg.startswith('None is not a valid region')
 # ============================================================
 
@@ -60,7 +60,7 @@
 - name: Validate rax_clb_nodes creds, region and load_balancer_id
   assert:
     that:
-      - rax_clb_nodes|failed
+      - rax_clb_nodes is failed
       - rax_clb_nodes.msg == 'Load balancer not found'
 # ============================================================
 
@@ -80,7 +80,7 @@
 - name: Validate rax_clb creation
   assert:
     that:
-      - rax_clb|success
+      - rax_clb is successful
 
 - name: Set variable for CLB ID
   set_fact:
@@ -102,7 +102,7 @@
 - name: Validate rax_clb_nodes creds, region and valid load_balancer_id
   assert:
     that:
-      - rax_clb_nodes|failed
+      - rax_clb_nodes is failed
       - rax_clb_nodes.msg == 'You must include an address and a port when creating a node.'
 # ============================================================
 
@@ -122,7 +122,7 @@
 - name: Validate rax_clb_nodes creds, region, load_balancer_id and address
   assert:
     that:
-      - rax_clb_nodes|failed
+      - rax_clb_nodes is failed
       - rax_clb_nodes.msg == 'You must include an address and a port when creating a node.'
 # ============================================================
 
@@ -143,7 +143,7 @@
 - name: Validate rax_clb_nodes creds, region, load_balancer_id, invalid address and port
   assert:
     that:
-      - rax_clb_nodes|failed
+      - rax_clb_nodes is failed
       - rax_clb_nodes.msg == "Invalid node address. The address '10.10.10.10' is currently not accepted for this request."
 # ============================================================
 
@@ -165,7 +165,7 @@
 - name: Validate rax_clb_nodes creds, region, load_balancer_id, address and port
   assert:
     that:
-      - rax_clb_nodes|success
+      - rax_clb_nodes is successful
       - rax_clb_nodes.node.address == '172.16.0.1'
       - rax_clb_nodes.node.condition == 'ENABLED'
       - rax_clb_nodes.node.port == 80
@@ -188,7 +188,7 @@
 - name: Validate delete integration 1
   assert:
     that:
-      - rax_clb_nodes|success
+      - rax_clb_nodes is successful
 # ============================================================
 
 
@@ -211,7 +211,7 @@
 - name: Validate rax_clb_nodes creds, region, load_balancer_id, address, port and type
   assert:
     that:
-      - rax_clb_nodes|failed
+      - rax_clb_nodes is failed
       - rax_clb_nodes.msg == 'you must enable health monitoring to use secondary nodes'
 # ============================================================
 
@@ -232,6 +232,6 @@
 - name: "Validate delete integration 3"
   assert:
     that:
-      - rax_clb|changed
+      - rax_clb is changed
       - rax_clb.balancer.id == rax_clb_id|int
 # ============================================================

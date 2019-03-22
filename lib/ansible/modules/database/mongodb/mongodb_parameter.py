@@ -27,33 +27,23 @@ options:
     login_user:
         description:
             - The username used to authenticate with
-        required: false
-        default: null
     login_password:
         description:
             - The password used to authenticate with
-        required: false
-        default: null
     login_host:
         description:
             - The host running the database
-        required: false
         default: localhost
     login_port:
         description:
             - The port to connect to
-        required: false
         default: 27017
     login_database:
         description:
             - The database where login credentials are stored
-        required: false
-        default: null
     replica_set:
         description:
             - Replica set to connect to (automatically connects to primary for writes)
-        required: false
-        default: null
     database:
         description:
             - The name of the database to add/remove the user from
@@ -61,8 +51,8 @@ options:
     ssl:
         description:
             - Whether to use an SSL connection when connecting to the database
-        required: false
-        default: false
+        type: bool
+        default: 'no'
     param:
         description:
             - MongoDB administrative parameter to modify
@@ -74,7 +64,6 @@ options:
     param_type:
         description:
             - Define the parameter value (str, int)
-        required: false
         default: str
 
 notes:
@@ -96,11 +85,11 @@ RETURN = '''
 before:
     description: value before modification
     returned: success
-    type: string
+    type: str
 after:
     description: value after modification
     returned: success
-    type: string
+    type: str
 '''
 
 import os
@@ -121,7 +110,7 @@ except ImportError:
 else:
     pymongo_found = True
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.six.moves import configparser
 from ansible.module_utils._text import to_native
 
@@ -167,7 +156,7 @@ def main():
     )
 
     if not pymongo_found:
-        module.fail_json(msg='the python pymongo module is required')
+        module.fail_json(msg=missing_required_lib('pymongo'))
 
     login_user = module.params['login_user']
     login_password = module.params['login_password']
@@ -223,5 +212,5 @@ def main():
                          after=value)
 
 
-if __name__ ==  '__main__':
+if __name__ == '__main__':
     main()

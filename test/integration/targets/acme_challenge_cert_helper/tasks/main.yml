@@ -1,0 +1,25 @@
+---
+- block:
+  - name: Create ECC256 account key
+    command: openssl ecparam -name prime256v1 -genkey -out {{ output_dir }}/account-ec256.pem
+  - name: Obtain cert 1
+    include_tasks: obtain-cert.yml
+    vars:
+      select_crypto_backend: auto
+      certgen_title: Certificate 1
+      certificate_name: cert-1
+      key_type: rsa
+      rsa_bits: 2048
+      subject_alt_name: "DNS:example.com"
+      subject_alt_name_critical: no
+      account_key: account-ec256
+      challenge: tls-alpn-01
+      challenge_alpn_tls: acme_challenge_cert_helper
+      modify_account: yes
+      deactivate_authzs: no
+      force: no
+      remaining_days: 10
+      terms_agreed: yes
+      account_email: "example@example.org"
+
+  when: openssl_version.stdout is version('1.0.0', '>=') or cryptography_version.stdout is version('1.5', '>=')

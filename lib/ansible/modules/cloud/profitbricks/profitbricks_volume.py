@@ -73,7 +73,7 @@ options:
     description:
       - Whether or not to increment a single number in the name for created virtual machines.
     default: yes
-    choices: ["yes", "no"]
+    type: bool
   instance_ids:
     description:
       - list of instance ids, currently only used when state='absent' to remove instances.
@@ -91,7 +91,7 @@ options:
       - wait for the datacenter to be created before returning
     required: false
     default: "yes"
-    choices: [ "yes", "no" ]
+    type: bool
   wait_timeout:
     description:
       - how long before wait gives up, in seconds
@@ -104,7 +104,7 @@ options:
     choices: ["present", "absent"]
 
 requirements: [ "profitbricks" ]
-author: Matt Baldwin (baldwin@stackpointcloud.com)
+author: Matt Baldwin (@baldwinSPC) <baldwin@stackpointcloud.com>
 '''
 
 EXAMPLES = '''
@@ -147,7 +147,7 @@ from ansible.module_utils._text import to_native
 
 
 uuid_match = re.compile(
-    '[\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{12}', re.I)
+    r'[\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{12}', re.I)
 
 
 def _wait_for_completion(profitbricks, promise, wait_timeout, msg):
@@ -170,7 +170,7 @@ def _wait_for_completion(profitbricks, promise, wait_timeout, msg):
     raise Exception(
         'Timed out waiting for async operation ' + msg + ' "' + str(
             promise['requestId']
-            ) + '" to complete.')
+        ) + '" to complete.')
 
 
 def _create_volume(module, profitbricks, datacenter, name):
@@ -194,7 +194,7 @@ def _create_volume(module, profitbricks, datacenter, name):
             ssh_keys=ssh_keys,
             disk_type=disk_type,
             licence_type=licence_type
-            )
+        )
 
         volume_response = profitbricks.create_volume(datacenter, v)
 

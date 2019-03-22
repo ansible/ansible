@@ -20,7 +20,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: ce_aaa_server
 version_added: "2.4"
@@ -28,77 +28,67 @@ short_description: Manages AAA server global configuration on HUAWEI CloudEngine
 description:
     - Manages AAA server global configuration on HUAWEI CloudEngine switches.
 author:
-    - wangdezhuang (@CloudEngine-Ansible)
+    - wangdezhuang (@QijunPan)
 options:
     state:
         description:
             - Specify desired state of the resource.
-        required: false
+        type: str
+        choices: [ absent, present ]
         default: present
-        choices: ['present', 'absent']
     authen_scheme_name:
         description:
             - Name of an authentication scheme.
               The value is a string of 1 to 32 characters.
-        required: false
-        default: null
+        type: str
     first_authen_mode:
         description:
             - Preferred authentication mode.
-        required: false
-        default: null
+        type: str
         choices: ['invalid', 'local', 'hwtacacs', 'radius', 'none']
     author_scheme_name:
         description:
             - Name of an authorization scheme.
               The value is a string of 1 to 32 characters.
-        required: false
-        default: null
+        type: str
     first_author_mode:
         description:
             - Preferred authorization mode.
-        required: false
-        default: null
+        type: str
         choices: ['invalid', 'local', 'hwtacacs', 'if-authenticated', 'none']
     acct_scheme_name:
         description:
             - Accounting scheme name.
               The value is a string of 1 to 32 characters.
-        required: false
-        default: null
+        type: str
     accounting_mode:
         description:
             - Accounting Mode.
-        required: false
-        default: null
+        type: str
         choices: ['invalid', 'hwtacacs', 'radius', 'none']
     domain_name:
         description:
             - Name of a domain.
               The value is a string of 1 to 64 characters.
-        required: false
-        default: null
+        type: str
     radius_server_group:
         description:
             - RADIUS server group's name.
               The value is a string of 1 to 32 case-insensitive characters.
-        required: false
-        default: null
+        type: str
     hwtacas_template:
         description:
             - Name of a HWTACACS template.
               The value is a string of 1 to 32 case-insensitive characters.
-        required: false
-        default: null
+        type: str
     local_user_group:
         description:
             - Name of the user group where the user belongs. The user inherits all the rights of the user group.
               The value is a string of 1 to 32 characters.
-        required: false
-        default: null
+        type: str
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 
 - name: AAA server test
   hosts: cloudengine
@@ -151,7 +141,7 @@ RETURN = '''
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 proposed:
     description: k/v pairs of parameters passed into module
@@ -183,7 +173,7 @@ updates:
 
 import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_nc_config, set_nc_config, ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec
 
 
 SUCCESS = """success"""

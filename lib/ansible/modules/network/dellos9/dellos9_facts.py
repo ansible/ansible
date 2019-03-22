@@ -23,20 +23,19 @@ description:
   - Collects a base set of device facts from a remote device that
     is running OS9.  This module prepends all of the
     base network fact keys with C(ansible_net_<fact>).  The facts
-    module always collects  a base set of facts from the device
+    module will always collect a base set of facts from the device
     and can enable or disable collection of additional facts.
 extends_documentation_fragment: dellos9
 options:
   gather_subset:
     description:
-      - When supplied, this argument restricts the facts collected
+      - When supplied, this argument will restrict the facts collected
         to a given subset.  Possible values for this argument include
-        all, hardware, config, and interfaces.  You can specify a list of
-        values to include a larger subset.  You can also use values
-        with an initial M(!) to specify that a specific subset should
+        all, hardware, config, and interfaces.  Can specify a list of
+        values to include a larger subset.  Values can also be used
+        with an initial C(M(!)) to specify that a specific subset should
         not be collected.
-    required: false
-    default: '!config'
+    default: [ '!config' ]
 notes:
   - This module requires OS9 version 9.10.0.1P13 or above.
 
@@ -63,76 +62,79 @@ EXAMPLES = """
 
 RETURN = """
 ansible_net_gather_subset:
-  description: The list of fact subsets collected from the device.
-  returned: Always.
+  description: The list of fact subsets collected from the device
+  returned: always
   type: list
 
 # default
 ansible_net_model:
-  description: The model name returned from the device.
-  returned: Always.
+  description: The model name returned from the device
+  returned: always
   type: str
 ansible_net_serialnum:
-  description: The serial number of the remote device.
-  returned: Always.
+  description: The serial number of the remote device
+  returned: always
   type: str
 ansible_net_version:
-  description: The operating system version running on the remote device.
-  returned: Always.
+  description: The operating system version running on the remote device
+  returned: always
   type: str
 ansible_net_hostname:
-  description: The configured hostname of the device.
-  returned: Always.
-  type: string
+  description: The configured hostname of the device
+  returned: always
+  type: str
 ansible_net_image:
-  description: The image file the device is running.
-  returned: Always.
-  type: string
+  description: The image file the device is running
+  returned: always
+  type: str
 
 # hardware
 ansible_net_filesystems:
-  description: All file system names available on the device.
-  returned: When hardware is configured.
+  description: All file system names available on the device
+  returned: when hardware is configured
   type: list
 ansible_net_memfree_mb:
-  description: The available free memory on the remote device in MB.
-  returned: When hardware is configured.
+  description: The available free memory on the remote device in Mb
+  returned: when hardware is configured
   type: int
 ansible_net_memtotal_mb:
-  description: The total memory on the remote device in MB.
-  returned: When hardware is configured.
+  description: The total memory on the remote device in Mb
+  returned: when hardware is configured
   type: int
 
 # config
 ansible_net_config:
-  description: The current active config from the device.
-  returned: When config is configured.
+  description: The current active config from the device
+  returned: when config is configured
   type: str
 
 # interfaces
 ansible_net_all_ipv4_addresses:
-  description: All IPv4 addresses configured on the device.
-  returned: When interfaces is configured.
+  description: All IPv4 addresses configured on the device
+  returned: when interfaces is configured
   type: list
 ansible_net_all_ipv6_addresses:
-  description: All IPv6 addresses configured on the device.
-  returned: When interfaces is configured.
+  description: All IPv6 addresses configured on the device
+  returned: when interfaces is configured
   type: list
 ansible_net_interfaces:
-  description: A hash of all interfaces running on the system.
-  returned: When interfaces is configured.
+  description: A hash of all interfaces running on the system
+  returned: when interfaces is configured
   type: dict
 ansible_net_neighbors:
   description: The list of LLDP neighbors from the remote device
-  returned: When interfaces is configured.
+  returned: when interfaces is configured
   type: dict
 """
 import re
-import itertools
+try:
+    from itertools import izip
+except ImportError:
+    izip = zip
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.dellos9 import run_commands
-from ansible.module_utils.dellos9 import dellos9_argument_spec, check_args
+from ansible.module_utils.network.dellos9.dellos9 import run_commands
+from ansible.module_utils.network.dellos9.dellos9 import dellos9_argument_spec, check_args
 from ansible.module_utils.six import iteritems
 
 
@@ -215,7 +217,7 @@ class Hardware(FactsBase):
         self.facts['filesystems'] = self.parse_filesystems(data)
 
         data = self.responses[1]
-        match = re.findall('\s(\d+)\s', data)
+        match = re.findall(r'\s(\d+)\s', data)
         if match:
             self.facts['memtotal_mb'] = int(match[0]) // 1024
             self.facts['memfree_mb'] = int(match[2]) // 1024
@@ -316,7 +318,7 @@ class Interfaces(FactsBase):
                 self.facts['interfaces'][key]['ipv6'] = list()
                 addresses = re.findall(r'\s+(.+), subnet', value, re.M)
                 subnets = re.findall(r', subnet is (\S+)', value, re.M)
-                for addr, subnet in itertools.izip(addresses, subnets):
+                for addr, subnet in izip(addresses, subnets):
                     ipv6 = dict(address=addr.strip(), subnet=subnet.strip())
                     self.add_ip_address(addr.strip(), 'ipv6')
                     self.facts['interfaces'][key]['ipv6'].append(ipv6)

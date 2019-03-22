@@ -1,0 +1,2 @@
+- set_fact:
+    lola: wiseman

@@ -1,4 +1,4 @@
 cloud/aws
-posix/ci/cloud/group1/aws
+shippable/aws/group2
 execute_lambda
 lambda

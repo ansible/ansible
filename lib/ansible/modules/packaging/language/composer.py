@@ -31,89 +31,90 @@ options:
         version_added: "1.8"
         description:
             - Composer command like "install", "update" and so on.
-        required: false
         default: install
     arguments:
         version_added: "2.0"
         description:
             - Composer arguments like required package, version and so on.
-        required: false
-        default: null
     executable:
         version_added: "2.4"
         description:
-            - Path to PHP Executable on the remote host, if PHP is not in PATH
-        required: false
-        default: null
-        aliases: [ "php_path" ]
+            - Path to PHP Executable on the remote host, if PHP is not in PATH.
+        aliases: [ php_path ]
     working_dir:
         description:
             - Directory of your project (see --working-dir). This is required when
               the command is not run globally.
             - Will be ignored if C(global_command=true).
-        required: false
-        default: null
-        aliases: [ "working-dir" ]
+        aliases: [ working-dir ]
     global_command:
         version_added: "2.4"
         description:
             - Runs the specified command globally.
-        required: false
-        choices: [ true, false]
+        type: bool
         default: false
-        aliases: [ "global-command" ]
+        aliases: [ global-command ]
     prefer_source:
         description:
             - Forces installation from package sources when possible (see --prefer-source).
-        required: false
         default: false
-        choices: [ true, false]
-        aliases: [ "prefer-source" ]
+        type: bool
+        aliases: [ prefer-source ]
     prefer_dist:
         description:
             - Forces installation from package dist even for dev versions (see --prefer-dist).
-        required: false
         default: false
-        choices: [ true, false]
-        aliases: [ "prefer-dist" ]
+        type: bool
+        aliases: [ prefer-dist ]
     no_dev:
         description:
             - Disables installation of require-dev packages (see --no-dev).
-        required: false
         default: true
-        choices: [ true, false]
-        aliases: [ "no-dev" ]
+        type: bool
+        aliases: [ no-dev ]
     no_scripts:
         description:
             - Skips the execution of all scripts defined in composer.json (see --no-scripts).
-        required: false
         default: false
-        choices: [ true, false]
-        aliases: [ "no-scripts" ]
+        type: bool
+        aliases: [ no-scripts ]
     no_plugins:
         description:
             - Disables all plugins ( see --no-plugins ).
-        required: false
         default: false
-        choices: [ true, false]
-        aliases: [ "no-plugins" ]
+        type: bool
+        aliases: [ no-plugins ]
     optimize_autoloader:
         description:
             - Optimize autoloader during autoloader dump (see --optimize-autoloader).
             - Convert PSR-0/4 autoloading to classmap to get a faster autoloader.
             - Recommended especially for production, but can take a bit of time to run.
-        required: false
         default: true
-        choices: [ true, false]
-        aliases: [ "optimize-autoloader" ]
+        type: bool
+        aliases: [ optimize-autoloader ]
+    classmap_authoritative:
+        version_added: "2.7"
+        description:
+            - Autoload classes from classmap only.
+            - Implicitely enable optimize_autoloader.
+            - Recommended especially for production, but can take a bit of time to run.
+        default: false
+        type: bool
+        aliases: [ classmap-authoritative ]
+    apcu_autoloader:
+        version_added: "2.7"
+        description:
+            - Uses APCu to cache found/not-found classes
+        default: false
+        type: bool
+        aliases: [ apcu-autoloader ]
     ignore_platform_reqs:
         version_added: "2.0"
         description:
             - Ignore php, hhvm, lib-* and ext-* requirements and force the installation even if the local machine does not fulfill these.
-        required: false
         default: false
-        choices: [ true, false]
-        aliases: [ "ignore-platform-reqs" ]
+        type: bool
+        aliases: [ ignore-platform-reqs ]
 requirements:
     - php
     - composer installed in bin path (recommended /usr/local/bin)
@@ -148,12 +149,11 @@ EXAMPLES = '''
 '''
 
 import re
-
 from ansible.module_utils.basic import AnsibleModule
 
 
 def parse_out(string):
-    return re.sub("\s+", " ", string).strip()
+    return re.sub(r"\s+", " ", string).strip()
 
 
 def has_changed(string):
@@ -188,9 +188,9 @@ def composer_command(module, command, arguments="", options=None, global_command
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            command=dict(default="install", type="str", required=False),
-            arguments=dict(default="", type="str", required=False),
-            executable=dict(type="path", required=False, aliases=["php_path"]),
+            command=dict(default="install", type="str"),
+            arguments=dict(default="", type="str"),
+            executable=dict(type="path", aliases=["php_path"]),
             working_dir=dict(type="path", aliases=["working-dir"]),
             global_command=dict(default=False, type="bool", aliases=["global-command"]),
             prefer_source=dict(default=False, type="bool", aliases=["prefer-source"]),
@@ -198,7 +198,9 @@ def main():
             no_dev=dict(default=True, type="bool", aliases=["no-dev"]),
             no_scripts=dict(default=False, type="bool", aliases=["no-scripts"]),
             no_plugins=dict(default=False, type="bool", aliases=["no-plugins"]),
+            apcu_autoloader=dict(default=False, type="bool", aliases=["apcu-autoloader"]),
             optimize_autoloader=dict(default=True, type="bool", aliases=["optimize-autoloader"]),
+            classmap_authoritative=dict(default=False, type="bool", aliases=["classmap-authoritative"]),
             ignore_platform_reqs=dict(default=False, type="bool", aliases=["ignore-platform-reqs"]),
         ),
         required_if=[('global_command', False, ['working_dir'])],
@@ -236,8 +238,10 @@ def main():
         'prefer_dist': 'prefer-dist',
         'no_dev': 'no-dev',
         'no_scripts': 'no-scripts',
-        'no_plugins': 'no_plugins',
+        'no_plugins': 'no-plugins',
+        'apcu_autoloader': 'acpu-autoloader',
         'optimize_autoloader': 'optimize-autoloader',
+        'classmap_authoritative': 'classmap-authoritative',
         'ignore_platform_reqs': 'ignore-platform-reqs',
     }
 
@@ -247,7 +251,10 @@ def main():
             options.append(option)
 
     if module.check_mode:
-        options.append('--dry-run')
+        if 'dry-run' in available_options:
+            options.append('--dry-run')
+        else:
+            module.exit_json(skipped=True, msg="command '%s' does not support check mode, skipping" % command)
 
     rc, out, err = composer_command(module, command, arguments, options, global_command)
 

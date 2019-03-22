@@ -1,25 +1,10 @@
 #!powershell
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# WANT_JSON
-# POWERSHELL_COMMON
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+#Requires -Module Ansible.ModuleUtils.Legacy
+#Requires -Module Ansible.ModuleUtils.Backup
 
-# Write lines to a file using the specified line separator and encoding,
-# performing validation if a validation command was specified.
 function WriteLines($outlines, $path, $linesep, $encodingobj, $validate, $check_mode) {
 	Try {
 		$temppath = [System.IO.Path]::GetTempFileName();
@@ -58,14 +43,14 @@ function WriteLines($outlines, $path, $linesep, $encodingobj, $validate, $check_
 	# Commit changes to the path
 	$cleanpath = $path.Replace("/", "\");
 	Try {
-		Copy-Item $temppath $cleanpath -force -ErrorAction Stop -WhatIf:$check_mode;
+		Copy-Item -Path $temppath -Destination $cleanpath -Force -WhatIf:$check_mode;
 	}
 	Catch {
 		Fail-Json @{} "Cannot write to: $cleanpath ($($_.Exception.Message))";
 	}
 
 	Try {
-		Remove-Item $temppath -force -ErrorAction Stop -WhatIf:$check_mode;
+		Remove-Item -Path $temppath -Force -WhatIf:$check_mode;
 	}
 	Catch {
 		Fail-Json @{} "Cannot remove temporary file: $temppath ($($_.Exception.Message))";
@@ -73,19 +58,6 @@ function WriteLines($outlines, $path, $linesep, $encodingobj, $validate, $check_
 
 	return $joined;
 
-}
-
-
-# Backup the file specified with a date/time filename
-function BackupFile($path, $check_mode) {
-	$backuppath = $path + "." + [DateTime]::Now.ToString("yyyyMMdd-HHmmss");
-	Try {
-		Copy-Item $path $backuppath -WhatIf:$check_mode;
-	}
-	Catch {
-		Fail-Json @{} "Cannot copy backup file! ($($_.Exception.Message))";
-	}
-	return $backuppath;
 }
 
 
@@ -98,7 +70,7 @@ function Present($path, $regexp, $line, $insertafter, $insertbefore, $create, $b
 
 	# Check if path exists. If it does not exist, either create it if create == "yes"
 	# was specified or fail with a reasonable error message.
-	If (-not (Test-Path -Path $path)) {
+	If (-not (Test-Path -LiteralPath $path)) {
 		If (-not $create) {
 			Fail-Json @{} "Path $path does not exist !";
 		}
@@ -199,7 +171,7 @@ function Present($path, $regexp, $line, $insertafter, $insertbefore, $create, $b
 		$result.msg = "line added";
 	}
 	ElseIf ($insertafter -eq "EOF" -or $index[1] -eq -1) {
-		$lines.Add($line);
+		$lines.Add($line) > $null;
 		$result.changed = $true;
 		$result.msg = "line added";
 	}
@@ -214,7 +186,9 @@ function Present($path, $regexp, $line, $insertafter, $insertbefore, $create, $b
 
 		# Write backup file if backup == "yes"
 		If ($backup) {
-			$result.backup = BackupFile $path $check_mode;
+			$result.backup_file = Backup-File -path $path -WhatIf:$check_mode
+			# Ensure backward compatibility (deprecate in future)
+			$result.backup = $result.backup_file
 		}
 
 		$after = WriteLines $lines $path $linesep $encodingobj $validate $check_mode;
@@ -234,7 +208,7 @@ function Present($path, $regexp, $line, $insertafter, $insertbefore, $create, $b
 function Absent($path, $regexp, $line, $backup, $validate, $encodingobj, $linesep, $check_mode, $diff_support) {
 
 	# Check if path exists. If it does not exist, fail with a reasonable error message.
-	If (-not (Test-Path -Path $path)) {
+	If (-not (Test-Path -LiteralPath $path)) {
 		Fail-Json @{} "Path $path does not exist !";
 	}
 
@@ -281,11 +255,11 @@ function Absent($path, $regexp, $line, $backup, $validate, $encodingobj, $linese
 			$match_found = $line -ceq $cur_line;
 		}
 		If ($match_found) {
-			$found.Add($cur_line);
+			$found.Add($cur_line) > $null;
 			$result.changed = $true;
 		}
 		Else {
-			$left.Add($cur_line);
+			$left.Add($cur_line) > $null;
 		}
 	}
 
@@ -294,7 +268,9 @@ function Absent($path, $regexp, $line, $backup, $validate, $encodingobj, $linese
 
 		# Write backup file if backup == "yes"
 		If ($backup) {
-			$result.backup = BackupFile $path $check_mode;
+			$result.backup_file = Backup-File -path $path -WhatIf:$check_mode
+			# Ensure backward compatibility (deprecate in future)
+			$result.backup = $result.backup_file
 		}
 
 		$after = WriteLines $left $path $linesep $encodingobj $validate $check_mode;
@@ -332,7 +308,7 @@ $encoding = Get-AnsibleParam -obj $params -name "encoding" -type "str" -default 
 $newline = Get-AnsibleParam -obj $params -name "newline" -type "str" -default "windows" -validateset "unix","windows";
 
 # Fail if the path is not a file
-If (Test-Path -Path $path -PathType "container") {
+If (Test-Path -LiteralPath $path -PathType "container") {
 	Fail-Json @{} "Path $path is a directory";
 }
 
@@ -340,15 +316,6 @@ If (Test-Path -Path $path -PathType "container") {
 $linesep = "`r`n"
 If ($newline -eq "unix") {
 	$linesep = "`n";
-}
-
-# Fix any CR/LF literals in the line argument. PS will not recognize either backslash
-# or backtick literals in the incoming string argument without this bit of black magic.
-If ($line) {
-	$line = $line.Replace("\r", "`r");
-	$line = $line.Replace("\n", "`n");
-	$line = $line.Replace("``r", "`r");
-	$line = $line.Replace("``n", "`n");
 }
 
 # Figure out the proper encoding to use for reading / writing the target file.
@@ -364,7 +331,7 @@ If ($encoding -ne "auto") {
 # Otherwise see if we can determine the current encoding of the target file.
 # If the file doesn't exist yet (create == 'yes') we use the default or
 # explicitly specified encoding set above.
-ElseIf (Test-Path -Path $path) {
+ElseIf (Test-Path -LiteralPath $path) {
 
 	# Get a sorted list of encodings with preambles, longest first
 	$max_preamble_len = 0;
@@ -376,12 +343,12 @@ ElseIf (Test-Path -Path $path) {
 			$max_preamble_len = $plen;
 		}
 		If ($plen -gt 0) {
-			$sortedlist.Add(-($plen * 1000000 + $encoding.CodePage), $encoding);
+			$sortedlist.Add(-($plen * 1000000 + $encoding.CodePage), $encoding) > $null;
 		}
 	}
 
 	# Get the first N bytes from the file, where N is the max preamble length we saw
-	[Byte[]]$bom = Get-Content -Encoding Byte -ReadCount $max_preamble_len -TotalCount $max_preamble_len -Path $path;
+	[Byte[]]$bom = Get-Content -Encoding Byte -ReadCount $max_preamble_len -TotalCount $max_preamble_len -LiteralPath $path;
 
 	# Iterate through the sorted encodings, looking for a full match.
 	$found = $false;

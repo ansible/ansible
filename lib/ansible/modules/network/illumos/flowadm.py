@@ -36,7 +36,7 @@ options:
         description:
             - Identifies a network flow by the local IP address.
         required: false
-    remove_ip:
+    remote_ip:
         description:
             - Identifies a network flow by the remote IP address.
         required: false
@@ -75,7 +75,7 @@ options:
               flows do not persist across reboots.
         required: false
         default: false
-        choices: [ "true", "false" ]
+        type: bool
     state:
         description:
             - Create/delete/enable/disable an IP address on the network interface.
@@ -113,42 +113,42 @@ RETURN = '''
 name:
     description: flow name
     returned: always
-    type: string
+    type: str
     sample: "http_drop"
 link:
     description: flow's link
     returned: if link is defined
-    type: string
+    type: str
     sample: "vnic0"
 state:
     description: state of the target
     returned: always
-    type: string
+    type: str
     sample: "present"
 temporary:
     description: flow's persistence
     returned: always
-    type: boolean
+    type: bool
     sample: "True"
 priority:
     description: flow's priority
     returned: if priority is defined
-    type: string
+    type: str
     sample: "low"
 transport:
     description: flow's transport
     returned: if transport is defined
-    type: string
+    type: str
     sample: "tcp"
 maxbw:
     description: flow's maximum bandwidth
     returned: if maxbw is defined
-    type: string
+    type: str
     sample: "100M"
 local_Ip:
     description: flow's local IP address
     returned: if local_ip is defined
-    type: string
+    type: str
     sample: "10.0.0.42"
 local_port:
     description: flow's local port
@@ -158,12 +158,12 @@ local_port:
 remote_Ip:
     description: flow's remote IP address
     returned: if remote_ip is defined
-    type: string
+    type: str
     sample: "10.0.0.42"
 dsfield:
     description: flow's differentiated services value
     returned: if dsfield is defined
-    type: string
+    type: str
     sample: "0x2e:0xfc"
 '''
 

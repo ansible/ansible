@@ -1,0 +1,30 @@
+{
+    "data": {
+        "VpnConnections": [
+            {
+                "CustomerGatewayId": "cgw-6113c87f",
+                "VpnConnectionId": "vpn-9d06e288",
+                "Category": "VPN",
+                "Routes": [],
+                "Options": {
+                    "StaticRoutesOnly": true
+                },
+                "Type": "ipsec.1",
+                "VpnGatewayId": "vgw-35d70c2b",
+                "State": "deleted"
+            }
+        ],
+        "ResponseMetadata": {
+            "HTTPStatusCode": 200,
+            "RequestId": "0d2390b1-83fb-40f6-ab75-adf605a9a3fc",
+            "HTTPHeaders": {
+                "content-length": "705",
+                "server": "AmazonEC2",
+                "content-type": "text/xml;charset=UTF-8",
+                "date": "Mon, 16 Apr 2018 13:04:31 GMT"
+            },
+            "RetryAttempts": 0
+        }
+    },
+    "status_code": 200
+}

@@ -4,7 +4,7 @@ import unittest
 boto3 = pytest.importorskip("boto3")
 botocore = pytest.importorskip("botocore")
 
-import ansible.modules.cloud.amazon.kinesis_stream as kinesis_stream
+from ansible.modules.cloud.amazon import kinesis_stream
 
 aws_region = 'us-west-2'
 
@@ -105,7 +105,8 @@ class AnsibleKinesisStreamFunctions(unittest.TestCase):
             'RetentionPeriodHours': 24,
             'StreamName': 'test',
             'StreamARN': 'arn:aws:kinesis:east-side:123456789:stream/test',
-            'StreamStatus': 'ACTIVE'
+            'StreamStatus': 'ACTIVE',
+            'EncryptionType': 'NONE'
         }
         self.assertTrue(success)
         self.assertEqual(stream, should_return)
@@ -125,7 +126,8 @@ class AnsibleKinesisStreamFunctions(unittest.TestCase):
             'RetentionPeriodHours': 24,
             'StreamName': 'test',
             'StreamARN': 'arn:aws:kinesis:east-side:123456789:stream/test',
-            'StreamStatus': 'ACTIVE'
+            'StreamStatus': 'ACTIVE',
+            'EncryptionType': 'NONE'
         }
         self.assertTrue(success)
         self.assertEqual(stream, should_return)
@@ -255,7 +257,8 @@ class AnsibleKinesisStreamFunctions(unittest.TestCase):
             'RetentionPeriodHours': 24,
             'StreamName': 'test',
             'StreamARN': 'arn:aws:kinesis:east-side:123456789:stream/test',
-            'StreamStatus': 'ACTIVE'
+            'StreamStatus': 'ACTIVE',
+            'EncryptionType': 'NONE'
         }
         tags = {
             'env': 'development',
@@ -292,9 +295,32 @@ class AnsibleKinesisStreamFunctions(unittest.TestCase):
             'stream_name': 'test',
             'stream_arn': 'arn:aws:kinesis:east-side:123456789:stream/test',
             'stream_status': 'ACTIVE',
+            'encryption_type': 'NONE',
             'tags': tags,
         }
         self.assertTrue(success)
         self.assertTrue(changed)
         self.assertEqual(results, should_return)
         self.assertEqual(err_msg, 'Kinesis Stream test updated successfully.')
+
+    def test_enable_stream_encription(self):
+        client = boto3.client('kinesis', region_name=aws_region)
+        success, changed, err_msg, results = (
+            kinesis_stream.start_stream_encryption(
+                client, 'test', encryption_type='KMS', key_id='', wait=True, wait_timeout=60, check_mode=True
+            )
+        )
+        self.assertTrue(success)
+        self.assertTrue(changed)
+        self.assertEqual(err_msg, 'Kinesis Stream test encryption started successfully.')
+
+    def test_dsbale_stream_encryption(self):
+        client = boto3.client('kinesis', region_name=aws_region)
+        success, changed, err_msg, results = (
+            kinesis_stream.stop_stream_encryption(
+                client, 'test', encryption_type='KMS', key_id='', wait=True, wait_timeout=60, check_mode=True
+            )
+        )
+        self.assertTrue(success)
+        self.assertTrue(changed)
+        self.assertEqual(err_msg, 'Kinesis Stream test encryption stopped successfully.')

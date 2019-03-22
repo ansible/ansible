@@ -22,13 +22,18 @@ __metaclass__ = type
 
 import re
 import os
-import json
+import traceback
+import string
 
-from collections import Mapping
+from xml.etree.ElementTree import fromstring
 
-from ansible.module_utils.network_common import Template
-from ansible.module_utils.six import iteritems
-from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.network.common.utils import Template
+from ansible.module_utils.six import iteritems, string_types
+from ansible.module_utils.common._collections_compat import Mapping
+from ansible.errors import AnsibleError, AnsibleFilterError
+from ansible.utils.display import Display
+from ansible.utils.encrypt import random_password
 
 try:
     import yaml
@@ -42,12 +47,13 @@ try:
 except ImportError:
     HAS_TEXTFSM = False
 
-
 try:
-    from __main__ import display
+    from passlib.hash import md5_crypt
+    HAS_PASSLIB = True
 except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+    HAS_PASSLIB = False
+
+display = Display()
 
 
 def re_matchall(regex, value):
@@ -76,12 +82,21 @@ def re_search(regex, value):
 
 
 def parse_cli(output, tmpl):
+    if not isinstance(output, string_types):
+        raise AnsibleError("parse_cli input should be a string, but was given a input of %s" % (type(output)))
+
+    if not os.path.exists(tmpl):
+        raise AnsibleError('unable to locate parse_cli template: %s' % tmpl)
+
     try:
         template = Template()
     except ImportError as exc:
-        raise AnsibleError(str(exc))
+        raise AnsibleError(to_native(exc))
 
-    spec = yaml.safe_load(open(tmpl).read())
+    with open(tmpl) as tmpl_fh:
+        tmpl_content = tmpl_fh.read()
+
+    spec = yaml.safe_load(tmpl_content)
     obj = {}
 
     for name, attrs in iteritems(spec['keys']):
@@ -90,7 +105,7 @@ def parse_cli(output, tmpl):
         try:
             variables = spec.get('vars', {})
             value = template(value, variables)
-        except:
+        except Exception:
             pass
 
         if 'start_block' in attrs and 'end_block' in attrs:
@@ -106,8 +121,6 @@ def parse_cli(output, tmpl):
                 match_end = end_block.match(line)
 
                 if match_start:
-                    if lines:
-                        blocks.append('\n'.join(lines))
                     lines = list()
                     lines.append(line)
                     block_started = True
@@ -115,6 +128,7 @@ def parse_cli(output, tmpl):
                 elif match_end:
                     if lines:
                         lines.append(line)
+                        blocks.append('\n'.join(lines))
                     block_started = False
 
                 elif block_started:
@@ -140,7 +154,7 @@ def parse_cli(output, tmpl):
                     for k, v in iteritems(value):
                         try:
                             obj[k] = template(v, {'item': items}, fail_on_undefined=False)
-                        except:
+                        except Exception:
                             obj[k] = None
                     objects.append(obj)
 
@@ -216,13 +230,16 @@ def parse_cli_textfsm(value, template):
     if not HAS_TEXTFSM:
         raise AnsibleError('parse_cli_textfsm filter requires TextFSM library to be installed')
 
+    if not isinstance(value, string_types):
+        raise AnsibleError("parse_cli_textfsm input should be a string, but was given a input of %s" % (type(value)))
+
     if not os.path.exists(template):
-        raise AnsibleError('unable to locate parse_cli template: %s' % template)
+        raise AnsibleError('unable to locate parse_cli_textfsm template: %s' % template)
 
     try:
         template = open(template)
     except IOError as exc:
-        raise AnsibleError(str(exc))
+        raise AnsibleError(to_native(exc))
 
     re_table = textfsm.TextFSM(template)
     fsm_results = re_table.ParseText(value)
@@ -234,12 +251,239 @@ def parse_cli_textfsm(value, template):
     return results
 
 
+def _extract_param(template, root, attrs, value):
+
+    key = None
+    when = attrs.get('when')
+    conditional = "{%% if %s %%}True{%% else %%}False{%% endif %%}" % when
+    param_to_xpath_map = attrs['items']
+
+    if isinstance(value, Mapping):
+        key = value.get('key', None)
+        if key:
+            value = value['values']
+
+    entries = dict() if key else list()
+
+    for element in root.findall(attrs['top']):
+        entry = dict()
+        item_dict = dict()
+        for param, param_xpath in iteritems(param_to_xpath_map):
+            fields = None
+            try:
+                fields = element.findall(param_xpath)
+            except Exception:
+                display.warning("Failed to evaluate value of '%s' with XPath '%s'.\nUnexpected error: %s." % (param, param_xpath, traceback.format_exc()))
+
+            tags = param_xpath.split('/')
+
+            # check if xpath ends with attribute.
+            # If yes set attribute key/value dict to param value in case attribute matches
+            # else if it is a normal xpath assign matched element text value.
+            if len(tags) and tags[-1].endswith(']'):
+                if fields:
+                    if len(fields) > 1:
+                        item_dict[param] = [field.attrib for field in fields]
+                    else:
+                        item_dict[param] = fields[0].attrib
+                else:
+                    item_dict[param] = {}
+            else:
+                if fields:
+                    if len(fields) > 1:
+                        item_dict[param] = [field.text for field in fields]
+                    else:
+                        item_dict[param] = fields[0].text
+                else:
+                    item_dict[param] = None
+
+        if isinstance(value, Mapping):
+            for item_key, item_value in iteritems(value):
+                entry[item_key] = template(item_value, {'item': item_dict})
+        else:
+            entry = template(value, {'item': item_dict})
+
+        if key:
+            expanded_key = template(key, {'item': item_dict})
+            if when:
+                if template(conditional, {'item': {'key': expanded_key, 'value': entry}}):
+                    entries[expanded_key] = entry
+            else:
+                entries[expanded_key] = entry
+        else:
+            if when:
+                if template(conditional, {'item': entry}):
+                    entries.append(entry)
+            else:
+                entries.append(entry)
+
+    return entries
+
+
+def parse_xml(output, tmpl):
+    if not os.path.exists(tmpl):
+        raise AnsibleError('unable to locate parse_xml template: %s' % tmpl)
+
+    if not isinstance(output, string_types):
+        raise AnsibleError('parse_xml works on string input, but given input of : %s' % type(output))
+
+    root = fromstring(output)
+    try:
+        template = Template()
+    except ImportError as exc:
+        raise AnsibleError(to_native(exc))
+
+    with open(tmpl) as tmpl_fh:
+        tmpl_content = tmpl_fh.read()
+
+    spec = yaml.safe_load(tmpl_content)
+    obj = {}
+
+    for name, attrs in iteritems(spec['keys']):
+        value = attrs['value']
+
+        try:
+            variables = spec.get('vars', {})
+            value = template(value, variables)
+        except Exception:
+            pass
+
+        if 'items' in attrs:
+            obj[name] = _extract_param(template, root, attrs, value)
+        else:
+            obj[name] = value
+
+    return obj
+
+
+def type5_pw(password, salt=None):
+    if not HAS_PASSLIB:
+        raise AnsibleFilterError('type5_pw filter requires PassLib library to be installed')
+
+    if not isinstance(password, string_types):
+        raise AnsibleFilterError("type5_pw password input should be a string, but was given a input of %s" % (type(password).__name__))
+
+    salt_chars = u''.join((
+        to_text(string.ascii_letters),
+        to_text(string.digits),
+        u'./'
+    ))
+    if salt is not None and not isinstance(salt, string_types):
+        raise AnsibleFilterError("type5_pw salt input should be a string, but was given a input of %s" % (type(salt).__name__))
+    elif not salt:
+        salt = random_password(length=4, chars=salt_chars)
+    elif not set(salt) <= set(salt_chars):
+        raise AnsibleFilterError("type5_pw salt used inproper characters, must be one of %s" % (salt_chars))
+
+    encrypted_password = md5_crypt.encrypt(password, salt=salt)
+
+    return encrypted_password
+
+
+def hash_salt(password):
+
+    split_password = password.split("$")
+    if len(split_password) != 4:
+        raise AnsibleFilterError('Could not parse salt out password correctly from {0}'.format(password))
+    else:
+        return split_password[2]
+
+
+def comp_type5(unencrypted_password, encrypted_password, return_original=False):
+
+    salt = hash_salt(encrypted_password)
+    if type5_pw(unencrypted_password, salt) == encrypted_password:
+        if return_original is True:
+            return encrypted_password
+        else:
+            return True
+    return False
+
+
+def vlan_parser(vlan_list, first_line_len=48, other_line_len=44):
+
+    '''
+        Input: Unsorted list of vlan integers
+        Output: Sorted string list of integers according to IOS-like vlan list rules
+
+        1. Vlans are listed in ascending order
+        2. Runs of 3 or more consecutive vlans are listed with a dash
+        3. The first line of the list can be first_line_len characters long
+        4. Subsequent list lines can be other_line_len characters
+    '''
+
+    # Sort and remove duplicates
+    sorted_list = sorted(set(vlan_list))
+
+    if sorted_list[0] < 1 or sorted_list[-1] > 4094:
+        raise AnsibleFilterError('Valid VLAN range is 1-4094')
+
+    parse_list = []
+    idx = 0
+    while idx < len(sorted_list):
+        start = idx
+        end = start
+        while end < len(sorted_list) - 1:
+            if sorted_list[end + 1] - sorted_list[end] == 1:
+                end += 1
+            else:
+                break
+
+        if start == end:
+            # Single VLAN
+            parse_list.append(str(sorted_list[idx]))
+        elif start + 1 == end:
+            # Run of 2 VLANs
+            parse_list.append(str(sorted_list[start]))
+            parse_list.append(str(sorted_list[end]))
+        else:
+            # Run of 3 or more VLANs
+            parse_list.append(str(sorted_list[start]) + '-' + str(sorted_list[end]))
+        idx = end + 1
+
+    line_count = 0
+    result = ['']
+    for vlans in parse_list:
+        # First line (" switchport trunk allowed vlan ")
+        if line_count == 0:
+            if len(result[line_count] + vlans) > first_line_len:
+                result.append('')
+                line_count += 1
+                result[line_count] += vlans + ','
+            else:
+                result[line_count] += vlans + ','
+
+        # Subsequent lines (" switchport trunk allowed vlan add ")
+        else:
+            if len(result[line_count] + vlans) > other_line_len:
+                result.append('')
+                line_count += 1
+                result[line_count] += vlans + ','
+            else:
+                result[line_count] += vlans + ','
+
+    # Remove trailing orphan commas
+    for idx in range(0, len(result)):
+        result[idx] = result[idx].rstrip(',')
+
+    # Sometimes text wraps to next line, but there are no remaining VLANs
+    if '' in result:
+        result.remove('')
+
+    return result
+
+
 class FilterModule(object):
     """Filters for working with output from network devices"""
 
     filter_map = {
         'parse_cli': parse_cli,
-        'parse_cli_textfsm': parse_cli_textfsm
+        'parse_cli_textfsm': parse_cli_textfsm,
+        'parse_xml': parse_xml,
+        'type5_pw': type5_pw,
+        'hash_salt': hash_salt,
+        'comp_type5': comp_type5,
+        'vlan_parser': vlan_parser
     }
 
     def filters(self):

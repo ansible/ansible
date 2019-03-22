@@ -2,14 +2,14 @@ import collections
 import os
 import sys
 
-from ansible.compat.tests import mock
-from ansible.compat.tests import unittest
+from units.compat import mock
+from units.compat import unittest
 
 try:
     from ansible.modules.packaging.os.apt import (
         expand_pkgspec_from_fnmatches,
     )
-except:
+except Exception:
     # Need some more module_utils work (porting urls.py) before we can test
     # modules.  So don't error out in this case.
     if sys.version_info[0] >= 3:

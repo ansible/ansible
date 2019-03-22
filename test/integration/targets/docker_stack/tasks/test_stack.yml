@@ -1,0 +1,113 @@
+---
+- block:
+  - name: Make sure we're not already using Docker swarm
+    docker_swarm:
+      state: absent
+      force: true
+
+  - name: Create a Swarm cluster
+    docker_swarm:
+      state: present
+      advertise_addr: "{{ansible_default_ipv4.address}}"
+
+  - name: install docker_stack python requirements
+    pip:
+      name: jsondiff,pyyaml
+
+  - name: Create a stack without name
+    register: output
+    docker_stack:
+      state: present
+    ignore_errors: yes
+
+  - name: assert failure when name not set
+    assert:
+      that:
+      - output is failed
+      - 'output.msg == "missing required arguments: name"'
+
+  - name: Create a stack without compose
+    register: output
+    docker_stack:
+      name: test_stack
+    ignore_errors: yes
+
+  - name: assert failure when compose not set
+    assert:
+      that:
+      - output is failed
+      - 'output.msg == "compose parameter must be a list containing at least one element"'
+
+  - name: Ensure stack is absent
+    register: output
+    docker_stack:
+      state: absent
+      name: test_stack
+      absent_retries: 30
+
+  - name: Copy compose files
+    copy:
+      src: "{{item}}"
+      dest: "{{output_dir}}/"
+    with_items:
+    - stack_compose_base.yml
+    - stack_compose_overrides.yml
+
+  - name: Create stack with compose file
+    register: output
+    docker_stack:
+      state: present
+      name: test_stack
+      compose:
+      - "{{output_dir}}/stack_compose_base.yml"
+
+  - name: assert test_stack changed on stack creation with compose file
+    assert:
+      that:
+      - output is changed
+
+  # FIXME: updating the stack prevents leaving the swarm on Shippable
+  #- name: Update stack with YAML
+  #  register: output
+  #  docker_stack:
+  #    state: present
+  #    name: test_stack
+  #    compose:
+  #    - "{{stack_compose_base}}"
+  #    - "{{stack_compose_overrides}}"
+  #
+  #- name: assert test_stack correctly changed on update with yaml
+  #  assert:
+  #    that:
+  #    - output is changed
+  #    - output.stack_spec_diff == stack_update_expected_diff
+
+  - name: Delete stack
+    register: output
+    docker_stack:
+      state: absent
+      name: test_stack
+      absent_retries: 30
+
+  - name: assert delete of existing stack returns changed
+    assert:
+      that:
+      - output is changed
+
+  - name: Delete stack again
+    register: output
+    docker_stack:
+      state: absent
+      name: test_stack
+      absent_retries: 30
+
+  - name: assert state=absent idempotency
+    assert:
+      that:
+      - output is not changed
+
+  always:
+  - name: Remove a Swarm cluster
+    docker_swarm:
+      state: absent
+      force: true

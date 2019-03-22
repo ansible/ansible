@@ -19,12 +19,11 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import collections
-
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock
+from units.compat import unittest
+from units.compat.mock import patch, MagicMock
 
 from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.module_utils.common._collections_compat import Container
 from ansible.playbook.block import Block
 from ansible.playbook.task import Task
 
@@ -97,7 +96,7 @@ class TestHashParams(unittest.TestCase):
 
     def test_container_but_not_iterable(self):
         # This is a Container that is not iterable, which is unlikely but...
-        class MyContainer(collections.Container):
+        class MyContainer(Container):
             def __init__(self, some_thing):
                 self.data = []
                 self.data.append(some_thing)
@@ -148,6 +147,26 @@ class TestRole(unittest.TestCase):
         assert isinstance(r._task_blocks[0], Block)
 
     @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    def test_load_role_with_tasks_dir_vs_file(self):
+
+        fake_loader = DictDataLoader({
+            "/etc/ansible/roles/foo_tasks/tasks/custom_main/foo.yml": """
+            - command: bar
+            """,
+            "/etc/ansible/roles/foo_tasks/tasks/custom_main.yml": """
+            - command: baz
+            """,
+        })
+
+        mock_play = MagicMock()
+        mock_play.ROLE_CACHE = {}
+
+        i = RoleInclude.load('foo_tasks', play=mock_play, loader=fake_loader)
+        r = Role.load(i, play=mock_play, from_files=dict(tasks='custom_main'))
+
+        self.assertEqual(r._task_blocks[0]._ds[0]['command'], 'baz')
+
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
     def test_load_role_with_handlers(self):
 
         fake_loader = DictDataLoader({
@@ -185,6 +204,90 @@ class TestRole(unittest.TestCase):
         r = Role.load(i, play=mock_play)
 
         self.assertEqual(r._default_vars, dict(foo='bar'))
+        self.assertEqual(r._role_vars, dict(foo='bam'))
+
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    def test_load_role_with_vars_dirs(self):
+
+        fake_loader = DictDataLoader({
+            "/etc/ansible/roles/foo_vars/defaults/main/foo.yml": """
+            foo: bar
+            """,
+            "/etc/ansible/roles/foo_vars/vars/main/bar.yml": """
+            foo: bam
+            """,
+        })
+
+        mock_play = MagicMock()
+        mock_play.ROLE_CACHE = {}
+
+        i = RoleInclude.load('foo_vars', play=mock_play, loader=fake_loader)
+        r = Role.load(i, play=mock_play)
+
+        self.assertEqual(r._default_vars, dict(foo='bar'))
+        self.assertEqual(r._role_vars, dict(foo='bam'))
+
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    def test_load_role_with_vars_nested_dirs(self):
+
+        fake_loader = DictDataLoader({
+            "/etc/ansible/roles/foo_vars/defaults/main/foo/bar.yml": """
+            foo: bar
+            """,
+            "/etc/ansible/roles/foo_vars/vars/main/bar/foo.yml": """
+            foo: bam
+            """,
+        })
+
+        mock_play = MagicMock()
+        mock_play.ROLE_CACHE = {}
+
+        i = RoleInclude.load('foo_vars', play=mock_play, loader=fake_loader)
+        r = Role.load(i, play=mock_play)
+
+        self.assertEqual(r._default_vars, dict(foo='bar'))
+        self.assertEqual(r._role_vars, dict(foo='bam'))
+
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    def test_load_role_with_vars_nested_dirs_combined(self):
+
+        fake_loader = DictDataLoader({
+            "/etc/ansible/roles/foo_vars/defaults/main/foo/bar.yml": """
+            foo: bar
+            a: 1
+            """,
+            "/etc/ansible/roles/foo_vars/defaults/main/bar/foo.yml": """
+            foo: bam
+            b: 2
+            """,
+        })
+
+        mock_play = MagicMock()
+        mock_play.ROLE_CACHE = {}
+
+        i = RoleInclude.load('foo_vars', play=mock_play, loader=fake_loader)
+        r = Role.load(i, play=mock_play)
+
+        self.assertEqual(r._default_vars, dict(foo='bar', a=1, b=2))
+
+    @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
+    def test_load_role_with_vars_dir_vs_file(self):
+
+        fake_loader = DictDataLoader({
+            "/etc/ansible/roles/foo_vars/vars/main/foo.yml": """
+            foo: bar
+            """,
+            "/etc/ansible/roles/foo_vars/vars/main.yml": """
+            foo: bam
+            """,
+        })
+
+        mock_play = MagicMock()
+        mock_play.ROLE_CACHE = {}
+
+        i = RoleInclude.load('foo_vars', play=mock_play, loader=fake_loader)
+        r = Role.load(i, play=mock_play)
+
         self.assertEqual(r._role_vars, dict(foo='bam'))
 
     @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)

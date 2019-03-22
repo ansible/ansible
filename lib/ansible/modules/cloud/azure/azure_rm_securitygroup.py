@@ -11,7 +11,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -31,28 +31,22 @@ options:
             - The set of default rules automatically added to a security group at creation. In general default
               rules will not be modified. Modify rules to shape the flow of traffic to or from a subnet or NIC. See
               rules below for the makeup of a rule dict.
-        required: false
-        default: null
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
-        default: resource_group location
-        required: false
     name:
         description:
             - Name of the security group to operate on.
-        required: false
-        default: null
     purge_default_rules:
         description:
             - Remove any existing rules not matching those defined in the default_rules parameter.
-        default: false
-        required: false
+        type: bool
+        default: 'no'
     purge_rules:
         description:
             - Remove any existing rules not matching those defined in the rules parameters.
-        default: false
-        required: false
+        type: bool
+        default: 'no'
     resource_group:
         description:
             - Name of the resource group the security group belongs to.
@@ -60,8 +54,6 @@ options:
     rules:
         description:
             - Set of rules shaping traffic flow to or from a subnet or NIC. Each rule is a dictionary.
-        required: false
-        default: null
         suboptions:
             name:
                 description:
@@ -80,18 +72,28 @@ options:
             source_port_range:
                 description:
                   - Port or range of ports from which traffic originates.
+                  - It can accept string type or a list of string type.
                 default: "*"
             destination_port_range:
                 description:
                   - Port or range of ports to which traffic is headed.
+                  - It can accept string type or a list of string type.
                 default: "*"
             source_address_prefix:
                 description:
-                  - IP address or CIDR from which traffic originates.
+                  - The CIDR or source IP range.
+                  - Asterisk C(*) can also be used to match all source IPs.
+                  - Default tags such as C(VirtualNetwork), C(AzureLoadBalancer) and C(Internet) can also be used.
+                  - If this is an ingress rule, specifies where network traffic originates from.
+                  - It can accept string type or a list of string type.
                 default: "*"
             destination_address_prefix:
                 description:
-                  - IP address or CIDR to which traffic is headed.
+                  - The destination address prefix.
+                  - CIDR or destination IP range.
+                  - Asterisk C(*) can also be used to match all source IPs.
+                  - Default tags such as C(VirtualNetwork), C(AzureLoadBalancer) and C(Internet) can also be used.
+                  - It can accept string type or a list of string type.
                 default: "*"
             access:
                 description:
@@ -113,10 +115,9 @@ options:
                 default: Inbound
     state:
         description:
-            - Assert the state of the security group. Set to 'present' to create or update a security group. Set to
-              'absent' to remove a security group.
+            - Assert the state of the security group. Set to C(present) to create or update a security group. Set to
+              C(absent) to remove a security group.
         default: present
-        required: false
         choices:
             - absent
             - present
@@ -135,37 +136,49 @@ EXAMPLES = '''
 
 # Create a security group
 - azure_rm_securitygroup:
-      resource_group: mygroup
+      resource_group: myResourceGroup
       name: mysecgroup
       purge_rules: yes
       rules:
           - name: DenySSH
-            protocol: TCP
+            protocol: Tcp
             destination_port_range: 22
             access: Deny
             priority: 100
             direction: Inbound
           - name: 'AllowSSH'
-            protocol: TCP
-            source_address_prefix: '174.109.158.0/24'
+            protocol: Tcp
+            source_address_prefix:
+              - '174.109.158.0/24'
+              - '174.109.159.0/24'
             destination_port_range: 22
             access: Allow
             priority: 101
             direction: Inbound
+          - name: 'AllowMultiplePorts'
+            protocol: Tcp
+            source_address_prefix:
+              - '174.109.158.0/24'
+              - '174.109.159.0/24'
+            destination_port_range:
+              - 80
+              - 443
+            access: Allow
+            priority: 102
 
 # Update rules on existing security group
 - azure_rm_securitygroup:
-      resource_group: mygroup
+      resource_group: myResourceGroup
       name: mysecgroup
       rules:
           - name: DenySSH
-            protocol: TCP
+            protocol: Tcp
             destination_port_range: 22-23
             access: Deny
             priority: 100
             direction: Inbound
           - name: AllowSSHFromHome
-            protocol: TCP
+            protocol: Tcp
             source_address_prefix: '174.109.158.0/24'
             destination_port_range: 22-23
             access: Allow
@@ -177,7 +190,7 @@ EXAMPLES = '''
 
 # Delete security group
 - azure_rm_securitygroup:
-      resource_group: mygroup
+      resource_group: myResourceGroup
       name: mysecgroup
       state: absent
 '''
@@ -196,7 +209,7 @@ state:
                 "destination_port_range": "*",
                 "direction": "Inbound",
                 "etag": 'W/"edf48d56-b315-40ca-a85d-dbcb47f2da7d"',
-                "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/defaultSecurityRules/AllowVnetInBound",
+                "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/defaultSecurityRules/AllowVnetInBound",
                 "name": "AllowVnetInBound",
                 "priority": 65000,
                 "protocol": "*",
@@ -211,7 +224,7 @@ state:
                 "destination_port_range": "*",
                 "direction": "Inbound",
                 "etag": 'W/"edf48d56-b315-40ca-a85d-dbcb47f2da7d"',
-                "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/defaultSecurityRules/AllowAzureLoadBalancerInBound",
+                "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/defaultSecurityRules/AllowAzureLoadBalancerInBound",
                 "name": "AllowAzureLoadBalancerInBound",
                 "priority": 65001,
                 "protocol": "*",
@@ -226,7 +239,7 @@ state:
                 "destination_port_range": "*",
                 "direction": "Inbound",
                 "etag": 'W/"edf48d56-b315-40ca-a85d-dbcb47f2da7d"',
-                "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/defaultSecurityRules/DenyAllInBound",
+                "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/defaultSecurityRules/DenyAllInBound",
                 "name": "DenyAllInBound",
                 "priority": 65500,
                 "protocol": "*",
@@ -241,7 +254,7 @@ state:
                 "destination_port_range": "*",
                 "direction": "Outbound",
                 "etag": 'W/"edf48d56-b315-40ca-a85d-dbcb47f2da7d"',
-                "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/defaultSecurityRules/AllowVnetOutBound",
+                "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/defaultSecurityRules/AllowVnetOutBound",
                 "name": "AllowVnetOutBound",
                 "priority": 65000,
                 "protocol": "*",
@@ -256,7 +269,7 @@ state:
                 "destination_port_range": "*",
                 "direction": "Outbound",
                 "etag": 'W/"edf48d56-b315-40ca-a85d-dbcb47f2da7d"',
-                "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/defaultSecurityRules/AllowInternetOutBound",
+                "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/defaultSecurityRules/AllowInternetOutBound",
                 "name": "AllowInternetOutBound",
                 "priority": 65001,
                 "protocol": "*",
@@ -271,7 +284,7 @@ state:
                 "destination_port_range": "*",
                 "direction": "Outbound",
                 "etag": 'W/"edf48d56-b315-40ca-a85d-dbcb47f2da7d"',
-                "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/defaultSecurityRules/DenyAllOutBound",
+                "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/defaultSecurityRules/DenyAllOutBound",
                 "name": "DenyAllOutBound",
                 "priority": 65500,
                 "protocol": "*",
@@ -280,7 +293,7 @@ state:
                 "source_port_range": "*"
             }
         ],
-        "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/mysecgroup",
+        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/mysecgroup",
         "location": "westus",
         "name": "mysecgroup",
         "network_interfaces": [],
@@ -292,7 +305,7 @@ state:
                 "destination_port_range": "22",
                 "direction": "Inbound",
                 "etag": 'W/"edf48d56-b315-40ca-a85d-dbcb47f2da7d"',
-                "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/securityRules/DenySSH",
+                "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/securityRules/DenySSH",
                 "name": "DenySSH",
                 "priority": 100,
                 "protocol": "Tcp",
@@ -307,7 +320,7 @@ state:
                 "destination_port_range": "22",
                 "direction": "Inbound",
                 "etag": 'W/"edf48d56-b315-40ca-a85d-dbcb47f2da7d"',
-                "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/securityRules/AllowSSH",
+                "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/securityRules/AllowSSH",
                 "name": "AllowSSH",
                 "priority": 101,
                 "protocol": "Tcp",
@@ -328,21 +341,17 @@ state:
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.network.models import NetworkSecurityGroup, SecurityRule
-    from azure.mgmt.network.models import (
-        SecurityRuleAccess,
-        SecurityRuleDirection,
-        SecurityRuleProtocol
-    )
+    from azure.mgmt.network import NetworkManagementClient
 except ImportError:
     # This is handled in azure_rm_common
     pass
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 from ansible.module_utils.six import integer_types
+from ansible.module_utils._text import to_native
 
 
-def validate_rule(rule, rule_type=None):
+def validate_rule(self, rule, rule_type=None):
     '''
     Apply defaults to a rule dictionary and check that all values are valid.
 
@@ -350,103 +359,96 @@ def validate_rule(rule, rule_type=None):
     :param rule_type: Set to 'default' if the rule is part of the default set of rules.
     :return: None
     '''
-
-    if not rule.get('name'):
-        raise Exception("Rule name value is required.")
-
-    priority = rule.get('priority', None)
-    if not priority:
-        raise Exception("Rule priority is required.")
-    if not isinstance(priority, integer_types):
-        try:
-            priority = int(priority)
-            rule['priority'] = priority
-        except:
-            raise Exception("Rule priority attribute must be an integer.")
+    priority = rule.get('priority', 0)
     if rule_type != 'default' and (priority < 100 or priority > 4096):
         raise Exception("Rule priority must be between 100 and 4096")
 
-    if not rule.get('access'):
-        rule['access'] = 'Allow'
+    def check_plural(src, dest):
+        if isinstance(rule.get(src), list):
+            rule[dest] = rule[src]
+            rule[src] = None
 
-    access_names = [member.value for member in SecurityRuleAccess]
-    if rule['access'] not in access_names:
-        raise Exception("Rule access must be one of [{0}]".format(', '.join(access_names)))
-
-    if not rule.get('destination_address_prefix'):
-        rule['destination_address_prefix'] = '*'
-
-    if not rule.get('source_address_prefix'):
-        rule['source_address_prefix'] = '*'
-
-    if not rule.get('protocol'):
-        rule['protocol'] = '*'
-
-    protocol_names = [member.value for member in SecurityRuleProtocol]
-    if rule['protocol'] not in protocol_names:
-        raise Exception("Rule protocol must be one of [{0}]".format(', '.join(protocol_names)))
-
-    if not rule.get('direction'):
-        rule['direction'] = 'Inbound'
-
-    direction_names = [member.value for member in SecurityRuleDirection]
-    if rule['direction'] not in direction_names:
-        raise Exception("Rule direction must be one of [{0}]".format(', '.join(direction_names)))
-
-    if not rule.get('source_port_range'):
-        rule['source_port_range'] = '*'
-
-    if not rule.get('destination_port_range'):
-        rule['destination_port_range'] = '*'
+    check_plural('destination_address_prefix', 'destination_address_prefixes')
+    check_plural('source_address_prefix', 'source_address_prefixes')
+    check_plural('source_port_range', 'source_port_ranges')
+    check_plural('destination_port_range', 'destination_port_ranges')
 
 
-def compare_rules(r, rule):
-    matched = False
+def compare_rules_change(old_list, new_list, purge_list):
+    old_list = old_list or []
+    new_list = new_list or []
     changed = False
-    if r['name'] == rule['name']:
-        matched = True
-        if rule.get('description', None) != r['description']:
+
+    for old_rule in old_list:
+        matched = next((x for x in new_list if x['name'] == old_rule['name']), [])
+        if matched:  # if the new one is in the old list, check whether it is updated
+            changed = changed or compare_rules(old_rule, matched)
+        elif not purge_list:  # keep this rule
+            new_list.append(old_rule)
+        else:  # one rule is removed
             changed = True
-            r['description'] = rule['description']
-        if rule['protocol'] != r['protocol']:
-            changed = True
-            r['protocol'] = rule['protocol']
-        if str(rule['source_port_range']) != str(r['source_port_range']):
-            changed = True
-            r['source_port_range'] = str(rule['source_port_range'])
-        if str(rule['destination_port_range']) != str(r['destination_port_range']):
-            changed = True
-            r['destination_port_range'] = str(rule['destination_port_range'])
-        if rule['access'] != r['access']:
-            changed = True
-            r['access'] = rule['access']
-        if rule['priority'] != r['priority']:
-            changed = True
-            r['priority'] = rule['priority']
-        if rule['direction'] != r['direction']:
-            changed = True
-            r['direction'] = rule['direction']
-    return matched, changed
+    # Compare new list and old list is the same? here only compare names
+    if not changed:
+        new_names = [to_native(x['name']) for x in new_list]
+        old_names = [to_native(x['name']) for x in old_list]
+        changed = (set(new_names) != set(old_names))
+    return changed, new_list
 
 
-def create_rule_instance(rule):
+def compare_rules(old_rule, rule):
+    changed = False
+    if old_rule['name'] != rule['name']:
+        changed = True
+    if rule.get('description', None) != old_rule['description']:
+        changed = True
+    if rule['protocol'] != old_rule['protocol']:
+        changed = True
+    if str(rule['source_port_range']) != str(old_rule['source_port_range']):
+        changed = True
+    if str(rule['destination_port_range']) != str(old_rule['destination_port_range']):
+        changed = True
+    if rule['access'] != old_rule['access']:
+        changed = True
+    if rule['priority'] != old_rule['priority']:
+        changed = True
+    if rule['direction'] != old_rule['direction']:
+        changed = True
+    if str(rule['source_address_prefix']) != str(old_rule['source_address_prefix']):
+        changed = True
+    if str(rule['destination_address_prefix']) != str(old_rule['destination_address_prefix']):
+        changed = True
+    if set(rule.get('source_address_prefixes') or []) != set(old_rule.get('source_address_prefixes') or []):
+        changed = True
+    if set(rule.get('destination_address_prefixes') or []) != set(old_rule.get('destination_address_prefixes') or []):
+        changed = True
+    if set(rule.get('source_port_ranges') or []) != set(old_rule.get('source_port_ranges') or []):
+        changed = True
+    if set(rule.get('destination_port_ranges') or []) != set(old_rule.get('destination_port_ranges') or []):
+        changed = True
+    return changed
+
+
+def create_rule_instance(self, rule):
     '''
     Create an instance of SecurityRule from a dict.
 
     :param rule: dict
     :return: SecurityRule
     '''
-    return SecurityRule(
-        rule['protocol'],
-        rule['source_address_prefix'],
-        rule['destination_address_prefix'],
-        rule['access'],
-        rule['direction'],
-        id=rule.get('id', None),
+    return self.nsg_models.SecurityRule(
         description=rule.get('description', None),
+        protocol=rule.get('protocol', None),
         source_port_range=rule.get('source_port_range', None),
         destination_port_range=rule.get('destination_port_range', None),
+        source_address_prefix=rule.get('source_address_prefix', None),
+        source_address_prefixes=rule.get('source_address_prefixes', None),
+        destination_address_prefix=rule.get('destination_address_prefix', None),
+        destination_address_prefixes=rule.get('destination_address_prefixes', None),
+        source_port_ranges=rule.get('source_port_ranges', None),
+        destination_port_ranges=rule.get('destination_port_ranges', None),
+        access=rule.get('access', None),
         priority=rule.get('priority', None),
+        direction=rule.get('direction', None),
         provisioning_state=rule.get('provisioning_state', None),
         name=rule.get('name', None),
         etag=rule.get('etag', None)
@@ -469,6 +471,10 @@ def create_rule_dict_from_obj(rule):
         destination_port_range=rule.destination_port_range,
         source_address_prefix=rule.source_address_prefix,
         destination_address_prefix=rule.destination_address_prefix,
+        source_port_ranges=rule.source_port_ranges,
+        destination_port_ranges=rule.destination_port_ranges,
+        source_address_prefixes=rule.source_address_prefixes,
+        destination_address_prefixes=rule.destination_address_prefixes,
         access=rule.access,
         priority=rule.priority,
         direction=rule.direction,
@@ -508,18 +514,32 @@ def create_network_security_group_dict(nsg):
     return results
 
 
+rule_spec = dict(
+    name=dict(type='str', required=True),
+    description=dict(type='str'),
+    protocol=dict(type='str', choices=['Udp', 'Tcp', '*'], default='*'),
+    source_port_range=dict(type='raw', default='*'),
+    destination_port_range=dict(type='raw', default='*'),
+    source_address_prefix=dict(type='raw', default='*'),
+    destination_address_prefix=dict(type='raw', default='*'),
+    access=dict(type='str', choices=['Allow', 'Deny'], default='Allow'),
+    priority=dict(type='int', required=True),
+    direction=dict(type='str', choices=['Inbound', 'Outbound'], default='Inbound')
+)
+
+
 class AzureRMSecurityGroup(AzureRMModuleBase):
 
     def __init__(self):
 
         self.module_arg_spec = dict(
-            default_rules=dict(type='list'),
+            default_rules=dict(type='list', elements='dict', options=rule_spec),
             location=dict(type='str'),
             name=dict(type='str', required=True),
             purge_default_rules=dict(type='bool', default=False),
             purge_rules=dict(type='bool', default=False),
             resource_group=dict(required=True, type='str'),
-            rules=dict(type='list'),
+            rules=dict(type='list', elements='dict', options=rule_spec),
             state=dict(type='str', default='present', choices=['present', 'absent']),
         )
 
@@ -532,6 +552,7 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
         self.rules = None
         self.state = None
         self.tags = None
+        self.nsg_models = None  # type: azure.mgmt.network.models
 
         self.results = dict(
             changed=False,
@@ -542,6 +563,10 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
                                                    supports_check_mode=True)
 
     def exec_module(self, **kwargs):
+        # tighten up poll interval for security groups; default 30s is an eternity
+        # this value is still overridden by the response Retry-After header (which is set on the initial operation response to 10s)
+        self.network_client.config.long_running_operation_timeout = 3
+        self.nsg_models = self.network_client.network_security_groups.models
 
         for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
@@ -557,14 +582,14 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
         if self.rules:
             for rule in self.rules:
                 try:
-                    validate_rule(rule)
+                    validate_rule(self, rule)
                 except Exception as exc:
                     self.fail("Error validating rule {0} - {1}".format(rule, str(exc)))
 
         if self.default_rules:
             for rule in self.default_rules:
                 try:
-                    validate_rule(rule, 'default')
+                    validate_rule(self, rule, 'default')
                 except Exception as exc:
                     self.fail("Error validating default rule {0} - {1}".format(rule, str(exc)))
 
@@ -579,7 +604,7 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
             elif self.state == 'absent':
                 self.log("CHANGED: security group found but state is 'absent'")
                 changed = True
-        except CloudError:
+        except CloudError:  # TODO: actually check for ResourceMissingError
             if self.state == 'present':
                 self.log("CHANGED: security group not found and state is 'present'")
                 changed = True
@@ -588,56 +613,22 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
             # update the security group
             self.log("Update security group {0}".format(self.name))
 
-            if self.rules:
-                for rule in self.rules:
-                    rule_matched = False
-                    for r in results['rules']:
-                        match, changed = compare_rules(r, rule)
-                        if changed:
-                            changed = True
-                        if match:
-                            rule_matched = True
-
-                    if not rule_matched:
-                        changed = True
-                        results['rules'].append(rule)
-
-            if self.purge_rules:
-                new_rules = []
-                for rule in results['rules']:
-                    for r in self.rules:
-                        if rule['name'] == r['name']:
-                            new_rules.append(rule)
-                results['rules'] = new_rules
-
-            if self.default_rules:
-                for rule in self.default_rules:
-                    rule_matched = False
-                    for r in results['default_rules']:
-                        match, changed = compare_rules(r, rule)
-                        if changed:
-                            changed = True
-                        if match:
-                            rule_matched = True
-                    if not rule_matched:
-                        changed = True
-                        results['default_rules'].append(rule)
-
-            if self.purge_default_rules:
-                new_default_rules = []
-                for rule in results['default_rules']:
-                    for r in self.default_rules:
-                        if rule['name'] == r['name']:
-                            new_default_rules.append(rule)
-                results['default_rules'] = new_default_rules
-
             update_tags, results['tags'] = self.update_tags(results['tags'])
             if update_tags:
                 changed = True
 
+            rule_changed, new_rule = compare_rules_change(results['rules'], self.rules, self.purge_rules)
+            if rule_changed:
+                changed = True
+                results['rules'] = new_rule
+            rule_changed, new_rule = compare_rules_change(results['default_rules'], self.default_rules, self.purge_default_rules)
+            if rule_changed:
+                changed = True
+                results['default_rules'] = new_rule
+
             self.results['changed'] = changed
             self.results['state'] = results
-            if not self.check_mode:
+            if not self.check_mode and changed:
                 self.results['state'] = self.create_or_update(results)
 
         elif self.state == 'present' and changed:
@@ -678,22 +669,22 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
         return self.results
 
     def create_or_update(self, results):
-        parameters = NetworkSecurityGroup()
+        parameters = self.nsg_models.NetworkSecurityGroup()
         if results.get('rules'):
             parameters.security_rules = []
             for rule in results.get('rules'):
-                parameters.security_rules.append(create_rule_instance(rule))
+                parameters.security_rules.append(create_rule_instance(self, rule))
         if results.get('default_rules'):
             parameters.default_security_rules = []
             for rule in results.get('default_rules'):
-                parameters.default_security_rules.append(create_rule_instance(rule))
+                parameters.default_security_rules.append(create_rule_instance(self, rule))
         parameters.tags = results.get('tags')
         parameters.location = results.get('location')
 
         try:
-            poller = self.network_client.network_security_groups.create_or_update(self.resource_group,
-                                                                                  self.name,
-                                                                                  parameters)
+            poller = self.network_client.network_security_groups.create_or_update(resource_group_name=self.resource_group,
+                                                                                  network_security_group_name=self.name,
+                                                                                  parameters=parameters)
             result = self.get_poller_result(poller)
         except CloudError as exc:
             self.fail("Error creating/updating security group {0} - {1}".format(self.name, str(exc)))
@@ -701,7 +692,7 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
 
     def delete(self):
         try:
-            poller = self.network_client.network_security_groups.delete(self.resource_group, self.name)
+            poller = self.network_client.network_security_groups.delete(resource_group_name=self.resource_group, network_security_group_name=self.name)
             result = self.get_poller_result(poller)
         except CloudError as exc:
             raise Exception("Error deleting security group {0} - {1}".format(self.name, str(exc)))

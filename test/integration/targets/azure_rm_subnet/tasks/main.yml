@@ -12,6 +12,12 @@
       delete: on-exit
     resource_group: "{{ resource_group }}"
 
+- name: Create route table
+  azure_rm_routetable:
+    name: routetableforsubnet
+    resource_group: "{{ resource_group }}"
+  register: route_table
+
 - name: Remove subnet
   azure_rm_subnet:
     state: absent
@@ -42,6 +48,16 @@
 - assert:
     that: output.changed
 
+- name: Add the subnet back (idempontent)
+  azure_rm_subnet:
+    name: foobar
+    virtual_network_name: My_Virtual_Network
+    resource_group: "{{ resource_group }}"
+  register: output
+
+- assert:
+    that: not output.changed
+
 - name: Create network security group
   azure_rm_securitygroup:
     name: secgroupfoo
@@ -56,6 +72,11 @@
     resource_group: "{{ resource_group }}"
     address_prefix_cidr: "10.1.0.0/16"
     security_group: secgroupfoo
+    service_endpoints:
+      - service: Microsoft.Sql
+        locations:
+          - eastus
+          - westus
     tags:
        testing: testing
        delete: on-fini
@@ -66,7 +87,11 @@
     virtual_network_name: My_Virtual_Network
     resource_group: "{{ resource_group }}"
     address_prefix_cidr: "10.1.0.0/16"
-    security_group: secgroupfoo
+    service_endpoints:
+      - service: Microsoft.Sql
+        locations:
+          - eastus
+          - westus
     tags:
        testing: testing
        delete: on-fini
@@ -75,12 +100,86 @@
 - assert:
     that: not output.changed
 
+- name: Create network security group in another resource group
+  azure_rm_securitygroup:
+    name: secgroupfoo
+    resource_group: "{{ resource_group_secondary }}"
+  register: nsg
+
+- name: Update the subnet
+  azure_rm_subnet:
+    name: foobar
+    virtual_network_name: My_Virtual_Network
+    resource_group: "{{ resource_group }}"
+    address_prefix_cidr: "10.1.0.0/16"
+    route_table: "{{ route_table.id }}"
+    security_group:
+      name: secgroupfoo
+      resource_group: "{{ resource_group_secondary }}"
+    tags:
+       testing: testing
+       delete: on-fini
+  register: output
+
+- assert:
+    that: 
+    - output.changed
+    - output.state.network_security_group.id == nsg.state.id
+
+- name: Update the subnet (idempotent)
+  azure_rm_subnet:
+    name: foobar
+    virtual_network_name: My_Virtual_Network
+    resource_group: "{{ resource_group }}"
+    address_prefix_cidr: "10.1.0.0/16"
+    security_group: "{{ nsg.state.id }}"
+    tags:
+       testing: testing
+       delete: on-fini
+  register: output
+
+- assert:
+    that: not output.changed
+
+- name: Get subnet facts
+  azure_rm_subnet_facts:
+    name: foobar
+    virtual_network_name: My_Virtual_Network
+    resource_group: "{{ resource_group }}"
+  register: output
+
+- debug:
+    var: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.subnets[0]['id'] != None
+      - output.subnets[0]['resource_group'] != None
+      - output.subnets[0]['virtual_network_name'] != None
+      - output.subnets[0]['name'] != None
+      - output.subnets[0]['address_prefix_cidr'] != None
+      - output.subnets[0]['route_table'] != None
+      - output.subnets[0]['security_group'] != None
+      - output.subnets[0]['provisioning_state'] != None
+
 - name: Remove subnet
   azure_rm_subnet:
     state: absent
     name: foobar
     virtual_network_name: My_Virtual_Network
     resource_group: "{{ resource_group }}"
+
+- name: Remove subnet (idempotent)
+  azure_rm_subnet:
+    state: absent
+    name: foobar
+    virtual_network_name: My_Virtual_Network
+    resource_group: "{{ resource_group }}"
+  register: output
+
+- assert:
+    that: not output.changed
 
 - name: Remove security group
   azure_rm_securitygroup:

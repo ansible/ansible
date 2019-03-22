@@ -1,18 +1,10 @@
 #!/usr/bin/python
 # Copyright (c) 2016 Hewlett-Packard Enterprise
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -50,13 +42,9 @@ options:
    description:
      description:
         - Description of the recordset
-     required: false
-     default: None
    ttl:
      description:
         -  TTL (Time To Live) value in seconds
-     required: false
-     default: None
    state:
      description:
        - Should the resource be present or absent.
@@ -65,10 +53,9 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 '''
 
 EXAMPLES = '''
@@ -107,23 +94,23 @@ recordset:
     contains:
         id:
             description: Unique recordset ID
-            type: string
+            type: str
             sample: "c1c530a3-3619-46f3-b0f6-236927b2618c"
         name:
             description: Recordset name
-            type: string
+            type: str
             sample: "www.example.net."
         zone_id:
             description: Zone id
-            type: string
+            type: str
             sample: 9508e177-41d8-434e-962c-6fe6ca880af7
         type:
             description: Recordset type
-            type: string
+            type: str
             sample: "A"
         description:
             description: Recordset description
-            type: string
+            type: str
             sample: "Test description"
         ttl:
             description: Zone TTL value
@@ -135,28 +122,24 @@ recordset:
             sample: ['10.0.0.1']
 '''
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
-from distutils.version import StrictVersion
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def _system_state_change(state, records, description, ttl, zone, recordset):
     if state == 'present':
         if recordset is None:
             return True
-        if records is not None and recordset.records != records:
+        if records is not None and recordset['records'] != records:
             return True
-        if description is not None and recordset.description != description:
+        if description is not None and recordset['description'] != description:
             return True
-        if ttl is not None and recordset.ttl != ttl:
+        if ttl is not None and recordset['ttl'] != ttl:
             return True
     if state == 'absent' and recordset:
         return True
     return False
+
 
 def main():
     argument_spec = openstack_full_argument_spec(
@@ -177,22 +160,16 @@ def main():
                            supports_check_mode=True,
                            **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-    if StrictVersion(shade.__version__) <= StrictVersion('1.8.0'):
-        module.fail_json(msg="To utilize this module, the installed version of "
-                             "the shade library MUST be >1.8.0")
-
     zone = module.params.get('zone')
     name = module.params.get('name')
     state = module.params.get('state')
 
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.openstack_cloud(**module.params)
         recordset_type = module.params.get('recordset_type')
-        recordset_filter = { 'type': recordset_type  }
+        recordset_filter = {'type': recordset_type}
 
-        recordsets = cloud.search_recordsets(zone, name_or_id=name + '.' + zone, filters=recordset_filter)
+        recordsets = cloud.search_recordsets(zone, name_or_id=name, filters=recordset_filter)
 
         if len(recordsets) == 1:
             recordset = recordsets[0]
@@ -245,18 +222,15 @@ def main():
                                                               None, recordset))
 
             if recordset is None:
-                changed=False
+                changed = False
             else:
                 cloud.delete_recordset(zone, recordset_id)
-                changed=True
+                changed = True
             module.exit_json(changed=changed)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
 
 if __name__ == '__main__':
     main()

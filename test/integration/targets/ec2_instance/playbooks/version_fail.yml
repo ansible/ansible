@@ -1,0 +1,47 @@
+- hosts: localhost
+  connection: local
+  environment: "{{ ansible_test.environment }}"
+  vars:
+     resource_prefix: 'ansible-testing'
+
+  tasks:
+    - block:
+        - name: set up aws connection info
+          set_fact:
+            aws_connection_info: &aws_connection_info
+              aws_access_key: "{{ aws_access_key }}"
+              aws_secret_key: "{{ aws_secret_key }}"
+              security_token: "{{ security_token }}"
+              region: "{{ aws_region }}"
+          no_log: True
+
+        - name: Include vars file in roles/ec2_instance/defaults/main.yml
+          include_vars:
+            file: 'roles/ec2_instance/defaults/main.yml'
+
+        - name: create c4.large with cpu options (fails gracefully)
+          ec2_instance:
+            state: present
+            name: "ansible-test-{{ resource_prefix | regex_search('([0-9]+)$') }}-ec2"
+            image_id: "{{ ec2_ami_image[aws_region] }}"
+            instance_type: c4.large
+            cpu_options:
+                core_count: 1
+                threads_per_core: 1
+            <<: *aws_connection_info
+          register: ec2_instance_cpu_options_creation
+          ignore_errors: yes
+
+        - name: check that graceful error message is returned when creation with cpu_options and old botocore
+          assert:
+            that:
+              - ec2_instance_cpu_options_creation.failed
+              - 'ec2_instance_cpu_options_creation.msg == "cpu_options is only supported with botocore >= 1.10.16"'
+
+      always:
+        - name: cleanup c4.large in case graceful failure was in fact a graceful success
+          ec2_instance:
+            state: absent
+            name: "ansible-test-{{ resource_prefix | regex_search('([0-9]+)$') }}-ec2"
+            <<: *aws_connection_info
+          ignore_errors: yes

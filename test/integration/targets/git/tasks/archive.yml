@@ -1,0 +1,76 @@
+- name: ARCHIVE | Clear checkout_dir
+  file:
+    state: absent
+    path: "{{ checkout_dir }}"
+
+- name: ARCHIVE | Archive repo using various archival format
+  git:
+    repo: '{{ repo_format1 }}'
+    dest: '{{ checkout_dir }}'
+    archive: '{{ checkout_dir }}/test_role.{{ item }}'
+  register: git_archive
+  with_items: "{{ git_archive_extensions[ansible_os_family ~ ansible_distribution_major_version | default('default') ] | default(git_archive_extensions.default) }}"
+
+# The map filter was added in Jinja2 2.7, which is newer than the version on RHEL/CentOS 6,
+# so we skip this validation on those hosts
+- name: ARCHIVE | Assert that archives were downloaded
+  assert:
+    that: (git_archive.results | map(attribute='changed') | unique | list)[0]
+  when:
+    - "ansible_os_family == 'RedHat'"
+    - ansible_distribution_major_version is version('7', '>=')
+
+- name: ARCHIVE | Check if archive file is created or not
+  stat:
+    path: '{{ checkout_dir }}/test_role.{{ item }}'
+  register: archive_check
+  with_items: "{{ git_archive_extensions[ansible_os_family ~ ansible_distribution_major_version | default('default') ] | default(git_archive_extensions.default) }}"
+
+- name: ARCHIVE | Assert that archive files exist
+  assert:
+    that: (archive_check.results | map(attribute='stat.exists') | unique | list)[0]
+  when:
+    - "ansible_os_family == 'RedHat'"
+    - ansible_distribution_major_version is version('7', '>=')
+
+- name: ARCHIVE | Clear checkout_dir               
+  file:                  
+    state: absent        
+    path: "{{ checkout_dir }}"                     
+                         
+- name: ARCHIVE | Clone clean repo                 
+  git:                   
+    repo: '{{ repo_format1 }}'                     
+    dest: '{{ checkout_dir }}'
+
+# Check git archive functionality without update
+- name: ARCHIVE | Archive repo using various archival format and without update
+  git:
+    repo: '{{ repo_format1 }}'
+    dest: '{{ checkout_dir }}'
+    update: no
+    archive: '{{ checkout_dir }}/test_role.{{ item }}'
+  register: git_archive
+  with_items: "{{ git_archive_extensions[ansible_os_family ~ ansible_distribution_major_version | default('default') ] | default(git_archive_extensions.default) }}"
+
+# The map filter was added in Jinja2 2.7, which is newer than the version on RHEL/CentOS 6,
+# so we skip this validation on those hosts
+- name: ARCHIVE | Assert that archives were downloaded
+  assert:
+    that: (git_archive.results | map(attribute='changed') | unique | list)[0]
+  when:
+    - "ansible_os_family == 'RedHat'"
+    - ansible_distribution_major_version is version('7', '>=')
+
+- name: ARCHIVE | Check if archive file is created or not
+  stat:
+    path: '{{ checkout_dir }}/test_role.{{ item }}'
+  register: archive_check
+  with_items: "{{ git_archive_extensions[ansible_os_family ~ ansible_distribution_major_version | default('default') ] | default(git_archive_extensions.default) }}"
+
+- name: ARCHIVE | Assert that archive files exist
+  assert:
+    that: (archive_check.results | map(attribute='stat.exists') | unique | list)[0]
+  when:
+    - "ansible_os_family == 'RedHat'"
+    - ansible_distribution_major_version is version('7', '>=')

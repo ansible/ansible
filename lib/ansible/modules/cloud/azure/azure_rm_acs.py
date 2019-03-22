@@ -1,17 +1,16 @@
 #!/usr/bin/python
-#
-# Copyright (c) 2017 Julien Stroheker, <juliens@microsoft.com>
-#
+# -*- coding: utf-8 -*
+
+# Copyright: (c) 2017, Julien Stroheker <juliens@microsoft.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-__metaclass__ = type
 
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -30,29 +29,28 @@ options:
         description:
             - Name of the Container Services instance.
         required: true
-        default: null
     state:
         description:
-            - Assert the state of the ACS. Use 'present' to create or update an ACS and 'absent' to delete it.
+            - Assert the state of the ACS. Use C(present) to create or update an ACS and C(absent) to delete it.
         default: present
         choices:
             - absent
             - present
-        required: false
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
-        default: resource_group location
-        required: false
     orchestration_platform:
         description:
             - Specifies the Container Orchestration Platform to use. Currently can be either DCOS, Kubernetes or Swarm.
+        choices:
+            - 'DCOS'
+            - 'Kubernetes'
+            - 'Swarm'
         required: true
     master_profile:
         description:
             - Master profile suboptions.
         required: true
-        default: null
         suboptions:
             count:
                 description:
@@ -62,6 +60,11 @@ options:
                   - 1
                   - 3
                   - 5
+            vm_size:
+                description:
+                    - The VM Size of each of the Agent Pool VM's (e.g. Standard_F1 / Standard_D2v2).
+                required: true
+                version_added: 2.5
             dns_prefix:
                 description:
                   - The DNS Prefix to use for the Container Service master nodes.
@@ -70,13 +73,11 @@ options:
         description:
             - The linux profile suboptions.
         required: true
-        default: null
         suboptions:
             admin_username:
                 description:
                   - The Admin Username for the Cluster.
                 required: true
-                default: azureuser
             ssh_key:
                 description:
                     - The Public SSH Key used to access the cluster.
@@ -85,7 +86,6 @@ options:
         description:
             - The agent pool profile suboptions.
         required: true
-        default: null
         suboptions:
             name:
                 description:
@@ -95,7 +95,6 @@ options:
                 description:
                     - Number of agents (VMs) to host docker containers. Allowed values must be in the range of 1 to 100 (inclusive).
                 required: true
-                default: 1
             dns_prefix:
                 description:
                     - The DNS Prefix given to Agents in this Agent Pool.
@@ -104,26 +103,21 @@ options:
                 description:
                     - The VM Size of each of the Agent Pool VM's (e.g. Standard_F1 / Standard_D2v2).
                 required: true
-                default: Standard_D2v2
     service_principal:
         description:
             - The service principal suboptions.
-        required: false
-        default: null
         suboptions:
             client_id:
                 description:
                     - The ID for the Service Principal.
-                required: false
             client_secret:
                 description:
                     - The secret password associated with the service principal.
-                required: false
     diagnostics_profile:
         description:
             - Should VM Diagnostics be enabled for the Container Service VM's.
         required: true
-        default: false
+        type: bool
 
 extends_documentation_fragment:
     - azure
@@ -139,11 +133,12 @@ EXAMPLES = '''
       azure_rm_acs:
         name: acctestcontservice1
         location: eastus
-        resource_group: Testing
+        resource_group: myResourceGroup
         orchestration_platform: Kubernetes
         master_profile:
             - count: 3
               dns_prefix: acsk8smasterdns
+              vm_size: Standard_D2_v2
         linux_profile:
             - admin_username: azureuser
               ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAA...
@@ -163,11 +158,12 @@ EXAMPLES = '''
       azure_rm_acs:
         name: acctestcontservice2
         location: eastus
-        resource_group: Testing
+        resource_group: myResourceGroup
         orchestration_platform: DCOS
         master_profile:
             - count: 3
               dns_prefix: acsdcosmasterdns
+              vm_size: Standard_D2_v2
         linux_profile:
             - admin_username: azureuser
               ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAA...
@@ -184,11 +180,12 @@ EXAMPLES = '''
       azure_rm_acs:
         name: acctestcontservice3
         location: eastus
-        resource_group: Testing
+        resource_group: myResourceGroup
         orchestration_platform: Swarm
         master_profile:
             - count: 3
               dns_prefix: acsswarmmasterdns
+              vm_size: Standard_D2_v2
         linux_profile:
             - admin_username: azureuser
               ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAA...
@@ -209,18 +206,16 @@ EXAMPLES = '''
       azure_rm_acs:
         name: acctestcontservice3
         location: eastus
-        resource_group: Testing
+        resource_group: myResourceGroup
         state: absent
         orchestration_platform: Swarm
         master_profile:
             - count: 1
+              vm_size: Standard_A0
               dns_prefix: acstestingmasterdns5
         linux_profile:
             - admin_username: azureuser
               ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAA...
-        service_principal:
-            - client_id: 7fb4173c-3ca3-4d5b-87f8-1daac941207a
-              client_secret: MPNSuM1auUuITefiLGBrpZZnLMDKBLw2
         agent_pool_profiles:
             - name: default
               count: 4
@@ -320,12 +315,17 @@ def create_ssh_configuration_instance(sshconf):
 def create_master_profile_instance(masterprofile):
     '''
     Helper method to serialize a dict to a ContainerServiceMasterProfile
+    Note: first_consecutive_static_ip is specifically set to None, for Azure server doesn't accept
+    request body with this property. This should be an inconsistency bug before Azure client SDK
+    and Azure server.
     :param: masterprofile: dict with the parameters to setup the ContainerServiceMasterProfile
     :return: ContainerServiceMasterProfile
     '''
     return ContainerServiceMasterProfile(
         count=masterprofile[0]['count'],
-        dns_prefix=masterprofile[0]['dns_prefix']
+        dns_prefix=masterprofile[0]['dns_prefix'],
+        vm_size=masterprofile[0]['vm_size'],
+        first_consecutive_static_ip=None
     )
 
 
@@ -357,7 +357,11 @@ def create_acs_dict(acs):
     :param: acs: ContainerService or AzureOperationPoller with the Azure callback object
     :return: dict with the state on Azure
     '''
-    results = dict(
+    service_principal_profile_dict = None
+    if acs.orchestrator_profile.orchestrator_type == 'Kubernetes':
+        service_principal_profile_dict = create_service_principal_profile_dict(acs.service_principal_profile)
+
+    return dict(
         id=acs.id,
         name=acs.name,
         location=acs.location,
@@ -365,13 +369,12 @@ def create_acs_dict(acs):
         orchestrator_profile=create_orchestrator_profile_dict(acs.orchestrator_profile),
         master_profile=create_master_profile_dict(acs.master_profile),
         linux_profile=create_linux_profile_dict(acs.linux_profile),
-        service_principal_profile=acs.service_principal_profile,
+        service_principal_profile=service_principal_profile_dict,
         diagnostics_profile=create_diagnotstics_profile_dict(acs.diagnostics_profile),
         provisioning_state=acs.provisioning_state,
         agent_pool_profiles=create_agent_pool_profiles_dict(acs.agent_pool_profiles),
         type=acs.type
     )
-    return results
 
 
 def create_linux_profile_dict(linuxprofile):
@@ -380,11 +383,10 @@ def create_linux_profile_dict(linuxprofile):
     :param: linuxprofile: ContainerServiceLinuxProfile with the Azure callback object
     :return: dict with the state on Azure
     '''
-    results = dict(
+    return dict(
         ssh_key=linuxprofile.ssh.public_keys[0].key_data,
         admin_username=linuxprofile.admin_username
     )
-    return results
 
 
 def create_master_profile_dict(masterprofile):
@@ -393,12 +395,24 @@ def create_master_profile_dict(masterprofile):
     :param: masterprofile: ContainerServiceMasterProfile with the Azure callback object
     :return: dict with the state on Azure
     '''
-    results = dict(
+    return dict(
         count=masterprofile.count,
         fqdn=masterprofile.fqdn,
+        vm_size=masterprofile.vm_size,
         dns_prefix=masterprofile.dns_prefix
     )
-    return results
+
+
+def create_service_principal_profile_dict(serviceprincipalprofile):
+    '''
+    Helper method to deserialize a ContainerServiceServicePrincipalProfile to a dict
+    Note: For security reason, the service principal secret is skipped on purpose.
+    :param: serviceprincipalprofile: ContainerServiceServicePrincipalProfile with the Azure callback object
+    :return: dict with the state on Azure
+    '''
+    return dict(
+        client_id=serviceprincipalprofile.client_id
+    )
 
 
 def create_diagnotstics_profile_dict(diagnosticsprofile):
@@ -407,10 +421,9 @@ def create_diagnotstics_profile_dict(diagnosticsprofile):
     :param: diagnosticsprofile: ContainerServiceVMDiagnostics with the Azure callback object
     :return: dict with the state on Azure
     '''
-    results = dict(
+    return dict(
         vm_diagnostics=diagnosticsprofile.vm_diagnostics.enabled
     )
-    return results
 
 
 def create_orchestrator_profile_dict(orchestratorprofile):
@@ -419,10 +432,9 @@ def create_orchestrator_profile_dict(orchestratorprofile):
     :param: orchestratorprofile: ContainerServiceOrchestratorProfile with the Azure callback object
     :return: dict with the state on Azure
     '''
-    results = dict(
+    return dict(
         orchestrator_type=str(orchestratorprofile.orchestrator_type)
     )
-    return results
 
 
 def create_agent_pool_profiles_dict(agentpoolprofiles):
@@ -431,17 +443,13 @@ def create_agent_pool_profiles_dict(agentpoolprofiles):
     :param: agentpoolprofiles: ContainerServiceAgentPoolProfile with the Azure callback object
     :return: dict with the state on Azure
     '''
-    results = []
-    for profile in agentpoolprofiles:
-        result = dict(
-            count=profile.count,
-            vm_size=profile.vm_size,
-            name=profile.name,
-            dns_prefix=profile.dns_prefix,
-            fqdn=profile.fqdn
-        )
-        results.append(result)
-    return results
+    return [dict(
+        count=profile.count,
+        vm_size=profile.vm_size,
+        name=profile.name,
+        dns_prefix=profile.dns_prefix,
+        fqdn=profile.fqdn
+    ) for profile in agentpoolprofiles]
 
 
 class AzureRMContainerService(AzureRMModuleBase):
@@ -459,13 +467,11 @@ class AzureRMContainerService(AzureRMModuleBase):
             ),
             state=dict(
                 type='str',
-                required=False,
                 default='present',
                 choices=['present', 'absent']
             ),
             location=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             orchestration_platform=dict(
                 type='str',
@@ -485,8 +491,7 @@ class AzureRMContainerService(AzureRMModuleBase):
                 required=True
             ),
             service_principal=dict(
-                type='list',
-                required=False
+                type='list'
             ),
             diagnostics_profile=dict(
                 type='bool',
@@ -523,10 +528,7 @@ class AzureRMContainerService(AzureRMModuleBase):
         results = dict()
         to_be_updated = False
 
-        try:
-            resource_group = self.get_resource_group(self.resource_group)
-        except CloudError:
-            self.fail('resource group {} not found'.format(self.resource_group))
+        resource_group = self.get_resource_group(self.resource_group)
         if not self.location:
             self.location = resource_group.location
 
@@ -543,7 +545,7 @@ class AzureRMContainerService(AzureRMModuleBase):
 
             mastercount = self.master_profile[0].get('count')
             if mastercount != 1 and mastercount != 3 and mastercount != 5:
-                self.fail('Master Count number wrong : {} / should be 1 3 or 5'.format(mastercount))
+                self.fail('Master Count number wrong : {0} / should be 1 3 or 5'.format(mastercount))
 
             # For now Agent Pool cannot be more than 1, just remove this part in the future if it change
             agentpoolcount = len(self.agent_pool_profiles)
@@ -563,16 +565,33 @@ class AzureRMContainerService(AzureRMModuleBase):
                     if update_tags:
                         to_be_updated = True
 
+                    def is_property_changed(profile, property, ignore_case=False):
+                        base = response[profile].get(property)
+                        new = getattr(self, profile)[0].get(property)
+                        if ignore_case:
+                            return base.lower() != new.lower()
+                        else:
+                            return base != new
+
                     # Cannot Update the master count for now // Uncomment this block in the future to support it
-                    if response['master_profile'].get('count') != self.master_profile[0].get('count'):
+                    if is_property_changed('master_profile', 'count'):
                         # self.log(("Master Profile Count Diff, Was {0} / Now {1}"
                         #           .format(response['master_profile'].count,
                         #           self.master_profile[0].get('count'))))
                         # to_be_updated = True
                         self.module.warn("master_profile.count cannot be updated")
 
+                    # Cannot Update the master vm_size for now. Could be a client SDK bug
+                    # Uncomment this block in the future to support it
+                    if is_property_changed('master_profile', 'vm_size', True):
+                        # self.log(("Master Profile VM Size Diff, Was {0} / Now {1}"
+                        #           .format(response['master_profile'].get('vm_size'),
+                        #                   self.master_profile[0].get('vm_size'))))
+                        # to_be_updated = True
+                        self.module.warn("master_profile.vm_size cannot be updated")
+
                     # Cannot Update the SSH Key for now // Uncomment this block in the future to support it
-                    if response['linux_profile'].get('ssh_key') != self.linux_profile[0].get('ssh_key'):
+                    if is_property_changed('linux_profile', 'ssh_key'):
                         # self.log(("Linux Profile Diff SSH, Was {0} / Now {1}"
                         #          .format(response['linux_profile'].ssh.public_keys[0].key_data,
                         #          self.linux_profile[0].get('ssh_key'))))
@@ -582,7 +601,7 @@ class AzureRMContainerService(AzureRMModuleBase):
                     # self.log("linux_profile response : {0}".format(response['linux_profile'].get('admin_username')))
                     # self.log("linux_profile self : {0}".format(self.linux_profile[0].get('admin_username')))
                     # Cannot Update the Username for now // Uncomment this block in the future to support it
-                    if response['linux_profile'].get('admin_username') != self.linux_profile[0].get('admin_username'):
+                    if is_property_changed('linux_profile', 'admin_username'):
                         # self.log(("Linux Profile Diff User, Was {0} / Now {1}"
                         #          .format(response['linux_profile'].admin_username,
                         #          self.linux_profile[0].get('admin_username'))))
@@ -599,10 +618,11 @@ class AzureRMContainerService(AzureRMModuleBase):
                         for profile_self in self.agent_pool_profiles:
                             if profile_result['name'] == profile_self['name']:
                                 matched = True
-                                if profile_result['count'] != profile_self['count'] or profile_result['vm_size'] != profile_self['vm_size']:
+                                if profile_result['count'] != profile_self['count'] or profile_result['vm_size'] != \
+                                        profile_self['vm_size']:
                                     self.log(("Agent Profile Diff - Count was {0} / Now {1} - Vm_size was {2} / Now {3}"
-                                             .format(profile_result['count'], profile_self['count'],
-                                              profile_result['vm_size'], profile_self['vm_size'])))
+                                              .format(profile_result['count'], profile_self['count'],
+                                                      profile_result['vm_size'], profile_self['vm_size'])))
                                     to_be_updated = True
                         if not matched:
                             self.log("Agent Pool not found")
@@ -619,6 +639,8 @@ class AzureRMContainerService(AzureRMModuleBase):
 
                 self.log("Creation / Update done")
         elif self.state == 'absent':
+            if self.check_mode:
+                return self.results
             self.delete_acs()
             self.log("ACS instance deleted")
 
@@ -664,7 +686,8 @@ class AzureRMContainerService(AzureRMModuleBase):
         # self.log("vm_diagnostics : {0}".format(parameters.diagnostics_profile.vm_diagnostics))
 
         try:
-            poller = self.containerservice_client.container_services.create_or_update(self.resource_group, self.name, parameters)
+            poller = self.containerservice_client.container_services.create_or_update(self.resource_group, self.name,
+                                                                                      parameters)
             response = self.get_poller_result(poller)
         except CloudError as exc:
             self.log('Error attempting to create the ACS instance.')
@@ -714,6 +737,7 @@ class AzureRMContainerService(AzureRMModuleBase):
 def main():
     """Main execution"""
     AzureRMContainerService()
+
 
 if __name__ == '__main__':
     main()

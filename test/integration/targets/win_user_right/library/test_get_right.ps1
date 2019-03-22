@@ -1,6 +1,6 @@
 #!powershell
 
-#Requires -Module Ansible.ModuleUtils.Legacy.psm1
+#Requires -Module Ansible.ModuleUtils.Legacy
 
 # basic script to get the lsit of users in a particular right
 # this is quite complex to put as a simple script so this is

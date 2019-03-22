@@ -23,14 +23,10 @@ options:
   filters:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
-        See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeRouteTables.html) for possible filters.
-    required: false
-    default: None
+        See U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeRouteTables.html) for possible filters.
   vpn_gateway_ids:
     description:
       - Get details of a specific Virtual Gateway ID. This value should be provided as a list.
-    required: false
-    default: None
 author: "Nick Aslanidis (@naslanidis)"
 extends_documentation_fragment:
     - aws
@@ -107,10 +103,10 @@ from ansible.module_utils.ec2 import (ec2_argument_spec, get_aws_connection_info
 
 def get_virtual_gateway_info(virtual_gateway):
     virtual_gateway_info = {'VpnGatewayId': virtual_gateway['VpnGatewayId'],
-                             'State': virtual_gateway['State'],
-                             'Type': virtual_gateway['Type'],
-                             'VpcAttachments': virtual_gateway['VpcAttachments'],
-                             'Tags': virtual_gateway['Tags']}
+                            'State': virtual_gateway['State'],
+                            'Type': virtual_gateway['Type'],
+                            'VpcAttachments': virtual_gateway['VpcAttachments'],
+                            'Tags': virtual_gateway.get('Tags', [])}
     return virtual_gateway_info
 
 
@@ -126,20 +122,18 @@ def list_virtual_gateways(client, module):
     try:
         all_virtual_gateways = client.describe_vpn_gateways(**params)
     except botocore.exceptions.ClientError as e:
-        module.fail_json(msg=str(e),exception=traceback.format_exc())
+        module.fail_json(msg=str(e), exception=traceback.format_exc())
 
-    snaked_vgws = [camel_dict_to_snake_dict(get_virtual_gateway_info(vgw))
-                                for vgw in all_virtual_gateways['VpnGateways']]
-
-    module.exit_json(virtual_gateways=snaked_vgws)
+    return [camel_dict_to_snake_dict(get_virtual_gateway_info(vgw))
+            for vgw in all_virtual_gateways['VpnGateways']]
 
 
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            filters = dict(type='dict', default=dict()),
-            vpn_gateway_ids = dict(type='list', default=None)
+            filters=dict(type='dict', default=dict()),
+            vpn_gateway_ids=dict(type='list', default=None)
         )
     )
 
@@ -153,12 +147,12 @@ def main():
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
         connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_kwargs)
     except botocore.exceptions.NoCredentialsError as e:
-        module.fail_json(msg="Can't authorize connection - "+str(e))
+        module.fail_json(msg="Can't authorize connection - " + str(e))
 
     # call your function here
     results = list_virtual_gateways(connection, module)
 
-    module.exit_json(result=results)
+    module.exit_json(virtual_gateways=results)
 
 
 if __name__ == '__main__':

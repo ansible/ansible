@@ -20,9 +20,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.ios import ios_ping
-from .ios_module import TestIosModule, load_fixture, set_module_args
+from units.modules.utils import set_module_args
+from .ios_module import TestIosModule, load_fixture
 
 
 class TestIosPingModule(TestIosModule):
@@ -30,10 +31,12 @@ class TestIosPingModule(TestIosModule):
     module = ios_ping
 
     def setUp(self):
+        super(TestIosPingModule, self).setUp()
         self.mock_run_commands = patch('ansible.modules.network.ios.ios_ping.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
     def tearDown(self):
+        super(TestIosPingModule, self).tearDown()
         self.mock_run_commands.stop()
 
     def load_fixtures(self, commands=None):

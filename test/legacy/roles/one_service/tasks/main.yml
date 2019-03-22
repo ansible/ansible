@@ -1,0 +1,266 @@
+---
+- name: Instantiate a service in check mode
+  one_service:
+    template_id: '{{ one_template_id }}'
+  register: create_check_mode
+  check_mode: yes
+
+- name: Check if instantiate in check mode returns as 'changed'
+  assert:
+    that:
+      - create_check_mode is changed
+    msg: Check mode doesn't return as 'changed' when instantiating in check mode
+
+- name: Check if it fails if no service in check mode
+  one_service:
+    service_name: testing-one_service-module-{{ ansible_date_time.iso8601_basic_short }}-missing
+  register: missing_service
+  failed_when: not missing_service is failed
+  check_mode: yes
+
+- name: Check if fails if no service
+  one_service:
+    service_name: testing-one_service-module-{{ ansible_date_time.iso8601_basic_short }}-missing
+  register: missing_service
+  failed_when: not missing_service is failed
+
+# Instantiate a new service without passing required custom_attrs, wait for it to fail, then delete it
+- block:
+    - name: Instantiate service from template ID
+      one_service:
+        template_id: '{{ one_template_id }}'
+      register: service
+
+    - name: Check if instantiate returns as 'changed'
+      assert:
+        that: service is changed
+
+    - name: Print service information for debugging
+      debug:
+        var: service
+
+    - name: Wait for service to become RUNNING
+      one_service:
+        service_id: '{{ service.service_id }}'
+        wait: yes
+      register: wait
+      failed_when: not wait.failed
+  always:
+    - name: Delete service in check mode
+      one_service:
+        service_id: '{{ service.service_id }}'
+        state: absent
+      register: delete_service
+      check_mode: yes
+
+    - name: Check if delete reports 'changed' in check mode
+      assert:
+        that:
+          - delete_service is changed
+
+    - name: Delete service
+      one_service:
+        service_id: '{{ service.service_id }}'
+        state: absent
+      register: delete_service
+
+    - name: Check if delete reports 'changed'
+      assert:
+        that:
+          - delete_service is changed
+
+    - name: Delete service again to check idempotence
+      one_service:
+        service_id: '{{ service.service_id }}'
+        state: absent
+      register: delete_service
+
+    - name: Check if consecutive delete reports 'OK'
+      assert:
+        that:
+          - not delete_service is changed
+        msg: "state=absent is not idempotent"
+
+    - name: Wait for the service to be deleted
+      one_service:
+        service_id: '{{ service.service_id }}'
+      register: delete_service
+      failed_when: no
+      until: delete_service is failed
+      retries: 30
+      delay: 2
+
+- block:
+    - name: Instantiate service from a named template
+      one_service:
+        template_name: '{{ one_template_name }}'
+        custom_attrs: '{{ one_template_custom_attrs }}'
+      register: service
+
+    - name: Check that mode/group were set to defaults on creation
+      assert:
+        that:
+          - service is changed
+          - service.group_id == {{ one_group_id_primary }}
+          - service.mode == 600
+
+    - name: Set mode/group of the service
+      one_service:
+        service_id: '{{ service.service_id }}'
+        group_id: '{{ one_group_id_secondary }}'
+        mode: 640
+      register: service_info
+
+    - name: Check that mode/group were set correctly
+      assert:
+        that:
+          - service_info is changed
+          - service_info.group_id == {{ one_group_id_secondary }}
+          - service_info.mode == 640
+
+    - name: Wait for service to become RUNNING
+      one_service:
+        service_id: '{{ service.service_id }}'
+        wait: yes
+      register: service_running
+
+    - name: Check that service state is RUNNING
+      assert:
+        that:
+          - not service_running is changed
+          - service_running.state == "RUNNING"
+  always:
+    - name: Delete service
+      one_service:
+        service_id: '{{ service.service_id }}'
+        state: absent
+
+- block:
+    - name: Instantiate service from a named template with set mode/group
+      one_service:
+        template_name: '{{ one_template_name }}'
+        custom_attrs: '{{ one_template_custom_attrs }}'
+        group_id: '{{ one_group_id_secondary }}'
+        mode: 660
+      register: service
+
+    - name: Check that mode/group were set correctly on creation
+      assert:
+        that:
+          - service is changed
+          - service.group_id == {{ one_group_id_secondary }}
+          - service.mode == 660
+
+    - name: Wait for service to become RUNNING
+      one_service:
+        service_id: '{{ service.service_id }}'
+        wait: yes
+  always:
+    - name: Delete service
+      one_service:
+        service_id: '{{ service.service_id }}'
+        state: absent
+
+- block:
+    - name: Set the name of the service for this test run
+      set_fact:
+        srv_name: testing-one_service-module-{{ ansible_date_time.iso8601_basic_short }}
+
+    - name: Instantiate a unique service in check mode
+      one_service:
+        template_name: '{{ one_template_name }}'
+        service_name: '{{ srv_name }}'
+        custom_attrs: '{{ one_template_custom_attrs }}'
+        unique: yes
+      check_mode: yes
+      register: service
+
+    - name: Check if instantiating a service with a unique name in check mode returns 'changed'
+      assert:
+        that:
+          - service is changed
+
+    - name: Instantiate a unique service
+      one_service:
+        template_name: '{{ one_template_name }}'
+        service_name: '{{ srv_name }}'
+        custom_attrs: '{{ one_template_custom_attrs }}'
+        unique: yes
+      register: service
+
+    - name: Check if instantiating a service with a unique name returns 'changed'
+      assert:
+        that:
+          - service is changed
+          - service.service_name == srv_name
+          - service.state == "PENDING"
+
+    - name: Instantiate a unique service again to check indepontence
+      one_service:
+        template_name: '{{ one_template_name }}'
+        service_name: '{{ srv_name }}'
+        custom_attrs: '{{ one_template_custom_attrs }}'
+        unique: yes
+      register: service
+
+    - name: Check idempotence of instantiating a service with a unique name
+      assert:
+        that:
+          - not service is changed
+
+    - name: Wait for service by its name to become RUNNING
+      one_service:
+        service_name: '{{ srv_name }}'
+        wait: yes
+
+    - name: Change role cardinality to 2
+      one_service:
+        service_id: '{{ service.service_id }}'
+        role: '{{ one_role }}'
+        cardinality: 2
+        wait: yes
+
+    - name: Change role cardinality to 3
+      one_service:
+        service_id: '{{ service.service_id }}'
+        role: '{{ one_role }}'
+        cardinality: 3
+        wait: yes
+      register: cardinality
+      ignore_errors: yes
+
+    - name: Check if setting role cardinality to greater than max fails
+      assert:
+        that:
+          - cardinality is failed
+          - cardinality.msg is match("Failed to change cardinality for role:")
+
+    - name: Change role cardinality to 3 with force=yes
+      one_service:
+        service_id: '{{ service.service_id }}'
+        role: '{{ one_role }}'
+        cardinality: 3
+        force: yes
+        wait: yes
+      register: cardinality
+
+    - name: Verify that cardinality is changed
+      assert:
+        that:
+          - cardinality is changed
+          - cardinality.roles|length == 2
+          - cardinality.roles[0].cardinality == 3
+  always:
+    - name: Delete service
+      one_service:
+        service_id: '{{ service.service_id }}'
+        state: absent
+
+- name: Set the name of the service for this test run
+  set_fact:
+    srv_name: testing-one_service-module-{{ ansible_date_time.iso8601_basic_short }}
+
+- name: Try to delete nonexistent service
+  one_service:
+    service_name: '{{ srv_name }}'
+    state: absent

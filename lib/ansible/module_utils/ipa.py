@@ -27,15 +27,31 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
+import os
+import socket
+import uuid
 
+import re
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.six import PY3
 from ansible.module_utils.six.moves.urllib.parse import quote
-from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.urls import fetch_url, HAS_GSSAPI
+from ansible.module_utils.basic import env_fallback, AnsibleFallbackNotFound
+
+
+def _env_then_dns_fallback(*args, **kwargs):
+    ''' Load value from environment or DNS in that order'''
+    try:
+        return env_fallback(*args, **kwargs)
+    except AnsibleFallbackNotFound:
+        # If no host was given, we try to guess it from IPA.
+        # The ipa-ca entry is a standard entry that IPA will have set for
+        # the CA.
+        try:
+            return socket.gethostbyaddr(socket.gethostbyname('ipa-ca'))[0]
+        except Exception:
+            raise AnsibleFallbackNotFound
 
 
 class IPAClient(object):
@@ -45,6 +61,8 @@ class IPAClient(object):
         self.protocol = protocol
         self.module = module
         self.headers = None
+        self.timeout = module.params.get('ipa_timeout')
+        self.use_gssapi = False
 
     def get_base_url(self):
         return '%s://%s/ipa' % (self.protocol, self.host)
@@ -53,23 +71,40 @@ class IPAClient(object):
         return '%s/session/json' % self.get_base_url()
 
     def login(self, username, password):
-        url = '%s/session/login_password' % self.get_base_url()
-        data = 'user=%s&password=%s' % (quote(username, safe=''), quote(password, safe=''))
-        headers = {'referer': self.get_base_url(),
-                   'Content-Type': 'application/x-www-form-urlencoded',
-                   'Accept': 'text/plain'}
-        try:
-            resp, info = fetch_url(module=self.module, url=url, data=to_bytes(data), headers=headers)
-            status_code = info['status']
-            if status_code not in [200, 201, 204]:
-                self._fail('login', info['msg'])
+        if 'KRB5CCNAME' in os.environ and HAS_GSSAPI:
+            self.use_gssapi = True
+        elif 'KRB5_CLIENT_KTNAME' in os.environ and HAS_GSSAPI:
+            ccache = "MEMORY:" + str(uuid.uuid4())
+            os.environ['KRB5CCNAME'] = ccache
+            self.use_gssapi = True
+        else:
+            if not password:
+                if 'KRB5CCNAME' in os.environ or 'KRB5_CLIENT_KTNAME' in os.environ:
+                    self.module.warn("In order to use GSSAPI, you need to install 'urllib_gssapi'")
+                self._fail('login', 'Password is required if not using '
+                           'GSSAPI. To use GSSAPI, please set the '
+                           'KRB5_CLIENT_KTNAME or KRB5CCNAME (or both) '
+                           ' environment variables.')
+            url = '%s/session/login_password' % self.get_base_url()
+            data = 'user=%s&password=%s' % (quote(username, safe=''), quote(password, safe=''))
+            headers = {'referer': self.get_base_url(),
+                       'Content-Type': 'application/x-www-form-urlencoded',
+                       'Accept': 'text/plain'}
+            try:
+                resp, info = fetch_url(module=self.module, url=url, data=to_bytes(data), headers=headers, timeout=self.timeout)
+                status_code = info['status']
+                if status_code not in [200, 201, 204]:
+                    self._fail('login', info['msg'])
 
-            self.headers = {'referer': self.get_base_url(),
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json',
-                            'Cookie': resp.info().get('Set-Cookie')}
-        except Exception as e:
-            self._fail('login', to_native(e))
+                self.headers = {'Cookie': resp.info().get('Set-Cookie')}
+            except Exception as e:
+                self._fail('login', to_native(e))
+        if not self.headers:
+            self.headers = dict()
+        self.headers.update({
+            'referer': self.get_base_url(),
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'})
 
     def _fail(self, msg, e):
         if 'message' in e:
@@ -78,13 +113,35 @@ class IPAClient(object):
             err_string = e
         self.module.fail_json(msg='%s: %s' % (msg, err_string))
 
+    def get_ipa_version(self):
+        response = self.ping()['summary']
+        ipa_ver_regex = re.compile(r'IPA server version (\d\.\d\.\d).*')
+        version_match = ipa_ver_regex.match(response)
+        ipa_version = None
+        if version_match:
+            ipa_version = version_match.groups()[0]
+        return ipa_version
+
+    def ping(self):
+        return self._post_json(method='ping', name=None)
+
     def _post_json(self, method, name, item=None):
         if item is None:
             item = {}
         url = '%s/session/json' % self.get_base_url()
-        data = {'method': method, 'params': [[name], item]}
+        data = dict(method=method)
+
+        # TODO: We should probably handle this a little better.
+        if method in ('ping', 'config_show'):
+            data['params'] = [[], {}]
+        elif method == 'config_mod':
+            data['params'] = [[], item]
+        else:
+            data['params'] = [[name], item]
+
         try:
-            resp, info = fetch_url(module=self.module, url=url, data=to_bytes(json.dumps(data)), headers=self.headers)
+            resp, info = fetch_url(module=self.module, url=url, data=to_bytes(json.dumps(data)),
+                                   headers=self.headers, timeout=self.timeout, use_gssapi=self.use_gssapi)
             status_code = info['status']
             if status_code not in [200, 201, 204]:
                 self._fail(method, info['msg'])
@@ -159,10 +216,11 @@ class IPAClient(object):
 
 def ipa_argument_spec():
     return dict(
-        ipa_prot=dict(type='str', default='https', choices=['http', 'https']),
-        ipa_host=dict(type='str', default='ipa.example.com'),
-        ipa_port=dict(type='int', default=443),
-        ipa_user=dict(type='str', default='admin'),
-        ipa_pass=dict(type='str', required=True, no_log=True),
+        ipa_prot=dict(type='str', default='https', choices=['http', 'https'], fallback=(env_fallback, ['IPA_PROT'])),
+        ipa_host=dict(type='str', default='ipa.example.com', fallback=(_env_then_dns_fallback, ['IPA_HOST'])),
+        ipa_port=dict(type='int', default=443, fallback=(env_fallback, ['IPA_PORT'])),
+        ipa_user=dict(type='str', default='admin', fallback=(env_fallback, ['IPA_USER'])),
+        ipa_pass=dict(type='str', no_log=True, fallback=(env_fallback, ['IPA_PASS'])),
+        ipa_timeout=dict(type='int', default=10, fallback=(env_fallback, ['IPA_TIMEOUT'])),
         validate_certs=dict(type='bool', default=True),
     )

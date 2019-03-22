@@ -1,34 +1,24 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright 2016 F5 Networks Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2017, F5 Networks Inc.
+# GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+                    'status': ['stableinterface'],
+                    'supported_by': 'certified'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: bigip_irule
-short_description: Manage iRules across different modules on a BIG-IP.
+short_description: Manage iRules across different modules on a BIG-IP
 description:
   - Manage iRules across different modules on a BIG-IP.
-version_added: "2.2"
+version_added: 2.2
 options:
   content:
     description:
@@ -36,9 +26,11 @@ options:
         the specified value. This is for simple values, but can be used with
         lookup plugins for anything complex or with formatting. Either one
         of C(src) or C(content) must be provided.
+    type: str
   module:
     description:
       - The BIG-IP module to add the iRule to.
+    type: str
     required: True
     choices:
       - ltm
@@ -46,122 +38,128 @@ options:
   name:
     description:
       - The name of the iRule.
+    type: str
     required: True
   src:
     description:
       - The iRule file to interpret and upload to the BIG-IP. Either one
         of C(src) or C(content) must be provided.
+    type: path
     required: True
   state:
     description:
       - Whether the iRule should exist or not.
-    default: present
+    type: str
     choices:
       - present
       - absent
-notes:
-  - Requires the f5-sdk Python package on the host. This is as easy as
-    pip install f5-sdk.
+    default: present
+  partition:
+    description:
+      - Device partition to manage resources on.
+    type: str
+    default: Common
+    version_added: 2.5
 extends_documentation_fragment: f5
-requirements:
-  - f5-sdk
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Add the iRule contained in template irule.tcl to the LTM module
   bigip_irule:
-      content: "{{ lookup('template', 'irule.tcl') }}"
-      module: "ltm"
-      name: "MyiRule"
-      password: "secret"
-      server: "lb.mydomain.com"
-      state: "present"
-      user: "admin"
+    content: "{{ lookup('template', 'irule.tcl') }}"
+    module: ltm
+    name: MyiRule
+    state: present
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
 - name: Add the iRule contained in static file irule.tcl to the LTM module
   bigip_irule:
-      module: "ltm"
-      name: "MyiRule"
-      password: "secret"
-      server: "lb.mydomain.com"
-      src: "irule.tcl"
-      state: "present"
-      user: "admin"
+    module: ltm
+    name: MyiRule
+    src: irule.tcl
+    state: present
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 '''
 
-RETURN = '''
+RETURN = r'''
 module:
-    description: The module that the iRule was added to
-    returned: changed and success
-    type: string
-    sample: "gtm"
+  description: The module that the iRule was added to
+  returned: changed and success
+  type: str
+  sample: gtm
 src:
-    description: The filename that included the iRule source
-    returned: changed and success, when provided
-    type: string
-    sample: "/opt/src/irules/example1.tcl"
+  description: The filename that included the iRule source
+  returned: changed and success, when provided
+  type: str
+  sample: /opt/src/irules/example1.tcl
 content:
-    description: The content of the iRule that was managed
-    returned: changed and success
-    type: string
-    sample: "when LB_FAILED { set wipHost [LB::server addr] }"
+  description: The content of the iRule that was managed
+  returned: changed and success
+  type: str
+  sample: "when LB_FAILED { set wipHost [LB::server addr] }"
 '''
 
-from ansible.module_utils.f5_utils import (
-    AnsibleF5Client,
-    AnsibleF5Parameters,
-    HAS_F5SDK,
-    F5ModuleError,
-    iControlUnexpectedHTTPError
-)
+import os
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import env_fallback
+
+try:
+    from library.module_utils.network.f5.bigip import F5RestClient
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import f5_argument_spec
+    from library.module_utils.network.f5.common import transform_name
+except ImportError:
+    from ansible.module_utils.network.f5.bigip import F5RestClient
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.network.f5.common import transform_name
 
 
 class Parameters(AnsibleF5Parameters):
     api_map = {
-        'apiAnonymous': 'content'
+        'apiAnonymous': 'content',
     }
 
     updatables = [
-        'content'
+        'content',
     ]
 
     api_attributes = [
-        'apiAnonymous'
+        'apiAnonymous',
     ]
 
     returnables = [
-        'content', 'src', 'module'
+        'content', 'src', 'module',
     ]
 
-    def to_return(self):
-        result = {}
-        try:
-            for returnable in self.returnables:
-                result[returnable] = getattr(self, returnable)
-            result = self._filter_params(result)
-        except Exception:
-            pass
-        return result
 
-    def api_params(self):
-        result = {}
-        for api_attribute in self.api_attributes:
-            if self.api_map is not None and api_attribute in self.api_map:
-                result[api_attribute] = getattr(self, self.api_map[api_attribute])
-            else:
-                result[api_attribute] = getattr(self, api_attribute)
-        result = self._filter_params(result)
-        return result
+class ApiParameters(Parameters):
+    pass
 
+
+class ModuleParameters(Parameters):
     @property
     def content(self):
         if self._values['content'] is None:
-            return None
-        return str(self._values['content']).strip()
+            result = self.src_content
+        else:
+            result = self._values['content']
+
+        return str(result).strip()
 
     @property
     def src(self):
@@ -169,23 +167,66 @@ class Parameters(AnsibleF5Parameters):
             return None
         return self._values['src']
 
-    @src.setter
-    def src(self, value):
-        if value:
-            self._values['src'] = value
-            with open(value) as f:
-                result = f.read()
-            self._values['content'] = result
+    @property
+    def src_content(self):
+        if not os.path.exists(self._values['src']):
+            raise F5ModuleError(
+                "The specified 'src' was not found."
+            )
+        with open(self._values['src']) as f:
+            result = f.read()
+        return result
+
+
+class Changes(Parameters):
+    def to_return(self):
+        result = {}
+        for returnable in self.returnables:
+            result[returnable] = getattr(self, returnable)
+        result = self._filter_params(result)
+        return result
+
+
+class UsableChanges(Changes):
+    pass
+
+
+class ReportableChanges(Changes):
+    pass
+
+
+class Difference(object):
+    def __init__(self, want, have=None):
+        self.want = want
+        self.have = have
+
+    def compare(self, param):
+        try:
+            result = getattr(self, param)
+            return result
+        except AttributeError:
+            return self.__default(param)
+
+    def __default(self, param):
+        attr1 = getattr(self.want, param)
+        try:
+            attr2 = getattr(self.have, param)
+            if attr1 != attr2:
+                return attr1
+        except AttributeError:
+            return attr1
 
 
 class ModuleManager(object):
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, *args, **kwargs):
+        self.client = kwargs.get('client', None)
+        self.module = kwargs.get('module', None)
+        self.kwargs = kwargs
 
     def exec_module(self):
-        if self.client.module.params['module'] == 'ltm':
+        if self.module.params['module'] == 'ltm':
             manager = self.get_manager('ltm')
-        elif self.client.module.params['module'] == 'gtm':
+        elif self.module.params['module'] == 'gtm':
             manager = self.get_manager('gtm')
         else:
             raise F5ModuleError(
@@ -195,34 +236,18 @@ class ModuleManager(object):
 
     def get_manager(self, type):
         if type == 'ltm':
-            return LtmManager(self.client)
+            return LtmManager(**self.kwargs)
         elif type == 'gtm':
-            return GtmManager(self.client)
+            return GtmManager(**self.kwargs)
 
 
 class BaseManager(object):
-    def __init__(self, client):
-        self.client = client
-        self.want = Parameters(self.client.module.params)
-        self.changes = Parameters()
-
-    def exec_module(self):
-        changed = False
-        result = dict()
-        state = self.want.state
-
-        try:
-            if state == "present":
-                changed = self.present()
-            elif state == "absent":
-                changed = self.absent()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
-
-        changes = self.changes.to_return()
-        result.update(**changes)
-        result.update(dict(changed=changed))
-        return result
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = F5RestClient(**self.module.params)
+        self.have = None
+        self.want = ModuleParameters(params=self.module.params)
+        self.changes = UsableChanges()
 
     def _set_changed_options(self):
         changed = {}
@@ -230,20 +255,50 @@ class BaseManager(object):
             if getattr(self.want, key) is not None:
                 changed[key] = getattr(self.want, key)
         if changed:
-            self.changes = Parameters(changed)
+            self.changes = UsableChanges(params=changed)
 
     def _update_changed_options(self):
-        changed = {}
-        for key in Parameters.updatables:
-            if getattr(self.want, key) is not None:
-                attr1 = getattr(self.want, key)
-                attr2 = getattr(self.have, key)
-                if attr1 != attr2:
-                    changed[key] = attr1
+        diff = Difference(self.want, self.have)
+        updatables = Parameters.updatables
+        changed = dict()
+        for k in updatables:
+            change = diff.compare(k)
+            if change is None:
+                continue
+            else:
+                if isinstance(change, dict):
+                    changed.update(change)
+                else:
+                    changed[k] = change
         if changed:
-            self.changes = Parameters(changed)
+            self.changes = UsableChanges(params=changed)
             return True
         return False
+
+    def _announce_deprecations(self, result):
+        warnings = result.pop('__warnings', [])
+        for warning in warnings:
+            self.module.deprecate(
+                msg=warning['msg'],
+                version=warning['version']
+            )
+
+    def exec_module(self):
+        changed = False
+        result = dict()
+        state = self.want.state
+
+        if state in ["present"]:
+            changed = self.present()
+        elif state == "absent":
+            changed = self.absent()
+
+        reportable = ReportableChanges(params=self.changes.to_return())
+        changes = reportable.to_return()
+        result.update(**changes)
+        result.update(dict(changed=changed))
+        self._announce_deprecations(result)
+        return result
 
     def present(self):
         if not self.want.content and not self.want.src:
@@ -257,7 +312,7 @@ class BaseManager(object):
 
     def create(self):
         self._set_changed_options()
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.create_on_device()
         if not self.exists():
@@ -274,7 +329,7 @@ class BaseManager(object):
         self.have = self.read_current_from_device()
         if not self.should_update():
             return False
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.update_on_device()
         return True
@@ -285,7 +340,7 @@ class BaseManager(object):
         return False
 
     def remove(self):
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.remove_from_device()
         if self.exists():
@@ -295,129 +350,227 @@ class BaseManager(object):
 
 class LtmManager(BaseManager):
     def exists(self):
-        result = self.client.api.tm.ltm.rules.rule.exists(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/rule/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        return result
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
 
     def update_on_device(self):
-        params = self.want.api_params()
-        resource = self.client.api.tm.ltm.rules.rule.load(
-            name=self.want.name,
-            partition=self.want.partition
+        params = self.changes.api_params()
+        uri = "https://{0}:{1}/mgmt/tm/ltm/rule/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        resource.update(**params)
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def create_on_device(self):
-        params = self.want.api_params()
-        resource = self.client.api.tm.ltm.rules.rule
-        resource.create(
-            name=self.want.name,
-            partition=self.want.partition,
-            **params
+        params = self.changes.api_params()
+        params['name'] = self.want.name
+        params['partition'] = self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/rule/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
         )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return response['selfLink']
 
     def read_current_from_device(self):
-        resource = self.client.api.tm.ltm.rules.rule.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/rule/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        result = resource.attrs
-        return Parameters(result)
+
+        resp = self.client.api.get(uri)
+
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return ApiParameters(params=response)
 
     def remove_from_device(self):
-        resource = self.client.api.tm.ltm.rules.rule.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/rule/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        resource.delete()
+        response = self.client.api.delete(uri)
+        if response.status == 200:
+            return True
+        raise F5ModuleError(response.content)
 
 
 class GtmManager(BaseManager):
-    def read_current_from_device(self):
-        resource = self.client.api.tm.gtm.rules.rule.load(
-            name=self.want.name,
-            partition=self.want.partition
-        )
-        result = resource.attrs
-        return Parameters(result)
-
-    def remove_from_device(self):
-        resource = self.client.api.tm.gtm.rules.rule.load(
-            name=self.want.name,
-            partition=self.want.partition
-        )
-        resource.delete()
-
     def exists(self):
-        result = self.client.api.tm.gtm.rules.rule.exists(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/gtm/rule/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        return result
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
 
     def update_on_device(self):
-        params = self.want.api_params()
-        resource = self.client.api.tm.gtm.rules.rule.load(
-            name=self.want.name,
-            partition=self.want.partition
+        params = self.changes.api_params()
+        uri = "https://{0}:{1}/mgmt/tm/gtm/rule/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        resource.update(**params)
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def create_on_device(self):
-        params = self.want.api_params()
-        resource = self.client.api.tm.gtm.rules.rule
-        resource.create(
-            name=self.want.name,
-            partition=self.want.partition,
-            **params
+        params = self.changes.api_params()
+        params['name'] = self.want.name
+        params['partition'] = self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/gtm/rule/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
         )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return response['selfLink']
+
+    def read_current_from_device(self):
+        uri = "https://{0}:{1}/mgmt/tm/gtm/rule/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
+        )
+
+        resp = self.client.api.get(uri)
+
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return ApiParameters(params=response)
+
+    def remove_from_device(self):
+        uri = "https://{0}:{1}/mgmt/tm/gtm/rule/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
+        )
+        response = self.client.api.delete(uri)
+        if response.status == 200:
+            return True
+        raise F5ModuleError(response.content)
 
 
 class ArgumentSpec(object):
     def __init__(self):
         self.supports_check_mode = True
-        self.argument_spec = dict(
-            content=dict(
-                required=False,
-                default=None
-            ),
+        argument_spec = dict(
+            content=dict(),
             src=dict(
-                required=False,
-                default=None
+                type='path',
             ),
             name=dict(required=True),
             module=dict(
                 required=True,
                 choices=['gtm', 'ltm']
+            ),
+            state=dict(
+                default='present',
+                choices=['present', 'absent']
+            ),
+            partition=dict(
+                default='Common',
+                fallback=(env_fallback, ['F5_PARTITION'])
             )
         )
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
         self.mutually_exclusive = [
             ['content', 'src']
         ]
-        self.f5_product_name = 'bigip'
 
 
 def main():
-    if not HAS_F5SDK:
-        raise F5ModuleError("The python f5-sdk module is required")
-
     spec = ArgumentSpec()
 
-    client = AnsibleF5Client(
+    module = AnsibleModule(
         argument_spec=spec.argument_spec,
-        mutually_exclusive=spec.mutually_exclusive,
         supports_check_mode=spec.supports_check_mode,
-        f5_product_name=spec.f5_product_name
+        mutually_exclusive=spec.mutually_exclusive
     )
 
     try:
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        client.module.exit_json(**results)
-    except F5ModuleError as e:
-        client.module.fail_json(msg=str(e))
+        module.exit_json(**results)
+    except F5ModuleError as ex:
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

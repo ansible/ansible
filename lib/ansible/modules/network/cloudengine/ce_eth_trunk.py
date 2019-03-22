@@ -27,7 +27,7 @@ version_added: "2.4"
 short_description: Manages Eth-Trunk interfaces on HUAWEI CloudEngine switches.
 description:
     - Manages Eth-Trunk specific configuration parameters on HUAWEI CloudEngine switches.
-author: QijunPan (@CloudEngine-Ansible)
+author: QijunPan (@QijunPan)
 notes:
     - C(state=absent) removes the Eth-Trunk config and interface if it
       already exists. If members to be removed are not explicitly
@@ -47,39 +47,30 @@ options:
     mode:
         description:
             - Specifies the working mode of an Eth-Trunk interface.
-        required: false
-        default: null
         choices: ['manual','lacp-dynamic','lacp-static']
     min_links:
         description:
             - Specifies the minimum number of Eth-Trunk member links in the Up state.
               The value is an integer ranging from 1 to the maximum number of interfaces
               that can be added to a Eth-Trunk interface.
-        required: false
-        default: null
     hash_type:
         description:
             - Hash algorithm used for load balancing among Eth-Trunk member interfaces.
-        required: false
-        default: null
         choices: ['src-dst-ip', 'src-dst-mac', 'enhanced', 'dst-ip', 'dst-mac', 'src-ip', 'src-mac']
     members:
         description:
             - List of interfaces that will be managed in a given Eth-Trunk.
               The interface name must be full name.
-        required: false
-        default: null
     force:
         description:
             - When true it forces Eth-Trunk members to match what is
               declared in the members param. This can be used to remove
               members.
-        required: false
-        default: false
+        type: bool
+        default: 'no'
     state:
         description:
             - Manage the state of the resource.
-        required: false
         default: present
         choices: ['present','absent']
 '''
@@ -138,13 +129,13 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 
 import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_nc_config, set_nc_config, ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec
 
 CE_NC_GET_TRUNK = """
 <filter type="subtree">

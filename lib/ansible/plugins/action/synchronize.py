@@ -18,13 +18,12 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os.path
-from collections import MutableSequence
 
 from ansible import constants as C
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text
+from ansible.module_utils.common._collections_compat import MutableSequence
 from ansible.module_utils.parsing.convert_bool import boolean
-from ansible.playbook.play_context import MAGIC_VARIABLE_MAPPING
 from ansible.plugins.action import ActionBase
 from ansible.plugins.loader import connection_loader
 
@@ -50,7 +49,7 @@ class ActionModule(ActionBase):
         return path
 
     def _host_is_ipv6_address(self, host):
-        return ':' in host
+        return ':' in to_text(host, errors='surrogate_or_strict')
 
     def _format_rsync_rsh_target(self, host, path, user):
         ''' formats rsync rsh target, escaping ipv6 addresses if needed '''
@@ -60,8 +59,8 @@ class ActionModule(ActionBase):
         if path.startswith('rsync://'):
             return path
 
-        # If using docker, do not add user information
-        if self._remote_transport not in ['docker'] and user:
+        # If using docker or buildah, do not add user information
+        if self._remote_transport not in ['docker', 'buildah'] and user:
             user_prefix = '%s@' % (user, )
 
         if self._host_is_ipv6_address(host):
@@ -165,6 +164,7 @@ class ActionModule(ActionBase):
         _tmp_args = self._task.args.copy()
 
         result = super(ActionModule, self).run(tmp, task_vars)
+        del tmp  # tmp no longer has any effect
 
         # Store remote connection type
         self._remote_transport = self._connection.transport
@@ -189,18 +189,23 @@ class ActionModule(ActionBase):
         except (AttributeError, KeyError):
             delegate_to = None
 
-        # ssh paramiko docker and local are fully supported transports.  Anything
+        # ssh paramiko docker buildah and local are fully supported transports.  Anything
         # else only works with delegate_to
-        if delegate_to is None and self._connection.transport not in ('ssh', 'paramiko', 'local', 'docker'):
+        if delegate_to is None and self._connection.transport not in \
+                ('ssh', 'paramiko', 'local', 'docker', 'buildah'):
             result['failed'] = True
-            result['msg'] = ("synchronize uses rsync to function. rsync needs to connect to the remote host via ssh, docker client or a direct filesystem "
-                             "copy. This remote host is being accessed via %s instead so it cannot work." % self._connection.transport)
+            result['msg'] = (
+                "synchronize uses rsync to function. rsync needs to connect to the remote "
+                "host via ssh, docker client or a direct filesystem "
+                "copy. This remote host is being accessed via %s instead "
+                "so it cannot work." % self._connection.transport)
             return result
 
         use_ssh_args = _tmp_args.pop('use_ssh_args', None)
 
         # Parameter name needed by the ansible module
         _tmp_args['_local_rsync_path'] = task_vars.get('ansible_rsync_path') or 'rsync'
+        _tmp_args['_local_rsync_password'] = task_vars.get('ansible_ssh_pass') or task_vars.get('ansible_password')
 
         # rsync thinks that one end of the connection is localhost and the
         # other is the host we're running the task for  (Note: We use
@@ -223,7 +228,7 @@ class ActionModule(ActionBase):
         localhost_ports = set()
         for host in C.LOCALHOST:
             localhost_vars = task_vars['hostvars'].get(host, {})
-            for port_var in MAGIC_VARIABLE_MAPPING['port']:
+            for port_var in C.MAGIC_VARIABLE_MAPPING['port']:
                 port = localhost_vars.get(port_var, None)
                 if port:
                     break
@@ -271,7 +276,7 @@ class ActionModule(ActionBase):
             localhost_shell = None
             for host in C.LOCALHOST:
                 localhost_vars = task_vars['hostvars'].get(host, {})
-                for shell_var in MAGIC_VARIABLE_MAPPING['shell']:
+                for shell_var in C.MAGIC_VARIABLE_MAPPING['shell']:
                     localhost_shell = localhost_vars.get(shell_var, None)
                     if localhost_shell:
                         break
@@ -285,7 +290,7 @@ class ActionModule(ActionBase):
             localhost_executable = None
             for host in C.LOCALHOST:
                 localhost_vars = task_vars['hostvars'].get(host, {})
-                for executable_var in MAGIC_VARIABLE_MAPPING['executable']:
+                for executable_var in C.MAGIC_VARIABLE_MAPPING['executable']:
                     localhost_executable = localhost_vars.get(executable_var, None)
                     if localhost_executable:
                         break
@@ -297,6 +302,9 @@ class ActionModule(ActionBase):
 
             new_connection = connection_loader.get('local', self._play_context, new_stdin)
             self._connection = new_connection
+            # Override _remote_is_local as an instance attribute specifically for the synchronize use case
+            # ensuring we set local tmpdir correctly
+            self._connection._remote_is_local = True
             self._override_module_replaced_vars(task_vars)
 
         # SWITCH SRC AND DEST HOST PER MODE
@@ -383,7 +391,7 @@ class ActionModule(ActionBase):
 
         # If launching synchronize against docker container
         # use rsync_opts to support container to override rsh options
-        if self._remote_transport in ['docker']:
+        if self._remote_transport in ['docker', 'buildah']:
             # Replicate what we do in the module argumentspec handling for lists
             if not isinstance(_tmp_args.get('rsync_opts'), MutableSequence):
                 tmp_rsync_opts = _tmp_args.get('rsync_opts', [])
@@ -395,12 +403,16 @@ class ActionModule(ActionBase):
 
             if '--blocking-io' not in _tmp_args['rsync_opts']:
                 _tmp_args['rsync_opts'].append('--blocking-io')
-            if become and self._play_context.become_user:
-                _tmp_args['rsync_opts'].append("--rsh=%s exec -u %s -i" % (self._docker_cmd, self._play_context.become_user))
-            elif user is not None:
-                _tmp_args['rsync_opts'].append("--rsh=%s exec -u %s -i" % (self._docker_cmd, user))
-            else:
-                _tmp_args['rsync_opts'].append("--rsh=%s exec -i" % self._docker_cmd)
+
+            if self._remote_transport in ['docker']:
+                if become and self._play_context.become_user:
+                    _tmp_args['rsync_opts'].append("--rsh=%s exec -u %s -i" % (self._docker_cmd, self._play_context.become_user))
+                elif user is not None:
+                    _tmp_args['rsync_opts'].append("--rsh=%s exec -u %s -i" % (self._docker_cmd, user))
+                else:
+                    _tmp_args['rsync_opts'].append("--rsh=%s exec -i" % self._docker_cmd)
+            elif self._remote_transport in ['buildah']:
+                _tmp_args['rsync_opts'].append("--rsh=buildah run --")
 
         # run the module and store the result
         result.update(self._execute_module('synchronize', module_args=_tmp_args, task_vars=task_vars))

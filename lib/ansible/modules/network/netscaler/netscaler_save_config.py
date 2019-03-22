@@ -54,6 +54,7 @@ options:
             - If C(no), SSL certificates will not be validated. This should only be used on personally controlled sites using self-signed certificates.
         required: false
         default: 'yes'
+        type: bool
 
     nitro_timeout:
         description:
@@ -120,7 +121,7 @@ except ImportError as e:
     PYTHON_SDK_IMPORTED = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netscaler import get_nitro_client, log, loglines, netscaler_common_arguments
+from ansible.module_utils.network.netscaler.netscaler import get_nitro_client, log, loglines, netscaler_common_arguments
 
 
 def main():

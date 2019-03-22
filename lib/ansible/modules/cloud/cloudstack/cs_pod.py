@@ -1,22 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# (c) 2016, René Moser <mail@renemoser.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2016, René Moser <mail@renemoser.net>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -29,86 +16,81 @@ module: cs_pod
 short_description: Manages pods on Apache CloudStack based clouds.
 description:
     - Create, update, delete pods.
-version_added: "2.1"
-author: "René Moser (@resmo)"
+version_added: '2.1'
+author: René Moser (@resmo)
 options:
   name:
     description:
       - Name of the pod.
+    type: str
     required: true
   id:
     description:
       - uuid of the existing pod.
-    default: null
-    required: false
+    type: str
   start_ip:
     description:
       - Starting IP address for the Pod.
-      - Required on C(state=present)
-    default: null
-    required: false
+      - Required on I(state=present)
+    type: str
   end_ip:
     description:
       - Ending IP address for the Pod.
-    default: null
-    required: false
+    type: str
   netmask:
     description:
       - Netmask for the Pod.
-      - Required on C(state=present)
-    default: null
-    required: false
+      - Required on I(state=present)
+    type: str
   gateway:
     description:
       - Gateway for the Pod.
-      - Required on C(state=present)
-    default: null
-    required: false
+      - Required on I(state=present)
+    type: str
   zone:
     description:
       - Name of the zone in which the pod belongs to.
       - If not set, default zone is used.
-    required: false
-    default: null
+    type: str
   state:
     description:
       - State of the pod.
-    required: false
-    default: 'present'
-    choices: [ 'present', 'enabled', 'disabled', 'absent' ]
+    type: str
+    default: present
+    choices: [ present, enabled, disabled, absent ]
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# Ensure a pod is present
-- local_action:
-    module: cs_pod
+- name: Ensure a pod is present
+  cs_pod:
     name: pod1
     zone: ch-zrh-ix-01
     start_ip: 10.100.10.101
     gateway: 10.100.10.1
     netmask: 255.255.255.0
+  delegate_to: localhost
 
-# Ensure a pod is disabled
-- local_action:
-    module: cs_pod
+- name: Ensure a pod is disabled
+  cs_pod:
     name: pod1
     zone: ch-zrh-ix-01
     state: disabled
+  delegate_to: localhost
 
-# Ensure a pod is enabled
-- local_action:
-    module: cs_pod
+- name: Ensure a pod is enabled
+  cs_pod:
     name: pod1
     zone: ch-zrh-ix-01
     state: enabled
+  delegate_to: localhost
 
-# Ensure a pod is absent
-- local_action:
-    module: cs_pod
+- name: Ensure a pod is absent
+  cs_pod:
     name: pod1
     zone: ch-zrh-ix-01
     state: absent
+  delegate_to: localhost
 '''
 
 RETURN = '''
@@ -116,42 +98,42 @@ RETURN = '''
 id:
   description: UUID of the pod.
   returned: success
-  type: string
+  type: str
   sample: 04589590-ac63-4ffc-93f5-b698b8ac38b6
 name:
   description: Name of the pod.
   returned: success
-  type: string
+  type: str
   sample: pod01
 start_ip:
   description: Starting IP of the pod.
   returned: success
-  type: string
+  type: str
   sample: 10.100.1.101
 end_ip:
   description: Ending IP of the pod.
   returned: success
-  type: string
+  type: str
   sample: 10.100.1.254
 netmask:
   description: Netmask of the pod.
   returned: success
-  type: string
+  type: str
   sample: 255.255.255.0
 gateway:
   description: Gateway of the pod.
   returned: success
-  type: string
+  type: str
   sample: 10.100.1.1
 allocation_state:
   description: State of the pod.
   returned: success
-  type: string
+  type: str
   sample: Enabled
 zone:
   description: Name of zone the pod is in.
   returned: success
-  type: string
+  type: str
   sample: ch-gva-2
 '''
 
@@ -192,22 +174,25 @@ class AnsibleCloudStackPod(AnsibleCloudStack):
 
     def get_pod(self):
         if not self.pod:
-            args = {}
+            args = {
+                'zoneid': self.get_zone(key='id')
+            }
 
             uuid = self.module.params.get('id')
             if uuid:
                 args['id'] = uuid
-                args['zoneid'] = self.get_zone(key='id')
-                pods = self.query_api('listPods', **args)
-                if pods:
-                    self.pod = pods['pod'][0]
-                    return self.pod
+            else:
+                args['name'] = self.module.params.get('name')
 
-            args['name'] = self.module.params.get('name')
-            args['zoneid'] = self.get_zone(key='id')
             pods = self.query_api('listPods', **args)
             if pods:
-                self.pod = pods['pod'][0]
+                for pod in pods['pod']:
+                    if not args['name']:
+                        self.pod = self._transform_ip_list(pod)
+                        break
+                    elif args['name'] == pod['name']:
+                        self.pod = self._transform_ip_list(pod)
+                        break
         return self.pod
 
     def present_pod(self):
@@ -258,6 +243,20 @@ class AnsibleCloudStackPod(AnsibleCloudStack):
             if not self.module.check_mode:
                 self.query_api('deletePod', **args)
         return pod
+
+    def _transform_ip_list(self, resource):
+        """ Workaround for 4.11 return API break """
+        keys = ['endip', 'startip']
+        if resource:
+            for key in keys:
+                if key in resource and isinstance(resource[key], list):
+                    resource[key] = resource[key][0]
+        return resource
+
+    def get_result(self, pod):
+        pod = self._transform_ip_list(pod)
+        super(AnsibleCloudStackPod, self).get_result(pod)
+        return self.result
 
 
 def main():

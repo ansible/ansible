@@ -1,7 +1,17 @@
----
+git_archive_extensions:
+  default:
+    - tar.gz
+    - tar
+    - tgz
+    - zip
+  RedHat6:
+    - tar
+    - zip
+
 
 checkout_dir: '{{ output_dir }}/git'
 repo_dir: '{{ output_dir }}/local_repos'
+separate_git_dir: '{{ output_dir }}/sep_git_dir'
 repo_format1: 'https://github.com/jimi-c/test_role'
 repo_format2: 'git@github.com:jimi-c/test_role.git'
 repo_format3: 'ssh://git@github.com/jimi-c/test_role.git'
@@ -21,7 +31,7 @@ git_version_supporting_ls_remote: 1.7.5
 # github_ssh_private_key: "{{ lookup('env', 'HOME') }}/.ssh/id_rsa"
 git_gpg_testkey: |
   -----BEGIN PGP PRIVATE KEY BLOCK-----
-  
+
   lQOYBFlkmX0BCACtE81Xj/351nnvwnAWMf8ZUP9B1YOPe9ohqNsCQY1DxODVJc9y
   ljCoh9fTdoHXuaUMUFistozxCMP81RuZxfbfsGePnl8OAOgWT5Sln6yEG45oClJ0
   RmJJZdDT1lF3VaVwK9NQ5E1oqmk1IOjISi7iFa9TmMn1h7ISP/p+/xtMxQhzUXt8
@@ -52,7 +62,7 @@ git_gpg_testkey: |
   =tV71
   -----END PGP PRIVATE KEY BLOCK-----
   -----BEGIN PGP PUBLIC KEY BLOCK-----
-  
+
   mQENBFlkmX0BCACtE81Xj/351nnvwnAWMf8ZUP9B1YOPe9ohqNsCQY1DxODVJc9y
   ljCoh9fTdoHXuaUMUFistozxCMP81RuZxfbfsGePnl8OAOgWT5Sln6yEG45oClJ0
   RmJJZdDT1lF3VaVwK9NQ5E1oqmk1IOjISi7iFa9TmMn1h7ISP/p+/xtMxQhzUXt8

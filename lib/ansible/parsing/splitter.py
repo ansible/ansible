@@ -97,7 +97,7 @@ def parse_kv(args, check_raw=False):
         # recombine the free-form params, if any were found, and assign
         # them to a special option for use later by the shell/command module
         if len(raw_params) > 0:
-            options[u'_raw_params'] = ' '.join(raw_params)
+            options[u'_raw_params'] = join_args(raw_params)
 
     return options
 
@@ -137,6 +137,20 @@ def _count_jinja2_blocks(token, cur_depth, open_token, close_token):
     return cur_depth
 
 
+def join_args(s):
+    '''
+    Join the original cmd based on manipulations by split_args().
+    This retains the original newlines and whitespaces.
+    '''
+    result = ''
+    for p in s:
+        if len(result) == 0 or result.endswith('\n'):
+            result += p
+        else:
+            result += ' ' + p
+    return result
+
+
 def split_args(args):
     '''
     Splits args on whitespace, but intelligently reassembles
@@ -157,9 +171,8 @@ def split_args(args):
     # this is going to be the result value when we are done
     params = []
 
-    # Initial split on white space
-    args = args.strip()
-    items = args.strip().split('\n')
+    # Initial split on newlines
+    items = args.split('\n')
 
     # iterate over the tokens, and reassemble any that may have been
     # split on a space inside a jinja2 block.
@@ -182,10 +195,16 @@ def split_args(args):
         # we split on spaces and newlines separately, so that we
         # can tell which character we split on for reassembly
         # inside quotation characters
-        tokens = item.strip().split(' ')
+        tokens = item.split(' ')
 
         line_continuation = False
         for (idx, token) in enumerate(tokens):
+
+            # Empty entries means we have subsequent spaces
+            # We want to hold onto them so we can reconstruct them later
+            if len(token) == 0 and idx != 0:
+                params[-1] += ' '
+                continue
 
             # if we hit a line continuation character, but
             # we're not inside quotes, ignore it and continue
@@ -261,6 +280,6 @@ def split_args(args):
     # If we're done and things are not at zero depth or we're still inside quotes,
     # raise an error to indicate that the args were unbalanced
     if print_depth or block_depth or comment_depth or inside_quotes:
-        raise AnsibleParserError("failed at splitting arguments, either an unbalanced jinja2 block or quotes: {}".format(args))
+        raise AnsibleParserError(u"failed at splitting arguments, either an unbalanced jinja2 block or quotes: {0}".format(args))
 
     return params

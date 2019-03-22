@@ -3,16 +3,20 @@
 """
 This script generated test_cases for test_distribution_version.py.
 
-To do so it outputs the relevant files from /etc/*release, the output of platform.dist() and the current ansible_facts regarding the distribution version.
+To do so it outputs the relevant files from /etc/*release, the output of distro.linux_distribution()
+and the current ansible_facts regarding the distribution version.
 
 This assumes a working ansible version in the path.
 """
 
-import platform
+
 import os.path
 import subprocess
 import json
 import sys
+
+from ansible.module_utils import distro
+
 
 filelist = [
     '/etc/oracle-release',
@@ -32,6 +36,7 @@ filelist = [
     '/etc/altlinux-release',
     '/etc/os-release',
     '/etc/coreos/update.conf',
+    '/usr/lib/os-release',
 ]
 
 fcont = {}
@@ -43,8 +48,7 @@ for f in filelist:
             with open(f) as fh:
                 fcont[f] = fh.read()
 
-dist = platform.dist()
-
+dist = distro.linux_distribution(full_distribution_name=False)
 
 facts = ['distribution', 'distribution_version', 'distribution_release', 'distribution_major_version', 'os_family']
 
@@ -61,7 +65,7 @@ ansible_facts = {}
 for fact in facts:
     try:
         ansible_facts[fact] = parsed['ansible_facts']['ansible_' + fact]
-    except:
+    except Exception:
         ansible_facts[fact] = "N/A"
 
 nicename = ansible_facts['distribution'] + ' ' + ansible_facts['distribution_version']

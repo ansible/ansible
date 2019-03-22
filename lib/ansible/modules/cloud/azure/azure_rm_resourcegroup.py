@@ -11,7 +11,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -22,32 +22,31 @@ short_description: Manage Azure resource groups.
 description:
     - Create, update and delete a resource group.
 options:
-    force:
+    force_delete_nonempty:
         description:
-            - Remove a resource group and all associated resources. Use with state 'absent' to delete a resource
+            - Remove a resource group and all associated resources. Use with state C(absent) to delete a resource.
               group that contains resources.
-        default: false
-        required: false
+        type: bool
+        aliases:
+            - force
+        default: 'no'
     location:
         description:
             - Azure location for the resource group. Required when creating a new resource group. Cannot
               be changed once resource group is created.
-        required: false
-        default: null
     name:
         description:
             - Name of the resource group.
         required: true
     state:
         description:
-            - Assert the state of the resource group. Use 'present' to create or update and
-              'absent' to delete. When 'absent' a resource group containing resources will not be removed unless the
+            - Assert the state of the resource group. Use C(present) to create or update and
+              C(absent) to delete. When C(absent) a resource group containing resources will not be removed unless the
               force option is used.
         default: present
         choices:
             - absent
             - present
-        required: false
 extends_documentation_fragment:
     - azure
     - azure_tags
@@ -83,7 +82,7 @@ state:
     returned: always
     type: dict
     sample: {
-        "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing",
+        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup",
         "location": "westus",
         "name": "Testing",
         "provisioning_state": "Succeeded",
@@ -96,11 +95,10 @@ state:
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.resource.resources.models import ResourceGroup
 except ImportError:
     pass
 
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase, normalize_location_name
 
 
 def resource_group_to_dict(rg):
@@ -120,14 +118,14 @@ class AzureRMResourceGroup(AzureRMModuleBase):
             name=dict(type='str', required=True),
             state=dict(type='str', default='present', choices=['present', 'absent']),
             location=dict(type='str'),
-            force=dict(type='bool', default=False)
+            force_delete_nonempty=dict(type='bool', default=False, aliases=['force'])
         )
 
         self.name = None
         self.state = None
         self.location = None
         self.tags = None
-        self.force = None
+        self.force_delete_nonempty = None
 
         self.results = dict(
             changed=False,
@@ -166,7 +164,7 @@ class AzureRMResourceGroup(AzureRMModuleBase):
                 if update_tags:
                     changed = True
 
-                if self.location and self.location != results['location']:
+                if self.location and normalize_location_name(self.location) != results['location']:
                     self.fail("Resource group '{0}' already exists in location '{1}' and cannot be "
                               "moved.".format(self.name, results['location']))
         except CloudError:
@@ -193,20 +191,21 @@ class AzureRMResourceGroup(AzureRMModuleBase):
                     if self.name_exists():
                         self.fail("Error: a resource group with the name {0} already exists in your subscription."
                                   .format(self.name))
-                    params = ResourceGroup(
+                    params = self.rm_models.ResourceGroup(
                         location=self.location,
                         tags=self.tags
                     )
                 else:
                     # Update resource group
-                    params = ResourceGroup(
+                    params = self.rm_models.ResourceGroup(
                         location=results['location'],
                         tags=results['tags']
                     )
                 self.results['state'] = self.create_or_update_resource_group(params)
             elif self.state == 'absent':
-                if contains_resources and not self.force:
-                    self.fail("Error removing resource group {0}. Resources exist within the group.".format(self.name))
+                if contains_resources and not self.force_delete_nonempty:
+                    self.fail("Error removing resource group {0}. Resources exist within the group. "
+                              "Use `force_delete_nonempty` to force delete.".format(self.name))
                 self.delete_resource_group()
 
         return self.results
@@ -254,6 +253,7 @@ class AzureRMResourceGroup(AzureRMModuleBase):
 
 def main():
     AzureRMResourceGroup()
+
 
 if __name__ == '__main__':
     main()

@@ -1,0 +1,208 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_static_route sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+# Flag used to test the track feature.  Some platforms
+# don't support it so this flag will be toggled accordingly.
+- set_fact: test_track_feature="true"
+
+- name: configure track
+  nxos_config:
+    lines:
+      - track 1 ip sla 1
+    provider: "{{ connection }}"
+  register: cmd_result
+  ignore_errors: yes
+
+- debug: msg="cmd result {{ cmd_result }}"
+
+- set_fact: test_track_feature="false"
+  when: cmd_result.failed
+
+- debug: msg="Test Track Feature {{ test_track_feature }}"
+
+- name: Setup and teardown, remove test routes if present
+  nxos_static_route: &setup_teardown
+    aggregate:
+      - { prefix: "192.168.1.164/32", next_hop: "192.0.2.3" }
+      - { prefix: "192.168.20.64/24", next_hop: "192.0.2.3" }
+      - { prefix: "192.168.22.64/24", next_hop: "192.0.2.3" }
+      - { prefix: "192.168.24.64/24", next_hop: "192.0.2.3" }
+    vrf: "{{ item }}"
+    provider: "{{ connection }}"
+    state: absent
+  with_items: "{{ vrfs }}"
+  ignore_errors: yes
+
+- name: Setup noise routes to ensure testing while non-test routes present
+  nxos_static_route:
+    prefix: "192.168.1.164/32"
+    next_hop: "192.0.2.3"
+    vrf: "{{ item }}"
+    provider: "{{ connection }}"
+    state: present
+  with_items: "{{ vrfs }}"
+
+- block:
+  - name: create static route
+    nxos_static_route: &configure_static
+      prefix: "192.168.20.64/24"
+      next_hop: "192.0.2.3"
+      route_name: testing
+      pref: 100
+      tag: 5500
+      vrf: "{{ item }}"
+      provider: "{{ connection }}"
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Conf static Idempotence"
+    nxos_static_route: *configure_static
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: change static route
+    nxos_static_route: &change_static
+      prefix: "192.168.20.64/24"
+      next_hop: "192.0.2.3"
+      route_name: default
+      pref: 10
+      tag: default
+      vrf: "{{ item }}"
+      provider: "{{ connection }}"
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Change Idempotence"
+    nxos_static_route: *change_static
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *false
+
+  - name: configure static route with track
+    nxos_static_route: &config_static_track
+      prefix: "192.168.20.64/24"
+      next_hop: "192.0.2.3"
+      route_name: default
+      pref: 10
+      tag: default
+      track: 1
+      vrf: "{{ item }}"
+      provider: "{{ connection }}"
+    with_items: "{{ vrfs }}"
+    register: result
+    when: test_track_feature
+
+  - assert: *true
+    when: test_track_feature
+
+  - name: "Config track Idempotence"
+    nxos_static_route: *config_static_track
+    with_items: "{{ vrfs }}"
+    register: result
+    when: test_track_feature
+
+  - assert: *false
+    when: test_track_feature
+
+  - name: configure static route with not configured track
+    nxos_static_route:
+      prefix: "192.168.20.64/24"
+      next_hop: "192.0.2.3"
+      route_name: default
+      pref: 10
+      tag: default
+      track: 2
+      vrf: "{{ item }}"
+      provider: "{{ connection }}"
+    with_items: "{{ vrfs }}"
+    register: result
+    ignore_errors: yes
+    when: test_track_feature
+
+  - assert:
+      that:
+        - "result.failed == True"
+    when: test_track_feature
+
+  - name: remove static route
+    nxos_static_route: &remove_static
+      prefix: "192.168.20.64/24"
+      next_hop: "192.0.2.3"
+      route_name: testing
+      pref: 100
+      vrf: "{{ item }}"
+      provider: "{{ connection }}"
+      state: absent
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Remove Idempotence"
+    nxos_static_route: *remove_static
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *false
+
+  - name: configure static route(aggregate)
+    nxos_static_route: &conf_agg
+      aggregate:
+        - { prefix: "192.168.22.64/24", next_hop: "192.0.2.3" }
+        - { prefix: "192.168.24.64/24", next_hop: "192.0.2.3" }
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: configure static route aggregate(Idempotence)
+    nxos_static_route: *conf_agg
+    register: result
+
+  - assert: *false
+
+  - name: remove static route aggregate
+    nxos_static_route: &remove_agg
+      aggregate:
+        - { prefix: "192.168.22.64/24", next_hop: "192.0.2.3" }
+        - { prefix: "192.168.24.64/24", next_hop: "192.0.2.3" }
+      provider: "{{ connection }}"
+      state: absent
+    register: result
+
+  - assert: *true
+
+  - name: remove static route aggregate(Idempotence)
+    nxos_static_route: *remove_agg
+    register: result
+
+  - assert: *false
+
+  always:
+  - name: remove track
+    nxos_config:
+      lines:
+        - no track 1
+      provider: "{{ connection }}"
+    ignore_errors: yes
+    when: test_track_feature
+
+  - name: teardown test routes
+    nxos_static_route: *setup_teardown
+    with_items: "{{ vrfs }}"
+    ignore_errors: yes
+
+- debug: msg="END connection={{ ansible_connection }} nxos_static_route sanity test"

@@ -18,7 +18,7 @@ author:
   - "Jens Carl (@j-carl), Hothead Games Inc."
 module: redshift_subnet_group
 version_added: "2.2"
-short_description: mange Redshift cluster subnet groups
+short_description: manage Redshift cluster subnet groups
 description:
   - Create, modifies, and deletes Redshift cluster subnet groups.
 options:
@@ -35,17 +35,15 @@ options:
   group_description:
     description:
       - Database subnet group description.
-    required: false
-    default: null
     aliases: ['description']
   group_subnets:
     description:
       - List of subnet IDs that make up the cluster subnet group.
-    required: false
-    default: null
     aliases: ['subnets']
 requirements: [ 'boto' ]
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+  - aws
+  - ec2
 '''
 
 EXAMPLES = '''
@@ -74,12 +72,12 @@ group:
         name:
             description: name of the Redshift subnet group
             returned: success
-            type: string
+            type: str
             sample: "redshift_subnet_group_name"
         vpc_id:
             description: Id of the VPC where the subnet is located
             returned: success
-            type: string
+            type: str
             sample: "vpc-aabb1122"
 '''
 
@@ -123,7 +121,7 @@ def main():
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module)
     if not region:
-        module.fail_json(msg=str("region not specified and unable to determine region from EC2_REGION."))
+        module.fail_json(msg=str("Region must be specified as a parameter, in EC2_REGION or AWS_REGION environment variables or in boto configuration file"))
 
     # Connect to the Redshift endpoint.
     try:

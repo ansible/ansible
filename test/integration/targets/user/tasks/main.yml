@@ -16,145 +16,844 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-- name: get the jinja2 version
-  shell: python -c 'import jinja2; print(jinja2.__version__)'
-  register: jinja2_version
-  delegate_to: localhost
-- debug: var=jinja2_version
 
-##
 ## user add
-##
-#
+
 - name: remove the test user
   user:
-      name: ansibulluser
-      state: absent
+    name: ansibulluser
+    state: absent
 
 - name: try to create a user
   user:
-      name: ansibulluser
-      state: present
-  register: user_test0
-- debug: var=user_test0
+    name: ansibulluser
+    state: present
+  register: user_test0_0
+
+- name: create the user again
+  user:
+    name: ansibulluser
+    state: present
+  register: user_test0_1
+
+- debug:
+    var: user_test0
+    verbosity: 2
 
 - name: make a list of users
-  script: userlist.sh "{{ ansible_distribution }}"
+  script: userlist.sh {{ ansible_facts.distribution }}
   register: user_names
-- debug: var=user_names
+
+- debug:
+    var: user_names
+    verbosity: 2
 
 - name: validate results for testcase 0
   assert:
-      that:
-          - 'user_test0.changed is defined'
-          - 'user_test0.changed'
-          - '"ansibulluser" in user_names.stdout_lines'
+    that:
+      - user_test0_0 is changed
+      - user_test0_1 is not changed
+      - '"ansibulluser" in user_names.stdout_lines'
 
-##
+# test user add with password
+- name: add an encrypted password for user
+  user:
+    name: ansibulluser
+    password: "$6$rounds=656000$TT4O7jz2M57npccl$33LF6FcUMSW11qrESXL1HX0BS.bsiT6aenFLLiVpsQh6hDtI9pJh5iY7x8J7ePkN4fP8hmElidHXaeD51pbGS."
+    state: present
+    update_password: always
+  register: test_user_encrypt0
+
+- name: there should not be warnings
+  assert:
+    that: "'warnings' not in test_user_encrypt0"
+
+- block:
+    - name: add an plaintext password for user
+      user:
+        name: ansibulluser
+        password: "plaintextpassword"
+        state: present
+        update_password: always
+      register: test_user_encrypt1
+
+    - name: there should be a warning complains that the password is plaintext
+      assert:
+        that: "'warnings' in test_user_encrypt1"
+
+    - name: add an invalid hashed password
+      user:
+        name: ansibulluser
+        password: "$6$rounds=656000$tgK3gYTyRLUmhyv2$lAFrYUQwn7E6VsjPOwQwoSx30lmpiU9r/E0Al7tzKrR9mkodcMEZGe9OXD0H/clOn6qdsUnaL4zefy5fG+++++"
+        state: present
+        update_password: always
+      register: test_user_encrypt2
+
+    - name: there should be a warning complains about the character set of password
+      assert:
+        that: "'warnings' in test_user_encrypt2"
+
+    - name: change password to '!'
+      user:
+        name: ansibulluser
+        password: '!'
+      register: test_user_encrypt3
+
+    - name: change password to '*'
+      user:
+        name: ansibulluser
+        password: '*'
+      register: test_user_encrypt4
+
+    - name: there should be no warnings when setting the password to '!' and '*'
+      assert:
+        that:
+          - "'warnings' not in test_user_encrypt3"
+          - "'warnings' not in test_user_encrypt4"
+  when: ansible_facts.system != 'Darwin'
+
+
+# https://github.com/ansible/ansible/issues/42484
+# Skipping macOS for now since there is a bug when changing home directory
+- block:
+    - name: create user specifying home
+      user:
+        name: ansibulluser
+        state: present
+        home: "{{ user_home_prefix[ansible_facts.system] }}/ansibulluser"
+      register: user_test3_0
+
+    - name: create user again specifying home
+      user:
+        name: ansibulluser
+        state: present
+        home: "{{ user_home_prefix[ansible_facts.system] }}/ansibulluser"
+      register: user_test3_1
+
+    - name: change user home
+      user:
+        name: ansibulluser
+        state: present
+        home: "{{ user_home_prefix[ansible_facts.system] }}/ansibulluser-mod"
+      register: user_test3_2
+
+    - name: change user home back
+      user:
+        name: ansibulluser
+        state: present
+        home: "{{ user_home_prefix[ansible_facts.system] }}/ansibulluser"
+      register: user_test3_3
+
+    - name: validate results for testcase 3
+      assert:
+        that:
+          - user_test3_0 is not changed
+          - user_test3_1 is not changed
+          - user_test3_2 is changed
+          - user_test3_3 is changed
+  when: ansible_facts.system != 'Darwin'
+
+
 ## user check
-##
 
 - name: run existing user check tests
   user:
-      name: "{{ user_names.stdout_lines|random }}"
-      state: present
-      create_home: no
-  with_sequence: start=1 end=5
+    name: "{{ user_names.stdout_lines | random }}"
+    state: present
+    create_home: no
+  loop: "{{ range(1, 5+1) | list }}"
   register: user_test1
-- debug: var=user_test1
+
+- debug:
+    var: user_test1
+    verbosity: 2
 
 - name: validate results for testcase 1
   assert:
-      that:
-          - 'user_test1.results is defined'
-          - 'user_test1.results|length == 5'
+    that:
+      - user_test1.results is defined
+      - user_test1.results | length == 5
 
-- name: validate changed results for testcase 1 (jinja >= 2.6)
+- name: validate changed results for testcase 1
   assert:
-      that:
-          - "user_test1.results|map(attribute='changed')|unique|list == [False]"
-          - "user_test1.results|map(attribute='state')|unique|list == ['present']"
-  when: "jinja2_version.stdout|version_compare('2.6', '>=')"
+    that:
+      - "user_test1.results[0] is not changed"
+      - "user_test1.results[1] is not changed"
+      - "user_test1.results[2] is not changed"
+      - "user_test1.results[3] is not changed"
+      - "user_test1.results[4] is not changed"
+      - "user_test1.results[0]['state'] == 'present'"
+      - "user_test1.results[1]['state'] == 'present'"
+      - "user_test1.results[2]['state'] == 'present'"
+      - "user_test1.results[3]['state'] == 'present'"
+      - "user_test1.results[4]['state'] == 'present'"
 
-- name: validate changed results for testcase 1 (jinja >= 2.6)
-  assert:
-      that:
-          - "not user_test1.results[0]['changed']"
-          - "not user_test1.results[1]['changed']"
-          - "not user_test1.results[2]['changed']"
-          - "not user_test1.results[3]['changed']"
-          - "not user_test1.results[4]['changed']"
-          - "user_test1.results[0]['state'] == 'present'"
-          - "user_test1.results[1]['state'] == 'present'"
-          - "user_test1.results[2]['state'] == 'present'"
-          - "user_test1.results[3]['state'] == 'present'"
-          - "user_test1.results[4]['state'] == 'present'"
-  when: "jinja2_version.stdout|version_compare('2.6', '<')"
 
-##
 ## user remove
-##
-            
+
 - name: try to delete the user
   user:
-      name: ansibulluser
-      state: absent
+    name: ansibulluser
+    state: absent
+    force: true
   register: user_test2
+
 - name: make a new list of users
-  script: userlist.sh "{{ ansible_distribution }}"
+  script: userlist.sh {{ ansible_facts.distribution }}
   register: user_names2
-- debug: var=user_names2
+
+- debug:
+    var: user_names2
+    verbosity: 2
+
 - name: validate results for testcase 2
   assert:
-      that:
-          - '"ansibulluser" not in user_names2.stdout_lines'
+    that:
+      - '"ansibulluser" not in user_names2.stdout_lines'
 
+
+## create user without home and test fallback home dir create
 
 - block:
-    - name: create non-system user on OSX to test the shell is set to /bin/bash
+    - name: create the user
       user:
-        name: osxuser
-      register: osxuser_output
+        name: ansibulluser
+
+    - name: delete the user and home dir
+      user:
+        name: ansibulluser
+        state: absent
+        force: true
+        remove: true
+
+    - name: create the user without home
+      user:
+        name: ansibulluser
+        create_home: no
+
+    - name: create the user home dir
+      user:
+        name: ansibulluser
+      register: user_create_home_fallback
+
+    - name: stat home dir
+      stat:
+        path: '{{ user_create_home_fallback.home }}'
+      register: user_create_home_fallback_dir
+
+    - name: read UMASK from /etc/login.defs and return mode
+      shell: |
+        import re
+        import os
+        try:
+            for line in open('/etc/login.defs').readlines():
+                m = re.match(r'^UMASK\s+(\d+)$', line)
+                if m:
+                    umask = int(m.group(1), 8)
+        except:
+            umask = os.umask(0)
+        mode = oct(0o777 & ~umask)
+        print(str(mode).replace('o', ''))
+      args:
+        executable: "{{ ansible_facts.python.executable }}"
+      register: user_login_defs_umask
+
+    - name: validate that user home dir is created
+      assert:
+        that:
+          - user_create_home_fallback is changed
+          - user_create_home_fallback_dir.stat.exists
+          - user_create_home_fallback_dir.stat.isdir
+          - user_create_home_fallback_dir.stat.pw_name == 'ansibulluser'
+          - user_create_home_fallback_dir.stat.mode == user_login_defs_umask.stdout
+  when: ansible_facts.system != 'Darwin'
+
+- block:
+    - name: create non-system user on macOS to test the shell is set to /bin/bash
+      user:
+        name: macosuser
+      register: macosuser_output
 
     - name: validate the shell is set to /bin/bash
       assert:
         that:
-          - 'osxuser_output.shell == "/bin/bash"'
+          - 'macosuser_output.shell == "/bin/bash"'
 
     - name: cleanup
       user:
-        name: osxuser
+        name: macosuser
         state: absent
 
-    - name: create system user on OSX to test the shell is set to /usr/bin/false
+    - name: create system user on macos to test the shell is set to /usr/bin/false
       user:
-        name: osxuser
+        name: macosuser
         system: yes
-      register: osxuser_output
+      register: macosuser_output
 
     - name: validate the shell is set to /usr/bin/false
       assert:
         that:
-          - 'osxuser_output.shell == "/usr/bin/false"'
+          - 'macosuser_output.shell == "/usr/bin/false"'
 
     - name: cleanup
       user:
-        name: osxuser
+        name: macosuser
         state: absent
 
-    - name: create non-system user on OSX and set the shell to /bin/sh
+    - name: create non-system user on macos and set the shell to /bin/sh
       user:
-        name: osxuser
+        name: macosuser
         shell: /bin/sh
-      register: osxuser_output
+      register: macosuser_output
 
     - name: validate the shell is set to /bin/sh
       assert:
         that:
-          - 'osxuser_output.shell == "/bin/sh"'
+          - 'macosuser_output.shell == "/bin/sh"'
 
     - name: cleanup
       user:
-        name: osxuser
+        name: macosuser
         state: absent
-  when: ansible_distribution == "MacOSX"
+  when: ansible_facts.distribution == "MacOSX"
+
+
+## user expires
+# Date is March 3, 2050
+- name: Set user expiration
+  user:
+    name: ansibulluser
+    state: present
+    expires: 2529881062
+  register: user_test_expires1
+
+- name: Set user expiration again to ensure no change is made
+  user:
+    name: ansibulluser
+    state: present
+    expires: 2529881062
+  register: user_test_expires2
+
+- name: Ensure that account with expiration was created and did not change on subsequent run
+  assert:
+    that:
+      - user_test_expires1 is changed
+      - user_test_expires2 is not changed
+
+- name: Verify expiration date for Linux
+  block:
+    - name: LINUX | Get expiration date for ansibulluser
+      getent:
+        database: shadow
+        key: ansibulluser
+
+    - name: LINUX | Ensure proper expiration date was set
+      assert:
+        that:
+          - getent_shadow['ansibulluser'][6] == '29281'
+  when: ansible_facts.os_family in ['RedHat', 'Debian', 'Suse']
+
+
+- name: Verify expiration date for BSD
+  block:
+    - name: BSD | Get expiration date for ansibulluser
+      shell: 'grep ansibulluser /etc/master.passwd | cut -d: -f 7'
+      changed_when: no
+      register: bsd_account_expiration
+
+    - name: BSD | Ensure proper expiration date was set
+      assert:
+        that:
+          - bsd_account_expiration.stdout == '2529881062'
+  when: ansible_facts.os_family == 'FreeBSD'
+
+- name: Change timezone
+  timezone:
+    name: America/Denver
+  register: original_timezone
+  tags:
+    - timezone
+
+- name: Change system timezone to make sure expiration comparison works properly
+  block:
+    - name: Create user with expiration again to ensure no change is made in a new timezone
+      user:
+        name: ansibulluser
+        state: present
+        expires: 2529881062
+      register: user_test_different_tz
+
+    - name: Ensure that no change was reported
+      assert:
+        that:
+          - user_test_different_tz is not changed
+
+  always:
+    - name: Restore original timezone - {{ original_timezone.diff.before.name }}
+      timezone:
+        name: "{{ original_timezone.diff.before.name }}"
+      tags:
+        - timezone
+
+
+- name: Unexpire user
+  user:
+    name: ansibulluser
+    state: present
+    expires: -1
+  register: user_test_expires3
+
+- name: Verify un expiration date for Linux
+  block:
+    - name: LINUX | Get expiration date for ansibulluser
+      getent:
+        database: shadow
+        key: ansibulluser
+
+    - name: LINUX | Ensure proper expiration date was set
+      assert:
+        msg: "expiry is supposed to be empty or -1, not {{ getent_shadow['ansibulluser'][6] }}"
+        that:
+          - not getent_shadow['ansibulluser'][6] or getent_shadow['ansibulluser'][6] | int < 0
+  when: ansible_facts.os_family in ['RedHat', 'Debian', 'Suse']
+
+- name: Verify un expiration date for Linux/BSD
+  block:
+    - name: Unexpire user again to check for change
+      user:
+        name: ansibulluser
+        state: present
+        expires: -1
+      register: user_test_expires4
+
+    - name: Ensure first expiration reported a change and second did not
+      assert:
+        msg: The second run of the expiration removal task reported a change when it should not
+        that:
+          - user_test_expires3 is changed
+          - user_test_expires4 is not changed
+  when: ansible_facts.os_family in ['RedHat', 'Debian', 'Suse', 'FreeBSD']
+
+- name: Verify un expiration date for BSD
+  block:
+    - name: BSD | Get expiration date for ansibulluser
+      shell: 'grep ansibulluser /etc/master.passwd | cut -d: -f 7'
+      changed_when: no
+      register: bsd_account_expiration
+
+    - name: BSD | Ensure proper expiration date was set
+      assert:
+        msg: "expiry is supposed to be '0', not {{ bsd_account_expiration.stdout }}"
+        that:
+          - bsd_account_expiration.stdout == '0'
+  when: ansible_facts.os_family == 'FreeBSD'
+
+# Test setting no expiration when creating a new account
+# https://github.com/ansible/ansible/issues/44155
+- name: Remove ansibulluser
+  user:
+    name: ansibulluser
+    state: absent
+
+- name: Create user account without expiration
+  user:
+    name: ansibulluser
+    state: present
+    expires: -1
+  register: user_test_create_no_expires_1
+
+- name: Create user account without expiration again
+  user:
+    name: ansibulluser
+    state: present
+    expires: -1
+  register: user_test_create_no_expires_2
+
+- name: Ensure changes were made appropriately
+  assert:
+    msg: Setting 'expires='-1 resulted in incorrect changes
+    that:
+      - user_test_create_no_expires_1 is changed
+      - user_test_create_no_expires_2 is not changed
+
+- name: Verify un expiration date for Linux
+  block:
+    - name: LINUX | Get expiration date for ansibulluser
+      getent:
+        database: shadow
+        key: ansibulluser
+
+    - name: LINUX | Ensure proper expiration date was set
+      assert:
+        msg: "expiry is supposed to be empty or -1, not {{ getent_shadow['ansibulluser'][6] }}"
+        that:
+          - not getent_shadow['ansibulluser'][6] or getent_shadow['ansibulluser'][6] | int < 0
+  when: ansible_facts.os_family in ['RedHat', 'Debian', 'Suse']
+
+- name: Verify un expiration date for BSD
+  block:
+    - name: BSD | Get expiration date for ansibulluser
+      shell: 'grep ansibulluser /etc/master.passwd | cut -d: -f 7'
+      changed_when: no
+      register: bsd_account_expiration
+
+    - name: BSD | Ensure proper expiration date was set
+      assert:
+        msg: "expiry is supposed to be '0', not {{ bsd_account_expiration.stdout }}"
+        that:
+          - bsd_account_expiration.stdout == '0'
+  when: ansible_facts.os_family == 'FreeBSD'
+
+# Test setting epoch 0 expiration when creating a new account, then removing the expiry
+# https://github.com/ansible/ansible/issues/47114
+- name: Remove ansibulluser
+  user:
+    name: ansibulluser
+    state: absent
+
+- name: Create user account with epoch 0 expiration
+  user:
+    name: ansibulluser
+    state: present
+    expires: 0
+  register: user_test_expires_create0_1
+
+- name: Create user account with epoch 0 expiration again
+  user:
+    name: ansibulluser
+    state: present
+    expires: 0
+  register: user_test_expires_create0_2
+
+- name: Change the user account to remove the expiry time
+  user:
+    name: ansibulluser
+    expires: -1
+  register: user_test_remove_expires_1
+
+- name: Change the user account to remove the expiry time again
+  user:
+    name: ansibulluser
+    expires: -1
+  register: user_test_remove_expires_2
+
+
+- name: Verify un expiration date for Linux
+  block:
+    - name: LINUX | Ensure changes were made appropriately
+      assert:
+        msg: Creating an account with 'expries=0' then removing that expriation with 'expires=-1' resulted in incorrect changes
+        that:
+          - user_test_expires_create0_1 is changed
+          - user_test_expires_create0_2 is not changed
+          - user_test_remove_expires_1 is changed
+          - user_test_remove_expires_2 is not changed
+
+    - name: LINUX | Get expiration date for ansibulluser
+      getent:
+        database: shadow
+        key: ansibulluser
+
+    - name: LINUX | Ensure proper expiration date was set
+      assert:
+        msg: "expiry is supposed to be empty or -1, not {{ getent_shadow['ansibulluser'][6] }}"
+        that:
+          - not getent_shadow['ansibulluser'][6] or getent_shadow['ansibulluser'][6] | int < 0
+  when: ansible_facts.os_family in ['RedHat', 'Debian', 'Suse']
+
+
+- name: Verify proper expiration behavior for BSD
+  block:
+    - name: BSD | Ensure changes were made appropriately
+      assert:
+        msg: Creating an account with 'expries=0' then removing that expriation with 'expires=-1' resulted in incorrect changes
+        that:
+          - user_test_expires_create0_1 is changed
+          - user_test_expires_create0_2 is not changed
+          - user_test_remove_expires_1 is not changed
+          - user_test_remove_expires_2 is not changed
+  when: ansible_facts.os_family == 'FreeBSD'
+
+# Test expiration with a very large negative number. This should have the same
+# result as setting -1.
+- name: Set expiration date using very long negative number
+  user:
+    name: ansibulluser
+    state: present
+    expires: -2529881062
+  register: user_test_expires5
+
+- name: Ensure no change was made
+  assert:
+    that:
+      - user_test_expires5 is not changed
+
+- name: Verify un expiration date for Linux
+  block:
+    - name: LINUX | Get expiration date for ansibulluser
+      getent:
+        database: shadow
+        key: ansibulluser
+
+    - name: LINUX | Ensure proper expiration date was set
+      assert:
+        msg: "expiry is supposed to be empty or -1, not {{ getent_shadow['ansibulluser'][6] }}"
+        that:
+          - not getent_shadow['ansibulluser'][6] or getent_shadow['ansibulluser'][6] | int < 0
+  when: ansible_facts.os_family in ['RedHat', 'Debian', 'Suse']
+
+- name: Verify un expiration date for BSD
+  block:
+    - name: BSD | Get expiration date for ansibulluser
+      shell: 'grep ansibulluser /etc/master.passwd | cut -d: -f 7'
+      changed_when: no
+      register: bsd_account_expiration
+
+    - name: BSD | Ensure proper expiration date was set
+      assert:
+        msg: "expiry is supposed to be '0', not {{ bsd_account_expiration.stdout }}"
+        that:
+          - bsd_account_expiration.stdout == '0'
+  when: ansible_facts.os_family == 'FreeBSD'
+
+
+## shadow backup
+- block:
+    - name: Create a user to test shadow file backup
+      user:
+        name: ansibulluser
+        state: present
+      register: result
+
+    - name: Find shadow backup files
+      find:
+        path: /etc
+        patterns: 'shadow\..*~$'
+        use_regex: yes
+      register: shadow_backups
+
+    - name: Assert that a backup file was created
+      assert:
+        that:
+          - result.bakup
+          - shadow_backups.files | map(attribute='path') | list | length > 0
+  when: ansible_facts.os_family == 'Solaris'
+
+
+# Test creating ssh key with passphrase
+- name: Remove ansibulluser
+  user:
+    name: ansibulluser
+    state: absent
+
+- name: Create user with ssh key
+  user:
+    name: ansibulluser
+    state: present
+    generate_ssh_key: yes
+    ssh_key_file: "{{ output_dir }}/test_id_rsa"
+    ssh_key_passphrase: secret_passphrase
+
+- name: Unlock ssh key
+  command: "ssh-keygen -y -f {{ output_dir }}/test_id_rsa -P secret_passphrase"
+  register: result
+
+- name: Check that ssh key was unlocked successfully
+  assert:
+    that:
+      - result.rc == 0
+
+- name: Clean ssh key
+  file:
+    path: "{{ output_dir }}/test_id_rsa"
+    state: absent
+  when: ansible_os_family == 'FreeBSD'
+
+
+## password lock
+- block:
+    - name: Set password for ansibulluser
+      user:
+        name: ansibulluser
+        password: "$6$rounds=656000$TT4O7jz2M57npccl$33LF6FcUMSW11qrESXL1HX0BS.bsiT6aenFLLiVpsQh6hDtI9pJh5iY7x8J7ePkN4fP8hmElidHXaeD51pbGS."
+
+    - name: Lock account
+      user:
+        name: ansibulluser
+        password_lock: yes
+      register: password_lock_1
+
+    - name: Lock account again
+      user:
+        name: ansibulluser
+        password_lock: yes
+      register: password_lock_2
+
+    - name: Unlock account
+      user:
+        name: ansibulluser
+        password_lock: no
+      register: password_lock_3
+
+    - name: Unlock account again
+      user:
+        name: ansibulluser
+        password_lock: no
+      register: password_lock_4
+
+    - name: Ensure task reported changes appropriately
+      assert:
+        msg: The password_lock tasks did not make changes appropriately
+        that:
+          - password_lock_1 is changed
+          - password_lock_2 is not changed
+          - password_lock_3 is changed
+          - password_lock_4 is not changed
+
+    - name: Lock account
+      user:
+        name: ansibulluser
+        password_lock: yes
+
+    - name: Verify account lock for BSD
+      block:
+        - name: BSD | Get account status
+          shell: "{{ status_command[ansible_facts['system']] }}"
+          register: account_status_locked
+
+        - name: Unlock account
+          user:
+            name: ansibulluser
+            password_lock: no
+
+        - name: BSD | Get account status
+          shell: "{{ status_command[ansible_facts['system']] }}"
+          register: account_status_unlocked
+
+        - name: FreeBSD | Ensure account is locked
+          assert:
+            that:
+              - "'LOCKED' in account_status_locked.stdout"
+              - "'LOCKED' not in account_status_unlocked.stdout"
+          when: ansible_facts['system'] == 'FreeBSD'
+
+      when: ansible_facts['system'] in ['FreeBSD', 'OpenBSD']
+
+    - name: Verify account lock for Linux
+      block:
+        - name: LINUX | Get account status
+          getent:
+            database: shadow
+            key: ansibulluser
+
+        - name: LINUX | Ensure account is locked
+          assert:
+            that:
+              - getent_shadow['ansibulluser'][0].startswith('!')
+
+        - name: Unlock account
+          user:
+            name: ansibulluser
+            password_lock: no
+
+        - name: LINUX | Get account status
+          getent:
+            database: shadow
+            key: ansibulluser
+
+        - name: LINUX | Ensure account is unlocked
+          assert:
+            that:
+              - not getent_shadow['ansibulluser'][0].startswith('!')
+
+      when: ansible_facts['system'] == 'Linux'
+
+  always:
+    - name: Unlock account
+      user:
+        name: ansibulluser
+        password_lock: no
+
+  when: ansible_facts['system'] in ['FreeBSD', 'OpenBSD', 'Linux']
+
+
+  ## Check local mode
+  # Even if we don't have a system that is bound to a directory, it's useful
+  # to run with local: true to exercise the code path that reads through the local
+  # user database file.
+  # https://github.com/ansible/ansible/issues/50947
+
+- name: Create /etc/gshadow
+  file:
+    path: /etc/gshadow
+    state: touch
+  when: ansible_facts.os_family == 'Suse'
+  tags:
+    - user_test_local_mode
+
+- name: Create /etc/libuser.conf
+  file:
+    path: /etc/libuser.conf
+    state: touch
+  when:
+    - ansible_facts.distribution == 'Ubuntu'
+    - ansible_facts.distribution_major_version is version_compare('16', '==')
+  tags:
+    - user_test_local_mode
+
+- name: Ensure luseradd is present
+  action: "{{ ansible_facts.pkg_mgr }}"
+  args:
+    name: libuser
+    state: present
+  when: ansible_facts.system in ['Linux']
+  tags:
+    - user_test_local_mode
+
+- name: Create local_ansibulluser
+  user:
+    name: local_ansibulluser
+    state: present
+    local: yes
+  register: local_user_test_1
+  tags:
+    - user_test_local_mode
+
+- name: Create local_ansibulluser again
+  user:
+    name: local_ansibulluser
+    state: present
+    local: yes
+  register: local_user_test_2
+  tags:
+    - user_test_local_mode
+
+- name: Remove local_ansibulluser
+  user:
+    name: local_ansibulluser
+    state: absent
+    remove: yes
+    local: yes
+  register: local_user_test_3
+  tags:
+    - user_test_local_mode
+
+- name: Remove local_ansibulluser again
+  user:
+    name: local_ansibulluser
+    state: absent
+    remove: yes
+    local: yes
+  register: local_user_test_4
+  tags:
+    - user_test_local_mode
+
+- name: Ensure local user accounts were created
+  assert:
+    that:
+      - local_user_test_1 is changed
+      - local_user_test_2 is not changed
+      - local_user_test_3 is changed
+      - local_user_test_4 is not changed
+  tags:
+    - user_test_local_mode

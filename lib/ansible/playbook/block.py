@@ -27,19 +27,19 @@ from ansible.playbook.conditional import Conditional
 from ansible.playbook.helpers import load_list_of_tasks
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
+from ansible.utils.sentinel import Sentinel
 
 
 class Block(Base, Become, Conditional, Taggable):
 
     # main block fields containing the task lists
-    _block = FieldAttribute(isa='list', default=[], inherit=False)
-    _rescue = FieldAttribute(isa='list', default=[], inherit=False)
-    _always = FieldAttribute(isa='list', default=[], inherit=False)
+    _block = FieldAttribute(isa='list', default=list, inherit=False)
+    _rescue = FieldAttribute(isa='list', default=list, inherit=False)
+    _always = FieldAttribute(isa='list', default=list, inherit=False)
 
     # other fields
     _delegate_to = FieldAttribute(isa='string')
-    _delegate_facts = FieldAttribute(isa='bool', default=False)
-    _name = FieldAttribute(isa='string', default='')
+    _delegate_facts = FieldAttribute(isa='bool')
 
     # for future consideration? this would be functionally
     # similar to the 'else' clause for exceptions
@@ -65,6 +65,14 @@ class Block(Base, Become, Conditional, Taggable):
 
     def __repr__(self):
         return "BLOCK(uuid=%s)(id=%s)(parent=%s)" % (self._uuid, id(self), self._parent)
+
+    def __eq__(self, other):
+        '''object comparison based on _uuid'''
+        return self._uuid == other._uuid
+
+    def __ne__(self, other):
+        '''object comparison based on _uuid'''
+        return self._uuid != other._uuid
 
     def get_vars(self):
         '''
@@ -154,6 +162,12 @@ class Block(Base, Become, Conditional, Taggable):
         except AssertionError as e:
             raise AnsibleParserError("A malformed block was encountered while loading always", obj=self._ds, orig_exc=e)
 
+    def _validate_always(self, attr, name, value):
+        if value and not self.block:
+            raise AnsibleParserError("'%s' keyword cannot be used without 'block'" % name, obj=self._ds)
+
+    _validate_rescue = _validate_always
+
     def get_dep_chain(self):
         if self._dep_chain is None:
             if self._parent:
@@ -170,13 +184,16 @@ class Block(Base, Become, Conditional, Taggable):
                 new_task = task.copy(exclude_parent=True)
                 if task._parent:
                     new_task._parent = task._parent.copy(exclude_tasks=True)
-                    # go up the parentage tree until we find an
-                    # object without a parent and make this new
-                    # block their parent
-                    cur_obj = new_task
-                    while cur_obj._parent:
-                        cur_obj = cur_obj._parent
-                    cur_obj._parent = new_block
+                    if task._parent == new_block:
+                        # If task._parent is the same as new_block, just replace it
+                        new_task._parent = new_block
+                    else:
+                        # task may not be a direct child of new_block, search for the correct place to insert new_block
+                        cur_obj = new_task._parent
+                        while cur_obj._parent and cur_obj._parent != new_block:
+                            cur_obj = cur_obj._parent
+
+                        cur_obj._parent = new_block
                 else:
                     new_task._parent = new_block
                 new_task_list.append(new_task)
@@ -192,7 +209,7 @@ class Block(Base, Become, Conditional, Taggable):
 
         new_me._parent = None
         if self._parent and not exclude_parent:
-            new_me._parent = self._parent.copy(exclude_tasks=exclude_tasks)
+            new_me._parent = self._parent.copy(exclude_tasks=True)
 
         if not exclude_tasks:
             new_me.block = _dupe_task_list(self.block or [], new_me)
@@ -235,7 +252,6 @@ class Block(Base, Become, Conditional, Taggable):
         '''
 
         # import is here to avoid import loops
-        from ansible.playbook.task import Task
         from ansible.playbook.task_include import TaskInclude
         from ansible.playbook.handler_task_include import HandlerTaskInclude
 
@@ -280,57 +296,65 @@ class Block(Base, Become, Conditional, Taggable):
             for dep in dep_chain:
                 dep.set_loader(loader)
 
-    def _get_attr_environment(self):
-        return self._get_parent_attribute('environment', extend=True, prepend=True)
-
     def _get_parent_attribute(self, attr, extend=False, prepend=False):
         '''
         Generic logic to get the attribute or parent attribute for a block value.
         '''
 
-        value = None
+        extend = self._valid_attrs[attr].extend
+        prepend = self._valid_attrs[attr].prepend
         try:
             value = self._attributes[attr]
+            # If parent is static, we can grab attrs from the parent
+            # otherwise, defer to the grandparent
+            if getattr(self._parent, 'statically_loaded', True):
+                _parent = self._parent
+            else:
+                _parent = self._parent._parent
 
-            if self._parent and (value is None or extend):
+            if _parent and (value is Sentinel or extend):
                 try:
-                    if attr != 'when' or getattr(self._parent, 'statically_loaded', True):
-                        parent_value = getattr(self._parent, attr, None)
+                    if getattr(_parent, 'statically_loaded', True):
+                        if hasattr(_parent, '_get_parent_attribute'):
+                            parent_value = _parent._get_parent_attribute(attr)
+                        else:
+                            parent_value = _parent._attributes.get(attr, Sentinel)
                         if extend:
                             value = self._extend_value(value, parent_value, prepend)
                         else:
                             value = parent_value
                 except AttributeError:
                     pass
-            if self._role and (value is None or extend):
+            if self._role and (value is Sentinel or extend):
                 try:
-                    parent_value = getattr(self._role, attr, None)
+                    parent_value = self._role._attributes.get(attr, Sentinel)
                     if extend:
                         value = self._extend_value(value, parent_value, prepend)
                     else:
                         value = parent_value
 
                     dep_chain = self.get_dep_chain()
-                    if dep_chain and (value is None or extend):
+                    if dep_chain and (value is Sentinel or extend):
                         dep_chain.reverse()
                         for dep in dep_chain:
-                            dep_value = getattr(dep, attr, None)
+                            dep_value = dep._attributes.get(attr, Sentinel)
                             if extend:
                                 value = self._extend_value(value, dep_value, prepend)
                             else:
                                 value = dep_value
 
-                            if value is not None and not extend:
+                            if value is not Sentinel and not extend:
                                 break
                 except AttributeError:
                     pass
-            if self._play and (value is None or extend):
+            if self._play and (value is Sentinel or extend):
                 try:
-                    parent_value = getattr(self._play, attr, None)
-                    if extend:
-                        value = self._extend_value(value, parent_value, prepend)
-                    else:
-                        value = parent_value
+                    play_value = self._play._attributes.get(attr, Sentinel)
+                    if play_value is not Sentinel:
+                        if extend:
+                            value = self._extend_value(value, play_value, prepend)
+                        else:
+                            value = play_value
                 except AttributeError:
                     pass
         except KeyError:
@@ -338,10 +362,9 @@ class Block(Base, Become, Conditional, Taggable):
 
         return value
 
-    def filter_tagged_tasks(self, play_context, all_vars):
+    def filter_tagged_tasks(self, all_vars):
         '''
-        Creates a new block, with task lists filtered based on the tags contained
-        within the play_context object.
+        Creates a new block, with task lists filtered based on the tags.
         '''
 
         def evaluate_and_append_task(target):
@@ -350,8 +373,8 @@ class Block(Base, Become, Conditional, Taggable):
                 if isinstance(task, Block):
                     tmp_list.append(evaluate_block(task))
                 elif (task.action == 'meta' or
-                        (task.action == 'include' and task.evaluate_tags([], play_context.skip_tags, all_vars=all_vars)) or
-                        task.evaluate_tags(play_context.only_tags, play_context.skip_tags, all_vars=all_vars)):
+                        (task.action == 'include' and task.evaluate_tags([], self._play.skip_tags, all_vars=all_vars)) or
+                        task.evaluate_tags(self._play.only_tags, self._play.skip_tags, all_vars=all_vars)):
                     tmp_list.append(task)
             return tmp_list
 

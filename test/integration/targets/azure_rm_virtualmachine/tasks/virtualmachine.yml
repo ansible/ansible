@@ -1,14 +1,11 @@
-- name: Delete virtual machine
-  azure_rm_virtualmachine:
-      resource_group: "{{ resource_group }}"
-      name: testvm002
-      state: absent
-      vm_size: Standard_A0
-  register: output
-
-- name: Create storage account name
+- name: Create random names
   set_fact:
       storage_account: "{{ resource_group | hash('md5') | truncate(24, True, '') }}"
+      vm_name1: "vm1{{ resource_group | hash('md5') | truncate(5, True, '') }}"
+      vm_name2: "vm2{{ resource_group | hash('md5') | truncate(5, True, '') }}"
+      vm_name3: "vm3{{ resource_group | hash('md5') | truncate(5, True, '') }}"
+      abs_name1: "avbs1{{ resource_group | hash('md5') | truncate(3, True, '') }}"
+      abs_name2: "avbs2{{ resource_group | hash('md5') | truncate(3, True, '') }}"
 
 - name: Create storage account
   azure_rm_storageaccount:
@@ -16,63 +13,129 @@
       name: "{{ storage_account }}"
       account_type: Standard_LRS
 
+- name: Create an availability set
+  azure_rm_availabilityset:
+    name: "{{ abs_name1 }}"
+    resource_group: "{{ resource_group }}"
+
 - name: Create virtual network
   azure_rm_virtualnetwork:
       resource_group: "{{ resource_group }}"
-      name: testvm001
+      name: "{{ vm_name1 }}"
       address_prefixes: "10.10.0.0/16"
 
 - name: Add subnet
   azure_rm_subnet:
       resource_group: "{{ resource_group }}"
-      name: testvm001
+      name: "{{ vm_name1 }}"
       address_prefix: "10.10.0.0/24"
-      virtual_network: testvm001
+      virtual_network: "{{ vm_name1 }}"
 
 - name: Create public ip
   azure_rm_publicipaddress:
       resource_group: "{{ resource_group }}"
       allocation_method: Static
-      name: testvm001
+      name: "{{ vm_name1 }}"
 
 - name: Create security group
   azure_rm_securitygroup:
       resource_group: "{{ resource_group }}"
-      name: testvm001
+      name: "{{ vm_name1 }}"
+      purge_rules: yes
+      rules:
+        - name: ALLOW_SSH
+          protocol: Tcp
+          destination_port_range: 22
+          access: Allow
+          priority: 100
+          direction: Inbound
+        - name: ALLOW_HTTP
+          protocol: Tcp
+          destination_port_range: 80
+          access: Allow
+          priority: 110
+          direction: Inbound
 
-- name: Create NIC
+- name: Create NIC for single nic VM
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"
-      name: testvm001
-      virtual_network: testvm001
-      subnet: testvm001
-      public_ip_name: testvm001
-      security_group: testvm001
+      name: "{{ vm_name1 }}"
+      virtual_network: "{{ vm_name1 }}"
+      subnet: "{{ vm_name1 }}"
+      public_ip_name: "{{ vm_name1 }}"
+      security_group: "{{ vm_name1 }}"
 
-- name: Create virtual machine
+- name: Create virtual machine with a single NIC
+  register: output
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
-      name: testvm002
+      name: "{{ vm_name1 }}"
       vm_size: Standard_A0
       storage_account: "{{ storage_account }}"
-      storage_container: testvm001
-      storage_blob: testvm001.vhd
+      storage_container: "{{ vm_name1 }}"
+      storage_blob: "{{ vm_name1 }}.vhd"
       admin_username: adminuser
       admin_password: Password123!
       short_hostname: testvm
       os_type: Linux
-      network_interfaces: testvm001
+      network_interfaces: "{{ vm_name1 }}"
+      availability_set: "{{ abs_name1 }}"
       image:
         offer: UbuntuServer
         publisher: Canonical
         sku: 16.04-LTS
         version: latest
-  register: output
+      custom_data: |
+        #!/bin/sh
+        echo "custom_data was executed" > /tmp/custom_data.txt
+
+- assert:
+      that:
+        - azure_vm.properties.availabilitySet.id
+
+# - add_host:
+#       name: new_azure_vm
+#       ansible_host: '{{ output.ansible_facts.azure_vm.properties.networkProfile.networkInterfaces[0].properties.ipConfigurations[0].properties.publicIPAddress.properties.ipAddress }}'
+#       ansible_connection: paramiko  # not guaranteed to have sshpass...
+#       ansible_user: adminuser
+#       ansible_password: Password123!
+#       ansible_host_key_checking: false
+
+# - name: wait for SSH port to be open
+#   wait_for:
+#       host: '{{ hostvars["new_azure_vm"].ansible_host }}'
+#       port: 22
+#       timeout: 60
+#       state: started
+
+#- block:
+#   TODO: figure out how to make this work under ansible-test with the coverage injector
+#  - name: wait for host to answer on SSH
+#    delegate_to: new_azure_vm
+#    wait_for_connection:
+#  - name: get content from custom_data script
+#    raw: cat /tmp/custom_data.txt
+#    register: custom_data_content
+
+#  - name: assert contents
+#    assert:
+#        that: custom_data_content.stdout | regex_search('custom_data was executed')
+#  delegate_to: new_azure_vm
+
+#   TODO: figure out how to make this work under ansible-test with the coverage injector
+#  - name: wait for file/content created by custom_data script
+#    delegate_to: new_azure_vm
+#    vars:
+#      ansible_python_interpreter: python
+#    wait_for:
+#      path: /tmp/custom_data.txt
+#      search_regex: ^custom_data was executed$
+#      timeout: 20
 
 - name: Restart the virtual machine
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
-      name: testvm002
+      name: "{{ vm_name1 }}"
       restarted: yes
       vm_size: Standard_A0
   register: output
@@ -85,7 +148,7 @@
 - name: Deallocate the virtual machine
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
-      name: testvm002
+      name: "{{ vm_name1 }}"
       allocated: no 
       vm_size: Standard_A0
   register: output
@@ -98,7 +161,7 @@
 - name: Start the virtual machine
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
-      name: testvm002
+      name: "{{ vm_name1 }}"
       vm_size: Standard_A0
   register: output
 
@@ -107,19 +170,19 @@
           - "azure_vm.powerstate in ['starting', 'running']"
           - output.changed
 
-- name: Should be idempotent
+- name: Should be idempotent with a single NIC
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
-      name: testvm002
+      name: "{{ vm_name1 }}"
       vm_size: Standard_A0
       storage_account: "{{ storage_account }}"
-      storage_container: testvm001
-      storage_blob: testvm001.vhd
+      storage_container: "{{ vm_name1 }}"
+      storage_blob: "{{ vm_name1 }}.vhd"
       admin_username: adminuser
       admin_password: Password123!
       short_hostname: testvm
       os_type: Linux
-      network_interfaces: testvm001
+      network_interfaces: "{{ vm_name1 }}"
       image:
         offer: UbuntuServer
         publisher: Canonical
@@ -130,10 +193,35 @@
 - assert:
       that: not output.changed
 
+- name: Resize VM
+  azure_rm_virtualmachine:
+      resource_group: "{{ resource_group }}"
+      name: "{{ vm_name1 }}"
+      vm_size: Standard_A1
+      storage_account: "{{ storage_account }}"
+      storage_container: "{{ vm_name1 }}"
+      storage_blob: "{{ vm_name1 }}.vhd"
+      admin_username: adminuser
+      admin_password: Password123!
+      short_hostname: testvm
+      os_type: Linux
+      network_interfaces: "{{ vm_name1 }}"
+      image:
+        offer: UbuntuServer
+        publisher: Canonical
+        sku: 16.04-LTS
+        version: latest
+  register: output
+
+- assert:
+      that:
+        - output.changed
+        - output.ansible_facts.azure_vm.properties.hardwareProfile.vmSize == "Standard_A1"
+
 - name: Delete VM
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
-      name: testvm002
+      name: "{{ vm_name1 }}"
       state: absent
       vm_size: Standard_A0
   register: output
@@ -141,7 +229,7 @@
 - name: NIC should be gone
   azure_rm_networkinterface_facts:
       resource_group: "{{ resource_group }}"
-      name: testvm001
+      name: "{{ vm_name1 }}"
   register: output
 
 - assert:
@@ -150,8 +238,316 @@
 - name: PIP should be gone
   azure_rm_publicipaddress_facts:
       resource_group: "{{ resource_group }}"
-      name: testvm001
+      name: "{{ vm_name1 }}"
   register: output
 
 - assert:
       that: azure_publicipaddresses | length == 0
+
+- name: Create virtual machine without public ip address
+  register: output
+  azure_rm_virtualmachine:
+      resource_group: "{{ resource_group }}"
+      name: testvmnoip
+      vm_size: Standard_A0
+      admin_username: adminuser
+      admin_password: Password123!
+      short_hostname: testvm
+      os_type: Linux
+      public_ip_allocation_method: Disabled
+      availability_set: "{{ abs_name1 }}"
+      image:
+        offer: UbuntuServer
+        publisher: Canonical
+        sku: 16.04-LTS
+        version: latest
+
+- assert:
+      that:
+        - not 'publicIPAddress' in output.ansible_facts.azure_vm.properties.networkProfile.networkInterfaces[0].properties.ipConfigurations[0].properties
+
+- name: Delete VM with no public ip
+  azure_rm_virtualmachine:
+      resource_group: "{{ resource_group }}"
+      name: testvmnoip
+      state: absent
+      vm_size: Standard_A0
+  async: 5000
+  poll: 0
+
+- set_fact:
+      niclist:
+         - name: testnic011
+           resource_group: "{{ resource_group_secondary }}"
+         - name: testnic012
+           resource_group: "{{ resource_group_secondary  }}"
+
+- name: Create an availability set
+  azure_rm_availabilityset:
+    name: "{{ abs_name2 }}"
+    resource_group: "{{ resource_group }}"
+
+- name: Create virtual network
+  azure_rm_virtualnetwork:
+      resource_group: "{{ resource_group_secondary }}"
+      name: "{{ vm_name2 }}"
+      address_prefixes: "10.10.0.0/16"
+  register: vn
+
+- name: Add subnet
+  azure_rm_subnet:
+      resource_group: "{{ resource_group_secondary }}"
+      name: "{{ vm_name2 }}"
+      address_prefix: "10.10.0.0/24"
+      virtual_network: "{{ vm_name2 }}"
+
+- name: Create NICs for dual nic VM
+  azure_rm_networkinterface:
+      resource_group: "{{ item.resource_group }}"
+      name: "{{ item.name }}"
+      virtual_network: "{{ vn.state.id }}"
+      subnet: "{{ vm_name2 }}"
+      security_group: "{{ vm_name1 }}"
+  loop: "{{ niclist }}"
+
+- name: Create virtual machine with two NICs
+  register: output
+  azure_rm_virtualmachine:
+      resource_group: "{{ resource_group }}"
+      name: "{{ vm_name2 }}"
+      vm_size: Standard_A0
+      storage_account: "{{ storage_account }}"
+      storage_container: "{{ vm_name2 }}"
+      storage_blob: "{{ vm_name2 }}.vhd"
+      admin_username: adminuser
+      admin_password: Password123!
+      short_hostname: testvm
+      os_type: Linux
+      os_disk_size_gb: 64
+      os_disk_name: testosdiskxx
+      network_interfaces: "{{ niclist }}"
+      availability_set: "{{ abs_name2 }}"
+      image:
+        offer: UbuntuServer
+        publisher: Canonical
+        sku: 16.04-LTS
+        version: latest
+      tags:
+        abc: def
+- assert:
+      that:
+        - azure_vm.properties.availabilitySet.id
+        - azure_vm.properties.storageProfile.osDisk.name == 'testosdiskxx'
+
+- name: Retrieve vms facts (filtering by name)
+  azure_rm_virtualmachine_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name2 }}"
+  register: results
+
+- name: Assert that facts module returned the second vm
+  assert:
+    that: 
+      - results.vms | length == 1
+      - results.vms[0].name == "{{ vm_name2 }}"
+      - results.vms[0].location == 'eastus'
+      - results.vms[0].admin_username == 'adminuser'
+      - results.vms[0].resource_group == "{{ resource_group }}"
+      - results.vms[0].power_state != None
+
+- name: Retrieve facts by tags
+  azure_rm_virtualmachine_facts:
+    tags:
+      - abc:def
+  register: results
+
+- name: Assert that facts module returned the second vm
+  assert:
+    that: 
+      - results.vms | length >= 1
+
+- name: Should be idempotent with a dual NICs
+  azure_rm_virtualmachine:
+      resource_group: "{{ resource_group }}"
+      name: "{{ vm_name2 }}"
+      vm_size: Standard_A0
+      storage_account: "{{ storage_account }}"
+      storage_container: "{{ vm_name2 }}"
+      storage_blob: "{{ vm_name2 }}.vhd"
+      admin_username: adminuser
+      admin_password: Password123!
+      short_hostname: testvm
+      os_type: Linux
+      os_disk_size_gb: 64
+      network_interfaces: "{{ niclist }}"
+      availability_set: "{{ abs_name2 }}"
+      image:
+        offer: UbuntuServer
+        publisher: Canonical
+        sku: 16.04-LTS
+        version: latest
+  register: output
+
+- assert:
+      that: not output.changed
+
+- name: Generalize VM
+  azure_rm_virtualmachine:
+      resource_group: "{{ resource_group }}"
+      name: "{{ vm_name2 }}"
+      generalized: yes
+
+- name: Gather facts and check if machine is generalized
+  azure_rm_virtualmachine_facts:
+      resource_group: "{{ resource_group }}"
+      name: "{{ vm_name2 }}"
+  register: generalized_output
+
+- assert:
+      that: generalized_output.vms[0].power_state == 'generalized'
+
+- name: Delete dual NIC VM
+  azure_rm_virtualmachine:
+      resource_group: "{{ resource_group }}"
+      name: "{{ vm_name2 }}"
+      state: absent
+      vm_size: Standard_A0
+  async: 5000
+  poll: 0
+
+# TODO: Until we have a module to create/delete images this is the best tests
+# I can do
+- name: assert error thrown with invalid image dict
+  azure_rm_virtualmachine:
+      resource_group: "{{ resource_group }}"
+      name: testvm002
+      image:
+        offer: UbuntuServer
+  register: fail_invalid_image_dict
+  failed_when: 'fail_invalid_image_dict.msg != "parameter error: expecting image to contain [publisher, offer, sku, version] or [name, resource_group]"'
+
+- name: assert error thrown with invalid image type
+  azure_rm_virtualmachine:
+      resource_group: "{{ resource_group }}"
+      name: testvm002
+      image:
+      - testing
+  register: fail_invalid_image_type
+  failed_when: 'fail_invalid_image_type.msg != "parameter error: expecting image to be a string or dict not list"'
+
+- name: assert error finding missing custom image
+  azure_rm_virtualmachine:
+      resource_group: "{{ resource_group }}"
+      name: testvm002
+      image: invalid-image
+  register: fail_missing_custom_image
+  failed_when: fail_missing_custom_image.msg != "Error could not find image with name invalid-image"
+
+- name: assert error finding missing custom image (dict style)
+  azure_rm_virtualmachine:
+      resource_group: "{{ resource_group }}"
+      name: testvm002
+      image:
+        name: invalid-image
+  register: fail_missing_custom_image_dict
+  failed_when: fail_missing_custom_image_dict.msg != "Error could not find image with name invalid-image"
+
+## Tests possible when CI user acccount setup with required authority
+#- name: Set test facts
+  #set_fact:
+    #image_paid:
+      #publisher: cognosys
+      #offer: ubuntu-14-04-lts
+      #sku: hardened-ubuntu-14-04
+      #version: latest
+    #plan_paid:
+      #name: hardened-ubuntu-14-04
+      #product: ubuntu-14-04-lts
+      #publisher: cognosys
+      
+#- name: Create virtual machine with image and plan which requires acceptance of terms
+  #azure_rm_virtualmachine:
+      #resource_group: "{{ resource_group }}"
+      #name: testvm009
+      #vm_size: Standard_A0
+      #storage_account: "{{ storage_account }}"
+      #storage_container: testvm001
+      #storage_blob: testvm003.vhd
+      #admin_username: adminuser
+      #admin_password: Password123!
+      #short_hostname: testvm
+      #os_type: Linux
+      #availability_set: "avbs{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+      #image: "{{ image_paid }}"
+      #plan_paid: "{{ plan_paid }}"
+  #register: output
+
+#- assert:
+    #that:
+      #- output.changed
+      #- output.ansible_facts.azure_vm.properties.storageProfile.imageReference.publisher == image_paid.publisher
+
+#- name: Should be idempotent with image and plan which requires acceptance of terms
+  #azure_rm_virtualmachine:
+      #resource_group: "{{ resource_group }}"
+      #name: testvm009
+      #vm_size: Standard_A0
+      #storage_account: "{{ storage_account }}"
+      #storage_container: testvm001
+      #storage_blob: testvm003.vhd
+      #admin_username: adminuser
+      #admin_password: Password123!
+      #short_hostname: testvm
+      #os_type: Linux
+      #availability_set: "avbs{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+      #image: "{{ image_paid }}"
+      #plan_paid: "{{ plan_paid }}"
+
+#- assert:
+    #that: not output.changed
+
+- name: Create minimal VM with defaults
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name3 }}"
+    admin_username: "testuser"
+    admin_password: "Pass123$$$abx!"
+    vm_size: Standard_B1ms
+    image:
+      offer: UbuntuServer
+      publisher: Canonical
+      sku: 16.04-LTS
+      version: latest
+  register: vm_output
+
+- name: Delete VM
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name3 }}"
+    remove_on_absent: all_autocreated
+    state: absent
+
+- name: Query NIC
+  azure_rm_networkinterface_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name3 }}01"
+  register: output_nic
+      
+- name: Query NSG
+  azure_rm_securitygroup_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name3 }}01"
+  register: output_nsg
+
+- name: Query PIP
+  azure_rm_publicipaddress_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name3 }}01"
+  register: output_pip
+
+- name: Assert that autocreated resources were deleted
+  assert:
+    that: 
+      - output_nic.ansible_facts.azure_networkinterfaces | length == 0
+      - output_nsg.ansible_facts.azure_securitygroups | length == 0
+      - output_pip.ansible_facts.azure_publicipaddresses | length == 0

@@ -29,7 +29,7 @@ short_description: Get interface link status on HUAWEI CloudEngine switches.
 description:
     - Get interface link status on HUAWEI CloudEngine switches.
 author:
-    - Zhijin Zhou (@CloudEngine-Ansible)
+    - Zhijin Zhou (@QijunPan)
 notes:
     - Current physical state shows an interface's physical status.
     - Current link state shows an interface's link layer protocol status.
@@ -128,7 +128,7 @@ result:
 
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import ce_argument_spec, get_nc_config
+from ansible.module_utils.network.cloudengine.ce import ce_argument_spec, get_nc_config
 
 CE_NC_GET_PORT_SPEED = """
 <filter type="subtree">

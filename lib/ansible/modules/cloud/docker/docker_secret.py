@@ -21,44 +21,56 @@ short_description: Manage docker secrets.
 version_added: "2.4"
 
 description:
-     - Create and remove Docker secrets in a Swarm environment. Similar to `docker secret create` and `docker secret rm`.
+     - Create and remove Docker secrets in a Swarm environment. Similar to C(docker secret create) and C(docker secret rm).
      - Adds to the metadata of new secrets 'ansible_key', an encrypted hash representation of the data, which is then used
-     - in future runs to test if a secret has changed.
-     - If 'ansible_key is not present, then a secret will not be updated unless the C(force) option is set.
+       in future runs to test if a secret has changed. If 'ansible_key is not present, then a secret will not be updated
+       unless the C(force) option is set.
      - Updates to secrets are performed by removing the secret and creating it again.
 options:
   data:
     description:
-      - String. The value of the secret. Required when state is C(present).
-    required: false
+      - The value of the secret. Required when state is C(present).
+    type: str
+  data_is_b64:
+    description:
+      - If set to C(true), the data is assumed to be Base64 encoded and will be
+        decoded before being used.
+      - To use binary C(data), it is better to keep it Base64 encoded and let it
+        be decoded by this option.
+    type: bool
+    default: no
+    version_added: "2.8"
   labels:
     description:
       - "A map of key:value meta data, where both the I(key) and I(value) are expected to be a string."
       - If new meta data is provided, or existing meta data is modified, the secret will be updated by removing it and creating it again.
-    required: false
+    type: dict
   force:
     description:
-      - Boolean. Use with state C(present) to always remove and recreate an existing secret.
+      - Use with state C(present) to always remove and recreate an existing secret.
       - If I(true), an existing secret will be replaced, even if it has not changed.
-    default: false
+    type: bool
+    default: no
   name:
     description:
       - The name of the secret.
-    required: true
+    type: str
+    required: yes
   state:
     description:
       - Set to C(present), if the secret should exist, and C(absent), if it should not.
-    required: false
+    type: str
     default: present
     choices:
       - absent
       - present
 
 extends_documentation_fragment:
-    - docker
+  - docker
+  - docker.docker_py_2_documentation
 
 requirements:
-  - "docker-py >= 2.1.0"
+  - "L(Docker SDK for Python,https://docker-py.readthedocs.io/en/stable/) >= 2.1.0"
   - "Docker API >= 1.25"
 
 author:
@@ -67,10 +79,14 @@ author:
 
 EXAMPLES = '''
 
-- name: Create secret foo
+- name: Create secret foo (from a file on the control machine)
   docker_secret:
     name: foo
-    data: Hello World!
+    # If the file is JSON or binary, Ansible might modify it (because
+    # it is first decoded and later re-encoded). Base64-encoding the
+    # file directly after reading it prevents this to happen.
+    data: "{{ lookup('file', '/path/to/secret/file') | base64 }}"
+    data_is_b64: true
     state: present
 
 - name: Change the secret data
@@ -129,20 +145,21 @@ RETURN = '''
 secret_id:
   description:
     - The ID assigned by Docker to the secret object.
-  returned: success
-  type: string
+  returned: success and C(state == "present")
+  type: str
   sample: 'hzehrmyjigmcp2gb6nlhmjqcv'
 '''
 
+import base64
 import hashlib
 
 try:
     from docker.errors import APIError
 except ImportError:
-    # missing docker-py handled in ansible.module_utils.docker
+    # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
 
-from ansible.module_utils.docker_common import AnsibleDockerClient, DockerBaseClass
+from ansible.module_utils.docker.common import AnsibleDockerClient, DockerBaseClass, compare_generic
 from ansible.module_utils._text import to_native, to_bytes
 
 
@@ -160,13 +177,18 @@ class SecretManager(DockerBaseClass):
         self.name = parameters.get('name')
         self.state = parameters.get('state')
         self.data = parameters.get('data')
+        if self.data is not None:
+            if parameters.get('data_is_b64'):
+                self.data = base64.b64decode(self.data)
+            else:
+                self.data = to_bytes(self.data)
         self.labels = parameters.get('labels')
         self.force = parameters.get('force')
         self.data_key = None
 
     def __call__(self):
         if self.state == 'present':
-            self.data_key = hashlib.sha224(to_bytes(self.data)).hexdigest()
+            self.data_key = hashlib.sha224(self.data).hexdigest()
             self.present()
         elif self.state == 'absent':
             self.absent()
@@ -214,22 +236,8 @@ class SecretManager(DockerBaseClass):
             if attrs.get('Labels', {}).get('ansible_key'):
                 if attrs['Labels']['ansible_key'] != self.data_key:
                     data_changed = True
-            labels_changed = False
-            if self.labels and attrs.get('Labels'):
-                # check if user requested a label change
-                for label in attrs['Labels']:
-                    if self.labels.get(label) and self.labels[label] != attrs['Labels'][label]:
-                        labels_changed = True
-                # check if user added a label
-            labels_added = False
-            if self.labels:
-                if attrs.get('Labels'):
-                    for label in self.labels:
-                        if label not in attrs['Labels']:
-                            labels_added = True
-                else:
-                    labels_added = True
-            if data_changed or labels_added or labels_changed or self.force:
+            labels_changed = not compare_generic(self.labels, attrs.get('Labels'), 'allow_more_present', 'dict')
+            if data_changed or labels_changed or self.force:
                 # if something changed or force, delete and re-create the secret
                 self.absent()
                 secret_id = self.create_secret()
@@ -254,8 +262,9 @@ class SecretManager(DockerBaseClass):
 def main():
     argument_spec = dict(
         name=dict(type='str', required=True),
-        state=dict(type='str', choices=['absent', 'present'], default='present'),
-        data=dict(type='str'),
+        state=dict(type='str', default='present', choices=['absent', 'present']),
+        data=dict(type='str', no_log=True),
+        data_is_b64=dict(type='bool', default=False),
         labels=dict(type='dict'),
         force=dict(type='bool', default=False)
     )
@@ -267,7 +276,9 @@ def main():
     client = AnsibleDockerClient(
         argument_spec=argument_spec,
         supports_check_mode=True,
-        required_if=required_if
+        required_if=required_if,
+        min_docker_version='2.1.0',
+        min_docker_api_version='1.25',
     )
 
     results = dict(

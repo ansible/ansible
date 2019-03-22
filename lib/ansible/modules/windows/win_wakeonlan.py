@@ -1,22 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Dag Wieers <dag@wieers.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2017, Dag Wieers <dag@wieers.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -29,27 +15,33 @@ version_added: '2.4'
 short_description: Send a magic Wake-on-LAN (WoL) broadcast packet
 description:
 - The C(win_wakeonlan) module sends magic Wake-on-LAN (WoL) broadcast packets.
+- For non-Windows targets, use the M(wakeonlan) module instead.
 options:
   mac:
     description:
     - MAC address to send Wake-on-LAN broadcast packet for.
-    required: true
+    type: str
+    required: yes
   broadcast:
     description:
     - Network broadcast address to use for broadcasting magic Wake-on-LAN packet.
+    type: str
     default: 255.255.255.255
   port:
     description:
     - UDP port to use for magic Wake-on-LAN packet.
+    type: int
     default: 7
+todo:
+- Does not have SecureOn password support
+notes:
+- This module sends a magic packet, without knowing whether it worked. It always report a change.
+- Only works if the target system was properly configured for Wake-on-LAN (in the BIOS and/or the OS).
+- Some BIOSes have a different (configurable) Wake-on-LAN boot order (i.e. PXE first).
+seealso:
+- module: wakeonlan
 author:
 - Dag Wieers (@dagwieers)
-todo:
-  - Does not have SecureOn password support
-notes:
-  - This module sends a magic packet, without knowing whether it worked. It always report a change.
-  - Only works if the target system was properly configured for Wake-on-LAN (in the BIOS and/or the OS).
-  - Some BIOSes have a different (configurable) Wake-on-LAN boot order (i.e. PXE first).
 '''
 
 EXAMPLES = r'''

@@ -16,7 +16,7 @@ DOCUMENTATION = """
 ---
 module: ordnance_facts
 version_added: "2.3"
-author: "Alexander Turner (alex.turner@ordnance.io)"
+author: "Alexander Turner (@alexanderturner) <alex.turner@ordnance.io>"
 short_description: Collect facts from Ordnance Virtual Routers over SSH
 description:
   - Collects a base set of device facts from an Ordnance Virtual
@@ -96,7 +96,7 @@ ansible_net_interfaces:
 import re
 import traceback
 
-from ansible.module_utils.network import NetworkModule
+from ansible.module_utils.network.common.network import NetworkModule
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import zip
 from ansible.module_utils._text import to_native
@@ -112,7 +112,7 @@ class FactsBase(object):
     def run(self, cmd):
         try:
             return self.module.cli(cmd)[0]
-        except:
+        except Exception:
             self.failed_commands.append(cmd)
 
 
@@ -216,12 +216,14 @@ class Interfaces(FactsBase):
         if match:
             return match.group(1)
 
+
 FACT_SUBSETS = dict(
     interfaces=Interfaces,
     config=Config,
 )
 
 VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
+
 
 def main():
     spec = dict(

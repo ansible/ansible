@@ -1,0 +1,2 @@
+bugfixes:
+- "fix elasticsearch_plugin force to be bool (https://github.com/ansible/ansible/pull/47134)"

@@ -28,125 +28,93 @@ short_description: Manages VRRP interfaces on HUAWEI CloudEngine devices.
 description:
     - Manages VRRP interface attributes on HUAWEI CloudEngine devices.
 author:
-    - Li Yanfeng (@CloudEngine-Ansible)
+    - Li Yanfeng (@numone213)
 options:
     interface:
         description:
             - Name of an interface. The value is a string of 1 to 63 characters.
-        required: false
-        default: null
     vrid:
         description:
             - VRRP backup group ID.
               The value is an integer ranging from 1 to 255.
-        required: false
         default: present
     virtual_ip :
         description:
             - Virtual IP address. The value is a string of 0 to 255 characters.
-        required: false
-        default: null
     vrrp_type:
         description:
             - Type of a VRRP backup group.
-        required: false
         choices: ['normal', 'member', 'admin']
-        default: null
     admin_ignore_if_down:
         description:
             - mVRRP ignores an interface Down event.
-        required: false
-        default: False
+        type: bool
+        default: 'no'
     admin_vrid:
         description:
             - Tracked mVRRP ID. The value is an integer ranging from 1 to 255.
-        required: false
-        default: null
     admin_interface:
         description:
             - Tracked mVRRP interface name. The value is a string of 1 to 63 characters.
-        required: false
-        default: null
     admin_flowdown:
         description:
             - Disable the flowdown function for service VRRP.
-        required: false
-        default: False
+        type: bool
+        default: 'no'
     priority:
         description:
             - Configured VRRP priority.
               The value ranges from 1 to 254. The default value is 100. A larger value indicates a higher priority.
-        required: false
-        default: null
     version:
         description:
             - VRRP version. The default version is v2.
-        required: false
         choices: ['v2','v3']
-        default: null
     advertise_interval:
         description:
             - Configured interval between sending advertisements, in milliseconds.
               Only the master router sends VRRP advertisements. The default value is 1000 milliseconds.
-        required: false
-        default: null
     preempt_timer_delay:
         description:
             - Preemption delay.
               The value is an integer ranging from 0 to 3600. The default value is 0.
-        required: false
-        default: null
     gratuitous_arp_interval:
         description:
             - Interval at which gratuitous ARP packets are sent, in seconds.
               The value ranges from 30 to 1200.The default value is 300.
-        required: false
-        default: null
     recover_delay:
         description:
             - Delay in recovering after an interface goes Up.
               The delay is used for interface flapping suppression.
               The value is an integer ranging from 0 to 3600.
               The default value is 0 seconds.
-        required: false
-        default: null
     holding_multiplier:
         description:
             - The configured holdMultiplier.The value is an integer ranging from 3 to 10. The default value is 3.
-        required: false
-        default: null
     auth_mode:
         description:
             - Authentication type used for VRRP packet exchanges between virtual routers.
               The values are noAuthentication, simpleTextPassword, md5Authentication.
               The default value is noAuthentication.
-        required: false
         choices: ['simple','md5','none']
-        default: null
     is_plain:
         description:
             - Select the display mode of an authentication key.
               By default, an authentication key is displayed in ciphertext.
-        required: false
-        default: False
+        type: bool
+        default: 'no'
     auth_key:
         description:
             - This object is set based on the authentication type.
               When noAuthentication is specified, the value is empty.
               When simpleTextPassword or md5Authentication is specified, the value is a string of 1 to 8 characters
               in plaintext and displayed as a blank text for security.
-        required: false
-        default: null
     fast_resume:
         description:
             - mVRRP's fast resume mode.
-        required: false
         choices: ['enable','disable']
-        default: null
     state:
         description:
             - Specify desired state of the resource.
-        required: false
         default: present
         choices: ['present','absent']
 
@@ -241,7 +209,7 @@ RETURN = '''
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 proposed:
     description: k/v pairs of parameters passed into module
@@ -287,7 +255,7 @@ updates:
 
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_nc_config, set_nc_config, ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec
 
 
 CE_NC_GET_VRRP_GROUP_INFO = """

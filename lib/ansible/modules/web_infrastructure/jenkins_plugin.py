@@ -23,53 +23,35 @@ description:
 
 options:
   group:
-    required: false
-    default: jenkins
     description:
       - Name of the Jenkins group on the OS.
+    default: jenkins
   jenkins_home:
-    required: false
-    default: /var/lib/jenkins
     description:
       - Home directory of the Jenkins user.
+    default: /var/lib/jenkins
   mode:
-    required: false
-    default: '0664'
     description:
       - File mode applied on versioned plugins.
   name:
-    required: true
     description:
       - Plugin name.
   owner:
-    required: false
-    default: jenkins
     description:
       - Name of the Jenkins user on the OS.
-  params:
-    required: false
-    default: null
-    description:
-      - Option used to allow the user to overwrite any of the other options. To
-        remove an option, set the value of the option to C(null).
-      - Changed in 2.5.0, 2.4.1, 2.3.3 to raise an error if C(url_password) is specified in params.
-        Use the actual C(url_password) argument instead.
+    default: jenkins
   state:
-    required: false
-    choices: [absent, present, pinned, unpinned, enabled, disabled, latest]
-    default: present
     description:
       - Desired plugin state.
       - If the C(latest) is set, the check for new version will be performed
         every time. This is suitable to keep the plugin up-to-date.
+    choices: [absent, present, pinned, unpinned, enabled, disabled, latest]
+    default: present
   timeout:
-    required: false
-    default: 30
     description:
       - Server connection timeout in secs.
+    default: 30
   updates_expiration:
-    required: false
-    default: 86400
     description:
       - Number of seconds after which a new copy of the I(update-center.json)
         file is downloaded. This is used to avoid the need to download the
@@ -77,21 +59,18 @@ options:
       - Set it to C(0) if no cache file should be used. In that case, the
         plugin file will always be downloaded to calculate its checksum when
         C(latest) is specified.
+    default: 86400
   updates_url:
-    required: false
-    default: https://updates.jenkins-ci.org
     description:
       - URL of the Update Centre.
       - Used as the base URL to download the plugins and the
         I(update-center.json) JSON file.
+    default: https://updates.jenkins.io
   url:
-    required: false
-    default: http://localhost:8080
     description:
       - URL of the Jenkins server.
+    default: http://localhost:8080
   version:
-    required: false
-    default: null
     description:
       - Plugin version number.
       - If this option is specified, all plugin dependencies must be installed
@@ -101,12 +80,11 @@ options:
       - Quote the version to prevent the value to be interpreted as float. For
         example if C(1.20) would be unquoted, it would become C(1.2).
   with_dependencies:
-    required: false
-    choices: ['yes', 'no']
-    default: 'yes'
     description:
       - Defines whether to install plugin dependencies.
       - This option takes effect only if the I(version) is not defined.
+    type: bool
+    default: 'yes'
 
 notes:
   - Plugin installation should be run under root or the same user which owns
@@ -120,6 +98,10 @@ notes:
   - It is not possible to run the module remotely by changing the I(url)
     parameter to point to the Jenkins server. The module must be used on the
     host where Jenkins runs as it needs direct access to the plugin files.
+  - "The C(params) option was removed in Ansible 2.5 due to circumventing Ansible's
+    option handling"
+extends_documentation_fragment:
+  - url
 '''
 
 EXAMPLES = '''
@@ -170,16 +152,12 @@ EXAMPLES = '''
 #
 # Example of how to authenticate
 #
-# my_jenkins_params:
-#   url_username: admin
-#
 - name: Install plugin
   jenkins_plugin:
     name: build-pipeline-plugin
-    params: "{{ my_jenkins_params }}"
+    url_username: admin
     url_password: p4ssw0rd
     url: http://localhost:8888
-# Note that url_password **can not** be placed in params as params could end up in a log file
 
 #
 # Example of a Play which handles Jenkins restarts during the state changes
@@ -274,20 +252,19 @@ RETURN = '''
 plugin:
     description: plugin name
     returned: success
-    type: string
+    type: str
     sample: build-pipeline-plugin
 state:
     description: state of the target, after execution
     returned: success
-    type: string
+    type: str
     sample: "present"
 '''
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.basic import AnsibleModule, to_bytes
 from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.urls import fetch_url, url_argument_spec
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, text_type, binary_type
 import base64
 import hashlib
 import json
@@ -333,8 +310,7 @@ class JenkinsPlugin(object):
         # Parse the JSON data
         try:
             json_data = json.loads(to_native(r.read()))
-        except Exception:
-            e = get_exception()
+        except Exception as e:
             self.module.fail_json(
                 msg="Cannot parse %s JSON data." % what,
                 details=to_native(e))
@@ -358,8 +334,7 @@ class JenkinsPlugin(object):
 
             if info['status'] != 200:
                 self.module.fail_json(msg=msg_status, details=info['msg'])
-        except Exception:
-            e = get_exception()
+        except Exception as e:
             self.module.fail_json(msg=msg_exception, details=to_native(e))
 
         return response
@@ -412,7 +387,7 @@ class JenkinsPlugin(object):
                 self.params['jenkins_home'],
                 self.params['name']))
 
-        if not self.is_installed and self.params['version'] is None:
+        if not self.is_installed and self.params['version'] in [None, 'latest']:
             if not self.module.check_mode:
                 # Install the plugin (with dependencies)
                 install_script = (
@@ -455,8 +430,9 @@ class JenkinsPlugin(object):
             md5sum_old = None
             if os.path.isfile(plugin_file):
                 # Make the checksum of the currently installed plugin
-                md5sum_old = hashlib.md5(
-                    open(plugin_file, 'rb').read()).hexdigest()
+                with open(plugin_file, 'rb') as md5_plugin_fh:
+                    md5_plugin_content = md5_plugin_fh.read()
+                md5sum_old = hashlib.md5(md5_plugin_content).hexdigest()
 
             if self.params['version'] in [None, 'latest']:
                 # Take latest version
@@ -502,22 +478,23 @@ class JenkinsPlugin(object):
                             self._write_file(plugin_file, data)
 
                         changed = True
-            else:
+            elif self.params['version'] == 'latest':
                 # Check for update from the updates JSON file
                 plugin_data = self._download_updates()
 
                 try:
-                    sha1_old = hashlib.sha1(open(plugin_file, 'rb').read())
-                except Exception:
-                    e = get_exception()
+                    with open(plugin_file, 'rb') as sha1_plugin_fh:
+                        sha1_plugin_content = sha1_plugin_fh.read()
+                    sha1_old = hashlib.sha1(sha1_plugin_content)
+                except Exception as e:
                     self.module.fail_json(
                         msg="Cannot calculate SHA1 of the old plugin.",
-                        details=e.message)
+                        details=to_native(e))
 
                 sha1sum_old = base64.b64encode(sha1_old.digest())
 
                 # If the latest version changed, download it
-                if sha1sum_old != plugin_data['sha1']:
+                if sha1sum_old != to_bytes(plugin_data['sha1']):
                     if not self.module.check_mode:
                         r = self._download_plugin(plugin_url)
                         self._write_file(plugin_file, r)
@@ -575,8 +552,7 @@ class JenkinsPlugin(object):
 
             try:
                 os.close(update_fd)
-            except IOError:
-                e = get_exception()
+            except IOError as e:
                 self.module.fail_json(
                     msg="Cannot close the tmp updates file %s." % updates_file,
                     details=to_native(e))
@@ -584,8 +560,7 @@ class JenkinsPlugin(object):
         # Open the updates file
         try:
             f = open(updates_file)
-        except IOError:
-            e = get_exception()
+        except IOError as e:
             self.module.fail_json(
                 msg="Cannot open temporal updates file.",
                 details=to_native(e))
@@ -596,11 +571,10 @@ class JenkinsPlugin(object):
             if i == 1:
                 try:
                     data = json.loads(line)
-                except Exception:
-                    e = get_exception()
+                except Exception as e:
                     self.module.fail_json(
                         msg="Cannot load JSON data from the tmp updates file.",
-                        details=e.message)
+                        details=to_native(e))
 
                 break
 
@@ -612,11 +586,10 @@ class JenkinsPlugin(object):
             if not os.path.isdir(updates_dir):
                 try:
                     os.makedirs(updates_dir, int('0700', 8))
-                except OSError:
-                    e = get_exception()
+                except OSError as e:
                     self.module.fail_json(
                         msg="Cannot create temporal directory.",
-                        details=e.message)
+                        details=to_native(e))
 
             self.module.atomic_move(updates_file, updates_file_orig)
 
@@ -640,15 +613,14 @@ class JenkinsPlugin(object):
         # Store the plugin into a temp file and then move it
         tmp_f_fd, tmp_f = tempfile.mkstemp()
 
-        if isinstance(data, str):
+        if isinstance(data, (text_type, binary_type)):
             os.write(tmp_f_fd, data)
         else:
             os.write(tmp_f_fd, data.read())
 
         try:
             os.close(tmp_f_fd)
-        except IOError:
-            e = get_exception()
+        except IOError as e:
             self.module.fail_json(
                 msg='Cannot close the temporal plugin file %s.' % tmp_f,
                 details=to_native(e))
@@ -749,7 +721,7 @@ def main():
             default='present'),
         timeout=dict(default=30, type="int"),
         updates_expiration=dict(default=86400, type="int"),
-        updates_url=dict(default='https://updates.jenkins-ci.org'),
+        updates_url=dict(default='https://updates.jenkins.io'),
         url=dict(default='http://localhost:8080'),
         url_password=dict(no_log=True),
         version=dict(),
@@ -762,16 +734,10 @@ def main():
         supports_check_mode=True,
     )
 
-    # Update module parameters by user's parameters if defined
-    if 'params' in module.params and isinstance(module.params['params'], dict):
-        if 'url_password' in module.params['params']:
-            # The params argument should be removed eventually.  Until then, raise an error if
-            # url_password is specified there as it can lead to the password being logged
-            module.fail_json(msg='Do not specify url_password in params as it may get logged')
-
-        module.params.update(module.params['params'])
-        # Remove the params
-        module.params.pop('params', None)
+    # Params was removed
+    # https://meetbot.fedoraproject.org/ansible-meeting/2017-09-28/ansible_dev_meeting.2017-09-28-15.00.log.html
+    if module.params['params']:
+        module.fail_json(msg="The params option to jenkins_plugin was removed in Ansible 2.5 since it circumvents Ansible's option handling")
 
     # Force basic authentication
     module.params['force_basic_auth'] = True
@@ -779,8 +745,7 @@ def main():
     # Convert timeout to float
     try:
         module.params['timeout'] = float(module.params['timeout'])
-    except ValueError:
-        e = get_exception()
+    except ValueError as e:
         module.fail_json(
             msg='Cannot convert %s to float.' % module.params['timeout'],
             details=to_native(e))

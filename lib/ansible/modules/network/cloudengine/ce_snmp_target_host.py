@@ -28,78 +28,53 @@ short_description: Manages SNMP target host configuration on HUAWEI CloudEngine 
 description:
     - Manages SNMP target host configurations on HUAWEI CloudEngine switches.
 author:
-    - wangdezhuang (@CloudEngine-Ansible)
+    - wangdezhuang (@QijunPan)
 options:
     version:
         description:
             - Version(s) Supported by SNMP Engine.
-        required: false
-        default: null
         choices: ['none', 'v1', 'v2c', 'v3', 'v1v2c', 'v1v3', 'v2cv3', 'all']
     connect_port:
         description:
             - Udp port used by SNMP agent to connect the Network management.
-        required: false
-        default: null
     host_name:
         description:
             - Unique name to identify target host entry.
-        required: false
-        default: null
     address:
         description:
             - Network Address.
-        required: false
-        default: null
     notify_type:
         description:
             - To configure notify type as trap or inform.
-        required: false
-        default: null
         choices: ['trap','inform']
     vpn_name:
         description:
             - VPN instance Name.
-        required: false
-        default: null
     recv_port:
         description:
             - UDP Port number used by network management to receive alarm messages.
-        required: false
-        default: null
     security_model:
         description:
             - Security Model.
-        required: false
-        default: null
         choices: ['v1','v2c', 'v3']
     security_name:
         description:
             - Security Name.
-        required: false
-        default: null
     security_name_v3:
         description:
             - Security Name V3.
-        required: false
-        default: null
     security_level:
         description:
             - Security level indicating whether to use authentication and encryption.
-        required: false
-        default: null
         choices: ['noAuthNoPriv','authentication', 'privacy']
     is_public_net:
         description:
             - To enable or disable Public Net-manager for target Host.
-        required: false
         default: no_use
         choices: ['no_use','true','false']
     interface_name:
         description:
             - Name of the interface to send the trap message.
-        required: false
-        default: null
 '''
 
 EXAMPLES = '''
@@ -140,7 +115,7 @@ RETURN = '''
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 proposed:
     description: k/v pairs of parameters passed into module
@@ -172,7 +147,7 @@ updates:
 
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_nc_config, set_nc_config, \
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, \
     ce_argument_spec, get_config, load_config, check_ip_addr
 
 # get snmp version

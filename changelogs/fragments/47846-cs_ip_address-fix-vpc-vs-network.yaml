@@ -1,0 +1,2 @@
+bugfixes:
+- cs_ip_address - fix vpc use case failed if network param provided. Ensured vpc and network are mutually exclusive.

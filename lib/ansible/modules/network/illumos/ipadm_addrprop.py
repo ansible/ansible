@@ -42,6 +42,7 @@ options:
               Temporary values do not persist across reboots.
         required: false
         default: false
+        type: bool
     state:
         description:
             - Set or reset the property value.
@@ -51,38 +52,38 @@ options:
 '''
 
 EXAMPLES = '''
-name: Mark address on addrobj as deprecated
-ipadm_addrprop: property=deprecated value=on addrobj=e1000g0/v6
+- name: Mark address on addrobj as deprecated
+  ipadm_addrprop: property=deprecated value=on addrobj=e1000g0/v6
 
-name: Set network prefix length for addrobj
-ipadm_addrprop: addrobj=bge0/v4 name=prefixlen value=26
+- name: Set network prefix length for addrobj
+  ipadm_addrprop: addrobj=bge0/v4 name=prefixlen value=26
 '''
 
 RETURN = '''
 property:
     description: property name
     returned: always
-    type: string
+    type: str
     sample: deprecated
 addrobj:
     description: address object name
     returned: always
-    type: string
+    type: str
     sample: bge0/v4
 state:
     description: state of the target
     returned: always
-    type: string
+    type: str
     sample: present
 temporary:
     description: specifies if operation will persist across reboots
     returned: always
-    type: boolean
+    type: bool
     sample: True
 value:
     description: property value
     returned: when value is provided
-    type: string
+    type: str
     sample: 26
 '''
 
@@ -191,7 +192,7 @@ class AddrProp(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            addrobj=dict(required=True, default=None, aliases=['nic, interface']),
+            addrobj=dict(required=True, default=None, aliases=['nic', 'interface']),
             property=dict(required=True, aliases=['name']),
             value=dict(required=False),
             temporary=dict(default=False, type='bool'),

@@ -11,7 +11,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -26,11 +26,6 @@ description:
     - Get facts for virtual machine images.
 
 options:
-    name:
-        description:
-            - Only show results for a specific security group.
-        default: null
-        required: false
     location:
         description:
             - Azure location value (ie. westus, eastus, eastus2, northcentralus, etc.). Supplying only a
@@ -39,23 +34,15 @@ options:
     publisher:
         description:
             - Name of an image publisher. List image offerings associated with a particular publisher.
-        default: null
-        required: false
     offer:
         description:
             - Name of an image offering. Combine with sku to see a list of available image versions.
-        default: null
-        required: false
     sku:
         description:
             - Image offering SKU. Combine with offer to see a list of available versions.
-        default: null
-        required: false
     version:
         description:
             - Specific version number of an image.
-        default: null
-        required: false
 
 extends_documentation_fragment:
     - azure
@@ -103,7 +90,7 @@ azure_vmimages:
 
 try:
     from msrestazure.azure_exceptions import CloudError
-except:
+except Exception:
     # This is handled in azure_rm_common
     pass
 
@@ -136,7 +123,7 @@ class AzureRMVirtualMachineImageFacts(AzureRMModuleBase):
         self.sku = None
         self.version = None
 
-        super(AzureRMVirtualMachineImageFacts, self).__init__(self.module_arg_spec)
+        super(AzureRMVirtualMachineImageFacts, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
 
@@ -227,6 +214,7 @@ class AzureRMVirtualMachineImageFacts(AzureRMModuleBase):
 
 def main():
     AzureRMVirtualMachineImageFacts()
+
 
 if __name__ == '__main__':
     main()

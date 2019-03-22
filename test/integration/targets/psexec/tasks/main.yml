@@ -1,0 +1,49 @@
+---
+- name: check whether the host supports encryption
+  win_shell: |
+    if ([System.Environment]::OSVersion.Version -lt [Version]"6.2") {
+        "false"
+    } else {
+        "true"
+    }
+  register: encryption_supported_raw
+
+- name: install pypsexec Python library for tests
+  pip:
+    name: pypsexec
+    state: latest
+  delegate_to: localhost
+
+- name: define psexec variables
+  set_fact:
+    psexec_hostname: '{{ansible_host}}'
+    psexec_username: '{{ansible_user}}'
+    psexec_password: '{{ansible_password}}'
+    psexec_encrypt: '{{encryption_supported_raw.stdout_lines[0]|bool}}'
+
+- name: create test rule to allow SMB traffic inbound
+  win_firewall_rule:
+    name: File and Printer Sharing (SMB-In) Test
+    direction: in
+    action: allow
+    localport: 445
+    enabled: yes
+    protocol: tcp
+    program: System
+    profiles:
+    - domain
+    - private
+    - public
+    state: present
+
+- name: run tests
+  block:
+  - include_tasks: tests.yml
+  
+  always:
+  - name: remove test rule that allows SMB traffic inbound
+    win_firewall_rule:
+      name: File and Printer Sharing (SMB-In) Test
+      direction: in
+      action: allow
+      state: absent

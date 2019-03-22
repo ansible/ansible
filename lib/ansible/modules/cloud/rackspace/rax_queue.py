@@ -22,7 +22,6 @@ options:
   name:
     description:
       - Name to give the queue
-    default: null
   state:
     description:
       - Indicate desired state of the resource
@@ -33,7 +32,9 @@ options:
 author:
     - "Christopher H. Laco (@claco)"
     - "Matt Martz (@sivel)"
-extends_documentation_fragment: rackspace
+extends_documentation_fragment:
+  - rackspace
+  - rackspace.openstack
 '''
 
 EXAMPLES = '''

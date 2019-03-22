@@ -1,31 +1,6 @@
 # Test code for the vmware_dvswitch module.
-# (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
-
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-- name: make sure pyvmomi is installed
-  pip:
-    name: pyvmomi
-    state: latest
-
-- name: store the vcenter container ip
-  set_fact:
-    vcsim: "{{ lookup('env', 'vcenter_host') }}"
-
-- debug: var=vcsim
+# Copyright: (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 - name: Wait for Flask controller to come up online
   wait_for:
@@ -35,11 +10,11 @@
 
 - name: kill vcsim
   uri:
-    url: "{{ 'http://' + vcsim + ':5000/killall' }}"
+    url: http://{{ vcsim }}:5000/killall
 
 - name: start vcsim
   uri:
-    url: "{{ 'http://' + vcsim + ':5000/spawn?cluster=2' }}"
+    url: http://{{ vcsim }}:5000/spawn?cluster=2
   register: vcsim_instance
 
 - name: Wait for vcsim server to come up online
@@ -50,7 +25,7 @@
 
 - name: get a list of Datacenter from vcsim
   uri:
-    url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=DC' }}"
+    url: http://{{ vcsim }}:5000/govc_find?filter=DC
   register: datacenters
 
 - debug: var=vcsim_instance
@@ -81,7 +56,7 @@
 
 - name: get a list of distributed vswitch from vcsim after adding
   uri:
-    url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=DVS' }}"
+    url: http://{{ vcsim }}:5000/govc_find?filter=DVS
   register: new_dvs_0001
 
 - debug:
@@ -97,27 +72,28 @@
 
 
 # Testcase 0002: Add Distributed vSwitch again
-- name: add distributed vSwitch again
-  vmware_dvswitch:
-    validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    datacenter_name: "{{ item | basename }}"
-    state: present
-    switch_name: dvswitch_0001
-    mtu: 9000
-    uplink_quantity: 2
-    discovery_proto: lldp
-    discovery_operation: both
-  register: dvs_result_0002
-  with_items:
-    - "{{ datacenters['json'] }}"
-
-- name: ensure distributed vswitch is present
-  assert:
-    that:
-        - "{{ dvs_result_0002.changed == false }}"
+# vcsim doesn't support ldp check (self.dvs.config.linkDiscoveryProtocolConfig.protocol)
+# - name: add distributed vSwitch again
+#   vmware_dvswitch:
+#     validate_certs: False
+#     hostname: "{{ vcsim }}"
+#     username: "{{ vcsim_instance['json']['username'] }}"
+#     password: "{{ vcsim_instance['json']['password'] }}"
+#     datacenter_name: "{{ item | basename }}"
+#     state: present
+#     switch_name: dvswitch_0001
+#     mtu: 9000
+#     uplink_quantity: 2
+#     discovery_proto: lldp
+#     discovery_operation: both
+#   register: dvs_result_0002
+#   with_items:
+#     - "{{ datacenters['json'] }}"
+#
+# - name: ensure distributed vswitch is present
+#   assert:
+#     that:
+#         - "{{ dvs_result_0002.changed == false }}"
 
 
 # FIXME: Uncomment this testcase once vcsim supports distributed vswitch delete method
@@ -149,7 +125,7 @@
 
 #- name: get a list of Datacenter from vcsim after adding datacenter
 #  uri:
-#    url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=DVS' }}"
+#    url: http://{{ vcsim }}:5000/govc_find?filter=DVS
 #  register: del_dvs
 
 #- debug:

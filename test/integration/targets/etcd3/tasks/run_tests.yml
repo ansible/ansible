@@ -1,0 +1,178 @@
+---
+# test code for the etcd3 module
+# (c) 2017,  Jean-Philippe Evrard <jean-philippe@evrard.me>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# ============================================================
+
+- name: python 2
+  set_fact:
+    python_suffix: ""
+  when: ansible_python_version is version('3', '<')
+
+- name: python 3
+  set_fact:
+    python_suffix: "-py3"
+  when: ansible_python_version is version('3', '>=')
+
+- include_vars: '{{ item }}'
+  with_first_found:
+    - files:
+        - '{{ ansible_distribution }}-{{ ansible_distribution_major_version }}{{ python_suffix }}.yml'
+        - '{{ ansible_distribution }}-{{ ansible_distribution_version }}{{ python_suffix }}.yml'
+        - '{{ ansible_os_family }}{{ python_suffix }}.yml'
+        - 'default{{ python_suffix }}.yml'
+      paths: '../vars'
+
+# Install requirements for etcd3 module
+- name: Install etcd3 packages
+  package:
+    name: "{{ etcd3_deps_packages }}"
+    state: present
+
+- name: Install etcd3 module
+  pip:
+    name: etcd3
+    state: present
+
+# Check if re-installing etcd3 is required
+- name: Check if etcd3ctl exists for re-use.
+  shell: "ETCDCTL_API=3 {{ etcd3_path }}/etcdctl --endpoints=localhost:2379 get foo"
+  args:
+    executable: /bin/bash
+  changed_when: false
+  failed_when: false
+  register: _testetcd3ctl
+
+# Installing etcd3
+- name: If can't reuse, prepare download folder
+  file:
+    path: "{{ etcd3_download_location }}"
+    state: directory
+  register: _etcddownloadexists
+  when:
+    - _testetcd3ctl.rc != 0
+
+- name: Delete download folder if already exists (to start clean)
+  file:
+    path: "{{ etcd3_download_location }}"
+    state: absent
+  when:
+    - _testetcd3ctl.rc != 0
+    - _etcddownloadexists is not changed
+
+- name: Recreate download folder if purged
+  file:
+    path: "{{ etcd3_download_location }}"
+    state: directory
+  when:
+    - _testetcd3ctl.rc != 0
+    - _etcddownloadexists is not changed
+
+- name: Download etcd3
+  unarchive:
+    src: "{{ etcd3_download_url }}"
+    dest: "{{ etcd3_download_location }}"
+    remote_src: yes
+  when:
+    - _testetcd3ctl.rc != 0
+
+# Running etcd3 and kill afterwards if it wasn't running before.
+- name: Run etcd3
+  shell: "{{ etcd3_path }}/etcd &"
+  register: _etcd3run
+  changed_when: true
+  when:
+    - _testetcd3ctl.rc != 0
+
+# Integration tests
+- name: Check mode, show need change
+  etcd3:
+    key: "foo"
+    value: "bar"
+    state: "present"
+  register: _etcd3_prst_chktst
+  check_mode: true
+
+- name: Change to new value
+  etcd3:
+    key: "foo"
+    value: "bar"
+    state: "present"
+  register: _etcd3_prst_chgtst
+
+- name: Idempotency test, show unchanged.
+  etcd3:
+    key: "foo"
+    value: "bar"
+    state: "present"
+  register: _etcd3_prst_idmptnttst
+
+- name: Idempotency test in check mode, show unchanged
+  etcd3:
+    key: "foo"
+    value: "bar"
+    state: "present"
+  register: _etcd3_prst_idmptntchktst
+  check_mode: true
+
+- name: Check mode, show need removal of key
+  etcd3:
+    key: "foo"
+    value: "baz"
+    state: "absent"
+  register: _etcd3_absnt_chktst
+  check_mode: true
+
+- name: Remove foo key
+  etcd3:
+    key: "foo"
+    value: "baz"
+    state: "absent"
+  register: _etcd3_absnt_chgtst
+
+- name: Idempotency test in check mode, show unchanged
+  etcd3:
+    key: "foo"
+    value: "baz"
+    state: "absent"
+  register: _etcd3_absnt_idmptnttst
+  check_mode: true
+
+- name: Idempotency test, show unchanged
+  etcd3:
+    key: "foo"
+    value: "baz"
+    state: "absent"
+  register: _etcd3_absnt_idmptntchktst
+
+- name: Checking the status are expected
+  assert:
+    that:
+      - _etcd3_prst_chktst is changed
+      - _etcd3_prst_chgtst is changed
+      - _etcd3_prst_idmptnttst is not changed
+      - _etcd3_prst_idmptntchktst is not changed
+      - _etcd3_absnt_chktst is changed
+      - _etcd3_absnt_chgtst is changed
+      - _etcd3_absnt_idmptnttst is not changed
+      - _etcd3_absnt_idmptntchktst is not changed
+
+- name: kill etcd3
+  command: "pkill etcd"
+  when:
+    - _testetcd3ctl.rc != 0

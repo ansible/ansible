@@ -12,9 +12,9 @@ variables needed for Boto have already been set:
     export AWS_ACCESS_KEY_ID='AK123'
     export AWS_SECRET_ACCESS_KEY='abc123'
 
-optional region environment variable if region is 'auto'
+Optional region environment variable if region is 'auto'
 
-This script also assumes there is an ec2.ini file alongside it.  To specify a
+This script also assumes that there is an ec2.ini file alongside it.  To specify a
 different path to ec2.ini, define the EC2_INI_PATH environment variable:
 
     export EC2_INI_PATH=/path/to/my_ec2.ini
@@ -31,6 +31,13 @@ the AWS_PROFILE variable:
     AWS_PROFILE=prod ansible-playbook -i ec2.py myplaybook.yml
 
 For more details, see: http://docs.pythonboto.org/en/latest/boto_config_tut.html
+
+You can filter for specific EC2 instances by creating an environment variable
+named EC2_INSTANCE_FILTERS, which has the same format as the instance_filters
+entry documented in ec2.ini.  For example, to find all hosts whose name begins
+with 'webserver', one might use:
+
+    export EC2_INSTANCE_FILTERS='tag:Name=webserver*'
 
 When run against a specific host, this script returns the following variables:
  - ec2_ami_launch_index
@@ -95,12 +102,37 @@ consistency with variable spellings (camelCase and underscores) since this
 just loops through all variables the object exposes. It is preferred to use the
 ones with underscores when multiple exist.
 
-In addition, if an instance has AWS Tags associated with it, each tag is a new
+In addition, if an instance has AWS tags associated with it, each tag is a new
 variable named:
  - ec2_tag_[Key] = [Value]
 
 Security groups are comma-separated in 'ec2_security_group_ids' and
 'ec2_security_group_names'.
+
+When destination_format and destination_format_tags are specified
+the destination_format can be built from the instance tags and attributes.
+The behavior will first check the user defined tags, then proceed to
+check instance attributes, and finally if neither are found 'nil' will
+be used instead.
+
+'my_instance': {
+    'region': 'us-east-1',             # attribute
+    'availability_zone': 'us-east-1a', # attribute
+    'private_dns_name': '172.31.0.1',  # attribute
+    'ec2_tag_deployment': 'blue',      # tag
+    'ec2_tag_clusterid': 'ansible',    # tag
+    'ec2_tag_Name': 'webserver',       # tag
+    ...
+}
+
+Inside of the ec2.ini file the following settings are specified:
+...
+destination_format: {0}-{1}-{2}-{3}
+destination_format_tags: Name,clusterid,deployment,private_dns_name
+...
+
+These settings would produce a destination_format as the following:
+'webserver-ansible-blue-172.31.0.1'
 '''
 
 # (c) 2012, Peter Sankauskas
@@ -127,6 +159,7 @@ import os
 import argparse
 import re
 from time import time
+from copy import deepcopy
 import boto
 from boto import ec2
 from boto import rds
@@ -147,10 +180,7 @@ except ImportError:
 from six.moves import configparser
 from collections import defaultdict
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
 DEFAULTS = {
     'all_elasticache_clusters': 'False',
@@ -158,16 +188,16 @@ DEFAULTS = {
     'all_elasticache_replication_groups': 'False',
     'all_instances': 'False',
     'all_rds_instances': 'False',
-    'aws_access_key_id': None,
-    'aws_secret_access_key': None,
-    'aws_security_token': None,
-    'boto_profile': None,
+    'aws_access_key_id': '',
+    'aws_secret_access_key': '',
+    'aws_security_token': '',
+    'boto_profile': '',
     'cache_max_age': '300',
     'cache_path': '~/.ansible/tmp',
     'destination_variable': 'public_dns_name',
     'elasticache': 'True',
     'eucalyptus': 'False',
-    'eucalyptus_host': None,
+    'eucalyptus_host': '',
     'expand_csv_tags': 'False',
     'group_by_ami_id': 'True',
     'group_by_availability_zone': 'True',
@@ -189,19 +219,19 @@ DEFAULTS = {
     'group_by_tag_keys': 'True',
     'group_by_tag_none': 'True',
     'group_by_vpc_id': 'True',
-    'hostname_variable': None,
-    'iam_role': None,
+    'hostname_variable': '',
+    'iam_role': '',
     'include_rds_clusters': 'False',
     'nested_groups': 'False',
-    'pattern_exclude': None,
-    'pattern_include': None,
+    'pattern_exclude': '',
+    'pattern_include': '',
     'rds': 'False',
     'regions': 'all',
     'regions_exclude': 'us-gov-west-1, cn-north-1',
     'replace_dash_in_groups': 'True',
     'route53': 'False',
     'route53_excluded_zones': '',
-    'route53_hostnames': None,
+    'route53_hostnames': '',
     'stack_filters': 'False',
     'vpc_destination_variable': 'ip_address'
 }
@@ -315,18 +345,18 @@ class Ec2Inventory(object):
 
         # Regions
         self.regions = []
-        configRegions = config.get('ec2', 'regions')
-        if (configRegions == 'all'):
+        config_regions = config.get('ec2', 'regions')
+        if (config_regions == 'all'):
             if self.eucalyptus_host:
                 self.regions.append(boto.connect_euca(host=self.eucalyptus_host).region.name, **self.credentials)
             else:
-                configRegions_exclude = config.get('ec2', 'regions_exclude')
+                config_regions_exclude = config.get('ec2', 'regions_exclude')
 
-                for regionInfo in ec2.regions():
-                    if regionInfo.name not in configRegions_exclude:
-                        self.regions.append(regionInfo.name)
+                for region_info in ec2.regions():
+                    if region_info.name not in config_regions_exclude:
+                        self.regions.append(region_info.name)
         else:
-            self.regions = configRegions.split(",")
+            self.regions = config_regions.split(",")
         if 'auto' in self.regions:
             env_region = os.environ.get('AWS_REGION')
             if env_region is None:
@@ -431,6 +461,7 @@ class Ec2Inventory(object):
         cache_id = self.boto_profile or os.environ.get('AWS_ACCESS_KEY_ID', self.credentials.get('aws_access_key_id'))
         if cache_id:
             cache_name = '%s-%s' % (cache_name, cache_id)
+        cache_name += '-' + str(abs(hash(__file__)))[1:7]
         self.cache_path_cache = os.path.join(cache_dir, "%s.cache" % cache_name)
         self.cache_path_index = os.path.join(cache_dir, "%s.index" % cache_name)
         self.cache_max_age = config.getint('ec2', 'cache_max_age')
@@ -468,8 +499,8 @@ class Ec2Inventory(object):
         # Instance filters (see boto and EC2 API docs). Ignore invalid filters.
         self.ec2_instance_filters = []
 
-        if config.has_option('ec2', 'instance_filters'):
-            filters = config.get('ec2', 'instance_filters')
+        if config.has_option('ec2', 'instance_filters') or 'EC2_INSTANCE_FILTERS' in os.environ:
+            filters = os.getenv('EC2_INSTANCE_FILTERS', config.get('ec2', 'instance_filters') if config.has_option('ec2', 'instance_filters') else '')
 
             if self.stack_filters and '&' in filters:
                 self.fail_with_error("AND filters along with stack_filter enabled is not supported.\n")
@@ -539,12 +570,14 @@ class Ec2Inventory(object):
         return connect_args
 
     def connect_to_aws(self, module, region):
-        connect_args = self.credentials
+        connect_args = deepcopy(self.credentials)
 
         # only pass the profile name if it's set (as it is not supported by older boto versions)
         if self.boto_profile:
             connect_args['profile_name'] = self.boto_profile
             self.boto_fix_security_token_in_profile(connect_args)
+        elif os.environ.get('AWS_SESSION_TOKEN'):
+            connect_args['security_token'] = os.environ.get('AWS_SESSION_TOKEN')
 
         if self.iam_role:
             sts_conn = sts.connect_to_region(region, **connect_args)
@@ -749,13 +782,26 @@ class Ec2Inventory(object):
         # ElastiCache boto module doesn't provide a get_all_instances method,
         # that's why we need to call describe directly (it would be called by
         # the shorthand method anyway...)
+        clusters = []
         try:
             conn = self.connect_to_aws(elasticache, region)
             if conn:
                 # show_cache_node_info = True
                 # because we also want nodes' information
-                response = conn.describe_cache_clusters(None, None, None, True)
-
+                _marker = 1
+                while _marker:
+                    if _marker == 1:
+                        _marker = None
+                    response = conn.describe_cache_clusters(None, None, _marker, True)
+                    _marker = response['DescribeCacheClustersResponse']['DescribeCacheClustersResult']['Marker']
+                    try:
+                        # Boto also doesn't provide wrapper classes to CacheClusters or
+                        # CacheNodes. Because of that we can't make use of the get_list
+                        # method in the AWSQueryConnection. Let's do the work manually
+                        clusters = clusters + response['DescribeCacheClustersResponse']['DescribeCacheClustersResult']['CacheClusters']
+                    except KeyError as e:
+                        error = "ElastiCache query to AWS failed (unexpected format)."
+                        self.fail_with_error(error, 'getting ElastiCache clusters')
         except boto.exception.BotoServerError as e:
             error = e.reason
 
@@ -767,16 +813,6 @@ class Ec2Inventory(object):
                     "or set 'elasticache = False' in ec2.ini"
             elif not e.reason == "Forbidden":
                 error = "Looks like AWS ElastiCache is down:\n%s" % e.message
-            self.fail_with_error(error, 'getting ElastiCache clusters')
-
-        try:
-            # Boto also doesn't provide wrapper classes to CacheClusters or
-            # CacheNodes. Because of that we can't make use of the get_list
-            # method in the AWSQueryConnection. Let's do the work manually
-            clusters = response['DescribeCacheClustersResponse']['DescribeCacheClustersResult']['CacheClusters']
-
-        except KeyError as e:
-            error = "ElastiCache query to AWS failed (unexpected format)."
             self.fail_with_error(error, 'getting ElastiCache clusters')
 
         for cluster in clusters:
@@ -858,8 +894,22 @@ class Ec2Inventory(object):
             return
 
         # Select the best destination address
+        # When destination_format and destination_format_tags are specified
+        # the following code will attempt to find the instance tags first,
+        # then the instance attributes next, and finally if neither are found
+        # assign nil for the desired destination format attribute.
         if self.destination_format and self.destination_format_tags:
-            dest = self.destination_format.format(*[getattr(instance, 'tags').get(tag, '') for tag in self.destination_format_tags])
+            dest_vars = []
+            inst_tags = getattr(instance, 'tags')
+            for tag in self.destination_format_tags:
+                if tag in inst_tags:
+                    dest_vars.append(inst_tags[tag])
+                elif hasattr(instance, tag):
+                    dest_vars.append(getattr(instance, tag))
+                else:
+                    dest_vars.append('nil')
+
+            dest = self.destination_format.format(*dest_vars)
         elif instance.subnet_id:
             dest = getattr(instance, self.vpc_destination_variable, None)
             if dest is None:
@@ -987,7 +1037,7 @@ class Ec2Inventory(object):
 
         # Inventory: Group by AWS account ID
         if self.group_by_aws_account:
-            self.push(self.inventory, self.aws_account_id, dest)
+            self.push(self.inventory, self.aws_account_id, hostname)
             if self.nested_groups:
                 self.push_group(self.inventory, 'accounts', self.aws_account_id)
 
@@ -1641,9 +1691,9 @@ class Ec2Inventory(object):
 
     def to_safe(self, word):
         ''' Converts 'bad' characters in a string to underscores so they can be used as Ansible groups '''
-        regex = "[^A-Za-z0-9\_"
+        regex = r"[^A-Za-z0-9\_"
         if not self.replace_dash_in_groups:
-            regex += "\-"
+            regex += r"\-"
         return re.sub(regex + "]", "_", word)
 
     def json_format_dict(self, data, pretty=False):

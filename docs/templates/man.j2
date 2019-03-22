@@ -1,16 +1,15 @@
 {% set name = ('ansible' if cli == 'adhoc' else 'ansible-%s' % cli) -%}
-{{name}}(1)
-{{ '=' *  ((name|length|int) + 3) }}
-:doctype:      manpage
-:encoding:     utf-8
-:lang:         en
-:man source:   Ansible
-:man version:  %VERSION%
-:man manual:   System administration commands
+{{name}}
+{{ '=' * ( name|length|int ) }}
 
-NAME
-----
-ansible{% if cli != 'adhoc' %}-{{cli}}{% endif %} - {{short_desc|default('')}}
+{{ '-' * ( short_desc|default('')|string|length|int ) }}
+{{short_desc|default('')}}
+{{ '-' * ( short_desc|default('')|string|length|int ) }}
+
+:Version:        Ansible %VERSION%
+:Manual section: 1
+:Manual group:   System administration commands
+
 
 
 SYNOPSIS
@@ -26,9 +25,9 @@ DESCRIPTION
 COMMON OPTIONS
 --------------
 {% for option in options|sort(attribute='options') %}
-{% for switch in option['options'] %}*{{switch}}*{% if option['arg'] %} '{{option['arg']}}'{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}::
+{% for switch in option['options'] %}**{{switch}}**{% if option['arg'] %} '{{option['arg']}}'{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
 
-{{ option['desc'] }}
+  {{ option['desc'] }}
 {% endfor %}
 {% endif %}
 
@@ -48,11 +47,12 @@ ARGUMENTS
 ACTIONS
 -------
 {% for action in actions %}
-    *{{ action }}*::: {{ (actions[action]['desc']|default(' '))|wordwrap}}
+**{{ action }}**
+  {{ (actions[action]['desc']|default(' '))}}
 
 {% if actions[action]['options'] %}
-{% for option in actions[action]['options']|sort %}
-{% for switch in option['options'] if switch in actions[action]['option_names'] %}*{{switch}}*{% if option['arg'] %} '{{option['arg']}}'{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}::
+{% for option in actions[action]['options']|sort(attribute='options') %}
+{% for switch in option['options'] if switch in actions[action]['option_names'] %}  **{{switch}}**{% if option['arg'] %} '{{option['arg']}}'{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
 
         {{ (option['desc']) }}
 {% endfor %}
@@ -67,7 +67,7 @@ INVENTORY
 
 Ansible stores the hosts it can potentially operate on in an inventory.
 This can be an YAML file, ini-like file, a script, directory, list, etc.
-For additional options, see the documentation on http://docs.ansible.com/.
+For additional options, see the documentation on https://docs.ansible.com/.
 
 {% endif %}
 ENVIRONMENT
@@ -76,17 +76,18 @@ ENVIRONMENT
 The following environment variables may be specified.
 
 {% if inventory %}
-ANSIBLE_INVENTORY  -- Override the default ansible inventory file
+ANSIBLE_INVENTORY  -- Override the default ansible inventory sources
 
 {% endif %}
 {% if library %}
 ANSIBLE_LIBRARY -- Override the default ansible module library path
 
 {% endif %}
-ANSIBLE_CONFIG -- Override the default ansible config file
+ANSIBLE_CONFIG -- Specify override location for the ansible config file
 
 Many more are available for most options in ansible.cfg
 
+For a full list check https://docs.ansible.com/. or use the `ansible-config` command.
 
 FILES
 -----
@@ -99,6 +100,9 @@ FILES
 
 ~/.ansible.cfg -- User config file, overrides the default config if present
 
+./ansible.cfg -- Local config file (in current working directory) assumed to be 'project specific' and overrides the rest if present.
+
+As mentioned above, the ANSIBLE_CONFIG environment variable will override all others.
 
 AUTHOR
 ------
@@ -109,16 +113,16 @@ Ansible was originally written by Michael DeHaan.
 COPYRIGHT
 ---------
 
-Copyright © 2017 Red Hat, Inc | Ansible.
-Ansible is released under the terms of the GPLv3 License.
+Copyright © 2018 Red Hat, Inc | Ansible.
+Ansible is released under the terms of the GPLv3 license.
 
 
 SEE ALSO
 --------
 
-{% for other in cli_list|sort %}{% if other != cli %}*ansible{% if other != 'adhoc' %}-{{other}}{% endif %}*(1){% if not loop.last %}, {% endif %}{% endif %}{% endfor %}
+{% for other in cli_list|sort %}{% if other != cli %}**ansible{% if other != 'adhoc' %}-{{other}}{% endif %}** (1){% if not loop.last %}, {% endif %}{% endif %}{% endfor %}
 
 Extensive documentation is available in the documentation site:
-<http://docs.ansible.com>.
+<https://docs.ansible.com>.
 IRC and mailing list info can be found in file CONTRIBUTING.md,
 available in: <https://github.com/ansible/ansible>

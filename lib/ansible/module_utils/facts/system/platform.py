@@ -35,6 +35,7 @@ class PlatformFactCollector(BaseFactCollector):
                      'kernel',
                      'machine',
                      'python_version',
+                     'architecture',
                      'machine_id'])
 
     def collect(self, module=None, collected_facts=None):

@@ -2,21 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # (c) 2016, René Moser <mail@renemoser.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -29,74 +15,72 @@ module: cs_configuration
 short_description: Manages configuration on Apache CloudStack based clouds.
 description:
     - Manages global, zone, account, storage and cluster configurations.
-version_added: "2.1"
-author: "René Moser (@resmo)"
+version_added: '2.1'
+author: René Moser (@resmo)
 options:
   name:
     description:
       - Name of the configuration.
+    type: str
     required: true
   value:
     description:
       - Value of the configuration.
+    type: str
     required: true
   account:
     description:
       - Ensure the value for corresponding account.
-    required: false
-    default: null
+    type: str
   domain:
     description:
       - Domain the account is related to.
-      - Only considered if C(account) is used.
-    required: false
+      - Only considered if I(account) is used.
+    type: str
     default: ROOT
   zone:
     description:
       - Ensure the value for corresponding zone.
-    required: false
-    default: null
+    type: str
   storage:
     description:
       - Ensure the value for corresponding storage pool.
-    required: false
-    default: null
+    type: str
   cluster:
     description:
       - Ensure the value for corresponding cluster.
-    required: false
-    default: null
+    type: str
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# Ensure global configuration
-- local_action:
-    module: cs_configuration
+- name: Ensure global configuration
+  cs_configuration:
     name: router.reboot.when.outofband.migrated
     value: false
+  delegate_to: localhost
 
-# Ensure zone configuration
-- local_action:
-    module: cs_configuration
+- name: Ensure zone configuration
+  cs_configuration:
     name: router.reboot.when.outofband.migrated
     zone: ch-gva-01
     value: true
+  delegate_to: localhost
 
-# Ensure storage configuration
-- local_action:
-    module: cs_configuration
+- name: Ensure storage configuration
+  cs_configuration:
     name: storage.overprovisioning.factor
     storage: storage01
     value: 2.0
+  delegate_to: localhost
 
-# Ensure account configuration
-- local_action:
-    module: cs_configuration
+- name: Ensure account configuration
+  cs_configuration:
     name: allow.public.user.templates
     value: false
     account: acme inc
     domain: customers
+  delegate_to: localhost
 '''
 
 RETURN = '''
@@ -104,52 +88,52 @@ RETURN = '''
 category:
   description: Category of the configuration.
   returned: success
-  type: string
+  type: str
   sample: Advanced
 scope:
   description: Scope (zone/cluster/storagepool/account) of the parameter that needs to be updated.
   returned: success
-  type: string
+  type: str
   sample: storagepool
 description:
   description: Description of the configuration.
   returned: success
-  type: string
+  type: str
   sample: Setup the host to do multipath
 name:
   description: Name of the configuration.
   returned: success
-  type: string
+  type: str
   sample: zone.vlan.capacity.notificationthreshold
 value:
   description: Value of the configuration.
   returned: success
-  type: string
+  type: str
   sample: "0.75"
 account:
   description: Account of the configuration.
   returned: success
-  type: string
+  type: str
   sample: admin
 Domain:
   description: Domain of account of the configuration.
   returned: success
-  type: string
+  type: str
   sample: ROOT
 zone:
   description: Zone of the configuration.
   returned: success
-  type: string
+  type: str
   sample: ch-gva-01
 cluster:
   description: Cluster of the configuration.
   returned: success
-  type: string
+  type: str
   sample: cluster01
 storage:
   description: Storage of the configuration.
   returned: success
-  type: string
+  type: str
   sample: storage01
 '''
 
@@ -225,10 +209,13 @@ class AnsibleCloudStackConfiguration(AnsibleCloudStack):
     def get_configuration(self):
         configuration = None
         args = self._get_common_configuration_args()
+        args['fetch_list'] = True
         configurations = self.query_api('listConfigurations', **args)
         if not configurations:
             self.module.fail_json(msg="Configuration %s not found." % args['name'])
-        configuration = configurations['configuration'][0]
+        for config in configurations:
+            if args['name'] == config['name']:
+                configuration = config
         return configuration
 
     def get_value(self):

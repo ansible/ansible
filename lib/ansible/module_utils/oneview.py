@@ -34,15 +34,18 @@ import json
 import os
 import traceback
 
+HPE_ONEVIEW_IMP_ERR = None
 try:
     from hpOneView.oneview_client import OneViewClient
     HAS_HPE_ONEVIEW = True
 except ImportError:
+    HPE_ONEVIEW_IMP_ERR = traceback.format_exc()
     HAS_HPE_ONEVIEW = False
 
 from ansible.module_utils import six
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
+from ansible.module_utils.common._collections_compat import Mapping
 
 
 def transform_list_to_dict(list_):
@@ -59,7 +62,7 @@ def transform_list_to_dict(list_):
         return ret
 
     for value in list_:
-        if isinstance(value, collections.Mapping):
+        if isinstance(value, Mapping):
             ret.update(value)
         else:
             ret[to_native(value, errors='surrogate_or_strict')] = True
@@ -108,7 +111,7 @@ def merge_list_by_key(original_list, updated_list, key, ignore_when_null=None):
 
 
 def _str_sorted(obj):
-    if isinstance(obj, collections.Mapping):
+    if isinstance(obj, Mapping):
         return json.dumps(obj, sort_keys=True)
     else:
         return str(obj)
@@ -201,13 +204,12 @@ class OneViewModuleBase(object):
     MSG_ALREADY_PRESENT = 'Resource is already present.'
     MSG_ALREADY_ABSENT = 'Resource is already absent.'
     MSG_DIFF_AT_KEY = 'Difference found at key \'{0}\'. '
-    HPE_ONEVIEW_SDK_REQUIRED = 'HPE OneView Python SDK is required for this module.'
 
     ONEVIEW_COMMON_ARGS = dict(
         config=dict(type='path'),
         hostname=dict(type='str'),
         username=dict(type='str'),
-        password=dict(type='str'),
+        password=dict(type='str', no_log=True),
         api_version=dict(type='int'),
         image_streamer_hostname=dict(type='str')
     )
@@ -256,7 +258,7 @@ class OneViewModuleBase(object):
 
     def _check_hpe_oneview_sdk(self):
         if not HAS_HPE_ONEVIEW:
-            self.module.fail_json(msg=self.HPE_ONEVIEW_SDK_REQUIRED)
+            self.module.fail_json(msg=missing_required_lib('hpOneView'), exception=HPE_ONEVIEW_IMP_ERR)
 
     def _create_oneview_client(self):
         if self.module.params.get('hostname'):
@@ -430,7 +432,7 @@ class OneViewModuleBase(object):
             # If both values are null, empty or False it will be considered equal.
             elif not resource1[key] and not resource2[key]:
                 continue
-            elif isinstance(resource1[key], collections.Mapping):
+            elif isinstance(resource1[key], Mapping):
                 # recursive call
                 if not self.compare(resource1[key], resource2[key]):
                     self.module.log(self.MSG_DIFF_AT_KEY.format(key) + debug_resources)
@@ -482,7 +484,7 @@ class OneViewModuleBase(object):
         resource2 = sorted(resource2, key=_str_sorted)
 
         for i, val in enumerate(resource1):
-            if isinstance(val, collections.Mapping):
+            if isinstance(val, Mapping):
                 # change comparison function to compare dictionaries
                 if not self.compare(val, resource2[i]):
                     self.module.log("resources are different. " + debug_resources)

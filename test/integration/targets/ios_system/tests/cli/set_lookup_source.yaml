@@ -1,29 +1,29 @@
 ---
-- debug: msg="START cli/set_lookup_source.yaml"
+- debug: msg="START cli/set_lookup_source.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   ios_config:
     lines:
-      - no ip domain lookup source-interface
+      - no ip domain lookup source-interface Loopback888
       - vrf definition ansible
     match: none
-    authorize: yes
+    provider: "{{ cli }}"
 
 - name: configure lookup_source
   ios_system:
-    lookup_source: Loopback10
-    authorize: yes
+    lookup_source: Loopback888
+    provider: "{{ cli }}"
   register: result
 
 - assert:
     that:
       - result.changed == true
-      - "'ip domain lookup source-interface Loopback10' in result.commands"
+      - "'ip domain lookup source-interface Loopback888' in result.commands"
 
 - name: verify lookup_source
   ios_system:
-    lookup_source: Loopback10
-    authorize: yes
+    lookup_source: Loopback888
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -33,7 +33,7 @@
 - name: Disable lookup_source
   ios_system:
     lookup_enabled: False
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -44,7 +44,7 @@
 - name: Disable lookup_source
   ios_system:
     lookup_enabled: True
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -57,7 +57,7 @@
 #    lookup_source:
 #      - interface: Loopback10
 #        vrf: ansible
-#    authorize: yes
+#    provider: "{{ cli }}"
 #    provider: "{{ cli }}"
 #  register: result
 #
@@ -73,7 +73,7 @@
 #    lookup_source:
 #      - interface: Management1
 #        vrf: ansible
-#    authorize: yes
+#    provider: "{{ cli }}"
 #    provider: "{{ cli }}"
 #  register: result
 #
@@ -84,11 +84,11 @@
 - name: teardown
   ios_config:
     lines:
-      - no ip domain lookup source-interface
+      - no ip domain lookup source-interface Loopback888
       - no vrf definition ansible
     match: none
-    authorize: yes
+    provider: "{{ cli }}"
   ignore_errors: yes
 # FIXME: Not sure why this is failing with msg": "no vrf definition ansible\r\n% IPv4 and IPv6 addresses from all interfaces in VRF ansible have been removed\r\nfoo(config)#", rc:1
 
-- debug: msg="END cli/set_lookup_source.yaml"
+- debug: msg="END cli/set_lookup_source.yaml on connection={{ ansible_connection }}"

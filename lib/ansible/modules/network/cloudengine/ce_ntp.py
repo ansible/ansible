@@ -28,34 +28,25 @@ short_description: Manages core NTP configuration on HUAWEI CloudEngine switches
 description:
     - Manages core NTP configuration on HUAWEI CloudEngine switches.
 author:
-    - Zhijin Zhou (@CloudEngine-Ansible)
+    - Zhijin Zhou (@QijunPan)
 options:
     server:
         description:
             - Network address of NTP server.
-        required: false
-        default: null
     peer:
         description:
             - Network address of NTP peer.
-        required: false
-        default: null
     key_id:
         description:
             - Authentication key identifier to use with given NTP server or peer.
-        required: false
-        default: null
     is_preferred:
         description:
             - Makes given NTP server or peer the preferred NTP server or peer for the device.
-        required: false
-        default: null
         choices: ['enable', 'disable']
     vpn_name:
         description:
             - Makes the device communicate with the given
               NTP server or peer over a specific vpn.
-        required: false
         default: '_public_'
     source_int:
         description:
@@ -63,12 +54,9 @@ options:
               Must be fully qualified interface name, i.e. C(40GE1/0/22), C(vlanif10).
               Interface types, such as C(10GE), C(40GE), C(100GE), C(Eth-Trunk), C(LoopBack),
               C(MEth), C(NULL), C(Tunnel), C(Vlanif).
-        required: false
-        default: null
     state:
         description:
             - Manage the state of the resource.
-        required: false
         default: present
         choices: ['present','absent']
 '''
@@ -137,14 +125,14 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 
 import re
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import ce_argument_spec, get_nc_config, set_nc_config
+from ansible.module_utils.network.cloudengine.ce import ce_argument_spec, get_nc_config, set_nc_config
 
 CE_NC_GET_NTP_CONFIG = """
 <filter type="subtree">

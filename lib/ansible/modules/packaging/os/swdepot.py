@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # (c) 2013, Raul Melo
@@ -30,32 +30,23 @@ options:
         description:
             - package name.
         required: true
-        default: null
-        choices: []
-        aliases: []
         version_added: 1.4
     state:
         description:
             - whether to install (C(present), C(latest)), or remove (C(absent)) a package.
         required: true
-        default: null
         choices: [ 'present', 'latest', 'absent']
-        aliases: []
         version_added: 1.4
     depot:
         description:
             - The source repository from which install or upgrade a package.
-        required: false
-        default: null
-        choices: []
-        aliases: []
         version_added: 1.4
 '''
 
 EXAMPLES = '''
 - swdepot:
     name: unzip-6.0
-    state: installed
+    state: present
     depot: 'repository:/path'
 
 - swdepot:
@@ -69,7 +60,9 @@ EXAMPLES = '''
 '''
 
 import re
-import pipes
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves import shlex_quote
 
 
 def compare_package(version1, version2):
@@ -97,16 +90,17 @@ def query_package(module, name, depot=None):
 
     cmd_list = '/usr/sbin/swlist -a revision -l product'
     if depot:
-        rc, stdout, stderr = module.run_command("%s -s %s %s | grep %s" % (cmd_list, pipes.quote(depot), pipes.quote(name), pipes.quote(name)),
+        rc, stdout, stderr = module.run_command("%s -s %s %s | grep %s" % (cmd_list, shlex_quote(depot), shlex_quote(name), shlex_quote(name)),
                                                 use_unsafe_shell=True)
     else:
-        rc, stdout, stderr = module.run_command("%s %s | grep %s" % (cmd_list, pipes.quote(name), pipes.quote(name)), use_unsafe_shell=True)
+        rc, stdout, stderr = module.run_command("%s %s | grep %s" % (cmd_list, shlex_quote(name), shlex_quote(name)), use_unsafe_shell=True)
     if rc == 0:
-        version = re.sub("\s\s+|\t" , " ", stdout).strip().split()[1]
+        version = re.sub(r"\s\s+|\t", " ", stdout).strip().split()[1]
     else:
         version = None
 
     return rc, version
+
 
 def remove_package(module, name):
     """ Uninstall package if installed. """
@@ -119,6 +113,7 @@ def remove_package(module, name):
     else:
         return rc, stderr
 
+
 def install_package(module, depot, name):
     """ Install package if not already installed """
 
@@ -129,12 +124,13 @@ def install_package(module, depot, name):
     else:
         return rc, stderr
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(aliases=['pkg'], required=True),
-            state = dict(choices=['present', 'absent', 'latest'], required=True),
-            depot = dict(default=None, required=False)
+        argument_spec=dict(
+            name=dict(aliases=['pkg'], required=True),
+            state=dict(choices=['present', 'absent', 'latest'], required=True),
+            depot=dict(default=None, required=False)
         ),
         supports_check_mode=True
     )
@@ -145,12 +141,11 @@ def main():
     changed = False
     msg = "No changed"
     rc = 0
-    if ( state == 'present' or state == 'latest' ) and depot is None:
+    if (state == 'present' or state == 'latest') and depot is None:
         output = "depot parameter is mandatory in present or latest task"
         module.fail_json(name=name, msg=output, rc=rc)
 
-
-    #Check local version
+    # Check local version
     rc, version_installed = query_package(module, name)
     if not rc:
         installed = True
@@ -159,7 +154,7 @@ def main():
     else:
         installed = False
 
-    if ( state == 'present' or state == 'latest' ) and installed is False:
+    if (state == 'present' or state == 'latest') and installed is False:
         if module.check_mode:
             module.exit_json(changed=True)
         rc, output = install_package(module, depot, name)
@@ -172,14 +167,14 @@ def main():
             module.fail_json(name=name, msg=output, rc=rc)
 
     elif state == 'latest' and installed is True:
-        #Check depot version
+        # Check depot version
         rc, version_depot = query_package(module, name, depot)
 
         if not rc:
-            if compare_package(version_installed,version_depot) == -1:
+            if compare_package(version_installed, version_depot) == -1:
                 if module.check_mode:
                     module.exit_json(changed=True)
-                #Install new version
+                # Install new version
                 rc, output = install_package(module, depot, name)
 
                 if not rc:
@@ -208,8 +203,6 @@ def main():
 
     module.exit_json(changed=changed, name=name, state=state, msg=msg)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

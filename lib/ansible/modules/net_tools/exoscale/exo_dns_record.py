@@ -34,12 +34,12 @@ options:
     description:
       - Type of the record.
     default: A
-    choices: ['A', 'ALIAS', 'CNAME', 'MX', 'SPF', 'URL', 'TXT', 'NS', 'SRV', 'NAPTR', 'PTR', 'AAAA', 'SSHFP', 'HINFO', 'POOL']
-    aliases: ['rtype', 'type']
+    choices: [ A, ALIAS, CNAME, MX, SPF, URL, TXT, NS, SRV, NAPTR, PTR, AAAA, SSHFP, HINFO, POOL ]
+    aliases: [ rtype, type ]
   content:
     description:
       - Content of the record.
-      - Required if C(state=present) or C(name="")
+      - Required if C(state=present) or C(multiple=yes).
     aliases: ['value', 'address']
   ttl:
     description:
@@ -48,19 +48,19 @@ options:
   prio:
     description:
       - Priority of the record.
-    aliases: ['priority']
+    aliases: [ priority ]
   multiple:
     description:
-      - Whether there are more than one records with similar C(name).
-      - Only allowed with C(record_type=A).
-      - C(content) will not be updated as it is used as key to find the record.
-    aliases: ['priority']
+      - Whether there are more than one records with similar C(name) and C(record_type).
+      - Only allowed for a few record types, e.g. C(record_type=A), C(record_type=NS) or C(record_type=MX).
+      - C(content) will not be updated, instead it is used as a key to find existing records.
+    type: bool
+    default: no
   state:
     description:
       - State of the record.
-    required: false
-    default: 'present'
-    choices: [ 'present', 'absent' ]
+    default: present
+    choices: [ present, absent ]
 extends_documentation_fragment: exoscale
 '''
 
@@ -95,23 +95,25 @@ EXAMPLES = '''
     record_type: CNAME
     content: web-vm-1
 
-- name: Create or update a MX record
+- name: Create another MX record
   local_action:
     module: exo_dns_record
     domain: example.com
     record_type: MX
     content: mx1.example.com
     prio: 10
+    multiple: yes
 
-- name: Delete a MX record
+- name: Delete one MX record out of multiple
   local_action:
     module: exo_dns_record
     domain: example.com
     record_type: MX
     content: mx1.example.com
+    multiple: yes
     state: absent
 
-- name: Remove a record
+- name: Remove a single A record
   local_action:
     module: exo_dns_record
     name: www
@@ -129,17 +131,17 @@ exo_dns_record:
         content:
             description: value of the record
             returned: success
-            type: string
+            type: str
             sample: 1.2.3.4
         created_at:
             description: When the record was created
             returned: success
-            type: string
+            type: str
             sample: "2016-08-12T15:24:23.989Z"
         domain:
             description: Name of the domain
             returned: success
-            type: string
+            type: str
             sample: example.com
         domain_id:
             description: ID of the domain
@@ -154,7 +156,7 @@ exo_dns_record:
         name:
             description: name of the record
             returned: success
-            type: string
+            type: str
             sample: www
         parent_id:
             description: ID of the parent
@@ -169,7 +171,7 @@ exo_dns_record:
         record_type:
             description: Priority of the record
             returned: success
-            type: string
+            type: str
             sample: A
         system_record:
             description: Whether the record is a system record or not
@@ -184,7 +186,7 @@ exo_dns_record:
         updated_at:
             description: When the record was updated
             returned: success
-            type: string
+            type: str
             sample: "2016-08-12T15:24:23.989Z"
 '''
 
@@ -223,12 +225,7 @@ class ExoDnsRecord(ExoDns):
 
         self.multiple = self.module.params.get('multiple')
         self.record_type = self.module.params.get('record_type')
-        if self.multiple and self.record_type != 'A':
-            self.module.fail_json(msg="Multiple is only usable with record_type A")
-
         self.content = self.module.params.get('content')
-        if self.content and self.record_type != 'TXT':
-            self.content = self.content.lower()
 
     def _create_record(self, record):
         self.result['changed'] = True
@@ -265,31 +262,26 @@ class ExoDnsRecord(ExoDns):
         domain = self.module.params.get('domain')
         records = self.api_query("/domains/%s/records" % domain, "GET")
 
-        record = None
+        result = {}
         for r in records:
-            found_record = None
-            if r['record']['record_type'] == self.record_type:
-                r_name = r['record']['name'].lower()
-                r_content = r['record']['content'].lower()
 
-                # there are multiple A records but we found an exact match
-                if self.multiple and self.name == r_name and self.content == r_content:
-                    record = r
-                    break
+            if r['record']['record_type'] != self.record_type:
+                continue
 
-                # We do not expect to found more then one record with that content
-                if not self.multiple and not self.name and self.content == r_content:
-                    found_record = r
+            r_name = r['record']['name'].lower()
+            r_content = r['record']['content']
 
-                # We do not expect to found more then one record with that name
-                elif not self.multiple and self.name and self.name == r_name:
-                    found_record = r
+            if r_name == self.name:
+                if not self.multiple:
+                    if result:
+                        self.module.fail_json(msg="More than one record with record_type=%s and name=%s params. "
+                                                  "Use multiple=yes for more than one record." % (self.record_type, self.name))
+                    else:
+                        result = r
+                elif r_content == self.content:
+                    return r
 
-                if record and found_record:
-                    self.module.fail_json(msg="More than one record with your params. Use multiple=yes for more than one A record.")
-                if found_record:
-                    record = found_record
-        return record
+        return result
 
     def present_record(self):
         record = self.get_record()
@@ -332,11 +324,8 @@ def main():
         argument_spec=argument_spec,
         required_together=exo_dns_required_together(),
         required_if=[
-            ['state', 'present', ['content']],
-            ['name', '', ['content']],
-        ],
-        required_one_of=[
-            ['content', 'name'],
+            ('state', 'present', ['content']),
+            ('multiple', True, ['content']),
         ],
         supports_check_mode=True,
     )

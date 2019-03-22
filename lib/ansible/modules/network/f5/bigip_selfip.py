@@ -1,325 +1,362 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright 2016 F5 Networks Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2016, F5 Networks Inc.
+# GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+                    'status': ['stableinterface'],
+                    'supported_by': 'certified'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: bigip_selfip
 short_description: Manage Self-IPs on a BIG-IP system
 description:
-  - Manage Self-IPs on a BIG-IP system
-version_added: "2.2"
+  - Manage Self-IPs on a BIG-IP system.
+version_added: 2.2
 options:
   address:
     description:
       - The IP addresses for the new self IP. This value is ignored upon update
         as addresses themselves cannot be changed after they are created.
+      - This value is required when creating new self IPs.
+    type: str
   allow_service:
     description:
       - Configure port lockdown for the Self IP. By default, the Self IP has a
         "default deny" policy. This can be changed to allow TCP and UDP ports
         as well as specific protocols. This list should contain C(protocol):C(port)
         values.
+    type: list
   name:
     description:
       - The self IP to create.
-    required: true
-    default: Value of C(address)
+      - If this parameter is not specified, then it will default to the value supplied
+        in the C(address) parameter.
+    type: str
+    required: True
+  description:
+    description:
+      - Description of the traffic selector.
+    type: str
+    version_added: 2.8
   netmask:
     description:
-      - The netmasks for the self IP.
-    required: true
+      - The netmask for the self IP. When creating a new Self IP, this value
+        is required.
+    type: str
   state:
     description:
-      - The state of the variable on the system. When C(present), guarantees
-        that the Self-IP exists with the provided attributes. When C(absent),
-        removes the Self-IP from the system.
-    required: false
-    default: present
+      - When C(present), guarantees that the Self-IP exists with the provided
+        attributes.
+      - When C(absent), removes the Self-IP from the system.
+    type: str
     choices:
       - absent
       - present
+    default: present
   traffic_group:
     description:
-      - The traffic group for the self IP addresses in an active-active,
-        redundant load balancer configuration.
-    required: false
+      - The traffic group for the Self IP addresses in an active-active,
+        redundant load balancer configuration. When creating a new Self IP, if
+        this value is not specified, the default of C(/Common/traffic-group-local-only)
+        will be used.
+    type: str
   vlan:
     description:
-      - The VLAN that the new self IPs will be on.
-    required: true
+      - The VLAN that the new self IPs will be on. When creating a new Self
+        IP, this value is required.
+    type: str
   route_domain:
     description:
-        - The route domain id of the system.
-          If none, id of the route domain will be "0" (default route domain)
-    required: false
-    default: none
+      - The route domain id of the system. When creating a new Self IP, if
+        this value is not specified, a default value of C(0) will be used.
+      - This value cannot be changed after it is set.
+    type: int
     version_added: 2.3
-notes:
-  - Requires the f5-sdk Python package on the host. This is as easy as pip
-    install f5-sdk.
-  - Requires the netaddr Python package on the host.
+  partition:
+    description:
+      - Device partition to manage resources on. You can set different partitions
+        for Self IPs, but the address used may not match any other address used
+        by a Self IP. In that sense, Self IPs are not isolated by partitions as
+        other resources on a BIG-IP are.
+    type: str
+    default: Common
+    version_added: 2.5
 extends_documentation_fragment: f5
-requirements:
-  - netaddr
-  - f5-sdk
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Create Self IP
   bigip_selfip:
-      address: "10.10.10.10"
-      name: "self1"
-      netmask: "255.255.255.0"
-      password: "secret"
-      server: "lb.mydomain.com"
-      user: "admin"
-      validate_certs: "no"
-      vlan: "vlan1"
+    address: 10.10.10.10
+    name: self1
+    netmask: 255.255.255.0
+    vlan: vlan1
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Create Self IP with a Route Domain
   bigip_selfip:
-      server: "lb.mydomain.com"
-      user: "admin"
-      password: "secret"
-      validate_certs: "no"
-      name: "self1"
-      address: "10.10.10.10"
-      netmask: "255.255.255.0"
-      vlan: "vlan1"
-      route_domain: "10"
-      allow_service: "default"
+    name: self1
+    address: 10.10.10.10
+    netmask: 255.255.255.0
+    vlan: vlan1
+    route_domain: 10
+    allow_service: default
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Delete Self IP
   bigip_selfip:
-      name: "self1"
-      password: "secret"
-      server: "lb.mydomain.com"
-      state: "absent"
-      user: "admin"
-      validate_certs: "no"
+    name: self1
+    state: absent
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
 - name: Allow management web UI to be accessed on this Self IP
   bigip_selfip:
-      name: "self1"
-      password: "secret"
-      server: "lb.mydomain.com"
-      state: "absent"
-      user: "admin"
-      validate_certs: "no"
-      allow_service:
-          - "tcp:443"
+    name: self1
+    state: absent
+    allow_service:
+      - tcp:443
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Allow HTTPS and SSH access to this Self IP
   bigip_selfip:
-      name: "self1"
-      password: "secret"
-      server: "lb.mydomain.com"
-      state: "absent"
-      user: "admin"
-      validate_certs: "no"
-      allow_service:
-          - "tcp:443"
-          - "tpc:22"
+    name: self1
+    state: absent
+    allow_service:
+      - tcp:443
+      - tcp:22
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Allow all services access to this Self IP
   bigip_selfip:
-      name: "self1"
-      password: "secret"
-      server: "lb.mydomain.com"
-      state: "absent"
-      user: "admin"
-      validate_certs: "no"
-      allow_service:
-          - all
+    name: self1
+    state: absent
+    allow_service:
+      - all
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Allow only GRE and IGMP protocols access to this Self IP
   bigip_selfip:
-      name: "self1"
-      password: "secret"
-      server: "lb.mydomain.com"
-      state: "absent"
-      user: "admin"
-      validate_certs: "no"
-      allow_service:
-          - gre:0
-          - igmp:0
+    name: self1
+    state: absent
+    allow_service:
+      - gre:0
+      - igmp:0
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
 - name: Allow all TCP, but no other protocols access to this Self IP
   bigip_selfip:
-      name: "self1"
-      password: "secret"
-      server: "lb.mydomain.com"
-      state: "absent"
-      user: "admin"
-      validate_certs: "no"
-      allow_service:
-          - tcp:0
+    name: self1
+    state: absent
+    allow_service:
+      - tcp:0
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 '''
 
-RETURN = '''
+RETURN = r'''
 allow_service:
-    description: Services that allowed via this Self IP
-    returned: changed
-    type: list
-    sample: ['igmp:0','tcp:22','udp:53']
+  description: Services that allowed via this Self IP
+  returned: changed
+  type: list
+  sample: ['igmp:0','tcp:22','udp:53']
 address:
-    description: The address for the Self IP
-    returned: created
-    type: string
-    sample: "192.0.2.10"
+  description: The address for the Self IP
+  returned: changed
+  type: str
+  sample: 192.0.2.10
 name:
-    description: The name of the Self IP
-    returned: created, changed or deleted
-    type: string
-    sample: "self1"
+  description: The name of the Self IP
+  returned: created
+  type: str
+  sample: self1
 netmask:
-    description: The netmask of the Self IP
-    returned: created or changed
-    type: string
-    sample: "255.255.255.0"
+  description: The netmask of the Self IP
+  returned: changed
+  type: str
+  sample: 255.255.255.0
 traffic_group:
-    description: The traffic group that the Self IP is a member of
-    returned: changed or created
-    type: string
-    sample: "traffic-group-local-only"
+  description: The traffic group that the Self IP is a member of
+  returned: changed
+  type: str
+  sample: traffic-group-local-only
 vlan:
-    description: The VLAN set on the Self IP
-    returned: created or changed
-    type: string
-    sample: "vlan1"
+  description: The VLAN set on the Self IP
+  returned: changed
+  type: str
+  sample: vlan1
 '''
 
-try:
-    from f5.bigip import ManagementRoot
-    from icontrol.session import iControlUnexpectedHTTPError
-    HAS_F5SDK = True
-except ImportError:
-    HAS_F5SDK = False
+import re
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import env_fallback
 
 try:
-    from netaddr import IPNetwork, AddrFormatError
-    HAS_NETADDR = True
+    from library.module_utils.network.f5.bigip import F5RestClient
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import fq_name
+    from library.module_utils.network.f5.common import f5_argument_spec
+    from library.module_utils.network.f5.common import transform_name
+    from library.module_utils.network.f5.ipaddress import is_valid_ip
+    from library.module_utils.network.f5.ipaddress import ipv6_netmask_to_cidr
+    from library.module_utils.compat.ipaddress import ip_address
+    from library.module_utils.compat.ipaddress import ip_network
+    from library.module_utils.compat.ipaddress import ip_interface
+    from library.module_utils.network.f5.compare import cmp_str_with_none
 except ImportError:
-    HAS_NETADDR = False
+    from ansible.module_utils.network.f5.bigip import F5RestClient
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import fq_name
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.network.f5.common import transform_name
+    from ansible.module_utils.network.f5.ipaddress import is_valid_ip
+    from ansible.module_utils.network.f5.ipaddress import ipv6_netmask_to_cidr
+    from ansible.module_utils.compat.ipaddress import ip_address
+    from ansible.module_utils.compat.ipaddress import ip_network
+    from ansible.module_utils.compat.ipaddress import ip_interface
+    from ansible.module_utils.network.f5.compare import cmp_str_with_none
 
-FLOAT = ['enabled', 'disabled']
-DEFAULT_TG = 'traffic-group-local-only'
-ALLOWED_PROTOCOLS = ['eigrp', 'egp', 'gre', 'icmp', 'igmp', 'igp', 'ipip',
-                     'l2tp', 'ospf', 'pim', 'tcp', 'udp']
+
+class Parameters(AnsibleF5Parameters):
+    api_map = {
+        'trafficGroup': 'traffic_group',
+        'allowService': 'allow_service',
+    }
+
+    updatables = [
+        'traffic_group',
+        'allow_service',
+        'vlan',
+        'netmask',
+        'address',
+        'description',
+    ]
+
+    returnables = [
+        'traffic_group',
+        'allow_service',
+        'vlan',
+        'route_domain',
+        'netmask',
+        'address',
+        'description',
+    ]
+
+    api_attributes = [
+        'trafficGroup',
+        'allowService',
+        'vlan',
+        'address',
+        'description',
+    ]
+
+    @property
+    def vlan(self):
+        if self._values['vlan'] is None:
+            return None
+        return fq_name(self.partition, self._values['vlan'])
 
 
-class BigIpSelfIp(object):
-    def __init__(self, *args, **kwargs):
-        if not HAS_F5SDK:
-            raise F5ModuleError("The python f5-sdk module is required")
-
-        # The params that change in the module
-        self.cparams = dict()
-
-        # Stores the params that are sent to the module
-        self.params = kwargs
-        self.api = ManagementRoot(kwargs['server'],
-                                  kwargs['user'],
-                                  kwargs['password'],
-                                  port=kwargs['server_port'])
-
-    def present(self):
-        changed = False
-
-        if self.exists():
-            changed = self.update()
-        else:
-            changed = self.create()
-
-        return changed
-
-    def absent(self):
-        changed = False
-
-        if self.exists():
-            changed = self.delete()
-
-        return changed
-
-    def read(self):
-        """Read information and transform it
-
-        The values that are returned by BIG-IP in the f5-sdk can have encoding
-        attached to them as well as be completely missing in some cases.
-
-        Therefore, this method will transform the data from the BIG-IP into a
-        format that is more easily consumable by the rest of the class and the
-        parameters that are supported by the module.
-
-        :return: List of values currently stored in BIG-IP, formatted for use
-        in this class.
-        """
-        p = dict()
-        name = self.params['name']
-        partition = self.params['partition']
-        r = self.api.tm.net.selfips.selfip.load(
-            name=name,
-            partition=partition
+class ModuleParameters(Parameters):
+    @property
+    def address(self):
+        address = "{0}%{1}/{2}".format(
+            self.ip, self.route_domain, self.netmask
         )
+        return address
 
-        if hasattr(r, 'address'):
-            p['route_domain'] = str(None)
-            if '%' in r.address:
-                ipaddr = []
-                ipaddr = r.address.split('%', 1)
-                rdmask = ipaddr[1].split('/', 1)
-                r.address = "%s/%s" % (ipaddr[0], rdmask[1])
-                p['route_domain'] = str(rdmask[0])
-            ipnet = IPNetwork(r.address)
-            p['address'] = str(ipnet.ip)
-            p['netmask'] = str(ipnet.netmask)
-        if hasattr(r, 'trafficGroup'):
-            p['traffic_group'] = str(r.trafficGroup)
-        if hasattr(r, 'vlan'):
-            p['vlan'] = str(r.vlan)
-        if hasattr(r, 'allowService'):
-            if r.allowService == 'all':
-                p['allow_service'] = set(['all'])
-            else:
-                p['allow_service'] = set([str(x) for x in r.allowService])
+    @property
+    def ip(self):
+        if self._values['address'] is None:
+            return None
+        if is_valid_ip(self._values['address']):
+            return self._values['address']
         else:
-            p['allow_service'] = set(['none'])
-        p['name'] = name
-        return p
+            raise F5ModuleError(
+                'The provided address is not a valid IP address'
+            )
 
-    def verify_services(self):
+    @property
+    def traffic_group(self):
+        if self._values['traffic_group'] is None:
+            return None
+        return fq_name(self.partition, self._values['traffic_group'])
+
+    @property
+    def route_domain(self):
+        if self._values['route_domain'] is None:
+            return None
+        result = int(self._values['route_domain'])
+        return result
+
+    @property
+    def netmask(self):
+        if self._values['netmask'] is None:
+            return None
+        result = -1
+        try:
+            result = int(self._values['netmask'])
+            if 0 < result < 256:
+                pass
+        except ValueError:
+            if is_valid_ip(self._values['netmask']):
+                addr = ip_address(u'{0}'.format(str(self._values['netmask'])))
+                if addr.version == 4:
+                    ip = ip_network(u'0.0.0.0/%s' % str(self._values['netmask']))
+                    result = ip.prefixlen
+                else:
+                    result = ipv6_netmask_to_cidr(self._values['netmask'])
+        if result < 0:
+            raise F5ModuleError(
+                'The provided netmask {0} is neither in IP or CIDR format'.format(result)
+            )
+        return result
+
+    @property
+    def allow_service(self):
         """Verifies that a supplied service string has correct format
 
         The string format for port lockdown is PROTOCOL:PORT. This method
@@ -338,34 +375,147 @@ class BigIpSelfIp(object):
 
         :raises F5ModuleError:
         """
+        if self._values['allow_service'] is None:
+            return None
         result = []
-        for svc in self.params['allow_service']:
-            if svc in ['all', 'none', 'default']:
+        allowed_protocols = [
+            'eigrp', 'egp', 'gre', 'icmp', 'igmp', 'igp', 'ipip',
+            'l2tp', 'ospf', 'pim', 'tcp', 'udp'
+        ]
+        special_protocols = [
+            'all', 'none', 'default'
+        ]
+        for svc in self._values['allow_service']:
+            if svc in special_protocols:
                 result = [svc]
                 break
-
-            tmp = svc.split(':')
-            if tmp[0] not in ALLOWED_PROTOCOLS:
-                raise F5ModuleError(
-                    "The provided protocol '%s' is invalid" % (tmp[0])
-                )
-            try:
-                port = int(tmp[1])
-            except Exception:
-                raise F5ModuleError(
-                    "The provided port '%s' is not a number" % (tmp[1])
-                )
-
-            if port < 0 or port > 65535:
-                raise F5ModuleError(
-                    "The provided port '%s' must be between 0 and 65535"
-                    % (port)
-                )
+            elif svc in allowed_protocols:
+                full_service = '{0}:0'.format(svc)
+                result.append(full_service)
             else:
-                result.append(svc)
-        return set(result)
+                tmp = svc.split(':')
+                if tmp[0] not in allowed_protocols:
+                    raise F5ModuleError(
+                        "The provided protocol '%s' is invalid" % (tmp[0])
+                    )
+                try:
+                    port = int(tmp[1])
+                except Exception:
+                    raise F5ModuleError(
+                        "The provided port '%s' is not a number" % (tmp[1])
+                    )
 
-    def fmt_services(self, services):
+                if port < 0 or port > 65535:
+                    raise F5ModuleError(
+                        "The provided port '{0}' must be between 0 and 65535".format(port)
+                    )
+                else:
+                    result.append(svc)
+        result = sorted(list(set(result)))
+        return result
+
+    @property
+    def description(self):
+        if self._values['description'] is None:
+            return None
+        elif self._values['description'] in ['none', '']:
+            return ''
+        return self._values['description']
+
+
+class ApiParameters(Parameters):
+    @property
+    def allow_service(self):
+        if self._values['allow_service'] is None:
+            return None
+        if self._values['allow_service'] == 'all':
+            self._values['allow_service'] = ['all']
+        return sorted(self._values['allow_service'])
+
+    @property
+    def destination_ip(self):
+        if self._values['address'] is None:
+            return None
+        try:
+            pattern = r'(?P<rd>%[0-9]+)'
+            addr = re.sub(pattern, '', self._values['address'])
+            ip = ip_interface(u'{0}'.format(addr))
+            return ip.with_prefixlen
+        except ValueError:
+            raise F5ModuleError(
+                "The provided destination is not an IP address"
+            )
+
+    @property
+    def netmask(self):
+        ip = ip_interface(self.destination_ip)
+        return int(ip.network.prefixlen)
+
+    @property
+    def ip(self):
+        result = ip_interface(self.destination_ip)
+        return str(result.ip)
+
+    @property
+    def description(self):
+        if self._values['description'] in [None, 'none']:
+            return None
+        return self._values['description']
+
+
+class Changes(Parameters):
+    def to_return(self):
+        result = {}
+        try:
+            for returnable in self.returnables:
+                result[returnable] = getattr(self, returnable)
+            result = self._filter_params(result)
+        except Exception:
+            pass
+        return result
+
+
+class UsableChanges(Changes):
+    @property
+    def allow_service(self):
+        if self._values['allow_service'] is None:
+            return None
+        if self._values['allow_service'] == ['all']:
+            return 'all'
+        return sorted(self._values['allow_service'])
+
+
+class ReportableChanges(Changes):
+    pass
+
+
+class Difference(object):
+    def __init__(self, want, have=None):
+        self.want = want
+        self.have = have
+
+    def compare(self, param):
+        try:
+            result = getattr(self, param)
+            return result
+        except AttributeError:
+            return self.__default(param)
+
+    def __default(self, param):
+        attr1 = getattr(self.want, param)
+        try:
+            attr2 = getattr(self.have, param)
+            if attr1 != attr2:
+                return attr1
+        except AttributeError:
+            return attr1
+
+    @property
+    def address(self):
+        return None
+
+    @property
+    def allow_service(self):
         """Returns services formatted for consumption by f5-sdk update
 
         The BIG-IP endpoint for services takes different values depending on
@@ -379,318 +529,325 @@ class BigIpSelfIp(object):
         This is a convenience function to massage the values the user has
         supplied so that they are formatted in such a way that BIG-IP will
         accept them and apply the specified policy.
-
-        :param services: The services to format. This is always a Python set
-        :return:
         """
-        result = list(services)
-        if result[0] == 'all':
-            return 'all'
-        elif result[0] == 'none':
+        if self.want.allow_service is None:
             return None
-        else:
-            return list(services)
+        result = self.want.allow_service
+        if result[0] == 'none' and self.have.allow_service is None:
+            return None
+        elif self.have.allow_service is None:
+            return result
+        elif result[0] == 'all' and self.have.allow_service[0] != 'all':
+            return ['all']
+        elif result[0] == 'none':
+            return []
+        elif set(self.want.allow_service) != set(self.have.allow_service):
+            return result
 
-    def traffic_groups(self):
-        result = []
-
-        groups = self.api.tm.cm.traffic_groups.get_collection()
-        for group in groups:
-            # Just checking for the addition of the partition here for
-            # different versions of BIG-IP
-            if '/' + self.params['partition'] + '/' in group.name:
-                result.append(group.name)
+    @property
+    def netmask(self):
+        if self.want.netmask is None:
+            return None
+        ip = self.have.ip
+        if is_valid_ip(ip):
+            if self.want.route_domain is not None:
+                want = "{0}%{1}/{2}".format(ip, self.want.route_domain, self.want.netmask)
+                have = "{0}%{1}/{2}".format(ip, self.want.route_domain, self.have.netmask)
+            elif self.have.route_domain is not None:
+                want = "{0}%{1}/{2}".format(ip, self.have.route_domain, self.want.netmask)
+                have = "{0}%{1}/{2}".format(ip, self.have.route_domain, self.have.netmask)
             else:
-                full_name = '/%s/%s' % (self.params['partition'], group.name)
-                result.append(str(full_name))
+                want = "{0}/{1}".format(ip, self.want.netmask)
+                have = "{0}/{1}".format(ip, self.have.netmask)
+            if want != have:
+                return want
+        else:
+            raise F5ModuleError(
+                'The provided address/netmask value "{0}" was invalid'.format(self.have.ip)
+            )
+
+    @property
+    def traffic_group(self):
+        if self.want.traffic_group != self.have.traffic_group:
+            return self.want.traffic_group
+
+    @property
+    def description(self):
+        return cmp_str_with_none(self.want.description, self.have.description)
+
+
+class ModuleManager(object):
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = F5RestClient(**self.module.params)
+        self.have = None
+        self.want = ModuleParameters(params=self.module.params)
+        self.changes = UsableChanges()
+
+    def _set_changed_options(self):
+        changed = {}
+        for key in Parameters.returnables:
+            if getattr(self.want, key) is not None:
+                changed[key] = getattr(self.want, key)
+        if changed:
+            self.changes = UsableChanges(params=changed)
+
+    def _update_changed_options(self):
+        diff = Difference(self.want, self.have)
+        updatables = ApiParameters.updatables
+        changed = dict()
+        for k in updatables:
+            change = diff.compare(k)
+            if change is None:
+                continue
+            else:
+                if k in ['netmask']:
+                    changed['address'] = change
+                else:
+                    changed[k] = change
+        if changed:
+            self.changes = UsableChanges(params=changed)
+            return True
+        return False
+
+    def _announce_deprecations(self, result):
+        warnings = result.pop('__warnings', [])
+        for warning in warnings:
+            self.client.module.deprecate(
+                msg=warning['msg'],
+                version=warning['version']
+            )
+
+    def exec_module(self):
+        changed = False
+        result = dict()
+        state = self.want.state
+
+        if state == "present":
+            changed = self.present()
+        elif state == "absent":
+            changed = self.absent()
+
+        reportable = ReportableChanges(params=self.changes.to_return())
+        changes = reportable.to_return()
+        result.update(**changes)
+        result.update(dict(changed=changed))
+        self._announce_deprecations(result)
         return result
 
-    def update(self):
-        changed = False
-        svcs = []
-        params = dict()
-        current = self.read()
-
-        check_mode = self.params['check_mode']
-        address = self.params['address']
-        allow_service = self.params['allow_service']
-        name = self.params['name']
-        netmask = self.params['netmask']
-        partition = self.params['partition']
-        traffic_group = self.params['traffic_group']
-        vlan = self.params['vlan']
-        route_domain = self.params['route_domain']
-
-        if address is not None and address != current['address']:
-            raise F5ModuleError(
-                'Self IP addresses cannot be updated'
-            )
-
-        if netmask is not None:
-            # I ignore the address value here even if they provide it because
-            # you are not allowed to change it.
-            try:
-                address = IPNetwork(current['address'])
-
-                new_addr = "%s/%s" % (address.ip, netmask)
-                nipnet = IPNetwork(new_addr)
-                if route_domain is not None:
-                    nipnet = "%s%s%s" % (address.ip, route_domain, netmask)
-
-                cur_addr = "%s/%s" % (current['address'], current['netmask'])
-                cipnet = IPNetwork(cur_addr)
-                if route_domain is not None:
-                    cipnet = "%s%s%s" % (current['address'], current['route_domain'], current['netmask'])
-
-                if nipnet != cipnet:
-                    if route_domain is not None:
-                        address = "%s%s%s/%s" % (address.ip, '%', route_domain, netmask)
-                    else:
-                        address = "%s/%s" % (nipnet.ip, nipnet.prefixlen)
-                    params['address'] = address
-            except AddrFormatError:
-                raise F5ModuleError(
-                    'The provided address/netmask value was invalid'
-                )
-
-        if traffic_group is not None:
-            traffic_group = "/%s/%s" % (partition, traffic_group)
-            if traffic_group not in self.traffic_groups():
-                raise F5ModuleError(
-                    'The specified traffic group was not found'
-                )
-
-            if 'traffic_group' in current:
-                if traffic_group != current['traffic_group']:
-                    params['trafficGroup'] = traffic_group
-            else:
-                params['trafficGroup'] = traffic_group
-
-        if vlan is not None:
-            vlans = self.get_vlans()
-            vlan = "/%s/%s" % (partition, vlan)
-
-            if 'vlan' in current:
-                if vlan != current['vlan']:
-                    params['vlan'] = vlan
-            else:
-                params['vlan'] = vlan
-
-            if vlan not in vlans:
-                raise F5ModuleError(
-                    'The specified VLAN was not found'
-                )
-
-        if allow_service is not None:
-            svcs = self.verify_services()
-            if 'allow_service' in current:
-                if svcs != current['allow_service']:
-                    params['allowService'] = self.fmt_services(svcs)
-            else:
-                params['allowService'] = self.fmt_services(svcs)
-
-        if params:
-            changed = True
-            params['name'] = name
-            params['partition'] = partition
-            if check_mode:
-                return changed
-            self.cparams = camel_dict_to_snake_dict(params)
-            if svcs:
-                self.cparams['allow_service'] = list(svcs)
+    def present(self):
+        if self.exists():
+            changed = self.update()
         else:
-            return changed
+            changed = self.create()
+        return changed
 
-        r = self.api.tm.net.selfips.selfip.load(
-            name=name,
-            partition=partition
-        )
-        r.update(**params)
-        r.refresh()
+    def absent(self):
+        changed = False
+        if self.exists():
+            changed = self.remove()
+        return changed
 
+    def remove(self):
+        if self.module.check_mode:
+            return True
+        self.remove_from_device()
+        if self.exists():
+            raise F5ModuleError("Failed to delete the Self IP")
         return True
 
-    def get_vlans(self):
-        """Returns formatted list of VLANs
+    def should_update(self):
+        result = self._update_changed_options()
+        if result:
+            return True
+        return False
 
-        The VLAN values stored in BIG-IP are done so using their fully
-        qualified name which includes the partition. Therefore, "correct"
-        values according to BIG-IP look like this
-
-            /Common/vlan1
-
-        This is in contrast to the formats that most users think of VLANs
-        as being stored as
-
-            vlan1
-
-        To provide for the consistent user experience while not turfing
-        BIG-IP, we need to massage the values that are provided by the
-        user so that they include the partition.
-
-        :return: List of vlans formatted with preceding partition
-        """
-        partition = self.params['partition']
-        vlans = self.api.tm.net.vlans.get_collection()
-        return [str("/" + partition + "/" + x.name) for x in vlans]
+    def update(self):
+        self.have = self.read_current_from_device()
+        if not self.should_update():
+            return False
+        if self.module.check_mode:
+            return True
+        self.update_on_device()
+        return True
 
     def create(self):
-        params = dict()
-
-        svcs = []
-        check_mode = self.params['check_mode']
-        address = self.params['address']
-        allow_service = self.params['allow_service']
-        name = self.params['name']
-        netmask = self.params['netmask']
-        partition = self.params['partition']
-        traffic_group = self.params['traffic_group']
-        vlan = self.params['vlan']
-        route_domain = self.params['route_domain']
-
-        if address is None or netmask is None:
+        if self.want.address is None or self.want.netmask is None:
             raise F5ModuleError(
-                'An address and a netmask must be specififed'
+                'An address and a netmask must be specified'
             )
-
-        if vlan is None:
+        if self.want.vlan is None:
             raise F5ModuleError(
                 'A VLAN name must be specified'
             )
-        else:
-            vlan = "/%s/%s" % (partition, vlan)
+        if self.want.route_domain is None:
+            rd = self.read_partition_default_route_domain_from_device()
+            self.want.update({'route_domain': rd})
 
-        try:
-            ipin = "%s/%s" % (address, netmask)
-            ipnet = IPNetwork(ipin)
-            if route_domain is not None:
-                params['address'] = "%s%s%s/%s" % (ipnet.ip, '%', route_domain, ipnet.prefixlen)
-            else:
-                params['address'] = "%s/%s" % (ipnet.ip, ipnet.prefixlen)
-        except AddrFormatError:
-            raise F5ModuleError(
-                'The provided address/netmask value was invalid'
-            )
-
-        if traffic_group is None:
-            params['trafficGroup'] = "/%s/%s" % (partition, DEFAULT_TG)
-        else:
-            traffic_group = "/%s/%s" % (partition, traffic_group)
-            if traffic_group in self.traffic_groups():
-                params['trafficGroup'] = traffic_group
-            else:
-                raise F5ModuleError(
-                    'The specified traffic group was not found'
-                )
-
-        vlans = self.get_vlans()
-        if vlan in vlans:
-            params['vlan'] = vlan
-        else:
-            raise F5ModuleError(
-                'The specified VLAN was not found'
-            )
-
-        if allow_service is not None:
-            svcs = self.verify_services()
-            params['allowService'] = self.fmt_services(svcs)
-
-        params['name'] = name
-        params['partition'] = partition
-
-        self.cparams = camel_dict_to_snake_dict(params)
-        if svcs:
-            self.cparams['allow_service'] = list(svcs)
-
-        if check_mode:
+        if self.want.traffic_group is None:
+            self.want.update({'traffic_group': '/Common/traffic-group-local-only'})
+        if self.want.route_domain is None:
+            self.want.update({'route_domain': 0})
+        if self.want.allow_service:
+            if 'all' in self.want.allow_service:
+                self.want.update(dict(allow_service=['all']))
+            elif 'none' in self.want.allow_service:
+                self.want.update(dict(allow_service=[]))
+            elif 'default' in self.want.allow_service:
+                self.want.update(dict(allow_service=['default']))
+        self._set_changed_options()
+        if self.want.check_mode:
             return True
-
-        d = self.api.tm.net.selfips.selfip
-        d.create(**params)
-
+        self.create_on_device()
         if self.exists():
             return True
         else:
-            raise F5ModuleError("Failed to create the self IP")
-
-    def delete(self):
-        params = dict()
-        check_mode = self.params['check_mode']
-
-        params['name'] = self.params['name']
-        params['partition'] = self.params['partition']
-
-        self.cparams = camel_dict_to_snake_dict(params)
-        if check_mode:
-            return True
-
-        dc = self.api.tm.net.selfips.selfip.load(**params)
-        dc.delete()
-
-        if self.exists():
-            raise F5ModuleError("Failed to delete the self IP")
-        return True
+            raise F5ModuleError("Failed to create the Self IP")
 
     def exists(self):
-        name = self.params['name']
-        partition = self.params['partition']
-        return self.api.tm.net.selfips.selfip.exists(
-            name=name,
-            partition=partition
+        uri = "https://{0}:{1}/mgmt/tm/net/self/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-
-    def flush(self):
-        result = dict()
-        state = self.params['state']
-
+        resp = self.client.api.get(uri)
         try:
-            if state == "present":
-                changed = self.present()
-            elif state == "absent":
-                changed = self.absent()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
 
-        result.update(**self.cparams)
-        result.update(dict(changed=changed))
-        return result
+    def create_on_device(self):
+        params = self.changes.api_params()
+        params['name'] = self.want.name
+        params['partition'] = self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/net/self/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+    def update_on_device(self):
+        params = self.changes.api_params()
+        uri = "https://{0}:{1}/mgmt/tm/net/self/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
+        )
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+    def remove_from_device(self):
+        uri = "https://{0}:{1}/mgmt/tm/net/self/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
+        )
+        resp = self.client.api.delete(uri)
+        if resp.status == 200:
+            return True
+
+    def read_current_from_device(self):
+        uri = "https://{0}:{1}/mgmt/tm/net/self/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return ApiParameters(params=response)
+
+    def read_partition_default_route_domain_from_device(self):
+        uri = "https://{0}:{1}/mgmt/tm/auth/partition/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.partition
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return int(response['defaultRouteDomain'])
+
+
+class ArgumentSpec(object):
+    def __init__(self):
+        self.supports_check_mode = True
+        argument_spec = dict(
+            address=dict(),
+            allow_service=dict(type='list'),
+            name=dict(required=True),
+            netmask=dict(),
+            traffic_group=dict(),
+            vlan=dict(),
+            route_domain=dict(type='int'),
+            description=dict(),
+            state=dict(
+                default='present',
+                choices=['present', 'absent']
+            ),
+            partition=dict(
+                default='Common',
+                fallback=(env_fallback, ['F5_PARTITION'])
+            )
+        )
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
 
 
 def main():
-    argument_spec = f5_argument_spec()
-
-    meta_args = dict(
-        address=dict(required=False, default=None),
-        allow_service=dict(type='list', default=None),
-        name=dict(required=True),
-        netmask=dict(required=False, default=None),
-        traffic_group=dict(required=False, default=None),
-        vlan=dict(required=False, default=None),
-        route_domain=dict(required=False, default=None)
-    )
-    argument_spec.update(meta_args)
+    spec = ArgumentSpec()
 
     module = AnsibleModule(
-        argument_spec=argument_spec,
-        supports_check_mode=True
+        argument_spec=spec.argument_spec,
+        supports_check_mode=spec.supports_check_mode
     )
 
     try:
-        if not HAS_NETADDR:
-            raise F5ModuleError(
-                "The netaddr python module is required."
-            )
+        mm = ModuleManager(module=module)
+        results = mm.exec_module()
+        module.exit_json(**results)
+    except F5ModuleError as ex:
+        module.fail_json(msg=str(ex))
 
-        obj = BigIpSelfIp(check_mode=module.check_mode, **module.params)
-        result = obj.flush()
-
-        module.exit_json(**result)
-    except F5ModuleError as e:
-        module.fail_json(msg=str(e))
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict
-from ansible.module_utils.f5_utils import *
 
 if __name__ == '__main__':
     main()

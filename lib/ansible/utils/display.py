@@ -36,8 +36,10 @@ from termios import TIOCGWINSZ
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.six import with_metaclass
 from ansible.utils.color import stringc
-
+from ansible.utils.singleton import Singleton
+from ansible.utils.unsafe_proxy import wrap_var
 
 try:
     # Python 2
@@ -47,15 +49,25 @@ except NameError:
     pass
 
 
+class FilterBlackList(logging.Filter):
+    def __init__(self, blacklist):
+        self.blacklist = [logging.Filter(name) for name in blacklist]
+
+    def filter(self, record):
+        return not any(f.filter(record) for f in self.blacklist)
+
+
 logger = None
 # TODO: make this a logging callback instead
-if C.DEFAULT_LOG_PATH:
+if getattr(C, 'DEFAULT_LOG_PATH'):
     path = C.DEFAULT_LOG_PATH
-    if (os.path.exists(path) and os.access(path, os.W_OK)) or os.access(os.path.dirname(path), os.W_OK):
+    if path and (os.path.exists(path) and os.access(path, os.W_OK)) or os.access(os.path.dirname(path), os.W_OK):
         logging.basicConfig(filename=path, level=logging.DEBUG, format='%(asctime)s %(name)s %(message)s')
         mypid = str(os.getpid())
         user = getpass.getuser()
         logger = logging.getLogger("p=%s u=%s | " % (mypid, user))
+        for handler in logging.root.handlers:
+            handler.addFilter(FilterBlackList(getattr(C, 'DEFAULT_LOG_FILTER', [])))
     else:
         print("[WARNING]: log file at %s is not writeable and we cannot create it, aborting\n" % path, file=sys.stderr)
 
@@ -67,7 +79,7 @@ b_COW_PATHS = (
 )
 
 
-class Display:
+class Display(with_metaclass(Singleton, object)):
 
     def __init__(self, verbosity=0):
 
@@ -91,14 +103,19 @@ class Display:
                 self.cows_available = set([to_text(c) for c in out.split()])
                 if C.ANSIBLE_COW_WHITELIST:
                     self.cows_available = set(C.ANSIBLE_COW_WHITELIST).intersection(self.cows_available)
-            except:
+            except Exception:
                 # could not execute cowsay for some reason
                 self.b_cowsay = False
 
         self._set_column_width()
 
     def set_cowsay_info(self):
-        if not C.ANSIBLE_NOCOWS:
+        if C.ANSIBLE_NOCOWS:
+            return
+
+        if C.ANSIBLE_COW_PATH:
+            self.b_cowsay = C.ANSIBLE_COW_PATH
+        else:
             for b_cow_path in b_COW_PATHS:
                 if os.path.exists(b_cow_path):
                     self.b_cowsay = b_cow_path
@@ -126,6 +143,8 @@ class Display:
                 # characters that are invalid in the user's locale
                 msg2 = to_text(msg2, self._output_encoding(stderr=stderr), errors='replace')
 
+            # Note: After Display() class is refactored need to update the log capture
+            # code in 'bin/ansible-connection' (and other relevant places).
             if not stderr:
                 fileobj = sys.stdout
             else:
@@ -174,16 +193,21 @@ class Display:
     def vvvvvv(self, msg, host=None):
         return self.verbose(msg, host=host, caplevel=5)
 
-    def debug(self, msg):
+    def debug(self, msg, host=None):
         if C.DEFAULT_DEBUG:
-            self.display("%6d %0.5f: %s" % (os.getpid(), time.time(), msg), color=C.COLOR_DEBUG)
+            if host is None:
+                self.display("%6d %0.5f: %s" % (os.getpid(), time.time(), msg), color=C.COLOR_DEBUG)
+            else:
+                self.display("%6d %0.5f [%s]: %s" % (os.getpid(), time.time(), host, msg), color=C.COLOR_DEBUG)
 
     def verbose(self, msg, host=None, caplevel=2):
+
+        to_stderr = C.VERBOSE_TO_STDERR
         if self.verbosity > caplevel:
             if host is None:
-                self.display(msg, color=C.COLOR_VERBOSE)
+                self.display(msg, color=C.COLOR_VERBOSE, stderr=to_stderr)
             else:
-                self.display("<%s> %s" % (host, msg), color=C.COLOR_VERBOSE, screen_only=True)
+                self.display("<%s> %s" % (host, msg), color=C.COLOR_VERBOSE, stderr=to_stderr)
 
     def deprecated(self, msg, version=None, removed=False):
         ''' used to print out a deprecation message.'''
@@ -226,7 +250,7 @@ class Display:
 
     def banner(self, msg, color=None, cows=True):
         '''
-        Prints a header-looking line with cowsay or stars wit hlength depending on terminal width (3 minimum)
+        Prints a header-looking line with cowsay or stars with length depending on terminal width (3 minimum)
         '''
         if self.b_cowsay and cows:
             try:
@@ -283,7 +307,7 @@ class Display:
         else:
             return input(prompt_string)
 
-    def do_var_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
+    def do_var_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None, unsafe=None):
 
         result = None
         if sys.__stdin__.isatty():
@@ -321,6 +345,9 @@ class Display:
 
         # handle utf-8 chars
         result = to_text(result, errors='surrogate_or_strict')
+
+        if unsafe:
+            result = wrap_var(result)
         return result
 
     @staticmethod

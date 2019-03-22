@@ -38,7 +38,7 @@ options:
   dest:
     description:
       - Destination of the logs.
-    choices: ['on', 'host', console', 'monitor', 'buffered']
+    choices: ['on', 'host', 'console', 'monitor', 'buffered']
   name:
     description:
       - If value of C(dest) is I(file) it indicates file-name,
@@ -48,6 +48,7 @@ options:
     description:
       - Size of buffer. The acceptable value is in range from 4096 to
         4294967295 bytes.
+    default: 4096
   facility:
     description:
       - Set logging facility.
@@ -61,6 +62,7 @@ options:
       - State of the logging configuration.
     default: present
     choices: ['present', 'absent']
+extends_documentation_fragment: ios
 """
 
 EXAMPLES = """
@@ -119,22 +121,23 @@ commands:
 import re
 
 from copy import deepcopy
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network_common import remove_default_spec
-from ansible.module_utils.ios import get_config, load_config
-from ansible.module_utils.ios import ios_argument_spec, check_args
+from ansible.module_utils.network.common.utils import remove_default_spec, validate_ip_address
+from ansible.module_utils.network.ios.ios import get_config, load_config
+from ansible.module_utils.network.ios.ios import get_capabilities
+from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
 
 
 def validate_size(value, module):
     if value:
-        if not int(4096) <= value <= int(4294967295):
+        if not int(4096) <= int(value) <= int(4294967295):
             module.fail_json(msg='size must be between 4096 and 4294967295')
         else:
             return value
 
 
-def map_obj_to_commands(updates, module):
+def map_obj_to_commands(updates, module, os_version):
+    dest_group = ('console', 'monitor', 'buffered', 'on')
     commands = list()
     want, have = updates
     for w in want:
@@ -146,45 +149,74 @@ def map_obj_to_commands(updates, module):
         state = w['state']
         del w['state']
 
+        if facility:
+            w['dest'] = 'facility'
+
         if state == 'absent' and w in have:
-            if dest == 'host':
-                commands.append('no logging host {}'.format(name))
-            elif dest:
-                commands.append('no logging {}'.format(dest))
-            else:
-                module.fail_json(msg='dest must be among console, monitor, buffered, host, on')
+            if dest:
+                if dest == 'host':
+                    if '12.' in os_version:
+                        commands.append('no logging {0}'.format(name))
+                    else:
+                        commands.append('no logging host {0}'.format(name))
+
+                elif dest in dest_group:
+                    commands.append('no logging {0}'.format(dest))
+
+                else:
+                    module.fail_json(msg='dest must be among console, monitor, buffered, host, on')
 
             if facility:
-                commands.append('no logging facility {}'.format(facility))
+                commands.append('no logging facility {0}'.format(facility))
 
         if state == 'present' and w not in have:
             if facility:
-                commands.append('logging facility {}'.format(facility))
+                present = False
+
+                for entry in have:
+                    if entry['dest'] == 'facility' and entry['facility'] == facility:
+                        present = True
+
+                if not present:
+                    commands.append('logging facility {0}'.format(facility))
 
             if dest == 'host':
-                commands.append('logging host {}'.format(name))
+                if '12.' in os_version:
+                    commands.append('logging {0}'.format(name))
+                else:
+                    commands.append('logging host {0}'.format(name))
 
             elif dest == 'on':
                 commands.append('logging on')
 
             elif dest == 'buffered' and size:
-                commands.append('logging buffered {}'.format(size))
+                present = False
+
+                for entry in have:
+                    if entry['dest'] == 'buffered' and entry['size'] == size and entry['level'] == level:
+                        present = True
+
+                if not present:
+                    if level and level != 'debugging':
+                        commands.append('logging buffered {0} {1}'.format(size, level))
+                    else:
+                        commands.append('logging buffered {0}'.format(size))
 
             else:
-                dest_cmd = 'logging {}'.format(dest)
-                if level:
-                    dest_cmd += ' {}'.format(level)
-
-                commands.append(dest_cmd)
+                if dest:
+                    dest_cmd = 'logging {0}'.format(dest)
+                    if level:
+                        dest_cmd += ' {0}'.format(level)
+                    commands.append(dest_cmd)
     return commands
 
 
-def parse_facility(line):
-    match = re.search(r'logging facility (\S+)', line, re.M)
-    if match:
-        facility = match.group(1)
-    else:
-        facility = 'local7'
+def parse_facility(line, dest):
+    facility = None
+    if dest == 'facility':
+        match = re.search(r'logging facility (\S+)', line, re.M)
+        if match:
+            facility = match.group(1)
 
     return facility
 
@@ -193,18 +225,12 @@ def parse_size(line, dest):
     size = None
 
     if dest == 'buffered':
-        match = re.search(r'logging buffered (\S+)', line, re.M)
+        match = re.search(r'logging buffered(?: (\d+))?(?: [a-z]+)?', line, re.M)
         if match:
-            try:
-                int_size = int(match.group(1))
-            except ValueError:
-                int_size = None
-
-            if int_size:
-                if isinstance(int_size, int):
-                    size = str(match.group(1))
-                else:
-                    size = str(4096)
+            if match.group(1) is not None:
+                size = match.group(1)
+            else:
+                size = "4096"
 
     return size
 
@@ -228,12 +254,13 @@ def parse_level(line, dest):
         level = 'debugging'
 
     else:
-        match = re.search(r'logging {} (\S+)'.format(dest), line, re.M)
-        if match:
-            if match.group(1) in level_group:
-                level = match.group(1)
-            else:
-                level = 'debugging'
+        if dest == 'buffered':
+            match = re.search(r'logging buffered(?: \d+)?(?: ([a-z]+))?', line, re.M)
+        else:
+            match = re.search(r'logging {0} (\S+)'.format(dest), line, re.M)
+
+        if match and match.group(1) in level_group:
+            level = match.group(1)
         else:
             level = 'debugging'
 
@@ -242,12 +269,12 @@ def parse_level(line, dest):
 
 def map_config_to_obj(module):
     obj = []
-    dest_group = ('console', 'host', 'monitor', 'buffered', 'on')
+    dest_group = ('console', 'host', 'monitor', 'buffered', 'on', 'facility')
 
-    data = get_config(module, flags=['| section logging'])
+    data = get_config(module, flags=['| include logging'])
 
     for line in data.split('\n'):
-        match = re.search(r'logging (\S+)', line, re.M)
+        match = re.search(r'^logging (\S+)', line, re.M)
         if match:
             if match.group(1) in dest_group:
                 dest = match.group(1)
@@ -256,10 +283,29 @@ def map_config_to_obj(module):
                     'dest': dest,
                     'name': parse_name(line, dest),
                     'size': parse_size(line, dest),
-                    'facility': parse_facility(line),
+                    'facility': parse_facility(line, dest),
                     'level': parse_level(line, dest)
                 })
-
+            elif validate_ip_address(match.group(1)):
+                dest = 'host'
+                obj.append({
+                    'dest': dest,
+                    'name': match.group(1),
+                    'size': parse_size(line, dest),
+                    'facility': parse_facility(line, dest),
+                    'level': parse_level(line, dest)
+                })
+            else:
+                ip_match = re.search(r'\d+\.\d+\.\d+\.\d+', match.group(1), re.M)
+                if ip_match:
+                    dest = 'host'
+                    obj.append({
+                        'dest': dest,
+                        'name': match.group(1),
+                        'size': parse_size(line, dest),
+                        'facility': parse_facility(line, dest),
+                        'level': parse_level(line, dest)
+                    })
     return obj
 
 
@@ -321,7 +367,6 @@ def map_params_to_obj(module, required_if=None):
                 'level': module.params['level'],
                 'state': module.params['state']
             })
-
     return obj
 
 
@@ -332,7 +377,7 @@ def main():
         dest=dict(type='str', choices=['on', 'host', 'console', 'monitor', 'buffered']),
         name=dict(type='str'),
         size=dict(type='int'),
-        facility=dict(type='str', default='local7'),
+        facility=dict(type='str'),
         level=dict(type='str', default='debugging'),
         state=dict(default='present', choices=['present', 'absent']),
     )
@@ -355,6 +400,9 @@ def main():
                            required_if=required_if,
                            supports_check_mode=True)
 
+    device_info = get_capabilities(module)
+    os_version = device_info['device_info']['network_os_version']
+
     warnings = list()
     check_args(module, warnings)
 
@@ -365,7 +413,7 @@ def main():
     want = map_params_to_obj(module, required_if=required_if)
     have = map_config_to_obj(module)
 
-    commands = map_obj_to_commands((want, have), module)
+    commands = map_obj_to_commands((want, have), module, os_version)
     result['commands'] = commands
 
     if commands:
@@ -374,6 +422,7 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

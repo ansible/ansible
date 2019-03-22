@@ -1,19 +1,11 @@
 #!/usr/bin/python
 
 # Copyright (c) 2014 Hewlett-Packard Development Company, L.P.
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -24,7 +16,7 @@ DOCUMENTATION = '''
 ---
 module: os_server_facts
 short_description: Retrieve facts about one or more compute instances
-author: Monty
+author: Monty (@emonty)
 version_added: "2.0"
 description:
     - Retrieve facts about server instances from OpenStack.
@@ -32,77 +24,83 @@ notes:
     - This module creates a new top-level C(openstack_servers) fact, which
       contains a list of servers.
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 options:
    server:
      description:
        - restrict results to servers with names or UUID matching
-         this glob expression (e.g., C<web*>).
-     required: false
-     default: None
+         this glob expression (e.g., <web*>).
    detailed:
      description:
         - when true, return additional detail about servers at the expense
           of additional API calls.
-     required: false
-     default: false
+     type: bool
+     default: 'no'
+   filters:
+     description:
+        - restrict results to servers matching a dictionary of
+          filters
+     version_added: "2.8"
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
+   all_projects:
+     description:
+       - Whether to list servers from all projects or just the current auth
+         scoped project.
+     type: bool
+     default: 'no'
+     version_added: "2.8"
 extends_documentation_fragment: openstack
 '''
 
 EXAMPLES = '''
-# Gather facts about all servers named C<web*>:
+# Gather facts about all servers named <web*> that are in an active state:
 - os_server_facts:
     cloud: rax-dfw
     server: web*
+    filters:
+      vm_state: active
 - debug:
     var: openstack_servers
 '''
 
 import fnmatch
 
-try:
-    import shade
-    from shade import meta
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def main():
 
     argument_spec = openstack_full_argument_spec(
         server=dict(required=False),
-        detailed=dict(required=False, type='bool'),
+        detailed=dict(required=False, type='bool', default=False),
+        filters=dict(required=False, type='dict', default=None),
+        all_projects=dict(required=False, type='bool', default=False),
     )
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.openstack_cloud(**module.params)
-        openstack_servers = cloud.list_servers(
-            detailed=module.params['detailed'])
+        openstack_servers = cloud.search_servers(
+            detailed=module.params['detailed'], filters=module.params['filters'],
+            all_projects=module.params['all_projects'])
 
         if module.params['server']:
             # filter servers by name
             pattern = module.params['server']
+            # TODO(mordred) This is handled by sdk now
             openstack_servers = [server for server in openstack_servers
                                  if fnmatch.fnmatch(server['name'], pattern) or fnmatch.fnmatch(server['id'], pattern)]
         module.exit_json(changed=False, ansible_facts=dict(
             openstack_servers=openstack_servers))
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
-# this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
+
 if __name__ == '__main__':
     main()

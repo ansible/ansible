@@ -9,6 +9,7 @@ import time
 from lib.cloud import (
     CloudProvider,
     CloudEnvironment,
+    CloudEnvironmentConfig,
 )
 
 from lib.util import (
@@ -17,6 +18,7 @@ from lib.util import (
     display,
     SubprocessError,
     is_shippable,
+    ConfigParser,
 )
 
 from lib.http import (
@@ -31,15 +33,9 @@ from lib.docker_util import (
     docker_inspect,
     docker_pull,
     docker_network_inspect,
+    docker_exec,
     get_docker_container_id,
 )
-
-try:
-    # noinspection PyPep8Naming
-    import ConfigParser as configparser
-except ImportError:
-    # noinspection PyUnresolvedReferences
-    import configparser
 
 
 class CsCloudProvider(CloudProvider):
@@ -50,10 +46,10 @@ class CsCloudProvider(CloudProvider):
         """
         :type args: TestConfig
         """
-        super(CsCloudProvider, self).__init__(args, config_extension='.ini')
+        super(CsCloudProvider, self).__init__(args)
 
         # The simulator must be pinned to a specific version to guarantee CI passes with the version used.
-        self.image = 'ansible/ansible:cloudstack-simulator@sha256:885aedb7f34ce7114eaa383a2541ede93c4f8cb543c05edf90b694def67b1a6a'
+        self.image = 'quay.io/ansible/cloudstack-test-container:1.2.0'
         self.container_name = ''
         self.endpoint = ''
         self.host = ''
@@ -119,7 +115,7 @@ class CsCloudProvider(CloudProvider):
 
     def _setup_static(self):
         """Configure CloudStack tests for use with static configuration."""
-        parser = configparser.RawConfigParser()
+        parser = ConfigParser()
         parser.read(self.config_static_path)
 
         self.endpoint = parser.get('cloudstack', 'endpoint')
@@ -162,8 +158,13 @@ class CsCloudProvider(CloudProvider):
             display.info('Starting a new CloudStack simulator docker container.', verbosity=1)
             docker_pull(self.args, self.image)
             docker_run(self.args, self.image, ['-d', '-p', '8888:8888', '--name', self.container_name])
+
+            # apply work-around for OverlayFS issue
+            # https://github.com/docker/for-linux/issues/72#issuecomment-319904698
+            docker_exec(self.args, self.container_name, ['find', '/var/lib/mysql', '-type', 'f', '-exec', 'touch', '{}', ';'])
+
             if not self.args.explain:
-                display.notice('The CloudStack simulator will probably be ready in 5 - 10 minutes.')
+                display.notice('The CloudStack simulator will probably be ready in 2 - 4 minutes.')
 
         container_id = get_docker_container_id()
 
@@ -211,7 +212,7 @@ class CsCloudProvider(CloudProvider):
             containers = bridge['Containers']
             container = [containers[container] for container in containers if containers[container]['Name'] == self.DOCKER_SIMULATOR_NAME][0]
             return re.sub(r'/[0-9]+$', '', container['IPv4Address'])
-        except:
+        except Exception:
             display.error('Failed to process the following docker network inspect output:\n%s' %
                           json.dumps(networks, indent=4, sort_keys=True))
             raise
@@ -233,7 +234,7 @@ class CsCloudProvider(CloudProvider):
             except SubprocessError:
                 pass
 
-            time.sleep(30)
+            time.sleep(10)
 
         raise ApplicationError('Timeout waiting for CloudStack service.')
 
@@ -255,23 +256,34 @@ class CsCloudProvider(CloudProvider):
                 except HttpError as ex:
                     display.error(ex)
 
-            time.sleep(30)
+            time.sleep(10)
 
         raise ApplicationError('Timeout waiting for CloudStack credentials.')
 
 
 class CsCloudEnvironment(CloudEnvironment):
     """CloudStack cloud environment plugin. Updates integration test environment after delegation."""
-    def configure_environment(self, env, cmd):
+    def get_environment_config(self):
         """
-        :type env: dict[str, str]
-        :type cmd: list[str]
+        :rtype: CloudEnvironmentConfig
         """
-        changes = dict(
-            CLOUDSTACK_CONFIG=self.config_path,
+        parser = ConfigParser()
+        parser.read(self.config_path)
+
+        config = dict(parser.items('default'))
+
+        env_vars = dict(
+            CLOUDSTACK_ENDPOINT=config['endpoint'],
+            CLOUDSTACK_KEY=config['key'],
+            CLOUDSTACK_SECRET=config['secret'],
+            CLOUDSTACK_TIMEOUT=config['timeout'],
         )
 
-        env.update(changes)
+        ansible_vars = dict(
+            cs_resource_prefix=self.resource_prefix,
+        )
 
-        cmd.append('-e')
-        cmd.append('cs_resource_prefix=%s' % self.resource_prefix)
+        return CloudEnvironmentConfig(
+            env_vars=env_vars,
+            ansible_vars=ansible_vars,
+        )

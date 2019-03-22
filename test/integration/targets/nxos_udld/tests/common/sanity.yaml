@@ -1,0 +1,101 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_udld sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- set_fact: udld_run="true"
+- set_fact: udld_run="false"
+  when: ((platform is search('N9K-F')) and (imagetag and (imagetag is version_compare('F3', 'lt'))))
+- set_fact: udld_run="false"
+  when: titanium
+
+- block:
+  - name: "Enable feature udld"
+    nxos_feature: 
+      feature: udld
+      provider: "{{ connection }}"
+      state: enabled
+
+  - name: Configure udld
+    nxos_udld: &conf1
+      aggressive: enabled
+      msg_time: 20
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Check Idempotence"
+    nxos_udld: *conf1
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: Reset udld
+    nxos_udld:
+      reset: True
+      provider: "{{ connection }}"
+
+  - name: Configure udld2
+    nxos_udld: &conf2
+      aggressive: disabled
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_udld: *conf2
+    register: result
+
+  - assert: *false
+
+  - name: Configure udld3
+    nxos_udld: &conf3
+      msg_time: default
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_udld: *conf3
+    register: result
+
+  - assert: *false
+
+  - name: Configure udld again
+    nxos_udld: *conf1
+    register: result
+
+  - assert: *true
+
+  - name: Remove udld config
+    nxos_udld: &conf4
+      provider: "{{ connection }}"
+      state: absent
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_udld: *conf4
+    register: result
+
+  - assert: *false
+
+  when: udld_run
+
+  always:
+  - name: "Disable udld"
+    nxos_feature: 
+      feature: udld
+      provider: "{{ connection }}"
+      state: disabled
+    ignore_errors: yes
+
+- debug: msg="END connection={{ ansible_connection }} nxos_udld sanity test"

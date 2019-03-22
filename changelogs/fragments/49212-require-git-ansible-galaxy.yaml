@@ -1,0 +1,2 @@
+minor_changes:
+ - "ansible-galaxy: properly warn when git isn't found in an installed bin path instead of traceback"

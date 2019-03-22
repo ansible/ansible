@@ -1,0 +1,5 @@
+minor_changes:
+- run_command - Add a new keyword argument expand_user_and_vars, which defaults to True,
+  allowing the module author to decide whether or paths and variables
+  are expanded before running the command when use_unsafe_shell=False
+  (https://github.com/ansible/ansible/issues/45418)

@@ -7,7 +7,7 @@
 - name: Validate results of rax with no args
   assert:
     that:
-      - rax|failed
+      - rax is failed
       - rax.msg == 'No credentials supplied!'
 # ============================================================
 
@@ -24,7 +24,7 @@
 - name: Validate results of rax with only creds
   assert:
     that:
-      - rax|failed
+      - rax is failed
       - rax.msg.startswith('None is not a valid region')
 # ============================================================
 
@@ -42,7 +42,7 @@
 - name: Validate rax creds and region
   assert:
     that:
-      - rax|failed
+      - rax is failed
       - rax.msg == 'image is required for the "rax" module'
 # ============================================================
 
@@ -61,7 +61,7 @@
 - name: Validate rax with creds, region and image
   assert:
     that:
-      - rax|failed
+      - rax is failed
       - rax.msg == 'flavor is required for the "rax" module'
 # ============================================================
 
@@ -81,7 +81,7 @@
 - name: Validate rax with creds, region, image and flavor
   assert:
     that:
-      - rax|failed
+      - rax is failed
       - rax.msg == 'name is required for the "rax" module'
 # ============================================================
 
@@ -101,8 +101,8 @@
 - name: Validate rax with creds, region, image, flavor and name
   assert:
     that:
-      - rax|success
-      - rax|changed
+      - rax is successful
+      - rax is changed
       - rax.action == 'create'
       - rax.instances|length == 1
       - rax.instances[0].name == "{{ resource_prefix }}-1"
@@ -125,7 +125,7 @@
 - name: "Validate delete integration 1"
   assert:
     that:
-      - rax|changed
+      - rax is changed
       - rax.action == 'delete'
       - rax.success[0].name == "{{ resource_prefix }}-1"
 # ============================================================
@@ -148,8 +148,8 @@
 - name: Validate rax basic idepmpotency 1
   assert:
     that:
-      - rax|success
-      - rax|changed
+      - rax is successful
+      - rax is changed
       - rax.action == 'create'
       - rax.instances|length == 1
       - rax.instances[0].name == "{{ resource_prefix }}-2"
@@ -171,8 +171,8 @@
 - name: Validate rax basic idempotency 2
   assert:
     that:
-      - rax|success
-      - not rax|changed
+      - rax is successful
+      - rax is not changed
       - not rax.action
       - rax.instances|length == 1
       - rax.instances[0].name == "{{ resource_prefix }}-2"
@@ -194,8 +194,8 @@
 - name: "Validate delete integration 2"
   assert:
     that:
-      - rax|success
-      - rax|changed
+      - rax is successful
+      - rax is changed
       - rax.action == 'delete'
       - rax.success[0].name == "{{ resource_prefix }}-2"
       - rax.success[0].rax_status == "DELETED"
@@ -221,8 +221,8 @@
 - name: Validate rax basic idepmpotency with meta 1
   assert:
     that:
-      - rax|success
-      - rax|changed
+      - rax is successful
+      - rax is changed
       - rax.action == 'create'
       - rax.instances|length == 1
       - rax.instances[0].name == "{{ resource_prefix }}-3"
@@ -247,8 +247,8 @@
 - name: Validate rax basic idempotency with meta 2
   assert:
     that:
-      - rax|success
-      - not rax|changed
+      - rax is successful
+      - rax is not changed
       - not rax.action
       - rax.instances|length == 1
       - rax.instances[0].name == "{{ resource_prefix }}-3"
@@ -272,8 +272,8 @@
 - name: "Validate delete integration 3"
   assert:
     that:
-      - rax|success
-      - rax|changed
+      - rax is successful
+      - rax is changed
       - rax.action == 'delete'
       - rax.success[0].name == "{{ resource_prefix }}-3"
       - rax.success[0].rax_status == "DELETED"
@@ -298,8 +298,8 @@
 - name: Validate rax basic idepmpotency multi server 1
   assert:
     that:
-      - rax|success
-      - rax|changed
+      - rax is successful
+      - rax is changed
       - rax.action == 'create'
       - rax.instances|length == 2
       - rax.instances == rax.success
@@ -320,8 +320,8 @@
 - name: Validate rax basic idempotency multi server 2
   assert:
     that:
-      - rax|success
-      - not rax|changed
+      - rax is successful
+      - rax is not changed
       - not rax.action
       - rax.instances|length == 2
       - not rax.success
@@ -342,8 +342,8 @@
 - name: Validate rax basic idempotency multi server 3
   assert:
     that:
-      - rax|success
-      - rax|changed
+      - rax is successful
+      - rax is changed
       - rax.action == 'create'
       - rax.instances|length == 3
       - rax.success|length == 1
@@ -365,8 +365,8 @@
 - name: "Validate delete integration 4"
   assert:
     that:
-      - rax|success
-      - rax|changed
+      - rax is successful
+      - rax is changed
       - rax.action == 'delete'
       - rax.success|length == 3
       - not rax.instances
@@ -392,8 +392,8 @@
 - name: Validate rax multi server group without exact_count 1
   assert:
     that:
-      - rax|success
-      - rax|changed
+      - rax is successful
+      - rax is changed
       - rax.action == 'create'
       - rax.instances|length == 2
       - rax.instances == rax.success
@@ -417,8 +417,8 @@
 - name: "Validate delete integration 5"
   assert:
     that:
-      - rax|success
-      - rax|changed
+      - rax is successful
+      - rax is changed
       - rax.action == 'delete'
       - rax.success|length == 2
       - not rax.instances
@@ -444,8 +444,8 @@
 - name: Validate rax multi server group without exact_count non-idempotency 1
   assert:
     that:
-      - rax|success
-      - rax|changed
+      - rax is successful
+      - rax is changed
       - rax.action == 'create'
       - rax.instances|length == 2
       - rax.instances == rax.success
@@ -468,8 +468,8 @@
 - name: Validate rax multi server group without exact_count non-idempotency 2
   assert:
     that:
-      - rax|success
-      - rax|changed
+      - rax is successful
+      - rax is changed
       - rax.action == 'create'
       - rax.instances|length == 4
       - rax.instances|map(attribute='rax_name')|unique|length == 4
@@ -492,8 +492,8 @@
 - name: "Validate delete integration 6"
   assert:
     that:
-      - rax|success
-      - rax|changed
+      - rax is successful
+      - rax is changed
       - rax.action == 'delete'
       - rax.success|length == 4
       - not rax.instances
@@ -520,8 +520,8 @@
 - name: Validate rax multi server group with exact_count 1
   assert:
     that:
-      - rax|success
-      - rax|changed
+      - rax is successful
+      - rax is changed
       - rax.action == 'create'
       - rax.instances|length == 2
       - rax.instances == rax.success
@@ -545,8 +545,8 @@
 - name: Validate rax multi server group with exact_count 2
   assert:
     that:
-      - rax|success
-      - not rax|changed
+      - rax is successful
+      - rax is not changed
       - not rax.action
       - rax.instances|length == 2
       - rax.instances|map(attribute='rax_name')|unique|length == 2
@@ -569,8 +569,8 @@
 - name: Validate rax multi server group with exact_count 3
   assert:
     that:
-      - rax|success
-      - rax|changed
+      - rax is successful
+      - rax is changed
       - rax.action == 'create'
       - rax.instances|length == 4
       - rax.success|length == 2
@@ -595,8 +595,8 @@
 - name: "Validate delete integration 7"
   assert:
     that:
-      - rax|success
-      - rax|changed
+      - rax is successful
+      - rax is changed
       - rax.action == 'delete'
       - rax.success|length == 4
       - not rax.instances
@@ -623,8 +623,8 @@
 - name: Validate rax multi server group without exact_count and disabled auto_increment 1
   assert:
     that:
-      - rax|success
-      - rax|changed
+      - rax is successful
+      - rax is changed
       - rax.action == 'create'
       - rax.instances|length == 2
       - rax.instances == rax.success
@@ -649,8 +649,8 @@
 - name: "Validate delete integration 8"
   assert:
     that:
-      - rax|success
-      - rax|changed
+      - rax is successful
+      - rax is changed
       - rax.action == 'delete'
       - rax.success|length == 2
       - not rax.instances
@@ -677,8 +677,8 @@
 - name: Validate rax multi server group with exact_count and no printf 1
   assert:
     that:
-      - rax|success
-      - rax|changed
+      - rax is successful
+      - rax is changed
       - rax.action == 'create'
       - rax.instances|length == 2
       - rax.instances == rax.success
@@ -702,8 +702,8 @@
 - name: "Validate delete integration 9"
   assert:
     that:
-      - rax|success
-      - rax|changed
+      - rax is successful
+      - rax is changed
       - rax.action == 'delete'
       - rax.success|length == 2
       - not rax.instances
@@ -731,8 +731,8 @@
 - name: Validate rax multi server group with exact_count and offset 1
   assert:
     that:
-      - rax|success
-      - rax|changed
+      - rax is successful
+      - rax is changed
       - rax.action == 'create'
       - rax.instances|length == 2
       - rax.instances == rax.success
@@ -757,8 +757,8 @@
 - name: "Validate delete integration 10"
   assert:
     that:
-      - rax|success
-      - rax|changed
+      - rax is successful
+      - rax is changed
       - rax.action == 'delete'
       - rax.success|length == 2
       - not rax.instances
@@ -786,8 +786,8 @@
 - name: Validate rax multi server group with exact_count and offset 1
   assert:
     that:
-      - rax|success
-      - rax|changed
+      - rax is successful
+      - rax is changed
       - rax.action == 'create'
       - rax.instances|length == 2
       - rax.instances == rax.success
@@ -812,8 +812,8 @@
 - name: "Validate delete integration 11"
   assert:
     that:
-      - rax|success
-      - rax|changed
+      - rax is successful
+      - rax is changed
       - rax.action == 'delete'
       - rax.success|length == 2
       - not rax.instances
@@ -837,8 +837,8 @@
 - name: Validate rax instance_ids absent 1 (create)
   assert:
     that:
-      - rax|success
-      - rax|changed
+      - rax is successful
+      - rax is changed
       - rax.action == 'create'
       - rax.instances|length == 1
       - rax.instances[0].name == "{{ resource_prefix }}-12"
@@ -862,8 +862,8 @@
 - name: Validate rax instance_ids absent 2 (delete)
   assert:
     that:
-      - rax2|success
-      - rax2|changed
+      - rax2 is successful
+      - rax2 is changed
       - rax2.action == 'delete'
       - rax2.success.0.rax_id == rax.success.0.rax_id
 # ============================================================

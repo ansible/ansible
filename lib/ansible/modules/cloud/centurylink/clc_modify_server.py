@@ -26,49 +26,35 @@ options:
   cpu:
     description:
       - How many CPUs to update on the server
-    required: False
-    default: None
   memory:
     description:
       - Memory (in GB) to set to the server.
-    required: False
-    default: None
   anti_affinity_policy_id:
     description:
       - The anti affinity policy id to be set for a hyper scale server.
         This is mutually exclusive with 'anti_affinity_policy_name'
-    required: False
-    default: None
   anti_affinity_policy_name:
     description:
       - The anti affinity policy name to be set for a hyper scale server.
         This is mutually exclusive with 'anti_affinity_policy_id'
-    required: False
-    default: None
   alert_policy_id:
     description:
       - The alert policy id to be associated to the server.
         This is mutually exclusive with 'alert_policy_name'
-    required: False
-    default: None
   alert_policy_name:
     description:
       - The alert policy name to be associated to the server.
         This is mutually exclusive with 'alert_policy_id'
-    required: False
-    default: None
   state:
     description:
       - The state to insure that the provided resources are in.
     default: 'present'
-    required: False
     choices: ['present', 'absent']
   wait:
     description:
       - Whether to wait for the provisioning tasks to finish before returning.
-    default: True
-    required: False
-    choices: [ True, False]
+    type: bool
+    default: 'yes'
 requirements:
     - python = 2.7
     - requests >= 2.5.0
@@ -320,11 +306,14 @@ __version__ = '${version}'
 
 import json
 import os
+import traceback
 from distutils.version import LooseVersion
 
+REQUESTS_IMP_ERR = None
 try:
     import requests
 except ImportError:
+    REQUESTS_IMP_ERR = traceback.format_exc()
     REQUESTS_FOUND = False
 else:
     REQUESTS_FOUND = True
@@ -333,17 +322,19 @@ else:
 #  Requires the clc-python-sdk.
 #  sudo pip install clc-sdk
 #
+CLC_IMP_ERR = None
 try:
     import clc as clc_sdk
     from clc import CLCException
     from clc import APIFailedResponse
 except ImportError:
+    CLC_IMP_ERR = traceback.format_exc()
     CLC_FOUND = False
     clc_sdk = None
 else:
     CLC_FOUND = True
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 
 class ClcModifyServer:
@@ -357,11 +348,9 @@ class ClcModifyServer:
         self.module = module
 
         if not CLC_FOUND:
-            self.module.fail_json(
-                msg='clc-python-sdk required for this module')
+            self.module.fail_json(msg=missing_required_lib('clc-sdk'), exception=CLC_IMP_ERR)
         if not REQUESTS_FOUND:
-            self.module.fail_json(
-                msg='requests library is required for this module')
+            self.module.fail_json(msg=missing_required_lib('requests'), exception=REQUESTS_IMP_ERR)
         if requests.__version__ and LooseVersion(
                 requests.__version__) < LooseVersion('2.5.0'):
             self.module.fail_json(

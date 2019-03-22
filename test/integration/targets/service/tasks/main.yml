@@ -2,153 +2,49 @@
   copy: src=ansible_test_service dest=/usr/sbin/ansible_test_service mode=755
   register: install_result
 
-- name: assert that the daemon script was installed
-  assert:
-    that:
-    - "install_result.dest == '/usr/sbin/ansible_test_service'"
-    - "install_result.state == 'file'"
-    - "install_result.mode == '0755'"
+- block:
+    - name: assert that the daemon script was installed
+      assert:
+        that:
+          - "install_result.dest == '/usr/sbin/ansible_test_service'"
+          - "install_result.state == 'file'"
+          - "install_result.mode == '0755'"
 
-# determine init system is in use
-- name: detect sysv init system
-  set_fact: service_type=sysv
-  when: ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux'] and (ansible_distribution_version|version_compare('6', '>=') and ansible_distribution_version|version_compare('7', '<'))
-- name: detect systemd init system
-  set_fact: service_type=systemd
-  when: (ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux'] and (ansible_distribution_version|version_compare('7', '>=') and ansible_distribution_version|version_compare('8', '<'))) or ansible_distribution == 'Fedora' or (ansible_distribution == 'Ubuntu' and ansible_distribution_version|version_compare('15.04', '>=')) or (ansible_distribution == 'Debian' and ansible_distribution_version|version_compare('8', '>=')) or ansible_os_family == 'Suse'
-- name: detect upstart init system
-  set_fact: service_type=upstart
-  when: ansible_distribution == 'Ubuntu' and ansible_distribution_version|version_compare('15.04', '<')
+    # determine init system is in use
+    - name: detect sysv init system
+      set_fact:
+        service_type: sysv
+      when:
+        - ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux']
+        - ansible_distribution_version is version('6', '>=')
+        - ansible_distribution_version is version('7', '<')
+    - name: detect systemd init system
+      set_fact:
+        service_type: systemd
+      when: (ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux'] and ansible_distribution_major_version is version('7', '>=')) or ansible_distribution == 'Fedora' or (ansible_distribution == 'Ubuntu' and ansible_distribution_version is version('15.04', '>=')) or (ansible_distribution == 'Debian' and ansible_distribution_version is version('8', '>=')) or ansible_os_family == 'Suse'
+    - name: detect upstart init system
+      set_fact:
+        service_type: upstart
+      when:
+        - ansible_distribution == 'Ubuntu'
+        - ansible_distribution_version is version('15.04', '<')
 
-# setup test service script
-- include: 'sysv_setup.yml'
-  when: service_type == "sysv"
-- include: 'systemd_setup.yml'
-  when: service_type == "systemd"
-- include: 'upstart_setup.yml'
-  when: service_type == "upstart"
+    - name: display value of ansible_service_mgr
+      debug:
+        msg: 'ansible_service_mgr: {{ ansible_service_mgr }}'
 
-- name: disable the ansible test service
-  service: name=ansible_test enabled=no
+    - name: setup test service script
+      include_tasks: '{{ service_type }}_setup.yml'
 
-- name: (check mode run) enable the ansible test service
-  service: name=ansible_test enabled=yes
-  register: enable_in_check_mode_result
-  check_mode: yes
+    - name: execute tests
+      import_tasks: tests.yml
 
-- name: assert that changes reported for check mode run
-  assert:
-    that:
-    - "enable_in_check_mode_result.changed == true"
+  always:
+    - name: disable and stop ansible test service
+      service:
+        name: ansible_test
+        state: stopped
+        enabled: false
 
-- name: enable the ansible test service
-  service: name=ansible_test enabled=yes
-  register: enable_result
-
-- name: assert that the service was enabled and changes reported
-  assert:
-    that:
-    - "enable_result.enabled == true"
-    - "enable_result.changed == true"
-
-- name: start the ansible test service
-  service: name=ansible_test state=started
-  register: start_result
-
-- name: assert that the service was started
-  assert:
-    that:
-    - "start_result.state == 'started'"
-
-- name: find the service with a pattern
-  service: name=ansible_test pattern="ansible_test_ser*" state=started
-  register: start2_result
-  # don't enable this check yet on systems with systemd because of https://github.com/ansible/ansible/issues/16694
-  when: service_type != "systemd"
-
-- name: assert that the service was started via the pattern
-  assert:
-    that:
-    - "start2_result.name == 'ansible_test'"
-    - "start2_result.state == 'started'"
-  when: service_type != "systemd"
-
-- name: restart the ansible test service
-  service: name=ansible_test state=restarted
-  register: restart_result
-
-- name: assert that the service was restarted
-  assert:
-    that:
-    - "restart_result.state == 'started'"
-
-- name: restart the ansible test service with a sleep
-  service: name=ansible_test state=restarted sleep=2
-  register: restart_sleep_result
-  # don't enable this check yet on systems with systemd because of https://github.com/ansible/ansible/issues/16694
-  when: service_type != "systemd"
-
-- name: assert that the service was restarted with a sleep
-  assert:
-    that:
-    - "restart_sleep_result.state == 'started'"
-  when: service_type != "systemd"
-
-- name: reload the ansible test service
-  service: name=ansible_test state=reloaded
-  register: reload_result
-  # don't do this on systems with systemd because it triggers error:
-  #   Unable to reload service ansible_test: ansible_test.service is not active, cannot reload.
-  when: service_type != "systemd"
-
-- name: assert that the service was reloaded
-  assert:
-    that:
-    - "reload_result.state == 'started'"
-  when: service_type != "systemd"
-
-- name: stop the ansible test service
-  service: name=ansible_test state=stopped
-  register: stop_result
-
-- name: assert that the service was stopped
-  assert:
-    that:
-    - "stop_result.state == 'stopped'"
-
-- name: disable the ansible test service
-  service: name=ansible_test enabled=no
-  register: disable_result
-
-- name: assert that the service was disabled
-  assert:
-    that:
-    - "disable_result.enabled == false"
-
-- name: try to enable a broken service
-  service: name=ansible_broken_test enabled=yes
-  register: broken_enable_result
-  ignore_errors: True
-
-- name: assert that the broken test failed
-  assert:
-    that:
-    - "broken_enable_result|failed"
-
-- name: remove the test daemon script
-  file: path=/usr/sbin/ansible_test_service state=absent
-  register: remove_result
-
-- name: assert that the test daemon script was removed
-  assert:
-    that:
-    - "remove_result.path == '/usr/sbin/ansible_test_service'"
-    - "remove_result.state == 'absent'"
-
-# cleaning up changes made by this playbook
-- include: 'sysv_cleanup.yml'
-  when: service_type == "sysv"
-- include: 'systemd_cleanup.yml'
-  when: service_type == "systemd"
-- include: 'upstart_cleanup.yml'
-  when: service_type == "upstart"
+    # cleaning up changes made by this playbook
+    - include_tasks: '{{ service_type }}_cleanup.yml'

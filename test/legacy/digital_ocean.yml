@@ -1,0 +1,9 @@
+- hosts: localhost
+  connection: local
+  gather_facts: no
+  tags:
+    - test_digital_ocean
+  vars:
+    dummy_ssh_pub_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCzTSH4WVqnK2kUgtbs2VryNUXBaox7SoXPmV4yMP4INPAndrtPTS3BRzBPrJwQSwjsT7y3kBLNIHGppxLFMoQTEL03WlMDfM1TthMT7Y5B65wOUMxdwbSn9zlblAqbbRg7XU/UgNZb+B2kBPepPRJlh1ap4CPTNrbzdKlmwqS4X3+hX/WM3Gt3S09eNxUKDBK18Fbf/yKvhXP4bGtD0cxYNKL4qoGjEZTkjiYQyC4TvfuZaUtOFpiMLPAt0V7ao2S2bKr8hAgxl9MtrJpa2q1FueAjljMSBWUhOjFgmO0SpWDcBu157vMtscmtUC2cMpQwAY2HQyMJAYs0HOa59dpUKtxBR3LwjXyZvL+RbjEbzZjp4JQSer/bB/jekrxHAIABCwdFmx6qBGNVqDdfT7o+OcEJaAvk4gKEFI24OU8k6WF4ss97VfxlvIT6Bq2p04oUsxN0qh9aSjRVfqJmhkSocf+1iGWGfa4DMFpeQAXCzUkhJS5ecYXSDmyMHGtl7OfhLnncUDHVRjhsmrCFb5kkHHVfNd601ixixydInlssUhQRRzhnJ+ciTh/x7ARDfwMendHTTHCj5sO1IvnOJdCcX4FTMKp1GLo6eaK738o9w4rWL0bs3kWJfxWg91QegwZW0r8xSJBtga7HyQafxivhwEN8knN8HuD47iBuAL+VTw==
+  roles:
+    - { role: test_digital_ocean, tags: test_digital_ocean }

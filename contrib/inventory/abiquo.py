@@ -46,10 +46,7 @@ import sys
 import time
 import ConfigParser
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
 from ansible.module_utils.urls import open_url
 
@@ -65,7 +62,7 @@ def api_get(link, config):
         result = open_url(url, headers=headers, url_username=config.get('auth', 'apiuser').replace('\n', ''),
                           url_password=config.get('auth', 'apipass').replace('\n', ''))
         return json.loads(result.read())
-    except:
+    except Exception:
         return None
 
 
@@ -102,7 +99,7 @@ def cache_available(config):
 
         try:
             existing = os.stat('/'.join([dpath, 'inventory']))
-        except:
+        except Exception:
             # cache doesn't exist or isn't accessible
             return False
 

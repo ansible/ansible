@@ -1,5 +1,8 @@
-Rebasing a Pull Request
-```````````````````````
+.. _rebase_guide:
+
+***********************
+Rebasing a pull request
+***********************
 
 You may find that your pull request (PR) is out-of-date and needs to be rebased. This can happen for several reasons:
 
@@ -8,8 +11,8 @@ You may find that your pull request (PR) is out-of-date and needs to be rebased.
 
 Rebasing the branch used to create your PR will resolve both of these issues.
 
-Configuring Your Remotes
-++++++++++++++++++++++++
+Configuring your remotes
+========================
 
 Before you can rebase your PR, you need to make sure you have the proper remotes configured.
 Assuming you cloned your fork in the usual fashion, the ``origin`` remote will point to your fork::
@@ -37,8 +40,8 @@ Checking the status of your branch should show you're up-to-date with your fork 
    Your branch is up-to-date with 'origin/YOUR_BRANCH'.
    nothing to commit, working tree clean
 
-Rebasing Your Branch
-++++++++++++++++++++
+Rebasing your branch
+====================
 
 Once you have an ``upstream`` remote configured, you can rebase the branch for your PR::
 
@@ -59,20 +62,25 @@ Once you've rebased, the status of your branch will have changed::
 Don't worry, this is normal after a rebase. You should ignore the ``git status`` instructions to use ``git pull``.
 We'll cover what to do next in the following section.
 
-Updating Your Pull Request
-++++++++++++++++++++++++++
+Updating your pull request
+==========================
 
 Now that you've rebased your branch, you need to push your changes to GitHub to update your PR.
 
 Since rebasing re-writes git history, you will need to use a force push::
 
-   $ git push --force
+   $ git push --force-with-lease
 
 Your PR on GitHub has now been updated. This will automatically trigger testing of your changes.
 You should check in on the status of your PR after tests have completed to see if further changes are required.
 
-Getting Help Rebasing
-+++++++++++++++++++++
+Getting help rebasing
+=====================
 
 For help with rebasing your PR, or other development related questions, join us on our #ansible-devel IRC chat channel
 on `freenode.net <https://freenode.net>`_.
+
+.. seealso::
+
+   :ref:`community_development_process`
+       Information on roadmaps, opening PRs, Ansibullbot, and more

@@ -28,143 +28,100 @@ short_description: Manages AAA server host configuration on HUAWEI CloudEngine s
 description:
     - Manages AAA server host configuration on HUAWEI CloudEngine switches.
 author:
-    - wangdezhuang (@CloudEngine-Ansible)
+    - wangdezhuang (@QijunPan)
 options:
     state:
         description:
             - Specify desired state of the resource.
-        required: false
         default: present
         choices: ['present', 'absent']
     local_user_name:
         description:
             - Name of a local user.
               The value is a string of 1 to 253 characters.
-        required: false
-        default: null
     local_password:
         description:
             - Login password of a user. The password can contain letters, numbers, and special characters.
               The value is a string of 1 to 255 characters.
-        required: false
-        default: null
     local_service_type:
         description:
             - The type of local user login through, such as ftp ssh snmp telnet.
-        required: false
-        default: null
     local_ftp_dir:
         description:
             - FTP user directory.
               The value is a string of 1 to 255 characters.
-        required: false
-        default: null
     local_user_level:
         description:
             - Login level of a local user.
               The value is an integer ranging from 0 to 15.
-        required: false
-        default: null
     local_user_group:
         description:
             - Name of the user group where the user belongs. The user inherits all the rights of the user group.
               The value is a string of 1 to 32 characters.
-        required: false
-        default: null
     radius_group_name:
         description:
             - RADIUS server group's name.
               The value is a string of 1 to 32 case-insensitive characters.
-        required: false
-        default: null
     radius_server_type:
         description:
             - Type of Radius Server.
-        required: false
-        default: null
         choices: ['Authentication', 'Accounting']
     radius_server_ip:
         description:
             - IPv4 address of configured server.
               The value is a string of 0 to 255 characters, in dotted decimal notation.
-        required: false
-        default: null
     radius_server_ipv6:
         description:
             - IPv6 address of configured server.
               The total length is 128 bits.
-        required: false
-        default: null
     radius_server_port:
         description:
             - Configured server port for a particular server.
               The value is an integer ranging from 1 to 65535.
-        required: false
-        default: null
     radius_server_mode:
         description:
             - Configured primary or secondary server for a particular server.
-        required: false
-        default: null
         choices: ['Secondary-server', 'Primary-server']
     radius_vpn_name:
         description:
             - Set VPN instance.
               The value is a string of 1 to 31 case-sensitive characters.
-        required: false
-        default: null
     radius_server_name:
         description:
             - Hostname of configured server.
               The value is a string of 0 to 255 case-sensitive characters.
-        required: false
-        default: null
     hwtacacs_template:
         description:
             - Name of a HWTACACS template.
               The value is a string of 1 to 32 case-insensitive characters.
-        required: false
-        default: null
     hwtacacs_server_ip:
         description:
             - Server IPv4 address. Must be a valid unicast IP address.
               The value is a string of 0 to 255 characters, in dotted decimal notation.
-        required: false
-        default: null
     hwtacacs_server_ipv6:
         description:
             - Server IPv6 address. Must be a valid unicast IP address.
               The total length is 128 bits.
-        required: false
-        default: null
     hwtacacs_server_type:
         description:
             - Hwtacacs server type.
-        required: false
-        default: null
         choices: ['Authentication', 'Authorization', 'Accounting', 'Common']
     hwtacacs_is_secondary_server:
         description:
             - Whether the server is secondary.
-        required: false
-        default: false
-        choices: ['true', 'false']
+        type: bool
+        default: 'no'
     hwtacacs_vpn_name:
         description:
             - VPN instance name.
-        required: false
-        default: null
     hwtacacs_is_public_net:
         description:
             - Set the public-net.
-        required: false
-        default: false
-        choices: ['true', 'false']
+        type: bool
+        default: 'no'
     hwtacacs_server_host_name:
         description:
             - Hwtacacs server host name.
-        required: false
-        default: null
 '''
 
 EXAMPLES = '''
@@ -201,7 +158,7 @@ EXAMPLES = '''
     ce_aaa_server_host:
       state: present
       radius_group_name: group1
-      raduis_server_type: Authentication
+      radius_server_type: Authentication
       radius_server_ip: 10.1.10.1
       radius_server_port: 2000
       radius_server_mode: Primary-server
@@ -212,7 +169,7 @@ EXAMPLES = '''
     ce_aaa_server_host:
       state: absent
       radius_group_name: group1
-      raduis_server_type: Authentication
+      radius_server_type: Authentication
       radius_server_ip: 10.1.10.1
       radius_server_port: 2000
       radius_server_mode: Primary-server
@@ -242,7 +199,7 @@ RETURN = '''
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 proposed:
     description: k/v pairs of parameters passed into module
@@ -284,7 +241,7 @@ updates:
 
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_nc_config, set_nc_config, ce_argument_spec, check_ip_addr
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec, check_ip_addr
 
 SUCCESS = """success"""
 FAILED = """failed"""
@@ -1059,7 +1016,7 @@ class AaaServerHost(object):
 
         module = kwargs["module"]
         radius_group_name = module.params['radius_group_name']
-        raduis_server_type = module.params['raduis_server_type']
+        radius_server_type = module.params['radius_server_type']
         radius_server_ip = module.params['radius_server_ip']
         radius_server_port = module.params['radius_server_port']
         radius_server_mode = module.params['radius_server_mode']
@@ -1099,10 +1056,10 @@ class AaaServerHost(object):
                 for tmp in result["radius_server_ip_v4"]:
                     if "serverType" in tmp.keys():
                         if state == "present":
-                            if tmp["serverType"] != raduis_server_type:
+                            if tmp["serverType"] != radius_server_type:
                                 need_cfg = True
                         else:
-                            if tmp["serverType"] == raduis_server_type:
+                            if tmp["serverType"] == radius_server_type:
                                 need_cfg = True
                     if "serverIPAddress" in tmp.keys():
                         if state == "present":
@@ -1141,14 +1098,14 @@ class AaaServerHost(object):
 
         module = kwargs["module"]
         radius_group_name = module.params['radius_group_name']
-        raduis_server_type = module.params['raduis_server_type']
+        radius_server_type = module.params['radius_server_type']
         radius_server_ip = module.params['radius_server_ip']
         radius_server_port = module.params['radius_server_port']
         radius_server_mode = module.params['radius_server_mode']
         radius_vpn_name = module.params['radius_vpn_name']
 
         conf_str = CE_MERGE_RADIUS_SERVER_CFG_IPV4 % (
-            radius_group_name, raduis_server_type,
+            radius_group_name, radius_server_type,
             radius_server_ip, radius_server_port,
             radius_server_mode, radius_vpn_name)
 
@@ -1163,7 +1120,7 @@ class AaaServerHost(object):
         cmd = "radius server group %s" % radius_group_name
         cmds.append(cmd)
 
-        if raduis_server_type == "Authentication":
+        if radius_server_type == "Authentication":
             cmd = "radius server authentication %s %s" % (
                 radius_server_ip, radius_server_port)
 
@@ -1190,14 +1147,14 @@ class AaaServerHost(object):
 
         module = kwargs["module"]
         radius_group_name = module.params['radius_group_name']
-        raduis_server_type = module.params['raduis_server_type']
+        radius_server_type = module.params['radius_server_type']
         radius_server_ip = module.params['radius_server_ip']
         radius_server_port = module.params['radius_server_port']
         radius_server_mode = module.params['radius_server_mode']
         radius_vpn_name = module.params['radius_vpn_name']
 
         conf_str = CE_DELETE_RADIUS_SERVER_CFG_IPV4 % (
-            radius_group_name, raduis_server_type,
+            radius_group_name, radius_server_type,
             radius_server_ip, radius_server_port,
             radius_server_mode, radius_vpn_name)
 
@@ -1212,7 +1169,7 @@ class AaaServerHost(object):
         cmd = "radius server group %s" % radius_group_name
         cmds.append(cmd)
 
-        if raduis_server_type == "Authentication":
+        if radius_server_type == "Authentication":
             cmd = "undo radius server authentication %s %s" % (
                 radius_server_ip, radius_server_port)
 
@@ -1239,7 +1196,7 @@ class AaaServerHost(object):
 
         module = kwargs["module"]
         radius_group_name = module.params['radius_group_name']
-        raduis_server_type = module.params['raduis_server_type']
+        radius_server_type = module.params['radius_server_type']
         radius_server_ipv6 = module.params['radius_server_ipv6']
         radius_server_port = module.params['radius_server_port']
         radius_server_mode = module.params['radius_server_mode']
@@ -1278,10 +1235,10 @@ class AaaServerHost(object):
                 for tmp in result["radius_server_ip_v6"]:
                     if "serverType" in tmp.keys():
                         if state == "present":
-                            if tmp["serverType"] != raduis_server_type:
+                            if tmp["serverType"] != radius_server_type:
                                 need_cfg = True
                         else:
-                            if tmp["serverType"] == raduis_server_type:
+                            if tmp["serverType"] == radius_server_type:
                                 need_cfg = True
                     if "serverIPAddress" in tmp.keys():
                         if state == "present":
@@ -1313,13 +1270,13 @@ class AaaServerHost(object):
 
         module = kwargs["module"]
         radius_group_name = module.params['radius_group_name']
-        raduis_server_type = module.params['raduis_server_type']
+        radius_server_type = module.params['radius_server_type']
         radius_server_ipv6 = module.params['radius_server_ipv6']
         radius_server_port = module.params['radius_server_port']
         radius_server_mode = module.params['radius_server_mode']
 
         conf_str = CE_MERGE_RADIUS_SERVER_CFG_IPV6 % (
-            radius_group_name, raduis_server_type,
+            radius_group_name, radius_server_type,
             radius_server_ipv6, radius_server_port,
             radius_server_mode)
 
@@ -1334,7 +1291,7 @@ class AaaServerHost(object):
         cmd = "radius server group %s" % radius_group_name
         cmds.append(cmd)
 
-        if raduis_server_type == "Authentication":
+        if radius_server_type == "Authentication":
             cmd = "radius server authentication %s %s" % (
                 radius_server_ipv6, radius_server_port)
 
@@ -1355,13 +1312,13 @@ class AaaServerHost(object):
 
         module = kwargs["module"]
         radius_group_name = module.params['radius_group_name']
-        raduis_server_type = module.params['raduis_server_type']
+        radius_server_type = module.params['radius_server_type']
         radius_server_ipv6 = module.params['radius_server_ipv6']
         radius_server_port = module.params['radius_server_port']
         radius_server_mode = module.params['radius_server_mode']
 
         conf_str = CE_DELETE_RADIUS_SERVER_CFG_IPV6 % (
-            radius_group_name, raduis_server_type,
+            radius_group_name, radius_server_type,
             radius_server_ipv6, radius_server_port,
             radius_server_mode)
 
@@ -1376,7 +1333,7 @@ class AaaServerHost(object):
         cmd = "radius server group %s" % radius_group_name
         cmds.append(cmd)
 
-        if raduis_server_type == "Authentication":
+        if radius_server_type == "Authentication":
             cmd = "undo radius server authentication %s %s" % (
                 radius_server_ipv6, radius_server_port)
 
@@ -1397,7 +1354,7 @@ class AaaServerHost(object):
 
         module = kwargs["module"]
         radius_group_name = module.params['radius_group_name']
-        raduis_server_type = module.params['raduis_server_type']
+        radius_server_type = module.params['radius_server_type']
         radius_server_name = module.params['radius_server_name']
         radius_server_port = module.params['radius_server_port']
         radius_server_mode = module.params['radius_server_mode']
@@ -1437,10 +1394,10 @@ class AaaServerHost(object):
                 for tmp in result["radius_server_name_cfg"]:
                     if "serverType" in tmp.keys():
                         if state == "present":
-                            if tmp["serverType"] != raduis_server_type:
+                            if tmp["serverType"] != radius_server_type:
                                 need_cfg = True
                         else:
-                            if tmp["serverType"] == raduis_server_type:
+                            if tmp["serverType"] == radius_server_type:
                                 need_cfg = True
                     if "serverName" in tmp.keys():
                         if state == "present":
@@ -1479,14 +1436,14 @@ class AaaServerHost(object):
 
         module = kwargs["module"]
         radius_group_name = module.params['radius_group_name']
-        raduis_server_type = module.params['raduis_server_type']
+        radius_server_type = module.params['radius_server_type']
         radius_server_name = module.params['radius_server_name']
         radius_server_port = module.params['radius_server_port']
         radius_server_mode = module.params['radius_server_mode']
         radius_vpn_name = module.params['radius_vpn_name']
 
         conf_str = CE_MERGE_RADIUS_SERVER_NAME % (
-            radius_group_name, raduis_server_type,
+            radius_group_name, radius_server_type,
             radius_server_name, radius_server_port,
             radius_server_mode, radius_vpn_name)
 
@@ -1500,7 +1457,7 @@ class AaaServerHost(object):
         cmd = "radius server group %s" % radius_group_name
         cmds.append(cmd)
 
-        if raduis_server_type == "Authentication":
+        if radius_server_type == "Authentication":
             cmd = "radius server authentication hostname %s %s" % (
                 radius_server_name, radius_server_port)
 
@@ -1527,14 +1484,14 @@ class AaaServerHost(object):
 
         module = kwargs["module"]
         radius_group_name = module.params['radius_group_name']
-        raduis_server_type = module.params['raduis_server_type']
+        radius_server_type = module.params['radius_server_type']
         radius_server_name = module.params['radius_server_name']
         radius_server_port = module.params['radius_server_port']
         radius_server_mode = module.params['radius_server_mode']
         radius_vpn_name = module.params['radius_vpn_name']
 
         conf_str = CE_DELETE_RADIUS_SERVER_NAME % (
-            radius_group_name, raduis_server_type,
+            radius_group_name, radius_server_type,
             radius_server_name, radius_server_port,
             radius_server_mode, radius_vpn_name)
 
@@ -1548,7 +1505,7 @@ class AaaServerHost(object):
         cmd = "radius server group %s" % radius_group_name
         cmds.append(cmd)
 
-        if raduis_server_type == "Authentication":
+        if radius_server_type == "Authentication":
             cmd = "undo radius server authentication hostname %s %s" % (
                 radius_server_name, radius_server_port)
 
@@ -2319,7 +2276,7 @@ def main():
         local_user_level=dict(type='str'),
         local_user_group=dict(type='str'),
         radius_group_name=dict(type='str'),
-        raduis_server_type=dict(choices=['Authentication', 'Accounting']),
+        radius_server_type=dict(choices=['Authentication', 'Accounting']),
         radius_server_ip=dict(type='str'),
         radius_server_ipv6=dict(type='str'),
         radius_server_port=dict(type='str'),
@@ -2366,7 +2323,7 @@ def main():
 
     # radius para
     radius_group_name = module.params['radius_group_name']
-    raduis_server_type = module.params['raduis_server_type']
+    radius_server_type = module.params['radius_server_type']
     radius_server_ip = module.params['radius_server_ip']
     radius_server_ipv6 = module.params['radius_server_ipv6']
     radius_server_port = module.params['radius_server_port']
@@ -2406,8 +2363,8 @@ def main():
         proposed["local_user_group"] = local_user_group
     if radius_group_name:
         proposed["radius_group_name"] = radius_group_name
-    if raduis_server_type:
-        proposed["raduis_server_type"] = raduis_server_type
+    if radius_server_type:
+        proposed["radius_server_type"] = radius_server_type
     if radius_server_ip:
         proposed["radius_server_ip"] = radius_server_ip
     if radius_server_ipv6:
@@ -2480,9 +2437,9 @@ def main():
             module.fail_json(
                 msg='Error: Please do not input radius_server_ip and radius_server_ipv6 at the same time.')
 
-        if not raduis_server_type or not radius_server_port or not radius_server_mode or not radius_vpn_name:
+        if not radius_server_type or not radius_server_port or not radius_server_mode or not radius_vpn_name:
             module.fail_json(
-                msg='Error: Please input raduis_server_type radius_server_port radius_server_mode radius_vpn_name.')
+                msg='Error: Please input radius_server_type radius_server_port radius_server_mode radius_vpn_name.')
 
         if radius_server_ip:
             rds_server_ipv4_result = ce_aaa_server_host.get_radius_server_cfg_ipv4(

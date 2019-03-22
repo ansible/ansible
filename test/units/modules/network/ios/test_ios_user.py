@@ -21,9 +21,10 @@ __metaclass__ = type
 
 import json
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.ios import ios_user
-from .ios_module import TestIosModule, load_fixture, set_module_args
+from units.modules.utils import set_module_args
+from .ios_module import TestIosModule, load_fixture
 
 
 class TestIosUserModule(TestIosModule):
@@ -31,6 +32,8 @@ class TestIosUserModule(TestIosModule):
     module = ios_user
 
     def setUp(self):
+        super(TestIosUserModule, self).setUp()
+
         self.mock_get_config = patch('ansible.modules.network.ios.ios_user.get_config')
         self.get_config = self.mock_get_config.start()
 
@@ -38,6 +41,7 @@ class TestIosUserModule(TestIosModule):
         self.load_config = self.mock_load_config.start()
 
     def tearDown(self):
+        super(TestIosUserModule, self).tearDown()
         self.mock_get_config.stop()
         self.mock_load_config.stop()
 
@@ -53,17 +57,18 @@ class TestIosUserModule(TestIosModule):
     def test_ios_user_delete(self):
         set_module_args(dict(name='ansible', state='absent'))
         result = self.execute_module(changed=True)
-        cmd = json.loads(
-            '{"answer": "y", ' +
-            '"prompt": "This operation will remove all username related ' +
-            'configurations with same name", "command": "no username ansible"}'
-        )
+        cmds = [
+            {
+                "command": "no username ansible", "answer": "y", "newline": False,
+                "prompt": "This operation will remove all username related configurations with same name",
+            }
+        ]
 
         result_cmd = []
         for i in result['commands']:
-            result_cmd.append(json.loads(i))
+            result_cmd.append(i)
 
-        self.assertEqual(result_cmd, [cmd])
+        self.assertEqual(result_cmd, cmds)
 
     def test_ios_user_password(self):
         set_module_args(dict(name='ansible', configured_password='test'))
@@ -82,15 +87,14 @@ class TestIosUserModule(TestIosModule):
     def test_ios_user_purge(self):
         set_module_args(dict(purge=True))
         result = self.execute_module(changed=True)
-        cmd = json.loads(
-            '{"answer": "y", ' +
-            '"prompt": "This operation will remove all username related ' +
-            'configurations with same name", "command": "no username ansible"}'
-        )
+        cmd = {
+            "command": "no username ansible", "answer": "y", "newline": False,
+            "prompt": "This operation will remove all username related configurations with same name",
+        }
 
         result_cmd = []
         for i in result['commands']:
-            result_cmd.append(json.loads(i))
+            result_cmd.append(i)
 
         self.assertEqual(result_cmd, [cmd])
 
@@ -112,3 +116,28 @@ class TestIosUserModule(TestIosModule):
         set_module_args(dict(name='ansible', configured_password='test', update_password='always'))
         result = self.execute_module(changed=True)
         self.assertEqual(result['commands'], ['username ansible secret test'])
+
+    def test_ios_user_set_sshkey(self):
+        set_module_args(dict(name='ansible', sshkey='dGVzdA=='))
+        commands = [
+            'ip ssh pubkey-chain',
+            'username ansible',
+            'key-hash ssh-rsa 098F6BCD4621D373CADE4E832627B4F6',
+            'exit',
+            'exit'
+        ]
+        result = self.execute_module(changed=True, commands=commands)
+        self.assertEqual(result['commands'], commands)
+
+    def test_ios_user_set_sshkey_multiple(self):
+        set_module_args(dict(name='ansible', sshkey=['dGVzdA==', 'eHWacB2==']))
+        commands = [
+            'ip ssh pubkey-chain',
+            'username ansible',
+            'key-hash ssh-rsa 098F6BCD4621D373CADE4E832627B4F6',
+            'key-hash ssh-rsa A019918340A1E9183388D9A675603036',
+            'exit',
+            'exit'
+        ]
+        result = self.execute_module(changed=True, commands=commands)
+        self.assertEqual(result['commands'], commands)

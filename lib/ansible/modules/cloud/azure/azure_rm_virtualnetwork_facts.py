@@ -11,7 +11,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -29,37 +29,31 @@ options:
     name:
         description:
             - Only show results for a specific security group.
-        default: null
-        required: false
     resource_group:
         description:
             - Limit results by resource group. Required when filtering by name.
-        default: null
-        required: false
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
-        default: null
-        required: false
 
 extends_documentation_fragment:
     - azure
 
 author:
-    - "Chris Houseknecht house@redhat.com"
-    - "Matt Davis mdavis@redhat.com"
+    - "Chris Houseknecht (@chouseknecht) <house@redhat.com>"
+    - "Matt Davis (@nitzmahone) <mdavis@redhat.com>"
 
 '''
 
 EXAMPLES = '''
     - name: Get facts for one virtual network
       azure_rm_virtualnetwork_facts:
-        resource_group: Testing
+        resource_group: myResourceGroup
         name: secgroup001
 
     - name: Get facts for all virtual networks
       azure_rm_virtualnetwork_facts:
-        resource_group: Testing
+        resource_group: myResourceGroup
 
     - name: Get facts by tags
       azure_rm_virtualnetwork_facts:
@@ -73,7 +67,7 @@ azure_virtualnetworks:
     type: list
     example: [{
         "etag": 'W/"532ba1be-ae71-40f2-9232-3b1d9cf5e37e"',
-        "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/virtualNetworks/vnet2001",
+        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/virtualNetworks/vnet2001",
         "location": "eastus2",
         "name": "vnet2001",
         "properties": {
@@ -88,11 +82,84 @@ azure_virtualnetworks:
         },
         "type": "Microsoft.Network/virtualNetworks"
     }]
+virtualnetworks:
+    description: List of virtual network dicts with same format as azure_rm_virtualnetwork module parameters.
+    returned: always
+    type: list
+    contains:
+            id:
+                description:
+                    - Resource ID.
+                sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/vnet2001
+                type: str
+            address_prefixes:
+                description:
+                    - List of IPv4 address ranges where each is formatted using CIDR notation.
+                sample: ["10.10.0.0/16"]
+                type: list
+            dns_servers:
+                description:
+                    - Custom list of DNS servers.
+                type: list
+                sample: ["www.azure.com"]
+            location:
+                description:
+                    - Valid azure location.
+                type: str
+                sample: eastus
+            tags:
+                description:
+                    - Tags assigned to the resource. Dictionary of string:string pairs.
+                type: dict
+                sample: { "tag1": "abc" }
+            provisioning_state:
+                description:
+                    - Provisioning state of the resource.
+                sample: Successed
+                type: str
+            name:
+                description:
+                    - name of the virtual network.
+                type: str
+                sample: foo
+            subnets:
+                description:
+                    - Subnets associate to this virtual network.
+                type: list
+                contains:
+                    id:
+                        description:
+                            - Resource ID.
+                        type: str
+                    name:
+                        description:
+                            - Resource Name.
+                        type: str
+                    provisioning_state:
+                        description:
+                            - provision state of the Resource.
+                        type: str
+                        sample: Successed
+                    address_prefix:
+                        description:
+                            - The address prefix for the subnet.
+                    network_security_group:
+                        description:
+                            - Existing security group id with which to associate the subnet.
+                        type: str
+                    route_table:
+                        description:
+                            - The reference of the RouteTable resource.
+                        type: str
+                    service_endpoints:
+                        description:
+                            - An array of service endpoints.
+                        type: list
 '''
 
 try:
     from msrestazure.azure_exceptions import CloudError
-except:
+except Exception:
     # This is handled in azure_rm_common
     pass
 
@@ -114,7 +181,8 @@ class AzureRMNetworkInterfaceFacts(AzureRMModuleBase):
 
         self.results = dict(
             changed=False,
-            ansible_facts=dict(azure_virtualnetworks=[])
+            ansible_facts=dict(azure_virtualnetworks=[]),
+            virtualnetworks=[]
         )
 
         self.name = None
@@ -131,9 +199,14 @@ class AzureRMNetworkInterfaceFacts(AzureRMModuleBase):
             setattr(self, key, kwargs[key])
 
         if self.name is not None:
-            self.results['ansible_facts']['azure_virtualnetworks'] = self.get_item()
+            results = self.get_item()
+        elif self.resource_group is not None:
+            results = self.list_resource_group()
         else:
-            self.results['ansible_facts']['azure_virtualnetworks'] = self.list_items()
+            results = self.list_items()
+
+        self.results['ansible_facts']['azure_virtualnetworks'] = self.serialize(results)
+        self.results['virtualnetworks'] = self.curated(results)
 
         return self.results
 
@@ -148,8 +221,7 @@ class AzureRMNetworkInterfaceFacts(AzureRMModuleBase):
             pass
 
         if item and self.has_tags(item.tags, self.tags):
-            results = [self.serialize_obj(item, AZURE_OBJECT_CLASS)]
-
+            results = [item]
         return results
 
     def list_resource_group(self):
@@ -162,7 +234,7 @@ class AzureRMNetworkInterfaceFacts(AzureRMModuleBase):
         results = []
         for item in response:
             if self.has_tags(item.tags, self.tags):
-                results.append(self.serialize_obj(item, AZURE_OBJECT_CLASS))
+                results.append(item)
         return results
 
     def list_items(self):
@@ -175,11 +247,54 @@ class AzureRMNetworkInterfaceFacts(AzureRMModuleBase):
         results = []
         for item in response:
             if self.has_tags(item.tags, self.tags):
-                results.append(self.serialize_obj(item, AZURE_OBJECT_CLASS))
+                results.append(item)
         return results
+
+    def serialize(self, raws):
+        self.log("Serialize all items")
+        return [self.serialize_obj(item, AZURE_OBJECT_CLASS) for item in raws] if raws else []
+
+    def curated(self, raws):
+        self.log("Format all items")
+        return [self.virtualnetwork_to_dict(x) for x in raws] if raws else []
+
+    def virtualnetwork_to_dict(self, vnet):
+        results = dict(
+            id=vnet.id,
+            name=vnet.name,
+            location=vnet.location,
+            tags=vnet.tags,
+            provisioning_state=vnet.provisioning_state
+        )
+        if vnet.dhcp_options and len(vnet.dhcp_options.dns_servers) > 0:
+            results['dns_servers'] = []
+            for server in vnet.dhcp_options.dns_servers:
+                results['dns_servers'].append(server)
+        if vnet.address_space and len(vnet.address_space.address_prefixes) > 0:
+            results['address_prefixes'] = []
+            for space in vnet.address_space.address_prefixes:
+                results['address_prefixes'].append(space)
+        if vnet.subnets and len(vnet.subnets) > 0:
+            results['subnets'] = [self.subnet_to_dict(x) for x in vnet.subnets]
+        return results
+
+    def subnet_to_dict(self, subnet):
+        result = dict(
+            id=subnet.id,
+            name=subnet.name,
+            provisioning_state=subnet.provisioning_state,
+            address_prefix=subnet.address_prefix,
+            network_security_group=subnet.network_security_group.id if subnet.network_security_group else None,
+            route_table=subnet.route_table.id if subnet.route_table else None
+        )
+        if subnet.service_endpoints:
+            result['service_endpoints'] = [{'service': item.service, 'locations': item.locations} for item in subnet.service_endpoints]
+        return result
+
 
 def main():
     AzureRMNetworkInterfaceFacts()
+
 
 if __name__ == '__main__':
     main()

@@ -1,0 +1,64 @@
+---
+- name: ensure test dir is present
+  win_file:
+    path: '{{ test_credential_dir }}'
+    state: directory
+
+- name: copy the pfx certificate
+  win_copy:
+    src: cert.pfx
+    dest: '{{ test_credential_dir }}\cert.pfx'
+
+- name: import the pfx into the personal store
+  win_certificate_store:
+    path: '{{ test_credential_dir }}\cert.pfx'
+    state: present
+    store_location: CurrentUser
+    store_name: My
+    password: '{{ key_password }}'
+  vars: &become_vars
+    ansible_become: True
+    ansible_become_method: runas
+    ansible_become_user: '{{ ansible_user }}'
+    ansible_become_pass: '{{ ansible_password }}'
+
+- name: ensure test credentials are removed before testing
+  win_credential:
+    name: '{{ test_hostname }}'
+    type: '{{ item }}'
+    state: absent
+  vars: *become_vars
+  with_items:
+  - domain_password
+  - domain_certificate
+  - generic_password
+  - generic_certificate
+
+- block:
+  - name: run tests
+    include_tasks: tests.yml
+
+  always:
+  - name: remove the pfx from the personal store
+    win_certificate_store:
+      state: absent
+      thumbprint: '{{ cert_thumbprint }}'
+      store_location: CurrentUser
+      store_name: My
+
+  - name: remove test credentials
+    win_credential:
+      name: '{{ test_hostname }}'
+      type: '{{ item }}'
+      state: absent
+    vars: *become_vars
+    with_items:
+    - domain_password
+    - domain_certificate
+    - generic_password
+    - generic_certificate
+
+  - name: remove test dir
+    win_file:
+      path: '{{ test_credential_dir }}'
+      state: absent

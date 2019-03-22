@@ -5,13 +5,12 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-__metaclass__ = type
 
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -21,8 +20,9 @@ author:
     - "Sebastien Rohaut (@usawa)"
 short_description: Modify Linux PAM limits
 description:
-     - The C(pam_limits) module modify PAM limits, default in /etc/security/limits.conf.
-       For the full documentation, see man limits.conf(5).
+     - The C(pam_limits) module modifies PAM limits. The default file is
+       C(/etc/security/limits.conf). For the full documentation, see C(man 5
+       limits.conf).
 options:
   domain:
     description:
@@ -30,7 +30,7 @@ options:
     required: true
   limit_type:
     description:
-      - Limit type, see C(man limits) for an explanation
+      - Limit type, see C(man 5 limits.conf) for an explanation
     required: true
     choices: [ "hard", "soft", "-" ]
   limit_item:
@@ -66,7 +66,7 @@ options:
       - Create a backup file including the timestamp information so you can get
         the original file back if you somehow clobbered it incorrectly.
     required: false
-    choices: [ "yes", "no" ]
+    type: bool
     default: "no"
   use_min:
     description:
@@ -74,7 +74,7 @@ options:
         If the specified value is inferior to the value in the file, file content is replaced with the new value,
         else content is not modified.
     required: false
-    choices: [ "yes", "no" ]
+    type: bool
     default: "no"
   use_max:
     description:
@@ -82,7 +82,7 @@ options:
         If the specified value is superior to the value in the file, file content is replaced with the new value,
         else content is not modified.
     required: false
-    choices: [ "yes", "no" ]
+    type: bool
     default: "no"
   dest:
     description:
@@ -95,32 +95,39 @@ options:
     required: false
     default: ''
 notes:
-  - If dest file doesn't exists, it is created.
+  - If C(dest) file doesn't exist, it is created.
 '''
 
 EXAMPLES = '''
-# Add or modify nofile soft limit for the user joe
-- pam_limits:
+- name: Add or modify nofile soft limit for the user joe
+  pam_limits:
     domain: joe
     limit_type: soft
     limit_item: nofile
     value: 64000
 
-# Add or modify fsize hard limit for the user smith. Keep or set the maximal value.
-- pam_limits:
+- name: Add or modify fsize hard limit for the user smith. Keep or set the maximal value.
+  pam_limits:
     domain: smith
     limit_type: hard
     limit_item: fsize
     value: 1000000
     use_max: yes
 
-# Add or modify memlock, both soft and hard, limit for the user james with a comment.
-- pam_limits:
+- name: Add or modify memlock, both soft and hard, limit for the user james with a comment.
+  pam_limits:
     domain: james
     limit_type: '-'
     limit_item: memlock
     value: unlimited
     comment: unlimited memory lock for james
+
+- name: Add or modify hard nofile limits for wildcard domain
+  pam_limits:
+    domain: '*'
+    limit_type: hard
+    limit_item: nofile
+    value: 39693561
 '''
 
 import os
@@ -133,38 +140,37 @@ from ansible.module_utils._text import to_native
 
 
 def main():
-
     pam_items = ['core', 'data', 'fsize', 'memlock', 'nofile', 'rss', 'stack', 'cpu', 'nproc', 'as', 'maxlogins', 'maxsyslogins', 'priority', 'locks',
                  'sigpending', 'msgqueue', 'nice', 'rtprio', 'chroot']
 
-    pam_types = [ 'soft', 'hard', '-' ]
+    pam_types = ['soft', 'hard', '-']
 
     limits_conf = '/etc/security/limits.conf'
 
     module = AnsibleModule(
         # not checking because of daisy chain to file module
-        argument_spec = dict(
-            domain            = dict(required=True, type='str'),
-            limit_type        = dict(required=True, type='str', choices=pam_types),
-            limit_item        = dict(required=True, type='str', choices=pam_items),
-            value             = dict(required=True, type='str'),
-            use_max           = dict(default=False, type='bool'),
-            use_min           = dict(default=False, type='bool'),
-            backup            = dict(default=False, type='bool'),
-            dest              = dict(default=limits_conf, type='str'),
-            comment           = dict(required=False, default='', type='str')
+        argument_spec=dict(
+            domain=dict(required=True, type='str'),
+            limit_type=dict(required=True, type='str', choices=pam_types),
+            limit_item=dict(required=True, type='str', choices=pam_items),
+            value=dict(required=True, type='str'),
+            use_max=dict(default=False, type='bool'),
+            use_min=dict(default=False, type='bool'),
+            backup=dict(default=False, type='bool'),
+            dest=dict(default=limits_conf, type='str'),
+            comment=dict(required=False, default='', type='str')
         )
     )
 
-    domain      =       module.params['domain']
-    limit_type  =       module.params['limit_type']
-    limit_item  =       module.params['limit_item']
-    value       =       module.params['value']
-    use_max     =       module.params['use_max']
-    use_min     =       module.params['use_min']
-    backup      =       module.params['backup']
-    limits_conf =       module.params['dest']
-    new_comment =       module.params['comment']
+    domain = module.params['domain']
+    limit_type = module.params['limit_type']
+    limit_item = module.params['limit_item']
+    value = module.params['value']
+    use_max = module.params['use_max']
+    use_min = module.params['use_min']
+    backup = module.params['backup']
+    limits_conf = module.params['dest']
+    new_comment = module.params['comment']
 
     changed = False
 
@@ -192,7 +198,7 @@ def main():
     space_pattern = re.compile(r'\s+')
 
     message = ''
-    f = open (limits_conf, 'rb')
+    f = open(limits_conf, 'rb')
     # Tempfile
     nf = tempfile.NamedTemporaryFile(mode='w+')
 
@@ -211,10 +217,10 @@ def main():
             continue
 
         # Remove comment in line
-        newline = newline.split('#',1)[0]
+        newline = newline.split('#', 1)[0]
         try:
-            old_comment = line.split('#',1)[1]
-        except:
+            old_comment = line.split('#', 1)[1]
+        except Exception:
             old_comment = ''
 
         newline = newline.rstrip()
@@ -228,10 +234,10 @@ def main():
             nf.write(line)
             continue
 
-        line_domain     = line_fields[0]
-        line_type       = line_fields[1]
-        line_item       = line_fields[2]
-        actual_value    = line_fields[3]
+        line_domain = line_fields[0]
+        line_type = line_fields[1]
+        line_item = line_fields[2]
+        actual_value = line_fields[3]
 
         if not (actual_value in ['unlimited', 'infinity', '-1'] or actual_value.isdigit()):
             module.fail_json(msg="Invalid configuration of '%s'. Current value of %s is unsupported." % (limits_conf, line_item))
@@ -280,7 +286,7 @@ def main():
     if not found:
         changed = True
         if new_comment:
-            new_comment = "\t#"+new_comment
+            new_comment = "\t#" + new_comment
         new_limit = domain + "\t" + limit_type + "\t" + limit_item + "\t" + new_value + new_comment + "\n"
         message = new_limit
         nf.write(new_limit)
@@ -293,11 +299,11 @@ def main():
 
     try:
         nf.close()
-    except:
+    except Exception:
         pass
 
     res_args = dict(
-        changed = changed, msg = message
+        changed=changed, msg=message
     )
 
     if backup:

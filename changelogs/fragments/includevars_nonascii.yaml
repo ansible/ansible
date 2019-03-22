@@ -1,0 +1,2 @@
+bugfixes:
+- include_vars - error handlers now generate proper error messages with non-ASCII args

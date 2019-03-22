@@ -1,10 +1,10 @@
 #!powershell
-# Copyright (c) 2017 Artem Zinenko <zinenkoartem@gmail.com>
-# Copyright (c) 2014 Timothy Vandenbrande <timothy.vandenbrande@gmail.com>
+
+# Copyright: (c) 2014, Timothy Vandenbrande <timothy.vandenbrande@gmail.com>
+# Copyright: (c) 2017, Artem Zinenko <zinenkoartem@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# WANT_JSON
-# POWERSHELL_COMMON
+#Requires -Module Ansible.ModuleUtils.Legacy
 
 function Parse-ProtocolType {
     param($protocol)
@@ -48,9 +48,9 @@ function Parse-Action {
 # Profile enum values: https://msdn.microsoft.com/en-us/library/windows/desktop/aa366303(v=vs.85).aspx
 function Parse-Profiles
 {
-    param($profilesStr)
+    param($profilesList)
 
-    $profiles = ($profilesStr.Split(',') | Select -uniq | ForEach {
+    $profiles = ($profilesList | Select -uniq | ForEach {
         switch ($_) {
             "domain" { return 1 }
             "private" { return 2 }
@@ -65,9 +65,9 @@ function Parse-Profiles
 
 function Parse-InterfaceTypes
 {
-    param($interfaceTypesStr)
+    param($interfaceTypes)
 
-    return ($interfaceTypesStr.Split(',') | Select -uniq | ForEach {
+    return ($interfaceTypes | Select -uniq | ForEach {
         switch ($_) {
             "wireless" { return "Wireless" }
             "lan" { return "Lan" }
@@ -117,8 +117,8 @@ function New-FWRule
         [string]$direction,
         [string]$action,
         [bool]$enabled,
-        [string]$profiles,
-        [string]$interfaceTypes,
+        [string[]]$profiles,
+        [string[]]$interfaceTypes,
         [string]$edgeTraversalOptions,
         [string]$secureFlags
     )
@@ -137,8 +137,9 @@ function New-FWRule
     if ($remoteAddresses -and $remoteAddresses -ne "any") { $rule.RemoteAddresses = $remoteAddresses }
     if ($direction) { $rule.Direction = Parse-Direction -directionStr $direction }
     if ($action) { $rule.Action = Parse-Action -actionStr $action }
-    if ($profiles) { $rule.Profiles = Parse-Profiles -profilesStr $profiles }
-    if ($interfaceTypes -and $interfaceTypes -ne "any") { $rule.InterfaceTypes = Parse-InterfaceTypes -interfaceTypesStr $interfaceTypes }
+    # Profiles value cannot be a uint32, but the "all profiles" value (0x7FFFFFFF) will often become a uint32, so must cast to [int]
+    if ($profiles) { $rule.Profiles = [int](Parse-Profiles -profilesList $profiles) }
+    if ($interfaceTypes -and @(Compare-Object $interfaceTypes @("any")).Count -ne 0) { $rule.InterfaceTypes = Parse-InterfaceTypes -interfaceTypes $interfaceTypes }
     if ($edgeTraversalOptions -and $edgeTraversalOptions -ne "no") {
         # EdgeTraversalOptions property exists only from Windows 7/Windows Server 2008 R2: https://msdn.microsoft.com/en-us/library/windows/desktop/dd607256(v=vs.85).aspx
         if ($rule | Get-Member -Name 'EdgeTraversalOptions') {
@@ -168,22 +169,26 @@ $diff_support = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool"
 $name = Get-AnsibleParam -obj $params -name "name" -failifempty $true
 $description = Get-AnsibleParam -obj $params -name "description" -type "str"
 $direction = Get-AnsibleParam -obj $params -name "direction" -type "str" -failifempty $true -validateset "in","out"
-$action = Get-AnsibleParam -obj $params -name "action" -type "str" -failifempty $true -validateset "allow","block","bypass"
+$action = Get-AnsibleParam -obj $params -name "action" -type "str" -failifempty $true -validateset "allow","block"
 $program = Get-AnsibleParam -obj $params -name "program" -type "str"
 $service = Get-AnsibleParam -obj $params -name "service" -type "str"
 $enabled = Get-AnsibleParam -obj $params -name "enabled" -type "bool" -default $true -aliases "enable"
-$profiles = Get-AnsibleParam -obj $params -name "profiles" -type "str" -default "domain,private,public" -aliases "profile"
+$profiles = Get-AnsibleParam -obj $params -name "profiles" -type "list" -default @("domain", "private", "public") -aliases "profile"
 $localip = Get-AnsibleParam -obj $params -name "localip" -type "str" -default "any"
 $remoteip = Get-AnsibleParam -obj $params -name "remoteip" -type "str" -default "any"
 $localport = Get-AnsibleParam -obj $params -name "localport" -type "str"
 $remoteport = Get-AnsibleParam -obj $params -name "remoteport" -type "str"
 $protocol = Get-AnsibleParam -obj $params -name "protocol" -type "str" -default "any"
-$interfacetypes = Get-AnsibleParam -obj $params -name "interfacetypes" -type "str" -default "any"
+$interfacetypes = Get-AnsibleParam -obj $params -name "interfacetypes" -type "list" -default @("any")
 $edge = Get-AnsibleParam -obj $params -name "edge" -type "str" -default "no" -validateset "no","yes","deferapp","deferuser"
 $security = Get-AnsibleParam -obj $params -name "security" -type "str" -default "notrequired" -validateset "notrequired","authnoencap","authenticate","authdynenc","authenc"
 
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent"
+
 $force = Get-AnsibleParam -obj $params -name "force" -type "bool" -default $false
+if ($force) {
+    Add-DeprecationWarning -obj $result -message "'force' isn't required anymore" -version 2.9
+}
 
 if ($diff_support) {
     $result.diff = @{}
@@ -256,7 +261,14 @@ try {
                     }
 
                     if (-not $check_mode) {
-                        $existingRule.$prop = $rule.$prop
+                        # Profiles value cannot be a uint32, but the "all profiles" value (0x7FFFFFFF) will often become a uint32, so must cast to [int]
+                        # to prevent InvalidCastException under PS5+
+                        If($prop -eq 'Profiles') {
+                            $existingRule.Profiles = [int] $rule.$prop
+                        }
+                        Else {
+                            $existingRule.$prop = $rule.$prop
+                        }
                     }
                     $result.changed = $true
                 }
@@ -270,7 +282,9 @@ try {
         }
     }
 } catch [Exception] {
-    Fail-Json $result $_.Exception.Message
+    $ex = $_
+    $result['exception'] = $($ex | Out-String)
+    Fail-Json $result $ex.Exception.Message
 }
 
 Exit-Json $result

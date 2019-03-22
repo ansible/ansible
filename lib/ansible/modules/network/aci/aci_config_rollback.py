@@ -8,133 +8,185 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
 module: aci_config_rollback
-short_description: Provides rollback and rollback preview functionality for Cisco ACI fabrics (config:ImportP)
+short_description: Provides rollback and rollback preview functionality (config:ImportP)
 description:
-- Provides rollback and rollback preview functionality for Cisco ACI fabric.
+- Provides rollback and rollback preview functionality for Cisco ACI fabrics.
 - Config Rollbacks are done using snapshots C(aci_snapshot) with the configImportP class.
-- More information from the internal APIC class
-  I(config:ImportP) at U(https://developer.cisco.com/media/mim-ref/MO-configImportP.html).
-author:
-- Swetha Chunduri (@schunduri)
-- Dag Wieers (@dagwieers)
-- Jacob McGill (@jmcgill298)
 version_added: '2.4'
-requirements:
-- ACI Fabric 1.0(3f)+
 options:
   compare_export_policy:
     description:
     - The export policy that the C(compare_snapshot) is associated to.
+    type: str
   compare_snapshot:
     description:
     - The name of the snapshot to compare with C(snapshot).
+    type: str
   description:
     description:
     - The description for the Import Policy.
+    type: str
     aliases: [ descr ]
   export_policy:
     description:
     - The export policy that the C(snapshot) is associated to.
+    type: str
     required: yes
   fail_on_decrypt:
     description:
     - Determines if the APIC should fail the rollback if unable to decrypt secured data.
-    - The APIC defaults new Import Policies to C(yes).
+    - The APIC defaults to C(yes) when unset.
     type: bool
-    default: 'yes'
   import_mode:
     description:
     - Determines how the import should be handled by the APIC.
-    - The APIC defaults new Import Policies to C(atomic).
+    - The APIC defaults to C(atomic) when unset.
+    type: str
     choices: [ atomic, best-effort ]
-    default: atomic
   import_policy:
     description:
     - The name of the Import Policy to use for config rollback.
+    type: str
   import_type:
     description:
     - Determines how the current and snapshot configuration should be compared for replacement.
-    - The APIC defaults new Import Policies to C(replace).
+    - The APIC defaults to C(replace) when unset.
+    type: str
     choices: [ merge, replace ]
-    default: replace
   snapshot:
     description:
     - The name of the snapshot to rollback to, or the base snapshot to use for comparison.
     - The C(aci_snapshot) module can be used to query the list of available snapshots.
+    type: str
     required: yes
   state:
     description:
     - Use C(preview) for previewing the diff between two snapshots.
     - Use C(rollback) for reverting the configuration to a previous snapshot.
+    type: str
     choices: [ preview, rollback ]
     default: rollback
 extends_documentation_fragment: aci
+seealso:
+- module: aci_config_snapshot
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(config:ImportP).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Jacob McGill (@jmcgill298)
 '''
 
 EXAMPLES = r'''
 ---
 - name: Create a Snapshot
   aci_config_snapshot:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
-    state: present
     export_policy: config_backup
+    state: present
+  delegate_to: localhost
 
 - name: Query Existing Snapshots
   aci_config_snapshot:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
-    state: query
     export_policy: config_backup
+    state: query
+  delegate_to: localhost
 
 - name: Compare Snapshot Files
   aci_config_rollback:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
-    state: preview
     export_policy: config_backup
-    snapshot: 'run-2017-08-28T06-24-01'
+    snapshot: run-2017-08-28T06-24-01
     compare_export_policy: config_backup
-    compare_snapshot: 'run-2017-08-27T23-43-56'
+    compare_snapshot: run-2017-08-27T23-43-56
+    state: preview
+  delegate_to: localhost
 
 - name: Rollback Configuration
   aci_config_rollback:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
-    state: rollback
     import_policy: rollback_config
     export_policy: config_backup
-    snapshot: 'run-2017-08-28T06-24-01'
+    snapshot: run-2017-08-28T06-24-01
+    state: rollback
+  delegate_to: localhost
 
 - name: Rollback Configuration
   aci_config_rollback:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
-    state: rollback
     import_policy: rollback_config
     export_policy: config_backup
-    snapshot: 'run-2017-08-28T06-24-01'
-    description: 'Rollback 8-27 changes'
+    snapshot: run-2017-08-28T06-24-01
+    description: Rollback 8-27 changes
     import_mode: atomic
     import_type: replace
     fail_on_decrypt: yes
+    state: rollback
+  delegate_to: localhost
 '''
 
 RETURN = r'''
-#
+preview:
+  description: A preview between two snapshots
+  returned: when state is preview
+  type: str
+error:
+  description: The error information as returned from the APIC
+  returned: failure
+  type: dict
+  sample:
+    {
+        "code": "122",
+        "text": "unknown managed object class foo"
+    }
+raw:
+  description: The raw output returned by the APIC REST API (xml or json)
+  returned: parse error
+  type: str
+  sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
+filter_string:
+  description: The filter string used for the request
+  returned: failure or debug
+  type: str
+  sample: ?rsp-prop-include=config-only
+method:
+  description: The HTTP method used for the request to the APIC
+  returned: failure or debug
+  type: str
+  sample: POST
+response:
+  description: The HTTP response from the APIC
+  returned: failure or debug
+  type: str
+  sample: OK (30 bytes)
+status:
+  description: The HTTP status from the APIC
+  returned: failure or debug
+  type: int
+  sample: 200
+url:
+  description: The HTTP url used for the request to the APIC
+  returned: failure or debug
+  type: str
+  sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-from ansible.module_utils.aci import ACIModule, aci_argument_spec
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils.urls import fetch_url
@@ -149,7 +201,7 @@ except ImportError:
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         compare_export_policy=dict(type='str'),
         compare_snapshot=dict(type='str'),
@@ -172,20 +224,16 @@ def main():
         ],
     )
 
+    aci = ACIModule(module)
+
     description = module.params['description']
     export_policy = module.params['export_policy']
-    fail_on_decrypt = module.params['fail_on_decrypt']
-    if fail_on_decrypt is True:
-        fail_on_decrypt = 'yes'
-    elif fail_on_decrypt is False:
-        fail_on_decrypt = 'no'
+    fail_on_decrypt = aci.boolean(module.params['fail_on_decrypt'])
     import_mode = module.params['import_mode']
     import_policy = module.params['import_policy']
     import_type = module.params['import_type']
     snapshot = module.params['snapshot']
     state = module.params['state']
-
-    aci = ACIModule(module)
 
     if state == 'rollback':
         if snapshot.startswith('run-'):
@@ -196,10 +244,17 @@ def main():
 
         filename = 'ce2_{0}-{1}'.format(export_policy, snapshot)
 
-        aci.construct_url(root_class="import_policy")
+        aci.construct_url(
+            root_class=dict(
+                aci_class='configImportP',
+                aci_rn='fabric/configimp-{0}'.format(import_policy),
+                module_object=import_policy,
+                target_filter={'name': import_policy},
+            ),
+        )
+
         aci.get_existing()
 
-        # Filter out module parameters with null values
         aci.payload(
             aci_class='configImportP',
             class_config=dict(
@@ -214,15 +269,13 @@ def main():
             ),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='configImportP')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'preview':
-        aci.result['url'] = '%(protocol)s://%(hostname)s/mqapi2/snapshots.diff.xml' % module.params
-        aci.result['filter_string'] = (
+        aci.url = '%(protocol)s://%(host)s/mqapi2/snapshots.diff.xml' % module.params
+        aci.filter_string = (
             '?s1dn=uni/backupst/snapshots-[uni/fabric/configexp-%(export_policy)s]/snapshot-%(snapshot)s&'
             's2dn=uni/backupst/snapshots-[uni/fabric/configexp-%(compare_export_policy)s]/snapshot-%(compare_snapshot)s'
         ) % module.params
@@ -230,25 +283,25 @@ def main():
         # Generate rollback comparison
         get_preview(aci)
 
-    module.exit_json(**aci.result)
+    aci.exit_json()
 
 
 def get_preview(aci):
     '''
     This function is used to generate a preview between two snapshots and add the parsed results to the aci module return data.
     '''
-    uri = aci.result['url'] + aci.result['filter_string']
+    uri = aci.url + aci.filter_string
     resp, info = fetch_url(aci.module, uri, headers=aci.headers, method='GET', timeout=aci.module.params['timeout'], use_proxy=aci.module.params['use_proxy'])
-    aci.result['response'] = info['msg']
-    aci.result['status'] = info['status']
-    aci.result['method'] = 'GET'
+    aci.method = 'GET'
+    aci.response = info['msg']
+    aci.status = info['status']
 
     # Handle APIC response
     if info['status'] == 200:
         xml_to_json(aci, resp.read())
     else:
-        aci.result['apic_response'] = resp.read()
-        aci.module.fail_json(msg='Request failed: %(error_code)s %(error_text)s' % aci.result, **aci.result)
+        aci.result['raw'] = resp.read()
+        aci.fail_json(msg="Request failed: %(code)s %(text)s (see 'raw' output)" % aci.error)
 
 
 def xml_to_json(aci, response_data):
@@ -258,9 +311,9 @@ def xml_to_json(aci, response_data):
     if XML_TO_JSON:
         xml = lxml.etree.fromstring(to_bytes(response_data))
         xmldata = cobra.data(xml)
-        aci.result['diff'] = xmldata
+        aci.result['preview'] = xmldata
     else:
-        aci.result['diff'] = response_data
+        aci.result['preview'] = response_data
 
 
 if __name__ == "__main__":

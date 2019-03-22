@@ -3,8 +3,10 @@ from __future__ import absolute_import, print_function
 
 import abc
 import glob
+import json
 import os
 import re
+import sys
 
 from lib.util import (
     ApplicationError,
@@ -13,7 +15,10 @@ from lib.util import (
     run_command,
     import_plugins,
     load_plugins,
+    parse_to_list_of_dict,
     ABC,
+    is_binary_file,
+    read_lines_without_comments,
 )
 
 from lib.ansible_util import (
@@ -53,14 +58,14 @@ def command_sanity(args):
     :type args: SanityConfig
     """
     changes = get_changes_filter(args)
-    require = (args.require or []) + changes
+    require = args.require + changes
     targets = SanityTargets(args.include, args.exclude, require)
 
     if not targets.include:
         raise AllTargetsSkipped()
 
     if args.delegate:
-        raise Delegate(require=changes)
+        raise Delegate(require=changes, exclude=args.exclude)
 
     install_command_requirements(args)
 
@@ -68,6 +73,12 @@ def command_sanity(args):
 
     if args.test:
         tests = [t for t in tests if t.name in args.test]
+    else:
+        disabled = [t.name for t in tests if not t.enabled and not args.allow_disabled]
+        tests = [t for t in tests if t.enabled or args.allow_disabled]
+
+        if disabled:
+            display.warning('Skipping tests disabled by default without --allow-disabled: %s' % ', '.join(sorted(disabled)))
 
     if args.skip_test:
         tests = [t for t in tests if t.name not in args.skip_test]
@@ -83,10 +94,10 @@ def command_sanity(args):
         if isinstance(test, SanityMultipleVersion):
             versions = SUPPORTED_PYTHON_VERSIONS
         else:
-            versions = None,
+            versions = (None,)
 
         for version in versions:
-            if args.python and version and version != args.python:
+            if args.python and version and version != args.python_version:
                 continue
 
             display.info('Sanity check using %s%s' % (test.name, ' with Python %s' % version if version else ''))
@@ -94,7 +105,7 @@ def command_sanity(args):
             options = ''
 
             if isinstance(test, SanityCodeSmellTest):
-                result = test.test(args)
+                result = test.test(args, targets)
             elif isinstance(test, SanityMultipleVersion):
                 result = test.test(args, targets, python_version=version)
                 options = ' --python %s' % version
@@ -124,8 +135,8 @@ def collect_code_smell_tests():
     """
     :rtype: tuple[SanityCodeSmellTest]
     """
-    with open('test/sanity/code-smell/skip.txt', 'r') as skip_fd:
-        skip_tests = skip_fd.read().splitlines()
+    skip_file = 'test/sanity/code-smell/skip.txt'
+    skip_tests = read_lines_without_comments(skip_file, remove_blank_lines=True)
 
     paths = glob.glob('test/sanity/code-smell/*')
     paths = sorted(p for p in paths if os.access(p, os.X_OK) and os.path.isfile(p) and os.path.basename(p) not in skip_tests)
@@ -199,32 +210,116 @@ class SanityTest(ABC):
 
     def __init__(self, name):
         self.name = name
+        self.enabled = True
 
 
 class SanityCodeSmellTest(SanityTest):
     """Sanity test script."""
     def __init__(self, path):
         name = os.path.splitext(os.path.basename(path))[0]
-
-        self.path = path
+        config_path = os.path.splitext(path)[0] + '.json'
 
         super(SanityCodeSmellTest, self).__init__(name)
 
-    def test(self, args):
+        self.path = path
+        self.config_path = config_path if os.path.exists(config_path) else None
+        self.config = None
+
+        if self.config_path:
+            with open(self.config_path, 'r') as config_fd:
+                self.config = json.load(config_fd)
+
+        if self.config:
+            self.enabled = not self.config.get('disabled')
+
+    def test(self, args, targets):
         """
         :type args: SanityConfig
-        :rtype: SanityResult
+        :type targets: SanityTargets
+        :rtype: TestResult
         """
-        cmd = [self.path]
+        if self.path.endswith('.py'):
+            cmd = [args.python_executable, self.path]
+        else:
+            cmd = [self.path]
+
         env = ansible_environment(args, color=False)
 
+        pattern = None
+        data = None
+
+        if self.config:
+            output = self.config.get('output')
+            extensions = self.config.get('extensions')
+            prefixes = self.config.get('prefixes')
+            files = self.config.get('files')
+            always = self.config.get('always')
+            text = self.config.get('text')
+            ignore_changes = self.config.get('ignore_changes')
+
+            if output == 'path-line-column-message':
+                pattern = '^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): (?P<message>.*)$'
+            elif output == 'path-message':
+                pattern = '^(?P<path>[^:]*): (?P<message>.*)$'
+            else:
+                pattern = ApplicationError('Unsupported output type: %s' % output)
+
+            if ignore_changes:
+                paths = sorted(i.path for i in targets.targets)
+                always = False
+            else:
+                paths = sorted(i.path for i in targets.include)
+
+            if always:
+                paths = []
+
+            # short-term work-around for paths being str instead of unicode on python 2.x
+            if sys.version_info[0] == 2:
+                paths = [p.decode('utf-8') for p in paths]
+
+            if text is not None:
+                if text:
+                    paths = [p for p in paths if not is_binary_file(p)]
+                else:
+                    paths = [p for p in paths if is_binary_file(p)]
+
+            if extensions:
+                paths = [p for p in paths if os.path.splitext(p)[1] in extensions or (p.startswith('bin/') and '.py' in extensions)]
+
+            if prefixes:
+                paths = [p for p in paths if any(p.startswith(pre) for pre in prefixes)]
+
+            if files:
+                paths = [p for p in paths if os.path.basename(p) in files]
+
+            if not paths and not always:
+                return SanitySkipped(self.name)
+
+            data = '\n'.join(paths)
+
+            if data:
+                display.info(data, verbosity=4)
+
         try:
-            stdout, stderr = run_command(args, cmd, env=env, capture=True)
+            stdout, stderr = run_command(args, cmd, data=data, env=env, capture=True)
             status = 0
         except SubprocessError as ex:
             stdout = ex.stdout
             stderr = ex.stderr
             status = ex.status
+
+        if stdout and not stderr:
+            if pattern:
+                matches = parse_to_list_of_dict(pattern, stdout)
+
+                messages = [SanityMessage(
+                    message=m['message'],
+                    path=m['path'],
+                    line=int(m.get('line', 0)),
+                    column=int(m.get('column', 0)),
+                ) for m in matches]
+
+                return SanityFailure(self.name, messages=messages)
 
         if stderr or status:
             summary = u'%s' % SubprocessError(cmd=cmd, status=status, stderr=stderr, stdout=stdout)
@@ -250,7 +345,7 @@ class SanitySingleVersion(SanityFunc):
         """
         :type args: SanityConfig
         :type targets: SanityTargets
-        :rtype: SanityResult
+        :rtype: TestResult
         """
         pass
 
@@ -263,7 +358,7 @@ class SanityMultipleVersion(SanityFunc):
         :type args: SanityConfig
         :type targets: SanityTargets
         :type python_version: str
-        :rtype: SanityResult
+        :rtype: TestResult
         """
         pass
 

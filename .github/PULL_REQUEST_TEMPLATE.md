@@ -1,37 +1,23 @@
 ##### SUMMARY
-<!--- Describe the change, including rationale and design decisions -->
+<!--- Describe the change below, including rationale and design decisions -->
 
-<!---
-If you are fixing an existing issue, please include "Fixes #nnn" in your
-commit message and your description; but you should still explain what
-the change does.
--->
+<!--- HINT: Include "Fixes #nnn" if you are fixing an existing issue -->
 
 ##### ISSUE TYPE
-<!--- Pick one below and delete the rest: -->
- - Feature Pull Request
- - New Module Pull Request
- - Bugfix Pull Request
- - Docs Pull Request
+<!--- Pick one below and delete the rest -->
+- Bugfix Pull Request
+- Docs Pull Request
+- Feature Pull Request
+- New Module Pull Request
 
 ##### COMPONENT NAME
-<!--- Name of the module/plugin/module/task -->
-
-##### ANSIBLE VERSION
-<!--- Paste verbatim output from "ansible --version" between quotes below -->
-```
-
-```
-
+<!--- Write the short name of the module, plugin, task or feature below -->
 
 ##### ADDITIONAL INFORMATION
-<!---
-Include additional information to help people understand the change here.
-For bugs that don't have a linked bug report, a step-by-step reproduction
-of the problem is helpful.
-  -->
+<!--- Include additional information to help people understand the change here -->
+<!--- A step-by-step reproduction of the problem is helpful if there is no related issue -->
 
 <!--- Paste verbatim command output below, e.g. before and after your change -->
-```
+```paste below
 
 ```

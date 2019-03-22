@@ -1,27 +1,34 @@
-@{ title }@ @{ plugin_type }@
+{# avoids rST "isn't included in any toctree" errors for module docs #}
+:orphan:
+
+.. _@{ title.lower() + '_' + plugin_type + 's' }@:
+
+@{ title }@ @{ plugin_type + 's' }@
 @{ '`' * title | length }@````````
 
 {% if blurb %}
 @{ blurb }@
 
 {% endif %}
-.. toctree:: :maxdepth: 1
+
 {% if category['_modules'] %}
 
 {% for module in category['_modules'] | sort %}
-  @{ module }@{% if module_info[module]['deprecated'] %} **(D)**{% endif%} - @{ module_info[module]['doc']['short_description'] }@ <@{ module }@_module>
+  * :ref:`@{ module }@_@{ plugin_type }@`{% if module_info[module]['deprecated'] %} **(D)**{% endif%} 
 {% endfor %}
 {% endif %}
 
 {% for name, info in subcategories.items() | sort %}
+
+.. _@{ name.lower() + '_' + title.lower() + '_' + plugin_type + 's' }@:
+
 @{ name.title() }@
 @{ '-' * name | length }@
 
-.. toctree:: :maxdepth: 1
+
 
 {% for module in info['_modules'] | sort %}
-{#  :ref:`@{ module }@`{% if module_info[module]['deprecated'] %} **(D)**{% endif%} @{ module_info[module]['doc']['short_description'] }@ #}
-    @{ module }@{% if module_info[module]['deprecated'] %} **(D)**{% endif%} @{ module_info[module]['doc']['short_description'] }@ <@{ module }@_module>
+  * :ref:`@{ module }@_@{ plugin_type }@`{% if module_info[module]['deprecated'] %} **(D)**{% endif%} 
 {% endfor %}
 
 {% endfor %}

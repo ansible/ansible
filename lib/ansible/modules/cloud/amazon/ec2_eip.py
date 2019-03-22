@@ -1,22 +1,16 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# -*- coding: utf-8 -*-
+
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -39,46 +33,47 @@ options:
       - The IP address of a previously allocated EIP.
       - If present and device is specified, the EIP is associated with the device.
       - If absent and device is specified, the EIP is disassociated from the device.
-    required: false
     aliases: [ ip ]
   state:
     description:
       - If present, allocate an EIP or associate an existing EIP with a device.
       - If absent, disassociate the EIP from the device and optionally release it.
-    required: false
     choices: ['present', 'absent']
     default: present
   in_vpc:
     description:
-      - allocate an EIP inside a VPC or not
-    required: false
-    default: false
+      - Allocate an EIP inside a VPC or not. Required if specifying an ENI.
+    default: 'no'
+    type: bool
     version_added: "1.4"
   reuse_existing_ip_allowed:
     description:
       - Reuse an EIP that is not associated to a device (when available), instead of allocating a new one.
-    required: false
-    default: false
+    default: 'no'
+    type: bool
     version_added: "1.6"
   release_on_disassociation:
     description:
       - whether or not to automatically release the EIP when it is disassociated
-    required: false
-    default: false
+    default: 'no'
+    type: bool
     version_added: "2.0"
   private_ip_address:
     description:
       - The primary or secondary private IP address to associate with the Elastic IP address.
-    required: False
-    default: None
     version_added: "2.3"
+  allow_reassociation:
+    description:
+      -  Specify this option to allow an Elastic IP address that is already associated with another
+         network interface or instance to be re-associated with the specified instance or interface.
+    default: 'no'
+    type: bool
+    version_added: "2.5"
 extends_documentation_fragment:
     - aws
     - ec2
 author: "Rick Mendes (@rickmendes) <rmendes@illumina.com>"
 notes:
-   - This module will return C(public_ip) on success, which will contain the
-     public IP address associated with the device.
    - There may be a delay between the time the EIP is assigned and when
      the cloud instance is reachable via the new address. Use wait_for and
      pause to delay further playbook execution until the instance is reachable,
@@ -100,6 +95,12 @@ EXAMPLES = '''
   ec2_eip:
     device_id: eni-c8ad70f3
     ip: 93.184.216.119
+
+- name: associate an elastic IP with a device and allow reassociation
+  ec2_eip:
+    device_id: eni-c8ad70f3
+    public_ip: 93.184.216.119
+    allow_reassociation: yes
 
 - name: disassociate an elastic IP from an instance
   ec2_eip:
@@ -126,10 +127,6 @@ EXAMPLES = '''
   debug:
     msg: "Allocated IP is {{ eip.public_ip }}"
 
-- name: another way of allocating an elastic IP without associating it to anything
-  ec2_eip:
-    state: 'present'
-
 - name: provision new instances with ec2
   ec2:
     keypair: mykey
@@ -143,7 +140,7 @@ EXAMPLES = '''
 - name: associate new elastic IPs with each of the instances
   ec2_eip:
     device_id: "{{ item }}"
-  with_items: "{{ ec2.instance_ids }}"
+  loop: "{{ ec2.instance_ids }}"
 
 - name: allocate a new elastic IP inside a VPC in us-west-2
   ec2_eip:
@@ -156,18 +153,33 @@ EXAMPLES = '''
     msg: "Allocated IP inside a VPC is {{ eip.public_ip }}"
 '''
 
+RETURN = '''
+allocation_id:
+  description: allocation_id of the elastic ip
+  returned: on success
+  type: str
+  sample: eipalloc-51aa3a6c
+public_ip:
+  description: an elastic ip address
+  returned: on success
+  type: str
+  sample: 52.88.159.209
+'''
+
 try:
-    import boto.ec2
-    HAS_BOTO = True
+    import boto.exception
 except ImportError:
-    HAS_BOTO = False
+    pass  # Taken care of by ec2.HAS_BOTO
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import HAS_BOTO, ec2_argument_spec, ec2_connect
 
 
 class EIPException(Exception):
     pass
 
 
-def associate_ip_and_device(ec2, address, private_ip_address, device_id, check_mode, isinstance=True):
+def associate_ip_and_device(ec2, address, private_ip_address, device_id, allow_reassociation, check_mode, isinstance=True):
     if address_is_associated_with_device(ec2, address, device_id, isinstance):
         return {'changed': False}
 
@@ -175,11 +187,20 @@ def associate_ip_and_device(ec2, address, private_ip_address, device_id, check_m
     if not check_mode:
         if isinstance:
             if address.domain == "vpc":
-                res = ec2.associate_address(device_id, allocation_id=address.allocation_id, private_ip_address=private_ip_address)
+                res = ec2.associate_address(device_id,
+                                            allocation_id=address.allocation_id,
+                                            private_ip_address=private_ip_address,
+                                            allow_reassociation=allow_reassociation)
             else:
-                res = ec2.associate_address(device_id, public_ip=address.public_ip, private_ip_address=private_ip_address)
+                res = ec2.associate_address(device_id,
+                                            public_ip=address.public_ip,
+                                            private_ip_address=private_ip_address,
+                                            allow_reassociation=allow_reassociation)
         else:
-            res = ec2.associate_address(network_interface_id=device_id, allocation_id=address.allocation_id, private_ip_address=private_ip_address)
+            res = ec2.associate_address(network_interface_id=device_id,
+                                        allocation_id=address.allocation_id,
+                                        private_ip_address=private_ip_address,
+                                        allow_reassociation=allow_reassociation)
         if not res:
             raise EIPException('association failed')
 
@@ -208,7 +229,7 @@ def _find_address_by_ip(ec2, public_ip):
     try:
         return ec2.get_all_addresses([public_ip])[0]
     except boto.exception.EC2ResponseError as e:
-        if "Address '{}' not found.".format(public_ip) not in e.message:
+        if "Address '{0}' not found.".format(public_ip) not in e.message:
             raise
 
 
@@ -297,7 +318,7 @@ def find_device(ec2, module, device_id, isinstance=True):
 
 
 def ensure_present(ec2, module, domain, address, private_ip_address, device_id,
-                   reuse_existing_ip_allowed, check_mode, isinstance=True):
+                   reuse_existing_ip_allowed, allow_reassociation, check_mode, isinstance=True):
     changed = False
 
     # Return the EIP object since we've been given a public IP
@@ -315,13 +336,13 @@ def ensure_present(ec2, module, domain, address, private_ip_address, device_id,
                 if instance.vpc_id and len(instance.vpc_id) > 0 and domain is None:
                     raise EIPException("You must set 'in_vpc' to true to associate an instance with an existing ip in a vpc")
             # Associate address object (provided or allocated) with instance
-            assoc_result = associate_ip_and_device(ec2, address, private_ip_address, device_id,
-                                                 check_mode)
+            assoc_result = associate_ip_and_device(ec2, address, private_ip_address, device_id, allow_reassociation,
+                                                   check_mode)
         else:
             instance = find_device(ec2, module, device_id, isinstance=False)
             # Associate address object (provided or allocated) with instance
-            assoc_result = associate_ip_and_device(ec2, address, private_ip_address, device_id,
-                                                 check_mode, isinstance=False)
+            assoc_result = associate_ip_and_device(ec2, address, private_ip_address, device_id, allow_reassociation,
+                                                   check_mode, isinstance=False)
 
         if instance.vpc_id:
             domain = 'vpc'
@@ -339,10 +360,10 @@ def ensure_absent(ec2, domain, address, device_id, check_mode, isinstance=True):
     if device_id:
         if isinstance:
             return disassociate_ip_and_device(ec2, address, device_id,
-                                                check_mode)
+                                              check_mode)
         else:
             return disassociate_ip_and_device(ec2, address, device_id,
-                                                check_mode, isinstance=False)
+                                              check_mode, isinstance=False)
     # releasing address
     else:
         return release_address(ec2, address, check_mode)
@@ -359,13 +380,17 @@ def main():
         reuse_existing_ip_allowed=dict(required=False, type='bool',
                                        default=False),
         release_on_disassociation=dict(required=False, type='bool', default=False),
+        allow_reassociation=dict(type='bool', default=False),
         wait_timeout=dict(default=300),
         private_ip_address=dict(required=False, default=None, type='str')
     ))
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        supports_check_mode=True
+        supports_check_mode=True,
+        required_together=[
+            ['device_id', 'private_ip_address'],
+        ],
     )
 
     if not HAS_BOTO:
@@ -382,10 +407,7 @@ def main():
     domain = 'vpc' if in_vpc else None
     reuse_existing_ip_allowed = module.params.get('reuse_existing_ip_allowed')
     release_on_disassociation = module.params.get('release_on_disassociation')
-
-    # Parameter checks
-    if private_ip_address is not None and device_id is None:
-        module.fail_json(msg="parameters are required together: ('device_id', 'private_ip_address')")
+    allow_reassociation = module.params.get('allow_reassociation')
 
     if instance_id:
         warnings = ["instance_id is no longer used, please use device_id going forward"]
@@ -408,7 +430,8 @@ def main():
         if state == 'present':
             if device_id:
                 result = ensure_present(ec2, module, domain, address, private_ip_address, device_id,
-                                    reuse_existing_ip_allowed, module.check_mode, isinstance=is_instance)
+                                        reuse_existing_ip_allowed, allow_reassociation,
+                                        module.check_mode, isinstance=is_instance)
             else:
                 if address:
                     changed = False
@@ -435,9 +458,6 @@ def main():
         result['warnings'] = warnings
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *  # noqa
-from ansible.module_utils.ec2 import *  # noqa
 
 if __name__ == '__main__':
     main()

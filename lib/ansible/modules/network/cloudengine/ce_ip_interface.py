@@ -27,7 +27,7 @@ version_added: "2.4"
 short_description: Manages L3 attributes for IPv4 and IPv6 interfaces on HUAWEI CloudEngine switches.
 description:
     - Manages Layer 3 attributes for IPv4 and IPv6 interfaces on HUAWEI CloudEngine switches.
-author: QijunPan (@CloudEngine-Ansible)
+author: QijunPan (@QijunPan)
 notes:
     - Interface must already be a L3 port when using this module.
     - Logical interfaces (loopback, vlanif) must be created first.
@@ -42,17 +42,12 @@ options:
     addr:
         description:
             - IPv4 or IPv6 Address.
-        required: false
-        default: null
     mask:
         description:
             - Subnet mask for IPv4 or IPv6 Address in decimal format.
-        required: false
-        default: null
     version:
         description:
             - IP address version.
-        required: false
         default: v4
         choices: ['v4','v6']
     ipv4_type:
@@ -61,13 +56,11 @@ options:
               The value is an enumerated type.
               main, primary IP address.
               sub, secondary IP address.
-        required: false
         default: main
         choices: ['main','sub']
     state:
         description:
             - Specify desired state of the resource.
-        required: false
         default: present
         choices: ['present','absent']
 '''
@@ -148,13 +141,13 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 
 import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_nc_config, set_nc_config, ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec
 
 
 CE_NC_GET_INTF = """

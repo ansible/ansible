@@ -1,0 +1,220 @@
+---
+- name: Registering container name
+  set_fact:
+    cname: "{{ cname_prefix ~ '-options' }}"
+
+####################################################################
+## published_ports: all ############################################
+####################################################################
+
+- name: published_ports -- all
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    exposed_ports:
+    - "9001"
+    - "9002"
+    published_ports:
+    - all
+    force_kill: yes
+  register: published_ports_1
+
+- name: published_ports -- all (idempotency)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    exposed_ports:
+    - "9001"
+    - "9002"
+    published_ports:
+    - all
+    force_kill: yes
+  register: published_ports_2
+
+- name: published_ports -- all (writing out 'all')
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    exposed_ports:
+    - "9001"
+    - "9002"
+    published_ports:
+    - "9001"
+    - "9002"
+    force_kill: yes
+  register: published_ports_3
+
+- name: published_ports -- all (idempotency 2)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    exposed_ports:
+    - "9001"
+    - "9002"
+    published_ports:
+    - "9002"
+    - "9001"
+    force_kill: yes
+  register: published_ports_4
+
+- name: published_ports -- all (switching back to 'all')
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    exposed_ports:
+    - "9001"
+    - "9002"
+    published_ports:
+    - all
+    force_kill: yes
+  register: published_ports_5
+
+- name: cleanup
+  docker_container:
+    name: "{{ cname }}"
+    state: absent
+    force_kill: yes
+  diff: no
+
+- assert:
+    that:
+    - published_ports_1 is changed
+    - published_ports_2 is not changed
+    - published_ports_3 is changed
+    - published_ports_4 is not changed
+    - published_ports_5 is changed
+
+####################################################################
+## published_ports: port range #####################################
+####################################################################
+
+- name: published_ports -- port range
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    exposed_ports:
+    - "9001"
+    - "9010-9050"
+    published_ports:
+    - "9001:9001"
+    - "9010-9050:9010-9050"
+    force_kill: yes
+  register: published_ports_1
+
+- name: published_ports -- port range (idempotency)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    exposed_ports:
+    - "9001"
+    - "9010-9050"
+    published_ports:
+    - "9001:9001"
+    - "9010-9050:9010-9050"
+    force_kill: yes
+  register: published_ports_2
+
+- name: published_ports -- port range (different range)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    exposed_ports:
+    - "9001"
+    - "9010-9050"
+    published_ports:
+    - "9001:9001"
+    - "9020-9060:9020-9060"
+    force_kill: yes
+  register: published_ports_3
+
+- name: cleanup
+  docker_container:
+    name: "{{ cname }}"
+    state: absent
+    force_kill: yes
+  diff: no
+
+- assert:
+    that:
+    - published_ports_1 is changed
+    - published_ports_2 is not changed
+    - published_ports_3 is changed
+
+####################################################################
+## published_ports: IPv6 addresses #################################
+####################################################################
+
+- name: published_ports -- IPv6
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    published_ports:
+    - "[::1]:9001:9001"
+    force_kill: yes
+  register: published_ports_1
+
+- name: published_ports -- IPv6 (idempotency)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    published_ports:
+    - "[::1]:9001:9001"
+    force_kill: yes
+  register: published_ports_2
+
+- name: published_ports -- IPv6 (different IP)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    published_ports:
+    - "127.0.0.1:9001:9001"
+    force_kill: yes
+  register: published_ports_3
+
+- name: published_ports -- IPv6 (hostname)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    published_ports:
+    - "localhost:9001:9001"
+    force_kill: yes
+  register: published_ports_4
+  ignore_errors: yes
+
+- name: cleanup
+  docker_container:
+    name: "{{ cname }}"
+    state: absent
+    force_kill: yes
+  diff: no
+
+- assert:
+    that:
+    - published_ports_1 is changed
+    - published_ports_2 is not changed
+    - published_ports_3 is changed
+    - published_ports_4 is failed

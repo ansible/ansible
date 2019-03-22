@@ -49,43 +49,31 @@ options:
   role_priority:
     description:
       - Role priority for device. Remember lower is better.
-    required: false
-    default: null
   system_priority:
     description:
       - System priority device.  Remember they must match between peers.
-    required: false
-    default: null
   pkl_src:
     description:
       - Source IP address used for peer keepalive link
-    required: false
-    default: null
   pkl_dest:
     description:
       - Destination (remote) IP address used for peer keepalive link
-    required: false
-    default: null
   pkl_vrf:
     description:
       - VRF used for peer keepalive link
-    required: false
     default: management
   peer_gw:
     description:
       - Enables/Disables peer gateway
-    required: true
-    choices: ['true','false']
+    type: bool
   auto_recovery:
     description:
       - Enables/Disables auto recovery
-    required: true
-    choices: ['true','false']
+    type: bool
   delay_restore:
     description:
       - manages delay restore command and config value in seconds
-    required: false
-    default: null
+    type: str
   state:
     description:
       - Manages desired state of the resource
@@ -113,6 +101,18 @@ EXAMPLES = '''
     pkl_src: 10.1.100.2
     pkl_dest: 192.168.100.4
     auto_recovery: true
+
+- name: Configure VPC with delay restore and existing keepalive VRF
+  nxos_vpc:
+    domain: 10
+    role_priority: 28672
+    system_priority: 2000
+    delay_restore: 180
+    peer_gw: true
+    pkl_src: 1.1.1.2
+    pkl_dest: 1.1.1.1
+    pkl_vrf: vpckeepalive
+    auto_recovery: true
 '''
 
 RETURN = '''
@@ -125,8 +125,9 @@ commands:
             "auto-recovery", "peer-gateway"]
 '''
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+import re
+from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -136,6 +137,13 @@ CONFIG_ARGS = {
     'delay_restore': 'delay restore {delay_restore}',
     'peer_gw': '{peer_gw} peer-gateway',
     'auto_recovery': '{auto_recovery} auto-recovery',
+}
+
+PARAM_TO_DEFAULT_KEYMAP = {
+    'delay_restore': '60',
+    'role_priority': '32667',
+    'system_priority': '32667',
+    'peer_gw': False,
 }
 
 
@@ -165,65 +173,68 @@ def get_vrf_list(module):
     return vrf_list
 
 
+def get_auto_recovery_default(module):
+    auto = False
+    data = run_commands(module, ['show inventory | json'])[0]
+    pid = data['TABLE_inv']['ROW_inv'][0]['productid']
+    if re.search(r'N7K', pid):
+        auto = True
+    elif re.search(r'N9K', pid):
+        data = run_commands(module, ['show hardware | json'])[0]
+        ver = data['kickstart_ver_str']
+        if re.search(r'7.0\(3\)F', ver):
+            auto = True
+
+    return auto
+
+
 def get_vpc(module):
     body = run_commands(module, ['show vpc | json'])[0]
-
-    domain = str(body['vpc-domain-id'])
-    auto_recovery = 'enabled' in str(body['vpc-auto-recovery-status']).lower()
+    if body:
+        domain = str(body['vpc-domain-id'])
+    else:
+        body = run_commands(module, ['show run vpc | inc domain'])[0]
+        if body:
+            domain = body.split()[2]
+        else:
+            domain = 'not configured'
 
     vpc = {}
     if domain != 'not configured':
-        delay_restore = None
-        pkl_src = None
-        role_priority = '32667'
-        system_priority = None
-        pkl_dest = None
-        pkl_vrf = None
-        peer_gw = False
-
-        run = get_config(module, flags=['section vpc'])
+        run = get_config(module, flags=['vpc'])
         if run:
+            vpc['domain'] = domain
+            for key in PARAM_TO_DEFAULT_KEYMAP.keys():
+                vpc[key] = PARAM_TO_DEFAULT_KEYMAP.get(key)
+            vpc['auto_recovery'] = get_auto_recovery_default(module)
             vpc_list = run.split('\n')
             for each in vpc_list:
-                if 'delay restore' in each:
-                    line = each.split()
-                    if len(line) == 3:
-                        delay_restore = line[-1]
-                if 'peer-keepalive destination' in each:
-                    line = each.split()
-                    pkl_dest = line[2]
-                    for word in line:
-                        if 'source' in word:
-                            index = line.index(word)
-                            pkl_src = line[index + 1]
                 if 'role priority' in each:
                     line = each.split()
-                    role_priority = line[-1]
+                    vpc['role_priority'] = line[-1]
                 if 'system-priority' in each:
                     line = each.split()
-                    system_priority = line[-1]
+                    vpc['system_priority'] = line[-1]
+                if 'delay restore' in each:
+                    line = each.split()
+                    vpc['delay_restore'] = line[-1]
+                if 'no auto-recovery' in each:
+                    vpc['auto_recovery'] = False
+                elif 'auto-recovery' in each:
+                    vpc['auto_recovery'] = True
                 if 'peer-gateway' in each:
-                    peer_gw = True
-
-        body = run_commands(module, ['show vpc peer-keepalive | json'])[0]
-
-        if body:
-            pkl_dest = body['vpc-keepalive-dest']
-            if 'N/A' in pkl_dest:
-                pkl_dest = None
-            elif len(pkl_dest) == 2:
-                pkl_dest = pkl_dest[0]
-            pkl_vrf = str(body['vpc-keepalive-vrf'])
-
-        vpc['domain'] = domain
-        vpc['auto_recovery'] = auto_recovery
-        vpc['delay_restore'] = delay_restore
-        vpc['pkl_src'] = pkl_src
-        vpc['role_priority'] = role_priority
-        vpc['system_priority'] = system_priority
-        vpc['pkl_dest'] = pkl_dest
-        vpc['pkl_vrf'] = pkl_vrf
-        vpc['peer_gw'] = peer_gw
+                    vpc['peer_gw'] = True
+                if 'peer-keepalive destination' in each:
+                    line = each.split()
+                    vpc['pkl_dest'] = line[2]
+                    vpc['pkl_vrf'] = 'management'
+                    if 'source' in each:
+                        vpc['pkl_src'] = line[4]
+                        if 'vrf' in each:
+                            vpc['pkl_vrf'] = line[6]
+                    else:
+                        if 'vrf' in each:
+                            vpc['pkl_vrf'] = line[4]
 
     return vpc
 
@@ -232,40 +243,24 @@ def get_commands_to_config_vpc(module, vpc, domain, existing):
     vpc = dict(vpc)
 
     domain_only = vpc.get('domain')
-    pkl_src = vpc.get('pkl_src')
-    pkl_dest = vpc.get('pkl_dest')
-    pkl_vrf = vpc.get('pkl_vrf') or existing.get('pkl_vrf')
-    vpc['pkl_vrf'] = pkl_vrf
 
     commands = []
-    if pkl_src or pkl_dest:
-        if pkl_src is None:
-            vpc['pkl_src'] = existing.get('pkl_src')
-        elif pkl_dest is None:
-            vpc['pkl_dest'] = existing.get('pkl_dest')
-        pkl_command = 'peer-keepalive destination {pkl_dest}'.format(**vpc) \
-                      + ' source {pkl_src} vrf {pkl_vrf}'.format(**vpc)
+    if 'pkl_dest' in vpc:
+        pkl_command = 'peer-keepalive destination {pkl_dest}'.format(**vpc)
+        if 'pkl_src' in vpc:
+            pkl_command += ' source {pkl_src}'.format(**vpc)
+        if 'pkl_vrf' in vpc and vpc['pkl_vrf'] != 'management':
+            pkl_command += ' vrf {pkl_vrf}'.format(**vpc)
         commands.append(pkl_command)
-    elif pkl_vrf:
-        pkl_src = existing.get('pkl_src')
-        pkl_dest = existing.get('pkl_dest')
-        if pkl_src and pkl_dest:
-            pkl_command = ('peer-keepalive destination {0}'
-                           ' source {1} vrf {2}'.format(pkl_dest, pkl_src, pkl_vrf))
-            commands.append(pkl_command)
 
-    if vpc.get('auto_recovery') is False:
-        vpc['auto_recovery'] = 'no'
-    else:
-        vpc['auto_recovery'] = ''
+    if 'auto_recovery' in vpc:
+        if not vpc.get('auto_recovery'):
+            vpc['auto_recovery'] = 'no'
+        else:
+            vpc['auto_recovery'] = ''
 
     if 'peer_gw' in vpc:
-        if vpc.get('peer_gw') is False:
-            vpc['peer_gw'] = 'no'
-        else:
-            vpc['peer_gw'] = ''
-    else:
-        if existing.get('peer_gw') is False:
+        if not vpc.get('peer_gw'):
             vpc['peer_gw'] = 'no'
         else:
             vpc['peer_gw'] = ''
@@ -283,14 +278,6 @@ def get_commands_to_config_vpc(module, vpc, domain, existing):
     return commands
 
 
-def get_commands_to_remove_vpc_interface(portchannel, config_value):
-    commands = []
-    command = 'no vpc {0}'.format(config_value)
-    commands.append(command)
-    commands.insert(0, 'interface port-channel{0}'.format(portchannel))
-    return commands
-
-
 def main():
     argument_spec = dict(
         domain=dict(required=True, type='str'),
@@ -298,9 +285,9 @@ def main():
         system_priority=dict(required=False, type='str'),
         pkl_src=dict(required=False),
         pkl_dest=dict(required=False),
-        pkl_vrf=dict(required=False, default='management'),
-        peer_gw=dict(required=True, type='bool'),
-        auto_recovery=dict(required=True, type='bool'),
+        pkl_vrf=dict(required=False),
+        peer_gw=dict(required=False, type='bool'),
+        auto_recovery=dict(required=False, type='bool'),
         delay_restore=dict(required=False, type='str'),
         state=dict(choices=['absent', 'present'], default='present'),
     )
@@ -331,18 +318,17 @@ def main():
                 auto_recovery=auto_recovery,
                 delay_restore=delay_restore)
 
-    if not (pkl_src and pkl_dest and pkl_vrf):
-        # if only the source or dest is set, it'll fail and ask to set the
-        # other
-        if pkl_src or pkl_dest:
-            module.fail_json(msg='source AND dest IP for pkl are required at '
-                                 'this time (although source is technically not '
-                                 ' required by the device.)')
-
-        args.pop('pkl_src')
-        args.pop('pkl_dest')
-        args.pop('pkl_vrf')
-
+    if not pkl_dest:
+        if pkl_src:
+            module.fail_json(msg='dest IP for peer-keepalive is required'
+                                 ' when src IP is present')
+        elif pkl_vrf:
+            if pkl_vrf != 'management':
+                module.fail_json(msg='dest and src IP for peer-keepalive are required'
+                                     ' when vrf is present')
+            else:
+                module.fail_json(msg='dest IP for peer-keepalive is required'
+                                     ' when vrf is present')
     if pkl_vrf:
         if pkl_vrf.lower() not in get_vrf_list(module):
             module.fail_json(msg='The VRF you are trying to use for the peer '
@@ -353,7 +339,12 @@ def main():
 
     commands = []
     if state == 'present':
-        delta = set(proposed.items()).difference(existing.items())
+        delta = {}
+        for key, value in proposed.items():
+            if str(value).lower() == 'default':
+                value = PARAM_TO_DEFAULT_KEYMAP.get(key)
+            if existing.get(key) != value:
+                delta[key] = value
         if delta:
             command = get_commands_to_config_vpc(module, delta, domain, existing)
             commands.append(command)

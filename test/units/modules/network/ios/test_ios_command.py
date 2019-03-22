@@ -21,9 +21,11 @@ __metaclass__ = type
 
 import json
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
+from ansible.module_utils.basic import get_timestamp
 from ansible.modules.network.ios import ios_command
-from .ios_module import TestIosModule, load_fixture, set_module_args
+from units.modules.utils import set_module_args
+from .ios_module import TestIosModule, load_fixture
 
 
 class TestIosCommandModule(TestIosModule):
@@ -31,10 +33,13 @@ class TestIosCommandModule(TestIosModule):
     module = ios_command
 
     def setUp(self):
+        super(TestIosCommandModule, self).setUp()
+
         self.mock_run_commands = patch('ansible.modules.network.ios.ios_command.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
     def tearDown(self):
+        super(TestIosCommandModule, self).tearDown()
         self.mock_run_commands.stop()
 
     def load_fixtures(self, commands=None):
@@ -42,6 +47,7 @@ class TestIosCommandModule(TestIosModule):
         def load_from_file(*args, **kwargs):
             module, commands = args
             output = list()
+            timestamps = list()
 
             for item in commands:
                 try:
@@ -51,7 +57,8 @@ class TestIosCommandModule(TestIosModule):
                     command = item['command']
                 filename = str(command).replace(' ', '_')
                 output.append(load_fixture(filename))
-            return output
+                timestamps.append(get_timestamp())
+            return output, timestamps
 
         self.run_commands.side_effect = load_from_file
 
@@ -102,3 +109,21 @@ class TestIosCommandModule(TestIosModule):
         commands = ['show version', 'show version']
         set_module_args(dict(commands=commands, wait_for=wait_for, match='all'))
         self.execute_module(failed=True)
+
+    def test_ios_command_configure_check_warning(self):
+        commands = ['configure terminal']
+        set_module_args({
+            'commands': commands,
+            '_ansible_check_mode': True,
+        })
+        result = self.execute_module()
+        self.assertEqual(
+            result['warnings'],
+            ['Only show commands are supported when using check mode, not executing configure terminal'],
+        )
+
+    def test_ios_command_configure_not_warning(self):
+        commands = ['configure terminal']
+        set_module_args(dict(commands=commands))
+        result = self.execute_module()
+        self.assertEqual(result['warnings'], [])

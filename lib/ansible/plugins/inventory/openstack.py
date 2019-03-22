@@ -11,16 +11,28 @@ __metaclass__ = type
 DOCUMENTATION = '''
     name: openstack
     plugin_type: inventory
+    author:
+      - Marco Vito Moscaritolo <marco@agavee.com>
+      - Jesse Keating <jesse.keating@rackspace.com>
     short_description: OpenStack inventory source
+    requirements:
+        - openstacksdk
+    extends_documentation_fragment:
+        - inventory_cache
+        - constructed
     description:
         - Get inventory hosts from OpenStack clouds
         - Uses openstack.(yml|yaml) YAML configuration file to configure the inventory plugin
         - Uses standard clouds.yaml YAML configuration file to configure cloud credentials
     options:
+        plugin:
+            description: token that ensures this is a source file for the 'openstack' plugin.
+            required: True
+            choices: ['openstack']
         show_all:
             description: toggles showing all vms vs only those with a working IP
-            type: boolean
-            default: False
+            type: bool
+            default: 'no'
         inventory_hostname:
             description: |
                 What to register as the inventory hostname.
@@ -43,16 +55,16 @@ DOCUMENTATION = '''
                 neutron and can be expensive for people with many hosts.
                 (Note, the default value of this is opposite from the default
                 old openstack.py inventory script's option expand_hostvars)
-            type: boolean
-            default: False
+            type: bool
+            default: 'no'
         private:
             description: |
                 Use the private interface of each server, if it has one, as
                 the host's IP in the inventory. This can be useful if you are
                 running ansible inside a server in the cloud and would rather
                 communicate to your servers over the private network.
-            type: boolean
-            default: False
+            type: bool
+            default: 'no'
         only_clouds:
             description: |
                 List of clouds from clouds.yaml to use, instead of using
@@ -67,8 +79,8 @@ DOCUMENTATION = '''
                 it can from as many clouds as it can contact. (Note, the
                 default value of this is opposite from the old openstack.py
                 inventory script's option fail_on_errors)
-            type: boolean
-            default: False
+            type: bool
+            default: 'no'
         clouds_yaml_path:
             description: |
                 Override path to clouds.yaml file. If this value is given it
@@ -77,7 +89,6 @@ DOCUMENTATION = '''
                 /etc/ansible/openstack.yml to the regular locations documented
                 at https://docs.openstack.org/os-client-config/latest/user/configuration.html#config-files
             type: string
-            default: None
         compose:
             description: Create vars from jinja2 expressions.
             type: dictionary
@@ -91,28 +102,29 @@ DOCUMENTATION = '''
 EXAMPLES = '''
 # file must be named openstack.yaml or openstack.yml
 # Make the plugin behave like the default behavior of the old script
-simple_config_file:
-    plugin: openstack
-    inventory_hostname: 'name'
-    expand_hostvars: true
-    fail_on_errors: true
+plugin: openstack
+expand_hostvars: yes
+fail_on_errors: yes
 '''
 
 import collections
+import sys
 
 from ansible.errors import AnsibleParserError
-from ansible.plugins.inventory import BaseInventoryPlugin
+from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
 
 try:
-    import os_client_config
-    import shade
-    import shade.inventory
-    HAS_SHADE = True
+    # Due to the name shadowing we should import other way
+    import importlib
+    sdk = importlib.import_module('openstack')
+    sdk_inventory = importlib.import_module('openstack.cloud.inventory')
+    client_config = importlib.import_module('openstack.config.loader')
+    HAS_SDK = True
 except ImportError:
-    HAS_SHADE = False
+    HAS_SDK = False
 
 
-class InventoryModule(BaseInventoryPlugin):
+class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     ''' Host inventory provider for ansible using OpenStack clouds. '''
 
     NAME = 'openstack'
@@ -121,39 +133,35 @@ class InventoryModule(BaseInventoryPlugin):
 
         super(InventoryModule, self).parse(inventory, loader, path)
 
-        cache_key = self.get_cache_prefix(path)
+        cache_key = self._get_cache_prefix(path)
 
         # file is config file
-        try:
-            self._config_data = self.loader.load_from_file(path)
-        except Exception as e:
-            raise AnsibleParserError(e)
+        self._config_data = self._read_config_data(path)
 
+        msg = ''
         if not self._config_data:
-            # empty. this is not my config file
-            return False
-        if 'plugin' in self._config_data and self._config_data['plugin'] != self.NAME:
-            # plugin config file, but not for us
-            return False
+            msg = 'File empty. this is not my config file'
+        elif 'plugin' in self._config_data and self._config_data['plugin'] != self.NAME:
+            msg = 'plugin config file, but not for us: %s' % self._config_data['plugin']
         elif 'plugin' not in self._config_data and 'clouds' not in self._config_data:
-            # it's not a clouds.yaml file either
-            return False
+            msg = "it's not a plugin configuration nor a clouds.yaml file"
+        elif not HAS_SDK:
+            msg = "openstacksdk is required for the OpenStack inventory plugin. OpenStack inventory sources will be skipped."
 
-        if not HAS_SHADE:
-            self.display.warning(
-                'shade is required for the OpenStack inventory plugin.'
-                ' OpenStack inventory sources will be skipped.')
-            return False
+        if msg:
+            raise AnsibleParserError(msg)
 
         # The user has pointed us at a clouds.yaml file. Use defaults for
         # everything.
         if 'clouds' in self._config_data:
             self._config_data = {}
 
+        if cache:
+            cache = self.get_option('cache')
         source_data = None
-        if cache and cache_key in inventory.cache:
+        if cache:
             try:
-                source_data = inventory.cache[cache_key]
+                source_data = self.cache.get(cache_key)
             except KeyError:
                 pass
 
@@ -161,14 +169,16 @@ class InventoryModule(BaseInventoryPlugin):
             clouds_yaml_path = self._config_data.get('clouds_yaml_path')
             if clouds_yaml_path:
                 config_files = (clouds_yaml_path +
-                                os_client_config.config.CONFIG_FILES)
+                                client_config.CONFIG_FILES)
             else:
                 config_files = None
 
-            # TODO(mordred) Integrate shade's logging with ansible's logging
-            shade.simple_logging()
+            # Redict logging to stderr so it does not mix with output
+            # particular ansible-inventory JSON output
+            # TODO(mordred) Integrate openstack's logging with ansible's logging
+            sdk.enable_logging(stream=sys.stderr)
 
-            cloud_inventory = shade.inventory.OpenStackInventory(
+            cloud_inventory = sdk_inventory.OpenStackInventory(
                 config_files=config_files,
                 private=self._config_data.get('private', False))
             only_clouds = self._config_data.get('only_clouds', [])
@@ -189,7 +199,8 @@ class InventoryModule(BaseInventoryPlugin):
             source_data = cloud_inventory.list_hosts(
                 expand=expand_hostvars, fail_on_cloud_config=fail_on_errors)
 
-            inventory.cache[cache_key] = source_data
+            if self.cache is not None:
+                self.cache.set(cache_key, source_data)
 
         self._populate_from_source(source_data)
 
@@ -232,7 +243,7 @@ class InventoryModule(BaseInventoryPlugin):
 
             # create composite vars
             self._set_composite_vars(
-                self._config_data.get('compose'), hostvars, host)
+                self._config_data.get('compose'), hostvars[host], host)
 
             # actually update inventory
             for key in hostvars[host]:
@@ -240,7 +251,11 @@ class InventoryModule(BaseInventoryPlugin):
 
             # constructed groups based on conditionals
             self._add_host_to_composed_groups(
-                self._config_data.get('groups'), hostvars, host)
+                self._config_data.get('groups'), hostvars[host], host)
+
+            # constructed groups based on jinja expressions
+            self._add_host_to_keyed_groups(
+                self._config_data.get('keyed_groups'), hostvars[host], host)
 
         for group_name, group_hosts in groups.items():
             self.inventory.add_group(group_name)
@@ -258,7 +273,8 @@ class InventoryModule(BaseInventoryPlugin):
         groups.append(cloud)
 
         # Create a group on region
-        groups.append(region)
+        if region:
+            groups.append(region)
 
         # And one by cloud_region
         groups.append("%s_%s" % (cloud, region))

@@ -1,18 +1,10 @@
 #!/usr/bin/python
 # Copyright (c) 2016 Hewlett-Packard Enterprise Corporation
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -29,8 +21,8 @@ author: "Ricardo Carrillo Cruz (@rcarrillocruz)"
 description:
     - Retrieve facts about a one or more OpenStack users
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 options:
    name:
      description:
@@ -39,18 +31,13 @@ options:
    domain:
      description:
         - Name or ID of the domain containing the user if the cloud supports domains
-     required: false
-     default: None
    filters:
      description:
         - A dictionary of meta data to use for further filtering.  Elements of
           this dictionary may be additional dictionaries.
-     required: false
-     default: None
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
 '''
 
 EXAMPLES = '''
@@ -96,11 +83,11 @@ openstack_users:
         id:
             description: Unique UUID.
             returned: success
-            type: string
+            type: str
         name:
             description: Name given to the user.
             returned: success
-            type: string
+            type: str
         enabled:
             description: Flag to indicate if the user is enabled
             returned: success
@@ -108,26 +95,23 @@ openstack_users:
         domain_id:
             description: Domain ID containing the user
             returned: success
-            type: string
+            type: str
         default_project_id:
             description: Default project ID of the user
             returned: success
-            type: string
+            type: str
         email:
             description: Email of the user
             returned: success
-            type: string
+            type: str
         username:
             description: Username of the user
             returned: success
-            type: string
+            type: str
 '''
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def main():
@@ -140,22 +124,18 @@ def main():
 
     module = AnsibleModule(argument_spec)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
+    sdk, opcloud = openstack_cloud_from_module(module)
     try:
         name = module.params['name']
         domain = module.params['domain']
         filters = module.params['filters']
-
-        opcloud = shade.operator_cloud(**module.params)
 
         if domain:
             try:
                 # We assume admin is passing domain id
                 dom = opcloud.get_domain(domain)['id']
                 domain = dom
-            except:
+            except Exception:
                 # If we fail, maybe admin is passing a domain name.
                 # Note that domains have unique names, just like id.
                 dom = opcloud.search_domains(filters={'name': domain})
@@ -169,16 +149,13 @@ def main():
 
             filters['domain_id'] = domain
 
-        users = opcloud.search_users(name,
-                                        filters)
+        users = opcloud.search_users(name, filters)
         module.exit_json(changed=False, ansible_facts=dict(
             openstack_users=users))
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
 
 if __name__ == '__main__':
     main()

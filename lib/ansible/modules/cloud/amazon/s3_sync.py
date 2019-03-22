@@ -66,7 +66,7 @@ options:
     description:
     - >
       Dict entry from extension to MIME type. This will override any default/sniffed MIME type.
-      For example C({".txt": "application/text", ".yml": "appication/text"})
+      For example C({".txt": "application/text", ".yml": "application/text"})
     required: false
   include:
     description:
@@ -95,12 +95,14 @@ options:
     required: false
     default: no
     version_added: "2.4"
+    type: bool
 
 requirements:
   - boto3 >= 1.4.4
   - botocore
+  - python-dateutil
 
-author: tedder
+author: Ted Timmons (@tedder)
 extends_documentation_fragment:
 - aws
 - ec2
@@ -209,12 +211,17 @@ import mimetypes
 import os
 import stat as osstat  # os.stat constants
 import traceback
-from dateutil import tz
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ec2_argument_spec, boto3_conn, get_aws_connection_info, HAS_BOTO3, boto_exception
 from ansible.module_utils._text import to_text
+
+try:
+    from dateutil import tz
+    HAS_DATEUTIL = True
+except ImportError:
+    HAS_DATEUTIL = False
 
 try:
     import botocore
@@ -250,7 +257,6 @@ DEFAULT_CHUNK_SIZE = 5 * 1024 * 1024
 
 
 def calculate_multipart_etag(source_path, chunk_size=DEFAULT_CHUNK_SIZE):
-
     """
     calculates a multipart upload etag for amazon s3
 
@@ -497,6 +503,10 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
     )
+
+    if not HAS_DATEUTIL:
+        module.fail_json(msg='dateutil required for this module')
+
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')
 

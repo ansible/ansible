@@ -22,35 +22,39 @@ version_added: 1.8
 short_description: Manage A10 Networks AX/SoftAX/Thunder/vThunder devices' service groups.
 description:
     - Manage SLB (Server Load Balancing) service-group objects on A10 Networks devices via aXAPIv2.
-author: "Eric Chou (@ericchou) 2016, Mischa Peters (@mischapeters) 2014"
+author:
+  - Eric Chou (@ericchou)
+  - Mischa Peters (@mischapeters)
 notes:
     - Requires A10 Networks aXAPI 2.1.
     - When a server doesn't exist and is added to the service-group the server will be created.
-extends_documentation_fragment: a10
+extends_documentation_fragment:
+  - a10
+  - url
 options:
+  state:
+    description:
+      - If the specified service group should exists.
+    default: present
+    choices: ['present', 'absent']
   partition:
     version_added: "2.3"
     description:
       - set active-partition
-    required: false
-    default: null
   service_group:
     description:
       - The SLB (Server Load Balancing) service-group name
     required: true
-    default: null
     aliases: ['service', 'pool', 'group']
   service_group_protocol:
     description:
       - The SLB service-group protocol of TCP or UDP.
-    required: false
     default: tcp
     aliases: ['proto', 'protocol']
     choices: ['tcp', 'udp']
   service_group_method:
     description:
       - The SLB service-group load balancing method, such as round-robin or weighted-rr.
-    required: false
     default: round-robin
     aliases: ['method']
     choices:
@@ -70,15 +74,13 @@ options:
       - A list of servers to add to the service group. Each list item should be a
         dictionary which specifies the C(server:) and C(port:), but can also optionally
         specify the C(status:). See the examples below for details.
-    required: false
-    default: null
+    aliases: ['server', 'member']
   validate_certs:
     description:
       - If C(no), SSL certificates will not be validated. This should only be used
         on personally controlled devices using self-signed certificates.
-    required: false
+    type: bool
     default: 'yes'
-    choices: ['yes', 'no']
 
 '''
 
@@ -107,13 +109,12 @@ RETURN = '''
 content:
   description: the full info regarding the slb_service_group
   returned: success
-  type: string
+  type: str
   sample: "mynewservicegroup"
 '''
 import json
 
-from ansible.module_utils.a10 import (axapi_call, a10_argument_spec, axapi_authenticate, axapi_failure,
-                                      axapi_enabled_disabled)
+from ansible.module_utils.network.a10.a10 import (axapi_call, a10_argument_spec, axapi_authenticate, axapi_failure, axapi_enabled_disabled)
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import url_argument_spec
 
@@ -136,7 +137,7 @@ def validate_servers(module, servers):
         if 'port' in item:
             try:
                 item['port'] = int(item['port'])
-            except:
+            except Exception:
                 module.fail_json(msg="server port definitions must be integers")
         else:
             module.fail_json(msg="server definitions must define the port field")
@@ -331,6 +332,7 @@ def main():
     # log out of the session nicely and exit
     axapi_call(module, session_url + '&method=session.close')
     module.exit_json(changed=changed, content=result)
+
 
 if __name__ == '__main__':
     main()

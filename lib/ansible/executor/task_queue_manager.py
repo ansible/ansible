@@ -28,15 +28,18 @@ import time
 from collections import deque
 
 from ansible import constants as C
+from ansible import context
 from ansible.errors import AnsibleError
 from ansible.executor.play_iterator import PlayIterator
 from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.process.threading import run_worker
 from ansible.executor.shared_plugin_loader import SharedPluginLoaderObj
 from ansible.executor.stats import AggregateStats
+from ansible.executor.task_result import TaskResult
 from ansible.module_utils.six import string_types
 from ansible.module_utils.six.moves import queue as Queue
 from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_text, to_native
 from ansible.playbook.block import Block
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import callback_loader, strategy_loader, module_loader
@@ -45,12 +48,7 @@ from ansible.template import Templar
 from ansible.utils.helpers import pct_to_int
 from ansible.vars.hostvars import HostVars
 from ansible.vars.reserved import warn_if_reserved
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import Display
 
 
 __all__ = ['TaskQueueManager']
@@ -74,6 +72,7 @@ def results_thread_main(tqm):
             break
         except Queue.Empty:
             pass
+display = Display()
 
 
 class TaskQueueManager:
@@ -95,43 +94,44 @@ class TaskQueueManager:
     RUN_FAILED_BREAK_PLAY = 8
     RUN_UNKNOWN_ERROR = 255
 
-    def __init__(self, inventory, variable_manager, loader, options, passwords, stdout_callback=None, run_additional_callbacks=True, run_tree=False):
+    def __init__(self, inventory, variable_manager, loader, passwords, stdout_callback=None, run_additional_callbacks=True, run_tree=False, forks=None):
 
         self._inventory = inventory
         self._variable_manager = variable_manager
         self._loader = loader
-        self._options = options
         self._stats = AggregateStats()
         self.passwords = passwords
         self._stdout_callback = stdout_callback
         self._run_additional_callbacks = run_additional_callbacks
         self._run_tree = run_tree
+        self._forks = forks or 5
 
         self._callbacks_loaded = False
         self._callback_plugins = []
         self._start_at_done = False
 
         # make sure any module paths (if specified) are added to the module_loader
-        if options.module_path:
-            for path in options.module_path:
+        if context.CLIARGS.get('module_path', False):
+            for path in context.CLIARGS['module_path']:
                 if path:
                     module_loader.add_directory(path)
 
         # a special flag to help us exit cleanly
         self._terminated = False
 
-        # this dictionary is used to keep track of notified handlers
-        self._notified_handlers = dict()
-        self._listening_handlers = dict()
-
         # dictionaries to keep track of failed/unreachable hosts
         self._failed_hosts = dict()
         self._unreachable_hosts = dict()
+
 
         # the final results queue we'll use for both forking and threading
         self._res_queue = deque()
         self._res_queue_lock = threading.Lock()
         self._res_ready = threading.Event()
+        try:
+            self._final_q = multiprocessing.Queue()
+        except OSError as e:
+            raise AnsibleError("Unable to use multiprocessing, this is normally caused by lack of access to /dev/shm: %s" % to_native(e))
 
         # A temporary file (opened pre-fork) used by connection
         # plugins for inter-process locking.
@@ -188,6 +188,7 @@ class TaskQueueManager:
         shared_loader_obj = SharedPluginLoaderObj()
 
         for i in range(num):
+
             rslt_q = multiprocessing.Queue()
             self._workers.append([None, rslt_q])
             w_thread = threading.Thread(target=run_worker, args=(self, shared_loader_obj))
@@ -237,6 +238,9 @@ class TaskQueueManager:
                     display.debug("Adding handler %s to listening list" % handler.name)
                     self._listening_handlers[listener].append(handler._uuid)
 
+            self._workers.append(None)
+
+
     def load_callbacks(self):
         '''
         Loads all available callbacks, with the exception of those which
@@ -259,7 +263,7 @@ class TaskQueueManager:
             else:
                 self._stdout_callback = callback_loader.get(self._stdout_callback)
                 try:
-                    self._stdout_callback.set_options(C.config.get_plugin_options('callback', self._stdout_callback._load_name))
+                    self._stdout_callback.set_options()
                 except AttributeError:
                     display.deprecated("%s stdout callback, does not support setting 'options', it will work for now, "
                                        " but this will be required in the future and should be updated,"
@@ -269,30 +273,29 @@ class TaskQueueManager:
             raise AnsibleError("callback must be an instance of CallbackBase or the name of a callback plugin")
 
         for callback_plugin in callback_loader.all(class_only=True):
-            if hasattr(callback_plugin, 'CALLBACK_VERSION') and callback_plugin.CALLBACK_VERSION >= 2.0:
-                # we only allow one callback of type 'stdout' to be loaded, so check
-                # the name of the current plugin and type to see if we need to skip
-                # loading this callback plugin
-                callback_type = getattr(callback_plugin, 'CALLBACK_TYPE', None)
-                callback_needs_whitelist = getattr(callback_plugin, 'CALLBACK_NEEDS_WHITELIST', False)
-                (callback_name, _) = os.path.splitext(os.path.basename(callback_plugin._original_path))
-                if callback_type == 'stdout':
-                    if callback_name != self._stdout_callback or stdout_callback_loaded:
-                        continue
-                    stdout_callback_loaded = True
-                elif callback_name == 'tree' and self._run_tree:
-                    pass
-                elif not self._run_additional_callbacks or (callback_needs_whitelist and (
-                        C.DEFAULT_CALLBACK_WHITELIST is None or callback_name not in C.DEFAULT_CALLBACK_WHITELIST)):
+            callback_type = getattr(callback_plugin, 'CALLBACK_TYPE', '')
+            callback_needs_whitelist = getattr(callback_plugin, 'CALLBACK_NEEDS_WHITELIST', False)
+            (callback_name, _) = os.path.splitext(os.path.basename(callback_plugin._original_path))
+            if callback_type == 'stdout':
+                # we only allow one callback of type 'stdout' to be loaded,
+                if callback_name != self._stdout_callback or stdout_callback_loaded:
                     continue
+                stdout_callback_loaded = True
+            elif callback_name == 'tree' and self._run_tree:
+                # special case for ansible cli option
+                pass
+            elif not self._run_additional_callbacks or (callback_needs_whitelist and (
+                    C.DEFAULT_CALLBACK_WHITELIST is None or callback_name not in C.DEFAULT_CALLBACK_WHITELIST)):
+                # 2.x plugins shipped with ansible should require whitelisting, older or non shipped should load automatically
+                continue
 
             callback_obj = callback_plugin()
             try:
-                callback_obj .set_options(C.config.get_plugin_options('callback', callback_plugin._load_name))
+                callback_obj.set_options()
             except AttributeError:
-                    display.deprecated("%s callback, does not support setting 'options', it will work for now, "
-                                       " but this will be required in the future and should be updated, "
-                                       " see the 2.4 porting guide for details." % self._stdout_callback._load_name, version="2.9")
+                display.deprecated("%s callback, does not support setting 'options', it will work for now, "
+                                   " but this will be required in the future and should be updated, "
+                                   " see the 2.4 porting guide for details." % callback_obj._load_name, version="2.9")
             self._callback_plugins.append(callback_obj)
 
         self._callbacks_loaded = True
@@ -323,36 +326,16 @@ class TaskQueueManager:
             loader=self._loader,
         )
 
-        # Fork # of forks, # of hosts or serial, whichever is lowest
-        num_hosts = len(self._inventory.get_hosts(new_play.hosts, ignore_restrictions=True))
+        play_context = PlayContext(new_play, self.passwords, self._connection_lockfile.fileno())
+        if (self._stdout_callback and
+                hasattr(self._stdout_callback, 'set_play_context')):
+            self._stdout_callback.set_play_context(play_context)
 
-        max_serial = 0
-        if new_play.serial:
-            # the play has not been post_validated here, so we may need
-            # to convert the scalar value to a list at this point
-            serial_items = new_play.serial
-            if not isinstance(serial_items, list):
-                serial_items = [serial_items]
-            max_serial = max([pct_to_int(x, num_hosts) for x in serial_items])
-
-        contenders = [self._options.forks, max_serial, num_hosts]
-        contenders = [v for v in contenders if v is not None and v > 0]
-        self._initialize_processes(min(contenders))
-
-        play_context = PlayContext(new_play, self._options, self.passwords, self._connection_lockfile.fileno())
         for callback_plugin in self._callback_plugins:
             if hasattr(callback_plugin, 'set_play_context'):
                 callback_plugin.set_play_context(play_context)
 
         self.send_callback('v2_playbook_on_play_start', new_play)
-
-        # initialize the shared dictionary containing the notified handlers
-        self._initialize_notified_handlers(new_play)
-
-        # load the specified strategy (or the default linear one)
-        strategy = strategy_loader.get(new_play.strategy, self)
-        if strategy is None:
-            raise AnsibleError("Invalid play strategy specified: %s" % new_play.strategy, obj=play._ds)
 
         # build the iterator
         iterator = PlayIterator(
@@ -363,6 +346,14 @@ class TaskQueueManager:
             all_vars=all_vars,
             start_at_done=self._start_at_done,
         )
+
+        # adjust to # of workers to configured forks or size of batch, whatever is lower
+        self._initialize_processes(min(self._forks, iterator.batch_size))
+
+        # load the specified strategy (or the default linear one)
+        strategy = strategy_loader.get(new_play.strategy, self)
+        if strategy is None:
+            raise AnsibleError("Invalid play strategy specified: %s" % new_play.strategy, obj=play._ds)
 
         # Because the TQM may survive multiple play runs, we start by marking
         # any hosts as failed in the iterator here which may have been marked
@@ -377,7 +368,7 @@ class TaskQueueManager:
         # during initialization, the PlayContext will clear the start_at_task
         # field to signal that a matching task was found, so check that here
         # and remember it so we don't try to skip tasks on future plays
-        if getattr(self._options, 'start_at_task', None) is not None and play_context.start_at_task is None:
+        if context.CLIARGS.get('start_at_task') is not None and play_context.start_at_task is None:
             self._start_at_done = True
 
         # and run the play using the strategy and cleanup on way out
@@ -404,7 +395,11 @@ class TaskQueueManager:
 
     def _cleanup_forked_processes(self):
         if hasattr(self, '_workers'):
+
             for (worker_prc, _) in self._workers:
+
+            for worker_prc in self._workers:
+
                 if worker_prc and worker_prc.is_alive():
                     try:
                         worker_prc.terminate()
@@ -442,8 +437,8 @@ class TaskQueueManager:
 
         defunct = False
         for (idx, x) in enumerate(self._workers):
-            if hasattr(x[0], 'exitcode'):
-                if x[0].exitcode in [-9, -11, -15]:
+            if hasattr(x, 'exitcode'):
+                if x.exitcode in [-9, -11, -15]:
                     defunct = True
         return defunct
 
@@ -463,9 +458,20 @@ class TaskQueueManager:
                 if gotit is not None:
                     methods.append(gotit)
 
+            # send clean copies
+            new_args = []
+            for arg in args:
+                # FIXME: add play/task cleaners
+                if isinstance(arg, TaskResult):
+                    new_args.append(arg.clean_copy())
+                # elif isinstance(arg, Play):
+                # elif isinstance(arg, Task):
+                else:
+                    new_args.append(arg)
+
             for method in methods:
                 try:
-                    method(*args, **kwargs)
+                    method(*new_args, **kwargs)
                 except Exception as e:
                     # TODO: add config toggle to make this fatal or not?
                     display.warning(u"Failure using method (%s) in callback plugin (%s): %s" % (to_text(method_name), to_text(callback_plugin), to_text(e)))

@@ -27,7 +27,7 @@ version_added: "2.4"
 short_description: Manages VPN instance on HUAWEI CloudEngine switches.
 description:
     - Manages VPN instance of HUAWEI CloudEngine switches.
-author: Yang yang (@CloudEngine-Ansible)
+author: Yang yang (@QijunPan)
 notes:
     - If I(state=absent), the route will be removed, regardless of the
       non-required options.
@@ -39,12 +39,9 @@ options:
     description:
         description:
             - Description of the vrf, the string length is 1 - 242 .
-        required: false
-        default: null
     state:
         description:
             - Manage the state of the resource.
-        required: false
         choices: ['present','absent']
         default: present
 '''
@@ -105,13 +102,13 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_nc_config, set_nc_config, ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec
 
 
 CE_NC_GET_VRF = """

@@ -73,12 +73,12 @@ class Pushover(object):
 
         # parse config
         options = dict(user=self.user,
-                token=self.token,
-                priority=priority,
-                message=msg)
+                       token=self.token,
+                       priority=priority,
+                       message=msg)
         data = urlencode(options)
 
-        headers = { "Content-type": "application/x-www-form-urlencoded"}
+        headers = {"Content-type": "application/x-www-form-urlencoded"}
         r, info = fetch_url(self.module, url, method='POST', data=data, headers=headers)
         if info['status'] != 200:
             raise Exception(info)
@@ -93,14 +93,14 @@ def main():
             msg=dict(required=True),
             app_token=dict(required=True, no_log=True),
             user_key=dict(required=True, no_log=True),
-            pri=dict(required=False, default='0', choices=['-2','-1','0','1','2']),
+            pri=dict(required=False, default='0', choices=['-2', '-1', '0', '1', '2']),
         ),
     )
 
     msg_object = Pushover(module, module.params['user_key'], module.params['app_token'])
     try:
         response = msg_object.run(module.params['pri'], module.params['msg'])
-    except:
+    except Exception:
         module.fail_json(msg='Unable to send msg via pushover')
 
     module.exit_json(msg='message sent successfully: %s' % response, changed=False)

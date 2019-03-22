@@ -19,11 +19,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.vyos import vyos_user
-from .vyos_module import TestVyosModule, load_fixture, set_module_args
+from units.modules.utils import set_module_args
+from .vyos_module import TestVyosModule, load_fixture
 
 
 class TestVyosUserModule(TestVyosModule):
@@ -31,6 +30,8 @@ class TestVyosUserModule(TestVyosModule):
     module = vyos_user
 
     def setUp(self):
+        super(TestVyosUserModule, self).setUp()
+
         self.mock_get_config = patch('ansible.modules.network.vyos.vyos_user.get_config')
         self.get_config = self.mock_get_config.start()
 
@@ -38,6 +39,7 @@ class TestVyosUserModule(TestVyosModule):
         self.load_config = self.mock_load_config.start()
 
     def tearDown(self):
+        super(TestVyosUserModule, self).tearDown()
         self.mock_get_config.stop()
         self.mock_load_config.stop()
 

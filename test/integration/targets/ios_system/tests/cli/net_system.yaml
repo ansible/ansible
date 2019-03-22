@@ -1,0 +1,37 @@
+---
+- debug: msg="START ios cli/net_system.yaml on connection={{ ansible_connection }}"
+
+# Add minimal testcase to check args are passed correctly to
+# implementation module and module run is successful.
+
+- name: setup
+  ios_config:
+    lines:
+      - no ip domain-list ansible.com
+      - no ip domain-list redhat.com
+    match: none
+    provider: "{{ cli }}"
+
+- name: configure domain_search using platform agnostic module
+  net_system:
+    domain_search:
+      - ansible.com
+      - redhat.com
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - "'ip domain list ansible.com' in result.commands"
+      - "'ip domain list redhat.com' in result.commands"
+
+- name: teardown
+  ios_config:
+    lines:
+      - no ip domain-list ansible.com
+      - no ip domain-list redhat.com
+    match: none
+    provider: "{{ cli }}"
+
+- debug: msg="END ios cli/net_system.yaml on connection={{ ansible_connection }}"

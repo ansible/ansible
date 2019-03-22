@@ -1,23 +1,32 @@
-#!/bin/bash -eux
+#!/usr/bin/env bash
 
-set -o pipefail
+set -o pipefail -eux
 
 declare -a args
-IFS='/:' read -ra args <<< "${TEST}"
+IFS='/:' read -ra args <<< "$1"
 
 script="${args[0]}"
 
+test="$1"
+
 docker images ansible/ansible
+docker images quay.io/ansible/*
+docker ps
+
+for container in $(docker ps --format '{{.Image}} {{.ID}}' | grep -v '^drydock/' | sed 's/^.* //'); do
+    docker rm -f "${container}" || true  # ignore errors
+done
+
 docker ps
 
 if [ -d /home/shippable/cache/ ]; then
     ls -la /home/shippable/cache/
 fi
 
-which python
+command -v python
 python -V
 
-which pip
+command -v pip
 pip --version
 pip list --disable-pip-version-check
 
@@ -37,7 +46,7 @@ elif [[ "${COMMIT_MESSAGE}" =~ ci_coverage ]]; then
     export COVERAGE="--coverage"
 else
     # on-demand coverage reporting disabled (default behavior, always-on coverage reporting remains enabled)
-    export COVERAGE=""
+    export COVERAGE="--coverage-check"
 fi
 
 if [ -n "${COMPLETE:-}" ]; then
@@ -51,6 +60,14 @@ else
     export CHANGED="--changed"
 fi
 
+if [ "${IS_PULL_REQUEST:-}" == "true" ]; then
+    # run unstable tests which are targeted by focused changes on PRs
+    export UNSTABLE="--allow-unstable-changed"
+else
+    # do not run unstable tests outside PRs
+    export UNSTABLE=""
+fi
+
 # remove empty core/extras module directories from PRs created prior to the repo-merge
 find lib/ansible/modules -type d -empty -print -delete
 
@@ -58,7 +75,7 @@ function cleanup
 {
     if find test/results/coverage/ -mindepth 1 -name '.*' -prune -o -print -quit | grep -q .; then
         # for complete on-demand coverage generate a report for all files with no coverage on the "other" job so we only have one copy
-        if [ "${COVERAGE}" ] && [ "${CHANGED}" == "" ] && [ "${TEST}" == "other" ]; then
+        if [ "${COVERAGE}" == "--coverage" ] && [ "${CHANGED}" == "" ] && [ "${test}" == "sanity/1" ]; then
             stub="--stub"
         else
             stub=""
@@ -69,17 +86,19 @@ function cleanup
         cp -a test/results/reports/coverage=*.xml shippable/codecoverage/
 
         # upload coverage report to codecov.io only when using complete on-demand coverage
-        if [ "${COVERAGE}" ] && [ "${CHANGED}" == "" ]; then
+        if [ "${COVERAGE}" == "--coverage" ] && [ "${CHANGED}" == "" ]; then
             for file in test/results/reports/coverage=*.xml; do
                 flags="${file##*/coverage=}"
                 flags="${flags%.xml}"
+                # remove numbered component from stub files when converting to tags
+                flags="${flags//stub-[0-9]*/stub}"
                 flags="${flags//=/,}"
                 flags="${flags//[^a-zA-Z0-9_,]/_}"
 
                 bash <(curl -s https://codecov.io/bash) \
                     -f "${file}" \
                     -F "${flags}" \
-                    -n "${TEST}" \
+                    -n "${test}" \
                     -t 83cd8957-dc76-488c-9ada-210dcea51633 \
                     -X coveragepy \
                     -X gcov \
@@ -93,9 +112,18 @@ function cleanup
 
     rmdir shippable/testresults/
     cp -a test/results/junit/ shippable/testresults/
+    cp -a test/results/data/ shippable/testresults/
     cp -aT test/results/bot/ shippable/testresults/
 }
 
 trap cleanup EXIT
 
-"test/utils/shippable/${script}.sh"
+if [[ "${COVERAGE:-}" == "--coverage" ]]; then
+    timeout=60
+else
+    timeout=45
+fi
+
+ansible-test env --dump --show --timeout "${timeout}" --color -v
+
+"test/utils/shippable/${script}.sh" "${test}"

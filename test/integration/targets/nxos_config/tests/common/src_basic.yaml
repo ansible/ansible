@@ -1,8 +1,7 @@
 ---
-- debug: msg="START {{ connection.transport }}/src_basic.yaml"
+- debug: msg="START common/src_basic.yaml on connection={{ ansible_connection }}"
 
-# Select interface for test
-- set_fact: intname="{{ nxos_int1 }}"
+- set_fact: intname="loopback1"
 
 - name: setup
   nxos_config:
@@ -16,13 +15,9 @@
 
 - name: configure device with config
   nxos_config:
-    commands:
-      - description this is a test
-      - shutdown
-    parents:
-      - "interface {{ intname }}"
-    defaults: yes
+    src: basic/config.j2
     provider: "{{ connection }}"
+    defaults: yes
   register: result
 
 - assert:
@@ -33,12 +28,7 @@
 
 - name: check device with config
   nxos_config:
-    commands:
-      - description this is a test
-      - shutdown
-    parents:
-      - "interface {{ intname }}"
-    defaults: yes
+    src: basic/config.j2
     provider: "{{ connection }}"
   register: result
 
@@ -48,4 +38,4 @@
 # https://github.com/ansible/ansible-modules-core/issues/4807
       - "result.updates is not defined"
 
-- debug: msg="END {{ connection.transport }}/src_basic.yaml"
+- debug: msg="END common/src_basic.yaml on connection={{ ansible_connection }}"

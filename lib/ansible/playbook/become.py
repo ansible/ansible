@@ -20,22 +20,20 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible import constants as C
+from ansible import context
 from ansible.errors import AnsibleParserError
 from ansible.playbook.attribute import FieldAttribute
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class Become:
 
     # Privilege escalation
-    _become = FieldAttribute(isa='bool')
-    _become_method = FieldAttribute(isa='string')
-    _become_user = FieldAttribute(isa='string')
+    _become = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('become'))
+    _become_method = FieldAttribute(isa='string', default=context.cliargs_deferred_get('become_method'))
+    _become_user = FieldAttribute(isa='string', default=context.cliargs_deferred_get('become_user'))
     _become_flags = FieldAttribute(isa='string')
 
     def __init__(self):
@@ -78,7 +76,7 @@ class Become:
                 ds['become_user'] = ds['sudo_user']
                 del ds['sudo_user']
 
-            display.deprecated("Instead of sudo/sudo_user, use become/become_user and make sure become_method is 'sudo' (default)", '2.6')
+            display.deprecated("Instead of sudo/sudo_user, use become/become_user and make sure become_method is 'sudo' (default)", '2.9')
 
         elif 'su' in ds or 'su_user' in ds:
             ds['become_method'] = 'su'
@@ -90,6 +88,6 @@ class Become:
                 ds['become_user'] = ds['su_user']
                 del ds['su_user']
 
-            display.deprecated("Instead of su/su_user, use become/become_user and set become_method to 'su' (default is sudo)", '2.6')
+            display.deprecated("Instead of su/su_user, use become/become_user and set become_method to 'su' (default is sudo)", '2.9')
 
         return ds

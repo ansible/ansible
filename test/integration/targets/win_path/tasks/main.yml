@@ -22,7 +22,7 @@
 - name: Ensure output
   assert:
     that:
-    - item.0 | changed
+    - item.0 is changed
     - item.0.path_value == "C:\\" + item.0.item + "Path"
     - item.1.stdout_lines[0] == 'C:\\' + item.0.item + 'Path'
   with_together:
@@ -47,7 +47,7 @@
 - name: Ensure output
   assert:
     that:
-    - multiout | changed
+    - multiout is changed
     - multiout.path_value == "C:\\PathZ;C:\\PathA"
     - varout.stdout_lines[0] == "C:\\PathZ;C:\\PathA"
 
@@ -84,10 +84,10 @@
 - name: Ensure output
   assert:
     that:
-    - addout | changed
+    - addout is changed
     - addout.path_value == 'C:\\PathZ;C:\\NewPath;C:\\PathA;C:\\PathWithTrailingBackslash\\;"C:\Quoted;With;Semicolons";%SystemRoot%\stuff'
     - varout.stdout_lines[0] == ('C:\\PathZ;C:\\NewPath;C:\\PathA;C:\\PathWithTrailingBackslash\\;"C:\Quoted;With;Semicolons";C:\Windows\stuff')
-    - not idemout | changed
+    - idemout is not changed
     - idemout.path_value == 'C:\\PathZ;C:\\NewPath;C:\\PathA;C:\\PathWithTrailingBackslash\\;"C:\Quoted;With;Semicolons";%SystemRoot%\stuff'
     - idemvarout.stdout_lines[0] == ('C:\\PathZ;C:\\NewPath;C:\\PathA;C:\\PathWithTrailingBackslash\\;"C:\Quoted;With;Semicolons";C:\Windows\stuff')
 
@@ -116,10 +116,10 @@
 - name: Ensure output
   assert:
     that:
-    - removeout | changed
+    - removeout is changed
     - removeout.path_value == 'C:\\PathZ;C:\\PathA;C:\\PathWithTrailingBackslash\\;"C:\Quoted;With;Semicolons";%SystemRoot%\stuff'
     - varout.stdout_lines[0] == 'C:\\PathZ;C:\\PathA;C:\\PathWithTrailingBackslash\\;"C:\Quoted;With;Semicolons";C:\Windows\stuff'
-    - not idemremoveout | changed
+    - idemremoveout is not changed
     - idemremoveout.path_value == 'C:\\PathZ;C:\\PathA;C:\\PathWithTrailingBackslash\\;"C:\Quoted;With;Semicolons";%SystemRoot%\stuff'
     - idemvarout.stdout_lines[0] == 'C:\\PathZ;C:\\PathA;C:\\PathWithTrailingBackslash\\;"C:\Quoted;With;Semicolons";C:\Windows\stuff'
 
@@ -141,7 +141,7 @@
 - name: Ensure output
   assert:
     that:
-    - removeout | changed
+    - removeout is changed
     - removeout.path_value == "C:\\PathA"
     - varout.stdout_lines[0] == "C:\\PathA"
 
@@ -172,10 +172,10 @@
 - name: Ensure output
   assert:
     that:
-    - checkadd | changed
+    - checkadd is changed
     - checkadd.path_value == "C:\\PathA;C:\\MissingPath"
     - checkaddvarout.stdout_lines[0] == "C:\\PathA" # shouldn't have actually changed the value
-    - checkremove | changed
+    - checkremove is changed
     - checkremove.path_value == ""
     - checkremovevarout.stdout_lines[0] == "C:\\PathA" # shouldn't have actually changed the value
 

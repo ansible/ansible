@@ -1,24 +1,24 @@
 ---
 # ensure logging configs are empty
 - name: Remove host logging
-  ios_logging:
+  ios_logging: &remove_host
     dest: host
     name: 172.16.0.1
     state: absent
-    authorize: yes
+    provider: "{{ cli }}"
 
 - name: Remove console
   ios_logging:
     dest: console
     level: warnings
     state: absent
-    authorize: yes
+    provider: "{{ cli }}"
 
 - name: Remove buffer
   ios_logging:
     dest: buffered
     size: 8000
-    authorize: yes
+    provider: "{{ cli }}"
     state: absent
 
 # start tests
@@ -26,8 +26,9 @@
   ios_logging:
     dest: host
     name: 172.16.0.1
+    facility: local7
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -41,19 +42,15 @@
     dest: host
     name: 172.16.0.1
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
-- assert:
+- assert: &unchanged
     that:
       - 'result.changed == false'
 
 - name: Delete/disable host logging
-  ios_logging:
-    dest: host
-    name: 172.16.0.1
-    state: absent
-    authorize: yes
+  ios_logging: *remove_host
   register: result
 
 - assert:
@@ -62,23 +59,17 @@
       - '"no logging host 172.16.0.1" in result.commands'
 
 - name: Delete/disable host logging (idempotent)
-  ios_logging:
-    dest: host
-    name: 172.16.0.1
-    state: absent
-    authorize: yes
+  ios_logging: *remove_host
   register: result
 
-- assert:
-    that:
-      - 'result.changed == false'
+- assert: *unchanged
 
 - name: Console logging with level warnings
   ios_logging:
     dest: console
     level: warnings
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -90,7 +81,7 @@
   ios_logging:
     dest: buffered
     size: 8000
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -98,12 +89,13 @@
       - 'result.changed == true'
       - '"logging buffered 8000" in result.commands'
 
+
 - name: Change logging parameters using aggregate
   ios_logging:
     aggregate:
       - { dest: console, level: notifications }
       - { dest: buffered, size: 9000 }
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -112,13 +104,36 @@
       - '"logging buffered 9000" in result.commands'
       - '"logging console notifications" in result.commands'
 
+- name: Set both logging destination and facility
+  ios_logging: &set_both
+    dest: buffered
+    facility: uucp
+    level: alerts
+    size: 4096
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"logging buffered 4096 alerts" in result.commands'
+      - '"logging facility uucp" in result.commands'
+
+- name: Set both logging destination and facility (idempotent)
+  ios_logging: *set_both
+  register: result
+
+- assert: *unchanged
+
 - name: remove logging as collection tearDown
   ios_logging:
     aggregate:
       - { dest: console, level: notifications }
-      - { dest: buffered, size: 9000 }
+      - { dest: buffered, size: 4096, level: alerts }
+      - { facility: uucp }
     state: absent
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -126,3 +141,4 @@
       - 'result.changed == true'
       - '"no logging console" in result.commands'
       - '"no logging buffered" in result.commands'
+      - '"no logging facility uucp" in result.commands'

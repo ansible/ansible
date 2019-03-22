@@ -6,14 +6,14 @@
     lines:
       - "snmp-server contact ansible"
       - "hostname switch"
-    provider: "{{ nxapi }}"
     match: none
+    provider: "{{ connection }}"
 
 - name: configure top level command with before
   nxos_config:
     lines: hostname foo
     before: snmp-server contact bar
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -26,7 +26,7 @@
   nxos_config:
     lines: hostname foo
     before: snmp-server contact foo
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -38,7 +38,7 @@
     lines:
       - "no snmp-server contact ansible"
       - "hostname switch"
-    provider: "{{ nxapi }}"
     match: none
+    provider: "{{ connection }}"
 
 - debug: msg="END nxapi/toplevel_before.yaml"

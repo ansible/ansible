@@ -1,20 +1,18 @@
 #!/usr/bin/python
 # encoding: utf-8
 
-# (c) 2012, Matt Wright <matt@nobien.net>
-# (c) 2013, Alexander Saltanov <asd@mokote.com>
-# (c) 2014, Rutger Spiertz <rutger@kumina.nl>
-#
+# Copyright: (c) 2012, Matt Wright <matt@nobien.net>
+# Copyright: (c) 2013, Alexander Saltanov <asd@mokote.com>
+# Copyright: (c) 2014, Rutger Spiertz <rutger@kumina.nl>
+
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
-
 
 DOCUMENTATION = '''
 ---
@@ -27,50 +25,44 @@ notes:
     - This module supports Debian Squeeze (version 6) as well as its successors.
 options:
     repo:
-        required: true
-        default: none
         description:
             - A source string for the repository.
+        required: true
     state:
-        required: false
-        choices: [ "absent", "present" ]
-        default: "present"
         description:
             - A source string state.
+        choices: [ absent, present ]
+        default: "present"
     mode:
-        required: false
-        default: 0644
         description:
             - The octal mode for newly created files in sources.list.d
+        default: '0644'
         version_added: "1.6"
     update_cache:
         description:
             - Run the equivalent of C(apt-get update) when a change occurs.  Cache updates are run after making changes.
-        required: false
+        type: bool
         default: "yes"
-        choices: [ "yes", "no" ]
     validate_certs:
-        version_added: '1.8'
         description:
             - If C(no), SSL certificates for the target repo will not be validated. This should only be used
               on personally controlled sites using self-signed certificates.
-        required: false
+        type: bool
         default: 'yes'
-        choices: ['yes', 'no']
+        version_added: '1.8'
     filename:
-        version_added: '2.1'
         description:
             - Sets the name of the source list file in sources.list.d.
               Defaults to a file name based on the repository source url.
               The .list extension will be automatically added.
-        required: false
+        version_added: '2.1'
     codename:
-        version_added: '2.3'
         description:
             - Override the distribution codename to use for PPA repositories.
               Should usually only be set when working with a PPA on a non-Ubuntu target (e.g. Debian or Mint)
-        required: false
-author: "Alexander Saltanov (@sashka)"
+        version_added: '2.3'
+author:
+- Alexander Saltanov (@sashka)
 version_added: "0.7"
 requirements:
    - python-apt (python 2)
@@ -87,7 +79,7 @@ EXAMPLES = '''
 - apt_repository:
     repo: deb http://dl.google.com/linux/chrome/deb/ stable main
     state: present
-    filename: 'google-chrome'
+    filename: google-chrome
 
 # Add source repository into sources list.
 - apt_repository:
@@ -102,15 +94,16 @@ EXAMPLES = '''
 # Add nginx stable repository from PPA and install its signing key.
 # On Ubuntu target:
 - apt_repository:
-    repo: 'ppa:nginx/stable'
+    repo: ppa:nginx/stable
 
 # On Debian target
 - apt_repository:
     repo: 'ppa:nginx/stable'
-    codename: 'trusty'
+    codename: trusty
 '''
 
 import glob
+import json
 import os
 import re
 import sys
@@ -126,12 +119,17 @@ except ImportError:
     distro = None
     HAVE_PYTHON_APT = False
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+from ansible.module_utils.urls import fetch_url
+
+
 if sys.version_info[0] < 3:
     PYTHON_APT = 'python-apt'
 else:
     PYTHON_APT = 'python3-apt'
 
-DEFAULT_SOURCES_PERM = int('0644', 8)
+DEFAULT_SOURCES_PERM = 0o0644
 
 VALID_SOURCE_TYPES = ('deb', 'deb-src')
 
@@ -186,7 +184,6 @@ class SourcesList(object):
             for n, valid, enabled, source, comment in sources:
                 if valid:
                     yield file, n, enabled, source, comment
-        raise StopIteration
 
     def _expand_path(self, filename):
         if '/' in filename:
@@ -208,8 +205,8 @@ class SourcesList(object):
             return s
 
         # Drop options and protocols.
-        line = re.sub('\[[^\]]+\]', '', line)
-        line = re.sub('\w+://', '', line)
+        line = re.sub(r'\[[^\]]+\]', '', line)
+        line = re.sub(r'\w+://', '', line)
 
         # split line into valid keywords
         parts = [part for part in line.split() if part not in VALID_SOURCE_TYPES]
@@ -233,7 +230,7 @@ class SourcesList(object):
         # Check for another "#" in the line and treat a part after it as a comment.
         i = line.find('#')
         if i > 0:
-            comment = line[i+1:].strip()
+            comment = line[i + 1:].strip()
             line = line[:i]
 
         # Split a source into substring to make sure that it is source spec.
@@ -284,6 +281,11 @@ class SourcesList(object):
         for filename, sources in list(self.files.items()):
             if sources:
                 d, fn = os.path.split(filename)
+                try:
+                    os.makedirs(d)
+                except OSError as err:
+                    if not os.path.isdir(d):
+                        self.module.fail_json("Failed to create directory %s: %s" % (d, to_native(err)))
                 fd, tmp_path = tempfile.mkstemp(prefix=".%s-" % fn, dir=d)
 
                 f = os.fdopen(fd, 'w')
@@ -300,9 +302,8 @@ class SourcesList(object):
 
                     try:
                         f.write(line)
-                    except IOError:
-                        err = get_exception()
-                        self.module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, unicode(err)))
+                    except IOError as err:
+                        self.module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, to_native(err)))
                 self.module.atomic_move(tmp_path, filename)
 
                 # allow the user to override the default mode
@@ -429,7 +430,7 @@ class UbuntuSourcesList(SourcesList):
             if self.add_ppa_signing_keys_callback is not None:
                 info = self._get_ppa_info(ppa_owner, ppa_name)
                 if not self._key_already_exists(info['signing_key_fingerprint']):
-                    command = ['apt-key', 'adv', '--recv-keys', '--keyserver', 'hkp://keyserver.ubuntu.com:80', info['signing_key_fingerprint']]
+                    command = ['apt-key', 'adv', '--recv-keys', '--no-tty', '--keyserver', 'hkp://keyserver.ubuntu.com:80', info['signing_key_fingerprint']]
                     self.add_ppa_signing_keys_callback(command)
 
             file = file or self._suggest_filename('%s_%s' % (line, self.codename))
@@ -479,15 +480,15 @@ def get_add_ppa_signing_key_callback(module):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            repo=dict(required=True),
-            state=dict(choices=['present', 'absent'], default='present'),
-            mode=dict(required=False, type='raw'),
-            update_cache = dict(aliases=['update-cache'], type='bool', default='yes'),
-            filename=dict(required=False, default=None),
-            # this should not be needed, but exists as a failsafe
-            install_python_apt=dict(required=False, default="yes", type='bool'),
-            validate_certs = dict(default='yes', type='bool'),
-            codename = dict(required=False),
+            repo=dict(type='str', required=True),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
+            mode=dict(type='raw'),
+            update_cache=dict(type='bool', default=True, aliases=['update-cache']),
+            filename=dict(type='str'),
+            # This should not be needed, but exists as a failsafe
+            install_python_apt=dict(type='bool', default=True),
+            validate_certs=dict(type='bool', default=True),
+            codename=dict(type='str'),
         ),
         supports_check_mode=True,
     )
@@ -506,9 +507,11 @@ def main():
         else:
             module.fail_json(msg='%s is not installed, and install_python_apt is False' % PYTHON_APT)
 
+    if not repo:
+        module.fail_json(msg='Please set argument \'repo\' to a non-empty value')
+
     if isinstance(distro, aptsources_distro.Distribution):
-        sourceslist = UbuntuSourcesList(module,
-            add_ppa_signing_keys_callback=get_add_ppa_signing_key_callback(module))
+        sourceslist = UbuntuSourcesList(module, add_ppa_signing_keys_callback=get_add_ppa_signing_key_callback(module))
     else:
         module.fail_json(msg='Module apt_repository is not supported on target.')
 
@@ -519,9 +522,8 @@ def main():
             sourceslist.add_source(repo)
         elif state == 'absent':
             sourceslist.remove_source(repo)
-    except InvalidSource:
-        err = get_exception()
-        module.fail_json(msg='Invalid repository string: %s' % unicode(err))
+    except InvalidSource as err:
+        module.fail_json(msg='Invalid repository string: %s' % to_native(err))
 
     sources_after = sourceslist.dump()
     changed = sources_before != sources_after
@@ -542,15 +544,11 @@ def main():
             if update_cache:
                 cache = apt.Cache()
                 cache.update()
-        except OSError:
-            err = get_exception()
-            module.fail_json(msg=unicode(err))
+        except OSError as err:
+            module.fail_json(msg=to_native(err))
 
     module.exit_json(changed=changed, repo=repo, state=state, diff=diff)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 
 if __name__ == '__main__':
     main()

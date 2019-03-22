@@ -19,6 +19,7 @@ short_description: Gather facts about Redshift cluster(s)
 description:
   - Gather facts about Redshift cluster(s)
 version_added: "2.4"
+requirements: [ boto3 ]
 options:
   cluster_identifier:
     description:
@@ -73,37 +74,37 @@ RETURN = '''
 cluster_identifier:
     description: Unique key to identify the cluster.
     returned: success
-    type: string
+    type: str
     sample: "redshift-identifier"
 node_type:
     description: The node type for nodes in the cluster.
     returned: success
-    type: string
+    type: str
     sample: "ds2.xlarge"
 cluster_status:
     description: Current state of the cluster.
     returned: success
-    type: string
+    type: str
     sample: "available"
 modify_status:
     description: The status of a modify operation.
     returned: optional
-    type: string
+    type: str
     sample: ""
 master_username:
     description: The master user name for the cluster.
     returned: success
-    type: string
+    type: str
     sample: "admin"
 db_name:
     description: The name of the initial database that was created when the cluster was created.
     returned: success
-    type: string
+    type: str
     sample: "dev"
 endpoint:
     description: The connection endpoint.
     returned: success
-    type: string
+    type: str
     sample: {
         "address": "cluster-ds2.ocmugla0rf.us-east-1.redshift.amazonaws.com",
         "port": 5439
@@ -111,7 +112,7 @@ endpoint:
 cluster_create_time:
     description: The date and time that the cluster was created.
     returned: success
-    type: string
+    type: str
     sample: "2016-05-10T08:33:16.629000+00:00"
 automated_snapshot_retention_period:
     description: The number of days that automatic cluster snapshots are retained.
@@ -156,22 +157,22 @@ cluster_paramater_groups:
 cluster_subnet_group_name:
     description: The name of the subnet group that is associated with the cluster.
     returned: success
-    type: string
+    type: str
     sample: "redshift-subnet"
 vpc_id:
     description: The identifier of the VPC the cluster is in, if the cluster is in a VPC.
     returned: success
-    type: string
+    type: str
     sample: "vpc-1234567"
-availibility_zone:
+availability_zone:
     description: The name of the Availability Zone in which the cluster is located.
     returned: success
-    type: string
+    type: str
     sample: "us-east-1b"
 preferred_maintenance_window:
     description: The weekly time range, in Universal Coordinated Time (UTC), during which system maintenance can occur.
     returned: success
-    type: string
+    type: str
     sample: "tue:07:30-tue:08:00"
 pending_modified_values:
     description: A value that, if present, indicates that changes to the cluster are pending.
@@ -181,14 +182,14 @@ pending_modified_values:
 cluster_version:
     description: The version ID of the Amazon Redshift engine that is running on the cluster.
     returned: success
-    type: string
+    type: str
     sample: "1.0"
 allow_version_upgrade:
     description: >
       A Boolean value that, if true, indicates that major version upgrades will be applied
       automatically to the cluster during the maintenance window.
     returned: success
-    type: boolean
+    type: bool
     sample: true|false
 number_of_nodes:
     description:  The number of compute nodes in the cluster.
@@ -198,12 +199,12 @@ number_of_nodes:
 publicly_accessible:
     description: A Boolean value that, if true , indicates that the cluster can be accessed from a public network.
     returned: success
-    type: boolean
+    type: bool
     sample: true|false
 encrypted:
     description: Boolean value that, if true , indicates that data in the cluster is encrypted at rest.
     returned: success
-    type: boolean
+    type: bool
     sample: true|false
 restore_status:
     description: A value that describes the status of a cluster restore action.
@@ -225,7 +226,7 @@ cluster_snapshot_copy_status:
 cluster_public_keys:
     description: The public key for the cluster.
     returned: success
-    type: string
+    type: str
     sample: "ssh-rsa anjigfam Amazon-Redshift\n"
 cluster_nodes:
     description: The nodes in the cluster.
@@ -251,7 +252,7 @@ elastic_ip_status:
 cluster_revision_number:
     description: The specific revision number of the database in the cluster.
     returned: success
-    type: string
+    type: str
     sample: "1231"
 tags:
     description: The list of tags for the cluster.
@@ -261,12 +262,12 @@ tags:
 kms_key_id:
     description: The AWS Key Management Service (AWS KMS) key ID of the encryption key used to encrypt data in the cluster.
     returned: success
-    type: string
+    type: str
     sample: ""
 enhanced_vpc_routing:
     description: An option that specifies whether to create the cluster with enhanced VPC routing enabled.
     returned: success
-    type: boolean
+    type: bool
     sample: true|false
 iam_roles:
     description: List of IAM roles attached to the cluster.

@@ -1,0 +1,19 @@
+---
+- name: test fail vpc and network mutually exclusive
+  cs_ip_address:
+    network: "{{ cs_resource_prefix }}_net_vpc"
+    vpc: "foobar"
+    zone: "{{ cs_common_zone_adv }}"
+  ignore_errors: yes
+  register: ip_address
+- name: verify test fail vpc and network mutually exclusive
+  assert:
+    that:
+    - ip_address is failed
+    - 'ip_address.msg == "parameters are mutually exclusive: vpc|network"'
+
+- name: run test for network setup
+  import_tasks: network.yml
+
+- name: run test for vpc setup
+  import_tasks: vpc.yml

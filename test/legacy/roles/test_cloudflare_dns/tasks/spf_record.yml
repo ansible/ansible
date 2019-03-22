@@ -19,8 +19,8 @@
 - name: "Validate: SPF record creation"
   assert:
     that:
-      - cloudflare_dns|success
-      - cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
       - cloudflare_dns.result.record.content == "{{ txt_teststring }}"
       - cloudflare_dns.result.record.ttl == 150
       - cloudflare_dns.result.record.type == 'SPF'
@@ -41,8 +41,8 @@
 - name: "Validate: SPF record idempotency"
   assert:
     that:
-      - cloudflare_dns|success
-      - not cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed
 
 - name: "Test: SPF record update"
   cloudflare_dns:
@@ -58,8 +58,8 @@
 - name: "Validate: SPF record update"
   assert:
     that:
-      - cloudflare_dns|success
-      - cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
       - cloudflare_dns.result.record.ttl == 300
 
 - name: "Test: SPF record duplicate (create new record)"
@@ -76,8 +76,8 @@
 - name: "Validate: SPF record duplicate (create new record)"
   assert:
     that:
-      - cloudflare_dns|success
-      - cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
       - cloudflare_dns.result.record.content == 'v=spf1 teststring'
       - cloudflare_dns.result.record.ttl == 150
       - cloudflare_dns.result.record.type == 'SPF'
@@ -98,8 +98,8 @@
 - name: "Validate: SPF record duplicate (old record present)"
   assert:
     that:
-      - cloudflare_dns|success
-      - not cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed
       - cloudflare_dns.result.record.content == "{{ txt_teststring }}"
       - cloudflare_dns.result.record.ttl == 300
       - cloudflare_dns.result.record.type == 'SPF'
@@ -121,8 +121,8 @@
 - name: "Validate: SPF record duplicate (make new record solo)"
   assert:
     that:
-      - cloudflare_dns|success
-      - cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
       - cloudflare_dns.result.record.content == 'v=spf1 teststring'
       - cloudflare_dns.result.record.ttl == 150
       - cloudflare_dns.result.record.type == 'SPF'
@@ -144,8 +144,8 @@
 - name: "Validate: SPF record duplicate (old record absent)"
   assert:
     that:
-      - cloudflare_dns|success
-      - not cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed
 
 - name: "Test: SPF record deletion"
   cloudflare_dns:
@@ -162,8 +162,8 @@
 - name: "Validate: SPF record deletion"
   assert:
     that:
-      - cloudflare_dns|success
-      - cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
 
 - name: "Test: SPF record deletion succeeded"
   cloudflare_dns:
@@ -180,5 +180,5 @@
 - name: "Validate: SPF record deletion succeeded"
   assert:
     that:
-      - cloudflare_dns|success
-      - not cloudflare_dns|changed
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed

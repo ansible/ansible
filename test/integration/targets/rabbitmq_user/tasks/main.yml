@@ -1,0 +1,10 @@
+---
+
+- when: ansible_distribution == 'Ubuntu'
+  block:
+
+  - import_tasks: tests.yml
+
+  - import_tasks: tests.yml
+    environment:
+      RABBITMQ_NODENAME: test

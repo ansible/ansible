@@ -1,0 +1,20 @@
+[
+    {
+        "table": "misc.dns_servers",
+        "href": "http://10.48.28.78/api/v1/misc/dns_servers/1",
+        "data": {
+            "number": "1",
+            "server": "192.168.1.20"
+        },
+        "id": 1
+    },
+    {
+        "table": "misc.dns_servers",
+        "href": "http://10.48.28.78/api/v1/misc/dns_servers/2",
+        "data": {
+            "number": "2",
+            "server": "192.168.1.30"
+        },
+        "id": 2
+    }
+]

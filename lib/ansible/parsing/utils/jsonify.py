@@ -19,10 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
 
 def jsonify(result, format=False):

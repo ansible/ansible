@@ -1,6 +1,7 @@
 #!/usr/bin/python
-#
-# (c) 2016, Aleksei Kostiuk <unitoff@gmail.com>
+# -*- coding: UTF-8 -*-
+
+# Copyright: (c) 2016, Aleksei Kostiuk <unitoff@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -49,35 +50,35 @@ ansible_facts:
   contains:
     ip:
       description: "Public IP address of a host"
-      type: string
+      type: str
       sample: "8.8.8.8"
     hostname:
       description: Domain name
-      type: string
+      type: str
       sample: "google-public-dns-a.google.com"
     country:
       description: ISO 3166-1 alpha-2 country code
-      type: string
+      type: str
       sample: "US"
     region:
       description: State or province name
-      type: string
+      type: str
       sample: "California"
     city:
       description: City name
-      type: string
+      type: str
       sample: "Mountain View"
     loc:
       description: Latitude and Longitude of the location
-      type: string
+      type: str
       sample: "37.3860,-122.0838"
     org:
       description: "organization's name"
-      type: string
+      type: str
       sample: "AS3356 Level 3 Communications, Inc."
     postal:
       description: Postal code
-      type: string
+      type: str
       sample: "94035"
 '''
 from ansible.module_utils.basic import AnsibleModule
@@ -96,12 +97,12 @@ class IpinfoioFacts(object):
         self.module = module
 
     def get_geo_data(self):
-        response, info = fetch_url(self.module, self.url, force=True, # NOQA
+        response, info = fetch_url(self.module, self.url, force=True,  # NOQA
                                    timeout=self.timeout)
         try:
             info['status'] == 200
         except AssertionError:
-            self.module.fail_json(msg='Could not get {} page, '
+            self.module.fail_json(msg='Could not get {0} page, '
                                   'check for connectivity!'.format(self.url))
         else:
             try:
@@ -116,7 +117,7 @@ class IpinfoioFacts(object):
 
 
 def main():
-    module = AnsibleModule( # NOQA
+    module = AnsibleModule(  # NOQA
         argument_spec=dict(
             http_agent=dict(default=USER_AGENT),
             timeout=dict(type='int', default=10),

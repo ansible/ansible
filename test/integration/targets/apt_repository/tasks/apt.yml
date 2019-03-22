@@ -12,12 +12,12 @@
 - name: use python-apt
   set_fact:
     python_apt: python-apt
-  when: ansible_python_version | version_compare('3', '<')
+  when: ansible_python_version is version('3', '<')
 
 - name: use python3-apt
   set_fact:
     python_apt: python3-apt
-  when: ansible_python_version | version_compare('3', '>=')
+  when: ansible_python_version is version('3', '>=')
 
 # UNINSTALL 'python-apt'
 #  The `apt_repository` module has the smarts to auto-install `python-apt`.  To
@@ -30,7 +30,7 @@
 - name: uninstall {{ python_apt }} with apt
   apt: pkg={{ python_apt }} state=absent purge=yes
   register: apt_result
-  when: dpkg_result|success
+  when: dpkg_result is successful
 
 #
 # TEST: apt_repository: repo=<name>
@@ -135,6 +135,9 @@
   stat: path='/var/cache/apt/pkgcache.bin'
   register: cache_before
 
+- name: ensure ppa key is present before adding repo that requires authentication
+  apt_key: keyserver=keyserver.ubuntu.com id='{{test_ppa_key}}' state=present
+
 - name: 'name=<spec> (expect: pass)'
   apt_repository: repo='{{test_ppa_spec}}' state=present
   register: result
@@ -167,6 +170,9 @@
   stat: path='/var/cache/apt/pkgcache.bin'
   register: cache_before
 
+- name: ensure ppa key is present before adding repo that requires authentication
+  apt_key: keyserver=keyserver.ubuntu.com id='{{test_ppa_key}}' state=present
+
 - name: 'name=<spec> filename=<filename> (expect: pass)'
   apt_repository: repo='{{test_ppa_spec}}' filename='{{test_ppa_filename}}' state=present
   register: result
@@ -198,6 +204,28 @@
 # When installing a repo with the spec, the key is *NOT* added
 - name: 'ensure ppa key is absent (expect: pass)'
   apt_key: id='{{test_ppa_key}}' state=absent
+
+- name: Test apt_repository with a null value for repo
+  apt_repository:
+    repo:
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result is failed
+      - result.msg == 'Please set argument \'repo\' to a non-empty value'
+
+- name: Test apt_repository with an empty value for repo
+  apt_repository:
+    repo: ""
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result is failed
+      - result.msg == 'Please set argument \'repo\' to a non-empty value'
 
 #
 # TEARDOWN

@@ -1,23 +1,21 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# (c) 2016, Kenneth D. Evensen <kevensen@redhat.com>
-# (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
-#
+
+# Copyright: (c) 2016, Kenneth D. Evensen <kevensen@redhat.com>
+# Copyright: (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = """
 module: gconftool2
 author:
-    - "Kenneth D. Evensen (@kevensen)"
+    - Kenneth D. Evensen (@kevensen)
 short_description: Edit GNOME Configurations
 description:
   - This module allows for the manipulation of GNOME 2 Configuration via
@@ -25,47 +23,35 @@ description:
 version_added: "2.3"
 options:
   key:
-    required: true
     description:
     - A GConf preference key is an element in the GConf repository
       that corresponds to an application preference. See man gconftool-2(1)
+    required: yes
   value:
-    required: false
     description:
     - Preference keys typically have simple values such as strings,
       integers, or lists of strings and integers. This is ignored if the state
       is "get". See man gconftool-2(1)
   value_type:
-    required: false
-    choices:
-    - int
-    - bool
-    - float
-    - string
     description:
     - The type of value being set. This is ignored if the state is "get".
+    choices: [ bool, float, int, string ]
   state:
-    required: true
-    choices:
-    - get
-    - present
-    - absent
     description:
     - The action to take upon the key/value.
+    required: yes
+    choices: [ absent, get, present ]
   config_source:
-    required: false
     description:
     - Specify a configuration source to use rather than the default path.
       See man gconftool-2(1)
   direct:
-    required: false
-    choices: [ "yes", "no" ]
-    default: no
     description:
     - Access the config database directly, bypassing server.  If direct is
       specified then the config_source must be specified as well.
       See man gconftool-2(1)
-
+    type: bool
+    default: 'no'
 """
 
 EXAMPLES = """
@@ -80,17 +66,17 @@ RETURN = '''
   key:
     description: The key specified in the module parameters
     returned: success
-    type: string
-    sample: "/desktop/gnome/interface/font_name"
+    type: str
+    sample: /desktop/gnome/interface/font_name
   value_type:
     description: The type of the value that was changed
     returned: success
-    type: string
-    sample: "string"
+    type: str
+    sample: string
   value:
     description: The value of the preference key after executing the module
     returned: success
-    type: string
+    type: str
     sample: "Serif 12"
 ...
 '''
@@ -165,18 +151,13 @@ def main():
     # Setup the Ansible module
     module = AnsibleModule(
         argument_spec=dict(
-            key=dict(required=True, default=None, type='str'),
-            value_type=dict(required=False,
-                            choices=['int', 'bool', 'float', 'string'],
-                            type='str'),
-            value=dict(required=False, default=None, type='str'),
-            state=dict(required=True,
-                       default=None,
-                       choices=['present', 'get', 'absent'],
-                       type='str'),
-            direct=dict(required=False, default=False, type='bool'),
-            config_source=dict(required=False, default=None, type='str')
-            ),
+            key=dict(type='str', required=True),
+            value_type=dict(type='str', choices=['bool', 'float', 'int', 'string']),
+            value=dict(type='str'),
+            state=dict(type='str', required=True, choices=['absent', 'get', 'present']),
+            direct=dict(type='bool', default=False),
+            config_source=dict(type='str'),
+        ),
         supports_check_mode=True
     )
 
@@ -203,17 +184,17 @@ def main():
     if state != "get":
         if value is None or value == "":
             module.fail_json(msg='State %s requires "value" to be set'
-                             % str(state))
+                                 % str(state))
         elif value_type is None or value_type == "":
             module.fail_json(msg='State %s requires "value_type" to be set'
-                             % str(state))
+                                 % str(state))
 
         if direct and config_source is None:
             module.fail_json(msg='If "direct" is "yes" then the ' +
-                             '"config_source" must be specified')
+                                 '"config_source" must be specified')
         elif not direct and config_source is not None:
             module.fail_json(msg='If the "config_source" is specified ' +
-                             'then "direct" must be "yes"')
+                                 'then "direct" must be "yes"')
 
     # Create a gconf2 preference
     gconf_pref = GConf2Preference(module, key, value_type,
@@ -246,6 +227,7 @@ def main():
                              'playbook_value': module.params['value']})
 
     module.exit_json(changed=change, ansible_facts=facts)
+
 
 if __name__ == '__main__':
     main()

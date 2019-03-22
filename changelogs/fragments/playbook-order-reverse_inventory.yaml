@@ -1,0 +1,3 @@
+bugfixes:
+- host execution order - Fix ``reverse_inventory`` not to change the order of
+  the items before reversing on python2 and to not backtrace on python3

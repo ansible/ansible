@@ -1,31 +1,58 @@
+.. _shell_plugins:
+
 Shell Plugins
--------------
+=============
 
-Shell plugins work transparently to ensure that the basic commands Ansible runs are properly formated to work with the target machine.
+.. contents::
+   :local:
+   :depth: 2
 
-Enabling Shell Plugins
-++++++++++++++++++++++
+Shell plugins work to ensure that the basic commands Ansible runs are properly formatted to work with
+the target machine and allow the user to configure certain behaviors related to how Ansible executes tasks.
 
-.. warning:: These plugins should not be reconfigured unless you have a restricted or exotic setup
-             in which the default ``/bin/sh`` is not a POSIX compatible shell or not availble for execution. 
+.. _enabling_shell:
 
-In addition to modifying the default configuration settings in :doc:`../config`, you can use a 'connection variable' :ref:`ansible_shell_type` to select a shell plugin, and update the :ref:`ansible_executable` to match.
+Enabling shell plugins
+----------------------
+
+You can add a custom shell plugin by dropping it into a ``shell_plugins`` directory adjacent to your play, inside a role,
+or by putting it in one of the shell plugin directory sources configured in :ref:`ansible.cfg <ansible_configuration_settings>`.
+
+.. warning:: You should not alter which plugin is used unless you have a setup in which the default ``/bin/sh``
+ is not a POSIX compatible shell or is not available for execution.
+
+.. _using_shell:
+
+Using shell plugins
+-------------------
+
+In addition to the default configuration settings in :ref:`ansible_configuration_settings`, you can use
+the connection variable :ref:`ansible_shell_type <ansible_shell_type>` to select the plugin to use.
+In this case, you will also want to update the :ref:`ansible_shell_executable <ansible_shell_executable>` to match.
+
+You can further control the settings for each plugin via other configuration options
+detailed in the plugin themselves (linked below).
+
+.. toctree:: :maxdepth: 1
+    :glob:
+
+    shell/*
 
 .. seealso::
 
-   :doc:`../playbooks`
+   :ref:`about_playbooks`
        An introduction to playbooks
-   :doc:`inventory`
+   :ref:`inventory_plugins`
        Ansible inventory plugins
-   :doc:`callback`
+   :ref:`callback_plugins`
        Ansible callback plugins
-   :doc:`../playbooks_filters`
+   :ref:`playbooks_filters`
        Jinja2 filter plugins
-   :doc:`../playbooks_tests`
+   :ref:`playbooks_tests`
        Jinja2 test plugins
-   :doc:`../playbooks_lookups`
+   :ref:`playbooks_lookups`
        Jinja2 lookup plugins
-   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

@@ -5,81 +5,81 @@
     check_mode: yes
 
 - assert:
-    that: result|changed
+    that: result is changed
 
 - include: "{{ role_path }}/tests/nitro/cs_vserver_policies/setup.yaml"
   vars:
     check_mode: no
 
 - assert:
-    that: result|changed
+    that: result is changed
 
 - include: "{{ role_path }}/tests/nitro/cs_vserver_policies/setup.yaml"
   vars:
     check_mode: yes
 
 - assert:
-    that: not result|changed
+    that: result is not changed
 
 - include: "{{ role_path }}/tests/nitro/cs_vserver_policies/setup.yaml"
   vars:
     check_mode: no
 
 - assert:
-    that: not result|changed
+    that: result is not changed
 
 - include: "{{ role_path }}/tests/nitro/cs_vserver_policies/update.yaml"
   vars:
     check_mode: yes
 
 - assert:
-    that: result|changed
+    that: result is changed
 
 - include: "{{ role_path }}/tests/nitro/cs_vserver_policies/update.yaml"
   vars:
     check_mode: no
 
 - assert:
-    that: result|changed
+    that: result is changed
 
 - include: "{{ role_path }}/tests/nitro/cs_vserver_policies/update.yaml"
   vars:
     check_mode: yes
 
 - assert:
-    that: not result|changed
+    that: result is not changed
 
 - include: "{{ role_path }}/tests/nitro/cs_vserver_policies/update.yaml"
   vars:
     check_mode: no
 
 - assert:
-    that: not result|changed
+    that: result is not changed
 
 - include: "{{ role_path }}/tests/nitro/cs_vserver_policies/remove.yaml"
   vars:
     check_mode: yes
 
 - assert:
-    that: result|changed
+    that: result is changed
 
 - include: "{{ role_path }}/tests/nitro/cs_vserver_policies/remove.yaml"
   vars:
     check_mode: no
 
 - assert:
-    that: result|changed
+    that: result is changed
 
 - include: "{{ role_path }}/tests/nitro/cs_vserver_policies/remove.yaml"
   vars:
     check_mode: yes
 
 - assert:
-    that: not result|changed
+    that: result is not changed
 
 - include: "{{ role_path }}/tests/nitro/cs_vserver_policies/remove.yaml"
   vars:
     check_mode: no
 
 - assert:
-    that: not result|changed
+    that: result is not changed

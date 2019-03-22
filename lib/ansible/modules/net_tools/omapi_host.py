@@ -1,108 +1,106 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2016, Loic Blot <loic.blot@unix-experience.fr>
+# copyright: (c) 2016, Loic Blot <loic.blot@unix-experience.fr>
 # Sponsored by Infopro Digital. http://www.infopro-digital.com/
 # Sponsored by E.T.A.I. http://www.etai.fr/
-#
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: omapi_host
-
 short_description: Setup OMAPI hosts.
-description:
-    - Create, update and remove OMAPI hosts into compatible DHCPd servers.
+description: Manage OMAPI hosts into compatible DHCPd servers
 version_added: "2.3"
 requirements:
   - pypureomapi
-author: "Loic Blot (@nerzhul)"
+author:
+- Loic Blot (@nerzhul)
 options:
     state:
         description:
             - Create or remove OMAPI host.
+        type: str
         required: true
-        choices: ['present', 'absent']
-    name:
+        choices: [ absent, present ]
+    hostname:
         description:
             - Sets the host lease hostname (mandatory if state=present).
-        default: None
+        type: str
+        aliases: [ name ]
     host:
         description:
             - Sets OMAPI server host to interact with.
+        type: str
         default: localhost
     port:
         description:
             - Sets the OMAPI server port to interact with.
+        type: int
         default: 7911
     key_name:
         description:
             - Sets the TSIG key name for authenticating against OMAPI server.
+        type: str
         required: true
     key:
         description:
             - Sets the TSIG key content for authenticating against OMAPI server.
+        type: str
         required: true
     macaddr:
         description:
             - Sets the lease host MAC address.
+        type: str
         required: true
     ip:
         description:
             - Sets the lease host IP address.
-        required: false
-        default: None
+        type: str
     statements:
         description:
             - Attach a list of OMAPI DHCP statements with host lease (without ending semicolon).
-        required: false
+        type: list
         default: []
     ddns:
         description:
             - Enable dynamic DNS updates for this host.
-        required: false
-        default: false
+        type: bool
+        default: no
 
 '''
-EXAMPLES = '''
-- name: Remove a host using OMAPI
-  omapi_host:
-    key_name: "defomapi"
-    key: "+bFQtBCta6j2vWkjPkNFtgA=="
-    host: "10.1.1.1"
-    macaddr: "00:66:ab:dd:11:44"
-    state: absent
-
+EXAMPLES = r'''
 - name: Add a host using OMAPI
   omapi_host:
-    key_name: "defomapi"
-    key: "+bFQtBCta6j2vWkjPkNFtgA=="
-    host: "10.98.4.55"
-    macaddr: "44:dd:ab:dd:11:44"
-    name: "server01"
-    ip: "192.168.88.99"
+    key_name: defomapi
+    key: +bFQtBCta6j2vWkjPkNFtgA==
+    host: 10.98.4.55
+    macaddr: 44:dd:ab:dd:11:44
+    name: server01
+    ip: 192.168.88.99
     ddns: yes
     statements:
-      - 'filename "pxelinux.0"'
-      - 'next-server 1.1.1.1'
+    - filename "pxelinux.0"
+    - next-server 1.1.1.1
     state: present
+
+- name: Remove a host using OMAPI
+  omapi_host:
+    key_name: defomapi
+    key: +bFQtBCta6j2vWkjPkNFtgA==
+    host: 10.1.1.1
+    macaddr: 00:66:ab:dd:11:44
+    state: absent
 '''
 
-RETURN = '''
-changed:
-    description: If module has modified a host
-    returned: success
-    type: string
+RETURN = r'''
 lease:
     description: dictionary containing host information
     returned: success
@@ -111,12 +109,12 @@ lease:
         ip-address:
             description: IP address, if there is.
             returned: success
-            type: string
+            type: str
             sample: '192.168.1.5'
         hardware-address:
             description: MAC address
             returned: success
-            type: string
+            type: str
             sample: '00:11:22:33:44:55'
         hardware-type:
             description: hardware type, generally '1'
@@ -126,7 +124,7 @@ lease:
         name:
             description: hostname
             returned: success
-            type: string
+            type: str
             sample: 'mydesktop'
 '''
 
@@ -135,15 +133,17 @@ import socket
 import struct
 import traceback
 
+PUREOMAPI_IMP_ERR = None
 try:
     from pypureomapi import Omapi, OmapiMessage, OmapiError, OmapiErrorNotFound
     from pypureomapi import pack_ip, unpack_ip, pack_mac, unpack_mac
     from pypureomapi import OMAPI_OP_STATUS, OMAPI_OP_UPDATE
     pureomapi_found = True
 except ImportError:
+    PUREOMAPI_IMP_ERR = traceback.format_exc()
     pureomapi_found = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_bytes, to_native
 
 
@@ -214,8 +214,7 @@ class OmapiHostManager:
                     stmt_join += "; ".join(self.module.params['statements'])
                     stmt_join += "; "
             except TypeError as e:
-                self.module.fail_json(msg="Invalid statements found: %s" % to_native(e),
-                                      exception=traceback.format_exc())
+                self.module.fail_json(msg="Invalid statements found: %s" % to_native(e))
 
             if len(stmt_join) > 0:
                 msg.obj.append(('statements', stmt_join))
@@ -227,14 +226,14 @@ class OmapiHostManager:
                                               "are valid.")
                 self.module.exit_json(changed=True, lease=self.unpack_facts(response.obj))
             except OmapiError as e:
-                self.module.fail_json(msg="OMAPI error: %s" % to_native(e), exception=traceback.format_exc())
+                self.module.fail_json(msg="OMAPI error: %s" % to_native(e))
         # Forge update message
         else:
             response_obj = self.unpack_facts(host_response.obj)
             fields_to_update = {}
 
             if to_bytes('ip-address', errors='surrogate_or_strict') not in response_obj or \
-                            unpack_ip(response_obj[to_bytes('ip-address', errors='surrogate_or_strict')]) != self.module.params['ip']:
+                    unpack_ip(response_obj[to_bytes('ip-address', errors='surrogate_or_strict')]) != self.module.params['ip']:
                 fields_to_update['ip-address'] = pack_ip(self.module.params['ip'])
 
             # Name cannot be changed
@@ -264,7 +263,7 @@ class OmapiHostManager:
                                               "are valid.")
                 self.module.exit_json(changed=True)
             except OmapiError as e:
-                self.module.fail_json(msg="OMAPI error: %s" % to_native(e), exception=traceback.format_exc())
+                self.module.fail_json(msg="OMAPI error: %s" % to_native(e))
 
     def remove_host(self):
         try:
@@ -273,28 +272,28 @@ class OmapiHostManager:
         except OmapiErrorNotFound:
             self.module.exit_json()
         except OmapiError as e:
-            self.module.fail_json(msg="OMAPI error: %s" % to_native(e), exception=traceback.format_exc())
+            self.module.fail_json(msg="OMAPI error: %s" % to_native(e))
 
 
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(required=True, type='str', choices=['present', 'absent']),
+            state=dict(type='str', required=True, choices=['absent', 'present']),
             host=dict(type='str', default="localhost"),
             port=dict(type='int', default=7911),
-            key_name=dict(required=True, type='str', default=None),
-            key=dict(required=True, type='str', default=None, no_log=True),
-            macaddr=dict(required=True, type='str', default=None),
-            hostname=dict(type='str', default=None, aliases=['name']),
-            ip=dict(type='str', default=None),
+            key_name=dict(type='str', required=True),
+            key=dict(type='str', required=True, no_log=True),
+            macaddr=dict(type='str', required=True),
+            hostname=dict(type='str', aliases=['name']),
+            ip=dict(type='str'),
             ddns=dict(type='bool', default=False),
-            statements=dict(type='list', default=[])
+            statements=dict(type='list', default=[]),
         ),
-        supports_check_mode=False
+        supports_check_mode=False,
     )
 
     if not pureomapi_found:
-        module.fail_json(msg="pypureomapi library is required by this module.")
+        module.fail_json(msg=missing_required_lib('pypureomapi'), exception=PUREOMAPI_IMP_ERR)
 
     if module.params['key'] is None or len(module.params["key"]) == 0:
         module.fail_json(msg="'key' parameter cannot be empty.")
@@ -309,7 +308,7 @@ def main():
         elif module.params['state'] == 'absent':
             host_manager.remove_host()
     except ValueError as e:
-        module.fail_json(msg="OMAPI input value error: %s" % to_native(e), exception=traceback.format_exc())
+        module.fail_json(msg="OMAPI input value error: %s" % to_native(e))
 
 
 if __name__ == '__main__':

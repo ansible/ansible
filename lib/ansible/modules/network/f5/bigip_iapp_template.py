@@ -1,33 +1,21 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright 2017 F5 Networks Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2017, F5 Networks Inc.
+# GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {
-    'status': ['preview'],
-    'supported_by': 'community',
-    'metadata_version': '1.1'
-}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-DOCUMENTATION = '''
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['stableinterface'],
+                    'supported_by': 'certified'}
+
+DOCUMENTATION = r'''
 ---
 module: bigip_iapp_template
-short_description: Manages TCL iApp templates on a BIG-IP.
+short_description: Manages TCL iApp templates on a BIG-IP
 description:
   - Manages TCL iApp templates on a BIG-IP. This module will allow you to
     deploy iApp templates to the BIG-IP and manage their lifecycle. The
@@ -42,7 +30,7 @@ description:
     existing services are changed to consume that new template. As such,
     the ability to update templates in-place requires the C(force) option
     to be used.
-version_added: "2.4"
+version_added: 2.4
 options:
   force:
     description:
@@ -51,90 +39,98 @@ options:
         using it. This will not update the running service though. Use
         C(bigip_iapp_service) to do that. When C(no), will update the iApp
         only if there are no iApp services using the template.
-    choices:
-      - yes
-      - no
+    type: bool
   name:
     description:
       - The name of the iApp template that you want to delete. This option
         is only available when specifying a C(state) of C(absent) and is
         provided as a way to delete templates that you may no longer have
         the source of.
+    type: str
   content:
     description:
       - Sets the contents of an iApp template directly to the specified
         value. This is for simple values, but can be used with lookup
         plugins for anything complex or with formatting. C(content) must
         be provided when creating new templates.
+    type: str
   state:
     description:
-      - Whether the iRule should exist or not.
-    default: present
+      - Whether the iApp template should exist or not.
+    type: str
     choices:
       - present
       - absent
+    default: present
   partition:
     description:
       - Device partition to manage resources on.
-    required: False
-    default: 'Common'
-notes:
-  - Requires the f5-sdk Python package on the host. This is as easy as pip
-    install f5-sdk.
+    default: Common
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Add the iApp contained in template iapp.tmpl
   bigip_iapp_template:
-      content: "{{ lookup('template', 'iapp.tmpl') }}"
-      password: "secret"
-      server: "lb.mydomain.com"
-      state: "present"
-      user: "admin"
+    content: "{{ lookup('template', 'iapp.tmpl') }}"
+    state: present
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
 - name: Update a template in place
   bigip_iapp_template:
-      content: "{{ lookup('template', 'iapp-new.tmpl') }}"
-      password: "secret"
-      server: "lb.mydomain.com"
-      state: "present"
-      user: "admin"
+    content: "{{ lookup('template', 'iapp-new.tmpl') }}"
+    state: present
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
 - name: Update a template in place that has existing services created from it.
   bigip_iapp_template:
-      content: "{{ lookup('template', 'iapp-new.tmpl') }}"
-      force: yes
-      password: "secret"
-      server: "lb.mydomain.com"
-      state: "present"
-      user: "admin"
+    content: "{{ lookup('template', 'iapp-new.tmpl') }}"
+    force: yes
+    state: present
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 '''
 
-RETURN = '''
+RETURN = r'''
 # only common fields returned
 '''
 
 import re
 import uuid
 
-from ansible.module_utils.f5_utils import (
-    AnsibleF5Client,
-    AnsibleF5Parameters,
-    HAS_F5SDK,
-    F5ModuleError,
-    iteritems,
-    defaultdict,
-    iControlUnexpectedHTTPError
-)
-from f5.utils.iapp_parser import (
-    NonextantTemplateNameException
-)
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import env_fallback
+
+try:
+    from library.module_utils.network.f5.bigip import F5RestClient
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import fq_name
+    from library.module_utils.network.f5.common import f5_argument_spec
+    from library.module_utils.network.f5.common import transform_name
+    from library.module_utils.network.f5.icontrol import upload_file
+except ImportError:
+    from ansible.module_utils.network.f5.bigip import F5RestClient
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import fq_name
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.network.f5.common import transform_name
+    from ansible.module_utils.network.f5.icontrol import upload_file
 
 try:
     from StringIO import StringIO
@@ -144,48 +140,16 @@ except ImportError:
 
 class Parameters(AnsibleF5Parameters):
     api_attributes = []
+
     returnables = []
-
-    def __init__(self, params=None):
-        self._values = defaultdict(lambda: None)
-        if params:
-            self.update(params=params)
-
-    def update(self, params=None):
-        if params:
-            for k, v in iteritems(params):
-                if self.api_map is not None and k in self.api_map:
-                    map_key = self.api_map[k]
-                else:
-                    map_key = k
-
-                # Handle weird API parameters like `dns.proxy.__iter__` by
-                # using a map provided by the module developer
-                class_attr = getattr(type(self), map_key, None)
-                if isinstance(class_attr, property):
-                    # There is a mapped value for the api_map key
-                    if class_attr.fset is None:
-                        # If the mapped value does not have an associated setter
-                        self._values[map_key] = v
-                    else:
-                        # The mapped value has a setter
-                        setattr(self, map_key, v)
-                else:
-                    # If the mapped value is not a @property
-                    self._values[map_key] = v
 
     @property
     def name(self):
         if self._values['name']:
             return self._values['name']
         if self._values['content']:
-            try:
-                name = self._get_template_name()
-                return name
-            except NonextantTemplateNameException:
-                raise F5ModuleError(
-                    "No template name was found in the template"
-                )
+            name = self._get_template_name()
+            return name
         return None
 
     @property
@@ -193,39 +157,17 @@ class Parameters(AnsibleF5Parameters):
         if self._values['content'] is None:
             return None
         result = self._squash_template_name_prefix()
-        if self._values['name']:
-            result = self._replace_template_name(result)
+        result = self._replace_template_name(result)
         return result
 
     @property
     def checksum(self):
         return self._values['tmplChecksum']
 
-    def to_return(self):
-        result = {}
-        try:
-            for returnable in self.returnables:
-                result[returnable] = getattr(self, returnable)
-            result = self._filter_params(result)
-        except Exception:
-            pass
-        return result
-
-    def api_params(self):
-        result = {}
-        for api_attribute in self.api_attributes:
-            if self.api_map is not None and api_attribute in self.api_map:
-                result[api_attribute] = getattr(self, self.api_map[api_attribute])
-            else:
-                result[api_attribute] = getattr(self, api_attribute)
-        result = self._filter_params(result)
-        return result
-
     def _squash_template_name_prefix(self):
         """Removes the template name prefix
 
-        The IappParser in the SDK treats the partition prefix as part of
-        the iApp's name. This method removes that partition from the name
+        This method removes that partition from the name
         in the iApp so that comparisons can be done properly and entries
         can be created properly when using REST.
 
@@ -246,46 +188,88 @@ class Parameters(AnsibleF5Parameters):
         :return string
         """
         pattern = r'sys\s+application\s+template\s+[^ ]+'
-        replace = 'sys application template {0}'.format(self._values['name'])
+
+        if self._values['name']:
+            name = self._values['name']
+        else:
+            name = self._get_template_name()
+
+        replace = 'sys application template {0}'.format(fq_name(self.partition, name))
         return re.sub(pattern, replace, template)
 
     def _get_template_name(self):
-        # There is a bug in the iApp parser in the F5 SDK that prevents us from
-        # using it in all cases to get the name of an iApp. So we'll use this
-        # pattern for now and file a bug with the F5 SDK
-        pattern = r'sys\s+application\s+template\s+(?P<path>\/\w+\/)?(?P<name>[\w.]+)'
-        matches = re.search(pattern, self.content)
+        pattern = r'sys\s+application\s+template\s+(?P<path>\/[^\{}"\'*?|#]+\/)?(?P<name>[^\{}"\'*?|#]+)'
+        matches = re.search(pattern, self._values['content'])
         try:
-            result = matches.group('name')
+            result = matches.group('name').strip()
         except IndexError:
             result = None
         if result:
             return result
-        raise NonextantTemplateNameException
+        raise F5ModuleError(
+            "No template name was found in the template"
+        )
+
+
+class ApiParameters(Parameters):
+    pass
+
+
+class ModuleParameters(Parameters):
+    pass
+
+
+class Changes(Parameters):
+    def to_return(self):
+        result = {}
+        try:
+            for returnable in self.returnables:
+                result[returnable] = getattr(self, returnable)
+            result = self._filter_params(result)
+        except Exception:
+            pass
+        return result
+
+
+class UsableChanges(Changes):
+    pass
+
+
+class ReportableChanges(Changes):
+    pass
 
 
 class ModuleManager(object):
-    def __init__(self, client):
-        self.client = client
-        self.want = Parameters(self.client.module.params)
-        self.changes = Parameters()
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = F5RestClient(**self.module.params)
+        self.want = ModuleParameters(params=self.module.params)
+        self.have = ApiParameters()
+        self.changes = UsableChanges()
+
+    def _announce_deprecations(self, result):
+        warnings = result.pop('__warnings', [])
+        for warning in warnings:
+            self.client.module.deprecate(
+                msg=warning['msg'],
+                version=warning['version']
+            )
 
     def exec_module(self):
-        result = dict()
         changed = False
+        result = dict()
         state = self.want.state
 
-        try:
-            if state == "present":
-                changed = self.present()
-            elif state == "absent":
-                changed = self.absent()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        if state == "present":
+            changed = self.present()
+        elif state == "absent":
+            changed = self.absent()
 
-        changes = self.changes.to_return()
+        reportable = ReportableChanges(params=self.changes.to_return())
+        changes = reportable.to_return()
         result.update(**changes)
         result.update(dict(changed=changed))
+        self._announce_deprecations(result)
         return result
 
     def present(self):
@@ -293,6 +277,29 @@ class ModuleManager(object):
             return self.update()
         else:
             return self.create()
+
+    def absent(self):
+        changed = False
+        if self.exists():
+            changed = self.remove()
+        return changed
+
+    def create(self):
+        if self.module.check_mode:
+            return True
+        self.create_on_device()
+        if self.exists():
+            return True
+        else:
+            raise F5ModuleError("Failed to create the iApp template")
+
+    def remove(self):
+        if self.module.check_mode:
+            return True
+        self.remove_from_device()
+        if self.exists():
+            raise F5ModuleError("Failed to delete the iApp template")
+        return True
 
     def update(self):
         self.have = self.read_current_from_device()
@@ -303,7 +310,7 @@ class ModuleManager(object):
         if not self.want.force and self.template_in_use():
             return False
 
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
 
         self._remove_iapp_checksum()
@@ -312,35 +319,63 @@ class ModuleManager(object):
         self._generate_template_checksum_on_device()
         return True
 
+    def exists(self):
+        uri = "https://{0}:{1}/mgmt/tm/sys/application/template/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
+
     def template_in_use(self):
-        collection = self.client.api.tm.sys.application.services.get_collection()
-        fullname = '/{0}/{1}'.format(self.want.partition, self.want.name)
-        for resource in collection:
-            if resource.template == fullname:
+        uri = "https://{0}:{1}/mgmt/tm/sys/application/service/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+
+        name = fq_name(self.want.partition, self.want.name)
+        resp = self.client.api.get(uri)
+
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+
+        for item in response['items']:
+            if item['template'] == name:
                 return True
         return False
 
     def read_current_from_device(self):
         self._generate_template_checksum_on_device()
-        resource = self.client.api.tm.sys.application.templates.template.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/sys/application/template/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        result = resource.attrs
-        return Parameters(result)
 
-    def absent(self):
-        changed = False
-        if self.exists():
-            changed = self.remove()
-        return changed
+        resp = self.client.api.get(uri)
 
-    def exists(self):
-        result = self.client.api.tm.sys.application.templates.template.exists(
-            name=self.want.name,
-            partition=self.want.partition
-        )
-        return result
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return ApiParameters(params=response)
 
     def _remove_iapp_checksum(self):
         """Removes the iApp tmplChecksum
@@ -351,11 +386,25 @@ class ModuleManager(object):
 
         :return:
         """
-        resource = self.client.api.tm.sys.application.templates.template.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/sys/application/template/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        resource.modify(tmplChecksum=None)
+        params = dict(tmplChecksum=None)
+
+        resp = self.client.api.patch(uri, json=params)
+
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def templates_differ(self):
         # BIG-IP can generate checksums of iApps, but the iApp needs to be
@@ -396,61 +445,92 @@ class ModuleManager(object):
         return temp
 
     def _generate_template_checksum_on_device(self):
-        generate = 'tmsh generate sys application template {0} checksum'.format(
+        command = 'tmsh generate sys application template {0} checksum'.format(
             self.want.name
         )
-        self.client.api.tm.util.bash.exec_cmd(
-            'run',
-            utilCmdArgs='-c "{0}"'.format(generate)
+        params = dict(
+            command="run",
+            utilCmdArgs='-c "{0}"'.format(command)
+        )
+        uri = "https://{0}:{1}/mgmt/tm/util/bash".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
         )
 
-    def create(self):
-        if self.client.check_mode:
-            return True
-        self.create_on_device()
-        if self.exists():
-            return True
-        else:
-            raise F5ModuleError("Failed to create the iApp template")
+        resp = self.client.api.post(uri, json=params)
+
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+    def upload_file_to_device(self, content, name):
+        url = 'https://{0}:{1}/mgmt/shared/file-transfer/uploads'.format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
+        )
+        try:
+            upload_file(self.client, url, content, name)
+        except F5ModuleError:
+            raise F5ModuleError(
+                "Failed to upload the file."
+            )
 
     def create_on_device(self):
         remote_path = "/var/config/rest/downloads/{0}".format(self.want.name)
         load_command = 'tmsh load sys application template {0}'.format(remote_path)
 
         template = StringIO(self.want.content)
+        self.upload_file_to_device(template, self.want.name)
 
-        upload = self.client.api.shared.file_transfer.uploads
-        upload.upload_stringio(template, self.want.name)
-        output = self.client.api.tm.util.bash.exec_cmd(
-            'run',
+        uri = "https://{0}:{1}/mgmt/tm/util/bash".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
+        )
+        params = dict(
+            command="run",
             utilCmdArgs='-c "{0}"'.format(load_command)
         )
 
-        if hasattr(output, 'commandResult'):
-            result = output.commandResult
-            if 'Syntax Error' in result:
-                raise F5ModuleError(output.commandResult)
+        resp = self.client.api.post(uri, json=params)
 
-    def remove(self):
-        if self.client.check_mode:
-            return True
-        self.remove_from_device()
-        if self.exists():
-            raise F5ModuleError("Failed to delete the iApp template")
+        try:
+            response = resp.json()
+            if 'commandResult' in response:
+                if 'Syntax Error' in response['commandResult']:
+                    raise F5ModuleError(response['commandResult'])
+                if 'ERROR' in response['commandResult']:
+                    raise F5ModuleError(response['commandResult'])
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
         return True
 
     def remove_from_device(self):
-        resource = self.client.api.tm.sys.application.templates.template.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/sys/application/template/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        resource.delete()
+        response = self.client.api.delete(uri)
+        if response.status == 200:
+            return True
+        raise F5ModuleError(response.content)
 
 
 class ArgumentSpec(object):
     def __init__(self):
         self.supports_check_mode = True
-        self.argument_spec = dict(
+        argument_spec = dict(
             name=dict(),
             state=dict(
                 default='present',
@@ -459,29 +539,32 @@ class ArgumentSpec(object):
             force=dict(
                 type='bool'
             ),
-            content=dict()
+            content=dict(),
+            partition=dict(
+                default='Common',
+                fallback=(env_fallback, ['F5_PARTITION'])
+            )
         )
-        self.f5_product_name = 'bigip'
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
 
 
 def main():
-    if not HAS_F5SDK:
-        raise F5ModuleError("The python f5-sdk module is required")
-
     spec = ArgumentSpec()
 
-    client = AnsibleF5Client(
+    module = AnsibleModule(
         argument_spec=spec.argument_spec,
-        supports_check_mode=spec.supports_check_mode,
-        f5_product_name=spec.f5_product_name
+        supports_check_mode=spec.supports_check_mode
     )
 
     try:
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        client.module.exit_json(**results)
-    except F5ModuleError as e:
-        client.module.fail_json(msg=str(e))
+        module.exit_json(**results)
+    except F5ModuleError as ex:
+        module.fail_json(msg=str(ex))
+
 
 if __name__ == '__main__':
     main()

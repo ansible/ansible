@@ -3,21 +3,7 @@
 #
 # (c) 2017, Marc-Aurèle Brothier @marcaurele
 # (c) 2017, René Moser <mail@renemoser.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -30,85 +16,81 @@ module: cs_instance_nic
 short_description: Manages NICs of an instance on Apache CloudStack based clouds.
 description:
     - Add and remove nic to and from network
-version_added: "2.4"
+version_added: '2.4'
 author:
-  - "Marc-Aurèle Brothier (@marcaurele)"
-  - "René Moser (@resmo)"
+  - Marc-Aurèle Brothier (@marcaurele)
+  - René Moser (@resmo)
 options:
   vm:
     description:
       - Name of instance.
     required: true
-    aliases: ['name']
+    type: str
+    aliases: [ name ]
   network:
     description:
       - Name of the network.
+    type: str
     required: true
   ip_address:
     description:
       - IP address to be used for the nic.
-    required: false
-    default: null
+    type: str
   vpc:
     description:
-      - Name of the VPC the C(vm) is related to.
-    required: false
-    default: null
+      - Name of the VPC the I(vm) is related to.
+    type: str
   domain:
     description:
       - Domain the instance is related to.
-    required: false
-    default: null
+    type: str
   account:
     description:
       - Account the instance is related to.
-    required: false
-    default: null
+    type: str
   project:
     description:
       - Name of the project the instance is deployed in.
-    required: false
-    default: null
+    type: str
   zone:
     description:
       - Name of the zone in which the instance is deployed in.
       - If not set, default zone is used.
-    required: false
-    default: null
+    type: str
   state:
     description:
       - State of the nic.
-    required: false
-    default: "present"
-    choices: [ 'present', 'absent' ]
+    type: str
+    default: present
+    choices: [ present, absent ]
   poll_async:
     description:
       - Poll async jobs until job has finished.
-    required: false
-    default: true
+    type: bool
+    default: yes
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# Add a nic on another network
-- local_action:
-    module: cs_instance_nic
+- name: Add a nic on another network
+  cs_instance_nic:
     vm: privnet
     network: privNetForBasicZone
+  delegate_to: localhost
 
-# Ensure IP address on a nic
-- local_action:
-    module: cs_instance_nic
+- name: Ensure IP address on a nic
+  cs_instance_nic:
     vm: privnet
     ip_address: 10.10.11.32
     network: privNetForBasicZone
+  delegate_to: localhost
 
-# Remove a secondary nic
-- local_action:
-    module: cs_instance_nic
+- name: Remove a secondary nic
+  cs_instance_nic:
     vm: privnet
     state: absent
     network: privNetForBasicZone
+  delegate_to: localhost
 '''
 
 RETURN = '''
@@ -116,47 +98,47 @@ RETURN = '''
 id:
   description: UUID of the nic.
   returned: success
-  type: string
+  type: str
   sample: 87b1e0ce-4e01-11e4-bb66-0050569e64b8
 vm:
   description: Name of the VM.
   returned: success
-  type: string
+  type: str
   sample: web-01
 ip_address:
   description: Primary IP of the NIC.
   returned: success
-  type: string
+  type: str
   sample: 10.10.10.10
 netmask:
   description: Netmask of the NIC.
   returned: success
-  type: string
+  type: str
   sample: 255.255.255.0
 mac_address:
   description: MAC address of the NIC.
   returned: success
-  type: string
+  type: str
   sample: 02:00:33:31:00:e4
 network:
   description: Name of the network if not default.
   returned: success
-  type: string
+  type: str
   sample: sync network
 domain:
   description: Domain the VM is related to.
   returned: success
-  type: string
+  type: str
   sample: example domain
 account:
   description: Account the VM is related to.
   returned: success
-  type: string
+  type: str
   sample: example account
 project:
   description: Name of project the VM is related to.
   returned: success
-  type: string
+  type: str
   sample: Production
 '''
 

@@ -22,6 +22,7 @@ __metaclass__ = type
 import os
 
 from ansible.errors import AnsibleParserError, AnsibleError
+from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems, string_types
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.playbook.base import Base
@@ -39,7 +40,7 @@ class RoleMetadata(Base):
     '''
 
     _allow_duplicates = FieldAttribute(isa='bool', default=False)
-    _dependencies = FieldAttribute(isa='list', default=[])
+    _dependencies = FieldAttribute(isa='list', default=list)
     _galaxy_info = FieldAttribute(isa='GalaxyInfo')
 
     def __init__(self, owner=None):
@@ -80,7 +81,7 @@ class RoleMetadata(Base):
                         role_def['name'] = def_parsed['name']
                     roles.append(role_def)
                 except AnsibleError as exc:
-                    raise AnsibleParserError(str(exc), obj=role_def, orig_exc=exc)
+                    raise AnsibleParserError(to_native(exc), obj=role_def, orig_exc=exc)
 
         current_role_path = None
         if self._owner:

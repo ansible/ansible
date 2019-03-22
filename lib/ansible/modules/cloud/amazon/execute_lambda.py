@@ -29,6 +29,7 @@ description:
 version_added: "2.2"
 extends_documentation_fragment:
   - aws
+  - ec2
 author: "Ryan Scott Brown (@ryansb) <ryansb@redhat.com>"
 requirements:
   - python >= 2.6
@@ -43,48 +44,42 @@ options:
       - The name of the function to be invoked. This can only be used for
         invocations within the calling account. To invoke a function in another
         account, use I(function_arn) to specify the full ARN.
-    required: false
-    default: None
   function_arn:
     description:
       - The name of the function to be invoked
-    required: false
-    default: None
   tail_log:
     description:
-      - If C(tail_log=true), the result of the task will include the last 4 KB
+      - If C(tail_log=yes), the result of the task will include the last 4 KB
         of the CloudWatch log for the function execution. Log tailing only
-        works if you use synchronous invocation C(wait=true). This is usually
+        works if you use synchronous invocation C(wait=yes). This is usually
         used for development or testing Lambdas.
-    required: false
-    default: false
+    type: bool
+    default: 'no'
   wait:
     description:
-      - Whether to wait for the function results or not. If I(wait) is false,
+      - Whether to wait for the function results or not. If I(wait) is C(no),
         the task will not return any results. To wait for the Lambda function
-        to complete, set C(wait=true) and the result will be available in the
+        to complete, set C(wait=yes) and the result will be available in the
         I(output) key.
-    required: false
-    default: true
+    type: bool
+    default: 'yes'
   dry_run:
     description:
       - Do not *actually* invoke the function. A C(DryRun) call will check that
         the caller has permissions to call the function, especially for
         checking cross-account permissions.
-    required: false
-    default: False
+    type: bool
+    default: 'no'
   version_qualifier:
     description:
       - Which version/alias of the function to run. This defaults to the
         C(LATEST) revision, but can be set to any existing version or alias.
-        See https;//docs.aws.amazon.com/lambda/latest/dg/versioning-aliases.html
+        See U(https://docs.aws.amazon.com/lambda/latest/dg/versioning-aliases.html)
         for details.
-    required: false
     default: LATEST
   payload:
     description:
       - A dictionary in any form to be provided as input to the Lambda function.
-    required: false
     default: {}
 '''
 
@@ -126,7 +121,7 @@ output:
     sample: "{ 'output': 'something' }"
 logs:
     description: The last 4KB of the function logs. Only provided if I(tail_log) is true
-    type: string
+    type: str
     returned: if I(tail_log) == true
 status:
     description: C(StatusCode) of API call exit (200 for synchronous invokes, 202 for async)
@@ -153,13 +148,13 @@ from ansible.module_utils._text import to_native
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        name                 = dict(),
-        function_arn         = dict(),
-        wait                 = dict(default=True, type='bool'),
-        tail_log             = dict(default=False, type='bool'),
-        dry_run              = dict(default=False, type='bool'),
-        version_qualifier    = dict(),
-        payload              = dict(default={}, type='dict'),
+        name=dict(),
+        function_arn=dict(),
+        wait=dict(default=True, type='bool'),
+        tail_log=dict(default=False, type='bool'),
+        dry_run=dict(default=False, type='bool'),
+        version_qualifier=dict(),
+        payload=dict(default={}, type='dict'),
     ))
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -172,13 +167,13 @@ def main():
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')
 
-    name                 = module.params.get('name')
-    function_arn         = module.params.get('function_arn')
-    await_return         = module.params.get('wait')
-    dry_run              = module.params.get('dry_run')
-    tail_log             = module.params.get('tail_log')
-    version_qualifier    = module.params.get('version_qualifier')
-    payload              = module.params.get('payload')
+    name = module.params.get('name')
+    function_arn = module.params.get('function_arn')
+    await_return = module.params.get('wait')
+    dry_run = module.params.get('dry_run')
+    tail_log = module.params.get('tail_log')
+    version_qualifier = module.params.get('version_qualifier')
+    payload = module.params.get('payload')
 
     if not HAS_BOTO3:
         module.fail_json(msg='Python module "boto3" is missing, please install it')
@@ -242,12 +237,12 @@ def main():
                          exception=traceback.format_exc())
     except botocore.exceptions.ParamValidationError as ve:
         module.fail_json(msg="Parameters to `invoke` failed to validate",
-                         exception=traceback.format_exc(ve))
+                         exception=traceback.format_exc())
     except Exception as e:
         module.fail_json(msg="Unexpected failure while invoking Lambda function",
                          exception=traceback.format_exc())
 
-    results ={
+    results = {
         'logs': '',
         'status': response['StatusCode'],
         'output': '',
@@ -276,7 +271,7 @@ def main():
                 # format the stacktrace sent back as an array into a multiline string
                 'trace': '\n'.join(
                     [' '.join([
-                        str(x) for x in line # cast line numbers to strings
+                        str(x) for x in line  # cast line numbers to strings
                     ]) for line in results.get('output', {}).get('stackTrace', [])]
                 ),
                 'errmsg': results['output'].get('errorMessage'),

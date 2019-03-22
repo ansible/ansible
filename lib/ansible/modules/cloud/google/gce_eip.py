@@ -42,39 +42,39 @@ options:
 
 EXAMPLES = '''
 # Create a Global external IP address
-gce_eip:
-  service_account_email: "{{ service_account_email }}"
-  credentials_file: "{{ credentials_file }}"
-  project_id: "{{ project_id }}"
-  name: my-global-ip
-  region: global
-  state: present
+- gce_eip:
+    service_account_email: "{{ service_account_email }}"
+    credentials_file: "{{ credentials_file }}"
+    project_id: "{{ project_id }}"
+    name: my-global-ip
+    region: global
+    state: present
 
 # Create a Regional external IP address
-gce_eip:
-  service_account_email: "{{ service_account_email }}"
-  credentials_file: "{{ credentials_file }}"
-  project_id: "{{ project_id }}"
-  name: my-global-ip
-  region: us-east1
-  state: present
+- gce_eip:
+    service_account_email: "{{ service_account_email }}"
+    credentials_file: "{{ credentials_file }}"
+    project_id: "{{ project_id }}"
+    name: my-global-ip
+    region: us-east1
+    state: present
 '''
 
 RETURN = '''
 address:
     description: IP address being operated on
     returned: always
-    type: string
+    type: str
     sample: "35.186.222.233"
 name:
     description: name of the address being operated on
     returned: always
-    type: string
+    type: str
     sample: "my-address"
 region:
     description: Which region an address belongs.
     returned: always
-    type: string
+    type: str
     sample: "global"
 '''
 
@@ -122,6 +122,7 @@ def get_address(gce, name, region):
     except ResourceNotFoundError:
         return None
 
+
 def create_address(gce, params):
     """
     Create a new Address.
@@ -147,6 +148,7 @@ def create_address(gce, params):
 
     return (changed, return_data)
 
+
 def delete_address(address):
     """
     Delete an Address.
@@ -166,6 +168,7 @@ def delete_address(address):
         changed = True
         return_data = address.address
     return (changed, return_data)
+
 
 def main():
     module = AnsibleModule(argument_spec=dict(

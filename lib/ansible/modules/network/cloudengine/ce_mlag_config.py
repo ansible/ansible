@@ -28,60 +28,42 @@ short_description: Manages MLAG configuration on HUAWEI CloudEngine switches.
 description:
     - Manages MLAG configuration on HUAWEI CloudEngine switches.
 author:
-    - Li Yanfeng (@CloudEngine-Ansible)
+    - Li Yanfeng (@QijunPan)
 options:
     dfs_group_id:
         description:
             - ID of a DFS group. The value is 1.
-        required: false
         default: present
     nickname:
         description:
             - The nickname bound to a DFS group. The value is an integer that ranges from 1 to 65471.
-        required: false
-        default: null
     pseudo_nickname:
         description:
             - A pseudo nickname of a DFS group. The value is an integer that ranges from 1 to 65471.
-        required: false
-        default: null
     pseudo_priority:
         description:
             - The priority of a pseudo nickname. The value is an integer that ranges from 128 to 255.
               The default value is 192. A larger value indicates a higher priority.
-        required: false
-        default: null
     ip_address:
         description:
             - IP address bound to the DFS group. The value is in dotted decimal notation.
-        required: false
-        default: null
     vpn_instance_name:
         description:
             - Name of the VPN instance bound to the DFS group. The value is a string of 1 to 31 case-sensitive
               characters without spaces. If the character string is quoted by double quotation marks, the character
               string can contain spaces. The value _public_ is reserved and cannot be used as the VPN instance name.
-        required: false
-        default: null
     priority_id:
         description:
             - Priority of a DFS group. The value is an integer that ranges from 1 to 254. The default value is 100.
-        required: false
-        default: null
     eth_trunk_id:
         description:
             - Name of the peer-link interface. The value is in the range from 0 to 511.
-        required: false
-        default: null
     peer_link_id:
         description:
             - Number of the peer-link interface. The value is 1.
-        required: false
-        default: null
     state:
         description:
             - Specify desired state of the resource.
-        required: false
         default: present
         choices: ['present','absent']
 '''
@@ -136,7 +118,7 @@ RETURN = '''
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 proposed:
     description: k/v pairs of parameters passed into module
@@ -165,8 +147,8 @@ updates:
 
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import load_config
-from ansible.module_utils.ce import get_nc_config, set_nc_config, ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import load_config
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec
 
 
 CE_NC_GET_DFS_GROUP_INFO = """

@@ -44,7 +44,9 @@ notes:
     C(serial: 1) to avoid exceeding the API request limit imposed by
     the Rackspace CloudDNS API"
 author: "Matt Martz (@sivel)"
-extends_documentation_fragment: rackspace
+extends_documentation_fragment:
+  - rackspace
+  - rackspace.openstack
 '''
 
 EXAMPLES = '''
@@ -72,7 +74,7 @@ from ansible.module_utils.rax import (rax_argument_spec,
                                       rax_required_together,
                                       rax_to_dict,
                                       setup_rax_module,
-                                     )
+                                      )
 
 
 def rax_dns(module, comment, email, name, state, ttl):

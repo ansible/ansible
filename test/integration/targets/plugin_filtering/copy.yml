@@ -1,0 +1,10 @@
+---
+- hosts: testhost
+  gather_facts: False
+  tasks:
+  - copy:
+      content: 'Testing 1... 2... 3...'
+      dest: ./testing.txt
+  - file:
+      state: absent
+      path: ./testing.txt

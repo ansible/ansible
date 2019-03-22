@@ -1,0 +1,4 @@
+{
+    "always": true,
+    "output": "path-line-column-message"
+}

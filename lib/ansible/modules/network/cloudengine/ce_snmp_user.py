@@ -28,55 +28,37 @@ short_description: Manages SNMP user configuration on HUAWEI CloudEngine switche
 description:
     - Manages SNMP user configurations on CloudEngine switches.
 author:
-    - wangdezhuang (@CloudEngine-Ansible)
+    - wangdezhuang (@QijunPan)
 options:
     acl_number:
         description:
             - Access control list number.
-        required: false
-        default: null
     usm_user_name:
         description:
             - Unique name to identify the USM user.
-        required: false
-        default: null
     aaa_local_user:
         description:
             - Unique name to identify the local user.
-        required: false
-        default: null
     remote_engine_id:
         description:
             - Remote engine id of the USM user.
-        required: false
-        default: null
     user_group:
         description:
             - Name of the group where user belongs to.
-        required: false
-        default: null
     auth_protocol:
         description:
             - Authentication protocol.
-        required: false
-        default: null
         choices: ['noAuth', 'md5', 'sha']
     auth_key:
         description:
             - The authentication password. Password length, 8-255 characters.
-        required: false
-        default: null
     priv_protocol:
         description:
             - Encryption protocol.
-        required: false
-        default: null
         choices: ['noPriv', 'des56', '3des168', 'aes128', 'aes192', 'aes256']
     priv_key:
         description:
             - The encryption password. Password length 8-255 characters.
-        required: false
-        default: null
 '''
 
 EXAMPLES = '''
@@ -138,7 +120,7 @@ RETURN = '''
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 proposed:
     description: k/v pairs of parameters passed into module
@@ -158,7 +140,7 @@ end_state:
     returned: always
     type: dict
     sample: {"snmp local user": {"local_user_info": []},
-             "snmp local user": {"local_user_info": [{"aclNumber": "2000", "engineID": "800007DB03389222111200",
+             "snmp usm user": {"usm_user_info": [{"aclNumber": "2000", "engineID": "800007DB03389222111200",
                                  "groupName": "wdz_group", "userName": "wdz_snmp"}]}}
 updates:
     description: command sent to the device
@@ -169,7 +151,7 @@ updates:
 
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_nc_config, set_nc_config, ce_argument_spec, get_config
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec, get_config
 
 
 # get snmp v3 USM user

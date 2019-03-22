@@ -1,19 +1,11 @@
 #!/usr/bin/python
 
 # Copyright (c) 2015 Hewlett-Packard Development Company, L.P.
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -29,13 +21,15 @@ author: "Davide Agnello (@dagnello)"
 description:
     - Retrieve facts about one or more subnets from OpenStack.
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 options:
-   subnet:
+   name:
      description:
-        - Name or ID of the subnet
+        - Name or ID of the subnet.
+        - Alias 'subnet' added in version 2.8.
      required: false
+     aliases: ['subnet']
    filters:
      description:
         - A dictionary of meta data to use for further filtering.  Elements of
@@ -52,7 +46,7 @@ EXAMPLES = '''
 - name: Gather facts about previously created subnets
   os_subnets_facts:
     auth:
-      auth_url: https://your_api_url.com:9000/v2.0
+      auth_url: https://identity.example.com
       username: user
       password: password
       project_name: someproject
@@ -64,7 +58,7 @@ EXAMPLES = '''
 - name: Gather facts about a previously created subnet by name
   os_subnets_facts:
     auth:
-      auth_url: https://your_api_url.com:9000/v2.0
+      auth_url: https://identity.example.com
       username: user
       password: password
       project_name: someproject
@@ -78,7 +72,7 @@ EXAMPLES = '''
   # Note: name and filters parameters are not mutually exclusive
   os_subnets_facts:
     auth:
-      auth_url: https://your_api_url.com:9000/v2.0
+      auth_url: https://identity.example.com
       username: user
       password: password
       project_name: someproject
@@ -99,23 +93,23 @@ openstack_subnets:
         id:
             description: Unique UUID.
             returned: success
-            type: string
+            type: str
         name:
             description: Name given to the subnet.
             returned: success
-            type: string
+            type: str
         network_id:
             description: Network ID this subnet belongs in.
             returned: success
-            type: string
+            type: str
         cidr:
             description: Subnet's CIDR.
             returned: success
-            type: string
+            type: str
         gateway_ip:
             description: Subnet's gateway ip.
             returned: success
-            type: string
+            type: str
         enable_dhcp:
             description: DHCP enable flag for this subnet.
             returned: success
@@ -127,7 +121,7 @@ openstack_subnets:
         tenant_id:
             description: Tenant id associated with this subnet.
             returned: success
-            type: string
+            type: str
         dns_nameservers:
             description: DNS name servers for this subnet.
             returned: success
@@ -138,36 +132,28 @@ openstack_subnets:
             type: list of dicts
 '''
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_cloud_from_module
 
 
 def main():
 
     argument_spec = openstack_full_argument_spec(
-        name=dict(required=False, default=None),
+        name=dict(required=False, default=None, aliases=['subnet']),
         filters=dict(required=False, type='dict', default=None)
     )
     module = AnsibleModule(argument_spec)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.openstack_cloud(**module.params)
         subnets = cloud.search_subnets(module.params['name'],
-                                         module.params['filters'])
+                                       module.params['filters'])
         module.exit_json(changed=False, ansible_facts=dict(
             openstack_subnets=subnets))
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
-# this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
+
 if __name__ == '__main__':
     main()

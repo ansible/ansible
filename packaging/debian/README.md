@@ -6,10 +6,9 @@ To create an Ansible DEB package:
 __Note__: You must run this target as root or set `PBUILDER_BIN='sudo pbuilder'`
 
 ```
-apt-get install asciidoc cdbs debootstrap devscripts make pbuilder python-setuptools
+apt-get install python-docutils cdbs debootstrap devscripts make pbuilder python-setuptools
 git clone https://github.com/ansible/ansible.git
 cd ansible
-git submodule update --init
 DEB_DIST='xenial trusty precise' make deb
 ```
 
@@ -18,7 +17,6 @@ Building in Docker:
 ```
 git clone https://github.com/ansible/ansible.git
 cd ansible
-git submodule update --init
 docker build -t ansible-deb-builder -f packaging/debian/Dockerfile .
 docker run --privileged -e DEB_DIST='trusty' -v $(pwd):/ansible ansible-deb-builder
 ```

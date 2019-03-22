@@ -2,22 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2016 Red Hat, Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -33,13 +18,17 @@ author: "Ondra Machacek (@machacekondra)"
 description:
     - "Module to manage data centers in oVirt/RHV"
 options:
+    id:
+        description:
+            - "ID of the datacenter to manage."
+        version_added: "2.8"
     name:
         description:
             - "Name of the data center to manage."
         required: true
     state:
         description:
-            - "Should the data center be present or absent"
+            - "Should the data center be present or absent."
         choices: ['present', 'absent']
         default: present
     description:
@@ -52,6 +41,7 @@ options:
         description:
             - "I(True) if the data center should be local, I(False) if should be shared."
             - "Default value is set by engine."
+        type: bool
     compatibility_version:
         description:
             - "Compatibility version of the data center."
@@ -65,6 +55,16 @@ options:
             - "IMPORTANT: This option is deprecated in oVirt/RHV 4.1. You should
                use C(mac_pool) in C(ovirt_clusters) module, as MAC pools are
                set per cluster since 4.1."
+    force:
+        description:
+            - "This parameter can be used only when removing a data center.
+              If I(True) data center will be forcibly removed, even though it
+              contains some clusters. Default value is I(False), which means
+              that only empty data center can be removed."
+        version_added: "2.5"
+        default: False
+        type: bool
+
 extends_documentation_fragment: ovirt
 '''
 
@@ -83,6 +83,11 @@ EXAMPLES = '''
 - ovirt_datacenter:
     state: absent
     name: mydatacenter
+
+# Change Datacenter Name
+- ovirt_datacenter:
+    id: 00000000-0000-0000-0000-000000000000
+    name: "new_datacenter_name"
 '''
 
 RETURN = '''
@@ -146,6 +151,7 @@ class DatacentersModule(BaseModule):
     def build_entity(self):
         return otypes.DataCenter(
             name=self._module.params['name'],
+            id=self._module.params['id'],
             comment=self._module.params['comment'],
             description=self._module.params['description'],
             mac_pool=otypes.MacPool(
@@ -168,6 +174,7 @@ class DatacentersModule(BaseModule):
             equal(getattr(self._get_mac_pool(), 'id', None), getattr(entity.mac_pool, 'id', None)) and
             equal(self._module.params.get('comment'), entity.comment) and
             equal(self._module.params.get('description'), entity.description) and
+            equal(self._module.params.get('name'), entity.name) and
             equal(self._module.params.get('quota_mode'), str(entity.quota_mode)) and
             equal(self._module.params.get('local'), entity.local) and
             equal(minor, self.__get_minor(entity.version)) and
@@ -184,18 +191,17 @@ def main():
         name=dict(default=None, required=True),
         description=dict(default=None),
         local=dict(type='bool'),
+        id=dict(default=None),
         compatibility_version=dict(default=None),
         quota_mode=dict(choices=['disabled', 'audit', 'enabled']),
         comment=dict(default=None),
         mac_pool=dict(default=None),
+        force=dict(default=None, type='bool'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
-
-    if module._name == 'ovirt_datacenters':
-        module.deprecate("The 'ovirt_datacenters' module is being renamed 'ovirt_datacenter'", version=2.8)
 
     check_sdk(module)
     check_params(module)
@@ -204,7 +210,7 @@ def main():
         auth = module.params.pop('auth')
         connection = create_connection(auth)
         data_centers_service = connection.system_service().data_centers_service()
-        clusters_module = DatacentersModule(
+        data_centers_module = DatacentersModule(
             connection=connection,
             module=module,
             service=data_centers_service,
@@ -212,9 +218,9 @@ def main():
 
         state = module.params['state']
         if state == 'present':
-            ret = clusters_module.create()
+            ret = data_centers_module.create()
         elif state == 'absent':
-            ret = clusters_module.remove()
+            ret = data_centers_module.remove(force=module.params['force'])
 
         module.exit_json(**ret)
     except Exception as e:

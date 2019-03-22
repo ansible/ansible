@@ -1,7 +1,9 @@
 #!/usr/bin/python
-# (c) Quentin Stafford-Fraser 2015
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2015, Quentin Stafford-Fraser
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-#
+
 # Create Webfaction website using Ansible and the Webfaction API
 
 from __future__ import absolute_import, division, print_function
@@ -18,7 +20,7 @@ DOCUMENTATION = '''
 module: webfaction_site
 short_description: Add or remove a website on a Webfaction host
 description:
-    - Add or remove a website on a Webfaction host.  Further documentation at http://github.com/quentinsf/ansible-webfaction.
+    - Add or remove a website on a Webfaction host.  Further documentation at https://github.com/quentinsf/ansible-webfaction.
 author: Quentin Stafford-Fraser (@quentinsf)
 version_added: "2.0"
 notes:
@@ -29,7 +31,7 @@ notes:
       You can run playbooks that use this on a local machine, or on a Webfaction host, or elsewhere, since the scripts use the remote webfaction API.
       The location is not important. However, running them on multiple hosts I(simultaneously) is best avoided. If you don't specify I(localhost) as
       your host, you may want to add C(serial: 1) to the plays.
-    - See `the webfaction API <http://docs.webfaction.com/xmlrpc-api/>`_ for more info.
+    - See `the webfaction API <https://docs.webfaction.com/xmlrpc-api/>`_ for more info.
 
 options:
 
@@ -41,7 +43,6 @@ options:
     state:
         description:
             - Whether the website should exist
-        required: false
         choices: ['present', 'absent']
         default: "present"
 
@@ -53,22 +54,18 @@ options:
     https:
         description:
             - Whether or not to use HTTPS
-        required: false
-        choices:
-            - true
-            - false
-        default: 'false'
+        type: bool
+        default: 'no'
 
     site_apps:
         description:
             - A mapping of URLs to apps
-        required: false
+        default: []
 
     subdomains:
         description:
             - A list of subdomains associated with this site.
-        required: false
-        default: null
+        default: []
 
     login_name:
         description:
@@ -97,31 +94,31 @@ EXAMPLES = '''
 '''
 
 import socket
-import xmlrpclib
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves import xmlrpc_client
 
 
-webfaction = xmlrpclib.ServerProxy('https://api.webfaction.com/')
+webfaction = xmlrpc_client.ServerProxy('https://api.webfaction.com/')
 
 
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(required=True),
-            state = dict(required=False, choices=['present', 'absent'], default='present'),
+        argument_spec=dict(
+            name=dict(required=True),
+            state=dict(required=False, choices=['present', 'absent'], default='present'),
             # You can specify an IP address or hostname.
-            host = dict(required=True),
-            https = dict(required=False, type='bool', default=False),
-            subdomains = dict(required=False, type='list', default=[]),
-            site_apps = dict(required=False, type='list', default=[]),
-            login_name = dict(required=True),
-            login_password = dict(required=True, no_log=True),
+            host=dict(required=True),
+            https=dict(required=False, type='bool', default=False),
+            subdomains=dict(required=False, type='list', default=[]),
+            site_apps=dict(required=False, type='list', default=[]),
+            login_name=dict(required=True),
+            login_password=dict(required=True, no_log=True),
         ),
         supports_check_mode=True
     )
-    site_name  = module.params['name']
+    site_name = module.params['name']
     site_state = module.params['state']
     site_host = module.params['host']
     site_ip = socket.gethostbyname(site_host)
@@ -159,7 +156,7 @@ def main():
                (set(existing_site['subdomains']) == set(module.params['subdomains'])) and \
                (dict(existing_site['website_apps']) == dict(module.params['site_apps'])):
                 module.exit_json(
-                    changed = False
+                    changed=False
                 )
 
         positional_args = [
@@ -168,16 +165,16 @@ def main():
             module.params['subdomains'],
         ]
         for a in module.params['site_apps']:
-            positional_args.append( (a[0], a[1]) )
+            positional_args.append((a[0], a[1]))
 
         if not module.check_mode:
             # If this isn't a dry run, create or modify the site
             result.update(
                 webfaction.create_website(
                     *positional_args
-                    ) if not existing_site else webfaction.update_website (
-                        *positional_args
-                    )
+                ) if not existing_site else webfaction.update_website(
+                    *positional_args
+                )
             )
 
     elif site_state == 'absent':
@@ -185,7 +182,7 @@ def main():
         # If the site's already not there, nothing changed.
         if not existing_site:
             module.exit_json(
-                changed = False,
+                changed=False,
             )
 
         if not module.check_mode:
@@ -195,11 +192,11 @@ def main():
             )
 
     else:
-        module.fail_json(msg="Unknown state specified: {}".format(site_state))
+        module.fail_json(msg="Unknown state specified: {0}".format(site_state))
 
     module.exit_json(
-        changed = True,
-        result = result
+        changed=True,
+        result=result
     )
 
 

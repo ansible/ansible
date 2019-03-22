@@ -65,10 +65,10 @@ options:
       - By default the module will not upload a certificate that is already uploaded into AWS.
         If set to True, it will upload the certificate as long as the name is unique.
     default: False
-
+    type: bool
 
 requirements: [ "boto" ]
-author: Jonathan I. Davila
+author: Jonathan I. Davila (@defionscode)
 extends_documentation_fragment:
     - aws
     - ec2
@@ -155,7 +155,7 @@ def dup_check(module, iam, name, new_name, cert, orig_cert_names, orig_cert_bodi
                     elif slug_cert.startswith(slug_orig_cert_bodies):
                         update = True
                         break
-                    elif slug_orig_cert_bodies != slug_cert:
+                    else:
                         module.fail_json(changed=False, msg='A cert with the name %s already exists and'
                                          ' has a different certificate body associated'
                                          ' with it. Certificates cannot have the same name' % orig_cert_names[c_index])
@@ -218,11 +218,14 @@ def cert_action(module, iam, name, cpath, new_name, new_path, state,
 def load_data(cert, key, cert_chain):
     # if paths are provided rather than lookups read the files and return the contents
     if cert and os.path.isfile(cert):
-        cert = open(cert, 'r').read().rstrip()
+        with open(cert, 'r') as cert_fh:
+            cert = cert_fh.read().rstrip()
     if key and os.path.isfile(key):
-        key = open(key, 'r').read().rstrip()
+        with open(key, 'r') as key_fh:
+            key = key_fh.read().rstrip()
     if cert_chain and os.path.isfile(cert_chain):
-        cert_chain = open(cert_chain, 'r').read()
+        with open(cert_chain, 'r') as cert_chain_fh:
+            cert_chain = cert_chain_fh.read()
     return cert, key, cert_chain
 
 

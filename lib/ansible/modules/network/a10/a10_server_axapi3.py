@@ -1,9 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2014, Mischa Peters <mpeters@a10networks.com>
-# (c) 2016, Eric Chou <ericc@a10networks.com>
-#
+# Copyright: (c) 2014, Mischa Peters <mpeters@a10networks.com>
+# Copyright: (c) 2016, Eric Chou <ericc@a10networks.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -23,7 +22,9 @@ short_description: Manage A10 Networks AX/SoftAX/Thunder/vThunder devices
 description:
     - Manage SLB (Server Load Balancer) server objects on A10 Networks devices via aXAPIv3.
 author: "Eric Chou (@ericchou) based on previous work by Mischa Peters (@mischapeters)"
-extends_documentation_fragment: a10
+extends_documentation_fragment:
+  - a10
+  - url
 options:
   server_name:
     description:
@@ -38,7 +39,6 @@ options:
   server_status:
     description:
       - The SLB (Server Load Balancer) virtual server status.
-    required: false
     default: enable
     aliases: ['action']
     choices: ['enable', 'disable']
@@ -46,22 +46,19 @@ options:
     description:
       - A list of ports to create for the server. Each list item should be a dictionary which specifies the C(port:)
         and C(protocol:).
-    required: false
-    default: null
+    aliases: ['port']
   operation:
     description:
       - Create, Update or Remove SLB server. For create and update operation, we use the IP address and server
         name specified in the POST message. For delete operation, we use the server name in the request URI.
-    required: false
     default: create
     choices: ['create', 'update', 'remove']
   validate_certs:
     description:
       - If C(no), SSL certificates will not be validated. This should only be used
         on personally controlled devices using self-signed certificates.
-    required: false
+    type: bool
     default: 'yes'
-    choices: ['yes', 'no']
 
 '''
 
@@ -91,8 +88,8 @@ EXAMPLES = '''
 '''
 import json
 
-from ansible.module_utils.a10 import axapi_call_v3, a10_argument_spec, axapi_authenticate_v3, axapi_failure
-from ansible.module_utils.a10 import AXAPI_PORT_PROTOCOLS
+from ansible.module_utils.network.a10.a10 import axapi_call_v3, a10_argument_spec, axapi_authenticate_v3, axapi_failure
+from ansible.module_utils.network.a10.a10 import AXAPI_PORT_PROTOCOLS
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import url_argument_spec
 
@@ -110,7 +107,7 @@ def validate_ports(module, ports):
         if 'port-number' in item:
             try:
                 item['port-number'] = int(item['port-number'])
-            except:
+            except Exception:
                 module.fail_json(msg="port-number entries in the port definitions must be integers")
         else:
             module.fail_json(msg="port definitions must define the port-number field")
@@ -164,13 +161,12 @@ def main():
     slb_server_status = module.params['server_status']
     slb_server_ports = module.params['server_ports']
 
-    axapi_base_url = 'https://{}/axapi/v3/'.format(host)
+    axapi_base_url = 'https://{0}/axapi/v3/'.format(host)
     axapi_auth_url = axapi_base_url + 'auth/'
     signature = axapi_authenticate_v3(module, axapi_auth_url, username, password)
 
     # validate the ports data structure
     validate_ports(module, slb_server_ports)
-
 
     json_post = {
         "server-list": [
@@ -188,7 +184,7 @@ def main():
     if slb_server_status:
         json_post['server-list'][0]['action'] = slb_server_status
 
-    slb_server_data = axapi_call_v3(module, axapi_base_url+'slb/server/', method='GET', body='', signature=signature)
+    slb_server_data = axapi_call_v3(module, axapi_base_url + 'slb/server/', method='GET', body='', signature=signature)
 
     # for empty slb server list
     if axapi_failure(slb_server_data):
@@ -203,7 +199,7 @@ def main():
     changed = False
     if operation == 'create':
         if slb_server_exists is False:
-            result = axapi_call_v3(module, axapi_base_url+'slb/server/', method='POST', body=json.dumps(json_post), signature=signature)
+            result = axapi_call_v3(module, axapi_base_url + 'slb/server/', method='POST', body=json.dumps(json_post), signature=signature)
             if axapi_failure(result):
                 module.fail_json(msg="failed to create the server: %s" % result['response']['err']['msg'])
             changed = True
@@ -234,7 +230,7 @@ def main():
 
     # if the config has changed, save the config unless otherwise requested
     if changed and write_config:
-        write_result = axapi_call_v3(module, axapi_base_url+'write/memory/', method='POST', body='', signature=signature)
+        write_result = axapi_call_v3(module, axapi_base_url + 'write/memory/', method='POST', body='', signature=signature)
         if axapi_failure(write_result):
             module.fail_json(msg="failed to save the configuration: %s" % write_result['response']['err']['msg'])
 

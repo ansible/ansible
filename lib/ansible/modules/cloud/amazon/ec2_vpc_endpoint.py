@@ -39,7 +39,7 @@ options:
       - Option when creating an endpoint. If not provided AWS will
         utilise a default policy which provides full access to the service.
     required: false
-  policy_path:
+  policy_file:
     description:
       - The path to the properly json formatted policy file, see
         U(https://github.com/ansible/ansible/issues/7005#issuecomment-42894813)
@@ -47,6 +47,7 @@ options:
       - Option when creating an endpoint. If not provided AWS will
         utilise a default policy which provides full access to the service.
     required: false
+    aliases: [ "policy_path" ]
   state:
     description:
         - present to ensure resource is created.
@@ -61,7 +62,7 @@ options:
         behaviour from AWS.
     required: false
     default: no
-    choices: ["yes", "no"]
+    type: bool
   wait_timeout:
     description:
       - Used in conjunction with wait. Number of seconds to wait for status.
@@ -83,7 +84,7 @@ options:
     description:
       - Optional client token to ensure idempotency
     required: false
-author: Karen Cheng(@Etherdaemon)
+author: Karen Cheng (@Etherdaemon)
 extends_documentation_fragment:
   - aws
   - ec2
@@ -262,7 +263,7 @@ def create_vpc_endpoint(client, module):
 
     elif module.params.get('policy_file'):
         try:
-            with open(module.params.get('policy'), 'r') as json_data:
+            with open(module.params.get('policy_file'), 'r') as json_data:
                 policy = json.load(json_data)
         except Exception as e:
             module.fail_json(msg=str(e), exception=traceback.format_exc(),
@@ -330,7 +331,7 @@ def main():
             vpc_id=dict(),
             service=dict(),
             policy=dict(type='json'),
-            policy_file=dict(type='path'),
+            policy_file=dict(type='path', aliases=['policy_path']),
             state=dict(default='present', choices=['present', 'absent']),
             wait=dict(type='bool', default=False),
             wait_timeout=dict(type='int', default=320, required=False),

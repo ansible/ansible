@@ -35,20 +35,25 @@
       - "result.stat.exists"
       - "not result.stat.isdir"
       - "result.stat.checksum == '5feac65e442c91f557fc90069ce6efc4d346ab51'"
-      - "not result|failed"
-      - "not result|changed"
+      - "result is not failed"
+      - "result is not changed"
 
 
 - name: insert a line at the beginning of the file, and back it up
   win_lineinfile: dest={{win_output_dir}}/test.txt state=present line="New line at the beginning" insertbefore="BOF" backup=yes
   register: result
 
+- name: check backup_file
+  win_stat:
+    path: '{{ result.backup_file }}'
+  register: backup_file
+
 - name: assert that the line was inserted at the head of the file
   assert:
     that:
-    - "result.changed == true"
-    - "result.msg == 'line added'"
-    - "result.backup != ''"
+    - result.changed == true
+    - result.msg == 'line added'
+    - backup_file.stat.exists == true
 
 - name: stat the backup file
   win_stat: path={{result.backup}}
@@ -638,3 +643,66 @@
   assert:
     that:
     - "result.stat.checksum == '66a72e71f42c4775f4326da95cfe82c8830e5022'"
+
+#########################################################################
+# issue #33858
+# \r\n causes line break instead of printing literally which breaks paths.
+
+- name: create testing file
+  win_copy:
+    src: test_linebreak.txt
+    dest: "{{win_output_dir}}/test_linebreak.txt"
+
+- name: stat the test file
+  win_stat:
+    path: "{{win_output_dir}}/test_linebreak.txt"
+  register: result
+
+# (Get-FileHash -path C:\ansible\test\integration\targets\win_lineinfile\files\test_linebreak.txt -Algorithm sha1).hash.tolower()
+- name: check win_stat file result
+  assert:
+    that:
+      - result.stat.exists
+      - not result.stat.isdir
+      - result.stat.checksum == 'da39a3ee5e6b4b0d3255bfef95601890afd80709'
+      - result is not failed
+      - result is not changed
+
+- name: insert path c:\return\new to test file
+  win_lineinfile:
+    dest: "{{win_output_dir}}/test_linebreak.txt"
+    line: c:\return\new
+  register: result_literal
+
+- name: insert path "c:\return\new" to test file, will cause line breaks
+  win_lineinfile:
+    dest: "{{win_output_dir}}/test_linebreak.txt"
+    line: "c:\return\new"
+  register: result_expand
+
+- name: assert that the lines were inserted
+  assert:
+    that:
+    - result_literal.changed == true
+    - result_literal.msg == 'line added'
+    - result_expand.changed == true
+    - result_expand.msg == 'line added'
+
+- name: stat the test file
+  win_stat:
+    path: "{{win_output_dir}}/test_linebreak.txt"
+  register: result
+
+- debug:
+    var: result
+    verbosity: 1
+
+# expect that the file looks like this:
+# c:\return\new
+# c:
+# eturn
+# ew #or c:eturnew  on windows
+- name: assert that one line is literal and the other has breaks
+  assert:
+    that:
+    - result.stat.checksum == 'd2dfd11bc70526ff13a91153c76a7ae5595a845b'

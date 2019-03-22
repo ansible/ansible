@@ -1,18 +1,10 @@
 #!/usr/bin/python
 # Copyright (c) 2016 IBM
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -37,13 +29,9 @@ options:
    description:
      description:
         - Group description
-     required: false
-     default: None
    domain_id:
      description:
         - Domain id to create the group in if the cloud supports domains.
-     required: false
-     default: None
      version_added: "2.3"
    state:
      description:
@@ -53,10 +41,9 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 '''
 
 EXAMPLES = '''
@@ -91,27 +78,24 @@ group:
     contains:
         id:
             description: Unique group ID
-            type: string
+            type: str
             sample: "ee6156ff04c645f481a6738311aea0b0"
         name:
             description: Group name
-            type: string
+            type: str
             sample: "demo"
         description:
             description: Group description
-            type: string
+            type: str
             sample: "Demo Group"
         domain_id:
             description: Domain for the group
-            type: string
+            type: str
             sample: "default"
 '''
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def _system_state_change(state, description, group):
@@ -137,16 +121,14 @@ def main():
                            supports_check_mode=True,
                            **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
+    name = module.params.get('name')
+    description = module.params.get('description')
+    state = module.params.get('state')
 
-    name = module.params.pop('name')
-    description = module.params.pop('description')
     domain_id = module.params.pop('domain_id')
-    state = module.params.pop('state')
 
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.operator_cloud(**module.params)
         if domain_id:
             group = cloud.get_group(name, filters={'domain_id': domain_id})
         else:
@@ -171,18 +153,15 @@ def main():
 
         elif state == 'absent':
             if group is None:
-                changed=False
+                changed = False
             else:
                 cloud.delete_group(group.id)
-                changed=True
+                changed = True
             module.exit_json(changed=changed)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
 
 if __name__ == '__main__':
     main()

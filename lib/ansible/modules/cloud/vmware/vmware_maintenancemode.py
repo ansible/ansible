@@ -1,16 +1,18 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2015, VMware, Inc.
+# Copyright: (c) 2015, VMware, Inc.
+# Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'community'
+}
 
 
 DOCUMENTATION = '''
@@ -18,44 +20,45 @@ DOCUMENTATION = '''
 module: vmware_maintenancemode
 short_description: Place a host into maintenance mode
 description:
-    - Place an ESXI host into maintenance mode
-    - Support for VSAN compliant maintenance mode when selected
-author: "Jay Jahns <jjahns@vmware.com>"
+    - This module can be used for placing a ESXi host into maintenance mode.
+    - Support for VSAN compliant maintenance mode when selected.
+author:
+- Jay Jahns (@jjahns) <jjahns@vmware.com>
+- Abhijeet Kasurde (@Akasurde)
 version_added: "2.1"
 notes:
-    - Tested on vSphere 5.5 and 6.0
+    - Tested on vSphere 5.5, 6.0 and 6.5
 requirements:
     - "python >= 2.6"
     - PyVmomi
 options:
     esxi_hostname:
         description:
-            - Name of the host as defined in vCenter
+            - Name of the host as defined in vCenter.
         required: True
-    vsan_mode:
+    vsan:
         description:
-            - Specify which VSAN compliant mode to enter
+            - Specify which VSAN compliant mode to enter.
         choices:
             - 'ensureObjectAccessibility'
             - 'evacuateAllData'
             - 'noAction'
         required: False
+        aliases: [ 'vsan_mode' ]
     evacuate:
         description:
-            - If True, evacuate all powered off VMs
-        choices:
-            - True
-            - False
+            - If set to C(True), evacuate all powered off VMs.
         default: False
         required: False
+        type: bool
     timeout:
         description:
-            - Specify a timeout for the operation
+            - Specify a timeout for the operation.
         required: False
         default: 0
     state:
         description:
-            - Enter or exit maintenance mode
+            - Enter or exit maintenance mode.
         choices:
             - present
             - absent
@@ -66,140 +69,130 @@ extends_documentation_fragment: vmware.documentation
 
 EXAMPLES = '''
 - name: Enter VSAN-Compliant Maintenance Mode
-  local_action:
-    module: vmware_maintenancemode
-    hostname: vc_host
-    username: vc_user
-    password: vc_pass
-    esxi_hostname: esxi.host.example
+  vmware_maintenancemode:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    esxi_hostname: "{{ esxi_hostname }}"
     vsan: ensureObjectAccessibility
     evacuate: yes
     timeout: 3600
     state: present
+  delegate_to: localhost
 '''
+
 RETURN = '''
 hostsystem:
     description: Name of vim reference
     returned: always
-    type: string
+    type: str
     sample: "'vim.HostSystem:host-236'"
 hostname:
     description: Name of host in vCenter
     returned: always
-    type: string
+    type: str
     sample: "esxi.local.domain"
 status:
     description: Action taken
     returned: always
-    type: string
+    type: str
     sample: "ENTER"
 '''
 
 try:
     from pyVmomi import vim
-    HAS_PYVMOMI = True
-
 except ImportError:
-    HAS_PYVMOMI = False
+    pass
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import (HAS_PYVMOMI, TaskError, connect_to_api, find_hostsystem_by_name,
-                                         vmware_argument_spec, wait_for_task)
+from ansible.module_utils.vmware import PyVmomi, TaskError, vmware_argument_spec, wait_for_task
+from ansible.module_utils._text import to_native
 
 
-def EnterMaintenanceMode(module, host):
+class VmwareMaintenanceMgr(PyVmomi):
+    def __init__(self, module):
+        super(VmwareMaintenanceMgr, self).__init__(module)
+        self.esxi_hostname = self.module.params.get('esxi_hostname')
+        self.vsan = self.module.params.get('vsan', None)
+        self.host = self.find_hostsystem_by_name(host_name=self.esxi_hostname)
+        if not self.host:
+            self.module.fail_json(msg='Host %s not found in vCenter' % self.esxi_hostname)
 
-    if host.runtime.inMaintenanceMode:
-        module.exit_json(
-            changed=False,
-            hostsystem=str(host),
-            hostname=module.params['esxi_hostname'],
-            status='NO_ACTION',
-            msg='Host already in maintenance mode')
+    def EnterMaintenanceMode(self):
+        if self.host.runtime.inMaintenanceMode:
+            self.module.exit_json(changed=False,
+                                  hostsystem=str(self.host),
+                                  hostname=self.esxi_hostname,
+                                  status='NO_ACTION',
+                                  msg='Host %s already in maintenance mode' % self.esxi_hostname)
 
-    spec = vim.host.MaintenanceSpec()
+        spec = vim.host.MaintenanceSpec()
 
-    if module.params['vsan']:
-        spec.vsanMode = vim.vsan.host.DecommissionMode()
-        spec.vsanMode.objectAction = module.params['vsan']
+        if self.vsan:
+            spec.vsanMode = vim.vsan.host.DecommissionMode()
+            spec.vsanMode.objectAction = self.vsan
 
-    try:
-        task = host.EnterMaintenanceMode_Task(
-            module.params['timeout'],
-            module.params['evacuate'],
-            spec)
+        try:
+            task = self.host.EnterMaintenanceMode_Task(self.module.params['timeout'],
+                                                       self.module.params['evacuate'],
+                                                       spec)
 
-        success, result = wait_for_task(task)
+            success, result = wait_for_task(task)
 
-        return dict(changed=success,
-                    hostsystem=str(host),
-                    hostname=module.params['esxi_hostname'],
-                    status='ENTER',
-                    msg='Host entered maintenance mode')
+            self.module.exit_json(changed=success,
+                                  hostsystem=str(self.host),
+                                  hostname=self.esxi_hostname,
+                                  status='ENTER',
+                                  msg='Host %s entered maintenance mode' % self.esxi_hostname)
 
-    except TaskError:
-        module.fail_json(
-            msg='Host failed to enter maintenance mode')
+        except TaskError as e:
+            self.module.fail_json(msg='Host %s failed to enter maintenance mode due to %s' % (self.esxi_hostname, to_native(e)))
 
+    def ExitMaintenanceMode(self):
+        if not self.host.runtime.inMaintenanceMode:
+            self.module.exit_json(changed=False,
+                                  hostsystem=str(self.host),
+                                  hostname=self.esxi_hostname,
+                                  status='NO_ACTION',
+                                  msg='Host %s not in maintenance mode' % self.esxi_hostname)
 
-def ExitMaintenanceMode(module, host):
-    if not host.runtime.inMaintenanceMode:
-        module.exit_json(
-            changed=False,
-            hostsystem=str(host),
-            hostname=module.params['esxi_hostname'],
-            status='NO_ACTION',
-            msg='Host not in maintenance mode')
+        try:
+            task = self.host.ExitMaintenanceMode_Task(self.module.params['timeout'])
 
-    try:
-        task = host.ExitMaintenanceMode_Task(
-            module.params['timeout'])
+            success, result = wait_for_task(task)
 
-        success, result = wait_for_task(task)
-
-        return dict(changed=success,
-                    hostsystem=str(host),
-                    hostname=module.params['esxi_hostname'],
-                    status='EXIT',
-                    msg='Host exited maintenance mode')
-
-    except TaskError:
-        module.fail_json(
-            msg='Host failed to exit maintenance mode')
+            self.module.exit_json(changed=success,
+                                  hostsystem=str(self.host),
+                                  hostname=self.esxi_hostname,
+                                  status='EXIT',
+                                  msg='Host %s exited maintenance mode' % self.esxi_hostname)
+        except TaskError as e:
+            self.module.fail_json(msg='Host %s failed to exit maintenance mode due to %s' % (self.esxi_hostname, to_native(e)))
 
 
 def main():
     spec = vmware_argument_spec()
-    spec.update(dict(
-        esxi_hostname=dict(required=True),
-        vsan=dict(required=False, choices=['ensureObjectAccessibility',
-                                           'evacuateAllData',
-                                           'noAction']),
-        evacuate=dict(required=False, type='bool', default=False),
-        timeout=dict(required=False, default=0, type='int'),
-        state=dict(required=False,
-                   default='present',
-                   choices=['present', 'absent'])))
+    spec.update(dict(esxi_hostname=dict(type='str', required=True),
+                     vsan=dict(type='str',
+                               choices=['ensureObjectAccessibility',
+                                        'evacuateAllData',
+                                        'noAction'],
+                               aliases=['vsan_mode'],
+                               ),
+                     evacuate=dict(type='bool', default=False),
+                     timeout=dict(default=0, type='int'),
+                     state=dict(required=False, default='present', choices=['present', 'absent'])
+                     )
+                )
 
     module = AnsibleModule(argument_spec=spec)
 
-    if not HAS_PYVMOMI:
-        module.fail_json(msg='pyvmomi is required for this module')
-
-    content = connect_to_api(module)
-    host = find_hostsystem_by_name(content, module.params['esxi_hostname'])
-
-    if not host:
-        module.fail_json(
-            msg='Host not found in vCenter')
+    host_maintenance_mgr = VmwareMaintenanceMgr(module=module)
 
     if module.params['state'] == 'present':
-        result = EnterMaintenanceMode(module, host)
-
+        host_maintenance_mgr.EnterMaintenanceMode()
     elif module.params['state'] == 'absent':
-        result = ExitMaintenanceMode(module, host)
-
-    module.exit_json(**result)
+        host_maintenance_mgr.ExitMaintenanceMode()
 
 
 if __name__ == '__main__':

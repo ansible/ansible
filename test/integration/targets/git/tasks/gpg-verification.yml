@@ -1,40 +1,39 @@
----
 # Test for verification of GnuPG signatures
 
-- name: Create GnuPG verification workdir
+- name: GPG-VERIFICATION | Create GnuPG verification workdir
   tempfile:
     state: directory
   register: git_gpg_workdir
 
-- name: Define variables based on workdir
+- name: GPG-VERIFICATION | Define variables based on workdir
   set_fact:
     git_gpg_keyfile: "{{ git_gpg_workdir.path }}/testkey.asc"
     git_gpg_source: "{{ git_gpg_workdir.path }}/source"
     git_gpg_dest: "{{ git_gpg_workdir.path }}/dest"
     git_gpg_gpghome: "{{ git_gpg_workdir.path }}/gpg"
 
-- name: Temporary store GnuPG test key
+- name: GPG-VERIFICATION | Temporary store GnuPG test key
   copy:
     content: "{{ git_gpg_testkey }}"
     dest: "{{ git_gpg_keyfile }}"
 
-- name: Create temporary GNUPGHOME directory
+- name: GPG-VERIFICATION | Create temporary GNUPGHOME directory
   file:
     path: "{{ git_gpg_gpghome }}"
     state: directory
     mode: 0700
 
-- name: Import GnuPG test key
+- name: GPG-VERIFICATION | Import GnuPG test key
   environment:
     - GNUPGHOME: "{{ git_gpg_gpghome }}"
   command: gpg --import {{ git_gpg_keyfile }}
 
-- name: Create local GnuPG signed repository directory
+- name: GPG-VERIFICATION | Create local GnuPG signed repository directory
   file:
     path: "{{ git_gpg_source }}"
     state: directory
 
-- name: Generate local GnuPG signed repository
+- name: GPG-VERIFICATION | Generate local GnuPG signed repository
   environment:
     - GNUPGHOME: "{{ git_gpg_gpghome }}"
   shell: |
@@ -57,19 +56,19 @@
   args:
     chdir: "{{ git_gpg_source }}"
 
-- name: Get hash of an unsigned commit
+- name: GPG-VERIFICATION | Get hash of an unsigned commit
   command: git show-ref --hash --verify refs/tags/lightweight_tag/unsigned_commit
   args:
     chdir: "{{ git_gpg_source }}"
   register: git_gpg_unsigned_commit
 
-- name: Get hash of a signed commit
+- name: GPG-VERIFICATION | Get hash of a signed commit
   command: git show-ref --hash --verify refs/tags/lightweight_tag/signed_commit
   args:
     chdir: "{{ git_gpg_source }}"
   register: git_gpg_signed_commit
 
-- name: Clone repo and verify signed HEAD
+- name: GPG-VERIFICATION | Clone repo and verify signed HEAD
   environment:
     - GNUPGHOME: "{{ git_gpg_gpghome }}"
   git:
@@ -77,7 +76,7 @@
     dest: "{{ git_gpg_dest }}"
     verify_commit: yes
 
-- name: Clone repo and verify a signed lightweight tag
+- name: GPG-VERIFICATION | Clone repo and verify a signed lightweight tag
   environment:
     - GNUPGHOME: "{{ git_gpg_gpghome }}"
   git:
@@ -86,7 +85,7 @@
     version: lightweight_tag/signed_commit
     verify_commit: yes
 
-- name: Clone repo and verify an unsigned lightweight tag (should fail)
+- name: GPG-VERIFICATION | Clone repo and verify an unsigned lightweight tag (should fail)
   environment:
     - GNUPGHOME: "{{ git_gpg_gpghome }}"
   git:
@@ -97,13 +96,13 @@
   register: git_verify
   ignore_errors: yes
 
-- name: Check that unsigned lightweight tag verification failed
+- name: GPG-VERIFICATION | Check that unsigned lightweight tag verification failed
   assert:
     that:
-      - git_verify|failed
-      - git_verify.msg|match("Failed to verify GPG signature of commit/tag.+")
+      - git_verify is failed
+      - git_verify.msg is match("Failed to verify GPG signature of commit/tag.+")
 
-- name: Clone repo and verify a signed commit
+- name: GPG-VERIFICATION | Clone repo and verify a signed commit
   environment:
     - GNUPGHOME: "{{ git_gpg_gpghome }}"
   git:
@@ -112,7 +111,7 @@
     version: "{{ git_gpg_signed_commit.stdout }}"
     verify_commit: yes
 
-- name: Clone repo and verify an unsigned commit
+- name: GPG-VERIFICATION | Clone repo and verify an unsigned commit
   environment:
     - GNUPGHOME: "{{ git_gpg_gpghome }}"
   git:
@@ -123,13 +122,13 @@
   register: git_verify
   ignore_errors: yes
 
-- name: Check that unsigned commit verification failed
+- name: GPG-VERIFICATION | Check that unsigned commit verification failed
   assert:
     that:
-      - git_verify|failed
-      - git_verify.msg|match("Failed to verify GPG signature of commit/tag.+")
+      - git_verify is failed
+      - git_verify.msg is match("Failed to verify GPG signature of commit/tag.+")
 
-- name: Clone repo and verify a signed annotated tag
+- name: GPG-VERIFICATION | Clone repo and verify a signed annotated tag
   environment:
     - GNUPGHOME: "{{ git_gpg_gpghome }}"
   git:
@@ -138,7 +137,7 @@
     version: signed_annotated_tag
     verify_commit: yes
 
-- name: Clone repo and verify an unsigned annotated tag (should fail)
+- name: GPG-VERIFICATION | Clone repo and verify an unsigned annotated tag (should fail)
   environment:
     - GNUPGHOME: "{{ git_gpg_gpghome }}"
   git:
@@ -149,13 +148,13 @@
   register: git_verify
   ignore_errors: yes
 
-- name: Check that unsigned annotated tag verification failed
+- name: GPG-VERIFICATION | Check that unsigned annotated tag verification failed
   assert:
     that:
-      - git_verify|failed
-      - git_verify.msg|match("Failed to verify GPG signature of commit/tag.+")
+      - git_verify is failed
+      - git_verify.msg is match("Failed to verify GPG signature of commit/tag.+")
 
-- name: Clone repo and verify a signed branch
+- name: GPG-VERIFICATION | Clone repo and verify a signed branch
   environment:
     - GNUPGHOME: "{{ git_gpg_gpghome }}"
   git:
@@ -164,7 +163,7 @@
     version: some_branch/signed_tip
     verify_commit: yes
 
-- name: Clone repo and verify an unsigned branch (should fail)
+- name: GPG-VERIFICATION | Clone repo and verify an unsigned branch (should fail)
   environment:
     - GNUPGHOME: "{{ git_gpg_gpghome }}"
   git:
@@ -175,13 +174,19 @@
   register: git_verify
   ignore_errors: yes
 
-- name: Check that unsigned branch verification failed
+- name: GPG-VERIFICATION | Check that unsigned branch verification failed
   assert:
     that:
-      - git_verify|failed
-      - git_verify.msg|match("Failed to verify GPG signature of commit/tag.+")
+      - git_verify is failed
+      - git_verify.msg is match("Failed to verify GPG signature of commit/tag.+")
 
-- name: Remove GnuPG verification workdir
+- name: GPG-VERIFICATION | Stop gpg-agent so we can remove any locks on the GnuPG dir
+  command: gpgconf --kill gpg-agent
+  when: ansible_os_family != 'Suse' or ansible_distribution_version != '42.3'  # OpenSUSE 42.3 ships with an older version of gpg-agent that doesn't support this
+  environment:
+    GNUPGHOME: "{{ git_gpg_gpghome }}"
+
+- name: GPG-VERIFICATION | Remove GnuPG verification workdir
   file:
     path: "{{ git_gpg_workdir.path }}"
     state: absent

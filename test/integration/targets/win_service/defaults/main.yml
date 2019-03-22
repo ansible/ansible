@@ -1,9 +1,7 @@
 ---
-# parameters set here for creating new service in tests
-test_win_service_name: TestService
+test_win_service_binary_url: https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/win_service/SleepService.exe
+test_win_service_dir: C:\ansible testing\[win_service]
+test_win_service_path: '{{ test_win_service_dir }}\SleepService.exe'
+test_win_service_name: TestService [*abc]
 test_win_service_display_name: Test Service
 test_win_service_description: Test Service description
-test_win_service_path: C:\Windows\System32\snmptrap.exe
-
-# used for the pause tests, need to use an actual service
-test_win_service_pause_name: TapiSrv

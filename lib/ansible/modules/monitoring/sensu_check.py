@@ -33,22 +33,19 @@ options:
     description:
       - Whether the check should be present or not
     choices: [ 'present', 'absent' ]
-    required: false
     default: present
   path:
     description:
       - Path to the json file of the check to be added/removed.
       - Will be created if it does not exist (unless I(state=absent)).
       - The parent folders need to exist when I(state=present), otherwise an error will be thrown
-    required: false
     default: /etc/sensu/conf.d/checks.json
   backup:
     description:
       - Create a backup file (if yes), including the timestamp information so
       - you can get the original file back if you somehow clobbered it incorrectly.
-    choices: [ 'yes', 'no' ]
-    required: false
-    default: no
+    type: bool
+    default: 'no'
   command:
     description:
       - Path to the sensu check to run (not required when I(state=absent))
@@ -56,113 +53,85 @@ options:
   handlers:
     description:
       - List of handlers to notify when the check fails
-    required: false
     default: []
   subscribers:
     description:
       - List of subscribers/channels this check should run for
       - See sensu_subscribers to subscribe a machine to a channel
-    required: false
     default: []
   interval:
     description:
       - Check interval in seconds
-    required: false
-    default: null
   timeout:
     description:
       - Timeout for the check
-    required: false
     default: 10
   ttl:
     description:
       - Time to live in seconds until the check is considered stale
-    required: false
-    default: null
     version_added: 2.4
   handle:
     description:
       - Whether the check should be handled or not
-    choices: [ 'yes', 'no' ]
-    required: false
-    default: yes
+    type: bool
+    default: 'yes'
   subdue_begin:
     description:
       - When to disable handling of check failures
-    required: false
-    default: null
   subdue_end:
     description:
       - When to enable handling of check failures
-    required: false
-    default: null
   dependencies:
     description:
       - Other checks this check depends on, if dependencies fail,
       - handling of this check will be disabled
-    required: false
     default: []
   metric:
     description:
       - Whether the check is a metric
-    choices: [ 'yes', 'no' ]
-    required: false
-    default: no
+    type: bool
+    default: 'no'
   standalone:
     description:
       - Whether the check should be scheduled by the sensu client or server
       - This option obviates the need for specifying the I(subscribers) option
-    choices: [ 'yes', 'no' ]
-    required: false
-    default: no
+    type: bool
+    default: 'no'
   publish:
     description:
       - Whether the check should be scheduled at all.
       - You can still issue it via the sensu api
-    choices: [ 'yes', 'no' ]
-    required: false
-    default: yes
+    type: bool
+    default: 'yes'
   occurrences:
     description:
       - Number of event occurrences before the handler should take action
-    required: false
     default: 1
   refresh:
     description:
       - Number of seconds handlers should wait before taking second action
-    required: false
-    default: null
   aggregate:
     description:
       - Classifies the check as an aggregate check,
       - making it available via the aggregate API
-    choices: [ 'yes', 'no' ]
-    required: false
-    default: no
+    type: bool
+    default: 'no'
   low_flap_threshold:
     description:
       - The low threshold for flap detection
-    required: false
-    default: null
   high_flap_threshold:
     description:
       - The high threshold for flap detection
-    required: false
-    default: null
   custom:
     version_added: "2.1"
     description:
       - A hash/dictionary of custom parameters for mixing to the configuration.
       - You can't rewrite others module parameters using this
-    required: false
     default: {}
   source:
     version_added: "2.1"
     description:
       - The check source, used to create a JIT Sensu client for an external resource (e.g. a network switch).
-    required: false
-    default: null
-requirements: [ ]
 author: "Anders Ingemann (@andsens)"
 '''
 
@@ -213,7 +182,7 @@ def sensu_check(module, path, name, state='present', backup=False):
             stream = open(path, 'r')
             config = json.load(stream)
         except IOError as e:
-            if e.errno is 2:  # File not found, non-fatal
+            if e.errno == 2:  # File not found, non-fatal
                 if state == 'absent':
                     reasons.append('file did not exist and state is `absent\'')
                     return changed, reasons
@@ -281,12 +250,12 @@ def sensu_check(module, path, name, state='present', backup=False):
         if module.params['custom']:
             # Convert to json
             custom_params = module.params['custom']
-            overwrited_fields = set(custom_params.keys()) & set(simple_opts + ['type','subdue','subdue_begin','subdue_end'])
+            overwrited_fields = set(custom_params.keys()) & set(simple_opts + ['type', 'subdue', 'subdue_begin', 'subdue_end'])
             if overwrited_fields:
                 msg = 'You can\'t overwriting standard module parameters via "custom". You are trying overwrite: {opt}'.format(opt=list(overwrited_fields))
                 module.fail_json(msg=msg)
 
-            for k,v in custom_params.items():
+            for k, v in custom_params.items():
                 if k in config['checks'][name]:
                     if not config['checks'][name][k] == v:
                         changed = True
@@ -298,7 +267,7 @@ def sensu_check(module, path, name, state='present', backup=False):
             simple_opts += custom_params.keys()
 
         # Remove obsolete custom params
-        for opt in set(config['checks'][name].keys()) - set(simple_opts + ['type','subdue','subdue_begin','subdue_end']):
+        for opt in set(config['checks'][name].keys()) - set(simple_opts + ['type', 'subdue', 'subdue_begin', 'subdue_end']):
             changed = True
             reasons.append('`custom param {opt}\' was deleted'.format(opt=opt))
             del check[opt]
@@ -345,30 +314,30 @@ def sensu_check(module, path, name, state='present', backup=False):
 
 def main():
 
-    arg_spec = {'name':         {'type': 'str', 'required': True},
-                'path':         {'type': 'str', 'default': '/etc/sensu/conf.d/checks.json'},
-                'state':        {'type': 'str', 'default': 'present', 'choices': ['present', 'absent']},
-                'backup':       {'type': 'bool', 'default': 'no'},
-                'command':      {'type': 'str'},
-                'handlers':     {'type': 'list'},
-                'subscribers':  {'type': 'list'},
-                'interval':     {'type': 'int'},
-                'timeout':      {'type': 'int'},
-                'ttl':          {'type': 'int'},
-                'handle':       {'type': 'bool'},
+    arg_spec = {'name': {'type': 'str', 'required': True},
+                'path': {'type': 'str', 'default': '/etc/sensu/conf.d/checks.json'},
+                'state': {'type': 'str', 'default': 'present', 'choices': ['present', 'absent']},
+                'backup': {'type': 'bool', 'default': 'no'},
+                'command': {'type': 'str'},
+                'handlers': {'type': 'list'},
+                'subscribers': {'type': 'list'},
+                'interval': {'type': 'int'},
+                'timeout': {'type': 'int'},
+                'ttl': {'type': 'int'},
+                'handle': {'type': 'bool'},
                 'subdue_begin': {'type': 'str'},
-                'subdue_end':   {'type': 'str'},
+                'subdue_end': {'type': 'str'},
                 'dependencies': {'type': 'list'},
-                'metric':       {'type': 'bool', 'default': 'no'},
-                'standalone':   {'type': 'bool'},
-                'publish':      {'type': 'bool'},
-                'occurrences':  {'type': 'int'},
-                'refresh':      {'type': 'int'},
-                'aggregate':    {'type': 'bool'},
-                'low_flap_threshold':  {'type': 'int'},
+                'metric': {'type': 'bool', 'default': 'no'},
+                'standalone': {'type': 'bool'},
+                'publish': {'type': 'bool'},
+                'occurrences': {'type': 'int'},
+                'refresh': {'type': 'int'},
+                'aggregate': {'type': 'bool'},
+                'low_flap_threshold': {'type': 'int'},
                 'high_flap_threshold': {'type': 'int'},
-                'custom':   {'type': 'dict'},
-                'source':   {'type': 'str'},
+                'custom': {'type': 'dict'},
+                'source': {'type': 'str'},
                 }
 
     required_together = [['subdue_begin', 'subdue_end']]

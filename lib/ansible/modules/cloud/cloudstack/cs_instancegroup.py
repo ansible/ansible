@@ -2,21 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # (c) 2015, René Moser <mail@renemoser.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -30,47 +16,45 @@ short_description: Manages instance groups on Apache CloudStack based clouds.
 description:
     - Create and remove instance groups.
 version_added: '2.0'
-author: "René Moser (@resmo)"
+author: René Moser (@resmo)
 options:
   name:
     description:
       - Name of the instance group.
+    type: str
     required: true
   domain:
     description:
       - Domain the instance group is related to.
-    required: false
-    default: null
+    type: str
   account:
     description:
       - Account the instance group is related to.
-    required: false
-    default: null
+    type: str
   project:
     description:
       - Project the instance group is related to.
-    required: false
-    default: null
+    type: str
   state:
     description:
       - State of the instance group.
-    required: false
-    default: 'present'
-    choices: [ 'present', 'absent' ]
+    type: str
+    default: present
+    choices: [ present, absent ]
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# Create an instance group
-- local_action:
-    module: cs_instancegroup
+- name: Create an instance group
+  cs_instancegroup:
     name: loadbalancers
+  delegate_to: localhost
 
-# Remove an instance group
-- local_action:
-    module: cs_instancegroup
+- name: Remove an instance group
+  cs_instancegroup:
     name: loadbalancers
     state: absent
+  delegate_to: localhost
 '''
 
 RETURN = '''
@@ -78,32 +62,32 @@ RETURN = '''
 id:
   description: UUID of the instance group.
   returned: success
-  type: string
+  type: str
   sample: 04589590-ac63-4ffc-93f5-b698b8ac38b6
 name:
   description: Name of the instance group.
   returned: success
-  type: string
+  type: str
   sample: webservers
 created:
   description: Date when the instance group was created.
   returned: success
-  type: string
+  type: str
   sample: 2015-05-03T15:05:51+0200
 domain:
   description: Domain the instance group is related to.
   returned: success
-  type: string
+  type: str
   sample: example domain
 account:
   description: Account the instance group is related to.
   returned: success
-  type: string
+  type: str
   sample: example account
 project:
   description: Project the instance group is related to.
   returned: success
-  type: string
+  type: str
   sample: example project
 '''
 
@@ -131,10 +115,11 @@ class AnsibleCloudStackInstanceGroup(AnsibleCloudStack):
             'account': self.get_account('name'),
             'domainid': self.get_domain('id'),
             'projectid': self.get_project('id'),
+            'fetch_list': True,
         }
         instance_groups = self.query_api('listInstanceGroups', **args)
         if instance_groups:
-            for g in instance_groups['instancegroup']:
+            for g in instance_groups:
                 if name in [g['name'], g['id']]:
                     self.instance_group = g
                     break

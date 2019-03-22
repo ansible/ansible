@@ -72,7 +72,7 @@
   assert:
     that:
     - fail_timeout_file_present.msg == 'timeout while waiting for file ' + test_win_wait_for_path + '\\test.txt to be present'
-    - fail_timeout_file_present.attempts == 5
+    - fail_timeout_file_present.wait_attempts == 5
     - fail_timeout_file_present.elapsed > 5
 
 - name: wait for file to not exist - non existing file
@@ -84,7 +84,7 @@
 - name: assert wait for file to not exist - non existing file
   assert:
     that:
-    - wait_remove_no_file.attempts == 1
+    - wait_remove_no_file.wait_attempts == 1
 
 - name: create file for next test
   win_file:
@@ -105,7 +105,7 @@
 - name: assert wait for file to not exist - existing file
   assert:
     that:
-    - wait_remove_existing_file.attempts > 1
+    - wait_remove_existing_file.wait_attempts > 1
 
 - name: run async task to create file after a timeout
   win_shell: Start-Sleep -Seconds 5; New-Item -Path '{{test_win_wait_for_path}}\test.txt' -Type File
@@ -121,7 +121,7 @@
 - name: assert wait for file to exist - non existing file
   assert:
     that:
-    - wait_new_missing_file.attempts > 1
+    - wait_new_missing_file.wait_attempts > 1
 
 - name: wait for file to exist - existing file
   win_wait_for:
@@ -132,7 +132,7 @@
 - name: assert wait for file to exist - existing file
   assert:
     that:
-    - wait_new_existing_file.attempts == 1
+    - wait_new_existing_file.wait_attempts == 1
 
 - name: timeout while waiting for file to not exist
   win_wait_for:
@@ -146,7 +146,7 @@
   assert:
     that:
     - fail_timeout_file_absent.msg == 'timeout while waiting for file ' + test_win_wait_for_path + '\\test.txt to be absent'
-    - fail_timeout_file_absent.attempts == 5
+    - fail_timeout_file_absent.wait_attempts == 5
     - fail_timeout_file_absent.elapsed > 5
 
 - name: run async task to populate file contents
@@ -164,7 +164,7 @@
 - name: assert wait for file contents to match regex - empty file
   assert:
     that:
-    - wait_regex_match_new.attempts > 1
+    - wait_regex_match_new.wait_attempts > 1
 
 - name: wait for file contents to match regex - existing file
   win_wait_for:
@@ -176,7 +176,7 @@
 - name: assert wait for file contents to match regex - existing file
   assert:
     that:
-    - wait_regex_match_existing.attempts == 1
+    - wait_regex_match_existing.wait_attempts == 1
 
 - name: run async task to clear file contents
   win_shell: Start-Sleep -Seconds 5; Set-Content -Path '{{test_win_wait_for_path}}\test.txt' -Value 'hello world`r`nother contents for file`r`nEnd line'
@@ -193,7 +193,7 @@
 - name: assert wait for file content to not match regex
   assert:
     that:
-    - wait_regex_match_absent_remove.attempts > 1
+    - wait_regex_match_absent_remove.wait_attempts > 1
 
 - name: wait for file content to not match regex - existing
   win_wait_for:
@@ -205,7 +205,7 @@
 - name: assert wait for file content to not match regex
   assert:
     that:
-    - wait_regex_match_absent_existing.attempts == 1
+    - wait_regex_match_absent_existing.wait_attempts == 1
 
 - name: remove file to test search_regex works on missing files
   win_file:
@@ -222,7 +222,7 @@
 - name: assert wait for file content to not match regex - missing file
   assert:
     that:
-    - wait_regex_match_absent_missing.attempts == 1
+    - wait_regex_match_absent_missing.wait_attempts == 1
 
 # port tests
 - name: timeout waiting for port to come online
@@ -237,7 +237,7 @@
   assert:
     that:
     - "fail_timeout_port_online.msg == 'timeout while waiting for 127.0.0.1:' + test_win_wait_for_port|string + ' to start listening'"
-    - fail_timeout_port_online.attempts > 1
+    - fail_timeout_port_online.wait_attempts > 1
     - fail_timeout_port_online.elapsed > 5
 
 - name: run async task to start web server
@@ -254,7 +254,7 @@
 - name: assert wait for port to come online
   assert:
     that:
-    - wait_for_port_to_start.attempts > 1
+    - wait_for_port_to_start.wait_attempts > 1
 
 - name: start web server
   win_shell: '{{test_win_wait_for_path}}\http-server.ps1'
@@ -270,7 +270,13 @@
 - name: assert wait for port that is already online
   assert:
     that:
-    - wait_for_port_already_started.attempts == 1
+    - wait_for_port_already_started.wait_attempts == 1
+
+# add a manual wait to make sure the port is truly offline for next test
+- name: wait for port to be offline
+  win_wait_for:
+    port: '{{test_win_wait_for_port}}'
+    state: stopped
 
 - name: wait for port that is already offline
   win_wait_for:
@@ -281,7 +287,7 @@
 - name: assert wait for port that is already offline
   assert:
     that:
-    - wait_for_port_already_stopped.attempts == 1
+    - wait_for_port_already_stopped.wait_attempts == 1
 
 - name: start web server for offline port test
   win_shell: '{{test_win_wait_for_path}}\http-server.ps1'
@@ -297,7 +303,7 @@
 - name: assert wait for port to go offline
   assert:
     that:
-    - wait_for_port_to_be_stopped.attempts > 1
+    - wait_for_port_to_be_stopped.wait_attempts > 1
 
 - name: wait for offline port to be drained
   win_wait_for:
@@ -308,7 +314,7 @@
 - name: assert wait for offline port to be drained
   assert:
     that:
-    - wait_for_drained_port_no_port.attempts == 1
+    - wait_for_drained_port_no_port.wait_attempts == 1
 
 - name: clear testing folder
   win_file:

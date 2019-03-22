@@ -20,7 +20,8 @@ short_description: Dpkg package selection selections
 description:
     - Change dpkg package selection state via --get-selections and --set-selections.
 version_added: "2.0"
-author: Brian Brazil <brian.brazil@boxever.com>
+author:
+- Brian Brazil (@brian-brazil)  <brian.brazil@boxever.com>
 options:
     name:
         description:
@@ -40,6 +41,9 @@ EXAMPLES = '''
     name: python
     selection: hold
 '''
+
+from ansible.module_utils.basic import AnsibleModule
+
 
 def main():
     module = AnsibleModule(
@@ -70,8 +74,6 @@ def main():
     module.run_command([dpkg, '--set-selections'], data="%s %s" % (name, selection), check_rc=True)
     module.exit_json(changed=changed, before=current, after=selection)
 
-
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

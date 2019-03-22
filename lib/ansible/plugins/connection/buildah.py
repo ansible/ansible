@@ -49,13 +49,9 @@ import subprocess
 import ansible.constants as C
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.plugins.connection import ConnectionBase, ensure_connect
+from ansible.utils.display import Display
 
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 # this _has to be_ named Connection
@@ -67,7 +63,6 @@ class Connection(ConnectionBase):
     # String used to identify this Connection class from other classes
     transport = 'buildah'
     has_pipelining = True
-    become_methods = frozenset(C.BECOME_METHODS)
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)

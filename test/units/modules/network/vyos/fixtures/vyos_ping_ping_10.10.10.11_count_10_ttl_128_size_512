@@ -1,0 +1,15 @@
+PING 10.10.10.11 (10.8.38.65) 512(540) bytes of data.
+520 bytes from 10.10.10.11: icmp_req=1 ttl=255 time=1.17 ms
+520 bytes from 10.10.10.11: icmp_req=2 ttl=255 time=1.32 ms
+520 bytes from 10.10.10.11: icmp_req=3 ttl=255 time=1.21 ms
+520 bytes from 10.10.10.11: icmp_req=4 ttl=255 time=1.46 ms
+520 bytes from 10.10.10.11: icmp_req=5 ttl=255 time=1.32 ms
+520 bytes from 10.10.10.11: icmp_req=6 ttl=255 time=1.28 ms
+520 bytes from 10.10.10.11: icmp_req=7 ttl=255 time=1.25 ms
+520 bytes from 10.10.10.11: icmp_req=8 ttl=255 time=1.23 ms
+520 bytes from 10.10.10.11: icmp_req=9 ttl=255 time=1.34 ms
+520 bytes from 10.10.10.11: icmp_req=10 ttl=255 time=21.0 ms
+
+--- 10.10.10.11 ping statistics ---
+10 packets transmitted, 10 received, 0% packet loss, time 9012ms
+rtt min/avg/max/mdev = 1.170/3.262/21.002/5.913 ms

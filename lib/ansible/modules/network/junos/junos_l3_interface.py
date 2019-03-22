@@ -36,6 +36,22 @@ options:
     description:
       - Logical interface number.
     default: 0
+  filter_input:
+    description:
+      - The name of input filter.
+    version_added: "2.8"
+  filter_output:
+    description:
+      - The name of output filter.
+    version_added: "2.8"
+  filter6_input:
+    description:
+      - The name of input filter for ipv6.
+    version_added: "2.8"
+  filter6_output:
+    description:
+      - The name of output filter for ipv6.
+    version_added: "2.8"
   aggregate:
     description: List of L3 interfaces definitions
   state:
@@ -47,13 +63,16 @@ options:
     description:
       - Specifies whether or not the configuration is active or deactivated
     default: True
-    choices: [True, False]
+    type: bool
 requirements:
   - ncclient (>=v0.5.2)
 notes:
   - This module requires the netconf system service be enabled on
     the remote device being managed.
   - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
+  - Recommended connection is C(netconf). See L(the Junos OS Platform Options,../network/user_guide/platform_junos.html).
+  - This module also works with C(local) connections for legacy playbooks.
+extends_documentation_fragment: junos
 """
 
 EXAMPLES = """
@@ -71,18 +90,18 @@ EXAMPLES = """
   junos_l3_interface:
     aggregate:
     - name: ge-0/0/1
-      ipv4: 1.1.1.1
+      ipv4: 192.0.2.1
     - name: ge-0/0/2
-      ipv4: 2.2.2.2
+      ipv4: 192.0.2.2
       ipv6: fd5d:12c9:2201:2::2
 
 - name: Delete ipv4 address using aggregate
   junos_l3_interface:
     aggregate:
     - name: ge-0/0/1
-      ipv4: 1.1.1.1
+      ipv4: 192.0.2.1
     - name: ge-0/0/2
-      ipv4: 2.2.2.2
+      ipv4: 192.0.2.2
     state: absent
 """
 
@@ -90,10 +109,10 @@ RETURN = """
 diff:
   description: Configuration difference before and after applying change.
   returned: when configuration is changed and diff option is enabled.
-  type: string
+  type: str
   sample: >
         [edit interfaces ge-0/0/1 unit 0 family inet]
-        +       address 1.1.1.1/32;
+        +       address 192.0.2.1/32;
         [edit interfaces ge-0/0/1 unit 0 family inet6]
         +       address fd5d:12c9:2201:1::1/128;
 """
@@ -102,15 +121,10 @@ import collections
 from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network_common import remove_default_spec
-from ansible.module_utils.junos import junos_argument_spec, check_args
-from ansible.module_utils.junos import load_config, map_params_to_obj, map_obj_to_ele
-from ansible.module_utils.junos import commit_configuration, discard_changes, locked_config, to_param_list
-
-try:
-    from lxml.etree import tostring
-except ImportError:
-    from xml.etree.ElementTree import tostring
+from ansible.module_utils.network.common.utils import remove_default_spec
+from ansible.module_utils.network.junos.junos import junos_argument_spec, tostring
+from ansible.module_utils.network.junos.junos import load_config, map_params_to_obj, map_obj_to_ele
+from ansible.module_utils.network.junos.junos import commit_configuration, discard_changes, locked_config, to_param_list
 
 USE_PERSISTENT_CONNECTION = True
 
@@ -122,6 +136,10 @@ def main():
         name=dict(),
         ipv4=dict(),
         ipv6=dict(),
+        filter_input=dict(),
+        filter_output=dict(),
+        filter6_input=dict(),
+        filter6_output=dict(),
         unit=dict(default=0, type='int'),
         state=dict(default='present', choices=['present', 'absent']),
         active=dict(default=True, type='bool')
@@ -149,8 +167,6 @@ def main():
                            required_one_of=required_one_of)
 
     warnings = list()
-    check_args(module, warnings)
-
     result = {'changed': False}
 
     if warnings:
@@ -163,7 +179,11 @@ def main():
         ('name', {'xpath': 'name', 'parent_attrib': False, 'is_key': True}),
         ('unit', {'xpath': 'name', 'top': 'unit', 'parent_attrib': False, 'is_key': True}),
         ('ipv4', {'xpath': 'inet/address/name', 'top': 'unit/family', 'is_key': True}),
-        ('ipv6', {'xpath': 'inet6/address/name', 'top': 'unit/family', 'is_key': True})
+        ('ipv6', {'xpath': 'inet6/address/name', 'top': 'unit/family', 'is_key': True}),
+        ('filter_input', {'xpath': 'inet/filter/input', 'top': 'unit/family'}),
+        ('filter_output', {'xpath': 'inet/filter/output', 'top': 'unit/family'}),
+        ('filter6_input', {'xpath': 'inet6/filter/input', 'top': 'unit/family'}),
+        ('filter6_output', {'xpath': 'inet6/filter/output', 'top': 'unit/family'}),
     ])
 
     params = to_param_list(module)
@@ -199,6 +219,7 @@ def main():
                 result['diff'] = {'prepared': diff}
 
     module.exit_json(**result)
+
 
 if __name__ == "__main__":
     main()

@@ -20,11 +20,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.aireos import aireos_config
-from .aireos_module import TestCiscoWlcModule, load_fixture, set_module_args
+from units.modules.utils import set_module_args
+from .aireos_module import TestCiscoWlcModule, load_fixture
 
 
 class TestCiscoWlcConfigModule(TestCiscoWlcModule):
@@ -32,6 +31,8 @@ class TestCiscoWlcConfigModule(TestCiscoWlcModule):
     module = aireos_config
 
     def setUp(self):
+        super(TestCiscoWlcConfigModule, self).setUp()
+
         self.mock_get_config = patch('ansible.modules.network.aireos.aireos_config.get_config')
         self.get_config = self.mock_get_config.start()
 
@@ -41,7 +42,11 @@ class TestCiscoWlcConfigModule(TestCiscoWlcModule):
         self.mock_run_commands = patch('ansible.modules.network.aireos.aireos_config.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
+        self.mock_save_config = patch('ansible.modules.network.aireos.aireos_config.save_config')
+        self.save_config = self.mock_save_config.start()
+
     def tearDown(self):
+        super(TestCiscoWlcConfigModule, self).tearDown()
         self.mock_get_config.stop()
         self.mock_load_config.stop()
         self.mock_run_commands.stop()
@@ -68,10 +73,9 @@ class TestCiscoWlcConfigModule(TestCiscoWlcModule):
         self.assertIn('__backup__', result)
 
     def test_aireos_config_save(self):
-        self.run_commands.return_value = "sysname foo"
         set_module_args(dict(save=True))
-        self.execute_module(changed=True)
-        self.assertEqual(self.run_commands.call_count, 1)
+        self.execute_module()
+        self.assertEqual(self.save_config.call_count, 1)
         self.assertEqual(self.get_config.call_count, 0)
         self.assertEqual(self.load_config.call_count, 0)
 
@@ -101,3 +105,27 @@ class TestCiscoWlcConfigModule(TestCiscoWlcModule):
         lines = ['sysname router', 'interface create mtc-1 1']
         set_module_args(dict(lines=lines, match='none'))
         self.execute_module(changed=True, commands=lines, sort=False)
+
+    def test_nxos_config_save_always(self):
+        args = dict(save_when='always')
+        set_module_args(args)
+        self.execute_module()
+        self.assertEqual(self.save_config.call_count, 1)
+        self.assertEqual(self.get_config.call_count, 0)
+        self.assertEqual(self.load_config.call_count, 0)
+
+    def test_nxos_config_save_changed_true(self):
+        args = dict(save_when='changed', lines=['sysname foo', 'interface create mtc-3 3'])
+        set_module_args(args)
+        self.execute_module(changed=True)
+        self.assertEqual(self.save_config.call_count, 1)
+        self.assertEqual(self.get_config.call_count, 1)
+        self.assertEqual(self.load_config.call_count, 1)
+
+    def test_nxos_config_save_changed_false(self):
+        args = dict(save_when='changed')
+        set_module_args(args)
+        self.execute_module()
+        self.assertEqual(self.save_config.call_count, 0)
+        self.assertEqual(self.get_config.call_count, 0)
+        self.assertEqual(self.load_config.call_count, 0)

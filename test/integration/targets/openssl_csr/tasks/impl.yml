@@ -1,0 +1,276 @@
+---
+- name: Generate privatekey
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey.pem'
+
+- name: Generate CSR (check mode)
+  openssl_csr:
+    path: '{{ output_dir }}/csr.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    subject:
+      commonName: www.ansible.com
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  check_mode: yes
+  register: generate_csr_check
+
+- name: Generate CSR
+  openssl_csr:
+    path: '{{ output_dir }}/csr.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    subject:
+      commonName: www.ansible.com
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: generate_csr
+
+- name: Generate CSR (idempotent)
+  openssl_csr:
+    path: '{{ output_dir }}/csr.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    subject:
+      commonName: www.ansible.com
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: generate_csr_check_idempotent
+
+- name: Generate CSR (idempotent, check mode)
+  openssl_csr:
+    path: '{{ output_dir }}/csr.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    subject:
+      commonName: www.ansible.com
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  check_mode: yes
+  register: generate_csr_check_idempotent_check
+
+- name: Generate CSR without SAN (check mode)
+  openssl_csr:
+    path: '{{ output_dir }}/csr-nosan.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    subject:
+      commonName: www.ansible.com
+    useCommonNameForSAN: no
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  check_mode: yes
+  register: generate_csr_nosan_check
+
+- name: Generate CSR without SAN
+  openssl_csr:
+    path: '{{ output_dir }}/csr-nosan.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    subject:
+      commonName: www.ansible.com
+    useCommonNameForSAN: no
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: generate_csr_nosan
+
+- name: Generate CSR without SAN (idempotent)
+  openssl_csr:
+    path: '{{ output_dir }}/csr-nosan.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    subject:
+      commonName: www.ansible.com
+    useCommonNameForSAN: no
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: generate_csr_nosan_check_idempotent
+
+- name: Generate CSR without SAN (idempotent, check mode)
+  openssl_csr:
+    path: '{{ output_dir }}/csr-nosan.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    subject:
+      commonName: www.ansible.com
+    useCommonNameForSAN: no
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  check_mode: yes
+  register: generate_csr_nosan_check_idempotent_check
+
+# keyUsage longname and shortname should be able to be used
+# interchangeably. Hence the long name is specified here
+# but the short name is used to test idempotency for ipsecuser
+# and vice-versa for biometricInfo
+- name: Generate CSR with KU and XKU
+  openssl_csr:
+    path: '{{ output_dir }}/csr_ku_xku.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    subject:
+      CN: www.ansible.com
+    keyUsage:
+      - digitalSignature
+      - keyAgreement
+    extendedKeyUsage:
+      - qcStatements
+      - DVCS
+      - IPSec User
+      - biometricInfo
+    select_crypto_backend: '{{ select_crypto_backend }}'
+
+- name: Generate CSR with KU and XKU (test idempotency)
+  openssl_csr:
+    path: '{{ output_dir }}/csr_ku_xku.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    subject:
+      commonName: 'www.ansible.com'
+    keyUsage:
+      - Key Agreement
+      - digitalSignature
+    extendedKeyUsage:
+      - ipsecUser
+      - qcStatements
+      - DVCS
+      - Biometric Info
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: csr_ku_xku
+
+- name: Generate CSR with KU and XKU (test XKU change)
+  openssl_csr:
+    path: '{{ output_dir }}/csr_ku_xku.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    subject:
+      commonName: 'www.ansible.com'
+    keyUsage:
+      - digitalSignature
+      - keyAgreement
+    extendedKeyUsage:
+      - ipsecUser
+      - qcStatements
+      - Biometric Info
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: csr_ku_xku_change
+
+- name: Generate CSR with KU and XKU (test KU change)
+  openssl_csr:
+    path: '{{ output_dir }}/csr_ku_xku.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    subject:
+      commonName: 'www.ansible.com'
+    keyUsage:
+      - digitalSignature
+    extendedKeyUsage:
+      - ipsecUser
+      - qcStatements
+      - Biometric Info
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: csr_ku_xku_change_2
+
+- name: Generate CSR with old API
+  openssl_csr:
+    path: '{{ output_dir }}/csr_oldapi.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    commonName: www.ansible.com
+    select_crypto_backend: '{{ select_crypto_backend }}'
+
+- name: Generate CSR with invalid SAN
+  openssl_csr:
+    path: '{{ output_dir }}/csrinvsan.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    subject_alt_name: invalid-san.example.com
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: generate_csr_invalid_san
+  ignore_errors: yes
+
+- name: Generate CSR with OCSP Must Staple
+  openssl_csr:
+    path: '{{ output_dir }}/csr_ocsp.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    subject_alt_name: "DNS:www.ansible.com"
+    ocsp_must_staple: true
+    select_crypto_backend: '{{ select_crypto_backend }}'
+
+- name: Generate CSR with OCSP Must Staple (test idempotency)
+  openssl_csr:
+    path: '{{ output_dir }}/csr_ocsp.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    subject_alt_name: "DNS:www.ansible.com"
+    ocsp_must_staple: true
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: csr_ocsp_idempotency
+
+- name: Generate ECC privatekey
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey2.pem'
+    type: ECC
+    curve: secp384r1
+
+- name: Generate CSR with ECC privatekey
+  openssl_csr:
+    path: '{{ output_dir }}/csr2.csr'
+    privatekey_path: '{{ output_dir }}/privatekey2.pem'
+    subject:
+      commonName: www.ansible.com
+    select_crypto_backend: '{{ select_crypto_backend }}'
+
+- name: Generate CSR with text common name
+  openssl_csr:
+    path: '{{ output_dir }}/csr3.csr'
+    privatekey_path: '{{ output_dir }}/privatekey2.pem'
+    subject:
+      commonName: This is for Ansible
+    useCommonNameForSAN: no
+    select_crypto_backend: '{{ select_crypto_backend }}'
+
+- name: Generate CSR with country name
+  openssl_csr:
+    path: '{{ output_dir }}/csr4.csr'
+    privatekey_path: '{{ output_dir }}/privatekey2.pem'
+    country_name: de
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: country_idempotent_1
+
+- name: Generate CSR with country name (idempotent)
+  openssl_csr:
+    path: '{{ output_dir }}/csr4.csr'
+    privatekey_path: '{{ output_dir }}/privatekey2.pem'
+    country_name: de
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: country_idempotent_2
+
+- name: Generate CSR with country name (idempotent 2)
+  openssl_csr:
+    path: '{{ output_dir }}/csr4.csr'
+    privatekey_path: '{{ output_dir }}/privatekey2.pem'
+    subject:
+      C: de
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: country_idempotent_3
+
+- name: Generate CSR with country name (bad country name)
+  openssl_csr:
+    path: '{{ output_dir }}/csr4.csr'
+    privatekey_path: '{{ output_dir }}/privatekey2.pem'
+    subject:
+      C: dex
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: country_fail_4
+  ignore_errors: yes
+
+- name: Generate privatekey with password
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekeypw.pem'
+    passphrase: hunter2
+    cipher: auto
+    select_crypto_backend: cryptography
+
+- name: Generate publickey - PEM format
+  openssl_csr:
+    path: '{{ output_dir }}/csr_pw1.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    privatekey_passphrase: hunter2
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  ignore_errors: yes
+  register: passphrase_error_1
+
+- name: Generate publickey - PEM format
+  openssl_csr:
+    path: '{{ output_dir }}/csr_pw2.csr'
+    privatekey_path: '{{ output_dir }}/privatekeypw.pem'
+    privatekey_passphrase: wrong_password
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  ignore_errors: yes
+  register: passphrase_error_2
+
+- name: Generate publickey - PEM format
+  openssl_csr:
+    path: '{{ output_dir }}/csr_pw3.csr'
+    privatekey_path: '{{ output_dir }}/privatekeypw.pem'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  ignore_errors: yes
+  register: passphrase_error_3

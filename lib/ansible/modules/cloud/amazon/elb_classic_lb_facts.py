@@ -26,18 +26,19 @@ description:
     - Gather facts about EC2 Elastic Load Balancers in AWS
 version_added: "2.0"
 author:
-  - "Michael Schultz (github.com/mjschultz)"
+  - "Michael Schultz (@mjschultz)"
   - "Fernando Jose Pando (@nand0p)"
 options:
   names:
     description:
       - List of ELB names to gather facts about. Pass this option to gather facts about a set of ELBs, otherwise, all ELBs are returned.
-    required: false
-    default: null
     aliases: ['elb_ids', 'ec2_elbs']
 extends_documentation_fragment:
     - aws
     - ec2
+requirements:
+  - botocore
+  - boto3
 '''
 
 EXAMPLES = '''
@@ -50,7 +51,7 @@ EXAMPLES = '''
 
 - debug:
     msg: "{{ item.dns_name }}"
-  with_items: "{{ elb_facts.elbs }}"
+  loop: "{{ elb_facts.elbs }}"
 
 # Gather facts about a particular ELB
 - elb_classic_lb_facts:
@@ -69,160 +70,129 @@ EXAMPLES = '''
 
 - debug:
     msg: "{{ item.dns_name }}"
-  with_items: "{{ elb_facts.elbs }}"
+  loop: "{{ elb_facts.elbs }}"
 
+'''
+
+RETURN = '''
+elbs:
+  description: a list of load balancers
+  returned: always
+  type: list
+  sample:
+    elbs:
+      - attributes:
+          access_log:
+            enabled: false
+          connection_draining:
+            enabled: true
+            timeout: 300
+          connection_settings:
+            idle_timeout: 60
+          cross_zone_load_balancing:
+            enabled: true
+        availability_zones:
+          - "us-east-1a"
+          - "us-east-1b"
+          - "us-east-1c"
+          - "us-east-1d"
+          - "us-east-1e"
+        backend_server_description: []
+        canonical_hosted_zone_name: test-lb-XXXXXXXXXXXX.us-east-1.elb.amazonaws.com
+        canonical_hosted_zone_name_id: XXXXXXXXXXXXXX
+        created_time: 2017-08-23T18:25:03.280000+00:00
+        dns_name: test-lb-XXXXXXXXXXXX.us-east-1.elb.amazonaws.com
+        health_check:
+          healthy_threshold: 10
+          interval: 30
+          target: HTTP:80/index.html
+          timeout: 5
+          unhealthy_threshold: 2
+        instances: []
+        instances_inservice: []
+        instances_inservice_count: 0
+        instances_outofservice: []
+        instances_outofservice_count: 0
+        instances_unknownservice: []
+        instances_unknownservice_count: 0
+        listener_descriptions:
+          - listener:
+              instance_port: 80
+              instance_protocol: HTTP
+              load_balancer_port: 80
+              protocol: HTTP
+            policy_names: []
+        load_balancer_name: test-lb
+        policies:
+          app_cookie_stickiness_policies: []
+          lb_cookie_stickiness_policies: []
+          other_policies: []
+        scheme: internet-facing
+        security_groups:
+          - sg-29d13055
+        source_security_group:
+          group_name: default
+          owner_alias: XXXXXXXXXXXX
+        subnets:
+          - subnet-XXXXXXXX
+          - subnet-XXXXXXXX
+        tags: {}
+        vpc_id: vpc-c248fda4
 '''
 
 import traceback
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import (
     AWSRetry,
-    connect_to_aws,
+    boto3_conn,
     ec2_argument_spec,
     get_aws_connection_info,
+    camel_dict_to_snake_dict,
+    boto3_tag_list_to_ansible_dict
 )
 
 try:
-    import boto.ec2.elb
-    from boto.ec2.tag import Tag
-    from boto.exception import BotoServerError
-    HAS_BOTO = True
+    import botocore
 except ImportError:
-    HAS_BOTO = False
+    pass
 
 
-class ElbInformation(object):
-    """Handles ELB information."""
+@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
+def list_elbs(connection, names):
+    paginator = connection.get_paginator('describe_load_balancers')
+    load_balancers = paginator.paginate(LoadBalancerNames=names).build_full_result().get('LoadBalancerDescriptions', [])
+    results = []
 
-    def __init__(self,
-                 module,
-                 names,
-                 region,
-                 **aws_connect_params):
+    for lb in load_balancers:
+        description = camel_dict_to_snake_dict(lb)
+        name = lb['LoadBalancerName']
+        instances = lb.get('Instances', [])
+        description['tags'] = get_tags(connection, name)
+        description['instances_inservice'], description['instances_inservice_count'] = lb_instance_health(connection, name, instances, 'InService')
+        description['instances_outofservice'], description['instances_outofservice_count'] = lb_instance_health(connection, name, instances, 'OutOfService')
+        description['instances_unknownservice'], description['instances_unknownservice_count'] = lb_instance_health(connection, name, instances, 'Unknown')
+        description['attributes'] = get_lb_attributes(connection, name)
+        results.append(description)
+    return results
 
-        self.module = module
-        self.names = names
-        self.region = region
-        self.aws_connect_params = aws_connect_params
-        self.connection = self._get_elb_connection()
 
-    def _get_tags(self, elbname):
-        params = {'LoadBalancerNames.member.1': elbname}
-        elb_tags = self.connection.get_list('DescribeTags', params, [('member', Tag)])
-        return dict((tag.Key, tag.Value) for tag in elb_tags if hasattr(tag, 'Key'))
+def get_lb_attributes(connection, name):
+    attributes = connection.describe_load_balancer_attributes(LoadBalancerName=name).get('LoadBalancerAttributes', {})
+    return camel_dict_to_snake_dict(attributes)
 
-    @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
-    def _get_elb_connection(self):
-        return connect_to_aws(boto.ec2.elb, self.region, **self.aws_connect_params)
 
-    def _get_elb_listeners(self, listeners):
-        listener_list = []
+def get_tags(connection, load_balancer_name):
+    tags = connection.describe_tags(LoadBalancerNames=[load_balancer_name])['TagDescriptions']
+    if not tags:
+        return {}
+    return boto3_tag_list_to_ansible_dict(tags[0]['Tags'])
 
-        for listener in listeners:
-            listener_dict = {
-                'load_balancer_port': listener[0],
-                'instance_port': listener[1],
-                'protocol': listener[2],
-            }
 
-            try:
-                ssl_certificate_id = listener[4]
-            except IndexError:
-                pass
-            else:
-                if ssl_certificate_id:
-                    listener_dict['ssl_certificate_id'] = ssl_certificate_id
-
-            listener_list.append(listener_dict)
-
-        return listener_list
-
-    def _get_health_check(self, health_check):
-        protocol, port_path = health_check.target.split(':')
-        try:
-            port, path = port_path.split('/', 1)
-            path = '/{0}'.format(path)
-        except ValueError:
-            port = port_path
-            path = None
-
-        health_check_dict = {
-            'ping_protocol': protocol.lower(),
-            'ping_port': int(port),
-            'response_timeout': health_check.timeout,
-            'interval': health_check.interval,
-            'unhealthy_threshold': health_check.unhealthy_threshold,
-            'healthy_threshold': health_check.healthy_threshold,
-        }
-
-        if path:
-            health_check_dict['ping_path'] = path
-        return health_check_dict
-
-    @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
-    def _get_elb_info(self, elb):
-        elb_info = {
-            'name': elb.name,
-            'zones': elb.availability_zones,
-            'dns_name': elb.dns_name,
-            'canonical_hosted_zone_name': elb.canonical_hosted_zone_name,
-            'canonical_hosted_zone_name_id': elb.canonical_hosted_zone_name_id,
-            'hosted_zone_name': elb.canonical_hosted_zone_name,
-            'hosted_zone_id': elb.canonical_hosted_zone_name_id,
-            'instances': [instance.id for instance in elb.instances],
-            'listeners': self._get_elb_listeners(elb.listeners),
-            'scheme': elb.scheme,
-            'security_groups': elb.security_groups,
-            'health_check': self._get_health_check(elb.health_check),
-            'subnets': elb.subnets,
-            'instances_inservice': [],
-            'instances_inservice_count': 0,
-            'instances_outofservice': [],
-            'instances_outofservice_count': 0,
-            'instances_inservice_percent': 0.0,
-            'tags': self._get_tags(elb.name)
-        }
-
-        if elb.vpc_id:
-            elb_info['vpc_id'] = elb.vpc_id
-
-        if elb.instances:
-            instance_health = self.connection.describe_instance_health(elb.name)
-            elb_info['instances_inservice'] = [inst.instance_id for inst in instance_health if inst.state == 'InService']
-            elb_info['instances_inservice_count'] = len(elb_info['instances_inservice'])
-            elb_info['instances_outofservice'] = [inst.instance_id for inst in instance_health if inst.state == 'OutOfService']
-            elb_info['instances_outofservice_count'] = len(elb_info['instances_outofservice'])
-            try:
-                elb_info['instances_inservice_percent'] = (
-                    float(elb_info['instances_inservice_count']) /
-                    float(elb_info['instances_inservice_count'] + elb_info['instances_outofservice_count'])
-                ) * 100.
-            except ZeroDivisionError:
-                elb_info['instances_inservice_percent'] = 0.
-        return elb_info
-
-    def list_elbs(self):
-        elb_array, token = [], None
-        get_elb_with_backoff = AWSRetry.backoff(tries=5, delay=5, backoff=2.0)(self.connection.get_all_load_balancers)
-        while True:
-            all_elbs = get_elb_with_backoff(marker=token)
-            token = all_elbs.next_marker
-
-            if all_elbs:
-                if self.names:
-                    for existing_lb in all_elbs:
-                        if existing_lb.name in self.names:
-                            elb_array.append(existing_lb)
-                else:
-                    elb_array.extend(all_elbs)
-            else:
-                break
-
-            if token is None:
-                break
-
-        return list(map(self._get_elb_info, elb_array))
+def lb_instance_health(connection, load_balancer_name, instances, state):
+    instance_states = connection.describe_instance_health(LoadBalancerName=load_balancer_name, Instances=instances).get('InstanceStates', [])
+    instate = [instance['InstanceId'] for instance in instance_states if instance['State'] == state]
+    return instate, len(instate)
 
 
 def main():
@@ -231,29 +201,18 @@ def main():
         names={'default': [], 'type': 'list'}
     )
     )
-    module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=True)
+    module = AnsibleAWSModule(argument_spec=argument_spec,
+                              supports_check_mode=True)
 
-    if not HAS_BOTO:
-        module.fail_json(msg='boto required for this module')
+    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
+    connection = boto3_conn(module, conn_type='client', resource='elb', region=region, endpoint=ec2_url, **aws_connect_params)
 
     try:
-        region, ec2_url, aws_connect_params = get_aws_connection_info(module)
-        if not region:
-            module.fail_json(msg="region must be specified")
+        elbs = list_elbs(connection, module.params.get('names'))
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Failed to get load balancer facts.")
 
-        names = module.params['names']
-        elb_information = ElbInformation(
-            module, names, region, **aws_connect_params)
-
-        ec2_facts_result = dict(changed=False,
-                                elbs=elb_information.list_elbs())
-
-    except BotoServerError as err:
-        module.fail_json(msg="{0}: {1}".format(err.error_code, err.error_message),
-                         exception=traceback.format_exc())
-
-    module.exit_json(**ec2_facts_result)
+    module.exit_json(elbs=elbs)
 
 
 if __name__ == '__main__':

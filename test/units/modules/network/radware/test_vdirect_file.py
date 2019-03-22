@@ -20,8 +20,8 @@
 import os
 from mock import patch, MagicMock
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch
+from units.compat import unittest
+from units.compat.mock import patch
 
 RESP_STATUS = 0
 RESP_REASON = 1
@@ -35,7 +35,7 @@ NONE_PARAMS = {'vdirect_ip': None, 'vdirect_user': None, 'vdirect_password': Non
 
 
 @patch('vdirect_client.rest_client.RestClient')
-class RestClient ():
+class RestClient:
     def __init__(self, vdirect_ip=None, vdirect_user=None, vdirect_password=None, wait=None,
                  secondary_vdirect_ip=None, https_port=None, http_port=None,
                  timeout=None, https=None, strict_http_results=None,
@@ -44,7 +44,7 @@ class RestClient ():
 
 
 @patch('vdirect_client.rest_client.Template')
-class Template ():
+class Template:
     create_from_source_result = None
     upload_source_result = None
 
@@ -67,7 +67,7 @@ class Template ():
 
 
 @patch('vdirect_client.rest_client.WorkflowTemplate')
-class WorkflowTemplate ():
+class WorkflowTemplate:
     create_template_from_archive_result = None
     update_archive_result = None
 
@@ -138,7 +138,7 @@ class TestManager(unittest.TestCase):
             except IOError:
                 assert True
 
-    def test_template_upload_create_success(self, *args):
+    def test_template_upload_create(self, *args):
         module_mock = MagicMock()
         with patch.dict('sys.modules', **{
             'vdirect_client': module_mock,
@@ -148,14 +148,22 @@ class TestManager(unittest.TestCase):
             vdirect_file.rest_client.RESP_STATUS = 0
             vdirect_file.rest_client.Template = Template
 
-            Template.set_create_from_source_result([400])
             file = vdirect_file.VdirectFile(NONE_PARAMS)
             path = os.path.dirname(os.path.abspath(__file__))
+
+            Template.set_create_from_source_result([201])
             result = file.upload(os.path.join(path, "ct.vm"))
             self.assertEqual(result, vdirect_file.CONFIGURATION_TEMPLATE_CREATED_SUCCESS,
                              'Unexpected result received:' + repr(result))
 
-    def test_template_upload_update_success(self, *args):
+            Template.set_create_from_source_result([400, "", "Parsing error", ""])
+            try:
+                result = file.upload(os.path.join(path, "ct.vm"))
+                self.fail("InvalidSourceException was not thrown")
+            except vdirect_file.InvalidSourceException:
+                assert True
+
+    def test_template_upload_update(self, *args):
         module_mock = MagicMock()
         with patch.dict('sys.modules', **{
             'vdirect_client': module_mock,
@@ -165,15 +173,23 @@ class TestManager(unittest.TestCase):
             vdirect_file.rest_client.RESP_STATUS = 0
             vdirect_file.rest_client.Template = Template
 
-            Template.set_create_from_source_result([409])
-            Template.set_upload_source_result([400])
             file = vdirect_file.VdirectFile(NONE_PARAMS)
             path = os.path.dirname(os.path.abspath(__file__))
+
+            Template.set_create_from_source_result([409])
+            Template.set_upload_source_result([201])
             result = file.upload(os.path.join(path, "ct.vm"))
             self.assertEqual(result, vdirect_file.CONFIGURATION_TEMPLATE_UPDATED_SUCCESS,
                              'Unexpected result received:' + repr(result))
 
-    def test_workflow_upload_create_success(self, *args):
+            Template.set_upload_source_result([400, "", "Parsing error", ""])
+            try:
+                result = file.upload(os.path.join(path, "ct.vm"))
+                self.fail("InvalidSourceException was not thrown")
+            except vdirect_file.InvalidSourceException:
+                assert True
+
+    def test_workflow_upload_create(self, *args):
         module_mock = MagicMock()
         with patch.dict('sys.modules', **{
             'vdirect_client': module_mock,
@@ -183,14 +199,22 @@ class TestManager(unittest.TestCase):
             vdirect_file.rest_client.RESP_STATUS = 0
             vdirect_file.rest_client.WorkflowTemplate = WorkflowTemplate
 
-            WorkflowTemplate.set_create_template_from_archive_result([400])
             file = vdirect_file.VdirectFile(NONE_PARAMS)
             path = os.path.dirname(os.path.abspath(__file__))
+
+            WorkflowTemplate.set_create_template_from_archive_result([201])
             result = file.upload(os.path.join(path, "wt.zip"))
             self.assertEqual(result, vdirect_file.WORKFLOW_TEMPLATE_CREATED_SUCCESS,
                              'Unexpected result received:' + repr(result))
 
-    def test_workflow_upload_update_success(self, *args):
+            WorkflowTemplate.set_create_template_from_archive_result([400, "", "Parsing error", ""])
+            try:
+                result = file.upload(os.path.join(path, "wt.zip"))
+                self.fail("InvalidSourceException was not thrown")
+            except vdirect_file.InvalidSourceException:
+                assert True
+
+    def test_workflow_upload_update(self, *args):
         module_mock = MagicMock()
         with patch.dict('sys.modules', **{
             'vdirect_client': module_mock,
@@ -200,10 +224,18 @@ class TestManager(unittest.TestCase):
             vdirect_file.rest_client.RESP_STATUS = 0
             vdirect_file.rest_client.WorkflowTemplate = WorkflowTemplate
 
-            WorkflowTemplate.set_create_template_from_archive_result([409])
-            WorkflowTemplate.set_update_archive_result([400])
             file = vdirect_file.VdirectFile(NONE_PARAMS)
             path = os.path.dirname(os.path.abspath(__file__))
+
+            WorkflowTemplate.set_create_template_from_archive_result([409])
+            WorkflowTemplate.set_update_archive_result([201])
             result = file.upload(os.path.join(path, "wt.zip"))
             self.assertEqual(result, vdirect_file.WORKFLOW_TEMPLATE_UPDATED_SUCCESS,
                              'Unexpected result received:' + repr(result))
+
+            WorkflowTemplate.set_update_archive_result([400, "", "Parsing error", ""])
+            try:
+                result = file.upload(os.path.join(path, "wt.zip"))
+                self.fail("InvalidSourceException was not thrown")
+            except vdirect_file.InvalidSourceException:
+                assert True

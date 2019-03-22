@@ -1,6 +1,6 @@
 import random
 
-from ansible.compat.tests import unittest
+from units.compat import unittest
 from ansible.module_utils.cloud import _exponential_backoff, \
     _full_jitter_backoff
 

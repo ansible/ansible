@@ -43,7 +43,6 @@ options:
   check_interval:
     description:
        - How often (in seconds) to send a health check.
-    required: false
     default: 5
   healthcheck_name:
     description:
@@ -65,7 +64,6 @@ options:
     description:
        - The TCP port number for the health check request. The default value is
          443 for HTTPS and 80 for HTTP.
-    required: false
   request_path:
     description:
        - The request path of the HTTPS health check request.
@@ -80,33 +78,26 @@ options:
        - How long (in seconds) to wait for a response before claiming
          failure. It is invalid for timeout
          to have a greater value than check_interval.
-    required: false
     default: 5
   unhealthy_threshold:
     description:
        - A so-far healthy instance will be marked unhealthy after this
          many consecutive failures.
-    required: false
     default: 2
   healthy_threshold:
     description:
        - A so-far unhealthy instance will be marked healthy after this
          many consecutive successes.
-    required: false
     default: 2
   service_account_email:
     description:
       - service account email
-    required: false
-    default: null
   service_account_permissions:
     version_added: "2.0"
     description:
       - service account permissions (see
         U(https://cloud.google.com/sdk/gcloud/reference/compute/instances/create),
         --scopes section for detailed information)
-    required: false
-    default: null
     choices: [
       "bigquery", "cloud-platform", "compute-ro", "compute-rw",
       "useraccounts-ro", "useraccounts-rw", "datastore", "logging-write",
@@ -116,13 +107,9 @@ options:
   credentials_file:
     description:
       - Path to the JSON file associated with the service account email
-    default: null
-    required: false
   project_id:
     description:
       - Your GCP project ID
-    required: false
-    default: null
 '''
 
 EXAMPLES = '''
@@ -257,7 +244,7 @@ def get_healthcheck(client, name, project_id=None, resource_type='HTTP'):
     """
     Get a Healthcheck from GCP.
 
-    :param client: An initialized GCE Compute Disovery resource.
+    :param client: An initialized GCE Compute Discovery resource.
     :type client:  :class: `googleapiclient.discovery.Resource`
 
     :param name: Name of the Url Map.
@@ -274,7 +261,7 @@ def get_healthcheck(client, name, project_id=None, resource_type='HTTP'):
         args = {'project': project_id, entity_name: name}
         req = resource.get(**args)
         return GCPUtils.execute_api_client_req(req, raise_404=False)
-    except:
+    except Exception:
         raise
 
 
@@ -282,7 +269,7 @@ def create_healthcheck(client, params, project_id, resource_type='HTTP'):
     """
     Create a new Healthcheck.
 
-    :param client: An initialized GCE Compute Disovery resource.
+    :param client: An initialized GCE Compute Discovery resource.
     :type client:  :class: `googleapiclient.discovery.Resource`
 
     :param params: Dictionary of arguments from AnsibleModule.
@@ -302,7 +289,7 @@ def create_healthcheck(client, params, project_id, resource_type='HTTP'):
                                           name=params['healthcheck_name'],
                                           project_id=project_id)
         return (True, return_data)
-    except:
+    except Exception:
         raise
 
 
@@ -310,7 +297,7 @@ def delete_healthcheck(client, name, project_id, resource_type='HTTP'):
     """
     Delete a Healthcheck.
 
-    :param client: An initialized GCE Compute Disover resource.
+    :param client: An initialized GCE Compute Discovery resource.
     :type client:  :class: `googleapiclient.discovery.Resource`
 
     :param name: Name of the Url Map.
@@ -328,7 +315,7 @@ def delete_healthcheck(client, name, project_id, resource_type='HTTP'):
         req = resource.delete(**args)
         return_data = GCPUtils.execute_api_client_req(req, client)
         return (True, return_data)
-    except:
+    except Exception:
         raise
 
 
@@ -339,7 +326,7 @@ def update_healthcheck(client, healthcheck, params, name, project_id,
 
     If the healthcheck has not changed, the update will not occur.
 
-    :param client: An initialized GCE Compute Disovery resource.
+    :param client: An initialized GCE Compute Discovery resource.
     :type client:  :class: `googleapiclient.discovery.Resource`
 
     :param healthcheck: Name of the Url Map.
@@ -369,7 +356,7 @@ def update_healthcheck(client, healthcheck, params, name, project_id,
         return_data = GCPUtils.execute_api_client_req(
             req, client=client, raw=False)
         return (True, return_data)
-    except:
+    except Exception:
         raise
 
 

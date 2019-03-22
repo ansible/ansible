@@ -1,0 +1,17 @@
+- name: Test vars_prompt confirm
+  hosts: testhost
+  become: no
+  gather_facts: no
+
+  vars_prompt:
+    - name: input
+      confirm: yes
+
+  tasks:
+    - name:
+      assert:
+        that:
+          - input == 'confirm me'
+
+    - debug:
+        var: input

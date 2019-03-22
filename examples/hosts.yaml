@@ -4,15 +4,17 @@
 #
 #   - Comments begin with the '#' character
 #   - Blank lines are ignored
-#   - Top level entries are assumed to be groups, start with 'all' to have a full hierchy
+#   - Top level entries are assumed to be groups, start with 'all' to have a full hierarchy
 #   - Hosts must be specified in a group's hosts:
 #     and they must be a key (: terminated)
 #   - groups can have children, hosts and vars keys
-#   - Anything defined under a hosts is assumed to be a var
-#   - You can enter hostnames or ip addresses
-#   - A hostname/ip can be a member of multiple groups
+#   - groups are unique and global - if you define a group in multiple locations, Ansible aggregates all the data to the global name.
+#   - If you define a group as a child of 2 different groups, it will be the child of both, any hosts and variables assigned will not be dependent on the parents, they will all be associated with the group.
+#   - Anything defined under a host is assumed to be a var
+#   - You can enter hostnames or IP addresses
+#   - A hostname/IP can be a member of multiple groups
 
-# Ex 1: Ungrouped hosts, put in 'all' or 'ungrouped' group
+# Ex 1: Ungrouped hosts, put them in 'all' or 'ungrouped' group
 ##all:
 ##  hosts:
 ##      green.example.com:
@@ -32,7 +34,12 @@
 ##        192.168.1.110:
 
 # Ex 3: You can create hosts using ranges and add children groups and vars to a group
-# The child group can define anything you would normally add to a group
+# The child group can define anything you would normally add to a group.
+# webservers is added as a child group of testing. gamma.example.org is added
+# to the existing webservers group. All references to webservers will
+# get alpha.example.org, beta.example.org, gamma.example.org, 192.168.1.100
+# and 192.168.1.110. References to testing will get all of those hosts plus
+# any host matching www[001:006].example.com
 
 ##    testing:
 ##      hosts:
@@ -42,7 +49,7 @@
 ##      children:
 ##        webservers:
 ##            hosts:
-##                beta.example.org:
+##                gamma.example.org:
 
 # Ex 4: all vars
 # keeping within 'all' group you can define common 'all' vars here with lowest precedence

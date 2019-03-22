@@ -35,53 +35,44 @@ options:
         required: true
     state:
         description:
-            - Assert the state of the vm extension. Use 'present' to create or update a vm extension and
-              'absent' to delete a vm extension.
+            - Assert the state of the vm extension. Use C(present) to create or update a vm extension and
+              C(absent) to delete a vm extension.
         default: present
         choices:
             - absent
             - present
-        required: false
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
-        default: resource_group location
-        required: false
     virtual_machine_name:
         description:
             - The name of the virtual machine where the extension should be create or updated.
-        required: false
     publisher:
         description:
             - The name of the extension handler publisher.
-        required: false
     virtual_machine_extension_type:
         description:
             - The type of the extension handler.
-        required: false
     type_handler_version:
         description:
             - The type version of the extension handler.
-        required: false
     settings:
         description:
             - Json formatted public settings for the extension.
-        required: false
     protected_settings:
         description:
             - Json formatted protected settings for the extension.
-        required: false
     auto_upgrade_minor_version:
         description:
             - Whether the extension handler should be automatically upgraded across minor versions.
-        required: false
+        type: bool
 
 extends_documentation_fragment:
     - azure
 
 author:
     - "Sertac Ozercan (@sozercan)"
-    - "Julien Stroheker (@ju_stroh)"
+    - "Julien Stroheker (@julienstroheker)"
 '''
 
 EXAMPLES = '''
@@ -89,7 +80,7 @@ EXAMPLES = '''
       azure_rm_virtualmachine_extension:
         name: myvmextension
         location: eastus
-        resource_group: Testing
+        resource_group: myResourceGroup
         virtual_machine_name: myvm
         publisher: Microsoft.Azure.Extensions
         virtual_machine_extension_type: CustomScript
@@ -101,7 +92,7 @@ EXAMPLES = '''
       azure_rm_virtualmachine_extension:
         name: myvmextension
         location: eastus
-        resource_group: Testing
+        resource_group: myResourceGroup
         virtual_machine_name: myvm
         state: absent
 '''
@@ -121,9 +112,6 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.compute.models import (
-        VirtualMachineExtension
-    )
 except ImportError:
     # This is handled in azure_rm_common
     pass
@@ -162,41 +150,32 @@ class AzureRMVMExtension(AzureRMModuleBase):
             ),
             state=dict(
                 type='str',
-                required=False,
                 default='present',
                 choices=['present', 'absent']
             ),
             location=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             virtual_machine_name=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             publisher=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             virtual_machine_extension_type=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             type_handler_version=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             auto_upgrade_minor_version=dict(
-                type='bool',
-                required=False
+                type='bool'
             ),
             settings=dict(
-                type='dict',
-                required=False
+                type='dict'
             ),
             protected_settings=dict(
-                type='dict',
-                required=False
+                type='dict'
             )
         )
 
@@ -211,11 +190,17 @@ class AzureRMVMExtension(AzureRMModuleBase):
         self.protected_settings = None
         self.state = None
 
+        required_if = [
+            ('state', 'present', [
+             'publisher', 'virtual_machine_extension_type', 'type_handler_version'])
+        ]
+
         self.results = dict(changed=False, state=dict())
 
         super(AzureRMVMExtension, self).__init__(derived_arg_spec=self.module_arg_spec,
                                                  supports_check_mode=False,
-                                                 supports_tags=False)
+                                                 supports_tags=False,
+                                                 required_if=required_if)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
@@ -227,10 +212,7 @@ class AzureRMVMExtension(AzureRMModuleBase):
         response = None
         to_be_updated = False
 
-        try:
-            resource_group = self.get_resource_group(self.resource_group)
-        except CloudError:
-            self.fail('resource group {} not found'.format(self.resource_group))
+        resource_group = self.get_resource_group(self.resource_group)
         if not self.location:
             self.location = resource_group.location
 
@@ -239,13 +221,42 @@ class AzureRMVMExtension(AzureRMModuleBase):
             if not response:
                 to_be_updated = True
             else:
-                if response['settings'] != self.settings:
-                    response['settings'] = self.settings
+                if self.settings is not None:
+                    if response['settings'] != self.settings:
+                        response['settings'] = self.settings
+                        to_be_updated = True
+                else:
+                    self.settings = response['settings']
+
+                if self.protected_settings is not None:
+                    if response['protected_settings'] != self.protected_settings:
+                        response['protected_settings'] = self.protected_settings
+                        to_be_updated = True
+                else:
+                    self.protected_settings = response['protected_settings']
+
+                if response['location'] != self.location:
+                    self.location = response['location']
+                    self.module.warn("Property 'location' cannot be changed")
+
+                if response['publisher'] != self.publisher:
+                    self.publisher = response['publisher']
+                    self.module.warn("Property 'publisher' cannot be changed")
+
+                if response['virtual_machine_extension_type'] != self.virtual_machine_extension_type:
+                    self.virtual_machine_extension_type = response['virtual_machine_extension_type']
+                    self.module.warn("Property 'virtual_machine_extension_type' cannot be changed")
+
+                if response['type_handler_version'] != self.type_handler_version:
+                    response['type_handler_version'] = self.type_handler_version
                     to_be_updated = True
 
-                if response['protected_settings'] != self.protected_settings:
-                    response['protected_settings'] = self.protected_settings
-                    to_be_updated = True
+                if self.auto_upgrade_minor_version is not None:
+                    if response['auto_upgrade_minor_version'] != self.auto_upgrade_minor_version:
+                        response['auto_upgrade_minor_version'] = self.auto_upgrade_minor_version
+                        to_be_updated = True
+                else:
+                    self.auto_upgrade_minor_version = response['auto_upgrade_minor_version']
 
             if to_be_updated:
                 self.results['changed'] = True
@@ -263,7 +274,7 @@ class AzureRMVMExtension(AzureRMModuleBase):
         '''
         self.log("Creating VM extension {0}".format(self.name))
         try:
-            params = VirtualMachineExtension(
+            params = self.compute_models.VirtualMachineExtension(
                 location=self.location,
                 publisher=self.publisher,
                 virtual_machine_extension_type=self.virtual_machine_extension_type,
@@ -314,6 +325,7 @@ class AzureRMVMExtension(AzureRMModuleBase):
 def main():
     """Main execution"""
     AzureRMVMExtension()
+
 
 if __name__ == '__main__':
     main()

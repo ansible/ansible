@@ -27,7 +27,7 @@ version_added: "2.4"
 short_description: Manages physical attributes of interfaces on HUAWEI CloudEngine switches.
 description:
     - Manages physical attributes of interfaces on HUAWEI CloudEngine switches.
-author: QijunPan (@CloudEngine-Ansible)
+author: QijunPan (@QijunPan)
 notes:
     - This module is also used to create logical interfaces such as
       vlanif and loopbacks.
@@ -35,13 +35,9 @@ options:
     interface:
         description:
             - Full name of interface, i.e. 40GE1/0/10, Tunnel1.
-        required: false
-        default: null
     interface_type:
         description:
             - Interface type to be configured from the device.
-        required: false
-        default: null
         choices: ['ge', '10ge', '25ge', '4x10ge', '40ge', '100ge', 'vlanif', 'loopback', 'meth',
                   'eth-trunk', 'nve', 'tunnel', 'ethernet', 'fcoe-port', 'fabric-port', 'stack-port', 'null']
     admin_state:
@@ -50,31 +46,24 @@ options:
               The value is an enumerated type.
               up, An interface is in the administrative Up state.
               down, An interface is in the administrative Down state.
-        required: false
-        default: null
         choices: ['up', 'down']
     description:
         description:
             - Specifies an interface description.
               The value is a string of 1 to 242 case-sensitive characters,
               spaces supported but question marks (?) not supported.
-        required: false
-        default: null
     mode:
         description:
             - Manage Layer 2 or Layer 3 state of the interface.
-        required: false
-        default: null
         choices: ['layer2', 'layer3']
     l2sub:
         description:
             - Specifies whether the interface is a Layer 2 sub-interface.
-        required: false
-        default: false
+        type: bool
+        default: 'no'
     state:
         description:
             - Specify desired state of the resource.
-        required: true
         default: present
         choices: ['present', 'absent', 'default']
 '''
@@ -154,14 +143,14 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 
 
 import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_nc_config, set_nc_config, ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec
 
 
 CE_NC_GET_INTFS = """
@@ -809,15 +798,15 @@ class Interface(object):
                     # delete interface
                     self.delete_interface(self.interface)
                 else:
-                    # interface does not exists
+                    # interface does not exist
                     self.module.fail_json(
-                        msg='Error: interface does not exists.')
+                        msg='Error: interface does not exist.')
 
             else:       # default
                 if not self.intf_info:
-                    # error, interface does not exists
+                    # error, interface does not exist
                     self.module.fail_json(
-                        msg='Error: interface does not exists.')
+                        msg='Error: interface does not exist.')
                 else:
                     self.default_interface(self.interface)
 

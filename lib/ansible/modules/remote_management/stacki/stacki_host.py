@@ -1,24 +1,22 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2016, Hugh Ma <Hugh.Ma@flextronics.com>
+# Copyright: (c) 2016, Hugh Ma <Hugh.Ma@flextronics.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
 module: stacki_host
 short_description: Add or remove host to stacki front-end
 description:
- - Use this module to add or remove hosts to a stacki front-end via API
+ - Use this module to add or remove hosts to a stacki front-end via API.
  - U(https://github.com/StackIQ/stacki)
 version_added: "2.3"
 options:
@@ -43,21 +41,18 @@ options:
   prim_intf_mac:
     description:
      - MAC Address for the primary PXE boot network interface.
-    required: False
   prim_intf_ip:
     description:
      - IP Address for the primary network interface.
-    required: False
   prim_intf:
     description:
      - Name of the primary network interface.
-    required: False
   force_install:
     description:
      - Set value to True to force node into install state if it already exists in stacki.
-    required: False
-
-author: "Hugh Ma <Hugh.Ma@flextronics.com>"
+    type: bool
+author:
+- Hugh Ma (@bbyhuy) <Hugh.Ma@flextronics.com>
 '''
 
 EXAMPLES = '''
@@ -84,7 +79,7 @@ RETURN = '''
 changed:
   description: response to whether or not the api call completed successfully
   returned: always
-  type: boolean
+  type: bool
   sample: true
 
 stdout:
@@ -112,18 +107,18 @@ class StackiHost(object):
 
     def __init__(self, module):
         self.module = module
-        self.hostname        = module.params['name']
-        self.rack            = module.params['rack']
-        self.rank            = module.params['rank']
-        self.appliance       = module.params['appliance']
-        self.prim_intf       = module.params['prim_intf']
-        self.prim_intf_ip    = module.params['prim_intf_ip']
-        self.network         = module.params['network']
-        self.prim_intf_mac   = module.params['prim_intf_mac']
-        self.endpoint        = module.params['stacki_endpoint']
+        self.hostname = module.params['name']
+        self.rack = module.params['rack']
+        self.rank = module.params['rank']
+        self.appliance = module.params['appliance']
+        self.prim_intf = module.params['prim_intf']
+        self.prim_intf_ip = module.params['prim_intf_ip']
+        self.network = module.params['network']
+        self.prim_intf_mac = module.params['prim_intf_mac']
+        self.endpoint = module.params['stacki_endpoint']
 
-        auth_creds  = {'USERNAME': module.params['stacki_user'],
-                       'PASSWORD': module.params['stacki_password']}
+        auth_creds = {'USERNAME': module.params['stacki_user'],
+                      'PASSWORD': module.params['stacki_password']}
 
         # Get Initial CSRF
         cred_a = self.do_request(self.module, self.endpoint, method="GET")
@@ -161,7 +156,6 @@ class StackiHost(object):
                        'Content-type': 'application/json',
                        'Cookie': login_req.headers.get('Set-Cookie')}
 
-
     def do_request(self, module, url, payload=None, headers=None, method=None):
         res, info = fetch_url(module, url, data=payload, headers=headers, method=method)
 
@@ -170,36 +164,25 @@ class StackiHost(object):
 
         return res
 
-
     def stack_check_host(self):
-
-        res = self.do_request(self.module, self.endpoint, payload=json.dumps({"cmd": "list host"}),
-                              headers=self.header, method="POST")
+        res = self.do_request(self.module, self.endpoint, payload=json.dumps({"cmd": "list host"}), headers=self.header, method="POST")
 
         if self.hostname in res.read():
             return True
         else:
             return False
 
-
     def stack_sync(self):
-
-        self.do_request(self.module, self.endpoint, payload=json.dumps({ "cmd": "sync config"}),
-                              headers=self.header, method="POST")
-
-        self.do_request(self.module, self.endpoint, payload=json.dumps({"cmd": "sync host config"}),
-                              headers=self.header, method="POST")
-
+        self.do_request(self.module, self.endpoint, payload=json.dumps({"cmd": "sync config"}), headers=self.header, method="POST")
+        self.do_request(self.module, self.endpoint, payload=json.dumps({"cmd": "sync host config"}), headers=self.header, method="POST")
 
     def stack_force_install(self, result):
-
         data = dict()
         changed = False
 
         data['cmd'] = "set host boot {0} action=install" \
             .format(self.hostname)
-        self.do_request(self.module, self.endpoint, payload=json.dumps(data),
-                              headers=self.header, method="POST")
+        self.do_request(self.module, self.endpoint, payload=json.dumps(data), headers=self.header, method="POST")
         changed = True
 
         self.stack_sync()
@@ -208,29 +191,24 @@ class StackiHost(object):
         result['stdout'] = "api call successful".rstrip("\r\n")
 
     def stack_add(self, result):
-
-        data            = dict()
-        changed         = False
+        data = dict()
+        changed = False
 
         data['cmd'] = "add host {0} rack={1} rank={2} appliance={3}"\
             .format(self.hostname, self.rack, self.rank, self.appliance)
-        self.do_request(self.module, self.endpoint, payload=json.dumps(data),
-                              headers=self.header, method="POST")
+        self.do_request(self.module, self.endpoint, payload=json.dumps(data), headers=self.header, method="POST")
 
         self.stack_sync()
 
         result['changed'] = changed
         result['stdout'] = "api call successful".rstrip("\r\n")
 
-
     def stack_remove(self, result):
-
-        data            = dict()
+        data = dict()
 
         data['cmd'] = "remove host {0}"\
             .format(self.hostname)
-        self.do_request(self.module, self.endpoint, payload=json.dumps(data),
-                              headers=self.header, method="POST")
+        self.do_request(self.module, self.endpoint, payload=json.dumps(data), headers=self.header, method="POST")
 
         self.stack_sync()
 
@@ -239,24 +217,23 @@ class StackiHost(object):
 
 
 def main():
-
     module = AnsibleModule(
-        argument_spec = dict(
-            state=dict(type='str', default='present', choices=['present', 'absent']),
-            name=dict(required=True, type='str'),
-            rack=dict(required=False, type='int', default=0),
-            rank=dict(required=False, type='int', default=0),
-            appliance=dict(required=False, type='str', default='backend'),
-            prim_intf=dict(required=False, type='str', default=None),
-            prim_intf_ip=dict(required=False, type='str', default=None),
-            network=dict(required=False, type='str', default='private'),
-            prim_intf_mac=dict(required=False, type='str', default=None),
-            stacki_user=dict(required=True, type='str', default=os.environ.get('stacki_user')),
-            stacki_password=dict(required=True, no_log=True, type='str', default=os.environ.get('stacki_password')),
-            stacki_endpoint=dict(required=True, type='str', default=os.environ.get('stacki_endpoint')),
-            force_install=dict(required=False, type='bool', default=False)
+        argument_spec=dict(
+            state=dict(type='str', default='present', choices=['absent', 'present']),
+            name=dict(type='str', required=True),
+            rack=dict(type='int', default=0),
+            rank=dict(type='int', default=0),
+            appliance=dict(type='str', default='backend'),
+            prim_intf=dict(type='str'),
+            prim_intf_ip=dict(type='str'),
+            network=dict(type='str', default='private'),
+            prim_intf_mac=dict(type='str'),
+            stacki_user=dict(type='str', required=True, default=os.environ.get('stacki_user')),
+            stacki_password=dict(type='str', required=True, default=os.environ.get('stacki_password'), no_log=True),
+            stacki_endpoint=dict(type='str', required=True, default=os.environ.get('stacki_endpoint')),
+            force_install=dict(type='bool', default=False),
         ),
-        supports_check_mode=False
+        supports_check_mode=False,
     )
 
     result = {'changed': False}

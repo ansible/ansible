@@ -1,3 +1,2 @@
 cloud/aws
-posix/ci/cloud/group1/aws
-skip/python3
+shippable/aws/group2

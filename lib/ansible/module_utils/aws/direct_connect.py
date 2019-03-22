@@ -1,12 +1,10 @@
+# Copyright (c) 2017 Ansible Project
+#
 # This code is part of Ansible, but is an independent component.
 # This particular file snippet, and this file snippet only, is BSD licensed.
 # Modules you write using this snippet, which is embedded dynamically by Ansible
 # still belong to the author of the module, and may assign their own license
 # to the complete work.
-#
-# Copyright (c) 2017 Ansible Project
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-# All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
@@ -40,12 +38,10 @@ from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 
 
 class DirectConnectError(Exception):
-    def __init__(self, msg, last_traceback=None, response=None):
-        response = {} if response is None else response
-
+    def __init__(self, msg, last_traceback=None, exception=None):
         self.msg = msg
         self.last_traceback = last_traceback
-        self.response = camel_dict_to_snake_dict(response)
+        self.exception = exception
 
 
 def delete_connection(client, connection_id):
@@ -54,7 +50,7 @@ def delete_connection(client, connection_id):
     except botocore.exceptions.ClientError as e:
         raise DirectConnectError(msg="Failed to delete DirectConnection {0}.".format(connection_id),
                                  last_traceback=traceback.format_exc(),
-                                 response=e.response)
+                                 exception=e)
 
 
 def associate_connection_and_lag(client, connection_id, lag_id):
@@ -65,7 +61,7 @@ def associate_connection_and_lag(client, connection_id, lag_id):
         raise DirectConnectError(msg="Failed to associate Direct Connect connection {0}"
                                  " with link aggregation group {1}.".format(connection_id, lag_id),
                                  last_traceback=traceback.format_exc(),
-                                 response=e.response)
+                                 exception=e)
 
 
 def disassociate_connection_and_lag(client, connection_id, lag_id):
@@ -76,7 +72,7 @@ def disassociate_connection_and_lag(client, connection_id, lag_id):
         raise DirectConnectError(msg="Failed to disassociate Direct Connect connection {0}"
                                  " from link aggregation group {1}.".format(connection_id, lag_id),
                                  last_traceback=traceback.format_exc(),
-                                 response=e.response)
+                                 exception=e)
 
 
 def delete_virtual_interface(client, virtual_interface):
@@ -85,4 +81,4 @@ def delete_virtual_interface(client, virtual_interface):
     except botocore.exceptions.ClientError as e:
         raise DirectConnectError(msg="Could not delete virtual interface {0}".format(virtual_interface),
                                  last_traceback=traceback.format_exc(),
-                                 response=e.response)
+                                 exception=e)

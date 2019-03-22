@@ -49,7 +49,7 @@ options:
       - Enable/Disable SSD Cache on Pool
     required: false
     default: yes
-    choices: [ "yes", "no" ]
+    type: bool
 notes:
   - Infinibox Admin level access is required for pool modifications
 extends_documentation_fragment:
@@ -79,14 +79,17 @@ EXAMPLES = '''
 
 RETURN = '''
 '''
+import traceback
 
+CAPACITY_IMP_ERR = None
 try:
     from capacity import KiB, Capacity
     HAS_CAPACITY = True
 except ImportError:
+    CAPACITY_IMP_ERR = traceback.format_exc()
     HAS_CAPACITY = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.infinibox import HAS_INFINISDK, api_wrapper, get_system, infinibox_argument_spec
 
 
@@ -95,16 +98,16 @@ def get_pool(module, system):
     """Return Pool on None"""
     try:
         return system.pools.get(name=module.params['name'])
-    except:
+    except Exception:
         return None
 
 
 @api_wrapper
 def create_pool(module, system):
     """Create Pool"""
-    name      = module.params['name']
-    size      = module.params['size']
-    vsize     = module.params['vsize']
+    name = module.params['name']
+    size = module.params['size']
+    vsize = module.params['vsize']
     ssd_cache = module.params['ssd_cache']
 
     if not module.check_mode:
@@ -126,10 +129,10 @@ def create_pool(module, system):
 @api_wrapper
 def update_pool(module, system, pool):
     """Update Pool"""
-    changed   = False
+    changed = False
 
-    size      = module.params['size']
-    vsize     = module.params['vsize']
+    size = module.params['size']
+    vsize = module.params['vsize']
     ssd_cache = module.params['ssd_cache']
 
     # Roundup the capacity to mimic Infinibox behaviour
@@ -167,36 +170,36 @@ def main():
     argument_spec = infinibox_argument_spec()
     argument_spec.update(
         dict(
-            name      = dict(required=True),
-            state     = dict(default='present', choices=['present', 'absent']),
-            size      = dict(),
-            vsize     = dict(),
-            ssd_cache = dict(type='bool', default=True)
+            name=dict(required=True),
+            state=dict(default='present', choices=['present', 'absent']),
+            size=dict(),
+            vsize=dict(),
+            ssd_cache=dict(type='bool', default=True)
         )
     )
 
     module = AnsibleModule(argument_spec, supports_check_mode=True)
 
     if not HAS_INFINISDK:
-        module.fail_json(msg='infinisdk is required for this module')
+        module.fail_json(msg=missing_required_lib('infinisdk'))
     if not HAS_CAPACITY:
-        module.fail_json(msg='The capacity python library is required for this module')
+        module.fail_json(msg=missing_required_lib('capacity'), exception=CAPACITY_IMP_ERR)
 
     if module.params['size']:
         try:
             Capacity(module.params['size'])
-        except:
+        except Exception:
             module.fail_json(msg='size (Physical Capacity) should be defined in MB, GB, TB or PB units')
 
     if module.params['vsize']:
         try:
             Capacity(module.params['vsize'])
-        except:
+        except Exception:
             module.fail_json(msg='vsize (Virtual Capacity) should be defined in MB, GB, TB or PB units')
 
-    state  = module.params['state']
+    state = module.params['state']
     system = get_system(module)
-    pool   = get_pool(module, system)
+    pool = get_pool(module, system)
 
     if state == 'present' and not pool:
         create_pool(module, system)
