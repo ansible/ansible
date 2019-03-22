@@ -324,7 +324,14 @@ class AzureRMCosmosDBAccount(AzureRMModuleBase):
             elif kwargs[key] is not None:
                 self.parameters[key] = kwargs[key]
 
-        dict_camelize(self.parameters, ['kind'], True)
+        kind = self.parameters.get('kind')
+        if kind == 'global_document_db':
+            self.parameters['kind'] = 'GlobalDocumentDB'
+        elif kind == 'mongo_db':
+            self.parameters['kind'] = 'MongoDB'
+        elif kind == 'parse':
+            self.parameters['kind'] = 'Parse'
+
         dict_camelize(self.parameters, ['consistency_policy', 'default_consistency_level'], True)
         dict_rename(self.parameters, ['geo_rep_locations', 'name'], 'location_name')
         dict_rename(self.parameters, ['geo_rep_locations'], 'locations')
