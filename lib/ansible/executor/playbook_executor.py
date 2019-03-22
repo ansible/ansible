@@ -254,37 +254,42 @@ class PlaybookExecutor:
         the serial size specified in the play.
         '''
 
-        if play.serial_inv_tier is None:
-            display.vv("tiering by inventory item %s" % play.serial_inv_tier)
+        if play.serial_tier_fact is None:
             serialized_batches = self._get_batches_from_int(play)
         else:
-            serialized_batches = self._get_batches_from_inventory(play)
+            display.vv("tiering by inventory item %s" % play.serial_tier_fact)
+            serialized_batches = self._get_batches_from_fact(play)
 
         return serialized_batches
 
-    def _get_batches_from_inventory(self, play):
+    def _get_batches_from_fact(self, play):
         # make sure we have a unique list of hosts
         all_hosts = self._inventory.get_hosts(play.hosts)
-        inventory_item = play.serial_inv_tier
+        inventory_item = play.serial_tier_fact
 
         host_tiers = {}
         for host in all_hosts:
             tier = host.vars.get(inventory_item)
+            if tier is None:
+                tier = ""
             display.vvv("grouping %s into %s" % (host.name, tier))
             if tier not in host_tiers:
                 host_tiers[tier] = []
             host_tiers[tier].append(host)
 
         serialized_batches = []
-        for tier in host_tiers:
-            serialized_batches.append(host_tiers[tier])
+        for tier in sorted(host_tiers):
+            host_groups = self._get_batches_from_int(play, host_tiers[tier])
+            for host_group in host_groups:
+                serialized_batches.append(host_group)
 
         return serialized_batches
 
-    def _get_batches_from_int(self, play):
+    def _get_batches_from_int(self, play, hosts=None):
         # make sure we have a unique list of hosts
-        all_hosts = self._inventory.get_hosts(play.hosts, order=play.order)
-        all_hosts_len = len(all_hosts)
+        if hosts is None:
+            hosts = self._inventory.get_hosts(play.hosts, order=play.order)
+        hosts_len = len(hosts)
 
         # the serial value can be listed as a scalar or a list of
         # scalars, so we make sure it's a list here
@@ -295,21 +300,21 @@ class PlaybookExecutor:
         cur_item = 0
         serialized_batches = []
 
-        while len(all_hosts) > 0:
+        while len(hosts) > 0:
             # get the serial value from current item in the list
-            serial = pct_to_int(serial_batch_list[cur_item], all_hosts_len)
+            serial = pct_to_int(serial_batch_list[cur_item], hosts_len)
 
             # if the serial count was not specified or is invalid, default to
             # a list of all hosts, otherwise grab a chunk of the hosts equal
             # to the current serial item size
             if serial <= 0:
-                serialized_batches.append(all_hosts)
+                serialized_batches.append(hosts)
                 break
             else:
                 play_hosts = []
                 for x in range(serial):
-                    if len(all_hosts) > 0:
-                        play_hosts.append(all_hosts.pop(0))
+                    if len(hosts) > 0:
+                        play_hosts.append(hosts.pop(0))
 
                 serialized_batches.append(play_hosts)
 

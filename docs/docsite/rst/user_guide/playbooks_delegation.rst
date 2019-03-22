@@ -116,20 +116,25 @@ You can also mix and match the values::
 Rolling Update Tiered
 ``````````````````````````
 
-In additoin to the ``serial`` parameter you can also specify updates roll out in a tiered fasion based off an inventory item on hosts. You can use the ``serial_inv_tier`` parameter to specify the item to group nodes by. When using this parameter the ``serial`` parameter will be ignored::
+In additoin to the ``serial`` parameter you can also specify updates roll out in a tiered fasion based off fact from the specified hosts. You can use the ``serial_tier_fact`` parameter to specify the item to group nodes by. When using ``serial_tier_fact`` the ``serial`` parameter will still be honored but will apply to each tier individually::
 
-    - name: test play
+    - name: example play
       hosts: databases
-      serial_inv_tier: rack_id
+      serial_tier_fact: rack_id
       tasks:
       - name: task one
         debug:
           msg: "{{ inventory_hostname }}"
+    - name: example play 2
+      hosts: databases
+      serial: 1
+      serial_tier_fact: rack_id
+      tasks:
       - name: task two
         debug:
           msg: "{{ inventory_hostname }}"
 
-In the above example nodes would be grouped based off the inventory item ``rack_id``. Hosts that do not have a value set will go into the same group::
+In the above example nodes would be grouped based off the host fact ``rack_id``. Hosts that do not have a value set will go into the same group::
 
     [databases]
     db1 rack_id=rack1
@@ -141,9 +146,9 @@ In the above example nodes would be grouped based off the inventory item ``rack_
 
 The above inventory example would execute like below::
 
-    PLAY [test play] ******************************************
+    PLAY [example play] **********************************************************************************************
     
-    TASK [task one] *******************************************
+    TASK [task one] **************************************************************************************************
     ok: [db5] => {
         "msg": "db5"
     }
@@ -151,64 +156,79 @@ The above inventory example would execute like below::
         "msg": "db6"
     }
     
-    TASK [task two] *******************************************
+    PLAY [example play] **********************************************************************************************
+    
+    TASK [task one] **************************************************************************************************
+    ok: [db1] => {
+        "msg": "db1"
+    }
+    ok: [db2] => {
+        "msg": "db2"
+    }
+    
+    PLAY [example play] **********************************************************************************************
+    
+    TASK [task one] **************************************************************************************************
+    ok: [db3] => {
+        "msg": "db3"
+    }
+    
+    PLAY [example play] **********************************************************************************************
+    
+    TASK [task one] **************************************************************************************************
+    ok: [db4] => {
+        "msg": "db4"
+    }
+    
+    PLAY [example play 2] ********************************************************************************************
+    
+    TASK [task two] **************************************************************************************************
     ok: [db5] => {
         "msg": "db5"
     }
+    
+    PLAY [example play 2] ********************************************************************************************
+    
+    TASK [task two] **************************************************************************************************
     ok: [db6] => {
         "msg": "db6"
     }
     
-    PLAY [test play] ******************************************
+    PLAY [example play 2] ********************************************************************************************
     
-    TASK [task one] *******************************************
-    ok: [db4] => {
-        "msg": "db4"
-    }
-    
-    TASK [task two] *******************************************
-    ok: [db4] => {
-        "msg": "db4"
-    }
-    
-    PLAY [test play] ******************************************
-    
-    TASK [task one] *******************************************
-    ok: [db3] => {
-        "msg": "db3"
-    }
-    
-    TASK [task two] *******************************************
-    ok: [db3] => {
-        "msg": "db3"
-    }
-    
-    PLAY [test play] ******************************************
-    
-    TASK [task one] *******************************************
+    TASK [task two] **************************************************************************************************
     ok: [db1] => {
         "msg": "db1"
     }
+    
+    PLAY [example play 2] ********************************************************************************************
+    
+    TASK [task two] **************************************************************************************************
     ok: [db2] => {
         "msg": "db2"
     }
     
-    TASK [task two] *******************************************
-    ok: [db1] => {
-        "msg": "db1"
-    }
-    ok: [db2] => {
-        "msg": "db2"
+    PLAY [example play 2] ********************************************************************************************
+    
+    TASK [task two] **************************************************************************************************
+    ok: [db3] => {
+        "msg": "db3"
     }
     
-    PLAY RECAP ************************************************
-    db1  : ok=2    changed=0    unreachable=0    failed=0
-    db2  : ok=2    changed=0    unreachable=0    failed=0
-    db3  : ok=2    changed=0    unreachable=0    failed=0
-    db4  : ok=2    changed=0    unreachable=0    failed=0
-    db5  : ok=2    changed=0    unreachable=0    failed=0
-    db6  : ok=2    changed=0    unreachable=0    failed=0
-
+    PLAY [example play 2] ********************************************************************************************
+    
+    TASK [task two] **************************************************************************************************
+    ok: [db4] => {
+        "msg": "db4"
+    }
+    
+    PLAY RECAP *******************************************************************************************************
+    db1                        : ok=2    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+    db2                        : ok=2    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+    db3                        : ok=2    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+    db4                        : ok=2    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+    db5                        : ok=2    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+    db6                        : ok=2    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
 
 
 .. _maximum_failure_percentage:
