@@ -599,12 +599,11 @@ def main():
                               dict_headers, socket_timeout)
     resp['elapsed'] = (datetime.datetime.utcnow() - start).seconds
     resp['status'] = int(resp['status'])
+    resp['changed'] = False
 
     # Write the file out if requested
     if dest is not None:
-        if resp['status'] == 304:
-            resp['changed'] = False
-        else:
+        if resp['status'] in status_code and resp['status'] != 304:
             write_file(module, url, dest, content, resp)
             # allow file attribute changes
             resp['changed'] = True
@@ -613,8 +612,6 @@ def main():
             file_args['path'] = dest
             resp['changed'] = module.set_fs_attributes_if_different(file_args, resp['changed'])
         resp['path'] = dest
-    else:
-        resp['changed'] = False
 
     # Transmogrify the headers, replacing '-' with '_', since variables don't
     # work with dashes.
