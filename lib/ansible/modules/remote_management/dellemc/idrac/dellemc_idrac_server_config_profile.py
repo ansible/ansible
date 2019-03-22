@@ -22,10 +22,10 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: dellemc_idrac_server_config_profile
-short_description: Export or Import Server Configuration Profile(SCP).
+short_description: Export or Import iDRAC Server Configuration Profile (SCP).
 version_added: "2.8"
 description:
-  - Export the Server Configuration Profile(SCP) from the iDRAC or Import from a network share or a local file.
+  - Export the Server Configuration Profile (SCP) from the iDRAC or Import from a network share or a local file.
 options:
   idrac_ip:
     description: iDRAC IP Address.
