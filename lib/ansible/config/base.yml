@@ -68,6 +68,16 @@ ANSIBLE_NOCOWS:
   - {key: nocows, section: defaults}
   type: boolean
   yaml: {key: display.i_am_no_fun}
+ANSIBLE_PROCESS_MODEL:
+  name: Sets the Ansible process model
+  default: "forking"
+  description:
+    - "Ansible supports two process models: forking (default) and threading."
+    - "The threading model is currently a technology preview."
+  env: [{name: ANSIBLE_PROCESS_MODEL}]
+  ini:
+  - {key: process_model, section: defaults}
+  yaml: {key: defaults.process_model}
 ANSIBLE_COW_PATH:
   name: Set path to cowsay command
   default: null
