@@ -50,7 +50,7 @@ from ansible.utils.display import Display
 try:
     from importlib import import_module
 except ImportError:
-    import_module = None
+    import_module = __import__
 
 # if we're on a Python that doesn't have FNFError, redefine it as IOError (since that's what we'll see)
 try:

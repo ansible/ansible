@@ -19,7 +19,7 @@ from ansible.module_utils.six import iteritems, string_types
 try:
     from importlib import import_module
 except ImportError:
-    import_module = None
+    import_module = __import__
 
 _SYNTHETIC_PACKAGES = {
     'ansible_collections.ansible': dict(type='pkg_only'),

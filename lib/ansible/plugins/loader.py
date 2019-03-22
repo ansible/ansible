@@ -32,7 +32,7 @@ from ansible.utils.plugin_docs import add_fragments
 try:
     from importlib import import_module
 except ImportError:
-    import_module = None
+    import_module = __import__
 
 display = Display()
 
