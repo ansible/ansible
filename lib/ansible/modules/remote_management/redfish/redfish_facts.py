@@ -134,7 +134,7 @@ CATEGORY_COMMANDS_ALL = {
                 "GetDiskInventory", "GetBiosAttributes", "GetBootOrder"],
     "Chassis": ["GetFanInventory"],
     "Accounts": ["ListUsers"],
-    "Update": ["GetFirmwareInventory"],
+    "Update": ["GetFirmwareInventory", "GetSupportedFirmwareUpdateMethods"],
     "Manager": ["GetManagerNicInventory", "GetLogs"],
 }
 
