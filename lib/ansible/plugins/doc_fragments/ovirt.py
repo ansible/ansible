@@ -34,42 +34,51 @@ options:
             username:
                 description:
                     - The name of the user, something like I(admin@internal).
-                    - Default value is set by I(OVIRT_USERNAME) environment variable.
+                    - Default value is set by C(OVIRT_USERNAME) environment variable.
+                type: str
                 required: true
             password:
                 description:
                     - The password of the user.
-                    - Default value is set by I(OVIRT_PASSWORD) environment variable.
+                    - Default value is set by C(OVIRT_PASSWORD) environment variable.
+                type: str
                 required: true
             url:
                 description:
                     - A string containing the API URL of the server, usually something like `I(https://server.example.com/ovirt-engine/api)`.
-                    - Default value is set by I(OVIRT_URL) environment variable.
+                    - Default value is set by C(OVIRT_URL) environment variable.
                     - Either C(url) or C(hostname) is required.
+                type: str
             hostname:
                 description:
                     - A string containing the hostname of the server, usually something like `I(server.example.com)`.
-                    - Default value is set by I(OVIRT_HOSTNAME) environment variable.
+                    - Default value is set by C(OVIRT_HOSTNAME) environment variable.
                     - Either C(url) or C(hostname) is required.
+                type: str
             token:
                 description:
                     - Token to be used instead of login with username/password.
-                    - Default value is set by I(OVIRT_TOKEN) environment variable.
+                    - Default value is set by C(OVIRT_TOKEN) environment variable.
+                type: str
             insecure:
                 description:
                     - A boolean flag that indicates if the server TLS certificate and host name should be checked.
+                type: bool
             ca_file:
                 description:
                     - A PEM file containing the trusted CA certificates.
                     - The certificate presented by the server will be verified using these CA certificates.
-                    - If `C(ca_file)` parameter is not set, system wide CA certificate store is used.
-                    - Default value is set by I(OVIRT_CAFILE) environment variable.
+                    - If C(ca_file) parameter is not set, system wide CA certificate store is used.
+                    - Default value is set by C(OVIRT_CAFILE) environment variable.
+                type: str
             kerberos:
                 description:
                     -  A boolean flag indicating if Kerberos authentication should be used instead of the default basic authentication.
+                type: bool
             headers:
                 description:
                     - Dictionary of HTTP headers to be added to each API call.
+                type: dict
         type: dict
         required: true
     timeout:
