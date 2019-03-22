@@ -5,7 +5,6 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
@@ -26,11 +25,13 @@ author:
 options:
   client_id:
     description:
-      - OAuth consumer key. If not set the environment variable C(BITBUCKET_CLIENT_ID) will be used.
+      - OAuth consumer key.
+      - If not set the environment variable C(BITBUCKET_CLIENT_ID) will be used.
     type: str
   client_secret:
     description:
-      - OAuth consumer secret. If not set the environment variable C(BITBUCKET_CLIENT_SECRET) will be used.
+      - OAuth consumer secret.
+      - If not set the environment variable C(BITBUCKET_CLIENT_SECRET) will be used.
     type: str
   repository:
     description:
@@ -55,9 +56,7 @@ options:
       - Indicates desired state of the key.
     type: str
     required: true
-    choices:
-      - present
-      - absent
+    choices: [ absent, present ]
 notes:
   - Bitbucket OAuth consumer key and secret can be obtained from Bitbucket profile -> Settings -> Access Management -> OAuth.
   - Check mode is supported.

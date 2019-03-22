@@ -5,9 +5,9 @@ from units.compat.mock import patch
 from units.modules.utils import AnsibleFailJson, AnsibleExitJson, ModuleTestCase, set_module_args
 
 
-class TestBucketPipelinesSSHKeyModule(ModuleTestCase):
+class TestBucketPipelineKeyPairModule(ModuleTestCase):
     def setUp(self):
-        super(TestBucketPipelinesSSHKeyModule, self).setUp()
+        super(TestBucketPipelineKeyPairModule, self).setUp()
         self.module = bitbucket_pipeline_key_pair
 
     def test_missing_keys_with_present_state(self):
