@@ -45,8 +45,13 @@
      - "localhost:3002"
      - "localhost:3003"
 
-- pause:
-    seconds: 10
+- name: Ensure is_primary script exists on host
+  copy:
+    src: js/is_primary.js
+    dest: /home/tests/is_primary.js
+
+- name: Ensure host reaches primary before proceeding
+  command: mongo admin --port 3001 /home/tests/is_primary.js
 
 - name: Get replicaset info
   command: mongo admin --eval "rs.status()" --port 3001
@@ -81,9 +86,9 @@
   script: files/bash/mongodb_replicaset.sh 3000 "{{ mongodb_replicaset1 }}" 3 1
   ignore_errors: "{{ debug }}"
 
-- name: Debug - Output mongodb logs
-  shell: cat /home/tests/mongodb3001/log.log
-  when: debug
+#- name: Debug - Output mongodb logs
+#  shell: cat /home/tests/mongodb3001/log.log
+#  when: debug
 
 - name: Validate replicaset previously created
   mongodb_replicaset:
@@ -110,9 +115,6 @@
   args:
     removes: /home/tests/mongodb3001
 
-- pause:
-    seconds: 10
-
 - name: Execute mongod script
   script: files/bash/mongodb_replicaset.sh 3000 "{{ mongodb_replicaset2 }}" 3 0
 
@@ -127,8 +129,8 @@
     replica_set: "{{ mongodb_replicaset2 }}"
     members: [ "localhost:3001", "localhost:3002", "localhost:3003" ]
 
-- pause:
-    seconds: 10
+- name: Ensure host reaches primary before proceeding
+  command: mongo admin --port 3001 /home/tests/is_primary.js
 
 - name: Get replicaset info
   command: mongo admin --eval "rs.status()" --port 3001
@@ -150,9 +152,6 @@
   args:
     removes: /home/tests/mongodb3001
 
-- pause:
-    seconds: 10
-
 - name: Execute mongod script
   script: files/bash/mongodb_replicaset.sh 3000 "{{ mongodb_replicaset3 }}" 3 0
 
@@ -167,8 +166,8 @@
     replica_set: "{{ mongodb_replicaset3 }}"
     members: "localhost:3001,localhost:3002,localhost:3003"
 
-- pause:
-    seconds: 10
+- name: Ensure host reaches primary before proceeding
+  command: mongo admin --port 3001 /home/tests/is_primary.js
 
 - name: Get replicaset info
   command: mongo admin --eval "rs.status()" --port 3001
@@ -190,9 +189,6 @@
   args:
     removes: /home/tests/mongodb3001
 
-- pause:
-    seconds: 10
-
 - name: Execute mongod script
   script: files/bash/mongodb_replicaset.sh 3000 "{{ mongodb_replicaset4 }}" 3 0
 
@@ -208,8 +204,8 @@
     replica_set: "{{ mongodb_replicaset4 }}"
     members: "localhost:3001,localhost:3002,localhost:3003"
 
-- pause:
-    seconds: 10
+- name: Ensure host reaches primary before proceeding
+  command: mongo admin --port 3001 /home/tests/is_primary.js
 
 - name: Get replicaset info
   command: mongo admin --eval "rs.status()" --port 3001
@@ -232,9 +228,6 @@
   args:
     removes: /home/tests/mongodb3001
 
-- pause:
-    seconds: 10
-
 - name: Execute mongod script
   script: files/bash/mongodb_replicaset.sh 3000 "{{ mongodb_replicaset5 }}" 3 0
 
@@ -253,8 +246,8 @@
       - localhost:3002
       - localhost:3003
 
-- pause:
-    seconds: 10
+- name: Ensure host reaches primary before proceeding
+  command: mongo admin --port 3001 /home/tests/is_primary.js
 
 - name: Get replicaset info
   command: mongo admin --eval "rs.conf()" --port 3001
@@ -277,9 +270,6 @@
   args:
     removes: /home/tests/mongodb3001
 
-- pause:
-    seconds: 10
-
 - name: Execute mongod script
   script: files/bash/mongodb_replicaset.sh 3000 "{{ mongodb_replicaset6 }}" 5 0
 
@@ -299,8 +289,8 @@
       - localhost:3004
       - localhost:3005
 
-- pause:
-    seconds: 10
+- name: Ensure host reaches primary before proceeding
+  command: mongo admin --port 3001 /home/tests/is_primary.js
 
 - name: Get replicaset info
   command: mongo admin --eval "rs.conf()" --port 3001
@@ -324,9 +314,6 @@
   args:
     removes: /home/tests/mongodb3001
 
-- pause:
-    seconds: 10
-
 - name: Execute mongod script
   script: files/bash/mongodb_replicaset.sh 3000 "{{ mongodb_replicaset7 }}" 3 0
 
@@ -345,8 +332,8 @@
       - localhost:3002
       - localhost:3003
 
-- pause:
-    seconds: 10
+- name: Ensure host reaches primary before proceeding
+  command: mongo admin --port 3001 /home/tests/is_primary.js
 
 - name: Get replicaset info
   command: mongo admin --eval "rs.conf()" --port 3001
@@ -368,9 +355,6 @@
   script: files/bash/mongod_teardown.sh
   args:
     removes: /home/tests/mongodb3001
-
-- pause:
-    seconds: 10
 
 - name: Execute mongod script
   script: files/bash/mongodb_replicaset.sh 3000 "{{ mongodb_replicaset8 }}" 3 0
@@ -408,8 +392,8 @@
       - localhost:3003
   when: mongodb_version.startswith('4') == True
 
-- pause:
-    seconds: 10
+- name: Ensure host reaches primary before proceeding
+  command: mongo admin --port 3001 /home/tests/is_primary.js
 
 - name: Get replicaset info
   command: mongo admin --eval "rs.conf()" --port 3001
