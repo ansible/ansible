@@ -172,6 +172,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         self.inventory.add_group('manager')
         self.inventory.add_group('worker')
         self.inventory.add_group('leader')
+        self.inventory.add_group('non-leader')
 
         if self.get_option('include_host_uri', True):
             if self.get_option('include_host_uri_port'):
@@ -205,6 +206,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
                                                         swarm_leader_ip + ":" + host_uri_port)
                         self.inventory.set_variable(self.node_attrs['ID'], 'ansible_host', swarm_leader_ip)
                         self.inventory.add_host(self.node_attrs['ID'], group='leader')
+                    else:
+                        self.inventory.add_host(self.node_attrs['ID'], group='non-leader')
+                else:
+                    self.inventory.add_host(self.node_attrs['ID'], group='non-leader')
                 # Use constructed if applicable
                 strict = self.get_option('strict')
                 # Composed variables
