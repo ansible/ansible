@@ -852,10 +852,10 @@ class InstanceFailoverreplica(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({u'available': self.request.get('available'), u'name': self.request.get('name')})
+        return remove_nones_from_dict({u'name': self.request.get('name')})
 
     def from_response(self):
-        return remove_nones_from_dict({u'available': self.request.get(u'available'), u'name': self.request.get(u'name')})
+        return remove_nones_from_dict({u'name': self.request.get(u'name')})
 
 
 class InstanceIpaddressesArray(object):
@@ -972,7 +972,6 @@ class InstanceSettings(object):
                 u'tier': self.request.get('tier'),
                 u'availabilityType': self.request.get('availability_type'),
                 u'backupConfiguration': InstanceBackupconfiguration(self.request.get('backup_configuration', {}), self.module).to_request(),
-                u'settingsVersion': self.request.get('settings_version'),
             }
         )
 
@@ -983,7 +982,6 @@ class InstanceSettings(object):
                 u'tier': self.request.get(u'tier'),
                 u'availabilityType': self.request.get(u'availabilityType'),
                 u'backupConfiguration': InstanceBackupconfiguration(self.request.get(u'backupConfiguration', {}), self.module).from_response(),
-                u'settingsVersion': self.request.get(u'settingsVersion'),
             }
         )
 
