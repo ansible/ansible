@@ -482,14 +482,15 @@ DEFAULT_BECOME_FLAGS:
   env: [{name: ANSIBLE_BECOME_FLAGS}]
   ini:
   - {key: become_flags, section: privilege_escalation}
-DEFAULT_BECOME_PLUGIN_PATH:
+BECOME_PLUGIN_PATH:
   name: Become plugins path
-  default: ~/.ansible/plugins/become:/usr/share/ansible/become
+  default: ~/.ansible/plugins/become:/usr/share/ansible/plugins/become
   description: Colon separated paths in which Ansible will search for Become Plugins.
   env: [{name: ANSIBLE_BECOME_PLUGINS}]
   ini:
   - {key: become_plugins, section: defaults}
   type: pathspec
+  version_added: "2.8"
 DEFAULT_BECOME_USER:
   # FIXME: should really be blank and make -u passing optional depending on it
   name: Set the user you 'become' via privilege escalation
