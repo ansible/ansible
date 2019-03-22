@@ -121,7 +121,7 @@
         src: aws-env-vars.j2
       no_log: yes
 
-  rescue:
+  always:
     - name: Terminate Linux EC2 instances
       ec2:
         state: absent
