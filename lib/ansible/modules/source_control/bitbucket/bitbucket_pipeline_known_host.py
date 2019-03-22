@@ -19,7 +19,7 @@ module: bitbucket_pipeline_known_host
 short_description: Manages Bitbucket pipelines known hosts
 description:
   - Create or delete a repository level known hosts.
-  - The host fingerprint will be retrieved automatically, but in case of an error, one can use I(public_key) field to specify it manually.
+  - The host fingerprint will be retrieved automatically, but in case of an error, one can use I(key) field to specify it manually.
 version_added: "2.7"
 author:
   - Evgeniy Krysanov (@catcombo)
@@ -49,7 +49,7 @@ options:
       - Hostname of the known host.
     type: str
     required: true
-  public_key:
+  key:
     description:
       - Public key.
     type: str
@@ -87,7 +87,7 @@ EXAMPLES = r'''
     repository: bitbucket-repo
     username: bitbucket_username
     name: bitbucket.org
-    public_key: '{{lookup("file", "bitbucket.pub") }}'
+    key: '{{lookup("file", "bitbucket.pub") }}'
     state: absent
 '''
 
@@ -203,7 +203,7 @@ def get_host_key(module, hostname):
 
 def create_known_host(module, bitbucket):
     hostname = module.params['name']
-    key_type, key = 'ssh-rsa', module.params['public_key']
+    key_type, key = 'ssh-rsa', module.params['key']
 
     if key is None:
         key_type, key = get_host_key(module, hostname)
@@ -253,7 +253,7 @@ def main():
         repository=dict(type='str', required=True),
         username=dict(type='str', required=True),
         name=dict(type='str', required=True),
-        public_key=dict(type='str'),
+        key=dict(type='str'),
         state=dict(type='str', choices=['present', 'absent'], required=True),
     )
     module = AnsibleModule(

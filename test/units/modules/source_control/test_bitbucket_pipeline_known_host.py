@@ -40,7 +40,7 @@ class TestBucketPipelineKnownHostModule(ModuleTestCase):
                     'username': 'name',
                     'repository': 'repo',
                     'name': 'bitbucket.org',
-                    'public_key': 'public',
+                    'key': 'public',
                     'state': 'present',
                 })
                 self.module.main()
