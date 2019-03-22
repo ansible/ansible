@@ -1,16 +1,16 @@
 ---
-- name: Generate privatekey
+- name: (Assertonly, {{select_crypto_backend}}) - Generate privatekey
   openssl_privatekey:
     path: '{{ output_dir }}/privatekey.pem'
 
-- name: Generate privatekey with password
+- name: (Assertonly, {{select_crypto_backend}}) - Generate privatekey with password
   openssl_privatekey:
     path: '{{ output_dir }}/privatekeypw.pem'
     passphrase: hunter2
     cipher: auto
     select_crypto_backend: cryptography
 
-- name: Generate CSR (no extensions)
+- name: (Assertonly, {{select_crypto_backend}}) - Generate CSR (no extensions)
   openssl_csr:
     path: '{{ output_dir }}/csr_noext.csr'
     privatekey_path: '{{ output_dir }}/privatekey.pem'
@@ -18,38 +18,42 @@
       commonName: www.example.com
     useCommonNameForSAN: no
 
-- name: Generate selfsigned certificate (no extensions)
+- name: (Assertonly, {{select_crypto_backend}}) - Generate selfsigned certificate (no extensions)
   openssl_certificate:
     path: '{{ output_dir }}/cert_noext.pem'
     csr_path: '{{ output_dir }}/csr_noext.csr'
     privatekey_path: '{{ output_dir }}/privatekey.pem'
     provider: selfsigned
     selfsigned_digest: sha256
+    select_crypto_backend: '{{ select_crypto_backend }}'
 
-- name: Assert that subject_alt_name is there (should fail)
+- name: (Assertonly, {{select_crypto_backend}}) - Assert that subject_alt_name is there (should fail)
   openssl_certificate:
     path: '{{ output_dir }}/cert_noext.pem'
     provider: assertonly
     subject_alt_name:
       - "DNS:example.com"
+    select_crypto_backend: '{{ select_crypto_backend }}'
   ignore_errors: yes
   register: extension_missing_san
 
-- name: Assert that key_usage is there (should fail)
+- name: (Assertonly, {{select_crypto_backend}}) - Assert that key_usage is there (should fail)
   openssl_certificate:
     path: '{{ output_dir }}/cert_noext.pem'
     provider: assertonly
     key_usage:
       - digitalSignature
+    select_crypto_backend: '{{ select_crypto_backend }}'
   ignore_errors: yes
   register: extension_missing_ku
 
-- name: Assert that extended_key_usage is there (should fail)
+- name: (Assertonly, {{select_crypto_backend}}) - Assert that extended_key_usage is there (should fail)
   openssl_certificate:
     path: '{{ output_dir }}/cert_noext.pem'
     provider: assertonly
     extended_key_usage:
       - biometricInfo
+    select_crypto_backend: '{{ select_crypto_backend }}'
   ignore_errors: yes
   register: extension_missing_eku
 
@@ -62,33 +66,36 @@
       - extension_missing_eku is failed
       - "'Found no extendedKeyUsage extension' in extension_missing_eku.msg"
 
-- name: Check private key passphrase fail 1
+- name: (Assertonly, {{select_crypto_backend}}) - Check private key passphrase fail 1
   openssl_certificate:
     path: '{{ output_dir }}/cert_noext.pem'
     privatekey_path: '{{ output_dir }}/privatekey.pem'
     privatekey_passphrase: hunter2
     provider: assertonly
+    select_crypto_backend: '{{ select_crypto_backend }}'
   ignore_errors: yes
   register: passphrase_error_1
 
-- name: Check private key passphrase fail 2
+- name: (Assertonly, {{select_crypto_backend}}) - Check private key passphrase fail 2
   openssl_certificate:
     path: '{{ output_dir }}/cert_noext.pem'
     privatekey_path: '{{ output_dir }}/privatekeypw.pem'
     privatekey_passphrase: wrong_password
     provider: assertonly
+    select_crypto_backend: '{{ select_crypto_backend }}'
   ignore_errors: yes
   register: passphrase_error_2
 
-- name: Check private key passphrase fail 3
+- name: (Assertonly, {{select_crypto_backend}}) - Check private key passphrase fail 3
   openssl_certificate:
     path: '{{ output_dir }}/cert_noext.pem'
     privatekey_path: '{{ output_dir }}/privatekeypw.pem'
     provider: assertonly
+    select_crypto_backend: '{{ select_crypto_backend }}'
   ignore_errors: yes
   register: passphrase_error_3
 
-- name:
+- name: (Assertonly, {{select_crypto_backend}}) -
   assert:
     that:
       - passphrase_error_1 is failed
