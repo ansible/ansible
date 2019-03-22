@@ -52,7 +52,8 @@ options:
     default: no
   like:
     description:
-    - Create a table like another table (with similar DDL). Mutually exclusive with I(columns), I(rename), and I(truncate).
+    - Create a table like another table (with similar DDL).
+      Mutually exclusive with I(columns), I(rename), and I(truncate).
     type: str
   including:
     description:
@@ -76,7 +77,8 @@ options:
     default: no
   storage_params:
     description:
-    - Storage parameters like fillfactor, autovacuum_vacuum_treshold, etc. Mutually exclusive with I(rename) and I(truncate).
+    - Storage parameters like fillfactor, autovacuum_vacuum_treshold, etc.
+      Mutually exclusive with I(rename) and I(truncate).
     type: list
   db:
     description:
@@ -234,11 +236,11 @@ tablespace:
   returned: always
   type: str
   sample: 'ssd_tablespace'
-query:
-  description: Query that was tried to be execute.
+queries:
+  description: List of executed queries.
   returned: always
   type: str
-  sample: 'CREATE TABLE test_table (id bigint)'
+  sample: [ 'CREATE TABLE "test_table" (id bigint)' ]
 storage_params:
   description: Storage parameters.
   returned: always
@@ -278,7 +280,7 @@ class Table(object):
         }
         self.exists = False
         self.__exists_in_db()
-        self.executed_query = ''
+        self.executed_queries = []
 
     def get_info(self):
         """Getter to refresh and get table info"""
@@ -322,9 +324,9 @@ class Table(object):
         """
         name = pg_quote_identifier(self.name, 'table')
 
-        if self.exists:
-            changed = False
+        changed = False
 
+        if self.exists:
             if tblspace == 'pg_default' and self.info['tblspace'] is None:
                 pass  # Because they have the same meaning
             elif tblspace and self.info['tblspace'] != tblspace:
@@ -368,15 +370,17 @@ class Table(object):
         if tblspace:
             query += " TABLESPACE %s" % pg_quote_identifier(tblspace, 'database')
 
-        self.executed_query = query
-
         if self.__exec_sql(query, ddl=True):
-            return True
+            self.executed_queries.append(query)
+            changed = True
 
-        return False
+        if owner:
+            changed = self.set_owner(owner)
+
+        return changed
 
     def create_like(self, src_table, including='', tblspace='',
-                    unlogged=False, params=''):
+                    unlogged=False, params='', owner=''):
         """
         Create table like another table (with similar DDL).
         Arguments:
@@ -389,6 +393,8 @@ class Table(object):
         owner - table owner.
         unlogged - create unlogged table.
         """
+        changed = False
+
         name = pg_quote_identifier(self.name, 'table')
 
         query = "CREATE"
@@ -412,36 +418,47 @@ class Table(object):
         if tblspace:
             query += " TABLESPACE %s" % pg_quote_identifier(tblspace, 'database')
 
-        self.executed_query = query
+        if self.__exec_sql(query, ddl=True):
+            self.executed_queries.append(query)
+            changed = True
 
-        return self.__exec_sql(query, ddl=True)
+        if owner:
+            changed = self.set_owner(owner)
+
+        return changed
 
     def truncate(self):
-        self.executed_query = "TRUNCATE TABLE %s" % pg_quote_identifier(self.name, 'table')
-        return self.__exec_sql(self.executed_query, ddl=True)
+        query = "TRUNCATE TABLE %s" % pg_quote_identifier(self.name, 'table')
+        self.executed_queries.append(query)
+        return self.__exec_sql(query, ddl=True)
 
     def rename(self, newname):
-        self.executed_query = "ALTER TABLE %s RENAME TO %s" % (pg_quote_identifier(self.name, 'table'),
-                                                               pg_quote_identifier(newname, 'table'))
-        return self.__exec_sql(self.executed_query, ddl=True)
+        query = "ALTER TABLE %s RENAME TO %s" % (pg_quote_identifier(self.name, 'table'),
+                                                 pg_quote_identifier(newname, 'table'))
+        self.executed_queries.append(query)
+        return self.__exec_sql(query, ddl=True)
 
     def set_owner(self, username):
-        self.executed_query = "ALTER TABLE %s OWNER TO %s" % (pg_quote_identifier(self.name, 'table'),
-                                                              pg_quote_identifier(username, 'role'))
-        return self.__exec_sql(self.executed_query, ddl=True)
+        query = "ALTER TABLE %s OWNER TO %s" % (pg_quote_identifier(self.name, 'table'),
+                                                pg_quote_identifier(username, 'role'))
+        self.executed_queries.append(query)
+        return self.__exec_sql(query, ddl=True)
 
     def drop(self):
-        self.executed_query = "DROP TABLE %s" % pg_quote_identifier(self.name, 'table')
-        return self.__exec_sql(self.executed_query, ddl=True)
+        query = "DROP TABLE %s" % pg_quote_identifier(self.name, 'table')
+        self.executed_queries.append(query)
+        return self.__exec_sql(query, ddl=True)
 
     def set_tblspace(self, tblspace):
-        self.executed_query = "ALTER TABLE %s SET TABLESPACE %s" % (pg_quote_identifier(self.name, 'table'),
-                                                                    pg_quote_identifier(tblspace, 'database'))
-        return self.__exec_sql(self.executed_query, ddl=True)
+        query = "ALTER TABLE %s SET TABLESPACE %s" % (pg_quote_identifier(self.name, 'table'),
+                                                      pg_quote_identifier(tblspace, 'database'))
+        self.executed_queries.append(query)
+        return self.__exec_sql(query, ddl=True)
 
     def set_stor_params(self, params):
-        self.executed_query = "ALTER TABLE %s SET (%s)" % (pg_quote_identifier(self.name, 'table'), params)
-        return self.__exec_sql(self.executed_query, ddl=True)
+        query = "ALTER TABLE %s SET (%s)" % (pg_quote_identifier(self.name, 'table'), params)
+        self.executed_queries.append(query)
+        return self.__exec_sql(query, ddl=True)
 
     def __exec_sql(self, query, ddl=False):
         try:
@@ -600,9 +617,9 @@ def main():
 
     elif newname:
         changed = table_obj.rename(newname)
-        q = table_obj.executed_query
+        q = table_obj.executed_queries
         table_obj = Table(newname, module, cursor)
-        table_obj.executed_query = q
+        table_obj.executed_queries = q
 
     elif state == 'present' and not like:
         changed = table_obj.create(columns, storage_params,
@@ -611,9 +628,6 @@ def main():
     elif state == 'present' and like:
         changed = table_obj.create_like(like, including, tablespace,
                                         unlogged, storage_params)
-
-    if owner:
-        changed = table_obj.set_owner(owner)
 
     if changed:
         if module.check_mode:
@@ -638,7 +652,7 @@ def main():
             # to keep other information about the dropped table:
             kw['state'] = 'absent'
 
-    kw['query'] = table_obj.executed_query
+    kw['queries'] = table_obj.executed_queries
     kw['changed'] = changed
     db_connection.close()
     module.exit_json(**kw)

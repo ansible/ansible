@@ -3,6 +3,15 @@
 # Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+# Create a role for tests:
+- name: postgresql_table - create a role for tests
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_user:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: alice
+
 # Create a simple table:
 - name: postgresql_table - create table
   become_user: "{{ pg_user }}"
@@ -12,6 +21,7 @@
     login_port: 5432
     login_user: "{{ pg_user }}"
     name: test1
+    owner: alice
     columns: id int
   register: result
   ignore_errors: yes
@@ -20,11 +30,11 @@
     that:
       - result.changed == true
       - result.table == 'test1'
-      - result.query == "CREATE TABLE \"test1\" (id int)"
+      - result.queries == ['CREATE TABLE "test1" (id int)', 'ALTER TABLE "test1" OWNER TO "alice"']
       - result.state == 'present'
       - result.storage_params == []
       - result.tablespace == ""
-      - result.owner == "{{ pg_user }}"
+      - result.owner == "alice"
 
 # Create a table LILE another table without any additional parameters:
 - name: postgresql_table - create table like
@@ -42,7 +52,7 @@
     that:
       - result.changed == true
       - result.table == 'test2'
-      - result.query == "CREATE TABLE \"test2\" (LIKE \"test1\")"
+      - result.queries == ['CREATE TABLE "test2" (LIKE "test1")']
       - result.state == 'present'
       - result.storage_params == []
       - result.tablespace == ""
@@ -63,7 +73,7 @@
 - assert:
     that:
       - result.changed == true
-      - result.query == "DROP TABLE \"test2\""
+      - result.queries == ['DROP TABLE "test2"']
       - result.state == 'absent'
       - result.storage_params == []
       - result.tablespace == ""
@@ -85,7 +95,7 @@
 - assert:
     that:
       - result.changed == true
-      - result.query == "CREATE TABLE \"test2\" (LIKE \"test1\" INCLUDING indexes)"
+      - result.queries == ['CREATE TABLE "test2" (LIKE "test1" INCLUDING indexes)']
       - result.state == 'present'
       - result.storage_params == []
       - result.tablespace == ""
@@ -162,7 +172,7 @@
 - assert:
     that:
       - result.owner == 'test_user'
-      - result.query == "ALTER TABLE \"test1\" OWNER TO \"test_user\""
+      - result.queries == ['ALTER TABLE "test1" OWNER TO "test_user"']
       - result.state == 'present'
       - result.changed == true
 
@@ -187,7 +197,7 @@
     that:
       - result.changed == true
       - result.state == 'present'
-      - result.query == "CREATE TABLE \"test3\" (id int,name text) WITH (fillfactor=10,autovacuum_analyze_threshold=1)"
+      - result.queries == ['CREATE TABLE "test3" (id int,name text) WITH (fillfactor=10,autovacuum_analyze_threshold=1)']
       - result.storage_params == [ "fillfactor=10", "autovacuum_analyze_threshold=1" ]
   
 # Truncate a table. It always returns changed == true
@@ -206,7 +216,7 @@
 - assert:
     that:
       - result.changed == true
-      - result.query == "TRUNCATE TABLE \"test3\""
+      - result.queries == ['TRUNCATE TABLE "test3"']
       - result.state == "present"
 
 # Rename a table:
@@ -224,7 +234,7 @@
 - assert:
     that:
       - result.changed == true
-      - result.query == "ALTER TABLE \"test3\" RENAME TO \"test4\""
+      - result.queries == ['ALTER TABLE "test3" RENAME TO "test4"']
       - result.state == "present"
 
 # Create unlogged table:
@@ -242,5 +252,5 @@
 - assert:
     that:
       - result.changed == true
-      - result.query == "CREATE UNLOGGED TABLE \"test5\" ()"
+      - result.queries == ['CREATE UNLOGGED TABLE "test5" ()']
   when: postgres_version_resp.stdout is version('9.1', '>=')
