@@ -56,3 +56,29 @@ class TestNxosInterfaceOspfModule(TestNxosModule):
         self.execute_module(failed=True, changed=False)
         set_module_args(dict(interface='loopback0', ospf=1, area=0, network='broadcast'))
         self.execute_module(failed=True, changed=False)
+
+    def test_nxos_interface_ospf_passive(self):
+        # default -> True
+        set_module_args(dict(interface='ethernet1/33', ospf=1, area=1, passive_interface=True))
+        self.execute_module(changed=True, commands=['interface Ethernet1/33', 'ip router ospf 1 area 0.0.0.1',
+                                                    'ip ospf passive-interface'])
+        # default -> False
+        set_module_args(dict(interface='ethernet1/33', ospf=1, area=1, passive_interface=False))
+        self.execute_module(changed=True, commands=['interface Ethernet1/33', 'ip router ospf 1 area 0.0.0.1',
+                                                    'no ip ospf passive-interface'])
+        # True -> False
+        set_module_args(dict(interface='ethernet1/34', ospf=1, area=1, passive_interface=False))
+        self.execute_module(changed=True, commands=['interface Ethernet1/34',
+                                                    'no ip ospf passive-interface'])
+        # True -> default
+        set_module_args(dict(interface='ethernet1/34', ospf=1, area=1, passive_interface='default'))
+        self.execute_module(changed=True, commands=['interface Ethernet1/34',
+                                                    'default ip ospf passive-interface'])
+        # False -> True
+        set_module_args(dict(interface='ethernet1/35', ospf=1, area=1, passive_interface=True))
+        self.execute_module(changed=True, commands=['interface Ethernet1/35',
+                                                    'ip ospf passive-interface'])
+        # False -> default
+        set_module_args(dict(interface='ethernet1/35', ospf=1, area=1, passive_interface='default'))
+        self.execute_module(changed=True, commands=['interface Ethernet1/35',
+                                                    'default ip ospf passive-interface'])
