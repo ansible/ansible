@@ -322,7 +322,6 @@ class AzureRMCosmosDBAccount(AzureRMModuleBase):
             elif kwargs[key] is not None:
                 self.parameters[key] = kwargs[key]
 
-        dict_camelize(self.parameters, ['kind'], True)
         kind = self.parameters.get('kind')
         if kind == 'global_document_db':
             self.parameters['kind'] = 'GlobalDocumentDB'
