@@ -95,11 +95,9 @@ RETURN = r''' # '''
 
 import socket
 import paramiko
-import warnings
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.source_control.bitbucket import BitbucketHelper
-from cryptography.utils import CryptographyDeprecationWarning
 
 BITBUCKET_API_ENDPOINTS = {
     'known-host-list': '%s/2.0/repositories/{username}/{repo_slug}/pipelines_config/ssh/known_hosts/' % BitbucketHelper.BITBUCKET_API_URL,
@@ -176,9 +174,6 @@ def get_host_key(module, hostname):
             'AAAAB3NzaC1yc2EAAAABIwAAA...SBne8+seeFVBoGqzHM9yXw==',
         )
     """
-    # Suppress deprecation warnings
-    warnings.filterwarnings('ignore', category=CryptographyDeprecationWarning)
-
     try:
         sock = socket.socket()
         sock.connect((hostname, 22))
