@@ -174,7 +174,7 @@
       - testmodule_out.source == 'user'
       - systestmodule_out.source == 'sys'
 
-# FIXME: this won't work until collections list gets paased through task templar
+# FIXME: this won't work until collections list gets passed through task templar
 #  - name: exercise unqualified filters/tests/lookups
 #    assert:
 #      that:

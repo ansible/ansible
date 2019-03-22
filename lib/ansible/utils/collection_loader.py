@@ -13,7 +13,7 @@ from importlib import import_module
 from types import ModuleType
 
 from ansible import constants as C
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.six import iteritems, string_types
 
 _SYNTHETIC_PACKAGES = {
@@ -162,14 +162,14 @@ class AnsibleCollectionLoader(object):
 
             newmod = ModuleType(fullname)
             newmod.__package__ = fullname
-            newmod.__file__ = location
+            newmod.__file__ = to_native(location)
             newmod.__loader__ = self
 
             if is_package:
                 if sub_collection:  # we never want to search multiple instances of the same collection; use first found
-                    newmod.__path__ = [candidate_child_path]
+                    newmod.__path__ = [to_native(candidate_child_path)]
                 else:
-                    newmod.__path__ = package_paths
+                    newmod.__path__ = [to_native(p) for p in package_paths]
 
             if source:
                 # FIXME: decide cases where we don't actually want to exec the code?
@@ -261,6 +261,7 @@ def is_collection_qualified_role_name(candidate_name):
 
 
 def get_collection_role_path(role_name, collection_list=None):
+    role_name = to_native(role_name)
     match = _collection_role_name_re.match(role_name)
 
     if match:
@@ -280,12 +281,16 @@ def get_collection_role_path(role_name, collection_list=None):
             # should we just ask the collections loader directly now?
             # FIXME: roles don't have to have tasks/main.y?ml anymore, just load the package itself?
             # FIXME: error handling; need to catch any import failures and move along
+
+            # FIXME: this line shouldn't be necessary, but py2 pkgutil.get_data is delegating back to built-in loader when it shouldn't
+            pkg = import_module(role_package + '.tasks')
+
             tasks_file = pkgutil.get_data(role_package + '.tasks', 'main.yml')
 
             if tasks_file is not None:
                 # the package is now loaded, get the collection's package and ask where it lives
                 path = os.path.dirname(sys.modules[role_package].__file__)
-                return role, path, collection_name
+                return to_text(role), to_text(path), to_text(collection_name)
 
         except IOError:
             continue

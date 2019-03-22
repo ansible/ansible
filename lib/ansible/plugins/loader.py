@@ -302,6 +302,7 @@ class PluginLoader:
                 display.debug('Added %s to loader search path' % (directory))
 
     def _find_fq_plugin(self, fq_name, extension):
+        fq_name = to_native(fq_name)
         # prefix our extension Python namespace if it isn't already there
         if not fq_name.startswith('ansible_collections.'):
             fq_name = 'ansible_collections.' + fq_name
@@ -336,7 +337,7 @@ class PluginLoader:
         if hasattr(pkg, '__loader__') and isinstance(pkg.__loader__, AnsibleFlatMapLoader):
             try:
                 file_path = pkg.__loader__.find_file(resource)
-                return file_path
+                return to_text(file_path)
             except IOError:
                 # this loader already takes care of extensionless files, so if we didn't find it, just bail
                 return None
@@ -347,7 +348,7 @@ class PluginLoader:
 
         # FIXME: and is file or file link or ...
         if os.path.exists(resource_path):
-            return resource_path
+            return to_text(resource_path)
 
         # look for any matching extension in the package location (sans filter)
         ext_blacklist = ['.pyc', '.pyo']
@@ -360,7 +361,7 @@ class PluginLoader:
             # TODO: warn?
             pass
 
-        return found_files[0]
+        return to_text(found_files[0])
 
     def _find_plugin(self, name, mod_type='', ignore_deprecated=False, check_aliases=False, collection_list=None):
         ''' Find a plugin named name '''

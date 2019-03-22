@@ -30,6 +30,7 @@ import shlex
 import zipfile
 import re
 import pkgutil
+import importlib
 from io import BytesIO
 
 from ansible.release import __version__, __author__
@@ -45,6 +46,11 @@ from ansible.plugins.loader import module_utils_loader
 from ansible.executor import action_write_locks
 
 from ansible.utils.display import Display
+
+try:
+    FileNotFoundError
+except NameError:
+    FileNotFoundError = IOError
 
 display = Display()
 
@@ -571,11 +577,13 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
             package_name = '.'.join(py_module_name[:-1])
             resource_name = py_module_name[-1] + '.py'
             try:
-                # FIXME: this won't support full package import, but do we actually want it to?
+                # FIXME: need this in py2 for some reason TBD
+                pkg = importlib.import_module(package_name)
                 module_info = pkgutil.get_data(package_name, resource_name)
             except FileNotFoundError:
                 # FIXME: implement package fallback code
                 raise AnsibleError('unable to load collection-hosted module_util {0}.{1}'.format(package_name, resource_name))
+            idx = 0
         else:
             # Check whether either the last or the second to last identifier is
             # a module name
