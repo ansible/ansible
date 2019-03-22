@@ -981,7 +981,6 @@ class BackendServiceIap(object):
                 u'enabled': self.request.get('enabled'),
                 u'oauth2ClientId': self.request.get('oauth2_client_id'),
                 u'oauth2ClientSecret': self.request.get('oauth2_client_secret'),
-                u'oauth2ClientSecretSha256': self.request.get('oauth2_client_secret_sha256'),
             }
         )
 
@@ -991,7 +990,6 @@ class BackendServiceIap(object):
                 u'enabled': self.request.get(u'enabled'),
                 u'oauth2ClientId': self.request.get(u'oauth2ClientId'),
                 u'oauth2ClientSecret': self.request.get(u'oauth2ClientSecret'),
-                u'oauth2ClientSecretSha256': self.request.get(u'oauth2ClientSecretSha256'),
             }
         )
 

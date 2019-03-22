@@ -1254,22 +1254,10 @@ class TableStreamingbuffer(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict(
-            {
-                u'estimatedBytes': self.request.get('estimated_bytes'),
-                u'estimatedRows': self.request.get('estimated_rows'),
-                u'oldestEntryTime': self.request.get('oldest_entry_time'),
-            }
-        )
+        return remove_nones_from_dict({})
 
     def from_response(self):
-        return remove_nones_from_dict(
-            {
-                u'estimatedBytes': self.request.get(u'estimatedBytes'),
-                u'estimatedRows': self.request.get(u'estimatedRows'),
-                u'oldestEntryTime': self.request.get(u'oldestEntryTime'),
-            }
-        )
+        return remove_nones_from_dict({})
 
 
 class TableSchema(object):
