@@ -1,0 +1,2 @@
+bugfixes:
+- "openssl_publickey - fixed crash on Python 3 when OpenSSH private keys were used with passphrases."
