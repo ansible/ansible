@@ -91,7 +91,7 @@ class TestPlaybookExecutor(unittest.TestCase):
             'serial_tier_fact_with_serial.yml': '''
             - hosts: all
               gather_facts: no
-              serial: 
+              serial:
                 - 1
                 - 2
                 - 5
@@ -107,7 +107,8 @@ class TestPlaybookExecutor(unittest.TestCase):
         templar = Templar(loader=fake_loader)
 
         pbe = PlaybookExecutor(
-            playbooks=['no_serial.yml', 'serial_int.yml', 'serial_pct.yml', 'serial_list.yml', 'serial_list_mixed.yml', 'serial_tier_fact.yml', 'serial_tier_fact_with_serial.yml'],
+            playbooks=['no_serial.yml', 'serial_int.yml', 'serial_pct.yml', 'serial_list.yml',
+                       'serial_list_mixed.yml', 'serial_tier_fact.yml', 'serial_tier_fact_with_serial.yml'],
             inventory=mock_inventory,
             variable_manager=mock_var_manager,
             loader=fake_loader,
@@ -194,9 +195,9 @@ class TestPlaybookExecutor(unittest.TestCase):
         mock_inventory.get_hosts.return_value = hosts
         print(pbe._get_serialized_batches(play))
         self.assertEqual(pbe._get_serialized_batches(play), [
-            hosts[0:1], hosts[1:3], hosts[3:7], # group1
-            hosts[7:8], hosts[8:10], hosts[10:11], # group2
-            hosts[11:12], hosts[12:14], hosts[14:19], hosts[19:22], #group3
+            hosts[0:1], hosts[1:3], hosts[3:7],  # group1
+            hosts[7:8], hosts[8:10], hosts[10:11],  # group2
+            hosts[11:12], hosts[12:14], hosts[14:19], hosts[19:22],  # group3
         ])
 
         # Test when serial percent is under 1.0
