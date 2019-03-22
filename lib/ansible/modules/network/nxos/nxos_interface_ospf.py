@@ -316,8 +316,7 @@ def state_present(module, existing, proposed, candidate):
         elif value is False:
             commands.append('no {0}'.format(key))
         elif value == 'default':
-            if existing_commands.get(key) or \
-                'ip ospf passive-interface' in key and existing_commands.get(key) is not None:
+            if existing_commands.get(key) or 'ip ospf passive-interface' in key and existing_commands.get(key) is not None:
                 commands.extend(get_default_commands(existing, proposed,
                                                      existing_commands, key,
                                                      module))
