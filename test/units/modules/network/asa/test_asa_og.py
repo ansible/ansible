@@ -50,38 +50,35 @@ class TestAsaOgModule(TestAsaModule):
 
     def test_asa_og_idempotent(self):
         set_module_args(dict(
-            name='service_object_test',
-            group_type='port-object',
-            protocol='udp',
-            lines=['range 56832 56959', 'range 61363 65185']
+            name='test_tenant1_nets',
+            group_type='network-object',
+            lines=['10.255.0.0 255.255.0.0', '192.168.0.0 255.255.0.0']
         ))
         commands = []
         self.execute_module(changed=False, commands=commands)
 
     def test_asa_og_update(self):
         set_module_args(dict(
-            name='service_object_test',
-            group_type='port-object',
-            protocol='udp',
-            lines=[['range 56832 56959', 'range 61363 65185', 'range 1024 4201']]
+            name='test_tenant1_nets',
+            group_type='network-object',
+            lines=['10.255.0.0 255.255.0.0', '192.168.0.0 255.255.0.0', 'host 8.8.8.8']
         ))
         commands = [
-            'object-group service service_object_test udp',
-            'port-object range 1024 4201'
+            'object-group network test_tenant1_nets',
+            'network-object host 8.8.8.8'
         ]
         self.execute_module(changed=True, commands=commands)
 
     def test_asa_og_replace(self):
         set_module_args(dict(
-            name='service_object_test',
-            group_type='port-object',
-            protocol='udp',
-            lines=[['range 1024 4201']]
+            name='test_tenant1_nets',
+            group_type='network-object',
+            lines=['host 8.8.4.4']
         ))
         commands = [
-            'object-group service service_object_test udp',
-            'no port-object range 56832 56959',
-            'no port-object range 61363 65185',
-            'port-object range 1024 4201'
+            'object-group network test_tenant1_nets',
+            'no network-object 10.255.0.0 255.255.0.0',
+            'no network-object 192.168.0.0 255.255.0.0',
+            'network-object host 8.8.4.4'
         ]
         self.execute_module(changed=True, commands=commands)
