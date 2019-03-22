@@ -74,7 +74,7 @@
 - assert:
     that:
     - result.changed == true
-    - result.queries == ["CREATE EXTENSION \"postgis\""]
+    - result.queries == ['CREATE EXTENSION "postgis"']
 
 # Check that extension exists after the previous step, rowcount must be 1
 - name: postgresql_ext - check that extension exists after the previous step
@@ -104,7 +104,7 @@
 - assert:
     that:
     - result.changed == true
-    - result.queries == ["DROP EXTENSION \"postgis\""]
+    - result.queries == ['DROP EXTENSION "postgis"']
 
 # Check that extension doesn't exist after the previous step, rowcount must be 0
 - name: postgresql_ext - check that extension doesn't exist after the previous step
@@ -134,7 +134,7 @@
 - assert:
     that:
     - result.changed == true
-    - result.queries == ["CREATE EXTENSION \"postgis\" WITH SCHEMA \"schema1\""]
+    - result.queries == ['CREATE EXTENSION "postgis" WITH SCHEMA "schema1"']
 
 # Check that extension exists after the previous step, rowcount must be 1
 - name: postgresql_ext - check that extension exists after the previous step
@@ -175,7 +175,7 @@
 - assert:
     that:
     - result.changed == true
-    - result.queries == ["DROP EXTENSION \"postgis\" CASCADE"]
+    - result.queries == ['DROP EXTENSION "postgis" CASCADE']
 
 # Check that extension doesn't exist after the previous step, rowcount must be 0
 - name: postgresql_ext - check that extension doesn't exist after the previous step
@@ -207,7 +207,7 @@
 - assert:
     that:
     - result.changed == true
-    - result.queries == ["CREATE EXTENSION \"postgis\" CASCADE"]
+    - result.queries == ['CREATE EXTENSION "postgis" CASCADE"']
   when: postgres_version_resp.stdout is version('9.6', '<=')
 
 # Check that extension exists after the previous step, rowcount must be 1

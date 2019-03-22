@@ -17,7 +17,7 @@ module: postgresql_ext
 short_description: Add or remove PostgreSQL extensions from a database
 description:
 - Add or remove PostgreSQL extensions from a database.
-version_added: "1.9"
+version_added: '1.9'
 options:
   name:
     description:
@@ -34,7 +34,7 @@ options:
   schema:
     description:
     - Name of the schema to add the extension to.
-    version_added: "2.8"
+    version_added: '2.8'
     type: str
   login_user:
     description:
@@ -83,7 +83,7 @@ options:
     - The specified session_role must be a role that the current login_user is a member of.
     - Permissions checking for SQL commands is carried out as though the session_role were the one that had logged in originally.
     type: str
-    version_added: "2.8"
+    version_added: '2.8'
   state:
     description:
     - The database extension state.
