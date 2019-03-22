@@ -2451,7 +2451,7 @@ class ContainerManager(DockerBaseClass):
                 self.results['changed'] = True
                 updated_container = self._add_networks(container, network_differences)
 
-        if self.parameters.comparisons['networks']['comparison'] == 'strict':
+        if (self.parameters.comparisons['networks']['comparison'] == 'strict' and self.parameters.networks is not None) or self.parameters.purge_networks:
             has_extra_networks, extra_networks = container.has_extra_networks()
             if has_extra_networks:
                 if self.diff.get('differences'):
