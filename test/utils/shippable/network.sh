@@ -53,6 +53,5 @@ for version in "${python_versions[@]}"; do
     ansible-test network-integration --color -v --retry-on-error "${target}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} ${UNSTABLE:+"$UNSTABLE"} \
          "${platforms[@]}" \
         --docker default --python "${version}" \
-        --continue-on-error \
         --remote-terminate "${terminate}" --remote-stage "${stage}" --remote-provider "${provider}"
 done
