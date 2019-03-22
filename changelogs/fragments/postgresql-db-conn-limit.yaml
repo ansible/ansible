@@ -1,0 +1,2 @@
+minor_changes:
+ - postgresql_db - Added paramter conn_limit to limit the number of concurrent connection to a certain database
