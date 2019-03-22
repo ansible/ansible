@@ -20,18 +20,7 @@
   hosts: all
   gather_facts: false
   tasks:
-    - debug: var=genus
-    - name: group by genus
-      group_by: key={{ genus }}
-
-    - name: group by first three letters of genus with key in quotes
-      group_by: key="{{ genus[:3] }}"
-
-    - name: group by first two letters of genus with key not in quotes
-      group_by: key={{ genus[:2] }}
-
-    - name: group by genus in uppercase using complex args
-      group_by: { key: "{{ genus | upper() }}" }
+    - include_tasks: create_groups.yml
 
 - name: Vicunga group validation
   hosts: vicugna
