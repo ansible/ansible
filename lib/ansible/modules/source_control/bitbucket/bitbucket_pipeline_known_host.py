@@ -20,7 +20,7 @@ short_description: Manages Bitbucket pipelines known hosts
 description:
   - Create or delete a repository level known hosts.
   - The host fingerprint will be retrieved automatically, but in case of an error, one can use I(key) field to specify it manually.
-version_added: "2.7"
+version_added: "2.8"
 author:
   - Evgeniy Krysanov (@catcombo)
 options:
