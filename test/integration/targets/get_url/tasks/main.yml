@@ -225,7 +225,7 @@
   get_url:
     url: 'https://{{ httpbin_host }}/'
     dest: '{{ output_dir }}/test'
-    mode: '0070'
+    mode: '0700'
   register: result
 
 - stat:
@@ -236,14 +236,14 @@
   assert:
     that:
       - result is changed
-      - "stat_result.stat.mode == '0070'"
+      - "stat_result.stat.mode == '0700'"
 
 # https://github.com/ansible/ansible/issues/29614
 - name: Change mode on an already downloaded file and specify checksum
   get_url:
-    url: 'https://{{ httpbin_host }}/get'
+    url: 'https://{{ httpbin_host }}/json'
     dest: '{{ output_dir }}/test'
-    checksum: 'sha256:7036ede810fad2b5d2e7547ec703cae8da61edbba43c23f9d7203a0239b765c4.'
+    checksum: 'sha256:bab3dfd2a6c992e4bf589eee05fc9650cc9d6988660b947a7a87b99420d108f9'
     mode: '0775'
   register: result
 
@@ -270,9 +270,9 @@
 
 - name: test checksum match in check mode
   get_url:
-    url: 'https://{{ httpbin_host }}/get'
+    url: 'https://{{ httpbin_host }}/json'
     dest: '{{ output_dir }}/test'
-    checksum: 'sha256:7036ede810fad2b5d2e7547ec703cae8da61edbba43c23f9d7203a0239b765c4.'
+    checksum: 'sha256:bab3dfd2a6c992e4bf589eee05fc9650cc9d6988660b947a7a87b99420d108f9'
   check_mode: True
   register: result
 
