@@ -20,7 +20,7 @@ __metaclass__ = type
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Module to work on User Configuration with Lenovo Switches
+# Module to work on Link Aggregation with Lenovo Switches
 # Lenovo Networking
 #
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -43,7 +43,7 @@ options:
   aggregate:
     description:
       - The set of username objects to be configured on the remote
-        Lenovo CNOS device.  The list entries can either be the username
+        Lenovo Cnos device.  The list entries can either be the username
         or a hash of username and properties.  This argument is mutually
         exclusive with the C(name) argument.
     aliases: ['users', 'collection']
@@ -58,12 +58,6 @@ options:
         password needs to be provided in cleartext and it will be encrypted
         on the device.
         Please note that this option is not same as C(provider password).
-  no_password:
-    description:
-      - Defines the username without assigning a password.
-        The options include yes or no in string format.
-    default: 'no'
-    choices: ['no', 'yes']
   update_password:
     description:
       - Since passwords are encrypted in the device running config, this
@@ -73,13 +67,17 @@ options:
         the username is created.
     default: always
     choices: ['on_create', 'always']
-  privileges:
+  role:
     description:
-      - The C(privilege) argument configures the privilege for the username in
-        device running configuration.  The argument accepts a integer value
-        ranging from 1-15.  This argument does not check if the privilege
+      - The C(role) argument configures the role for the username in the
+        device running configuration.  The argument accepts a string value
+        defining the role name.  This argument does not check if the role
         has been configured on the device.
-    aliases: ['privilege']
+    aliases: ['roles']
+  sshkey:
+    description:
+      - The C(sshkey) argument defines the SSH public key to configure
+        for the username.  This argument accepts a valid SSH key value.
   purge:
     description:
       - The C(purge) argument instructs the module to consider the
@@ -88,10 +86,6 @@ options:
         `admin` user which cannot be deleted per cnos constraints.
     type: bool
     default: 'no'
-  view:
-    description:
-      - configures the view for the username in the device running configuration
-    type: str
   state:
     description:
       - The C(state) argument configures the state of the username definition
@@ -107,17 +101,18 @@ EXAMPLES = """
 - name: create a new user
   cnos_user:
     name: ansible
+    sshkey: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
     state: present
 
 - name: remove all users except admin
   cnos_user:
     purge: yes
 
-- name: set multiple users privilege
+- name: set multiple users role
   aggregate:
     - name: netop
     - name: netend
-  privilege: network-operator
+  role: network-operator
   state: present
 """
 
@@ -151,16 +146,20 @@ from copy import deepcopy
 from functools import partial
 
 from ansible.module_utils.network.cnos.cnos import run_commands, load_config
+from ansible.module_utils.network.cnos.cnos import get_config
 from ansible.module_utils.network.cnos.cnos import cnos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import string_types, iteritems
-from ansible.module_utils.network.common.utils import remove_default_spec, to_list
+from ansible.module_utils.network.common.utils import to_list
+from ansible.module_utils.network.common.utils import remove_default_spec
+
+VALID_ROLES = ['network-admin', 'network-operator']
 
 
-def validate_privileges(value, module):
+def validate_roles(value, module):
     for item in value:
-        if 1 < item < 15:
-            module.fail_json(msg='invalid privilege specified')
+        if item not in VALID_ROLES:
+            module.fail_json(msg='invalid role specified')
 
 
 def map_obj_to_commands(updates, module):
@@ -191,48 +190,64 @@ def map_obj_to_commands(updates, module):
             if update_password == 'always' or not have:
                 add('password %s' % want['configured_password'])
 
-        if want['privileges']:
-            if have:
-                for item in set(have['privileges']).difference(want['privileges']):
-                    remove('privilege %s' % item)
+        if needs_update('sshkey'):
+            add('sshkey %s' % want['sshkey'])
 
-                for item in set(want['privileges']).difference(have['privileges']):
-                    add('privilege %s' % item)
+        if want['roles']:
+            if have:
+                for item in set(have['roles']).difference(want['roles']):
+                    remove('role %s' % item)
+
+                for item in set(want['roles']).difference(have['roles']):
+                    add('role %s' % item)
             else:
-                for item in want['privileges']:
-                    add('privilege %s' % item)
+                for item in want['roles']:
+                    add('role %s' % item)
 
     return commands
 
 
 def parse_password(data):
-    if not data.get('remote_login'):
-        return '<PASSWORD>'
+    if 'no password set' in data:
+        return None
+    return '<PASSWORD>'
 
 
-def parse_privileges(data):
-    configured_privileges = None
-    if 'TABLE_privilege' in data:
-        configured_privileges = data.get('TABLE_privilege')['ROW_privilege']
+def parse_roles(data):
+    roles = list()
+    if 'role:' in data:
+        items = data.split()
+        my_item = items[items.index('role:')+1]
+        roles.append(my_item)
+    return roles
 
-    privileges = list()
-    if configured_privileges:
-        for item in to_list(configured_privileges):
-            privileges.append(item['privilege'])
-    return privileges
+
+def parse_username(data):
+    name = data.split(' ', 1)[0]
+    username = name[1:]
+    return username
+
+
+def parse_sshkey(data):
+    key = None
+    if 'sskkey:' in data:
+        items = data.split()
+        key = items[items.index('sshkey:')+1]
+    return key
 
 
 def map_config_to_obj(module):
-    out = run_commands(module, ['show user-account | json'])
+    out = run_commands(module, ['show user-account'])
     data = out[0]
-
     objects = list()
+    datum = data.split('User')
 
-    for item in to_list(data['TABLE_template']['ROW_template']):
+    for item in datum:
         objects.append({
-            'name': item['usr_name'],
+            'name': parse_username(item),
             'configured_password': parse_password(item),
-            'privileges': parse_privileges(item),
+            'sshkey': parse_sshkey(item),
+            'roles': parse_roles(item),
             'state': 'present'
         })
     return objects
@@ -278,7 +293,8 @@ def map_params_to_obj(module):
         get_value = partial(get_param_value, item=item, module=module)
         item.update({
             'configured_password': get_value('configured_password'),
-            'privileges': get_value('roles'),
+            'sshkey': get_value('sshkey'),
+            'roles': get_value('roles'),
             'state': get_value('state')
         })
 
@@ -314,9 +330,8 @@ def main():
         name=dict(),
         configured_password=dict(no_log=True),
         update_password=dict(default='always', choices=['on_create', 'always']),
-        privileges=dict(type='list', aliases=['privilege']),
-        no_password=dict(default='no', choices=['no', 'yes']),
-        view=dict(type='str'),
+        roles=dict(type='list', aliases=['role']),
+        sshkey=dict(),
         state=dict(default='present', choices=['present', 'absent'])
     )
 
@@ -326,12 +341,13 @@ def main():
     remove_default_spec(aggregate_spec)
 
     argument_spec = dict(
-        aggregate=dict(type='list', elements='dict', options=aggregate_spec,
-                       aliases=['collection', 'users']),
+        aggregate=dict(type='list', elements='dict',
+                       options=aggregate_spec, aliases=['collection', 'users']),
         purge=dict(type='bool', default=False)
     )
 
     argument_spec.update(element_spec)
+
     mutually_exclusive = [('name', 'aggregate')]
 
     module = AnsibleModule(argument_spec=argument_spec,
@@ -339,11 +355,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    if module.params['password'] and not module.params['configured_password']:
-        warnings.append(
-            'The "password" is used to authenticate the current connection. ' +
-            'To set a user password use "configured_password" instead.'
-        )
 
     result = {'changed': False}
     result['warnings'] = warnings
@@ -358,15 +369,16 @@ def main():
         have_users = [x['name'] for x in have]
         for item in set(have_users).difference(want_users):
             if item != 'admin':
+                if not item.strip():
+                    continue
                 item = item.replace("\\", "\\\\")
                 commands.append('no username %s' % item)
 
     result['commands'] = commands
 
-    # the cnos cli prevents this by rule so capture it and display
-    # a nice failure message
+    # the cnos cli prevents this by rule but still
     if 'no username admin' in commands:
-        module.fail_json(msg='cannot delete the `admin` account')
+        module.fail_json(msg='Cannot delete the `admin` account')
 
     if commands:
         if not module.check_mode:
