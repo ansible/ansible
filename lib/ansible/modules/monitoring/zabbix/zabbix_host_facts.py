@@ -28,7 +28,7 @@ module: zabbix_host_facts
 short_description: Gather facts about Zabbix host
 description:
    - This module allows you to search for Zabbix host entries.
-version_added: "2.7"
+version_added: "2.8"
 author:
     - "Michael Miko (@RedWhiteMiko)"
 requirements:
