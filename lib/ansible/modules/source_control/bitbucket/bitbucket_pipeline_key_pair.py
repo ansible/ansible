@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = r'''
 ---
-module: bitbucket_pipelines_ssh_key
+module: bitbucket_pipeline_key_pair
 short_description: Manages Bitbucket pipelines ssh keys
 description:
   - Create, update and delete Bitbucket pipelines ssh keys.
@@ -65,7 +65,7 @@ notes:
 
 EXAMPLES = r'''
 - name: Create or update ssh key
-  bitbucket_pipelines_ssh_key:
+  bitbucket_pipeline_key_pair:
     repository: 'bitbucket-repo'
     username: bitbucket_username
     public_key: '{{lookup("file", "bitbucket.pub") }}'
@@ -73,7 +73,7 @@ EXAMPLES = r'''
     state: present
 
 - name: Remove ssh key
-  bitbucket_pipelines_ssh_key:
+  bitbucket_pipeline_key_pair:
     repository: bitbucket-repo
     username: bitbucket_username
     state: absent
@@ -82,7 +82,7 @@ EXAMPLES = r'''
 RETURN = r''' # '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.bitbucket import BitbucketHelper
+from ansible.module_utils.source_control.bitbucket import BitbucketHelper
 
 error_messages = {
     'invalid_params': 'Account, repository or SSH key pair was not found',

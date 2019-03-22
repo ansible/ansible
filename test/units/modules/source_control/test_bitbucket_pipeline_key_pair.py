@@ -1,5 +1,5 @@
-from ansible.module_utils.bitbucket import BitbucketHelper
-from ansible.modules.source_control import bitbucket_pipelines_ssh_key
+from ansible.module_utils.source_control.bitbucket import BitbucketHelper
+from ansible.modules.source_control.bitbucket import bitbucket_pipeline_key_pair
 from units.compat import unittest
 from units.compat.mock import patch
 from units.modules.utils import AnsibleFailJson, AnsibleExitJson, ModuleTestCase, set_module_args
@@ -8,7 +8,7 @@ from units.modules.utils import AnsibleFailJson, AnsibleExitJson, ModuleTestCase
 class TestBucketPipelinesSSHKeyModule(ModuleTestCase):
     def setUp(self):
         super(TestBucketPipelinesSSHKeyModule, self).setUp()
-        self.module = bitbucket_pipelines_ssh_key
+        self.module = bitbucket_pipeline_key_pair
 
     def test_missing_keys_with_present_state(self):
         with self.assertRaises(AnsibleFailJson) as exec_info:
@@ -24,7 +24,7 @@ class TestBucketPipelinesSSHKeyModule(ModuleTestCase):
         self.assertEqual(exec_info.exception.args[0]['msg'], self.module.error_messages['required_keys'])
 
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
-    @patch.object(bitbucket_pipelines_ssh_key, 'get_existing_ssh_key_pair', return_value=None)
+    @patch.object(bitbucket_pipeline_key_pair, 'get_existing_ssh_key_pair', return_value=None)
     def test_create_keys(self, *args):
         with patch.object(self.module, 'update_ssh_key_pair') as update_ssh_key_pair_mock:
             with self.assertRaises(AnsibleExitJson) as exec_info:
@@ -43,7 +43,7 @@ class TestBucketPipelinesSSHKeyModule(ModuleTestCase):
             self.assertEqual(exec_info.exception.args[0]['changed'], True)
 
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
-    @patch.object(bitbucket_pipelines_ssh_key, 'get_existing_ssh_key_pair', return_value=None)
+    @patch.object(bitbucket_pipeline_key_pair, 'get_existing_ssh_key_pair', return_value=None)
     def test_create_keys_check_mode(self, *args):
         with patch.object(self.module, 'update_ssh_key_pair') as update_ssh_key_pair_mock:
             with self.assertRaises(AnsibleExitJson) as exec_info:
@@ -63,7 +63,7 @@ class TestBucketPipelinesSSHKeyModule(ModuleTestCase):
             self.assertEqual(exec_info.exception.args[0]['changed'], True)
 
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
-    @patch.object(bitbucket_pipelines_ssh_key, 'get_existing_ssh_key_pair', return_value={
+    @patch.object(bitbucket_pipeline_key_pair, 'get_existing_ssh_key_pair', return_value={
         'public_key': 'unknown',
         'type': 'pipeline_ssh_key_pair',
     })
@@ -85,7 +85,7 @@ class TestBucketPipelinesSSHKeyModule(ModuleTestCase):
             self.assertEqual(exec_info.exception.args[0]['changed'], True)
 
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
-    @patch.object(bitbucket_pipelines_ssh_key, 'get_existing_ssh_key_pair', return_value={
+    @patch.object(bitbucket_pipeline_key_pair, 'get_existing_ssh_key_pair', return_value={
         'public_key': 'public',
         'type': 'pipeline_ssh_key_pair',
     })
@@ -107,7 +107,7 @@ class TestBucketPipelinesSSHKeyModule(ModuleTestCase):
             self.assertEqual(exec_info.exception.args[0]['changed'], False)
 
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
-    @patch.object(bitbucket_pipelines_ssh_key, 'get_existing_ssh_key_pair', return_value={
+    @patch.object(bitbucket_pipeline_key_pair, 'get_existing_ssh_key_pair', return_value={
         'public_key': 'unknown',
         'type': 'pipeline_ssh_key_pair',
     })
@@ -130,7 +130,7 @@ class TestBucketPipelinesSSHKeyModule(ModuleTestCase):
             self.assertEqual(exec_info.exception.args[0]['changed'], True)
 
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
-    @patch.object(bitbucket_pipelines_ssh_key, 'get_existing_ssh_key_pair', return_value={
+    @patch.object(bitbucket_pipeline_key_pair, 'get_existing_ssh_key_pair', return_value={
         'public_key': 'public',
         'type': 'pipeline_ssh_key_pair',
     })
@@ -150,7 +150,7 @@ class TestBucketPipelinesSSHKeyModule(ModuleTestCase):
             self.assertEqual(exec_info.exception.args[0]['changed'], True)
 
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
-    @patch.object(bitbucket_pipelines_ssh_key, 'get_existing_ssh_key_pair', return_value=None)
+    @patch.object(bitbucket_pipeline_key_pair, 'get_existing_ssh_key_pair', return_value=None)
     def test_delete_absent_keys(self, *args):
         with patch.object(self.module, 'delete_ssh_key_pair') as delete_ssh_key_pair_mock:
             with self.assertRaises(AnsibleExitJson) as exec_info:
@@ -167,7 +167,7 @@ class TestBucketPipelinesSSHKeyModule(ModuleTestCase):
             self.assertEqual(exec_info.exception.args[0]['changed'], False)
 
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
-    @patch.object(bitbucket_pipelines_ssh_key, 'get_existing_ssh_key_pair', return_value={
+    @patch.object(bitbucket_pipeline_key_pair, 'get_existing_ssh_key_pair', return_value={
         'public_key': 'public',
         'type': 'pipeline_ssh_key_pair',
     })
