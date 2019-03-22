@@ -537,32 +537,10 @@ class InstanceGroupManagerCurrentactions(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict(
-            {
-                u'abandoning': self.request.get('abandoning'),
-                u'creating': self.request.get('creating'),
-                u'creatingWithoutRetries': self.request.get('creating_without_retries'),
-                u'deleting': self.request.get('deleting'),
-                u'none': self.request.get('none'),
-                u'recreating': self.request.get('recreating'),
-                u'refreshing': self.request.get('refreshing'),
-                u'restarting': self.request.get('restarting'),
-            }
-        )
+        return remove_nones_from_dict({})
 
     def from_response(self):
-        return remove_nones_from_dict(
-            {
-                u'abandoning': self.request.get(u'abandoning'),
-                u'creating': self.request.get(u'creating'),
-                u'creatingWithoutRetries': self.request.get(u'creatingWithoutRetries'),
-                u'deleting': self.request.get(u'deleting'),
-                u'none': self.request.get(u'none'),
-                u'recreating': self.request.get(u'recreating'),
-                u'refreshing': self.request.get(u'refreshing'),
-                u'restarting': self.request.get(u'restarting'),
-            }
-        )
+        return remove_nones_from_dict({})
 
 
 class InstanceGroupManagerNamedportsArray(object):

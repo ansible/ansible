@@ -1298,14 +1298,10 @@ class InstanceDiskencryptionkey(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict(
-            {u'rawKey': self.request.get('raw_key'), u'rsaEncryptedKey': self.request.get('rsa_encrypted_key'), u'sha256': self.request.get('sha256')}
-        )
+        return remove_nones_from_dict({u'rawKey': self.request.get('raw_key'), u'rsaEncryptedKey': self.request.get('rsa_encrypted_key')})
 
     def from_response(self):
-        return remove_nones_from_dict(
-            {u'rawKey': self.request.get(u'rawKey'), u'rsaEncryptedKey': self.request.get(u'rsaEncryptedKey'), u'sha256': self.request.get(u'sha256')}
-        )
+        return remove_nones_from_dict({u'rawKey': self.request.get(u'rawKey'), u'rsaEncryptedKey': self.request.get(u'rsaEncryptedKey')})
 
 
 class InstanceInitializeparams(object):
@@ -1348,10 +1344,10 @@ class InstanceSourceimageencryptionkey(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({u'rawKey': self.request.get('raw_key'), u'sha256': self.request.get('sha256')})
+        return remove_nones_from_dict({u'rawKey': self.request.get('raw_key')})
 
     def from_response(self):
-        return remove_nones_from_dict({u'rawKey': self.request.get(u'rawKey'), u'sha256': self.request.get(u'sha256')})
+        return remove_nones_from_dict({u'rawKey': self.request.get(u'rawKey')})
 
 
 class InstanceGuestacceleratorsArray(object):
@@ -1406,7 +1402,6 @@ class InstanceNetworkinterfacesArray(object):
             {
                 u'accessConfigs': InstanceAccessconfigsArray(item.get('access_configs', []), self.module).to_request(),
                 u'aliasIpRanges': InstanceAliasiprangesArray(item.get('alias_ip_ranges', []), self.module).to_request(),
-                u'name': item.get('name'),
                 u'network': replace_resource_dict(item.get(u'network', {}), 'selfLink'),
                 u'networkIP': item.get('network_ip'),
                 u'subnetwork': replace_resource_dict(item.get(u'subnetwork', {}), 'selfLink'),
@@ -1418,7 +1413,6 @@ class InstanceNetworkinterfacesArray(object):
             {
                 u'accessConfigs': InstanceAccessconfigsArray(item.get(u'accessConfigs', []), self.module).from_response(),
                 u'aliasIpRanges': InstanceAliasiprangesArray(item.get(u'aliasIpRanges', []), self.module).from_response(),
-                u'name': item.get(u'name'),
                 u'network': item.get(u'network'),
                 u'networkIP': item.get(u'networkIP'),
                 u'subnetwork': item.get(u'subnetwork'),
