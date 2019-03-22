@@ -369,36 +369,39 @@ You can replace these platform-specific modules with the network agnostic ``cli_
 
     tasks:
       - name: Run cli_command on Arista and display results
-        cli_command:
-          command: show ip int br
-        register: result
+        block:
+        - name: Run cli_command on Arista
+          cli_command:
+            command: show ip int br
+          register: result
+
+        - name: Display result to terminal window
+          debug:
+            var: result.stdout_lines
         when: ansible_network_os == 'eos'
 
-      - name: Display result to terminal window
-        debug:
-          var: result.stdout_lines
-        when: ansible_network_os == 'eos'
+      - name: Run cli_command on Cisco IOS and display results
+        block:
+        - name: Run cli_command on Cisco IOS
+          cli_command:
+            command: show ip int br
+          register: result
 
-      - name: Run cli_command on Cisco IOS
-        cli_command:
-          command: show ip int br
-        register: result
+        - name: Display result to terminal window
+          debug:
+            var: result.stdout_lines
         when: ansible_network_os == 'ios'
 
-      - name: Display result to terminal window
-        debug:
-          var: result.stdout_lines
-        when: ansible_network_os == 'ios'
+      - name: Run cli_command on Vyos and display results
+        block:
+        - name: Run cli_command on Vyos
+          cli_command:
+            command: show interfaces
+          register: result
 
-      - name: Run cli_command on Vyos
-        cli_command:
-          command: show interfaces
-        register: result
-        when: ansible_network_os == 'vyos'
-
-      - name: Display result to terminal window
-        debug:
-          var: result.stdout_lines
+        - name: Display result to terminal window
+          debug:
+            var: result.stdout_lines
         when: ansible_network_os == 'vyos'
 
 
