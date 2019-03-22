@@ -67,9 +67,12 @@ options:
         integer or the keyword 'default'.
   passive_interface:
     description:
-      - Setting to true will prevent this interface from receiving
-        HELLO packets.
-    type: bool
+      - Enable or disable passive-interface state on this interface.
+        true: (enable) Prevent OSPF from establishing an adjacency or
+                       sending routing updates on this interface.
+        false: (disable) Override global 'passive-interface default' for this interface.
+        default: Remove existing (enabled or disabled) passive-interface setting.
+    choices: [true, false, default]
   network:
     description:
       - Specifies interface ospf network type. Valid values are 'point-to-point' or 'broadcast'.
@@ -190,9 +193,12 @@ def get_value(arg, config, module):
                 value = value_list[3]
     elif arg == 'passive_interface':
         has_no_command = re.search(r'\s+no\s+{0}\s*$'.format(command), config, re.M)
-        value = False
-        if has_command and not has_no_command:
+        if has_no_command:
+            value = False
+        elif has_command:
             value = True
+        else:
+            value = None
     elif arg in BOOL_PARAMS:
         value = bool(has_command)
     else:
@@ -249,6 +255,8 @@ def get_default_commands(existing, proposed, existing_commands, key, module):
                 encryption_type,
                 existing['message_digest_password'])
             commands.append(command)
+    elif 'passive-interface' in key:
+        commands.append('default ip ospf passive-interface')
     else:
         commands.append('no {0} {1}'.format(key, existing_value))
     return commands
@@ -308,7 +316,8 @@ def state_present(module, existing, proposed, candidate):
         elif value is False:
             commands.append('no {0}'.format(key))
         elif value == 'default':
-            if existing_commands.get(key):
+            if existing_commands.get(key) or \
+                'ip ospf passive-interface' in key and existing_commands.get(key) is not None:
                 commands.extend(get_default_commands(existing, proposed,
                                                      existing_commands, key,
                                                      module))
@@ -332,6 +341,11 @@ def state_absent(module, existing, proposed, candidate):
     existing_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, existing)
 
     for key, value in existing_commands.items():
+        if 'ip ospf passive-interface' in key:
+            # cli is present for both enabled or disabled; 'no' will not remove
+            commands.append('default ip ospf passive-interface')
+            continue
+
         if value:
             if key.startswith('ip ospf message-digest-key'):
                 if 'options' not in key:
@@ -346,8 +360,7 @@ def state_absent(module, existing, proposed, candidate):
                         encryption_type,
                         existing['message_digest_password'])
                     commands.append(command)
-            elif key in ['ip ospf authentication message-digest',
-                         'ip ospf passive-interface', 'ip ospf network']:
+            elif key in ['ip ospf authentication message-digest', 'ip ospf network']:
                 if value:
                     commands.append('no {0}'.format(key))
             elif key == 'ip router ospf':
@@ -380,7 +393,7 @@ def main():
         cost=dict(required=False, type='str'),
         hello_interval=dict(required=False, type='str'),
         dead_interval=dict(required=False, type='str'),
-        passive_interface=dict(required=False, type='bool'),
+        passive_interface=dict(required=False, type='str', choices=['true', 'false', 'default']),
         network=dict(required=False, type='str', choices=['broadcast', 'point-to-point']),
         message_digest=dict(required=False, type='bool'),
         message_digest_key_id=dict(required=False, type='str'),
@@ -438,6 +451,8 @@ def main():
                 value = 'default'
             if existing.get(key) or (not existing.get(key) and value):
                 proposed[key] = value
+            elif 'passive_interface' in key and existing.get(key) is None and value is False:
+                proposed[key] = value
 
     proposed['area'] = normalize_area(proposed['area'], module)
     if 'hello_interval' in proposed and proposed['hello_interval'] == '10':
@@ -451,7 +466,8 @@ def main():
 
     if candidate:
         candidate = candidate.items_text()
-        load_config(module, candidate)
+        if not module.check_mode:
+            load_config(module, candidate)
         result['changed'] = True
         result['commands'] = candidate
 
