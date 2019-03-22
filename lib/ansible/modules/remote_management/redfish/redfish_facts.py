@@ -169,7 +169,7 @@ CATEGORY_COMMANDS_ALL = {
     "Systems": ["GetSystemInventory", "GetPsuInventory", "GetCpuInventory",
                 "GetMemoryInventory", "GetNicInventory",
                 "GetStorageControllerInventory", "GetDiskInventory",
-                "GetBiosAttributes", "GetBootOrder"],
+                "GetBiosAttributes", "GetBootOrder", "GetBootOverride"],
     "Chassis": ["GetFanInventory", "GetPsuInventory", "GetChassisPower", "GetChassisThermals"],
     "Accounts": ["ListUsers"],
     "Update": ["GetFirmwareInventory", "GetFirmwareUpdateCapabilities"],
