@@ -37,19 +37,11 @@
         <<: *aws_connection_info
       register: role_output
 
-    - name: Setting fact for role name
-      set_fact:
-        iam_role_name: "{{role_output.iam_role.role_name}}"
-
     - name: Create S3 bucket
       s3_bucket:
         name: "{{resource_prefix}}-aws-ssm-s3"
         <<: *aws_connection_info
       register: s3_output
-
-    - name: Setting fact for S3 bucket name
-      set_fact:
-        bucket_name: "{{s3_output.name}}"
 
     - name: Wait for IAM Role getting created
       pause:
@@ -61,7 +53,7 @@
         image: "{{linux_ami_id}}"
         wait: "yes"
         count: 1
-        instance_profile_name: "{{iam_role_name}}"
+        instance_profile_name: "{{role_output.iam_role.role_name}}"
         instance_tags:
           Name: "{{resource_prefix}}-integration-test-aws-ssm-linux"
         user_data: |
@@ -71,17 +63,13 @@
         <<: *aws_connection_info
       register: linux_output
 
-    - name: Setting fact for Linux EC2 instance id
-      set_fact:
-        linux_instance_id: "{{linux_output.instance_ids[0]}}"
-
     - name: Create Windows EC2 instance
       ec2:
         instance_type: "{{instance_type}}"
         image: "{{windows_ami_id}}"
         wait: "yes"
         count: 1
-        instance_profile_name: "{{iam_role_name}}"
+        instance_profile_name: "{{role_output.iam_role.role_name}}"
         instance_tags:
           Name: "{{resource_prefix}}-integration-test-aws-ssm-windows"
         user_data: |
@@ -92,18 +80,9 @@
         <<: *aws_connection_info
       register: windows_output
 
-    - name: Setting fact for Windows EC2 instance id
-      set_fact:
-        windows_instance_id: "{{windows_output.instance_ids[0]}}"
-
     - name: Wait for EC2 to be available
       wait_for_connection:
         delay: 300
-
-    - name: Create var_to_delete.yml
-      template:
-        dest: "{{playbook_dir}}/vars_to_delete.yml"
-        src: vars_to_delete.yml.j2
 
     - name: Create Inventory file for Linux host
       template:
@@ -122,36 +101,26 @@
       no_log: yes
 
   always:
-    - name: Terminate Linux EC2 instances
-      ec2:
-        state: absent
-        instance_ids: linux_output.instance_ids
-        <<: *aws_connection_info
+    - name: Create EC2 Linux vars_to_delete.yml
+      template:
+        dest: "{{playbook_dir}}/ec2_linux_vars_to_delete.yml"
+        src: ec2_linux_vars_to_delete.yml.j2
       ignore_errors: yes
 
-    - name: Terminate Windows EC2 instances
-      ec2:
-        state: absent
-        instance_ids: windows_output.instance_ids
-        <<: *aws_connection_info
+    - name: Create EC2 Windows vars_to_delete.yml
+      template:
+        dest: "{{playbook_dir}}/ec2_windows_vars_to_delete.yml"
+        src: ec2_windows_vars_to_delete.yml.j2
       ignore_errors: yes
 
-    - name: S3 bucket Deletion
-      aws_s3:
-        bucket: "{{bucket_name}}"
-        mode: delete
-        <<: *aws_connection_info
+    - name: Create S3 vars_to_delete.yml
+      template:
+        dest: "{{playbook_dir}}/s3_vars_to_delete.yml"
+        src: s3_vars_to_delete.yml.j2
       ignore_errors: yes
 
-    - name: Delete IAM role
-      iam_role:
-        name: "{{iam_role_name}}"
-        state: absent
-        <<: *aws_connection_info
-      ignore_errors: yes
-
-    - name: Delete AWS Keys Environement
-      file:
-        path: "{{playbook_dir}}/aws-env-vars.sh"
-        state: absent
+    - name: Create IAM Role vars_to_delete.yml
+      template:
+        dest: "{{playbook_dir}}/iam_role_vars_to_delete.yml"
+        src: iam_role_vars_to_delete.yml.j2
       ignore_errors: yes
