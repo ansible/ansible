@@ -85,7 +85,7 @@ ansible-playbook public_exposure/no_bleeding.yml -i inventory "$@"
 ansible-playbook public_exposure/no_overwrite_roles.yml -i inventory "$@"
 
 # https://github.com/ansible/ansible/pull/48068
-ansible-playbook run_once/playbook.yml "$@"
+ANSIBLE_HOST_PATTERN_MISMATCH=warning ansible-playbook run_once/playbook.yml "$@"
 
 # https://github.com/ansible/ansible/issues/48936
 ansible-playbook -v handler_addressing/playbook.yml 2>&1 | tee test_handler_addressing.out
