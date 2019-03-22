@@ -18,7 +18,7 @@ version_added: "2.3"
 short_description: Generate an OpenSSL public key from its private key.
 description:
     - This module allows one to (re)generate OpenSSL public keys from their private keys.
-    -  It uses the pyOpenSSL python library to interact with openssl.
+    - It uses the pyOpenSSL python library to interact with openssl.
     - Keys are generated in PEM format.
     - This module works only if the version of PyOpenSSL is recent enough (> 16.0.0).
 requirements:
@@ -131,7 +131,6 @@ fingerprint:
       sha512: "fd:ed:5e:39:48:5f:9f:fe:7f:25:06:3f:79:08:cd:ee:a5:e7:b3:3d:13:82:87:1f:84:e1:f5:c7:28:77:53:94:86:56:38:69:f0:d9:35:22:01:1e:a6:60:...:0f:9b"
 '''
 
-import hashlib
 import os
 import traceback
 
@@ -147,7 +146,7 @@ else:
     pyopenssl_found = True
 
 from ansible.module_utils import crypto as crypto_utils
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_bytes
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 
@@ -183,9 +182,11 @@ class PublicKey(crypto_utils.OpenSSLObject):
                 if self.format == 'OpenSSH':
                     with open(self.privatekey_path, 'rb') as private_key_fh:
                         privatekey_content = private_key_fh.read()
-                    key = crypto_serialization.load_pem_private_key(privatekey_content,
-                                                                    password=self.privatekey_passphrase,
-                                                                    backend=default_backend())
+                    key = crypto_serialization.load_pem_private_key(
+                        privatekey_content,
+                        password=None if self.privatekey_passphrase is None else to_bytes(self.privatekey_passphrase),
+                        backend=default_backend()
+                    )
                     publickey_content = key.public_key().public_bytes(
                         crypto_serialization.Encoding.OpenSSH,
                         crypto_serialization.PublicFormat.OpenSSH
