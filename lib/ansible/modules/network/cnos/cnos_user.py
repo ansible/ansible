@@ -217,7 +217,7 @@ def parse_roles(data):
     roles = list()
     if 'role:' in data:
         items = data.split()
-        my_item = items[items.index('role:')+1]
+        my_item = items[items.index('role:') + 1]
         roles.append(my_item)
     return roles
 
@@ -232,7 +232,7 @@ def parse_sshkey(data):
     key = None
     if 'sskkey:' in data:
         items = data.split()
-        key = items[items.index('sshkey:')+1]
+        key = items[items.index('sshkey:') + 1]
     return key
 
 
