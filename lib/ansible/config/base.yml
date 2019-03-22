@@ -215,6 +215,14 @@ CACHE_PLUGIN_TIMEOUT:
   - {key: fact_caching_timeout, section: defaults}
   type: integer
   yaml: {key: facts.cache.timeout}
+COLLECTION_PATHS:
+  name: ordered list of root paths for loading installed Ansible collections content
+  default: ['~/.ansible/collections', '/usr/share/ansible/collections']
+  type: list
+  env:
+  - {name: ANSIBLE_COLLECTION_PATHS}
+  ini:
+  - {key: collection_paths, section: defaults}
 COLOR_CHANGED:
   name: Color for 'changed' task status
   default: yellow
@@ -1416,14 +1424,6 @@ HOST_PATTERN_MISMATCH:
   - {key: host_pattern_mismatch, section: inventory}
   choices: ['warning', 'error', 'ignore']
   version_added: "2.8"
-INSTALLED_CONTENT_ROOTS:
-  name: root paths for loading installed role/plugin content
-  default: ['~/.ansible/content', '/usr/share/ansible/content']
-  type: list
-  env:
-  - {name: ANSIBLE_INSTALLED_CONTENT_ROOTS}
-  ini:
-  - {key: installed_content_roots, section: defaults}
 INTERPRETER_PYTHON:
   name: Python interpreter path (or automatic discovery behavior) used for module execution
   default: auto_legacy

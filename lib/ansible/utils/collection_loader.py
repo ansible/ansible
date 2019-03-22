@@ -36,7 +36,7 @@ _collection_role_name_re = re.compile(r'^(\w+)\.(\w+)\.(\w+)$')
 # FIXME: exception handling/error logging
 class AnsibleCollectionLoader(object):
     def __init__(self):
-        self._configured_paths = C.config.get_config_value('INSTALLED_CONTENT_ROOTS')
+        self._configured_paths = C.config.get_config_value('COLLECTION_PATHS')
 
         if isinstance(self._configured_paths, string_types):
             self._configured_paths = [self._configured_paths]
@@ -76,7 +76,7 @@ class AnsibleCollectionLoader(object):
         added_paths = set()
 
         # de-dupe and ensure the paths are native strings (Python seems to do this for package paths etc, so assume it's safe)
-        self._playbook_paths = [to_native(p) for p in playbook_paths if not (p in added_paths or added_paths.add(p))]
+        self._playbook_paths = [os.path.join(to_native(p), 'collections') for p in playbook_paths if not (p in added_paths or added_paths.add(p))]
         # FIXME: only allow setting this once, or handle any necessary cache/package path invalidations internally?
 
     def find_module(self, fullname, path=None):
