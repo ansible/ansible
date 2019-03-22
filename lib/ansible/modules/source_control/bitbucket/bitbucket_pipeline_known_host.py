@@ -16,9 +16,9 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = r'''
 ---
 module: bitbucket_pipeline_known_host
-short_description: Manages Bitbucket pipelines known hosts
+short_description: Manages Bitbucket pipeline known hosts
 description:
-  - Create or delete a repository level known hosts.
+  - Manages Bitbucket pipeline known hosts under the "SSH Keys" menu.
   - The host fingerprint will be retrieved automatically, but in case of an error, one can use I(key) field to specify it manually.
 version_added: "2.8"
 author:
@@ -38,22 +38,22 @@ options:
     type: str
   repository:
     description:
-      - Repository name.
+      - The repository name.
     type: str
     required: true
   username:
     description:
-      - Repository owner.
+      - The repository owner.
     type: str
     required: true
   name:
     description:
-      - Hostname of the known host.
+      - The FQDN of the known host.
     type: str
     required: true
   key:
     description:
-      - Public key.
+      - The public key.
     type: str
   state:
     description:
