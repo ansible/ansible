@@ -61,7 +61,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     ''' Host inventory parser for ansible using local virtualbox. '''
 
     NAME = 'virtualbox'
-    VBOX = b"VBoxManage"
+    VBOX = "VBoxManage"
 
     def __init__(self):
         self._vbox_path = None
