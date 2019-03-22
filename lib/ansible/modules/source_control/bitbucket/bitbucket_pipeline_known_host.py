@@ -23,6 +23,8 @@ description:
 version_added: "2.8"
 author:
   - Evgeniy Krysanov (@catcombo)
+requirements:
+    - paramiko
 options:
   client_id:
     description:
@@ -94,7 +96,12 @@ EXAMPLES = r'''
 RETURN = r''' # '''
 
 import socket
-import paramiko
+
+try:
+    import paramiko
+    HAS_PARAMIKO = True
+except ImportError:
+    HAS_PARAMIKO = False
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.source_control.bitbucket import BitbucketHelper
@@ -255,6 +262,9 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
+
+    if not HAS_PARAMIKO:
+        module.fail_json(msg='`paramiko` package not found, please install it.')
 
     bitbucket = BitbucketHelper(module)
 
