@@ -267,6 +267,8 @@ def main():
                     result["bios_attribute"] = rf_utils.get_multi_bios_attributes()
                 elif command == "GetBootOrder":
                     result["boot_order"] = rf_utils.get_multi_boot_order()
+                elif command == "GetBootOverride":
+                    result["boot_override"] = rf_utils.get_boot_override()
 
         elif category == "Chassis":
             # execute only if we find Chassis resource
