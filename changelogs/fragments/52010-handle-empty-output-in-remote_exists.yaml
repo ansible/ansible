@@ -1,0 +1,2 @@
+bugfixes:
+  - flatpak_remote - Handle empty output in remote_exists, fixes https://github.com/ansible/ansible/issues/51481 
