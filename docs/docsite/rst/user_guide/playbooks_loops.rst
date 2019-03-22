@@ -400,6 +400,14 @@ Variable                    Description
       loop_control:
         extended: yes
 
+.. versionadded:: 2.8
+
+As of Ansible 2.8 you can get the name of the value provided to ``loop_control.loop_var`` using the ``ansible_loop_var`` variable
+
+For role authors, writing roles that allow loops, instead of dictating the required ``loop_var`` value, you can gather the value via::
+
+    "{{ lookup('vars', ansible_loop_var) }}"
+
 .. _migrating_to_loop:
 
 Migrating from with_X to loop
