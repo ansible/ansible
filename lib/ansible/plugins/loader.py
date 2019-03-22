@@ -704,7 +704,7 @@ _PLUGIN_FILTERS = _load_plugin_filter()
 fragment_loader = PluginLoader(
     'ModuleDocFragment',
     'ansible.plugins.doc_fragments',
-    C.DOC_FRAGMENT_PLUGIN_PATH,
+    C.DOC_FRAGMENTS_PLUGIN_PATH,
     'doc_fragments',
 )
 
@@ -742,7 +742,7 @@ connection_loader = PluginLoader(
 shell_loader = PluginLoader(
     'ShellModule',
     'ansible.plugins.shell',
-    'shell_plugins',
+    C.SHELL_PLUGIN_PATH,
     'shell_plugins',
 )
 
@@ -848,6 +848,6 @@ httpapi_loader = PluginLoader(
 become_loader = PluginLoader(
     'BecomeModule',
     'ansible.plugins.become',
-    C.DEFAULT_BECOME_PLUGIN_PATH,
+    C.BECOME_PLUGIN_PATH,
     'become_plugins'
 )

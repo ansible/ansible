@@ -367,14 +367,15 @@ LOCALHOST_WARNING:
   - {key: localhost_warning, section: defaults}
   type: boolean
   version_added: "2.6"
-DOC_FRAGMENT_PLUGIN_PATH:
+DOC_FRAGMENTS_PLUGIN_PATH:
   name: documentation fragment plugins path
   default: ~/.ansible/plugins/doc_fragments:/usr/share/ansible/plugins/doc_fragments
   description: Colon separated paths in which Ansible will search for Documentation Fragments Plugins.
-  env: [{name: ANSIBLE_DOC_FRAGMENT_PLUGINS}]
+  env: [{name: ANSIBLE_DOC_FRAGMENTS_PLUGINS}]
   ini:
-  - {key: doc_fragment_plugins, section: defaults}
+  - {key: doc_fragments_plugins, section: defaults}
   type: pathspec
+  version_added: "2.8"
 DEFAULT_ACTION_PLUGIN_PATH:
   name: Action plugins path
   default: ~/.ansible/plugins/action:/usr/share/ansible/plugins/action
@@ -384,6 +385,15 @@ DEFAULT_ACTION_PLUGIN_PATH:
   - {key: action_plugins, section: defaults}
   type: pathspec
   yaml: {key: plugins.action.path}
+SHELL_PLUGIN_PATH:
+  name: Shell plugins path
+  default: ~/.ansible/plugins/shell:/usr/share/ansible/plugins/shell
+  description: Colon separated paths in which Ansible will search for Shell Plugins.
+  env: [{name: ANSIBLE_SHELL_PLUGINS}]
+  ini:
+  - {key: shell_plugins, section: defaults}
+  type: pathspec
+  version_added: "2.8"
 DEFAULT_ALLOW_UNSAFE_LOOKUPS:
   name: Allow unsafe lookups
   default: False
@@ -482,14 +492,15 @@ DEFAULT_BECOME_FLAGS:
   env: [{name: ANSIBLE_BECOME_FLAGS}]
   ini:
   - {key: become_flags, section: privilege_escalation}
-DEFAULT_BECOME_PLUGIN_PATH:
+BECOME_PLUGIN_PATH:
   name: Become plugins path
-  default: ~/.ansible/plugins/become:/usr/share/ansible/become
+  default: ~/.ansible/plugins/become:/usr/share/ansible/plugins/become
   description: Colon separated paths in which Ansible will search for Become Plugins.
   env: [{name: ANSIBLE_BECOME_PLUGINS}]
   ini:
   - {key: become_plugins, section: defaults}
   type: pathspec
+  version_added: "2.8"
 DEFAULT_BECOME_USER:
   # FIXME: should really be blank and make -u passing optional depending on it
   name: Set the user you 'become' via privilege escalation
