@@ -664,14 +664,10 @@ class DiskSourceimageencryptionkey(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict(
-            {u'rawKey': self.request.get('raw_key'), u'sha256': self.request.get('sha256'), u'kmsKeyName': self.request.get('kms_key_name')}
-        )
+        return remove_nones_from_dict({u'rawKey': self.request.get('raw_key'), u'kmsKeyName': self.request.get('kms_key_name')})
 
     def from_response(self):
-        return remove_nones_from_dict(
-            {u'rawKey': self.request.get(u'rawKey'), u'sha256': self.request.get(u'sha256'), u'kmsKeyName': self.request.get(u'kmsKeyName')}
-        )
+        return remove_nones_from_dict({u'rawKey': self.request.get(u'rawKey'), u'kmsKeyName': self.request.get(u'kmsKeyName')})
 
 
 class DiskDiskencryptionkey(object):
@@ -683,14 +679,10 @@ class DiskDiskencryptionkey(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict(
-            {u'rawKey': self.request.get('raw_key'), u'sha256': self.request.get('sha256'), u'kmsKeyName': self.request.get('kms_key_name')}
-        )
+        return remove_nones_from_dict({u'rawKey': self.request.get('raw_key'), u'kmsKeyName': self.request.get('kms_key_name')})
 
     def from_response(self):
-        return remove_nones_from_dict(
-            {u'rawKey': self.request.get(u'rawKey'), u'sha256': self.request.get(u'sha256'), u'kmsKeyName': self.request.get(u'kmsKeyName')}
-        )
+        return remove_nones_from_dict({u'rawKey': self.request.get(u'rawKey'), u'kmsKeyName': self.request.get(u'kmsKeyName')})
 
 
 class DiskSourcesnapshotencryptionkey(object):
@@ -702,14 +694,10 @@ class DiskSourcesnapshotencryptionkey(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict(
-            {u'rawKey': self.request.get('raw_key'), u'kmsKeyName': self.request.get('kms_key_name'), u'sha256': self.request.get('sha256')}
-        )
+        return remove_nones_from_dict({u'rawKey': self.request.get('raw_key'), u'kmsKeyName': self.request.get('kms_key_name')})
 
     def from_response(self):
-        return remove_nones_from_dict(
-            {u'rawKey': self.request.get(u'rawKey'), u'kmsKeyName': self.request.get(u'kmsKeyName'), u'sha256': self.request.get(u'sha256')}
-        )
+        return remove_nones_from_dict({u'rawKey': self.request.get(u'rawKey'), u'kmsKeyName': self.request.get(u'kmsKeyName')})
 
 
 if __name__ == '__main__':
