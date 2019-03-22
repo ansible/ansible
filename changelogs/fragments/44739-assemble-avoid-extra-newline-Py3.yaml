@@ -1,0 +1,2 @@
+bugfixes:
+  - assemble - avoid extra newline on Python 3 (https://github.com/ansible/ansible/issues/44739)
