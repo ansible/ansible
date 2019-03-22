@@ -329,7 +329,7 @@ class AzureRMCosmosDBAccount(AzureRMModuleBase):
             self.parameters['kind'] = 'MongoDB'
         elif kind == 'parse':
             self.parameters['kind'] = 'Parse'
-            
+
         dict_camelize(self.parameters, ['consistency_policy', 'default_consistency_level'], True)
         dict_rename(self.parameters, ['geo_rep_locations', 'name'], 'location_name')
         dict_rename(self.parameters, ['geo_rep_locations'], 'locations')

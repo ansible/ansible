@@ -44,7 +44,7 @@
     resource_group: "{{ resource_group }}"
     name: "{{ dbname }}"
     location: eastus
-    kind: document_db
+    kind: global_document_db
     geo_rep_locations:
       - name: eastus
         failover_priority: 0
@@ -69,7 +69,7 @@
     resource_group: "{{ resource_group }}"
     name: "{{ dbname }}"
     location: eastus
-    kind: document_db
+    kind: global_document_db
     geo_rep_locations:
       - name: eastus
         failover_priority: 0
@@ -94,7 +94,7 @@
     resource_group: "{{ resource_group }}"
     name: "{{ dbname }}"
     location: eastus
-    kind: document_db
+    kind: global_document_db
     geo_rep_locations:
       - name: eastus
         failover_priority: 0
