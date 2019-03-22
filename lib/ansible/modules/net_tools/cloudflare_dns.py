@@ -789,13 +789,12 @@ def main():
             zone=dict(type='str', required=True, aliases=['domain']),
         ),
         supports_check_mode=True,
-        required_if=([
+        required_if=[
             ('state', 'present', ['record', 'type', 'value']),
             ('state', 'absent', ['record']),
             ('type', 'SRV', ['proto', 'service']),
             ('type', 'TLSA', ['proto', 'port']),
         ],
-        ),
     )
 
     if module.params['type'] == 'SRV':
