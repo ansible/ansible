@@ -225,7 +225,7 @@
   get_url:
     url: 'https://{{ httpbin_host }}/'
     dest: '{{ remote_tmp_dir }}/test'
-    mode: '0070'
+    mode: '0700'
   register: result
 
 - stat:
@@ -236,14 +236,14 @@
   assert:
     that:
       - result is changed
-      - "stat_result.stat.mode == '0070'"
+      - "stat_result.stat.mode == '0700'"
 
 # https://github.com/ansible/ansible/issues/29614
 - name: Change mode on an already downloaded file and specify checksum
   get_url:
-    url: 'https://{{ httpbin_host }}/get'
+    url: 'https://{{ httpbin_host }}/json'
     dest: '{{ remote_tmp_dir }}/test'
-    checksum: 'sha256:7036ede810fad2b5d2e7547ec703cae8da61edbba43c23f9d7203a0239b765c4.'
+    checksum: 'sha256:bab3dfd2a6c992e4bf589eee05fc9650cc9d6988660b947a7a87b99420d108f9'
     mode: '0775'
   register: result
 
@@ -270,9 +270,9 @@
 
 - name: test checksum match in check mode
   get_url:
-    url: 'https://{{ httpbin_host }}/get'
+    url: 'https://{{ httpbin_host }}/json'
     dest: '{{ remote_tmp_dir }}/test'
-    checksum: 'sha256:7036ede810fad2b5d2e7547ec703cae8da61edbba43c23f9d7203a0239b765c4.'
+    checksum: 'sha256:bab3dfd2a6c992e4bf589eee05fc9650cc9d6988660b947a7a87b99420d108f9'
   check_mode: True
   register: result
 
@@ -386,7 +386,7 @@
     headers: Foo:bar,Baz:qux
     dest: "{{ remote_tmp_dir }}/headers_string.json"
 
-- name: Get downloaded file
+- name: Get downloaded headers string
   slurp:
     src: "{{ remote_tmp_dir }}/headers_string.json"
   register: result
@@ -415,7 +415,7 @@
       Baz: qux
     dest: "{{ remote_tmp_dir }}/headers_dict.json"
 
-- name: Get downloaded file
+- name: Get downloaded headers dict
   slurp:
     src: "{{ remote_tmp_dir }}/headers_dict.json"
   register: result
@@ -434,10 +434,11 @@
     dest: "{{ remote_tmp_dir }}/ssl_client_verify"
   when: has_httptester
 
-- name: Get downloaded file
+- name: Get downloaded ssl_client_verify
   slurp:
     src: "{{ remote_tmp_dir }}/ssl_client_verify"
   register: result
+  when: has_httptester
 
 - name: Assert that the ssl_client_verify file contains the correct content
   assert:
