@@ -130,13 +130,6 @@
     - name: set a fact to check that we ran this play
       set_fact: genus_CAMELUS=true
 
-- name: genus group validation (expect skipped)
-  hosts: 'genus'
-  gather_facts: false
-  tasks:
-    - name: no hosts should match this group
-      fail: msg="should never get here"
-
 - name: alpaca validation of groups
   hosts: alpaca
   gather_facts: false
