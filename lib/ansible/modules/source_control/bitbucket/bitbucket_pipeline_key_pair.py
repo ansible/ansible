@@ -16,9 +16,9 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = r'''
 ---
 module: bitbucket_pipeline_key_pair
-short_description: Manages Bitbucket pipelines ssh keys
+short_description: Manages Bitbucket pipeline SSH key pair
 description:
-  - Create, update and delete Bitbucket pipelines ssh keys.
+  - Manages Bitbucket pipeline SSH key pair.
 version_added: "2.8"
 author:
   - Evgeniy Krysanov (@catcombo)
@@ -35,25 +35,25 @@ options:
     type: str
   repository:
     description:
-      - Repository name.
+      - The repository name.
     type: str
     required: true
   username:
     description:
-      - Repository owner.
+      - The repository owner.
     type: str
     required: true
   public_key:
     description:
-      - Public key.
+      - The public key.
     type: str
   private_key:
     description:
-      - Private key.
+      - The private key.
     type: str
   state:
     description:
-      - Indicates desired state of the key.
+      - Indicates desired state of the key pair.
     type: str
     required: true
     choices: [ absent, present ]
@@ -63,7 +63,7 @@ notes:
 '''
 
 EXAMPLES = r'''
-- name: Create or update ssh key
+- name: Create or update SSH key pair
   bitbucket_pipeline_key_pair:
     repository: 'bitbucket-repo'
     username: bitbucket_username
@@ -71,7 +71,7 @@ EXAMPLES = r'''
     private_key: '{{lookup("file", "bitbucket") }}'
     state: present
 
-- name: Remove ssh key
+- name: Remove SSH key pair
   bitbucket_pipeline_key_pair:
     repository: bitbucket-repo
     username: bitbucket_username
