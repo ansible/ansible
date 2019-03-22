@@ -68,10 +68,10 @@ options:
   passive_interface:
     description:
       - Enable or disable passive-interface state on this interface.
-        true: (enable) Prevent OSPF from establishing an adjacency or
+        true - (enable) Prevent OSPF from establishing an adjacency or
                        sending routing updates on this interface.
-        false: (disable) Override global 'passive-interface default' for this interface.
-        default: Remove existing (enabled or disabled) passive-interface setting.
+        false - (disable) Override global 'passive-interface default' for this interface.
+        default - Remove existing (enabled or disabled) passive-interface setting.
     choices: [true, false, default]
   network:
     description:
