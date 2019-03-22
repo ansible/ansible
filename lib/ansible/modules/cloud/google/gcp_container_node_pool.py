@@ -747,10 +747,10 @@ class NodePoolUpgradeoptions(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({u'autoUpgradeStartTime': self.request.get('auto_upgrade_start_time'), u'description': self.request.get('description')})
+        return remove_nones_from_dict({})
 
     def from_response(self):
-        return remove_nones_from_dict({u'autoUpgradeStartTime': self.request.get(u'autoUpgradeStartTime'), u'description': self.request.get(u'description')})
+        return remove_nones_from_dict({})
 
 
 if __name__ == '__main__':
