@@ -101,14 +101,15 @@
 #        that: "result.stdout_lines[-1] == '(0 rows)'"
 
 #
-# Test encoding, collate, ctype, template options
+# Test conn_limit, encoding, collate, ctype, template options
 #
-- name: Create a DB with encoding, collate, ctype, and template options
+- name: Create a DB with conn_limit, encoding, collate, ctype, and template options
   become_user: "{{ pg_user }}"
   become: True
   postgresql_db:
     name: '{{ db_name }}'
     state: 'present'
+    conn_limit: '100'
     encoding: 'LATIN1'
     lc_collate: 'pt_BR{{ locale_latin_suffix }}'
     lc_ctype: 'es_ES{{ locale_latin_suffix }}'
@@ -118,7 +119,7 @@
 - name: Check that the DB has all of our options
   become_user: "{{ pg_user }}"
   become: True
-  shell: echo "select datname, pg_encoding_to_char(encoding), datcollate, datctype from pg_database where datname = '{{ db_name }}';" | psql -d postgres
+  shell: echo "select datname, datconnlimit, pg_encoding_to_char(encoding), datcollate, datctype from pg_database where datname = '{{ db_name }}';" | psql -d postgres
   register: result
 
 - assert:
@@ -129,6 +130,7 @@
       - "'es_ES' in result.stdout_lines[-2]"
       - "'UTF8' not in result.stdout_lines[-2]"
       - "'en_US' not in result.stdout_lines[-2]"
+      - "'100' in result.stdout_lines[-2]"
 
 - name: Check that running db cration with options a second time does nothing
   become_user: "{{ pg_user }}"
@@ -136,6 +138,7 @@
   postgresql_db:
     name: '{{ db_name }}'
     state: 'present'
+    conn_limit: '100'
     encoding: 'LATIN1'
     lc_collate: 'pt_BR{{ locale_latin_suffix }}'
     lc_ctype: 'es_ES{{ locale_latin_suffix }}'
@@ -165,6 +168,35 @@
 - assert:
     that:
       - 'result.failed == True'
+
+- name: Check that changing the conn_limit actually works
+  become_user: "{{ pg_user }}"
+  become: True
+  postgresql_db:
+    name: '{{ db_name }}'
+    state: 'present'
+    conn_limit: '200'
+    encoding: 'LATIN1'
+    lc_collate: 'pt_BR{{ locale_latin_suffix }}'
+    lc_ctype: 'es_ES{{ locale_latin_suffix }}'
+    template: 'template0'
+    login_user: "{{ pg_user }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == True'
+
+- name: Check that conn_limit has actually been set / updated to 200
+  become_user: "{{ pg_user }}"
+  become: True
+  shell: echo "SELECT datconnlimit AS conn_limit FROM pg_database WHERE datname = '{{ db_name }}';" | psql -d postgres
+  register: result
+
+- assert:
+    that:
+      - "result.stdout_lines[-1] == '(1 row)'"
+      - "'200' == '{{ result.stdout_lines[-2] | trim }}'"
 
 - name: Cleanup test DB
   become_user: "{{ pg_user }}"
