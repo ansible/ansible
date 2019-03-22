@@ -30,7 +30,6 @@ import shlex
 import zipfile
 import re
 import pkgutil
-import importlib
 from io import BytesIO
 
 from ansible.release import __version__, __author__
@@ -47,6 +46,13 @@ from ansible.executor import action_write_locks
 
 from ansible.utils.display import Display
 
+# HACK: keep Python 2.6 controller tests happy in CI until they're properly split
+try:
+    from importlib import import_module
+except ImportError:
+    import_module = None
+
+# if we're on a Python that doesn't have FNFError, redefine it as IOError (since that's what we'll see)
 try:
     FileNotFoundError
 except NameError:
@@ -578,7 +584,7 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
             resource_name = py_module_name[-1] + '.py'
             try:
                 # FIXME: need this in py2 for some reason TBD
-                pkg = importlib.import_module(package_name)
+                pkg = import_module(package_name)
                 module_info = pkgutil.get_data(package_name, resource_name)
             except FileNotFoundError:
                 # FIXME: implement package fallback code

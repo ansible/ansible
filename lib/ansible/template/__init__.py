@@ -21,7 +21,6 @@ __metaclass__ = type
 
 import ast
 import datetime
-import importlib
 import os
 import pkgutil
 import pwd
@@ -51,6 +50,12 @@ from ansible.template.template import AnsibleJ2Template
 from ansible.template.vars import AnsibleJ2Vars
 from ansible.utils.display import Display
 from ansible.utils.unsafe_proxy import UnsafeProxy, wrap_var
+
+# HACK: keep Python 2.6 controller tests happy in CI until they're properly split
+try:
+    from importlib import import_module
+except ImportError:
+    import_module = None
 
 display = Display()
 
@@ -297,7 +302,7 @@ class JinjaPluginIntercept(MutableMapping):
         # FIXME: error handling for bogus plugin name, bogus impl, bogus filter/test
 
         # FIXME: move this capability into the Jinja plugin loader
-        pkg = importlib.import_module(collection_pkg)
+        pkg = import_module(collection_pkg)
 
         for dummy, module_name, ispkg in pkgutil.iter_modules(pkg.__path__, prefix=collection_name + '.'):
             if ispkg:

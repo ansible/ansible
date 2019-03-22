@@ -9,12 +9,17 @@ import pkgutil
 import re
 import sys
 
-from importlib import import_module
 from types import ModuleType
 
 from ansible import constants as C
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.six import iteritems, string_types
+
+# HACK: keep Python 2.6 controller tests happy in CI until they're properly split
+try:
+    from importlib import import_module
+except ImportError:
+    import_module = None
 
 _SYNTHETIC_PACKAGES = {
     'ansible_collections.ansible': dict(type='pkg_only'),

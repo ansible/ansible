@@ -12,7 +12,6 @@ import imp
 import os
 import os.path
 import pkgutil
-import importlib
 import sys
 import warnings
 
@@ -29,6 +28,11 @@ from ansible.utils.collection_loader import AnsibleCollectionLoader, AnsibleFlat
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import add_fragments
 
+# HACK: keep Python 2.6 controller tests happy in CI until they're properly split
+try:
+    from importlib import import_module
+except ImportError:
+    import_module = None
 
 display = Display()
 
@@ -330,7 +334,7 @@ class PluginLoader:
         pkg = sys.modules.get(package)
         if not pkg:
             # FIXME: there must be cheaper/safer way to do this
-            pkg = importlib.import_module(package)
+            pkg = import_module(package)
 
         # if the package is one of our flatmaps, we need to consult its loader to find the path, since the file could be
         # anywhere in the tree
