@@ -113,6 +113,10 @@ options:
     type: str
     choices: [ annually, daily, hourly, monthly, reboot, weekly, yearly ]
     version_added: "1.3"
+  schedule:
+    description:
+      - Raw cron schedule (0 0 * * *)
+    type: str
   disabled:
     description:
       - If the job should be disabled (commented out) in the crontab.
@@ -168,6 +172,12 @@ EXAMPLES = r'''
     name: "a job for reboot"
     special_time: reboot
     job: "/some/job.sh"
+
+- name: Creates and entry with a raw cron schedule string
+  cron:
+    name: "a raw cron job"
+    schedule: "0 0 * * *"
+    job: "/bin/tar cf backup.tar /backup"
 
 - name: Creates an entry like "PATH=/opt/bin" on top of crontab
   cron:
@@ -424,7 +434,7 @@ class CronTab(object):
 
         return []
 
-    def get_cron_job(self, minute, hour, day, month, weekday, job, special, disabled):
+    def get_cron_job(self, minute, hour, day, month, weekday, job, special, schedule, disabled):
         # normalize any leading/trailing newlines (ansible/ansible-modules-core#3791)
         job = job.strip('\r\n')
 
@@ -438,6 +448,11 @@ class CronTab(object):
                 return "%s@%s %s %s" % (disable_prefix, special, self.user, job)
             else:
                 return "%s@%s %s" % (disable_prefix, special, job)
+        elif schedule:
+            if self.cron_file:
+                return "%s%s %s %s" % (disable_prefix, schedule, self.user, job)
+            else:
+                return "%s%s %s" % (disable_prefix, schedule, job)
         else:
             if self.cron_file:
                 return "%s%s %s %s %s %s %s %s" % (disable_prefix, minute, hour, day, month, weekday, self.user, job)
@@ -572,6 +587,7 @@ def main():
             weekday=dict(type='str', default='*', aliases=['dow']),
             reboot=dict(type='bool', default=False),
             special_time=dict(type='str', choices=["reboot", "yearly", "annually", "monthly", "weekly", "daily", "hourly"]),
+            schedule=dict(type='str'),
             disabled=dict(type='bool', default=False),
             env=dict(type='bool'),
             insertafter=dict(type='str'),
@@ -580,6 +596,12 @@ def main():
         supports_check_mode=True,
         mutually_exclusive=[
             ['reboot', 'special_time'],
+            ['schedule', 'special_time'],
+            ['schedule', 'minute'],
+            ['schedule', 'hour'],
+            ['schedule', 'day'],
+            ['schedule', 'month'],
+            ['schedule', 'weekday'],
             ['insertafter', 'insertbefore'],
         ],
         required_by=dict(
@@ -603,6 +625,7 @@ def main():
     weekday = module.params['weekday']
     reboot = module.params['reboot']
     special_time = module.params['special_time']
+    schedule = module.params['schedule']
     disabled = module.params['disabled']
     env = module.params['env']
     insertafter = module.params['insertafter']
@@ -704,7 +727,7 @@ def main():
                     warnings.append('Job should not contain line breaks')
                     break
 
-            job = crontab.get_cron_job(minute, hour, day, month, weekday, job, special_time, disabled)
+            job = crontab.get_cron_job(minute, hour, day, month, weekday, job, special_time, schedule, disabled)
             old_job = crontab.find_job(name, job)
 
             if len(old_job) == 0:
