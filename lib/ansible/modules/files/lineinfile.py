@@ -274,10 +274,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
         else:
             with open(b_dest, 'rb') as f:
                 b_lines = f.readlines()
-        # Create a copy of the list to avoid modifying in _present_data_manipulator,
-        # resulting in an incorrect diff
-        b_lines_orig = b_lines[:]
-        msg, changed, b_modified_lines = _present_data_manipulator(b_lines_orig, regexp, line, insertafter,
+        msg, changed, b_modified_lines = _present_data_manipulator(b_lines, regexp, line, insertafter,
                                                                    insertbefore, backrefs, firstmatch)
         if not os.path.exists(b_dest):
             diff['before'] = to_native(b('').join(b_lines))
@@ -288,10 +285,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
     else:
         with open_locked(b_dest) as f:
             b_lines = f.readlines()
-            # Create a copy of the list to avoid modifying in _present_data_manipulator,
-            # resulting in an incorrect diff
-            b_lines_orig = b_lines[:]
-            msg, changed, b_modified_lines = _present_data_manipulator(b_lines_orig, regexp, line, insertafter,
+            msg, changed, b_modified_lines = _present_data_manipulator(b_lines, regexp, line, insertafter,
                                                                        insertbefore, backrefs, firstmatch)
 
             if changed:
@@ -311,7 +305,9 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
 
 
 def _present_data_manipulator(b_lines, regexp, line, insertafter, insertbefore, backrefs, firstmatch):
-
+    # Create a copy of the list of lines to avoid modifying the original lines,
+    # resulting in an incorrect diff
+    b_lines_new = b_lines[:]
     if regexp is not None:
         bre_m = re.compile(to_bytes(regexp, errors='surrogate_or_strict'))
 
@@ -327,7 +323,7 @@ def _present_data_manipulator(b_lines, regexp, line, insertafter, insertbefore, 
     index = [-1, -1]
     m = None
     b_line = to_bytes(line, errors='surrogate_or_strict')
-    for lineno, b_cur_line in enumerate(b_lines):
+    for lineno, b_cur_line in enumerate(b_lines_new):
         if regexp is not None:
             match_found = bre_m.search(b_cur_line)
         else:
@@ -369,18 +365,18 @@ def _present_data_manipulator(b_lines, regexp, line, insertafter, insertbefore, 
             if insertafter and insertafter != 'EOF':
                 # Ensure there is a line separator after the found string
                 # at the end of the file.
-                if b_lines and not b_lines[-1][-1:] in (b('\n'), b('\r')):
-                    b_lines[-1] = b_lines[-1] + b_linesep
+                if b_lines_new and not b_lines_new[-1][-1:] in (b('\n'), b('\r')):
+                    b_lines_new[-1] = b_lines_new[-1] + b_linesep
 
                 # If the line to insert after is at the end of the file
                 # use the appropriate index value.
-                if len(b_lines) == index[1]:
-                    if b_lines[index[1] - 1].rstrip(b('\r\n')) != b_line:
-                        b_lines.append(b_line + b_linesep)
+                if len(b_lines_new) == index[1]:
+                    if b_lines_new[index[1] - 1].rstrip(b('\r\n')) != b_line:
+                        b_lines_new.append(b_line + b_linesep)
                         msg = 'line added'
                         changed = True
-                elif b_lines[index[1]].rstrip(b('\r\n')) != b_line:
-                    b_lines.insert(index[1], b_line + b_linesep)
+                elif b_lines_new[index[1]].rstrip(b('\r\n')) != b_line:
+                    b_lines_new.insert(index[1], b_line + b_linesep)
                     msg = 'line added'
                     changed = True
 
@@ -388,18 +384,18 @@ def _present_data_manipulator(b_lines, regexp, line, insertafter, insertbefore, 
                 # If the line to insert before is at the beginning of the file
                 # use the appropriate index value.
                 if index[1] <= 0:
-                    if b_lines[index[1]].rstrip(b('\r\n')) != b_line:
-                        b_lines.insert(index[1], b_line + b_linesep)
+                    if b_lines_new[index[1]].rstrip(b('\r\n')) != b_line:
+                        b_lines_new.insert(index[1], b_line + b_linesep)
                         msg = 'line added'
                         changed = True
 
-                elif b_lines[index[1] - 1].rstrip(b('\r\n')) != b_line:
-                    b_lines.insert(index[1], b_line + b_linesep)
+                elif b_lines_new[index[1] - 1].rstrip(b('\r\n')) != b_line:
+                    b_lines_new.insert(index[1], b_line + b_linesep)
                     msg = 'line added'
                     changed = True
 
-        elif b_lines[index[0]] != b_new_line:
-            b_lines[index[0]] = b_new_line
+        elif b_lines_new[index[0]] != b_new_line:
+            b_lines_new[index[0]] = b_new_line
             msg = 'line replaced'
             changed = True
 
@@ -409,7 +405,7 @@ def _present_data_manipulator(b_lines, regexp, line, insertafter, insertbefore, 
         pass
     # Add it to the beginning of the file
     elif insertbefore == 'BOF' or insertafter == 'BOF':
-        b_lines.insert(0, b_line + b_linesep)
+        b_lines_new.insert(0, b_line + b_linesep)
         msg = 'line added'
         changed = True
     # Add it to the end of the file if requested or
@@ -418,19 +414,19 @@ def _present_data_manipulator(b_lines, regexp, line, insertafter, insertbefore, 
     elif insertafter == 'EOF' or index[1] == -1:
 
         # If the file is not empty then ensure there's a newline before the added line
-        if b_lines and not b_lines[-1][-1:] in (b('\n'), b('\r')):
-            b_lines.append(b_linesep)
+        if b_lines_new and not b_lines_new[-1][-1:] in (b('\n'), b('\r')):
+            b_lines_new.append(b_linesep)
 
-        b_lines.append(b_line + b_linesep)
+        b_lines_new.append(b_line + b_linesep)
         msg = 'line added'
         changed = True
     # insert matched, but not the regexp
     else:
-        b_lines.insert(index[1], b_line + b_linesep)
+        b_lines_new.insert(index[1], b_line + b_linesep)
         msg = 'line added'
         changed = True
 
-    return msg, changed, b_lines
+    return msg, changed, b_lines_new
 
 
 def absent(module, dest, regexp, line, backup):
