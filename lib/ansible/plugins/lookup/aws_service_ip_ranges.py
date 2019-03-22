@@ -37,6 +37,7 @@ tasks:
 
 # fetch EC2 ip ranges for eu-central-1 and apply them to an EC2 security group
 - name: fetch raw ip ranges
+  set_fact:
     raw_ec2_ranges: "{{ lookup('aws_service_ip_ranges', region='eu-central-1', service='EC2', wantlist=True) }}"
 
 - name: prepare list structure for ec2_group module
