@@ -230,15 +230,15 @@ class ACIModule(object):
         if self.params['certificate_name'] is None:
             self.params['certificate_name'] = os.path.basename(os.path.splitext(self.params['private_key'])[0])
 
-        #Checks to verify if the private key was entered as a string instead of a file. This allows the use of vaulting the private key.
+        # Checks to verify if the private_key was entered as a string instead of a file. This allows the use of vaulting the private key.
         str_private_key = self.params['private_key'].startswith('-----BEGIN PRIVATE KEY-----')
 
-        if str_private_key == True:
+        if str_private_key is True:
             try:
-               sig_key = load_privatekey(FILETYPE_PEM, self.params['private_key'])
-            except:
+                sig_key = load_privatekey(FILETYPE_PEM, self.params['private_key'])
+            except Exception:
                 self.module.fail_json(msg='Cannot load private key %s' % self.params['private_key'])
-        else:  
+        else:
             try:
                 with open(self.params['private_key'], 'r') as priv_key_fh:
                     private_key_content = priv_key_fh.read()
