@@ -522,6 +522,20 @@ def main():
     checksum_src = None
     checksum_dest = None
 
+    if module.check_mode:
+        if os.access(tmpsrc, os.R_OK):
+            checksum_src = module.sha1(tmpsrc)
+        if os.access(dest, os.R_OK):
+            checksum_dest = module.sha1(dest)
+        changed = (checksum_src is None or
+                   checksum_dest is None or
+                   checksum_src != checksum_dest)
+        os.remove(tmpsrc)
+        res_args = dict(url=url, changed=changed, dest=dest, src=tmpsrc,
+                        checksum_dest=checksum_dest, checksum_src=checksum_src,
+                        msg=info.get('msg', ''))
+        module.exit_json(**res_args)
+
     # raise an error if there is no tmpsrc file
     if not os.path.exists(tmpsrc):
         os.remove(tmpsrc)
@@ -548,16 +562,6 @@ def main():
         if not os.access(os.path.dirname(dest), os.W_OK):
             os.remove(tmpsrc)
             module.fail_json(msg="Destination %s is not writable" % (os.path.dirname(dest)))
-
-    if module.check_mode:
-        if os.path.exists(tmpsrc):
-            os.remove(tmpsrc)
-        changed = (checksum_dest is None or
-                   checksum_src != checksum_dest)
-        res_args = dict(url=url, changed=changed, dest=dest, src=tmpsrc,
-                        checksum_dest=checksum_dest, checksum_src=checksum_src,
-                        msg=info.get('msg', ''))
-        module.exit_json(**res_args)
 
     backup_file = None
     if checksum_src != checksum_dest:

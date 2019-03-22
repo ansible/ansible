@@ -281,6 +281,14 @@
     that:
       - result is not changed
 
+# https://github.com/ansible/ansible/issues/54180
+
+- name: No error in check mode when dest does not exist
+  get_url:
+    url: 'https://{{ httpbin_host }}/get'
+    dest: '/nonexistent'
+  check_mode: True
+
 # https://github.com/ansible/ansible/issues/27617
 
 - name: set role facts
