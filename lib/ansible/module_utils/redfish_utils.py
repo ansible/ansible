@@ -511,6 +511,32 @@ class RedfishUtils(object):
             return response
         return {'ret': True}
 
+    def get_supported_firmware_update_methods(self):
+        result = {}
+        response = self.get_request(self.root_uri + "/redfish/v1")
+
+        if response['ret'] is False:
+            return response
+
+        result['ret'] = True
+
+        result['entries'] = []
+        data = response['data']
+        if "UpdateService" in data:
+            response = self.get_request(self.root_uri + "/redfish/v1/UpdateService")
+
+            data = response['data']
+
+            if "Actions" in data:
+                if "#UpdateService.SimpleUpdate" in data["Actions"]:
+                    if "TransferProtocol@Redfish.AllowableValues" in data["Actions"]["#UpdateService.SimpleUpdate"]:
+                        result['entries'] = data["Actions"]["#UpdateService.SimpleUpdate"]["TransferProtocol@Redfish.AllowableValues"]
+            else:
+                return {'ret': "False", 'msg': "Key Actions not found."}
+        else:
+            return {'ret': "False", 'msg': "Key UpdateService not found."}
+        return result
+
     def get_firmware_inventory(self):
         result = {}
         response = self.get_request(self.root_uri + self.firmware_uri)
