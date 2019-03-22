@@ -34,6 +34,29 @@ tasks:
 - name: "Pull S3 IP ranges, and print the default return style"
   debug: msg="{{ lookup('aws_service_ip_ranges', region='us-east-1', service='S3') }}"
 # "52.92.16.0/20,52.216.0.0/15,54.231.0.0/17"
+
+# fetch EC2 ip ranges for eu-central-1 and apply them to an EC2 security group
+- name: fetch raw ip ranges
+    raw_ec2_ranges: "{{ lookup('aws_service_ip_ranges', region='eu-central-1', service='EC2', wantlist=True) }}"
+
+- name: prepare list structure for ec2_group module
+  set_fact:
+    ec2_ranges: "{{ ec2_ranges | default([]) + [{'proto': 'all', 'cidr_ip': item, 'rule_desc': 'EC2 Service IP range'}]}}"
+  with_items: "{{ raw_ec2_ranges }}"
+
+- name: set EC2 ranges to egress rules
+  ec2_group:
+    name: aws_ec2_ip_ranges
+    description: allow outgoing traffic to aws EC2 service
+    region: eu-central-1
+    state: present
+    vpc_id: vpc-123456
+    purge_rules: true
+    purge_rules_egress: true
+    rules: []
+    rules_egress: "{{ ec2_ranges }}"
+    tags:
+      Name: aws_ec2_ip_ranges
 """
 
 RETURN = """
