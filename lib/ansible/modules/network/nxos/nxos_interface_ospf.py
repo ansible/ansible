@@ -72,7 +72,7 @@ options:
                        sending routing updates on this interface.
         false - (disable) Override global 'passive-interface default' for this interface.
         default - Remove existing (enabled or disabled) passive-interface setting.
-    choices: [true, false, default]
+    choices: ['true', 'false', 'default']
   network:
     description:
       - Specifies interface ospf network type. Valid values are 'point-to-point' or 'broadcast'.
