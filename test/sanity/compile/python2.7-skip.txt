@@ -1,0 +1,2 @@
+# Only run by release engineers who can be asked to have newer Python3 on their systems
+hacking/release-announcement.py
