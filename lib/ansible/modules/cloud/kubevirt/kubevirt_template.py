@@ -272,6 +272,7 @@ class KubeVirtVMTemplate(KubeVirtRawModule):
 
         # Execute the CRUD of VM template:
         kind = 'Template'
+        template_api_version = 'template.openshift.io/v1'
 
         # Fill in template parameters:
         definition['parameters'] = self.params.get('parameters')
@@ -337,7 +338,11 @@ class KubeVirtVMTemplate(KubeVirtRawModule):
                 dummy, vm_def = self.construct_vm_template_definition('VirtualMachine', vm_definition, vm_template, obj)
 
                 definition['objects'].append(vm_def)
-        result = self.execute_crud(kind, definition)
+
+        # Create template:
+        resource = self.client.resources.get(api_version=template_api_version, kind=kind, name='templates')
+        definition = self.set_defaults(resource, definition)
+        result = self.perform_action(resource, definition)
 
         # Return from the module:
         self.exit_json(**{
