@@ -70,7 +70,7 @@ ansible-vault view "$@" --vault-id some_unknown_vault_id@test-vault-client.py fo
 # Use linux setsid to test without a tty. No setsid if osx/bsd though...
 if [ -x "$(command -v setsid)" ]; then
     # tests related to https://github.com/ansible/ansible/issues/30993
-    CMD='ansible-playbook -vvvvv --ask-vault-pass test_vault.yml'
+    CMD='ansible-playbook -i ../../inventory -vvvvv --ask-vault-pass test_vault.yml'
     setsid sh -c "echo test-vault-password|${CMD}" < /dev/null > log 2>&1 && :
     WRONG_RC=$?
     cat log
@@ -83,21 +83,21 @@ if [ -x "$(command -v setsid)" ]; then
     [ $WRONG_RC -eq 1 ]
     cat log
 
-    setsid sh -c 'tty; echo passbhkjhword|ansible-playbook -vvvvv --ask-vault-pass test_vault.yml' < /dev/null > log 2>&1 && :
+    setsid sh -c 'tty; echo passbhkjhword|ansible-playbook -i ../../inventory -vvvvv --ask-vault-pass test_vault.yml' < /dev/null > log 2>&1 && :
     WRONG_RC=$?
     echo "rc was $WRONG_RC (1 is expected)"
     [ $WRONG_RC -eq 1 ]
     cat log
 
-    setsid sh -c 'tty; echo test-vault-password |ansible-playbook -vvvvv --ask-vault-pass test_vault.yml' < /dev/null > log 2>&1
+    setsid sh -c 'tty; echo test-vault-password |ansible-playbook -i ../../inventory -vvvvv --ask-vault-pass test_vault.yml' < /dev/null > log 2>&1
     echo $?
     cat log
 
-    setsid sh -c 'tty; echo test-vault-password|ansible-playbook -vvvvv --ask-vault-pass test_vault.yml' < /dev/null > log 2>&1
+    setsid sh -c 'tty; echo test-vault-password|ansible-playbook -i ../../inventory -vvvvv --ask-vault-pass test_vault.yml' < /dev/null > log 2>&1
     echo $?
     cat log
 
-    setsid sh -c 'tty; echo test-vault-password |ansible-playbook -vvvvv --ask-vault-pass test_vault.yml' < /dev/null > log 2>&1
+    setsid sh -c 'tty; echo test-vault-password |ansible-playbook -i ../../inventory -vvvvv --ask-vault-pass test_vault.yml' < /dev/null > log 2>&1
     echo $?
     cat log
 
