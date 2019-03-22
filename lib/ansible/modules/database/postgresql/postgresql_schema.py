@@ -26,7 +26,7 @@ options:
     type: str
   database:
     description:
-    - Name of the database to connect to and create the schema.
+    - Name of the database to connect to and add or remove the schema.
     type: str
     default: postgres
     aliases:
