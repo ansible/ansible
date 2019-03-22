@@ -1168,7 +1168,7 @@ def integration_environment(args, target, test_dir, inventory_path, ansible_conf
 
     if 'non_local/' in target.aliases:
         if args.coverage:
-            display.warning('Skipping coverage reporting for non-local test: %s' % target.name)
+            display.warning('Skipping coverage reporting on Ansible modules for non-local test: %s' % target.name)
 
         env.update(dict(ANSIBLE_TEST_REMOTE_INTERPRETER=''))
 
@@ -1211,8 +1211,8 @@ def command_integration_script(args, target, test_dir, inventory_path, temp_path
             if config_path:
                 cmd += ['-e', '@%s' % config_path]
 
-            coverage = args.coverage and 'non_local/' not in target.aliases
-            intercept_command(args, cmd, target_name=target.name, env=env, cwd=cwd, temp_path=temp_path, coverage=coverage)
+            module_coverage = 'non_local/' not in target.aliases
+            intercept_command(args, cmd, target_name=target.name, env=env, cwd=cwd, temp_path=temp_path, module_coverage=module_coverage)
 
 
 def command_integration_role(args, target, start_at_task, test_dir, inventory_path, temp_path):
@@ -1295,8 +1295,8 @@ def command_integration_role(args, target, start_at_task, test_dir, inventory_pa
 
             env['ANSIBLE_ROLES_PATH'] = os.path.abspath(os.path.join(test_env.integration_dir, 'targets'))
 
-            coverage = args.coverage and 'non_local/' not in target.aliases
-            intercept_command(args, cmd, target_name=target.name, env=env, cwd=cwd, temp_path=temp_path, coverage=coverage)
+            module_coverage = 'non_local/' not in target.aliases
+            intercept_command(args, cmd, target_name=target.name, env=env, cwd=cwd, temp_path=temp_path, module_coverage=module_coverage)
 
 
 def command_units(args):

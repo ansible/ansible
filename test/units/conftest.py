@@ -24,12 +24,12 @@ def pytest_configure():
             coverage_instances.append(obj)
 
     if not coverage_instances:
-        coverage_config = os.environ.get('_ANSIBLE_COVERAGE_CONFIG')
+        coverage_config = os.environ.get('COVERAGE_CONF')
 
         if not coverage_config:
             return
 
-        coverage_output = os.environ.get('_ANSIBLE_COVERAGE_OUTPUT')
+        coverage_output = os.environ.get('COVERAGE_FILE')
 
         if not coverage_output:
             return

@@ -163,12 +163,13 @@ def cleanup_python_paths():
         shutil.rmtree(path)
 
 
-def get_coverage_environment(args, target_name, version, temp_path):
+def get_coverage_environment(args, target_name, version, temp_path, module_coverage):
     """
     :type args: TestConfig
     :type target_name: str
     :type version: str
     :type temp_path: str
+    :type module_coverage: bool
     :rtype: dict[str, str]
     """
     if temp_path:
@@ -187,16 +188,25 @@ def get_coverage_environment(args, target_name, version, temp_path):
         args.command, target_name, args.coverage_label or 'local-%s' % version, 'python-%s' % version))
 
     if args.coverage_check:
+        # cause the 'coverage' module to be found, but not imported or enabled
         coverage_file = ''
 
+    # Enable code coverage collection on local Python programs (this does not include Ansible modules).
+    # Used by the injectors in test/runner/injector/ to support code coverage.
+    # Used by unit tests in test/units/conftest.py to support code coverage.
+    # The COVERAGE_FILE variable is also used directly by the 'coverage' module.
     env = dict(
-        # both AnsiballZ and the ansible-test coverage injector rely on this
-        _ANSIBLE_COVERAGE_CONFIG=config_file,
-        # used during AnsiballZ wrapper creation to set COVERAGE_FILE for the module
-        _ANSIBLE_COVERAGE_OUTPUT=coverage_file,
-        # handle cases not covered by the AnsiballZ wrapper creation above
+        COVERAGE_CONF=config_file,
         COVERAGE_FILE=coverage_file,
     )
+
+    if module_coverage:
+        # Enable code coverage collection on Ansible modules (both local and remote).
+        # Used by the AnsiballZ wrapper generator in lib/ansible/executor/module_common.py to support code coverage.
+        env.update(dict(
+            _ANSIBLE_COVERAGE_CONFIG=config_file,
+            _ANSIBLE_COVERAGE_OUTPUT=coverage_file,
+        ))
 
     return env
 
@@ -277,7 +287,8 @@ def generate_pip_command(python):
     return [python, '-m', 'pip.__main__']
 
 
-def intercept_command(args, cmd, target_name, env, capture=False, data=None, cwd=None, python_version=None, temp_path=None, coverage=None, virtualenv=None):
+def intercept_command(args, cmd, target_name, env, capture=False, data=None, cwd=None, python_version=None, temp_path=None, module_coverage=True,
+                      virtualenv=None):
     """
     :type args: TestConfig
     :type cmd: collections.Iterable[str]
@@ -288,15 +299,12 @@ def intercept_command(args, cmd, target_name, env, capture=False, data=None, cwd
     :type cwd: str | None
     :type python_version: str | None
     :type temp_path: str | None
-    :type coverage: bool | None
+    :type module_coverage: bool
     :type virtualenv: str | None
     :rtype: str | None, str | None
     """
     if not env:
         env = common_environment()
-
-    if coverage is None:
-        coverage = args.coverage
 
     cmd = list(cmd)
     version = python_version or args.python_version
@@ -313,9 +321,9 @@ def intercept_command(args, cmd, target_name, env, capture=False, data=None, cwd
     env['ANSIBLE_TEST_PYTHON_VERSION'] = version
     env['ANSIBLE_TEST_PYTHON_INTERPRETER'] = interpreter
 
-    if coverage:
+    if args.coverage:
         # add the necessary environment variables to enable code coverage collection
-        env.update(get_coverage_environment(args, target_name, version, temp_path))
+        env.update(get_coverage_environment(args, target_name, version, temp_path, module_coverage))
 
     return run_command(args, cmd, capture=capture, env=env, data=data, cwd=cwd)
 
