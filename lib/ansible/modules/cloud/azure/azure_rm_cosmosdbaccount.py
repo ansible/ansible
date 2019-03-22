@@ -178,7 +178,7 @@ EXAMPLES = '''
 RETURN = '''
 id:
     description:
-        - The unique resource identifier of the database account.
+        - The unique resource identifier of the database account.x
     returned: always
     type: str
     sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DocumentDB/databaseAccounts/ddb1
