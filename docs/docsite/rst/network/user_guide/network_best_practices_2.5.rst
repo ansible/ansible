@@ -350,10 +350,10 @@ This example assumes three platforms, Arista EOS, Cisco NXOS, and Juniper JunOS.
       commands: show ip int br
     when: ansible_network_os == 'nxos'
 
-  - name: Run Junos command
-    junos_command:
-      commands: show interface terse
-    when: ansible_network_os == 'junos'
+  - name: Run Vyos command
+    vyos_command:
+      commands: show interface
+    when: ansible_network_os == 'vyos'
 
 Simplified playbook with ``cli_command`` network agnostic module
 ----------------------------------------------------------------
@@ -368,31 +368,38 @@ You can replace these platform-specific modules with the network agnostic ``cli_
     connection: network_cli
 
     tasks:
-      - name: show command for cisco
+      - name: Run cli_command on Arista and display results
         cli_command:
           command: show ip int br
         register: result
+        when: ansible_network_os == 'eos'
 
-      - name: display result to terminal window
-          debug:
-        var: result.stdout_lines
+      - name: Display result to terminal window
+        debug:
+          var: result.stdout_lines
+        when: ansible_network_os == 'eos'
 
-.. code-block:: yaml
-
-  ---
-  - hosts: juniper
-    gather_facts: false
-    connection: network_cli
-
-    tasks:
-      - name: show command for juniper
+      - name: Run cli_command on Cisco IOS
         cli_command:
-          command: show interfaces terse em1
+          command: show ip int br
         register: result
+        when: ansible_network_os == 'ios'
 
-      - name: display result to terminal window
-          debug:
-        var: result.stdout_lines
+      - name: Display result to terminal window
+        debug:
+          var: result.stdout_lines
+        when: ansible_network_os == 'ios'
+
+      - name: Run cli_command on Vyos
+        cli_command:
+          command: show interfaces
+        register: result
+        when: ansible_network_os == 'vyos'
+
+      - name: Display result to terminal window
+        debug:
+          var: result.stdout_lines
+        when: ansible_network_os == 'vyos'
 
 
 If you use groups and group_vars by platform type, this playbook can be further simplified to :
@@ -420,21 +427,22 @@ The ``cli_command`` also supports multiple prompts.
 
 .. code-block:: yaml
 
-  - name: CHANGE PASSWORD TO WORKSHOP DEFAULT
-  cli_command:
-    command: "{{item}}"
-    prompt:
-      - "New password"
-      - "Retype new password"
-    answer:
-      - "mypassword123"
-      - "mypassword123"
-    check_all: True
-  loop:
-    - "configure"
-    - "rollback"
-    - "set system root-authentication plain-text-password"
-    - "commit"
+  ---
+  - name: Change password to default
+    cli_command:
+      command: "{{ item }}"
+      prompt:
+        - "New password"
+        - "Retype new password"
+      answer:
+        - "mypassword123"
+        - "mypassword123"
+      check_all: True
+    loop:
+      - "configure"
+      - "rollback"
+      - "set system root-authentication plain-text-password"
+      - "commit"
 
 See the :ref:`cli_command <cli_command_module>` for full documentation on this command.
 
