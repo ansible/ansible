@@ -263,7 +263,7 @@ def main():
         supports_check_mode=True,
     )
 
-    if not HAS_PARAMIKO:
+    if (module.params['key'] is None) and (not HAS_PARAMIKO):
         module.fail_json(msg='`paramiko` package not found, please install it.')
 
     bitbucket = BitbucketHelper(module)
