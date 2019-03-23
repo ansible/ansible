@@ -135,3 +135,4 @@
       - privatekey_mode_2 is not changed
       - privatekey_mode_3 is changed
       - privatekey_mode_3_stat.stat.mode == '0400'
+      - privatekey_mode_1_stat.stat.mtime != privatekey_mode_3_stat.stat.mtime
