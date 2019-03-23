@@ -15,7 +15,6 @@ import sys
 import warnings
 
 from collections import defaultdict
-from threading import Lock
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
@@ -123,7 +122,6 @@ class PluginLoader:
         self._plugin_path_cache = PLUGIN_PATH_CACHE[class_name]
 
         self._searched_paths = set()
-        self._lock = Lock()
 
     def _clear_caches(self):
 
@@ -444,15 +442,12 @@ class PluginLoader:
         if path is None:
             return None
 
-        self._lock.acquire()
         if path not in self._module_cache:
             self._module_cache[path] = self._load_module_source(name, path)
             self._load_config_defs(name, self._module_cache[path], path)
             found_in_cache = False
 
         obj = getattr(self._module_cache[path], self.class_name)
-        self._lock.release()
-
         if self.base_class:
             # The import path is hardcoded and should be the right place,
             # so we are not expecting an ImportError.
@@ -569,17 +564,10 @@ class PluginLoader:
                 found_in_cache = False
 
             try:
-                self._lock.acquire()
-                if path not in self._module_cache:
-                    self._module_cache[path] = self._load_module_source(name, path)
-                    found_in_cache = False
-
                 obj = getattr(self._module_cache[path], self.class_name)
             except AttributeError as e:
                 display.warning("Skipping plugin (%s) as it seems to be invalid: %s" % (path, to_text(e)))
                 continue
-            finally:
-                self._lock.release()
 
             if self.base_class:
                 # The import path is hardcoded and should be the right place,
