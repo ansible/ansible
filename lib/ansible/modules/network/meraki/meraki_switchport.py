@@ -245,21 +245,20 @@ from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_native
 from ansible.module_utils.network.meraki.meraki import MerakiModule, meraki_argument_spec
 
-# param_map isn't used but leaving in as it is a more efficient method for implementation later
-param_map = {'accessPolicyNumber': 'access_policy_number',
-             'allowedVlans': 'allowed_vlans',
+param_map = {'access_policy_number': 'accessPolicyNumber',
+             'allowed_vlans': 'allowedVlans',
              'enabled': 'enabled',
-             'isolationEnabled': 'isolation_enabled',
-             'linkNegotiation': 'link_negotiation',
+             'isolation_enabled': 'isolationEnabled',
+             'link_negotiation': 'linkNegotiation',
              'name': 'name',
              'number': 'number',
-             'poeEnabled': 'poe_enabled',
-             'rstpEnabled': 'rstp_enabled',
-             'stpGuard': 'stp_guard',
+             'poe_enabled': 'poeEnabled',
+             'rstp_enabled': 'rstpEnabled',
+             'stp_guard': 'stpGuard',
              'tags': 'tags',
              'type': 'type',
              'vlan': 'vlan',
-             'voiceVlan': 'voice_vlan',
+             'voice_vlan': 'voiceVlan',
              }
 
 def sort_vlans(meraki, vlans):
@@ -307,10 +306,6 @@ def main():
     meraki = MerakiModule(module, function='switchport')
     meraki.params['follow_redirects'] = 'all'
 
-    # argument checks
-    # if meraki.params['type'] == 'access':
-    #     if meraki.params['allowed_vlans']:
-    #         meraki.fail_json(msg='allowed_vlans is not allowed on access ports')
     if meraki.params['type'] == 'trunk':
         if not meraki.params['allowed_vlans']:
             meraki.params['allowed_vlans'] = ['all']  # Backdoor way to set default without conflicting on access
@@ -349,37 +344,14 @@ def main():
             meraki.result['data'] = response
     elif meraki.params['state'] == 'present':
         payload = dict()
-        proposed = dict()
 
-        # if meraki.params['type'] == 'access':
-        payload['name'] = meraki.params['name']
-        payload['tags'] = meraki.params['tags']
-        payload['enabled'] = meraki.params['enabled']
-        payload['poeEnabled'] = meraki.params['poe_enabled']
-        payload['type'] = meraki.params['type']
-        payload['vlan'] = meraki.params['vlan']
-        payload['voiceVlan'] = meraki.params['voice_vlan']
-        payload['isolationEnabled'] = meraki.params['isolation_enabled']
-        payload['rstpEnabled'] = meraki.params['rstp_enabled']
-        payload['stpGuard'] = meraki.params['stp_guard']
-        payload['accessPolicyNumber'] = meraki.params['access_policy_number']
-        payload['linkNegotiation'] = meraki.params['link_negotiation']
-        payload['allowedVlans'] = meraki.params['allowed_vlans']
-        proposed['name'] = meraki.params['name']
-        proposed['tags'] = meraki.params['tags']
-        proposed['enabled'] = meraki.params['enabled']
-        proposed['poeEnabled'] = meraki.params['poe_enabled']
-        proposed['type'] = meraki.params['type']
-        proposed['vlan'] = meraki.params['vlan']
-        proposed['voiceVlan'] = meraki.params['voice_vlan']
-        proposed['isolationEnabled'] = meraki.params['isolation_enabled']
-        proposed['rstpEnabled'] = meraki.params['rstp_enabled']
-        proposed['stpGuard'] = meraki.params['stp_guard']
-        proposed['accessPolicyNumber'] = meraki.params['access_policy_number']
-        proposed['linkNegotiation'] = meraki.params['link_negotiation']
-        proposed['allowedVlans'] = meraki.params['allowed_vlans']
+        for k, v in meraki.params.items():
+            try:
+                payload[param_map[k]] = v
+            except KeyError:
+                pass
 
-        allowed = set()
+        allowed = set()  # Use a set to remove duplicate items
         if meraki.params['allowed_vlans'][0] == 'all':
             allowed.add('all')
         else:
@@ -389,23 +361,19 @@ def main():
                 allowed.add(str(meraki.params['vlan']))
         if len(allowed) > 1:  # Convert from list to comma separated
             payload['allowedVlans'] = sort_vlans(meraki, allowed)
-            proposed['allowedVlans'] = sort_vlans(meraki, allowed)
         else:
             payload['allowedVlans'] = next(iter(allowed))
-            proposed['allowedVlans'] = payload['allowedVlans']
 
         # Exceptions need to be made for idempotency check based on how Meraki returns
         if meraki.params['type'] == 'access':
             if not meraki.params['vlan']:  # VLAN needs to be specified in access ports, but can't default to it
                 payload['vlan'] = 1
-                proposed['vlan'] = 1
 
+        proposed = payload.copy()
         query_path = meraki.construct_path('get_one', custom={'serial': meraki.params['serial'],
                                                               'number': meraki.params['number'],
                                                               })
         original = meraki.request(query_path, method='GET')
-        # meraki.fail_json(msg="Payload", original=original, payload=payload)
-
         if meraki.params['type'] == 'trunk':
             proposed['voiceVlan'] = original['voiceVlan']  # API shouldn't include voice VLAN on a trunk port
         if meraki.is_update_required(original, proposed, optional_ignore=('number')):
