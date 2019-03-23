@@ -39,6 +39,11 @@ DOCUMENTATION = '''
                   region, site, role, platform, and/or tenant. Please check official netbox docs for more info.
             default: False
             type: boolean
+        interfaces:
+            description:
+                - If True, it adds dcim interface information in host vars.
+            default: False
+            type: boolean
         token:
             required: True
             description: NetBox token.
@@ -208,7 +213,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             "platforms": self.extract_platform,
             "device_types": self.extract_device_type,
             "config_context": self.extract_config_context,
-            "manufacturers": self.extract_manufacturer
+            "manufacturers": self.extract_manufacturer,
+            "interfaces": self.extract_interfaces
         }
 
     def extract_disk(self, host):
@@ -300,6 +306,15 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
     def extract_tags(self, host):
         return host["tags"]
+
+    def extract_interfaces(self, host):
+        try:
+            if self.interfaces:
+                url = urljoin(self.api_endpoint, "/api/dcim/interfaces/?limit=0&device_id=%s" % (str(host["id"])))
+                interface_lookup = self.get_resource_list(api_url=url)
+                return interface_lookup
+        except Exception:
+            return
 
     def refresh_platforms_lookup(self):
         url = self.api_endpoint + "/api/dcim/platforms/?limit=0"
@@ -455,6 +470,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         self.timeout = self.get_option("timeout")
         self.validate_certs = self.get_option("validate_certs")
         self.config_context = self.get_option("config_context")
+        self.interfaces = self.get_option("interfaces")
         self.headers = {
             'Authorization': "Token %s" % token,
             'User-Agent': "ansible %s Python %s" % (ansible_version, python_version.split(' ')[0]),
