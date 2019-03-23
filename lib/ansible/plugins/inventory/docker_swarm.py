@@ -22,9 +22,13 @@ DOCUMENTATION = '''
     description:
         - Reads inventories from the Docker swarm API.
         - Uses a YAML configuration file docker_swarm.[yml|yaml].
+        - Plugin returns following groups od swarm nodes - I(all) - all hosts; I(workers) - all worker nodes;
+          I(managers) - all manager nodes; I(leader)v- the swarm leader node;
+          I(nonleader) - all nodes except the swarm leader.
     options:
         plugin:
-            description: The name of this plugin, it should always be set to C(docker_swarm) for this plugin to recognize it as it's own.
+            description: The name of this plugin, it should always be set to C(docker_swarm) for this plugin to
+                         recognize it as it's own.
             type: str
             required: true
             choices: docker_swarm
@@ -35,7 +39,8 @@ DOCUMENTATION = '''
             type: str
             required: true
         verbose_output:
-            description: Toggle to (not) include all available nodes metadata (e.g. Platform, Architecture, OS, EngineVersion)
+            description: Toggle to (not) include all available nodes metadata (e.g. Platform, Architecture,OS,
+                         EngineVersion)
             type: bool
             default: yes
         tls:
@@ -43,20 +48,23 @@ DOCUMENTATION = '''
             type: bool
             default: no
         tls_verify:
-            description: Toggle if connecting using TLS with or without verifying the authenticity of the Docker host server.
+            description: Toggle if connecting using TLS with or without verifying the authenticity of the Docker
+                         host server.
             type: bool
             default: no
         key_path:
             description: Path to the client's TLS key file.
             type: path
         cacert_path:
-            description: Use a CA certificate when performing server verification by providing the path to a CA certificate file.
+            description: Use a CA certificate when performing server verification by providing the path to a CA
+                         certificate file.
             type: path
         cert_path:
             description: Path to the client's TLS certificate file.
             type: path
         tls_hostname:
-            description: When verifying the authenticity of the Docker host server, provide the expected name of the server.
+            description: When verifying the authenticity of the Docker host server, provide the expected name of
+                         the server.
             type: str
         ssl_version:
             description: Provide a valid SSL version number. Default value determined by ssl.py module.
@@ -69,8 +77,8 @@ DOCUMENTATION = '''
         timeout:
             description:
                 - The maximum amount of time in seconds to wait on a response from the API.
-                - If the value is not specified in the task, the value of environment variable C(DOCKER_TIMEOUT) will be used
-                  instead. If the environment variable is not set, the default value will be used.
+                - If the value is not specified in the task, the value of environment variable C(DOCKER_TIMEOUT)
+                  will be used instead. If the environment variable is not set, the default value will be used.
             type: int
             default: 60
         include_host_uri:
@@ -172,7 +180,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         self.inventory.add_group('manager')
         self.inventory.add_group('worker')
         self.inventory.add_group('leader')
-        self.inventory.add_group('non-leader')
+        self.inventory.add_group('nonleader')
 
         if self.get_option('include_host_uri', True):
             if self.get_option('include_host_uri_port'):
@@ -207,9 +215,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
                         self.inventory.set_variable(self.node_attrs['ID'], 'ansible_host', swarm_leader_ip)
                         self.inventory.add_host(self.node_attrs['ID'], group='leader')
                     else:
-                        self.inventory.add_host(self.node_attrs['ID'], group='non-leader')
+                        self.inventory.add_host(self.node_attrs['ID'], group='nonleader')
                 else:
-                    self.inventory.add_host(self.node_attrs['ID'], group='non-leader')
+                    self.inventory.add_host(self.node_attrs['ID'], group='nonleader')
                 # Use constructed if applicable
                 strict = self.get_option('strict')
                 # Composed variables
