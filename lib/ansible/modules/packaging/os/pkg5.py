@@ -103,7 +103,7 @@ def main():
             packages.append(fragment)
 
     if params['state'] in ['present', 'installed']:
-        ensure(module, 'present', packages, params)
+        ensure(module, 'present', get_not_installed_packages(module, packages), params)
     elif params['state'] in ['latest']:
         ensure(module, 'latest', packages, params)
     elif params['state'] in ['absent', 'uninstalled', 'removed']:
@@ -117,7 +117,7 @@ def ensure(module, state, packages, params):
     }
     behaviour = {
         'present': {
-            'filter': lambda p: not is_installed(module, p),
+            'filter': lambda p: True,
             'subcommand': 'install',
         },
         'latest': {
@@ -167,6 +167,14 @@ def ensure(module, state, packages, params):
 
     module.exit_json(**response)
 
+def get_not_installed_packages(module, packages):
+    rc, out, err = module.run_command(['pkg', 'list', '--'] + packages)
+    not_installed_packages = []
+    if err:
+        for package in packages:
+           if (package + "\n") in err:
+               not_installed_packages += [package]
+    return not_installed_packages
 
 def is_installed(module, package):
     rc, out, err = module.run_command(['pkg', 'list', '--', package])
