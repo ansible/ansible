@@ -101,13 +101,15 @@ def main():
             packages[-1] += ',' + fragment
         else:
             packages.append(fragment)
+    check_latest = params['state'] in ['latest']
+    install_state = get_install_state(module, packages, check_latest)
 
     if params['state'] in ['present', 'installed']:
-        ensure(module, 'present', get_not_installed_packages(module, packages), params)
+        ensure(module, 'present', install_state['not_installed_packages'], params)
     elif params['state'] in ['latest']:
-        ensure(module, 'latest', packages, params)
+        ensure(module, 'latest', install_state['updatable_packages'] + install_state['not_installed_packages'], params)
     elif params['state'] in ['absent', 'uninstalled', 'removed']:
-        ensure(module, 'absent', packages, params)
+        ensure(module, 'absent', install_state['installed_packages'], params)
 
 
 def ensure(module, state, packages, params):
@@ -115,22 +117,9 @@ def ensure(module, state, packages, params):
         'results': [],
         'msg': '',
     }
-    behaviour = {
-        'present': {
-            'filter': lambda p: True,
-            'subcommand': 'install',
-        },
-        'latest': {
-            'filter': lambda p: (
-                not is_installed(module, p) or not is_latest(module, p)
-            ),
-            'subcommand': 'install',
-        },
-        'absent': {
-            'filter': lambda p: is_installed(module, p),
-            'subcommand': 'uninstall',
-        },
-    }
+    subcommand = ['install']
+    if state == 'absent':
+        subcommand = ['uninstall']
 
     if module.check_mode:
         dry_run = ['-n']
@@ -152,9 +141,8 @@ def ensure(module, state, packages, params):
     else:
         no_refresh = ['--no-refresh']
 
-    to_modify = filter(behaviour[state]['filter'], packages)
-    if to_modify:
-        rc, out, err = module.run_command(['pkg', behaviour[state]['subcommand']] + dry_run + accept_licenses + beadm + no_refresh + ['-q', '--'] + to_modify)
+    if packages:
+        rc, out, err = module.run_command(['pkg'] + subcommand + dry_run + accept_licenses + beadm + no_refresh + ['-q','--'] + packages)
         response['rc'] = rc
         response['results'].append(out)
         response['msg'] += err
@@ -167,23 +155,32 @@ def ensure(module, state, packages, params):
 
     module.exit_json(**response)
 
-def get_not_installed_packages(module, packages):
+
+def get_install_state(module, packages, check_latest):
     rc, out, err = module.run_command(['pkg', 'list', '--'] + packages)
-    not_installed_packages = []
+    installed_packages=[]
+    not_installed_packages=[]
+    updatable_packages=[]
     if err:
         for package in packages:
            if (package + "\n") in err:
                not_installed_packages += [package]
-    return not_installed_packages
+           else:
+               installed_packages += [package]
+    else:
+        installed_packages = packages
 
-def is_installed(module, package):
-    rc, out, err = module.run_command(['pkg', 'list', '--', package])
-    return not bool(int(rc))
-
-
-def is_latest(module, package):
-    rc, out, err = module.run_command(['pkg', 'list', '-u', '--', package])
-    return bool(int(rc))
+    if check_latest:
+        rc, out, err = module.run_command(['pkg', 'list', '-u', '--'] + installed_packages)
+        for installed_package in installed_packages:
+            if err:
+               if (installed_package + "\n") in err:
+                   updatable_packages += [installed_package]
+    return {
+        "installed_packages": installed_packages,
+        "not_installed_packages": not_installed_packages,
+        "updatable_packages": updatable_packages
+    }
 
 
 if __name__ == '__main__':
