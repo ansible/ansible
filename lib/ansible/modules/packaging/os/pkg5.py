@@ -163,10 +163,10 @@ def get_install_state(module, packages, check_latest):
     updatable_packages = []
     if err:
         for package in packages:
-           if (package + "\n") in err:
-               not_installed_packages += [package]
-           else:
-               installed_packages += [package]
+            if (package + "\n") in err:
+                not_installed_packages += [package]
+            else:
+                installed_packages += [package]
     else:
         installed_packages = packages
 
@@ -174,8 +174,8 @@ def get_install_state(module, packages, check_latest):
         rc, out, err = module.run_command(['pkg', 'list', '-u', '--'] + installed_packages)
         for installed_package in installed_packages:
             if err:
-               if (installed_package + "\n") in err:
-                   updatable_packages += [installed_package]
+                if (installed_package + "\n") in err:
+                    updatable_packages += [installed_package]
     return {
         "installed_packages": installed_packages,
         "not_installed_packages": not_installed_packages,
