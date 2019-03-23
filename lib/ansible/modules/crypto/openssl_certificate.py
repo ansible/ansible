@@ -659,7 +659,7 @@ class Certificate(crypto_utils.OpenSSLObject):
                     csr_ext = csr_exts.get_extension_for_oid(cert_ext.oid)
                     if cert_ext != csr_ext:
                         return False
-                except cryptography.x509.ExtensionNotFound as e:
+                except cryptography.x509.ExtensionNotFound as dummy:
                     return False
             return True
 

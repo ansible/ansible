@@ -129,7 +129,7 @@ def load_privatekey(path, passphrase=None, check_passphrase=True, backend='pyope
                         # Since we can load the key without an exception, the
                         # key isn't password-protected
                         raise OpenSSLBadPassphraseError('Passphrase provided, but private key is not password-protected!')
-                except crypto.Error:
+                except crypto.Error as e:
                     if passphrase is None and len(e.args) > 0 and len(e.args[0]) > 0 and e.args[0][0][2] == 'bad decrypt':
                         # The key is obviously protected by the empty string.
                         # Don't do this at home (if it's possible at all)...
@@ -139,9 +139,9 @@ def load_privatekey(path, passphrase=None, check_passphrase=True, backend='pyope
                 result = load_pem_private_key(priv_key_detail,
                                               passphrase,
                                               cryptography_backend())
-            except TypeError as e:
+            except TypeError as dummy:
                 raise OpenSSLBadPassphraseError('Wrong or empty passphrase provided for private key')
-            except ValueError as e:
+            except ValueError as dummy:
                 raise OpenSSLBadPassphraseError('Wrong passphrase provided for private key')
 
         return result
