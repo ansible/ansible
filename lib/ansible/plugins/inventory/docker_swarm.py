@@ -22,9 +22,9 @@ DOCUMENTATION = '''
     description:
         - Reads inventories from the Docker swarm API.
         - Uses a YAML configuration file docker_swarm.[yml|yaml].
-        - Plugin returns following groups od swarm nodes - I(all) - all hosts; I(workers) - all worker nodes;
-          I(managers) - all manager nodes; I(leader)v- the swarm leader node;
-          I(nonleader) - all nodes except the swarm leader.
+        - "The plugin returns following groups of swarm nodes:  I(all) - all hosts; I(workers) - all worker nodes;
+          I(managers) - all manager nodes; I(leader) - the swarm leader node;
+          I(nonleaders) - all nodes except the swarm leader."
     options:
         plugin:
             description: The name of this plugin, it should always be set to C(docker_swarm) for this plugin to
@@ -180,7 +180,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         self.inventory.add_group('manager')
         self.inventory.add_group('worker')
         self.inventory.add_group('leader')
-        self.inventory.add_group('nonleader')
+        self.inventory.add_group('nonleaders')
 
         if self.get_option('include_host_uri', True):
             if self.get_option('include_host_uri_port'):
@@ -215,9 +215,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
                         self.inventory.set_variable(self.node_attrs['ID'], 'ansible_host', swarm_leader_ip)
                         self.inventory.add_host(self.node_attrs['ID'], group='leader')
                     else:
-                        self.inventory.add_host(self.node_attrs['ID'], group='nonleader')
+                        self.inventory.add_host(self.node_attrs['ID'], group='nonleaders')
                 else:
-                    self.inventory.add_host(self.node_attrs['ID'], group='nonleader')
+                    self.inventory.add_host(self.node_attrs['ID'], group='nonleaders')
                 # Use constructed if applicable
                 strict = self.get_option('strict')
                 # Composed variables
