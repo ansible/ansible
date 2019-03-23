@@ -35,9 +35,9 @@ from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleParserError, AnsibleUndefinedVariable
 from ansible.executor import action_write_locks
+from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_result import TaskResult
 from ansible.inventory.host import Host
-from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils.six.moves import queue as Queue
 from ansible.module_utils.six import iteritems, itervalues, string_types
 from ansible.module_utils._text import to_text
@@ -45,7 +45,6 @@ from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.task_include import TaskInclude
-from ansible.playbook.role_include import IncludeRole
 from ansible.plugins.loader import action_loader, connection_loader, filter_loader, lookup_loader, module_loader, test_loader
 from ansible.template import Templar
 from ansible.utils.display import Display
@@ -162,7 +161,7 @@ class StrategyBase:
 
     '''
     This is the base class for strategy plugins, which contains some common
-    code useful to all strategies like running handlers, etc.
+    code useful to all strategies like running handlers, cleanup actions, etc.
     '''
 
     def __init__(self, tqm):
@@ -171,10 +170,6 @@ class StrategyBase:
         self._workers = tqm.get_workers()
         self._variable_manager = tqm.get_variable_manager()
         self._loader = tqm.get_loader()
-
-        self._step = getattr(tqm._options, 'step', False)
-        self._diff = getattr(tqm._options, 'diff', False)
-
         self._final_q = tqm._final_q
         self._step = context.CLIARGS.get('step', False)
         self._diff = context.CLIARGS.get('diff', False)
@@ -190,14 +185,11 @@ class StrategyBase:
 
         # internal counters
         self._pending_results = 0
+        self._cur_worker = 0
 
         # this dictionary is used to keep track of hosts that have
         # outstanding tasks still in queue
         self._blocked_hosts = dict()
-
-
-        self._results_lock = threading.Condition(threading.Lock())
-
 
         # this dictionary is used to keep track of hosts that have
         # flushed handlers
@@ -228,7 +220,6 @@ class StrategyBase:
                 display.debug("got an error while closing persistent connection: %s" % e)
         self._final_q.put(_sentinel)
         self._results_thread.join()
-
 
     def run(self, iterator, play_context, result=0):
         # execute one more pass through the iterator without peeking, to
@@ -298,9 +289,7 @@ class StrategyBase:
         # there.
 
         if task.action not in action_write_locks.action_write_locks:
- threading_plus_forking
-            action_write_locks.action_write_locks[task.action] = threading.Lock()
-
+            display.debug('Creating lock for %s' % task.action)
             action_write_locks.action_write_locks[task.action] = Lock()
 
         # and then queue the new task
@@ -336,12 +325,11 @@ class StrategyBase:
                 elif self._cur_worker == starting_worker:
                     time.sleep(0.0001)
 
-
-        if self._tqm.put_job((host, task, play_context, task_vars)):
             self._pending_results += 1
-        else:
-            raise AnsibleError('Could not put the job')
-
+        except (EOFError, IOError, AssertionError) as e:
+            # most likely an abort
+            display.debug("got an error while queuing: %s" % e)
+            return
         display.debug("exiting _queue_task() for %s/%s" % (host.name, task.action))
 
     def get_task_hosts(self, iterator, task_host, task):
@@ -410,9 +398,13 @@ class StrategyBase:
 
         cur_pass = 0
         while True:
-            task_result = self._tqm.get_result()
-            if task_result is None:
+            try:
+                self._results_lock.acquire()
+                task_result = self._results.popleft()
+            except IndexError:
                 break
+            finally:
+                self._results_lock.release()
 
             # get the original host and task. We then assign them to the TaskResult for use in callbacks/etc.
             original_host = get_original_host(task_result._host)

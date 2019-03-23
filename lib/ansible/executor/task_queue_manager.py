@@ -22,23 +22,14 @@ __metaclass__ = type
 import multiprocessing
 import os
 import tempfile
-import threading
-import time
-
-from collections import deque
 
 from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleError
 from ansible.executor.play_iterator import PlayIterator
-from ansible.executor.process.worker import WorkerProcess
-from ansible.executor.process.threading import run_worker
-from ansible.executor.shared_plugin_loader import SharedPluginLoaderObj
 from ansible.executor.stats import AggregateStats
 from ansible.executor.task_result import TaskResult
 from ansible.module_utils.six import string_types
-from ansible.module_utils.six.moves import queue as Queue
-from ansible.module_utils._text import to_text
 from ansible.module_utils._text import to_text, to_native
 from ansible.playbook.block import Block
 from ansible.playbook.play_context import PlayContext
@@ -53,25 +44,6 @@ from ansible.utils.display import Display
 
 __all__ = ['TaskQueueManager']
 
-class ResultsSentinel:
-    pass
-
-_sentinel = ResultsSentinel()
-
-def results_thread_main(tqm):
-    while True:
-        try:
-            result = tqm._final_q.get()
-            if isinstance(result, ResultsSentinel):
-                break
-            else:
-                tqm._results_lock.acquire()
-                tqm._res_queue.append(result)
-                tqm._results_lock.release()
-        except (IOError, EOFError):
-            break
-        except Queue.Empty:
-            pass
 display = Display()
 
 
@@ -123,11 +95,6 @@ class TaskQueueManager:
         self._failed_hosts = dict()
         self._unreachable_hosts = dict()
 
-
-        # the final results queue we'll use for both forking and threading
-        self._res_queue = deque()
-        self._res_queue_lock = threading.Lock()
-        self._res_ready = threading.Event()
         try:
             self._final_q = multiprocessing.Queue()
         except OSError as e:
@@ -138,108 +105,10 @@ class TaskQueueManager:
         self._connection_lockfile = tempfile.TemporaryFile()
 
     def _initialize_processes(self, num):
-        if C.ANSIBLE_PROCESS_MODEL == 'forking':
-            self._final_q = multiprocessing.Queue()
-            self._job_queue = None
-            self._job_queue_lock = None
-            self.put_job = self._forked_put_job
-            self.get_job = self._forked_get_job
-            self.put_result = self._forked_put_result
-            self.get_result = self._forked_get_result
-            self._cleanup_processes = self._cleanup_forked_processes
-            self._initialize_forked_processes(num)
-
-            # create the result processing thread for reading results in the background
-            self._results_lock = threading.Condition(threading.Lock())
-            self._results_thread = threading.Thread(target=results_thread_main, args=(self,))
-            self._results_thread.daemon = True
-            self._results_thread.start()
-
-        elif C.ANSIBLE_PROCESS_MODEL == 'threading':
-            self._job_queue = deque()
-            self._job_queue_lock = threading.Lock()
-            self.put_job = self._threaded_put_job
-            self.get_job = self._threaded_get_job
-            self.put_result = self._threaded_put_result
-            self.get_result = self._threaded_get_result
-            self._cleanup_processes = self._cleanup_threaded_processes
-            self._initialize_threaded_processes(num)
-
-        else:
-            self._cleanup_processes = self._cleanup_dummy
-            raise AnsibleError(
-                      'Invalid process model specified: "%s". ' \
-                      'The process model must be set to either "forking" or "threading"'
-                  )
-
-    def _initialize_forked_processes(self, num):
-        self._workers = []
-        self._cur_worker = 0
-
-        for i in range(num):
-            self._workers.append([None, None])
-
-    def _initialize_threaded_processes(self, num):
-        # FIXME: do we need a global lock for workers here instead of a per-worker?
         self._workers = []
 
-        # create a dummy object with plugin loaders set as an easier
-        # way to share them with the forked processes
-        shared_loader_obj = SharedPluginLoaderObj()
-
         for i in range(num):
-
-            rslt_q = multiprocessing.Queue()
-            self._workers.append([None, rslt_q])
-            w_thread = threading.Thread(target=run_worker, args=(self, shared_loader_obj))
-            w_thread.start()
-            w_lock = threading.Lock()
-            self._workers.append([w_thread, w_lock])
-
-    def _initialize_notified_handlers(self, play):
-        '''
-        Clears and initializes the shared notified handlers dict with entries
-        for each handler in the play, which is an empty array that will contain
-        inventory hostnames for those hosts triggering the handler.
-        '''
-
-        # Zero the dictionary first by removing any entries there.
-        # Proxied dicts don't support iteritems, so we have to use keys()
-        self._notified_handlers.clear()
-        self._listening_handlers.clear()
-
-        def _process_block(b):
-            temp_list = []
-            for t in b.block:
-                if isinstance(t, Block):
-                    temp_list.extend(_process_block(t))
-                else:
-                    temp_list.append(t)
-            return temp_list
-
-        handler_list = []
-        for handler_block in play.handlers:
-            handler_list.extend(_process_block(handler_block))
-        # then initialize it with the given handler list
-        self.update_handler_list(handler_list)
-
-    def update_handler_list(self, handler_list):
-        for handler in handler_list:
-            if handler._uuid not in self._notified_handlers:
-                display.debug("Adding handler %s to notified list" % handler.name)
-                self._notified_handlers[handler._uuid] = []
-            if handler.listen:
-                listeners = handler.listen
-                if not isinstance(listeners, list):
-                    listeners = [listeners]
-                for listener in listeners:
-                    if listener not in self._listening_handlers:
-                        self._listening_handlers[listener] = []
-                    display.debug("Adding handler %s to listening list" % handler.name)
-                    self._listening_handlers[listener].append(handler._uuid)
-
             self._workers.append(None)
-
 
     def load_callbacks(self):
         '''
@@ -378,39 +247,24 @@ class TaskQueueManager:
         for host_name in iterator.get_failed_hosts():
             self._failed_hosts[host_name] = True
 
+        strategy.cleanup()
         self._cleanup_processes()
         return play_return
 
     def cleanup(self):
         display.debug("RUNNING CLEANUP")
         self.terminate()
-        if hasattr(self, '_final_q'):
-            self._final_q.put(_sentinel)
-            self._results_thread.join()
-            self._final_q.close()
+        self._final_q.close()
         self._cleanup_processes()
 
-    def _cleanup_dummy(self):
-        return
-
-    def _cleanup_forked_processes(self):
+    def _cleanup_processes(self):
         if hasattr(self, '_workers'):
-
-            for (worker_prc, _) in self._workers:
-
             for worker_prc in self._workers:
-
                 if worker_prc and worker_prc.is_alive():
                     try:
                         worker_prc.terminate()
                     except AttributeError:
                         pass
-
-    def _cleanup_threaded_processes(self):
-        if hasattr(self, '_workers'):
-            for (w_thread, w_lock) in self._workers:
-                if w_thread and not w_thread.is_alive():
-                    w_thread.join()
 
     def clear_failed_hosts(self):
         self._failed_hosts = dict()
@@ -425,7 +279,7 @@ class TaskQueueManager:
         return self._loader
 
     def get_workers(self):
-        return self._workers
+        return self._workers[:]
 
     def terminate(self):
         self._terminated = True
@@ -478,78 +332,3 @@ class TaskQueueManager:
                     from traceback import format_tb
                     from sys import exc_info
                     display.vvv('Callback Exception: \n' + ' '.join(format_tb(exc_info()[2])))
-
-    # helpers for forking
-    def _forked_put_job(self, data):
-        try:
-            (host, task, play_context, task_vars) = data
-
-            # create a dummy object with plugin loaders set as an easier
-            # way to share them with the forked processes
-            shared_loader_obj = SharedPluginLoaderObj()
-
-            queued = False
-            starting_worker = self._cur_worker
-            while True:
-                (worker_prc, rslt_q) = self._workers[self._cur_worker]
-                if worker_prc is None or not worker_prc.is_alive():
-                    worker_prc = WorkerProcess(self._final_q, task_vars, host, task, play_context, self._loader, self._variable_manager, shared_loader_obj)
-                    self._workers[self._cur_worker][0] = worker_prc
-                    worker_prc.start()
-                    display.debug("worker is %d (out of %d available)" % (self._cur_worker + 1, len(self._workers)))
-                    queued = True
-                self._cur_worker += 1
-                if self._cur_worker >= len(self._workers):
-                    self._cur_worker = 0
-                if queued:
-                    break
-                elif self._cur_worker == starting_worker:
-                    time.sleep(0.0001)
-
-            return True
-        except (EOFError, IOError, AssertionError) as e:
-            # most likely an abort
-            display.debug("got an error while queuing: %s" % e)
-            return False
-
-    def _forked_get_job(self):
-        pass
-
-    def _forked_put_result(self):
-        pass
-
-    def _forked_get_result(self):
-        return self._pop_off_queue(self._res_queue, self._res_queue_lock)
-
-    # helpers for threading
-    def _put_in_queue(self, data, queue, lock):
-        lock.acquire()
-        queue.appendleft(data)
-        lock.release()
-
-    def _pop_off_queue(self, queue, lock):
-        try:
-            data = None
-            lock.acquire()
-            data = queue.pop()
-        except:
-            pass
-        finally:
-            lock.release()
-        return data
-
-    def _threaded_put_job(self, data):
-        self._put_in_queue(data, self._job_queue, self._job_queue_lock)
-        return True
-
-    def _threaded_get_job(self):
-        return self._pop_off_queue(self._job_queue, self._job_queue_lock)
-
-    def _threaded_put_result(self, data):
-        self._put_in_queue(data, self._res_queue, self._res_queue_lock)
-        self._res_ready.set()
-        return True
-
-    def _threaded_get_result(self):
-        return self._pop_off_queue(self._res_queue, self._res_queue_lock)
-
