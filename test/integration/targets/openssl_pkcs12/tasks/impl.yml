@@ -102,7 +102,7 @@
 
   - name: 'Create broken PKCS#12'
     copy:
-      dest: "{{ role_path ~ '/' ~ output_dir }}/broken.p12"
+      dest: "{{ output_dir }}/broken.p12"
       content: "broken"
   - name: 'Regenerate broken PKCS#12'
     openssl_pkcs12:

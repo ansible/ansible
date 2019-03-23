@@ -186,7 +186,7 @@
 
 - name: Create broken key
   copy:
-    dest: "{{ role_path ~ '/' ~ output_dir }}/broken"
+    dest: "{{ output_dir }}/broken"
     content: "broken"
 - name: Regenerate broken key
   openssl_privatekey:
