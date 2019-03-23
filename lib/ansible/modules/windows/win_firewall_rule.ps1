@@ -116,6 +116,7 @@ function New-FWRule
         [string]$remoteAddresses,
         [string]$direction,
         [string]$action,
+        [string]$group,
         [bool]$enabled,
         [string[]]$profiles,
         [string[]]$interfaceTypes,
@@ -130,6 +131,7 @@ function New-FWRule
     if ($description) { $rule.Description = $description }
     if ($applicationName) { $rule.ApplicationName = $applicationName }
     if ($serviceName) { $rule.ServiceName = $serviceName }
+    if ($group) { $rule.Grouping = $group }
     if ($protocol -and $protocol -ne "any") { $rule.Protocol = Parse-ProtocolType -protocol $protocol }
     if ($localPorts -and $localPorts -ne "any") { $rule.LocalPorts = $localPorts }
     if ($remotePorts -and $remotePorts -ne "any") { $rule.RemotePorts = $remotePorts }
@@ -170,6 +172,7 @@ $name = Get-AnsibleParam -obj $params -name "name" -failifempty $true
 $description = Get-AnsibleParam -obj $params -name "description" -type "str"
 $direction = Get-AnsibleParam -obj $params -name "direction" -type "str" -failifempty $true -validateset "in","out"
 $action = Get-AnsibleParam -obj $params -name "action" -type "str" -failifempty $true -validateset "allow","block"
+$group = Get-AnsibleParam -obj $params -name "group" -type "str" -failifempty $false
 $program = Get-AnsibleParam -obj $params -name "program" -type "str"
 $service = Get-AnsibleParam -obj $params -name "service" -type "str"
 $enabled = Get-AnsibleParam -obj $params -name "enabled" -type "bool" -default $true -aliases "enable"
@@ -208,6 +211,7 @@ try {
                        -description $description `
                        -direction $direction `
                        -action $action `
+                       -group $group `
                        -applicationName $program `
                        -serviceName $service `
                        -enabled $enabled `
