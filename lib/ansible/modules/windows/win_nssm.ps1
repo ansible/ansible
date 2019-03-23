@@ -338,12 +338,12 @@ if ($state -ne 'absent') {
         Fail-Json -obj $result -message "The application parameter must be defined when the state is not absent."
     }
 
-    if (-not (Test-Path -Path $application -PathType Leaf)) {
+    if (-not (Test-Path -LiteralPath $application -PathType Leaf)) {
         Fail-Json -obj $result -message "The application specified ""$application"" does not exist on the host."
     }
 
     if($null -eq $appDirectory) {
-        $appDirectory = (Get-Item $application).DirectoryName
+        $appDirectory = (Get-Item -LiteralPath $application).DirectoryName
     }
 
     if ($user -and -not $password) {
