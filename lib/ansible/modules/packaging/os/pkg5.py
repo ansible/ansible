@@ -142,7 +142,7 @@ def ensure(module, state, packages, params):
         no_refresh = ['--no-refresh']
 
     if packages:
-        rc, out, err = module.run_command(['pkg'] + subcommand + dry_run + accept_licenses + beadm + no_refresh + ['-q','--'] + packages)
+        rc, out, err = module.run_command(['pkg'] + subcommand + dry_run + accept_licenses + beadm + no_refresh + ['-q', '--'] + packages)
         response['rc'] = rc
         response['results'].append(out)
         response['msg'] += err
@@ -158,9 +158,9 @@ def ensure(module, state, packages, params):
 
 def get_install_state(module, packages, check_latest):
     rc, out, err = module.run_command(['pkg', 'list', '--'] + packages)
-    installed_packages=[]
-    not_installed_packages=[]
-    updatable_packages=[]
+    installed_packages = []
+    not_installed_packages = []
+    updatable_packages = []
     if err:
         for package in packages:
            if (package + "\n") in err:
