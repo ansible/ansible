@@ -23,13 +23,12 @@
     path: /home/tests
     state: directory
 
-- name: Execute cleanup script if /home/tests/mongodb[1-3] directories exist
-  script: files/bash/mongod_teardown.sh
-  args:
-    removes: /home/tests/mongodb3001
+- include_tasks: mongod_teardown.yml
 
-- name: Execute mongod script
-  script: files/bash/mongodb_replicaset.sh 3000 "{{ mongodb_replicaset1 }}" 3 0
+- set_fact:
+    current_replicaset: "{{ mongodb_replicaset1 }}"
+
+- include_tasks: mongod_replicaset.yml
 
 # test with yaml list
 - name: Create replicaset with module
@@ -82,13 +81,14 @@
 - name: Murder all mongod processes
   shell: pkill mongod && sleep 10;
 
-- name: Execute mongod script to restart with auth enabled
-  script: files/bash/mongodb_replicaset.sh 3000 "{{ mongodb_replicaset1 }}" 3 1
-  ignore_errors: "{{ debug }}"
+- set_fact:
+    current_replicaset: "{{ mongodb_replicaset1 }}"
 
-#- name: Debug - Output mongodb logs
-#  shell: cat /home/tests/mongodb3001/log.log
-#  when: debug
+- set_fact:
+    mongod_auth: true
+
+- name: Execute mongod script to restart with auth enabled
+  include_tasks: mongod_replicaset.yml
 
 - name: Validate replicaset previously created
   mongodb_replicaset:
@@ -110,13 +110,16 @@
 
   #############################################################
 
-- name: Execute cleanup script if /home/tests/mongodb3001 directories exist
-  script: files/bash/mongod_teardown.sh
-  args:
-    removes: /home/tests/mongodb3001
+- include_tasks: mongod_teardown.yml
 
-- name: Execute mongod script
-  script: files/bash/mongodb_replicaset.sh 3000 "{{ mongodb_replicaset2 }}" 3 0
+- set_fact:
+    current_replicaset: "{{ mongodb_replicaset2 }}"
+
+- set_fact:
+    mongod_auth: false
+
+- name: Execute mongod script to restart with auth enabled
+  include_tasks: mongod_replicaset.yml
 
 # Test with python style list
 - name: Create replicaset with module
@@ -147,13 +150,16 @@
 
 #############################################################
 
-- name: Execute cleanup script if /home/tests/mongodb3001 directories exist
-  script: files/bash/mongod_teardown.sh
-  args:
-    removes: /home/tests/mongodb3001
+- include_tasks: mongod_teardown.yml
 
-- name: Execute mongod script
-  script: files/bash/mongodb_replicaset.sh 3000 "{{ mongodb_replicaset3 }}" 3 0
+- set_fact:
+    current_replicaset: "{{ mongodb_replicaset3 }}"
+
+- set_fact:
+    mongod_auth: false
+
+- name: Launch mongod processes
+  include_tasks: mongod_replicaset.yml
 
 # Test with csv string
 - name: Create replicaset with module
@@ -184,13 +190,16 @@
 
   #############################################################
 
-- name: Execute cleanup script if /home/tests/mongodb3001 directories exist
-  script: files/bash/mongod_teardown.sh
-  args:
-    removes: /home/tests/mongodb3001
+- include_tasks: mongod_teardown.yml
 
-- name: Execute mongod script
-  script: files/bash/mongodb_replicaset.sh 3000 "{{ mongodb_replicaset4 }}" 3 0
+- set_fact:
+    current_replicaset: "{{ mongodb_replicaset4 }}"
+
+- set_fact:
+    mongod_auth: false
+
+- name: Launch mongod processes
+  include_tasks: mongod_replicaset.yml
 
 # Test with arbiter_at_index
 - name: Create replicaset with module
@@ -223,13 +232,16 @@
 
 #############################################################
 
-- name: Execute cleanup script if /home/tests/mongodb3001 directories exist
-  script: files/bash/mongod_teardown.sh
-  args:
-    removes: /home/tests/mongodb3001
+- include_tasks: mongod_teardown.yml
 
-- name: Execute mongod script
-  script: files/bash/mongodb_replicaset.sh 3000 "{{ mongodb_replicaset5 }}" 3 0
+- set_fact:
+    current_replicaset: "{{ mongodb_replicaset5 }}"
+
+- set_fact:
+    mongod_auth: false
+
+- name: Launch mongod processes
+  include_tasks: mongod_replicaset.yml
 
 # Test with chainingAllowed
 - name: Create replicaset with module
@@ -265,13 +277,19 @@
 
 #############################################################
 
-- name: Execute cleanup script if /home/tests/mongodb3001 directories exist
-  script: files/bash/mongod_teardown.sh
-  args:
-    removes: /home/tests/mongodb3001
+- include_tasks: mongod_teardown.yml
 
-- name: Execute mongod script
-  script: files/bash/mongodb_replicaset.sh 3000 "{{ mongodb_replicaset6 }}" 5 0
+- set_fact:
+    current_replicaset: "{{ mongodb_replicaset6 }}"
+
+- set_fact:
+    mongodb_nodes: [ 3001, 3002, 3003, 3004, 3005]
+
+- set_fact:
+    mongod_auth: false
+
+- name: Launch mongod processes
+  include_tasks: mongod_replicaset.yml
 
 # Test with 5 mongod processes
 - name: Create replicaset with module
@@ -309,13 +327,19 @@
 
 #############################################################
 
-- name: Execute cleanup script if /home/tests/mongodb3001 directories exist
-  script: files/bash/mongod_teardown.sh
-  args:
-    removes: /home/tests/mongodb3001
+- include_tasks: mongod_teardown.yml
 
-- name: Execute mongod script
-  script: files/bash/mongodb_replicaset.sh 3000 "{{ mongodb_replicaset7 }}" 3 0
+- set_fact:
+    current_replicaset: "{{ mongodb_replicaset7 }}"
+
+- set_fact:
+    mongod_auth: false
+
+- set_fact:
+    mongodb_nodes: [ 3001, 3002, 3003 ]
+
+- name: Launch mongod processes
+  include_tasks: mongod_replicaset.yml
 
 # Test withheartbeatTimeoutSecs
 - name: Create replicaset with module
@@ -351,13 +375,13 @@
 
 #############################################################
 
-- name: Execute cleanup script if /home/tests/mongodb3001 directories exist
-  script: files/bash/mongod_teardown.sh
-  args:
-    removes: /home/tests/mongodb3001
+- include_tasks: mongod_teardown.yml
 
-- name: Execute mongod script
-  script: files/bash/mongodb_replicaset.sh 3000 "{{ mongodb_replicaset8 }}" 3 0
+- set_fact:
+    current_replicaset: "{{ mongodb_replicaset8 }}"
+
+- name: Launch mongod processes
+  include_tasks: mongod_replicaset.yml
 
 # Test with heartbeatTimeoutSecs
 - name: Create replicaset with module protocolVersion 0 (Mongodb 3.0)

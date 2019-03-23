@@ -1,0 +1,18 @@
+- name: Kill all mongod processes
+  command: pkill mongod
+  ignore_errors: true
+
+- pause:
+    seconds: 5
+
+- name: Remove all mongod folders
+  file:
+    path: "{{ remote_tmp_dir }}/{{ item }}"
+    state: absent
+  with_items:
+    - mongod3001
+    - mongod3002
+    - mongod3003
+
+- name: Remove all mongod sock files
+  shell: rm -Rf /tmp/mongodb*.sock

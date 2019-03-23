@@ -1,0 +1,33 @@
+- name: Create directories for mongod processes
+  file:
+    path: "{{ remote_tmp_dir }}/mongod{{ item }}"
+    state: directory
+    owner: mongodb
+    group: mongodb
+    mode: 0755
+    recurse: yes
+  with_items: "{{ mongodb_nodes }}"
+
+- name: Create keyfile
+  copy:
+    dest: "{{ remote_tmp_dir }}/my.key"
+    content: |
+      fd2CUrbXBJpB4rt74A6F
+    owner: mongodb
+    group: mongodb
+    mode: 0600
+  when: mongod_auth == True
+
+- name: Spawn mongod process without auth
+  command: mongod --shardsvr --smallfiles --storageEngine wiredTiger --wiredTigerEngineConfigString="cache_size=200M" --dbpath mongod{{ item }} --port {{ item }} --replSet {{ current_replicaset }} --logpath mongod{{ item }}/log.log --fork
+  args:
+    chdir: "{{ remote_tmp_dir }}"
+  with_items: "{{ mongodb_nodes }}"
+  when: mongod_auth == False
+
+- name: Spawn mongod process with auth
+  command: mongod --shardsvr --smallfiles --storageEngine wiredTiger --wiredTigerEngineConfigString="cache_size=200M" --dbpath mongod{{ item }} --port {{ item }} --replSet {{ current_replicaset }} --logpath mongod{{ item }}/log.log --fork --auth --keyFile my.key
+  args:
+    chdir: "{{ remote_tmp_dir }}"
+  with_items: "{{ mongodb_nodes }}"
+  when: mongod_auth == True

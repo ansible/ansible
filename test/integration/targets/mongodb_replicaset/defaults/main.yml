@@ -12,3 +12,8 @@ test_mongo_auth: yes
 mongodb_admin_user: test_root
 mongodb_admin_password: saE_Rr9!gE6gh#e~R#nZ
 debug: False
+mongodb_nodes:
+  - 3001
+  - 3002
+  - 3003
+mongod_auth: false
