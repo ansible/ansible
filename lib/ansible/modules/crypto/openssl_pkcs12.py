@@ -240,11 +240,6 @@ class Pkcs(crypto_utils.OpenSSLObject):
 
         self.pkcs12 = crypto.PKCS12()
 
-        try:
-            self.remove(module)
-        except PkcsError as exc:
-            module.fail_json(msg=to_native(exc))
-
         if self.ca_certificates:
             ca_certs = [crypto_utils.load_certificate(ca_cert) for ca_cert
                         in self.ca_certificates]
@@ -276,7 +271,6 @@ class Pkcs(crypto_utils.OpenSSLObject):
         """Read PKCS#12 file."""
 
         try:
-            self.remove(module)
             with open(self.src, 'rb') as pkcs12_fh:
                 pkcs12_content = pkcs12_fh.read()
             p12 = crypto.load_pkcs12(pkcs12_content,
@@ -289,7 +283,6 @@ class Pkcs(crypto_utils.OpenSSLObject):
             crypto_utils.write_file(module, b'%s%s' % (pkey, crt))
 
         except IOError as exc:
-            self.remove(module)
             raise PkcsError(exc)
 
 
