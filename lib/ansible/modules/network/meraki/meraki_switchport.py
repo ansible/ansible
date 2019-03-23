@@ -261,6 +261,7 @@ param_map = {'access_policy_number': 'accessPolicyNumber',
              'voice_vlan': 'voiceVlan',
              }
 
+
 def sort_vlans(meraki, vlans):
     converted = set()
     for vlan in vlans:
