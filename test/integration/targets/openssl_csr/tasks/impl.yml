@@ -278,7 +278,7 @@
 - name: Create broken CSR
   copy:
     dest: "{{ role_path ~ '/' ~ output_dir }}/csrbroken.csr"
-    content: ""
+    content: "broken"
 - name: Regenerate broken CSR
   openssl_csr:
     path: '{{ output_dir }}/csrbroken.csr'

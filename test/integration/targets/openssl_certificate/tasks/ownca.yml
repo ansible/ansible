@@ -205,7 +205,7 @@
 - name: Create broken certificate
   copy:
     dest: "{{ role_path ~ '/' ~ output_dir }}/ownca_broken.pem"
-    content: ""
+    content: "broken"
 - name: Regenerate broken cert
   openssl_certificate:
     path: '{{ output_dir }}/ownca_broken.pem'

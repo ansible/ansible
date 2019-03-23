@@ -45,7 +45,7 @@
     - name: Create broken params
       copy:
         dest: "{{ role_path ~ '/' ~ output_dir }}/dhbroken.pem"
-        content: ""
+        content: "broken"
     - name: Regenerate broken params
       openssl_dhparam:
         path: '{{ output_dir }}/dhbroken.pem'

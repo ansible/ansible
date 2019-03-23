@@ -111,7 +111,7 @@
     - name: Create broken key
       copy:
         dest: "{{ role_path ~ '/' ~ output_dir }}/publickeybroken.pub"
-        content: ""
+        content: "broken"
     - name: Regenerate broken key
       openssl_publickey:
         path: '{{ output_dir }}/publickeybroken.pub'
