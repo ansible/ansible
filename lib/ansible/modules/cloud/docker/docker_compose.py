@@ -302,7 +302,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-service_facts:
+services:
   description:
   - A dictionary mapping the service's name to a dictionary of containers.
   - Note that facts are part of the registered vars since Ansible 2.8. For compatibility reasons, the facts
@@ -686,7 +686,7 @@ class ContainerManager(DockerBaseClass):
         start_deps = self.dependencies
         service_names = self.services
         detached = True
-        result = dict(changed=False, actions=[], ansible_facts=dict(), service_facts=dict())
+        result = dict(changed=False, actions=[], ansible_facts=dict(), services=dict())
 
         up_options = {
             u'--no-recreate': False,
@@ -772,7 +772,7 @@ class ContainerManager(DockerBaseClass):
         for service in self.project.services:
             service_facts = dict()
             result['ansible_facts'][service.name] = service_facts
-            result['service_facts'][service.name] = service_facts
+            result['services'][service.name] = service_facts
             for container in service.containers(stopped=True):
                 inspection = container.inspect()
                 # pare down the inspection data to the most useful bits
