@@ -373,9 +373,7 @@ class PrivateKeyPyOpenSSL(PrivateKeyBase):
         try:
             crypto_utils.load_privatekey(self.path, self.passphrase)
             return True
-        except crypto.Error:
-            return False
-        except crypto_utils.OpenSSLBadPassphraseError as exc:
+        except Exception as dummy:
             return False
 
     def _check_size_and_type(self):
@@ -535,12 +533,8 @@ class PrivateKeyCryptography(PrivateKeyBase):
                     backend=self.cryptography_backend
                 )
             return True
-        except TypeError as e:
-            if 'Password' in str(e) and 'encrypted' in str(e):
-                return False
-            raise PrivateKeyError(e)
-        except Exception as e:
-            raise PrivateKeyError(e)
+        except Exception as dummy:
+            return False
 
     def _check_size_and_type(self):
         privatekey = self._load_privatekey()

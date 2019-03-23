@@ -671,7 +671,10 @@ class Certificate(crypto_utils.OpenSSLObject):
         if not state_and_perms:
             return False
 
-        self.cert = crypto_utils.load_certificate(self.path, backend=self.backend)
+        try:
+            self.cert = crypto_utils.load_certificate(self.path, backend=self.backend)
+        except Exception as dummy:
+            return False
 
         if self.privatekey_path:
             try:

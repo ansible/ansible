@@ -235,7 +235,7 @@ class PublicKey(crypto_utils.OpenSSLObject):
                     crypto.FILETYPE_ASN1,
                     crypto.load_publickey(crypto.FILETYPE_PEM, publickey_content)
                 )
-            except (crypto.Error, ValueError):
+            except Exception as dummy:
                 return False
 
             try:

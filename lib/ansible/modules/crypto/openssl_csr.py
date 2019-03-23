@@ -604,7 +604,10 @@ class CertificateSigningRequestPyOpenSSL(CertificateSigningRequestBase):
             except crypto.Error:
                 return False
 
-        csr = crypto_utils.load_certificate_request(self.path)
+        try:
+            csr = crypto_utils.load_certificate_request(self.path)
+        except Exception as dummy:
+            return False
 
         return _check_subject(csr) and _check_extensions(csr) and _check_signature(csr)
 
