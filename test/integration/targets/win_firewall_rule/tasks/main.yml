@@ -393,3 +393,21 @@
   assert:
     that:
     - add_firewall_rule_with_list_profiles.changed == true
+
+- name: Enable a built-in rule
+  win_firewall_rule:
+    name: 'World Wide Web Services (HTTP Traffic-In)'
+    action: allow
+    direction: in
+    enabled: yes
+    state: present
+  register: change_built_in_rule
+
+- name: Disable a built-in rule if previous changed (reset)
+  win_firewall_rule:
+    name: 'World Wide Web Services (HTTP Traffic-In)'
+    action: allow
+    direction: in
+    enabled: no
+    state: present
+  when: change_built_in_rule.changed

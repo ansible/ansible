@@ -50,7 +50,7 @@ function Parse-Profiles
 {
     param($profilesList)
 
-    $profiles = ($profilesList | Select -uniq | ForEach {
+    $profiles = ($profilesList | Select-Object -Unique | ForEach-Object {
         switch ($_) {
             "domain" { return 1 }
             "private" { return 2 }
@@ -67,7 +67,7 @@ function Parse-InterfaceTypes
 {
     param($interfaceTypes)
 
-    return ($interfaceTypes | Select -uniq | ForEach {
+    return ($interfaceTypes | Select-Object -Unique | ForEach-Object {
         switch ($_) {
             "wireless" { return "Wireless" }
             "lan" { return "Lan" }
@@ -102,60 +102,6 @@ function Parse-SecureFlags
     }
 }
 
-function New-FWRule
-{
-    param (
-        [string]$name,
-        [string]$description,
-        [string]$applicationName,
-        [string]$serviceName,
-        [string]$protocol,
-        [string]$localPorts,
-        [string]$remotePorts,
-        [string]$localAddresses,
-        [string]$remoteAddresses,
-        [string]$direction,
-        [string]$action,
-        [bool]$enabled,
-        [string[]]$profiles,
-        [string[]]$interfaceTypes,
-        [string]$edgeTraversalOptions,
-        [string]$secureFlags
-    )
-
-    # INetFwRule interface description: https://msdn.microsoft.com/en-us/library/windows/desktop/aa365344(v=vs.85).aspx
-    $rule = New-Object -ComObject HNetCfg.FWRule
-    $rule.Name = $name
-    $rule.Enabled = $enabled
-    if ($description) { $rule.Description = $description }
-    if ($applicationName) { $rule.ApplicationName = $applicationName }
-    if ($serviceName) { $rule.ServiceName = $serviceName }
-    if ($protocol -and $protocol -ne "any") { $rule.Protocol = Parse-ProtocolType -protocol $protocol }
-    if ($localPorts -and $localPorts -ne "any") { $rule.LocalPorts = $localPorts }
-    if ($remotePorts -and $remotePorts -ne "any") { $rule.RemotePorts = $remotePorts }
-    if ($localAddresses -and $localAddresses -ne "any") { $rule.LocalAddresses = $localAddresses }
-    if ($remoteAddresses -and $remoteAddresses -ne "any") { $rule.RemoteAddresses = $remoteAddresses }
-    if ($direction) { $rule.Direction = Parse-Direction -directionStr $direction }
-    if ($action) { $rule.Action = Parse-Action -actionStr $action }
-    # Profiles value cannot be a uint32, but the "all profiles" value (0x7FFFFFFF) will often become a uint32, so must cast to [int]
-    if ($profiles) { $rule.Profiles = [int](Parse-Profiles -profilesList $profiles) }
-    if ($interfaceTypes -and @(Compare-Object $interfaceTypes @("any")).Count -ne 0) { $rule.InterfaceTypes = Parse-InterfaceTypes -interfaceTypes $interfaceTypes }
-    if ($edgeTraversalOptions -and $edgeTraversalOptions -ne "no") {
-        # EdgeTraversalOptions property exists only from Windows 7/Windows Server 2008 R2: https://msdn.microsoft.com/en-us/library/windows/desktop/dd607256(v=vs.85).aspx
-        if ($rule | Get-Member -Name 'EdgeTraversalOptions') {
-            $rule.EdgeTraversalOptions = Parse-EdgeTraversalOptions -edgeTraversalOptionsStr $edgeTraversalOptions
-        }
-    }
-    if ($secureFlags -and $secureFlags -ne "notrequired") {
-        # SecureFlags property exists only from Windows 8/Windows Server 2012: https://msdn.microsoft.com/en-us/library/windows/desktop/hh447465(v=vs.85).aspx
-        if ($rule | Get-Member -Name 'SecureFlags') {
-            $rule.SecureFlags = Parse-SecureFlags -secureFlagsStr $secureFlags
-        }
-    }
-
-    return $rule
-}
-
 $ErrorActionPreference = "Stop"
 
 $result = @{
@@ -172,16 +118,16 @@ $direction = Get-AnsibleParam -obj $params -name "direction" -type "str" -failif
 $action = Get-AnsibleParam -obj $params -name "action" -type "str" -failifempty $true -validateset "allow","block"
 $program = Get-AnsibleParam -obj $params -name "program" -type "str"
 $service = Get-AnsibleParam -obj $params -name "service" -type "str"
-$enabled = Get-AnsibleParam -obj $params -name "enabled" -type "bool" -default $true -aliases "enable"
-$profiles = Get-AnsibleParam -obj $params -name "profiles" -type "list" -default @("domain", "private", "public") -aliases "profile"
-$localip = Get-AnsibleParam -obj $params -name "localip" -type "str" -default "any"
-$remoteip = Get-AnsibleParam -obj $params -name "remoteip" -type "str" -default "any"
+$enabled = Get-AnsibleParam -obj $params -name "enabled" -type "bool" -aliases "enable"
+$profiles = Get-AnsibleParam -obj $params -name "profiles" -type "list" -aliases "profile"
+$localip = Get-AnsibleParam -obj $params -name "localip" -type "str"
+$remoteip = Get-AnsibleParam -obj $params -name "remoteip" -type "str"
 $localport = Get-AnsibleParam -obj $params -name "localport" -type "str"
 $remoteport = Get-AnsibleParam -obj $params -name "remoteport" -type "str"
-$protocol = Get-AnsibleParam -obj $params -name "protocol" -type "str" -default "any"
-$interfacetypes = Get-AnsibleParam -obj $params -name "interfacetypes" -type "list" -default @("any")
-$edge = Get-AnsibleParam -obj $params -name "edge" -type "str" -default "no" -validateset "no","yes","deferapp","deferuser"
-$security = Get-AnsibleParam -obj $params -name "security" -type "str" -default "notrequired" -validateset "notrequired","authnoencap","authenticate","authdynenc","authenc"
+$protocol = Get-AnsibleParam -obj $params -name "protocol" -type "str"
+$interfacetypes = Get-AnsibleParam -obj $params -name "interfacetypes" -type "list"
+$edge = Get-AnsibleParam -obj $params -name "edge" -type "str" -validateset "no","yes","deferapp","deferuser"
+$security = Get-AnsibleParam -obj $params -name "security" -type "str" -validateset "notrequired","authnoencap","authenticate","authdynenc","authenc"
 
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent"
 
@@ -198,33 +144,48 @@ if ($diff_support) {
 try {
     $fw = New-Object -ComObject HNetCfg.FwPolicy2
 
-    $existingRule = $fw.Rules | Where { $_.Name -eq $name }
+    $existingRule = $fw.Rules | Where-Object { $_.Name -eq $name }
 
     if ($existingRule -is [System.Array]) {
         Fail-Json $result "Multiple firewall rules with name '$name' found."
     }
 
-    $rule = New-FWRule -name $name `
-                       -description $description `
-                       -direction $direction `
-                       -action $action `
-                       -applicationName $program `
-                       -serviceName $service `
-                       -enabled $enabled `
-                       -profiles $profiles `
-                       -localAddresses $localip `
-                       -remoteAddresses $remoteip `
-                       -localPorts $localport `
-                       -remotePorts $remoteport `
-                       -protocol $protocol `
-                       -interfaceTypes $interfacetypes `
-                       -edgeTraversalOptions $edge `
-                       -secureFlags $security
+        # INetFwRule interface description: https://msdn.microsoft.com/en-us/library/windows/desktop/aa365344(v=vs.85).aspx
+    $new_rule = New-Object -ComObject HNetCfg.FWRule
+    $new_rule.Name = $name
+    # the default for enabled in module description is "true", but the actual COM object defaults to "false" when created
+    if ($null -ne $enabled) { $new_rule.Enabled = $enabled } else { $new_rule.Enabled = $true }
+    if ($null -ne $description) { $new_rule.Description = $description }
+    if ($null -ne $program) { $new_rule.ApplicationName = $program }
+    if ($null -ne $service) { $new_rule.ServiceName = $service }
+    if ($null -ne $protocol -and $protocol -ne "any") { $new_rule.Protocol = Parse-ProtocolType -protocol $protocol }
+    if ($null -ne $localport -and $localport -ne "any") { $new_rule.LocalPorts = $localport }
+    if ($null -ne $remoteport -and $remoteport -ne "any") { $new_rule.RemotePorts = $remoteport }
+    if ($null -ne $localip -and $localip -ne "any") { $new_rule.LocalAddresses = $localip }
+    if ($null -ne $remoteip -and $remoteip -ne "any") { $new_rule.RemoteAddresses = $remoteip }
+    if ($null -ne $direction) { $new_rule.Direction = Parse-Direction -directionStr $direction }
+    if ($null -ne $action) { $new_rule.Action = Parse-Action -actionStr $action }
+    # Profiles value cannot be a uint32, but the "all profiles" value (0x7FFFFFFF) will often become a uint32, so must cast to [int]
+    if ($null -ne $profiles) { $new_rule.Profiles = [int](Parse-Profiles -profilesList $profiles) }
+    if ($null -ne $interfacetypes -and @(Compare-Object -ReferenceObject $interfacetypes -DifferenceObject @("any")).Count -ne 0) { $new_rule.InterfaceTypes = Parse-InterfaceTypes -interfaceTypes $interfacetypes }
+    if ($null -ne $edge -and $edge -ne "no") {
+        # EdgeTraversalOptions property exists only from Windows 7/Windows Server 2008 R2: https://msdn.microsoft.com/en-us/library/windows/desktop/dd607256(v=vs.85).aspx
+        if ($new_rule | Get-Member -Name 'EdgeTraversalOptions') {
+            $new_rule.EdgeTraversalOptions = Parse-EdgeTraversalOptions -edgeTraversalOptionsStr $edge
+        }
+    }
+    if ($null -ne $security -and $security -ne "notrequired") {
+        # SecureFlags property exists only from Windows 8/Windows Server 2012: https://msdn.microsoft.com/en-us/library/windows/desktop/hh447465(v=vs.85).aspx
+        if ($new_rule | Get-Member -Name 'SecureFlags') {
+            $new_rule.SecureFlags = Parse-SecureFlags -secureFlagsStr $security
+        }
+    }
 
     $fwPropertiesToCompare = @('Name','Description','Direction','Action','ApplicationName','ServiceName','Enabled','Profiles','LocalAddresses','RemoteAddresses','LocalPorts','RemotePorts','Protocol','InterfaceTypes', 'EdgeTraversalOptions', 'SecureFlags')
+    $userPassedArguments = @($name, $description, $direction, $action, $program, $service, $enabled, $profiles, $localip, $remoteip, $localport, $remoteport, $protocol, $interfacetypes, $edge, $security)
 
     if ($state -eq "absent") {
-        if ($existingRule -eq $null) {
+        if ($null -eq $existingRule) {
             $result.msg = "Firewall rule '$name' does not exist."
         } else {
             if ($diff_support) {
@@ -240,40 +201,42 @@ try {
             $result.msg = "Firewall rule '$name' removed."
         }
     } elseif ($state -eq "present") {
-        if ($existingRule -eq $null) {
+        if ($null -eq $existingRule) {
             if ($diff_support) {
                 foreach ($prop in $fwPropertiesToCompare) {
-                    $result.diff.prepared += "+[$($prop)='$($existingRule.$prop)']`n"
+                    $result.diff.prepared += "+[$($prop)='$($new_rule.$prop)']`n"
                 }
             }
 
             if (-not $check_mode) {
-                $fw.Rules.Add($rule)
+                $fw.Rules.Add($new_rule)
             }
             $result.changed = $true
             $result.msg = "Firewall rule '$name' created."
         } else {
-            foreach ($prop in $fwPropertiesToCompare) {
-                if ($existingRule.$prop -ne $rule.$prop) {
-                    if ($diff_support) {
-                        $result.diff.prepared += "-[$($prop)='$($existingRule.$prop)']`n"
-                        $result.diff.prepared += "+[$($prop)='$($rule.$prop)']`n"
-                    }
+            for($i = 0; $i -lt $fwPropertiesToCompare.Length; $i++) {
+                $prop = $fwPropertiesToCompare[$i]
+                if($null -ne $userPassedArguments[$i]) { # the value was specified
+                    if ($existingRule.$prop -ne $new_rule.$prop) {
+                        if ($diff_support) {
+                            $result.diff.prepared += "-[$($prop)='$($existingRule.$prop)']`n"
+                            $result.diff.prepared += "+[$($prop)='$($new_rule.$prop)']`n"
+                        }
 
-                    if (-not $check_mode) {
-                        # Profiles value cannot be a uint32, but the "all profiles" value (0x7FFFFFFF) will often become a uint32, so must cast to [int]
-                        # to prevent InvalidCastException under PS5+
-                        If($prop -eq 'Profiles') {
-                            $existingRule.Profiles = [int] $rule.$prop
+                        if (-not $check_mode) {
+                            # Profiles value cannot be a uint32, but the "all profiles" value (0x7FFFFFFF) will often become a uint32, so must cast to [int]
+                            # to prevent InvalidCastException under PS5+
+                            If($prop -eq 'Profiles') {
+                                $existingRule.Profiles = [int] $new_rule.$prop
+                            }
+                            Else {
+                                $existingRule.$prop = $new_rule.$prop
+                            }
                         }
-                        Else {
-                            $existingRule.$prop = $rule.$prop
-                        }
+                        $result.changed = $true
                     }
-                    $result.changed = $true
                 }
             }
-
             if ($result.changed) {
                 $result.msg = "Firewall rule '$name' changed."
             } else {
