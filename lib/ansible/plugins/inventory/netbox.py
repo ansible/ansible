@@ -273,10 +273,14 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         try:
             if self.config_context:
 <<<<<<< HEAD
+<<<<<<< HEAD
                 if 'device_role' in host:
 =======
                 if 'device_role' in host: 
 >>>>>>> added differentiator for retrieving config context for vm's
+=======
+                if 'device_role' in host:
+>>>>>>> fixed identified pep8 issue
                     url = self.api_endpoint + "/api/dcim/devices/" + str(host["id"])
                 elif 'role' in host:
                     url = self.api_endpoint + "/api/virtualization/virtual-machines/" + str(host["id"])
