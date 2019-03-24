@@ -47,3 +47,6 @@ httmock
 
 # requirment for kubevirt modules
 openshift ; python_version >= '2.7'
+
+# requirement for maven_artifact
+semantic_version

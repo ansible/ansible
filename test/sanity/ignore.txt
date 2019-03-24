@@ -5209,7 +5209,6 @@ lib/ansible/modules/packaging/language/easy_install.py validate-modules:E324
 lib/ansible/modules/packaging/language/easy_install.py validate-modules:E337
 lib/ansible/modules/packaging/language/easy_install.py validate-modules:E338
 lib/ansible/modules/packaging/language/gem.py validate-modules:E337
-lib/ansible/modules/packaging/language/maven_artifact.py validate-modules:E324
 lib/ansible/modules/packaging/language/maven_artifact.py validate-modules:E337
 lib/ansible/modules/packaging/language/maven_artifact.py validate-modules:E338
 lib/ansible/modules/packaging/language/pear.py validate-modules:E322
