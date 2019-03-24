@@ -54,6 +54,11 @@ options:
     description:
       - Reload SELinux policy after commit.
     default: yes
+  ignore_selinux_state:
+    description:
+    - Run independent of selinux runtime state
+    type: bool
+    default: false
 notes:
    - The changes are persistent across reboots
    - Not tested on any debian based system
@@ -61,6 +66,7 @@ requirements: [ 'libselinux', 'policycoreutils' ]
 author:
 - Dan Keder (@dankeder)
 - Petr Lautrbach (@bachradsusi)
+- James Cassell (@jamescassell)
 '''
 
 EXAMPLES = '''
@@ -144,10 +150,14 @@ def semanage_login_add(module, login, seuser, do_reload, serange='s0', sestore='
         # module.fail_json(msg="%s: %s %s" % (all_logins, login, sestore))
         # for local_login in all_logins:
         if login not in all_logins.keys():
-            selogin.add(login, seuser, serange)
             change = True
+            if not module.check_mode:
+                selogin.add(login, seuser, serange)
         else:
-            selogin.modify(login, seuser, serange)
+            if all_logins[login][0] != seuser or all_logins[login][1] != serange:
+                change = True
+                if not module.check_mode:
+                    selogin.modify(login, seuser, serange)
 
     except (ValueError, KeyError, OSError, RuntimeError) as e:
         module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, to_native(e)), exception=traceback.format_exc())
@@ -183,8 +193,9 @@ def semanage_login_del(module, login, seuser, do_reload, sestore=''):
         all_logins = selogin.get_all()
         # module.fail_json(msg="%s: %s %s" % (all_logins, login, sestore))
         if login in all_logins.keys():
-            selogin.delete(login)
             change = True
+            if not module.check_mode:
+                selogin.delete(login)
 
     except (ValueError, KeyError, OSError, RuntimeError) as e:
         module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, to_native(e)), exception=traceback.format_exc())
@@ -192,9 +203,14 @@ def semanage_login_del(module, login, seuser, do_reload, sestore=''):
     return change
 
 
+def get_runtime_status(ignore_selinux_state=False):
+    return True if ignore_selinux_state is True else selinux.is_selinux_enabled()
+
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
+            ignore_selinux_state=dict(type='bool', default=False),
             login=dict(type='str', required=True),
             seuser=dict(type='str'),
             selevel=dict(type='str', aliases=['serange'], default='s0'),
@@ -204,7 +220,7 @@ def main():
         required_if=[
             ["state", "present", ["seuser"]]
         ],
-        supports_check_mode=False
+        supports_check_mode=True
     )
     if not HAVE_SELINUX:
         module.fail_json(msg=missing_required_lib("libselinux"), exception=SELINUX_IMP_ERR)
@@ -212,7 +228,9 @@ def main():
     if not HAVE_SEOBJECT:
         module.fail_json(msg=missing_required_lib("seobject from policycoreutils"), exception=SEOBJECT_IMP_ERR)
 
-    if not selinux.is_selinux_enabled():
+    ignore_selinux_state = module.params['ignore_selinux_state']
+
+    if not get_runtime_status(ignore_selinux_state):
         module.fail_json(msg="SELinux is disabled on this host.")
 
     login = module.params['login']
