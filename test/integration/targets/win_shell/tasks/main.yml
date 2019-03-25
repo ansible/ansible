@@ -259,7 +259,7 @@
     - nonascii_output.stderr == ''
 
 - name: Add echo to powershell profile
-  win_shell: 'echo "echo PROFILE_LOADED" > $profile'
+  win_shell: 'mkdir $(Split-Path $profile); echo "echo PROFILE_LOADED" > $profile'
 
 - name: Validate that profile is loaded by default
   win_shell: exit 0
