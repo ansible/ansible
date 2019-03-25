@@ -96,6 +96,8 @@ it easier to author playbooks making heavy use of API-based modules such as clou
 +-------+---------------------------+-----------------+
 | k8s   | Kubernetes                | 2.8             |
 +-------+---------------------------+-----------------+
+| os    | OpenStack                 | 2.8             |
++-------+---------------------------+-----------------+
 
 Use the groups with `module_defaults` by prefixing the group name with `group/` - e.g. `group/aws`
 
