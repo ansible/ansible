@@ -256,7 +256,6 @@ class DistributionFiles:
             newstart_facts['distribution_major_version'] = data.split()[-1].split('.')[0]
         return True, newstart_facts
 
-
     def parse_distribution_file_SUSE(self, name, data, path, collected_facts):
         suse_facts = {}
         if 'suse' not in data.lower():
