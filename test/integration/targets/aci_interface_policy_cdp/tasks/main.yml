@@ -79,7 +79,6 @@
 - debug: 
     var: cdp_disable
 
-
 - assert: 
     that:
-      - 'cdp_disable.current.0.cdpifPol.attributes.adminSt == "disabled"'
+      - 'cdp_disable.current.0.cdpIfPol.attributes.adminSt == "disabled"'
