@@ -15,24 +15,27 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_virtualmachinescalesetextension_facts
+module: azure_rm_virtualmachineextension_info
 version_added: "2.8"
-short_description: Get Azure Virtual Machine Scale Set Extension facts.
+short_description: Get Azure Virtual Machine Extension facts.
 description:
-    - Get facts of Azure Virtual Machine Scale Set Extension.
+    - Get facts of Azure Virtual Machine Extension.
 
 options:
     resource_group:
         description:
             - The name of the resource group.
         required: True
-    vmss_name:
+    virtual_machine_name:
         description:
-            - The name of VMSS containing the extension.
+            - The name of the virtual machine containing the extension.
         required: True
     name:
         description:
             - The name of the virtual machine extension.
+    tags:
+        description:
+            - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
 
 extends_documentation_fragment:
     - azure
@@ -43,16 +46,16 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Get information on specific Virtual Machine Scale Set Extension
-    azure_rm_virtualmachineextension_facts:
+  - name: Get information on specific Virtual Machine Extension
+    azure_rm_virtualmachineextension_info:
       resource_group: myResourceGroup
-      vmss_name: myvmss
+      virtual_machine_name: myvm
       name: myextension
 
-  - name: List installed Virtual Machine Scale Set Extensions
-    azure_rm_virtualmachineextension_facts:
-      resource_group: myrg
-      vmss_name: myvmss
+  - name: List installed Virtual Machine Extensions
+    azure_rm_virtualmachineextension_info:
+      resource_group: myResourceGroup
+      virtual_machine_name: myvm
 '''
 
 RETURN = '''
@@ -66,26 +69,32 @@ extensions:
                 - Resource Id
             returned: always
             type: str
-            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/
-                     myvmss/extensions/myextension"
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/myvm/testVM/extens
+                     ions/myextension"
         resource_group:
             description:
                 - Resource group name
             returned: always
             type: str
-            sample: myrg
-        vmss_name:
+            sample: myResourceGroup
+        virtual_machine_name:
             description:
                 - Virtual machine name
             returned: always
             type: str
-            sample: myvmss
+            sample: myvm
         name:
             description:
                 - Virtual machine name
             returned: always
             type: str
             sample: myextension
+        location:
+            description:
+                - Location
+            returned: always
+            type: str
+            sample: eastus
         publisher:
             description:
                 - Extension publisher
@@ -110,6 +119,12 @@ extensions:
             returned: always
             type: bool
             sample: true
+        tags:
+            description:
+                - Resource tags
+            returned: always
+            type: complex
+            sample: "{ mytag: abc }"
         provisioning_state:
             description:
                 - Provisioning state of the extension
@@ -128,7 +143,7 @@ except ImportError:
     pass
 
 
-class AzureRMVirtualMachineScaleSetExtensionFacts(AzureRMModuleBase):
+class AzureRMVirtualMachineExtensionFacts(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -136,12 +151,15 @@ class AzureRMVirtualMachineScaleSetExtensionFacts(AzureRMModuleBase):
                 type='str',
                 required=True
             ),
-            vmss_name=dict(
+            virtual_machine_name=dict(
                 type='str',
                 required=True
             ),
             name=dict(
                 type='str'
+            ),
+            tags=dict(
+                type='list'
             )
         )
         # store the results of the module operation
@@ -149,9 +167,10 @@ class AzureRMVirtualMachineScaleSetExtensionFacts(AzureRMModuleBase):
             changed=False
         )
         self.resource_group = None
-        self.vmss_name = None
+        self.virtual_machine_name = None
         self.name = None
-        super(AzureRMVirtualMachineScaleSetExtensionFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        self.tags = None
+        super(AzureRMVirtualMachineExtensionFacts, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
@@ -168,14 +187,14 @@ class AzureRMVirtualMachineScaleSetExtensionFacts(AzureRMModuleBase):
         response = None
         results = []
         try:
-            response = self.compute_client.virtual_machine_scale_set_extensions.get(resource_group_name=self.resource_group,
-                                                                                    vm_scale_set_name=self.vmss_name,
-                                                                                    vmss_extension_name=self.name)
+            response = self.compute_client.virtual_machine_extensions.get(resource_group_name=self.resource_group,
+                                                                          vm_name=self.virtual_machine_name,
+                                                                          vm_extension_name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
             self.log('Could not get facts for Virtual Machine Extension.')
 
-        if response:
+        if response and self.has_tags(response.tags, self.tags):
             results.append(self.format_response(response))
 
         return results
@@ -184,37 +203,39 @@ class AzureRMVirtualMachineScaleSetExtensionFacts(AzureRMModuleBase):
         response = None
         results = []
         try:
-            response = self.compute_client.virtual_machine_scale_set_extensions.list(resource_group_name=self.resource_group,
-                                                                                     vm_scale_set_name=self.vmss_name)
+            response = self.compute_client.virtual_machine_extensions.list(resource_group_name=self.resource_group,
+                                                                           vm_name=self.virtual_machine_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
             self.log('Could not get facts for Virtual Machine Extension.')
 
-        if response is not None:
-            for item in response:
-                results.append(self.format_response(item))
+        if response is not None and response.value is not None:
+            for item in response.value:
+                if self.has_tags(item.tags, self.tags):
+                    results.append(self.format_response(item))
 
         return results
 
     def format_response(self, item):
-        id_template = "/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Compute/virtualMachineScaleSets/{2}/extensions/{3}"
         d = item.as_dict()
         d = {
-            'id': id_template.format(self.subscription_id, self.resource_group, self.vmss_name, d.get('name')),
+            'id': d.get('id', None),
             'resource_group': self.resource_group,
-            'vmss_name': self.vmss_name,
+            'virtual_machine_name': self.virtual_machine_name,
+            'location': d.get('location'),
             'name': d.get('name'),
             'publisher': d.get('publisher'),
-            'type': d.get('type'),
+            'type': d.get('virtual_machine_extension_type'),
             'settings': d.get('settings'),
             'auto_upgrade_minor_version': d.get('auto_upgrade_minor_version'),
+            'tags': d.get('tags', None),
             'provisioning_state': d.get('provisioning_state')
         }
         return d
 
 
 def main():
-    AzureRMVirtualMachineScaleSetExtensionFacts()
+    AzureRMVirtualMachineExtensionFacts()
 
 
 if __name__ == '__main__':

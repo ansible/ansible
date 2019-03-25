@@ -3,6 +3,6 @@ destructive
 shippable/azure/group4
 azure_rm_sqlserver_facts
 azure_rm_sqldatabase
-azure_rm_sqldatabase_facts
+azure_rm_sqldatabase_info
 azure_rm_sqlfirewallrule
-azure_rm_sqlfirewallrule_facts
+azure_rm_sqlfirewallrule_info
