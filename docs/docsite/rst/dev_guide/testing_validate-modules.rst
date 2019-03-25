@@ -141,6 +141,9 @@ Errors
             modules or a ``.ps1`` for powershell modules
   502       Ansible module subdirectories must contain an ``__init__.py``
   503       Missing python documentation file
+  504       Module contains ansible_facts but is not named with _facts suffix
+  505       Module does not contain ansible_facts but is named using the _facts suffix.
+            This module should instead use the _info suffix
 =========   ===================
 
 Warnings

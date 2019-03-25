@@ -437,6 +437,23 @@ class ModuleValidator(Validator):
                         column=(os_call_match.span()[0] + 1)
                     )
 
+    def _check_facts(self):
+        endswith_facts = self.name.endswith('_facts')
+        found_facts = 'ansible_facts' in self.text
+        if found_facts and not endswith_facts:
+            self.reporter.error(
+                path=self.object_path,
+                code=504,
+                msg='Module contains ansible_facts but is not named with _facts suffix'
+            )
+        elif not found_facts and endswith_facts:
+            self.reporter.error(
+                path=self.object_path,
+                code=505,
+                msg=('Module does not contain ansible_facts but is named using the _facts suffix. '
+                     'This module should instead use the _info suffix')
+            )
+
     def _find_blacklist_imports(self):
         for child in self.ast.body:
             names = []
@@ -1545,6 +1562,7 @@ class ModuleValidator(Validator):
                     self._validate_ansible_module_call(docs)
 
         self._check_gpl3_header()
+        self._check_facts()
         if not self._just_docs() and not end_of_deprecation_should_be_removed_only:
             self._check_interpreter(powershell=self._powershell_module())
             self._check_type_instead_of_isinstance(
