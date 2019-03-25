@@ -1,0 +1,2 @@
+minor_changes:
+- Updated VMware Update tag API as new specifications (https://github.com/ansible/ansible/issues/53060).
