@@ -115,14 +115,14 @@
       - passphrase_5 is changed
       - passphrase_1.backup_file is undefined
       - passphrase_2.backup_file is undefined
-      - passphrase_3.backup_file is not none
+      - passphrase_3.backup_file is string
       - passphrase_4.backup_file is undefined
-      - passphrase_5.backup_file is not none
+      - passphrase_5.backup_file is string
 
 - name: Validate remove
   assert:
     that:
       - remove_1 is changed
       - remove_2 is not changed
-      - remove_1.backup_file is not none
+      - remove_1.backup_file is string
       - remove_2.backup_file is undefined

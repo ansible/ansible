@@ -273,7 +273,7 @@ class PrivateKeyBase(crypto_utils.OpenSSLObject):
         self.fingerprint = {}
 
         self.backup = module.params['backup']
-        self.backup_path = None
+        self.backup_file = None
 
         self.mode = module.params.get('mode', None)
         if self.mode is None:
@@ -352,8 +352,8 @@ class PrivateKeyBase(crypto_utils.OpenSSLObject):
             'changed': self.changed,
             'fingerprint': self.fingerprint,
         }
-        if self.backup_path:
-            result['backup_path'] = self.backup_path
+        if self.backup_file:
+            result['backup_file'] = self.backup_file
 
         return result
 
