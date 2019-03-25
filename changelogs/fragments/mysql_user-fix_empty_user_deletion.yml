@@ -1,0 +1,2 @@
+bugfixes:
+  - cleanup mysql.db entries when removing anonymous user

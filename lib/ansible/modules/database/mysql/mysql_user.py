@@ -105,6 +105,7 @@ notes:
 
 author:
 - Jonathan Mainguy (@Jmainguy)
+- Benjamin Malynovytch (@bmalynovytch)
 extends_documentation_fragment: mysql
 '''
 
