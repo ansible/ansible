@@ -1,61 +1,35 @@
 .. _network-best-practices:
 
-**************************************
-Network Best Practices for Ansible 2.5
-**************************************
+************************
+Ansible Network Examples
+************************
 
+This document describes some examples of using Ansible to manage your network infrastructure.
 
-Overview
-========
-
-This document explains the best practices for using Ansible 2.5 to manage your network infrastructure.
-
-
-Audience
---------
-
-* This example is intended for network or system administrators who want to understand how to use Ansible to manage network devices.
-
+.. contents::
+   :local:
 
 Prerequisites
--------------
+=============
 
 This example requires the following:
 
-* **Ansible 2.5** (or higher) installed. See :doc:`../../installation_guide/intro_installation` for more information.
+* **Ansible 2.5** (or higher) installed. See :ref:`intro_installation_guide` for more information.
 * One or more network devices that are compatible with Ansible.
-* Basic understanding of YAML :doc:`../../reference_appendices/YAMLSyntax`.
-* Basic understanding of Jinja2 Templates. See :doc:`../../user_guide/playbooks_templating` for more information.
+* Basic understanding of YAML :ref:`yaml_syntax`.
+* Basic understanding of Jinja2 templates. See :ref:`playbooks_templating` for more information.
 * Basic Linux command line use.
 * Basic knowledge of network switch & router configurations.
 
 
+Groups and variables in an inventory file
+=========================================
 
-Concepts
-========
-
-This section explains some fundamental concepts that you should understand when working with Ansible Networking.
-
-Structure
-----------
-
-The examples on this page use the following structure:
-
-.. code-block:: console
-
-   .
-   ├── facts-demo.yml
-   └── inventory
-
-
-Inventory, Connections, Credentials: Grouping Devices and Variables
--------------------------------------------------------------------
-
-An ``inventory`` file is an INI-like configuration file that defines the mapping of hosts into groups.
+An ``inventory`` file is a YAML or INI-like configuration file that defines the mapping of hosts into groups.
 
 In our example, the inventory file defines the groups ``eos``, ``ios``, ``vyos`` and a "group of groups" called ``switches``. Further details about subgroups and inventory files can be found in the :ref:`Ansible inventory Group documentation <subgroups>`.
 
-Because Ansible is a flexible tool, there are a number of ways to specify connection information and credentials. We recommend using the ``[my_group:vars]`` capability in your inventory file. Here's what it would look like if you specified your ssh passwords (encrypted with Ansible Vault) among your variables:
+Because Ansible is a flexible tool, there are a number of ways to specify connection information and credentials. We recommend using the ``[my_group:vars]`` capability in your inventory file. Here's what it would look like if you specified your SSH passwords (encrypted with Ansible Vault) among your variables:
 
 .. code-block:: ini
 
@@ -122,13 +96,21 @@ Because Ansible is a flexible tool, there are a number of ways to specify connec
                      3665626431626532630a353564323566316162613432373738333064366130303637616239396438
                      9853
 
-If you use ssh-agent, you do not need the ``ansible_password`` lines. If you use ssh keys, but not ssh-agent, and you have multiple keys, specify the key to use for each connection in the ``[group:vars]`` section with ``ansible_ssh_private_key_file=/path/to/correct/key``. For more information on ``ansible_ssh_`` options see the :ref:`behavioral_parameters`.
+If you use ssh-agent, you do not need the ``ansible_password`` lines. If you use ssh keys, but not ssh-agent, and you have multiple keys, specify the key to use for each connection in the ``[group:vars]`` section with ``ansible_ssh_private_key_file=/path/to/correct/key``. For more information on ``ansible_ssh_`` options see :ref:`behavioral_parameters`.
 
 .. FIXME FUTURE Gundalow - Link to network auth & proxy page (to be written)
 
 .. warning:: Never store passwords in plain text.
 
-The "Vault" feature of Ansible allows you to keep sensitive data such as passwords or keys in encrypted files, rather than as plain text in your playbooks or roles. These vault files can then be distributed or placed in source control. See :doc:`../../user_guide/playbooks_vault` for more information.
+Ansible vault for password encryption
+-------------------------------------
+
+The "Vault" feature of Ansible allows you to keep sensitive data such as passwords or keys in encrypted files, rather than as plain text in your playbooks or roles. These vault files can then be distributed or placed in source control. See :ref:`playbooks_vault` for more information.
+
+Common inventory variables
+--------------------------
+
+The following variables are common for all platforms in the inventory, though they can be overwritten for a particular inventory group or host.
 
 :ansible_connection:
 
@@ -145,9 +127,9 @@ The "Vault" feature of Ansible allows you to keep sensitive data such as passwor
   Which type of `become` should be used, for ``network_cli`` the only valid choice is ``enable``.
 
 Privilege escalation
-^^^^^^^^^^^^^^^^^^^^
+--------------------
 
-Certain network platforms, such as eos and ios, have the concept of different privilege modes. Certain network modules, such as those that modify system state including users, will only work in high privilege states. Ansible version 2.5 added support for ``become`` when using ``connection: network_cli``. This allows privileges to be raised for the specific tasks that need them. Adding ``become: yes`` and ``become_method: enable`` informs Ansible to go into privilege mode before executing the task, as shown here:
+Certain network platforms, such as Arista EOS and Cisco IOS, have the concept of different privilege modes. Certain network modules, such as those that modify system state including users, will only work in high privilege states. Ansible supports ``become`` when using ``connection: network_cli``. This allows privileges to be raised for the specific tasks that need them. Adding ``become: yes`` and ``become_method: enable`` informs Ansible to go into privilege mode before executing the task, as shown here:
 
 .. code-block:: ini
 
@@ -161,15 +143,12 @@ For more information, see the :ref:`using become with network modules<become_net
 
 
 Jump hosts
-^^^^^^^^^^
+----------
 
 If the Ansible Controller doesn't have a direct route to the remote device and you need to use a Jump Host, please see the :ref:`Ansible Network Proxy Command <network_delegate_to_vs_ProxyCommand>` guide for details on how to achieve this.
 
-Playbook
---------
-
-Collect data
-^^^^^^^^^^^^
+Example 1: collecting facts and creating backup files with a playbook
+=====================================================================
 
 Ansible facts modules gather system information 'facts' that are available to the rest of your playbook.
 
@@ -179,13 +158,10 @@ Ansible's "Network Fact modules" gather information from the system and store th
 
 To ensure we call the correct mode (``*_facts``) the task is conditionally run based on the group defined in the inventory file, for more information on the use of conditionals in Ansible Playbooks see :ref:`the_when_statement`.
 
-
-Example
-=======
-
 In this example, we will create an inventory file containing some network switches, then run a playbook to connect to the network devices and return some information about them.
 
-**Create an inventory file**
+Step 1: Creating the inventory
+------------------------------
 
 First, create a file called ``inventory``, containing:
 
@@ -206,7 +182,8 @@ First, create a file called ``inventory``, containing:
    vyos01.example.net
 
 
-**Create a playbook**
+Step 2: Creating the playbook
+-----------------------------
 
 Next, create a playbook file called ``facts-demo.yml`` containing the following:
 
@@ -307,8 +284,8 @@ Next, create a playbook file called ``facts-demo.yml`` containing the following:
            dest: "/tmp/backups/{{ inventory_hostname }}/{{ inventory_hostname }}.bck"
          when: ansible_network_os == 'vyos'
 
-Running the playbook
---------------------
+Step 3: Running the playbook
+----------------------------
 
 To run the playbook, run the following from a console prompt:
 
@@ -325,6 +302,9 @@ This should return output similar to the following:
    ios01.example.net          : ok=7    changed=2    unreachable=0    failed=0
    vyos01.example.net         : ok=6    changed=2    unreachable=0    failed=0
 
+Step 4: Examining the playbook results
+--------------------------------------
+
 Next, look at the contents of the file we created containing the switch facts:
 
 .. code-block:: console
@@ -338,7 +318,136 @@ You can also look at the backup files:
    find /tmp/backups
 
 
-If `ansible-playbook` fails, please follow the debug steps in :doc:`network_debug_troubleshooting`.
+If `ansible-playbook` fails, please follow the debug steps in :ref:`network_debug_troubleshooting`.
+
+
+.. _network-agnostic-examples:
+
+Example 2: simplifying playbooks with network agnostic modules
+==============================================================
+
+If you have two or more network platforms in your environment, you can use the network agnostic modules to simplify your playbooks. You can use network agnostic modules such as ``cli_command`` or ``cli_config`` in place of the platform-specific modules such as ``eos_config``, ``ios_config``, and ``junos_config``. This reduces the number of tasks and conditionals you need in your playbooks.
+
+.. note::
+  Network agnostic modules require the :ref:`network_cli <network_cli_connection>` connection plugin.
+
+
+Sample playbook with platform-specific modules
+----------------------------------------------
+
+This example assumes three platforms, Arista EOS, Cisco NXOS, and Juniper JunOS.  Without the network agnostic modules, a sample playbook might contain the following three tasks with platform-specific commands:
+
+.. code-block:: yaml
+
+  ---
+  - name: Run Arista command
+    eos_command:
+      commands: show ip int br
+    when: ansible_network_os == 'eos'
+
+  - name: Run Cisco NXOS command
+    nxos_command:
+      commands: show ip int br
+    when: ansible_network_os == 'nxos'
+
+  - name: Run Vyos command
+    vyos_command:
+      commands: show interface
+    when: ansible_network_os == 'vyos'
+
+Simplified playbook with ``cli_command`` network agnostic module
+----------------------------------------------------------------
+
+You can replace these platform-specific modules with the network agnostic ``cli_command`` module as follows:
+
+.. code-block:: yaml
+
+  ---
+  - hosts: network
+    gather_facts: false
+    connection: network_cli
+
+    tasks:
+      - name: Run cli_command on Arista and display results
+        block:
+        - name: Run cli_command on Arista
+          cli_command:
+            command: show ip int br
+          register: result
+
+        - name: Display result to terminal window
+          debug:
+            var: result.stdout_lines
+        when: ansible_network_os == 'eos'
+
+      - name: Run cli_command on Cisco IOS and display results
+        block:
+        - name: Run cli_command on Cisco IOS
+          cli_command:
+            command: show ip int br
+          register: result
+
+        - name: Display result to terminal window
+          debug:
+            var: result.stdout_lines
+        when: ansible_network_os == 'ios'
+
+      - name: Run cli_command on Vyos and display results
+        block:
+        - name: Run cli_command on Vyos
+          cli_command:
+            command: show interfaces
+          register: result
+
+        - name: Display result to terminal window
+          debug:
+            var: result.stdout_lines
+        when: ansible_network_os == 'vyos'
+
+
+If you use groups and group_vars by platform type, this playbook can be further simplified to :
+
+.. code-block:: yaml
+
+  ---
+  - name: Run command and print to terminal window
+    hosts: routers
+    gather_facts: false
+
+    tasks:
+      - name: Run show command
+        cli_command:
+          command: "{{show_interfaces}}"
+        register: command_output
+
+
+You can see a full example of this using group_vars and also a configuration backup example at `Network agnostic examples <https://github.com/network-automation/agnostic_example>`_.
+
+Using multiple prompts with the  ``cli_command``
+------------------------------------------------
+
+The ``cli_command`` also supports multiple prompts.
+
+.. code-block:: yaml
+
+  ---
+  - name: Change password to default
+    cli_command:
+      command: "{{ item }}"
+      prompt:
+        - "New password"
+        - "Retype new password"
+      answer:
+        - "mypassword123"
+        - "mypassword123"
+      check_all: True
+    loop:
+      - "configure"
+      - "rollback"
+      - "set system root-authentication plain-text-password"
+      - "commit"
+
+See the :ref:`cli_command <cli_command_module>` for full documentation on this command.
 
 
 Implementation Notes
@@ -366,14 +475,10 @@ Note that when using variables from tasks in this way we use double quotes (``"`
 Troubleshooting
 ===============
 
-If you receive an connection error please double check the inventory and Playbook for typos or missing lines. If the issue still occurs follow the debug steps in :doc:`network_debug_troubleshooting`.
+If you receive an connection error please double check the inventory and playbook for typos or missing lines. If the issue still occurs follow the debug steps in :ref:`network_debug_troubleshooting`.
 
 .. seealso::
 
   * :ref:`network_guide`
-  * :doc:`../../user_guide/intro_inventory`
+  * :ref:`intro_inventory`
   * :ref:`Vault best practices <best_practices_for_variables_and_vaults>`
-
-
-
-
