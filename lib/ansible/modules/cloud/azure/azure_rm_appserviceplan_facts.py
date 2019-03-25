@@ -142,7 +142,6 @@ class AzureRMAppServicePlanFacts(AzureRMModuleBase):
         )
 
         self.results = dict(changed=False)
-        )
 
         self.name = None
         self.resource_group = None
