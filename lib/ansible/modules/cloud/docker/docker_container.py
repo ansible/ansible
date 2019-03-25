@@ -61,7 +61,7 @@ options:
       - Allows to specify how properties of existing containers are compared with
         module options to decide whether the container should be recreated / updated
         or not. Only options which correspond to the state of a container as handled
-        by the Docker daemon can be specified.
+        by the Docker daemon can be specified, as well as C(networks).
       - Must be a dictionary specifying for an option one of the keys C(strict), C(ignore)
         and C(allow_more_present).
       - If C(strict) is specified, values are tested for equality, and changes always
@@ -423,6 +423,20 @@ options:
             can be used in the network to reach this container.
         type: list
     version_added: "2.2"
+  networks_cli_compatible:
+    description:
+      - "When networks are provided to the module via the I(networks) option, the module
+         behaves differently than C(docker run --network): C(docker run --network other)
+         will create a container with network C(other) attached, but the default network
+         not attached. This module with C(networks: {name: other}) will create a container
+         with both C(default) and C(other) attached. If I(purge_networks) is set to C(yes),
+         the C(default) network will be removed afterwards."
+      - "If I(networks_cli_compatible) is set to C(yes), this module will behave as
+         C(docker run --network) and will I(not) add the default network if C(networks) is
+         specified. If C(networks) is not specified, the default network will be attached."
+      - Current value is C(no). A new default of C(yes) will be set in Ansible 2.12.
+    type: bool
+    version_added: "2.8"
   oom_killer:
     description:
       - Whether or not to disable OOM Killer for the container.
@@ -1076,6 +1090,7 @@ class TaskParameters(DockerBaseClass):
         self.network_mode = None
         self.userns_mode = None
         self.networks = None
+        self.networks_cli_compatible = None
         self.oom_killer = None
         self.oom_score_adj = None
         self.paused = None
@@ -1260,6 +1275,16 @@ class TaskParameters(DockerBaseClass):
             if getattr(self, value, None) is not None:
                 if self.client.option_minimal_versions[value]['supported']:
                     result[key] = getattr(self, value)
+
+        if self.networks_cli_compatible and self.networks:
+            network = self.networks[0]
+            params = dict()
+            for para in ('ipv4_address', 'ipv6_address', 'links', 'aliases'):
+                if network.get(para):
+                    params[para] = network[para]
+            network_config = dict()
+            network_config[network['name']] = self.client.create_endpoint_config(params)
+            result['networking_config'] = self.client.create_networking_config(network_config)
         return result
 
     def _expand_host_paths(self):
@@ -2265,6 +2290,7 @@ class ContainerManager(DockerBaseClass):
         container = self._get_container(self.parameters.name)
         was_running = container.running
         was_paused = container.paused
+        container_created = False
 
         # If the image parameter was passed then we need to deal with the image
         # version comparison. Otherwise we handle this depending on whether
@@ -2282,6 +2308,7 @@ class ContainerManager(DockerBaseClass):
             new_container = self.container_create(self.parameters.image, self.parameters.create_parameters)
             if new_container:
                 container = new_container
+            container_created = True
         else:
             # Existing container
             different, differences = container.has_different_configuration(image)
@@ -2306,10 +2333,11 @@ class ContainerManager(DockerBaseClass):
                 new_container = self.container_create(image_to_use, self.parameters.create_parameters)
                 if new_container:
                     container = new_container
+                container_created = True
 
         if container and container.exists:
             container = self.update_limits(container)
-            container = self.update_networks(container)
+            container = self.update_networks(container, container_created)
 
             if state == 'started' and not container.running:
                 self.diff_tracker.add('running', parameter=True, active=was_running)
@@ -2405,24 +2433,25 @@ class ContainerManager(DockerBaseClass):
             return self._get_container(container.Id)
         return container
 
-    def update_networks(self, container):
-        has_network_differences, network_differences = container.has_network_differences()
+    def update_networks(self, container, container_created):
         updated_container = container
-        if has_network_differences:
-            if self.diff.get('differences'):
-                self.diff['differences'].append(dict(network_differences=network_differences))
-            else:
-                self.diff['differences'] = [dict(network_differences=network_differences)]
-            for netdiff in network_differences:
-                self.diff_tracker.add(
-                    'network.{0}'.format(netdiff['parameter']['name']),
-                    parameter=netdiff['parameter'],
-                    active=netdiff['container']
-                )
-            self.results['changed'] = True
-            updated_container = self._add_networks(container, network_differences)
+        if self.parameters.comparisons['networks']['comparison'] != 'ignore' or container_created:
+            has_network_differences, network_differences = container.has_network_differences()
+            if has_network_differences:
+                if self.diff.get('differences'):
+                    self.diff['differences'].append(dict(network_differences=network_differences))
+                else:
+                    self.diff['differences'] = [dict(network_differences=network_differences)]
+                for netdiff in network_differences:
+                    self.diff_tracker.add(
+                        'network.{0}'.format(netdiff['parameter']['name']),
+                        parameter=netdiff['parameter'],
+                        active=netdiff['container']
+                    )
+                self.results['changed'] = True
+                updated_container = self._add_networks(container, network_differences)
 
-        if self.parameters.purge_networks:
+        if (self.parameters.comparisons['networks']['comparison'] == 'strict' and self.parameters.networks is not None) or self.parameters.purge_networks:
             has_extra_networks, extra_networks = container.has_extra_networks()
             if has_extra_networks:
                 if self.diff.get('differences'):
@@ -2665,6 +2694,7 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
             env='set',
             entrypoint='list',
             etc_hosts='set',
+            networks='set(dict)',
             ulimits='set(dict)',
             device_read_bps='set(dict)',
             device_write_bps='set(dict)',
@@ -2680,7 +2710,7 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
             for alias in data.get('aliases', []):
                 all_options.add(alias)
             # Ignore options which aren't used as container properties
-            if option in self.__NON_CONTAINER_PROPERTY_OPTIONS:
+            if option in self.__NON_CONTAINER_PROPERTY_OPTIONS and option != 'networks':
                 continue
             # Determine option type
             if option in explicit_types:
@@ -2706,6 +2736,8 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
         # Process legacy ignore options
         if self.module.params['ignore_image']:
             comparisons['image']['comparison'] = 'ignore'
+        if self.module.params['purge_networks']:
+            comparisons['networks']['comparison'] = 'strict'
         # Process options
         if self.module.params.get('comparisons'):
             # If '*' appears in comparisons, process it first
@@ -2713,7 +2745,12 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
                 value = self.module.params['comparisons']['*']
                 if value not in ('strict', 'ignore'):
                     self.fail("The wildcard can only be used with comparison modes 'strict' and 'ignore'!")
-                for dummy, v in comparisons.items():
+                for option, v in comparisons.items():
+                    if option == 'networks':
+                        # `networks` is special: only update if
+                        # some value is actually specified
+                        if self.module.params['networks'] is None:
+                            continue
                     v['comparison'] = value
             # Now process all other comparisons.
             comp_aliases_used = {}
@@ -2748,6 +2785,8 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
         # Check legacy values
         if self.module.params['ignore_image'] and comparisons['image']['comparison'] != 'ignore':
             self.module.warn('The ignore_image option has been overridden by the comparisons option!')
+        if self.module.params['purge_networks'] and comparisons['networks']['comparison'] != 'strict':
+            self.module.warn('The purge_networks option has been overridden by the comparisons option!')
         self.comparisons = comparisons
 
     def _get_additional_minimal_versions(self):
@@ -2893,6 +2932,7 @@ def main():
             aliases=dict(type='list', elements='str'),
             links=dict(type='list', elements='str'),
         )),
+        networks_cli_compatible=dict(type='bool'),
         oom_killer=dict(type='bool'),
         oom_score_adj=dict(type='int'),
         output_logs=dict(type='bool', default=False),
@@ -2938,6 +2978,16 @@ def main():
         supports_check_mode=True,
         min_docker_api_version='1.20',
     )
+    if client.module.params['networks_cli_compatible'] is None and client.module.params['networks']:
+        client.module.deprecate(
+            'Please note that docker_container handles networks slightly different than docker CLI. '
+            'If you specify networks, the default network will still be attached as the first network. '
+            '(You can specify purge_networks to remove all networks not explicitly listed.) '
+            'This behavior will change in Ansible 2.12. You can change the behavior now by setting '
+            'the new `networks_cli_compatible` option to `yes`, and remove this warning by setting '
+            'it to `no`',
+            version='2.12'
+        )
 
     cm = ContainerManager(client)
     client.module.exit_json(**sanitize_result(cm.results))
