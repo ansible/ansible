@@ -35,7 +35,7 @@ options:
      default: present
    tags:
      description:
-       - tag names
+       - Key and value for tags
      required: true
    availability_zone:
      description:
@@ -51,7 +51,7 @@ EXAMPLES = '''
     server: "{{ server_name }}"
     state: present
     tags:
-      - tagname.tag
+      - key.value
 '''
 
 RETURN = '''
@@ -59,7 +59,15 @@ server:
     description: UUID of the server.
     returned: success
     type: str
+    sample: 2f66c03e-a9ab-414c-925a-03eb14871456
+
+tags:
+    description: tags.
+    returned: success
+    type: list
+    sample: ["key1.value1","key2.value2"]
 '''
+
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.openstack import (
@@ -81,9 +89,11 @@ def main():
     )
 
     module_kwargs = openstack_module_kwargs()
-    module = AnsibleModule(argument_spec, **module_kwargs)
+    module = AnsibleModule(argument_spec,
+                           supports_check_mode=True,
+                           **module_kwargs)
 
-    server = module.params['server']
+    server_param = module.params['server']
     state = module.params['state']
     tags = module.params['tags']
 
@@ -91,27 +101,29 @@ def main():
     sdk, cloud = openstack_cloud_from_module(module)
 
     try:
-
-        server = cloud.get_server(server)
+        changed = False
+        server = cloud.get_server(server_param)
         if not server:
-            module.fail_json(msg="server not found: %s " % module.params['server'])
+            module.fail_json(msg="server not found: %s " % server_param)
 
         server = conn.compute.get_server(server.id)
         current_tagging = server.fetch_tags(conn.compute)
 
         if state == 'present':
-            if set(current_tagging.tags) == set(tags):
-                module.exit_json(changed=False)
-            else:
-                server.set_tags(conn.compute, tags)
-                module.exit_json(changed=True, server=server.id)
+            if set(current_tagging.tags) != set(tags):
+                if not module.check_mode:
+                    server.set_tags(conn.compute, tags)
+                changed = True
         elif state == 'absent':
             for tag in tags:
                 if tag in current_tagging.tags:
-                    server.remove_tag(conn.compute, tag)
-                    module.exit_json(changed=True)
-                else:
-                    module.exit_json(changed=False)
+                    if not module.check_mode:
+                        server.remove_tag(conn.compute, tag)
+                    changed = True
+
+        # Refresh current tags again
+        current_tagging = server.fetch_tags(conn.compute)
+        module.exit_json(changed=changed, server=server.id, tags=current_tagging.tags)
 
     except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e), extra_data=e.extra_data)
