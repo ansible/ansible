@@ -1,0 +1,5 @@
+minor_changes:
+- "docker_container - a new option ``networks_cli_compatible`` with default value ``no`` has been added. The default value
+   will change to ``yes`` in Ansible 2.12. Setting it to ``yes`` lets the module behave similar to ``docker create --network``
+   when at least one network is specified, i.e. the default network is not automatically attached to the container in this
+   case."
