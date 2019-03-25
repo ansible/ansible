@@ -73,6 +73,11 @@ EXAMPLES = '''
       resource_type: virtualmachinescalesets
       resource_name: myVmss
       api_version: "2017-12-01"
+
+  - name: Query all the resources in the resource group
+    azure_rm_resource_facts:
+      resource_group: "{{ resource_group }}"
+      resource_type: resources
 '''
 
 RETURN = '''
@@ -187,6 +192,9 @@ class AzureRMResourceFacts(AzureRMModuleBase):
                         if rt['resourceType'].lower() == resourceType.lower():
                             self.api_version = rt['apiVersions'][0]
                             break
+                else:
+                    # if there's no provider in API version, assume Microsoft.Resources
+                    self.api_version = '2018-05-01'
                 if not self.api_version:
                     self.fail("Couldn't find api version for {0}/{1}".format(provider, resourceType))
             except Exception as exc:

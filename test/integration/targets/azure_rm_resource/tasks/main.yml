@@ -99,6 +99,17 @@
       - output.response[0]['name'] != None
       - output.response | length >= 1
 
+- name: Query all the resources in the resource group
+  azure_rm_resource_facts:
+    resource_group: "{{ resource_group }}"
+    resource_type: resources
+  register: output
+- name: Assert value was returned
+  assert:
+    that:
+      - not output.changed
+      - output.response | length >= 1
+
 - name: Create storage account that requires LRO polling
   azure_rm_resource:
     polling_timeout: 600
