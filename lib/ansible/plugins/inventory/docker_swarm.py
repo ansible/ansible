@@ -38,6 +38,7 @@ DOCUMENTATION = '''
                 - "Use C(unix://var/run/docker.sock) to connect via local socket."
             type: str
             required: true
+            aliases: [ docker_url ]
         verbose_output:
             description: Toggle to (not) include all available nodes metadata (e.g. Platform, Architecture,OS,
                          EngineVersion)
@@ -55,13 +56,16 @@ DOCUMENTATION = '''
         key_path:
             description: Path to the client's TLS key file.
             type: path
+            aliases: [ tls_client_key ]
         cacert_path:
             description: Use a CA certificate when performing server verification by providing the path to a CA
                          certificate file.
             type: path
+            aliases: [ tls_ca_cert ]
         cert_path:
             description: Path to the client's TLS certificate file.
             type: path
+            aliases: [ tls_client_cert ]
         tls_hostname:
             description: When verifying the authenticity of the Docker host server, provide the expected name of
                          the server.
@@ -74,6 +78,7 @@ DOCUMENTATION = '''
                 - The version of the Docker API running on the Docker Host.
                 - Defaults to the latest version of the API supported by docker-py.
             type: str
+            aliases: [ docker_api_version ]
         timeout:
             description:
                 - The maximum amount of time in seconds to wait on a response from the API.
@@ -81,6 +86,7 @@ DOCUMENTATION = '''
                   will be used instead. If the environment variable is not set, the default value will be used.
             type: int
             default: 60
+            aliases: [ time_out ]
         include_host_uri:
             description: Toggle to return the additional attribute I(ansible_host_uri) which contains the URI of the
                          swarm leader in format of M(tcp://172.16.0.1:2376). This value may be used without additional
@@ -164,15 +170,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             cert_path=self.get_option('cert_path'),
             tls_hostname=self.get_option('tls_hostname'),
             api_version=self.get_option('api_version'),
-            timeout=self.get_option('timeout') or 60,
+            timeout=self.get_option('timeout'),
             ssl_version=self.get_option('ssl_version'),
             debug=None,
         )
-        if raw_params['timeout'] is not None:
-            try:
-                raw_params['timeout'] = int(raw_params['timeout'])
-            except Exception as dummy:
-                raise AnsibleError('Argument to timeout function must be an integer')
         update_tls_hostname(raw_params)
         connect_params = get_connect_params(raw_params, fail_function=self._fail)
         self.client = docker.DockerClient(**connect_params)
@@ -182,9 +183,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         self.inventory.add_group('leader')
         self.inventory.add_group('nonleaders')
 
-        if self.get_option('include_host_uri', True):
+        if self.get_option('include_host_uri'):
             if self.get_option('include_host_uri_port'):
-                host_uri_port = self.get_option('include_host_uri_port')
+                host_uri_port = str(self.get_option('include_host_uri_port'))
             elif self.get_option('tls') or self.get_option('tls_verify'):
                 host_uri_port = "2376"
             else:
@@ -198,10 +199,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
                 self.inventory.add_host(self.node_attrs['ID'], group=self.node_attrs['Spec']['Role'])
                 self.inventory.set_variable(self.node_attrs['ID'], 'ansible_host',
                                             self.node_attrs['Status']['Addr'])
-                if self.get_option('include_host_uri', True):
+                if self.get_option('include_host_uri'):
                     self.inventory.set_variable(self.node_attrs['ID'], 'ansible_host_uri',
                                                 "tcp://" + self.node_attrs['Status']['Addr'] + ":" + host_uri_port)
-                if self.get_option('verbose_output', True):
+                if self.get_option('verbose_output'):
                     self.inventory.set_variable(self.node_attrs['ID'], 'docker_swarm_node_attributes', self.node_attrs)
                 if 'ManagerStatus' in self.node_attrs:
                     if self.node_attrs['ManagerStatus'].get('Leader'):
@@ -209,7 +210,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
                         # Check moby/moby#35437 for details
                         swarm_leader_ip = parse_address(self.node_attrs['ManagerStatus']['Addr'])[0] or \
                             self.node_attrs['Status']['Addr']
-                        if self.get_option('include_host_uri', True):
+                        if self.get_option('include_host_uri'):
                             self.inventory.set_variable(self.node_attrs['ID'], 'ansible_host_uri', "tcp://" +
                                                         swarm_leader_ip + ":" + host_uri_port)
                         self.inventory.set_variable(self.node_attrs['ID'], 'ansible_host', swarm_leader_ip)
