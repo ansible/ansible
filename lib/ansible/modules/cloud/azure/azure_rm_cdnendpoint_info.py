@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_cdnendpoint_facts
+module: azure_rm_cdnendpoint_info
 
 version_added: "2.8"
 
@@ -49,12 +49,12 @@ author:
 
 EXAMPLES = '''
   - name: Get facts for all endpoints in CDN profile
-    azure_rm_cdnendpoint_facts:
+    azure_rm_cdnendpoint_info:
       resource_group: myResourceGroup
       profile_name: myCDNProfile
 
   - name: Get facts of specific CDN endpoint
-    azure_rm_cdnendpoint_facts:
+    azure_rm_cdnendpoint_info:
       resource_group: myResourceGroup
       profile_name: myCDNProfile
       name: myEndpoint1
