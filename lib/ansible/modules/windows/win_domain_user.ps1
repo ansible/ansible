@@ -125,6 +125,21 @@ if ($null -ne $domain_server) {
     $extra_args.Server = $domain_server
 }
 
+Function Get-PrincipalGroups {
+    Param (identity, $args_extra)
+    try{
+        $groups = Get-ADPrincipalGroupMembership -Identity $identity @args_extra -ErrorAction SilentlyContinue
+    } catch {
+        Add-Warning -obj $result -message "Failed to enumerate user groups but continuing on.: $($_.Exception.Message)"
+        return @()
+    }
+
+    $result_groups = foreach ($group in $groups) {
+        $group.DistinguishedName
+    }
+    return $result_groups
+}
+
 try {
     $user_obj = Get-ADUser -Identity $identity -Properties * @extra_args
     $user_guid = $user_obj.ObjectGUID
@@ -284,10 +299,7 @@ If ($state -eq 'present') {
             $groups += (Get-ADGroup -Identity $group @extra_args).DistinguishedName
         }
 
-        $assigned_groups = @()
-        Foreach ($group in (Get-ADPrincipalGroupMembership -Identity $user_guid @extra_args)) {
-            $assigned_groups += $group.DistinguishedName
-        }
+        $assigned_groups = Get-PrincipalGroups $user_guid $extra_args
 
         switch ($groups_action) {
             "add" {
@@ -359,11 +371,7 @@ If ($user_obj) {
     $result.account_locked = $user_obj.LockedOut
     $result.sid = [string]$user_obj.SID
     $result.upn = $user_obj.UserPrincipalName
-    $user_groups = @()
-    Foreach ($group in (Get-ADPrincipalGroupMembership $user_guid @extra_args)) {
-        $user_groups += $group.name
-    }
-    $result.groups = $user_groups
+    $result.groups = Get-PrincipalGroups $user_guid $extra_args
     $result.msg = "User '$name' is present"
     $result.state = "present"
 }
