@@ -165,7 +165,7 @@ class AzureRMResourceGroupFacts(AzureRMModuleBase):
         try:
             response = self.rm_client.resources.list_by_resource_group(name)
             while True:
-                results.append(response.next())
+                results.append(response.next().as_dict())
         except StopIteration:
             pass
         except CloudError as exc:
