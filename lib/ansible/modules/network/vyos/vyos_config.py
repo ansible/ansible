@@ -221,10 +221,13 @@ def diff_config(commands, config):
     for line in commands:
         item = str(line).replace("'", '')
 
-        if not item.startswith('set') and not item.startswith('delete'):
-            raise ValueError('line must start with either `set` or `delete`')
+        if not item.startswith('set') and not item.startswith('delete') and not item.startswith('comment'):
+            raise ValueError('line must start with either `set`, `delete` or `comment`')
 
         elif item.startswith('set') and item not in config:
+            updates.append(line)
+
+        elif item.startswith('comment'):
             updates.append(line)
 
         elif item.startswith('delete'):
