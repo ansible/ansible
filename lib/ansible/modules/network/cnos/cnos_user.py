@@ -43,7 +43,7 @@ options:
   aggregate:
     description:
       - The set of username objects to be configured on the remote
-        Lenovo Cnos device.  The list entries can either be the username
+        Lenovo CNOS device.  The list entries can either be the username
         or a hash of username and properties.  This argument is mutually
         exclusive with the C(name) argument.
     aliases: ['users', 'collection']
