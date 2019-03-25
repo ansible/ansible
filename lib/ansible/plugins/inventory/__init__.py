@@ -428,7 +428,7 @@ class Constructable(object):
                         for bare_name in new_raw_group_names:
                             gname = self._sanitize_group_name('%s%s%s' % (prefix, sep, bare_name))
                             result_gname = self.inventory.add_group(gname)
-                            self.inventory.add_child(result_gname, host)
+                            self.inventory.add_host(host, result_gname)
 
                             if raw_parent_name:
                                 parent_name = self._sanitize_group_name(raw_parent_name)
