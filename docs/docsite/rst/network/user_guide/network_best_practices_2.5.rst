@@ -326,6 +326,8 @@ If `ansible-playbook` fails, please follow the debug steps in :ref:`network_debu
 Example 2: simplifying playbooks with network agnostic modules
 ==============================================================
 
+(This example originally appeared in the `Deep Dive on cli_command for Network Automation <https://www.ansible.com/blog/deep-dive-on-cli-command-for-network-automation>`_ blog post by Sean Cavanaugh -`@IPvSean <https://github.com/IPvSean>`_).
+
 If you have two or more network platforms in your environment, you can use the network agnostic modules to simplify your playbooks. You can use network agnostic modules such as ``cli_command`` or ``cli_config`` in place of the platform-specific modules such as ``eos_config``, ``ios_config``, and ``junos_config``. This reduces the number of tasks and conditionals you need in your playbooks.
 
 .. note::
