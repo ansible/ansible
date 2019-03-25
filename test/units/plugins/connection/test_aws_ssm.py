@@ -13,6 +13,7 @@ from ansible.plugins.connection import aws_ssm
 from ansible.plugins.loader import connection_loader
 
 
+@pytest.mark.skipif(sys.version_info < (2, 7), reason="requires Python 2.7 or higher")
 class TestConnectionBaseClass(unittest.TestCase):
 
     @patch('os.path.exists')
