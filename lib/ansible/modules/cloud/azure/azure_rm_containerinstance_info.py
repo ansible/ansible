@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_containerinstance_facts
+module: azure_rm_containerinstance_info
 version_added: "2.8"
 short_description: Get Azure Container Instance facts.
 description:
@@ -43,12 +43,12 @@ author:
 
 EXAMPLES = '''
   - name: Get specific Container Instance facts
-    azure_rm_containerinstance_facts:
+    azure_rm_containerinstance_info:
       resource_group: myResourceGroup
       name: container_group_name
 
   - name: List Container Instances in a specified resource group name
-    azure_rm_containerinstance_facts:
+    azure_rm_containerinstance_info:
       resource_group: myResourceGroup
 '''
 

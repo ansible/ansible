@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_image_facts
+module: azure_rm_image_info
 
 version_added: "2.8"
 
@@ -42,19 +42,19 @@ author:
 
 EXAMPLES = '''
 - name: List images with name
-  azure_rm_image_facts:
+  azure_rm_image_info:
     name: test-image
     resource_group: myResourceGroup
 
 - name: List images by resource group
-  azure_rm_image_facts:
+  azure_rm_image_info:
     resource_group: myResourceGroup
     tags:
       - testing
       - foo:bar
 
 - name: List all available images under current subscription
-  azure_rm_image_facts:
+  azure_rm_image_info:
 '''
 
 

@@ -116,7 +116,7 @@
       - output.changed
 
 - name: Get facts of single account
-  azure_rm_cosmosdbaccount_facts:
+  azure_rm_cosmosdbaccount_info:
     resource_group: "{{ resource_group }}"
     name: "{{ dbname }}"
   register: output
@@ -148,7 +148,7 @@
       - output.accounts[0]['tags'] != None
 
 - name: Get facts with keys
-  azure_rm_cosmosdbaccount_facts:
+  azure_rm_cosmosdbaccount_info:
     resource_group: "{{ resource_group }}"
     name: "{{ dbname }}"
     retrieve_keys: all
@@ -164,7 +164,7 @@
       - output.accounts[0]['secondary_readonly_master_key'] != None
 
 - name: Get facts with readonly keys
-  azure_rm_cosmosdbaccount_facts:
+  azure_rm_cosmosdbaccount_info:
     resource_group: "{{ resource_group }}"
     name: "{{ dbname }}"
     retrieve_keys: readonly
@@ -182,7 +182,7 @@
       - output.accounts[0]['connection_strings'] | length > 0
 
 - name: List acounts by resource group
-  azure_rm_cosmosdbaccount_facts:
+  azure_rm_cosmosdbaccount_info:
     resource_group: "{{ resource_group }}"
     name: "{{ dbname }}"
   register: output
