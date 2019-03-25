@@ -56,7 +56,7 @@
       - result is not changed
       - result is failed
       # We got the correct response from the module
-      - "'ca_certs file does not exist' == result.msg"
+      - "'ca_cert file does not exist' == result.msg"
 
 - name: Download CA Cert as pem from server
   get_url:
