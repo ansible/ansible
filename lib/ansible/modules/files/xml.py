@@ -832,7 +832,8 @@ def main():
         supports_check_mode=True,
         required_by=dict(
             add_children=['xpath'],
-#            attribute=['value'],  # TODO: Reinstate this in Ansible v2.12 when we have deprecated the incorrect use below
+            # TODO: Reinstate this in Ansible v2.12 when we have deprecated the incorrect use below
+            # attribute=['value'],
             content=['xpath'],
             set_children=['xpath'],
             value=['xpath'],
