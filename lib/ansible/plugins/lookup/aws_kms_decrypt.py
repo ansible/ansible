@@ -1,5 +1,5 @@
 """
-Copyright 2019, Achintha Gunasekara <contact@achinthagunasekara.com>.
+Copyright: (c) 2019, Achintha Gunasekara <contact@achinthagunasekara.com>.
 Lookup plugin to handle decrypting of items with KMS.
 GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt).
 """
