@@ -20,7 +20,7 @@ __metaclass__ = type
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Module to work on Link Aggregation with Lenovo Switches
+# Module to work on management of local users on Lenovo CNOS Switches
 # Lenovo Networking
 #
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -152,13 +152,12 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import string_types, iteritems
 from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.network.common.utils import remove_default_spec
-
-VALID_ROLES = ['network-admin', 'network-operator']
+from ansible.module_utils.network.common.utils import get_user_roles
 
 
 def validate_roles(value, module):
     for item in value:
-        if item not in VALID_ROLES:
+        if item not in get_user_roles():
             module.fail_json(msg='invalid role specified')
 
 
