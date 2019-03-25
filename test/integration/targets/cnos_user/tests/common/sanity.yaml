@@ -9,7 +9,6 @@
       configured_password: Hello!234
       update_password: on_create
       roles: network-operator
-#      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -25,12 +24,10 @@
     - assert: &false
         that:
           - 'result.changed == false'
-#    when: idem
 
   - name: Remove user
     cnos_user: &remove
       name: netend
-#      provider: "{{ connection }}"
       state: absent
     register: result
 
@@ -42,27 +39,6 @@
 
   - assert: *false
 
-  - debug: msg="skipping sshkey test as the key needs to be created on the server first"
-
-#  - name: create a new user
-#    cnos_user: &conf1
-#      name: ansible
-#      sshkey: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
-#      provider: "{{ connection }}"
-#      state: present
-#    register: result
-#
-#  - assert: *true
-
-#  - block:
-#    - name: user idempotency
-#      cnos_user: *conf1
-#      register: result
-#
-#    - assert: *false
-#
-#    when: idem
-
   - name: Collection of users
     cnos_user: &coll
       users:
@@ -70,7 +46,6 @@
         - name: test2
       configured_password: Hello!234
       update_password: on_create
-#      provider: "{{ connection }}"
       state: present
       roles: 
         - network-admin
@@ -86,13 +61,10 @@
 
     - assert: *true
 
-#    when: idem
-
   - name: tearDown
     cnos_user: &tear
       name: ansible
       purge: yes
-#      provider: "{{ connection }}"
     register: result
 
   - assert: *true
