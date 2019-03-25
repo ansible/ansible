@@ -685,7 +685,9 @@
     query: "SELECT 1 FROM pg_stat_all_tables WHERE relname = 'test5'"
   ignore_errors: yes
   register: result
+  when: postgres_version_resp.stdout is version('9.1', '>=')
  
 - assert:
     that:
       - result.rowcount == 1
+  when: postgres_version_resp.stdout is version('9.1', '>=')
