@@ -189,12 +189,12 @@ EXAMPLES = '''
 - pip:
     requirements: /my_app/requirements.txt
     extra_args: -i https://example.com/pypi/simple
-    
+
 # Install specified python requirements offline from a local directory with downloaded packages.
 - pip:
     requirements: /my_app/requirements.txt
     extra_args: "--no-index --find-links=file:///my_downloaded_packages_dir"
-    
+
 # Install (Bottle) for Python 3.3 specifically,using the 'pip-3.3' executable.
 - pip:
     name: bottle
