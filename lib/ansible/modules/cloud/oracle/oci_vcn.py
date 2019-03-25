@@ -180,7 +180,7 @@ def main():
     )
 
     if not HAS_OCI_PY_SDK:
-        module.fail_json(msg=missing_required_lib("OCI Python SDK"))
+        module.fail_json(msg=missing_required_lib("oci"))
 
     virtual_network_client = oci_utils.create_service_client(
         module, VirtualNetworkClient

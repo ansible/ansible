@@ -39,7 +39,6 @@ except ImportError:
     HAS_OCI_PY_SDK = False
 
 
-from ansible.module_utils.basic import _load_params
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils.six import iteritems
 
@@ -88,35 +87,35 @@ def get_common_arg_spec(supports_create=False, supports_wait=False):
     # can check for absence of OCI Python SDK and fail with an appropriate message. Introducing an OCI dependency in
     # this method would break that error handling logic.
     common_args = dict(
-        config_file_location=dict(type="str", required=False),
-        config_profile_name=dict(type="str", required=False, default="DEFAULT"),
-        api_user=dict(type="str", required=False),
-        api_user_fingerprint=dict(type="str", required=False, no_log=True),
-        api_user_key_file=dict(type="str", required=False),
-        api_user_key_pass_phrase=dict(type="str", required=False, no_log=True),
+        config_file_location=dict(type="str"),
+        config_profile_name=dict(type="str", default="DEFAULT"),
+        api_user=dict(type="str"),
+        api_user_fingerprint=dict(type="str", no_log=True),
+        api_user_key_file=dict(type="str"),
+        api_user_key_pass_phrase=dict(type="str", no_log=True),
         auth_type=dict(
             type="str",
             required=False,
             choices=["api_key", "instance_principal"],
             default="api_key",
         ),
-        tenancy=dict(type="str", required=False),
-        region=dict(type="str", required=False),
+        tenancy=dict(type="str"),
+        region=dict(type="str"),
     )
 
     if supports_create:
         common_args.update(
-            key_by=dict(type="list", required=False),
-            force_create=dict(type="bool", required=False, default=False),
+            key_by=dict(type="list"),
+            force_create=dict(type="bool", default=False),
         )
 
     if supports_wait:
         common_args.update(
-            wait=dict(type="bool", required=False, default=True),
+            wait=dict(type="bool", default=True),
             wait_timeout=dict(
-                type="int", required=False, default=MAX_WAIT_TIMEOUT_IN_SECONDS
+                type="int", default=MAX_WAIT_TIMEOUT_IN_SECONDS
             ),
-            wait_until=dict(type="str", required=False),
+            wait_until=dict(type="str"),
         )
 
     return common_args
@@ -129,9 +128,9 @@ def get_facts_module_arg_spec(filter_by_name=False):
     # this method would break that error handling logic.
     facts_module_arg_spec = get_common_arg_spec()
     if filter_by_name:
-        facts_module_arg_spec.update(name=dict(type="str", required=False))
+        facts_module_arg_spec.update(name=dict(type="str"))
     else:
-        facts_module_arg_spec.update(display_name=dict(type="str", required=False))
+        facts_module_arg_spec.update(display_name=dict(type="str"))
     return facts_module_arg_spec
 
 
@@ -631,7 +630,7 @@ def get_attr_to_update(get_fn, kwargs_get, module, update_attributes):
             # only update if the user has explicitly provided a value for this attribute
             # otherwise, no update is necessary because the user hasn't expressed a particular
             # value for that attribute
-            if has_user_provided_value_for_option(module, attr):
+            if module.params.get(attr, None):
                 attributes_to_update.append(attr)
 
     return attributes_to_update, resource
@@ -844,30 +843,6 @@ def is_attr_assigned_default(default_attribute_values, attr, assigned_value):
     else:
         # module author has not provided a default value for attr
         return True
-
-
-def has_user_provided_value_for_option(module, option):
-    if option in _load_params():
-        return True
-
-    # User can specify value for option either using option name or its alias.
-    # module.aliases is a dictionary with key as alias name and its value as option name.
-    # Get one or more aliases of the option into a list.
-    aliases = []
-    for alias, opt in module.aliases.items():
-        if opt == option:
-            aliases.append(alias)
-    # Check if one of the aliases of option is specified by user.
-    for alias in aliases:
-        if alias in _load_params():
-            return True
-
-    # Case where the attribute_name in resource(passed as option to this function) is an alias for some option X and
-    # user has provided value for option X in the playbook, then return True if X is in _load_params().
-    if option in module.aliases and module.aliases[option] in _load_params():
-        return True
-
-    return False
 
 
 def create_resource(resource_type, create_fn, kwargs_create, module):
