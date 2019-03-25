@@ -151,15 +151,13 @@ EXAMPLES = '''
       name: mynewcontainergroup
       os_type: linux
       ip_address: public
-      ports:
-        - 80
-        - 81
       containers:
         - name: mycontainer1
           image: httpd
           memory: 1.5
           ports:
             - 80
+            - 81
 '''
 RETURN = '''
 id:
