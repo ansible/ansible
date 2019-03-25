@@ -115,7 +115,7 @@ def get_self_heal_status(name):
         elif line.startswith('/') or '\n' in line:
             continue
         else:
-            heal_info.append(br_dict)
+            br_dict and heal_info.append(br_dict)
             br_dict = {}
     return heal_info
 
