@@ -81,7 +81,7 @@ try:
     from aws_encryption_sdk.key_providers.kms import KMSMasterKey
     from aws_encryption_sdk import KMSMasterKeyProvider, encrypt
     from aws_encryption_sdk.exceptions import AWSEncryptionSDKClientError
-    AWS_ENCRYPTION_SDK_PRESENT = False
+    AWS_ENCRYPTION_SDK_PRESENT = True
 except ImportError:
     AWS_ENCRYPTION_SDK_PRESENT = False
 
