@@ -22,10 +22,10 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: dellemc_ome_device_facts
-short_description: Retrieves Device details.
+short_description: Retrieves the facts about Device.
 version_added: "2.8"
 description:
-   - Retrieves the list of all devices with the exhaustive inventory of each
+   - This module retrieves the list of all devices facts with the exhaustive inventory of each
      device.
 options:
     hostname:
@@ -157,15 +157,15 @@ RETURN = """
 ---
 msg:
   type: str
-  description: Over all device_facts status.
+  description: Over all device facts status.
   returned: on error
   sample: "Failed to fetch the device facts"
 ansible_facts:
   type: dict
-  description: Device inventory details.
+  description: Returns the facts collected from the Device.
   returned: success
   sample: {
-        "value": [
+        "192.168.0.1": [
             {
                 "Actions": null,
                 "AssetTag": null,
