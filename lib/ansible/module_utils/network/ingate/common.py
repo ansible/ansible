@@ -23,7 +23,7 @@ def ingate_argument_spec(**kwargs):
         password=dict(type='str', required=True, no_log=True),
         port=dict(type='int'),
         timeout=dict(type='int'),
-        verify_ssl=dict(default=True, type='bool'),
+        validate_certs=dict(default=True, type='bool', aliases=['verify_ssl']),
     )
     argument_spec = dict(
         client=dict(type='dict', required=True,
@@ -56,7 +56,7 @@ def ingate_create_client_noauth(**kwargs):
                                   timeout=client_params['timeout'])
 
     # Check if we should skip SSL Certificate verification.
-    verify_ssl = client_params.get('verify_ssl')
+    verify_ssl = client_params.get('validate_certs')
     if not verify_ssl:
         api_client.skip_verify_certificate()
 
