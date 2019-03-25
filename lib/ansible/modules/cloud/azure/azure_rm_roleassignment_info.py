@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_roleassignment_facts
+module: azure_rm_roleassignment_info
 version_added: "2.8"
 short_description: Gets Azure Role Assignment facts.
 description:
@@ -47,11 +47,11 @@ author:
 
 EXAMPLES = '''
     - name: Get role assignments for specific service principal
-      azure_rm_roleassignment_facts:
+      azure_rm_roleassignment_info:
         assignee: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 
     - name: Get role assignments for specific scope
-      azure_rm_roleassignment_facts:
+      azure_rm_roleassignment_info:
         scope: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 '''
 
