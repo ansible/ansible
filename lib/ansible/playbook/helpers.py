@@ -102,7 +102,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
     task_list = []
     for task_ds in ds:
         if not isinstance(task_ds, dict):
-            AnsibleAssertionError('The ds (%s) should be a dict but was a %s' % (ds, type(ds)))
+            raise AnsibleAssertionError('The ds (%s) should be a dict but was a %s' % (ds, type(ds)))
 
         if 'block' in task_ds:
             t = Block.load(

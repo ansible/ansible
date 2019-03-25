@@ -97,6 +97,11 @@ class TestLoadListOfTasks(unittest.TestCase, MixinForMocks):
         self.assertRaises(AssertionError, helpers.load_list_of_tasks,
                           ds, self.mock_play, block=None, role=None, task_include=None, use_handlers=False, variable_manager=None, loader=None)
 
+    def test_ds_not_dict(self):
+        ds = [[]]
+        self.assertRaises(AssertionError, helpers.load_list_of_tasks,
+                          ds, self.mock_play, block=None, role=None, task_include=None, use_handlers=False, variable_manager=None, loader=None)
+
     def test_empty_task(self):
         ds = [{}]
         self.assertRaisesRegexp(errors.AnsibleParserError,
