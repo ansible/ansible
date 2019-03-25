@@ -833,6 +833,9 @@
 - include: postgresql_ext.yml
   when: postgres_version_resp.stdout is version('9.1', '>=') and ansible_distribution == 'Fedora'
 
+# Test postgresql_schema module:
+- include: postgresql_schema.yml
+
 # dump/restore tests per format
 # ============================================================
 - include: state_dump_restore.yml test_fixture=user file=dbdata.sql
