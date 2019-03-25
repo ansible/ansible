@@ -118,9 +118,7 @@ def load_privatekey(path, passphrase=None, check_passphrase=True, backend='pyope
                             raise OpenSSLBadPassphraseError('Wrong passphrase provided for private key!')
                         else:
                             raise OpenSSLBadPassphraseError('No passphrase provided, but private key is password-protected!')
-                if len(e.args) > 0 and len(e.args[0]) == 0:
-                    raise OpenSSLObjectError('Error while deserializing key')
-                raise OpenSSLObjectError('Unknown error while loading private key: {0}'.format(e))
+                raise OpenSSLObjectError('Error while deserializing key: {0}'.format(e))
             if check_passphrase:
                 # Next we want to make sure that the key is actually protected by
                 # a passphrase (in case we did try the empty string before, make
