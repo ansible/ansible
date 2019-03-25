@@ -141,9 +141,7 @@ class AzureRMAppServicePlanFacts(AzureRMModuleBase):
             tags=dict(type='list')
         )
 
-        self.results = dict(
-            changed=False,
-            ansible_facts=dict(azure_appserviceplans=[])
+        self.results = dict(changed=False)
         )
 
         self.name = None
