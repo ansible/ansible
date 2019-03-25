@@ -515,7 +515,6 @@ def main():
     storage_params = module.params["storage_params"]
     truncate = module.params["truncate"]
     columns = module.params["columns"]
-    storage_params = module.params["storage_params"]
     sslrootcert = module.params["ssl_rootcert"]
     session_role = module.params["session_role"]
 
