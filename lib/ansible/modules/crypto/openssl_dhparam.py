@@ -136,6 +136,13 @@ class DHParameter(object):
 
         self.changed = changed
 
+    def remove(self, module):
+        try:
+            os.remove(self.path)
+            self.changed = True
+        except OSError as exc:
+            module.fail_json(msg=to_native(exc))
+
     def check(self, module):
         """Ensure the resource is in its desired state."""
         if self.force:
@@ -223,10 +230,11 @@ def main():
             result['changed'] = os.path.exists(module.params['path'])
             module.exit_json(**result)
 
-        try:
-            os.remove(module.params['path'])
-        except OSError as exc:
-            module.fail_json(msg=to_native(exc))
+        if os.path.exists(module.params['path']):
+            try:
+                dhparam.remove(module)
+            except Exception as exc:
+                module.fail_json(msg=to_native(exc))
 
     result = dhparam.dump()
 
