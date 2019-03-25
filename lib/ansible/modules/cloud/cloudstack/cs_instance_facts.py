@@ -185,68 +185,68 @@ volumes:
   type: list
   sample: '[ { name: "ROOT-1369", type: "ROOT", size: 10737418240 }, { name: "data01, type: "DATADISK", size: 10737418240 } ]'
 nic:
-  description: List of dictionaries of the instance nics
+  description: List of dictionaries of the instance nics.
   returned: success
   type: complex
   version_added: '2.8'
   contains:
     broadcasturi:
-      description: The broadcast uri of the nic
+      description: The broadcast uri of the nic.
       returned: success
       type: str
       sample: vlan://2250
     gateway:
-      description: The gateway of the nic
+      description: The gateway of the nic.
       returned: success
       type: str
       sample: 10.1.2.1
     id:
-      description: The ID of the nic
+      description: The ID of the nic.
       returned: success
       type: str
       sample: 5dc74fa3-2ec3-48a0-9e0d-6f43365336a9
     ipaddress:
-      description: The ip address of the nic
+      description: The ip address of the nic.
       returned: success
       type: str
       sample: 10.1.2.3
     isdefault:
-      description: True if nic is default, false otherwise
+      description: True if nic is default, false otherwise.
       returned: success
       type: bool
       sample: true
     isolationuri:
-      description: The isolation uri of the nic
+      description: The isolation uri of the nic.
       returned: success
       type: str
       sample: vlan://2250
     macaddress:
-      description: The mac address of the nic
+      description: The mac address of the nic.
       returned: success
       type: str
       sample: 06:a2:03:00:08:12
     netmask:
-      description: The netmask of the nic
+      description: The netmask of the nic.
       returned: success
       type: str
       sample: 255.255.255.0
     networkid:
-      description: The ID of the corresponding network
+      description: The ID of the corresponding network.
       returned: success
       type: str
       sample: 432ce27b-c2bb-4e12-a88c-a919cd3a3017
     networkname:
-      description: The name of the corresponding network
+      description: The name of the corresponding network.
       returned: success
       type: str
       sample: network1
     traffictype:
-      description: The traffic type of the nic
+      description: The traffic type of the nic.
       returned: success
       type: str
       sample: Guest
     type:
-      description: The type of the network
+      description: The type of the network.
       returned: success
       type: str
       sample: Shared
