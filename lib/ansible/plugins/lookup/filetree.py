@@ -29,7 +29,7 @@ EXAMPLES = """
   with_filetree: web/
   when: item.state == 'directory'
 
-- name: Template files
+- name: Template files (explicitly skip directories in order to use the 'src' attribute)
   template:
     src: '{{ item.src }}'
     dest: /web/{{ item.path }}
@@ -53,7 +53,7 @@ RETURN = """
     description: list of dictionaries with file information
     contains:
         src:
-          description: TODO
+          description: full path to file. This attribute is not present when filetree matches directories, and you may decide to skip directories using "when: item.state == 'file'" statement
         root:
           description: allows filtering by original location
         path:
