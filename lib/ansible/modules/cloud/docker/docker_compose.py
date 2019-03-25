@@ -728,7 +728,7 @@ class ContainerManager(DockerBaseClass):
             containers = self.client.containers(
                 filters={'label': ['{0}={1}'.format(LABEL_PROJECT, self.project.name), '{0}={1}'.format(LABEL_ONE_OFF, "False")]}
             )
-            
+
             def _findOrphans():
                 for container in containers:
                     # service_name = ctnr.labels.get(LABEL_SERVICE)
@@ -739,7 +739,7 @@ class ContainerManager(DockerBaseClass):
             orphans = list(_findOrphans())
             if orphans:
                 result['changed'] = True
-        
+
         for service in self.project.services:
             if not service_names or service.name in service_names:
                 plan = service.convergence_plan(strategy=converge)
