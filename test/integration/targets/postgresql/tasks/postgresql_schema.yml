@@ -21,7 +21,7 @@
     login_user: "{{ pg_user }}"
 
 # Test: CREATE SCHEMA in checkmode
-- name: Create a new schema with name "acme"
+- name: Create a new schema with name "acme" in check_mode
   become_user: "{{ pg_user }}"
   become: yes
   check_mode: yes
@@ -68,6 +68,36 @@
       - result.queries == [ 'CREATE SCHEMA "acme"' ]
 
 - name: Check that the new schema "acme" exists
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_query:
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+    query: "SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'acme'"
+  register: result
+
+- assert:
+    that:
+      - result.rowcount == 1
+
+# Test: DROP SCHEMA in checkmode
+- name: Drop schema "acme" in check_mode
+  become_user: "{{ pg_user }}"
+  become: yes
+  check_mode: yes
+  postgresql_schema:
+    database: "{{ db_name }}"
+    name: acme
+    state: absent
+    login_user: "{{ pg_user }}"
+  register: result
+
+# Checks
+- assert:
+    that:
+      - result.changed == false
+
+- name: Check that the new schema "acme" still exists
   become: yes
   become_user: "{{ pg_user }}"
   postgresql_query:
