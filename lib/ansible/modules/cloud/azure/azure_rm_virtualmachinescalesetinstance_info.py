@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_virtualmachinescalesetinstance_facts
+module: azure_rm_virtualmachinescalesetinstance_info
 version_added: "2.8"
 short_description: Get Azure Virtual Machine Scale Set Instance facts.
 description:

@@ -84,7 +84,7 @@
     that: results.changed
 
 - name: Query extension
-  azure_rm_virtualmachineextension_facts:
+  azure_rm_virtualmachineextension_info:
     resource_group: "{{ resource_group }}"
     name: testVMExtension
     virtual_machine_name: testVM
@@ -105,7 +105,7 @@
       - results.extensions[0]['provisioning_state'] != None
 
 - name: List extensions
-  azure_rm_virtualmachineextension_facts:
+  azure_rm_virtualmachineextension_info:
     resource_group: "{{ resource_group }}"
     virtual_machine_name: testVM
   register: results
