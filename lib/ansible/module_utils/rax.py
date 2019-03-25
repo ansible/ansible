@@ -251,7 +251,7 @@ def rax_argument_spec():
         tenant_id=dict(type='str'),
         tenant_name=dict(type='str'),
         username=dict(type='str'),
-        verify_ssl=dict(type='bool'),
+        validate_certs=dict(type='bool', aliases=['verify_ssl']),
     )
 
 
@@ -275,7 +275,7 @@ def setup_rax_module(module, rax_module, region_required=True):
     tenant_id = module.params.get('tenant_id')
     tenant_name = module.params.get('tenant_name')
     username = module.params.get('username')
-    verify_ssl = module.params.get('verify_ssl')
+    verify_ssl = module.params.get('validate_certs')
 
     if env is not None:
         rax_module.set_environment(env)
