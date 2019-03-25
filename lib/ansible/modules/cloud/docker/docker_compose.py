@@ -463,7 +463,7 @@ try:
     from compose.cli.command import project_from_options
     from compose.service import NoSuchImageError
     from compose.cli.main import convergence_strategy_from_opts, build_action_from_opts, image_type_from_opt
-    from compose.const import DEFAULT_TIMEOUT
+    from compose.const import DEFAULT_TIMEOUT, LABEL_SERVICE, LABEL_PROJECT, LABEL_ONE_OFF
     HAS_COMPOSE = True
     HAS_COMPOSE_EXC = None
     MINIMUM_COMPOSE_VERSION = '1.7.0'
@@ -716,6 +716,29 @@ class ContainerManager(DockerBaseClass):
             build_output = self.cmd_build()
             result['changed'] = build_output['changed']
             result['actions'] += build_output['actions']
+
+        if self.remove_orphans:
+            # containers = list(filter(None, [
+            #     Container.from_ps(self.project.client, container)
+            #     for container in self.project.client.containers(
+            #         all=False,
+            #         filters={'label': ['{0}={1}'.format(LABEL_PROJECT, self.project.name), '{0}={1}'.format(LABEL_ONE_OFF, "False")]})])
+            # )
+
+            containers = self.client.containers(
+                filters={'label': ['{0}={1}'.format(LABEL_PROJECT, self.project.name), '{0}={1}'.format(LABEL_ONE_OFF, "False")]}
+            )
+            
+            def _findOrphans():
+                for container in containers:
+                    # service_name = ctnr.labels.get(LABEL_SERVICE)
+                    service_name = container['Labels'][LABEL_SERVICE]
+                    if service_name not in self.project.service_names:
+                        yield container
+                    
+            orphans = list(_findOrphans())
+            if orphans:
+              result['changed'] = True
 
         for service in self.project.services:
             if not service_names or service.name in service_names:
