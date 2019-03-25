@@ -570,9 +570,9 @@ def main():
             connect_timeout=dict(type='int', default=30),
             config_file=dict(type='path', default='~/.my.cnf'),
             sql_log_bin=dict(type='bool', default=True),
-            ssl_cert=dict(type='path'),
-            ssl_key=dict(type='path'),
-            ssl_ca=dict(type='path'),
+            client_cert=dict(type='path', aliases=['ssl_cert']),
+            client_key=dict(type='path', aliases=['ssl_key']),
+            ca_cert=dict(type='path', aliases=['ssl_ca']),
         ),
         supports_check_mode=True,
     )
@@ -590,9 +590,9 @@ def main():
     config_file = module.params['config_file']
     append_privs = module.boolean(module.params["append_privs"])
     update_password = module.params['update_password']
-    ssl_cert = module.params["ssl_cert"]
-    ssl_key = module.params["ssl_key"]
-    ssl_ca = module.params["ssl_ca"]
+    ssl_cert = module.params["client_cert"]
+    ssl_key = module.params["client_key"]
+    ssl_ca = module.params["ca_cert"]
     db = 'mysql'
     sql_log_bin = module.params["sql_log_bin"]
 
