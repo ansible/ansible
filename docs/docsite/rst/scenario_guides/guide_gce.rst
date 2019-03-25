@@ -261,13 +261,13 @@ Migration Guides
 gce.py -> gcp_compute_instance.py
 `````````````````````````````````
 As of Ansible 2.8, we're encouraging everyone to move from the ``gce`` module to the
-`gcp_compute_instance` module. The `gcp_compute_instance` module has better
+``gcp_compute_instance`` module. The ``gcp_compute_instance`` module has better
 support for all of GCP's features, fewer dependencies, more flexibility, and
 better supports GCP's authentication systems.
 
-The `gcp_compute_instance` module supports all of the features of the `gce`
-module (and more!). Below is a mapping of `gce` fields over to
-`gcp_compute_instance` fields.
+The ``gcp_compute_instance`` module supports all of the features of the ``gce``
+module (and more!). Below is a mapping of ``gce`` fields over to
+``gcp_compute_instance`` fields.
 
 ============================  ==========================================  ======================
  gce.py                        gcp_compute_instance.py                     Notes 
