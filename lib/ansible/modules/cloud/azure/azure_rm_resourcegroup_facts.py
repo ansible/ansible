@@ -55,6 +55,11 @@ EXAMPLES = '''
         tags:
           - testing
           - foo:bar
+
+    - name: List resources under resource group
+      azure_rm_resourcegroup_facts:
+          name: foo
+          list_resources: yes
 '''
 RETURN = '''
 azure_resourcegroups:
@@ -93,7 +98,8 @@ class AzureRMResourceGroupFacts(AzureRMModuleBase):
 
         self.module_arg_spec = dict(
             name=dict(type='str'),
-            tags=dict(type='list')
+            tags=dict(type='list'),
+            list_resources=dict(type='bool')
         )
 
         self.results = dict(
@@ -103,6 +109,7 @@ class AzureRMResourceGroupFacts(AzureRMModuleBase):
 
         self.name = None
         self.tags = None
+        self.list_resources = None
 
         super(AzureRMResourceGroupFacts, self).__init__(self.module_arg_spec,
                                                         supports_tags=False,
@@ -117,6 +124,10 @@ class AzureRMResourceGroupFacts(AzureRMModuleBase):
             self.results['ansible_facts']['azure_resourcegroups'] = self.get_item()
         else:
             self.results['ansible_facts']['azure_resourcegroups'] = self.list_items()
+
+        if self.list_resources:
+            for item in self.results['ansible_facts']['azure_resourcegroups']:
+                item['resources'] = self.list_by_rg(item['name'])
 
         return self.results
 
@@ -148,6 +159,17 @@ class AzureRMResourceGroupFacts(AzureRMModuleBase):
                 results.append(self.serialize_obj(item, AZURE_OBJECT_CLASS))
         return results
 
+    def list_by_rg(self, name):
+        self.log('List resources under resource group')
+        results = []
+        try:
+            response = self.rm_client.resources.list_by_resource_group(name)
+            while True:
+                results.append(response.next())
+        except StopIteration:
+            pass
+        except CloudError as exc:
+            self.fail('Error when listing resources under resource group {0}: {1}'.format(name, exc.message or str(exc)))
 
 def main():
     AzureRMResourceGroupFacts()
