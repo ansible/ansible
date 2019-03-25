@@ -32,6 +32,11 @@ options:
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
+    list_resources:
+        description:
+            - List all resources under the resource group.
+            - Note this will cost network overhead for each resource group. Suggest use this when C(name) set.
+        version_added: 2.8
 
 extends_documentation_fragment:
     - azure
