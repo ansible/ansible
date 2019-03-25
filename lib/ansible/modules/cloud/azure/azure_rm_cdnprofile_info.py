@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_cdnprofile_facts
+module: azure_rm_cdnprofile_info
 
 version_added: "2.8"
 
@@ -44,15 +44,15 @@ author:
 
 EXAMPLES = '''
     - name: Get facts for one CDN profile
-      azure_rm_cdnprofile_facts:
+      azure_rm_cdnprofile_info:
         name: Testing
         resource_group: myResourceGroup
 
     - name: Get facts for all CDN profiles
-      azure_rm_cdnprofile_facts:
+      azure_rm_cdnprofile_info:
 
     - name: Get facts by tags
-      azure_rm_cdnprofile_facts:
+      azure_rm_cdnprofile_info:
         tags:
           - Environment:Test
 '''
