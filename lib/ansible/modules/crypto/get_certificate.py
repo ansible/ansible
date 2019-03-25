@@ -26,7 +26,7 @@ options:
       required: true
     ca_cert:
       description:
-        - A PEM file containing a list of root certificates; if present, the cert will be validated against these root certs.
+        - A PEM file containing one or more root certificates; if present, the cert will be validated against these root certs.
         - Note that this only validates the certificate is signed by the chain; not that the cert is valid for the host presenting it.
       type: path
       aliases: [ ca_certs ]
