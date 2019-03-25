@@ -1,5 +1,5 @@
 """
-(c) 2019, Achintha Gunasekara <contact@achinthagunasekara.com>.
+Copyright 2019, Achintha Gunasekara <contact@achinthagunasekara.com>.
 Lookup plugin to handle decrypting of items with KMS.
 GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt).
 """
@@ -11,12 +11,13 @@ import base64
 from os.path import basename
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
+from ansible.module_utils.basic import missing_required_lib
 
 
 DOCUMENTATION = """
-lookup: :aws_kms_decrypt
+lookup: aws_kms_decrypt
 author:
-    - Achintha Gunasekara (@achinthagunasekara) <contact@achinthagunasekara.com>
+    - Achintha Gunasekara (@achinthagunasekara)
 version_added: "2.8"
 requirements:
     - boto3
@@ -37,6 +38,8 @@ options:
     region:
         description: AWS region to use for the KMS key.
         default: 'us-east-1'
+        env:
+            - name: AWS_REGION
     profile:
         description: AWS AWS credential profile to use.
         env:
@@ -44,11 +47,11 @@ options:
     role_arn:
         description: ARN of the AWS IAM role to use to get credentials.
     aws_access_key:
-        description: AWS access key to use. Must use togather with `aws_secret_key` option.
+        description: AWS access key to use. Must use together with `aws_secret_key` option.
         env:
             - name: AWS_SECRET_ACCESS_KEY
     aws_secret_key:
-        description: AWS secret key to use. Must use togather with aws_`access_key` option.
+        description: AWS secret key to use. Must use togather with `aws_access_key` option.
         env:
             - name: AWS_SESSION_TOKEN
 """
@@ -73,18 +76,24 @@ vars:
 RETURN = """
 str:
     description:
-        String decrypted value of the provided encrypted srting.
+        String decrypted value of the provided encrypted string.
 """
 
 
 try:
     import boto3
+    BOTO_PRESENT = True
+except ImportError:
+    BOTO_PRESENT = False
+
+
+try:
     from aws_encryption_sdk.key_providers.kms import KMSMasterKey
     from aws_encryption_sdk import KMSMasterKeyProvider, decrypt
     from aws_encryption_sdk.exceptions import AWSEncryptionSDKClientError
-    HAS_DEPENDENCIES = True
+    AWS_ENCRYPTION_SDK_PRESENT = False
 except ImportError:
-    HAS_DEPENDENCIES = False
+    AWS_ENCRYPTION_SDK_PRESENT = False
 
 
 def check_dependencies():
@@ -95,9 +104,11 @@ def check_dependencies():
     Return:
         None.
     """
-    if not HAS_DEPENDENCIES:
-        raise AnsibleError('You need to install "boto3" and "aws_encryption_sdk"'
-                           'before using aws_kms filter')
+    if not BOTO_PRESENT:
+        raise AnsibleError(missing_required_lib(library='boto3'))
+
+    if not AWS_ENCRYPTION_SDK_PRESENT:
+        raise AnsibleError(missing_required_lib(library='aws_encryption_sdk'))
 
 
 def role_arn_to_session(role_arn, role_session_name):
