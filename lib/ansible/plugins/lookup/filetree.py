@@ -53,7 +53,8 @@ RETURN = """
     description: list of dictionaries with file information
     contains:
         src:
-          description: full path to file. This attribute is not present when filetree matches directories, and you may decide to skip directories using "when: item.state == 'file'" statement
+          description: full path to file. This attribute is not present when filetree matches directories, and you 
+          may decide to skip directories using `when: item.state == 'file'` statement
         root:
           description: allows filtering by original location
         path:
