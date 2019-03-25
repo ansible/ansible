@@ -275,9 +275,8 @@ class PrivateKeyBase(crypto_utils.OpenSSLObject):
         self.backup = module.params['backup']
         self.backup_file = None
 
-        self.mode = module.params.get('mode', None)
-        if self.mode is None:
-            self.mode = 0o600
+        if module.params['mode'] is None:
+            module.params['mode'] = '0600'
 
     @abc.abstractmethod
     def _generate_private_key_data(self):
@@ -294,26 +293,8 @@ class PrivateKeyBase(crypto_utils.OpenSSLObject):
             if self.backup:
                 self.backup_file = module.backup_local(self.path)
             privatekey_data = self._generate_private_key_data()
-            try:
-                privatekey_file = os.open(self.path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC)
-                os.close(privatekey_file)
-                if isinstance(self.mode, string_types):
-                    try:
-                        self.mode = int(self.mode, 8)
-                    except ValueError as e:
-                        try:
-                            st = os.lstat(self.path)
-                            self.mode = AnsibleModule._symbolic_mode_to_octal(st, self.mode)
-                        except ValueError as e:
-                            module.fail_json(msg="%s" % to_native(e), exception=traceback.format_exc())
-                os.chmod(self.path, self.mode)
-                privatekey_file = os.open(self.path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, self.mode)
-                os.write(privatekey_file, privatekey_data)
-                os.close(privatekey_file)
-                self.changed = True
-            except IOError as exc:
-                self.remove()
-                raise PrivateKeyError(exc)
+            crypto_utils.write_file(module, privatekey_data, 0o600)
+            self.changed = True
 
         self.fingerprint = self._get_fingerprint()
         file_args = module.load_file_common_arguments(module.params)
