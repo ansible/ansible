@@ -53,15 +53,17 @@ options:
   password:
     description:
     - Provide a password for authenticating with the API server.
-  ssl_ca_cert:
+  ca_cert:
     description:
     - "Path to a CA certificate file used to verify connection to the API server. The full certificate chain
       must be provided to avoid certificate validation errors."
-  verify_ssl:
+    aliases: [ ssl_ca_cert ]
+  validate_certs:
     description:
     - "Whether or not to verify the API server's SSL certificates."
     type: bool
     default: true
+    aliases: [ verify_ssl ]
   api_key:
     description:
     - When C(state) is set to I(absent), this specifies the token to revoke.
@@ -78,7 +80,7 @@ EXAMPLES = '''
   module_defaults:
     group/k8s:
       host: https://k8s.example.com/
-      ssl_ca_cert: ca.pem
+      ca_cert: ca.pem
   tasks:
   - block:
     # It's good practice to store login credentials in a secure vault and not
@@ -124,11 +126,11 @@ k8s_auth:
       description: URL for accessing the API server.
       returned: success
       type: str
-    ssl_ca_cert:
+    ca_cert:
       description: Path to a CA certificate file used to verify connection to the API server.
       returned: success
       type: str
-    verify_ssl:
+    validate_certs:
       description: "Whether or not to verify the API server's SSL certificates."
       returned: success
       type: bool
@@ -172,10 +174,11 @@ K8S_AUTH_ARG_SPEC = {
     'host': {'required': True},
     'username': {},
     'password': {'no_log': True},
-    'ssl_ca_cert': {'type': 'path'},
-    'verify_ssl': {
+    'ca_cert': {'type': 'path', 'aliases': ['ssl_ca_cert']},
+    'validate_certs': {
         'type': 'bool',
-        'default': True
+        'default': True,
+        'aliases': ['verify_ssl']
     },
     'api_key': {'no_log': True},
 }
@@ -203,8 +206,8 @@ class KubernetesAuthModule(AnsibleModule):
 
     def execute_module(self):
         state = self.params.get('state')
-        verify_ssl = self.params.get('verify_ssl')
-        ssl_ca_cert = self.params.get('ssl_ca_cert')
+        verify_ssl = self.params.get('validate_certs')
+        ssl_ca_cert = self.params.get('ca_cert')
 
         self.auth_username = self.params.get('username')
         self.auth_password = self.params.get('password')
@@ -224,8 +227,8 @@ class KubernetesAuthModule(AnsibleModule):
             new_api_key = self.openshift_login()
             result = dict(
                 host=self.con_host,
-                verify_ssl=verify_ssl,
-                ssl_ca_cert=ssl_ca_cert,
+                validate_certs=verify_ssl,
+                ca_cert=ssl_ca_cert,
                 api_key=new_api_key,
                 username=self.auth_username,
             )
