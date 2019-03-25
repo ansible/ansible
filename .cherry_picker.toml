@@ -5,4 +5,4 @@ fix_commit_msg = false  # Don't replace "#" with "GH-"
 default_branch = "devel"
 git add .cherry_picker.toml
 git commit
-pip install cherry_picker
+pip install cherry_picker # Use pip to install cherry-picker (if you are using python 3, change it or add a new line for pip3 (pip for python 3)
