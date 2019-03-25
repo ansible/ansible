@@ -203,3 +203,33 @@
     backup: yes
     state: absent
   register: remove_2
+
+- name: Generate privatekey_mode (mode 0400)
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey_mode.pem'
+    mode: '0400'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: privatekey_mode_1
+- name: Stat for privatekey_mode
+  stat:
+    path: '{{ output_dir }}/privatekey_mode.pem'
+  register: privatekey_mode_1_stat
+
+- name: Generate privatekey_mode (mode 0400, idempotency)
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey_mode.pem'
+    mode: '0400'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: privatekey_mode_2
+
+- name: Generate privatekey_mode (mode 0400, force)
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey_mode.pem'
+    mode: '0400'
+    force: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: privatekey_mode_3
+- name: Stat for privatekey_mode
+  stat:
+    path: '{{ output_dir }}/privatekey_mode.pem'
+  register: privatekey_mode_3_stat
