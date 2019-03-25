@@ -93,6 +93,26 @@ def test_keyed_group_empty_construction(inventory_module):
     assert host.groups == []
 
 
+def test_keyed_group_host_confusion(inventory_module):
+    inventory_module.inventory.add_host('cow')
+    inventory_module.inventory.add_group('cow')
+    host = inventory_module.inventory.get_host('cow')
+    host.vars['species'] = 'cow'
+    keyed_groups = [
+        {
+            'separator': '',
+            'prefix': '',
+            'key': 'species'
+        }
+    ]
+    inventory_module._add_host_to_keyed_groups(
+        keyed_groups, host.vars, host.name, strict=True
+    )
+    group = inventory_module.inventory.groups['cow']
+    # group cow has host of cow
+    assert group.hosts == [host]
+
+
 def test_keyed_parent_groups(inventory_module):
     inventory_module.inventory.add_host('web1')
     inventory_module.inventory.add_host('web2')
