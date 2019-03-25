@@ -74,7 +74,7 @@ EXAMPLES = r'''
     state: add
   delegate_to: localhost
 
-- name: Remove a tag to a virtual machine
+- name: Remove a tag from a virtual machine
   vmware_tag_manager:
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
@@ -87,7 +87,7 @@ EXAMPLES = r'''
     state: remove
   delegate_to: localhost
 
-- name: Add a tags to a distributed virtual switch
+- name: Add tags to a distributed virtual switch
   vmware_tag_manager:
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
@@ -100,7 +100,7 @@ EXAMPLES = r'''
     state: add
   delegate_to: localhost
 
-- name: Add a tags to a distributed virtual portgroup
+- name: Add tags to a distributed virtual portgroup
   vmware_tag_manager:
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
