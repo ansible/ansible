@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_mysqlconfiguration_facts
+module: azure_rm_mysqlconfiguration_info
 version_added: "2.8"
 short_description: Get Azure MySQL Configuration facts.
 description:
@@ -44,13 +44,13 @@ author:
 
 EXAMPLES = '''
   - name: Get specific setting of MySQL Server
-    azure_rm_mysqlconfiguration_facts:
+    azure_rm_mysqlconfiguration_info:
       resource_group: myResourceGroup
       server_name: testmysqlserver
       name: deadlock_timeout
 
   - name: Get all settings of MySQL Server
-    azure_rm_mysqlconfiguration_facts:
+    azure_rm_mysqlconfiguration_info:
       resource_group: myResourceGroup
       server_name: server_name
 '''

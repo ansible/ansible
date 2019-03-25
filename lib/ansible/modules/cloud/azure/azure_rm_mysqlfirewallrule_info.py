@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2019 Zim Kalinowski, (@zikalino)
+# Copyright (c) 2018 Zim Kalinowski, <zikalino@microsoft.com>
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -15,16 +15,16 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_postgresqlconfiguration_facts
+module: azure_rm_mysqlfirewallrule_info
 version_added: "2.8"
-short_description: Get Azure PostgreSQL Configuration facts.
+short_description: Get Azure MySQL Firewall Rule facts.
 description:
-    - Get facts of Azure PostgreSQL Configuration.
+    - Get facts of Azure MySQL Firewall Rule.
 
 options:
     resource_group:
         description:
-            - The name of the resource group that contains the resource.
+            - The name of the resource group.
         required: True
     server_name:
         description:
@@ -32,7 +32,7 @@ options:
         required: True
     name:
         description:
-            - Setting name.
+            - The name of the server firewall rule.
 
 extends_documentation_fragment:
     - azure
@@ -43,55 +43,55 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Get specific setting of PostgreSQL configuration
-    azure_rm_postgresqlconfiguration_facts:
+  - name: Get instance of MySQL Firewall Rule
+    azure_rm_mysqlfirewallrule_info:
       resource_group: myResourceGroup
-      server_name: testpostgresqlserver
-      name: deadlock_timeout
+      server_name: server_name
+      name: firewall_rule_name
 
-  - name: Get all settings of PostgreSQL Configuration
-    azure_rm_postgresqlconfiguration_facts:
+  - name: List instances of MySQL Firewall Rule
+    azure_rm_mysqlfirewallrule_info:
       resource_group: myResourceGroup
-      server_name: testpostgresqlserver
+      server_name: server_name
 '''
 
 RETURN = '''
-settings:
-    description: A list of dictionaries containing MySQL Server settings.
+rules:
+    description: A list of dictionaries containing facts for MySQL Firewall Rule.
     returned: always
     type: complex
     contains:
         id:
             description:
-                - Setting resource ID
+                - Resource ID
             returned: always
             type: str
-            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/testrg/providers/Microsoft.DBforPostgreSQL/servers/testpostgresqlser
-                     ver/configurations/deadlock_timeout"
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/TestGroup/providers/Microsoft.DBforMySQL/servers/testserver/fire
+                    wallRules/rule1"
+        server_name:
+            description:
+                - The name of the server.
+            returned: always
+            type: str
+            sample: testserver
         name:
             description:
-                - Setting name.
+                - Resource name.
             returned: always
             type: str
-            sample: deadlock_timeout
-        value:
+            sample: rule1
+        start_ip_address:
             description:
-                - Setting value.
-            returned: always
-            type: raw
-            sample: 1000
-        description:
-            description:
-                - Description of the configuration.
+                - The start IP address of the MySQL firewall rule.
             returned: always
             type: str
-            sample: Deadlock timeout.
-        source:
+            sample: 10.0.0.16
+        end_ip_address:
             description:
-                - Source of the configuration.
+                - The end IP address of the MySQL firewall rule.
             returned: always
             type: str
-            sample: system-default
+            sample: 10.0.0.18
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -99,14 +99,14 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 try:
     from msrestazure.azure_exceptions import CloudError
     from msrestazure.azure_operation import AzureOperationPoller
-    from azure.mgmt.rdbms.postgresql import PostgreSQLManagementClient
+    from azure.mgmt.rdbms.mysql import MySQLManagementClient
     from msrest.serialization import Model
 except ImportError:
     # This is handled in azure_rm_common
     pass
 
 
-class AzureRMPostgreSQLConfigurationFacts(AzureRMModuleBase):
+class AzureRMMySqlFirewallRuleFacts(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -130,35 +130,30 @@ class AzureRMPostgreSQLConfigurationFacts(AzureRMModuleBase):
         self.resource_group = None
         self.server_name = None
         self.name = None
-        super(AzureRMPostgreSQLConfigurationFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMMySqlFirewallRuleFacts, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
-        self.mgmt_client = self.get_mgmt_svc_client(PostgreSQLManagementClient,
+        self.mgmt_client = self.get_mgmt_svc_client(MySQLManagementClient,
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
-        if self.name is not None:
-            self.results['settings'] = self.get()
+        if (self.name is not None):
+            self.results['rules'] = self.get()
         else:
-            self.results['settings'] = self.list_by_server()
+            self.results['rules'] = self.list_by_server()
         return self.results
 
     def get(self):
-        '''
-        Gets facts of the specified PostgreSQL Configuration.
-
-        :return: deserialized PostgreSQL Configurationinstance state dictionary
-        '''
         response = None
         results = []
         try:
-            response = self.mgmt_client.configurations.get(resource_group_name=self.resource_group,
+            response = self.mgmt_client.firewall_rules.get(resource_group_name=self.resource_group,
                                                            server_name=self.server_name,
-                                                           configuration_name=self.name)
+                                                           firewall_rule_name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.fail('Could not get requested setting.')
+            self.log('Could not get facts for FirewallRules.')
 
         if response is not None:
             results.append(self.format_item(response))
@@ -166,19 +161,14 @@ class AzureRMPostgreSQLConfigurationFacts(AzureRMModuleBase):
         return results
 
     def list_by_server(self):
-        '''
-        Gets facts of the specified PostgreSQL Configuration.
-
-        :return: deserialized PostgreSQL Configurationinstance state dictionary
-        '''
         response = None
         results = []
         try:
-            response = self.mgmt_client.configurations.list_by_server(resource_group_name=self.resource_group,
+            response = self.mgmt_client.firewall_rules.list_by_server(resource_group_name=self.resource_group,
                                                                       server_name=self.server_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.fail('Could not get settings for server.')
+            self.log('Could not get facts for FirewallRules.')
 
         if response is not None:
             for item in response:
@@ -190,18 +180,17 @@ class AzureRMPostgreSQLConfigurationFacts(AzureRMModuleBase):
         d = item.as_dict()
         d = {
             'resource_group': self.resource_group,
-            'server_name': self.server_name,
             'id': d['id'],
+            'server_name': self.server_name,
             'name': d['name'],
-            'value': d['value'],
-            'description': d['description'],
-            'source': d['source']
+            'start_ip_address': d['start_ip_address'],
+            'end_ip_address': d['end_ip_address']
         }
         return d
 
 
 def main():
-    AzureRMPostgreSQLConfigurationFacts()
+    AzureRMMySqlFirewallRuleFacts()
 
 
 if __name__ == '__main__':
