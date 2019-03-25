@@ -38,4 +38,41 @@
     match: none
     provider: "{{ connection }}"
 
+- debug: msg='Verify https://github.com/ansible/ansible/issues/50635'
+
+- name: PUT INTERFACE INTO DEFAULT STATE
+  nxos_config:
+    lines:
+      - "default interface {{ nxos_int1 }}"
+    provider: "{{ connection }}"
+
+- name: MAKE INTERFACE A SWITCHPORT
+  nxos_config:
+    lines:
+      - switchport
+    parents: "interface {{ nxos_int1 }}"
+    provider: "{{ connection }}"
+
+- name: CONFIGURE EDGE TRUNK TYPE
+  nxos_config: &config
+    lines:
+      - description foo
+      - switchport access vlan 3333
+      - spanning-tree port type edge
+    parents: "interface {{ nxos_int1 }}"
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: IDEMPOTENCE CHECK
+  nxos_config: *config
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
 - debug: msg="END common/sanity.yaml on connection={{ ansible_connection }}"
