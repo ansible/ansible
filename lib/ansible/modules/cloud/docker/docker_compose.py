@@ -731,10 +731,10 @@ class ContainerManager(DockerBaseClass):
                     service_name = container.labels.get(LABEL_SERVICE)
                     if service_name not in self.project.service_names:
                         yield container
-                    
+
             orphans = list(_findOrphans())
             if orphans:
-              result['changed'] = True
+                result['changed'] = True
 
         for service in self.project.services:
             if not service_names or service.name in service_names:
