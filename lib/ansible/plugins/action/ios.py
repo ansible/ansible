@@ -85,7 +85,7 @@ class ActionModule(ActionNetworkModule):
         conn = Connection(socket_path)
         try:
             out = conn.get_prompt()
-            while to_text(out, errors='surrogate_then_replace').strip().endswith(')#'):
+            while to_text(out, errors='surrogate_then_replace').strip().endswith('config)#'):
                 display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
                 conn.send_command('exit')
                 out = conn.get_prompt()
