@@ -71,18 +71,53 @@ azure_resourcegroups:
     description: List of resource group dicts.
     returned: always
     type: list
-    example: [{
-        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup",
-        "location": "westus",
-        "name": "Testing",
-        "properties": {
-            "provisioningState": "Succeeded"
-        },
-        "tags": {
-            "delete": "never",
-            "testing": "testing"
-        }
-    }]
+    contains:
+        id:
+            description:
+                - Resource id.
+            type: str
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/foo"
+        name:
+            description:
+                - Resource group name.
+            type: str
+            sample: foo
+        tags:
+            description:
+                - Tags to assign to the managed disk.
+            type: dict
+            sample: { "tag": "value" }
+        resources:
+            description:
+                - List of resources under the resource group.
+                - Only shows when C(list_resources) set to C(True).
+            type: list
+            contains:
+                id:
+                    description:
+                        - Resource id.
+                    type: str
+                    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/foo/providers/Microsoft.XX/XXX/bar"
+                name:
+                    description:
+                        - Resource name.
+                    type: str
+                    sample: bar
+                location:
+                    description:
+                        - Resource region.
+                    type: str
+                    sample: eastus
+                type:
+                    description:
+                        - Resource type.
+                    type: str
+                    sample: "Microsoft.Compute/virtualMachines"
+                tags:
+                    description:
+                        - Tags to assign to the managed disk.
+                    type: dict
+                    sample: { "tag": "value" }
 '''
 
 try:
