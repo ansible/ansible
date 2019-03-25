@@ -19,6 +19,7 @@
       - get_element_attribute.matches[0]['rating'] is defined
       - get_element_attribute.matches[0]['rating']['subjective'] == 'true'
 
+  # TODO: Remove this in Ansible v2.12 when this incorrect use of attribute is deprecated
   - name: Get element attributes
     xml:
       path: /tmp/ansible-xml-beers.xml
