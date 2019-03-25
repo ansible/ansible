@@ -152,7 +152,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import string_types, iteritems
 from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.network.common.utils import remove_default_spec
-from ansible.module_utils.network.common.utils import get_user_roles
+from ansible.module_utils.network.cnos.cnos import get_user_roles
 
 
 def validate_roles(value, module):
