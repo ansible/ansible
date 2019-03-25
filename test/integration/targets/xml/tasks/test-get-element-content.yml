@@ -34,7 +34,7 @@
       - get_element_attribute_wrong.matches[0]['rating'] is defined
       - get_element_attribute_wrong.matches[0]['rating']['subjective'] == 'true'
       - get_element_attribute_wrong.deprecations is defined
-      - get_element_attribute_wrong.deprecations[0].msg == "Parameter 'attribute' is ignored when using 'content=attribute' only 'xpath' is used. Please remove 'attribute=subjective' entry."
+      - get_element_attribute_wrong.deprecations[0].msg == "Parameter 'attribute=subjective' is ignored when using 'content=attribute' only 'xpath' is used. Please remove entry."
       - get_element_attribute_wrong.deprecations[0].version == '2.12'
 
   - name: Get element text
