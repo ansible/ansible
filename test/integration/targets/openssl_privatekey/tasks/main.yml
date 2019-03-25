@@ -40,4 +40,31 @@
     passphrase: ànsïblé
     cipher: aes256
 
+- name: Generate privatekey_mode (mode 0400)
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey_mode.pem'
+    mode: '0400'
+  register: privatekey_mode_1
+- name: Stat for privatekey_mode
+  stat:
+    path: '{{ output_dir }}/privatekey_mode.pem'
+  register: privatekey_mode_1_stat
+
+- name: Generate privatekey_mode (mode 0400, idempotency)
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey_mode.pem'
+    mode: '0400'
+  register: privatekey_mode_2
+
+- name: Generate privatekey_mode (mode 0400, force)
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey_mode.pem'
+    mode: '0400'
+    force: yes
+  register: privatekey_mode_3
+- name: Stat for privatekey_mode
+  stat:
+    path: '{{ output_dir }}/privatekey_mode.pem'
+  register: privatekey_mode_3_stat
+
 - import_tasks: ../tests/validate.yml

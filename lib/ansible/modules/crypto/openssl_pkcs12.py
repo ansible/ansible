@@ -177,9 +177,9 @@ class Pkcs(crypto_utils.OpenSSLObject):
         self.privatekey_passphrase = module.params['privatekey_passphrase']
         self.privatekey_path = module.params['privatekey_path']
         self.src = module.params['src']
-        self.mode = module.params['mode']
-        if not self.mode:
-            self.mode = 0o400
+
+        if module.params['mode'] is None:
+            module.params['mode'] = '0400'
 
     def check(self, module, perms_required=True):
         """Ensure the resource is in its desired state."""
@@ -216,11 +216,6 @@ class Pkcs(crypto_utils.OpenSSLObject):
 
         self.pkcs12 = crypto.PKCS12()
 
-        try:
-            self.remove()
-        except PkcsError as exc:
-            module.fail_json(msg=to_native(exc))
-
         if self.ca_certificates:
             ca_certs = [crypto_utils.load_certificate(os.path.expanduser(os.path.expandvars(ca_cert))) for ca_cert
                         in self.ca_certificates]
@@ -239,38 +234,28 @@ class Pkcs(crypto_utils.OpenSSLObject):
                                        self.privatekey_passphrase)
                                        )
 
-        try:
-            pkcs12_file = os.open(self.path,
-                                  os.O_WRONLY | os.O_CREAT | os.O_TRUNC,
-                                  self.mode)
-            os.write(pkcs12_file, self.pkcs12.export(self.passphrase,
-                                                     self.iter_size, self.maciter_size))
-            os.close(pkcs12_file)
-        except (IOError, OSError) as exc:
-            self.remove()
-            raise PkcsError(exc)
+        crypto_utils.write_file(
+            module,
+            self.pkcs12.export(self.passphrase, self.iter_size, self.maciter_size),
+            0o600
+        )
 
     def parse(self, module):
         """Read PKCS#12 file."""
 
         try:
-            self.remove()
-
-            p12 = crypto.load_pkcs12(open(self.src, 'rb').read(),
+            with open(self.src, 'rb') as pkcs12_fh:
+                pkcs12_content = pkcs12_fh.read()
+            p12 = crypto.load_pkcs12(pkcs12_content,
                                      self.passphrase)
             pkey = crypto.dump_privatekey(crypto.FILETYPE_PEM,
                                           p12.get_privatekey())
             crt = crypto.dump_certificate(crypto.FILETYPE_PEM,
                                           p12.get_certificate())
 
-            pkcs12_file = os.open(self.path,
-                                  os.O_WRONLY | os.O_CREAT | os.O_TRUNC,
-                                  self.mode)
-            os.write(pkcs12_file, b'%s%s' % (pkey, crt))
-            os.close(pkcs12_file)
+            crypto_utils.write_file(module, b'%s%s' % (pkey, crt))
 
         except IOError as exc:
-            self.remove()
             raise PkcsError(exc)
 
 

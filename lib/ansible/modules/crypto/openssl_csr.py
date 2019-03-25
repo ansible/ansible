@@ -414,13 +414,8 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
             req.sign(self.privatekey, self.digest)
             self.request = req
 
-            try:
-                csr_file = open(self.path, 'wb')
-                csr_file.write(crypto.dump_certificate_request(crypto.FILETYPE_PEM, self.request))
-                csr_file.close()
-            except (IOError, OSError) as exc:
-                raise CertificateSigningRequestError(exc)
-
+            result = crypto.dump_certificate_request(crypto.FILETYPE_PEM, self.request)
+            crypto_utils.write_file(module, result)
             self.changed = True
 
         file_args = module.load_file_common_arguments(module.params)

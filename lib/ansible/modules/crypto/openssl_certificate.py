@@ -579,12 +579,7 @@ class SelfSignedCertificate(Certificate):
             cert.sign(self.privatekey, self.digest)
             self.cert = cert
 
-            try:
-                with open(self.path, 'wb') as cert_file:
-                    cert_file.write(crypto.dump_certificate(crypto.FILETYPE_PEM, self.cert))
-            except EnvironmentError as exc:
-                raise CertificateError(exc)
-
+            crypto_utils.write_file(module, crypto.dump_certificate(crypto.FILETYPE_PEM, self.cert))
             self.changed = True
 
         file_args = module.load_file_common_arguments(module.params)
@@ -676,12 +671,7 @@ class OwnCACertificate(Certificate):
             cert.sign(self.ca_privatekey, self.digest)
             self.cert = cert
 
-            try:
-                with open(self.path, 'wb') as cert_file:
-                    cert_file.write(crypto.dump_certificate(crypto.FILETYPE_PEM, self.cert))
-            except EnvironmentError as exc:
-                raise CertificateError(exc)
-
+            crypto_utils.write_file(module, crypto.dump_certificate(crypto.FILETYPE_PEM, self.cert))
             self.changed = True
 
         file_args = module.load_file_common_arguments(module.params)
@@ -1011,8 +1001,7 @@ class AcmeCertificate(Certificate):
                                                             self.csr_path,
                                                             self.challenge_path),
                                          check_rc=True)[1]
-                with open(self.path, 'wb') as certfile:
-                    certfile.write(to_bytes(crt))
+                crypto_utils.write_file(module, to_bytes(crt))
                 self.changed = True
             except OSError as exc:
                 raise CertificateError(exc)
