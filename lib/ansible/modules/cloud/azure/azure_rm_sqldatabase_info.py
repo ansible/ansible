@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_sqldatabase_facts
+module: azure_rm_sqldatabase_info
 version_added: "2.8"
 short_description: Get Azure SQL Database facts.
 description:
@@ -50,19 +50,19 @@ author:
 
 EXAMPLES = '''
   - name: Get instance of SQL Database
-    azure_rm_sqldatabase_facts:
+    azure_rm_sqldatabase_info:
       resource_group: testrg
       server_name: testserver
       name: testdb
 
   - name: List instances of SQL Database
-    azure_rm_sqldatabase_facts:
+    azure_rm_sqldatabase_info:
       resource_group: testrg
       server_name: testserver
       elastic_pool_name: testep
 
   - name: List instances of SQL Database
-    azure_rm_sqldatabase_facts:
+    azure_rm_sqldatabase_info:
       resource_group: testrg
       server_name: testserver
 '''
