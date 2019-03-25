@@ -2,7 +2,6 @@ from io import StringIO
 import pytest
 import sys
 from ansible import constants as C
-from ansible.errors import AnsibleAuthenticationFailure
 from ansible.compat.selectors import SelectorKey, EVENT_READ
 from units.compat import unittest
 from units.compat.mock import patch, MagicMock, PropertyMock
@@ -11,10 +10,9 @@ from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.connection import aws_ssm
-from ansible.plugins.loader import connection_loader, become_loader
+from ansible.plugins.loader import connection_loader
 
 
-@pytest.mark.skipif(sys.version_info < (2, 7), reason="requires python 2.7 or higher")
 class TestConnectionBaseClass(unittest.TestCase):
 
     @patch('os.path.exists')
