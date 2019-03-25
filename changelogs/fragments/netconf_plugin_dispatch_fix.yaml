@@ -1,0 +1,3 @@
+---
+bugfixes:
+- Fix netconf plugin dispatch response (https://github.com/ansible/ansible/issues/53236)
