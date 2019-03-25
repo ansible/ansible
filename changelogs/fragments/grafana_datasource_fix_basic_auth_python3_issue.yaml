@@ -1,0 +1,3 @@
+bugfixes:
+  - grafana_datasource - Fixed an issue when running Python3 and using basic auth
+    (https://github.com/ansible/ansible/issues/49147)
