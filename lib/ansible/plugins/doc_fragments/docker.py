@@ -42,27 +42,27 @@ options:
               instead. If the environment variable is not set, the default value will be used.
         type: int
         default: 60
-    cacert_path:
+    ca_cert:
         description:
             - Use a CA certificate when performing server verification by providing the path to a CA certificate file.
             - If the value is not specified in the task and the environment variable C(DOCKER_CERT_PATH) is set,
               the file C(ca.pem) from the directory specified in the environment variable C(DOCKER_CERT_PATH) will be used.
         type: path
-        aliases: [ tls_ca_cert ]
-    cert_path:
+        aliases: [ tls_ca_cert, cacert_path ]
+    client_cert:
         description:
             - Path to the client's TLS certificate file.
             - If the value is not specified in the task and the environment variable C(DOCKER_CERT_PATH) is set,
               the file C(cert.pem) from the directory specified in the environment variable C(DOCKER_CERT_PATH) will be used.
         type: path
-        aliases: [ tls_client_cert ]
-    key_path:
+        aliases: [ tls_client_cert, cert_path ]
+    client_key:
         description:
             - Path to the client's TLS key file.
             - If the value is not specified in the task and the environment variable C(DOCKER_CERT_PATH) is set,
               the file C(key.pem) from the directory specified in the environment variable C(DOCKER_CERT_PATH) will be used.
         type: path
-        aliases: [ tls_client_key ]
+        aliases: [ tls_client_key, key_path ]
     ssl_version:
         description:
             - Provide a valid SSL version number. Default value determined by ssl.py module.
@@ -77,13 +77,14 @@ options:
               instead. If the environment variable is not set, the default value will be used.
         type: bool
         default: no
-    tls_verify:
+    validate_certs:
         description:
             - Secure the connection to the API by using TLS and verifying the authenticity of the Docker host server.
             - If the value is not specified in the task, the value of environment variable C(DOCKER_TLS_VERIFY) will be
               used instead. If the environment variable is not set, the default value will be used.
         type: bool
         default: no
+        aliases: [ tls_verify ]
     debug:
         description:
             - Debug mode
