@@ -96,7 +96,14 @@ https://docs.ansible.com/ansible/devel/porting_guides/porting_guide_{{ latest_ve
 
 
 {% filter wordwrap %}
-If you discover any errors or if any of your working playbooks break when you upgrade to {{ latest_ver }}, please report the regression via https://github.com/ansible/ansible/issues/new/choose  In your issue, be sure to mention the Ansible version that works and the one that doesn't.
+If you discover any errors or if any of your working playbooks break when you upgrade to {{ latest_ver }}, please use the following link to report the regression:
+{% endfilter %}
+
+
+  https://github.com/ansible/ansible/issues/new/choose
+
+{% filter wordwrap %}
+In your issue, be sure to mention the Ansible version that works and the one that doesn't.
 {% endfilter %}
 
 
