@@ -170,6 +170,8 @@ class AzureRMResourceGroupFacts(AzureRMModuleBase):
             pass
         except CloudError as exc:
             self.fail('Error when listing resources under resource group {0}: {1}'.format(name, exc.message or str(exc)))
+        return results
+
 
 def main():
     AzureRMResourceGroupFacts()
