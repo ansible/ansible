@@ -197,8 +197,7 @@ class PublicKey(crypto_utils.OpenSSLObject):
                     )
                     publickey_content = crypto.dump_publickey(crypto.FILETYPE_PEM, self.privatekey)
 
-                with open(self.path, 'wb') as publickey_file:
-                    publickey_file.write(publickey_content)
+                crypto_utils.write_file(module, publickey_content)
 
                 self.changed = True
             except crypto_utils.OpenSSLBadPassphraseError as exc:
@@ -206,7 +205,6 @@ class PublicKey(crypto_utils.OpenSSLObject):
             except (IOError, OSError) as exc:
                 raise PublicKeyError(exc)
             except AttributeError as exc:
-                self.remove(module)
                 raise PublicKeyError('You need to have PyOpenSSL>=16.0.0 to generate public keys')
 
         self.fingerprint = crypto_utils.get_fingerprint(

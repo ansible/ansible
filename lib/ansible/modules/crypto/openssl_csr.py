@@ -422,14 +422,7 @@ class CertificateSigningRequestBase(crypto_utils.OpenSSLObject):
         '''Generate the certificate signing request.'''
         if not self.check(module, perms_required=False) or self.force:
             result = self._generate_csr()
-
-            try:
-                csr_file = open(self.path, 'wb')
-                csr_file.write(result)
-                csr_file.close()
-            except (IOError, OSError) as exc:
-                raise CertificateSigningRequestError(exc)
-
+            crypto_utils.write_file(module, result)
             self.changed = True
 
         file_args = module.load_file_common_arguments(module.params)
