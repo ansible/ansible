@@ -40,6 +40,7 @@ import errno
 import hashlib
 import os
 import re
+import tempfile
 
 from ansible.module_utils import six
 from ansible.module_utils._text import to_bytes, to_text
@@ -233,6 +234,49 @@ def select_message_digest(digest_string):
     elif digest_string == 'md5':
         digest = hashes.MD5()
     return digest
+
+
+def write_file(module, content, default_mode=None):
+    '''
+    Writes content into destination file as securely as possible.
+    Uses file arguments from module.
+    '''
+    # Find out parameters for file
+    file_args = module.load_file_common_arguments(module.params)
+    if file_args['mode'] is None:
+        file_args['mode'] = default_mode
+    # Create tempfile name
+    tmp_fd, tmp_name = tempfile.mkstemp(prefix=b'.ansible_tmp')
+    try:
+        os.close(tmp_fd)
+    except Exception as dummy:
+        pass
+    module.add_cleanup_file(tmp_name)  # if we fail, let Ansible try to remove the file
+    try:
+        try:
+            # Create tempfile
+            file = os.open(tmp_name, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+            os.write(file, content)
+            os.close(file)
+        except Exception as e:
+            try:
+                os.remove(tmp_name)
+            except Exception as dummy:
+                pass
+            module.fail_json(msg='Error while writing result into temporary file: {0}'.format(e))
+        # Update destination to wanted permissions
+        if os.path.exists(file_args['path']):
+            module.set_fs_attributes_if_different(file_args, False)
+        # Move tempfile to final destination
+        module.atomic_move(tmp_name, file_args['path'])
+        # Try to update permissions again
+        module.set_fs_attributes_if_different(file_args, False)
+    except Exception as e:
+        try:
+            os.remove(tmp_name)
+        except Exception as dummy:
+            pass
+        module.fail_json(msg='Error while writing result: {0}'.format(e))
 
 
 @six.add_metaclass(abc.ABCMeta)
