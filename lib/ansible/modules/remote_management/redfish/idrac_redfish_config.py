@@ -85,7 +85,6 @@ EXAMPLES = '''
       baseuri: "{{ baseuri }}"
       username: "{{ username}}"
       password: "{{ password }}"
-      password: "{{ password }}"
 '''
 
 RETURN = '''
