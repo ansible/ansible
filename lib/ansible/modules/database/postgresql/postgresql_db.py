@@ -462,7 +462,7 @@ def main():
         "login_password": "password",
         "port": "port",
         "ssl_mode": "sslmode",
-        "ssl_rootcert": "sslrootcert"
+        "ca_cert": "sslrootcert"
     }
     kw = dict((params_map[k], v) for (k, v) in iteritems(module.params)
               if k in params_map and v != '' and v is not None)
@@ -479,7 +479,7 @@ def main():
 
     if not raw_connection:
         try:
-            pgutils.ensure_libs(sslrootcert=module.params.get('ssl_rootcert'))
+            pgutils.ensure_libs(sslrootcert=module.params.get('ca_cert'))
             db_connection = psycopg2.connect(database=maintenance_db, **kw)
 
             # Enable autocommit so we can create databases
