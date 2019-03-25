@@ -1096,6 +1096,8 @@ files:
   $plugins/doc_fragments/proxysql.py: *mysql
   $plugins/doc_fragments/ucs.py: *ucs
   $plugins/doc_fragments/vultr.py: *vultr
+  $plugins/doc_fragments/ovirt.py: *ovirt
+  $plugins/doc_fragments/ovirt_facts.py: *ovirt
   $plugins/doc_fragments/xenserver.py:
     maintainers: bvitnik
   $plugins/doc_fragments/hpe3par.py: *hpe3par
