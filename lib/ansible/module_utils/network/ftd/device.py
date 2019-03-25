@@ -27,6 +27,12 @@ except ImportError:
     HAS_KICK = False
 
 
+def assert_kick_is_installed(module):
+    if not HAS_KICK:
+        module.fail_json(msg='Firepower-kick library is required to run this module. '
+                             'Please, install it with `pip install firepower-kick` command and run the playbook again.')
+
+
 class FtdModel:
     FTD_ASA5506_X = 'Cisco ASA5506-X Threat Defense'
     FTD_ASA5508_X = 'Cisco ASA5508-X Threat Defense'

@@ -74,10 +74,10 @@ class TestFtdInstall(object):
 
     @pytest.fixture(autouse=True)
     def has_kick_mock(self, mocker):
-        return mocker.patch('ansible.modules.network.ftd.ftd_install.HAS_KICK', True)
+        return mocker.patch('ansible.module_utils.network.ftd.device.HAS_KICK', True)
 
     def test_module_should_fail_when_kick_is_not_installed(self, mocker):
-        mocker.patch('ansible.modules.network.ftd.ftd_install.HAS_KICK', False)
+        mocker.patch('ansible.module_utils.network.ftd.device.HAS_KICK', False)
 
         set_module_args(dict(DEFAULT_MODULE_PARAMS))
         with pytest.raises(AnsibleFailJson) as ex:
@@ -85,7 +85,7 @@ class TestFtdInstall(object):
 
         result = ex.value.args[0]
         assert result['failed']
-        assert "Kick Python module is required to run this module." in result['msg']
+        assert "Firepower-kick library is required to run this module" in result['msg']
 
     def test_module_should_fail_when_platform_is_not_supported(self, config_resource_mock):
         config_resource_mock.execute_operation.return_value = {'platformModel': 'nonSupportedModel'}

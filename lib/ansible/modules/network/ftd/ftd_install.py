@@ -198,7 +198,7 @@ from ansible.module_utils.connection import Connection
 from ansible.module_utils.six import iteritems
 
 from ansible.module_utils.network.ftd.configuration import BaseConfigurationResource, ParamName
-from ansible.module_utils.network.ftd.device import HAS_KICK, FtdPlatformFactory, FtdModel
+from ansible.module_utils.network.ftd.device import assert_kick_is_installed, FtdPlatformFactory, FtdModel
 from ansible.module_utils.network.ftd.operation import FtdOperations, get_system_info
 
 REQUIRED_PARAMS_FOR_LOCAL_CONNECTION = ['device_ip', 'device_netmask', 'device_gateway', 'device_model', 'dns_server']
@@ -229,9 +229,7 @@ def main():
         force_install=dict(type='bool', required=False, default=False)
     )
     module = AnsibleModule(argument_spec=fields)
-    if not HAS_KICK:
-        module.fail_json(msg='Kick Python module is required to run this module. '
-                             'Please, install it with `pip install firepower-kick` command and run the playbook again.')
+    assert_kick_is_installed(module)
 
     use_local_connection = module._socket_path is None
     if use_local_connection:
