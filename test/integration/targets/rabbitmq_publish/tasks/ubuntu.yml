@@ -34,11 +34,16 @@
       - "'amq.gen' in rabbit_random_queue_output.result.queue"
       - "'text/plain' in rabbit_random_queue_output.result.content_type"
 
+- name: Copy binary to remote
+  copy:
+    src: "{{ role_path }}/files/image.gif"
+    dest: "{{ remote_tmp_dir }}/image.gif"
+
 - name: Publish binary to a queue
   rabbitmq_publish:
     url: "amqp://guest:guest@localhost:5672/%2F"
     queue: publish_test
-    src: "{{ role_path }}/files/image.gif"
+    src: "{{ remote_tmp_dir }}/image.gif"
   register: rabbitmq_publish_file
 
 - assert:
@@ -51,7 +56,7 @@
   rabbitmq_publish:
     url: "amqp://guest:guest@localhost:5672/%2F"
     queue: 'publish_test'
-    src: "{{ role_path }}/files/image.gif"
+    src: "{{ remote_tmp_dir }}/image.gif"
     body: blah
   register: rabbit_basic_fail_output1
   ignore_errors: yes
@@ -141,7 +146,7 @@
   rabbitmq_publish:
     url: "amqp://guest:guest@localhost:5672/%2F"
     queue: 'publish_test'
-    src: "{{ role_path }}/files/image.gif"
+    src: "{{ remote_tmp_dir }}/image.gif"
     headers:
       myHeader: Value1
       secondHeader: Value2
