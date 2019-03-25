@@ -67,7 +67,7 @@ NIOS_PROVIDER_SPEC = {
     'host': dict(fallback=(env_fallback, ['INFOBLOX_HOST'])),
     'username': dict(fallback=(env_fallback, ['INFOBLOX_USERNAME'])),
     'password': dict(fallback=(env_fallback, ['INFOBLOX_PASSWORD']), no_log=True),
-    'ssl_verify': dict(type='bool', default=False, fallback=(env_fallback, ['INFOBLOX_SSL_VERIFY'])),
+    'validate_certs': dict(type='bool', default=False, fallback=(env_fallback, ['INFOBLOX_SSL_VERIFY']), aliases=['ssl_verify']),
     'silent_ssl_warnings': dict(type='bool', default=True),
     'http_request_timeout': dict(type='int', default=10, fallback=(env_fallback, ['INFOBLOX_HTTP_REQUEST_TIMEOUT'])),
     'http_pool_connections': dict(type='int', default=10),
@@ -89,7 +89,7 @@ def get_connector(*args, **kwargs):
                         'to be installed.  It can be installed using the '
                         'command `pip install infoblox-client`')
 
-    if not set(kwargs.keys()).issubset(NIOS_PROVIDER_SPEC.keys()):
+    if not set(kwargs.keys()).issubset(list(NIOS_PROVIDER_SPEC.keys()) + ['ssl_verify']):
         raise Exception('invalid or unsupported keyword argument for connector')
     for key, value in iteritems(NIOS_PROVIDER_SPEC):
         if key not in kwargs:
@@ -103,6 +103,10 @@ def get_connector(*args, **kwargs):
             env = ('INFOBLOX_%s' % key).upper()
             if env in os.environ:
                 kwargs[key] = os.environ.get(env)
+
+    if 'validate_certs' in kwargs.keys():
+        kwargs['ssl_verify'] = kwargs['validate_certs']
+        kwargs.pop('validate_certs', None)
 
     return Connector(kwargs)
 
