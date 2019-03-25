@@ -22,10 +22,10 @@ description:
 options:
   name:
     description:
-      - The name of the feature to install.
+      - The name(s) of the feature to install.
       - This relates to C(FeatureName) in the Powershell cmdlet.
       - To list all available features use the PowerShell command C(Get-WindowsOptionalFeature).
-    type: str
+    type: list
     required: yes
   state:
     description:
@@ -72,6 +72,13 @@ EXAMPLES = r'''
 - name: Reboot if installing Linux Subsytem as feature requires it
   win_reboot:
   when: wsl_status.reboot_required
+
+- name: Install multiple features in one task
+  win_optional_feature:
+    name:
+    - NetFx3
+    - Microsoft-Windows-Subsystem-Linux
+    state: present
 '''
 
 RETURN = r'''
