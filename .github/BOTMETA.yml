@@ -1127,6 +1127,9 @@ files:
   $plugins/inventory/__init__.py:
     support: core
   $plugins/inventory/docker: *docker
+  $plugins/inventory/docker_swarm.py:
+    <<: *docker
+    maintainers: $team_docker morph027
   $plugins/inventory/gcp_compute.py:
     maintainers: $team_google
     supershipit: $team_google
