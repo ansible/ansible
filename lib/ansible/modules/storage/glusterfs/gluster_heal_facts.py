@@ -121,14 +121,18 @@ def get_self_heal_status(name):
 
 
 def get_rebalance_status(name):
-    out = run_gluster(['volume', 'rebalance', name, 'status'])
+    out = run_gluster(['volume', 'rebalance', name, 'status'], environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
     raw_out = out.split("\n")
     rebalance_status = []
     # return the files that are either still 'in progress' state or 'completed'.
     for line in raw_out:
-        node_dict = {}
         line = " ".join(line.split())
         line_vals = line.split(" ")
+        if line_vals[0].startswith('-') or line_vals[0].startswith('Node'):
+            continue
+        node_dict = {}
+        if len(line_vals) == 1 or len(line_vals) == 4:
+            continue
         node_dict['node'] = line_vals[0]
         node_dict['rebalanced_files'] = line_vals[1]
         node_dict['failures'] = line_vals[4]
