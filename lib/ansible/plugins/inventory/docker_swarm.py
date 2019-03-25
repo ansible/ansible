@@ -187,9 +187,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             if self.get_option('include_host_uri_port'):
                 host_uri_port = str(self.get_option('include_host_uri_port'))
             elif self.get_option('tls') or self.get_option('tls_verify'):
-                host_uri_port = "2376"
+                host_uri_port = '2376'
             else:
-                host_uri_port = "2375"
+                host_uri_port = '2375'
 
         try:
             self.nodes = self.client.nodes.list()
@@ -201,7 +201,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
                                             self.node_attrs['Status']['Addr'])
                 if self.get_option('include_host_uri'):
                     self.inventory.set_variable(self.node_attrs['ID'], 'ansible_host_uri',
-                                                "tcp://" + self.node_attrs['Status']['Addr'] + ":" + host_uri_port)
+                                                'tcp://' + self.node_attrs['Status']['Addr'] + ':' + host_uri_port)
                 if self.get_option('verbose_output'):
                     self.inventory.set_variable(self.node_attrs['ID'], 'docker_swarm_node_attributes', self.node_attrs)
                 if 'ManagerStatus' in self.node_attrs:
@@ -211,8 +211,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
                         swarm_leader_ip = parse_address(self.node_attrs['ManagerStatus']['Addr'])[0] or \
                             self.node_attrs['Status']['Addr']
                         if self.get_option('include_host_uri'):
-                            self.inventory.set_variable(self.node_attrs['ID'], 'ansible_host_uri', "tcp://" +
-                                                        swarm_leader_ip + ":" + host_uri_port)
+                            self.inventory.set_variable(self.node_attrs['ID'], 'ansible_host_uri',
+                                                        'tcp://' + swarm_leader_ip + ':' + host_uri_port)
                         self.inventory.set_variable(self.node_attrs['ID'], 'ansible_host', swarm_leader_ip)
                         self.inventory.add_host(self.node_attrs['ID'], group='leader')
                     else:
@@ -244,7 +244,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         """Return the possibly of a file being consumable by this plugin."""
         return (
             super(InventoryModule, self).verify_file(path) and
-            path.endswith((self.NAME + ".yaml", self.NAME + ".yml")))
+            path.endswith((self.NAME + '.yaml', self.NAME + '.yml')))
 
     def parse(self, inventory, loader, path, cache=True):
         if not HAS_DOCKER:
