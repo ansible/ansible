@@ -139,7 +139,7 @@ RETURN = """
 changed:
     description: A flag indicating if any change was made or not.
     returned: success
-    type: boolean
+    type: bool
     sample: false
 """
 

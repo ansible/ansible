@@ -1,20 +1,7 @@
 #!/usr/bin/env python
-# Copyright 2013 Google Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# Copyright: (c) 2013, Google Inc.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 '''
 GCE external inventory script
@@ -101,16 +88,13 @@ else:
 import logging
 logging.getLogger('libcloud.common.google').addHandler(logging.NullHandler())
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
 try:
     from libcloud.compute.types import Provider
     from libcloud.compute.providers import get_driver
     _ = Provider.GCE
-except:
+except Exception:
     sys.exit("GCE inventory script requires libcloud >= 0.13")
 
 
@@ -292,7 +276,7 @@ class GceInventory(object):
             args = list(secrets.GCE_PARAMS)
             kwargs = secrets.GCE_KEYWORD_PARAMS
             secrets_found = True
-        except:
+        except Exception:
             pass
 
         if not secrets_found and secrets_path:
@@ -306,7 +290,7 @@ class GceInventory(object):
                 args = list(getattr(secrets, 'GCE_PARAMS', []))
                 kwargs = getattr(secrets, 'GCE_KEYWORD_PARAMS', {})
                 secrets_found = True
-            except:
+            except Exception:
                 pass
 
         if not secrets_found:
@@ -501,7 +485,7 @@ class GceInventory(object):
             else:
                 groups[machine_type] = [name]
 
-            image = node.image and node.image or 'persistent_disk'
+            image = node.image or 'persistent_disk'
             if image in groups:
                 groups[image].append(name)
             else:
@@ -533,6 +517,7 @@ class GceInventory(object):
             return json.dumps(data, sort_keys=True, indent=2)
         else:
             return json.dumps(data)
+
 
 # Run the script
 if __name__ == '__main__':

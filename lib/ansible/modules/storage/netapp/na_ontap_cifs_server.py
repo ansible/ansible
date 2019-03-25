@@ -1,7 +1,7 @@
 #!/usr/bin/python
 """ this is cifs_server module
 
- (c) 2018, NetApp, Inc
+ (c) 2018-2019, NetApp, Inc
  # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 """
 
@@ -11,20 +11,20 @@ __metaclass__ = type
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
-    'supported_by': 'community'
+    'supported_by': 'certified'
 }
 
 DOCUMENTATION = '''
 ---
 module: na_ontap_cifs_server
-short_description: cifs server configuration
+short_description: NetApp ONTAP CIFS server configuration
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
-author: chhaya gunawat (chhayag@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 
 description:
-    - Creating / deleting and modifying the CIF server .
+    - Creating / deleting and modifying the CIFS server .
 
 options:
 
@@ -39,10 +39,11 @@ options:
     - CIFS Server Administrative Status.
     choices: ['stopped', 'started']
 
-  cifs_server_name:
+  name:
     description:
     - Specifies the cifs_server name.
     required: true
+    aliases: ['cifs_server_name']
 
   admin_user_name:
     description:
@@ -60,6 +61,19 @@ options:
     description:
     -  The NetBIOS name of the domain or workgroup this CIFS server belongs to.
 
+  ou:
+    description:
+    - The Organizational Unit (OU) within the Windows Active Directory
+      this CIFS server belongs to.
+    version_added: '2.7'
+
+  force:
+    type: bool
+    description:
+    - If this is set and a machine account with the same name as
+      specified in 'name' exists in the Active Directory, it
+      will be overwritten and reused.
+    version_added: '2.7'
 
   vserver:
     description:
@@ -80,7 +94,7 @@ EXAMPLES = '''
     - name: Delete cifs_server
       na_ontap_cifs_server:
         state: absent
-        cifs_server_name: data2
+        name: data2
         vserver: svm1
         hostname: "{{ netapp_hostname }}"
         username: "{{ netapp_username }}"
@@ -110,12 +124,13 @@ class NetAppOntapcifsServer(object):
         self.argument_spec.update(dict(
             state=dict(required=False, choices=['present', 'absent'], default='present'),
             service_state=dict(required=False, choices=['stopped', 'started']),
-            cifs_server_name=dict(required=False, type='str'),
+            name=dict(required=True, type='str', aliases=['cifs_server_name']),
             workgroup=dict(required=False, type='str', default=None),
             domain=dict(required=False, type='str'),
             admin_user_name=dict(required=False, type='str'),
-            admin_password=dict(required=False, type='str'),
-
+            admin_password=dict(required=False, type='str', no_log=True),
+            ou=dict(required=False, type='str'),
+            force=dict(required=False, type='bool'),
             vserver=dict(required=True, type='str'),
         ))
 
@@ -135,6 +150,8 @@ class NetAppOntapcifsServer(object):
         self.service_state = params['service_state']
         self.admin_user_name = params['admin_user_name']
         self.admin_password = params['admin_password']
+        self.ou = params['ou']
+        self.force = params['force']
 
         if HAS_NETAPP_LIB is False:
             self.module.fail_json(msg="the python NetApp-Lib module is required")
@@ -185,6 +202,10 @@ class NetAppOntapcifsServer(object):
             options['admin-username'] = self.admin_user_name
         if self.admin_password is not None:
             options['admin-password'] = self.admin_password
+        if self.ou is not None:
+            options['organizational-unit'] = self.ou
+        if self.force is not None:
+            options['force-account-overwrite'] = str(self.force).lower()
 
         cifs_server_create = netapp_utils.zapi.NaElement.create_node_with_children(
             'cifs-server-create', **options)

@@ -25,8 +25,9 @@ import re
 import collections
 
 from ansible import constants as C
+from ansible.module_utils._text import to_native
 from ansible.module_utils.network.common.netconf import remove_namespaces
-from ansible.module_utils.network.iosxr.iosxr import build_xml
+from ansible.module_utils.network.iosxr.iosxr import build_xml, etree_find
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.plugins.netconf import NetconfBase
 from ansible.plugins.netconf import ensure_connected
@@ -64,10 +65,10 @@ class Netconf(NetconfBase):
         install_filter = build_xml('install', install_meta, opcode='filter')
 
         reply = self.get(install_filter)
-        ele_boot_variable = etree.fromstring(reply).find('.//boot-variable/boot-variable')
+        ele_boot_variable = etree_find(reply, 'boot-variable/boot-variable')
         if ele_boot_variable is not None:
             device_info['network_os_image'] = re.split('[:|,]', ele_boot_variable.text)[1]
-        ele_package_name = etree.fromstring(reply).find('.//package-name')
+        ele_package_name = etree_find(reply, 'package-name')
         if ele_package_name is not None:
             device_info['network_os_package'] = ele_package_name.text
             device_info['network_os_version'] = re.split('-', ele_package_name.text)[-1]
@@ -75,7 +76,7 @@ class Netconf(NetconfBase):
         hostname_filter = build_xml('host-names', opcode='filter')
 
         reply = self.get(hostname_filter)
-        hostname_ele = etree.fromstring(reply).find('.//host-name')
+        hostname_ele = etree_find(reply, 'host-name')
         device_info['network_os_hostname'] = hostname_ele.text if hostname_ele is not None else None
 
         return device_info
@@ -93,21 +94,25 @@ class Netconf(NetconfBase):
 
     @staticmethod
     def guess_network_os(obj):
-
+        """
+        Guess the remote network os name
+        :param obj: Netconf connection class object
+        :return: Network OS name
+        """
         try:
             m = manager.connect(
                 host=obj._play_context.remote_addr,
                 port=obj._play_context.port or 830,
                 username=obj._play_context.remote_user,
                 password=obj._play_context.password,
-                key_filename=obj._play_context.private_key_file,
-                hostkey_verify=C.HOST_KEY_CHECKING,
-                look_for_keys=C.PARAMIKO_LOOK_FOR_KEYS,
+                key_filename=obj.key_filename,
+                hostkey_verify=obj.get_option('host_key_checking'),
+                look_for_keys=obj.get_option('look_for_keys'),
                 allow_agent=obj._play_context.allow_agent,
-                timeout=obj._play_context.timeout
+                timeout=obj.get_option('persistent_connect_timeout')
             )
         except SSHUnknownHostError as exc:
-            raise AnsibleConnectionFailure(str(exc))
+            raise AnsibleConnectionFailure(to_native(exc))
 
         guessed_os = None
         for c in m.server_capabilities:
@@ -120,53 +125,80 @@ class Netconf(NetconfBase):
 
     # TODO: change .xml to .data_xml, when ncclient supports data_xml on all platforms
     @ensure_connected
-    def get(self, filter=None):
+    def get(self, filter=None, remove_ns=False):
         if isinstance(filter, list):
             filter = tuple(filter)
         try:
-            response = self.m.get(filter=filter)
-            return remove_namespaces(response)
+            resp = self.m.get(filter=filter)
+            if remove_ns:
+                response = remove_namespaces(resp)
+            else:
+                response = resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
+            return response
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
     @ensure_connected
-    def get_config(self, source=None, filter=None):
+    def get_config(self, source=None, filter=None, remove_ns=False):
         if isinstance(filter, list):
             filter = tuple(filter)
         try:
-            response = self.m.get_config(source=source, filter=filter)
-            return remove_namespaces(response)
+            resp = self.m.get_config(source=source, filter=filter)
+            if remove_ns:
+                response = remove_namespaces(resp)
+            else:
+                response = resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
+            return response
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
     @ensure_connected
-    def edit_config(self, *args, **kwargs):
+    def edit_config(self, config=None, format='xml', target='candidate', default_operation=None, test_option=None, error_option=None, remove_ns=False):
+        if config is None:
+            raise ValueError('config value must be provided')
         try:
-            response = self.m.edit_config(*args, **kwargs)
-            return remove_namespaces(response)
+            resp = self.m.edit_config(config, format=format, target=target, default_operation=default_operation, test_option=test_option,
+                                      error_option=error_option)
+            if remove_ns:
+                response = remove_namespaces(resp)
+            else:
+                response = resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
+            return response
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
     @ensure_connected
-    def commit(self, *args, **kwargs):
+    def commit(self, confirmed=False, timeout=None, persist=None, remove_ns=False):
         try:
-            response = self.m.commit(*args, **kwargs)
-            return remove_namespaces(response)
+            resp = self.m.commit(confirmed=confirmed, timeout=timeout, persist=persist)
+            if remove_ns:
+                response = remove_namespaces(resp)
+            else:
+                response = resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
+            return response
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
     @ensure_connected
-    def validate(self, *args, **kwargs):
+    def validate(self, source="candidate", remove_ns=False):
         try:
-            response = self.m.validate(*args, **kwargs)
-            return remove_namespaces(response)
+            resp = self.m.validate(source=source)
+            if remove_ns:
+                response = remove_namespaces(resp)
+            else:
+                response = resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
+            return response
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
     @ensure_connected
-    def discard_changes(self):
+    def discard_changes(self, remove_ns=False):
         try:
-            response = self.m.discard_changes()
-            return remove_namespaces(response)
+            resp = self.m.discard_changes()
+            if remove_ns:
+                response = remove_namespaces(resp)
+            else:
+                response = resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
+            return response
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))

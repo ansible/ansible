@@ -47,7 +47,7 @@ New module development
 ----------------------
 
 Please read 
-`link <https://docs.ansible.com/ansible/dev_guide/developing_modules.html#how-to-develop-a-module>`__,
+`link <https://docs.ansible.com/ansible/devel/dev_guide/developing_modules.html>`__,
 first to know what common properties, functions and features every module must
 have.
 
@@ -210,7 +210,7 @@ Testing
 -------
 
 -  Integration testing is currently done in oVirt's CI system
-   `here <http://jenkins.ovirt.org/job/ovirt_master-ansible-system-tests/>`__
+   `here <http://jenkins.ovirt.org/view/All/job/ovirt-system-tests_ansible-suite-master/>`__
    and
    `here <https://github.com/oVirt/ovirt-system-tests/tree/master/ansible-suite-master/>`__.
 -  Please consider using these integrationtests if you create a new module or add a new feature to an existing

@@ -1,0 +1,2 @@
+bugfixes:
+- Enhance the conditional check to include main.yml if it is not from 'role/vars/' (https://github.com/ansible/ansible/pull/51926).

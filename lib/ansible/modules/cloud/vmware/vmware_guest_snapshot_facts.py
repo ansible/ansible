@@ -35,9 +35,15 @@ options:
      - This is required if C(uuid) is not supplied.
    uuid:
      description:
-     - UUID of the instance to manage if known, this value is VMware's unique identifier.
-     - This is required if C(name) is not supplied.
+     - UUID of the instance to manage if known, this is VMware's BIOS UUID by default.
+     - This is required if C(name) parameter is not supplied.
      - The C(folder) is ignored, if C(uuid) is provided.
+   use_instance_uuid:
+     description:
+     - Whether to use the VMWare instance UUID rather than the BIOS UUID.
+     default: no
+     type: bool
+     version_added: '2.8'
    folder:
      description:
      - Destination folder, absolute or relative path to find an existing guest.
@@ -61,13 +67,13 @@ extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-  - name: Gather facts about the virtual machine in given vCenter
+  - name: Gather snapshot facts about the virtual machine in the given vCenter
     vmware_guest_snapshot_facts:
-      hostname: 192.168.1.209
-      username: administrator@vsphere.local
-      password: vmware
-      datacenter: datacenter_name
-      name: dummy_vm
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      datacenter: "{{ datacenter_name }}"
+      name: "{{ guest_name }}"
     delegate_to: localhost
     register: snapshot_facts
 '''
@@ -125,6 +131,7 @@ def main():
     argument_spec.update(
         name=dict(type='str'),
         uuid=dict(type='str'),
+        use_instance_uuid=dict(type='bool', default=False),
         folder=dict(type='str'),
         datacenter=dict(required=True, type='str'),
     )

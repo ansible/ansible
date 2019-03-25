@@ -18,11 +18,11 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os.path
-from collections import MutableSequence
 
 from ansible import constants as C
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text
+from ansible.module_utils.common._collections_compat import MutableSequence
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.plugins.loader import connection_loader
@@ -49,7 +49,7 @@ class ActionModule(ActionBase):
         return path
 
     def _host_is_ipv6_address(self, host):
-        return ':' in host
+        return ':' in to_text(host, errors='surrogate_or_strict')
 
     def _format_rsync_rsh_target(self, host, path, user):
         ''' formats rsync rsh target, escaping ipv6 addresses if needed '''
@@ -205,6 +205,7 @@ class ActionModule(ActionBase):
 
         # Parameter name needed by the ansible module
         _tmp_args['_local_rsync_path'] = task_vars.get('ansible_rsync_path') or 'rsync'
+        _tmp_args['_local_rsync_password'] = task_vars.get('ansible_ssh_pass') or task_vars.get('ansible_password')
 
         # rsync thinks that one end of the connection is localhost and the
         # other is the host we're running the task for  (Note: We use
@@ -301,6 +302,9 @@ class ActionModule(ActionBase):
 
             new_connection = connection_loader.get('local', self._play_context, new_stdin)
             self._connection = new_connection
+            # Override _remote_is_local as an instance attribute specifically for the synchronize use case
+            # ensuring we set local tmpdir correctly
+            self._connection._remote_is_local = True
             self._override_module_replaced_vars(task_vars)
 
         # SWITCH SRC AND DEST HOST PER MODE

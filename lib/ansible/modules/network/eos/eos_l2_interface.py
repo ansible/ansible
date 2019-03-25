@@ -171,14 +171,18 @@ def map_obj_to_commands(updates, module):
                     if obj_in_have['mode'] == 'access':
                         commands.append('no switchport access vlan {0}'.format(obj_in_have['access_vlan']))
                         if native_vlan:
+                            commands.append('switchport mode trunk')
                             commands.append('switchport trunk native vlan {0}'.format(native_vlan))
                         if trunk_allowed_vlans:
+                            commands.append('switchport mode trunk')
                             commands.append('switchport trunk allowed vlan {0}'.format(trunk_allowed_vlans))
                     else:
                         if obj_in_have['native_vlan']:
-                            commands.append('not switchport trunk native vlan {0}'.format(obj_in_have['native_vlan']))
+                            commands.append('no switchport trunk native vlan {0}'.format(obj_in_have['native_vlan']))
+                            commands.append('no switchport mode trunk')
                         if obj_in_have['trunk_allowed_vlans']:
-                            commands.append('not switchport trunk allowed vlan {0}'.format(obj_in_have['trunk_allowed_vlans']))
+                            commands.append('no switchport trunk allowed vlan {0}'.format(obj_in_have['trunk_allowed_vlans']))
+                            commands.append('no switchport mode trunk')
                         commands.append('switchport access vlan {0}'.format(access_vlan))
                 else:
                     if mode == 'access':
@@ -207,8 +211,9 @@ def map_config_to_obj(module):
     instances = list()
 
     for item in set(match):
-        command = 'sh int {0} switchport | include Switchport'
-        switchport_cfg = run_commands(module, command.format(item))[0].split(':')[1].strip()
+        command = {'command': 'show interfaces {0} switchport | include Switchport'.format(item),
+                   'output': 'text'}
+        switchport_cfg = run_commands(module, command)[0].split(':')[1].strip()
         if switchport_cfg == 'Enabled':
             state = 'present'
         else:

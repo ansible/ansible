@@ -1,0 +1,136 @@
+---
+# ensure logging configs are empty
+- name: Remove server logging
+  cnos_logging: &remove_server
+    dest: server
+    name: 10.241.107.224
+    state: absent
+
+- name: Remove console
+  cnos_logging:
+    dest: console
+    level: 4
+    state: absent
+
+- name: Remove buffer
+  cnos_logging:
+    dest: logfile
+    size: 8000
+    state: absent
+
+# start tests
+- name: Set up server logging
+  cnos_logging:
+    dest: server
+    name: 10.241.107.224
+    facility: local7
+    state: present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"logging server 10.241.107.224" in result.commands'
+
+- name: Set up server logging again (idempotent)
+  cnos_logging:
+    dest: server
+    name: 10.241.107.224
+    state: present
+  register: result
+
+- assert: &unchanged
+    that:
+      - 'result.changed == true'
+
+- name: Delete/disable server logging
+  cnos_logging: *remove_server
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"no logging server 10.241.107.224" in result.commands'
+
+- name: Delete/disable server logging (idempotent)
+  cnos_logging: *remove_server
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+
+- name: Console logging with level errors
+  cnos_logging:
+    dest: console
+    level: 3 
+    state: present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"logging console 3" in result.commands'
+
+- name: Configure Buffer size
+  cnos_logging:
+    dest: logfile
+    name: testfile
+    level: 6
+    size: 8000
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"logging logfile testfile 6 size 8000" in result.commands'
+
+
+- name: Change logging parameters using aggregate
+  cnos_logging:
+    aggregate:
+      - { dest: console, level: 5 }
+      - { dest: logfile, name: anil, level: 3, size: 9000 }
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"logging logfile anil 3 size 9000" in result.commands'
+      - '"logging console 5" in result.commands'
+
+- name: Set both logging destination and facility
+  cnos_logging: &set_both
+    dest: logfile
+    name: mylog
+    level: 1
+    size: 4096
+    state: present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"logging logfile mylog 1 size 4096" in result.commands'
+
+- name: Set both logging destination and facility (idempotent)
+  cnos_logging: *set_both
+  register: result
+
+- assert: 
+    that:
+      - 'result.changed == false'
+
+- name: remove logging as collection tearDown
+  cnos_logging:
+    aggregate:
+      - { dest: console, level: 6 }
+      - { dest: logfile, name: mylog, size: 4096, level: 1 }
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"no logging console" in result.commands'
+      - '"no logging logfile" in result.commands'

@@ -16,3 +16,5 @@ Please note that this is not a complete list. If you believe any extra informati
    porting_guide_2.4
    porting_guide_2.5
    porting_guide_2.6
+   porting_guide_2.7
+   porting_guide_2.8

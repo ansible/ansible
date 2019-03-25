@@ -1,0 +1,2 @@
+minor_changes:
+- change default value for ``configs`` from ``[]`` to ``null`` and for ``update_order`` from ``stop-first`` to ``null``, matching docker API and allowing the module to interact with older docker daemons.

@@ -1,41 +1,83 @@
 #!powershell
-# This file is part of Ansible
 
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-#Requires -Module Ansible.ModuleUtils.Legacy
+#AnsibleRequires -CSharpUtil Ansible.Basic
 #Requires -Module Ansible.ModuleUtils.FileUtil
 #Requires -Module Ansible.ModuleUtils.LinkUtil
 
-function DateTo-Timestamp($start_date, $end_date) {
+function ConvertTo-Timestamp($start_date, $end_date) {
     if ($start_date -and $end_date) {
         return (New-TimeSpan -Start $start_date -End $end_date).TotalSeconds
     }
 }
 
-$params = Parse-Args $args -supports_check_mode $true
-
-$path = Get-AnsibleParam -obj $params -name "path" -type "path" -failifempty $true -aliases "dest","name"
-$get_md5 = Get-AnsibleParam -obj $params -name "get_md5" -type "bool" -default $false
-$get_checksum = Get-AnsibleParam -obj $params -name "get_checksum" -type "bool" -default $true
-$checksum_algorithm = Get-AnsibleParam -obj $params -name "checksum_algorithm" -type "str" -default "sha1" -validateset "md5","sha1","sha256","sha384","sha512"
-
-$result = @{
-    changed = $false
-    stat = @{
-        exists = $false
+function Get-FileChecksum($path, $algorithm) {
+    switch ($algorithm) {
+        'md5' { $sp = New-Object -TypeName System.Security.Cryptography.MD5CryptoServiceProvider }
+        'sha1' { $sp = New-Object -TypeName System.Security.Cryptography.SHA1CryptoServiceProvider }
+        'sha256' { $sp = New-Object -TypeName System.Security.Cryptography.SHA256CryptoServiceProvider }
+        'sha384' { $sp = New-Object -TypeName System.Security.Cryptography.SHA384CryptoServiceProvider }
+        'sha512' { $sp = New-Object -TypeName System.Security.Cryptography.SHA512CryptoServiceProvider }
+        default { Fail-Json -obj $result -message "Unsupported hash algorithm supplied '$algorithm'" }
     }
+
+    $fp = [System.IO.File]::Open($path, [System.IO.Filemode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite)
+    try {
+        $hash = [System.BitConverter]::ToString($sp.ComputeHash($fp)).Replace("-", "").ToLower()
+    } finally {
+        $fp.Dispose()
+    }
+
+    return $hash
 }
 
-# get_md5 will be an undocumented option in 2.9 to be removed at a later
-# date if possible (3.0+)
-if (Get-Member -inputobject $params -name "get_md5") {
-    Add-DepreactionWarning -obj $result -message "get_md5 has been deprecated along with the md5 return value, use get_checksum=True and checksum_algorithm=md5 instead" -version 2.9
+function Get-FileInfo {
+    param([String]$Path, [Switch]$Follow)
+
+    $info = Get-AnsibleItem -Path $Path -ErrorAction SilentlyContinue
+    $link_info = $null
+    if ($null -ne $info) {
+        try {
+            $link_info = Get-Link -link_path $info.FullName
+        } catch {
+            $module.Warn("Failed to check/get link info for file: $($_.Exception.Message)")
+        }
+
+        # If follow=true we want to follow the link all the way back to root object
+        if ($Follow -and $null -ne $link_info -and $link_info.Type -in @("SymbolicLink", "JunctionPoint")) {
+            $info, $link_info = Get-FileInfo -Path $link_info.AbsolutePath -Follow
+        }
+    }
+
+    return $info, $link_info
 }
 
-$info = Get-AnsibleItem -Path $path -ErrorAction SilentlyContinue
-If ($info -ne $null) {
+$spec = @{
+    options = @{
+        path = @{ type='path'; required=$true; aliases=@( 'dest', 'name' ) }
+        get_checksum = @{ type='bool'; default=$true }
+        checksum_algorithm = @{ type='str'; default='sha1'; choices=@( 'md5', 'sha1', 'sha256', 'sha384', 'sha512' ) }
+        get_md5 = @{ type='bool'; default=$false; removed_in_version='2.9' }
+        follow = @{ type='bool'; default=$false }
+    }
+    supports_check_mode = $true
+}
+
+$module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
+
+$path = $module.Params.path
+$get_md5 = $module.Params.get_md5
+$get_checksum = $module.Params.get_checksum
+$checksum_algorithm = $module.Params.checksum_algorithm
+$follow = $module.Params.follow
+
+$module.Result.stat = @{ exists=$false }
+
+Load-LinkUtils
+$info, $link_info = Get-FileInfo -Path $path -Follow:$follow
+If ($null -ne $info) {    
     $epoch_date = Get-Date -Date "01/01/1970"
     $attributes = @()
     foreach ($attribute in ($info.Attributes -split ',')) {
@@ -59,9 +101,9 @@ If ($info -ne $null) {
         # lnk_target = islnk or isjunction Target of the symlink. Note that relative paths remain relative
         # lnk_source = islnk os isjunction Target of the symlink normalized for the remote filesystem
         hlnk_targets = @()
-        creationtime = (DateTo-Timestamp -start_date $epoch_date -end_date $info.CreationTime)
-        lastaccesstime = (DateTo-Timestamp -start_date $epoch_date -end_date $info.LastAccessTime)
-        lastwritetime = (DateTo-Timestamp -start_date $epoch_date -end_date $info.LastWriteTime)
+        creationtime = (ConvertTo-Timestamp -start_date $epoch_date -end_date $info.CreationTime)
+        lastaccesstime = (ConvertTo-Timestamp -start_date $epoch_date -end_date $info.LastAccessTime)
+        lastwritetime = (ConvertTo-Timestamp -start_date $epoch_date -end_date $info.LastWriteTime)
         # size = a file and directory - calculated below
         path = $info.FullName
         filename = $info.Name
@@ -71,13 +113,19 @@ If ($info -ne $null) {
         # checksum = a file and get_checksum: True
         # md5 = a file and get_md5: True
     }
-    $stat.owner = $info.GetAccessControl().Owner
+    try {
+        $stat.owner = $info.GetAccessControl().Owner
+    } catch {
+        # may not have rights, historical behaviour was to just set to $null
+        # due to ErrorActionPreference being set to "Continue"
+        $stat.owner = $null
+    }
 
     # values that are set according to the type of file
     if ($info.Attributes.HasFlag([System.IO.FileAttributes]::Directory)) {
         $stat.isdir = $true
-        $share_info = Get-WmiObject -Class Win32_Share -Filter "Path='$($stat.path -replace '\\', '\\')'"
-        if ($share_info -ne $null) {
+        $share_info = Get-CimInstance -ClassName Win32_Share -Filter "Path='$($stat.path -replace '\\', '\\')'"
+        if ($null -ne $share_info) {
             $stat.isshared = $true
             $stat.sharename = $share_info.Name
         }
@@ -100,39 +148,33 @@ If ($info -ne $null) {
             try {
                 $stat.md5 = Get-FileChecksum -path $path -algorithm "md5"
             } catch {
-                Fail-Json -obj $result -message "failed to get MD5 hash of file, remove get_md5 to ignore this error: $($_.Exception.Message)"
+                $module.FailJson("Failed to get MD5 hash of file, remove get_md5 to ignore this error: $($_.Exception.Message)", $_)
             }
         }
         if ($get_checksum) {
             try {
                 $stat.checksum = Get-FileChecksum -path $path -algorithm $checksum_algorithm
             } catch {
-                Fail-Json -obj $result -message "failed to get hash of file, set get_checksum to False to ignore this error: $($_.Exception.Message)"
+                $module.FailJson("Failed to get hash of file, set get_checksum to False to ignore this error: $($_.Exception.Message)", $_)
             }
         }
     }
 
     # Get symbolic link, junction point, hard link info
-    Load-LinkUtils
-    try {
-        $link_info = Get-Link -link_path $info.FullName
-    } catch {
-        Add-Warning -obj $result -message "Failed to check/get link info for file: $($_.Exception.Message)"
-    }
-    if ($link_info -ne $null) {
+    if ($null -ne $link_info) {
         switch ($link_info.Type) {
             "SymbolicLink" {
                 $stat.islnk = $true
                 $stat.isreg = $false
                 $stat.lnk_target = $link_info.TargetPath
-                $stat.lnk_source = $link_info.AbsolutePath                
+                $stat.lnk_source = $link_info.AbsolutePath
                 break
             }
             "JunctionPoint" {
                 $stat.isjunction = $true
                 $stat.isreg = $false
                 $stat.lnk_target = $link_info.TargetPath
-                $stat.lnk_source = $link_info.AbsolutePath                
+                $stat.lnk_source = $link_info.AbsolutePath
                 break
             }
             "HardLink" {
@@ -147,7 +189,8 @@ If ($info -ne $null) {
         }
     }
 
-    $result.stat = $stat
+    $module.Result.stat = $stat
 }
 
-Exit-Json $result
+$module.ExitJson()
+

@@ -95,24 +95,24 @@ extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-# Create a resource pool
-  - name: Add resource pool to vCenter
-    vmware_resource_pool:
-      hostname: vcsa_host
-      username: vcsa_user
-      password: vcsa_pass
-      datacenter: datacenter
-      cluster: cluster
-      resource_pool: resource_pool
-      mem_shares: normal
-      mem_limit: -1
-      mem_reservation: 0
-      mem_expandable_reservations: True
-      cpu_shares: normal
-      cpu_limit: -1
-      cpu_reservation: 0
-      cpu_expandable_reservations: True
-      state: present
+- name: Add resource pool to vCenter
+  vmware_resource_pool:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    datacenter: '{{ datacenter_name }}'
+    cluster: '{{ cluster_name }}'
+    resource_pool: '{{ resource_pool_name }}'
+    mem_shares: normal
+    mem_limit: -1
+    mem_reservation: 0
+    mem_expandable_reservations: yes
+    cpu_shares: normal
+    cpu_limit: -1
+    cpu_reservation: 0
+    cpu_expandable_reservations: yes
+    state: present
+  delegate_to: localhost
 '''
 
 RETURN = """
@@ -229,7 +229,7 @@ class VMwareResourcePool(object):
             task = self.resource_pool_obj.Destroy()
             success, result = wait_for_task(task)
 
-        except:
+        except Exception:
             self.module.fail_json(msg="Failed to remove resource pool '%s' '%s'" % (
                 self.resource_pool, resource_pool))
         self.module.exit_json(changed=changed, result=str(result))

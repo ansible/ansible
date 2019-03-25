@@ -28,23 +28,28 @@ options:
   path:
     description:
       - The full path including file name to the registry file on the remote machine to be merged
+    type: path
     required: yes
   compare_key:
     description:
       - The parent key to use when comparing the contents of the registry to the contents of the file.  Needs to be in HKLM or HKCU part of registry.
         Use a PS-Drive style path for example HKLM:\SOFTWARE not HKEY_LOCAL_MACHINE\SOFTWARE
         If not supplied, or the registry key is not found, no comparison will be made, and the module will report changed.
-author:
-- Jon Hawkesworth (@jhawkesworth)
+    type: str
 notes:
    - Organise your registry files so that they contain a single root registry
      key if you want to use the compare_to functionality.
-     This module does not force registry settings to be in the state
+   - This module does not force registry settings to be in the state
      described in the file.  If registry settings have been modified externally
      the module will merge the contents of the file but continue to report
      differences on subsequent runs.
-     To force registry change, use M(win_regedit) with state=absent before
-     using M(win_regmerge).
+   - To force registry change, use M(win_regedit) with C(state=absent) before
+     using C(win_regmerge).
+seealso:
+- module: win_reg_stat
+- module: win_regedit
+author:
+- Jon Hawkesworth (@jhawkesworth)
 '''
 
 EXAMPLES = r'''
@@ -62,7 +67,7 @@ RETURN = r'''
 compare_to_key_found:
     description: whether the parent registry key has been found for comparison
     returned: when comparison key not found in registry
-    type: boolean
+    type: bool
     sample: false
 difference_count:
     description: number of differences between the registry and the file
@@ -72,6 +77,6 @@ difference_count:
 compared:
     description: whether a comparison has taken place between the registry and the file
     returned: when a comparison key has been supplied and comparison has been attempted
-    type: boolean
+    type: bool
     sample: true
 '''

@@ -21,8 +21,8 @@ __metaclass__ = type
 
 from jinja2.runtime import Context
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch
+from units.compat import unittest
+from units.compat.mock import patch
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
@@ -50,6 +50,7 @@ class BaseTemplar(object):
             some_unsafe_var=wrap_var("unsafe_blip"),
             some_static_unsafe_var=wrap_var("static_unsafe_blip"),
             some_unsafe_keyword=wrap_var("{{ foo }}"),
+            str_with_error="{{ 'str' | from_json }}",
         )
         self.fake_loader = DictDataLoader({
             "/path/to/my_file.txt": "foo\n",
@@ -117,26 +118,25 @@ class TestTemplarTemplate(BaseTemplar, unittest.TestCase):
         self.assertFalse(res)
 
     def test_template_convert_bare_string(self):
-        # Note: no bare_deprecated=False so we hit the deprecation path
         res = self.templar.template('foo', convert_bare=True)
         self.assertEqual(res, 'bar')
 
     def test_template_convert_bare_nested(self):
-        res = self.templar.template('bam', convert_bare=True, bare_deprecated=False)
+        res = self.templar.template('bam', convert_bare=True)
         self.assertEqual(res, 'bar')
 
     def test_template_convert_bare_unsafe(self):
-        res = self.templar.template('some_unsafe_var', convert_bare=True, bare_deprecated=False)
+        res = self.templar.template('some_unsafe_var', convert_bare=True)
         self.assertEqual(res, 'unsafe_blip')
         # self.assertIsInstance(res, AnsibleUnsafe)
         self.assertTrue(self.is_unsafe(res), 'returned value from template.template (%s) is not marked unsafe' % res)
 
     def test_template_convert_bare_filter(self):
-        res = self.templar.template('bam|capitalize', convert_bare=True, bare_deprecated=False)
+        res = self.templar.template('bam|capitalize', convert_bare=True)
         self.assertEqual(res, 'Bar')
 
     def test_template_convert_bare_filter_unsafe(self):
-        res = self.templar.template('some_unsafe_var|capitalize', convert_bare=True, bare_deprecated=False)
+        res = self.templar.template('some_unsafe_var|capitalize', convert_bare=True)
         self.assertEqual(res, 'Unsafe_blip')
         # self.assertIsInstance(res, AnsibleUnsafe)
         self.assertTrue(self.is_unsafe(res), 'returned value from template.template (%s) is not marked unsafe' % res)
@@ -177,23 +177,6 @@ class TestTemplarTemplate(BaseTemplar, unittest.TestCase):
         res = self.templar.template(unsafe_obj)
         self.assertTrue(self.is_unsafe(res), 'returned value from template.template (%s) is not marked unsafe' % res)
 
-    # TODO: not sure what template is supposed to do it, but it currently throws attributeError
-    @patch('ansible.template.Templar._clean_data')
-    def test_template_unsafe_non_string_clean_data_exception(self, mock_clean_data):
-        msg = 'Error raised from _clean_data by test_template_unsafe_non_string_clean_data_exception'
-        mock_clean_data.side_effect = AnsibleError(msg)
-        unsafe_obj = AnsibleUnsafe()
-        res = self.templar.template(unsafe_obj)
-        self.assertTrue(self.is_unsafe(res), 'returned value from template.template (%s) is not marked unsafe' % res)
-
-    # TODO: not sure what template is supposed to do it, but it currently throws attributeError
-    @patch('ansible.template.Templar._clean_data', side_effect=AnsibleError)
-    def test_template_unsafe_non_string_subclass_clean_data_exception(self, mock_clean_data):
-        unsafe_obj = SomeUnsafeClass()
-        self.assertTrue(self.is_unsafe(unsafe_obj))
-        res = self.templar.template(unsafe_obj)
-        self.assertTrue(self.is_unsafe(res), 'returned value from template.template (%s) is not marked unsafe' % res)
-
     def test_weird(self):
         data = u'''1 2 #}huh{# %}ddfg{% }}dfdfg{{  {%what%} {{#foo#}} {%{bar}%} {#%blip%#} {{asdfsd%} 3 4 {{foo}} 5 6 7'''
         self.assertRaisesRegexp(AnsibleError,
@@ -201,47 +184,9 @@ class TestTemplarTemplate(BaseTemplar, unittest.TestCase):
                                 self.templar.template,
                                 data)
 
-
-class TestTemplarCleanData(BaseTemplar, unittest.TestCase):
-    def test_clean_data(self):
-        res = self.templar._clean_data(u'some string')
-        self.assertEqual(res, u'some string')
-
-    def test_clean_data_not_stringtype(self):
-        res = self.templar._clean_data(None)
-        # None vs NoneType
-        self.assertEqual(res, None)
-
-    def test_clean_data_jinja(self):
-        res = self.templar._clean_data(u'1 2 {what} 3 4 {{foo}} 5 6 7')
-        self.assertEqual(res, u'1 2 {what} 3 4 {#foo#} 5 6 7')
-
-    def test_clean_data_block(self):
-        res = self.templar._clean_data(u'1 2 {%what%} 3 4 {{foo}} 5 6 7')
-        self.assertEqual(res, u'1 2 {#what#} 3 4 {#foo#} 5 6 7')
-
-#    def test_clean_data_weird(self):
-#        res = self.templar._clean_data(u'1 2 #}huh{# %}ddfg{% }}dfdfg{{  {%what%} {{#foo#}} {%{bar}%} {#%blip%#} {{asdfsd%} 3 4 {{foo}} 5 6 7')
-#        print(res)
-
-        self.assertEqual(res, u'1 2 {#what#} 3 4 {#foo#} 5 6 7')
-
-    def test_clean_data_object(self):
-        obj = {u'foo': [1, 2, 3, u'bdasdf', u'{what}', u'{{foo}}', 5]}
-        clean_obj = {u'foo': [1, 2, 3, u'bdasdf', u'{what}', u'{#foo#}', 5]}
-        res = self.templar._clean_data(obj)
-        self.assertNotEqual(res, obj)
-        self.assertEqual(res, clean_obj)
-
-    def test_clean_data_bad_dict(self):
-        res = self.templar._clean_data(u'{{bad_dict}}')
-        self.assertEqual(res, u'{#bad_dict#}')
-
-    def test_clean_data_unsafe_obj(self):
-        some_obj = SomeClass()
-        unsafe_obj = wrap_var(some_obj)
-        res = self.templar._clean_data(unsafe_obj)
-        self.assertIsInstance(res, SomeClass)
+    def test_template_with_error(self):
+        """Check that AnsibleError is raised, fail if an unhandled exception is raised"""
+        self.assertRaises(AnsibleError, self.templar.template, "{{ str_with_error }}")
 
 
 class TestTemplarMisc(BaseTemplar, unittest.TestCase):

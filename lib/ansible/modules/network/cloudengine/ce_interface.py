@@ -27,7 +27,7 @@ version_added: "2.4"
 short_description: Manages physical attributes of interfaces on HUAWEI CloudEngine switches.
 description:
     - Manages physical attributes of interfaces on HUAWEI CloudEngine switches.
-author: QijunPan (@CloudEngine-Ansible)
+author: QijunPan (@QijunPan)
 notes:
     - This module is also used to create logical interfaces such as
       vlanif and loopbacks.
@@ -143,7 +143,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 

@@ -20,8 +20,6 @@ requirements:
 - set as stdout in configuation
 '''
 
-from collections import MutableMapping, MutableSequence
-
 HAS_OD = False
 try:
     from collections import OrderedDict
@@ -30,16 +28,15 @@ except ImportError:
     pass
 
 from ansible.module_utils.six import binary_type, text_type
+from ansible.module_utils.common._collections_compat import MutableMapping, MutableSequence
 from ansible.plugins.callback.default import CallbackModule as CallbackModule_default
 from ansible.utils.color import colorize, hostcolor
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import Display
 
 import sys
+
+display = Display()
+
 
 # Design goals:
 #
@@ -484,14 +481,19 @@ class CallbackModule_dense(CallbackModule_default):
         hosts = sorted(stats.processed.keys())
         for h in hosts:
             t = stats.summarize(h)
-            self._display.display(u"%s : %s %s %s %s" % (
-                hostcolor(h, t),
-                colorize(u'ok', t['ok'], C.COLOR_OK),
-                colorize(u'changed', t['changed'], C.COLOR_CHANGED),
-                colorize(u'unreachable', t['unreachable'], C.COLOR_UNREACHABLE),
-                colorize(u'failed', t['failures'], C.COLOR_ERROR)),
+            self._display.display(
+                u"%s : %s %s %s %s %s %s" % (
+                    hostcolor(h, t),
+                    colorize(u'ok', t['ok'], C.COLOR_OK),
+                    colorize(u'changed', t['changed'], C.COLOR_CHANGED),
+                    colorize(u'unreachable', t['unreachable'], C.COLOR_UNREACHABLE),
+                    colorize(u'failed', t['failures'], C.COLOR_ERROR),
+                    colorize(u'rescued', t['rescued'], C.COLOR_OK),
+                    colorize(u'ignored', t['ignored'], C.COLOR_WARN),
+                ),
                 screen_only=True
             )
+
 
 # When using -vv or higher, simply do the default action
 if display.verbosity >= 2 or not HAS_OD:

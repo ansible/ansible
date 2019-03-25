@@ -82,12 +82,12 @@ invalidation:
     create_time:
       description: The date and time the invalidation request was first made.
       returned: always
-      type: string
+      type: str
       sample: '2018-02-01T15:50:41.159000+00:00'
     id:
       description: The identifier for the invalidation request.
       returned: always
-      type: string
+      type: str
       sample: I2G9MOWJZFV612
     invalidation_batch:
       description: The current invalidation information for the batch request.
@@ -97,7 +97,7 @@ invalidation:
         caller_reference:
           description: The value used to uniquely identify an invalidation request.
           returned: always
-          type: string
+          type: str
           sample: testing 123
         paths:
           description: A dict that contains information about the objects that you want to invalidate.
@@ -120,12 +120,12 @@ invalidation:
     status:
       description: The status of the invalidation request.
       returned: always
-      type: string
+      type: str
       sample: Completed
 location:
   description: The fully qualified URI of the distribution and invalidation batch request.
   returned: always
-  type: string
+  type: str
   sample: https://cloudfront.amazonaws.com/2017-03-25/distribution/E1ZID6KZJECZY7/invalidation/I2G9MOWJZFV622
 '''
 

@@ -12,7 +12,7 @@ installed on the host running Ansible.
 
 .. code-block:: bash
 
-    $ pip install ansible[azure]
+    $ pip install 'ansible[azure]'
 
 If you are running Ansible from source, you can install the dependencies from the
 root directory of the Ansible repo.
@@ -38,7 +38,7 @@ instructions on how to actually use the modules and authenticate with the Azure 
 Using Service Principal
 .......................
 
-There is now a detailed official tutorial describing `how to create a service principal <https://azure.microsoft.com/en-us/documentation/articles/resource-group-create-service-principal-portal/>`_.
+There is now a detailed official tutorial describing `how to create a service principal <https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-create-service-principal-portal>`_.
 
 After stepping through the tutorial you will have:
 
@@ -93,13 +93,13 @@ To pass Active Directory username/password in ADFS via the environment, define t
 * AZURE_TENANT
 * AZURE_ADFS_AUTHORITY_URL
 
-"AZURE_ADFS_AUTHORITY_URL" is optional. It's necessary only when you have own ADFS authority like https://xxx.com/adfs.
+"AZURE_ADFS_AUTHORITY_URL" is optional. It's necessary only when you have own ADFS authority like https://yourdomain.com/adfs.
 
 Storing in a File
 `````````````````
 
 When working in a development environment, it may be desirable to store credentials in a file. The modules will look
-for credentials in $HOME/.azure/credentials. This file is an ini style file. It will look as follows:
+for credentials in ``$HOME/.azure/credentials``. This file is an ini style file. It will look as follows:
 
 .. code-block:: ini
 
@@ -136,7 +136,7 @@ Or, pass the following parameters for ADFS username/pasword:
 * tenant
 * adfs_authority_url
 
-"adfs_authority_url" is optional. It's necessary only when you have own ADFS authority like https://xxx.com/adfs.
+"adfs_authority_url" is optional. It's necessary only when you have own ADFS authority like https://yourdomain.com/adfs.
 
 
 Other Cloud Environments
@@ -244,7 +244,7 @@ virtual network already with an existing subnet, you can run the following to cr
       name: testvm10
       vm_size: Standard_D1
       admin_username: chouseknecht
-      ssh_password: false
+      ssh_password_enabled: false
       ssh_public_keys: "{{ ssh_keys }}"
       image:
         offer: CentOS
@@ -258,9 +258,9 @@ Dynamic Inventory Script
 
 If you are not familiar with Ansible's dynamic inventory scripts, check out :ref:`Intro to Dynamic Inventory <intro_dynamic_inventory>`.
 
-The Azure Resource Manager inventory script is called azure_rm.py. It authenticates with the Azure API exactly the same as the
+The Azure Resource Manager inventory script is called  `azure_rm.py  <https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/azure_rm.py>`_. It authenticates with the Azure API exactly the same as the
 Azure modules, which means you will either define the same environment variables described above in `Using Environment Variables`_,
-create a $HOME/.azure/credentials file (also described above in `Storing in a File`_), or pass command line parameters. To see available command
+create a ``$HOME/.azure/credentials`` file (also described above in `Storing in a File`_), or pass command line parameters. To see available command
 line options execute the following:
 
 .. code-block:: bash
@@ -328,6 +328,7 @@ By default hosts are grouped by:
 * security group name
 * tag key
 * tag key_value
+* os_disk operating_system_type (Windows/Linux)
 
 You can control host groupings and host selection by either defining environment variables or creating an
 azure_rm.ini file in your current working directory.
@@ -344,6 +345,7 @@ Control grouping using the following variables defined in the environment:
 * AZURE_GROUP_BY_LOCATION=yes
 * AZURE_GROUP_BY_SECURITY_GROUP=yes
 * AZURE_GROUP_BY_TAG=yes
+* AZURE_GROUP_BY_OS_FAMILY=yes
 
 Select hosts within specific resource groups by assigning a comma separated list to:
 
@@ -390,7 +392,7 @@ file will contain the following:
     group_by_location=yes
     group_by_security_group=yes
     group_by_tag=yes
-
+    group_by_os_family=yes
 
 Examples
 ........
@@ -401,6 +403,12 @@ Here are some examples using the inventory script:
 
     # Execute /bin/uname on all instances in the Testing resource group
     $ ansible -i azure_rm.py Testing -m shell -a "/bin/uname -a"
+
+    # Execute win_ping on all Windows instances
+    $ ansible -i azure_rm.py windows -m win_ping
+
+    # Execute win_ping on all Windows instances
+    $ ansible -i azure_rm.py winux -m ping
 
     # Use the inventory script to print instance specific information
     $ ./ansible/contrib/inventory/azure_rm.py --host my_instance_host_name --resource-groups=Testing --pretty

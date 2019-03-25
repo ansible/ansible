@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2017-2018, Keller Fuchs <kellerfuchs@hashbang.sh>
-#
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -33,13 +32,12 @@ notes:
     and I(bind_pw).
 version_added: '2.6'
 author:
-  - Keller Fuchs (@kellerfuchs)
+  - Keller Fuchs (@KellerFuchs)
 requirements:
   - python-ldap
 options:
   passwd:
     required: true
-    default: null
     description:
       - The (plaintext) password to be set for I(dn).
 extends_documentation_fragment: ldap.documentation
@@ -69,14 +67,18 @@ modlist:
   sample: '[[2, "olcRootDN", ["cn=root,dc=example,dc=com"]]]'
 """
 
-from ansible.module_utils.basic import AnsibleModule
+import traceback
+
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.ldap import LdapGeneric, gen_specs
 
+LDAP_IMP_ERR = None
 try:
     import ldap
 
     HAS_LDAP = True
 except ImportError:
+    LDAP_IMP_ERR = traceback.format_exc()
     HAS_LDAP = False
 
 
@@ -117,7 +119,7 @@ class LdapPasswd(LdapGeneric):
 
         # Change the password (or throw an exception)
         try:
-            self.connection.passwd_set(self.dn, None, self.passwd)
+            self.connection.passwd_s(self.dn, None, self.passwd)
         except ldap.LDAPError as e:
             self.fail("Unable to set password", e)
 
@@ -132,8 +134,8 @@ def main():
     )
 
     if not HAS_LDAP:
-        module.fail_json(
-            msg="Missing required 'ldap' module (pip install python-ldap).")
+        module.fail_json(msg=missing_required_lib('python-ldap'),
+                         exception=LDAP_IMP_ERR)
 
     ldap = LdapPasswd(module)
 

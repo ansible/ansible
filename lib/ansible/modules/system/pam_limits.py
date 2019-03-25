@@ -20,8 +20,9 @@ author:
     - "Sebastien Rohaut (@usawa)"
 short_description: Modify Linux PAM limits
 description:
-     - The C(pam_limits) module modify PAM limits, default in /etc/security/limits.conf.
-       For the full documentation, see man limits.conf(5).
+     - The C(pam_limits) module modifies PAM limits. The default file is
+       C(/etc/security/limits.conf). For the full documentation, see C(man 5
+       limits.conf).
 options:
   domain:
     description:
@@ -29,7 +30,7 @@ options:
     required: true
   limit_type:
     description:
-      - Limit type, see C(man limits) for an explanation
+      - Limit type, see C(man 5 limits.conf) for an explanation
     required: true
     choices: [ "hard", "soft", "-" ]
   limit_item:
@@ -94,32 +95,39 @@ options:
     required: false
     default: ''
 notes:
-  - If dest file doesn't exists, it is created.
+  - If C(dest) file doesn't exist, it is created.
 '''
 
 EXAMPLES = '''
-# Add or modify nofile soft limit for the user joe
-- pam_limits:
+- name: Add or modify nofile soft limit for the user joe
+  pam_limits:
     domain: joe
     limit_type: soft
     limit_item: nofile
     value: 64000
 
-# Add or modify fsize hard limit for the user smith. Keep or set the maximal value.
-- pam_limits:
+- name: Add or modify fsize hard limit for the user smith. Keep or set the maximal value.
+  pam_limits:
     domain: smith
     limit_type: hard
     limit_item: fsize
     value: 1000000
     use_max: yes
 
-# Add or modify memlock, both soft and hard, limit for the user james with a comment.
-- pam_limits:
+- name: Add or modify memlock, both soft and hard, limit for the user james with a comment.
+  pam_limits:
     domain: james
     limit_type: '-'
     limit_item: memlock
     value: unlimited
     comment: unlimited memory lock for james
+
+- name: Add or modify hard nofile limits for wildcard domain
+  pam_limits:
+    domain: '*'
+    limit_type: hard
+    limit_item: nofile
+    value: 39693561
 '''
 
 import os
@@ -212,7 +220,7 @@ def main():
         newline = newline.split('#', 1)[0]
         try:
             old_comment = line.split('#', 1)[1]
-        except:
+        except Exception:
             old_comment = ''
 
         newline = newline.rstrip()
@@ -291,7 +299,7 @@ def main():
 
     try:
         nf.close()
-    except:
+    except Exception:
         pass
 
     res_args = dict(

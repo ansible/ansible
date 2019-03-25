@@ -45,7 +45,7 @@ options:
        - Ignored. Present for backwards compatibility
      required: false
 requirements:
-    - "python >= 2.6"
+    - "python >= 2.7"
     - "openstacksdk"
 '''
 
@@ -77,11 +77,11 @@ RETURN = '''
 id:
     description: Unique UUID.
     returned: success
-    type: string
+    type: str
 name:
     description: The name of the server group.
     returned: success
-    type: string
+    type: str
 policies:
     description: A list of one or more policy names of the server group.
     returned: success
@@ -97,11 +97,11 @@ metadata:
 project_id:
     description: The project ID who owns the server group.
     returned: success
-    type: string
+    type: str
 user_id:
     description: The user ID who owns the server group.
     returned: success
-    type: string
+    type: str
 '''
 
 from ansible.module_utils.basic import AnsibleModule

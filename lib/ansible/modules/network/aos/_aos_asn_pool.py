@@ -209,7 +209,7 @@ def asn_pool_absent(module, aos, my_pool):
     if not module.check_mode:
         try:
             my_pool.delete()
-        except:
+        except Exception:
             module.fail_json(msg="An error occurred, while trying to delete the ASN Pool")
 
     module.exit_json(changed=True,
@@ -240,7 +240,7 @@ def asn_pool_present(module, aos, my_pool):
             try:
                 my_new_pool = create_new_asn_pool(my_pool, margs['name'], margs['ranges'])
                 my_pool = my_new_pool
-            except:
+            except Exception:
                 module.fail_json(msg="An error occurred while trying to create a new ASN Pool ")
 
         module.exit_json(changed=True,
@@ -271,7 +271,7 @@ def asn_pool(module):
 
     try:
         aos = get_aos_session(module, margs['session'])
-    except:
+    except Exception:
         module.fail_json(msg="Unable to login to the AOS server")
 
     item_name = False
@@ -304,7 +304,7 @@ def asn_pool(module):
         my_pool = find_collection_item(aos.AsnPools,
                                        item_name=item_name,
                                        item_id=item_id)
-    except:
+    except Exception:
         module.fail_json(msg="Unable to find the IP Pool based on name or ID, something went wrong")
 
     # ----------------------------------------------------
@@ -340,6 +340,7 @@ def main():
     check_aos_version(module, '0.6.0')
 
     asn_pool(module)
+
 
 if __name__ == "__main__":
     main()

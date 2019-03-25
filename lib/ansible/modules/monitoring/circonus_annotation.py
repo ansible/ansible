@@ -88,7 +88,7 @@ annotation:
         _cid:
             description: annotation identifier
             returned: success
-            type: string
+            type: str
             sample: /annotation/100000
         _created:
             description: creation timestamp
@@ -103,22 +103,22 @@ annotation:
         _last_modified_by:
             description: last modified by
             returned: success
-            type: string
+            type: str
             sample: /user/1000
         category:
             description: category of the created annotation
             returned: success
-            type: string
+            type: str
             sample: alerts
         title:
             description: title of the created annotation
             returned: success
-            type: string
+            type: str
             sample: WARNING
         description:
             description: description of the created annotation
             returned: success
-            type: string
+            type: str
             sample: Host is down.
         start:
             description: timestamp, since annotation applies
@@ -128,7 +128,7 @@ annotation:
         stop:
             description: timestamp, since annotation ends
             returned: success
-            type: string
+            type: str
             sample: Host is down.
         rel_metrics:
             description: Array of metrics related to this annotation, each metrics is a string.
@@ -142,13 +142,15 @@ import time
 import traceback
 from distutils.version import LooseVersion
 
+REQUESTS_IMP_ERR = None
 try:
     import requests
     HAS_REQUESTS = True
 except ImportError:
+    REQUESTS_IMP_ERR = traceback.format_exc()
     HAS_REQUESTS = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.six import PY3
 from ansible.module_utils._text import to_native
 
@@ -156,7 +158,7 @@ from ansible.module_utils._text import to_native
 def check_requests_dep(module):
     """Check if an adequate requests version is available"""
     if not HAS_REQUESTS:
-        module.fail_json(msg='requests is required for this module')
+        module.fail_json(msg=missing_required_lib('requests'), exception=REQUESTS_IMP_ERR)
     else:
         required_version = '2.0.0' if PY3 else '1.0.0'
         if LooseVersion(requests.__version__) < LooseVersion(required_version):

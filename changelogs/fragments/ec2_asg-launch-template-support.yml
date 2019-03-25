@@ -1,0 +1,2 @@
+minor_changes:
+- AWS EC2's Autoscaling Group (`ec2_asg`) module now supports the use of Launch Templates in addition to existing support for Launch Configurations.

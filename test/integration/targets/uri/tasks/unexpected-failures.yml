@@ -1,0 +1,27 @@
+---
+# same as expanduser & expandvars called on managed host
+- command: 'echo {{ output_dir }}'
+  register: echo
+
+- set_fact:
+    remote_dir_expanded: '{{ echo.stdout }}'
+
+- name: ensure test directory doesn't exist
+  file:
+    path: '{{ output_dir }}/non/existent/path'
+    state: absent
+
+- name: destination doesn't exist
+  uri:
+    url: 'https://{{ httpbin_host }}/get'
+    dest: '{{ output_dir }}/non/existent/path'
+  ignore_errors: true
+  register: ret
+
+- name: check that unexpected failure didn't happen
+  assert:
+    that:
+      - ret is failed
+      - "not ret.msg.startswith('MODULE FAILURE')"
+      - '"Destination dir ''" ~ remote_dir_expanded ~ "/non/existent'' not writable" in ret.msg'
+      - ret.status == 200

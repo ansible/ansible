@@ -7,6 +7,7 @@ import os
 from . import (
     CloudProvider,
     CloudEnvironment,
+    CloudEnvironmentConfig,
 )
 
 from ..util import (
@@ -31,7 +32,7 @@ class NiosProvider(CloudProvider):
 
     DOCKER_SIMULATOR_NAME = 'nios-simulator'
 
-    DOCKER_IMAGE = 'quay.io/ansible/nios-test-container:1.0.0'
+    DOCKER_IMAGE = 'quay.io/ansible/nios-test-container:1.3.0'
     """Default image to run the nios simulator.
 
     The simulator must be pinned to a specific version
@@ -174,12 +175,18 @@ class NiosEnvironment(CloudEnvironment):
 
     Updates integration test environment after delegation.
     """
-
-    def configure_environment(self, env, cmd):
+    def get_environment_config(self):
         """
-        :type env: dict[str, str]
-        :type cmd: list[str]
+        :rtype: CloudEnvironmentConfig
         """
+        ansible_vars = dict(
+            nios_provider=dict(
+                host=self._get_cloud_config('NIOS_HOST'),
+                username='admin',
+                password='infoblox',
+            ),
+        )
 
-        # Send the container IP down to the integration test(s)
-        env['NIOS_HOST'] = self._get_cloud_config('NIOS_HOST')
+        return CloudEnvironmentConfig(
+            ansible_vars=ansible_vars,
+        )

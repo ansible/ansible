@@ -17,27 +17,28 @@ Prerequisites for using the rax modules are minimal.  In addition to ansible its
 all of the modules require and are tested against pyrax 1.5 or higher. 
 You'll need this Python module installed on the execution host.  
 
-pyrax is not currently available in many operating system 
+``pyrax`` is not currently available in many operating system
 package repositories, so you will likely need to install it via pip:
 
 .. code-block:: bash
 
     $ pip install pyrax
 
-The following steps will often execute from the control machine against the Rackspace Cloud API, so it makes sense 
-to add localhost to the inventory file.  (Ansible may not require this manual step in the future):
+Ansible creates an implicit localhost that executes in the same context as the ``ansible-playbook`` and the other CLI tools.
+If for any reason you need or want to have it in your inventory you should do something like the following:
 
 .. code-block:: ini
 
     [localhost]
-    localhost ansible_connection=local
+    localhost ansible_connection=local ansible_python_interpreter=/usr/local/bin/python2
+
+For more information see :ref:`Implicit Localhost <implicit_localhost>`
 
 In playbook steps, we'll typically be using the following pattern:
 
 .. code-block:: yaml
 
     - hosts: localhost
-      connection: local
       gather_facts: False
       tasks:
 
@@ -54,11 +55,11 @@ The `rax.py` inventory script and all `rax` modules support a standard `pyrax` c
     username = myraxusername
     api_key = d41d8cd98f00b204e9800998ecf8427e
 
-Setting the environment parameter RAX_CREDS_FILE to the path of this file will help Ansible find how to load
+Setting the environment parameter ``RAX_CREDS_FILE`` to the path of this file will help Ansible find how to load
 this information.
 
 More information about this credentials file can be found at 
-https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#authenticating
+https://github.com/pycontribs/pyrax/blob/master/docs/getting_started.md#authenticating
 
 
 .. _virtual_environment:
@@ -103,7 +104,7 @@ Here is a basic example of provisioning an instance in ad-hoc mode:
 
 .. code-block:: bash
 
-    $ ansible localhost -m rax -a "name=awx flavor=4 image=ubuntu-1204-lts-precise-pangolin wait=yes" -c local
+    $ ansible localhost -m rax -a "name=awx flavor=4 image=ubuntu-1204-lts-precise-pangolin wait=yes"
 
 Here's what it would look like in a playbook, assuming the parameters were defined in variables:
 
@@ -111,8 +112,7 @@ Here's what it would look like in a playbook, assuming the parameters were defin
 
     tasks:
       - name: Provision a set of instances
-        local_action:
-            module: rax
+        rax:
             name: "{{ rax_name }}"
             flavor: "{{ rax_flavor }}"
             image: "{{ rax_image }}"
@@ -120,17 +120,17 @@ Here's what it would look like in a playbook, assuming the parameters were defin
             group: "{{ group }}"
             wait: yes
         register: rax
+        delegate_to: localhost
 
 The rax module returns data about the nodes it creates, like IP addresses, hostnames, and login passwords.  By registering the return value of the step, it is possible used this data to dynamically add the resulting hosts to inventory (temporarily, in memory). This facilitates performing configuration actions on the hosts in a follow-on task.  In the following example, the servers that were successfully created using the above task are dynamically added to a group called "raxhosts", with each nodes hostname, IP address, and root password being added to the inventory.
 
 .. code-block:: yaml
 
     - name: Add the instances we created (by public IP) to the group 'raxhosts'
-      local_action:
-          module: add_host 
+      add_host:
           hostname: "{{ item.name }}"
           ansible_host: "{{ item.rax_accessipv4 }}"
-          ansible_ssh_pass: "{{ item.rax_adminpass }}"
+          ansible_password: "{{ item.rax_adminpass }}"
           groups: raxhosts
       loop: "{{ rax.success }}"
       when: rax.action == 'create'
@@ -163,7 +163,7 @@ In Ansible it is quite possible to use multiple dynamic inventory plugins along 
 rax.py
 ++++++
 
-To use the rackspace dynamic inventory script, copy ``rax.py`` into your inventory directory and make it executable. You can specify a credentials file for ``rax.py`` utilizing the ``RAX_CREDS_FILE`` environment variable.
+To use the Rackspace dynamic inventory script, copy ``rax.py`` into your inventory directory and make it executable. You can specify a credentials file for ``rax.py`` utilizing the ``RAX_CREDS_FILE`` environment variable.
 
 .. note:: Dynamic inventory scripts (like ``rax.py``) are saved in ``/usr/share/ansible/inventory`` if Ansible has been installed globally.  If installed to a virtualenv, the inventory scripts are installed to ``$VIRTUALENV/share/inventory``.
 
@@ -303,11 +303,11 @@ This can be achieved with the ``rax_facts`` module and an inventory file similar
       gather_facts: False
       tasks:
         - name: Get facts about servers
-          local_action:
-            module: rax_facts
+          rax_facts:
             credentials: ~/.raxpub
             name: "{{ inventory_hostname }}"
             region: "{{ rax_region }}"
+          delegate_to: localhost
         - name: Map some facts
           set_fact:
             ansible_host: "{{ rax_accessipv4 }}"
@@ -415,24 +415,22 @@ Network and Server
 Create an isolated cloud network and build a server
 
 .. code-block:: yaml
-   
+
     - name: Build Servers on an Isolated Network
       hosts: localhost
-      connection: local
       gather_facts: False
       tasks:
         - name: Network create request
-          local_action:
-            module: rax_network
+          rax_network:
             credentials: ~/.raxpub
             label: my-net
             cidr: 192.168.3.0/24
             region: IAD
             state: present
-            
+          delegate_to: localhost
+
         - name: Server create request
-          local_action:
-            module: rax
+          rax:
             credentials: ~/.raxpub
             name: web%04d.example.org
             flavor: 2
@@ -449,6 +447,7 @@ Create an isolated cloud network and build a server
             wait: yes
             wait_timeout: 360
           register: rax
+          delegate_to: localhost
 
 .. _complete_environment:
 
@@ -458,16 +457,14 @@ Complete Environment
 Build a complete webserver environment with servers, custom networks and load balancers, install nginx and create a custom index.html
 
 .. code-block:: yaml
-   
+
     ---
     - name: Build environment
       hosts: localhost
-      connection: local
       gather_facts: False
       tasks:
         - name: Load Balancer create request
-          local_action:
-            module: rax_clb
+          rax_clb:
             credentials: ~/.raxpub
             name: my-lb
             port: 80
@@ -481,20 +478,18 @@ Build a complete webserver environment with servers, custom networks and load ba
             meta:
               app: my-cool-app
           register: clb
-    
+
         - name: Network create request
-          local_action:
-            module: rax_network
+          rax_network:
             credentials: ~/.raxpub
             label: my-net
             cidr: 192.168.3.0/24
             state: present
             region: IAD
           register: network
-    
+
         - name: Server create request
-          local_action:
-            module: rax
+          rax:
             credentials: ~/.raxpub
             name: web%04d.example.org
             flavor: performance1-1
@@ -511,21 +506,19 @@ Build a complete webserver environment with servers, custom networks and load ba
             group: web
             wait: yes
           register: rax
-    
+
         - name: Add servers to web host group
-          local_action:
-            module: add_host
+          add_host:
             hostname: "{{ item.name }}"
             ansible_host: "{{ item.rax_accessipv4 }}"
-            ansible_ssh_pass: "{{ item.rax_adminpass }}"
+            ansible_password: "{{ item.rax_adminpass }}"
             ansible_user: root
             groups: web
           loop: "{{ rax.success }}"
           when: rax.action == 'create'
-    
+
         - name: Add servers to Load balancer
-          local_action:
-            module: rax_clb_nodes
+          rax_clb_nodes:
             credentials: ~/.raxpub
             load_balancer_id: "{{ clb.balancer.id }}"
             address: "{{ item.rax_networks.private|first }}"
@@ -536,22 +529,22 @@ Build a complete webserver environment with servers, custom networks and load ba
             region: IAD
           loop: "{{ rax.success }}"
           when: rax.action == 'create'
-    
+
     - name: Configure servers
       hosts: web
       handlers:
         - name: restart nginx
           service: name=nginx state=restarted
-    
+
       tasks:
         - name: Install nginx
           apt: pkg=nginx state=latest update_cache=yes cache_valid_time=86400
           notify:
             - restart nginx
-    
+
         - name: Ensure nginx starts on boot
           service: name=nginx state=started enabled=yes
-    
+
         - name: Create custom index.html
           copy: content="{{ inventory_hostname }}" dest=/usr/share/nginx/www/index.html
                 owner=root group=root mode=0644
@@ -578,12 +571,10 @@ Using a Control Machine
 
     - name: Create an exact count of servers
       hosts: localhost
-      connection: local
       gather_facts: False
       tasks:
         - name: Server build requests
-          local_action:
-            module: rax
+          rax:
             credentials: ~/.raxpub
             name: web%03d.example.org
             flavor: performance1-1
@@ -596,66 +587,66 @@ Using a Control Machine
             group: web
             wait: yes
           register: rax
-    
+
         - name: Add servers to in memory groups
-          local_action:
-            module: add_host
+          add_host:
             hostname: "{{ item.name }}"
             ansible_host: "{{ item.rax_accessipv4 }}"
-            ansible_ssh_pass: "{{ item.rax_adminpass }}"
+            ansible_password: "{{ item.rax_adminpass }}"
             ansible_user: root
             rax_id: "{{ item.rax_id }}"
             groups: web,new_web
           loop: "{{ rax.success }}"
           when: rax.action == 'create'
-    
+
     - name: Wait for rackconnect and managed cloud automation to complete
       hosts: new_web
       gather_facts: false
       tasks:
-        - name: Wait for rackconnnect automation to complete
-          local_action:
-            module: rax_facts
-            credentials: ~/.raxpub
-            id: "{{ rax_id }}"
-            region: DFW
-          register: rax_facts
-          until: rax_facts.ansible_facts['rax_metadata']['rackconnect_automation_status']|default('') == 'DEPLOYED'
-          retries: 30
-          delay: 10
-    
-        - name: Wait for managed cloud automation to complete
-          local_action:
-            module: rax_facts
-            credentials: ~/.raxpub
-            id: "{{ rax_id }}"
-            region: DFW
-          register: rax_facts
-          until: rax_facts.ansible_facts['rax_metadata']['rax_service_level_automation']|default('') == 'Complete'
-          retries: 30
-          delay: 10
-    
+        - name: ensure we run all tasks from localhost
+          delegate_to: localhost
+          block:
+            - name: Wait for rackconnnect automation to complete
+              rax_facts:
+                credentials: ~/.raxpub
+                id: "{{ rax_id }}"
+                region: DFW
+              register: rax_facts
+              until: rax_facts.ansible_facts['rax_metadata']['rackconnect_automation_status']|default('') == 'DEPLOYED'
+              retries: 30
+              delay: 10
+
+            - name: Wait for managed cloud automation to complete
+              rax_facts:
+                credentials: ~/.raxpub
+                id: "{{ rax_id }}"
+                region: DFW
+              register: rax_facts
+              until: rax_facts.ansible_facts['rax_metadata']['rax_service_level_automation']|default('') == 'Complete'
+              retries: 30
+              delay: 10
+
     - name: Update new_web hosts with IP that RackConnect assigns
       hosts: new_web
       gather_facts: false
       tasks:
         - name: Get facts about servers
-          local_action:
-            module: rax_facts
+          rax_facts:
             name: "{{ inventory_hostname }}"
             region: DFW
+          delegate_to: localhost
         - name: Map some facts
           set_fact:
             ansible_host: "{{ rax_accessipv4 }}"
-        
+
     - name: Base Configure Servers
       hosts: web
       roles:
         - role: users
-    
+
         - role: openssh
           opensshd_PermitRootLogin: "no"
-    
+
         - role: ntp
 
 .. _using_ansible_pull:
@@ -668,51 +659,52 @@ Using Ansible Pull
     ---
     - name: Ensure Rackconnect and Managed Cloud Automation is complete
       hosts: all
-      connection: local
       tasks:
-        - name: Check for completed bootstrap
-          stat:
-            path: /etc/bootstrap_complete
-          register: bootstrap
-    
-        - name: Get region
-          command: xenstore-read vm-data/provider_data/region
-          register: rax_region
-          when: bootstrap.stat.exists != True
-    
-        - name: Wait for rackconnect automation to complete
-          uri:
-            url: "https://{{ rax_region.stdout|trim }}.api.rackconnect.rackspace.com/v1/automation_status?format=json"
-            return_content: yes
-          register: automation_status
-          when: bootstrap.stat.exists != True
-          until: automation_status['automation_status']|default('') == 'DEPLOYED'
-          retries: 30
-          delay: 10
-    
-        - name: Wait for managed cloud automation to complete
-          wait_for:
-            path: /tmp/rs_managed_cloud_automation_complete
-            delay: 10
-          when: bootstrap.stat.exists != True
-    
-        - name: Set bootstrap completed
-          file:
-            path: /etc/bootstrap_complete
-            state: touch
-            owner: root
-            group: root
-            mode: 0400
-    
+        - name: ensure we run all tasks from localhost
+          delegate_to: localhost
+          block:
+            - name: Check for completed bootstrap
+              stat:
+                path: /etc/bootstrap_complete
+              register: bootstrap
+
+            - name: Get region
+              command: xenstore-read vm-data/provider_data/region
+              register: rax_region
+              when: bootstrap.stat.exists != True
+
+            - name: Wait for rackconnect automation to complete
+              uri:
+                url: "https://{{ rax_region.stdout|trim }}.api.rackconnect.rackspace.com/v1/automation_status?format=json"
+                return_content: yes
+              register: automation_status
+              when: bootstrap.stat.exists != True
+              until: automation_status['automation_status']|default('') == 'DEPLOYED'
+              retries: 30
+              delay: 10
+
+            - name: Wait for managed cloud automation to complete
+              wait_for:
+                path: /tmp/rs_managed_cloud_automation_complete
+                delay: 10
+              when: bootstrap.stat.exists != True
+
+            - name: Set bootstrap completed
+              file:
+                path: /etc/bootstrap_complete
+                state: touch
+                owner: root
+                group: root
+                mode: 0400
+
     - name: Base Configure Servers
       hosts: all
-      connection: local
       roles:
         - role: users
-    
+
         - role: openssh
           opensshd_PermitRootLogin: "no"
-    
+
         - role: ntp
 
 .. _using_ansible_pull_with_xenstore:
@@ -725,7 +717,6 @@ Using Ansible Pull with XenStore
     ---
     - name: Ensure Rackconnect and Managed Cloud Automation is complete
       hosts: all
-      connection: local
       tasks:
         - name: Check for completed bootstrap
           stat:
@@ -773,16 +764,15 @@ Using Ansible Pull with XenStore
             owner: root
             group: root
             mode: 0400
-    
+
     - name: Base Configure Servers
       hosts: all
-      connection: local
       roles:
         - role: users
-    
+
         - role: openssh
           opensshd_PermitRootLogin: "no"
-    
+
         - role: ntp
 
 .. _advanced_usage:

@@ -2,18 +2,22 @@
   package:
     name: '{{ item }}'
     state: present
-  when: ansible_system == 'Linux' or item != 'dosfstools'
+  # xfsprogs on OpenSUSE requires Python 3, skip this for our newer Py2 OpenSUSE builds
+  when: not (item == 'xfsprogs' and ansible_os_family == 'Suse' and ansible_python.version.major == 2 and ansible_distribution_major_version|int != 42)
   with_items:
     - e2fsprogs
     - xfsprogs
-    - dosfstools
 
 - block:
   - name: install btrfs progs
     package:
       name: btrfs-progs
       state: present
-    when: ansible_os_family != 'Suse' and not (ansible_distribution == 'Ubuntu' and ansible_distribution_version is version('16.04', '<='))
+    when:
+      - ansible_os_family != 'Suse'
+      - not (ansible_distribution == 'Ubuntu' and ansible_distribution_version is version('16.04', '<='))
+      - ansible_system != "FreeBSD"
+      - not (ansible_distribution == "RedHat" and ansible_distribution_major_version|int >= 8)
 
   - name: install btrfs progs (Ubuntu <= 16.04)
     package:
@@ -27,7 +31,7 @@
       state: present
     when: ansible_os_family == 'Suse'
     with_items:
-      - python-xml
+      - python{{ ansible_python.version.major }}-xml
       - btrfsprogs
 
   - name: install ocfs2 (Debian)
@@ -35,7 +39,32 @@
       name: ocfs2-tools
       state: present
     when: ansible_os_family == 'Debian'
-  when: ansible_system == 'Linux'
+
+  - when:
+      - ansible_os_family != 'RedHat' or ansible_distribution == 'Fedora'
+      - ansible_distribution != 'Ubuntu' or ansible_distribution_version is version('16.04', '>=')
+      - ansible_system != "FreeBSD"
+    block:
+      - name: install f2fs
+        package:
+          name: f2fs-tools
+          state: present
+
+      - name: fetch f2fs version
+        command: mkfs.f2fs /dev/null
+        ignore_errors: yes
+        register: mkfs_f2fs
+
+      - set_fact:
+          f2fs_version: '{{ mkfs_f2fs.stdout | regex_search("F2FS-tools: mkfs.f2fs Ver:.*") | regex_replace("F2FS-tools: mkfs.f2fs Ver: ([0-9.]+) .*", "\1") }}'
+
+  - name: install dosfstools and lvm2 (Linux)
+    package:
+      name: '{{ item }}'
+    with_items:
+      - dosfstools
+      - lvm2
+    when: ansible_system == 'Linux'
 
 - block:
   - name: install fatresize

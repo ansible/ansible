@@ -16,6 +16,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import os
+
 LSBLK_OUTPUT = b"""
 /dev/sda
 /dev/sda1                             32caaec3-ef40-4691-a3b6-438c3f9bc1c0
@@ -360,3 +362,178 @@ STATVFS_INFO = {'/': {'block_available': 10192323,
 #    ['/dev/sdz4', '/not/a/real/bind_mount', 'ext4', 'rw,seclabel,relatime,data=ordered', '0', '0'],
 
 BIND_MOUNTS = ['/not/a/real/bind_mount']
+
+CPU_INFO_TEST_SCENARIOS = [
+    {
+        'architecture': 'armv61',
+        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/armv6-rev7-1cpu-cpuinfo')).readlines(),
+        'expected_result': {
+            'processor': ['0', 'ARMv6-compatible processor rev 7 (v6l)'],
+            'processor_cores': 1,
+            'processor_count': 1,
+            'processor_threads_per_core': 1,
+            'processor_vcpus': 1},
+    },
+    {
+        'architecture': 'armv71',
+        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/armv7-rev4-4cpu-cpuinfo')).readlines(),
+        'expected_result': {
+            'processor': [
+                '0', 'ARMv7 Processor rev 4 (v7l)',
+                '1', 'ARMv7 Processor rev 4 (v7l)',
+                '2', 'ARMv7 Processor rev 4 (v7l)',
+                '3', 'ARMv7 Processor rev 4 (v7l)',
+            ],
+            'processor_cores': 1,
+            'processor_count': 4,
+            'processor_threads_per_core': 1,
+            'processor_vcpus': 4},
+    },
+    {
+        'architecture': 'aarch64',
+        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/aarch64-4cpu-cpuinfo')).readlines(),
+        'expected_result': {
+            'processor': [
+                '0', 'AArch64 Processor rev 4 (aarch64)',
+                '1', 'AArch64 Processor rev 4 (aarch64)',
+                '2', 'AArch64 Processor rev 4 (aarch64)',
+                '3', 'AArch64 Processor rev 4 (aarch64)',
+            ],
+            'processor_cores': 1,
+            'processor_count': 4,
+            'processor_threads_per_core': 1,
+            'processor_vcpus': 4},
+    },
+    {
+        'architecture': 'x86_64',
+        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/x86_64-4cpu-cpuinfo')).readlines(),
+        'expected_result': {
+            'processor': [
+                '0', 'AuthenticAMD', 'Dual-Core AMD Opteron(tm) Processor 2216',
+                '1', 'AuthenticAMD', 'Dual-Core AMD Opteron(tm) Processor 2216',
+                '2', 'AuthenticAMD', 'Dual-Core AMD Opteron(tm) Processor 2216',
+                '3', 'AuthenticAMD', 'Dual-Core AMD Opteron(tm) Processor 2216',
+            ],
+            'processor_cores': 2,
+            'processor_count': 2,
+            'processor_threads_per_core': 1,
+            'processor_vcpus': 4},
+    },
+    {
+        'architecture': 'x86_64',
+        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/x86_64-8cpu-cpuinfo')).readlines(),
+        'expected_result': {
+            'processor': [
+                '0', 'GenuineIntel', 'Intel(R) Core(TM) i7-4800MQ CPU @ 2.70GHz',
+                '1', 'GenuineIntel', 'Intel(R) Core(TM) i7-4800MQ CPU @ 2.70GHz',
+                '2', 'GenuineIntel', 'Intel(R) Core(TM) i7-4800MQ CPU @ 2.70GHz',
+                '3', 'GenuineIntel', 'Intel(R) Core(TM) i7-4800MQ CPU @ 2.70GHz',
+                '4', 'GenuineIntel', 'Intel(R) Core(TM) i7-4800MQ CPU @ 2.70GHz',
+                '5', 'GenuineIntel', 'Intel(R) Core(TM) i7-4800MQ CPU @ 2.70GHz',
+                '6', 'GenuineIntel', 'Intel(R) Core(TM) i7-4800MQ CPU @ 2.70GHz',
+                '7', 'GenuineIntel', 'Intel(R) Core(TM) i7-4800MQ CPU @ 2.70GHz',
+            ],
+            'processor_cores': 4,
+            'processor_count': 1,
+            'processor_threads_per_core': 2,
+            'processor_vcpus': 8},
+    },
+    {
+        'architecture': 'arm64',
+        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/arm64-4cpu-cpuinfo')).readlines(),
+        'expected_result': {
+            'processor': ['0', '1', '2', '3'],
+            'processor_cores': 1,
+            'processor_count': 4,
+            'processor_threads_per_core': 1,
+            'processor_vcpus': 4},
+    },
+    {
+        'architecture': 'armv71',
+        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/armv7-rev3-8cpu-cpuinfo')).readlines(),
+        'expected_result': {
+            'processor': [
+                '0', 'ARMv7 Processor rev 3 (v7l)',
+                '1', 'ARMv7 Processor rev 3 (v7l)',
+                '2', 'ARMv7 Processor rev 3 (v7l)',
+                '3', 'ARMv7 Processor rev 3 (v7l)',
+                '4', 'ARMv7 Processor rev 3 (v7l)',
+                '5', 'ARMv7 Processor rev 3 (v7l)',
+                '6', 'ARMv7 Processor rev 3 (v7l)',
+                '7', 'ARMv7 Processor rev 3 (v7l)',
+            ],
+            'processor_cores': 1,
+            'processor_count': 8,
+            'processor_threads_per_core': 1,
+            'processor_vcpus': 8},
+    },
+    {
+        'architecture': 'x86_64',
+        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/x86_64-2cpu-cpuinfo')).readlines(),
+        'expected_result': {
+            'processor': [
+                '0', 'GenuineIntel', 'Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz',
+                '1', 'GenuineIntel', 'Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz',
+            ],
+            'processor_cores': 1,
+            'processor_count': 2,
+            'processor_threads_per_core': 1,
+            'processor_vcpus': 2},
+    },
+    {
+        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/ppc64-power7-rhel7-8cpu-cpuinfo')).readlines(),
+        'architecture': 'ppc64',
+        'expected_result': {
+            'processor': [
+                '0', 'POWER7 (architected), altivec supported',
+                '1', 'POWER7 (architected), altivec supported',
+                '2', 'POWER7 (architected), altivec supported',
+                '3', 'POWER7 (architected), altivec supported',
+                '4', 'POWER7 (architected), altivec supported',
+                '5', 'POWER7 (architected), altivec supported',
+                '6', 'POWER7 (architected), altivec supported',
+                '7', 'POWER7 (architected), altivec supported'
+            ],
+            'processor_cores': 1,
+            'processor_count': 16,
+            'processor_threads_per_core': 1,
+            'processor_vcpus': 16
+        },
+    },
+    {
+        'cpuinfo': open(os.path.join(os.path.dirname(__file__), '../fixtures/cpuinfo/ppc64le-power8-24cpu-cpuinfo')).readlines(),
+        'architecture': 'ppc64le',
+        'expected_result': {
+            'processor': [
+                '0', 'POWER8 (architected), altivec supported',
+                '1', 'POWER8 (architected), altivec supported',
+                '2', 'POWER8 (architected), altivec supported',
+                '3', 'POWER8 (architected), altivec supported',
+                '4', 'POWER8 (architected), altivec supported',
+                '5', 'POWER8 (architected), altivec supported',
+                '6', 'POWER8 (architected), altivec supported',
+                '7', 'POWER8 (architected), altivec supported',
+                '8', 'POWER8 (architected), altivec supported',
+                '9', 'POWER8 (architected), altivec supported',
+                '10', 'POWER8 (architected), altivec supported',
+                '11', 'POWER8 (architected), altivec supported',
+                '12', 'POWER8 (architected), altivec supported',
+                '13', 'POWER8 (architected), altivec supported',
+                '14', 'POWER8 (architected), altivec supported',
+                '15', 'POWER8 (architected), altivec supported',
+                '16', 'POWER8 (architected), altivec supported',
+                '17', 'POWER8 (architected), altivec supported',
+                '18', 'POWER8 (architected), altivec supported',
+                '19', 'POWER8 (architected), altivec supported',
+                '20', 'POWER8 (architected), altivec supported',
+                '21', 'POWER8 (architected), altivec supported',
+                '22', 'POWER8 (architected), altivec supported',
+                '23', 'POWER8 (architected), altivec supported',
+            ],
+            'processor_cores': 1,
+            'processor_count': 48,
+            'processor_threads_per_core': 1,
+            'processor_vcpus': 48
+        },
+    },
+]

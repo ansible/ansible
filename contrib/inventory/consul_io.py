@@ -49,12 +49,14 @@ Other options include:
 'datacenter':
 
 which restricts the included nodes to those from the given datacenter
+This can also be set with the environmental variable CONSUL_DATACENTER
 
 'url':
 
 the URL of the Consul cluster. host, port and scheme are derived from the
 URL. If not specified, connection configuration defaults to http requests
 to localhost on port 8500.
+This can also be set with the environmental variable CONSUL_URL
 
 'domain':
 
@@ -191,16 +193,13 @@ if os.getenv('ANSIBLE_INVENTORY_CONSUL_IO_LOG_ENABLED'):
     setup_logging()
 
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
 try:
     import consul
 except ImportError as e:
     sys.exit("""failed=True msg='python-consul required for this module.
-See http://python-consul.readthedocs.org/en/latest/#installation'""")
+See https://python-consul.readthedocs.io/en/latest/#installation'""")
 
 from six import iteritems
 
@@ -336,7 +335,7 @@ class ConsulInventory(object):
                     metadata = json.loads(metadata['Value'])
                     for k, v in metadata.items():
                         self.add_metadata(node_data, k, v)
-                except:
+                except Exception:
                     pass
 
     def load_groups_from_kv(self, node_data):
@@ -456,6 +455,7 @@ class ConsulConfig(dict):
     def __init__(self):
         self.read_settings()
         self.read_cli_args()
+        self.read_env_vars()
 
     def has_config(self, name):
         if hasattr(self, name):
@@ -500,6 +500,14 @@ class ConsulConfig(dict):
             if getattr(args, arg):
                 setattr(self, arg, getattr(args, arg))
 
+    def read_env_vars(self):
+        env_var_options = ['datacenter', 'url']
+        for option in env_var_options:
+            value = None
+            env_var = 'CONSUL_' + option.upper()
+            if os.environ.get(env_var):
+                setattr(self, option, os.environ.get(env_var))
+
     def get_availability_suffix(self, suffix, default):
         if self.has_config(suffix):
             return self.has_config(suffix)
@@ -527,5 +535,6 @@ class ConsulConfig(dict):
             if not token:
                 token = 'anonymous'
         return consul.Consul(host=host, port=port, token=token, scheme=scheme)
+
 
 ConsulInventory()

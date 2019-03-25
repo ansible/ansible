@@ -48,6 +48,8 @@ options:
             - SRV
             - TXT
             - PTR
+            - CAA
+            - SOA
         required: true
     record_mode:
         description:
@@ -101,11 +103,10 @@ EXAMPLES = '''
 
 - name: ensure an "A" record set with multiple records
   azure_rm_dnsrecordset:
-    resource_group: Testing
+    resource_group: myResourceGroup
     relative_name: www
     zone_name: testing.com
     record_type: A
-    state: present
     records:
       - entry: 192.168.100.101
       - entry: 192.168.100.102
@@ -113,7 +114,7 @@ EXAMPLES = '''
 
 - name: delete a record set
   azure_rm_dnsrecordset:
-    resource_group: Testing
+    resource_group: myResourceGroup
     record_type: A
     relative_name: www
     zone_name: testing.com
@@ -121,9 +122,8 @@ EXAMPLES = '''
 
 - name: create multiple "A" record sets with multiple records
   azure_rm_dnsrecordset:
-    resource_group: Testing
+    resource_group: myResourceGroup
     zone_name: testing.com
-    state: present
     relative_name: "{{ item.name }}"
     record_type: "{{ item.type }}"
     records: "{{ item.records }}"
@@ -134,12 +134,11 @@ EXAMPLES = '''
 
 - name: create SRV records in a new record set
   azure_rm_dnsrecordset:
-    resource_group: Testing
+    resource_group: myResourceGroup
     relative_name: _sip._tcp.testing.com
     zone_name: testing.com
     time_to_live: 7200
     record_type: SRV
-    state: present
     records:
     - entry: sip.testing.com
       preference: 10
@@ -149,7 +148,7 @@ EXAMPLES = '''
 
 - name: create PTR record in a new record set
   azure_rm_dnsrecordset:
-    resource_group: Testing
+    resource_group: myResourceGroup
     relative_name: 192.168.100.101.in-addr.arpa
     zone_name: testing.com
     record_type: PTR
@@ -158,7 +157,7 @@ EXAMPLES = '''
 
 - name: create TXT record in a new record set
   azure_rm_dnsrecordset:
-    resource_group: Testing
+    resource_group: myResourceGroup
     relative_name: mail.testing.com
     zone_name: testing.com
     record_type: TXT
@@ -179,7 +178,6 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase, HAS_AZURE
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.dns.models import Zone, RecordSet, ARecord, AaaaRecord, MxRecord, NsRecord, PtrRecord, SrvRecord, TxtRecord, CnameRecord, SoaRecord
 except ImportError:
     # This is handled in azure_rm_common
     pass
@@ -214,18 +212,34 @@ RECORD_ARGSPECS = dict(
     TXT=dict(
         value=dict(type='list', required=True, aliases=['entry'])
     ),
+    SOA=dict(
+        host=dict(type='str', aliases=['entry']),
+        email=dict(type='str'),
+        serial_number=dict(type='long'),
+        refresh_time=dict(type='long'),
+        retry_time=dict(type='long'),
+        expire_time=dict(type='long'),
+        minimum_ttl=dict(type='long')
+    ),
+    CAA=dict(
+        value=dict(type='str', aliases=['entry']),
+        flags=dict(type='int'),
+        tag=dict(type='str')
+    )
     # FUTURE: ensure all record types are supported (see https://github.com/Azure/azure-sdk-for-python/tree/master/azure-mgmt-dns/azure/mgmt/dns/models)
 )
 
 RECORDSET_VALUE_MAP = dict(
-    A=dict(attrname='arecords', classobj=ARecord, is_list=True),
-    AAAA=dict(attrname='aaaa_records', classobj=AaaaRecord, is_list=True),
-    CNAME=dict(attrname='cname_record', classobj=CnameRecord, is_list=False),
-    MX=dict(attrname='mx_records', classobj=MxRecord, is_list=True),
-    NS=dict(attrname='ns_records', classobj=NsRecord, is_list=True),
-    PTR=dict(attrname='ptr_records', classobj=PtrRecord, is_list=True),
-    SRV=dict(attrname='srv_records', classobj=SrvRecord, is_list=True),
-    TXT=dict(attrname='txt_records', classobj=TxtRecord, is_list=True),
+    A=dict(attrname='arecords', classobj='ARecord', is_list=True),
+    AAAA=dict(attrname='aaaa_records', classobj='AaaaRecord', is_list=True),
+    CNAME=dict(attrname='cname_record', classobj='CnameRecord', is_list=False),
+    MX=dict(attrname='mx_records', classobj='MxRecord', is_list=True),
+    NS=dict(attrname='ns_records', classobj='NsRecord', is_list=True),
+    PTR=dict(attrname='ptr_records', classobj='PtrRecord', is_list=True),
+    SRV=dict(attrname='srv_records', classobj='SrvRecord', is_list=True),
+    TXT=dict(attrname='txt_records', classobj='TxtRecord', is_list=True),
+    SOA=dict(attrname='soa_record', classobj='SoaRecord', is_list=False),
+    CAA=dict(attrname='caa_records', classobj='CaaRecord', is_list=True)
     # FUTURE: add missing record types from https://github.com/Azure/azure-sdk-for-python/blob/master/azure-mgmt-dns/azure/mgmt/dns/models/record_set.py
 ) if HAS_AZURE else {}
 
@@ -261,14 +275,18 @@ class AzureRMRecordSet(AzureRMModuleBase):
 
         # look up the right subspec and metadata
         record_subspec = RECORD_ARGSPECS.get(self.module.params['record_type'])
-        self.record_type_metadata = RECORDSET_VALUE_MAP.get(self.module.params['record_type'])
 
         # patch the right record shape onto the argspec
         self.module_arg_spec['records']['options'] = record_subspec
 
-        # monkeypatch __hash__ on SDK model objects so we can safely use them in sets
-        for rvm in RECORDSET_VALUE_MAP.values():
-            rvm['classobj'].__hash__ = gethash
+        self.resource_group = None
+        self.relative_name = None
+        self.zone_name = None
+        self.record_type = None
+        self.record_mode = None
+        self.state = None
+        self.time_to_live = None
+        self.records = None
 
         # rerun validation and actually run the module this time
         super(AzureRMRecordSet, self).__init__(self.module_arg_spec, required_if=required_if, supports_check_mode=True)
@@ -286,24 +304,27 @@ class AzureRMRecordSet(AzureRMModuleBase):
         try:
             self.log('Fetching Record Set {0}'.format(self.relative_name))
             record_set = self.dns_client.record_sets.get(self.resource_group, self.zone_name, self.relative_name, self.record_type)
-        except CloudError as ce:
+            self.results['state'] = self.recordset_to_dict(record_set)
+        except CloudError:
             record_set = None
             # FUTURE: fail on anything other than ResourceNotFound
+
+        record_type_metadata = RECORDSET_VALUE_MAP.get(self.record_type)
 
         # FUTURE: implement diff mode
 
         if self.state == 'present':
             # convert the input records to SDK objects
-            self.input_sdk_records = self.create_sdk_records(self.records)
+            self.input_sdk_records = self.create_sdk_records(self.records, self.record_type)
 
             if not record_set:
                 changed = True
             else:
                 # and use it to get the type-specific records
-                server_records = getattr(record_set, self.record_type_metadata['attrname'])
+                server_records = getattr(record_set, record_type_metadata.get('attrname'))
 
                 # compare the input records to the server records
-                changed = self.records_changed(self.input_sdk_records, server_records)
+                self.input_sdk_records, changed = self.records_changed(self.input_sdk_records, server_records)
 
                 # also check top-level recordset properties
                 changed |= record_set.ttl != self.time_to_live
@@ -325,18 +346,11 @@ class AzureRMRecordSet(AzureRMModuleBase):
                     ttl=self.time_to_live
                 )
 
-                if not self.record_type_metadata['is_list']:
-                    records_to_create_or_update = self.input_sdk_records[0]
-                elif self.record_mode == 'append' and record_set:  # append mode, merge with existing values before update
-                    records_to_create_or_update = set(self.input_sdk_records).union(set(server_records))
-                else:
-                    records_to_create_or_update = self.input_sdk_records
+                record_set_args[record_type_metadata['attrname']] = self.input_sdk_records if record_type_metadata['is_list'] else self.input_sdk_records[0]
 
-                record_set_args[self.record_type_metadata['attrname']] = records_to_create_or_update
+                record_set = self.dns_models.RecordSet(**record_set_args)
 
-                record_set = RecordSet(**record_set_args)
-
-                rsout = self.dns_client.record_sets.create_or_update(self.resource_group, self.zone_name, self.relative_name, self.record_type, record_set)
+                self.results['state'] = self.create_or_update(record_set)
 
             elif self.state == 'absent':
                 # delete record set
@@ -344,49 +358,61 @@ class AzureRMRecordSet(AzureRMModuleBase):
 
         return self.results
 
+    def create_or_update(self, record_set):
+        try:
+            record_set = self.dns_client.record_sets.create_or_update(resource_group_name=self.resource_group,
+                                                                      zone_name=self.zone_name,
+                                                                      relative_record_set_name=self.relative_name,
+                                                                      record_type=self.record_type,
+                                                                      parameters=record_set)
+            return self.recordset_to_dict(record_set)
+        except Exception as exc:
+            self.fail("Error creating or updating dns record {0} - {1}".format(self.relative_name, exc.message or str(exc)))
+
     def delete_record_set(self):
         try:
             # delete the record set
-            self.dns_client.record_sets.delete(self.resource_group, self.zone_name, self.relative_name, self.record_type)
+            self.dns_client.record_sets.delete(resource_group_name=self.resource_group,
+                                               zone_name=self.zone_name,
+                                               relative_record_set_name=self.relative_name,
+                                               record_type=self.record_type)
         except Exception as exc:
-            self.fail("Error deleting record set {0} - {1}".format(self.relative_name, str(exc)))
+            self.fail("Error deleting record set {0} - {1}".format(self.relative_name, exc.message or str(exc)))
         return None
 
-    def create_sdk_records(self, input_records):
-        record_sdk_class = self.record_type_metadata['classobj']
-        record_argspec = inspect.getargspec(record_sdk_class.__init__)
-        return [record_sdk_class(**dict([(k, v) for k, v in iteritems(x) if k in record_argspec.args])) for x in input_records]
+    def create_sdk_records(self, input_records, record_type):
+        record = RECORDSET_VALUE_MAP.get(record_type)
+        if not record:
+            self.fail('record type {0} is not supported now'.format(record_type))
+        record_sdk_class = getattr(self.dns_models, record.get('classobj'))
+        return [record_sdk_class(**x) for x in input_records]
 
     def records_changed(self, input_records, server_records):
         # ensure we're always comparing a list, even for the single-valued types
         if not isinstance(server_records, list):
             server_records = [server_records]
 
-        input_set = set(input_records)
-        server_set = set(server_records)
+        input_set = set([self.module.jsonify(x.as_dict()) for x in input_records])
+        server_set = set([self.module.jsonify(x.as_dict()) for x in server_records])
 
         if self.record_mode == 'append':  # only a difference if the server set is missing something from the input set
-            return len(input_set.difference(server_set)) > 0
+            input_set = server_set.union(input_set)
 
         # non-append mode; any difference in the sets is a change
-        return input_set != server_set
+        changed = input_set != server_set
 
+        records = [self.module.from_json(x) for x in input_set]
+        return self.create_sdk_records(records, self.record_type), changed
 
-# Quick 'n dirty hash impl suitable for monkeypatching onto SDK model objects (so we can use set comparisons)
-def gethash(self):
-    if not getattr(self, '_cachedhash', None):
-        spec = inspect.getargspec(self.__init__)
-        valuetuple = tuple(
-            map(lambda v: v if not isinstance(v, list) else str(v), [
-                getattr(self, x, None) for x in spec.args if x != 'self'
-            ])
-        )
-        self._cachedhash = hash(valuetuple)
-    return self._cachedhash
+    def recordset_to_dict(self, recordset):
+        result = recordset.as_dict()
+        result['type'] = result['type'].strip('Microsoft.Network/dnszones/')
+        return result
 
 
 def main():
     AzureRMRecordSet()
+
 
 if __name__ == '__main__':
     main()

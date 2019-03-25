@@ -26,6 +26,7 @@ description:
       the IETF. It is documented in RFC 6241.
     - This module allows the user to execute NETCONF RPC requests as defined
       by IETF RFC standards as well as proprietary requests.
+extends_documentation_fragment: network_agnostic
 options:
   rpc:
     description:
@@ -123,7 +124,7 @@ stdout:
   description: The raw XML string containing configuration or state data
                received from the underlying ncclient library.
   returned: always apart from low-level errors (such as action plugin)
-  type: string
+  type: str
   sample: '...'
 stdout_lines:
   description: The value of stdout split into a list
@@ -182,7 +183,7 @@ def get_xml_request(module, request, xmlns, content):
         try:
             # trying if content contains dict
             content = ast.literal_eval(content)
-        except:
+        except Exception:
             module.fail_json(msg='unsupported content value `%s`' % content)
 
     if isinstance(content, dict):
@@ -246,7 +247,7 @@ def main():
     elif display == 'json':
         try:
             output = jxmlease.parse(xml_resp)
-        except:
+        except Exception:
             raise ValueError(xml_resp)
     elif display == 'pretty':
         output = tostring(response, pretty_print=True)
@@ -257,6 +258,7 @@ def main():
     }
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

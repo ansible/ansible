@@ -9,8 +9,9 @@
 
 - block:
   - name: "Enable feature hsrp"
-    nxos_feature: 
+    nxos_feature:
       feature: hsrp
+      provider: "{{ connection }}"
       state: enabled
 
   - name: "change int1 mode"
@@ -20,6 +21,7 @@
       parents:
         - "interface {{ intname1 }}"
       match: none
+      provider: "{{ connection }}"
 
   - name: "change int2 mode"
     nxos_config:
@@ -28,6 +30,7 @@
       parents:
         - "interface {{ intname2 }}"
       match: none
+      provider: "{{ connection }}"
 
   - name: "configure nxos_hsrp"
     nxos_hsrp: &conf1000
@@ -39,6 +42,7 @@
       preempt: enabled
       auth_type: md5
       auth_string: "7 1234"
+      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -57,12 +61,13 @@
     nxos_hsrp: &conf100
       group: 100
       version: 2
-      vip: 2.2.2.2
+      vip: 192.0.2.2
       priority: 25
       interface: "{{ intname1 }}"
       preempt: enabled
       auth_type: md5
       auth_string: "0 1234"
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -83,6 +88,7 @@
       preempt: disabled
       auth_type: md5
       auth_string: "0 1234"
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -96,11 +102,12 @@
   - name: "configure group 200"
     nxos_hsrp: &conf200
       group: 200
-      vip: 3.3.3.3
+      vip: 192.0.2.3
       version: 1
       interface: "{{ intname2 }}"
       auth_type: text
       auth_string: "1234"
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -114,11 +121,12 @@
   - name: "change group 200"
     nxos_hsrp: &chg200
       group: 200
-      vip: 3.3.3.3
+      vip: 192.0.2.3
       version: 2
       interface: "{{ intname2 }}"
       auth_type: text
       auth_string: default
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -133,6 +141,7 @@
     nxos_hsrp: &remove
       group: 1000
       interface: "{{ intname1 }}"
+      provider: "{{ connection }}"
       state: absent
     register: result
 
@@ -146,8 +155,9 @@
 
   always:
   - name: "Disable feature hsrp"
-    nxos_feature: 
+    nxos_feature:
       feature: hsrp
+      provider: "{{ connection }}"
       state: disabled
     ignore_errors: yes
 

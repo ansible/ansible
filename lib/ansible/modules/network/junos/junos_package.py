@@ -47,7 +47,6 @@ options:
         to reboot the device once the updated package has been installed.
         If disabled or the remote package does not need to be changed,
         the device will not be started.
-    required: true
     type: bool
     default: 'yes'
   no_copy:
@@ -71,9 +70,26 @@ options:
       - The I(force) argument instructs the module to bypass the package
         version check and install the packaged identified in I(src) on
         the remote device.
-    required: true
     type: bool
     default: 'no'
+  force_host:
+    description:
+      - The I(force_host) argument controls the way software package or
+        bundle is added on remote JUNOS host and is applicable
+        for JUNOS QFX5100 device. If the value is set to C(True) it
+        will ignore any warnings while adding the host software package or bundle.
+    type: bool
+    default: False
+    version_added: 2.8
+  issu:
+    description:
+      - The I(issu) argument is a boolean flag when set to C(True) allows
+        unified in-service software upgrade (ISSU) feature which enables
+        you to upgrade between two different Junos OS releases with no
+        disruption on the control plane and with minimal disruption of traffic.
+    type: bool
+    default: False
+    version_added: 2.8
 requirements:
   - junos-eznc
   - ncclient (>=v0.5.2)
@@ -141,13 +157,15 @@ def install_package(module, device):
     package = module.params['src']
     no_copy = module.params['no_copy']
     validate = module.params['validate']
+    force_host = module.params['force_host']
+    issu = module.params['issu']
 
     def progress_log(dev, report):
         module.log(report)
 
     module.log('installing package')
     result = junos.install(package, progress=progress_log, no_copy=no_copy,
-                           validate=validate)
+                           validate=validate, force_host=force_host, issu=issu)
 
     if not result:
         module.fail_json(msg='Unable to install package on device')
@@ -167,7 +185,9 @@ def main():
         no_copy=dict(default=False, type='bool'),
         validate=dict(default=True, type='bool'),
         force=dict(type='bool', default=False),
-        transport=dict(default='netconf', choices=['netconf'])
+        transport=dict(default='netconf', choices=['netconf']),
+        force_host=dict(type='bool', default=False),
+        issu=dict(type='bool', default=False)
     )
 
     argument_spec.update(junos_argument_spec)

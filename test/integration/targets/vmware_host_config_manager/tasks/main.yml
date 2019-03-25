@@ -4,12 +4,6 @@
 
 # TODO: vcsim does not support update host configuartion
 
-- name: store the vcenter container ip
-  set_fact:
-    vcsim: "{{ lookup('env', 'vcenter_host') }}"
-
-- debug: var=vcsim
-
 - name: Wait for Flask controller to come up online
   wait_for:
     host: "{{ vcsim }}"
@@ -86,3 +80,37 @@
   assert:
     that:
         - all_hosts_result.changed
+
+- name: Change facts about all hosts in given cluster in check mode
+  vmware_host_config_manager:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance.json.username }}"
+    password: "{{ vcsim_instance.json.password }}"
+    cluster_name: "{{ ccr1 }}"
+    options:
+      'Config.HostAgent.log.level': 'verbose'
+    validate_certs: no
+  register: all_hosts_result_check_mode
+  check_mode: yes
+
+- name: ensure changes are done to all hosts
+  assert:
+    that:
+        - all_hosts_result_check_mode.changed
+
+- name: Change facts about a given host in check mode
+  vmware_host_config_manager:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance.json.username }}"
+    password: "{{ vcsim_instance.json.password }}"
+    esxi_hostname: "{{ host1 }}"
+    options:
+      'Config.HostAgent.log.level': 'info'
+    validate_certs: no
+  register: host_result_check_mode
+  check_mode: yes
+
+- name: ensure changes are done to given hosts
+  assert:
+    that:
+        - all_hosts_result_check_mode.changed

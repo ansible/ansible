@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# (c) 2018, NetApp, Inc
+# (c) 2018-2019, NetApp, Inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -9,27 +9,27 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = """
 module: na_ontap_nfs
-short_description: Manage Ontap NFS status
+short_description: NetApp ONTAP NFS status
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
-author: Suhas Bangalore Shekar  (bsuhas@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 description:
-- Enable or disable nfs on ONTAP
+- Enable or disable NFS on ONTAP
 options:
   state:
     description:
-    - Whether nfs should exist or not.
+    - Whether NFS should exist or not.
     choices: ['present', 'absent']
     default: present
   service_state:
     description:
-    - Whether the specified nfs should be enabled or disabled. Creates nfs service if doesnt exist.
+    - Whether the specified NFS should be enabled or disabled. Creates NFS service if doesnt exist.
     choices: ['started', 'stopped']
   vserver:
     description:
@@ -37,15 +37,20 @@ options:
     required: true
   nfsv3:
     description:
-    - status of nfsv3.
+    - status of NFSv3.
     choices: ['enabled', 'disabled']
+  nfsv3_fsid_change:
+    description:
+    - status of if NFSv3 clients see change in FSID as they traverse filesystems.
+    choices: ['enabled', 'disabled']
+    version_added: '2.7'
   nfsv4:
     description:
-    - status of nfsv4.
+    - status of NFSv4.
     choices: ['enabled', 'disabled']
   nfsv41:
     description:
-    - status of nfsv41.
+    - status of NFSv41.
     aliases: ['nfsv4.1']
     choices: ['enabled', 'disabled']
   vstorage_state:
@@ -55,14 +60,55 @@ options:
   nfsv4_id_domain:
     description:
     - Name of the nfsv4_id_domain to use.
+  nfsv40_acl:
+    description:
+    - status of NFS v4.0 ACL feature
+    choices: ['enabled', 'disabled']
+    version_added: '2.7'
+  nfsv40_read_delegation:
+    description:
+    - status for NFS v4.0 read delegation feature.
+    choices: ['enabled', 'disabled']
+    version_added: '2.7'
+  nfsv40_write_delegation:
+    description:
+    - status for NFS v4.0 write delegation feature.
+    choices: ['enabled', 'disabled']
+    version_added: '2.7'
+  nfsv41_acl:
+    description:
+    - status of NFS v4.1 ACL feature
+    choices: ['enabled', 'disabled']
+    version_added: '2.7'
+  nfsv41_read_delegation:
+    description:
+    - status for NFS v4.1 read delegation feature.
+    choices: ['enabled', 'disabled']
+    version_added: '2.7'
+  nfsv41_write_delegation:
+    description:
+    - status for NFS v4.1 write delegation feature.
+    choices: ['enabled', 'disabled']
+    version_added: '2.7'
   tcp:
     description:
-    - Enable TCP.
+    - Enable TCP (support from ONTAP 9.3 onward).
     choices: ['enabled', 'disabled']
   udp:
     description:
-    - Enable UDP.
+    - Enable UDP (support from ONTAP 9.3 onward).
     choices: ['enabled', 'disabled']
+  showmount:
+    description:
+    - Whether SVM allows showmount
+    choices: ['enabled', 'disabled']
+    version_added: '2.7'
+  tcp_max_xfer_size:
+    description:
+    - TCP Maximum Transfer Size (bytes). The default value is 65536.
+    version_added: '2.8'
+    type: int
+
 """
 
 EXAMPLES = """
@@ -105,12 +151,21 @@ class NetAppONTAPNFS(object):
             service_state=dict(required=False, choices=['started', 'stopped']),
             vserver=dict(required=True, type='str'),
             nfsv3=dict(required=False, default=None, choices=['enabled', 'disabled']),
+            nfsv3_fsid_change=dict(required=False, default=None, choices=['enabled', 'disabled']),
             nfsv4=dict(required=False, default=None, choices=['enabled', 'disabled']),
             nfsv41=dict(required=False, default=None, choices=['enabled', 'disabled'], aliases=['nfsv4.1']),
             vstorage_state=dict(required=False, default=None, choices=['enabled', 'disabled']),
             tcp=dict(required=False, default=None, choices=['enabled', 'disabled']),
             udp=dict(required=False, default=None, choices=['enabled', 'disabled']),
             nfsv4_id_domain=dict(required=False, type='str', default=None),
+            nfsv40_acl=dict(required=False, default=None, choices=['enabled', 'disabled']),
+            nfsv40_read_delegation=dict(required=False, default=None, choices=['enabled', 'disabled']),
+            nfsv40_write_delegation=dict(required=False, default=None, choices=['enabled', 'disabled']),
+            nfsv41_acl=dict(required=False, default=None, choices=['enabled', 'disabled']),
+            nfsv41_read_delegation=dict(required=False, default=None, choices=['enabled', 'disabled']),
+            nfsv41_write_delegation=dict(required=False, default=None, choices=['enabled', 'disabled']),
+            showmount=dict(required=False, default=None, choices=['enabled', 'disabled']),
+            tcp_max_xfer_size=dict(required=False, default=None, type='int')
         ))
 
         self.module = AnsibleModule(
@@ -125,12 +180,21 @@ class NetAppONTAPNFS(object):
         self.service_state = parameters['service_state']
         self.vserver = parameters['vserver']
         self.nfsv3 = parameters['nfsv3']
+        self.nfsv3_fsid_change = parameters['nfsv3_fsid_change']
         self.nfsv4 = parameters['nfsv4']
         self.nfsv41 = parameters['nfsv41']
         self.vstorage_state = parameters['vstorage_state']
         self.nfsv4_id_domain = parameters['nfsv4_id_domain']
         self.udp = parameters['udp']
         self.tcp = parameters['tcp']
+        self.nfsv40_acl = parameters['nfsv40_acl']
+        self.nfsv40_read_delegation = parameters['nfsv40_read_delegation']
+        self.nfsv40_write_delegation = parameters['nfsv40_write_delegation']
+        self.nfsv41_acl = parameters['nfsv41_acl']
+        self.nfsv41_read_delegation = parameters['nfsv41_read_delegation']
+        self.nfsv41_write_delegation = parameters['nfsv41_write_delegation']
+        self.showmount = parameters['showmount']
+        self.tcp_max_xfer_size = parameters['tcp_max_xfer_size']
 
         if HAS_NETAPP_LIB is False:
             self.module.fail_json(msg="the python NetApp-Lib module is required")
@@ -158,20 +222,38 @@ class NetAppONTAPNFS(object):
                 int(result.get_child_content('num-records')) >= 1:
             attributes_list = result.get_child_by_name('attributes-list').get_child_by_name('nfs-info')
             is_nfsv3_enabled = attributes_list.get_child_content('is-nfsv3-enabled')
+            is_nfsv3_fsid_change_enabled = attributes_list.get_child_content('is-nfsv3-fsid-change-enabled')
             is_nfsv40_enabled = attributes_list.get_child_content('is-nfsv40-enabled')
             is_nfsv41_enabled = attributes_list.get_child_content('is-nfsv41-enabled')
             is_vstorage_enabled = attributes_list.get_child_content('is-vstorage-enabled')
             nfsv4_id_domain_value = attributes_list.get_child_content('nfsv4-id-domain')
             is_tcp_enabled = attributes_list.get_child_content('is-tcp-enabled')
             is_udp_enabled = attributes_list.get_child_content('is-udp-enabled')
+            is_nfsv40_acl_enabled = attributes_list.get_child_content('is-nfsv40-acl-enabled')
+            is_nfsv40_write_delegation_enabled = attributes_list.get_child_content('is-nfsv40-write-delegation-enabled')
+            is_nfsv40_read_delegation_enabled = attributes_list.get_child_content('is-nfsv40-read-delegation-enabled')
+            is_nfsv41_acl_enabled = attributes_list.get_child_content('is-nfsv41-acl-enabled')
+            is_nfsv41_write_delegation_enabled = attributes_list.get_child_content('is-nfsv41-write-delegation-enabled')
+            is_nfsv41_read_delegation_enabled = attributes_list.get_child_content('is-nfsv41-read-delegation-enabled')
+            is_showmount_enabled = attributes_list.get_child_content('showmount')
+            tcp_max_xfer_size = attributes_list.get_child_content('tcp-max-xfer-size')
             nfs_details = {
                 'is_nfsv3_enabled': is_nfsv3_enabled,
+                'is_nfsv3_fsid_change_enabled': is_nfsv3_fsid_change_enabled,
                 'is_nfsv40_enabled': is_nfsv40_enabled,
                 'is_nfsv41_enabled': is_nfsv41_enabled,
                 'is_vstorage_enabled': is_vstorage_enabled,
                 'nfsv4_id_domain': nfsv4_id_domain_value,
                 'is_tcp_enabled': is_tcp_enabled,
-                'is_udp_enabled': is_udp_enabled
+                'is_udp_enabled': is_udp_enabled,
+                'is_nfsv40_acl_enabled': is_nfsv40_acl_enabled,
+                'is_nfsv40_write_delegation_enabled': is_nfsv40_write_delegation_enabled,
+                'is_nfsv40_read_delegation_enabled': is_nfsv40_read_delegation_enabled,
+                'is_nfsv41_acl_enabled': is_nfsv41_acl_enabled,
+                'is_nfsv41_write_delegation_enabled': is_nfsv41_write_delegation_enabled,
+                'is_nfsv41_read_delegation_enabled': is_nfsv41_read_delegation_enabled,
+                'is_showmount_enabled': is_showmount_enabled,
+                'tcp_max_xfer_size': tcp_max_xfer_size
             }
         return nfs_details
 
@@ -181,7 +263,7 @@ class NetAppONTAPNFS(object):
         :param:
             name : Name of the vserver
         :return: status of nfs. None if not found.
-        :rtype: boolean
+        :rtype: bool
         """
         nfs_status = netapp_utils.zapi.NaElement('nfs-status')
         result = self.server.invoke_successfully(nfs_status, True)
@@ -225,6 +307,10 @@ class NetAppONTAPNFS(object):
             nfs_modify.add_new_child('is-nfsv3-enabled', 'true')
         elif self.nfsv3 == 'disabled':
             nfs_modify.add_new_child('is-nfsv3-enabled', 'false')
+        if self.nfsv3_fsid_change == 'enabled':
+            nfs_modify.add_new_child('is-nfsv3-fsid-change-enabled', 'true')
+        elif self.nfsv3_fsid_change == 'disabled':
+            nfs_modify.add_new_child('is-nfsv3-fsid-change-enabled', 'false')
         if self.nfsv4 == 'enabled':
             nfs_modify.add_new_child('is-nfsv40-enabled', 'true')
         elif self.nfsv4 == 'disabled':
@@ -245,6 +331,36 @@ class NetAppONTAPNFS(object):
             nfs_modify.add_new_child('is-udp-enabled', 'true')
         elif self.udp == 'disabled':
             nfs_modify.add_new_child('is-udp-enabled', 'false')
+        if self.nfsv40_acl == 'enabled':
+            nfs_modify.add_new_child('is-nfsv40-acl-enabled', 'true')
+        elif self.nfsv40_acl == 'disabled':
+            nfs_modify.add_new_child('is-nfsv40-acl-enabled', 'false')
+        if self.nfsv40_read_delegation == 'enabled':
+            nfs_modify.add_new_child('is-nfsv40-read-delegation-enabled', 'true')
+        elif self.nfsv40_read_delegation == 'disabled':
+            nfs_modify.add_new_child('is-nfsv40-read-delegation-enabled', 'false')
+        if self.nfsv40_write_delegation == 'enabled':
+            nfs_modify.add_new_child('is-nfsv40-write-delegation-enabled', 'true')
+        elif self.nfsv40_write_delegation == 'disabled':
+            nfs_modify.add_new_child('is-nfsv40-write-delegation-enabled', 'false')
+        if self.nfsv41_acl == 'enabled':
+            nfs_modify.add_new_child('is-nfsv41-acl-enabled', 'true')
+        elif self.nfsv41_acl == 'disabled':
+            nfs_modify.add_new_child('is-nfsv41-acl-enabled', 'false')
+        if self.nfsv41_read_delegation == 'enabled':
+            nfs_modify.add_new_child('is-nfsv41-read-delegation-enabled', 'true')
+        elif self.nfsv41_read_delegation == 'disabled':
+            nfs_modify.add_new_child('is-nfsv41-read-delegation-enabled', 'false')
+        if self.nfsv41_write_delegation == 'enabled':
+            nfs_modify.add_new_child('is-nfsv41-write-delegation-enabled', 'true')
+        elif self.nfsv41_write_delegation == 'disabled':
+            nfs_modify.add_new_child('is-nfsv41-write-delegation-enabled', 'false')
+        if self.showmount == 'enabled':
+            nfs_modify.add_new_child('showmount', 'true')
+        elif self.showmount == 'disabled':
+            nfs_modify.add_new_child('showmount', 'false')
+        if self.tcp_max_xfer_size is not None:
+            nfs_modify.add_new_child('tcp-max-xfer-size', str(self.tcp_max_xfer_size))
         try:
             self.server.invoke_successfully(nfs_modify,
                                             enable_tunneling=True)
@@ -302,11 +418,19 @@ class NetAppONTAPNFS(object):
 
         def is_modify_needed():
             if (((self.nfsv3 is not None) and state_changed(self.nfsv3, nfs_service_details['is_nfsv3_enabled'])) or
+                ((self.nfsv3_fsid_change is not None) and state_changed(self.nfsv3_fsid_change, nfs_service_details['is_nfsv3_fsid_change_enabled'])) or
                 ((self.nfsv4 is not None) and state_changed(self.nfsv4, nfs_service_details['is_nfsv40_enabled'])) or
                 ((self.nfsv41 is not None) and state_changed(self.nfsv41, nfs_service_details['is_nfsv41_enabled'])) or
                 ((self.tcp is not None) and state_changed(self.tcp, nfs_service_details['is_tcp_enabled'])) or
                 ((self.udp is not None) and state_changed(self.udp, nfs_service_details['is_udp_enabled'])) or
-                    ((self.vstorage_state is not None) and state_changed(self.vstorage_state, nfs_service_details['is_vstorage_enabled']))):
+                ((self.nfsv40_acl is not None) and state_changed(self.nfsv40_acl, nfs_service_details['is_nfsv40_acl_enabled'])) or
+                ((self.nfsv40_write_delegation is not None) and state_changed(self.nfsv40_write_delegation,
+                                                                              nfs_service_details['is_nfsv40_write_delegation_enabled'])) or
+                ((self.nfsv40_write_delegation is not None) and state_changed(self.nfsv40_write_delegation,
+                                                                              nfs_service_details['is_nfsv40_write_delegation_enabled'])) or
+                ((self.showmount is not None) and state_changed(self.showmount, nfs_service_details['is_showmount_enabled'])) or
+                    ((self.vstorage_state is not None) and state_changed(self.vstorage_state, nfs_service_details['is_vstorage_enabled'])) or
+                    ((self.tcp_max_xfer_size is not None) and int(self.tcp_max_xfer_size) != int(nfs_service_details['tcp_max_xfer_size']))):
                 return True
             return False
 

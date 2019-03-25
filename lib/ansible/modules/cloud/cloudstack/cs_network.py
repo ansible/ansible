@@ -17,52 +17,62 @@ short_description: Manages networks on Apache CloudStack based clouds.
 description:
     - Create, update, restart and delete networks.
 version_added: '2.0'
-author: "René Moser (@resmo)"
+author: René Moser (@resmo)
 options:
   name:
     description:
       - Name (case sensitive) of the network.
+    type: str
     required: true
   display_text:
     description:
       - Display text of the network.
-      - If not specified, C(name) will be used as C(display_text).
+      - If not specified, I(name) will be used as I(display_text).
+    type: str
   network_offering:
     description:
       - Name of the offering for the network.
-      - Required if C(state=present).
+      - Required if I(state=present).
+    type: str
   start_ip:
     description:
       - The beginning IPv4 address of the network belongs to.
       - Only considered on create.
+    type: str
   end_ip:
     description:
       - The ending IPv4 address of the network belongs to.
-      - If not specified, value of C(start_ip) is used.
+      - If not specified, value of I(start_ip) is used.
       - Only considered on create.
+    type: str
   gateway:
     description:
       - The gateway of the network.
       - Required for shared networks and isolated networks when it belongs to a VPC.
       - Only considered on create.
+    type: str
   netmask:
     description:
       - The netmask of the network.
       - Required for shared networks and isolated networks when it belongs to a VPC.
       - Only considered on create.
+    type: str
   start_ipv6:
     description:
       - The beginning IPv6 address of the network belongs to.
       - Only considered on create.
+    type: str
   end_ipv6:
     description:
       - The ending IPv6 address of the network belongs to.
-      - If not specified, value of C(start_ipv6) is used.
+      - If not specified, value of I(start_ipv6) is used.
       - Only considered on create.
+    type: str
   cidr_ipv6:
     description:
       - CIDR of IPv6 network, must be at least /64.
       - Only considered on create.
+    type: str
   gateway_ipv6:
     description:
       - The gateway of the IPv6 network.
@@ -71,56 +81,68 @@ options:
   vlan:
     description:
       - The ID or VID of the network.
+    type: str
   vpc:
     description:
       - Name of the VPC of the network.
+    type: str
   isolated_pvlan:
     description:
       - The isolated private VLAN for this network.
+    type: str
   clean_up:
     description:
       - Cleanup old network elements.
-      - Only considered on C(state=restarted).
+      - Only considered on I(state=restarted).
     default: no
     type: bool
   acl_type:
     description:
-      - Access control type for the VPC network tier.
+      - Access control type for the network.
+      - If not specified, Cloudstack will default to C(account) for isolated networks
+      - and C(domain) for shared networks.
       - Only considered on create.
-    default: account
+    type: str
     choices: [ account, domain ]
   acl:
     description:
       - The name of the access control list for the VPC network tier.
-    version_added: "2.5"
+    type: str
+    version_added: '2.5'
   subdomain_access:
     description:
       - Defines whether to allow subdomains to use networks dedicated to their parent domain(s).
-      - Should be used with C(acl_type=domain).
+      - Should be used with I(acl_type=domain).
       - Only considered on create.
     type: bool
-    version_added: "2.5"
+    version_added: '2.5'
   network_domain:
     description:
       - The network domain.
+    type: str
   state:
     description:
       - State of the network.
+    type: str
     default: present
     choices: [ present, absent, restarted ]
   zone:
     description:
       - Name of the zone in which the network should be deployed.
       - If not set, default zone is used.
+    type: str
   project:
     description:
       - Name of the project the network to be deployed in.
+    type: str
   domain:
     description:
       - Domain the network is related to.
+    type: str
   account:
     description:
       - Account the network is related to.
+    type: str
   poll_async:
     description:
       - Poll async jobs until job has finished.
@@ -131,16 +153,15 @@ extends_documentation_fragment: cloudstack
 
 EXAMPLES = '''
 - name: Create a network
-  local_action:
-    module: cs_network
+  cs_network:
     name: my network
     zone: gva-01
     network_offering: DefaultIsolatedNetworkOfferingWithSourceNatService
     network_domain: example.com
+  delegate_to: localhost
 
 - name: Create a VPC tier
-  local_action:
-    module: cs_network
+  cs_network:
     name: my VPC tier 1
     zone: gva-01
     vpc: my VPC
@@ -148,26 +169,27 @@ EXAMPLES = '''
     gateway: 10.43.0.1
     netmask: 255.255.255.0
     acl: my web acl
+  delegate_to: localhost
 
 - name: Update a network
-  local_action:
-    module: cs_network
+  cs_network:
     name: my network
     display_text: network of domain example.local
     network_domain: example.local
+  delegate_to: localhost
 
 - name: Restart a network with clean up
-  local_action:
-    module: cs_network
+  cs_network:
     name: my network
     clean_up: yes
     state: restared
+  delegate_to: localhost
 
 - name: Remove a network
-  local_action:
-    module: cs_network
+  cs_network:
     name: my network
     state: absent
+  delegate_to: localhost
 '''
 
 RETURN = '''
@@ -175,154 +197,159 @@ RETURN = '''
 id:
   description: UUID of the network.
   returned: success
-  type: string
+  type: str
   sample: 04589590-ac63-4ffc-93f5-b698b8ac38b6
 name:
   description: Name of the network.
   returned: success
-  type: string
+  type: str
   sample: web project
 display_text:
   description: Display text of the network.
   returned: success
-  type: string
+  type: str
   sample: web project
 dns1:
   description: IP address of the 1st nameserver.
   returned: success
-  type: string
+  type: str
   sample: 1.2.3.4
 dns2:
   description: IP address of the 2nd nameserver.
   returned: success
-  type: string
+  type: str
   sample: 1.2.3.4
 cidr:
   description: IPv4 network CIDR.
   returned: success
-  type: string
+  type: str
   sample: 10.101.64.0/24
 gateway:
   description: IPv4 gateway.
   returned: success
-  type: string
+  type: str
   sample: 10.101.64.1
 netmask:
   description: IPv4 netmask.
   returned: success
-  type: string
+  type: str
   sample: 255.255.255.0
 cidr_ipv6:
   description: IPv6 network CIDR.
-  returned: success
-  type: string
+  returned: if available
+  type: str
   sample: 2001:db8::/64
 gateway_ipv6:
   description: IPv6 gateway.
-  returned: success
-  type: string
+  returned: if available
+  type: str
   sample: 2001:db8::1
 zone:
   description: Name of zone.
   returned: success
-  type: string
+  type: str
   sample: ch-gva-2
 domain:
   description: Domain the network is related to.
   returned: success
-  type: string
+  type: str
   sample: ROOT
 account:
   description: Account the network is related to.
   returned: success
-  type: string
+  type: str
   sample: example account
 project:
   description: Name of project.
   returned: success
-  type: string
+  type: str
   sample: Production
 tags:
   description: List of resource tags associated with the network.
   returned: success
-  type: dict
+  type: list
   sample: '[ { "key": "foo", "value": "bar" } ]'
 acl_type:
-  description: Access type of the VPC network tier (Domain, Account).
+  description: Access type of the network (Domain, Account).
   returned: success
-  type: string
+  type: str
   sample: Account
 acl:
   description: Name of the access control list for the VPC network tier.
   returned: success
-  type: string
+  type: str
   sample: My ACL
-  version_added: "2.5"
+  version_added: '2.5'
 acl_id:
   description: ID of the access control list for the VPC network tier.
   returned: success
-  type: string
+  type: str
   sample: dfafcd55-0510-4b8c-b6c5-b8cedb4cfd88
-  version_added: "2.5"
+  version_added: '2.5'
 broadcast_domain_type:
   description: Broadcast domain type of the network.
   returned: success
-  type: string
+  type: str
   sample: Vlan
 type:
   description: Type of the network.
   returned: success
-  type: string
+  type: str
   sample: Isolated
 traffic_type:
   description: Traffic type of the network.
   returned: success
-  type: string
+  type: str
   sample: Guest
 state:
   description: State of the network (Allocated, Implemented, Setup).
   returned: success
-  type: string
+  type: str
   sample: Allocated
 is_persistent:
   description: Whether the network is persistent or not.
   returned: success
-  type: boolean
+  type: bool
   sample: false
 network_domain:
   description: The network domain
   returned: success
-  type: string
+  type: str
   sample: example.local
 network_offering:
   description: The network offering name.
   returned: success
-  type: string
+  type: str
   sample: DefaultIsolatedNetworkOfferingWithSourceNatService
 network_offering_display_text:
   description: The network offering display text.
   returned: success
-  type: string
+  type: str
   sample: Offering for Isolated Vpc networks with Source Nat service enabled
-  version_added: "2.5"
+  version_added: '2.5'
 network_offering_conserve_mode:
   description: Whether the network offering has IP conserve mode enabled or not.
   returned: success
   type: bool
   sample: false
-  version_added: "2.5"
+  version_added: '2.5'
 network_offering_availability:
   description: The availability of the network offering the network is created from
   returned: success
-  type: string
+  type: str
   sample: Optional
-  version_added: "2.5"
+  version_added: '2.5'
 is_system:
   description: Whether the network is system related or not.
   returned: success
   type: bool
   sample: false
-  version_added: "2.5"
+  version_added: '2.5'
+vpc:
+  description: Name of the VPC.
+  returned: if available
+  type: str
+  sample: My VPC
 '''
 
 from ansible.module_utils.basic import AnsibleModule

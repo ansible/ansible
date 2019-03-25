@@ -27,7 +27,9 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+import traceback
 
+TOWER_CLI_IMP_ERR = None
 try:
     import tower_cli.utils.exceptions as exc
     from tower_cli.utils import parser
@@ -35,19 +37,21 @@ try:
 
     HAS_TOWER_CLI = True
 except ImportError:
+    TOWER_CLI_IMP_ERR = traceback.format_exc()
     HAS_TOWER_CLI = False
+
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 
 def tower_auth_config(module):
     '''tower_auth_config attempts to load the tower-cli.cfg file
     specified from the `tower_config_file` parameter. If found,
     if returns the contents of the file as a dictionary, else
-    it will attempt to fetch values from the module pararms and
+    it will attempt to fetch values from the module params and
     only pass those values that have been set.
     '''
     config_file = module.params.pop('tower_config_file', None)
     if config_file:
-        config_file = os.path.expanduser(config_file)
         if not os.path.exists(config_file):
             module.fail_json(msg='file not found: %s' % config_file)
         if os.path.isdir(config_file):
@@ -82,11 +86,27 @@ def tower_check_mode(module):
             module.fail_json(changed=False, msg='Failed check mode: {0}'.format(excinfo))
 
 
-def tower_argument_spec():
-    return dict(
-        tower_host=dict(),
-        tower_username=dict(),
-        tower_password=dict(no_log=True),
-        tower_verify_ssl=dict(type='bool', default=True),
-        tower_config_file=dict(type='path'),
-    )
+class TowerModule(AnsibleModule):
+    def __init__(self, argument_spec, **kwargs):
+        args = dict(
+            tower_host=dict(),
+            tower_username=dict(),
+            tower_password=dict(no_log=True),
+            tower_verify_ssl=dict(type='bool'),
+            tower_config_file=dict(type='path'),
+        )
+        args.update(argument_spec)
+
+        mutually_exclusive = kwargs.get('mutually_exclusive', [])
+        kwargs['mutually_exclusive'] = mutually_exclusive.extend((
+            ('tower_config_file', 'tower_host'),
+            ('tower_config_file', 'tower_username'),
+            ('tower_config_file', 'tower_password'),
+            ('tower_config_file', 'tower_verify_ssl'),
+        ))
+
+        super(TowerModule, self).__init__(argument_spec=args, **kwargs)
+
+        if not HAS_TOWER_CLI:
+            self.fail_json(msg=missing_required_lib('ansible-tower-cli'),
+                           exception=TOWER_CLI_IMP_ERR)

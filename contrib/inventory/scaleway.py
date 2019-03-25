@@ -47,10 +47,7 @@ import sys
 import time
 import traceback
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
 EMPTY_GROUP = {
     'children': [],
@@ -150,8 +147,9 @@ def cache_available(config):
 
 def generate_inv_from_api(config):
     try:
-        inventory['all'] = copy.deepcopy(EMPTY_GROUP)
+        inventory['scaleway'] = copy.deepcopy(EMPTY_GROUP)
 
+        auth_token = None
         if config.has_option('auth', 'api_token'):
             auth_token = config.get('auth', 'api_token')
         auth_token = env_or_param('SCALEWAY_TOKEN', param=auth_token)
@@ -186,7 +184,7 @@ def generate_inv_from_api(config):
                 if region not in inventory:
                     inventory[region] = copy.deepcopy(EMPTY_GROUP)
                 inventory[region]['children'].append(hostname)
-                inventory['all']['children'].append(hostname)
+                inventory['scaleway']['children'].append(hostname)
                 inventory[hostname] = []
                 inventory[hostname].append(ip)
 
@@ -194,7 +192,7 @@ def generate_inv_from_api(config):
     except Exception:
         # Return empty hosts output
         traceback.print_exc()
-        return {'all': {'hosts': []}, '_meta': {'hostvars': {}}}
+        return {'scaleway': {'hosts': []}, '_meta': {'hostvars': {}}}
 
 
 def get_inventory(config):

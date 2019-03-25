@@ -21,7 +21,8 @@ __metaclass__ = type
 
 import json
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
+from ansible.module_utils.basic import get_timestamp
 from ansible.modules.network.nxos import nxos_command
 from .nxos_module import TestNxosModule, load_fixture, set_module_args
 
@@ -44,6 +45,7 @@ class TestNxosCommandModule(TestNxosModule):
         def load_from_file(*args, **kwargs):
             module, commands = args
             output = list()
+            timestamps = list()
 
             for item in commands:
                 try:
@@ -53,7 +55,8 @@ class TestNxosCommandModule(TestNxosModule):
                     command = item['command']
                 filename = '%s.txt' % str(command).replace(' ', '_')
                 output.append(load_fixture('nxos_command', filename))
-            return output
+                timestamps.append(get_timestamp())
+            return output, timestamps
 
         self.run_commands.side_effect = load_from_file
 

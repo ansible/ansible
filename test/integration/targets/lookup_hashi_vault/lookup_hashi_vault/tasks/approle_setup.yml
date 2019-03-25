@@ -1,0 +1,21 @@
+- name: 'Create an approle policy'
+  shell: "echo '{{ policy }}' | {{ vault_cmd }} policy write approle-policy -"
+  vars:
+    policy: |
+      path "auth/approle/login" {
+       capabilities = [ "create", "read" ]
+      }
+
+- name: 'Enable the AppRole auth method'
+  command: '{{ vault_cmd }} auth enable approle'
+
+- name: 'Create a named role'
+  command: '{{ vault_cmd }} write auth/approle/role/test-role policies="test-policy,approle-policy"'
+
+- name: 'Fetch the RoleID of the AppRole'
+  command: '{{ vault_cmd }} read -field=role_id auth/approle/role/test-role/role-id'
+  register: role_id_cmd
+
+- name: 'Get a SecretID issued against the AppRole'
+  command: '{{ vault_cmd }} write -field=secret_id -f auth/approle/role/test-role/secret-id'
+  register: secret_id_cmd

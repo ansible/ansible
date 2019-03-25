@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# (c) 2018, NetApp, Inc
+# (c) 2018-2019, NetApp, Inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -9,18 +9,17 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = """
 module: na_ontap_net_ifgrp
-short_description: Create, modify, destroy the network interface group
+short_description: NetApp Ontap modify network interface group
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
-author:
-- Chris Archibald (carchi@netapp.com), Kevin Hutton (khutton@netapp.com), Suhas Bangalore Shekar (bsuhas@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 description:
-- Create, modify, destroy the network interface group
+- Create, modify ports, destroy the network interface group
 options:
   state:
     description:
@@ -47,32 +46,48 @@ options:
     - Specifies the name of node.
     required: true
 
-  port:
+  ports:
+    aliases:
+    - port
     description:
-    - Adds the specified port.
-
+    - List of expected ports to be present in the interface group.
+    - If a port is present in this list, but not on the target, it will be added.
+    - If a port is not in the list, but present on the target, it will be removed.
+    - Make sure the list contains all ports you want to see on the target.
+    version_added: '2.8'
 """
 
 EXAMPLES = """
     - name: create ifgrp
       na_ontap_net_ifgrp:
-        state=present
-        username={{ netapp_username }}
-        password={{ netapp_password }}
-        hostname={{ netapp_hostname }}
-        distribution_function=ip
-        name=a0c
-        port=e0d
-        mode=multimode
-        node={{ Vsim node name }}
+        state: present
+        username: "{{ netapp_username }}"
+        password: "{{ netapp_password }}"
+        hostname: "{{ netapp_hostname }}"
+        distribution_function: ip
+        name: a0c
+        ports: [e0a]
+        mode: multimode
+        node: "{{ Vsim node name }}"
+    - name: modify ports in an ifgrp
+      na_ontap_net_ifgrp:
+        state: present
+        username: "{{ netapp_username }}"
+        password: "{{ netapp_password }}"
+        hostname: "{{ netapp_hostname }}"
+        distribution_function: ip
+        name: a0c
+        port: [e0a, e0c]
+        mode: multimode
+        node: "{{ Vsim node name }}"
     - name: delete ifgrp
       na_ontap_net_ifgrp:
-        state=absent
-        username={{ netapp_username }}
-        password={{ netapp_password }}
-        hostname={{ netapp_hostname }}
-        name=a0c
-        node={{ Vsim node name }}
+        state: absent
+        username: "{{ netapp_username }}"
+        password: "{{ netapp_password }}"
+        hostname: "{{ netapp_hostname }}"
+        name: a0c
+        node: "{{ Vsim node name }}"
 """
 
 RETURN = """
@@ -82,6 +97,7 @@ RETURN = """
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.netapp_module import NetAppModule
 from ansible.module_utils._text import to_native
 import ansible.module_utils.netapp as netapp_utils
 
@@ -103,7 +119,7 @@ class NetAppOntapIfGrp(object):
             name=dict(required=True, type='str'),
             mode=dict(required=False, type='str'),
             node=dict(required=True, type='str'),
-            port=dict(required=False, type='str'),
+            ports=dict(required=False, type='list', aliases=["port"]),
         ))
 
         self.module = AnsibleModule(
@@ -114,15 +130,9 @@ class NetAppOntapIfGrp(object):
             supports_check_mode=True
         )
 
-        parameters = self.module.params
-
-        # set up state variables
-        self.state = parameters['state']
-        self.distribution_function = parameters['distribution_function']
-        self.name = parameters['name']
-        self.mode = parameters['mode']
-        self.node = parameters['node']
-        self.port = parameters['port']
+        # set up variables
+        self.na_helper = NetAppModule()
+        self.parameters = self.na_helper.set_parameters(self.module.params)
 
         if HAS_NETAPP_LIB is False:
             self.module.fail_json(msg="the python NetApp-Lib module is required")
@@ -141,31 +151,27 @@ class NetAppOntapIfGrp(object):
         """
         if_group_iter = netapp_utils.zapi.NaElement('net-port-get-iter')
         if_group_info = netapp_utils.zapi.NaElement('net-port-info')
-        if_group_info.add_new_child('port', self.name)
+        if_group_info.add_new_child('port', self.parameters['name'])
         if_group_info.add_new_child('port-type', 'if_group')
+        if_group_info.add_new_child('node', self.parameters['node'])
         query = netapp_utils.zapi.NaElement('query')
         query.add_child_elem(if_group_info)
         if_group_iter.add_child_elem(query)
-        result = self.server.invoke_successfully(if_group_iter, True)
+        try:
+            result = self.server.invoke_successfully(if_group_iter, True)
+        except netapp_utils.zapi.NaApiError as error:
+            self.module.fail_json(msg='Error getting if_group %s: %s' % (self.parameters['name'], to_native(error)),
+                                  exception=traceback.format_exc())
 
         return_value = None
 
-        if result.get_child_by_name('num-records') and \
-                int(result.get_child_content('num-records')) >= 1:
-
-            if_group_attributes = result.get_child_by_name('attributes-list').get_child_by_name('net-port-info')
-            distribution_function = if_group_attributes.get_child_content('ifgrp-distribution-function')
-            name = if_group_attributes.get_child_content('port')
-            mode = if_group_attributes.get_child_content('ifgrp-mode')
-            ports = if_group_attributes.get_child_content('ifgrp-port')
-            node = if_group_attributes.get_child_content('node')
-
+        if result.get_child_by_name('num-records') and int(result['num-records']) >= 1:
+            if_group_attributes = result['attributes-list']['net-port-info']
             return_value = {
-                'name': name,
-                'distribution_function': distribution_function,
-                'mode': mode,
-                'node': node,
-                'ports': ports
+                'name': if_group_attributes['port'],
+                'distribution_function': if_group_attributes['ifgrp-distribution-function'],
+                'mode': if_group_attributes['ifgrp-mode'],
+                'node': if_group_attributes['node'],
             }
 
         return return_value
@@ -175,141 +181,118 @@ class NetAppOntapIfGrp(object):
         Return ports of the if_group
         :param:
             name : Name of the if_group
-
         :return: Ports of the if_group. None if not found.
         :rtype: dict
         """
         if_group_iter = netapp_utils.zapi.NaElement('net-port-ifgrp-get')
-        if_group_iter.add_new_child('ifgrp-name', self.name)
-        if_group_iter.add_new_child('node', self.node)
-        result = self.server.invoke_successfully(if_group_iter, True)
+        if_group_iter.add_new_child('ifgrp-name', self.parameters['name'])
+        if_group_iter.add_new_child('node', self.parameters['node'])
+        try:
+            result = self.server.invoke_successfully(if_group_iter, True)
+        except netapp_utils.zapi.NaApiError as error:
+            self.module.fail_json(msg='Error getting if_group ports %s: %s' % (self.parameters['name'], to_native(error)),
+                                  exception=traceback.format_exc())
 
-        return_value = None
-
+        port_list = []
         if result.get_child_by_name('attributes'):
-            if_group_attributes = result.get_child_by_name('attributes').get_child_by_name('net-ifgrp-info')
-            name = if_group_attributes.get_child_content('ifgrp-name')
-            mode = if_group_attributes.get_child_content('mode')
-            port_list = []
+            if_group_attributes = result['attributes']['net-ifgrp-info']
             if if_group_attributes.get_child_by_name('ports'):
                 ports = if_group_attributes.get_child_by_name('ports').get_children()
                 for each in ports:
                     port_list.append(each.get_content())
-            node = if_group_attributes.get_child_content('node')
-            return_value = {
-                'name': name,
-                'mode': mode,
-                'node': node,
-                'ports': port_list
-            }
-        return return_value
+        return {'ports': port_list}
 
     def create_if_grp(self):
         """
         Creates a new ifgrp
         """
         route_obj = netapp_utils.zapi.NaElement("net-port-ifgrp-create")
-        route_obj.add_new_child("distribution-function", self.distribution_function)
-        route_obj.add_new_child("ifgrp-name", self.name)
-        route_obj.add_new_child("mode", self.mode)
-        route_obj.add_new_child("node", self.node)
+        route_obj.add_new_child("distribution-function", self.parameters['distribution_function'])
+        route_obj.add_new_child("ifgrp-name", self.parameters['name'])
+        route_obj.add_new_child("mode", self.parameters['mode'])
+        route_obj.add_new_child("node", self.parameters['node'])
         try:
             self.server.invoke_successfully(route_obj, True)
         except netapp_utils.zapi.NaApiError as error:
-            self.module.fail_json(msg='Error creating if_group %s: %s' % (self.name, to_native(error)),
+            self.module.fail_json(msg='Error creating if_group %s: %s' % (self.parameters['name'], to_native(error)),
                                   exception=traceback.format_exc())
+        for port in self.parameters.get('ports'):
+            self.add_port_to_if_grp(port)
 
     def delete_if_grp(self):
         """
         Deletes a ifgrp
         """
         route_obj = netapp_utils.zapi.NaElement("net-port-ifgrp-destroy")
-        route_obj.add_new_child("ifgrp-name", self.name)
-        route_obj.add_new_child("node", self.node)
+        route_obj.add_new_child("ifgrp-name", self.parameters['name'])
+        route_obj.add_new_child("node", self.parameters['node'])
         try:
             self.server.invoke_successfully(route_obj, True)
         except netapp_utils.zapi.NaApiError as error:
-            self.module.fail_json(msg='Error deleting if_group %s: %s' % (self.name, to_native(error)),
+            self.module.fail_json(msg='Error deleting if_group %s: %s' % (self.parameters['name'], to_native(error)),
                                   exception=traceback.format_exc())
 
-    def add_port_to_if_grp(self):
+    def add_port_to_if_grp(self, port):
         """
         adds port to a ifgrp
         """
         route_obj = netapp_utils.zapi.NaElement("net-port-ifgrp-add-port")
-        route_obj.add_new_child("ifgrp-name", self.name)
-        route_obj.add_new_child("port", self.port)
-        route_obj.add_new_child("node", self.node)
+        route_obj.add_new_child("ifgrp-name", self.parameters['name'])
+        route_obj.add_new_child("port", port)
+        route_obj.add_new_child("node", self.parameters['node'])
         try:
             self.server.invoke_successfully(route_obj, True)
         except netapp_utils.zapi.NaApiError as error:
             self.module.fail_json(msg='Error adding port %s to if_group %s: %s' %
-                                      (self.port, self.name, to_native(error)),
+                                      (port, self.parameters['name'], to_native(error)),
                                   exception=traceback.format_exc())
 
-    def remove_port_to_if_grp(self):
+    def modify_ports(self, current_ports):
+        add_ports = set(self.parameters['ports']) - set(current_ports)
+        remove_ports = set(current_ports) - set(self.parameters['ports'])
+        for port in add_ports:
+            self.add_port_to_if_grp(port)
+        for port in remove_ports:
+            self.remove_port_to_if_grp(port)
+
+    def remove_port_to_if_grp(self, port):
         """
         removes port from a ifgrp
         """
         route_obj = netapp_utils.zapi.NaElement("net-port-ifgrp-remove-port")
-        route_obj.add_new_child("ifgrp-name", self.name)
-        route_obj.add_new_child("port", self.port)
-        route_obj.add_new_child("node", self.node)
+        route_obj.add_new_child("ifgrp-name", self.parameters['name'])
+        route_obj.add_new_child("port", port)
+        route_obj.add_new_child("node", self.parameters['node'])
         try:
             self.server.invoke_successfully(route_obj, True)
         except netapp_utils.zapi.NaApiError as error:
             self.module.fail_json(msg='Error removing port %s to if_group %s: %s' %
-                                      (self.port, self.name, to_native(error)),
+                                      (port, self.parameters['name'], to_native(error)),
                                   exception=traceback.format_exc())
 
-    def apply(self):
-        changed = False
-        ifgroup_exists = False
-        add_ports_exists = True
-        remove_ports_exists = False
+    def autosupport_log(self):
         results = netapp_utils.get_cserver(self.server)
         cserver = netapp_utils.setup_na_ontap_zapi(module=self.module, vserver=results)
         netapp_utils.ems_log_event("na_ontap_net_ifgrp", cserver)
-        if_group_detail = self.get_if_grp()
-        if if_group_detail:
-            ifgroup_exists = True
-            ifgrp_ports_detail = self.get_if_grp_ports()
-            if self.state == 'absent':
-                changed = True
-                if self.port:
-                    if self.port in ifgrp_ports_detail['ports']:
-                        remove_ports_exists = True
-            elif self.state == 'present':
-                if self.port:
-                    if not ifgrp_ports_detail['ports']:
-                        add_ports_exists = False
-                        changed = True
-                    else:
-                        if self.port not in ifgrp_ports_detail['ports']:
-                            add_ports_exists = False
-                            changed = True
-        else:
-            if self.state == 'present':
-                changed = True
 
-        if changed:
+    def apply(self):
+        self.autosupport_log()
+        current, modify = self.get_if_grp(), None
+        cd_action = self.na_helper.get_cd_action(current, self.parameters)
+        if cd_action is None and self.parameters['state'] == 'present':
+            current_ports = self.get_if_grp_ports()
+            modify = self.na_helper.get_modified_attributes(current_ports, self.parameters)
+        if self.na_helper.changed:
             if self.module.check_mode:
                 pass
             else:
-                if self.state == 'present':
-                    if not ifgroup_exists:
-                        self.create_if_grp()
-                        if self.port:
-                            self.add_port_to_if_grp()
-                    else:
-                        if not add_ports_exists:
-                            self.add_port_to_if_grp()
-                elif self.state == 'absent':
-                    if remove_ports_exists:
-                        self.remove_port_to_if_grp()
+                if cd_action == 'create':
+                    self.create_if_grp()
+                elif cd_action == 'delete':
                     self.delete_if_grp()
-
-        self.module.exit_json(changed=changed)
+                elif modify:
+                    self.modify_ports(current_ports['ports'])
+        self.module.exit_json(changed=self.na_helper.changed)
 
 
 def main():

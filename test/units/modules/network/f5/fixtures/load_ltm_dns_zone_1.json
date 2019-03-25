@@ -1,0 +1,31 @@
+{
+    "kind": "tm:ltm:dns:zone:zonestate",
+    "name": "foo",
+    "partition": "Common",
+    "fullPath": "/Common/foo",
+    "generation": 812,
+    "selfLink": "https://localhost/mgmt/tm/ltm/dns/zone/~Common~foo?ver=13.1.0.8",
+    "dnsExpressAllowNotify": [
+        "1.1.1.1"
+    ],
+    "dnsExpressEnabled": "yes",
+    "dnsExpressNotifyAction": "consume",
+    "dnsExpressNotifyTsigVerify": "yes",
+    "dnsExpressServer": "/Common/asd",
+    "dnsExpressServerReference": {
+        "link": "https://localhost/mgmt/tm/ltm/dns/nameserver/~Common~asd?ver=13.1.0.8"
+    },
+    "responsePolicy": "no",
+    "serverTsigKey": "/Common/asd",
+    "serverTsigKeyReference": {
+        "link": "https://localhost/mgmt/tm/ltm/dns/tsig-key/~Common~asd?ver=13.1.0.8"
+    },
+    "transferClients": [
+        "/Common/asd"
+    ],
+    "transferClientsReference": [
+        {
+            "link": "https://localhost/mgmt/tm/ltm/dns/nameserver/~Common~asd?ver=13.1.0.8"
+        }
+    ]
+}

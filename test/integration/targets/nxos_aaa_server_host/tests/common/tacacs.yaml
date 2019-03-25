@@ -6,12 +6,14 @@
 - name: "Enable feature tacacs+"
   nxos_feature:
     feature: tacacs+
+    provider: "{{ connection }}"
     state: enabled
 
 - name: "Setup"
   nxos_aaa_server_host: &remove
     server_type: tacacs
     address: 8.8.8.8
+    provider: "{{ connection }}"
     state: absent
   ignore_errors: yes
 
@@ -21,6 +23,7 @@
     nxos_aaa_server_host: &configure_default_tacacs
       server_type: tacacs
       address: 8.8.8.8
+      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -54,6 +57,7 @@
       address: 8.8.8.8
       host_timeout: 25
       tacacs_port: 89
+      provider: "{{ connection }}"
       state: present
     register: result
  
@@ -71,6 +75,7 @@
       address: 8.8.8.8
       host_timeout: default
       tacacs_port: 100
+      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -90,6 +95,7 @@
       tacacs_port: default
       encrypt_type: 0
       key: hello
+      provider: "{{ connection }}"
       state: present
     register: result
    
@@ -115,6 +121,7 @@
       tacacs_port: 89
       encrypt_type: 7
       key: hello
+      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -122,6 +129,29 @@
 
   - name: "Check Idempotence"
     nxos_aaa_server_host: *configure_tacacs_type7
+    register: result
+
+  - assert: *false
+
+  - name: "Configure tacacs server with new type 7 encryption key"
+    nxos_aaa_server_host: &configure_tacacs_new_type7
+      server_type: tacacs
+      address: 8.8.8.8
+      host_timeout: 25
+      tacacs_port: 89
+      encrypt_type: 7
+      key: helloback
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - "'key 7' in result.updates[0]"
+
+  - name: "Check Idempotence"
+    nxos_aaa_server_host: *configure_tacacs_new_type7
     register: result
 
   - assert: *false
@@ -134,6 +164,7 @@
       tacacs_port: 89
       encrypt_type: 7
       key: default
+      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -152,6 +183,7 @@
       host_timeout: default
       tacacs_port: default
       key: default
+      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -176,6 +208,7 @@
   - name: "Disable feature tacacs+"
     nxos_feature:
       feature: tacacs+
+      provider: "{{ connection }}"
       state: disabled
 
   - debug: msg="END connection={{ ansible_connection }} nxos_aaa_server_host tacacs.yaml sanity test"  

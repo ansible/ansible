@@ -185,12 +185,13 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 
 from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_interface_type
 from ansible.module_utils.basic import AnsibleModule
 
 import re
@@ -225,23 +226,6 @@ def get_interface_mode(interface, intf_type, module):
     elif intf_type == 'loopback' or intf_type == 'svi':
         mode = 'layer3'
     return mode
-
-
-def get_interface_type(interface):
-    if interface.upper().startswith('ET'):
-        return 'ethernet'
-    elif interface.upper().startswith('VL'):
-        return 'svi'
-    elif interface.upper().startswith('LO'):
-        return 'loopback'
-    elif interface.upper().startswith('MG'):
-        return 'management'
-    elif interface.upper().startswith('MA'):
-        return 'management'
-    elif interface.upper().startswith('PO'):
-        return 'portchannel'
-    else:
-        return 'unknown'
 
 
 def apply_key_map(key_map, table):
@@ -383,7 +367,7 @@ def config_igmp_interface(delta, existing, existing_oif_prefix_source):
     def_vals = get_igmp_interface_defaults()
 
     for key, value in delta.items():
-        if key == 'oif_ps':
+        if key == 'oif_ps' and value != 'default':
             for each in value:
                 if each in existing_oif_prefix_source:
                     existing_oif_prefix_source.remove(each)
@@ -399,15 +383,15 @@ def config_igmp_interface(delta, existing, existing_oif_prefix_source):
                         commands.append(CMDS.get('oif_prefix').format(pf))
             if existing_oif_prefix_source:
                 for each in existing_oif_prefix_source:
-                        # remove stale prefix/sources
-                        pf = each['prefix']
-                        src = ''
-                        if 'source' in each.keys():
-                            src = each['source']
-                        if src:
-                            commands.append('no ' + CMDS.get('oif_prefix_source').format(pf, src))
-                        else:
-                            commands.append('no ' + CMDS.get('oif_prefix').format(pf))
+                    # remove stale prefix/sources
+                    pf = each['prefix']
+                    src = ''
+                    if 'source' in each.keys():
+                        src = each['source']
+                    if src:
+                        commands.append('no ' + CMDS.get('oif_prefix_source').format(pf, src))
+                    else:
+                        commands.append('no ' + CMDS.get('oif_prefix').format(pf))
         elif key == 'oif_routemap':
             if value == 'default':
                 if existing.get(key):
@@ -513,7 +497,7 @@ def main():
         oif_routemap=dict(required=False, type='str'),
         oif_prefix=dict(required=False, type='str', removed_in_version='2.10'),
         oif_source=dict(required=False, type='str', removed_in_version='2.10'),
-        oif_ps=dict(required=False, type='list', elements='dict'),
+        oif_ps=dict(required=False, type='raw'),
         restart=dict(type='bool', default=False),
         state=dict(choices=['present', 'absent', 'default'],
                    default='present')
@@ -608,7 +592,7 @@ def main():
     delta = dict(set(proposed.items()).difference(existing.items()))
 
     if oif_ps:
-        if oif_ps == ['default']:
+        if oif_ps == 'default':
             delta['oif_ps'] = []
         else:
             delta['oif_ps'] = oif_ps

@@ -21,7 +21,7 @@ author: "Monty Taylor (@emonty)"
 description:
     - Retrieve an auth token from an OpenStack Cloud
 requirements:
-    - "python >= 2.6"
+    - "python >= 2.7"
     - "openstacksdk"
 options:
   availability_zone:
@@ -39,6 +39,17 @@ EXAMPLES = '''
 - name: Show service catalog
   debug:
     var: service_catalog
+'''
+
+RETURN = '''
+auth_token:
+    description: Openstack API Auth Token
+    returned: success
+    type: str
+service_catalog:
+    description: A dictionary of available API endpoints
+    returned: success
+    type: dict
 '''
 
 import traceback

@@ -11,7 +11,7 @@ Here are some commonly asked questions and their answers.
 How can I set the PATH or any other environment variable for a task or entire playbook?
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Setting environment variables can be done with the `environment` keyword. It can be used at the task or the play level::
+Setting environment variables can be done with the `environment` keyword. It can be used at the task or other levels in the play::
 
     environment:
       PATH: "{{ ansible_env.PATH }}:/thingy/bin"
@@ -131,6 +131,25 @@ requires Python 2, you can also report a bug on our `bug tracker
 
 Do not replace the shebang lines of your python modules.  Ansible will do this for you automatically at deploy time.
 
+Also, this works for ANY interpreter, i.e ruby: `ansible_ruby_interpreter`, perl: `ansible_perl_interpreter`, etc,
+so you can use this for custom modules written in any scripting language and control the interpreter location.
+
+Keep in mind that if you put `env` in your module shebang line (`#!/usr/bin/env <other>`),
+this facility will be ignored so you will be at the mercy of the remote `$PATH`.
+
+.. _installation_faqs:
+
+How do I handle the package dependencies required by Ansible package dependencies during Ansible installation ?
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+While installing Ansible, sometimes you may encounter errors such as `No package 'libffi' found` or `fatal error: Python.h: No such file or directory`
+These errors are generally caused by the missing packages which are dependencies of the packages required by Ansible.
+For example, `libffi` package is dependency of `pynacl` and `paramiko` (Ansible -> paramiko -> pynacl -> libffi).
+
+In order to solve these kinds of dependency issue, you may need to install required packages using the OS native package managers (e.g., `yum`, `dnf` or `apt`) or as mentioned in the package installation guide.
+
+Please refer the documentation of the respective package for such dependencies and their installation methods.
+
 Common Platform Issues
 ++++++++++++++++++++++
 
@@ -149,9 +168,9 @@ If you want to run under Python 3 instead of Python 2 you may want to change tha
 
 .. code-block:: shell
 
-    $ virtualenv ansible
+    $ virtualenv -p python3 ansible
     $ source ./ansible/bin/activate
-    $ pip3 install ansible
+    $ pip install ansible
 
 If you need to use any libraries which are not available via pip (for instance, SELinux Python
 bindings on systems such as Red Hat Enterprise Linux or Fedora that have SELinux enabled) then you
@@ -203,6 +222,40 @@ is likely the problem. There are several workarounds:
 
   (bash, ksh, and zsh should also be POSIX compatible if you have any of those installed).
 
+Running on z/OS
+---------------
+
+There are a few common errors that one might run into when trying to execute Ansible on z/OS as a target.
+
+* Version 2.7.6 of python for z/OS will not work with Ansible because it represents strings internally as EBCDIC.
+
+  To get around this limitation, download and install a later version of `python for z/OS <https://www.rocketsoftware.com/zos-open-source>`_ (2.7.13 or 3.6.1) that represents strings internally as ASCII.  Version 2.7.13 is verified to work.
+
+* When ``pipelining = False`` in `/etc/ansible/ansible.cfg` then Ansible modules are transferred in binary mode via sftp however execution of python fails with 
+
+  .. error::
+      SyntaxError: Non-UTF-8 code starting with \'\\x83\' in file /a/user1/.ansible/tmp/ansible-tmp-1548232945.35-274513842609025/AnsiballZ_stat.py on line 1, but no encoding declared; see http://python.org/dev/peps/pep-0263/ for details
+  
+  To fix it set ``pipelining = True`` in `/etc/ansible/ansible.cfg`.
+
+* Python interpret cannot be found in default location ``/usr/bin/python`` on target host.
+
+  .. error::
+      /usr/bin/python: EDC5129I No such file or directory
+
+  To fix this set the path to the python installation in your inventory like so::
+
+    zos1 ansible_python_interpreter=/usr/lpp/python/python-2017-04-12-py27/python27/bin/python
+
+* Start of python fails with ``The module libpython2.7.so was not found.``
+
+  .. error::
+    EE3501S The module libpython2.7.so was not found.
+
+  On z/OS, you must execute python from gnu bash.  If gnu bash is installed at ``/usr/lpp/bash``, you can fix this in your inventory by specifying an ``ansible_shell_executable``::
+
+    zos1 ansible_shell_executable=/usr/lpp/bash/bin/bash
+
 
 .. _use_roles:
 
@@ -228,7 +281,7 @@ How do I disable cowsay?
 ++++++++++++++++++++++++
 
 If cowsay is installed, Ansible takes it upon itself to make your day happier when running playbooks.  If you decide
-that you would like to work in a professional cow-free environment, you can either uninstall cowsay, or set the :envvar:`ANSIBLE_NOCOWS` environment variable:
+that you would like to work in a professional cow-free environment, you can either uninstall cowsay, set ``nocows=1`` in ansible.cfg, or set the :envvar:`ANSIBLE_NOCOWS` environment variable:
 
 .. code-block:: shell-session
 
@@ -245,18 +298,34 @@ Ansible by default gathers "facts" about the machines under management, and thes
 
     ansible -m setup hostname
 
-This will print out a dictionary of all of the facts that are available for that particular host. You might want to pipe the output to a pager.
+This will print out a dictionary of all of the facts that are available for that particular host. You might want to pipe the output to a pager.This does NOT include inventory variables or internal 'magic' variables. See the next question if you need more than just 'facts'.
+
 
 .. _browse_inventory_vars:
 
-How do I see all the inventory vars defined for my host?
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+How do I see all the inventory variables defined for my host?
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-By running the following command, you can see vars resulting from what you've defined in the inventory:
+By running the following command, you can see inventory variables for a host:
+
+.. code-block:: shell-session
+
+    ansible-inventory --list --yaml
+
+
+.. _browse_host_vars:
+
+How do I see all the variables specific to my host?
++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+To see all host specific variables, which might include facts and other sources:
 
 .. code-block:: shell-session
 
     ansible -m debug -a "var=hostvars['hostname']" localhost
+
+Unless you are using a fact cache, you normally need to use a play that gathers facts first, for facts included in the task above.
+
 
 .. _host_loops:
 
@@ -301,6 +370,19 @@ via a role parameter or other input.  Variable names can be built by adding stri
 The trick about going through hostvars is necessary because it's a dictionary of the entire namespace of variables.  'inventory_hostname'
 is a magic variable that indicates the current host you are looping over in the host loop.
 
+Also see dynamic_variables_.
+
+
+.. _access_group_variable:
+
+How do I access a group variable?
++++++++++++++++++++++++++++++++++
+
+Technically, you don't, Ansible does not really use groups directly. Groups are label for host selection and a way to bulk assign variables, they are not a first class entity, Ansible only cares about Hosts and Tasks.
+
+That said, you could just access the variable by selecting a host that is part of that group, see first_host_in_a_group_ below for an example.
+
+
 .. _first_host_in_a_group:
 
 How do I access a variable of the first host in a group?
@@ -338,35 +420,44 @@ The "copy" module has a recursive parameter.  However, take a look at the "synch
 How do I access shell environment variables?
 ++++++++++++++++++++++++++++++++++++++++++++
 
-If you just need to access existing variables, use the 'env' lookup plugin.  For example, to access the value of the HOME
-environment variable on the management machine::
+If you just need to access existing variables ON THE CONTROLLER, use the 'env' lookup plugin.
+For example, to access the value of the HOME environment variable on the management machine::
 
    ---
    # ...
      vars:
         local_home: "{{ lookup('env','HOME') }}"
 
-If you need to set environment variables, see the Advanced Playbooks section about environments.
 
-Remote environment variables are available via facts in the 'ansible_env' variable:
+For environment variables on the TARGET machines, they are available via facts in the 'ansible_env' variable:
 
 .. code-block:: jinja
 
    {{ ansible_env.SOME_VARIABLE }}
 
+If you need to set environment variables for TASK execution, see :ref:`playbooks_environment` in the :ref:`Advanced Playbooks <playbooks_special_topics>` section.
+There are several ways to set environment variables on your target machines. You can use the :ref:`template <template_module>`, :ref:`replace <replace_module>`, or :ref:`lineinfile <lineinfile_module>` modules to introduce environment variables into files.
+The exact files to edit vary depending on your OS and distribution and local configuration.
+
 .. _user_passwords:
 
-How do I generate crypted passwords for the user module?
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+How do I generate encrypted passwords for the user module?
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-The mkpasswd utility that is available on most Linux systems is a great option:
+Ansible ad-hoc command is the easiest option:
+
+.. code-block:: shell-session
+
+    ansible all -i localhost, -m debug -a "msg={{ 'mypassword' | password_hash('sha512', 'mysecretsalt') }}"
+
+The mkpasswd utility that is available on most Linux systems is also a great option:
 
 .. code-block:: shell-session
 
     mkpasswd --method=sha-512
-    
 
-If this utility is not installed on your system (e.g. you are using OS X) then you can still easily
+
+If this utility is not installed on your system (e.g. you are using macOS) then you can still easily
 generate these passwords using Python. First, ensure that the `Passlib <https://bitbucket.org/ecollins/passlib/wiki/Home>`_
 password hashing library is installed:
 
@@ -389,14 +480,16 @@ In OpenBSD, a similar option is available in the base system called encrypt(1):
 
     encrypt
 
-.. _commercial_support:
+.. _dot_or_array_notation:
 
 Ansible supports dot notation and array notation for variables. Which notation should I use?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 The dot notation comes from Jinja and works fine for variables without special
-characters. If your variable contains dots (.), colons (:), or dashes (-) it is
-safer to use the array notation for variables.
+characters. If your variable contains dots (.), colons (:), or dashes (-), if
+a key begins and ends with two underscores, or if a key uses any of the known
+public attributes, it is safer to use the array notation. See :ref:`playbooks_variables`
+for a list of the known public attributes.
 
 .. code-block:: jinja
 
@@ -405,20 +498,62 @@ safer to use the array notation for variables.
     item['region']['Mid-Atlantic']
     It is {{ temperature['Celsius']['-3'] }} outside.
 
+Also array notation allows for dynamic variable composition, see dynamic_variables_.
+
+Another problem with 'dot notation' is that some keys can cause problems because they collide with attributes and methods of python dictionaries.
+
+.. code-block:: jinja
+
+    item.update # this breaks if item is a dictionary, as 'update()' is a python method for dictionaries
+    item['update'] # this works
+
+
+.. _argsplat_unsafe:
+
+When is it unsafe to bulk-set task arguments from a variable?
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+You can set all of a task's arguments from a dictionary-typed variable. This
+technique can be useful in some dynamic execution scenarios. However, it
+introduces a security risk. We do not recommend it, so Ansible issues a
+warning when you do something like this::
+
+    #...
+    vars:
+      usermod_args:
+        name: testuser
+        state: present
+        update_password: always
+    tasks:
+    - user: '{{ usermod_args }}'
+
+This particular example is safe. However, constructing tasks like this is
+risky because the parameters and values passed to ``usermod_args`` could
+be overwritten by malicious values in the ``host facts`` on a compromised
+target machine. To mitigate this risk:
+
+* set bulk variables at a level of precedence greater than ``host facts`` in the order of precedence found in :ref:`ansible_variable_precedence` (the example above is safe because play vars take precedence over facts)
+* disable the :ref:`inject_facts_as_vars` configuration setting to prevent fact values from colliding with variables (this will also disable the original warning)
+
+
+.. _commercial_support:
+
 Can I get training on Ansible?
 ++++++++++++++++++++++++++++++
 
-Yes!  See our `services page <https://www.ansible.com/consulting>`_ for information on our services and training offerings. Email `info@ansible.com <mailto:info@ansible.com>`_ for further details.
+Yes!  See our `services page <https://www.ansible.com/products/consulting>`_ for information on our services and training offerings. Email `info@ansible.com <mailto:info@ansible.com>`_ for further details.
 
-We also offer free web-based training classes on a regular basis. See our `webinar page <https://www.ansible.com/webinars-training>`_ for more info on upcoming webinars.
+We also offer free web-based training classes on a regular basis. See our `webinar page <https://www.ansible.com/resources/webinars-training>`_ for more info on upcoming webinars.
+
 
 .. _web_interface:
 
 Is there a web interface / REST API / etc?
 ++++++++++++++++++++++++++++++++++++++++++
 
-Yes!  Ansible, Inc makes a great product that makes Ansible even more powerful
-and easy to use. See :doc:`../reference_appendices/tower`.
+Yes!  Ansible, Inc makes a great product that makes Ansible even more powerful and easy to use. See :doc:`../reference_appendices/tower`.
+
 
 .. _docs_contributions:
 
@@ -426,6 +561,7 @@ How do I submit a change to the documentation?
 ++++++++++++++++++++++++++++++++++++++++++++++
 
 Great question!  Documentation for Ansible is kept in the main project git repository, and complete instructions for contributing can be found in the docs README `viewable on GitHub <https://github.com/ansible/ansible/blob/devel/docs/docsite/README.md>`_.  Thanks!
+
 
 .. _keep_secret_data:
 
@@ -464,8 +600,7 @@ A steadfast rule is 'always use ``{{ }}`` except when ``when:``'.
 Conditionals are always run through Jinja2 as to resolve the expression,
 so ``when:``, ``failed_when:`` and ``changed_when:`` are always templated and you should avoid adding ``{{ }}``.
 
-In most other cases you should always use the brackets, even if previously you could use variables without specifying (like ``loop`` or ``with_`` clauses),
-as this made it hard to distinguish between an undefined variable and a string.
+In most other cases you should always use the brackets, even if previously you could use variables without specifying (like ``loop`` or ``with_`` clauses), as this made it hard to distinguish between an undefined variable and a string.
 
 Another rule is 'moustaches don't stack'. We often see this:
 
@@ -473,17 +608,40 @@ Another rule is 'moustaches don't stack'. We often see this:
 
      {{ somevar_{{other_var}} }}
 
-The above DOES NOT WORK, if you need to use a dynamic variable use the hostvars or vars dictionary as appropriate:
+The above DOES NOT WORK as you expect, if you need to use a dynamic variable use the following as appropriate:
 
 .. code-block:: jinja
 
     {{ hostvars[inventory_hostname]['somevar_' + other_var] }}
+
+For 'non host vars' you can use the :ref:`vars lookup<vars_lookup>` plugin:
+
+.. code-block:: jinja
+
+     {{ lookup('vars', 'somevar_' + other_var) }}
+
+
+.. _why_no_wheel:
 
 Why don't you ship in X format?
 +++++++++++++++++++++++++++++++
 
 Several reasons, in most cases it has to do with maintainability, there are tons of ways to ship software and it is a herculean task to try to support them all.
 In other cases there are technical issues, for example, for python wheels, our dependencies are not present so there is little to no gain.
+
+
+.. _ansible_host_delegated:
+
+How do I get the original ansible_host when I delegate a task?
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+As the documentation states, connection variables are taken from the ``delegate_to`` host so ``ansible_host`` is overwritten,
+but you can still access the original via ``hostvars``::
+
+   original_host: "{{ hostvars[inventory_hostname]['ansible_host'] }}"
+
+This works for all overriden connection variables, like ``ansible_user``, ``ansible_port``, etc.
+
 
 .. _i_dont_see_my_question:
 
@@ -498,7 +656,7 @@ Please see the section below for a link to IRC and the Google Group, where you c
        An introduction to playbooks
    :doc:`../user_guide/playbooks_best_practices`
        Best practices advice
-   `User Mailing List <http://groups.google.com/group/ansible-project>`_
+   `User Mailing List <https://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

@@ -21,7 +21,7 @@ author: "Ricardo Carrillo Cruz (@rcarrillocruz)"
 description:
     - Retrieve facts about a one or more OpenStack projects
 requirements:
-    - "python >= 2.6"
+    - "python >= 2.7"
     - "openstacksdk"
 options:
    name:
@@ -83,15 +83,15 @@ openstack_projects:
         id:
             description: Unique UUID.
             returned: success
-            type: string
+            type: str
         name:
             description: Name given to the project.
             returned: success
-            type: string
+            type: str
         description:
             description: Description of the project
             returned: success
-            type: string
+            type: str
         enabled:
             description: Flag to indicate if the project is enabled
             returned: success
@@ -127,7 +127,7 @@ def main():
                 # We assume admin is passing domain id
                 dom = opcloud.get_domain(domain)['id']
                 domain = dom
-            except:
+            except Exception:
                 # If we fail, maybe admin is passing a domain name.
                 # Note that domains have unique names, just like id.
                 dom = opcloud.search_domains(filters={'name': domain})

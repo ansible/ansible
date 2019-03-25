@@ -79,7 +79,11 @@ def _maintain_symlinks(symlink_type, base_path):
             if 'ansible-playbook' in symlink_data['script']['ansible']:
                 _cache_symlinks(symlink_data)
             else:
-                raise
+                raise RuntimeError(
+                    "Pregenerated symlink list was not present and expected "
+                    "symlinks in ./bin were missing or broken. "
+                    "Perhaps this isn't a git checkout?"
+                )
         else:
             raise
     symlinks = symlink_data[symlink_type]
@@ -131,6 +135,15 @@ class SDistCommand(SDist):
         _cache_symlinks(symlinks)
 
         SDist.run(self)
+
+        # Print warnings at the end because no one will see warnings before all the normal status
+        # output
+        if os.environ.get('_ANSIBLE_SDIST_FROM_MAKEFILE', False) != '1':
+            warnings.warn('When setup.py sdist is run from outside of the Makefile,'
+                          ' the generated tarball may be incomplete.  Use `make snapshot`'
+                          ' to create a tarball from an arbitrary checkout or use'
+                          ' `cd packaging/release && make release version=[..]` for official builds.',
+                          RuntimeWarning)
 
 
 def read_file(file_name):
@@ -232,17 +245,22 @@ static_setup_params = dict(
     project_urls={
         'Bug Tracker': 'https://github.com/ansible/ansible/issues',
         'CI: Shippable': 'https://app.shippable.com/github/ansible/ansible',
+        'Code of Conduct': 'https://docs.ansible.com/ansible/latest/community/code_of_conduct.html',
         'Documentation': 'https://docs.ansible.com/ansible/',
+        'Mailing lists': 'https://docs.ansible.com/ansible/latest/community/communication.html#mailing-list-information',
         'Source Code': 'https://github.com/ansible/ansible',
     },
     license='GPLv3+',
     # Ansible will also make use of a system copy of python-six and
     # python-selectors2 if installed but use a Bundled copy if it's not.
-    python_requires='>=2.6,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*',
+    python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*',
     package_dir={'': 'lib'},
     packages=find_packages('lib'),
     package_data={
         '': [
+            'executor/powershell/*.ps1',
+            'module_utils/csharp/*.cs',
+            'module_utils/csharp/*/*.cs',
             'module_utils/powershell/*.psm1',
             'module_utils/powershell/*/*.psm1',
             'modules/windows/*.ps1',
@@ -252,6 +270,7 @@ static_setup_params = dict(
             'galaxy/data/*/*/*.*',
             'galaxy/data/*/tests/inventory',
             'config/base.yml',
+            'config/module_defaults.yml',
         ],
     },
     classifiers=[
@@ -263,8 +282,9 @@ static_setup_params = dict(
         'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
         'Natural Language :: English',
         'Operating System :: POSIX',
-        'Programming Language :: Python :: 2.6',
+        'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',

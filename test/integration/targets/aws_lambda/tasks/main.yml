@@ -336,19 +336,19 @@
     - name: wait for async job 1
       async_status: jid={{ async_1.ansible_job_id }}
       register: job_result
-      until: job_result.finished
+      until: job_result is finished
       retries: 30
 
     - name: wait for async job 2
       async_status: jid={{ async_1.ansible_job_id }}
       register: job_result
-      until: job_result.finished
+      until: job_result is finished
       retries: 30
 
     - name: wait for async job 3
       async_status: jid={{ async_3.ansible_job_id }}
       register: job_result
-      until: job_result.finished
+      until: job_result is finished
       retries: 30
 
 
@@ -407,19 +407,19 @@
     - name: wait for async job 1
       async_status: jid={{ async_1.ansible_job_id }}
       register: job_result
-      until: job_result.finished
+      until: job_result is finished
       retries: 30
 
     - name: wait for async job 2
       async_status: jid={{ async_1.ansible_job_id }}
       register: job_result
-      until: job_result.finished
+      until: job_result is finished
       retries: 30
 
     - name: wait for async job 3
       async_status: jid={{ async_3.ansible_job_id }}
       register: job_result
-      until: job_result.finished
+      until: job_result is finished
       retries: 30
 
 

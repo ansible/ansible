@@ -1,0 +1,2 @@
+bugfixes:
+  - docker_swarm - Fixed node_id parameter not working for node removal (https://github.com/ansible/ansible/issues/53501)

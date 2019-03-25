@@ -152,7 +152,8 @@ def create_maintenance(zbx, group_ids, host_ids, start_time, maintenance_type, p
                 }]
             }
         )
-    except BaseException as e:
+    # zabbix_api can call sys.exit() so we need to catch SystemExit here
+    except (Exception, SystemExit) as e:
         return 1, None, str(e)
     return 0, None, None
 
@@ -176,7 +177,8 @@ def update_maintenance(zbx, maintenance_id, group_ids, host_ids, start_time, mai
                 }]
             }
         )
-    except BaseException as e:
+    # zabbix_api can call sys.exit() so we need to catch SystemExit here
+    except (Exception, SystemExit) as e:
         return 1, None, str(e)
     return 0, None, None
 
@@ -193,7 +195,8 @@ def get_maintenance(zbx, name):
                 "selectHosts": "extend"
             }
         )
-    except BaseException as e:
+    # zabbix_api can call sys.exit() so we need to catch SystemExit here
+    except (Exception, SystemExit) as e:
         return 1, None, str(e)
 
     for maintenance in maintenances:
@@ -207,7 +210,8 @@ def get_maintenance(zbx, name):
 def delete_maintenance(zbx, maintenance_id):
     try:
         zbx.maintenance.delete([maintenance_id])
-    except BaseException as e:
+    # zabbix_api can call sys.exit() so we need to catch SystemExit here
+    except (Exception, SystemExit) as e:
         return 1, None, str(e)
     return 0, None, None
 
@@ -225,7 +229,8 @@ def get_group_ids(zbx, host_groups):
                     }
                 }
             )
-        except BaseException as e:
+        # zabbix_api can call sys.exit() so we need to catch SystemExit here
+        except (Exception, SystemExit) as e:
             return 1, None, str(e)
 
         if not result:
@@ -249,7 +254,8 @@ def get_host_ids(zbx, host_names):
                     }
                 }
             )
-        except BaseException as e:
+        # zabbix_api can call sys.exit() so we need to catch SystemExit here
+        except (Exception, SystemExit) as e:
             return 1, None, str(e)
 
         if not result:
@@ -308,7 +314,8 @@ def main():
         zbx = ZabbixAPI(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password,
                         validate_certs=validate_certs)
         zbx.login(login_user, login_password)
-    except BaseException as e:
+    # zabbix_api can call sys.exit() so we need to catch SystemExit here
+    except (Exception, SystemExit) as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
 
     changed = False

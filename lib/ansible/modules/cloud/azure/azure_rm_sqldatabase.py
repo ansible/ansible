@@ -127,7 +127,7 @@ options:
       type: bool
     state:
       description:
-        - Assert the state of the SQL Database. Use 'present' to create or update an SQL Database and 'absent' to delete it.
+        - Assert the state of the SQL Database. Use C(present) to create or update an SQL Database and C(absent) to delete it.
       default: present
       choices:
         - absent
@@ -135,6 +135,7 @@ options:
 
 extends_documentation_fragment:
     - azure
+    - azure_tags
 
 author:
     - "Zim Kalinowski (@zikalino)"
@@ -144,30 +145,30 @@ author:
 EXAMPLES = '''
   - name: Create (or update) SQL Database
     azure_rm_sqldatabase:
-      resource_group: sqlcrudtest-4799
+      resource_group: myResourceGroup
       server_name: sqlcrudtest-5961
       name: testdb
       location: eastus
 
   - name: Restore SQL Database
     azure_rm_sqldatabase:
-      resource_group: sqlcrudtest-4799
+      resource_group: myResourceGroup
       server_name: sqlcrudtest-5961
       name: restoreddb
       location: eastus
       create_mode: restore
-      restorable_dropped_database_id: "/subscriptions/00000000-1111-2222-3333-444444444444/resourceGroups/Default-SQL-SouthEastAsia/providers/Microsoft.Sql/s
-                                      ervers/testsvr/restorableDroppedDatabases/testdb2,131444841315030000"
+      restorable_dropped_database_id: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Sql/s
+                                       ervers/testsvr/restorableDroppedDatabases/testdb2,131444841315030000"
 
   - name: Create SQL Database in Copy Mode
     azure_rm_sqldatabase:
-      resource_group: sqlcrudtest-4799
+      resource_group: myResourceGroup
       server_name: sqlcrudtest-5961
       name: copydb
       location: eastus
       create_mode: copy
-      source_database_id: "/subscriptions/00000000-1111-2222-3333-444444444444/resourceGroups/Default-SQL-SouthEastAsia/providers/Microsoft.Sql/servers/tests
-                          vr/databases/testdb"
+      source_database_id: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Sql/servers/tests
+                           vr/databases/testdb"
 
 '''
 
@@ -177,7 +178,7 @@ id:
         - Resource ID.
     returned: always
     type: str
-    sample: "/subscriptions/00000000-1111-2222-3333-444444444444/resourceGroups/sqlcrudtest-4799/providers/Microsoft.Sql/servers/sqlcrudtest-5961/databases/t
+    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Sql/servers/sqlcrudtest-5961/databases/t
             estdb"
 database_id:
     description:
@@ -198,7 +199,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from msrestazure.azure_operation import AzureOperationPoller
+    from msrest.polling import LROPoller
     from azure.mgmt.sql import SqlManagementClient
     from msrest.serialization import Model
 except ImportError:
@@ -210,7 +211,7 @@ class Actions:
     NoAction, Create, Update, Delete = range(4)
 
 
-class AzureRMDatabases(AzureRMModuleBase):
+class AzureRMSqlDatabase(AzureRMModuleBase):
     """Configuration class for an Azure RM SQL Database resource"""
 
     def __init__(self):
@@ -301,20 +302,20 @@ class AzureRMDatabases(AzureRMModuleBase):
         self.server_name = None
         self.name = None
         self.parameters = dict()
+        self.tags = None
 
         self.results = dict(changed=False)
-        self.mgmt_client = None
         self.state = None
         self.to_do = Actions.NoAction
 
-        super(AzureRMDatabases, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                               supports_check_mode=True,
-                                               supports_tags=False)
+        super(AzureRMSqlDatabase, self).__init__(derived_arg_spec=self.module_arg_spec,
+                                                 supports_check_mode=True,
+                                                 supports_tags=True)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
 
-        for key in list(self.module_arg_spec.keys()):
+        for key in list(self.module_arg_spec.keys()) + ['tags']:
             if hasattr(self, key):
                 setattr(self, key, kwargs[key])
             elif kwargs[key] is not None:
@@ -346,13 +347,10 @@ class AzureRMDatabases(AzureRMModuleBase):
                         ev = 'AdventureWorksLT'
                     self.parameters["sample_name"] = ev
                 elif key == "zone_redundant":
-                    self.parameters["zone_redundant"] = 'Enabled' if kwargs[key] else 'Disabled'
+                    self.parameters["zone_redundant"] = True if kwargs[key] else False
 
         old_response = None
         response = None
-
-        self.mgmt_client = self.get_mgmt_svc_client(SqlManagementClient,
-                                                    base_url=self._cloud_environment.endpoints.resource_manager)
 
         resource_group = self.get_resource_group(self.resource_group)
 
@@ -384,6 +382,9 @@ class AzureRMDatabases(AzureRMModuleBase):
                 if (('edition' in self.parameters) and
                         (self.parameters['edition'] != old_response['edition'])):
                     self.to_do = Actions.Update
+                update_tags, newtags = self.update_tags(old_response.get('tags', dict()))
+                if update_tags:
+                    self.tags = newtags
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
             self.log("Need to Create / Update the SQL Database instance")
@@ -392,6 +393,7 @@ class AzureRMDatabases(AzureRMModuleBase):
                 self.results['changed'] = True
                 return self.results
 
+            self.parameters['tags'] = self.tags
             response = self.create_update_sqldatabase()
 
             if not old_response:
@@ -432,11 +434,11 @@ class AzureRMDatabases(AzureRMModuleBase):
         self.log("Creating / Updating the SQL Database instance {0}".format(self.name))
 
         try:
-            response = self.mgmt_client.databases.create_or_update(resource_group_name=self.resource_group,
-                                                                   server_name=self.server_name,
-                                                                   database_name=self.name,
-                                                                   parameters=self.parameters)
-            if isinstance(response, AzureOperationPoller):
+            response = self.sql_client.databases.create_or_update(resource_group_name=self.resource_group,
+                                                                  server_name=self.server_name,
+                                                                  database_name=self.name,
+                                                                  parameters=self.parameters)
+            if isinstance(response, LROPoller):
                 response = self.get_poller_result(response)
 
         except CloudError as exc:
@@ -452,9 +454,9 @@ class AzureRMDatabases(AzureRMModuleBase):
         '''
         self.log("Deleting the SQL Database instance {0}".format(self.name))
         try:
-            response = self.mgmt_client.databases.delete(resource_group_name=self.resource_group,
-                                                         server_name=self.server_name,
-                                                         database_name=self.name)
+            response = self.sql_client.databases.delete(resource_group_name=self.resource_group,
+                                                        server_name=self.server_name,
+                                                        database_name=self.name)
         except CloudError as e:
             self.log('Error attempting to delete the SQL Database instance.')
             self.fail("Error deleting the SQL Database instance: {0}".format(str(e)))
@@ -470,9 +472,9 @@ class AzureRMDatabases(AzureRMModuleBase):
         self.log("Checking if the SQL Database instance {0} is present".format(self.name))
         found = False
         try:
-            response = self.mgmt_client.databases.get(resource_group_name=self.resource_group,
-                                                      server_name=self.server_name,
-                                                      database_name=self.name)
+            response = self.sql_client.databases.get(resource_group_name=self.resource_group,
+                                                     server_name=self.server_name,
+                                                     database_name=self.name)
             found = True
             self.log("Response : {0}".format(response))
             self.log("SQL Database instance : {0} found".format(response.name))
@@ -493,7 +495,8 @@ def _snake_to_camel(snake, capitalize_first=False):
 
 def main():
     """Main execution"""
-    AzureRMDatabases()
+    AzureRMSqlDatabase()
+
 
 if __name__ == '__main__':
     main()

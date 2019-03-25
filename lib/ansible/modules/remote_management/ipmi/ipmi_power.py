@@ -54,14 +54,14 @@ options:
 requirements:
   - "python >= 2.6"
   - pyghmi
-author: "Bulat Gaifullin (gaifullinbf@gmail.com)"
+author: "Bulat Gaifullin (@bgaifullin) <gaifullinbf@gmail.com>"
 '''
 
 RETURN = '''
 powerstate:
     description: The current power state of the machine.
     returned: success
-    type: string
+    type: str
     sample: on
 '''
 
@@ -74,12 +74,16 @@ EXAMPLES = '''
     state: on
 '''
 
+import traceback
+
+PYGHMI_IMP_ERR = None
 try:
     from pyghmi.ipmi import command
 except ImportError:
+    PYGHMI_IMP_ERR = traceback.format_exc()
     command = None
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 
 def main():
@@ -96,7 +100,7 @@ def main():
     )
 
     if command is None:
-        module.fail_json(msg='the python pyghmi module is required')
+        module.fail_json(msg=missing_required_lib('pyghmi'), exception=PYGHMI_IMP_ERR)
 
     name = module.params['name']
     port = module.params['port']
@@ -126,6 +130,7 @@ def main():
         module.exit_json(changed=changed, **response)
     except Exception as e:
         module.fail_json(msg=str(e))
+
 
 if __name__ == '__main__':
     main()

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -9,8 +9,8 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+                    'status': ['stableinterface'],
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -25,6 +25,7 @@ options:
   device_group:
     description:
       - The device group that you want to perform config-sync actions on.
+    type: str
     required: True
   sync_device_to_group:
     description:
@@ -44,14 +45,15 @@ options:
     description:
       - Indicates that the sync operation overwrites the configuration on
         the target.
-    default: no
     type: bool
+    default: no
 notes:
   - Requires the objectpath Python package on the host. This is as easy as
     C(pip install objectpath).
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
@@ -59,30 +61,30 @@ EXAMPLES = r'''
   bigip_configsync_action:
     device_group: foo-group
     sync_device_to_group: yes
-    server: lb.mydomain.com
-    user: admin
-    password: secret
-    validate_certs: no
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Sync configuration from most recent device to the current host
   bigip_configsync_action:
     device_group: foo-group
     sync_most_recent_to_device: yes
-    server: lb.mydomain.com
-    user: admin
-    password: secret
-    validate_certs: no
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Perform an initial sync of a device to a new device group
   bigip_configsync_action:
     device_group: new-device-group
     sync_device_to_group: yes
-    server: lb.mydomain.com
-    user: admin
-    password: secret
-    validate_certs: no
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 '''
 
@@ -97,27 +99,15 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
 
 try:
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
 except ImportError:
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
 
 try:
     from objectpath import Tree
@@ -130,6 +120,12 @@ class Parameters(AnsibleF5Parameters):
     api_attributes = []
     returnables = []
 
+
+class ApiParameters(Parameters):
+    pass
+
+
+class ModuleParameters(Parameters):
     @property
     def direction(self):
         if self.sync_device_to_group:
@@ -167,6 +163,8 @@ class Parameters(AnsibleF5Parameters):
         else:
             return False
 
+
+class Changes(Parameters):
     def to_return(self):
         result = {}
         try:
@@ -177,33 +175,44 @@ class Parameters(AnsibleF5Parameters):
             pass
         return result
 
-    def api_params(self):
-        result = {}
-        for api_attribute in self.api_attributes:
-            if self.api_map is not None and api_attribute in self.api_map:
-                result[api_attribute] = getattr(self, self.api_map[api_attribute])
-            else:
-                result[api_attribute] = getattr(self, api_attribute)
-        result = self._filter_params(result)
-        return result
+
+class UsableChanges(Changes):
+    pass
+
+
+class ReportableChanges(Changes):
+    pass
+
+
+class Difference(object):
+    pass
 
 
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
-        self.want = Parameters(params=self.module.params)
-        self.changes = Parameters()
+        self.client = F5RestClient(**self.module.params)
+        self.want = ModuleParameters(params=self.module.params)
+        self.changes = UsableChanges()
+
+    def _announce_deprecations(self, result):
+        warnings = result.pop('__warnings', [])
+        for warning in warnings:
+            self.client.module.deprecate(
+                msg=warning['msg'],
+                version=warning['version']
+            )
 
     def exec_module(self):
         result = dict()
 
-        try:
-            changed = self.present()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        changed = self.present()
 
+        reportable = ReportableChanges(params=self.changes.to_return())
+        changes = reportable.to_return()
+        result.update(**changes)
         result.update(dict(changed=changed))
+        self._announce_deprecations(result)
         return result
 
     def present(self):
@@ -222,17 +231,25 @@ class ModuleManager(object):
             return self.execute()
 
     def _sync_to_group_required(self):
-        resource = self.read_current_from_device()
-        status = self._get_status_from_resource(resource)
+        status = self._get_status_from_resource()
         if status == 'Awaiting Initial Sync' and self.want.sync_group_to_device:
             return True
         return False
 
     def _device_group_exists(self):
-        result = self.client.api.tm.cm.device_groups.device_group.exists(
-            name=self.want.device_group
+        uri = "https://{0}:{1}/mgmt/tm/cm/device-group/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.device_group
         )
-        return result
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
 
     def execute(self):
         self.execute_on_device()
@@ -240,8 +257,7 @@ class ModuleManager(object):
         return True
 
     def exists(self):
-        resource = self.read_current_from_device()
-        status = self._get_status_from_resource(resource)
+        status = self._get_status_from_resource()
         if status == 'In Sync':
             return True
         else:
@@ -253,17 +269,32 @@ class ModuleManager(object):
             self.want.device_group,
             self.want.force_full_push
         )
-        self.client.api.tm.cm.exec_cmd(
-            'run',
+        uri = "https://{0}:{1}/mgmt/tm/cm".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        args = dict(
+            command='run',
             utilCmdArgs=sync_cmd
         )
+        resp = self.client.api.post(uri, json=args)
+
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def _wait_for_sync(self):
         # Wait no more than half an hour
-        resource = self.read_current_from_device()
         for x in range(1, 180):
             time.sleep(3)
-            status = self._get_status_from_resource(resource)
+            status = self._get_status_from_resource()
 
             # Changes Pending:
             #     The existing device has changes made to it that
@@ -279,29 +310,48 @@ class ModuleManager(object):
             #     after starting the sync and stay until all devices finish.
             #
             if status in ['Changes Pending']:
-                details = self._get_details_from_resource(resource)
+                details = self._get_details_from_resource()
                 self._validate_pending_status(details)
             elif status in ['Awaiting Initial Sync', 'Not All Devices Synced']:
                 pass
             elif status == 'In Sync':
                 return
+            elif status == 'Disconnected':
+                raise F5ModuleError(
+                    "One or more devices are unreachable (disconnected). "
+                    "Resolve any communication problems before attempting to sync."
+                )
             else:
                 raise F5ModuleError(status)
 
     def read_current_from_device(self):
-        result = self.client.api.tm.cm.sync_status.load()
-        return result
+        uri = "https://{0}:{1}/mgmt/tm/cm/sync-status/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
 
-    def _get_status_from_resource(self, resource):
-        resource.refresh()
-        entries = resource.entries.copy()
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return response
+
+    def _get_status_from_resource(self):
+        resource = self.read_current_from_device()
+        entries = resource['entries'].copy()
         k, v = entries.popitem()
         status = v['nestedStats']['entries']['status']['description']
         return status
 
-    def _get_details_from_resource(self, resource):
-        resource.refresh()
-        stats = resource.entries.copy()
+    def _get_details_from_resource(self):
+        resource = self.read_current_from_device()
+        stats = resource['entries'].copy()
         tree = Tree(stats)
         details = list(tree.execute('$..*["details"]["description"]'))
         result = details[::-1]
@@ -353,9 +403,6 @@ class ArgumentSpec(object):
         self.mutually_exclusive = [
             ['sync_device_to_group', 'sync_most_recent_to_device']
         ]
-        self.required_one_of = [
-            ['sync_device_to_group', 'sync_most_recent_to_device']
-        ]
 
 
 def main():
@@ -367,17 +414,12 @@ def main():
         mutually_exclusive=spec.mutually_exclusive,
         required_one_of=spec.required_one_of
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
 
     try:
-        client = F5Client(**module.params)
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
         module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
         module.fail_json(msg=str(ex))
 
 

@@ -16,14 +16,14 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: zabbix_group
-short_description: Zabbix host groups creates/deletes
+short_description: Create/delete Zabbix host groups
 description:
    - Create host groups if they do not exist.
    - Delete existing host groups if they exist.
 version_added: "1.8"
 author:
-    - "(@cove)"
-    - "Tony Minfei Ding"
+    - "Cove (@cove)"
+    - "Tony Minfei Ding (!UNKNOWN)"
     - "Harrison Gu (@harrisongu)"
 requirements:
     - "python >= 2.6"

@@ -43,7 +43,6 @@ options:
             family:
                 description:
                     - SKU family name
-                required: True
             name:
                 description:
                     - SKU name to specify whether the key vault is a standard vault or a premium vault.
@@ -64,7 +63,7 @@ options:
                 description:
                     - "The object ID of a user, service principal or security group in the Azure Active Directory tenant for the vault. The object ID must be
                        unique for the list of access policies."
-                    - Please note this is not application id. Object id can be obtained by running "az ad show sp --id <application id>".
+                    - Please note this is not application id. Object id can be obtained by running "az ad sp show --id <application id>".
                 required: True
             application_id:
                 description:
@@ -144,7 +143,7 @@ options:
         type: bool
     state:
         description:
-            - Assert the state of the KeyVault. Use 'present' to create or update an KeyVault and 'absent' to delete it.
+            - Assert the state of the KeyVault. Use C(present) to create or update an KeyVault and C(absent) to delete it.
         default: present
         choices:
             - absent
@@ -152,6 +151,7 @@ options:
 
 extends_documentation_fragment:
     - azure
+    - azure_tags
 
 author:
     - "Zim Kalinowski (@zikalino)"
@@ -161,7 +161,7 @@ author:
 EXAMPLES = '''
   - name: Create instance of Key Vault
     azure_rm_keyvault:
-      resource_group: myresourcegroup
+      resource_group: myResourceGroup
       vault_name: samplekeyvault
       enabled_for_deployment: yes
       vault_tenant: 72f98888-8666-4144-9199-2d7cd0111111
@@ -265,6 +265,7 @@ class AzureRMVaults(AzureRMModuleBase):
         self.resource_group = None
         self.vault_name = None
         self.parameters = dict()
+        self.tags = None
 
         self.results = dict(changed=False)
         self.mgmt_client = None
@@ -273,14 +274,14 @@ class AzureRMVaults(AzureRMModuleBase):
 
         super(AzureRMVaults, self).__init__(derived_arg_spec=self.module_arg_spec,
                                             supports_check_mode=True,
-                                            supports_tags=False,
+                                            supports_tags=True,
                                             required_if=self.module_required_if)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
 
         # translate Ansible input to SDK-formatted dict in self.parameters
-        for key in list(self.module_arg_spec.keys()):
+        for key in list(self.module_arg_spec.keys()) + ['tags']:
             if hasattr(self, key):
                 setattr(self, key, kwargs[key])
             elif kwargs[key] is not None:
@@ -391,12 +392,20 @@ class AzureRMVaults(AzureRMModuleBase):
                                 self.to_do = Actions.Update
                                 break
 
+                update_tags, newtags = self.update_tags(old_response.get('tags', dict()))
+
+                if update_tags:
+                    self.to_do = Actions.Update
+                    self.tags = newtags
+
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
             self.log("Need to Create / Update the Key Vault instance")
 
             if self.check_mode:
                 self.results['changed'] = True
                 return self.results
+
+            self.parameters["tags"] = self.tags
 
             response = self.create_update_keyvault()
 
@@ -488,6 +497,7 @@ class AzureRMVaults(AzureRMModuleBase):
 def main():
     """Main execution"""
     AzureRMVaults()
+
 
 if __name__ == '__main__':
     main()

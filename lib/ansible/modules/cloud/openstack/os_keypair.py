@@ -65,20 +65,20 @@ RETURN = '''
 id:
     description: Unique UUID.
     returned: success
-    type: string
+    type: str
 name:
     description: Name given to the keypair.
     returned: success
-    type: string
+    type: str
 public_key:
     description: The public key value for the keypair.
     returned: success
-    type: string
+    type: str
 private_key:
     description: The private key value for the keypair.
     returned: Only when a keypair is generated for the user (e.g., when creating one
               and a public key is not specified).
-    type: string
+    type: str
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -115,8 +115,8 @@ def main():
     public_key = module.params['public_key']
 
     if module.params['public_key_file']:
-        public_key = open(module.params['public_key_file']).read()
-        public_key = public_key.rstrip()
+        with open(module.params['public_key_file']) as public_key_fh:
+            public_key = public_key_fh.read().rstrip()
 
     sdk, cloud = openstack_cloud_from_module(module)
     try:

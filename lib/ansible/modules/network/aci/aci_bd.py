@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -16,13 +16,6 @@ module: aci_bd
 short_description: Manage Bridge Domains (BD) objects (fv:BD)
 description:
 - Manages Bridge Domains (BD) on Cisco ACI fabrics.
-notes:
-- The C(tenant) used must exist before using this module in your playbook.
-  The M(aci_tenant) module can be used for this.
-- More information about the internal APIC class B(fv:BD) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
-author:
-- Jacob McGill (@jmcgill298)
 version_added: '2.4'
 options:
   arp_flooding:
@@ -33,15 +26,18 @@ options:
   bd:
     description:
     - The name of the Bridge Domain.
+    type: str
     aliases: [ bd_name, name ]
   bd_type:
     description:
     - The type of traffic on the Bridge Domain.
     - The APIC defaults to C(ethernet) when unset during creation.
+    type: str
     choices: [ ethernet, fc ]
   description:
     description:
     - Description for the Bridge Domain.
+    type: str
   enable_multicast:
     description:
     - Determines if PIM is enabled.
@@ -62,20 +58,24 @@ options:
     description:
     - Determines if GARP should be enabled to detect when End Points move.
     - The APIC defaults to C(garp) when unset during creation.
+    type: str
     choices: [ default, garp ]
   endpoint_retention_action:
-   description:
-   - Determines if the Bridge Domain should inherit or resolve the End Point Retention Policy.
+    description:
+    - Determines if the Bridge Domain should inherit or resolve the End Point Retention Policy.
     - The APIC defaults to C(resolve) when unset during creation.
-   choices: [ inherit, resolve ]
+    type: str
+    choices: [ inherit, resolve ]
   endpoint_retention_policy:
     description:
     - The name of the End Point Retention Policy the Bridge Domain should use when
       overriding the default End Point Retention Policy.
+    type: str
   igmp_snoop_policy:
     description:
     - The name of the IGMP Snooping Policy the Bridge Domain should use when
       overriding the default IGMP Snooping Policy.
+    type: str
   ip_learning:
     description:
     - Determines if the Bridge Domain should learn End Point IPs.
@@ -85,15 +85,18 @@ options:
     description:
     - The name of the IPv6 Neighbor Discovery Policy the Bridge Domain should use when
       overridding the default IPV6 ND Policy.
+    type: str
   l2_unknown_unicast:
     description:
     - Determines what forwarding method to use for unknown l2 destinations.
     - The APIC defaults to C(proxy) when unset during creation.
+    type: str
     choices: [ proxy, flood ]
   l3_unknown_multicast:
     description:
     - Determines the forwarding method to use for unknown multicast destinations.
     - The APIC defaults to C(flood) when unset during creation.
+    type: str
     choices: [ flood, opt-flood ]
   limit_ip_learn:
     description:
@@ -104,28 +107,43 @@ options:
     description:
     - The MAC Address to assign to the C(bd) instead of using the default.
     - The APIC defaults to C(00:22:BD:F8:19:FF) when unset during creation.
+    type: str
     aliases: [ mac ]
     version_added: '2.5'
   multi_dest:
     description:
     - Determines the forwarding method for L2 multicast, broadcast, and link layer traffic.
     - The APIC defaults to C(bd-flood) when unset during creation.
+    type: str
     choices: [ bd-flood, drop, encap-flood ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
   tenant:
     description:
     - The name of the Tenant.
+    type: str
     aliases: [ tenant_name ]
   vrf:
     description:
     - The name of the VRF.
+    type: str
     aliases: [ vrf_name ]
 extends_documentation_fragment: aci
+notes:
+- The C(tenant) used must exist before using this module in your playbook.
+  The M(aci_tenant) module can be used for this.
+seealso:
+- module: aci_tenant
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(fv:BD).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Jacob McGill (@jmcgill298)
 '''
 
 EXAMPLES = r'''
@@ -135,11 +153,12 @@ EXAMPLES = r'''
     username: "{{ username }}"
     password: "{{ password }}"
     validate_certs: no
-    state: present
     tenant: prod
     bd: web_servers
     mac_address: 00:22:BD:F8:19:FE
     vrf: prod_vrf
+    state: present
+  delegate_to: localhost
 
 - name: Add an FC Bridge Domain
   aci_bd:
@@ -147,12 +166,13 @@ EXAMPLES = r'''
     username: "{{ username }}"
     password: "{{ password }}"
     validate_certs: no
-    state: present
     tenant: prod
     bd: storage
     bd_type: fc
     vrf: fc_vrf
     enable_routing: no
+    state: present
+  delegate_to: localhost
 
 - name: Modify a Bridge Domain
   aci_bd:
@@ -160,11 +180,12 @@ EXAMPLES = r'''
     username: "{{ username }}"
     password: "{{ password }}"
     validate_certs: yes
-    state: present
     tenant: prod
     bd: web_servers
     arp_flooding: yes
     l2_unknown_unicast: flood
+    state: present
+  delegate_to: localhost
 
 - name: Query All Bridge Domains
   aci_bd:
@@ -173,6 +194,8 @@ EXAMPLES = r'''
     password: "{{ password }}"
     validate_certs: yes
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query a Bridge Domain
   aci_bd:
@@ -180,9 +203,11 @@ EXAMPLES = r'''
     username: "{{ username }}"
     password: "{{ password }}"
     validate_certs: yes
-    state: query
     tenant: prod
     bd: web_servers
+    state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Delete a Bridge Domain
   aci_bd:
@@ -190,9 +215,10 @@ EXAMPLES = r'''
     username: "{{ username }}"
     password: "{{ password }}"
     validate_certs: yes
-    state: absent
     tenant: prod
     bd: web_servers
+    state: absent
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -227,7 +253,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -276,17 +302,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -296,12 +322,12 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 
 def main():
@@ -381,14 +407,14 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='fvBD',
             aci_rn='BD-{0}'.format(bd),
-            filter_target='eq(fvBD.name, "{0}")'.format(bd),
             module_object=bd,
+            target_filter={'name': bd},
         ),
         child_classes=['fvRsCtx', 'fvRsIgmpsn', 'fvRsBDToNdP', 'fvRsBdToEpRet'],
     )

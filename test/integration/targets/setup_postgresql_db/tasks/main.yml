@@ -96,6 +96,12 @@
 # instLangs parameter).
 
 - block:
+  - name: Install langpacks (rhel8 beta)
+    yum:
+      name: glibc-all-langpacks
+      state: present
+    when: ansible_distribution_major_version|int >= 8
+
   - name: Check if locales need to be generated (RedHat)
     shell: "localedef --list-archive | grep -a -q '^{{ locale }}$'"
     register: locale_present

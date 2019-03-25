@@ -44,22 +44,40 @@ options:
         type: bool
     daemon_reload:
         description:
-            - run daemon-reload before doing any other operations, to make sure systemd has read any changes.
+            - Run daemon-reload before doing any other operations, to make sure systemd has read any changes.
+            - When set to C(yes), runs daemon-reload even if the module does not start or stop anything.
         type: bool
-        default: 'no'
+        default: no
         aliases: [ daemon-reload ]
+    daemon_reexec:
+        description:
+            - Run daemon_reexec command before doing any other operations, the systemd manager will serialize the manager state.
+        type: bool
+        default: no
+        aliases: [ daemon-reexec ]
+        version_added: "2.8"
     user:
         description:
-            - run systemctl talking to the service manager of the calling user, rather than the service manager
+            - (deprecated) run ``systemctl`` talking to the service manager of the calling user, rather than the service manager
               of the system.
+            - This option is deprecated and will eventually be removed in 2.11. The ``scope`` option should be used instead.
         type: bool
-        default: 'no'
+        default: no
+    scope:
+        description:
+            - run systemctl within a given service manager scope, either as the default system scope (system),
+              the current user's scope (user), or the scope of all users (global).
+            - "For systemd to work with 'user', the executing user must have its own instance of dbus started (systemd requirement).
+              The user dbus process is normally started during normal login, but not during the run of Ansible tasks.
+              Otherwise you will probably get a 'Failed to connect to bus: no such file or directory' error."
+        choices: [ system, user, global ]
+        version_added: "2.7"
     no_block:
         description:
             - Do not synchronously wait for the requested operation to finish.
               Enqueued job will continue without Ansible blocking on its completion.
         type: bool
-        default: 'no'
+        default: no
         version_added: "2.3"
 notes:
     - Since 2.4, one of the following options is required 'state', 'enabled', 'masked', 'daemon_reload', and all except 'daemon_reload' also require 'name'.
@@ -237,7 +255,10 @@ status:
         }
 '''  # NOQA
 
+import os
+
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.facts.system.chroot import is_chroot
 from ansible.module_utils.service import sysv_exists, sysv_is_enabled, fail_if_missing
 from ansible.module_utils._text import to_native
 
@@ -298,20 +319,46 @@ def main():
             force=dict(type='bool'),
             masked=dict(type='bool'),
             daemon_reload=dict(type='bool', default=False, aliases=['daemon-reload']),
-            user=dict(type='bool', default=False),
+            daemon_reexec=dict(type='bool', default=False, aliases=['daemon-reexec']),
+            user=dict(type='bool'),
+            scope=dict(type='str', choices=['system', 'user', 'global']),
             no_block=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
         required_one_of=[['state', 'enabled', 'masked', 'daemon_reload']],
+        required_by=dict(
+            state=('name', ),
+            enabled=('name', ),
+            masked=('name', ),
+        ),
+        mutually_exclusive=[['scope', 'user']],
     )
 
     systemctl = module.get_bin_path('systemctl', True)
-    if module.params['user']:
-        systemctl = systemctl + " --user"
+
+    if os.getenv('XDG_RUNTIME_DIR') is None:
+        os.environ['XDG_RUNTIME_DIR'] = '/run/user/%s' % os.geteuid()
+
+    ''' Set CLI options depending on params '''
+    if module.params['user'] is not None:
+        # handle user deprecation, mutually exclusive with scope
+        module.deprecate("The 'user' option is being replaced by 'scope'", version='2.11')
+        if module.params['user']:
+            module.params['scope'] = 'user'
+        else:
+            module.params['scope'] = 'system'
+
+    # if scope is 'system' or None, we can ignore as there is no extra switch.
+    # The other choices match the corresponding switch
+    if module.params['scope'] not in (None, 'system'):
+        systemctl += " --%s" % module.params['scope']
+
     if module.params['no_block']:
-        systemctl = systemctl + " --no-block"
+        systemctl += " --no-block"
+
     if module.params['force']:
-        systemctl = systemctl + " --force"
+        systemctl += " --force"
+
     unit = module.params['name']
     rc = 0
     out = err = ''
@@ -321,15 +368,17 @@ def main():
         status=dict(),
     )
 
-    for requires in ('state', 'enabled', 'masked'):
-        if module.params[requires] is not None and unit is None:
-            module.fail_json(msg="name is also required when specifying %s" % requires)
-
     # Run daemon-reload first, if requested
     if module.params['daemon_reload'] and not module.check_mode:
         (rc, out, err) = module.run_command("%s daemon-reload" % (systemctl))
         if rc != 0:
             module.fail_json(msg='failure %d during daemon-reload: %s' % (rc, err))
+
+    # Run daemon-reexec
+    if module.params['daemon_reexec'] and not module.check_mode:
+        (rc, out, err) = module.run_command("%s daemon-reexec" % (systemctl))
+        if rc != 0:
+            module.fail_json(msg='failure %d during daemon-reexec: %s' % (rc, err))
 
     if unit:
         found = False
@@ -353,8 +402,10 @@ def main():
 
                 is_systemd = 'LoadState' in result['status'] and result['status']['LoadState'] != 'not-found'
 
+                is_masked = 'LoadState' in result['status'] and result['status']['LoadState'] == 'masked'
+
                 # Check for loading error
-                if is_systemd and 'LoadError' in result['status']:
+                if is_systemd and not is_masked and 'LoadError' in result['status']:
                     module.fail_json(msg="Error loading unit file '%s': %s" % (unit, result['status']['LoadError']))
         else:
             # Check for systemctl command
@@ -401,10 +452,12 @@ def main():
             if rc == 0:
                 enabled = True
             elif rc == 1:
-                # if not a user service and both init script and unit file exist stdout should have enabled/disabled, otherwise use rc entries
-                if not module.params['user'] and \
+                # if not a user or global user service and both init script and unit file exist stdout should have enabled/disabled, otherwise use rc entries
+                if module.params['scope'] in (None, 'system') and \
+                        not module.params['user'] and \
                         is_initd and \
-                        (not out.strip().endswith('disabled') or sysv_is_enabled(unit)):
+                        not out.strip().endswith('disabled') and \
+                        sysv_is_enabled(unit):
                     enabled = True
 
             # default to current state
@@ -449,6 +502,9 @@ def main():
                         (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, action, unit))
                         if rc != 0:
                             module.fail_json(msg="Unable to %s service %s: %s" % (action, unit, err))
+            # check for chroot
+            elif is_chroot():
+                module.warn("Target is a chroot. This can lead to false positives or prevent the init system tools from working.")
             else:
                 # this should not happen?
                 module.fail_json(msg="Service is in unknown state", status=result['status'])

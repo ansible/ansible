@@ -1,10 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 #
 # Copyright (C) 2017 Lenovo, Inc.
-#
+# (c) 2017, Ansible by Red Hat, inc
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -20,568 +18,551 @@ __metaclass__ = type
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Module to send Port channel commands to Lenovo Switches
+# Module to work on Interfaces with Lenovo Switches
 # Lenovo Networking
 #
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: cnos_interface
-author: "Anil Kumar Muraleedharan (@amuraleedhar)"
-short_description: Manage interface configuration on devices running Lenovo CNOS
-description:
-    - This module allows you to work with interface related configurations. The operators used are
-     overloaded to ensure control over switch interface configurations. Apart from the regular device
-     connection related attributes, there are seven interface arguments that will perform further
-     configurations. They are interfaceArg1, interfaceArg2, interfaceArg3, interfaceArg4, interfaceArg5,
-     interfaceArg6, and interfaceArg7. For more details on how to use these arguments, see
-     [Overloaded Variables]. Interface configurations are taken care at six contexts in a regular CLI.
-     They are
-     1. Interface Name - Configurations
-     2. Ethernet Interface - Configurations
-     3. Loopback Interface Configurations
-     4. Management Interface Configurations
-     5. Port Aggregation - Configurations
-     6. VLAN Configurations
-     This module uses SSH to manage network device configuration.
-     The results of the operation will be placed in a directory named 'results'
-     that must be created by the user in their local directory to where the playbook is run.
-     For more information about this module from Lenovo and customizing it usage for your
-     use cases, please visit U(http://systemx.lenovofiles.com/help/index.jsp?topic=%2Fcom.lenovo.switchmgt.ansible.doc%2Fcnos_interface.html)
 version_added: "2.3"
-extends_documentation_fragment: cnos
+author: "Anil Kumar Muraleedharan(@amuraleedhar)"
+short_description: Manage Interface on Lenovo CNOS network devices
+description:
+  - This module provides declarative management of Interfaces
+    on Lenovo CNOS network devices.
+notes:
+  - Tested against CNOS 10.8.1
 options:
-    interfaceRange:
+  name:
+    description:
+      - Name of the Interface.
+    required: true
+    version_added: "2.8"
+  description:
+    description:
+      - Description of Interface.
+    version_added: "2.8"
+  enabled:
+    description:
+      - Interface link status.
+    type: bool
+    default: True
+    version_added: "2.8"
+  speed:
+    description:
+      - Interface link speed.
+    version_added: "2.8"
+  mtu:
+    description:
+      - Maximum size of transmit packet.
+    version_added: "2.8"
+  duplex:
+    description:
+      - Interface link status
+    default: auto
+    choices: ['full', 'half', 'auto']
+    version_added: "2.8"
+  tx_rate:
+    description:
+      - Transmit rate in bits per second (bps).
+      - This is state check parameter only.
+      - Supports conditionals, see L(Conditionals in Networking Modules,
+        ../network/user_guide/network_working_with_command_output.html)
+    version_added: "2.8"
+  rx_rate:
+    description:
+      - Receiver rate in bits per second (bps).
+      - This is state check parameter only.
+      - Supports conditionals, see L(Conditionals in Networking Modules,
+        ../network/user_guide/network_working_with_command_output.html)
+    version_added: "2.8"
+  neighbors:
+    description:
+      - Check operational state of given interface C(name) for LLDP neighbor.
+      - The following suboptions are available.
+    version_added: "2.8"
+    suboptions:
+        host:
+          description:
+            - "LLDP neighbor host for given interface C(name)."
+        port:
+          description:
+            - "LLDP neighbor port to which interface C(name) is connected."
+  aggregate:
+    description: List of Interfaces definitions.
+    version_added: "2.8"
+  delay:
+    description:
+      - Time in seconds to wait before checking for the operational state on
+        remote device. This wait is applicable for operational state argument
+        which are I(state) with values C(up)/C(down), I(tx_rate) and I(rx_rate)
+    default: 20
+    version_added: "2.8"
+  state:
+    description:
+      - State of the Interface configuration, C(up) means present and
+        operationally up and C(down) means present and operationally C(down)
+    default: present
+    version_added: "2.8"
+    choices: ['present', 'absent', 'up', 'down']
+  provider:
+    description:
+      - B(Deprecated)
+      - "Starting with Ansible 2.5 we recommend using C(connection: network_cli)."
+      - For more information please see the L(CNOS Platform Options guide, ../network/user_guide/platform_cnos.html).
+      - HORIZONTALLINE
+      - A dict object containing connection details.
+    version_added: "2.8"
+    suboptions:
+      host:
         description:
-            - This specifies the interface range in which the port aggregation is envisaged
-        required: Yes
-        default: Null
-    interfaceOption:
+          - Specifies the DNS host name or address for connecting to the remote
+            device over the specified transport.  The value of host is used as
+            the destination address for the transport.
+        required: true
+      port:
         description:
-            - This specifies the attribute you specify subsequent to interface command
-        required: Yes
-        default: Null
-        choices: [None, ethernet, loopback, mgmt, port-aggregation, vlan]
-    interfaceArg1:
+          - Specifies the port to use when building the connection to the remote device.
+        default: 22
+      username:
         description:
-            - This is an overloaded interface first argument. Usage of this argument can be found is the User Guide referenced above.
-        required: Yes
-        default: Null
-        choices: [aggregation-group, bfd, bridgeport, description, duplex, flowcontrol, ip, ipv6, lacp, lldp,
-        load-interval, mac, mac-address, mac-learn, microburst-detection, mtu, service, service-policy,
-        shutdown, snmp, spanning-tree, speed, storm-control, vlan, vrrp, port-aggregation]
-    interfaceArg2:
+          - Configures the username to use to authenticate the connection to
+            the remote device.  This value is used to authenticate
+            the SSH session. If the value is not specified in the task, the
+            value of environment variable C(ANSIBLE_NET_USERNAME) will be used instead.
+      password:
         description:
-            - This is an overloaded interface second argument. Usage of this argument can be found is the User Guide referenced above.
-        required: No
-        default: Null
-        choices: [aggregation-group number, access or mode or trunk, description, auto or full or half,
-        receive or send, port-priority, suspend-individual, timeout, receive or transmit or trap-notification,
-        tlv-select, Load interval delay in seconds, counter, Name for the MAC Access List, mac-address in HHHH.HHHH.HHHH format,
-        THRESHOLD  Value in unit of buffer cell, <64-9216>  MTU in bytes-<64-9216> for L2 packet,<576-9216> for L3 IPv4 packet,
-        <1280-9216> for L3 IPv6 packet, enter the instance id, input or output, copp-system-policy,
-        type, 1000  or  10000  or   40000 or   auto, broadcast or multicast or unicast, disable or enable or egress-only,
-        Virtual router identifier, destination-ip or destination-mac or destination-port or source-dest-ip or
-        source-dest-mac or source-dest-port or source-interface or source-ip or source-mac or source-port]
-    interfaceArg3:
+          - Specifies the password to use to authenticate the connection to
+            the remote device.   This value is used to authenticate
+            the SSH session. If the value is not specified in the task, the
+            value of environment variable C(ANSIBLE_NET_PASSWORD) will be used instead.
+      timeout:
         description:
-            - This is an overloaded interface third argument. Usage of this argument can be found is the User Guide referenced above.
-        required: No
-        default: Null
-        choices: [active or on or passive, on or off, LACP port priority, long or short, link-aggregation or
-        mac-phy-status or management-address or max-frame-size or port-description or port-protocol-vlan or
-        port-vlan or power-mdi or protocol-identity or system-capabilities or system-description or system-name
-        or vid-management or vlan-name, counter for load interval, policy input name, all or Copp class name to attach,
-        qos, queueing, Enter the allowed traffic level, ipv6]
-    interfaceArg4:
+          - Specifies the timeout in seconds for communicating with the network device
+            for either connecting or sending commands.  If the timeout is
+            exceeded before the operation is completed, the module will error.
+        default: 10
+      ssh_keyfile:
         description:
-            - This is an overloaded interface fourth argument. Usage of this argument can be found is the User Guide referenced above.
-        required: No
-        default: Null
-        choices: [key-chain, key-id, keyed-md5 or keyed-sha1 or meticulous-keyed-md5 or meticulous-keyed-sha1 or simple, Interval value in milliseconds,
-         Destination IP (Both IPV4 and IPV6),in or out, MAC address, Time-out value in seconds, class-id, request, Specify the IPv4 address,
-         OSPF area ID as a decimal value, OSPF area ID in IP address format, anycast or secondary, ethernet, vlan,
-         MAC (hardware) address in HHHH.HHHH.HHHH format,
-         Load interval delay in seconds, Specify policy input name, input or output, cost, port-priority, BFD minimum receive interval,source-interface]
-    interfaceArg5:
+          - Specifies the SSH key to use to authenticate the connection to
+            the remote device.   This value is the path to the
+            key used to authenticate the SSH session. If the value is not specified
+            in the task, the value of environment variable C(ANSIBLE_NET_SSH_KEYFILE)
+            will be used instead.
+      authorize:
         description:
-            - This is an overloaded interface fifth argument. Usage of this argument can be found is the User Guide referenced above.
-        required: No
-        default: Null
-        choices: [name of key-chain,  key-Id Value, key-chain , key-id, BFD minimum receive interval, Value of Hello Multiplier,
-        admin-down or multihop or non-persistent, Vendor class-identifier name, bootfile-name or host-name or log-server or ntp-server or tftp-server-name,
-        Slot/chassis number, Vlan interface, Specify policy input name, Port path cost or auto, Port priority increments of 32]
-    interfaceArg6:
+          - Instructs the module to enter privileged mode on the remote device
+            before sending any commands.  If not specified, the device will
+            attempt to execute all commands in non-privileged mode. If the value
+            is not specified in the task, the value of environment variable
+            C(ANSIBLE_NET_AUTHORIZE) will be used instead.
+        type: bool
+        default: 'no'
+      auth_pass:
         description:
-            - This is an overloaded interface sixth argument. Usage of this argument can be found is the User Guide referenced above.
-        required: No
-        default: Null
-        choices: [Authentication key string, name of key-chain, key-Id Value, Value of Hello Multiplier, admin-down or non-persistent]
-    interfaceArg7:
-        description:
-            - This is an overloaded interface seventh argument. Usage of this argument can be found is the User Guide referenced above.
-        required: No
-        default: Null
-        choices: [Authentication key string, admin-down]
+          - Specifies the password to use if required to enter privileged mode
+            on the remote device.  If I(authorize) is false, then this argument
+            does nothing. If the value is not specified in the task, the value of
+            environment variable C(ANSIBLE_NET_AUTH_PASS) will be used instead.
+"""
 
-'''
-EXAMPLES = '''
-Tasks : The following are examples of using the module cnos_interface. These are written in the main.yml file of the tasks directory.
----
-- name: Test Interface Ethernet - aggregation-group
+EXAMPLES = """
+- name: configure interface
   cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
-      deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
-      outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
-      interfaceOption: 'ethernet'
-      interfaceRange: 1
-      interfaceArg1: "aggregation-group"
-      interfaceArg2: 33
-      interfaceArg3: "on"
+      name: Ethernet1/33
+      description: test-interface
+      speed: 100
+      duplex: half
+      mtu: 999
 
-- name: Test Interface Ethernet - bridge-port
+- name: remove interface
   cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
-      deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
-      outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
-      interfaceOption: 'ethernet'
-      interfaceRange: 33
-      interfaceArg1: "bridge-port"
-      interfaceArg2: "access"
-      interfaceArg3: 33
+    name: loopback3
+    state: absent
 
-- name: Test Interface Ethernet - bridgeport mode
+- name: make interface up
   cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
-      deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
-      outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
-      interfaceOption: 'ethernet'
-      interfaceRange: 33
-      interfaceArg1: "bridge-port"
-      interfaceArg2: "mode"
-      interfaceArg3: "access"
+    name: Ethernet1/33
+    enabled: True
 
-- name: Test Interface Ethernet  - Description
+- name: make interface down
   cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
-      deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
-      outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
-      interfaceOption: 'ethernet'
-      interfaceRange: 33
-      interfaceArg1: "description"
-      interfaceArg2: "Hentammoo "
+    name: Ethernet1/33
+    enabled: False
 
-- name: Test Interface Ethernet - Duplex
+- name: Check intent arguments
   cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
-      deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
-      outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
-      interfaceOption: 'ethernet'
-      interfaceRange: 1
-      interfaceArg1: "duplex"
-      interfaceArg2: "auto"
+    name: Ethernet1/33
+    state: up
+    tx_rate: ge(0)
+    rx_rate: le(0)
 
-- name: Test Interface Ethernet - flowcontrol
+- name: Check neighbors intent arguments
   cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
-      deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
-      outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
-      interfaceOption: 'ethernet'
-      interfaceRange: 33
-      interfaceArg1: "flowcontrol"
-      interfaceArg2: "send"
-      interfaceArg3: "off"
+    name: Ethernet1/33
+    neighbors:
+    - port: eth0
+      host: netdev
 
-- name: Test Interface Ethernet - lacp
+- name: Config + intent
   cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
-      deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
-      outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
-      interfaceOption: 'ethernet'
-      interfaceRange: 33
-      interfaceArg1: "lacp"
-      interfaceArg2: "port-priority"
-      interfaceArg3: 33
+    name: Ethernet1/33
+    enabled: False
+    state: down
 
-- name: Test Interface Ethernet  - lldp
+- name: Add interface using aggregate
   cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
-      deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
-      outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
-      interfaceOption: 'ethernet'
-      interfaceRange: 33
-      interfaceArg1: "lldp"
-      interfaceArg2: "tlv-select"
-      interfaceArg3: "max-frame-size"
+    aggregate:
+    - { name: Ethernet1/33, mtu: 256, description: test-interface-1 }
+    - { name: Ethernet1/44, mtu: 516, description: test-interface-2 }
+    duplex: full
+    speed: 100
+    state: present
 
-- name: Test Interface Ethernet - load-interval
+- name: Delete interface using aggregate
   cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
-      deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
-      outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
-      interfaceOption: 'ethernet'
-      interfaceRange: 33
-      interfaceArg1: "load-interval"
-      interfaceArg2: "counter"
-      interfaceArg3: 2
-      interfaceArg4: 33
+    aggregate:
+    - name: loopback3
+    - name: loopback6
+    state: absent
+"""
 
-- name: Test Interface Ethernet - mac
-  cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
-      deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
-      outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
-      interfaceOption: 'ethernet'
-      interfaceRange: 33
-      interfaceArg1: "mac"
-      interfaceArg2: "copp-system-acl-vlag-hc"
-
-- name: Test Interface Ethernet - microburst-detection
-  cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
-      deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
-      outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
-      interfaceOption: 'ethernet'
-      interfaceRange: 33
-      interfaceArg1: "microburst-detection"
-      interfaceArg2: 25
-
-- name: Test Interface Ethernet  - mtu
-  cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
-      deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
-      outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
-      interfaceOption: 'ethernet'
-      interfaceRange: 33
-      interfaceArg1: "mtu"
-      interfaceArg2: 66
-
-- name: Test Interface Ethernet - service-policy
-  cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
-      deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
-      outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
-      interfaceOption: 'ethernet'
-      interfaceRange: 33
-      interfaceArg1: "service-policy"
-      interfaceArg2: "input"
-      interfaceArg3: "Anil"
-
-- name: Test Interface Ethernet - speed
-  cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
-      deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
-      outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
-      interfaceOption: 'ethernet'
-      interfaceRange: 1
-      interfaceArg1: "speed"
-      interfaceArg2: "auto"
-
-- name: Test Interface Ethernet - storm
-  cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
-      deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
-      outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
-      interfaceOption: 'ethernet'
-      interfaceRange: 33
-      interfaceArg1: "storm-control"
-      interfaceArg2: "broadcast"
-      interfaceArg3: 12.5
-
-- name: Test Interface Ethernet - vlan
-  cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
-      deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
-      outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
-      interfaceOption: 'ethernet'
-      interfaceRange: 33
-      interfaceArg1: "vlan"
-      interfaceArg2: "disable"
-
-- name: Test Interface Ethernet - vrrp
-  cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
-      deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
-      outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
-      interfaceOption: 'ethernet'
-      interfaceRange: 33
-      interfaceArg1: "vrrp"
-      interfaceArg2: 33
-
-- name: Test Interface Ethernet - spanning tree1
-  cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
-      deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
-      outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
-      interfaceOption: 'ethernet'
-      interfaceRange: 33
-      interfaceArg1: "spanning-tree"
-      interfaceArg2: "bpduguard"
-      interfaceArg3: "enable"
-
-- name: Test Interface Ethernet - spanning tree 2
-  cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
-      deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
-      outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
-      interfaceOption: 'ethernet'
-      interfaceRange: 33
-      interfaceArg1: "spanning-tree"
-      interfaceArg2: "mst"
-      interfaceArg3: "33-35"
-      interfaceArg4: "cost"
-      interfaceArg5: 33
-
-- name: Test Interface Ethernet - ip1
-  cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
-      deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
-      outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
-      interfaceOption: 'ethernet'
-      interfaceRange: 33
-      interfaceArg1: "ip"
-      interfaceArg2: "access-group"
-      interfaceArg3: "anil"
-      interfaceArg4: "in"
-
-- name: Test Interface Ethernet - ip2
-  cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
-      deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
-      outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
-      interfaceOption: 'ethernet'
-      interfaceRange: 33
-      interfaceArg1: "ip"
-      interfaceArg2: "port"
-      interfaceArg3: "anil"
-
-- name: Test Interface Ethernet - bfd
-  cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
-      deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
-      outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
-      interfaceOption: 'ethernet'
-      interfaceRange: 33
-      interfaceArg1: "bfd"
-      interfaceArg2: "interval"
-      interfaceArg3: 55
-      interfaceArg4: 55
-      interfaceArg5: 33
-
-- name: Test Interface Ethernet - bfd
-  cnos_interface:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
-      deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
-      outputfile: "./results/test_interface_{{ inventory_hostname }}_output.txt"
-      interfaceOption: 'ethernet'
-      interfaceRange: 33
-      interfaceArg1: "bfd"
-      interfaceArg2: "ipv4"
-      interfaceArg3: "authentication"
-      interfaceArg4: "meticulous-keyed-md5"
-      interfaceArg5: "key-chain"
-      interfaceArg6: "mychain"
-
-'''
-RETURN = '''
-msg:
-  description: Success or failure message
-  returned: always
-  type: string
-  sample: "Interface configurations accomplished."
-'''
-
-import sys
-try:
-    import paramiko
-    HAS_PARAMIKO = True
-except ImportError:
-    HAS_PARAMIKO = False
-import time
-import socket
-import array
-import json
-import time
+RETURN = """
+commands:
+  description: The list of configuration mode commands to send to the device.
+  returned: always, except for the platforms that use Netconf transport to
+            manage the device.
+  type: list
+  sample:
+  - interface Ethernet1/33
+  - description test-interface
+  - duplex half
+  - mtu 512
+"""
 import re
-try:
-    from ansible.module_utils.network.cnos import cnos
-    HAS_LIB = True
-except:
-    HAS_LIB = False
+
+from copy import deepcopy
+from time import sleep
+
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
-from collections import defaultdict
+from ansible.module_utils.connection import exec_command
+from ansible.module_utils.network.cnos.cnos import get_config, load_config
+from ansible.module_utils.network.cnos.cnos import cnos_argument_spec
+from ansible.module_utils.network.cnos.cnos import debugOutput, check_args
+from ansible.module_utils.network.common.config import NetworkConfig
+from ansible.module_utils.network.common.utils import conditional
+from ansible.module_utils.network.common.utils import remove_default_spec
+
+
+def validate_mtu(value, module):
+    if value and not 64 <= int(value) <= 9216:
+        module.fail_json(msg='mtu must be between 64 and 9216')
+
+
+def validate_param_values(module, obj, param=None):
+    if param is None:
+        param = module.params
+    for key in obj:
+        # validate the param value (if validator func exists)
+        validator = globals().get('validate_%s' % key)
+        if callable(validator):
+            validator(param.get(key), module)
+
+
+def parse_shutdown(configobj, name):
+    cfg = configobj['interface %s' % name]
+    cfg = '\n'.join(cfg.children)
+    match = re.search(r'^shutdown', cfg, re.M)
+    if match:
+        return True
+    else:
+        return False
+
+
+def parse_config_argument(configobj, name, arg=None):
+    cfg = configobj['interface %s' % name]
+    cfg = '\n'.join(cfg.children)
+    match = re.search(r'%s (.+)$' % arg, cfg, re.M)
+    if match:
+        return match.group(1)
+
+
+def search_obj_in_list(name, lst):
+    for o in lst:
+        if o['name'] == name:
+            return o
+
+    return None
+
+
+def add_command_to_interface(interface, cmd, commands):
+    if interface not in commands:
+        commands.append(interface)
+    commands.append(cmd)
+
+
+def map_config_to_obj(module):
+    config = get_config(module)
+    configobj = NetworkConfig(indent=1, contents=config)
+
+    match = re.findall(r'^interface (\S+)', config, re.M)
+    if not match:
+        return list()
+
+    instances = list()
+
+    for item in set(match):
+        obj = {
+            'name': item,
+            'description': parse_config_argument(configobj, item, 'description'),
+            'speed': parse_config_argument(configobj, item, 'speed'),
+            'duplex': parse_config_argument(configobj, item, 'duplex'),
+            'mtu': parse_config_argument(configobj, item, 'mtu'),
+            'disable': True if parse_shutdown(configobj, item) else False,
+            'state': 'present'
+        }
+        instances.append(obj)
+    return instances
+
+
+def map_params_to_obj(module):
+    obj = []
+    aggregate = module.params.get('aggregate')
+    if aggregate:
+        for item in aggregate:
+            for key in item:
+                if item.get(key) is None:
+                    item[key] = module.params[key]
+
+            validate_param_values(module, item, item)
+            d = item.copy()
+
+            if d['enabled']:
+                d['disable'] = False
+            else:
+                d['disable'] = True
+
+            obj.append(d)
+
+    else:
+        params = {
+            'name': module.params['name'],
+            'description': module.params['description'],
+            'speed': module.params['speed'],
+            'mtu': module.params['mtu'],
+            'duplex': module.params['duplex'],
+            'state': module.params['state'],
+            'delay': module.params['delay'],
+            'tx_rate': module.params['tx_rate'],
+            'rx_rate': module.params['rx_rate'],
+            'neighbors': module.params['neighbors']
+        }
+
+        validate_param_values(module, params)
+        if module.params['enabled']:
+            params.update({'disable': False})
+        else:
+            params.update({'disable': True})
+
+        obj.append(params)
+    return obj
+
+
+def map_obj_to_commands(updates):
+    commands = list()
+    want, have = updates
+
+    args = ('speed', 'description', 'duplex', 'mtu')
+    for w in want:
+        name = w['name']
+        disable = w['disable']
+        state = w['state']
+
+        obj_in_have = search_obj_in_list(name, have)
+        interface = 'interface ' + name
+        if state == 'absent' and obj_in_have:
+            commands.append('no ' + interface)
+        elif state in ('present', 'up', 'down'):
+            if obj_in_have:
+                for item in args:
+                    candidate = w.get(item)
+                    running = obj_in_have.get(item)
+                    if candidate != running:
+                        if candidate:
+                            cmd = item + ' ' + str(candidate)
+                            add_command_to_interface(interface, cmd, commands)
+
+                if disable and not obj_in_have.get('disable', False):
+                    add_command_to_interface(interface, 'shutdown', commands)
+                elif not disable and obj_in_have.get('disable', False):
+                    add_command_to_interface(interface, 'no shutdown', commands)
+            else:
+                commands.append(interface)
+                for item in args:
+                    value = w.get(item)
+                    if value:
+                        commands.append(item + ' ' + str(value))
+
+                if disable:
+                    commands.append('no shutdown')
+    return commands
+
+
+def check_declarative_intent_params(module, want, result):
+    failed_conditions = []
+    have_neighbors_lldp = None
+    for w in want:
+        want_state = w.get('state')
+        want_tx_rate = w.get('tx_rate')
+        want_rx_rate = w.get('rx_rate')
+        want_neighbors = w.get('neighbors')
+
+        if want_state not in ('up', 'down') and not want_tx_rate and not want_rx_rate and not want_neighbors:
+            continue
+
+        if result['changed']:
+            sleep(w['delay'])
+
+        command = 'show interface %s brief' % w['name']
+        rc, out, err = exec_command(module, command)
+        if rc != 0:
+            module.fail_json(msg=to_text(err, errors='surrogate_then_replace'), command=command, rc=rc)
+        if want_state in ('up', 'down'):
+            state_data = out.strip().lower().split(w['name'])
+            have_state = None
+            have_state = state_data[1].split()[3]
+            if have_state is None or not conditional(want_state, have_state.strip()):
+                failed_conditions.append('state ' + 'eq(%s)' % want_state)
+
+        command = 'show interface %s' % w['name']
+        rc, out, err = exec_command(module, command)
+        have_tx_rate = None
+        have_rx_rate = None
+        rates = out.splitlines()
+        for s in rates:
+            s = s.strip()
+            if 'output rate' in s and 'input rate' in s:
+                sub = s.split()
+                if want_tx_rate:
+                    have_tx_rate = sub[8]
+                    if have_tx_rate is None or not conditional(want_tx_rate, have_tx_rate.strip(), cast=int):
+                        failed_conditions.append('tx_rate ' + want_tx_rate)
+                if want_rx_rate:
+                    have_rx_rate = sub[2]
+                    if have_rx_rate is None or not conditional(want_rx_rate, have_rx_rate.strip(), cast=int):
+                        failed_conditions.append('rx_rate ' + want_rx_rate)
+        if want_neighbors:
+            have_host = []
+            have_port = []
+
+            # Process LLDP neighbors
+            if have_neighbors_lldp is None:
+                rc, have_neighbors_lldp, err = exec_command(module, 'show lldp neighbors detail')
+                if rc != 0:
+                    module.fail_json(msg=to_text(err,
+                                     errors='surrogate_then_replace'),
+                                     command=command, rc=rc)
+
+            if have_neighbors_lldp:
+                lines = have_neighbors_lldp.strip().split('Local Port ID: ')
+                for line in lines:
+                    field = line.split('\n')
+                    if field[0].strip() == w['name']:
+                        for item in field:
+                            if item.startswith('System Name:'):
+                                have_host.append(item.split(':')[1].strip())
+                            if item.startswith('Port Description:'):
+                                have_port.append(item.split(':')[1].strip())
+
+            for item in want_neighbors:
+                host = item.get('host')
+                port = item.get('port')
+                if host and host not in have_host:
+                    failed_conditions.append('host ' + host)
+                if port and port not in have_port:
+                    failed_conditions.append('port ' + port)
+    return failed_conditions
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
-            outputfile=dict(required=True),
-            host=dict(required=True),
-            username=dict(required=True),
-            password=dict(required=True, no_log=True),
-            enablePassword=dict(required=False, no_log=True),
-            deviceType=dict(required=True),
-            interfaceRange=dict(required=False),
-            interfaceOption=dict(required=False),
-            interfaceArg1=dict(required=True),
-            interfaceArg2=dict(required=False),
-            interfaceArg3=dict(required=False),
-            interfaceArg4=dict(required=False),
-            interfaceArg5=dict(required=False),
-            interfaceArg6=dict(required=False),
-            interfaceArg7=dict(required=False),),
-        supports_check_mode=False)
+    """ main entry point for module execution
+    """
+    neighbors_spec = dict(
+        host=dict(),
+        port=dict()
+    )
 
-    username = module.params['username']
-    password = module.params['password']
-    enablePassword = module.params['enablePassword']
-    interfaceRange = module.params['interfaceRange']
-    interfaceOption = module.params['interfaceOption']
-    interfaceArg1 = module.params['interfaceArg1']
-    interfaceArg2 = module.params['interfaceArg2']
-    interfaceArg3 = module.params['interfaceArg3']
-    interfaceArg4 = module.params['interfaceArg4']
-    interfaceArg5 = module.params['interfaceArg5']
-    interfaceArg6 = module.params['interfaceArg6']
-    interfaceArg7 = module.params['interfaceArg7']
-    outputfile = module.params['outputfile']
-    hostIP = module.params['host']
-    deviceType = module.params['deviceType']
+    element_spec = dict(
+        name=dict(),
+        description=dict(),
+        speed=dict(),
+        mtu=dict(),
+        duplex=dict(default='auto', choices=['full', 'half', 'auto']),
+        enabled=dict(default=True, type='bool'),
+        tx_rate=dict(),
+        rx_rate=dict(),
+        neighbors=dict(type='list', elements='dict', options=neighbors_spec),
+        delay=dict(default=20, type='int'),
+        state=dict(default='present',
+                   choices=['present', 'absent', 'up', 'down'])
+    )
 
-    output = ""
-    if not HAS_PARAMIKO:
-        module.fail_json(msg='paramiko is required for this module')
+    aggregate_spec = deepcopy(element_spec)
+    aggregate_spec['name'] = dict(required=True)
 
-    # Create instance of SSHClient object
-    remote_conn_pre = paramiko.SSHClient()
+    # remove default in aggregate spec, to handle common arguments
+    remove_default_spec(aggregate_spec)
 
-    # Automatically add untrusted hosts (make sure okay for security policy in your environment)
-    remote_conn_pre.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec),
+    )
 
-    # initiate SSH connection with the switch
-    remote_conn_pre.connect(hostIP, username=username, password=password)
-    time.sleep(2)
+    argument_spec.update(element_spec)
+    argument_spec.update(cnos_argument_spec)
 
-    # Use invoke_shell to establish an 'interactive session'
-    remote_conn = remote_conn_pre.invoke_shell()
-    time.sleep(2)
+    required_one_of = [['name', 'aggregate']]
+    mutually_exclusive = [['name', 'aggregate']]
 
-    # Enable and enter configure terminal then send command
-    output = output + cnos.waitForDeviceResponse("\n", ">", 2, remote_conn)
+    module = AnsibleModule(argument_spec=argument_spec,
+                           required_one_of=required_one_of,
+                           mutually_exclusive=mutually_exclusive,
+                           supports_check_mode=True)
+    warnings = list()
+    check_args(module, warnings)
 
-    output = output + cnos.enterEnableModeForDevice(enablePassword, 3, remote_conn)
+    result = {'changed': False}
+    if warnings:
+        result['warnings'] = warnings
 
-    # Make terminal length = 0
-    output = output + cnos.waitForDeviceResponse("terminal length 0\n", "#", 2, remote_conn)
+    want = map_params_to_obj(module)
+    have = map_config_to_obj(module)
 
-    # Go to config mode
-    output = output + cnos.waitForDeviceResponse("configure device\n", "(config)#", 2, remote_conn)
+    commands = map_obj_to_commands((want, have))
+    result['commands'] = commands
 
-    # Send the CLi command
-    if(interfaceOption is None or interfaceOption == ""):
-        output = output + cnos.interfaceConfig(remote_conn, deviceType, "(config)#", 2, None, interfaceRange,
-                                               interfaceArg1, interfaceArg2, interfaceArg3, interfaceArg4, interfaceArg5, interfaceArg6, interfaceArg7)
-    elif(interfaceOption == "ethernet"):
-        output = output + cnos.interfaceConfig(remote_conn, deviceType, "(config)#", 2, "ethernet", interfaceRange,
-                                               interfaceArg1, interfaceArg2, interfaceArg3, interfaceArg4, interfaceArg5, interfaceArg6, interfaceArg7)
-    elif(interfaceOption == "loopback"):
-        output = output + cnos.interfaceConfig(remote_conn, deviceType, "(config)#", 2, "loopback", interfaceRange,
-                                               interfaceArg1, interfaceArg2, interfaceArg3, interfaceArg4, interfaceArg5, interfaceArg6, interfaceArg7)
-    elif(interfaceOption == "mgmt"):
-        output = output + cnos.interfaceConfig(remote_conn, deviceType, "(config)#", 2, "mgmt", interfaceRange,
-                                               interfaceArg1, interfaceArg2, interfaceArg3, interfaceArg4, interfaceArg5, interfaceArg6, interfaceArg7)
-    elif(interfaceOption == "port-aggregation"):
-        output = output + cnos.interfaceConfig(remote_conn, deviceType, "(config)#", 2, "port-aggregation", interfaceRange,
-                                               interfaceArg1, interfaceArg2, interfaceArg3, interfaceArg4, interfaceArg5, interfaceArg6, interfaceArg7)
-    elif(interfaceOption == "vlan"):
-        output = output + cnos.interfaceConfig(remote_conn, deviceType, "(config)#", 2, "vlan", interfaceRange,
-                                               interfaceArg1, interfaceArg2, interfaceArg3, interfaceArg4, interfaceArg5, interfaceArg6, interfaceArg7)
-    else:
-        output = "Invalid interface option \n"
-    # Save it into the file
-    file = open(outputfile, "a")
-    file.write(output)
-    file.close()
+    if commands:
+        if not module.check_mode:
+            load_config(module, commands)
+        result['changed'] = True
 
-    # Logic to check when changes occur or not
-    errorMsg = cnos.checkOutputForError(output)
-    if(errorMsg is None):
-        module.exit_json(changed=True, msg="Interface Configuration is done")
-    else:
-        module.fail_json(msg=errorMsg)
+    failed_conditions = check_declarative_intent_params(module, want, result)
+
+    if failed_conditions:
+        msg = 'One or more conditional statements have not been satisfied'
+        module.fail_json(msg=msg, failed_conditions=failed_conditions)
+
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':

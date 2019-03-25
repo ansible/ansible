@@ -22,9 +22,9 @@ import re
 import shlex
 
 from ansible.errors import AnsibleError, AnsibleAction, _AnsibleActionDone, AnsibleActionFail, AnsibleActionSkip
+from ansible.executor.powershell import module_manifest as ps_manifest
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.action import ActionBase
-from ansible.plugins.shell.powershell import exec_wrapper
 
 
 class ActionModule(ActionBase):
@@ -65,11 +65,11 @@ class ActionModule(ActionBase):
             chdir = self._task.args.get('chdir')
             if chdir:
                 # Powershell is the only Windows-path aware shell
-                if self._connection._shell.SHELL_FAMILY == 'powershell' and \
-                        not self.windows_absolute_path_detection.matches(chdir):
+                if getattr(self._connection._shell, "_IS_WINDOWS", False) and \
+                        not self.windows_absolute_path_detection.match(chdir):
                     raise AnsibleActionFail('chdir %s must be an absolute path for a Windows remote node' % chdir)
                 # Every other shell is unix-path-aware.
-                if self._connection._shell.SHELL_FAMILY != 'powershell' and not chdir.startswith('/'):
+                if not getattr(self._connection._shell, "_IS_WINDOWS", False) and not chdir.startswith('/'):
                     raise AnsibleActionFail('chdir %s must be an absolute path for a Unix-aware remote node' % chdir)
 
             # Split out the script as the first item in raw_params using
@@ -124,14 +124,20 @@ class ActionModule(ActionBase):
             script_cmd = self._connection._shell.wrap_for_exec(script_cmd)
 
             exec_data = None
-            # WinRM requires a special wrapper to work with environment variables
-            if self._connection.transport == "winrm":
-                pay = self._connection._create_raw_wrapper_payload(script_cmd,
-                                                                   env_dict)
-                exec_data = exec_wrapper.replace(b"$json_raw = ''",
-                                                 b"$json_raw = @'\r\n%s\r\n'@"
-                                                 % to_bytes(pay))
-                script_cmd = "-"
+            # PowerShell runs the script in a special wrapper to enable things
+            # like become and environment args
+            if getattr(self._connection._shell, "_IS_WINDOWS", False):
+                # FUTURE: use a more public method to get the exec payload
+                pc = self._play_context
+                exec_data = ps_manifest._create_powershell_wrapper(
+                    to_bytes(script_cmd), {}, env_dict, self._task.async_val,
+                    pc.become, pc.become_method, pc.become_user,
+                    pc.become_pass, pc.become_flags, substyle="script"
+                )
+                # build the necessary exec wrapper command
+                # FUTURE: this still doesn't let script work on Windows with non-pipelined connections or
+                # full manual exec of KEEP_REMOTE_FILES
+                script_cmd = self._connection._shell.build_module_command(env_string='', shebang='#!powershell', cmd='')
 
             result.update(self._low_level_execute_command(cmd=script_cmd, in_data=exec_data, sudoable=True, chdir=chdir))
 

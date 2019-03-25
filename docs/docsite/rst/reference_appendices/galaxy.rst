@@ -18,7 +18,7 @@ You can also use the site to share roles that you create. By authenticating with
 them available to the Ansible community. Imported roles become available in the Galaxy search index and visible on the site, allowing users to
 discover and download them.
 
-Learn more by viewing `the About page <https://galaxy.ansible.com/intro>`_.
+Learn more by viewing `the About page <https://galaxy.ansible.com/docs/>`_.
 
 The command line tool
 `````````````````````
@@ -99,7 +99,7 @@ Each role in the file will have one or more of the following attributes:
    scm
      Specify the SCM. As of this writing only *git* or *hg* are supported. See the examples below. Defaults to *git*.
    version:
-     The version of the role to download. Provide a release tag value, commit hash, or branch name. Defaults to *master*.
+     The version of the role to download. Provide a release tag value, commit hash, or branch name. Defaults to the branch set as a default in the repository, otherwise defaults to the *master*.
    name:
      Download the role to a specific name. Defaults to the Galaxy name when downloading from Galaxy, otherwise it defaults
      to the name of the repository.
@@ -124,14 +124,14 @@ Use the following example as a guide for specifying roles in *requirements.yml*:
       name: http-role
 
     # from Bitbucket
-    - src: git+http://bitbucket.org/willthames/git-ansible-galaxy
+    - src: git+https://bitbucket.org/willthames/git-ansible-galaxy
       version: v1.4
 
     # from Bitbucket, alternative syntax and caveats
-    - src: http://bitbucket.org/willthames/hg-ansible-galaxy
+    - src: https://bitbucket.org/willthames/hg-ansible-galaxy
       scm: hg
 
-    # from GitLab or other git-based scm
+    # from GitLab or other git-based scm, using git+ssh
     - src: git@gitlab.company.com:mygroup/ansible-base.git
       scm: git
       version: "0.1"  # quoted, so YAML doesn't parse this as a floating-point value
@@ -165,8 +165,10 @@ Content of the *webserver.yml* file:
     - src: https://github.com/bennojoy/nginx
 
     # from Bitbucket
-    - src: git+http://bitbucket.org/willthames/git-ansible-galaxy
+    - src: git+https://bitbucket.org/willthames/git-ansible-galaxy
       version: v1.4
+
+.. _galaxy_dependencies:
 
 Dependencies
 ============
@@ -178,8 +180,8 @@ the format ``username.role_name``. The more complex format used in ``requirement
 
 Tags are inherited *down* the dependency chain. In order for tags to be applied to a role and all its dependencies, the tag should be applied to the role, not to all the tasks within a role.
 
-Roles listed as dependencies are subject to conditionals and tag filtering, and may not execute fully depeneding on
-what tags and conditinoals are applied.
+Roles listed as dependencies are subject to conditionals and tag filtering, and may not execute fully depending on
+what tags and conditionals are applied.
 
 Dependencies found in Galaxy can be specified as follows:
 
@@ -220,21 +222,24 @@ The above will create the following directory structure in the current working d
 
 ::
 
-   README.md
-   .travis.yml
-   defaults/
-       main.yml
-   files/
-   handlers/
-       main.yml
-   meta/
-       main.yml
-   templates/
-   tests/
-       inventory
-       test.yml
-   vars/
-       main.yml
+   role_name/
+       README.md
+       .travis.yml
+       defaults/
+           main.yml
+       files/
+       handlers/
+           main.yml
+       meta/
+           main.yml
+       templates/
+       tests/
+           inventory
+           test.yml
+       vars/
+           main.yml
+
+If you want to create a repository for the role the repository root should be `role_name`.
 
 Force
 =====
@@ -245,7 +250,7 @@ use the *--force* option. Force will create the above subdirectories and files, 
 Container Enabled
 =================
 
-If you are creating a Container Enabled role, use the *--container-enabled* option. This will create the same directory structure as above, but populate it
+If you are creating a Container Enabled role, pass ``--type container`` to ``ansible-galaxy init``. This will create the same directory structure as above, but populate it
 with default files appropriate for a Container Enabled role. For instance, the README.md has a slightly different structure, the *.travis.yml* file tests
 the role using `Ansible Container <https://github.com/ansible/ansible-container>`_, and the meta directory includes a *container.yml* file.
 
@@ -380,7 +385,7 @@ The following shows authenticating with the Galaxy website using a GitHub userna
 
     Use --github-token if you do not want to enter your password.
 
-    Github Username: dsmith
+    GitHub Username: dsmith
     Password for dsmith:
     Successfully logged into Galaxy as dsmith
 
@@ -455,7 +460,7 @@ This only removes the role from Galaxy. It does not remove or alter the actual G
 Travis integrations
 -------------------
 
-You can create an integration or connection between a role in Galaxy and `Travis <http://travis-ci.org>`_. Once the connection is established, a build in Travis will
+You can create an integration or connection between a role in Galaxy and `Travis <https://travis-ci.org>`_. Once the connection is established, a build in Travis will
 automatically trigger an import in Galaxy, updating the search index with the latest information about the role.
 
 You create the integration using the ``setup`` command, but before an integration can be created, you must first authenticate using the ``login`` command; you will
@@ -511,7 +516,7 @@ Provide the ID of the integration to be disabled. You can find the ID by using t
 
    :ref:`playbooks_reuse_roles`
        All about ansible roles
-   `Mailing List <http://groups.google.com/group/ansible-project>`_
+   `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

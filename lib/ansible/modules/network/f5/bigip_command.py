@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -9,15 +9,15 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+                    'status': ['stableinterface'],
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
 module: bigip_command
-short_description: Run arbitrary command on F5 devices
+short_description: Run TMSH and BASH commands on F5 devices
 description:
-  - Sends an arbitrary command to an BIG-IP node and returns the results
+  - Sends a TMSH or BASH command to an BIG-IP node and returns the results
     read from the device. This module includes an argument that will cause
     the module to wait for a specific condition before returning or timing
     out if the condition is not met.
@@ -101,26 +101,27 @@ options:
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
 - name: run show version on remote devices
   bigip_command:
     commands: show sys version
-    server: lb.mydomain.com
-    password: secret
-    user: admin
-    validate_certs: no
+    provider:
+      server: lb.mydomain.com
+      password: secret
+      user: admin
   delegate_to: localhost
 
 - name: run show version and check to see if output contains BIG-IP
   bigip_command:
     commands: show sys version
     wait_for: result[0] contains BIG-IP
-    server: lb.mydomain.com
-    password: secret
-    user: admin
-    validate_certs: no
+    provider:
+      server: lb.mydomain.com
+      password: secret
+      user: admin
   register: result
   delegate_to: localhost
 
@@ -129,10 +130,10 @@ EXAMPLES = r'''
     commands:
       - show sys version
       - list ltm virtual
-    server: lb.mydomain.com
-    password: secret
-    user: admin
-    validate_certs: no
+    provider:
+      server: lb.mydomain.com
+      password: secret
+      user: admin
   delegate_to: localhost
 
 - name: run multiple commands and evaluate the output
@@ -143,10 +144,10 @@ EXAMPLES = r'''
     wait_for:
       - result[0] contains BIG-IP
       - result[1] contains my-vs
-    server: lb.mydomain.com
-    password: secret
-    user: admin
-    validate_certs: no
+    provider:
+      server: lb.mydomain.com
+      password: secret
+      user: admin
   register: result
   delegate_to: localhost
 
@@ -155,10 +156,10 @@ EXAMPLES = r'''
     commands:
       - show sys version
       - tmsh list ltm virtual
-    server: lb.mydomain.com
-    password: secret
-    user: admin
-    validate_certs: no
+    provider:
+      server: lb.mydomain.com
+      password: secret
+      user: admin
   delegate_to: localhost
 
 - name: Delete all LTM nodes in Partition1, assuming no dependencies exist
@@ -166,10 +167,10 @@ EXAMPLES = r'''
     commands:
       - delete ltm node all
     chdir: Partition1
-    server: lb.mydomain.com
-    password: secret
-    user: admin
-    validate_certs: no
+    provider:
+      server: lb.mydomain.com
+      password: secret
+      user: admin
   delegate_to: localhost
 '''
 
@@ -207,36 +208,58 @@ from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.six import string_types
 from collections import deque
 
+
 try:
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import is_cli
+    from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from library.module_utils.network.f5.common import transform_name
+    from library.module_utils.network.f5.common import is_cli
 except ImportError:
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import is_cli
+    from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from ansible.module_utils.network.f5.common import transform_name
+    from ansible.module_utils.network.f5.common import is_cli
 
 try:
     from ansible.module_utils.network.f5.common import run_commands
     HAS_CLI_TRANSPORT = True
 except ImportError:
     HAS_CLI_TRANSPORT = False
+
+
+class NoChangeReporter(object):
+    stdout_re = [
+        # A general error when a resource already exists
+        re.compile(r"The requested.*already exists"),
+
+        # Returned when creating a duplicate cli alias
+        re.compile(r"Data Input Error: shared.*already exists"),
+    ]
+
+    def find_no_change(self, responses):
+        """Searches the response for something that looks like a change
+
+        This method borrows heavily from Ansible's ``_find_prompt`` method
+        defined in the ``lib/ansible/plugins/connection/network_cli.py::Connection``
+        class.
+
+        Arguments:
+            response (string): The output from the command.
+
+        Returns:
+            bool: True when change is detected. False otherwise.
+        """
+        for response in responses:
+            for regex in self.stdout_re:
+                if regex.search(response):
+                    return True
+        return False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -384,7 +407,7 @@ class Parameters(AnsibleF5Parameters):
 class BaseManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = Parameters(params=self.module.params)
         self.want.update({'module': self.module})
         self.changes = Parameters(module=self.module)
@@ -398,17 +421,14 @@ class BaseManager(object):
         lines = list()
         for item in stdout:
             if isinstance(item, string_types):
-                item = str(item).split('\n')
+                item = item.split('\n')
             lines.append(item)
         return lines
 
     def exec_module(self):
         result = dict()
 
-        try:
-            changed = self.execute()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        changed = self.execute()
 
         result.update(**self.changes.to_return())
         result.update(dict(changed=changed))
@@ -505,13 +525,19 @@ class BaseManager(object):
         if self.want.warn:
             changes['warnings'] = self.warnings
         self.changes = Parameters(params=changes, module=self.module)
+        return self.determine_change(responses)
+
+    def determine_change(self, responses):
+        changer = NoChangeReporter()
+        if changer.find_no_change(responses):
+            return False
         if any(x for x in self.want.normalized_commands if x.startswith(self.changed_command_prefixes)):
             return True
         return False
 
     def _check_known_errors(self, responses):
         # A regex to match the error IDs used in the F5 v2 logging framework.
-        pattern = r'^[0-9A-Fa-f]+:?\d+?:'
+        # pattern = r'^[0-9A-Fa-f]+:?\d+?:'
 
         for resp in responses:
             if 'usage: tmsh' in resp:
@@ -519,8 +545,6 @@ class BaseManager(object):
                     "tmsh command printed its 'help' message instead of running your command. "
                     "This usually indicates unbalanced quotes."
                 )
-            if re.match(pattern, resp):
-                raise F5ModuleError(str(resp))
 
     def _transform_to_complex_commands(self, commands):
         spec = dict(
@@ -590,17 +614,29 @@ class V2Manager(BaseManager):
 
     def execute_on_device(self, commands):
         responses = []
+        uri = "https://{0}:{1}/mgmt/tm/util/bash".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
         for item in to_list(commands):
             try:
-                command = '-c "{0}"'.format(item['command'])
-                output = self.client.api.tm.util.bash.exec_cmd(
-                    'run',
-                    utilCmdArgs=command
+                args = dict(
+                    command='run',
+                    utilCmdArgs='-c "{0}"'.format(item['command'])
                 )
-                if hasattr(output, 'commandResult'):
-                    responses.append(str(output.commandResult).strip())
-            except Exception as ex:
-                pass
+                resp = self.client.api.post(uri, json=args)
+                response = resp.json()
+                if 'commandResult' in response:
+                    output = u'{0}'.format(response['commandResult'])
+                    responses.append(output.strip())
+            except ValueError as ex:
+                raise F5ModuleError(str(ex))
+
+            if 'code' in response and response['code'] == 400:
+                if 'message' in response:
+                    raise F5ModuleError(response['message'])
+                else:
+                    raise F5ModuleError(resp.content)
         return responses
 
 
@@ -671,20 +707,13 @@ def main():
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode
     )
-    if is_cli(module) and not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required to use the REST api")
 
     try:
-        client = F5Client(**module.params)
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        if not is_cli(module):
-            cleanup_tokens(client)
         module.exit_json(**results)
-    except F5ModuleError as e:
-        if not is_cli(module):
-            cleanup_tokens(client)
-        module.fail_json(msg=str(e))
+    except F5ModuleError as ex:
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

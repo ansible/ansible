@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 module: os_nova_host_aggregate
 short_description: Manage OpenStack host aggregates
 extends_documentation_fragment: openstack
-author: "Jakub Jursa"
+author: "Jakub Jursa (@kuboj)"
 version_added: "2.3"
 description:
     - Create, update, or delete OpenStack host aggregates. If a aggregate
@@ -37,7 +37,7 @@ options:
     choices: [present, absent]
     default: present
 requirements:
-    - "python >= 2.6"
+    - "python >= 2.7"
     - "openstacksdk"
 '''
 

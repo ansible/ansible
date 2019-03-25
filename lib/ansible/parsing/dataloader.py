@@ -21,12 +21,9 @@ from ansible.parsing.quoting import unquote
 from ansible.parsing.utils.yaml import from_yaml
 from ansible.parsing.vault import VaultLib, b_HEADER, is_encrypted, is_encrypted_file, parse_vaulttext_envelope
 from ansible.utils.path import unfrackpath
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 # Tries to determine if a path is inside a role, last dir must be 'tasks'
@@ -143,7 +140,7 @@ class DataLoader:
 
         :arg file_name: The name of the file to read.  If this is a relative
             path, it will be expanded relative to the basedir
-        :raises AnsibleFileNotFOund: if the file_name does not refer to a file
+        :raises AnsibleFileNotFound: if the file_name does not refer to a file
         :raises AnsibleParserError: if we were unable to read the file
         :return: Returns a byte string of the file contents
         '''
@@ -293,12 +290,12 @@ class DataLoader:
             for path in paths:
                 upath = unfrackpath(path, follow=False)
                 b_upath = to_bytes(upath, errors='surrogate_or_strict')
-                b_mydir = os.path.dirname(b_upath)
+                b_pb_base_dir = os.path.dirname(b_upath)
 
                 # if path is in role and 'tasks' not there already, add it into the search
-                if (is_role or self._is_role(path)) and b_mydir.endswith(b'tasks'):
-                        search.append(os.path.join(os.path.dirname(b_mydir), b_dirname, b_source))
-                        search.append(os.path.join(b_mydir, b_source))
+                if (is_role or self._is_role(path)) and b_pb_base_dir.endswith(b'/tasks'):
+                    search.append(os.path.join(os.path.dirname(b_pb_base_dir), b_dirname, b_source))
+                    search.append(os.path.join(b_pb_base_dir, b_source))
                 else:
                     # don't add dirname if user already is using it in source
                     if b_source.split(b'/')[0] != dirname:
@@ -422,7 +419,7 @@ class DataLoader:
                     if allow_dir:
                         found.extend(self._get_dir_vars_files(to_text(full_path), extensions))
                     else:
-                        next
+                        continue
                 else:
                     found.append(full_path)
                 break

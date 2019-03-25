@@ -48,8 +48,12 @@ def sysv_is_enabled(name, runlevel=None):
     :kw runlevel: runlevel to check (default: None)
     '''
     if runlevel:
+        if not os.path.isdir('/etc/rc0.d/'):
+            return bool(glob.glob('/etc/init.d/rc%s.d/S??%s' % (runlevel, name)))
         return bool(glob.glob('/etc/rc%s.d/S??%s' % (runlevel, name)))
     else:
+        if not os.path.isdir('/etc/rc0.d/'):
+            return bool(glob.glob('/etc/init.d/rc?.d/S??%s' % name))
         return bool(glob.glob('/etc/rc?.d/S??%s' % name))
 
 
@@ -204,7 +208,7 @@ def daemonize(module, cmd):
         fds = [p.stdout, p.stderr]
 
         # loop reading output till its done
-        output = {p.stdout: b(""), p.sterr: b("")}
+        output = {p.stdout: b(""), p.stderr: b("")}
         while fds:
             rfd, wfd, efd = select.select(fds, [], fds, 1)
             if (rfd + wfd + efd) or p.poll():

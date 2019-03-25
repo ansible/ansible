@@ -1,6 +1,0 @@
-{
-    "extensions": [
-        ".py"
-    ],
-    "output": "path-line-column-message"
-}

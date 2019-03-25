@@ -1,0 +1,2 @@
+minor_changes:
+- "Added missing deprecation warning for param 'reboot' and use without param 'name' to the cron module."

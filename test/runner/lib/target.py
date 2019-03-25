@@ -12,6 +12,8 @@ import sys
 
 from lib.util import (
     ApplicationError,
+    display,
+    read_lines_without_comments,
 )
 
 MODULE_EXTENSIONS = '.py', '.ps1'
@@ -31,7 +33,7 @@ def find_target_completion(target_func, prefix):
         matches = walk_completion_targets(targets, prefix, short)
         return matches
     except Exception as ex:  # pylint: disable=locally-disabled, broad-except
-        return [str(ex)]
+        return [u'%s' % ex]
 
 
 def walk_completion_targets(targets, prefix, short=False):
@@ -341,8 +343,11 @@ def analyze_integration_target_dependencies(integration_targets):
     :type integration_targets: list[IntegrationTarget]
     :rtype: dict[str,set[str]]
     """
-    hidden_role_target_names = set(t.name for t in integration_targets if t.type == 'role' and 'hidden/' in t.aliases)
-    normal_role_targets = [t for t in integration_targets if t.type == 'role' and 'hidden/' not in t.aliases]
+    real_target_root = os.path.realpath('test/integration/targets') + '/'
+
+    role_targets = [t for t in integration_targets if t.type == 'role']
+    hidden_role_target_names = set(t.name for t in role_targets if 'hidden/' in t.aliases)
+
     dependencies = collections.defaultdict(set)
 
     # handle setup dependencies
@@ -350,9 +355,37 @@ def analyze_integration_target_dependencies(integration_targets):
         for setup_target_name in target.setup_always + target.setup_once:
             dependencies[setup_target_name].add(target.name)
 
+    # handle target dependencies
+    for target in integration_targets:
+        for need_target in target.needs_target:
+            dependencies[need_target].add(target.name)
+
+    # handle symlink dependencies between targets
+    # this use case is supported, but discouraged
+    for target in integration_targets:
+        for root, _dummy, file_names in os.walk(target.path):
+            for name in file_names:
+                path = os.path.join(root, name)
+
+                if not os.path.islink(path):
+                    continue
+
+                real_link_path = os.path.realpath(path)
+
+                if not real_link_path.startswith(real_target_root):
+                    continue
+
+                link_target = real_link_path[len(real_target_root):].split('/')[0]
+
+                if link_target == target.name:
+                    continue
+
+                dependencies[link_target].add(target.name)
+
     # intentionally primitive analysis of role meta to avoid a dependency on pyyaml
-    for role_target in normal_role_targets:
-        meta_dir = os.path.join(role_target.path, 'meta')
+    # script based targets are scanned as they may execute a playbook with role dependencies
+    for target in integration_targets:
+        meta_dir = os.path.join(target.path, 'meta')
 
         if not os.path.isdir(meta_dir):
             continue
@@ -361,8 +394,12 @@ def analyze_integration_target_dependencies(integration_targets):
 
         for meta_path in meta_paths:
             if os.path.exists(meta_path):
-                with open(meta_path, 'r') as meta_fd:
-                    meta_lines = meta_fd.read().splitlines()
+                with open(meta_path, 'rb') as meta_fd:
+                    # try and decode the file as a utf-8 string, skip if it contains invalid chars (binary file)
+                    try:
+                        meta_lines = meta_fd.read().decode('utf-8').splitlines()
+                    except UnicodeDecodeError:
+                        continue
 
                 for meta_line in meta_lines:
                     if re.search(r'^ *#.*$', meta_line):
@@ -373,7 +410,34 @@ def analyze_integration_target_dependencies(integration_targets):
 
                     for hidden_target_name in hidden_role_target_names:
                         if hidden_target_name in meta_line:
-                            dependencies[hidden_target_name].add(role_target.name)
+                            dependencies[hidden_target_name].add(target.name)
+
+    while True:
+        changes = 0
+
+        for dummy, dependent_target_names in dependencies.items():
+            for dependent_target_name in list(dependent_target_names):
+                new_target_names = dependencies.get(dependent_target_name)
+
+                if new_target_names:
+                    for new_target_name in new_target_names:
+                        if new_target_name not in dependent_target_names:
+                            dependent_target_names.add(new_target_name)
+                            changes += 1
+
+        if not changes:
+            break
+
+    for target_name in sorted(dependencies):
+        consumers = dependencies[target_name]
+
+        if not consumers:
+            continue
+
+        display.info('%s:' % target_name, verbosity=4)
+
+        for consumer in sorted(consumers):
+            display.info('  %s' % consumer, verbosity=4)
 
     return dependencies
 
@@ -447,7 +511,7 @@ class TestTarget(CompletionTarget):
 
         if module_path and path.startswith(module_path) and name != '__init__' and ext in MODULE_EXTENSIONS:
             self.module = name[len(module_prefix or ''):].lstrip('_')
-            self.modules = self.module,
+            self.modules = (self.module,)
         else:
             self.module = None
             self.modules = tuple()
@@ -506,13 +570,13 @@ class IntegrationTarget(CompletionTarget):
         elif os.path.isdir(os.path.join(path, 'tasks')) or os.path.isdir(os.path.join(path, 'defaults')):
             self.type = 'role'
         else:
-            self.type = 'unknown'
+            self.type = 'role'  # ansible will consider these empty roles, so ansible-test should as well
 
         # static_aliases
 
         try:
-            with open(os.path.join(path, 'aliases'), 'r') as aliases_file:
-                static_aliases = tuple(aliases_file.read().splitlines())
+            aliases_path = os.path.join(path, 'aliases')
+            static_aliases = tuple(read_lines_without_comments(aliases_path, remove_blank_lines=True))
         except IOError as ex:
             if ex.errno != errno.ENOENT:
                 raise
@@ -566,6 +630,11 @@ class IntegrationTarget(CompletionTarget):
         if self.type not in ('script', 'role'):
             groups.append('hidden')
 
+        # Collect file paths before group expansion to avoid including the directories.
+        # Ignore references to test targets, as those must be defined using `needs/target/*` or other target references.
+        self.needs_file = tuple(sorted(set('/'.join(g.split('/')[2:]) for g in groups if
+                                           g.startswith('needs/file/') and not g.startswith('needs/file/test/integration/targets/'))))
+
         for group in itertools.islice(groups, 0, len(groups)):
             if '/' in group:
                 parts = group.split('/')
@@ -590,6 +659,7 @@ class IntegrationTarget(CompletionTarget):
 
         self.setup_once = tuple(sorted(set(g.split('/')[2] for g in groups if g.startswith('setup/once/'))))
         self.setup_always = tuple(sorted(set(g.split('/')[2] for g in groups if g.startswith('setup/always/'))))
+        self.needs_target = tuple(sorted(set(g.split('/')[2] for g in groups if g.startswith('needs/target/'))))
 
 
 class TargetPatternsNotMatched(ApplicationError):

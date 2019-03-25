@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -24,10 +24,12 @@ options:
   name:
     description:
       - Name of the new application.
+    type: str
     required: True
   description:
     description:
       - Description of the application.
+    type: str
   servers:
     description:
       - A list of servers that the application is hosted on.
@@ -38,13 +40,16 @@ options:
       address:
         description:
           - The IP address of the server.
+        type: str
         required: True
       port:
         description:
           - The port of the server.
           - When creating a new application and specifying a server, if this parameter
             is not provided, the default of C(8000) will be used.
+        type: str
         default: 8000
+    type: list
   inbound_virtual:
     description:
       - Settings to configure the virtual which will receive the inbound connection.
@@ -54,11 +59,13 @@ options:
           - Specifies destination IP address information to which the virtual server
             sends traffic.
           - This parameter is required when creating a new application.
+        type: str
         required: True
       netmask:
         description:
           - Specifies the netmask to associate with the given C(destination).
           - This parameter is required when creating a new application.
+        type: str
         required: True
       port:
         description:
@@ -66,6 +73,7 @@ options:
           - When creating a new application, if this parameter is not specified, the
             default value of C(8080) will be used.
         default: 8080
+    type: dict
   service_environment:
     description:
       - Specifies the name of service environment that the application will be
@@ -75,6 +83,7 @@ options:
         Therefore, it is crucial that you maintain unique names for items in the
         different service environment types.
       - SSGs are not supported for this type of application.
+    type: str
   add_analytics:
     description:
       - Collects statistics of the BIG-IP that the application is deployed to.
@@ -87,10 +96,11 @@ options:
       - The state of the resource on the system.
       - When C(present), guarantees that the resource exists with the provided attributes.
       - When C(absent), removes the resource from the system.
-    default: present
+    type: str
     choices:
       - absent
       - present
+    default: present
   wait:
     description:
       - If the module should wait for the application to be created, deleted or updated.
@@ -101,7 +111,7 @@ notes:
   - This module does not support updating of your application (whether deployed or not).
     If you need to update the application, the recommended practice is to remove and
     re-create.
-  - Requires BIG-IQ version 6.0 or greater.
+  - This module will not work on BIGIQ version 6.1.x or greater.
 author:
   - Tim Rupp (@caphrim007)
 '''
@@ -117,9 +127,9 @@ EXAMPLES = r'''
         port: 8080
       - address: 5.6.7.8
         port: 8080
-    load_balancer:
+    inbound_virtual:
       name: foo
-      destination: 2.2.2.2
+      address: 2.2.2.2
       netmask: 255.255.255.255
       port: 443
     provider:
@@ -134,22 +144,22 @@ RETURN = r'''
 description:
   description: The new description of the application of the resource.
   returned: changed
-  type: string
+  type: str
   sample: My application
 service_environment:
   description: The environment which the service was deployed to.
   returned: changed
-  type: string
+  type: str
   sample: my-ssg1
 inbound_virtual_destination:
   description: The destination of the virtual that was created.
   returned: changed
-  type: string
+  type: str
   sample: 6.7.8.9
 inbound_virtual_netmask:
   description: The network mask of the provided inbound destination.
   returned: changed
-  type: string
+  type: str
   sample: 255.255.255.0
 inbound_virtual_port:
   description: The port the inbound virtual address listens on.
@@ -164,7 +174,7 @@ servers:
     address:
       description: The IP address of the server.
       returned: changed
-      type: string
+      type: str
       sample: 2.3.4.5
     port:
       description: The port that the server listens on.
@@ -174,32 +184,25 @@ servers:
   sample: hash/dictionary of values
 '''
 
+import time
+
+from distutils.version import LooseVersion
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.basic import env_fallback
 
 try:
     from library.module_utils.network.f5.bigiq import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
+    from library.module_utils.network.f5.ipaddress import is_valid_ip
+    from library.module_utils.network.f5.icontrol import bigiq_version
 except ImportError:
     from ansible.module_utils.network.f5.bigiq import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
-
-try:
-    import netaddr
-    HAS_NETADDR = True
-except ImportError:
-    HAS_NETADDR = False
-
-
-import time
+    from ansible.module_utils.network.f5.ipaddress import is_valid_ip
+    from ansible.module_utils.network.f5.icontrol import bigiq_version
 
 
 class Parameters(AnsibleF5Parameters):
@@ -274,11 +277,10 @@ class ModuleParameters(Parameters):
 
     @property
     def default_device_reference(self):
-        try:
+        if is_valid_ip(self.service_environment):
             # An IP address was specified
-            netaddr.IPAddress(self.service_environment)
             filter = "address+eq+'{0}'".format(self.service_environment)
-        except netaddr.core.AddrFormatError:
+        else:
             # Assume a hostname was specified
             filter = "hostname+eq+'{0}'".format(self.service_environment)
 
@@ -338,7 +340,7 @@ class UsableChanges(Changes):
                     name='virtual',
                     destinationAddress=self.inbound_virtual['address'],
                     mask=self.inbound_virtual['netmask'],
-                    destinationPort=self.inbound_virtual['port']
+                    destinationPort=self.inbound_virtual.get('port', 8080)
                 ),
                 subcollectionResources=self.profiles
             )
@@ -376,7 +378,7 @@ class UsableChanges(Changes):
         for x in self.servers:
             member = dict(
                 parameters=dict(
-                    port=x['port'],
+                    port=x.get('port', 8000),
                     nodeReference=dict(
                         link='#/resources/ltm:node:3e91bd30bbfb/{0}'.format(x['address']),
                         fullPath='# {0}'.format(x['address'])
@@ -447,7 +449,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.want.client = self.client
         self.have = ApiParameters()
@@ -485,7 +487,15 @@ class ModuleManager(object):
             return True
         return False
 
+    def check_bigiq_version(self):
+        version = bigiq_version(self.client)
+        if LooseVersion(version) >= LooseVersion('6.1.0'):
+            raise F5ModuleError(
+                'Module supports only BIGIQ version 6.0.x or lower.'
+            )
+
     def exec_module(self):
+        self.check_bigiq_version()
         changed = False
         result = dict()
         state = self.want.state
@@ -678,16 +688,13 @@ def main():
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode
     )
-    if not HAS_NETADDR:
-        module.fail_json(msg="The python netaddr module is required")
 
     try:
-        client = F5RestClient(module=module)
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

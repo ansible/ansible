@@ -1,0 +1,5 @@
+team = "ansible"
+repo = "ansible"
+check_sha = "f31421576b00f0b167cdbe61217c31c21a41ac02"  # the very first commit in repo
+fix_commit_msg = false  # Don't replace "#" with "GH-"
+default_branch = "devel"

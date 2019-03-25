@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# Copyright(c) 2014, Matthew Vernon <mcv21@cam.ac.uk>
+# Copyright: (c) 2014, Matthew Vernon <mcv21@cam.ac.uk>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -31,7 +31,11 @@ options:
   key:
     description:
       - The SSH public host key, as a string (required if state=present, optional when state=absent, in which case all keys for the host are removed).
-        The key must be in the right format for ssh (see sshd(8), section "SSH_KNOWN_HOSTS FILE FORMAT")
+        The key must be in the right format for ssh (see sshd(8), section "SSH_KNOWN_HOSTS FILE FORMAT").
+
+        Specifically, the key should not match the format that is found in an SSH pubkey file, but should rather have the hostname prepended to a
+        line that includes the pubkey, the same way that it would appear in the known_hosts file. The value prepended to the line must also match
+        the value of the name parameter.
   path:
     description:
       - The known_hosts file to edit
@@ -70,14 +74,18 @@ EXAMPLES = '''
 #    hash_host = yes|no (default: no) hash the hostname in the known_hosts file
 #    state = absent|present (default: present)
 
+import base64
+import errno
+import hashlib
+import hmac
 import os
 import os.path
-import tempfile
-import errno
 import re
+import tempfile
 
-from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.file import FileLock
+from ansible.module_utils._text import to_bytes, to_native
 
 
 def enforce_state(module, params):
@@ -87,23 +95,25 @@ def enforce_state(module, params):
 
     host = params["name"].lower()
     key = params.get("key", None)
-    port = params.get("port", None)
     path = params.get("path")
     hash_host = params.get("hash_host")
     state = params.get("state")
     # Find the ssh-keygen binary
     sshkeygen = module.get_bin_path("ssh-keygen", True)
 
-    # Trailing newline in files gets lost, so re-add if necessary
-    if key and key[-1] != '\n':
-        key += '\n'
-
-    if key is None and state != "absent":
+    if not key and state != "absent":
         module.fail_json(msg="No key specified when adding a host")
+
+    if key and hash_host:
+        key = hash_host_key(host, key)
+
+    # Trailing newline in files gets lost, so re-add if necessary
+    if key and not key.endswith('\n'):
+        key += '\n'
 
     sanity_check(module, host, key, sshkeygen)
 
-    found, replace_or_add, found_line, key = search_for_host_key(module, host, key, hash_host, path, sshkeygen)
+    found, replace_or_add, found_line = search_for_host_key(module, host, key, path, sshkeygen)
 
     params['diff'] = compute_diff(path, found_line, replace_or_add, state, key)
 
@@ -119,7 +129,7 @@ def enforce_state(module, params):
     # Now do the work.
 
     # Only remove whole host if found and no key provided
-    if found and key is None and state == "absent":
+    if found and not key and state == "absent":
         module.run_command([sshkeygen, '-R', host, '-f', path], check_rc=True)
         params['changed'] = True
 
@@ -133,24 +143,19 @@ def enforce_state(module, params):
             else:
                 module.fail_json(msg="Failed to read %s: %s" % (path, str(e)))
         try:
-            outf = tempfile.NamedTemporaryFile(mode='w+', dir=os.path.dirname(path))
-            if inf is not None:
-                for line_number, line in enumerate(inf):
-                    if found_line == (line_number + 1) and (replace_or_add or state == 'absent'):
-                        continue  # skip this line to replace its key
-                    outf.write(line)
-                inf.close()
-            if state == 'present':
-                outf.write(key)
-            outf.flush()
-            module.atomic_move(outf.name, path)
+            with tempfile.NamedTemporaryFile(mode='w+', dir=os.path.dirname(path), delete=False) as outf:
+                if inf is not None:
+                    for line_number, line in enumerate(inf):
+                        if found_line == (line_number + 1) and (replace_or_add or state == 'absent'):
+                            continue  # skip this line to replace its key
+                        outf.write(line)
+                    inf.close()
+                if state == 'present':
+                    outf.write(key)
         except (IOError, OSError) as e:
             module.fail_json(msg="Failed to write to file %s: %s" % (path, to_native(e)))
-
-        try:
-            outf.close()
-        except:
-            pass
+        else:
+            module.atomic_move(outf.name, path)
 
         params['changed'] = True
 
@@ -166,7 +171,7 @@ def sanity_check(module, host, key, sshkeygen):
     sshkeygen is the path to ssh-keygen, found earlier with get_bin_path
     '''
     # If no key supplied, we're doing a removal, and have nothing to check here.
-    if key is None:
+    if not key:
         return
     # Rather than parsing the key ourselves, get ssh-keygen to do it
     # (this is essential for hashed keys, but otherwise useful, as the
@@ -179,26 +184,22 @@ def sanity_check(module, host, key, sshkeygen):
         module.fail_json(msg="Comma separated list of names is not supported. "
                              "Please pass a single name to lookup in the known_hosts file.")
 
-    try:
-        outf = tempfile.NamedTemporaryFile(mode='w+')
-        outf.write(key)
-        outf.flush()
-    except IOError as e:
-        module.fail_json(msg="Failed to write to temporary file %s: %s" %
+    with tempfile.NamedTemporaryFile(mode='w+') as outf:
+        try:
+            outf.write(key)
+            outf.flush()
+        except IOError as e:
+            module.fail_json(msg="Failed to write to temporary file %s: %s" %
                              (outf.name, to_native(e)))
 
-    sshkeygen_command = [sshkeygen, '-F', host, '-f', outf.name]
-    rc, stdout, stderr = module.run_command(sshkeygen_command)
-    try:
-        outf.close()
-    except:
-        pass
+        sshkeygen_command = [sshkeygen, '-F', host, '-f', outf.name]
+        rc, stdout, stderr = module.run_command(sshkeygen_command)
 
     if stdout == '':  # host not found
         module.fail_json(msg="Host parameter does not match hashed host field in supplied key")
 
 
-def search_for_host_key(module, host, key, hash_host, path, sshkeygen):
+def search_for_host_key(module, host, key, path, sshkeygen):
     '''search_for_host_key(module,host,key,path,sshkeygen) -> (found,replace_or_add,found_line)
 
     Looks up host and keytype in the known_hosts file path; if it's there, looks to see
@@ -210,7 +211,7 @@ def search_for_host_key(module, host, key, hash_host, path, sshkeygen):
     sshkeygen is the path to ssh-keygen, found earlier with get_bin_path
     '''
     if os.path.exists(path) is False:
-        return False, False, None, key
+        return False, False, None
 
     sshkeygen_command = [sshkeygen, '-F', host, '-f', path]
 
@@ -218,22 +219,16 @@ def search_for_host_key(module, host, key, hash_host, path, sshkeygen):
     # 1 if no host is found, whereas previously it returned 0
     rc, stdout, stderr = module.run_command(sshkeygen_command, check_rc=False)
     if stdout == '' and stderr == '' and (rc == 0 or rc == 1):
-        return False, False, None, key  # host not found, no other errors
+        return False, False, None  # host not found, no other errors
     if rc != 0:  # something went wrong
         module.fail_json(msg="ssh-keygen failed (rc=%d, stdout='%s',stderr='%s')" % (rc, stdout, stderr))
 
     # If user supplied no key, we don't want to try and replace anything with it
-    if key is None:
-        return True, False, None, key
+    if not key:
+        return True, False, None
 
     lines = stdout.split('\n')
     new_key = normalize_known_hosts_key(key)
-
-    sshkeygen_command.insert(1, '-H')
-    rc, stdout, stderr = module.run_command(sshkeygen_command, check_rc=False)
-    if rc not in (0, 1) or stderr != '':  # something went wrong
-        module.fail_json(msg="ssh-keygen failed to hash host (rc=%d, stdout='%s',stderr='%s')" % (rc, stdout, stderr))
-    hashed_lines = stdout.split('\n')
 
     for lnum, l in enumerate(lines):
         if l == '':
@@ -247,19 +242,25 @@ def search_for_host_key(module, host, key, hash_host, path, sshkeygen):
                 module.fail_json(msg="failed to parse output of ssh-keygen for line number: '%s'" % l)
         else:
             found_key = normalize_known_hosts_key(l)
-            if hash_host is True:
-                if found_key['host'][:3] == '|1|':
-                    new_key['host'] = found_key['host']
-                else:
-                    hashed_host = normalize_known_hosts_key(hashed_lines[lnum])
-                    found_key['host'] = hashed_host['host']
-                key = key.replace(host, found_key['host'])
+            if new_key['host'][:3] == '|1|' and found_key['host'][:3] == '|1|':  # do not change host hash if already hashed
+                new_key['host'] = found_key['host']
             if new_key == found_key:  # found a match
-                return True, False, found_line, key  # found exactly the same key, don't replace
+                return True, False, found_line  # found exactly the same key, don't replace
             elif new_key['type'] == found_key['type']:  # found a different key for the same key type
-                return True, True, found_line, key
+                return True, True, found_line
+
     # No match found, return found and replace, but no line
-    return True, True, None, key
+    return True, True, None
+
+
+def hash_host_key(host, key):
+    hmac_key = os.urandom(20)
+    hashed_host = hmac.new(hmac_key, to_bytes(host), hashlib.sha1).digest()
+    parts = key.strip().split()
+    # @ indicates the optional marker field used for @cert-authority or @revoked
+    i = 1 if parts[0][0] == '@' else 0
+    parts[i] = '|1|%s|%s' % (to_native(base64.b64encode(hmac_key)), to_native(base64.b64encode(hashed_host)))
+    return ' '.join(parts)
 
 
 def normalize_known_hosts_key(key):
@@ -271,7 +272,7 @@ def normalize_known_hosts_key(key):
     from the end (like the username@host tag usually present in hostkeys, but
     absent in known_hosts files)
     '''
-    k = key.strip()  # trim trailing newline
+    key = key.strip()  # trim trailing newline
     k = key.split()
     d = dict()
     # The optional "marker" field, used for @cert-authority or @revoked

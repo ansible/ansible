@@ -1,5 +1,5 @@
-#!/bin/bash -eux
+#!/usr/bin/env bash
 
-set -o pipefail
+set -o pipefail -eu
 
-"$@" 2>&1 | gawk '{ print strftime("%Y-%m-%d %H:%M:%S"), $0; fflush(); }'
+"$@" 2>&1 | "$(dirname "$0")/timing.py"

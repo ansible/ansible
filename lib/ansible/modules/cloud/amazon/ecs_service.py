@@ -27,11 +27,11 @@ description:
   - Creates or terminates ecs services.
 notes:
   - the service role specified must be assumable (i.e. have a trust relationship for the ecs service, ecs.amazonaws.com)
-  - for details of the parameters and returns see U(http://boto3.readthedocs.org/en/latest/reference/services/ecs.html)
+  - for details of the parameters and returns see U(https://boto3.readthedocs.io/en/latest/reference/services/ecs.html)
   - An IAM role must have been previously created
 version_added: "2.1"
 author:
-    - "Mark Chance (@java1guy)"
+    - "Mark Chance (@Java1Guy)"
     - "Darek Kaczynski (@kaczynskid)"
     - "Stephane Maarek (@simplesteph)"
     - "Zac Blazic (@zacblazic)"
@@ -82,6 +82,12 @@ options:
           - The number of times to check that the service is available
         required: false
         default: 10
+    force_new_deployment:
+        description:
+          - Force deployment of service even if there are no changes
+        required: false
+        version_added: 2.8
+        type: bool
     deployment_configuration:
         description:
           - Optional parameters that control the deployment_configuration; format is '{"maximum_percent":<integer>, "minimum_healthy_percent":<integer>}
@@ -100,9 +106,53 @@ options:
     network_configuration:
         description:
           - network configuration of the service. Only applicable for task definitions created with C(awsvpc) I(network_mode).
-          - I(network_configuration) has two keys, I(subnets), a list of subnet IDs to which the task is attached and I(security_groups),
-            a list of group names or group IDs for the task
-        version_added: 2.6
+          - assign_public_ip requires botocore >= 1.8.4
+        suboptions:
+          subnets:
+            description:
+              - A list of subnet IDs to associate with the task
+            version_added: 2.6
+          security_groups:
+            description:
+              - A list of security group names or group IDs to associate with the task
+            version_added: 2.6
+          assign_public_ip:
+            description:
+              - Whether the task's elastic network interface receives a public IP address. This option requires botocore >= 1.8.4.
+            type: bool
+            version_added: 2.7
+    launch_type:
+        description:
+          - The launch type on which to run your service
+        required: false
+        version_added: 2.7
+        choices: ["EC2", "FARGATE"]
+    health_check_grace_period_seconds:
+        description:
+          - Seconds to wait before health checking the freshly added/updated services. This option requires botocore >= 1.8.20.
+        required: false
+        version_added: 2.8
+    service_registries:
+        description:
+          - describes service disovery registries this service will register with.
+        required: false
+        version_added: 2.8
+        suboptions:
+            container_name:
+                description:
+                  - container name for service disovery registration
+            container_port:
+                description:
+                  - container port for service disovery registration
+            arn:
+                description:
+                  - Service discovery registry ARN
+    scheduling_strategy:
+        description:
+          - The scheduling strategy, defaults to "REPLICA" if not given to preserve previous behavior
+        required: false
+        version_added: 2.8
+        choices: ["DAEMON", "REPLICA"]
 extends_documentation_fragment:
     - aws
     - ec2
@@ -170,7 +220,7 @@ service:
         clusterArn:
             description: The Amazon Resource Name (ARN) of the of the cluster that hosts the service.
             returned: always
-            type: string
+            type: str
         desiredCount:
             description: The desired number of instantiations of the task definition to keep running on the service.
             returned: always
@@ -183,11 +233,11 @@ service:
                 loadBalancerName:
                     description: the name
                     returned: always
-                    type: string
+                    type: str
                 containerName:
                     description: The name of the container to associate with the load balancer.
                     returned: always
-                    type: string
+                    type: str
                 containerPort:
                     description: The port on the container to associate with the load balancer.
                     returned: always
@@ -205,19 +255,19 @@ service:
                          of the service, the AWS account ID of the service owner, the service namespace, and then the service name. For example,
                          arn:aws:ecs:region :012345678910 :service/my-service .
             returned: always
-            type: string
+            type: str
         serviceName:
             description: A user-generated string used to identify the service
             returned: always
-            type: string
+            type: str
         status:
             description: The valid values are ACTIVE, DRAINING, or INACTIVE.
             returned: always
-            type: string
+            type: str
         taskDefinition:
             description: The ARN of a task definition to use for tasks in the service.
             returned: always
-            type: string
+            type: str
         deployments:
             description: list of service deployments
             returned: always
@@ -247,12 +297,12 @@ service:
                 type:
                     description: The type of constraint. Valid values are distinctInstance and memberOf.
                     returned: always
-                    type: string
+                    type: str
                 expression:
                     description: A cluster query language expression to apply to the constraint. Note you cannot specify an expression if the constraint type is
                                  distinctInstance.
                     returned: always
-                    type: string
+                    type: str
         placementStrategy:
             description: List of placement strategy objects
             returned: always
@@ -261,13 +311,13 @@ service:
                 type:
                     description: The type of placement strategy. Valid values are random, spread and binpack.
                     returned: always
-                    type: string
+                    type: str
                 field:
                     description: The field to apply the placement strategy against. For the spread placement strategy, valid values are instanceId
                                  (or host, which has the same effect), or any platform or custom attribute that is applied to a container instance,
                                  such as attribute:ecs.availability-zone. For the binpack placement strategy, valid values are CPU and MEMORY.
                     returned: always
-                    type: string
+                    type: str
 ansible_facts:
     description: Facts about deleted service.
     returned: when deleting a service
@@ -305,11 +355,11 @@ class EcsServiceManager:
 
     def format_network_configuration(self, network_config):
         result = dict()
-        if 'subnets' in network_config:
+        if network_config['subnets'] is not None:
             result['subnets'] = network_config['subnets']
         else:
             self.module.fail_json(msg="Network configuration must include subnets")
-        if 'security_groups' in network_config:
+        if network_config['security_groups'] is not None:
             groups = network_config['security_groups']
             if any(not sg.startswith('sg-') for sg in groups):
                 try:
@@ -318,6 +368,14 @@ class EcsServiceManager:
                 except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                     self.module.fail_json_aws(e, msg="Couldn't look up security groups")
             result['securityGroups'] = groups
+        if network_config['assign_public_ip'] is not None:
+            if self.module.botocore_at_least('1.8.4'):
+                if network_config['assign_public_ip'] is True:
+                    result['assignPublicIp'] = "ENABLED"
+                else:
+                    result['assignPublicIp'] = "DISABLED"
+            else:
+                self.module.fail_json(msg='botocore needs to be version 1.8.4 or higher to use assign_public_ip in network_configuration')
         return dict(awsvpcConfiguration=result)
 
     def find_in_array(self, array_of_services, service_name, field_name='serviceArn'):
@@ -350,40 +408,65 @@ class EcsServiceManager:
         if (expected['load_balancers'] or []) != existing['loadBalancers']:
             return False
 
-        if (expected['desired_count'] or 0) != existing['desiredCount']:
-            return False
+        # expected is params. DAEMON scheduling strategy returns desired count equal to
+        # number of instances running; don't check desired count if scheduling strat is daemon
+        if (expected['scheduling_strategy'] != 'DAEMON'):
+            if (expected['desired_count'] or 0) != existing['desiredCount']:
+                return False
 
         return True
 
     def create_service(self, service_name, cluster_name, task_definition, load_balancers,
                        desired_count, client_token, role, deployment_configuration,
-                       placement_constraints, placement_strategy, network_configuration):
+                       placement_constraints, placement_strategy, health_check_grace_period_seconds,
+                       network_configuration, service_registries, launch_type, scheduling_strategy):
+
         params = dict(
             cluster=cluster_name,
             serviceName=service_name,
             taskDefinition=task_definition,
             loadBalancers=load_balancers,
-            desiredCount=desired_count,
             clientToken=client_token,
             role=role,
             deploymentConfiguration=deployment_configuration,
             placementConstraints=placement_constraints,
-            placementStrategy=placement_strategy)
+            placementStrategy=placement_strategy
+        )
         if network_configuration:
             params['networkConfiguration'] = network_configuration
+        if launch_type:
+            params['launchType'] = launch_type
+        if self.health_check_setable(params) and health_check_grace_period_seconds is not None:
+            params['healthCheckGracePeriodSeconds'] = health_check_grace_period_seconds
+        if service_registries:
+            params['serviceRegistries'] = service_registries
+        # desired count is not required if scheduling strategy is daemon
+        if desired_count is not None:
+            params['desiredCount'] = desired_count
+
+        if scheduling_strategy:
+            params['schedulingStrategy'] = scheduling_strategy
         response = self.ecs.create_service(**params)
         return self.jsonize(response['service'])
 
     def update_service(self, service_name, cluster_name, task_definition,
-                       desired_count, deployment_configuration, network_configuration):
+                       desired_count, deployment_configuration, network_configuration,
+                       health_check_grace_period_seconds, force_new_deployment):
         params = dict(
             cluster=cluster_name,
             service=service_name,
             taskDefinition=task_definition,
-            desiredCount=desired_count,
             deploymentConfiguration=deployment_configuration)
         if network_configuration:
             params['networkConfiguration'] = network_configuration
+        if force_new_deployment:
+            params['forceNewDeployment'] = force_new_deployment
+        if health_check_grace_period_seconds is not None:
+            params['healthCheckGracePeriodSeconds'] = health_check_grace_period_seconds
+        # desired count is not required if scheduling strategy is daemon
+        if desired_count is not None:
+            params['desiredCount'] = desired_count
+
         response = self.ecs.update_service(**params)
         return self.jsonize(response['service'])
 
@@ -408,11 +491,15 @@ class EcsServiceManager:
         return self.ecs.delete_service(cluster=cluster, service=service)
 
     def ecs_api_handles_network_configuration(self):
-        from distutils.version import LooseVersion
         # There doesn't seem to be a nice way to inspect botocore to look
         # for attributes (and networkConfiguration is not an explicit argument
         # to e.g. ecs.run_task, it's just passed as a keyword argument)
-        return LooseVersion(botocore.__version__) >= LooseVersion('1.7.44')
+        return self.module.botocore_at_least('1.7.44')
+
+    def health_check_setable(self, params):
+        load_balancers = params.get('loadBalancers', [])
+        # check if botocore (and thus boto3) is new enough for using the healthCheckGracePeriodSeconds parameter
+        return len(load_balancers) > 0 and self.module.botocore_at_least('1.8.20')
 
 
 def main():
@@ -428,16 +515,30 @@ def main():
         role=dict(required=False, default='', type='str'),
         delay=dict(required=False, type='int', default=10),
         repeat=dict(required=False, type='int', default=10),
+        force_new_deployment=dict(required=False, default=False, type='bool'),
         deployment_configuration=dict(required=False, default={}, type='dict'),
         placement_constraints=dict(required=False, default=[], type='list'),
         placement_strategy=dict(required=False, default=[], type='list'),
-        network_configuration=dict(required=False, type='dict')
+        health_check_grace_period_seconds=dict(required=False, type='int'),
+        network_configuration=dict(required=False, type='dict', options=dict(
+            subnets=dict(type='list'),
+            security_groups=dict(type='list'),
+            assign_public_ip=dict(type='bool')
+        )),
+        launch_type=dict(required=False, choices=['EC2', 'FARGATE']),
+        service_registries=dict(required=False, type='list', default=[]),
+        scheduling_strategy=dict(required=False, choices=['DAEMON', 'REPLICA'])
     ))
 
     module = AnsibleAWSModule(argument_spec=argument_spec,
                               supports_check_mode=True,
-                              required_if=[('state', 'present', ['task_definition', 'desired_count'])],
+                              required_if=[('state', 'present', ['task_definition']),
+                                           ('launch_type', 'FARGATE', ['network_configuration'])],
                               required_together=[['load_balancers', 'role']])
+
+    if module.params['state'] == 'present' and module.params['scheduling_strategy'] == 'REPLICA':
+        if module.params['desired_count'] is None:
+            module.fail_json(msg='state is present, scheduling_strategy is REPLICA; missing desired_count')
 
     service_mgr = EcsServiceManager(module)
     if module.params['network_configuration']:
@@ -451,6 +552,7 @@ def main():
                                                 DEPLOYMENT_CONFIGURATION_TYPE_MAP)
 
     deploymentConfiguration = snake_dict_to_camel_dict(deployment_configuration)
+    serviceRegistries = list(map(snake_dict_to_camel_dict, module.params['service_registries']))
 
     try:
         existing = service_mgr.describe_service(module.params['cluster'], module.params['name'])
@@ -458,12 +560,26 @@ def main():
         module.fail_json(msg="Exception describing service '" + module.params['name'] + "' in cluster '" + module.params['cluster'] + "': " + str(e))
 
     results = dict(changed=False)
+
+    if module.params['launch_type']:
+        if not module.botocore_at_least('1.8.4'):
+            module.fail_json(msg='botocore needs to be version 1.8.4 or higher to use launch_type')
+    if module.params['force_new_deployment']:
+        if not module.botocore_at_least('1.8.4'):
+            module.fail_json(msg='botocore needs to be version 1.8.4 or higher to use force_new_deployment')
+    if module.params['health_check_grace_period_seconds']:
+        if not module.botocore_at_least('1.8.20'):
+            module.fail_json(msg='botocore needs to be version 1.8.20 or higher to use health_check_grace_period_seconds')
+
     if module.params['state'] == 'present':
 
         matching = False
         update = False
+
         if existing and 'status' in existing and existing['status'] == "ACTIVE":
-            if service_mgr.is_matching_service(module.params, existing):
+            if module.params['force_new_deployment']:
+                update = True
+            elif service_mgr.is_matching_service(module.params, existing):
                 matching = True
                 results['service'] = existing
             else:
@@ -474,34 +590,65 @@ def main():
 
                 role = module.params['role']
                 clientToken = module.params['client_token']
-                loadBalancers = module.params['load_balancers']
+
+                loadBalancers = []
+                for loadBalancer in module.params['load_balancers']:
+                    if 'containerPort' in loadBalancer:
+                        loadBalancer['containerPort'] = int(loadBalancer['containerPort'])
+                    loadBalancers.append(loadBalancer)
+
+                for loadBalancer in loadBalancers:
+                    if 'containerPort' in loadBalancer:
+                        loadBalancer['containerPort'] = int(loadBalancer['containerPort'])
 
                 if update:
+                    # check various parameters and boto versions and give a helpful erro in boto is not new enough for feature
+
+                    if module.params['scheduling_strategy']:
+                        if not module.botocore_at_least('1.10.37'):
+                            module.fail_json(msg='botocore needs to be version 1.10.37 or higher to use scheduling_strategy')
+                        elif (existing['schedulingStrategy']) != module.params['scheduling_strategy']:
+                            module.fail_json(msg="It is not possible to update the scheduling strategy of an existing service")
+
+                    if module.params['service_registries']:
+                        if not module.botocore_at_least('1.9.15'):
+                            module.fail_json(msg='botocore needs to be version 1.9.15 or higher to use service_registries')
+                        elif (existing['serviceRegistries'] or []) != serviceRegistries:
+                            module.fail_json(msg="It is not possible to update the service registries of an existing service")
+
                     if (existing['loadBalancers'] or []) != loadBalancers:
                         module.fail_json(msg="It is not possible to update the load balancers of an existing service")
+
                     # update required
                     response = service_mgr.update_service(module.params['name'],
                                                           module.params['cluster'],
                                                           module.params['task_definition'],
                                                           module.params['desired_count'],
                                                           deploymentConfiguration,
-                                                          network_configuration)
+                                                          network_configuration,
+                                                          module.params['health_check_grace_period_seconds'],
+                                                          module.params['force_new_deployment'])
+
                 else:
-                    for loadBalancer in loadBalancers:
-                        if 'containerPort' in loadBalancer:
-                            loadBalancer['containerPort'] = int(loadBalancer['containerPort'])
-                    # doesn't exist. create it.
-                    response = service_mgr.create_service(module.params['name'],
-                                                          module.params['cluster'],
-                                                          module.params['task_definition'],
-                                                          loadBalancers,
-                                                          module.params['desired_count'],
-                                                          clientToken,
-                                                          role,
-                                                          deploymentConfiguration,
-                                                          module.params['placement_constraints'],
-                                                          module.params['placement_strategy'],
-                                                          network_configuration)
+                    try:
+                        response = service_mgr.create_service(module.params['name'],
+                                                              module.params['cluster'],
+                                                              module.params['task_definition'],
+                                                              loadBalancers,
+                                                              module.params['desired_count'],
+                                                              clientToken,
+                                                              role,
+                                                              deploymentConfiguration,
+                                                              module.params['placement_constraints'],
+                                                              module.params['placement_strategy'],
+                                                              module.params['health_check_grace_period_seconds'],
+                                                              network_configuration,
+                                                              serviceRegistries,
+                                                              module.params['launch_type'],
+                                                              module.params['scheduling_strategy']
+                                                              )
+                    except botocore.exceptions.ClientError as e:
+                        module.fail_json_aws(e, msg="Couldn't create service")
 
                 results['service'] = response
 
@@ -526,7 +673,7 @@ def main():
                             module.params['cluster']
                         )
                     except botocore.exceptions.ClientError as e:
-                        module.fail_json(msg=e.message)
+                        module.fail_json_aws(e, msg="Couldn't delete service")
                 results['changed'] = True
 
     elif module.params['state'] == 'deleting':

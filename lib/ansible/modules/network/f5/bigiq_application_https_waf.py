@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -24,10 +24,12 @@ options:
   name:
     description:
       - Name of the new application.
+    type: str
     required: True
   description:
     description:
       - Description of the application.
+    type: str
   servers:
     description:
       - A list of servers that the application is hosted on.
@@ -38,10 +40,13 @@ options:
       address:
         description:
           - The IP address of the server.
+        type: str
       port:
         description:
           - The port of the server.
+        type: str
         default: 80
+    type: list
   inbound_virtual:
     description:
       - Settings to configure the virtual which will receive the inbound connection.
@@ -49,21 +54,25 @@ options:
       - Traffic destined to the C(redirect_virtual) will be offloaded to this
         parameter to ensure that proper redirection from insecure, to secure, occurs.
     suboptions:
-      destination:
+      address:
         description:
           - Specifies destination IP address information to which the virtual server
             sends traffic.
           - This parameter is required when creating a new application.
+        type: str
       netmask:
         description:
           - Specifies the netmask to associate with the given C(destination).
           - This parameter is required when creating a new application.
+        type: str
       port:
         description:
           - The port that the virtual listens for connections on.
           - When creating a new application, if this parameter is not specified, the
             default value of C(443) will be used.
+        type: str
         default: 443
+    type: dict
   redirect_virtual:
     description:
       - Settings to configure the virtual which will receive the connection to be
@@ -73,21 +82,25 @@ options:
         C(inbound_virtual) parameter to ensure that proper redirection from insecure,
         to secure, occurs.
     suboptions:
-      destination:
+      address:
         description:
           - Specifies destination IP address information to which the virtual server
             sends traffic.
           - This parameter is required when creating a new application.
+        type: str
       netmask:
         description:
           - Specifies the netmask to associate with the given C(destination).
           - This parameter is required when creating a new application.
+        type: str
       port:
         description:
           - The port that the virtual listens for connections on.
           - When creating a new application, if this parameter is not specified, the
             default value of C(80) will be used.
+        type: str
         default: 80
+    type: dict
   client_ssl_profile:
     description:
       - Specifies the SSL profile for managing client-side SSL traffic.
@@ -97,6 +110,7 @@ options:
           - The name of the client SSL profile to created and used.
           - When creating a new application, if this value is not specified, the
             default value of C(clientssl) will be used.
+        type: str
       cert_key_chain:
         description:
           - One or more certificates and keys to associate with the SSL profile.
@@ -107,33 +121,39 @@ options:
             per profile.
           - If you attempt to assign two RSA, DSA, or ECDSA certificate/key combo,
             the device will reject this.
-          - This list is a complex list that specifies a number of keys. There are
-            several supported keys.
+          - This list is a complex list that specifies a number of keys.
           - When creating a new profile, if this parameter is not specified, the
             default value of C(inherit) will be used.
         suboptions:
           cert:
             description:
               - Specifies a cert name for use.
+            type: str
             required: True
           key:
             description:
               - Specifies a key name.
+            type: str
             required: True
           chain:
             description:
               - Specifies a certificate chain that is relevant to the certificate and
                 key mentioned earlier.
               - This key is optional.
+            type: str
           passphrase:
             description:
               - Contains the passphrase of the key file, should it require one.
               - Passphrases are encrypted on the remote BIG-IP device.
+            type: str
+        type: raw
+    type: dict
   service_environment:
     description:
       - Specifies the name of service environment that the application will be
         deployed to.
       - When creating a new application, this parameter is required.
+    type: str
   add_analytics:
     description:
       - Collects statistics of the BIG-IP that the application is deployed to.
@@ -146,21 +166,25 @@ options:
       - Specifies host names that are used to access the web application that this
         security policy protects.
       - When creating a new application, this parameter is required.
+    type: list
   state:
     description:
       - The state of the resource on the system.
       - When C(present), guarantees that the resource exists with the provided attributes.
       - When C(absent), removes the resource from the system.
-    default: present
+    type: str
     choices:
       - absent
       - present
+    default: present
   wait:
     description:
       - If the module should wait for the application to be created, deleted or updated.
     type: bool
     default: yes
 extends_documentation_fragment: f5
+notes:
+  - This module will not work on BIGIQ version 6.1.x or greater.
 author:
   - Tim Rupp (@caphrim007)
 '''
@@ -177,11 +201,11 @@ EXAMPLES = r'''
       - address: 5.6.7.8
         port: 8080
     inbound_virtual:
-      destination: 2.2.2.2
+      address: 2.2.2.2
       netmask: 255.255.255.255
       port: 443
     redirect_virtual:
-      destination: 2.2.2.2
+      address: 2.2.2.2
       netmask: 255.255.255.255
       port: 80
     provider:
@@ -196,22 +220,22 @@ RETURN = r'''
 description:
   description: The new description of the application of the resource.
   returned: changed
-  type: string
+  type: str
   sample: My application
 service_environment:
   description: The environment which the service was deployed to.
   returned: changed
-  type: string
+  type: str
   sample: my-ssg1
 inbound_virtual_destination:
   description: The destination of the virtual that was created.
   returned: changed
-  type: string
+  type: str
   sample: 6.7.8.9
 inbound_virtual_netmask:
   description: The network mask of the provided inbound destination.
   returned: changed
-  type: string
+  type: str
   sample: 255.255.255.0
 inbound_virtual_port:
   description: The port the inbound virtual address listens on.
@@ -226,7 +250,7 @@ servers:
     address:
       description: The IP address of the server.
       returned: changed
-      type: string
+      type: str
       sample: 2.3.4.5
     port:
       description: The port that the server listens on.
@@ -238,8 +262,8 @@ servers:
 
 import time
 
+from distutils.version import LooseVersion
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.six import string_types
 
 try:
@@ -247,23 +271,17 @@ try:
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.common import fq_name
+    from library.module_utils.network.f5.ipaddress import is_valid_ip
+    from library.module_utils.network.f5.icontrol import bigiq_version
 except ImportError:
     from ansible.module_utils.network.f5.bigiq import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.common import fq_name
-
-try:
-    import netaddr
-    HAS_NETADDR = True
-except ImportError:
-    HAS_NETADDR = False
+    from ansible.module_utils.network.f5.ipaddress import is_valid_ip
+    from ansible.module_utils.network.f5.icontrol import bigiq_version
 
 
 class Parameters(AnsibleF5Parameters):
@@ -341,11 +359,10 @@ class ModuleParameters(Parameters):
 
     @property
     def default_device_reference(self):
-        try:
+        if is_valid_ip(self.service_environment):
             # An IP address was specified
-            netaddr.IPAddress(self.service_environment)
             filter = "address+eq+'{0}'".format(self.service_environment)
-        except netaddr.core.AddrFormatError:
+        else:
             # Assume a hostname was specified
             filter = "hostname+eq+'{0}'".format(self.service_environment)
 
@@ -726,7 +743,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.want.client = self.client
         self.have = ApiParameters()
@@ -766,7 +783,15 @@ class ModuleManager(object):
             return True
         return False
 
+    def check_bigiq_version(self):
+        version = bigiq_version(self.client)
+        if LooseVersion(version) >= LooseVersion('6.1.0'):
+            raise F5ModuleError(
+                'Module supports only BIGIQ version 6.0.x or lower.'
+            )
+
     def exec_module(self):
+        self.check_bigiq_version()
         changed = False
         result = dict()
         state = self.want.state
@@ -997,18 +1022,16 @@ def main():
 
     module = AnsibleModule(
         argument_spec=spec.argument_spec,
-        supports_check_mode=spec.supports_check_mode
+        supports_check_mode=spec.supports_check_mode,
+        mutually_exclusive=spec.mutually_exclusive
     )
-    if not HAS_NETADDR:
-        module.fail_json(msg="The python netaddr module is required")
 
     try:
-        client = F5RestClient(module=module)
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

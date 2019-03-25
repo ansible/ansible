@@ -1,0 +1,4 @@
+minor_changes:
+- "docker_volume - reverted changed behavior of ``force``, which was released in Ansible 2.7.1 to 2.7.5, and Ansible 2.6.8 to 2.6.11.
+   Volumes are now only recreated if the parameters changed **and** ``force`` is set to ``true`` (instead of or). This is the behavior
+   which has been described in the documentation all the time."

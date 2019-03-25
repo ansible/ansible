@@ -1,0 +1,27 @@
+- name: test dynamic no log
+  hosts: testhost
+  gather_facts: no
+  ignore_errors: yes
+  tasks:
+    - name: no loop, task fails, dynamic no_log
+      debug:
+        msg: "SHOW {{ var_does_not_exist }}"
+      no_log: "{{ not (unsafe_show_logs|bool) }}"
+
+    - name: loop, task succeeds, dynamic does no_log
+      debug:
+        msg: "SHOW {{ item }}"
+      loop:
+        - a
+        - b
+        - c
+      no_log: "{{ not (unsafe_show_logs|bool) }}"
+
+    - name: loop, task fails, dynamic no_log
+      debug:
+        msg: "SHOW {{ var_does_not_exist }}"
+      loop:
+        - a
+        - b
+        - c
+      no_log: "{{ not (unsafe_show_logs|bool) }}"

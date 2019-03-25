@@ -35,7 +35,7 @@ echo "This is a test file for edit3" > "${TEST_FILE_EDIT3}"
 # ansible-config view
 ansible-config view
 
-# ansisle-config
+# ansible-config
 ansible-config dump --only-changed
 ansible-vault encrypt "$@" --vault-id vault-password "${TEST_FILE_EDIT3}"
 # EDITOR=./faux-editor.py ansible-vault edit "$@" "${TEST_FILE_EDIT3}"
@@ -70,7 +70,7 @@ ansible-vault view "$@" --vault-id some_unknown_vault_id@test-vault-client.py fo
 # Use linux setsid to test without a tty. No setsid if osx/bsd though...
 if [ -x "$(command -v setsid)" ]; then
     # tests related to https://github.com/ansible/ansible/issues/30993
-    CMD='ansible-playbook -vvvvv --ask-vault-pass test_vault.yml'
+    CMD='ansible-playbook -i ../../inventory -vvvvv --ask-vault-pass test_vault.yml'
     setsid sh -c "echo test-vault-password|${CMD}" < /dev/null > log 2>&1 && :
     WRONG_RC=$?
     cat log
@@ -83,21 +83,21 @@ if [ -x "$(command -v setsid)" ]; then
     [ $WRONG_RC -eq 1 ]
     cat log
 
-    setsid sh -c 'tty; echo passbhkjhword|ansible-playbook -vvvvv --ask-vault-pass test_vault.yml' < /dev/null > log 2>&1 && :
+    setsid sh -c 'tty; echo passbhkjhword|ansible-playbook -i ../../inventory -vvvvv --ask-vault-pass test_vault.yml' < /dev/null > log 2>&1 && :
     WRONG_RC=$?
     echo "rc was $WRONG_RC (1 is expected)"
     [ $WRONG_RC -eq 1 ]
     cat log
 
-    setsid sh -c 'tty; echo test-vault-password |ansible-playbook -vvvvv --ask-vault-pass test_vault.yml' < /dev/null > log 2>&1
+    setsid sh -c 'tty; echo test-vault-password |ansible-playbook -i ../../inventory -vvvvv --ask-vault-pass test_vault.yml' < /dev/null > log 2>&1
     echo $?
     cat log
 
-    setsid sh -c 'tty; echo test-vault-password|ansible-playbook -vvvvv --ask-vault-pass test_vault.yml' < /dev/null > log 2>&1
+    setsid sh -c 'tty; echo test-vault-password|ansible-playbook -i ../../inventory -vvvvv --ask-vault-pass test_vault.yml' < /dev/null > log 2>&1
     echo $?
     cat log
 
-    setsid sh -c 'tty; echo test-vault-password |ansible-playbook -vvvvv --ask-vault-pass test_vault.yml' < /dev/null > log 2>&1
+    setsid sh -c 'tty; echo test-vault-password |ansible-playbook -i ../../inventory -vvvvv --ask-vault-pass test_vault.yml' < /dev/null > log 2>&1
     echo $?
     cat log
 
@@ -105,23 +105,6 @@ if [ -x "$(command -v setsid)" ]; then
     echo $?
     cat log
 fi
-
-# old format
-ansible-vault view "$@" --vault-password-file vault-password-ansible format_1_0_AES.yml
-
-ansible-vault view "$@" --vault-password-file vault-password-ansible format_1_1_AES.yml
-
-# old format, wrong password
-echo "The wrong password tests are expected to return 1"
-ansible-vault view "$@" --vault-password-file vault-password-wrong format_1_0_AES.yml && :
-WRONG_RC=$?
-echo "rc was $WRONG_RC (1 is expected)"
-[ $WRONG_RC -eq 1 ]
-
-ansible-vault view "$@" --vault-password-file vault-password-wrong format_1_1_AES.yml && :
-WRONG_RC=$?
-echo "rc was $WRONG_RC (1 is expected)"
-[ $WRONG_RC -eq 1 ]
 
 ansible-vault view "$@" --vault-password-file vault-password-wrong format_1_1_AES256.yml && :
 WRONG_RC=$?
@@ -282,6 +265,9 @@ echo "rc was $WRONG_RC (2 is expected)"
 [ $WRONG_RC -eq 2 ]
 
 ansible-vault view "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" "${TEST_FILE}"
+
+# view file with unicode in filename
+ansible-vault view "$@" --vault-password-file vault-password vault-café.yml
 
 # view with old password file and new password file
 ansible-vault view "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" --vault-password-file vault-password "${TEST_FILE}"
@@ -504,3 +490,6 @@ ansible-playbook "$@" -i invalid_format/inventory --vault-id invalid_format/vaul
 
 EXPECTED_ERROR='Vault format unhexlify error: Odd-length string'
 ansible-playbook "$@" -i invalid_format/inventory --vault-id invalid_format/vault-secret invalid_format/broken-group-vars-tasks.yml 2>&1 | grep "${EXPECTED_ERROR}"
+
+# Run playbook with vault file with unicode in filename (https://github.com/ansible/ansible/issues/50316)
+ansible-playbook -i ../../inventory -v "$@" --vault-password-file vault-password test_utf8_value_in_filename.yml

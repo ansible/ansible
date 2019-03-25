@@ -20,9 +20,6 @@ short_description: Manage organizations in the Meraki cloud
 version_added: "2.6"
 description:
 - Allows for management of SNMP settings for Meraki.
-notes:
-- More information about the Meraki API can be found at U(https://dashboard.meraki.com/api_docs).
-- Some of the options are likely only used for developers within Meraki.
 options:
     state:
         description:
@@ -68,23 +65,88 @@ EXAMPLES = r'''
     org_name: YourOrg
     state: query
   delegate_to: localhost
+
+- name: Enable SNMPv2
+  meraki_snmp:
+    auth_key: abc12345
+    org_name: YourOrg
+    state: present
+    v2c_enabled: yes
+  delegate_to: localhost
+
+- name: Disable SNMPv2
+  meraki_snmp:
+    auth_key: abc12345
+    org_name: YourOrg
+    state: present
+    v2c_enabled: no
+  delegate_to: localhost
+
+- name: Enable SNMPv3
+  meraki_snmp:
+    auth_key: abc12345
+    org_name: YourOrg
+    state: present
+    v3_enabled: true
+    v3_auth_mode: SHA
+    v3_auth_pass: ansiblepass
+    v3_priv_mode: AES128
+    v3_priv_pass: ansiblepass
+    peer_ips: 192.0.1.1;192.0.1.2
+  delegate_to: localhost
 '''
 
 RETURN = r'''
 data:
-    description: Information about queried or updated object.
-    type: list
-    returned: info
-    sample:
-      "data": {
-          "hostname": "n110.meraki.com",
-          "peer_ips": null,
-          "port": 16100,
-          "v2c_enabled": false,
-          "v3_auth_mode": null,
-          "v3_enabled": false,
-          "v3_priv_mode": null
-      }
+    description: Information about SNMP settings.
+    type: complex
+    returned: always
+    contains:
+        hostname:
+            description: Hostname of SNMP server.
+            returned: success
+            type: str
+            sample: n1.meraki.com
+        peerIps:
+            description: Semi-colon delimited list of IPs which can poll SNMP information.
+            returned: success
+            type: str
+            sample: 192.0.1.1
+        port:
+            description: Port number of SNMP.
+            returned: success
+            type: str
+            sample: 16100
+        v2cEnabled:
+            description: Shows enabled state of SNMPv2c
+            returned: success
+            type: bool
+            sample: true
+        v3Enabled:
+            description: Shows enabled state of SNMPv3
+            returned: success
+            type: bool
+            sample: true
+        v3AuthMode:
+            description: The SNMP version 3 authentication mode either MD5 or SHA.
+            returned: success
+            type: str
+            sample: SHA
+        v3PrivMode:
+            description: The SNMP version 3 privacy mode DES or AES128.
+            returned: success
+            type: str
+            sample: AES128
+        v2CommunityString:
+            description: Automatically generated community string for SNMPv2c.
+            returned: When SNMPv2c is enabled.
+            type: str
+            sample: o/8zd-JaSb
+        v3User:
+            description: Automatically generated username for SNMPv3.
+            returned: When SNMPv3c is enabled.
+            type: str
+            sample: o/8zd-JaSb
 '''
 
 import os
@@ -99,7 +161,8 @@ def get_snmp(meraki, org_id):
     r = meraki.request(path,
                        method='GET',
                        )
-    return json.loads(r)
+    if meraki.status == 200:
+        return r
 
 
 def set_snmp(meraki, org_id):
@@ -118,7 +181,7 @@ def set_snmp(meraki, org_id):
                 meraki.params['v3_auth_pass'] is None or
                 meraki.params['v3_priv_mode'] is None or
                 meraki.params['v3_priv_pass'] is None):
-                    meraki.fail_json(msg='v3_auth_mode, v3_auth_pass, v3_priv_mode, and v3_auth_pass are required')
+            meraki.fail_json(msg='v3_auth_mode, v3_auth_pass, v3_priv_mode, and v3_auth_pass are required')
         payload = {'v3Enabled': meraki.params['v3_enabled'],
                    'v3AuthMode': meraki.params['v3_auth_mode'].upper(),
                    'v3AuthPass': meraki.params['v3_auth_pass'],
@@ -143,8 +206,9 @@ def set_snmp(meraki, org_id):
         r = meraki.request(path,
                            method='PUT',
                            payload=json.dumps(payload))
-        meraki.result['changed'] = True
-        return json.loads(r)
+        if meraki.status == 200:
+            meraki.result['changed'] = True
+            return r
     return -1
 
 
@@ -205,9 +269,12 @@ def main():
 
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
-    org_id = meraki.params['org_id']
 
-    if org_id:
+    if not meraki.params['org_name'] and not meraki.params['org_id']:
+        meraki.fail_json(msg='org_name or org_id is required')
+
+    org_id = meraki.params['org_id']
+    if org_id is None:
         org_id = meraki.get_org_id(meraki.params['org_name'])
 
     if meraki.params['state'] == 'query':

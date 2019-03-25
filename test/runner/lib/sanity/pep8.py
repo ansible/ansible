@@ -15,6 +15,8 @@ from lib.util import (
     SubprocessError,
     display,
     run_command,
+    read_lines_without_comments,
+    parse_to_list_of_dict,
 )
 
 from lib.config import (
@@ -37,17 +39,14 @@ class Pep8Test(SanitySingleVersion):
         :type targets: SanityTargets
         :rtype: TestResult
         """
-        with open(PEP8_SKIP_PATH, 'r') as skip_fd:
-            skip_paths = skip_fd.read().splitlines()
+        skip_paths = read_lines_without_comments(PEP8_SKIP_PATH)
+        legacy_paths = read_lines_without_comments(PEP8_LEGACY_PATH)
 
-        with open(PEP8_LEGACY_PATH, 'r') as legacy_fd:
-            legacy_paths = legacy_fd.read().splitlines()
+        legacy_ignore_file = 'test/sanity/pep8/legacy-ignore.txt'
+        legacy_ignore = set(read_lines_without_comments(legacy_ignore_file, remove_blank_lines=True))
 
-        with open('test/sanity/pep8/legacy-ignore.txt', 'r') as ignore_fd:
-            legacy_ignore = set(ignore_fd.read().splitlines())
-
-        with open('test/sanity/pep8/current-ignore.txt', 'r') as ignore_fd:
-            current_ignore = sorted(ignore_fd.read().splitlines())
+        current_ignore_file = 'test/sanity/pep8/current-ignore.txt'
+        current_ignore = sorted(read_lines_without_comments(current_ignore_file, remove_blank_lines=True))
 
         skip_paths_set = set(skip_paths)
         legacy_paths_set = set(legacy_paths)
@@ -82,7 +81,7 @@ class Pep8Test(SanitySingleVersion):
         if stdout:
             pattern = '^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): (?P<code>[WE][0-9]{3}) (?P<message>.*)$'
 
-            results = [re.search(pattern, line).groupdict() for line in stdout.splitlines()]
+            results = parse_to_list_of_dict(pattern, stdout)
         else:
             results = []
 
@@ -105,6 +104,9 @@ class Pep8Test(SanitySingleVersion):
 
         for path in legacy_paths:
             line += 1
+
+            if not path:
+                continue
 
             if not os.path.exists(path):
                 # Keep files out of the list which no longer exist in the repo.
@@ -132,6 +134,9 @@ class Pep8Test(SanitySingleVersion):
 
         for path in skip_paths:
             line += 1
+
+            if not path:
+                continue
 
             if not os.path.exists(path):
                 # Keep files out of the list which no longer exist in the repo.

@@ -25,7 +25,7 @@ import json
 
 from contextlib import contextmanager
 from io import BytesIO, StringIO
-from ansible.compat.tests import unittest
+from units.compat import unittest
 from ansible.module_utils.six import PY3
 from ansible.module_utils._text import to_bytes
 
@@ -77,7 +77,7 @@ def swap_stdout():
 class ModuleTestCase(unittest.TestCase):
     def setUp(self, module_args=None):
         if module_args is None:
-            module_args = {}
+            module_args = {'_ansible_remote_tmp': '/tmp', '_ansible_keep_remote_files': False}
 
         args = json.dumps(dict(ANSIBLE_MODULE_ARGS=module_args))
 

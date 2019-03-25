@@ -109,7 +109,7 @@ images:
             sample: 153
         name:
             description: image name
-            type: string
+            type: str
             sample: app1
         group_id:
             description: image's group id
@@ -117,7 +117,7 @@ images:
             sample: 1
         group_name:
             description: image's group name
-            type: string
+            type: str
             sample: one-users
         owner_id:
             description: image's owner id
@@ -125,11 +125,11 @@ images:
             sample: 143
         owner_name:
             description: image's owner name
-            type: string
+            type: str
             sample: ansible-test
         state:
             description: state of image instance
-            type: string
+            type: str
             sample: READY
         used:
             description: is image in use
@@ -157,6 +157,7 @@ def get_all_images(client):
     pool.info(filter=-2)
 
     return pool
+
 
 IMAGE_STATES = ['INIT', 'READY', 'USED', 'DISABLED', 'LOCKED', 'ERROR', 'CLONE', 'DELETE', 'USED_PERS', 'LOCKED_USED', 'LOCKED_USED_PERS']
 

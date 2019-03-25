@@ -1,15 +1,22 @@
 ---
-- name: Toggle feature nxapi - Enable
+- name: Enable Feature Privilege
   nxos_config:
     lines:
-      - feature nxapi
       - feature privilege
   connection: network_cli
   ignore_errors: yes
 
-- name: Set nxapi to default state
+- name: Enable Feature NXAPI
   nxos_nxapi:
+    state: present
   connection: network_cli
+
+- name: Enable lldp
+  nxos_config:
+    lines:
+      - feature lldp
+  connection: network_cli
+  ignore_errors: yes
 
 # Gather the list of interfaces on this device and make the list
 # available for integration tests that need them.
@@ -59,8 +66,12 @@
 - set_fact: chassis_type="{{ nxos_inventory_output.stdout_lines[0]['TABLE_inv']['ROW_inv'][0]['productid'].split('-')[1] }}"
 
 # Check if platform is fretta
-- set_fact: fretta={% for row in nxos_inventory_output.stdout_lines[0]['TABLE_inv']['ROW_inv'] if 'FM-R' in row['productid'] %}"true"{% endfor %}
-  when: platform is match("N9K")
+- set_fact: fretta={% for row in nxos_inventory_output.stdout_lines[0]['TABLE_inv']['ROW_inv'] if '-R' in row['productid'] %}"true"{% endfor %}
+  when: platform is match("N9K|N3K")
+
+# Set platform to N3K-F for fretta
+- set_fact: platform="N3K-F"
+  when: ( platform is match("N3K")) and ( fretta is search("true"))
 
 # Set platform to N9K-F for fretta
 - set_fact: platform="N9K-F"
@@ -93,6 +104,7 @@
 # 8.0(1)
 # 7.3(0)D1(1)
 # 7.0(3)IHD8(1)
+- set_fact: major_version="{{ image_version[0:3] }}"
 - set_fact: imagetag="{{ image_version[0:3] }}"
   when: image_version is search("\d\.\d\(\d\)")
 - set_fact: imagetag="{{ image_version[6:8] }}"

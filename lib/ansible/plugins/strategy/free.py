@@ -20,11 +20,13 @@ __metaclass__ = type
 
 DOCUMENTATION = '''
     strategy: free
-    short_description: Executes tasks on each host independently
+    short_description: Executes tasks without waiting for all hosts
     description:
-        - Task execution is as fast as possible per host in batch as defined by C(serial) (default all).
-          Ansible will not wait for other hosts to finish the current task before queuing the next task for a host that has finished.
-          Once a host is done with the play, it opens it's slot to a new host that was waiting to start.
+        - Task execution is as fast as possible per batch as defined by C(serial) (default all).
+          Ansible will not wait for other hosts to finish the current task before queuing more tasks for other hosts.
+          All hosts are still attempted for the current task, but it prevents blocking new tasks for hosts that have already finished.
+        - With the free strategy, unlike the default linear strategy, a host that is slow or stuck on a specific task
+          won't hold up the rest of the hosts and tasks.
     version_added: "2.0"
     author: Ansible Core Team
 '''
@@ -38,16 +40,25 @@ from ansible.plugins.loader import action_loader
 from ansible.plugins.strategy import StrategyBase
 from ansible.template import Templar
 from ansible.module_utils._text import to_text
+from ansible.utils.display import Display
 
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class StrategyModule(StrategyBase):
+
+    def _filter_notified_hosts(self, notified_hosts):
+        '''
+        Filter notified hosts accordingly to strategy
+        '''
+
+        # We act only on hosts that are ready to flush handlers
+        return [host for host in notified_hosts
+                if host in self._flushed_hosts and self._flushed_hosts[host]]
+
+    def __init__(self, tqm):
+        super(StrategyModule, self).__init__(tqm)
+        self._host_pinned = False
 
     def run(self, iterator, play_context):
         '''
@@ -67,6 +78,9 @@ class StrategyModule(StrategyBase):
         last_host = 0
 
         result = self._tqm.RUN_OK
+
+        # start with all workers being counted as being free
+        workers_free = len(self._workers)
 
         work_to_do = True
         while work_to_do and not self._tqm._terminated:
@@ -123,7 +137,7 @@ class StrategyModule(StrategyBase):
                         try:
                             task.name = to_text(templar.template(task.name, fail_on_undefined=False), nonstring='empty')
                             display.debug("done templating", host=host_name)
-                        except:
+                        except Exception:
                             # just ignore any errors during task name templating,
                             # we don't care if it just shows the raw name
                             display.debug("templating failed for some reason", host=host_name)
@@ -158,9 +172,17 @@ class StrategyModule(StrategyBase):
                                                     "as tasks are executed independently on each host")
                                 self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
                                 self._queue_task(host, task, task_vars, play_context)
+                                # each task is counted as a worker being busy
+                                workers_free -= 1
                                 del task_vars
                     else:
                         display.debug("%s is blocked, skipping for now" % host_name)
+
+                # all workers have tasks to do (and the current host isn't done with the play).
+                # loop back to starting host and break out
+                if self._host_pinned and workers_free == 0 and work_to_do:
+                    last_host = starting_host
+                    break
 
                 # move on to the next host and make sure we
                 # haven't gone past the end of our hosts list
@@ -174,6 +196,9 @@ class StrategyModule(StrategyBase):
 
             results = self._process_pending_results(iterator)
             host_results.extend(results)
+
+            # each result is counted as a worker being free again
+            workers_free += len(results)
 
             self.update_active_connections(results)
 
@@ -200,18 +225,17 @@ class StrategyModule(StrategyBase):
                                 variable_manager=self._variable_manager,
                                 loader=self._loader,
                             )
-                            self._tqm.update_handler_list([handler for handler_block in handler_blocks for handler in handler_block.block])
                         else:
                             new_blocks = self._load_included_file(included_file, iterator=iterator)
                     except AnsibleError as e:
                         for host in included_file._hosts:
                             iterator.mark_host_failed(host)
-                        display.warning(str(e))
+                        display.warning(to_text(e))
                         continue
 
                     for new_block in new_blocks:
-                        task_vars = self._variable_manager.get_vars(play=iterator._play, task=included_file._task)
-                        final_block = new_block.filter_tagged_tasks(play_context, task_vars)
+                        task_vars = self._variable_manager.get_vars(play=iterator._play, task=new_block._parent)
+                        final_block = new_block.filter_tagged_tasks(task_vars)
                         for host in hosts_left:
                             if host in included_file._hosts:
                                 all_blocks[host].append(final_block)

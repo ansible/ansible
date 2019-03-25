@@ -22,7 +22,7 @@ __metaclass__ = type
 
 from ansible.modules.net_tools.nios import nios_network_view
 from ansible.module_utils.net_tools.nios import api
-from ansible.compat.tests.mock import patch, MagicMock, Mock
+from units.compat.mock import patch, MagicMock, Mock
 from .test_nios_module import TestNiosModule, load_fixture
 
 
@@ -75,7 +75,7 @@ class TestNiosNetworkViewModule(TestNiosModule):
         res = wapi.run('testobject', test_spec)
 
         self.assertTrue(res['changed'])
-        wapi.create_object.assert_called_once_with('testobject', {'name': 'ansible'})
+        wapi.create_object.assert_called_once_with('testobject', {'name': self.module._check_type_dict().__getitem__()})
 
     def test_nios_network_view_update_comment(self):
         self.module.params = {'provider': None, 'state': 'present', 'name': 'default',

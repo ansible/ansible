@@ -58,35 +58,39 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = '''
 - name: Enter datastore into Maintenance Mode
   vmware_datastore_maintenancemode:
-    hostname: vc_host
-    username: vc_user
-    password: vc_pass
-    datastore: datastore1
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    datastore: '{{ datastore_name }}'
     state: present
+  delegate_to: localhost
 
 - name: Enter all datastores under cluster into Maintenance Mode
   vmware_datastore_maintenancemode:
-    hostname: vc_host
-    username: vc_user
-    password: vc_pass
-    cluster_name: DC0_C0
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    cluster_name: '{{ cluster_name }}'
     state: present
+  delegate_to: localhost
 
 - name: Enter all datastores under datastore cluster into Maintenance Mode
   vmware_datastore_maintenancemode:
-    hostname: vc_host
-    username: vc_user
-    password: vc_pass
-    datastore_cluster: DSC_POD0
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    datastore_cluster: '{{ datastore_cluster_name }}'
     state: present
+  delegate_to: localhost
 
 - name: Exit datastore into Maintenance Mode
   vmware_datastore_maintenancemode:
-    hostname: vc_host
-    username: vc_user
-    password: vc_pass
-    datastore: datastore1
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    datastore: '{{ datastore_name }}'
     state: absent
+  delegate_to: localhost
 '''
 
 RETURN = '''

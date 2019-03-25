@@ -1,11 +1,17 @@
-prune hacking
 include README.rst
 include COPYING
 include SYMLINK_CACHE.json
 include requirements.txt
 include .coveragerc
+include shippable.yml
+include tox.ini
+include bin/ansible-test
 include examples/hosts
 include examples/ansible.cfg
+include examples/scripts/ConfigureRemotingForAnsible.ps1
+include examples/scripts/upgrade_to_ps3.ps1
+recursive-include lib/ansible/executor/powershell *
+recursive-include lib/ansible/module_utils/csharp *
 recursive-include lib/ansible/module_utils/powershell *
 recursive-include lib/ansible/modules *
 recursive-include lib/ansible/galaxy/data *
@@ -15,6 +21,7 @@ recursive-include packaging *
 recursive-include test *
 include Makefile
 include MANIFEST.in
-include changelogs/CHANGELOG-*.rst
+include changelogs/CHANGELOG*.rst
 include contrib/README.md
 recursive-include contrib/inventory *
+exclude test/sanity/code-smell/botmeta.*

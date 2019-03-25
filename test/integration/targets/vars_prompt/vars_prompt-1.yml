@@ -1,0 +1,15 @@
+- name: Basic vars_prompt test
+  hosts: testhost
+  become: no
+  gather_facts: no
+
+  vars_prompt:
+    - name: input
+
+  tasks:
+    - assert:
+        that:
+          - input == 'some input'
+
+    - debug:
+        var: input

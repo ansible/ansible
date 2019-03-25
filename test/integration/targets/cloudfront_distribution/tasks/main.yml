@@ -124,7 +124,6 @@
         custom_origin_config:
           http_port: 8080
       - domain_name: "{{ resource_prefix }}2.example.com"
-      - domain_name: "{{ test_identifier }}2.example.com"
       default_root_object: index.html
       wait: yes
       state: present
@@ -178,7 +177,7 @@
     cloudfront_distribution:
       alias: "{{ cloudfront_alias }}"
       origins:
-      - domain_name: "{{ test_identifier }}2.example.com"
+      - domain_name: "{{ resource_prefix }}2.example.com"
       default_root_object: index.php
       state: present
       <<: *aws_connection_info

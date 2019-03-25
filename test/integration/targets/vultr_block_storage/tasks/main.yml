@@ -1,0 +1,111 @@
+# Copyright (c) 2018, Yanis Guenane <yanis+ansible@guenane.org>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: setup
+  vultr_block_storage:
+    name: "{{ vultr_block_storage_name }}"
+    state: absent
+  register: result
+- name: verify setup
+  assert:
+    that:
+    - result is success
+
+- name: test fail if missing name
+  vultr_block_storage:
+  register: result
+  ignore_errors: yes
+- name: verify test fail if missing name
+  assert:
+    that:
+    - result is failed
+    - 'result.msg == "missing required arguments: name"'
+
+- name: test fail if missing params for state=present
+  vultr_block_storage:
+    name: "{{ vultr_block_storage_name }}"
+  register: result
+  ignore_errors: yes
+- name: verify fail if missing params for state=present
+  assert:
+    that:
+    - result is failed
+    - 'result.msg == "state is present but all of the following are missing: size, region"'
+
+- name: test create block storage volume in check mode
+  vultr_block_storage:
+    name: "{{ vultr_block_storage_name }}"
+    size: "{{ vultr_block_storage_size }}"
+    region: "{{ vultr_block_storage_region }}"
+  register: result
+  check_mode: yes
+- name: verify test create server in check mode
+  assert:
+    that:
+    - result is changed
+
+- name: test create block storage volume
+  vultr_block_storage:
+    name: "{{ vultr_block_storage_name }}"
+    size: "{{ vultr_block_storage_size }}"
+    region: "{{ vultr_block_storage_region }}"
+  register: result
+
+- name: verify test create block storage volume
+  assert:
+    that:
+    - result is changed
+    - result.vultr_block_storage.name == "{{ vultr_block_storage_name }}"
+    - result.vultr_block_storage.region == "{{ vultr_block_storage_region }}"
+    - result.vultr_block_storage.size == 10
+
+- name: test create block storage volume idempotence
+  vultr_block_storage:
+    name: "{{ vultr_block_storage_name }}"
+    size: "{{ vultr_block_storage_size }}"
+    region: "{{ vultr_block_storage_region }}"
+  register: result
+
+- name: verify test block storage volume idempotence
+  assert:
+    that:
+    - result is not changed
+    - result.vultr_block_storage.name == "{{ vultr_block_storage_name }}"
+    - result.vultr_block_storage.region == "{{ vultr_block_storage_region }}"
+    - result.vultr_block_storage.size == 10
+
+- name: test destroy block storage volume in check mode
+  vultr_block_storage:
+    name: "{{ vultr_block_storage_name }}"
+    state: absent
+  register: result
+  check_mode: yes
+
+- name: verify test destroy block storage volume in check mode
+  assert:
+    that:
+    - result is changed
+    - result.vultr_block_storage.name == "{{ vultr_block_storage_name }}"
+
+- name: test destroy block storage volume
+  vultr_block_storage:
+    name: "{{ vultr_block_storage_name }}"
+    state: absent
+  register: result
+
+- name: verify test destroy an existing block storage volume
+  assert:
+    that:
+    - result is changed
+    - result.vultr_block_storage.name == "{{ vultr_block_storage_name }}"
+
+- name: test destroy an existing block storage volume idempotence
+  vultr_block_storage:
+    name: "{{ vultr_block_storage_name }}"
+    state: absent
+  register: result
+
+- name: verify test destroy an existing block storage volume idempotence
+  assert:
+    that:
+    - result is not changed

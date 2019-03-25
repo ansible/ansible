@@ -30,7 +30,6 @@ options:
   api_version:
     description:
       - Specific API version to be used.
-    required: yes
   provider:
     description:
       - Provider type, should be specified in no URL is given
@@ -69,10 +68,10 @@ author:
 EXAMPLES = '''
   - name: Get scaleset info
     azure_rm_resource_facts:
-      resource_group: "{{ resource_group }}"
+      resource_group: myResourceGroup
       provider: compute
       resource_type: virtualmachinescalesets
-      resource_name: "{{ scaleset_name }}"
+      resource_name: myVmss
       api_version: "2017-12-01"
 '''
 
@@ -102,38 +101,31 @@ class AzureRMResourceFacts(AzureRMModuleBase):
         # define user inputs into argument
         self.module_arg_spec = dict(
             url=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             provider=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             resource_group=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             resource_type=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             resource_name=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             subresource=dict(
                 type='list',
-                required=False,
                 default=[]
             ),
             api_version=dict(
-                type='str',
-                required=True
+                type='str'
             )
         )
         # store the results of the module operation
         self.results = dict(
-            response=None
+            response=[]
         )
         self.mgmt_client = None
         self.url = None
@@ -152,6 +144,7 @@ class AzureRMResourceFacts(AzureRMModuleBase):
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
         if self.url is None:
+            orphan = None
             rargs = dict()
             rargs['subscription'] = self.subscription_id
             rargs['resource_group'] = self.resource_group
@@ -159,19 +152,45 @@ class AzureRMResourceFacts(AzureRMModuleBase):
                 rargs['namespace'] = "Microsoft." + self.provider
             else:
                 rargs['namespace'] = self.provider
-            rargs['type'] = self.resource_type
-            rargs['name'] = self.resource_name
 
-            for i in range(len(self.subresource)):
-                rargs['child_namespace_' + str(i + 1)] = self.subresource[i].get('namespace', None)
-                rargs['child_type_' + str(i + 1)] = self.subresource[i].get('type', None)
-                rargs['child_name_' + str(i + 1)] = self.subresource[i].get('name', None)
+            if self.resource_type is not None and self.resource_name is not None:
+                rargs['type'] = self.resource_type
+                rargs['name'] = self.resource_name
+                for i in range(len(self.subresource)):
+                    resource_ns = self.subresource[i].get('namespace', None)
+                    resource_type = self.subresource[i].get('type', None)
+                    resource_name = self.subresource[i].get('name', None)
+                    if resource_type is not None and resource_name is not None:
+                        rargs['child_namespace_' + str(i + 1)] = resource_ns
+                        rargs['child_type_' + str(i + 1)] = resource_type
+                        rargs['child_name_' + str(i + 1)] = resource_name
+                    else:
+                        orphan = resource_type
+            else:
+                orphan = self.resource_type
 
             self.url = resource_id(**rargs)
 
-            # this is to fix a problem with resource_id implementation, when resource_name is not specified
-            if self.resource_type is not None and self.resource_name is None:
-                self.url += '/' + self.resource_type
+            if orphan is not None:
+                self.url += '/' + orphan
+
+        # if api_version was not specified, get latest one
+        if not self.api_version:
+            try:
+                # extract provider and resource type
+                if "/providers/" in self.url:
+                    provider = self.url.split("/providers/")[1].split("/")[0]
+                    resourceType = self.url.split(provider + "/")[1].split("/")[0]
+                    url = "/subscriptions/" + self.subscription_id + "/providers/" + provider
+                    api_versions = json.loads(self.mgmt_client.query(url, "GET", {'api-version': '2015-01-01'}, None, None, [200], 0, 0).text)
+                    for rt in api_versions['resourceTypes']:
+                        if rt['resourceType'].lower() == resourceType.lower():
+                            self.api_version = rt['apiVersions'][0]
+                            break
+                if not self.api_version:
+                    self.fail("Couldn't find api version for {0}/{1}".format(provider, resourceType))
+            except Exception as exc:
+                self.fail("Failed to obtain API version: {0}".format(str(exc)))
 
         self.results['url'] = self.url
 
@@ -180,18 +199,24 @@ class AzureRMResourceFacts(AzureRMModuleBase):
 
         header_parameters = {}
         header_parameters['Content-Type'] = 'application/json; charset=utf-8'
+        skiptoken = None
 
-        response = self.mgmt_client.query(self.url, "GET", query_parameters, header_parameters, None, [200, 404])
-
-        try:
-            response = json.loads(response.text)
-            if response is list:
-                self.results['response'] = response
-            else:
-                self.results['response'] = [response]
-        except:
-            self.results['response'] = []
-
+        while True:
+            if skiptoken:
+                query_parameters['skiptoken'] = skiptoken
+            response = self.mgmt_client.query(self.url, "GET", query_parameters, header_parameters, None, [200, 404], 0, 0)
+            try:
+                response = json.loads(response.text)
+                if isinstance(response, dict):
+                    if response.get('value'):
+                        self.results['response'] = self.results['response'] + response['value']
+                        skiptoken = response.get('nextLink')
+                    else:
+                        self.results['response'] = self.results['response'] + [response]
+            except Exception as e:
+                self.fail('Failed to parse response: ' + str(e))
+            if not skiptoken:
+                break
         return self.results
 
 

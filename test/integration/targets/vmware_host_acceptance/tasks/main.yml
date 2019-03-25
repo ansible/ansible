@@ -4,12 +4,6 @@
 
 # TODO: vcsim does not support Acceptance Level related to operations
 
-- name: store the vcenter container ip
-  set_fact:
-    vcsim: "{{ lookup('env', 'vcenter_host') }}"
-
-- debug: var=vcsim
-
 - name: Wait for Flask controller to come up online
   wait_for:
     host: "{{ vcsim }}"
@@ -61,3 +55,21 @@
 - assert:
     that:
       - host_acceptance_facts.facts is defined
+
+- name: Change acceptance level of given hosts in check mode
+  vmware_host_acceptance:
+    hostname: "{{ vcsim }}"
+    username: "{{ user }}"
+    password: "{{ passwd }}"
+    esxi_hostname: "{{ host1 }}"
+    validate_certs: no
+    acceptance_level: vmware_certified
+    state: present
+  register: host_acceptance_facts_check_mode
+  check_mode: yes
+
+- debug: var=host_acceptance_facts_check_mode
+
+- assert:
+    that:
+      - host_acceptance_facts_check_mode.facts is defined

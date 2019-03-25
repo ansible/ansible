@@ -106,7 +106,7 @@ RETURN = '''
 result:
     description: Message detailing upload result
     returned: success
-    type: string
+    type: str
     sample: "Workflow template created"
 '''
 
@@ -237,6 +237,7 @@ def main():
         module.exit_json(**result)
     except Exception as e:
         module.fail_json(msg=str(e))
+
 
 if __name__ == '__main__':
     main()

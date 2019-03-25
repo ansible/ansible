@@ -1,20 +1,8 @@
 #!/usr/bin/python
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# -*- coding: utf-8 -*-
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -289,12 +277,6 @@ def invoke(name, *args, **kwargs):
         return func(*args, **kwargs)
 
 
-def get_snapshot(module):
-    command = 'show snapshot dump {0}'.format(module.params['snapshot_name'])
-    body = execute_show_command(command, module)[0]
-    return body
-
-
 def write_on_file(content, filename, module):
     path = module.params['path']
     if path[-1] != '/':
@@ -304,7 +286,7 @@ def write_on_file(content, filename, module):
         report = open(filepath, 'w')
         report.write(content)
         report.close()
-    except:
+    except Exception:
         module.fail_json(msg="Error while writing on file.")
 
     return filepath
@@ -362,7 +344,9 @@ def main():
                 snapshot1 = module.params['snapshot1']
                 snapshot2 = module.params['snapshot2']
                 compare_option = module.params['compare_option']
-                command = 'show snapshot compare {0} {1} {2}'.format(snapshot1, snapshot2, compare_option)
+                command = 'show snapshot compare {0} {1}'.format(snapshot1, snapshot2)
+                if compare_option:
+                    command += ' {0}'.format(compare_option)
                 content = execute_show_command(command, module)[0]
                 if content:
                     write_on_file(content, comparison_results_file, module)
@@ -373,12 +357,13 @@ def main():
                 result['changed'] = True
 
             if action == 'create' and module.params['path'] and module.params['save_snapshot_locally']:
-                command = 'show snapshot | include {}'.format(module.params['snapshot_name'])
+                command = 'show snapshot dump {0} | json'.format(module.params['snapshot_name'])
                 content = execute_show_command(command, module)[0]
                 if content:
-                    write_on_file(content, module.params['snapshot_name'], module)
+                    write_on_file(str(content), module.params['snapshot_name'], module)
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

@@ -48,7 +48,7 @@
 - assert:
     that:
       - "result.changed == true"
-      - "'address 1.1.1.1/32' in result.diff.prepared"
+      - "'address 192.0.2.1/32' in result.diff.prepared"
 
 - name: check device with config
   junos_config:
@@ -79,7 +79,7 @@
 - assert:
     that:
       - "result.changed == true"
-      - "'address 1.1.1.1/32' in result.diff.prepared"
+      - "'address 192.0.2.1/32' in result.diff.prepared"
 
 - name: check device with config
   junos_config:

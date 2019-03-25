@@ -1,0 +1,133 @@
+# test code for the svn module
+# (c) 2014, Michael DeHaan <michael.dehaan@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# checks out every branch so using a small repo
+
+- name: initial checkout
+  subversion:
+    repo: '{{ subversion_repo_url }}'
+    dest: '{{ subversion_test_dir }}/svn'
+  register: subverted
+
+- name: check if dir was checked out
+  stat:
+    path: '{{ subversion_test_dir }}/svn'
+  register: subverted_result
+
+# FIXME: the before/after logic here should be fixed to make them hashes, see GitHub 6078
+# looks like this: {
+#        "after": [
+#            "Revision: 9",
+#            "URL: https://github.com/jimi-c/test_role"
+#        ],
+#        "before": null,
+#        "changed": true,
+#        "item": ""
+# }
+- name: verify information about the initial clone
+  assert:
+    that:
+      - "'after' in subverted"
+      - "subverted.after.1 == 'URL: ' ~ subversion_repo_url"
+      - "not subverted.before"
+      - "subverted.changed"
+      - subverted_result.stat.exists
+
+- name: repeated checkout
+  subversion:
+    repo: '{{ subversion_repo_url }}'
+    dest: '{{ subversion_test_dir }}/svn'
+  register: subverted2
+
+- name: verify on a reclone things are marked unchanged
+  assert:
+    that:
+      - "not subverted2.changed"
+
+- name: check for tags
+  stat: path={{ subversion_test_dir }}/svn/tags
+  register: tags
+
+- name: check for trunk
+  stat: path={{ subversion_test_dir }}/svn/trunk
+  register: trunk
+
+- name: check for branches
+  stat: path={{ subversion_test_dir }}/svn/branches
+  register: branches
+
+- name: assert presence of tags/trunk/branches
+  assert:
+    that:
+      - "tags.stat.isdir"
+      - "trunk.stat.isdir"
+      - "branches.stat.isdir"
+
+- name: remove checked out repo
+  file:
+    path: '{{ subversion_test_dir }}/svn'
+    state: absent
+
+- name: checkout with quotes in username
+  subversion:
+    repo: '{{ subversion_repo_auth_url }}'
+    dest: '{{ subversion_test_dir }}/svn'
+    username: '{{ subversion_username }}'
+    password: '{{ subversion_password }}'
+  register: subverted3
+
+- name: get result of checkout with quotes in username
+  stat:
+    path: '{{ subversion_test_dir }}/svn'
+  register: subverted3_result
+
+- name: assert checkout with quotes in username
+  assert:
+    that:
+    - subverted3 is changed
+    - subverted3_result.stat.exists
+    - subverted3_result.stat.isdir
+
+- name: checkout with export
+  subversion:
+    repo: '{{ subversion_repo_url }}'
+    dest: '{{ subversion_test_dir }}/svn-export'
+    export: True
+  register: subverted4
+
+- name: check for tags
+  stat: path={{ subversion_test_dir }}/svn-export/tags
+  register: export_tags
+
+- name: check for trunk
+  stat: path={{ subversion_test_dir }}/svn-export/trunk
+  register: export_trunk
+
+- name: check for branches
+  stat: path={{ subversion_test_dir }}/svn-export/branches
+  register: export_branches
+
+- name: assert presence of tags/trunk/branches in export
+  assert:
+    that:
+      - "export_tags.stat.isdir"
+      - "export_trunk.stat.isdir"
+      - "export_branches.stat.isdir"
+      - "subverted4.changed"
+
+# TBA: test for additional options or URL variants welcome

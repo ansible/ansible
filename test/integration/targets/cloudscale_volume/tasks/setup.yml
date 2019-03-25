@@ -1,0 +1,8 @@
+---
+- name: Create test instance
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-server'
+    flavor: '{{ cloudscale_test_flavor }}'
+    image: '{{ cloudscale_test_image }}'
+    ssh_keys: '{{ cloudscale_test_ssh_key }}'
+  register: server

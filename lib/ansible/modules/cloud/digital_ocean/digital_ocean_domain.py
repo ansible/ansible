@@ -16,9 +16,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: digital_ocean_domain
-short_description: Create/delete a DNS record in DigitalOcean
+short_description: Create/delete a DNS domain in DigitalOcean
 description:
-     - Create/delete a DNS record in DigitalOcean.
+     - Create/delete a DNS domain in DigitalOcean.
 version_added: "1.6"
 author: "Michael Gregson (@mgregson)"
 options:
@@ -36,7 +36,7 @@ options:
      - String, this is the name of the droplet - must be formatted by hostname rules, or the name of a SSH key, or the name of a domain.
   ip:
     description:
-     - The IP address to point a domain at.
+     - An 'A' record for '@' ($ORIGIN) will be created with the value 'ip'.  'ip' is an IP version 4 address.
 extends_documentation_fragment: digital_ocean.documentation
 notes:
   - Environment variables DO_OAUTH_TOKEN can be used for the oauth_token.
@@ -49,14 +49,14 @@ requirements:
 
 
 EXAMPLES = '''
-# Create a domain record
+# Create a domain
 
 - digital_ocean_domain:
     state: present
     name: my.digitalocean.domain
     ip: 127.0.0.1
 
-# Create a droplet and a corresponding domain record
+# Create a droplet and a corresponding domain
 
 - digital_ocean:
     state: present
@@ -134,10 +134,22 @@ class DoManager(DigitalOceanHelper, object):
         else:
             return json
 
-    def edit_domain_record(self):
-        params = {'name': self.domain_name}
-        resp = self.put('domains/%s/records/%s' % (self.domain_name, self.domain_id), data=params)
+    def edit_domain_record(self, record):
+        params = {'name': '@',
+                  'data': self.module.params.get('ip')}
+        resp = self.put('domains/%s/records/%s' % (self.domain_name, record['id']), data=params)
         status, json = self.jsonify(resp)
+
+        return json['domain_record']
+
+    def create_domain_record(self):
+        params = {'name': '@',
+                  'type': 'A',
+                  'data': self.module.params.get('ip')}
+
+        resp = self.post('domains/%s/records' % (self.domain_name), data=params)
+        status, json = self.jsonify(resp)
+
         return json['domain_record']
 
 
@@ -160,8 +172,11 @@ def core(module):
                 if record['name'] == "@" and record['type'] == 'A':
                     at_record = record
 
-            if not at_record['data'] == module.params.get('ip'):
-                do_manager.edit_domain_record()
+            if not at_record:
+                do_manager.create_domain_record()
+                module.exit_json(changed=True, domain=do_manager.find())
+            elif not at_record['data'] == module.params.get('ip'):
+                do_manager.edit_domain_record(at_record)
                 module.exit_json(changed=True, domain=do_manager.find())
             else:
                 module.exit_json(changed=False, domain=do_manager.domain_record())

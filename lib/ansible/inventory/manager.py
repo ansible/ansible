@@ -21,8 +21,13 @@ __metaclass__ = type
 
 import fnmatch
 import os
+import sys
 import re
 import itertools
+import traceback
+
+from operator import attrgetter
+from random import shuffle
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
@@ -32,12 +37,9 @@ from ansible.module_utils._text import to_bytes, to_text
 from ansible.parsing.utils.addresses import parse_address
 from ansible.plugins.loader import inventory_loader
 from ansible.utils.path import unfrackpath
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 IGNORED_ALWAYS = [br"^\.", b"^host_vars$", b"^group_vars$", b"^vars_plugins$"]
 IGNORED_PATTERNS = [to_bytes(x) for x in C.INVENTORY_IGNORE_PATTERNS]
@@ -183,7 +185,6 @@ class InventoryManager(object):
         for name in C.INVENTORY_ENABLED:
             plugin = inventory_loader.get(name)
             if plugin:
-                plugin.set_options()
                 self._inventory_plugins.append(plugin)
             else:
                 display.warning('Failed to load inventory plugin, skipping %s' % name)
@@ -224,7 +225,9 @@ class InventoryManager(object):
         parsed = False
         display.debug(u'Examining possible inventory source: %s' % source)
 
+        # use binary for path functions
         b_source = to_bytes(source)
+
         # process directories as a collection of inventories
         if os.path.isdir(b_source):
             display.debug(u'Searching for inventory files in directory: %s' % source)
@@ -236,9 +239,9 @@ class InventoryManager(object):
                     continue
 
                 # recursively deal with directory entries
-                b_fullpath = os.path.join(b_source, i)
-                parsed_this_one = self.parse_source(b_fullpath, cache=cache)
-                display.debug(u'parsed %s as %s' % (to_text(b_fullpath), parsed_this_one))
+                fullpath = to_text(os.path.join(b_source, i), errors='surrogate_or_strict')
+                parsed_this_one = self.parse_source(fullpath, cache=cache)
+                display.debug(u'parsed %s as %s' % (fullpath, parsed_this_one))
                 if not parsed:
                     parsed = parsed_this_one
         else:
@@ -265,28 +268,36 @@ class InventoryManager(object):
 
                 if plugin_wants:
                     try:
-                        # in case plugin fails 1/2 way we dont want partial inventory
+                        # FIXME in case plugin fails 1/2 way we have partial inventory
                         plugin.parse(self._inventory, self._loader, source, cache=cache)
+                        if getattr(plugin, '_cache', None):
+                            plugin.update_cache_if_changed()
                         parsed = True
-                        display.vvv('Parsed %s inventory source with %s plugin' % (to_text(source), plugin_name))
+                        display.vvv('Parsed %s inventory source with %s plugin' % (source, plugin_name))
                         break
                     except AnsibleParserError as e:
-                        display.debug('%s was not parsable by %s' % (to_text(source), plugin_name))
-                        failures.append({'src': source, 'plugin': plugin_name, 'exc': e})
+                        display.debug('%s was not parsable by %s' % (source, plugin_name))
+                        tb = ''.join(traceback.format_tb(sys.exc_info()[2]))
+                        failures.append({'src': source, 'plugin': plugin_name, 'exc': e, 'tb': tb})
                     except Exception as e:
-                        display.debug('%s failed to parse %s' % (plugin_name, to_text(source)))
-                        failures.append({'src': source, 'plugin': plugin_name, 'exc': AnsibleError(e)})
+                        display.debug('%s failed while attempting to parse %s' % (plugin_name, source))
+                        tb = ''.join(traceback.format_tb(sys.exc_info()[2]))
+                        failures.append({'src': source, 'plugin': plugin_name, 'exc': AnsibleError(e), 'tb': tb})
                 else:
-                    display.debug('%s did not meet %s requirements' % (to_text(source), plugin_name))
+                    display.vvv("%s declined parsing %s as it did not pass it's verify_file() method" % (plugin_name, source))
             else:
                 if not parsed and failures:
                     # only if no plugin processed files should we show errors.
                     for fail in failures:
                         display.warning(u'\n* Failed to parse %s with %s plugin: %s' % (to_text(fail['src']), fail['plugin'], to_text(fail['exc'])))
-                        if hasattr(fail['exc'], 'tb'):
-                            display.vvv(to_text(fail['exc'].tb))
+                        if 'tb' in fail:
+                            display.vvv(to_text(fail['tb']))
+                    if C.INVENTORY_ANY_UNPARSED_IS_FAILED:
+                        raise AnsibleError(u'Completely failed to parse inventory source %s' % (source))
         if not parsed:
-            display.warning("Unable to parse %s as an inventory source" % to_text(source))
+            if source != '/etc/ansible/hosts' or os.path.exists(source):
+                # only warn if NOT using the default and if using it, only if the file is present
+                display.warning("Unable to parse %s as an inventory source" % source)
 
         # clear up, jic
         self._inventory.current_source = None
@@ -365,17 +376,15 @@ class InventoryManager(object):
 
             # sort hosts list if needed (should only happen when called from strategy)
             if order in ['sorted', 'reverse_sorted']:
-                from operator import attrgetter
                 hosts = sorted(self._hosts_patterns_cache[pattern_hash][:], key=attrgetter('name'), reverse=(order == 'reverse_sorted'))
             elif order == 'reverse_inventory':
-                hosts = sorted(self._hosts_patterns_cache[pattern_hash][:], reverse=True)
+                hosts = self._hosts_patterns_cache[pattern_hash][::-1]
             else:
                 hosts = self._hosts_patterns_cache[pattern_hash][:]
                 if order == 'shuffle':
-                    from random import shuffle
                     shuffle(hosts)
                 elif order not in [None, 'inventory']:
-                    AnsibleOptionsError("Invalid 'order' specified for inventory hosts: %s" % order)
+                    raise AnsibleOptionsError("Invalid 'order' specified for inventory hosts: %s" % order)
 
         return hosts
 
@@ -546,7 +555,13 @@ class InventoryManager(object):
 
         # Display warning if specified host pattern did not match any groups or hosts
         if not results and not matching_groups and pattern != 'all':
-            display.warning("Could not match supplied host pattern, ignoring: %s" % pattern)
+            msg = "Could not match supplied host pattern, ignoring: %s" % pattern
+            display.debug(msg)
+            if C.HOST_PATTERN_MISMATCH == 'warning':
+                display.warning(msg)
+            elif C.HOST_PATTERN_MISMATCH == 'error':
+                raise AnsibleError(msg)
+            # no need to write 'ignore' state
 
         return results
 
@@ -593,7 +608,7 @@ class InventoryManager(object):
             for x in subset_patterns:
                 if x.startswith("@"):
                     fd = open(x[1:])
-                    results.extend(fd.read().split("\n"))
+                    results.extend([l.strip() for l in fd.read().split("\n")])
                     fd.close()
                 else:
                     results.append(x)

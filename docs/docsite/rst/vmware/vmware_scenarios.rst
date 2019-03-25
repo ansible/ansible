@@ -14,6 +14,11 @@ To get started, please select one of the following topics.
 .. toctree::
    :maxdepth: 2
 
+   scenario_clone_template
+   scenario_rename_vm
+   scenario_remove_vm
+   scenario_find_vm_folder
+   scenario_vmware_http
    vmware_scenario_1
 
-   
+

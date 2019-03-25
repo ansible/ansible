@@ -1,8 +1,3 @@
----
-
-- name: ensure zypper ref works
-  command: zypper -n ref
-
 - name: Delete test repo
   zypper_repository:
     name: test
@@ -15,8 +10,6 @@
     state: present
     repo: http://dl.google.com/linux/chrome/rpm/stable/x86_64
   register: zypper_result
-
-- debug: var=zypper_result
 
 - name: verify repo addition
   assert:
@@ -47,17 +40,12 @@
     that:
       - "zypper_result.changed"
 
-- name: Remove repo by name (also to not mess up later tasks)
-  zypper_repository:
-    name: test
-    state: absent
-
 - name: use refresh option
   zypper_repository:
     name: testrefresh
     refresh: no
     state: present
-    repo: http://download.opensuse.org/distribution/leap/{{ ansible_distribution_version }}/repo/oss/
+    repo: http://download.videolan.org/pub/vlc/SuSE/Leap_{{ ansible_distribution_version }}/
 
 - name: check refreshoption
   command: zypper -x lr testrefresh
@@ -72,7 +60,7 @@
     name: testprio
     priority: 55
     state: present
-    repo: http://download.opensuse.org/distribution/leap/{{ ansible_distribution_version }}/repo/oss/
+    repo: http://download.videolan.org/pub/vlc/SuSE/Leap_{{ ansible_distribution_version }}/
 
 - name: check refreshoption
   command: zypper -x lr testprio
@@ -86,35 +74,26 @@
   zypper_repository:
     name: "{{item}}"
     state: present
-    repo: http://download.opensuse.org/distribution/leap/{{ ansible_distribution_version }}/repo/oss/
+    repo: http://dl.google.com/linux/chrome/rpm/stable/x86_64
   with_items:
-    - oss1
-    - oss2
+    - chrome1
+    - chrome2
 
 - name: check repo is updated by url
-  command: zypper lr oss1
+  command: zypper lr chrome1
   register: zypper_result1
   ignore_errors: yes
 
 - name: check repo is updated by url
-  command: zypper lr oss2
+  command: zypper lr chrome2
   register: zypper_result2
 
 - assert:
     that:
-      - "zypper_result1.rc == 6"
+      - "zypper_result1.rc != 0"
       - "'not found' in zypper_result1.stderr"
       - "zypper_result2.rc == 0"
-      - "'http://download.opensuse.org/distribution/leap/{{ ansible_distribution_version }}/repo/oss/' in zypper_result2.stdout"
-
-
-- name: reset oss repo (to not break zypper later)
-  zypper_repository:
-    name: OSS
-    state: present
-    repo: http://download.opensuse.org/distribution/leap/{{ ansible_distribution_version }}/repo/oss/
-    priority: 99
-    refresh: yes
+      - "'http://dl.google.com/linux/chrome/rpm/stable/x86_64' in zypper_result2.stdout"
 
 - name: add two repos with same name
   zypper_repository:
@@ -139,9 +118,6 @@
     repo: http://download.opensuse.org/repositories/devel:/languages:/ruby/openSUSE_Leap_{{ ansible_distribution_version }}/
     state: absent
 
-- name: ensure zypper ref still works
-  command: zypper -n ref
-
 - name: "Test adding a repo with custom GPG key"
   zypper_repository:
     name: "Apache_Modules"
@@ -149,6 +125,3 @@
     priority: 100
     auto_import_keys: true
     state: "present"
-
-- name: ensure zypper ref still works
-  command: zypper -n ref

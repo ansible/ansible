@@ -17,8 +17,8 @@
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
     output_level: debug
-    state: present
     tenant: anstest
+    state: present
   register: tenant_present
 
 - name: create contract - check mode works
@@ -59,16 +59,16 @@
 - name: present assertions
   assert:
     that:
-      - present_check_mode.changed == true
+      - present_check_mode is changed
       - present_check_mode.previous == []
       - 'present_check_mode.sent == {"vzBrCP": {"attributes": {"name": "anstest", "descr": "Ansible Test"}}}'
-      - contract_present.changed == true
+      - contract_present is changed
       - contract_present.sent == present_check_mode.sent
-      - present_idempotent.changed == false
-      - present_update.changed == true
+      - present_idempotent is not changed
+      - present_update is changed
       - present_update.sent != present_update.proposed
-      - 'present_update.sent.vzBrCP.attributes.scope == "application-profile"'
-      - present_missing_param.failed == true
+      - present_update.sent.vzBrCP.attributes.scope == "application-profile"
+      - present_missing_param is failed
       - 'present_missing_param.msg == "state is present but all of the following are missing: contract"'
 
 - name: query contract
@@ -99,19 +99,19 @@
 - name: query assertions
   assert:
     that:
-      - query_contract.changed == false
+      - query_contract is not changed
       - query_contract.current | length == 1
       - '"tn-anstest/brc-anstest.json" in query_contract.url'
-      - query_tenant.changed == false
+      - query_tenant is not changed
       - query_tenant.current | length == 1
       - query_tenant.current.0.fvTenant.children | length > 1
       - '"rsp-subtree-class=vzBrCP" in query_tenant.filter_string'
       - '"tn-anstest.json" in query_tenant.url'
-      - query_name.changed == false
+      - query_name is not changed
       - query_name.current != []
-      - '"query-target-filter=eq(vzBrCP.name, \"anstest\")" in query_name.filter_string'
+      - '"query-target-filter=eq(vzBrCP.name, \"anstest\")" in query_name.filter_string|urldecode'
       - '"class/vzBrCP.json" in query_name.url'
-      - query_all.changed == false
+      - query_all is not changed
       - query_all.current | length > 1
       - '"class/vzBrCP.json" in query_all.url'
 
@@ -147,17 +147,17 @@
 - name: absent assertions
   assert:
     that:
-      - absent_check_mode.changed == true
+      - absent_check_mode is changed
       - absent_check_mode.previous != []
-      - contract_absent.changed == true
+      - contract_absent is changed
       - contract_absent.previous == absent_check_mode.previous
-      - absent_idempotent.changed == false
+      - absent_idempotent is not changed
       - absent_idempotent.previous == []
-      - absent_missing_param.failed == true
+      - absent_missing_param is failed
       - 'absent_missing_param.msg == "state is absent but all of the following are missing: tenant"'
 
 - name: cleanup tenant
   aci_tenant:
     <<: *aci_tenant_present
     state: absent
-  when: tenant_present.changed == true
+  when: tenant_present is changed

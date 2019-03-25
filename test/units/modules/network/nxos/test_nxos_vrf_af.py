@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.nxos import nxos_vrf_af
 from .nxos_module import TestNxosModule, set_module_args
 
@@ -46,18 +46,18 @@ class TestNxosVrfafModule(TestNxosModule):
         self.load_config.return_value = None
 
     def test_nxos_vrf_af_present(self):
-        set_module_args(dict(vrf='ntc', afi='ipv4', safi='unicast', state='present'))
+        set_module_args(dict(vrf='ntc', afi='ipv4', state='present'))
         result = self.execute_module(changed=True)
         self.assertEqual(sorted(result['commands']), sorted(['vrf context ntc',
                                                              'address-family ipv4 unicast']))
 
     def test_nxos_vrf_af_absent(self):
-        set_module_args(dict(vrf='ntc', afi='ipv4', safi='unicast', state='absent'))
+        set_module_args(dict(vrf='ntc', afi='ipv4', state='absent'))
         result = self.execute_module(changed=False)
         self.assertEqual(result['commands'], [])
 
     def test_nxos_vrf_af_route_target(self):
-        set_module_args(dict(vrf='ntc', afi='ipv4', safi='unicast', route_target_both_auto_evpn=True))
+        set_module_args(dict(vrf='ntc', afi='ipv4', route_target_both_auto_evpn=True))
         result = self.execute_module(changed=True)
         self.assertEqual(sorted(result['commands']), sorted(['vrf context ntc',
                                                              'address-family ipv4 unicast',

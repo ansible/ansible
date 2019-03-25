@@ -1,0 +1,7 @@
+---
+minor_changes:
+- Python-3.8 removes platform.dist() from the standard library. To maintain
+  compatibility we've switched to an alternative library, nir0s/distro, to
+  detect the distribution for fact gathering.  Distributions facts may change
+  slightly as nir0s/distro has bugfixes which the standard library's
+  platform.dist() has lacked.

@@ -1,0 +1,2 @@
+bugfixes:
+- loop - Do not evaluate a empty literal list ``[]`` as falsy, it should instead cause the task to skip ()

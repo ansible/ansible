@@ -10,13 +10,16 @@ Ansible ships with a number of handy plugins, and you can easily write your own.
 
 This section covers the various types of plugins that are included with Ansible:
 
-.. toctree:: 
+.. toctree::
    :maxdepth: 1
 
    action
+   become
    cache
    callback
+   cliconf
    connection
+   httpapi
    inventory
    lookup
    shell
@@ -32,9 +35,9 @@ This section covers the various types of plugins that are included with Ansible:
        An introduction to playbooks
    :ref:`ansible_configuration_settings`
        Ansible configuration documentation and settings
-   :doc:`../user_guide/command_line_tools`
+   :ref:`command_line_tools`
        Ansible tools, description and options
-   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

@@ -51,39 +51,37 @@ extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-# save the ESXi configuration locally by authenticating directly against the ESXi host
-- name: ESXI backup test
-  local_action:
-      module: vmware_cfg_backup
-      hostname: esxi_hostname
-      username: user
-      password: pass
-      state: saved
-      dest: /tmp/
+- name: Save the ESXi configuration locally by authenticating directly against the ESXi host
+  vmware_cfg_backup:
+    hostname: '{{ esxi_hostname }}'
+    username: '{{ esxi_username }}'
+    password: '{{ esxi_password }}'
+    state: saved
+    dest: /tmp/
+  delegate_to: localhost
 
-# save the ESXi configuration locally by authenticating against the vCenter and selecting the ESXi host
-- name: ESXI backup test
-  local_action:
-      module: vmware_cfg_backup
-      hostname: vCenter
-      esxi_hostname: esxi_hostname
-      username: user
-      password: pass
-      state: saved
-      dest: /tmp/
+- name: Save the ESXi configuration locally by authenticating against the vCenter and selecting the ESXi host
+  vmware_cfg_backup:
+    hostname: '{{ vcenter_hostname }}'
+    esxi_hostname: '{{ esxi_hostname }}'
+    username: '{{ esxi_username }}'
+    password: '{{ esxi_password }}'
+    state: saved
+    dest: /tmp/
+  delegate_to: localhost
 '''
 
 RETURN = '''
 dest_file:
     description: The full path of where the file holding the ESXi configurations was stored
     returned: changed
-    type: string
+    type: str
     sample: /tmp/configBundle-esxi.host.domain.tgz
 '''
 
 import os
 try:
-    from pyVmomi import vim, vmodl
+    from pyVmomi import vim
 except ImportError:
     pass
 
@@ -130,7 +128,7 @@ class VMwareConfigurationBackup(PyVmomi):
 
     def load_configuration(self):
         if not os.path.isfile(self.src):
-            self.module.fail_json(msg="Source file {} does not exist".format(self.src))
+            self.module.fail_json(msg="Source file {0} does not exist".format(self.src))
 
         url = self.host.configManager.firmwareSystem.QueryFirmwareConfigUploadURL()
         url = url.replace('*', self.host.name)

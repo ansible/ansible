@@ -1,0 +1,2 @@
+bugfixes:
+    - small code cleanup to make method signatures match their parents and nicer 'unsafe' handling.

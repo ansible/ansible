@@ -1,22 +1,9 @@
 #!/usr/bin/env python
-# (c) 2012, Jan-Piet Mens <jpmens () gmail.com>
-# (c) 2012-2014, Michael DeHaan <michael@ansible.com> and others
-# (c) 2017 Ansible Project
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2012, Jan-Piet Mens <jpmens () gmail.com>
+# Copyright: (c) 2012-2014, Michael DeHaan <michael@ansible.com> and others
+# Copyright: (c) 2017, Ansible Project
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -30,7 +17,9 @@ import re
 import sys
 import warnings
 from collections import defaultdict
+from copy import deepcopy
 from distutils.version import LooseVersion
+from functools import partial
 from pprint import PrettyPrinter
 
 try:
@@ -45,13 +34,17 @@ except ImportError:
 import jinja2
 import yaml
 from jinja2 import Environment, FileSystemLoader
+from jinja2.runtime import Undefined
 from six import iteritems, string_types
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common.collections import is_sequence
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.loader import fragment_loader
 from ansible.utils import plugin_docs
 from ansible.utils.display import Display
+from ansible.utils._build_helpers import update_file_if_different
 
 
 #####################################################################################
@@ -59,7 +52,7 @@ from ansible.utils.display import Display
 
 # if a module is added in a version of Ansible older than this, don't print the version added information
 # in the module documentation because everyone is assumed to be running something newer than this already.
-TOO_OLD_TO_BE_NOTABLE = 1.3
+TOO_OLD_TO_BE_NOTABLE = 2.0
 
 # Get parent directory of the directory this script lives in
 MODULEDIR = os.path.abspath(os.path.join(
@@ -83,6 +76,28 @@ DEPRECATED = b" (D)"
 
 pp = PrettyPrinter()
 display = Display()
+
+
+# kludge_ns gives us a kludgey way to set variables inside of loops that need to be visible outside
+# the loop.  We can get rid of this when we no longer need to build docs with less than Jinja-2.10
+# http://jinja.pocoo.org/docs/2.10/templates/#assignments
+# With Jinja-2.10 we can use jinja2's namespace feature, restoring the namespace template portion
+# of: fa5c0282a4816c4dd48e80b983ffc1e14506a1f5
+NS_MAP = {}
+
+
+def to_kludge_ns(key, value):
+    NS_MAP[key] = value
+    return ""
+
+
+def from_kludge_ns(key):
+    return NS_MAP[key]
+
+
+# The max filter was added in Jinja2-2.10.  Until we can require that version, use this
+def do_max(seq):
+    return max(seq)
 
 
 def rst_ify(text):
@@ -132,6 +147,36 @@ def rst_xline(width, char="="):
     return char * width
 
 
+def documented_type(text):
+    ''' Convert any python type to a type for documentation '''
+
+    if isinstance(text, Undefined):
+        return '-'
+    if text == 'str':
+        return 'string'
+    if text == 'bool':
+        return 'boolean'
+    if text == 'int':
+        return 'integer'
+    if text == 'dict':
+        return 'dictionary'
+    return text
+
+
+test_list = partial(is_sequence, include_strings=False)
+
+
+def normalize_options(value):
+    """Normalize boolean option value."""
+
+    if value.get('type') == 'bool' and 'default' in value:
+        try:
+            value['default'] = boolean(value['default'], strict=True)
+        except TypeError:
+            pass
+    return value
+
+
 def write_data(text, output_dir, outputname, module=None):
     ''' dumps module output to a file or the screen, as requested '''
 
@@ -143,10 +188,26 @@ def write_data(text, output_dir, outputname, module=None):
             os.makedirs(output_dir)
         fname = os.path.join(output_dir, outputname)
         fname = fname.replace(".py", "")
-        with open(fname, 'wb') as f:
-            f.write(to_bytes(text))
+
+        try:
+            updated = update_file_if_different(fname, to_bytes(text))
+        except Exception as e:
+            display.display("while rendering %s, an error occured: %s" % (module, e))
+            raise
+        if updated:
+            display.display("rendering: %s" % module)
     else:
         print(text)
+
+
+IS_STDOUT_TTY = sys.stdout.isatty()
+
+
+def show_progress(progress):
+    '''Show a little process indicator.'''
+    if IS_STDOUT_TTY:
+        sys.stdout.write('\r%s\r' % ("-/|\\"[progress % 4]))
+        sys.stdout.flush()
 
 
 def get_plugin_info(module_dir, limit_to=None, verbose=False):
@@ -166,6 +227,7 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
             :aliases: set of aliases to this module name
             :metadata: The modules metadata (as recorded in the module)
             :doc: The documentation structure for the module
+            :seealso: The list of dictionaries with references to related subjects
             :examples: The module's examples
             :returndocs: The module's returndocs
 
@@ -189,6 +251,7 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
         glob.glob("%s/*/*/*/*.py" % module_dir)
     )
 
+    module_index = 0
     for module_path in files:
         # Do not list __init__.py files
         if module_path.endswith('__init__.py'):
@@ -224,11 +287,25 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
         # Regular module to process
         #
 
+        module_index += 1
+        show_progress(module_index)
+
+        # use ansible core library to parse out doc metadata YAML and plaintext examples
+        doc, examples, returndocs, metadata = plugin_docs.get_docstring(module_path, fragment_loader, verbose=verbose)
+
+        if metadata and 'removed' in metadata.get('status', []):
+            continue
+
         category = categories
 
         # Start at the second directory because we don't want the "vendor"
         mod_path_only = os.path.dirname(module_path[len(module_dir):])
 
+        # Find the subcategory for each module
+        relative_dir = mod_path_only.split('/')[1]
+        sub_category = mod_path_only[len(relative_dir) + 2:]
+
+        primary_category = ''
         module_categories = []
         # build up the categories that this module belongs to
         for new_cat in mod_path_only.split('/')[1:]:
@@ -244,8 +321,19 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
         if module_categories:
             primary_category = module_categories[0]
 
-        # use ansible core library to parse out doc metadata YAML and plaintext examples
-        doc, examples, returndocs, metadata = plugin_docs.get_docstring(module_path, fragment_loader, verbose=verbose)
+        if not doc:
+            display.error("*** ERROR: DOCUMENTATION section missing for %s. ***" % module_path)
+            continue
+
+        if 'options' in doc and doc['options'] is None:
+            display.error("*** ERROR: DOCUMENTATION.options must be a dictionary/hash when used. ***")
+            pos = getattr(doc, "ansible_pos", None)
+            if pos is not None:
+                display.error("Module position: %s, %d, %d" % doc.ansible_pos)
+            doc['options'] = dict()
+
+        for key, opt in doc.get('options', {}).items():
+            doc['options'][key] = normalize_options(opt)
 
         # save all the information
         module_info[module] = {'path': module_path,
@@ -258,6 +346,7 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
                                'returndocs': returndocs,
                                'categories': module_categories,
                                'primary_category': primary_category,
+                               'sub_category': sub_category,
                                }
 
     # keep module tests out of becoming module docs
@@ -279,7 +368,7 @@ def generate_parser():
     p.add_option("-A", "--ansible-version", action="store", dest="ansible_version", default="unknown", help="Ansible version number")
     p.add_option("-M", "--module-dir", action="store", dest="module_dir", default=MODULEDIR, help="Ansible library path")
     p.add_option("-P", "--plugin-type", action="store", dest="plugin_type", default='module', help="The type of plugin (module, lookup, etc)")
-    p.add_option("-T", "--template-dir", action="store", dest="template_dir", default="hacking/templates", help="directory containing Jinja2 templates")
+    p.add_option("-T", "--template-dir", action="append", dest="template_dir", help="directory containing Jinja2 templates")
     p.add_option("-t", "--type", action='store', dest='type', choices=['rst'], default='rst', help="Document type")
     p.add_option("-o", "--output-dir", action="store", dest="output_dir", default=None, help="Output directory for module files")
     p.add_option("-I", "--includes-file", action="store", dest="includes_file", default=None, help="Create a file containing list of processed modules")
@@ -298,12 +387,22 @@ def jinja2_environment(template_dir, typ, plugin_type):
                       trim_blocks=True)
     env.globals['xline'] = rst_xline
 
+    # Can be removed (and template switched to use namespace) when we no longer need to build
+    # with <Jinja-2.10
+    env.globals['to_kludge_ns'] = to_kludge_ns
+    env.globals['from_kludge_ns'] = from_kludge_ns
+    if 'max' not in env.filters:
+        # Jinja < 2.10
+        env.filters['max'] = do_max
+
     templates = {}
     if typ == 'rst':
-        env.filters['convert_symbols_to_format'] = rst_ify
+        env.filters['rst_ify'] = rst_ify
         env.filters['html_ify'] = html_ify
         env.filters['fmt'] = rst_fmt
         env.filters['xline'] = rst_xline
+        env.filters['documented_type'] = documented_type
+        env.tests['list'] = test_list
         templates['plugin'] = env.get_template('plugin.rst.j2')
 
         if plugin_type == 'module':
@@ -334,9 +433,10 @@ def too_old(added):
 
 
 def process_plugins(module_map, templates, outputname, output_dir, ansible_version, plugin_type):
-    for module in module_map:
+    for module_index, module in enumerate(module_map):
 
-        display.display("rendering: %s" % module)
+        show_progress(module_index)
+
         fname = module_map[module]['path']
         display.vvvvv(pp.pformat(('process_plugins info: ', module_map[module])))
 
@@ -400,14 +500,14 @@ def process_plugins(module_map, templates, outputname, output_dir, ansible_versi
             for (k, v) in iteritems(doc['options']):
                 # Error out if there's no description
                 if 'description' not in doc['options'][k]:
-                    raise AnsibleError("Missing required description for option %s in %s " % (k, module))
+                    raise AnsibleError("Missing required description for parameter '%s' in '%s' " % (k, module))
 
                 # Error out if required isn't a boolean (people have been putting
                 # information on when something is required in here.  Those need
                 # to go in the description instead).
                 required_value = doc['options'][k].get('required', False)
                 if not isinstance(required_value, bool):
-                    raise AnsibleError("Invalid required value '%s' for option '%s' in '%s' (must be truthy)" % (required_value, k, module))
+                    raise AnsibleError("Invalid required value '%s' for parameter '%s' in '%s' (must be truthy)" % (required_value, k, module))
 
                 # Strip old version_added information for options
                 if 'version_added' in doc['options'][k] and too_old(doc['options'][k]['version_added']):
@@ -458,7 +558,12 @@ def process_plugins(module_map, templates, outputname, output_dir, ansible_versi
 
         display.v('about to template %s' % module)
         display.vvvvv(pp.pformat(doc))
-        text = templates['plugin'].render(doc)
+        try:
+            text = templates['plugin'].render(doc)
+        except Exception as e:
+            display.warning(msg="Could not parse %s due to %s" % (module, e))
+            continue
+
         if LooseVersion(jinja2.__version__) < LooseVersion('2.10'):
             # jinja2 < 2.10's indent filter indents blank lines.  Cleanup
             text = re.sub(' +\n', '\n', text)
@@ -467,6 +572,11 @@ def process_plugins(module_map, templates, outputname, output_dir, ansible_versi
 
 
 def process_categories(plugin_info, categories, templates, output_dir, output_name, plugin_type):
+    # For some reason, this line is changing plugin_info:
+    # text = templates['list_of_CATEGORY_modules'].render(template_data)
+    # To avoid that, make a deepcopy of the data.
+    # We should track that down and fix it at some point in the future.
+    plugin_info = deepcopy(plugin_info)
     for category in sorted(categories.keys()):
         module_map = categories[category]
         category_filename = output_name % category
@@ -491,7 +601,7 @@ def process_categories(plugin_info, categories, templates, output_dir, output_na
         write_data(text, output_dir, category_filename)
 
 
-def process_support_levels(plugin_info, templates, output_dir, plugin_type):
+def process_support_levels(plugin_info, categories, templates, output_dir, plugin_type):
     supported_by = {'Ansible Core Team': {'slug': 'core_supported',
                                           'modules': [],
                                           'output': 'core_maintained.rst',
@@ -505,7 +615,7 @@ def process_support_levels(plugin_info, templates, output_dir, plugin_type):
                                                       " Ansible Network Team<network_maintained>` in"
                                                       " a relationship similar to how the Ansible Core Team"
                                                       " maintains the Core modules."},
-                    'Ansible Partners': {'slug': 'partner_supported',
+                    'Ansible Partners': {'slug': 'certified_supported',
                                          'modules': [],
                                          'output': 'partner_maintained.rst',
                                          'blurb': """
@@ -554,9 +664,24 @@ These modules are currently shipped with Ansible, but will most likely be shippe
         else:
             raise AnsibleError('Unknown supported_by value: %s' % info['metadata']['supported_by'])
 
-    # Render the module lists
+    # Render the module lists based on category and subcategory
     for maintainers, data in supported_by.items():
+        subcategories = {}
+        subcategories[''] = {}
+        for module in data['modules']:
+            new_cat = plugin_info[module]['sub_category']
+            category = plugin_info[module]['primary_category']
+            if category not in subcategories:
+                subcategories[category] = {}
+                subcategories[category][''] = {}
+                subcategories[category]['']['_modules'] = []
+            if new_cat not in subcategories[category]:
+                subcategories[category][new_cat] = {}
+                subcategories[category][new_cat]['_modules'] = []
+            subcategories[category][new_cat]['_modules'].append(module)
+
         template_data = {'maintainers': maintainers,
+                         'subcategories': subcategories,
                          'modules': data['modules'],
                          'slug': data['slug'],
                          'module_info': plugin_info,
@@ -582,9 +707,13 @@ def main():
     # INIT
     p = generate_parser()
     (options, args) = p.parse_args()
+    if not options.template_dir:
+        options.template_dir = ["hacking/templates"]
     validate_options(options)
     display.verbosity = options.verbosity
     plugin_type = options.plugin_type
+
+    display.display("Evaluating %s files..." % plugin_type)
 
     # prep templating
     templates = jinja2_environment(options.template_dir, options.type, plugin_type)
@@ -610,17 +739,20 @@ def main():
 
     categories['all'] = {'_modules': plugin_info.keys()}
 
-    display.vvv(pp.pformat(categories))
-    display.vvvvv(pp.pformat(plugin_info))
+    if display.verbosity >= 3:
+        display.vvv(pp.pformat(categories))
+    if display.verbosity >= 5:
+        display.vvvvv(pp.pformat(plugin_info))
 
     # Transform the data
     if options.type == 'rst':
         display.v('Generating rst')
         for key, record in plugin_info.items():
             display.vv(key)
-            display.vvvvv(pp.pformat(('record', record)))
+            if display.verbosity >= 5:
+                display.vvvvv(pp.pformat(('record', record)))
             if record.get('doc', None):
-                short_desc = record['doc']['short_description']
+                short_desc = record['doc']['short_description'].rstrip('.')
                 if short_desc is None:
                     display.warning('short_description for %s is None' % key)
                     short_desc = ''
@@ -644,7 +776,7 @@ def main():
         process_categories(plugin_info, categories, templates, output_dir, category_list_name_template, plugin_type)
 
         # Render all the categories for modules
-        process_support_levels(plugin_info, templates, output_dir, plugin_type)
+        process_support_levels(plugin_info, categories, templates, output_dir, plugin_type)
 
 
 if __name__ == '__main__':

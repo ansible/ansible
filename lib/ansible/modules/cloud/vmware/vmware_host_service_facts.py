@@ -24,6 +24,7 @@ author:
 - Abhijeet Kasurde (@Akasurde)
 notes:
 - Tested on vSphere 6.5
+- If source package name is not available then fact is populated as null.
 requirements:
 - python >= 2.6
 - PyVmomi
@@ -48,6 +49,7 @@ EXAMPLES = r'''
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
     cluster_name: cluster_name
+  delegate_to: localhost
   register: cluster_host_services
 
 - name: Gather facts about ESXi Host
@@ -56,10 +58,40 @@ EXAMPLES = r'''
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
     esxi_hostname: '{{ esxi_hostname }}'
+  delegate_to: localhost
   register: host_services
 '''
 
-RETURN = r'''#
+RETURN = r'''
+host_service_facts:
+    description:
+    - dict with hostname as key and dict with host service config facts
+    returned: always
+    type: dict
+    sample: {
+        "10.76.33.226": [
+            {
+                "key": "DCUI",
+                "label": "Direct Console UI",
+                "policy": "on",
+                "required": false,
+                "running": true,
+                "uninstallable": false,
+                "source_package_name": "esx-base",
+                "source_package_desc": "This VIB contains all of the base functionality of vSphere ESXi."
+            },
+            {
+                "key": "TSM",
+                "label": "ESXi Shell",
+                "policy": "off",
+                "required": false,
+                "running": false,
+                "uninstallable": false,
+                "source_package_name": "esx-base",
+                "source_package_desc": "This VIB contains all of the base functionality of vSphere ESXi."
+            },
+        ]
+    }
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -81,16 +113,18 @@ class VmwareServiceManager(PyVmomi):
             if host_service_system:
                 services = host_service_system.serviceInfo.service
                 for service in services:
-                    host_service_facts.append(dict(key=service.key,
-                                                   label=service.label,
-                                                   required=service.required,
-                                                   uninstallable=service.uninstallable,
-                                                   running=service.running,
-                                                   policy=service.policy,
-                                                   source_package_name=service.sourcePackage.sourcePackageName,
-                                                   source_package_desc=service.sourcePackage.description,
-                                                   )
-                                              )
+                    host_service_facts.append(
+                        dict(
+                            key=service.key,
+                            label=service.label,
+                            required=service.required,
+                            uninstallable=service.uninstallable,
+                            running=service.running,
+                            policy=service.policy,
+                            source_package_name=service.sourcePackage.sourcePackageName if service.sourcePackage else None,
+                            source_package_desc=service.sourcePackage.description if service.sourcePackage else None,
+                        )
+                    )
             hosts_facts[host.name] = host_service_facts
         return hosts_facts
 
@@ -106,7 +140,8 @@ def main():
         argument_spec=argument_spec,
         required_one_of=[
             ['cluster_name', 'esxi_hostname'],
-        ]
+        ],
+        supports_check_mode=True,
     )
 
     vmware_host_service_config = VmwareServiceManager(module)

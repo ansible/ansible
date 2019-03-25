@@ -1,0 +1,3 @@
+bugfixes:
+- remote home directory - Disallow use of remote home directories that include
+  relative pathing by means of `..` (CVE-2019-3828) (https://github.com/ansible/ansible/pull/52133)

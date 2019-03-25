@@ -53,6 +53,7 @@ options:
     description:
       - Indicates whether the VPN connection uses static routes only. Static routes must be used for devices that don't support BGP.
     default: False
+    type: bool
     required: no
   tunnel_options:
     description:
@@ -108,6 +109,21 @@ options:
   purge_routes:
     description:
       - Whether or not to delete VPN connections routes that are not specified in the task.
+    type: bool
+  wait_timeout:
+    description:
+      - How long before wait gives up, in seconds.
+    default: 600
+    type: int
+    required: false
+    version_added: "2.8"
+  delay:
+    description:
+      - The time to wait before checking operation again. in seconds.
+    required: false
+    type: int
+    default: 15
+    version_added: "2.8"
 """
 
 EXAMPLES = """
@@ -228,7 +244,7 @@ routes:
             }]
 state:
   description: The status of the VPN connection.
-  type: string
+  type: str
   returned: I(state=present)
   sample:
     state: available
@@ -432,11 +448,10 @@ def find_connection_response(connections=None):
             return connections['VpnConnections'][0]
 
 
-def create_connection(connection, customer_gateway_id, static_only, vpn_gateway_id, connection_type, tunnel_options=None):
+def create_connection(connection, customer_gateway_id, static_only, vpn_gateway_id, connection_type, max_attempts, delay, tunnel_options=None):
     """ Creates a VPN connection """
 
     options = {'StaticRoutesOnly': static_only}
-
     if tunnel_options and len(tunnel_options) <= 2:
         t_opt = []
         for m in tunnel_options:
@@ -456,7 +471,10 @@ def create_connection(connection, customer_gateway_id, static_only, vpn_gateway_
                                                CustomerGatewayId=customer_gateway_id,
                                                VpnGatewayId=vpn_gateway_id,
                                                Options=options)
-        connection.get_waiter('vpn_connection_available').wait(VpnConnectionIds=[vpn['VpnConnection']['VpnConnectionId']])
+        connection.get_waiter('vpn_connection_available').wait(
+            VpnConnectionIds=[vpn['VpnConnection']['VpnConnectionId']],
+            WaiterConfig={'Delay': delay, 'MaxAttempts': max_attempts}
+        )
     except WaiterError as e:
         raise VPNConnectionException(msg="Failed to wait for VPN connection {0} to be available".format(vpn['VpnConnection']['VpnConnectionId']),
                                      exception=e)
@@ -467,11 +485,14 @@ def create_connection(connection, customer_gateway_id, static_only, vpn_gateway_
     return vpn['VpnConnection']
 
 
-def delete_connection(connection, vpn_connection_id):
+def delete_connection(connection, vpn_connection_id, delay, max_attempts):
     """ Deletes a VPN connection """
     try:
         connection.delete_vpn_connection(VpnConnectionId=vpn_connection_id)
-        connection.get_waiter('vpn_connection_deleted').wait(VpnConnectionIds=[vpn_connection_id])
+        connection.get_waiter('vpn_connection_deleted').wait(
+            VpnConnectionIds=[vpn_connection_id],
+            WaiterConfig={'Delay': delay, 'MaxAttempts': max_attempts}
+        )
     except WaiterError as e:
         raise VPNConnectionException(msg="Failed to wait for VPN connection {0} to be removed".format(vpn_connection_id),
                                      exception=e)
@@ -639,6 +660,8 @@ def ensure_present(connection, module_params, check_mode=False):
     """ Creates and adds tags to a VPN connection. If the connection already exists update tags. """
     vpn_connection = find_connection(connection, module_params)
     changed = False
+    delay = module_params.get('delay')
+    max_attempts = module_params.get('wait_timeout') // delay
 
     # No match but vpn_connection_id was specified.
     if not vpn_connection and module_params.get('vpn_connection_id'):
@@ -663,7 +686,9 @@ def ensure_present(connection, module_params, check_mode=False):
                                            static_only=module_params.get('static_only'),
                                            vpn_gateway_id=module_params.get('vpn_gateway_id'),
                                            connection_type=module_params.get('connection_type'),
-                                           tunnel_options=module_params.get('tunnel_options'))
+                                           tunnel_options=module_params.get('tunnel_options'),
+                                           max_attempts=max_attempts,
+                                           delay=delay)
         changes = check_for_update(connection, module_params, vpn_connection['VpnConnectionId'])
         _ = make_changes(connection, vpn_connection['VpnConnectionId'], changes)
 
@@ -683,8 +708,11 @@ def ensure_absent(connection, module_params, check_mode=False):
     if check_mode:
         return get_check_mode_results(connection, module_params, vpn_connection['VpnConnectionId'] if vpn_connection else None)
 
+    delay = module_params.get('delay')
+    max_attempts = module_params.get('wait_timeout') // delay
+
     if vpn_connection:
-        delete_connection(connection, vpn_connection['VpnConnectionId'])
+        delete_connection(connection, vpn_connection['VpnConnectionId'], delay=delay, max_attempts=max_attempts)
         changed = True
     else:
         changed = False
@@ -699,13 +727,15 @@ def main():
         vpn_gateway_id=dict(type='str'),
         tags=dict(default={}, type='dict'),
         connection_type=dict(default='ipsec.1', type='str'),
-        tunnel_options=dict(type='list', default=[]),
+        tunnel_options=dict(no_log=True, type='list', default=[]),
         static_only=dict(default=False, type='bool'),
         customer_gateway_id=dict(type='str'),
         vpn_connection_id=dict(type='str'),
         purge_tags=dict(type='bool', default=False),
         routes=dict(type='list', default=[]),
         purge_routes=dict(type='bool', default=False),
+        wait_timeout=dict(type='int', default=600),
+        delay=dict(type='int', default=15),
     )
     module = AnsibleAWSModule(argument_spec=argument_spec,
                               supports_check_mode=True)
@@ -726,6 +756,7 @@ def main():
             module.fail_json(msg=e.msg)
 
     module.exit_json(changed=changed, **camel_dict_to_snake_dict(response))
+
 
 if __name__ == '__main__':
     main()

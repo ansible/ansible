@@ -12,7 +12,7 @@ short_description: recursively match all files in a directory tree
 description:
 - This lookup enables you to template a complete tree of files on a target system while retaining permissions and ownership.
 - Supports directories, files and symlinks, including SELinux and other file properties
-- If you provide more than one path, it will implement a with_first_found logic, and will not process entries it already processed in previous paths.
+- If you provide more than one path, it will implement a first_found logic, and will not process entries it already processed in previous paths.
   This enables merging different trees in order of importance, or add role_vars to specific paths to influence different instances of the same role.
 options:
   _terms:
@@ -99,12 +99,9 @@ except ImportError:
 
 from ansible.plugins.lookup import LookupBase
 from ansible.module_utils._text import to_native, to_text
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 # If selinux fails to find a default, return an array of None
@@ -183,6 +180,7 @@ class LookupModule(LookupBase):
             term_file = os.path.basename(term)
             dwimmed_path = self._loader.path_dwim_relative(basedir, 'files', os.path.dirname(term))
             path = os.path.join(dwimmed_path, term_file)
+            display.debug("Walking '{0}'".format(path))
             for root, dirs, files in os.walk(path, topdown=True):
                 for entry in dirs + files:
                     relpath = os.path.relpath(os.path.join(root, entry), path)
@@ -191,6 +189,7 @@ class LookupModule(LookupBase):
                     if relpath not in [entry['path'] for entry in ret]:
                         props = file_props(path, relpath)
                         if props is not None:
+                            display.debug("  found '{0}'".format(os.path.join(path, relpath)))
                             ret.append(props)
 
         return ret

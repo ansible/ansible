@@ -39,7 +39,7 @@ def command_coverage_combine(args):
     """
     coverage = initialize_coverage(args)
 
-    modules = dict((t.module, t.path) for t in list(walk_module_targets()))
+    modules = dict((t.module, t.path) for t in list(walk_module_targets()) if t.path.endswith('.py'))
 
     coverage_files = [os.path.join(COVERAGE_DIR, f) for f in os.listdir(COVERAGE_DIR) if '=coverage.' in f]
 
@@ -55,7 +55,28 @@ def command_coverage_combine(args):
         sources = []
 
     if args.stub:
-        groups['=stub'] = dict((source, set()) for source in sources)
+        stub_group = []
+        stub_groups = [stub_group]
+        stub_line_limit = 500000
+        stub_line_count = 0
+
+        for source in sources:
+            with open(source, 'r') as source_fd:
+                source_line_count = len(source_fd.read().splitlines())
+
+            stub_group.append(source)
+            stub_line_count += source_line_count
+
+            if stub_line_count > stub_line_limit:
+                stub_line_count = 0
+                stub_group = []
+                stub_groups.append(stub_group)
+
+        for stub_index, stub_group in enumerate(stub_groups):
+            if not stub_group:
+                continue
+
+            groups['=stub-%02d' % (stub_index + 1)] = dict((source, set()) for source in stub_group)
 
     for coverage_file in coverage_files:
         counter += 1
@@ -76,7 +97,7 @@ def command_coverage_combine(args):
         try:
             original.read_file(coverage_file)
         except Exception as ex:  # pylint: disable=locally-disabled, broad-except
-            display.error(str(ex))
+            display.error(u'%s' % ex)
             continue
 
         for filename in original.measured_files():
@@ -88,10 +109,17 @@ def command_coverage_combine(args):
                 continue
 
             if '/ansible_modlib.zip/ansible/' in filename:
+                # Rewrite the module_utils path from the remote host to match the controller. Ansible 2.6 and earlier.
                 new_name = re.sub('^.*/ansible_modlib.zip/ansible/', ansible_path, filename)
                 display.info('%s -> %s' % (filename, new_name), verbosity=3)
                 filename = new_name
+            elif re.search(r'/ansible_[^/]+_payload\.zip/ansible/', filename):
+                # Rewrite the module_utils path from the remote host to match the controller. Ansible 2.7 and later.
+                new_name = re.sub(r'^.*/ansible_[^/]+_payload\.zip/ansible/', ansible_path, filename)
+                display.info('%s -> %s' % (filename, new_name), verbosity=3)
+                filename = new_name
             elif '/ansible_module_' in filename:
+                # Rewrite the module path from the remote host to match the controller. Ansible 2.6 and earlier.
                 module_name = re.sub('^.*/ansible_module_(?P<module>.*).py$', '\\g<module>', filename)
                 if module_name not in modules:
                     display.warning('Skipping coverage of unknown module: %s' % module_name)
@@ -99,8 +127,25 @@ def command_coverage_combine(args):
                 new_name = os.path.abspath(modules[module_name])
                 display.info('%s -> %s' % (filename, new_name), verbosity=3)
                 filename = new_name
+            elif re.search(r'/ansible_[^/]+_payload(_[^/]+|\.zip)/__main__\.py$', filename):
+                # Rewrite the module path from the remote host to match the controller. Ansible 2.7 and later.
+                # AnsiballZ versions using zipimporter will match the `.zip` portion of the regex.
+                # AnsiballZ versions not using zipimporter will match the `_[^/]+` portion of the regex.
+                module_name = re.sub(r'^.*/ansible_(?P<module>[^/]+)_payload(_[^/]+|\.zip)/__main__\.py$', '\\g<module>', filename).rstrip('_')
+                if module_name not in modules:
+                    display.warning('Skipping coverage of unknown module: %s' % module_name)
+                    continue
+                new_name = os.path.abspath(modules[module_name])
+                display.info('%s -> %s' % (filename, new_name), verbosity=3)
+                filename = new_name
             elif re.search('^(/.*?)?/root/ansible/', filename):
+                # Rewrite the path of code running on a remote host or in a docker container as root.
                 new_name = re.sub('^(/.*?)?/root/ansible/', root_path, filename)
+                display.info('%s -> %s' % (filename, new_name), verbosity=3)
+                filename = new_name
+            elif '/.ansible/test/tmp/' in filename:
+                # Rewrite the path of code running from an integration test temporary directory.
+                new_name = re.sub(r'^.*/\.ansible/test/tmp/[^/]+/', root_path, filename)
                 display.info('%s -> %s' % (filename, new_name), verbosity=3)
                 filename = new_name
 
@@ -115,6 +160,8 @@ def command_coverage_combine(args):
             arc_data[filename].update(arcs)
 
     output_files = []
+    invalid_path_count = 0
+    invalid_path_chars = 0
 
     for group in sorted(groups):
         arc_data = groups[group]
@@ -123,7 +170,12 @@ def command_coverage_combine(args):
 
         for filename in arc_data:
             if not os.path.isfile(filename):
-                display.warning('Invalid coverage path: %s' % filename)
+                invalid_path_count += 1
+                invalid_path_chars += len(filename)
+
+                if args.verbosity > 1:
+                    display.warning('Invalid coverage path: %s' % filename)
+
                 continue
 
             updated.add_arcs({filename: list(arc_data[filename])})
@@ -135,6 +187,9 @@ def command_coverage_combine(args):
             output_file = COVERAGE_FILE + group
             updated.write_file(output_file)
             output_files.append(output_file)
+
+    if invalid_path_count > 0:
+        display.warning('Ignored %d characters from %d invalid coverage path(s).' % (invalid_path_chars, invalid_path_count))
 
     return sorted(output_files)
 

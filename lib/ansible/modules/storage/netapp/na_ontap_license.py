@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# (c) 2018, NetApp, Inc
+# (c) 2018-2019, NetApp, Inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -9,18 +9,18 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
 
 module: na_ontap_license
 
-short_description: Manage NetApp ONTAP protocol and feature licenses
+short_description: NetApp ONTAP protocol and feature licenses
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
-author: Sumit Kumar (sumit4@netapp.com), Archana Ganesan (garchana@netapp.com), Suhas Bangalore Shekar (bsuhas@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 
 description:
 - Add or remove licenses on NetApp ONTAP.
@@ -137,7 +137,14 @@ HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 
 
 def local_cmp(a, b):
-    return (a > b) - (a < b)
+    """
+        compares with only values and not keys, keys should be the same for both dicts
+        :param a: dict 1
+        :param b: dict 2
+        :return: difference of values in both dicts
+        """
+    diff = [key for key in a if a[key] != b[key]]
+    return len(diff)
 
 
 class NetAppOntapLicense(object):

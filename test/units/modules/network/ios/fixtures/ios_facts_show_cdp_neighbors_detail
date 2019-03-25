@@ -1,0 +1,40 @@
+-------------------------
+Device ID: R2
+Entry address(es): 
+  IP address: 10.0.0.3
+Platform: cisco CSR1000V,  Capabilities: Router IGMP 
+Interface: GigabitEthernet1,  Port ID (outgoing port): GigabitEthernet2
+Holdtime : 149 sec
+
+Version :
+Cisco IOS Software [Everest], Virtual XE Software (X86_64_LINUX_IOSD-UNIVERSALK9-M), Version 16.6.4, RELEASE SOFTWARE (fc3)
+Technical Support: http://www.cisco.com/techsupport
+Copyright (c) 1986-2018 by Cisco Systems, Inc.
+Compiled Sun 08-Jul-18 04:30 by mcpre
+
+advertisement version: 2
+Duplex: full
+Management address(es): 
+  IP address: 10.0.0.3
+
+-------------------------
+Device ID: R3
+Entry address(es): 
+  IP address: 10.0.0.4
+Platform: cisco CSR1000V,  Capabilities: Router IGMP 
+Interface: GigabitEthernet1,  Port ID (outgoing port): GigabitEthernet3
+Holdtime : 149 sec
+
+Version :
+Cisco IOS Software [Everest], Virtual XE Software (X86_64_LINUX_IOSD-UNIVERSALK9-M), Version 16.6.4, RELEASE SOFTWARE (fc3)
+Technical Support: http://www.cisco.com/techsupport
+Copyright (c) 1986-2018 by Cisco Systems, Inc.
+Compiled Sun 08-Jul-18 04:30 by mcpre
+
+advertisement version: 2
+Duplex: full
+Management address(es): 
+  IP address: 10.0.0.4
+
+
+Total cdp entries displayed : 2

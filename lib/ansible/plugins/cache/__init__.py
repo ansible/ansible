@@ -1,4 +1,5 @@
 # (c) 2014, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2018, Ansible Project
 #
 # This file is part of Ansible
 #
@@ -17,29 +18,50 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import copy
 import os
 import time
 import errno
 from abc import ABCMeta, abstractmethod
-from collections import MutableMapping
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils.six import with_metaclass
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common._collections_compat import MutableMapping
+from ansible.plugins import AnsiblePlugin
 from ansible.plugins.loader import cache_loader
+from ansible.utils.display import Display
+from ansible.vars.fact_cache import FactCache as RealFactCache
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
-class BaseCacheModule(with_metaclass(ABCMeta, object)):
+class FactCache(RealFactCache):
+    """
+    This is for backwards compatibility.  Will be removed after deprecation.  It was removed as it
+    wasn't actually part of the cache plugin API.  It's actually the code to make use of cache
+    plugins, not the cache plugin itself.  Subclassing it wouldn't yield a usable Cache Plugin and
+    there was no facility to use it as anything else.
+    """
+    def __init__(self, *args, **kwargs):
+        display.deprecated('ansible.plugins.cache.FactCache has been moved to'
+                           ' ansible.vars.fact_cache.FactCache.  If you are looking for the class'
+                           ' to subclass for a cache plugin, you want'
+                           ' ansible.plugins.cache.BaseCacheModule or one of its subclasses.',
+                           version='2.12')
+        super(FactCache, self).__init__(*args, **kwargs)
+
+
+class BaseCacheModule(AnsiblePlugin):
 
     # Backwards compat only.  Just import the global display instead
     _display = display
+
+    def __init__(self, *args, **kwargs):
+        self._load_name = self.__module__.split('.')[-1]
+        super(BaseCacheModule, self).__init__()
+        self.set_options(var_options=args, direct=kwargs)
 
     @abstractmethod
     def get(self, key):
@@ -76,11 +98,15 @@ class BaseFileCacheModule(BaseCacheModule):
     """
     def __init__(self, *args, **kwargs):
 
+        try:
+            super(BaseFileCacheModule, self).__init__(*args, **kwargs)
+            self._cache_dir = self._get_cache_connection(self.get_option('_uri'))
+            self._timeout = float(self.get_option('_timeout'))
+        except KeyError:
+            self._cache_dir = self._get_cache_connection(C.CACHE_PLUGIN_CONNECTION)
+            self._timeout = float(C.CACHE_PLUGIN_TIMEOUT)
         self.plugin_name = self.__module__.split('.')[-1]
-        self._timeout = float(C.CACHE_PLUGIN_TIMEOUT)
         self._cache = {}
-        self._cache_dir = self._get_cache_connection(C.CACHE_PLUGIN_CONNECTION)
-        self._set_inventory_cache_override(**kwargs)
         self.validate_cache_connection()
 
     def _get_cache_connection(self, source):
@@ -89,12 +115,6 @@ class BaseFileCacheModule(BaseCacheModule):
                 return os.path.expanduser(os.path.expandvars(source))
             except TypeError:
                 pass
-
-    def _set_inventory_cache_override(self, **kwargs):
-        if kwargs.get('cache_timeout'):
-            self._timeout = kwargs.get('cache_timeout')
-        if kwargs.get('cache_connection'):
-            self._cache_dir = self._get_cache_connection(kwargs.get('cache_connection'))
 
     def validate_cache_connection(self):
         if not self._cache_dir:
@@ -153,7 +173,7 @@ class BaseFileCacheModule(BaseCacheModule):
     def has_expired(self, key):
 
         if self._timeout == 0:
-            return True
+            return False
 
         cachefile = "%s/%s" % (self._cache_dir, key)
         try:
@@ -247,101 +267,96 @@ class BaseFileCacheModule(BaseCacheModule):
         pass
 
 
-class FactCache(MutableMapping):
-
-    def __init__(self, *args, **kwargs):
-
-        self._plugin = cache_loader.get(C.CACHE_PLUGIN)
-        if not self._plugin:
-            raise AnsibleError('Unable to load the facts cache plugin (%s).' % (C.CACHE_PLUGIN))
-
-        # Backwards compat: self._display isn't really needed, just import the global display and use that.
-        self._display = display
-
-        # in memory cache so plugins don't expire keys mid run
+class CachePluginAdjudicator(MutableMapping):
+    """
+    Intermediary between a cache dictionary and a CacheModule
+    """
+    def __init__(self, plugin_name='memory', **kwargs):
         self._cache = {}
+        self._retrieved = {}
 
-    def __getitem__(self, key):
-        if not self._plugin.contains(key):
-            raise KeyError
-        return self._plugin.get(key)
+        self._plugin = cache_loader.get(plugin_name, **kwargs)
+        if not self._plugin:
+            raise AnsibleError('Unable to load the cache plugin (%s).' % plugin_name)
 
-    def __setitem__(self, key, value):
-        self._plugin.set(key, value)
+        self._plugin_name = plugin_name
 
-    def __delitem__(self, key):
-        self._plugin.delete(key)
+    def update_cache_if_changed(self):
+        if self._retrieved != self._cache:
+            self.set_cache()
 
-    def __contains__(self, key):
-        return self._plugin.contains(key)
+    def set_cache(self):
+        for top_level_cache_key in self._cache.keys():
+            self._plugin.set(top_level_cache_key, self._cache[top_level_cache_key])
+        self._retrieved = copy.deepcopy(self._cache)
+
+    def load_whole_cache(self):
+        for key in self._plugin.keys():
+            self._cache[key] = self._plugin.get(key)
+
+    def __repr__(self):
+        return to_text(self._cache)
 
     def __iter__(self):
-        return iter(self._plugin.keys())
+        return iter(self.keys())
 
     def __len__(self):
-        return len(self._plugin.keys())
+        return len(self.keys())
 
-    def copy(self):
-        """ Return a primitive copy of the keys and values from the cache. """
-        return dict(self)
+    def _do_load_key(self, key):
+        load = False
+        if key not in self._cache and key not in self._retrieved and self._plugin_name != 'memory':
+            if isinstance(self._plugin, BaseFileCacheModule):
+                load = True
+            elif not isinstance(self._plugin, BaseFileCacheModule) and self._plugin.contains(key):
+                # Database-backed caches don't raise KeyError for expired keys, so only load if the key is valid by checking contains()
+                load = True
+        return load
+
+    def __getitem__(self, key):
+        if self._do_load_key(key):
+            try:
+                self._cache[key] = self._plugin.get(key)
+            except KeyError:
+                pass
+            else:
+                self._retrieved[key] = self._cache[key]
+        return self._cache[key]
+
+    def get(self, key, default=None):
+        if self._do_load_key(key):
+            try:
+                self._cache[key] = self._plugin.get(key)
+            except KeyError as e:
+                pass
+            else:
+                self._retrieved[key] = self._cache[key]
+        return self._cache.get(key, default)
+
+    def items(self):
+        return self._cache.items()
+
+    def values(self):
+        return self._cache.values()
 
     def keys(self):
-        return self._plugin.keys()
+        return self._cache.keys()
+
+    def pop(self, key, *args):
+        if args:
+            return self._cache.pop(key, args[0])
+        return self._cache.pop(key)
+
+    def __delitem__(self, key):
+        del self._cache[key]
+
+    def __setitem__(self, key, value):
+        self._cache[key] = value
 
     def flush(self):
-        """ Flush the fact cache of all keys. """
-        self._plugin.flush()
-
-    def update(self, key, value):
-        host_cache = self._plugin.get(key)
-        host_cache.update(value)
-        self._plugin.set(key, host_cache)
-
-
-class InventoryFileCacheModule(BaseFileCacheModule):
-    """
-    A caching module backed by file based storage.
-    """
-    def __init__(self, plugin_name, timeout, cache_dir):
-
-        self.plugin_name = plugin_name
-        self._timeout = timeout
+        for key in self._cache.keys():
+            self._plugin.delete(key)
         self._cache = {}
-        self._cache_dir = self._get_cache_connection(cache_dir)
-        self.validate_cache_connection()
-        self._plugin = self.get_plugin(plugin_name)
 
-    def validate_cache_connection(self):
-        try:
-            super(InventoryFileCacheModule, self).validate_cache_connection()
-        except AnsibleError as e:
-            cache_connection_set = False
-        else:
-            cache_connection_set = True
-
-        if not cache_connection_set:
-            raise AnsibleError("error, '%s' inventory cache plugin requires the one of the following to be set:\n"
-                               "ansible.cfg:\n[default]: fact_caching_connection,\n[inventory]: cache_connection;\n"
-                               "Environment:\nANSIBLE_INVENTORY_CACHE_CONNECTION,\nANSIBLE_CACHE_PLUGIN_CONNECTION."
-                               "to be set to a writeable directory path" % self.plugin_name)
-
-    def get(self, cache_key):
-
-        if not self.contains(cache_key):
-            # Check if cache file exists
-            raise KeyError
-
-        return super(InventoryFileCacheModule, self).get(cache_key)
-
-    def get_plugin(self, plugin_name):
-        plugin = cache_loader.get(plugin_name, cache_connection=self._cache_dir, cache_timeout=self._timeout)
-        if not plugin:
-            raise AnsibleError('Unable to load the facts cache plugin (%s).' % (plugin_name))
-        self._cache = {}
-        return plugin
-
-    def _load(self, path):
-        return self._plugin._load(path)
-
-    def _dump(self, value, path):
-        return self._plugin._dump(value, path)
+    def update(self, value):
+        self._cache.update(value)

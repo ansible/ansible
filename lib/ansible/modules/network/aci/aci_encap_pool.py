@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -16,40 +16,49 @@ module: aci_encap_pool
 short_description: Manage encap pools (fvns:VlanInstP, fvns:VxlanInstP, fvns:VsanInstP)
 description:
 - Manage vlan, vxlan, and vsan pools on Cisco ACI fabrics.
-notes:
-- More information about the internal APIC classes B(fvns:VlanInstP), B(fvns:VxlanInstP) and B(fvns:VsanInstP) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
-author:
-- Jacob McGill (@jmcgill298)
 version_added: '2.5'
 options:
   description:
     description:
     - Description for the C(pool).
+    type: str
     aliases: [ descr ]
   pool:
     description:
     - The name of the pool.
+    type: str
     aliases: [ name, pool_name ]
   pool_allocation_mode:
     description:
     - The method used for allocating encaps to resources.
     - Only vlan and vsan support allocation modes.
+    type: str
     choices: [ dynamic, static ]
     aliases: [ allocation_mode, mode ]
   pool_type:
     description:
     - The encap type of C(pool).
+    type: str
     required: yes
     aliases: [ type ]
-    choices: [ vlan, vxlan, vsan]
+    choices: [ vlan, vsan, vxlan ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
+seealso:
+- module: aci_encap_pool_range
+- module: aci_vlan_pool
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC classes B(fvns:VlanInstP),
+               B(fvns:VxlanInstP) and B(fvns:VsanInstP)
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Jacob McGill (@jmcgill298)
 '''
 
 EXAMPLES = r'''
@@ -62,6 +71,7 @@ EXAMPLES = r'''
     pool_type: vlan
     description: Production VLANs
     state: present
+  delegate_to: localhost
 
 - name: Remove a vlan pool
   aci_encap_pool:
@@ -71,6 +81,7 @@ EXAMPLES = r'''
     pool: production
     pool_type: vlan
     state: absent
+  delegate_to: localhost
 
 - name: Query a vlan pool
   aci_encap_pool:
@@ -80,6 +91,8 @@ EXAMPLES = r'''
     pool: production
     pool_type: vlan
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all vlan pools
   aci_encap_pool:
@@ -88,6 +101,8 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     pool_type: vlan
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -122,7 +137,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -171,17 +186,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -191,14 +206,14 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
-ACI_MAPPING = dict(
+ACI_POOL_MAPPING = dict(
     vlan=dict(
         aci_class='fvnsVlanInstP',
         aci_mo='infra/vlanns-',
@@ -217,10 +232,10 @@ ACI_MAPPING = dict(
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
+        pool_type=dict(type='str', required=True, aliases=['type'], choices=['vlan', 'vsan', 'vxlan']),
         description=dict(type='str', aliases=['descr']),
         pool=dict(type='str', aliases=['name', 'pool_name']),  # Not required for querying all objects
         pool_allocation_mode=dict(type='str', aliases=['allocation_mode', 'mode'], choices=['dynamic', 'static']),
-        pool_type=dict(type='str', aliases=['type'], choices=['vlan', 'vxlan', 'vsan'], required=True),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
 
@@ -239,8 +254,8 @@ def main():
     pool_allocation_mode = module.params['pool_allocation_mode']
     state = module.params['state']
 
-    aci_class = ACI_MAPPING[pool_type]["aci_class"]
-    aci_mo = ACI_MAPPING[pool_type]["aci_mo"]
+    aci_class = ACI_POOL_MAPPING[pool_type]['aci_class']
+    aci_mo = ACI_POOL_MAPPING[pool_type]['aci_mo']
     pool_name = pool
 
     # ACI Pool URL requires the pool_allocation mode for vlan and vsan pools (ex: uni/infra/vlanns-[poolname]-static)
@@ -259,8 +274,8 @@ def main():
         root_class=dict(
             aci_class=aci_class,
             aci_rn='{0}{1}'.format(aci_mo, pool_name),
-            filter_target='eq({0}.name, "{1}")'.format(aci_class, pool),
             module_object=pool,
+            target_filter={'name': pool},
         ),
     )
 

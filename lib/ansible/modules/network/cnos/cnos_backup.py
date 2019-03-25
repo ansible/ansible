@@ -33,7 +33,8 @@ DOCUMENTATION = '''
 ---
 module: cnos_backup
 author: "Anil Kumar Muraleedharan (@amuraleedhar)"
-short_description: Backup the current running or startup configuration to a remote server on devices running Lenovo CNOS
+short_description: Backup the current running or startup configuration to a
+ remote server on devices running Lenovo CNOS
 description:
     - This module allows you to work with switch configurations. It provides a
      way to back up the running or startup configurations of a switch to a
@@ -45,9 +46,8 @@ description:
      Authentication details required by the remote server must be provided as
      well. This module uses SSH to manage network device configuration.
      The results of the operation will be placed in a directory named 'results'
-     that must be created by the user in their local directory to where the playbook is run.
-     For more information about this module from Lenovo and customizing it usage for your
-     use cases, please visit U(http://systemx.lenovofiles.com/help/index.jsp?topic=%2Fcom.lenovo.switchmgt.ansible.doc%2Fcnos_backup.html)
+     that must be created by the user in their local directory to where the
+     playbook is run.
 version_added: "2.3"
 extends_documentation_fragment: cnos
 options:
@@ -65,8 +65,8 @@ options:
             - This refers to the protocol used by the network device to
              interact with the remote server to where to upload the backup
              configuration. The choices are FTP, SFTP, TFTP, or SCP. Any other
-             protocols will result in error. If this parameter is not specified,
-             there is no default value to be used.
+             protocols will result in error. If this parameter is
+             not specified, there is no default value to be used.
         required: Yes
         default: Null
         choices: [SFTP, SCP, FTP, TFTP]
@@ -98,15 +98,12 @@ options:
         default: Null
 '''
 EXAMPLES = '''
-Tasks : The following are examples of using the module cnos_backup. These are written in the main.yml file of the tasks directory.
+Tasks : The following are examples of using the module cnos_backup.
+ These are written in the main.yml file of the tasks directory.
 ---
 - name: Test Running Config Backup
   cnos_backup:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_backup_{{ inventory_hostname }}_output.txt"
       configType: running-config
       protocol: "sftp"
@@ -117,11 +114,7 @@ Tasks : The following are examples of using the module cnos_backup. These are wr
 
 - name: Test Startup Config Backup
   cnos_backup:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_backup_{{ inventory_hostname }}_output.txt"
       configType: startup-config
       protocol: "sftp"
@@ -132,11 +125,7 @@ Tasks : The following are examples of using the module cnos_backup. These are wr
 
 - name: Test Running Config Backup -TFTP
   cnos_backup:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_backup_{{ inventory_hostname }}_output.txt"
       configType: running-config
       protocol: "tftp"
@@ -147,11 +136,7 @@ Tasks : The following are examples of using the module cnos_backup. These are wr
 
 - name: Test Startup Config Backup - TFTP
   cnos_backup:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_backup_{{ inventory_hostname }}_output.txt"
       configType: startup-config
       protocol: "tftp"
@@ -165,29 +150,79 @@ RETURN = '''
 msg:
   description: Success or failure message
   returned: always
-  type: string
+  type: str
   sample: "Config file tranferred to server"
 '''
 
 import sys
-try:
-    import paramiko
-    HAS_PARAMIKO = True
-except ImportError:
-    HAS_PARAMIKO = False
 import time
 import socket
 import array
 import json
 import time
 import re
+import os
 try:
     from ansible.module_utils.network.cnos import cnos
     HAS_LIB = True
-except:
+except Exception:
     HAS_LIB = False
 from ansible.module_utils.basic import AnsibleModule
 from collections import defaultdict
+
+
+# Utility Method to back up the running config or start up copnfig
+# This method supports only SCP or SFTP or FTP or TFTP
+# Tuning of timeout parameter is pending
+def doConfigBackUp(module, prompt, answer):
+    host = module.params['host']
+    server = module.params['serverip']
+    username = module.params['serverusername']
+    password = module.params['serverpassword']
+    protocol = module.params['protocol'].lower()
+    rcPath = module.params['rcpath']
+    configType = module.params['configType']
+    confPath = rcPath + host + '_' + configType + '.txt'
+
+    retVal = ''
+
+    # config backup command happens here
+    command = "copy " + configType + " " + protocol + " " + protocol + "://"
+    command = command + username + "@" + server + "/" + confPath
+    command = command + " vrf management\n"
+    cnos.debugOutput(command + "\n")
+    # cnos.checkForFirstTimeAccess(module, command, 'yes/no', 'yes')
+    cmd = []
+    if(protocol == "scp"):
+        scp_cmd1 = [{'command': command, 'prompt': 'timeout:', 'answer': '0'}]
+        scp_cmd2 = [{'command': '\n', 'prompt': 'Password:',
+                     'answer': password}]
+        cmd.extend(scp_cmd1)
+        cmd.extend(scp_cmd2)
+        retVal = retVal + str(cnos.run_cnos_commands(module, cmd))
+    elif(protocol == "sftp"):
+        sftp_cmd = [{'command': command, 'prompt': 'Password:',
+                     'answer': password}]
+        cmd.extend(sftp_cmd)
+        retVal = retVal + str(cnos.run_cnos_commands(module, cmd))
+    elif(protocol == "ftp"):
+        ftp_cmd = [{'command': command, 'prompt': 'Password:',
+                    'answer': password}]
+        cmd.extend(ftp_cmd)
+        retVal = retVal + str(cnos.run_cnos_commands(module, cmd))
+    elif(protocol == "tftp"):
+        command = "copy " + configType + " " + protocol + " " + protocol
+        command = command + "://" + server + "/" + confPath
+        command = command + " vrf management\n"
+        # cnos.debugOutput(command)
+        tftp_cmd = [{'command': command, 'prompt': None, 'answer': None}]
+        cmd.extend(tftp_cmd)
+        retVal = retVal + str(cnos.run_cnos_commands(module, cmd))
+    else:
+        return "Error-110"
+
+    return retVal
+# EOM
 
 
 def main():
@@ -195,9 +230,9 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             outputfile=dict(required=True),
-            host=dict(required=True),
-            username=dict(required=True),
-            password=dict(required=True, no_log=True),
+            host=dict(required=False),
+            username=dict(required=False),
+            password=dict(required=False, no_log=True),
             enablePassword=dict(required=False, no_log=True),
             deviceType=dict(required=True),
             configType=dict(required=True),
@@ -208,80 +243,22 @@ def main():
             serverpassword=dict(required=False, no_log=True),),
         supports_check_mode=False)
 
-    username = module.params['username']
-    password = module.params['password']
-    enablePassword = module.params['enablePassword']
     outputfile = module.params['outputfile']
-    host = module.params['host']
-    deviceType = module.params['deviceType']
-    configType = module.params['configType']
     protocol = module.params['protocol'].lower()
-    rcserverip = module.params['serverip']
-    rcpath = module.params['rcpath']
-    serveruser = module.params['serverusername']
-    serverpwd = module.params['serverpassword']
-    output = ""
-    timeout = 90
-    tftptimeout = 450
-
-    if not HAS_PARAMIKO:
-        module.fail_json(msg='paramiko is required for this module')
-
-    # Create instance of SSHClient object
-    remote_conn_pre = paramiko.SSHClient()
-
-    # Automatically add untrusted hosts (make sure okay for security policy in
-    # your environment)
-    remote_conn_pre.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-
-    # initiate SSH connection with the switch
-    remote_conn_pre.connect(host, username=username, password=password)
-    time.sleep(2)
-
-    # Use invoke_shell to establish an 'interactive session'
-    remote_conn = remote_conn_pre.invoke_shell()
-    time.sleep(2)
-
-    #
-    # Enable and then send command
-    output = output + cnos.waitForDeviceResponse("\n", ">", 2, remote_conn)
-
-    output = output + \
-        cnos.enterEnableModeForDevice(enablePassword, 3, remote_conn)
-
-    # Make terminal length = 0
-    output = output + \
-        cnos.waitForDeviceResponse("terminal length 0\n", "#", 2, remote_conn)
-
-    # Invoke method for config transfer from server
-    if(configType == 'running-config'):
-        if(protocol == "tftp" or protocol == "ftp"):
-            transfer_status = cnos.doRunningConfigBackUp(
-                protocol, tftptimeout, rcserverip, rcpath, serveruser,
-                serverpwd, remote_conn)
-        elif(protocol == "sftp" or protocol == "scp"):
-            transfer_status = cnos.doSecureRunningConfigBackUp(
-                protocol, timeout, rcserverip, rcpath, serveruser,
-                serverpwd, remote_conn)
-        else:
-            transfer_status = "Invalid Protocol option"
-    elif(configType == 'startup-config'):
-        if(protocol == "tftp" or protocol == "ftp"):
-            transfer_status = cnos.doStartupConfigBackUp(
-                protocol, tftptimeout, rcserverip, rcpath, serveruser,
-                serverpwd, remote_conn)
-        elif(protocol == "sftp" or protocol == "scp"):
-            transfer_status = cnos.doSecureStartupConfigBackUp(
-                protocol, timeout, rcserverip, rcpath, serveruser, serverpwd,
-                remote_conn)
-        else:
-            transfer_status = "Invalid Protocol option"
+    output = ''
+    if(protocol == "tftp" or protocol == "ftp" or
+       protocol == "sftp" or protocol == "scp"):
+        transfer_status = doConfigBackUp(module, None, None)
     else:
-        transfer_status = "Invalid configType Option"
+        transfer_status = "Invalid Protocol option"
 
     output = output + "\n Config Back Up status \n" + transfer_status
 
     # Save it into the file
+    path = outputfile.rsplit('/', 1)
+    # cnos.debugOutput(path[0])
+    if not os.path.exists(path[0]):
+        os.makedirs(path[0])
     file = open(outputfile, "a")
     file.write(output)
     file.close()

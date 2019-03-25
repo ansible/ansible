@@ -20,54 +20,65 @@ short_description: Manages instances and virtual machines on Apache CloudStack b
 description:
     - Deploy, start, update, scale, restart, restore, stop and destroy instances.
 version_added: '2.0'
-author: "René Moser (@resmo)"
+author: René Moser (@resmo)
 options:
   name:
     description:
       - Host name of the instance. C(name) can only contain ASCII letters.
       - Name will be generated (UUID) by CloudStack if not specified and can not be changed afterwards.
       - Either C(name) or C(display_name) is required.
+    type: str
   display_name:
     description:
       - Custom display name of the instances.
-      - Display name will be set to C(name) if not specified.
-      - Either C(name) or C(display_name) is required.
+      - Display name will be set to I(name) if not specified.
+      - Either I(name) or I(display_name) is required.
+    type: str
   group:
     description:
       - Group in where the new instance should be in.
+    type: str
   state:
     description:
       - State of the instance.
+    type: str
     default: present
     choices: [ deployed, started, stopped, restarted, restored, destroyed, expunged, present, absent ]
   service_offering:
     description:
       - Name or id of the service offering of the new instance.
       - If not set, first found service offering is used.
+    type: str
   cpu:
     description:
       - The number of CPUs to allocate to the instance, used with custom service offerings
+    type: int
   cpu_speed:
     description:
       - The clock speed/shares allocated to the instance, used with custom service offerings
+    type: int
   memory:
     description:
       - The memory allocated to the instance, used with custom service offerings
+    type: int
   template:
     description:
       - Name, display text or id of the template to be used for creating the new instance.
       - Required when using I(state=present).
-      - Mutually exclusive with C(ISO) option.
+      - Mutually exclusive with I(iso) option.
+    type: str
   iso:
     description:
       - Name or id of the ISO to be used for creating the new instance.
       - Required when using I(state=present).
-      - Mutually exclusive with C(template) option.
+      - Mutually exclusive with I(template) option.
+    type: str
   template_filter:
     description:
       - Name of the filter used to search for the template or iso.
-      - Used for params C(iso) or C(template) on I(state=present).
+      - Used for params I(iso) or I(template) on I(state=present).
       - The filter C(all) was added in 2.6.
+    type: str
     default: executable
     choices: [ all, featured, self, selfexecutable, sharedexecutable, executable, community ]
     aliases: [ iso_filter ]
@@ -77,80 +88,105 @@ options:
       - Name the hypervisor to be used for creating the new instance.
       - Relevant when using I(state=present), but only considered if not set on ISO/template.
       - If not set or found on ISO/template, first found hypervisor will be used.
-    choices: [ KVM, VMware, BareMetal, XenServer, LXC, HyperV, UCS, OVM, Simulator ]
+    type: str
+    choices: [ KVM, kvm, VMware, vmware, BareMetal, baremetal, XenServer, xenserver, LXC, lxc, HyperV, hyperv, UCS, ucs, OVM, ovm, Simulator, simulator ]
   keyboard:
     description:
       - Keyboard device type for the instance.
-    choices: [ de, de-ch, es, fi, fr, fr-be, fr-ch, is, it, jp, nl-be, no, pt, uk, us ]
+    type: str
+    choices: [ 'de', 'de-ch', 'es', 'fi', 'fr', 'fr-be', 'fr-ch', 'is', 'it', 'jp', 'nl-be', 'no', 'pt', 'uk', 'us' ]
   networks:
     description:
       - List of networks to use for the new instance.
+    type: list
     aliases: [ network ]
   ip_address:
     description:
       - IPv4 address for default instance's network during creation.
+    type: str
   ip6_address:
     description:
       - IPv6 address for default instance's network.
+    type: str
   ip_to_networks:
     description:
       - "List of mappings in the form I({'network': NetworkName, 'ip': 1.2.3.4})"
-      - Mutually exclusive with C(networks) option.
+      - Mutually exclusive with I(networks) option.
+    type: list
     aliases: [ ip_to_network ]
   disk_offering:
     description:
       - Name of the disk offering to be used.
+    type: str
   disk_size:
     description:
       - Disk size in GByte required if deploying instance from ISO.
+    type: int
   root_disk_size:
     description:
       - Root disk size in GByte required if deploying instance with KVM hypervisor and want resize the root disk size at startup
         (need CloudStack >= 4.4, cloud-initramfs-growroot installed and enabled in the template)
+    type: int
   security_groups:
     description:
       - List of security groups the instance to be applied to.
+    type: list
     aliases: [ security_group ]
   host:
     description:
       - Host on which an instance should be deployed or started on.
       - Only considered when I(state=started) or instance is running.
       - Requires root admin privileges.
-    version_added: 2.6
+    type: str
+    version_added: '2.6'
   domain:
     description:
       - Domain the instance is related to.
+    type: str
   account:
     description:
       - Account the instance is related to.
+    type: str
   project:
     description:
       - Name of the project the instance to be deployed in.
+    type: str
   zone:
     description:
       - Name of the zone in which the instance should be deployed.
       - If not set, default zone is used.
+    type: str
   ssh_key:
     description:
       - Name of the SSH key to be deployed on the new instance.
+    type: str
   affinity_groups:
     description:
       - Affinity groups names to be applied to the new instance.
+    type: list
     aliases: [ affinity_group ]
   user_data:
     description:
       - Optional data (ASCII) that can be sent to the instance upon a successful deployment.
       - The data will be automatically base64 encoded.
       - Consider switching to HTTP_POST by using I(CLOUDSTACK_METHOD=post) to increase the HTTP_GET size limit of 2KB to 32 KB.
+    type: str
   force:
     description:
       - Force stop/start the instance if required to apply changes, otherwise a running instance will not be changed.
     type: bool
     default: no
+  allow_root_disk_shrink:
+    description:
+      - Enables a volume shrinkage when the new size is smaller than the old one.
+    type: bool
+    default: no
+    version_added: '2.7'
   tags:
     description:
       - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
       - "If you want to delete all tags, set a empty list e.g. I(tags: [])."
+    type: list
     aliases: [ tag ]
   poll_async:
     description:
@@ -160,6 +196,7 @@ options:
   details:
     description:
       - Map to specify custom parameters.
+    type: dict
     version_added: '2.6'
 extends_documentation_fragment: cloudstack
 '''
@@ -183,7 +220,7 @@ EXAMPLES = '''
   delegate_to: localhost
 
 - name: for changing a running instance, use the 'force' parameter
-- cs_instance:
+  cs_instance:
     name: web-vm-1
     display_name: web-vm-01.example.com
     iso: Linux Debian 7 64-bit
@@ -245,104 +282,104 @@ RETURN = '''
 id:
   description: UUID of the instance.
   returned: success
-  type: string
+  type: str
   sample: 04589590-ac63-4ffc-93f5-b698b8ac38b6
 name:
   description: Name of the instance.
   returned: success
-  type: string
+  type: str
   sample: web-01
 display_name:
   description: Display name of the instance.
   returned: success
-  type: string
+  type: str
   sample: web-01
 group:
   description: Group name of the instance is related.
   returned: success
-  type: string
+  type: str
   sample: web
 created:
   description: Date of the instance was created.
   returned: success
-  type: string
+  type: str
   sample: 2014-12-01T14:57:57+0100
 password_enabled:
   description: True if password setting is enabled.
   returned: success
-  type: boolean
+  type: bool
   sample: true
 password:
   description: The password of the instance if exists.
-  returned: success
-  type: string
+  returned: if available
+  type: str
   sample: Ge2oe7Do
 ssh_key:
   description: Name of SSH key deployed to instance.
-  returned: success
-  type: string
+  returned: if available
+  type: str
   sample: key@work
 domain:
   description: Domain the instance is related to.
   returned: success
-  type: string
+  type: str
   sample: example domain
 account:
   description: Account the instance is related to.
   returned: success
-  type: string
+  type: str
   sample: example account
 project:
   description: Name of project the instance is related to.
   returned: success
-  type: string
+  type: str
   sample: Production
 default_ip:
   description: Default IP address of the instance.
   returned: success
-  type: string
+  type: str
   sample: 10.23.37.42
 default_ip6:
   description: Default IPv6 address of the instance.
-  returned: success
-  type: string
+  returned: if available
+  type: str
   sample: 2a04:c43:c00:a07:4b4:beff:fe00:74
   version_added: '2.6'
 public_ip:
   description: Public IP address with instance via static NAT rule.
-  returned: success
-  type: string
+  returned: if available
+  type: str
   sample: 1.2.3.4
 iso:
   description: Name of ISO the instance was deployed with.
-  returned: success
-  type: string
+  returned: if available
+  type: str
   sample: Debian-8-64bit
 template:
   description: Name of template the instance was deployed with.
   returned: success
-  type: string
+  type: str
   sample: Linux Debian 9 64-bit
 template_display_text:
   description: Display text of template the instance was deployed with.
   returned: success
-  type: string
+  type: str
   sample: Linux Debian 9 64-bit 200G Disk (2017-10-08-622866)
-  version_added: 2.6
+  version_added: '2.6'
 service_offering:
   description: Name of the service offering the instance has.
   returned: success
-  type: string
+  type: str
   sample: 2cpu_2gb
 zone:
   description: Name of zone the instance is in.
   returned: success
-  type: string
+  type: str
   sample: ch-gva-2
 state:
   description: State of the instance.
   returned: success
-  type: string
+  type: str
   sample: Running
 security_groups:
   description: Security groups the instance is in.
@@ -357,24 +394,29 @@ affinity_groups:
 tags:
   description: List of resource tags associated with the instance.
   returned: success
-  type: dict
+  type: list
   sample: '[ { "key": "foo", "value": "bar" } ]'
 hypervisor:
   description: Hypervisor related to this instance.
   returned: success
-  type: string
+  type: str
   sample: KVM
 host:
   description: Hostname of hypervisor an instance is running on.
   returned: success and instance is running
-  type: string
+  type: str
   sample: host-01.example.com
-  version_added: 2.6
+  version_added: '2.6'
 instance_name:
   description: Internal name of the instance (ROOT admin only).
   returned: success
-  type: string
+  type: str
   sample: i-44-3992-VM
+user-data:
+  description: Optional data sent to the instance.
+  returned: success
+  type: str
+  sample: VXNlciBkYXRhIGV4YW1wbGUK
 '''
 
 import base64
@@ -743,11 +785,32 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
 
         security_groups_changed = self.security_groups_has_changed()
 
+        # Volume data
+        args_volume_update = {}
+        root_disk_size = self.module.params.get('root_disk_size')
+        root_disk_size_changed = False
+
+        if root_disk_size is not None:
+            res = self.query_api('listVolumes', type='ROOT', virtualmachineid=instance['id'])
+            [volume] = res['volume']
+
+            size = volume['size'] >> 30
+
+            args_volume_update['id'] = volume['id']
+            args_volume_update['size'] = root_disk_size
+
+            shrinkok = self.module.params.get('allow_root_disk_shrink')
+            if shrinkok:
+                args_volume_update['shrinkok'] = shrinkok
+
+            root_disk_size_changed = root_disk_size != size
+
         changed = [
             service_offering_changed,
             instance_changed,
             security_groups_changed,
             ssh_key_changed,
+            root_disk_size_changed,
         ]
 
         if any(changed):
@@ -787,17 +850,23 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
                         instance = self.poll_job(instance, 'virtualmachine')
                         self.instance = instance
 
+                    # Root disk size
+                    if root_disk_size_changed:
+                        async_result = self.query_api('resizeVolume', **args_volume_update)
+                        self.poll_job(async_result, 'volume')
+
                     # Start VM again if it was running before
                     if instance_state == 'running' and start_vm:
                         instance = self.start_instance()
             else:
-                self.module.warn("Changes won't be applied to running instances. " +
+                self.module.warn("Changes won't be applied to running instances. "
                                  "Use force=true to allow the instance %s to be stopped/started." % instance['name'])
 
         # migrate to other host
         host_changed = all([
-            instance['state'].lower() == 'running',
-            self.module.params.get('host'),
+            instance['state'].lower() in ['starting', 'running'],
+            instance.get('hostname') is not None,
+            self.module.params.get('host') is not None,
             self.module.params.get('host') != instance.get('hostname')
         ])
         if host_changed:
@@ -807,7 +876,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
                 'hostid': self.get_host_id(),
             }
             if not self.module.check_mode:
-                res = self.query_api('migrateVirtualMachineWithVolume', **args_host)
+                res = self.query_api('migrateVirtualMachine', **args_host)
                 instance = self.poll_job(res, 'virtualmachine')
 
         return instance
@@ -966,12 +1035,12 @@ def main():
         ),
         networks=dict(type='list', aliases=['network']),
         ip_to_networks=dict(type='list', aliases=['ip_to_network']),
-        ip_address=dict(defaul=None),
-        ip6_address=dict(defaul=None),
+        ip_address=dict(),
+        ip6_address=dict(),
         disk_offering=dict(),
         disk_size=dict(type='int'),
         root_disk_size=dict(type='int'),
-        keyboard=dict(choices=['de', 'de-ch', 'es', 'fi', 'fr', 'fr-be', 'fr-ch', 'is', 'it', 'jp', 'nl-be', 'no', 'pt', 'uk', 'us']),
+        keyboard=dict(type='str', choices=['de', 'de-ch', 'es', 'fi', 'fr', 'fr-be', 'fr-ch', 'is', 'it', 'jp', 'nl-be', 'no', 'pt', 'uk', 'us']),
         hypervisor=dict(choices=CS_HYPERVISORS),
         host=dict(),
         security_groups=dict(type='list', aliases=['security_group']),
@@ -986,6 +1055,7 @@ def main():
         tags=dict(type='list', aliases=['tag']),
         details=dict(type='dict'),
         poll_async=dict(type='bool', default=True),
+        allow_root_disk_shrink=dict(type='bool', default=False),
     ))
 
     required_together = cs_required_together()

@@ -7,7 +7,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
@@ -22,7 +22,7 @@ description:
     using the Infoblox WAPI interface over REST.
   - Supports both IPV4 and IPV6 internet protocols
 requirements:
-  - infoblox_client
+  - infoblox-client
 extends_documentation_fragment: nios
 options:
   network:
@@ -48,7 +48,10 @@ options:
     suboptions:
       name:
         description:
-          - The name of the DHCP option to configure
+          - The name of the DHCP option to configure. The standard options are
+            C(router), C(router-templates), C(domain-name-servers), C(domain-name),
+            C(broadcast-address), C(broadcast-address-offset), C(dhcp-lease-time),
+            and C(dhcp6.name-servers).
       num:
         description:
           - The number of the DHCP option to configure
@@ -75,6 +78,12 @@ options:
       - Configures a text string comment to be associated with the instance
         of this object.  The provided text string will be configured on the
         object instance.
+  container:
+    description:
+      - If set to true it'll create the network container to be added or removed
+        from the system.
+    type: bool
+    version_added: '2.8'
   state:
     description:
       - Configures the intended state of the instance of the object on
@@ -98,7 +107,6 @@ EXAMPLES = '''
       username: admin
       password: admin
   connection: local
-
 - name: configure a network ipv6
   nios_network:
     network: fe80::/64
@@ -109,7 +117,6 @@ EXAMPLES = '''
       username: admin
       password: admin
   connection: local
-
 - name: set dhcp options for a network ipv4
   nios_network:
     network: 192.168.10.0/24
@@ -123,10 +130,42 @@ EXAMPLES = '''
       username: admin
       password: admin
   connection: local
-
 - name: remove a network ipv4
   nios_network:
     network: 192.168.10.0/24
+    state: absent
+    provider:
+      host: "{{ inventory_hostname_short }}"
+      username: admin
+      password: admin
+  connection: local
+- name: configure a ipv4 network container
+  nios_network:
+    network: 192.168.10.0/24
+    container: true
+    comment: test network container
+    state: present
+    provider:
+      host: "{{ inventory_hostname_short }}"
+      username: admin
+      password: admin
+  connection: local
+- name: configure a ipv6 network container
+  nios_network:
+    network: fe80::/64
+    container: true
+    comment: test network container
+    state: present
+    provider:
+      host: "{{ inventory_hostname_short }}"
+      username: admin
+      password: admin
+  connection: local
+- name: remove a ipv4 network container
+  nios_network:
+    networkr: 192.168.10.0/24
+    container: true
+    comment: test network container
     state: absent
     provider:
       host: "{{ inventory_hostname_short }}"
@@ -141,14 +180,14 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.net_tools.nios.api import WapiModule
 from ansible.module_utils.network.common.utils import validate_ip_address, validate_ip_v6_address
+from ansible.module_utils.net_tools.nios.api import NIOS_IPV4_NETWORK, NIOS_IPV6_NETWORK
+from ansible.module_utils.net_tools.nios.api import NIOS_IPV4_NETWORK_CONTAINER, NIOS_IPV6_NETWORK_CONTAINER
 
 
 def options(module):
     ''' Transforms the module argument into a valid WAPI struct
-
     This function will transform the options argument into a structure that
     is a valid WAPI structure in the format of:
-
         {
             name: <value>,
             num: <value>,
@@ -156,11 +195,9 @@ def options(module):
             use_option: <value>,
             vendor_class: <value>
         }
-
     It will remove any options that are set to None since WAPI will error on
     that condition.  It will also verify that either `name` or `num` is
     set in the structure but does not validate the values are equal.
-
     The remainder of the value validation is performed by WAPI
     '''
     options = list()
@@ -172,15 +209,40 @@ def options(module):
     return options
 
 
-def check_ip_addr_type(ip):
-    '''This function will check if the argument ip is type v4/v6 and return appropriate infoblox network type
+def check_ip_addr_type(obj_filter, ib_spec):
+    '''This function will check if the argument ip is type v4/v6 and return appropriate infoblox
+       network/networkcontainer type
     '''
-    check_ip = ip.split('/')
 
-    if validate_ip_address(check_ip[0]):
-        return 'network'
-    elif validate_ip_v6_address(check_ip[0]):
-        return 'ipv6network'
+    ip = obj_filter['network']
+    if 'container' in obj_filter and obj_filter['container']:
+        check_ip = ip.split('/')
+        del ib_spec['container']  # removing the container key from post arguments
+        del ib_spec['options']  # removing option argument as for network container it's not supported
+        if validate_ip_address(check_ip[0]):
+            return NIOS_IPV4_NETWORK_CONTAINER, ib_spec
+        elif validate_ip_v6_address(check_ip[0]):
+            return NIOS_IPV6_NETWORK_CONTAINER, ib_spec
+    else:
+        check_ip = ip.split('/')
+        del ib_spec['container']  # removing the container key from post arguments
+        if validate_ip_address(check_ip[0]):
+            return NIOS_IPV4_NETWORK, ib_spec
+        elif validate_ip_v6_address(check_ip[0]):
+            return NIOS_IPV6_NETWORK, ib_spec
+
+
+def check_vendor_specific_dhcp_option(module, ib_spec):
+    '''This function will check if the argument dhcp option belongs to vendor-specific and if yes then will remove
+     use_options flag which is not supported with vendor-specific dhcp options.
+    '''
+    for key, value in iteritems(ib_spec):
+        if isinstance(module.params[key], list):
+            temp_dict = module.params[key][0]
+            if 'num' in temp_dict:
+                if temp_dict['num'] in (43, 124, 125):
+                    del module.params[key][0]['use_option']
+    return ib_spec
 
 
 def main():
@@ -204,7 +266,8 @@ def main():
         options=dict(type='list', elements='dict', options=option_spec, transform=options),
 
         extattrs=dict(type='dict'),
-        comment=dict()
+        comment=dict(),
+        container=dict(type='bool', ib_req=True)
     )
 
     argument_spec = dict(
@@ -220,9 +283,12 @@ def main():
 
     # to get the argument ipaddr
     obj_filter = dict([(k, module.params[k]) for k, v in iteritems(ib_spec) if v.get('ib_req')])
-    network_type = check_ip_addr_type(obj_filter['network'])
+    network_type, ib_spec = check_ip_addr_type(obj_filter, ib_spec)
 
     wapi = WapiModule(module)
+    # to check for vendor specific dhcp option
+    ib_spec = check_vendor_specific_dhcp_option(module, ib_spec)
+
     result = wapi.run(network_type, ib_spec)
 
     module.exit_json(**result)

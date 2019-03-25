@@ -1,0 +1,2 @@
+minor_changes:
+  - "docker_swarm_service - Added option ``resolve_image`` which enables resolving image digests from registry to detect and deploy changed images."

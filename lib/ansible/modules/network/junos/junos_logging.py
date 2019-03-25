@@ -127,7 +127,7 @@ RETURN = """
 diff.prepared:
   description: Configuration difference before and after applying change.
   returned: when configuration is changed and diff option is enabled.
-  type: string
+  type: str
   sample: >
           [edit system syslog]
           +    [edit system syslog]
@@ -142,14 +142,9 @@ from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import remove_default_spec
-from ansible.module_utils.network.junos.junos import junos_argument_spec
+from ansible.module_utils.network.junos.junos import junos_argument_spec, tostring
 from ansible.module_utils.network.junos.junos import load_config, map_params_to_obj, map_obj_to_ele, to_param_list
 from ansible.module_utils.network.junos.junos import commit_configuration, discard_changes, locked_config
-
-try:
-    from lxml.etree import tostring
-except ImportError:
-    from xml.etree.ElementTree import tostring
 
 USE_PERSISTENT_CONNECTION = True
 
@@ -283,6 +278,7 @@ def main():
                 result['diff'] = {'prepared': diff}
 
     module.exit_json(**result)
+
 
 if __name__ == "__main__":
     main()

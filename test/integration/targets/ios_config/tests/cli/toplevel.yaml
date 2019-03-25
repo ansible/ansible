@@ -5,12 +5,10 @@
   ios_config:
     lines: ['hostname {{ shorter_hostname }}']
     match: none
-    provider: "{{ cli }}"
 
 - name: configure top level command
   ios_config:
     lines: ['hostname foo']
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -21,7 +19,6 @@
 - name: configure top level command idempotent check
   ios_config:
     lines: ['hostname foo']
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -32,6 +29,5 @@
   ios_config:
     lines: ['hostname {{ shorter_hostname }}']
     match: none
-    provider: "{{ cli }}"
 
 - debug: msg="END cli/toplevel.yaml on connection={{ ansible_connection }}"

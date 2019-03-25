@@ -140,32 +140,32 @@ availability_zones:
 canonical_hosted_zone_id:
     description: The ID of the Amazon Route 53 hosted zone associated with the load balancer.
     returned: when state is present
-    type: string
+    type: str
     sample: ABCDEF12345678
 created_time:
     description: The date and time the load balancer was created.
     returned: when state is present
-    type: string
+    type: str
     sample: "2015-02-12T02:14:02+00:00"
 deletion_protection_enabled:
     description: Indicates whether deletion protection is enabled.
     returned: when state is present
-    type: string
+    type: str
     sample: true
 dns_name:
     description: The public DNS name of the load balancer.
     returned: when state is present
-    type: string
+    type: str
     sample: internal-my-elb-123456789.ap-southeast-2.elb.amazonaws.com
 idle_timeout_timeout_seconds:
     description: The idle timeout value, in seconds.
     returned: when state is present
-    type: string
+    type: str
     sample: 60
 ip_address_type:
     description:  The type of IP addresses used by the subnets for the load balancer.
     returned: when state is present
-    type: string
+    type: str
     sample: ipv4
 listeners:
     description: Information about the listeners.
@@ -175,12 +175,12 @@ listeners:
         listener_arn:
             description: The Amazon Resource Name (ARN) of the listener.
             returned: when state is present
-            type: string
+            type: str
             sample: ""
         load_balancer_arn:
             description: The Amazon Resource Name (ARN) of the load balancer.
             returned: when state is present
-            type: string
+            type: str
             sample: ""
         port:
             description: The port on which the load balancer is listening.
@@ -190,7 +190,7 @@ listeners:
         protocol:
             description: The protocol for connections from clients to the load balancer.
             returned: when state is present
-            type: string
+            type: str
             sample: HTTPS
         certificates:
             description: The SSL server certificate.
@@ -200,47 +200,47 @@ listeners:
                 certificate_arn:
                     description: The Amazon Resource Name (ARN) of the certificate.
                     returned: when state is present
-                    type: string
+                    type: str
                     sample: ""
         ssl_policy:
             description: The security policy that defines which ciphers and protocols are supported.
             returned: when state is present
-            type: string
+            type: str
             sample: ""
         default_actions:
             description: The default actions for the listener.
             returned: when state is present
-            type: string
+            type: str
             contains:
                 type:
                     description: The type of action.
                     returned: when state is present
-                    type: string
+                    type: str
                     sample: ""
                 target_group_arn:
                     description: The Amazon Resource Name (ARN) of the target group.
                     returned: when state is present
-                    type: string
+                    type: str
                     sample: ""
 load_balancer_arn:
     description: The Amazon Resource Name (ARN) of the load balancer.
     returned: when state is present
-    type: string
+    type: str
     sample: arn:aws:elasticloadbalancing:ap-southeast-2:0123456789:loadbalancer/app/my-elb/001122334455
 load_balancer_name:
     description: The name of the load balancer.
     returned: when state is present
-    type: string
+    type: str
     sample: my-elb
 load_balancing_cross_zone_enabled:
     description: Indicates whether cross-zone load balancing is enabled.
     returned: when state is present
-    type: string
+    type: str
     sample: true
 scheme:
     description: Internet-facing or internal load balancer.
     returned: when state is present
-    type: string
+    type: str
     sample: internal
 state:
     description: The state of the load balancer.
@@ -257,12 +257,12 @@ tags:
 type:
     description: The type of load balancer.
     returned: when state is present
-    type: string
+    type: str
     sample: network
 vpc_id:
     description: The ID of the VPC for the load balancer.
     returned: when state is present
-    type: string
+    type: str
     sample: vpc-0011223344
 '''
 
@@ -414,6 +414,7 @@ def main():
         create_or_update_elb(elb)
     else:
         delete_elb(elb)
+
 
 if __name__ == '__main__':
     main()

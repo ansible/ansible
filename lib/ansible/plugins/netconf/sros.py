@@ -23,7 +23,7 @@ import json
 import re
 
 from ansible import constants as C
-from ansible.module_utils._text import to_text, to_bytes
+from ansible.module_utils._text import to_text, to_bytes, to_native
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.plugins.netconf import NetconfBase
 from ansible.plugins.netconf import ensure_connected
@@ -82,14 +82,14 @@ class Netconf(NetconfBase):
                 port=obj._play_context.port or 830,
                 username=obj._play_context.remote_user,
                 password=obj._play_context.password,
-                key_filename=obj._play_context.private_key_file,
-                hostkey_verify=C.HOST_KEY_CHECKING,
-                look_for_keys=C.PARAMIKO_LOOK_FOR_KEYS,
+                key_filename=obj.key_filename,
+                hostkey_verify=obj.get_option('host_key_checking'),
+                look_for_keys=obj.get_option('look_for_keys'),
                 allow_agent=obj._play_context.allow_agent,
-                timeout=obj._play_context.timeout
+                timeout=obj.get_option('persistent_connect_timeout')
             )
         except SSHUnknownHostError as exc:
-            raise AnsibleConnectionFailure(str(exc))
+            raise AnsibleConnectionFailure(to_native(exc))
 
         guessed_os = None
         for c in m.server_capabilities:

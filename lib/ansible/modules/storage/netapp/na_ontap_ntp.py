@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# (c) 2018, NetApp, Inc
+# (c) 2018-2019, NetApp, Inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -9,31 +9,31 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = """
 module: na_ontap_ntp
-short_description: Create/Delete/modify_version ONTAP NTP server
+short_description: NetApp ONTAP NTP server
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
-author: Suhas Bangalore Shekar (bsuhas@netapp.com), Archana Ganesan (garchana@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 description:
-- Create or delete or modify ntp server in ONTAP
+- Create or delete or modify NTP server in ONTAP
 options:
   state:
     description:
-    - Whether the specified ntp server should exist or not.
+    - Whether the specified NTP server should exist or not.
     choices: ['present', 'absent']
     default: 'present'
   server_name:
     description:
-    - The name of the ntp server to manage.
+    - The name of the NTP server to manage.
     required: True
   version:
     description:
-    - give version for ntp server
+    - give version for NTP server
     choices: ['auto', '3', '4']
     default: 'auto'
 """
@@ -43,12 +43,14 @@ EXAMPLES = """
       na_ontap_ntp:
         state: present
         version: auto
+        server_name: "{{ server_name }}"
         hostname: "{{ netapp_hostname }}"
         username: "{{ netapp_username }}"
         password: "{{ netapp_password }}"
     - name: Delete NTP server
       na_ontap_ntp:
         state: absent
+        server_name: "{{ server_name }}"
         hostname: "{{ netapp_hostname }}"
         username: "{{ netapp_username }}"
         password: "{{ netapp_password }}"

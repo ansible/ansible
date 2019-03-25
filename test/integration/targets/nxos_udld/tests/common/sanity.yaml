@@ -13,12 +13,14 @@
   - name: "Enable feature udld"
     nxos_feature: 
       feature: udld
+      provider: "{{ connection }}"
       state: enabled
 
   - name: Configure udld
     nxos_udld: &conf1
       aggressive: enabled
       msg_time: 20
+      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -36,10 +38,12 @@
   - name: Reset udld
     nxos_udld:
       reset: True
+      provider: "{{ connection }}"
 
   - name: Configure udld2
     nxos_udld: &conf2
       aggressive: disabled
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -53,6 +57,7 @@
   - name: Configure udld3
     nxos_udld: &conf3
       msg_time: default
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -71,6 +76,7 @@
 
   - name: Remove udld config
     nxos_udld: &conf4
+      provider: "{{ connection }}"
       state: absent
     register: result
 
@@ -88,6 +94,7 @@
   - name: "Disable udld"
     nxos_feature: 
       feature: udld
+      provider: "{{ connection }}"
       state: disabled
     ignore_errors: yes
 

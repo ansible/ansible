@@ -1,0 +1,69 @@
+- name: Create s3 bucket (Check)
+  check_mode: yes
+  aws_s3:
+    bucket: '{{ bucket_name }}'
+    mode: create
+    region: '{{ scaleway_region }}'
+    s3_url: '{{ s3_url }}'
+    encrypt: false
+  register: bucket_creation_check
+
+- name: Show bucket_creation_check
+  debug:
+    var: bucket_creation_check
+
+- name: bucket_creation_check is success
+  assert:
+    that:
+      - bucket_creation_check is success
+
+- name: bucket_creation_check is changed
+  assert:
+    that:
+      - bucket_creation_check is changed
+
+- name: Create s3 bucket
+  aws_s3:
+    bucket: '{{ bucket_name }}'
+    mode: create
+    region: '{{ scaleway_region }}'
+    s3_url: '{{ s3_url }}'
+    encrypt: false
+  register: bucket_creation
+
+- name: Show bucket_creation
+  debug:
+    var: bucket_creation
+
+- name: bucket_creation is success
+  assert:
+    that:
+      - bucket_creation is success
+
+- name: bucket_creation is changed
+  assert:
+    that:
+      - bucket_creation is changed
+
+- name: Create s3 bucket (Confirmation)
+  aws_s3:
+    bucket: '{{ bucket_name }}'
+    mode: create
+    region: '{{ scaleway_region }}'
+    s3_url: '{{ s3_url }}'
+    encrypt: false
+  register: bucket_creation_confirmation
+
+- name: Show bucket_creation_confirmation
+  debug:
+    var: bucket_creation_confirmation
+
+- name: bucket_creation_confirmation is success
+  assert:
+    that:
+      - bucket_creation_confirmation is success
+
+- name: bucket_creation_confirmation is not changed
+  assert:
+    that:
+      - bucket_creation_confirmation is not changed

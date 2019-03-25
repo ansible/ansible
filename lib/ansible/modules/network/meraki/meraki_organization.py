@@ -20,9 +20,6 @@ short_description: Manage organizations in the Meraki cloud
 version_added: "2.6"
 description:
 - Allows for creation, management, and visibility into organizations within Meraki.
-notes:
-- More information about the Meraki API can be found at U(https://dashboard.meraki.com/api_docs).
-- Some of the options are likely only used for developers within Meraki.
 options:
     state:
         description:
@@ -85,10 +82,22 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-response:
-    description: Data returned from Meraki dashboard.
-    type: dict
-    returned: info
+data:
+  description: Information about the organization which was created or modified
+  returned: success
+  type: complex
+  contains:
+    id:
+      description: Unique identification number of organization
+      returned: success
+      type: int
+      sample: 2930418
+    name:
+      description: Name of organization
+      returned: success
+      type: str
+      sample: YourOrg
+
 '''
 
 import os
@@ -177,23 +186,23 @@ def main():
     elif meraki.params['state'] == 'present':
         if meraki.params['clone']:  # Cloning
             payload = {'name': meraki.params['org_name']}
-            meraki.result['data'] = json.loads(
-                meraki.request(
-                    meraki.construct_path(
-                        'clone',
-                        org_name=meraki.params['clone']
-                    ),
-                    payload=json.dumps(payload),
-                    method='POST'))
+            response = meraki.request(meraki.construct_path('clone',
+                                                            org_name=meraki.params['clone']
+                                                            ),
+                                      payload=json.dumps(payload),
+                                      method='POST')
+            if meraki.status != 201:
+                meraki.fail_json(msg='Organization clone failed')
+            meraki.result['data'] = response
             meraki.result['changed'] = True
         elif not meraki.params['org_id'] and meraki.params['org_name']:  # Create new organization
             payload = {'name': meraki.params['org_name']}
-            meraki.result['data'] = json.loads(
-                meraki.request(
-                    meraki.construct_path('create'),
-                    method='POST',
-                    payload=json.dumps(payload)))
-            meraki.result['changed'] = True
+            response = meraki.request(meraki.construct_path('create'),
+                                      method='POST',
+                                      payload=json.dumps(payload))
+            if meraki.status == 201:
+                meraki.result['data'] = response
+                meraki.result['changed'] = True
         elif meraki.params['org_id'] and meraki.params['org_name']:  # Update an existing organization
             payload = {'name': meraki.params['org_name'],
                        'id': meraki.params['org_id'],
@@ -204,14 +213,14 @@ def main():
                     meraki.params['org_id'],
                     orgs),
                     payload):
-                meraki.result['data'] = json.loads(
-                    meraki.request(
-                        meraki.construct_path(
-                            'update',
-                            org_id=meraki.params['org_id']
-                        ),
-                        method='PUT',
-                        payload=json.dumps(payload)))
+                response = meraki.request(meraki.construct_path('update',
+                                                                org_id=meraki.params['org_id']
+                                                                ),
+                                          method='PUT',
+                                          payload=json.dumps(payload))
+                if meraki.status != 200:
+                    meraki.fail_json(msg='Organization update failed')
+                meraki.result['data'] = response
                 meraki.result['changed'] = True
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results

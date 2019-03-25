@@ -155,7 +155,7 @@ def main():
 
     # locate binaries for service management
     paths = ['/sbin', '/usr/sbin', '/bin', '/usr/bin']
-    binaries = ['chkconfig', ' update-rc.d', 'insserv', 'service']
+    binaries = ['chkconfig', 'update-rc.d', 'insserv', 'service']
 
     # Keeps track of the service status for various runlevels because we can
     # operate on multiple runlevels at once
@@ -175,12 +175,12 @@ def main():
 
     # figure out started status, everyone does it different!
     is_started = False
+    worked = False
 
     # user knows other methods fail and supplied pattern
     if pattern:
-        is_started = get_ps(module, pattern)
+        worked = is_started = get_ps(module, pattern)
     else:
-        worked = False
         if location.get('service'):
             # standard tool that has been 'destandarized' by reimplementation in other OS/distros
             cmd = '%s %s status' % (location['service'], name)
@@ -221,6 +221,7 @@ def main():
         if not worked:
             # hail mary
             if rc == 0:
+                is_started = True
                 worked = True
             # ps for luck, can only assure positive match
             elif get_ps(module, name):
@@ -258,7 +259,7 @@ def main():
                 elif location.get('chkconfig'):
                     (rc, out, err) = module.run_command("%s --level %s %s off" % (location['chkconfig'], ''.join(runlevels), name))
     else:
-        if enabled != runlevel_status["enabled"]:
+        if enabled is not None and enabled != runlevel_status["enabled"]:
             result['changed'] = True
             result['status']['enabled']['changed'] = True
 
@@ -266,7 +267,7 @@ def main():
             # Perform enable/disable here
             if enabled:
                 if location.get('update-rc.d'):
-                    (rc, out, err) = module.run_command("%s %s enable" % (location['update-rc.d'], name))
+                    (rc, out, err) = module.run_command("%s %s defaults" % (location['update-rc.d'], name))
                 elif location.get('chkconfig'):
                     (rc, out, err) = module.run_command("%s %s on" % (location['chkconfig'], name))
             else:
@@ -299,7 +300,9 @@ def main():
 
         def runme(doit):
 
-            cmd = "%s %s %s %s" % (script, doit, name, module.params['arguments'])
+            args = module.params['arguments']
+            cmd = "%s %s %s" % (script, doit, "" if args is None else args)
+
             # how to run
             if module.params['daemonize']:
                 (rc, out, err) = daemonize(cmd)
@@ -308,7 +311,7 @@ def main():
             # FIXME: ERRORS
 
             if rc != 0:
-                module.fail_json(msg="Failed to %s service: %s" % (action, name))
+                module.fail_json(msg="Failed to %s service: %s" % (action, name), rc=rc, stdout=out, stderr=err)
 
             return (rc, out, err)
 

@@ -35,7 +35,7 @@ description:
   - This module provides declarative management of VLANs
     on Extreme SLX-OS network devices.
 notes:
-  - Tested against SLX-OS 17s.1.02
+  - Tested against SLX-OS 18r.1.00
 options:
   name:
     description:
@@ -105,7 +105,6 @@ from ansible.module_utils.network.slxos.slxos import load_config, run_commands
 
 
 def search_obj_in_list(vlan_id, lst):
-    obj = list()
     for o in lst:
         if o['vlan_id'] == vlan_id:
             return o
@@ -217,16 +216,16 @@ def map_config_to_obj(module):
     obj = {}
 
     for l in lines:
-        splitted_line = re.split(r'([0-9]+)? +(\S.{14})? +(ACTIVE|INACTIVE\(.+?\))? +(Eth .+?|Po .+?)\([ut]\)\s*$', l.rstrip())
+        splitted_line = re.split(r'([0-9]+)? +(\S.{14})? +(ACTIVE|INACTIVE\(.+?\))?.*(Eth .+?|Po .+?|Tu .+?)\([ut]\).*$', l.rstrip())
         if len(splitted_line) == 1:
             # Handle situation where VLAN is configured, but has no associated ports
-            inactive = re.match(r'([0-9]+)? +(\S.{14}) +INACTIVE\(no member port\)$', l.rstrip())
+            inactive = re.match(r'([0-9]+)? +(\S.{14}) +INACTIVE\(no member port\).*$', l.rstrip())
             if inactive:
                 splitted_line = ['', inactive.groups()[0], inactive.groups()[1], '', '']
             else:
                 continue
 
-        splitted_line[4] = splitted_line[4].replace('Eth', 'Ethernet').replace('Po', 'Port-channel')
+        splitted_line[4] = splitted_line[4].replace('Eth', 'Ethernet').replace('Po', 'Port-channel').replace('Tu', 'Tunnel')
 
         if splitted_line[1] is None:
             obj['interfaces'].append(splitted_line[4])
@@ -305,6 +304,7 @@ def main():
         check_declarative_intent_params(want, module)
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

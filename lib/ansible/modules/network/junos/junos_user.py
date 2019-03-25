@@ -57,6 +57,11 @@ options:
       - The C(sshkey) argument defines the public SSH key to be configured
         for the user account on the remote system.  This argument must
         be a valid SSH key
+  encrypted_password:
+    description:
+      - The C(encrypted_password) argument set already hashed password
+        for the user account on the remote system.
+    version_added: "2.8"
   purge:
     description:
       - The C(purge) argument instructs the module to consider the
@@ -109,6 +114,13 @@ EXAMPLES = """
     - name: ansible
     purge: yes
 
+- name: set user password
+  junos_user:
+    name: ansible
+    role: super-user
+    encrypted_password: "{{ 'my-password' | password_hash('sha512') }}"
+    state: present
+
 - name: Create list of users
   junos_user:
     aggregate:
@@ -126,7 +138,7 @@ RETURN = """
 diff.prepared:
   description: Configuration difference before and after applying change.
   returned: when configuration is changed and diff option is enabled.
-  type: string
+  type: str
   sample: >
           [edit system login]
           +    user test-user {
@@ -138,17 +150,19 @@ from functools import partial
 
 from copy import deepcopy
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.common.utils import remove_default_spec
-from ansible.module_utils.network.junos.junos import junos_argument_spec, get_connection
+from ansible.module_utils.network.junos.junos import junos_argument_spec, get_connection, tostring
 from ansible.module_utils.network.junos.junos import commit_configuration, discard_changes
 from ansible.module_utils.network.junos.junos import load_config, locked_config
 from ansible.module_utils.six import iteritems
 
 try:
-    from lxml.etree import Element, SubElement, tostring
+    from lxml.etree import Element, SubElement
 except ImportError:
-    from xml.etree.ElementTree import Element, SubElement, tostring
+    from xml.etree.ElementTree import Element, SubElement
 
 ROLES = ['operator', 'read-only', 'super-user', 'unauthorized']
 USE_PERSISTENT_CONNECTION = True
@@ -160,7 +174,11 @@ def handle_purge(module, want):
     login = SubElement(element, 'login')
 
     conn = get_connection(module)
-    reply = conn.execute_rpc(tostring(Element('get-configuration')), ignore_warning=False)
+    try:
+        reply = conn.execute_rpc(tostring(Element('get-configuration')), ignore_warning=False)
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+
     users = reply.xpath('configuration/system/login/user/name')
     if users:
         for item in users:
@@ -184,11 +202,16 @@ def map_obj_to_ele(module, want):
         else:
             operation = 'merge'
 
-        user = SubElement(login, 'user', {'operation': operation})
-
-        SubElement(user, 'name').text = item['name']
+        if item['name'] != 'root':
+            user = SubElement(login, 'user', {'operation': operation})
+            SubElement(user, 'name').text = item['name']
+        else:
+            user = auth = SubElement(element, 'root-authentication', {'operation': operation})
 
         if operation == 'merge':
+            if item['name'] == 'root' and (not item['active'] or item['role'] or item['full_name']):
+                module.fail_json(msg="'root' account cannot be deactivated or be assigned a role and a full name")
+
             if item['active']:
                 user.set('active', 'active')
             else:
@@ -201,9 +224,22 @@ def map_obj_to_ele(module, want):
                 SubElement(user, 'full-name').text = item['full_name']
 
             if item.get('sshkey'):
-                auth = SubElement(user, 'authentication')
-                ssh_rsa = SubElement(auth, 'ssh-rsa')
+                if 'auth' not in locals():
+                    auth = SubElement(user, 'authentication')
+                if 'ssh-rsa' in item['sshkey']:
+                    ssh_rsa = SubElement(auth, 'ssh-rsa')
+                elif 'ssh-dss' in item['sshkey']:
+                    ssh_rsa = SubElement(auth, 'ssh-dsa')
+                elif 'ecdsa-sha2' in item['sshkey']:
+                    ssh_rsa = SubElement(auth, 'ssh-ecdsa')
+                elif 'ssh-ed25519' in item['sshkey']:
+                    ssh_rsa = SubElement(auth, 'ssh-ed25519')
                 key = SubElement(ssh_rsa, 'name').text = item['sshkey']
+
+            if item.get('encrypted_password'):
+                if 'auth' not in locals():
+                    auth = SubElement(user, 'authentication')
+                SubElement(auth, 'encrypted-password').text = item['encrypted_password']
 
     return element
 
@@ -254,6 +290,7 @@ def map_params_to_obj(module):
         item.update({
             'full_name': get_value('full_name'),
             'role': get_value('role'),
+            'encrypted_password': get_value('encrypted_password'),
             'sshkey': get_value('sshkey'),
             'state': get_value('state'),
             'active': get_value('active')
@@ -277,6 +314,7 @@ def main():
         name=dict(),
         full_name=dict(),
         role=dict(choices=ROLES),
+        encrypted_password=dict(),
         sshkey=dict(),
         state=dict(choices=['present', 'absent'], default='present'),
         active=dict(type='bool', default=True)
@@ -329,6 +367,7 @@ def main():
                 result['diff'] = {'prepared': diff}
 
     module.exit_json(**result)
+
 
 if __name__ == "__main__":
     main()

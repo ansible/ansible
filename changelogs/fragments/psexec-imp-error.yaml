@@ -1,0 +1,2 @@
+bugfixes:
+- psexec - give proper error message when the psexec requirements are not installed

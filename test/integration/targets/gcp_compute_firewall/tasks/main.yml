@@ -15,41 +15,37 @@
 # Pre-test setup
 - name: delete a firewall
   gcp_compute_firewall:
-      name: "{{ resource_name }}"
-      allowed:
-        - ip_protocol: 'tcp'
-          ports:
-            - "22"
-      target_tags:
-        - test-ssh-server
-        - staging-ssh-server
-      source_tags:
-        - test-ssh-clients
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
-      state: absent
+    name: "{{ resource_name }}"
+    allowed:
+    - ip_protocol: tcp
+      ports:
+      - '22'
+    target_tags:
+    - test-ssh-server
+    - staging-ssh-server
+    source_tags:
+    - test-ssh-clients
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
 #----------------------------------------------------------
 - name: create a firewall
   gcp_compute_firewall:
-      name: "{{ resource_name }}"
-      allowed:
-        - ip_protocol: 'tcp'
-          ports:
-            - "22"
-      target_tags:
-        - test-ssh-server
-        - staging-ssh-server
-      source_tags:
-        - test-ssh-clients
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
-      state: present
+    name: "{{ resource_name }}"
+    allowed:
+    - ip_protocol: tcp
+      ports:
+      - '22'
+    target_tags:
+    - test-ssh-server
+    - staging-ssh-server
+    source_tags:
+    - test-ssh-clients
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: result
 - name: assert changed is true
   assert:
@@ -57,32 +53,36 @@
       - result.changed == true
       - "result.kind == 'compute#firewall'"
 - name: verify that firewall was created
-  shell: |
-    gcloud compute firewall-rules describe  --project="{{ gcp_project}}"  "{{ resource_name }}"
-  register: results
-- name: verify that command succeeded
-  assert:
-    that:
-      - results.rc == 0
-# ----------------------------------------------------------------------------
-- name: create a firewall that already exists
-  gcp_compute_firewall:
-      name: "{{ resource_name }}"
-      allowed:
-        - ip_protocol: 'tcp'
-          ports:
-            - "22"
-      target_tags:
-        - test-ssh-server
-        - staging-ssh-server
-      source_tags:
-        - test-ssh-clients
+  gcp_compute_firewall_facts:
+      filters:
+         - name = {{ resource_name }}
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
       scopes:
         - https://www.googleapis.com/auth/compute
-      state: present
+  register: results
+- name: verify that command succeeded
+  assert:
+    that:
+      - results['items'] | length == 1
+# ----------------------------------------------------------------------------
+- name: create a firewall that already exists
+  gcp_compute_firewall:
+    name: "{{ resource_name }}"
+    allowed:
+    - ip_protocol: tcp
+      ports:
+      - '22'
+    target_tags:
+    - test-ssh-server
+    - staging-ssh-server
+    source_tags:
+    - test-ssh-clients
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: result
 - name: assert changed is false
   assert:
@@ -92,22 +92,20 @@
 #----------------------------------------------------------
 - name: delete a firewall
   gcp_compute_firewall:
-      name: "{{ resource_name }}"
-      allowed:
-        - ip_protocol: 'tcp'
-          ports:
-            - "22"
-      target_tags:
-        - test-ssh-server
-        - staging-ssh-server
-      source_tags:
-        - test-ssh-clients
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
-      state: absent
+    name: "{{ resource_name }}"
+    allowed:
+    - ip_protocol: tcp
+      ports:
+      - '22'
+    target_tags:
+    - test-ssh-server
+    - staging-ssh-server
+    source_tags:
+    - test-ssh-clients
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
   register: result
 - name: assert changed is true
   assert:
@@ -115,34 +113,36 @@
       - result.changed == true
       - result.has_key('kind') == False
 - name: verify that firewall was deleted
-  shell: |
-    gcloud compute firewall-rules describe  --project="{{ gcp_project}}"  "{{ resource_name }}"
-  register: results
-  failed_when: results.rc == 0
-- name: verify that command succeeded
-  assert:
-    that:
-      - results.rc == 1
-      - "\"'projects/{{ gcp_project }}/global/firewalls/{{ resource_name }}' was not found\" in results.stderr"
-# ----------------------------------------------------------------------------
-- name: delete a firewall that does not exist
-  gcp_compute_firewall:
-      name: "{{ resource_name }}"
-      allowed:
-        - ip_protocol: 'tcp'
-          ports:
-            - "22"
-      target_tags:
-        - test-ssh-server
-        - staging-ssh-server
-      source_tags:
-        - test-ssh-clients
+  gcp_compute_firewall_facts:
+      filters:
+         - name = {{ resource_name }}
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
       scopes:
         - https://www.googleapis.com/auth/compute
-      state: absent
+  register: results
+- name: verify that command succeeded
+  assert:
+    that:
+      - results['items'] | length == 0
+# ----------------------------------------------------------------------------
+- name: delete a firewall that does not exist
+  gcp_compute_firewall:
+    name: "{{ resource_name }}"
+    allowed:
+    - ip_protocol: tcp
+      ports:
+      - '22'
+    target_tags:
+    - test-ssh-server
+    - staging-ssh-server
+    source_tags:
+    - test-ssh-clients
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
   register: result
 - name: assert changed is false
   assert:

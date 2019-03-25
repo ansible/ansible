@@ -6,7 +6,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -101,11 +100,13 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.influxdb import InfluxDb
+from ansible.module_utils._text import to_native
 
 
 def find_retention_policy(module, client):
     database_name = module.params['database_name']
     policy_name = module.params['policy_name']
+    hostname = module.params['hostname']
     retention_policy = None
 
     try:
@@ -115,7 +116,7 @@ def find_retention_policy(module, client):
                 retention_policy = policy
                 break
     except requests.exceptions.ConnectionError as e:
-        module.fail_json(msg=str(e))
+        module.fail_json(msg="Cannot connect to database %s on %s : %s" % (database_name, hostname, to_native(e)))
     return retention_policy
 
 

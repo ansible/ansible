@@ -23,7 +23,7 @@ import json
 import re
 
 from ansible import constants as C
-from ansible.module_utils._text import to_text, to_bytes
+from ansible.module_utils._text import to_text, to_bytes, to_native
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.plugins.netconf import NetconfBase
 from ansible.plugins.netconf import ensure_connected
@@ -32,7 +32,7 @@ try:
     from ncclient import manager
     from ncclient.operations import RPCError
     from ncclient.transport.errors import SSHUnknownHostError
-    from ncclient.xml_ import to_ele, to_xml, new_ele
+    from ncclient.xml_ import to_ele, to_xml, new_ele, sub_ele
 except ImportError:
     raise AnsibleError("ncclient is not installed")
 
@@ -61,24 +61,29 @@ class Netconf(NetconfBase):
 
     @ensure_connected
     def execute_rpc(self, name):
-        """RPC to be execute on remote device
-           :name: Name of rpc in string format"""
+        """
+        RPC to be execute on remote device
+        :param name: Name of rpc in string format
+        :return: Received rpc response from remote host
+        """
         return self.rpc(name)
 
     @ensure_connected
-    def load_configuration(self, *args, **kwargs):
-        """Loads given configuration on device
-        :format: Format of configuration (xml, text, set)
-        :action: Action to be performed (merge, replace, override, update)
-        :target: is the name of the configuration datastore being edited
-        :config: is the configuration in string format."""
-        if kwargs.get('config'):
-            kwargs['config'] = to_bytes(kwargs['config'], errors='surrogate_or_strict')
-            if kwargs.get('format', 'xml') == 'xml':
-                kwargs['config'] = to_ele(kwargs['config'])
+    def load_configuration(self, format='xml', action='merge', target='candidate', config=None):
+        """
+        Load given configuration on device
+        :param format: Format of configuration (xml, text, set)
+        :param action: Action to be performed (merge, replace, override, update)
+        :param target: The name of the configuration datastore being edited
+        :param config: The configuration to be loaded on remote host in string format
+        :return: Received rpc response from remote host in string format
+        """
+        if config:
+            if format == 'xml':
+                config = to_ele(config)
 
         try:
-            return self.m.load_configuration(*args, **kwargs).data_xml
+            return self.m.load_configuration(format=format, action=action, target=target, config=config).data_xml
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
@@ -97,21 +102,25 @@ class Netconf(NetconfBase):
 
     @staticmethod
     def guess_network_os(obj):
-
+        """
+        Guess the remote network os name
+        :param obj: Netconf connection class object
+        :return: Network OS name
+        """
         try:
             m = manager.connect(
                 host=obj._play_context.remote_addr,
                 port=obj._play_context.port or 830,
                 username=obj._play_context.remote_user,
                 password=obj._play_context.password,
-                key_filename=obj._play_context.private_key_file,
-                hostkey_verify=C.HOST_KEY_CHECKING,
-                look_for_keys=C.PARAMIKO_LOOK_FOR_KEYS,
+                key_filename=obj.key_filename,
+                hostkey_verify=obj.get_option('host_key_checking'),
+                look_for_keys=obj.get_option('look_for_keys'),
                 allow_agent=obj._play_context.allow_agent,
-                timeout=obj._play_context.timeout
+                timeout=obj.get_option('persistent_connect_timeout')
             )
         except SSHUnknownHostError as exc:
-            raise AnsibleConnectionFailure(str(exc))
+            raise AnsibleConnectionFailure(to_native(exc))
 
         guessed_os = None
         for c in m.server_capabilities:
@@ -122,18 +131,25 @@ class Netconf(NetconfBase):
         return guessed_os
 
     @ensure_connected
-    def get_configuration(self, *args, **kwargs):
-        """Retrieve all or part of a specified configuration.
-           :format: format in configuration should be retrieved
-           :filter: specifies the portion of the configuration to retrieve
-           (by default entire configuration is retrieved)"""
-        return self.m.get_configuration(*args, **kwargs).data_xml
+    def get_configuration(self, format='xml', filter=None):
+        """
+        Retrieve all or part of a specified configuration.
+        :param format: format in which configuration should be retrieved
+        :param filter: specifies the portion of the configuration to retrieve
+        :return: Received rpc response from remote host in string format
+        """
+        return self.m.get_configuration(format=format, filter=filter).data_xml
 
     @ensure_connected
-    def compare_configuration(self, *args, **kwargs):
-        """Compare configuration
-           :rollback: rollback id"""
-        return self.m.compare_configuration(*args, **kwargs).data_xml
+    def compare_configuration(self, rollback=0):
+        """
+        Compare the candidate configuration with running configuration
+        by default. The candidate configuration can be compared with older
+        committed configuration by providing rollback id.
+        :param rollback: Rollback id of previously commited configuration
+        :return: Received rpc response from remote host in string format
+        """
+        return self.m.compare_configuration(rollback=rollback).data_xml
 
     @ensure_connected
     def halt(self):
@@ -144,3 +160,43 @@ class Netconf(NetconfBase):
     def reboot(self):
         """reboot the device"""
         return self.m.reboot().data_xml
+
+    # Due to issue in ncclient commit() method for Juniper (https://github.com/ncclient/ncclient/issues/238)
+    # below commit() is a workaround which build's raw `commit-configuration` xml with required tags and uses
+    # ncclient generic rpc() method to execute rpc on remote host.
+    # Remove below method after the issue in ncclient is fixed.
+    @ensure_connected
+    def commit(self, confirmed=False, check=False, timeout=None, comment=None, synchronize=False, at_time=None):
+        """
+        Commit the candidate configuration as the device's new current configuration.
+        Depends on the `:candidate` capability.
+        A confirmed commit (i.e. if *confirmed* is `True`) is reverted if there is no
+        followup commit within the *timeout* interval. If no timeout is specified the
+        confirm timeout defaults to 600 seconds (10 minutes).
+        A confirming commit may have the *confirmed* parameter but this is not required.
+        Depends on the `:confirmed-commit` capability.
+        :param confirmed: whether this is a confirmed commit
+        :param check: Check correctness of syntax
+        :param timeout: specifies the confirm timeout in seconds
+        :param comment: Message to write to commit log
+        :param synchronize: Synchronize commit on remote peers
+        :param at_time: Time at which to activate configuration changes
+        :return: Received rpc response from remote host
+        """
+        obj = new_ele('commit-configuration')
+        if confirmed:
+            sub_ele(obj, 'confirmed')
+        if check:
+            sub_ele(obj, 'check')
+        if synchronize:
+            sub_ele(obj, 'synchronize')
+        if at_time:
+            subele = sub_ele(obj, 'at-time')
+            subele.text = str(at_time)
+        if comment:
+            subele = sub_ele(obj, 'log')
+            subele.text = str(comment)
+        if timeout:
+            subele = sub_ele(obj, 'confirm-timeout')
+            subele.text = str(timeout)
+        return self.rpc(obj)

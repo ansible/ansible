@@ -1,5 +1,5 @@
 **********************************
-Using Ansible with the Packet host
+Packet.net Guide
 **********************************
 
 Introduction
@@ -21,7 +21,7 @@ The Packet modules and inventory script connect to the Packet API using the pack
 
     $ pip install packet-python
 
-In order to check the state of devices created by Ansible on Packet, it's a good idea to install one of the `Packet CLI clients <https://www.packet.net/developers/integrations/api-cli/>`_. Otherwise you can check them via the `Packet portal <https://app.packet.net/portal>`_.
+In order to check the state of devices created by Ansible on Packet, it's a good idea to install one of the `Packet CLI clients <https://www.packet.net/developers/integrations/>`_. Otherwise you can check them via the `Packet portal <https://app.packet.net/portal>`_.
 
 To use the modules and inventory script you'll need a Packet API token. You can generate an API token via the Packet portal `here <https://app.packet.net/portal#/api-keys>`__. The simplest way to authenticate yourself is to set the Packet API token in an environment variable:
 
@@ -31,7 +31,7 @@ To use the modules and inventory script you'll need a Packet API token. You can 
 
 If you're not comfortable exporting your API token, you can pass it as a parameter to the modules.
 
-On Packet, devices and reserved IP addresses belong to `projects <https://www.packet.net/developers/api/projects/>`_. In order to use the packet_device module, you need to specify the UUID of the project in which you want to create or manage devices. You can find a project's UUID in the Packet portal `here <https://app.packet.net/portal#/projects/list/table/>`_ (it's just under the project table) or via one of the available `CLIs <https://www.packet.net/developers/integrations/api-cli/>`_.
+On Packet, devices and reserved IP addresses belong to `projects <https://www.packet.net/developers/api/projects/>`_. In order to use the packet_device module, you need to specify the UUID of the project in which you want to create or manage devices. You can find a project's UUID in the Packet portal `here <https://app.packet.net/portal#/projects/list/table/>`_ (it's just under the project table) or via one of the available `CLIs <https://www.packet.net/developers/integrations/>`_.
 
 
 If you want to use a new SSH keypair in this tutorial, you can generate it to ``./id_rsa`` and ``./id_rsa.pub`` as:
@@ -46,7 +46,7 @@ If you want to use an existing keypair, just copy the private and public key ove
 Device Creation
 ===============
 
-The following code block is a simple playbook that creates one `Type 0 <https://www.packet.net/bare-metal/servers/type-0/>`_ server (the 'plan' parameter). You have to supply 'plan' and 'operating_system'. 'location' defaults to 'ewr1' (Parsippany, NJ). You can find all the possible values for the parameters via a `CLI client <https://www.packet.net/developers/integrations/api-cli/>`_.
+The following code block is a simple playbook that creates one `Type 0 <https://www.packet.net/bare-metal/servers/type-0/>`_ server (the 'plan' parameter). You have to supply 'plan' and 'operating_system'. 'location' defaults to 'ewr1' (Parsippany, NJ). You can find all the possible values for the parameters via a `CLI client <https://www.packet.net/developers/integrations/>`_.
 
 .. code-block:: yaml
 
@@ -104,7 +104,7 @@ If your playbook acts on existing Packet devices, you can only pass the 'hostnam
           hostnames: myserver
           state: rebooted
 
-You can also identify specific Packet devices with the 'device_ids' parameter. The device's UUID can be found in the `Packet Portal <https://app.packet.net/portal>`_ or by using a `CLI <https://www.packet.net/developers/integrations/api-cli/>`_. The following playbook removes a Packet device using the 'device_ids' field:
+You can also identify specific Packet devices with the 'device_ids' parameter. The device's UUID can be found in the `Packet Portal <https://app.packet.net/portal>`_ or by using a `CLI <https://www.packet.net/developers/integrations/>`_. The following playbook removes a Packet device using the 'device_ids' field:
 
 .. code-block:: yaml
 
@@ -178,7 +178,7 @@ The following playbook will create an SSH key, 3 Packet servers, and then wait u
           port: 22
           state: started
           timeout: 500
-        loop: "{{ newhosts.devices }}"
+        loop: "{{ newhosts.results[0].devices }}"
 
 
 As with most Ansible modules, the default states of the Packet modules are idempotent, meaning the resources in your project will remain the same after re-runs of a playbook. Thus, we can keep the ``packet_sshkey`` module call in our playbook. If the public key is already in your Packet account, the call will have no effect.

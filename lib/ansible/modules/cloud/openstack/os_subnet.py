@@ -95,8 +95,14 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
+   extra_specs:
+     description:
+        - Dictionary with extra key/value pairs passed to the API
+     required: false
+     default: {}
+     version_added: "2.7"
 requirements:
-    - "python >= 2.6"
+    - "python >= 2.7"
     - "openstacksdk"
 '''
 
@@ -139,7 +145,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
-def _can_update(subnet, module, cloud):
+def _can_update(subnet, module, cloud, filters=None):
     """Check for differences in non-updatable values"""
     network_name = module.params['network_name']
     ip_version = int(module.params['ip_version'])
@@ -147,7 +153,7 @@ def _can_update(subnet, module, cloud):
     ipv6_a_mode = module.params['ipv6_address_mode']
 
     if network_name:
-        network = cloud.get_network(network_name)
+        network = cloud.get_network(network_name, filters)
         if network:
             netid = network['id']
         else:
@@ -164,11 +170,11 @@ def _can_update(subnet, module, cloud):
                               subnet')
 
 
-def _needs_update(subnet, module, cloud):
+def _needs_update(subnet, module, cloud, filters=None):
     """Check for differences in the updatable values."""
 
     # First check if we are trying to update something we're not allowed to
-    _can_update(subnet, module, cloud)
+    _can_update(subnet, module, cloud, filters)
 
     # now check for the things we are allowed to update
     enable_dhcp = module.params['enable_dhcp']
@@ -203,12 +209,12 @@ def _needs_update(subnet, module, cloud):
     return False
 
 
-def _system_state_change(module, subnet, cloud):
+def _system_state_change(module, subnet, cloud, filters=None):
     state = module.params['state']
     if state == 'present':
         if not subnet:
             return True
-        return _needs_update(subnet, module, cloud)
+        return _needs_update(subnet, module, cloud, filters)
     if state == 'absent' and subnet:
         return True
     return False
@@ -217,27 +223,31 @@ def _system_state_change(module, subnet, cloud):
 def main():
     ipv6_mode_choices = ['dhcpv6-stateful', 'dhcpv6-stateless', 'slaac']
     argument_spec = openstack_full_argument_spec(
-        name=dict(required=True),
-        network_name=dict(default=None),
-        cidr=dict(default=None),
-        ip_version=dict(default='4', choices=['4', '6']),
-        enable_dhcp=dict(default='true', type='bool'),
-        gateway_ip=dict(default=None),
-        no_gateway_ip=dict(default=False, type='bool'),
-        dns_nameservers=dict(default=None, type='list'),
-        allocation_pool_start=dict(default=None),
-        allocation_pool_end=dict(default=None),
-        host_routes=dict(default=None, type='list'),
-        ipv6_ra_mode=dict(default=None, choice=ipv6_mode_choices),
-        ipv6_address_mode=dict(default=None, choice=ipv6_mode_choices),
-        use_default_subnetpool=dict(default=False, type='bool'),
-        state=dict(default='present', choices=['absent', 'present']),
-        project=dict(default=None)
+        name=dict(type='str', required=True),
+        network_name=dict(type='str'),
+        cidr=dict(type='str'),
+        ip_version=dict(type='str', default='4', choices=['4', '6']),
+        enable_dhcp=dict(type='bool', default=True),
+        gateway_ip=dict(type='str'),
+        no_gateway_ip=dict(type='bool', default=False),
+        dns_nameservers=dict(type='list', default=None),
+        allocation_pool_start=dict(type='str'),
+        allocation_pool_end=dict(type='str'),
+        host_routes=dict(type='list', default=None),
+        ipv6_ra_mode=dict(type='str', choice=ipv6_mode_choices),
+        ipv6_address_mode=dict(type='str', choice=ipv6_mode_choices),
+        use_default_subnetpool=dict(type='bool', default=False),
+        extra_specs=dict(type='dict', default=dict()),
+        state=dict(type='str', default='present', choices=['absent', 'present']),
+        project=dict(type='str'),
     )
 
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec,
                            supports_check_mode=True,
+                           required_together=[
+                               ['allocation_pool_end', 'allocation_pool_start'],
+                           ],
                            **module_kwargs)
 
     state = module.params['state']
@@ -256,6 +266,7 @@ def main():
     ipv6_a_mode = module.params['ipv6_address_mode']
     use_default_subnetpool = module.params['use_default_subnetpool']
     project = module.params.pop('project')
+    extra_specs = module.params['extra_specs']
 
     # Check for required parameters when state == 'present'
     if state == 'present':
@@ -267,8 +278,6 @@ def main():
 
     if pool_start and pool_end:
         pool = [dict(start=pool_start, end=pool_end)]
-    elif pool_start or pool_end:
-        module.fail_json(msg='allocation pool requires start and end values')
     else:
         pool = None
 
@@ -291,11 +300,12 @@ def main():
 
         if module.check_mode:
             module.exit_json(changed=_system_state_change(module, subnet,
-                                                          cloud))
+                                                          cloud, filters))
 
         if state == 'present':
             if not subnet:
                 kwargs = dict(
+                    cidr=cidr,
                     ip_version=ip_version,
                     enable_dhcp=enable_dhcp,
                     subnet_name=subnet_name,
@@ -307,12 +317,17 @@ def main():
                     ipv6_ra_mode=ipv6_ra_mode,
                     ipv6_address_mode=ipv6_a_mode,
                     tenant_id=project_id)
+                dup_args = set(kwargs.keys()) & set(extra_specs.keys())
+                if dup_args:
+                    raise ValueError('Duplicate key(s) {0} in extra_specs'
+                                     .format(list(dup_args)))
                 if use_default_subnetpool:
                     kwargs['use_default_subnetpool'] = use_default_subnetpool
-                subnet = cloud.create_subnet(network_name, cidr, **kwargs)
+                kwargs = dict(kwargs, **extra_specs)
+                subnet = cloud.create_subnet(network_name, **kwargs)
                 changed = True
             else:
-                if _needs_update(subnet, module, cloud):
+                if _needs_update(subnet, module, cloud, filters):
                     cloud.update_subnet(subnet['id'],
                                         subnet_name=subnet_name,
                                         enable_dhcp=enable_dhcp,

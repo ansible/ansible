@@ -1,3 +1,5 @@
+:orphan:
+
 .. _testing_units_modules:
 
 ****************************
@@ -15,15 +17,15 @@ This document explains why, how and when you should use unit tests for Ansible m
 The document doesn't apply to other parts of Ansible for which the recommendations are
 normally closer to the Python standard.  There is basic documentation for Ansible unit
 tests in the developer guide :doc:`testing_units`.  This document should
-be readable for a new Ansible module author. If you find it incomplete or confusing, 
+be readable for a new Ansible module author. If you find it incomplete or confusing,
 please open a bug or ask for help on Ansible IRC.
 
 What Are Unit Tests?
 ====================
 
-Ansible includes a set of unit tests in the :file:`test/unit` directory. These tests primarily cover the
+Ansible includes a set of unit tests in the :file:`test/units` directory. These tests primarily cover the
 internals but can also can cover Ansible modules.  The structure of the unit tests matches
-the structure of the code base, so the tests that reside in the :file:`test/unit/modules/` directory
+the structure of the code base, so the tests that reside in the :file:`test/units/modules/` directory
 are organized by module groups.
 
 Integration tests can be used for most modules, but there are situations where
@@ -69,12 +71,12 @@ When To Use Unit Tests
 There are a number of situations where unit tests are a better choice than integration
 tests. For example, testing things which are impossible, slow or very difficult to test
 with integration tests, such as:
-    
+
 * Forcing rare / strange / random situations that can't be forced, such as specific network
   failures and exceptions
-* Extensive testing of slow configuration APIs 
+* Extensive testing of slow configuration APIs
 * Situations where the integration tests cannot be run as part of the main Ansible
-  continuous integraiton running in Shippable.
+  continuous integration running in Shippable.
 
 
 
@@ -92,11 +94,11 @@ creating a unit test when bug fixing a module, even if those tests do not often 
 problems later.  As a basic goal, every module should have at least one unit test which
 will give quick feedback in easy cases without having to wait for the integration tests to
 complete.
-    
+
 Ensuring correct use of external interfaces
 -------------------------------------------
 
-Unit tests can check the way in which external services are run to ensure that they match 
+Unit tests can check the way in which external services are run to ensure that they match
 specifications or are as efficient as possible *even when the final output will not be changed*.
 
 Example:
@@ -108,17 +110,17 @@ Example:
 
 Another related use is in the situation where an API has versions which behave
 differently. A programmer working on a new version may change the module to work with the
-new API version and unintentially break the old version.  A test case
+new API version and unintentionally break the old version.  A test case
 which checks that the call happens properly for the old version can help avoid the
 problem.  In this situation it is very important to include version numbering in the test case
 name (see `Naming unit tests`_ below).
 
-Providing specific design tests 
+Providing specific design tests
 --------------------------------
 
 By building a requirement for a particular part of the
 code and then coding to that requirement, unit tests _can_ sometimes improve the code and
-help future developers understand that code. 
+help future developers understand that code.
 
 Unit tests that test internal implementation details of code, on the other hand, almost
 always do more harm than good.  Testing that your packages to install are stored in a list
@@ -126,7 +128,7 @@ would slow down and confuse a future developer who might need to change that lis
 dictionary for efficiency. This problem can be reduced somewhat with clear test naming so
 that the future developer immediately knows to delete the test case, but it is often
 better to simply leave out the test case altogether and test for a real valuable feature
-of the code, such as installing all of the packages supplied as arguments to the module. 
+of the code, such as installing all of the packages supplied as arguments to the module.
 
 
 How to unit test Ansible modules
@@ -148,7 +150,7 @@ If a unit test is designed to verify compatibility with a specific software or A
 then include the version in the name of the unit test.
 
 As an example, ``test_v2_state_present_should_call_create_server_with_name()`` would be a
-good name, ``test_create_server()`` would not be.  
+good name, ``test_create_server()`` would not be.
 
 
 Use of Mocks
@@ -164,16 +166,16 @@ Ensuring failure cases are visible with mock objects
 ----------------------------------------------------
 
 Functions like :meth:`module.fail_json` are normally expected to terminate execution. When you
-run with a mock module object this doesn't happen since the mock always returns another mock 
+run with a mock module object this doesn't happen since the mock always returns another mock
 from a function call. You can set up the mock to raise an exception as shown above, or you can
 assert that these functions have not been called in each test. For example::
 
   module = MagicMock()
   function_to_test(module, argument)
-  module.fail_json.assert_not_called() 
+  module.fail_json.assert_not_called()
 
 This applies not only to calling the main module but almost any other
-function in a module which gets the module object.  
+function in a module which gets the module object.
 
 
 Mocking of the actual module
@@ -193,9 +195,9 @@ above, either by throwing an exception or ensuring that they haven't been called
     module.exit_json.side_effect = AnsibleExitJson(Exception)
     with self.assertRaises(AnsibleExitJson) as result:
         return = my_module.test_this_function(module, argument)
-    module.fail_json.assert_not_called() 
+    module.fail_json.assert_not_called()
     assert return["changed"] == True
-    
+
 API definition with unit test cases
 -----------------------------------
 
@@ -237,7 +239,7 @@ This is then used to create a list of states::
         simple_instance_list('available', {}),
         simple_instance_list('available', {}),
     ]
-    
+
 These states are then used as returns from a mock object to ensure that the ``await`` function
 waits through all of the states that would mean the RDS instance has not yet completed
 configuration::
@@ -269,10 +271,10 @@ The most common are documented below, and suggestions for others can be found by
 at the source code of the existing unit tests or asking on the Ansible IRC channel or mailing
 lists.
 
-Module argument processing 
+Module argument processing
 --------------------------
 
-There are two problems with running the main function of a module:  
+There are two problems with running the main function of a module:
 
 * Since the module is supposed to accept arguments on ``STDIN`` it is a bit difficult to
   set up the arguments correctly so that the module will get them as parameters.
@@ -383,7 +385,7 @@ A Complete Example
 
 The following example is a complete skeleton that reuses the mocks explained above and adds a new
 mock for :meth:`Ansible.get_bin_path`::
-    
+
     import json
 
     from ansible.compat.tests import unittest
@@ -531,6 +533,12 @@ A helpful development approach to this should be to ensure that all of the tests
 run under Python 2.6 and that each assertion in the test cases has been checked to work by breaking
 the code in Ansible to trigger that failure.
 
+.. warning:: Maintain Python 2.6 compatibility
+
+    Please remember that modules need to maintain compatibility with Python 2.6 so the unittests for
+    modules should also be compatible with Python 2.6.
+
+
 .. seealso::
 
    :doc:`testing_units`
@@ -540,19 +548,19 @@ the code in Ansible to trigger that failure.
    :doc:`developing_modules`
        How to develop modules
    `Python 3 documentation - 26.4. unittest — Unit testing framework <https://docs.python.org/3/library/unittest.html>`_
-       The documentation of the unittest framework in python 3 
+       The documentation of the unittest framework in python 3
    `Python 2 documentation - 25.3. unittest — Unit testing framework <https://docs.python.org/3/library/unittest.html>`_
        The documentation of the earliest supported unittest framework - from Python 2.6
    `pytest: helps you write better programs <https://docs.pytest.org/en/latest/>`_
        The documentation of pytest - the framework actually used to run Ansible unit tests
-   `Development Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `Development Mailing List <https://groups.google.com/group/ansible-devel>`_
        Mailing list for development topics
-   `Testing Your Code (from The Hitchhiker's Guide to Python!) <http://docs.python-guide.org/en/latest/writing/tests/>`_
+   `Testing Your Code (from The Hitchhiker's Guide to Python!) <https://docs.python-guide.org/writing/tests/>`_
        General advice on testing Python code
    `Uncle Bob's many videos on YouTube <https://www.youtube.com/watch?v=QedpQjxBPMA&list=PLlu0CT-JnSasQzGrGzddSczJQQU7295D2>`_
        Unit testing is a part of the of various philosophies of software development, including
        Extreme Programming (XP), Clean Coding.  Uncle Bob talks through how to benfit from this
-   `"Why Most Unit Testing is Waste" http://rbcs-us.com/documents/Why-Most-Unit-Testing-is-Waste.pdf`
+   `"Why Most Unit Testing is Waste" https://rbcs-us.com/documents/Why-Most-Unit-Testing-is-Waste.pdf`
        An article warning against the costs of unit testing
-   `'A Response to "Why Most Unit Testing is Waste"' https://henrikwarne.com/2014/09/04/a-response-to-why-most-unit-testing-is-waste/` 
+   `'A Response to "Why Most Unit Testing is Waste"' https://henrikwarne.com/2014/09/04/a-response-to-why-most-unit-testing-is-waste/`
        An response pointing to how to maintain the value of unit tests

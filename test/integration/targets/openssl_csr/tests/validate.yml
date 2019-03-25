@@ -1,3 +1,4 @@
+---
 - name: Validate CSR (test - privatekey modulus)
   shell: 'openssl rsa -noout -modulus -in {{ output_dir }}/privatekey.pem'
   register: privatekey_modulus
@@ -16,10 +17,28 @@
       - csr_cn.stdout.split('=')[-1] == 'www.ansible.com'
       - csr_modulus.stdout == privatekey_modulus.stdout
 
-- name: Validate CSR_KU_XKU (assert idempotency)
+- name: Validate CSR (check mode, idempotency)
+  assert:
+    that:
+      - generate_csr_check is changed
+      - generate_csr is changed
+      - generate_csr_check_idempotent is not changed
+      - generate_csr_check_idempotent_check is not changed
+
+- name: Validate CSR without SAN (check mode, idempotency)
+  assert:
+    that:
+      - generate_csr_nosan_check is changed
+      - generate_csr_nosan is changed
+      - generate_csr_nosan_check_idempotent is not changed
+      - generate_csr_nosan_check_idempotent_check is not changed
+
+- name: Validate CSR_KU_XKU (assert idempotency, change)
   assert:
     that:
       - csr_ku_xku is not changed
+      - csr_ku_xku_change is changed
+      - csr_ku_xku_change_2 is changed
 
 - name: Validate old_API CSR (test - Common Name)
   shell: "openssl req -noout -subject -in {{ output_dir }}/csr_oldapi.csr -nameopt oneline,-space_eq"
@@ -35,6 +54,12 @@
       - csr_oldapi_cn.stdout.split('=')[-1] == 'www.ansible.com'
       - csr_oldapi_modulus.stdout == privatekey_modulus.stdout
 
+- name: Validate invalid SAN
+  assert:
+    that:
+      - generate_csr_invalid_san is failed
+      - "'Subject Alternative Name' in generate_csr_invalid_san.msg"
+
 - name: Validate OCSP Must Staple CSR (test - everything)
   shell: "openssl req -noout -in {{ output_dir }}/csr_ocsp.csr -text"
   register: csr_ocsp
@@ -49,3 +74,48 @@
   assert:
     that:
       - csr_ocsp_idempotency is not changed
+
+- name: Validate ECC CSR (test - privatekey's public key)
+  shell: 'openssl ec -pubout -in {{ output_dir }}/privatekey2.pem'
+  register: privatekey_ecc_key
+
+- name: Validate ECC CSR (test - Common Name)
+  shell: "openssl req -noout -subject -in {{ output_dir }}/csr2.csr -nameopt oneline,-space_eq"
+  register: csr_ecc_cn
+
+- name: Validate ECC CSR (test - CSR pubkey)
+  shell: 'openssl req -noout -pubkey -in {{ output_dir }}/csr2.csr'
+  register: csr_ecc_pubkey
+
+- name: Validate ECC CSR (assert)
+  assert:
+    that:
+      - csr_ecc_cn.stdout.split('=')[-1] == 'www.ansible.com'
+      - csr_ecc_pubkey.stdout == privatekey_ecc_key.stdout
+
+- name: Validate CSR (text common name - Common Name)
+  shell: "openssl req -noout -subject -in {{ output_dir }}/csr3.csr -nameopt oneline,-space_eq"
+  register: csr3_cn
+
+- name: Validate CSR (assert)
+  assert:
+    that:
+      - csr3_cn.stdout.split('=')[-1] == 'This is for Ansible'
+
+- name: Validate country name idempotency and validation
+  assert:
+    that:
+      - country_idempotent_1 is changed
+      - country_idempotent_2 is not changed
+      - country_idempotent_3 is not changed
+      - country_fail_4 is failed
+
+- name:
+  assert:
+    that:
+      - passphrase_error_1 is failed
+      - "'assphrase' in passphrase_error_1.msg or 'assword' in passphrase_error_1.msg"
+      - passphrase_error_2 is failed
+      - "'assphrase' in passphrase_error_1.msg or 'assword' in passphrase_error_2.msg"
+      - passphrase_error_3 is failed
+      - "'assphrase' in passphrase_error_1.msg or 'assword' in passphrase_error_3.msg"

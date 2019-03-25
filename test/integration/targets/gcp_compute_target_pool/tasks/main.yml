@@ -15,25 +15,21 @@
 # Pre-test setup
 - name: delete a target pool
   gcp_compute_target_pool:
-      name: "{{ resource_name }}"
-      region: 'us-west1'
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
-      state: absent
+    name: "{{ resource_name }}"
+    region: us-west1
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
 #----------------------------------------------------------
 - name: create a target pool
   gcp_compute_target_pool:
-      name: "{{ resource_name }}"
-      region: 'us-west1'
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
-      state: present
+    name: "{{ resource_name }}"
+    region: us-west1
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: result
 - name: assert changed is true
   assert:
@@ -41,24 +37,29 @@
       - result.changed == true
       - "result.kind == 'compute#targetPool'"
 - name: verify that target_pool was created
-  shell: |
-    gcloud compute target-pools describe  --project="{{ gcp_project}}"  --region=us-west1  "{{ resource_name }}"
-  register: results
-- name: verify that command succeeded
-  assert:
-    that:
-      - results.rc == 0
-# ----------------------------------------------------------------------------
-- name: create a target pool that already exists
-  gcp_compute_target_pool:
-      name: "{{ resource_name }}"
-      region: 'us-west1'
+  gcp_compute_target_pool_facts:
+      filters:
+         - name = {{ resource_name }}
+      region: us-west1
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
       scopes:
         - https://www.googleapis.com/auth/compute
-      state: present
+  register: results
+- name: verify that command succeeded
+  assert:
+    that:
+      - results['items'] | length == 1
+# ----------------------------------------------------------------------------
+- name: create a target pool that already exists
+  gcp_compute_target_pool:
+    name: "{{ resource_name }}"
+    region: us-west1
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: result
 - name: assert changed is false
   assert:
@@ -68,14 +69,12 @@
 #----------------------------------------------------------
 - name: delete a target pool
   gcp_compute_target_pool:
-      name: "{{ resource_name }}"
-      region: 'us-west1'
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
-      state: absent
+    name: "{{ resource_name }}"
+    region: us-west1
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
   register: result
 - name: assert changed is true
   assert:
@@ -83,26 +82,29 @@
       - result.changed == true
       - result.has_key('kind') == False
 - name: verify that target_pool was deleted
-  shell: |
-    gcloud compute target-pools describe  --project="{{ gcp_project}}"  --region=us-west1  "{{ resource_name }}"
-  register: results
-  failed_when: results.rc == 0
-- name: verify that command succeeded
-  assert:
-    that:
-      - results.rc == 1
-      - "\"'projects/{{ gcp_project }}/regions/us-west1/targetPools/{{ resource_name }}' was not found\" in results.stderr"
-# ----------------------------------------------------------------------------
-- name: delete a target pool that does not exist
-  gcp_compute_target_pool:
-      name: "{{ resource_name }}"
-      region: 'us-west1'
+  gcp_compute_target_pool_facts:
+      filters:
+         - name = {{ resource_name }}
+      region: us-west1
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
       scopes:
         - https://www.googleapis.com/auth/compute
-      state: absent
+  register: results
+- name: verify that command succeeded
+  assert:
+    that:
+      - results['items'] | length == 0
+# ----------------------------------------------------------------------------
+- name: delete a target pool that does not exist
+  gcp_compute_target_pool:
+    name: "{{ resource_name }}"
+    region: us-west1
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
   register: result
 - name: assert changed is false
   assert:

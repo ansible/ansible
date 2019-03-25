@@ -7,12 +7,17 @@ import os
 import collections
 import datetime
 import re
-import tempfile
 import time
 import textwrap
 import functools
 import pipes
+import sys
 import hashlib
+import difflib
+import filecmp
+import random
+import string
+import shutil
 
 import lib.pytar
 import lib.thread
@@ -32,6 +37,7 @@ from lib.cloud import (
     cloud_init,
     get_cloud_environment,
     get_cloud_platforms,
+    CloudEnvironmentConfig,
 )
 
 from lib.util import (
@@ -47,13 +53,20 @@ from lib.util import (
     is_binary_file,
     find_executable,
     raw_command,
-    get_coverage_path,
+    get_python_path,
     get_available_port,
+    generate_pip_command,
+    find_python,
+    get_docker_completion,
+    named_temporary_file,
+    COVERAGE_OUTPUT_PATH,
 )
 
 from lib.docker_util import (
     docker_pull,
     docker_run,
+    docker_available,
+    docker_rm,
     get_docker_container_id,
     get_docker_container_ip,
 )
@@ -100,12 +113,19 @@ from lib.metadata import (
     ChangeDescription,
 )
 
+from lib.integration import (
+    integration_test_environment,
+    integration_test_config_file,
+    setup_common_temp_dir,
+)
+
 SUPPORTED_PYTHON_VERSIONS = (
     '2.6',
     '2.7',
     '3.5',
     '3.6',
     '3.7',
+    '3.8',
 )
 
 HTTPTESTER_HOSTS = (
@@ -148,10 +168,15 @@ def create_shell_command(command):
     return cmd
 
 
-def install_command_requirements(args):
+def install_command_requirements(args, python_version=None):
     """
     :type args: EnvironmentConfig
+    :type python_version: str | None
     """
+    if isinstance(args, ShellConfig):
+        if args.raw:
+            return
+
     generate_egg_info(args)
 
     if not args.requirements:
@@ -168,7 +193,10 @@ def install_command_requirements(args):
         if args.junit:
             packages.append('junit-xml')
 
-    pip = args.pip_command
+    if not python_version:
+        python_version = args.python_version
+
+    pip = generate_pip_command(find_python(python_version))
 
     commands = [generate_pip_install(pip, args.command, packages=packages)]
 
@@ -302,9 +330,11 @@ def command_posix_integration(args):
     """
     :type args: PosixIntegrationConfig
     """
+    filename = 'test/integration/inventory'
+
     all_targets = tuple(walk_posix_integration_targets(include_hidden=True))
     internal_targets = command_integration_filter(args, all_targets)
-    command_integration_filtered(args, internal_targets, all_targets)
+    command_integration_filtered(args, internal_targets, all_targets, filename)
 
 
 def command_network_integration(args):
@@ -334,7 +364,7 @@ def command_network_integration(args):
     instances = []  # type: list [lib.thread.WrappedThread]
 
     if args.platform:
-        get_coverage_path(args)  # initialize before starting threads
+        get_python_path(args, args.python_executable)  # initialize before starting threads
 
         configs = dict((config['platform_version'], config) for config in args.metadata.instance_config)
 
@@ -365,7 +395,7 @@ def command_network_integration(args):
     success = False
 
     try:
-        command_integration_filtered(args, internal_targets, all_targets)
+        command_integration_filtered(args, internal_targets, all_targets, filename)
         success = True
     finally:
         if args.remote_terminate == 'always' or (args.remote_terminate == 'success' and success):
@@ -497,9 +527,12 @@ def command_windows_integration(args):
     all_targets = tuple(walk_windows_integration_targets(include_hidden=True))
     internal_targets = command_integration_filter(args, all_targets, init_callback=windows_init)
     instances = []  # type: list [lib.thread.WrappedThread]
+    pre_target = None
+    post_target = None
+    httptester_id = None
 
     if args.windows:
-        get_coverage_path(args)  # initialize before starting threads
+        get_python_path(args, args.python_executable)  # initialize before starting threads
 
         configs = dict((config['platform_version'], config) for config in args.metadata.instance_config)
 
@@ -523,17 +556,80 @@ def command_windows_integration(args):
             with open(filename, 'w') as inventory_fd:
                 inventory_fd.write(inventory)
 
+        use_httptester = args.httptester and any('needs/httptester/' in t.aliases for t in internal_targets)
+        # if running under Docker delegation, the httptester may have already been started
+        docker_httptester = bool(os.environ.get("HTTPTESTER", False))
+
+        if use_httptester and not docker_available() and not docker_httptester:
+            display.warning('Assuming --disable-httptester since `docker` is not available.')
+        elif use_httptester:
+            if docker_httptester:
+                # we are running in a Docker container that is linked to the httptester container, we just need to
+                # forward these requests to the linked hostname
+                first_host = HTTPTESTER_HOSTS[0]
+                ssh_options = ["-R", "8080:%s:80" % first_host, "-R", "8443:%s:443" % first_host]
+            else:
+                # we are running directly and need to start the httptester container ourselves and forward the port
+                # from there manually set so HTTPTESTER env var is set during the run
+                args.inject_httptester = True
+                httptester_id, ssh_options = start_httptester(args)
+
+            # to get this SSH command to run in the background we need to set to run in background (-f) and disable
+            # the pty allocation (-T)
+            ssh_options.insert(0, "-fT")
+
+            # create a script that will continue to run in the background until the script is deleted, this will
+            # cleanup and close the connection
+            def forward_ssh_ports(target):
+                """
+                :type target: IntegrationTarget
+                """
+                if 'needs/httptester/' not in target.aliases:
+                    return
+
+                for remote in [r for r in remotes if r.version != '2008']:
+                    manage = ManageWindowsCI(remote)
+                    manage.upload("test/runner/setup/windows-httptester.ps1", watcher_path)
+
+                    # We cannot pass an array of string with -File so we just use a delimiter for multiple values
+                    script = "powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\\%s -Hosts \"%s\"" \
+                             % (watcher_path, "|".join(HTTPTESTER_HOSTS))
+                    if args.verbosity > 3:
+                        script += " -Verbose"
+                    manage.ssh(script, options=ssh_options, force_pty=False)
+
+            def cleanup_ssh_ports(target):
+                """
+                :type target: IntegrationTarget
+                """
+                if 'needs/httptester/' not in target.aliases:
+                    return
+
+                for remote in [r for r in remotes if r.version != '2008']:
+                    # delete the tmp file that keeps the http-tester alive
+                    manage = ManageWindowsCI(remote)
+                    manage.ssh("cmd.exe /c \"del %s /F /Q\"" % watcher_path, force_pty=False)
+
+            watcher_path = "ansible-test-http-watcher-%s.ps1" % time.time()
+            pre_target = forward_ssh_ports
+            post_target = cleanup_ssh_ports
+
     success = False
 
     try:
-        command_integration_filtered(args, internal_targets, all_targets)
+        command_integration_filtered(args, internal_targets, all_targets, filename, pre_target=pre_target,
+                                     post_target=post_target)
         success = True
     finally:
+        if httptester_id:
+            docker_rm(args, httptester_id)
+
         if args.remote_terminate == 'always' or (args.remote_terminate == 'success' and success):
             for instance in instances:
                 instance.result.stop()
 
 
+# noinspection PyUnusedLocal
 def windows_init(args, internal_targets):  # pylint: disable=locally-disabled, unused-argument
     """
     :type args: WindowsIntegrationConfig
@@ -603,6 +699,10 @@ def windows_inventory(remotes):
             ansible_port=remote.connection.port,
         )
 
+        # used for the connection_windows_ssh test target
+        if remote.ssh_key:
+            options["ansible_ssh_private_key_file"] = os.path.abspath(remote.ssh_key.key)
+
         hosts.append(
             '%s %s' % (
                 remote.name.replace('/', '_'),
@@ -642,8 +742,19 @@ def command_integration_filter(args, targets, init_callback=None):
     """
     targets = tuple(target for target in targets if 'hidden/' not in target.aliases)
     changes = get_changes_filter(args)
-    require = (args.require or []) + changes
-    exclude = (args.exclude or [])
+
+    # special behavior when the --changed-all-target target is selected based on changes
+    if args.changed_all_target in changes:
+        # act as though the --changed-all-target target was in the include list
+        if args.changed_all_mode == 'include' and args.changed_all_target not in args.include:
+            args.include.append(args.changed_all_target)
+            args.delegate_args += ['--include', args.changed_all_target]
+        # act as though the --changed-all-target target was in the exclude list
+        elif args.changed_all_mode == 'exclude' and args.changed_all_target not in args.exclude:
+            args.exclude.append(args.changed_all_target)
+
+    require = args.require + changes
+    exclude = args.exclude
 
     internal_targets = walk_internal_targets(targets, args.include, exclude, require)
     environment_exclude = get_integration_filter(args, internal_targets)
@@ -666,18 +777,21 @@ def command_integration_filter(args, targets, init_callback=None):
     cloud_init(args, internal_targets)
 
     if args.delegate:
-        raise Delegate(require=changes, exclude=exclude, integration_targets=internal_targets)
+        raise Delegate(require=require, exclude=exclude, integration_targets=internal_targets)
 
     install_command_requirements(args)
 
     return internal_targets
 
 
-def command_integration_filtered(args, targets, all_targets):
+def command_integration_filtered(args, targets, all_targets, inventory_path, pre_target=None, post_target=None):
     """
     :type args: IntegrationConfig
     :type targets: tuple[IntegrationTarget]
     :type all_targets: tuple[IntegrationTarget]
+    :type inventory_path: str
+    :type pre_target: (IntegrationTarget) -> None | None
+    :type post_target: (IntegrationTarget) -> None | None
     """
     found = False
     passed = []
@@ -714,121 +828,151 @@ def command_integration_filtered(args, targets, all_targets):
                 display.warning('SSH service not responding. Waiting %d second(s) before checking again.' % seconds)
                 time.sleep(seconds)
 
-    if args.inject_httptester:
+    # Windows is different as Ansible execution is done locally but the host is remote
+    if args.inject_httptester and not isinstance(args, WindowsIntegrationConfig):
         inject_httptester(args)
 
     start_at_task = args.start_at_task
 
     results = {}
 
-    for target in targets_iter:
-        if args.start_at and not found:
-            found = target.name == args.start_at
+    current_environment = None  # type: EnvironmentDescription | None
 
-            if not found:
+    # common temporary directory path that will be valid on both the controller and the remote
+    # it must be common because it will be referenced in environment variables that are shared across multiple hosts
+    common_temp_path = '/tmp/ansible-test-%s' % ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(8))
+
+    setup_common_temp_dir(args, common_temp_path)
+
+    try:
+        for target in targets_iter:
+            if args.start_at and not found:
+                found = target.name == args.start_at
+
+                if not found:
+                    continue
+
+            if args.list_targets:
+                print(target.name)
                 continue
 
-        if args.list_targets:
-            print(target.name)
-            continue
+            tries = 2 if args.retry_on_error else 1
+            verbosity = args.verbosity
 
-        tries = 2 if args.retry_on_error else 1
-        verbosity = args.verbosity
+            cloud_environment = get_cloud_environment(args, target)
 
-        cloud_environment = get_cloud_environment(args, target)
+            original_environment = current_environment if current_environment else EnvironmentDescription(args)
+            current_environment = None
 
-        original_environment = EnvironmentDescription(args)
+            display.info('>>> Environment Description\n%s' % original_environment, verbosity=3)
 
-        display.info('>>> Environment Description\n%s' % original_environment, verbosity=3)
+            try:
+                while tries:
+                    tries -= 1
 
-        try:
-            while tries:
-                tries -= 1
+                    try:
+                        if cloud_environment:
+                            cloud_environment.setup_once()
 
-                try:
-                    if cloud_environment:
-                        cloud_environment.setup_once()
+                        run_setup_targets(args, test_dir, target.setup_once, all_targets_dict, setup_targets_executed, inventory_path, common_temp_path, False)
 
-                    run_setup_targets(args, test_dir, target.setup_once, all_targets_dict, setup_targets_executed, False)
+                        start_time = time.time()
 
-                    start_time = time.time()
+                        run_setup_targets(args, test_dir, target.setup_always, all_targets_dict, setup_targets_executed, inventory_path, common_temp_path, True)
 
-                    run_setup_targets(args, test_dir, target.setup_always, all_targets_dict, setup_targets_executed, True)
+                        if not args.explain:
+                            # create a fresh test directory for each test target
+                            remove_tree(test_dir)
+                            make_dirs(test_dir)
 
-                    if not args.explain:
-                        # create a fresh test directory for each test target
-                        remove_tree(test_dir)
-                        make_dirs(test_dir)
+                        if pre_target:
+                            pre_target(target)
 
-                    if target.script_path:
-                        command_integration_script(args, target)
-                    else:
-                        command_integration_role(args, target, start_at_task)
-                        start_at_task = None
+                        try:
+                            if target.script_path:
+                                command_integration_script(args, target, test_dir, inventory_path, common_temp_path)
+                            else:
+                                command_integration_role(args, target, start_at_task, test_dir, inventory_path, common_temp_path)
+                                start_at_task = None
+                        finally:
+                            if post_target:
+                                post_target(target)
 
-                    end_time = time.time()
+                        end_time = time.time()
 
-                    results[target.name] = dict(
-                        name=target.name,
-                        type=target.type,
-                        aliases=target.aliases,
-                        modules=target.modules,
-                        run_time_seconds=int(end_time - start_time),
-                        setup_once=target.setup_once,
-                        setup_always=target.setup_always,
-                        coverage=args.coverage,
-                        coverage_label=args.coverage_label,
-                        python_version=args.python_version,
-                    )
+                        results[target.name] = dict(
+                            name=target.name,
+                            type=target.type,
+                            aliases=target.aliases,
+                            modules=target.modules,
+                            run_time_seconds=int(end_time - start_time),
+                            setup_once=target.setup_once,
+                            setup_always=target.setup_always,
+                            coverage=args.coverage,
+                            coverage_label=args.coverage_label,
+                            python_version=args.python_version,
+                        )
 
-                    break
-                except SubprocessError:
-                    if cloud_environment:
-                        cloud_environment.on_failure(target, tries)
+                        break
+                    except SubprocessError:
+                        if cloud_environment:
+                            cloud_environment.on_failure(target, tries)
 
-                    if not original_environment.validate(target.name, throw=False):
-                        raise
+                        if not original_environment.validate(target.name, throw=False):
+                            raise
 
-                    if not tries:
-                        raise
+                        if not tries:
+                            raise
 
-                    display.warning('Retrying test target "%s" with maximum verbosity.' % target.name)
-                    display.verbosity = args.verbosity = 6
+                        display.warning('Retrying test target "%s" with maximum verbosity.' % target.name)
+                        display.verbosity = args.verbosity = 6
 
-            start_time = time.time()
-            original_environment.validate(target.name, throw=True)
-            end_time = time.time()
+                start_time = time.time()
+                current_environment = EnvironmentDescription(args)
+                end_time = time.time()
 
-            results[target.name]['validation_seconds'] = int(end_time - start_time)
+                EnvironmentDescription.check(original_environment, current_environment, target.name, throw=True)
 
-            passed.append(target)
-        except Exception as ex:
-            failed.append(target)
+                results[target.name]['validation_seconds'] = int(end_time - start_time)
 
-            if args.continue_on_error:
-                display.error(ex)
-                continue
+                passed.append(target)
+            except Exception as ex:
+                failed.append(target)
 
-            display.notice('To resume at this test target, use the option: --start-at %s' % target.name)
+                if args.continue_on_error:
+                    display.error(ex)
+                    continue
 
-            next_target = next(targets_iter, None)
+                display.notice('To resume at this test target, use the option: --start-at %s' % target.name)
 
-            if next_target:
-                display.notice('To resume after this test target, use the option: --start-at %s' % next_target.name)
+                next_target = next(targets_iter, None)
 
-            raise
-        finally:
-            display.verbosity = args.verbosity = verbosity
+                if next_target:
+                    display.notice('To resume after this test target, use the option: --start-at %s' % next_target.name)
 
-    if not args.explain:
-        results_path = 'test/results/data/%s-%s.json' % (args.command, re.sub(r'[^0-9]', '-', str(datetime.datetime.utcnow().replace(microsecond=0))))
+                raise
+            finally:
+                display.verbosity = args.verbosity = verbosity
 
-        data = dict(
-            targets=results,
-        )
+    finally:
+        if not args.explain:
+            if args.coverage:
+                coverage_temp_path = os.path.join(common_temp_path, COVERAGE_OUTPUT_PATH)
+                coverage_save_path = 'test/results/coverage'
 
-        with open(results_path, 'w') as results_fd:
-            results_fd.write(json.dumps(data, sort_keys=True, indent=4))
+                for filename in os.listdir(coverage_temp_path):
+                    shutil.copy(os.path.join(coverage_temp_path, filename), os.path.join(coverage_save_path, filename))
+
+            remove_tree(common_temp_path)
+
+            results_path = 'test/results/data/%s-%s.json' % (args.command, re.sub(r'[^0-9]', '-', str(datetime.datetime.utcnow().replace(microsecond=0))))
+
+            data = dict(
+                targets=results,
+            )
+
+            with open(results_path, 'w') as results_fd:
+                results_fd.write(json.dumps(data, sort_keys=True, indent=4))
 
     if failed:
         raise ApplicationError('The %d integration test(s) listed below (out of %d) failed. See error output above for details:\n%s' % (
@@ -962,13 +1106,15 @@ rdr pass inet proto tcp from any to any port 443 -> 127.0.0.1 port 8443
         raise ApplicationError('No supported port forwarding mechanism detected.')
 
 
-def run_setup_targets(args, test_dir, target_names, targets_dict, targets_executed, always):
+def run_setup_targets(args, test_dir, target_names, targets_dict, targets_executed, inventory_path, temp_path, always):
     """
     :type args: IntegrationConfig
     :type test_dir: str
     :type target_names: list[str]
     :type targets_dict: dict[str, IntegrationTarget]
     :type targets_executed: set[str]
+    :type inventory_path: str
+    :type temp_path: str
     :type always: bool
     """
     for target_name in target_names:
@@ -983,31 +1129,38 @@ def run_setup_targets(args, test_dir, target_names, targets_dict, targets_execut
             make_dirs(test_dir)
 
         if target.script_path:
-            command_integration_script(args, target)
+            command_integration_script(args, target, test_dir, inventory_path, temp_path)
         else:
-            command_integration_role(args, target, None)
+            command_integration_role(args, target, None, test_dir, inventory_path, temp_path)
 
         targets_executed.add(target_name)
 
 
-def integration_environment(args, target, cmd):
+def integration_environment(args, target, test_dir, inventory_path, ansible_config, env_config):
     """
     :type args: IntegrationConfig
     :type target: IntegrationTarget
-    :type cmd: list[str]
+    :type test_dir: str
+    :type inventory_path: str
+    :type ansible_config: str | None
+    :type env_config: CloudEnvironmentConfig | None
     :rtype: dict[str, str]
     """
-    env = ansible_environment(args)
+    env = ansible_environment(args, ansible_config=ansible_config)
 
     if args.inject_httptester:
         env.update(dict(
             HTTPTESTER='1',
         ))
 
+    callback_plugins = ['junit'] + (env_config.callback_plugins or [] if env_config else [])
+
     integration = dict(
         JUNIT_OUTPUT_DIR=os.path.abspath('test/results/junit'),
-        ANSIBLE_CALLBACK_WHITELIST='junit',
+        ANSIBLE_CALLBACK_WHITELIST=','.join(sorted(set(callback_plugins))),
         ANSIBLE_TEST_CI=args.metadata.ci_provider,
+        OUTPUT_DIR=test_dir,
+        INVENTORY_PATH=os.path.abspath(inventory_path),
     )
 
     if args.debug_strategy:
@@ -1015,108 +1168,135 @@ def integration_environment(args, target, cmd):
 
     if 'non_local/' in target.aliases:
         if args.coverage:
-            display.warning('Skipping coverage reporting for non-local test: %s' % target.name)
+            display.warning('Skipping coverage reporting on Ansible modules for non-local test: %s' % target.name)
 
         env.update(dict(ANSIBLE_TEST_REMOTE_INTERPRETER=''))
 
     env.update(integration)
 
-    cloud_environment = get_cloud_environment(args, target)
-
-    if cloud_environment:
-        cloud_environment.configure_environment(env, cmd)
-
     return env
 
 
-def command_integration_script(args, target):
+def command_integration_script(args, target, test_dir, inventory_path, temp_path):
     """
     :type args: IntegrationConfig
     :type target: IntegrationTarget
+    :type test_dir: str
+    :type inventory_path: str
+    :type temp_path: str
     """
     display.info('Running %s integration test script' % target.name)
 
-    cmd = ['./%s' % os.path.basename(target.script_path)]
+    env_config = None
 
-    if args.verbosity:
-        cmd.append('-' + ('v' * args.verbosity))
+    if isinstance(args, PosixIntegrationConfig):
+        cloud_environment = get_cloud_environment(args, target)
 
-    env = integration_environment(args, target, cmd)
-    cwd = target.path
+        if cloud_environment:
+            env_config = cloud_environment.get_environment_config()
 
-    intercept_command(args, cmd, target_name=target.name, env=env, cwd=cwd)
+    with integration_test_environment(args, target, inventory_path) as test_env:
+        cmd = ['./%s' % os.path.basename(target.script_path)]
+
+        if args.verbosity:
+            cmd.append('-' + ('v' * args.verbosity))
+
+        env = integration_environment(args, target, test_dir, test_env.inventory_path, test_env.ansible_config, env_config)
+        cwd = os.path.join(test_env.integration_dir, 'targets', target.name)
+
+        if env_config and env_config.env_vars:
+            env.update(env_config.env_vars)
+
+        with integration_test_config_file(args, env_config, test_env.integration_dir) as config_path:
+            if config_path:
+                cmd += ['-e', '@%s' % config_path]
+
+            module_coverage = 'non_local/' not in target.aliases
+            intercept_command(args, cmd, target_name=target.name, env=env, cwd=cwd, temp_path=temp_path, module_coverage=module_coverage)
 
 
-def command_integration_role(args, target, start_at_task):
+def command_integration_role(args, target, start_at_task, test_dir, inventory_path, temp_path):
     """
     :type args: IntegrationConfig
     :type target: IntegrationTarget
     :type start_at_task: str | None
+    :type test_dir: str
+    :type inventory_path: str
+    :type temp_path: str
     """
     display.info('Running %s integration test role' % target.name)
 
-    vars_file = 'integration_config.yml'
+    env_config = None
 
     if isinstance(args, WindowsIntegrationConfig):
-        inventory = 'inventory.winrm'
         hosts = 'windows'
         gather_facts = False
     elif isinstance(args, NetworkIntegrationConfig):
-        inventory = args.inventory or 'inventory.networking'
         hosts = target.name[:target.name.find('_')]
         gather_facts = False
     else:
-        inventory = 'inventory'
         hosts = 'testhost'
         gather_facts = True
 
         cloud_environment = get_cloud_environment(args, target)
 
         if cloud_environment:
-            hosts = cloud_environment.inventory_hosts or hosts
+            env_config = cloud_environment.get_environment_config()
 
-    playbook = '''
-- hosts: %s
-  gather_facts: %s
-  roles:
-    - { role: %s }
-    ''' % (hosts, gather_facts, target.name)
+    with integration_test_environment(args, target, inventory_path) as test_env:
+        play = dict(
+            hosts=hosts,
+            gather_facts=gather_facts,
+            vars_files=[
+                test_env.vars_file,
+            ],
+            roles=[
+                target.name,
+            ],
+        )
 
-    with tempfile.NamedTemporaryFile(dir='test/integration', prefix='%s-' % target.name, suffix='.yml') as pb_fd:
-        pb_fd.write(playbook.encode('utf-8'))
-        pb_fd.flush()
+        if env_config:
+            play.update(dict(
+                vars=env_config.ansible_vars,
+                environment=env_config.env_vars,
+                module_defaults=env_config.module_defaults,
+            ))
 
-        filename = os.path.basename(pb_fd.name)
+        playbook = json.dumps([play], indent=4, sort_keys=True)
 
-        display.info('>>> Playbook: %s\n%s' % (filename, playbook.strip()), verbosity=3)
+        with named_temporary_file(args=args, directory=test_env.integration_dir, prefix='%s-' % target.name, suffix='.yml', content=playbook) as playbook_path:
+            filename = os.path.basename(playbook_path)
 
-        cmd = ['ansible-playbook', filename, '-i', inventory, '-e', '@%s' % vars_file]
+            display.info('>>> Playbook: %s\n%s' % (filename, playbook.strip()), verbosity=3)
 
-        if start_at_task:
-            cmd += ['--start-at-task', start_at_task]
+            cmd = ['ansible-playbook', filename, '-i', test_env.inventory_path]
 
-        if args.tags:
-            cmd += ['--tags', args.tags]
+            if start_at_task:
+                cmd += ['--start-at-task', start_at_task]
 
-        if args.skip_tags:
-            cmd += ['--skip-tags', args.skip_tags]
+            if args.tags:
+                cmd += ['--tags', args.tags]
 
-        if args.diff:
-            cmd += ['--diff']
+            if args.skip_tags:
+                cmd += ['--skip-tags', args.skip_tags]
 
-        if isinstance(args, NetworkIntegrationConfig):
-            if args.testcase:
-                cmd += ['-e', 'testcase=%s' % args.testcase]
+            if args.diff:
+                cmd += ['--diff']
 
-        if args.verbosity:
-            cmd.append('-' + ('v' * args.verbosity))
+            if isinstance(args, NetworkIntegrationConfig):
+                if args.testcase:
+                    cmd += ['-e', 'testcase=%s' % args.testcase]
 
-        env = integration_environment(args, target, cmd)
-        cwd = 'test/integration'
+            if args.verbosity:
+                cmd.append('-' + ('v' * args.verbosity))
 
-        env['ANSIBLE_ROLES_PATH'] = os.path.abspath('test/integration/targets')
+            env = integration_environment(args, target, test_dir, test_env.inventory_path, test_env.ansible_config, env_config)
+            cwd = test_env.integration_dir
 
-        intercept_command(args, cmd, target_name=target.name, env=env, cwd=cwd)
+            env['ANSIBLE_ROLES_PATH'] = os.path.abspath(os.path.join(test_env.integration_dir, 'targets'))
+
+            module_coverage = 'non_local/' not in target.aliases
+            intercept_command(args, cmd, target_name=target.name, env=env, cwd=cwd, temp_path=temp_path, module_coverage=module_coverage)
 
 
 def command_units(args):
@@ -1124,16 +1304,14 @@ def command_units(args):
     :type args: UnitsConfig
     """
     changes = get_changes_filter(args)
-    require = (args.require or []) + changes
+    require = args.require + changes
     include, exclude = walk_external_targets(walk_units_targets(), args.include, args.exclude, require)
 
     if not include:
         raise AllTargetsSkipped()
 
     if args.delegate:
-        raise Delegate(require=changes)
-
-    install_command_requirements(args)
+        raise Delegate(require=changes, exclude=args.exclude)
 
     version_commands = []
 
@@ -1142,12 +1320,16 @@ def command_units(args):
         if args.python and version != args.python_version:
             continue
 
+        if args.requirements_mode != 'skip':
+            install_command_requirements(args, version)
+
         env = ansible_environment(args)
 
         cmd = [
             'pytest',
             '--boxed',
             '-r', 'a',
+            '-n', 'auto',
             '--color',
             'yes' if args.color else 'no',
             '--junit-xml',
@@ -1166,6 +1348,9 @@ def command_units(args):
         cmd += [target.path for target in include]
 
         version_commands.append((version, cmd, env))
+
+    if args.requirements_mode == 'only':
+        sys.exit()
 
     for version, command, env in version_commands:
         display.info('Unit test with Python %s' % version)
@@ -1374,6 +1559,40 @@ def common_integration_filter(args, targets, exclude):
             display.warning('Excluding tests marked "%s" which require --allow-unstable or prefixing with "unstable/": %s'
                             % (skip.rstrip('/'), ', '.join(skipped)))
 
+    # only skip a Windows test if using --windows and all the --windows versions are defined in the aliases as skip/windows/%s
+    if isinstance(args, WindowsIntegrationConfig) and args.windows:
+        all_skipped = []
+        not_skipped = []
+
+        for target in targets:
+            if "skip/windows/" not in target.aliases:
+                continue
+
+            skip_valid = []
+            skip_missing = []
+            for version in args.windows:
+                if "skip/windows/%s/" % version in target.aliases:
+                    skip_valid.append(version)
+                else:
+                    skip_missing.append(version)
+
+            if skip_missing and skip_valid:
+                not_skipped.append((target.name, skip_valid, skip_missing))
+            elif skip_valid:
+                all_skipped.append(target.name)
+
+        if all_skipped:
+            exclude.extend(all_skipped)
+            skip_aliases = ["skip/windows/%s/" % w for w in args.windows]
+            display.warning('Excluding tests marked "%s" which are set to skip with --windows %s: %s'
+                            % ('", "'.join(skip_aliases), ', '.join(args.windows), ', '.join(all_skipped)))
+
+        if not_skipped:
+            for target, skip_valid, skip_missing in not_skipped:
+                # warn when failing to skip due to lack of support for skipping only some versions
+                display.warning('Including test "%s" which was marked to skip for --windows %s but not %s.'
+                                % (target, ', '.join(skip_valid), ', '.join(skip_missing)))
+
 
 def get_integration_local_filter(args, targets):
     """
@@ -1429,6 +1648,13 @@ def get_integration_docker_filter(args, targets):
 
     common_integration_filter(args, targets, exclude)
 
+    skip = 'skip/docker/'
+    skipped = [target.name for target in targets if skip in target.aliases]
+    if skipped:
+        exclude.append(skip)
+        display.warning('Excluding tests marked "%s" which cannot run under docker: %s'
+                        % (skip.rstrip('/'), ', '.join(skipped)))
+
     if not args.docker_privileged:
         skip = 'needs/privileged/'
         skipped = [target.name for target in targets if skip in target.aliases]
@@ -1437,15 +1663,9 @@ def get_integration_docker_filter(args, targets):
             display.warning('Excluding tests marked "%s" which require --docker-privileged to run under docker: %s'
                             % (skip.rstrip('/'), ', '.join(skipped)))
 
-    docker_image = args.docker.split('@')[0]  # strip SHA for proper tag comparison
-
     python_version = 2  # images are expected to default to python 2 unless otherwise specified
 
-    if docker_image.endswith('py3'):
-        python_version = 3  # docker images ending in 'py3' are expected to default to python 3
-
-    if docker_image.endswith(':default'):
-        python_version = 3  # docker images tagged 'default' are expected to default to python 3
+    python_version = int(get_docker_completion().get(args.docker_raw, {}).get('python', str(python_version)))
 
     if args.python:  # specifying a numeric --python option overrides the default python
         if args.python.startswith('3'):
@@ -1484,6 +1704,13 @@ def get_integration_remote_filter(args, targets):
         display.warning('Excluding tests marked "%s" which are not supported on %s: %s'
                         % (skip.rstrip('/'), platform, ', '.join(skipped)))
 
+    skip = 'skip/%s/' % args.remote.replace('/', '')
+    skipped = [target.name for target in targets if skip in target.aliases]
+    if skipped:
+        exclude.append(skip)
+        display.warning('Excluding tests marked "%s" which are not supported on %s: %s'
+                        % (skip.rstrip('/'), args.remote.replace('/', ' '), ', '.join(skipped)))
+
     python_version = 2  # remotes are expected to default to python 2
 
     skip = 'skip/python%d/' % python_version
@@ -1508,26 +1735,83 @@ class EnvironmentDescription(object):
             self.data = {}
             return
 
+        warnings = []
+
         versions = ['']
         versions += SUPPORTED_PYTHON_VERSIONS
         versions += list(set(v.split('.')[0] for v in SUPPORTED_PYTHON_VERSIONS))
 
         python_paths = dict((v, find_executable('python%s' % v, required=False)) for v in sorted(versions))
-        python_versions = dict((v, self.get_version([python_paths[v], '-V'])) for v in sorted(python_paths) if python_paths[v])
-
         pip_paths = dict((v, find_executable('pip%s' % v, required=False)) for v in sorted(versions))
-        pip_versions = dict((v, self.get_version([pip_paths[v], '--version'])) for v in sorted(pip_paths) if pip_paths[v])
+        program_versions = dict((v, self.get_version([python_paths[v], 'test/runner/versions.py'], warnings)) for v in sorted(python_paths) if python_paths[v])
         pip_interpreters = dict((v, self.get_shebang(pip_paths[v])) for v in sorted(pip_paths) if pip_paths[v])
         known_hosts_hash = self.get_hash(os.path.expanduser('~/.ssh/known_hosts'))
 
+        for version in sorted(versions):
+            self.check_python_pip_association(version, python_paths, pip_paths, pip_interpreters, warnings)
+
+        for warning in warnings:
+            display.warning(warning, unique=True)
+
         self.data = dict(
             python_paths=python_paths,
-            python_versions=python_versions,
             pip_paths=pip_paths,
-            pip_versions=pip_versions,
+            program_versions=program_versions,
             pip_interpreters=pip_interpreters,
             known_hosts_hash=known_hosts_hash,
+            warnings=warnings,
         )
+
+    @staticmethod
+    def check_python_pip_association(version, python_paths, pip_paths, pip_interpreters, warnings):
+        """
+        :type version: str
+        :param python_paths: dict[str, str]
+        :param pip_paths:  dict[str, str]
+        :param pip_interpreters:  dict[str, str]
+        :param warnings: list[str]
+        """
+        python_label = 'Python%s' % (' %s' % version if version else '')
+
+        pip_path = pip_paths.get(version)
+        python_path = python_paths.get(version)
+
+        if not python_path and not pip_path:
+            # neither python or pip is present for this version
+            return
+
+        if not python_path:
+            warnings.append('A %s interpreter was not found, yet a matching pip was found at "%s".' % (python_label, pip_path))
+            return
+
+        if not pip_path:
+            warnings.append('A %s interpreter was found at "%s", yet a matching pip was not found.' % (python_label, python_path))
+            return
+
+        pip_shebang = pip_interpreters.get(version)
+
+        match = re.search(r'#!\s*(?P<command>[^\s]+)', pip_shebang)
+
+        if not match:
+            warnings.append('A %s pip was found at "%s", but it does not have a valid shebang: %s' % (python_label, pip_path, pip_shebang))
+            return
+
+        pip_interpreter = os.path.realpath(match.group('command'))
+        python_interpreter = os.path.realpath(python_path)
+
+        if pip_interpreter == python_interpreter:
+            return
+
+        try:
+            identical = filecmp.cmp(pip_interpreter, python_interpreter)
+        except OSError:
+            identical = False
+
+        if identical:
+            return
+
+        warnings.append('A %s pip was found at "%s", but it uses interpreter "%s" instead of "%s".' % (
+            python_label, pip_path, pip_interpreter, python_interpreter))
 
     def __str__(self):
         """
@@ -1543,18 +1827,40 @@ class EnvironmentDescription(object):
         """
         current = EnvironmentDescription(self.args)
 
-        original_json = str(self)
+        return self.check(self, current, target_name, throw)
+
+    @staticmethod
+    def check(original, current, target_name, throw):
+        """
+        :type original: EnvironmentDescription
+        :type current: EnvironmentDescription
+        :type target_name: str
+        :type throw: bool
+        :rtype: bool
+        """
+        original_json = str(original)
         current_json = str(current)
 
         if original_json == current_json:
             return True
+
+        unified_diff = '\n'.join(difflib.unified_diff(
+            a=original_json.splitlines(),
+            b=current_json.splitlines(),
+            fromfile='original.json',
+            tofile='current.json',
+            lineterm='',
+        ))
 
         message = ('Test target "%s" has changed the test environment!\n'
                    'If these changes are necessary, they must be reverted before the test finishes.\n'
                    '>>> Original Environment\n'
                    '%s\n'
                    '>>> Current Environment\n'
-                   '%s' % (target_name, original_json, current_json))
+                   '%s\n'
+                   '>>> Environment Diff\n'
+                   '%s'
+                   % (target_name, original_json, current_json, unified_diff))
 
         if throw:
             raise ApplicationError(message)
@@ -1564,17 +1870,19 @@ class EnvironmentDescription(object):
         return False
 
     @staticmethod
-    def get_version(command):
+    def get_version(command, warnings):
         """
         :type command: list[str]
-        :rtype: str
+        :type warnings: list[str]
+        :rtype: list[str]
         """
         try:
             stdout, stderr = raw_command(command, capture=True, cmd_verbosity=2)
-        except SubprocessError:
+        except SubprocessError as ex:
+            warnings.append(u'%s' % ex)
             return None  # all failures are equal, we don't care why it failed, only that it did
 
-        return (stdout or '').strip() + (stderr or '').strip()
+        return [line.strip() for line in ((stdout or '').strip() + (stderr or '').strip()).splitlines()]
 
     @staticmethod
     def get_shebang(path):
@@ -1583,7 +1891,7 @@ class EnvironmentDescription(object):
         :rtype: str
         """
         with open(path) as script_fd:
-            return script_fd.readline()
+            return script_fd.readline().strip()
 
     @staticmethod
     def get_hash(path):

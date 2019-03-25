@@ -50,7 +50,7 @@ options:
      description:
        - Ignored. Present for backwards compatibility
 requirements:
-    - "python >= 2.6"
+    - "python >= 2.7"
     - "openstacksdk"
 '''
 
@@ -58,6 +58,7 @@ EXAMPLES = '''
 # Create a project
 - os_project:
     cloud: mycloud
+    endpoint_type: admin
     state: present
     name: demoproject
     description: demodescription
@@ -67,6 +68,7 @@ EXAMPLES = '''
 # Delete a project
 - os_project:
     cloud: mycloud
+    endpoint_type: admin
     state: absent
     name: demoproject
 '''
@@ -80,15 +82,15 @@ project:
     contains:
         id:
             description: Project ID
-            type: string
+            type: str
             sample: "f59382db809c43139982ca4189404650"
         name:
             description: Project name
-            type: string
+            type: str
             sample: "demoproject"
         description:
             description: Project description
-            type: string
+            type: str
             sample: "demodescription"
         enabled:
             description: Boolean to indicate if project is enabled
@@ -158,13 +160,13 @@ def main():
                 # We assume admin is passing domain id
                 dom = cloud.get_domain(domain)['id']
                 domain = dom
-            except:
+            except Exception:
                 # If we fail, maybe admin is passing a domain name.
                 # Note that domains have unique names, just like id.
                 try:
                     dom = cloud.search_domains(filters={'name': domain})[0]['id']
                     domain = dom
-                except:
+                except Exception:
                     # Ok, let's hope the user is non-admin and passing a sane id
                     pass
 

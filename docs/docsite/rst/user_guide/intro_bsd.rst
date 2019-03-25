@@ -16,7 +16,8 @@ versions of sshpass do not deal particularly well with BSD login prompts, so whe
     [freebsd]
     mybsdhost1 ansible_connection=paramiko
 
-Ansible is agentless by default, however certain software is required on the target machines. Using Python 2.4 on the agents requires an additional py-simplejson package/library to be installed, however this library is already included in Python 2.5 and above.
+Ansible is agentless by default, however certain software is required on the target machines.
+
 Operating without Python is possible with the ``raw`` module. Although this module can be used to bootstrap Ansible and install Python on BSD variants (see below), it is very limited and the use of Python is required to make full use of Ansible's features.
 
 .. _bootstrap_bsd:
@@ -92,7 +93,7 @@ Please feel free to report any issues or incompatibilities you discover with BSD
        Learning ansible's configuration management language
    :ref:`developing_modules`
        How to write modules
-   `Mailing List <http://groups.google.com/group/ansible-project>`_
+   `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

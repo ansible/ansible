@@ -24,25 +24,13 @@ options:
     description:
       - Path to a pester test file or a folder where tests can be found.
       - If the path is a folder, the module will consider all ps1 files as Pester tests.
+    type: str
     required: true
   version:
     description:
       - Minimum version of the pester module that has to be available on the remote host.
 author:
-    - Erwan Quelin (@erwanquelin)
-'''
-
-RETURN = r'''
-pester_version:
-    description: Version of the pester module found on the remote host.
-    returned: always
-    type: string
-    sample: 4.3.1
-output:
-    description: Results of the Pester tests.
-    returned: success
-    type: list
-    sample: False
+    - Erwan Quelin (@equelin)
 '''
 
 EXAMPLES = r'''
@@ -65,4 +53,17 @@ EXAMPLES = r'''
   win_pester:
     path: C:\Pester\test01.test.ps1
     version: 4.1.0
+'''
+
+RETURN = r'''
+pester_version:
+    description: Version of the pester module found on the remote host.
+    returned: always
+    type: str
+    sample: 4.3.1
+output:
+    description: Results of the Pester tests.
+    returned: success
+    type: list
+    sample: false
 '''

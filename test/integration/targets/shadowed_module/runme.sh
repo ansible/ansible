@@ -11,4 +11,4 @@ fi
 
 # This playbook calls a lookup which shadows a keyword.
 # This is an ok situation, and should not error
-ansible-playbook playbook_lookup.yml -i inventory -e @../../integration_config.yml "$@"
+ansible-playbook playbook_lookup.yml -i ../../inventory -e @../../integration_config.yml "$@"

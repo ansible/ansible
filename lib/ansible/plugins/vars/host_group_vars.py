@@ -27,8 +27,6 @@ DOCUMENTATION = '''
         - Files are restricted by extension to one of .yaml, .json, .yml or no extension.
         - Hidden (starting with '.') and backup (ending with '~') files and directories are ignored.
         - Only applies to inventory sources that are existing paths.
-    notes:
-        - It takes the place of the previously hardcoded group_vars/host_vars loading.
     options:
       _valid_extensions:
         default: [".yml", ".yaml", ".json"]
@@ -79,12 +77,12 @@ class VarsModule(BaseVarsPlugin):
                 try:
                     found_files = []
                     # load vars
-                    opath = os.path.realpath(os.path.join(self._basedir, subdir))
+                    b_opath = os.path.realpath(to_bytes(os.path.join(self._basedir, subdir)))
+                    opath = to_text(b_opath)
                     key = '%s.%s' % (entity.name, opath)
                     if cache and key in FOUND:
                         found_files = FOUND[key]
                     else:
-                        b_opath = to_bytes(opath)
                         # no need to do much if path does not exist for basedir
                         if os.path.exists(b_opath):
                             if os.path.isdir(b_opath):

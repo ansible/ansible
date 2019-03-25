@@ -233,6 +233,19 @@
       - result is failed
   when: result is not skipped
 
+- name: check if urllib3 is installed as an OS package
+  package:
+    name: "{{ uri_os_packages[ansible_os_family].urllib3 }}"
+  check_mode: yes
+  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool and uri_os_packages[ansible_os_family].urllib3|default
+  register: urllib3
+
+- name: uninstall conflicting urllib3 pip package
+  pip:
+    name: urllib3
+    state: absent
+  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool and uri_os_packages[ansible_os_family].urllib3|default and urllib3.changed
+
 - name: install OS packages that are needed for SNI on old python
   package:
     name: "{{ item }}"
@@ -285,7 +298,7 @@
   pip:
     name: "{{ item }}"
     state: latest
-    extra_args: "-c {{ role_path }}/files/constraints.txt"
+    extra_args: "-c {{ remote_constraints }}"
   with_items:
     - urllib3
     - PyOpenSSL
@@ -390,6 +403,20 @@
     - result is failure
     - "'failed to parse body as form_urlencoded: too many values to unpack' in result.msg"
 
+- name: Validate invalid method
+  uri:
+    url: https://{{ httpbin_host }}/anything
+    method: UNKNOWN
+  register: result
+  ignore_errors: yes
+
+- name: Assert invalid method fails
+  assert:
+    that:
+    - result is failure
+    - result.status == 405
+    - "'METHOD NOT ALLOWED' in result.msg"
+
 - name: Test client cert auth, no certs
   uri:
     url: "https://ansible.http.tests/ssl_client_verify"
@@ -402,8 +429,8 @@
 - name: Test client cert auth, with certs
   uri:
     url: "https://ansible.http.tests/ssl_client_verify"
-    client_cert: "{{ output_dir }}/client.pem"
-    client_key: "{{ output_dir }}/client.key"
+    client_cert: "{{ remote_tmp_dir }}/client.pem"
+    client_key: "{{ remote_tmp_dir }}/client.key"
     return_content: true
   register: result
   failed_when: result.content != "ansible.http.tests:SUCCESS"
@@ -412,8 +439,8 @@
 - name: Test client cert auth, with no validation
   uri:
     url: "https://fail.ansible.http.tests/ssl_client_verify"
-    client_cert: "{{ output_dir }}/client.pem"
-    client_key: "{{ output_dir }}/client.key"
+    client_cert: "{{ remote_tmp_dir }}/client.pem"
+    client_key: "{{ remote_tmp_dir }}/client.key"
     return_content: true
     validate_certs: no
   register: result
@@ -423,8 +450,8 @@
 - name: Test client cert auth, with validation and ssl mismatch
   uri:
     url: "https://fail.ansible.http.tests/ssl_client_verify"
-    client_cert: "{{ output_dir }}/client.pem"
-    client_key: "{{ output_dir }}/client.key"
+    client_cert: "{{ remote_tmp_dir }}/client.pem"
+    client_key: "{{ remote_tmp_dir }}/client.key"
     return_content: true
     validate_certs: yes
   register: result
@@ -445,25 +472,84 @@
 - name: Write out netrc template
   template:
     src: netrc.j2
-    dest: "{{ output_dir }}/netrc"
-
-- debug:
-    msg: "{{ lookup('file', output_dir ~ '/netrc') }}"
+    dest: "{{ remote_tmp_dir }}/netrc"
 
 - name: Test netrc with port
   uri:
     url: "https://{{ httpbin_host }}:443/basic-auth/user/passwd"
   environment:
-    NETRC: "{{ output_dir|expanduser }}/netrc"
+    NETRC: "{{ remote_tmp_dir }}/netrc"
+
+- name: Test JSON POST with src
+  uri:
+    url: "https://{{ httpbin_host}}/post"
+    src: pass0.json
+    method: POST
+    return_content: true
+    body_format: json
+  register: result
+
+- name: Validate POST with src works
+  assert:
+    that:
+      - result.json.json[0] == 'JSON Test Pattern pass1'
+
+- name: Copy file pass0.json to remote
+  copy:
+    src: "{{ role_path }}/files/pass0.json"
+    dest: "{{ remote_tmp_dir }}/pass0.json"
+
+- name: Test JSON POST with src and remote_src=True
+  uri:
+    url: "https://{{ httpbin_host}}/post"
+    src: "{{ remote_tmp_dir }}/pass0.json"
+    remote_src: true
+    method: POST
+    return_content: true
+    body_format: json
+  register: result
+
+- name: Validate POST with src  and remote_src=True works
+  assert:
+    that:
+      - result.json.json[0] == 'JSON Test Pattern pass1'
+
+- name: Create a testing file
+  copy:
+    content: "content"
+    dest: "{{ output_dir }}/output"
+
+- name: Download a file from non existing location
+  uri:
+    url: http://does/not/exist
+    dest: "{{ output_dir }}/output"
+  ignore_errors: yes
+
+- name: Save testing file's output
+  command: "cat {{ output_dir }}/output"
+  register: file_out
+
+- name: Test the testing file was not overwritten
+  assert:
+    that:
+      - "'content' in file_out.stdout"
+
+- name: Clean up
+  file:
+    dest: "{{ output_dir }}/output"
+    state: absent
 
 - name: Test follow_redirects=none
-  include_tasks: redirect-none.yml
+  import_tasks: redirect-none.yml
 
 - name: Test follow_redirects=safe
-  include_tasks: redirect-safe.yml
+  import_tasks: redirect-safe.yml
 
 - name: Test follow_redirects=urllib2
-  include_tasks: redirect-urllib2.yml
+  import_tasks: redirect-urllib2.yml
 
 - name: Test follow_redirects=all
-  include_tasks: redirect-all.yml
+  import_tasks: redirect-all.yml
+
+- name: Check unexpected failures
+  import_tasks: unexpected-failures.yml

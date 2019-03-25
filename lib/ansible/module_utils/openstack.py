@@ -134,11 +134,12 @@ def openstack_cloud_from_module(module, min_version='0.12.0'):
                 " excluded.")
             for param in (
                     'auth', 'region_name', 'verify',
-                    'cacert', 'key', 'api_timeout', 'interface'):
+                    'cacert', 'key', 'api_timeout', 'auth_type'):
                 if module.params[param] is not None:
-                    module.fail_json(fail_message.format(param=param))
-            if module.params['auth_type'] != 'password':
-                module.fail_json(fail_message.format(param='auth_type'))
+                    module.fail_json(msg=fail_message.format(param=param))
+            # For 'interface' parameter, fail if we receive a non-default value
+            if module.params['interface'] != 'public':
+                module.fail_json(msg=fail_message.format(param='interface'))
             return sdk, sdk.connect(**cloud_config)
         else:
             return sdk, sdk.connect(

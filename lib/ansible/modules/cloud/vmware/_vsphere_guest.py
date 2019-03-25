@@ -176,6 +176,7 @@ EXAMPLES = '''
     esxi:
       datacenter: MyDatacenter
       hostname: esx001.mydomain.local
+  delegate_to: localhost
 
 # Reconfigure the CPU and Memory on the newly created VM
 # Will return the changes made
@@ -208,6 +209,7 @@ EXAMPLES = '''
     esxi:
       datacenter: MyDatacenter
       hostname: esx001.mydomain.local
+  delegate_to: localhost
 
 # Deploy a guest from a template
 - vsphere_guest:
@@ -221,19 +223,20 @@ EXAMPLES = '''
     resource_pool: "/Resources"
     vm_extra_config:
       folder: MyFolder
+  delegate_to: localhost
 
 # Task to gather facts from a vSphere cluster only if the system is a VMware guest
-
 - vsphere_guest:
     vcenter_hostname: vcenter.mydomain.local
     username: myuser
     password: mypass
     guest: newvm001
     vmware_guest_facts: yes
+  delegate_to: localhost
 
 ---
 # Typical output of a vsphere_facts run on a guest
-# If vmware tools is not installed, ipadresses with return None
+# If vmware tools is not installed, ipaddresses with return None
 
 - hw_eth0:
   - addresstype: "assigned"
@@ -273,6 +276,7 @@ EXAMPLES = '''
     guest: newvm001
     state: absent
     force: yes
+  delegate_to: localhost
 '''
 
 import os

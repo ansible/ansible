@@ -9,8 +9,6 @@
   become: yes
   register: result
 
-
-
 - assert:
     that:
       # _facts modules should never report a change

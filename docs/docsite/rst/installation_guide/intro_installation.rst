@@ -36,18 +36,18 @@ For other installation options, we recommend installing via "pip", which is the 
 If you wish to track the development release to use and test the latest features, we will share
 information about running from source.  It's not necessary to install the program to run from source.
 
-.. _control_machine_requirements:
+.. _control_node_requirements:
 
-Control Machine Requirements
+Control Node Requirements
 ````````````````````````````
 
-Currently Ansible can be run from any machine with Python 2 (versions 2.6 or 2.7) or Python 3 (versions 3.5 and higher) installed (Windows isn't supported for the control machine).
+Currently Ansible can be run from any machine with Python 2 (version 2.7) or Python 3 (versions 3.5 and higher) installed. Windows isn't supported for the control node.
 
-This includes Red Hat, Debian, CentOS, OS X, any of the BSDs, and so on.
+This includes Red Hat, Debian, CentOS, macOS, any of the BSDs, and so on.
 
 .. note::
 
-    Mac OS X by default is configured for a small number of file handles, so if you want to use 15 or more forks you'll need to raise the ulimit with ``sudo launchctl limit maxfiles unlimited``. This command can also fix any "Too many open files" error.
+    macOS by default is configured for a small number of file handles, so if you want to use 15 or more forks you'll need to raise the ulimit with ``sudo launchctl limit maxfiles unlimited``. This command can also fix any "Too many open files" error.
 
 
 .. warning::
@@ -90,11 +90,11 @@ later).
 
      .. code-block:: shell
 
-        ansible myhost --sudo -m raw -a "yum install -y python2"
+        $ ansible myhost --become -m raw -a "yum install -y python2"
 
-.. _installing_the_control_machine:
+.. _installing_the_control_node:
 
-Installing the Control Machine
+Installing the Control Node
 ``````````````````````````````
 .. _from_yum:
 
@@ -119,9 +119,9 @@ To enable the Ansible Engine repository, run the following command:
 
 .. code-block:: bash
 
-    $ sudo subscription-manager repos --enable rhel-7-server-ansible-2.6-rpms
+    $ sudo subscription-manager repos --enable rhel-7-server-ansible-2.7-rpms
 
-RPMs for currently supported versions of RHEL, CentOS, and Fedora are available from `EPEL <http://fedoraproject.org/wiki/EPEL>`_ as well as `releases.ansible.com <https://releases.ansible.com/ansible/rpm>`_.
+RPMs for currently supported versions of RHEL, CentOS, and Fedora are available from `EPEL <https://fedoraproject.org/wiki/EPEL>`_ as well as `releases.ansible.com <https://releases.ansible.com/ansible/rpm>`_.
 
 Ansible version 2.4 and later can manage earlier operating systems that contain Python 2.6 or higher.
 
@@ -136,22 +136,21 @@ You can also build an RPM yourself. From the root of a checkout or tarball, use 
 
 .. _from_apt:
 
-Latest Releases Via Apt (Ubuntu)
+Latest Releases via Apt (Ubuntu)
 ++++++++++++++++++++++++++++++++
 
-Ubuntu builds are available `in a PPA here <https://launchpad.net/~ansible/+archive/ansible>`_.
+Ubuntu builds are available `in a PPA here <https://launchpad.net/~ansible/+archive/ubuntu/ansible>`_.
 
 To configure the PPA on your machine and install ansible run these commands:
 
 .. code-block:: bash
 
-    $ sudo apt-get update
-    $ sudo apt-get install software-properties-common
-    $ sudo apt-add-repository ppa:ansible/ansible
-    $ sudo apt-get update
-    $ sudo apt-get install ansible
+    $ sudo apt update
+    $ sudo apt install software-properties-common
+    $ sudo apt-add-repository --yes --update ppa:ansible/ansible
+    $ sudo apt install ansible
 
-.. note:: On older Ubuntu distributions, "software-properties-common" is called "python-software-properties".
+.. note:: On older Ubuntu distributions, "software-properties-common" is called "python-software-properties". You may want to use ``apt-get`` instead of ``apt`` in older versions.
 
 Debian/Ubuntu packages can also be built from the source checkout, run:
 
@@ -159,9 +158,9 @@ Debian/Ubuntu packages can also be built from the source checkout, run:
 
     $ make deb
 
-You may also wish to run from source to get the latest, which is covered above.
+You may also wish to run from source to get the latest, which is covered below.
 
-Latest Releases Via Apt (Debian)
+Latest Releases via Apt (Debian)
 ++++++++++++++++++++++++++++++++
 
 Debian users may leverage the same source as the Ubuntu PPA.
@@ -177,12 +176,12 @@ Then run these commands:
 .. code-block:: bash
 
     $ sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 93C4A3FD7BB9C367
-    $ sudo apt-get update
-    $ sudo apt-get install ansible
+    $ sudo apt update
+    $ sudo apt install ansible
 
-.. note:: This method has been verified with the Trusty sources in Debian Jessie and Stretch but may not be supported in earlier versions.
+.. note:: This method has been verified with the Trusty sources in Debian Jessie and Stretch but may not be supported in earlier versions. You may want to use ``apt-get`` instead of ``apt`` in older versions.
 
-Latest Releases Via Portage (Gentoo)
+Latest Releases via Portage (Gentoo)
 ++++++++++++++++++++++++++++++++++++
 
 .. code-block:: bash
@@ -195,18 +194,22 @@ To install the newest version, you may need to unmask the ansible package prior 
 
     $ echo 'app-admin/ansible' >> /etc/portage/package.accept_keywords
 
-.. note::
-
-    The current default Python slot on Gentoo is version 3.4.  Ansible needs Python-3.5 or higher so
-    you will need to `:ref:`bootstrap <managed_node_requirements>` a compatible version onto the
-    machines.
-
-Latest Releases Via pkg (FreeBSD)
+Latest Releases via pkg (FreeBSD)
 +++++++++++++++++++++++++++++++++
+
+Though Ansible works with both Python 2 and 3 versions, FreeBSD has different packages for each Python version.
+So to install you can use:
 
 .. code-block:: bash
 
-    $ sudo pkg install ansible
+    $ sudo pkg install py27-ansible
+
+or:
+
+.. code-block:: bash
+
+    $ sudo pkg install py36-ansible
+
 
 You may also wish to install from ports, run:
 
@@ -214,18 +217,26 @@ You may also wish to install from ports, run:
 
     $ sudo make -C /usr/ports/sysutils/ansible install
 
+You can also choose a specific version, i.e  ``ansible25``.
+
+Older versions of FreeBSD worked with something like this (substitute for your choice of package manager):
+
+.. code-block:: bash
+
+    $ sudo pkg install ansible
+
 .. _on_macos:
 
-Latest Releases on Mac OSX
-++++++++++++++++++++++++++++++++++++++
+Latest Releases on macOS
+++++++++++++++++++++++++++
 
-The preferred way to install ansible on a Mac is via pip.
+The preferred way to install Ansible on a Mac is via pip.
 
-The instructions can be found in `Latest Releases Via Pip`_ section.
+The instructions can be found in `Latest Releases via Pip`_ section. If you are running macOS version 10.12 or older, then you ought to upgrade to the latest pip (9.0.3 or newer) to connect to the Python Package Index securely.
 
 .. _from_pkgutil:
 
-Latest Releases Via OpenCSW (Solaris)
+Latest Releases via OpenCSW (Solaris)
 +++++++++++++++++++++++++++++++++++++
 
 Ansible is available for Solaris as `SysV package from OpenCSW <https://www.opencsw.org/packages/ansible/>`_.
@@ -237,20 +248,49 @@ Ansible is available for Solaris as `SysV package from OpenCSW <https://www.open
 
 .. _from_pacman:
 
-Latest Releases Via Pacman (Arch Linux)
+Latest Releases via Pacman (Arch Linux)
 +++++++++++++++++++++++++++++++++++++++
 
 Ansible is available in the Community repository::
 
     $ pacman -S ansible
 
-The AUR has a PKGBUILD for pulling directly from Github called `ansible-git <https://aur.archlinux.org/packages/ansible-git>`_.
+The AUR has a PKGBUILD for pulling directly from GitHub called `ansible-git <https://aur.archlinux.org/packages/ansible-git>`_.
 
 Also see the `Ansible <https://wiki.archlinux.org/index.php/Ansible>`_ page on the ArchWiki.
 
+.. _from_sbopkg:
+
+Latest Releases via sbopkg (Slackware Linux)
+++++++++++++++++++++++++++++++++++++++++++++
+
+Ansible build script is available in the `SlackBuilds.org <https://slackbuilds.org/apps/ansible/>`_ repository.
+Can be built and installed using `sbopkg <https://sbopkg.org/>`_.
+
+Create queue with Ansible and all dependencies::
+
+    # sqg -p ansible
+
+Build and install packages from created queuefile (answer Q for question if sbopkg should use queue or package)::
+
+    # sbopkg -k -i ansible
+
+.. _from swupd:
+
+Latest Release via swupd (Clear Linux)
++++++++++++++++++++++++++++++++++++++++
+
+Ansible and its dependencies are available as part of the sysadmin host management bundle::
+
+    $ sudo swupd bundle-add sysadmin-hostmgmt
+
+Update of the software will be managed by the swupd tool::
+
+   $ sudo swupd update
+
 .. _from_pip:
 
-Latest Releases Via Pip
+Latest Releases via Pip
 +++++++++++++++++++++++
 
 Ansible can be installed via "pip", the Python package manager.  If 'pip' isn't already available in
@@ -264,13 +304,19 @@ Then install Ansible with [1]_::
 
 Or if you are looking for the latest development version::
 
-    pip install git+https://github.com/ansible/ansible.git@devel
+   $ pip install git+https://github.com/ansible/ansible.git@devel
 
-If you are installing on OS X Mavericks, you may encounter some noise from your compiler.  A workaround is to do the following::
+If you are installing on macOS Mavericks, you may encounter some noise from your compiler.  A workaround is to do the following::
 
    $ sudo CFLAGS=-Qunused-arguments CPPFLAGS=-Qunused-arguments pip install ansible
 
-Readers that use virtualenv can also install Ansible under virtualenv, though we'd recommend to not worry about it and just install Ansible globally.  Do not use easy_install to install ansible directly.
+Readers that use virtualenv can also install Ansible under virtualenv, though we'd recommend to not worry about it and just install Ansible globally. Do not use easy_install to install Ansible directly.
+
+.. note::
+
+    Older versions of pip defaults to http://pypi.python.org/simple, which no longer works.
+    Please make sure you have an updated pip (version 10 or greater) installed before installing Ansible.
+    Refer `here <https://pip.pypa.io/en/stable/installing/#installation>`_ about installing latest pip.
 
 .. _tagged_releases:
 
@@ -299,14 +345,14 @@ open source projects.
 
 .. note::
 
-   If you are intending to use Tower as the Control Machine, do not use a source install. Please use OS package manager (like ``apt/yum``) or ``pip`` to install a stable version.
+   If you are intending to use Tower as the Control Node, do not use a source install. Please use OS package manager (like ``apt/yum``) or ``pip`` to install a stable version.
 
 
 To install from source, clone the Ansible git repository:
 
 .. code-block:: bash
 
-    $ git clone https://github.com/ansible/ansible.git --recursive
+    $ git clone https://github.com/ansible/ansible.git
     $ cd ./ansible
 
 Once git has cloned the Ansible repository, setup the Ansible environment:
@@ -341,7 +387,7 @@ To update ansible checkouts, use pull-with-rebase so any local changes are repla
 
     $ git pull --rebase
 
-Note: when updating ansible checkouts that are v2.2 and older, be sure to not
+Note: when updating Ansible checkouts that are v2.2 and older, be sure to not
 only update the source tree, but also the "submodules" in git which point at
 Ansible's own modules.
 
@@ -358,10 +404,6 @@ other than /etc/ansible/hosts:
 
     $ echo "127.0.0.1" > ~/ansible_hosts
     $ export ANSIBLE_INVENTORY=~/ansible_hosts
-
-.. note::
-
-    ANSIBLE_INVENTORY is available starting at 1.9 and substitutes the deprecated ANSIBLE_HOSTS
 
 You can read more about the inventory file in later parts of the manual.
 
@@ -389,9 +431,11 @@ bugs and feature ideas.
        Examples of basic commands
    :ref:`working_with_playbooks`
        Learning ansible's configuration management language
-   `Mailing List <http://groups.google.com/group/ansible-project>`_
+   :ref:`installation_faqs`
+       Ansible Installation related to FAQs
+   `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
 
-.. [1] If you have issues with the "pycrypto" package install on Mac OSX, then you may need to try ``CC=clang sudo -E pip install pycrypto``.
+.. [1] If you have issues with the "pycrypto" package install on macOS, then you may need to try ``CC=clang sudo -E pip install pycrypto``.

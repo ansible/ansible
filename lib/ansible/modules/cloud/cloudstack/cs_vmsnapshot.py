@@ -48,6 +48,7 @@ options:
     description:
       - Snapshot memory if set to true.
     default: false
+    type: bool
   zone:
     description:
       - Name of the zone in which the VM is in. If not set, default zone is used.
@@ -70,6 +71,7 @@ options:
       - Poll async jobs until job has finished.
     required: false
     default: true
+    type: bool
   tags:
     description:
       - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
@@ -107,57 +109,57 @@ RETURN = '''
 id:
   description: UUID of the snapshot.
   returned: success
-  type: string
+  type: str
   sample: a6f7a5fc-43f8-11e5-a151-feff819cdc9f
 name:
   description: Name of the snapshot.
   returned: success
-  type: string
+  type: str
   sample: snapshot before update
 display_name:
   description: Display name of the snapshot.
   returned: success
-  type: string
+  type: str
   sample: snapshot before update
 created:
   description: date of the snapshot.
   returned: success
-  type: string
+  type: str
   sample: 2015-03-29T14:57:06+0200
 current:
   description: true if the snapshot is current
   returned: success
-  type: boolean
+  type: bool
   sample: True
 state:
   description: state of the vm snapshot
   returned: success
-  type: string
+  type: str
   sample: Allocated
 type:
   description: type of vm snapshot
   returned: success
-  type: string
+  type: str
   sample: DiskAndMemory
 description:
   description: description of vm snapshot
   returned: success
-  type: string
+  type: str
   sample: snapshot brought to you by Ansible
 domain:
   description: Domain the vm snapshot is related to.
   returned: success
-  type: string
+  type: str
   sample: example domain
 account:
   description: Account the vm snapshot is related to.
   returned: success
-  type: string
+  type: str
   sample: example account
 project:
   description: Name of project the vm snapshot is related to.
   returned: success
-  type: string
+  type: str
   sample: Production
 '''
 

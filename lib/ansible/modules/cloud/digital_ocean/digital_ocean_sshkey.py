@@ -43,7 +43,6 @@ options:
      - DigitalOcean OAuth token.
     required: true
     version_added: 2.4
-
 notes:
   - Version 2 of DigitalOcean API is used.
 requirements:

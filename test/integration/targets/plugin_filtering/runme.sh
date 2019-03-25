@@ -22,6 +22,15 @@ if test $? != 0 ; then
 fi
 
 #
+# Check that if no modules are blacklisted then Ansible should not through traceback
+#
+ANSIBLE_CONFIG=no_blacklist_module.ini ansible-playbook tempfile.yml  -i ../../inventory -vvv "$@"
+if test $? != 0 ; then
+	echo "### Failed to run tempfile with no modules blacklisted"
+	exit 1
+fi
+
+#
 # Check that with these modules filtered out, all of these modules fail to be found
 #
 ANSIBLE_CONFIG=filter_modules.ini ansible-playbook copy.yml -i ../../inventory -v "$@"

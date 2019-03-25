@@ -1,4 +1,3 @@
-
 #
 # This file is part of Ansible
 #
@@ -23,17 +22,15 @@ from os.path import basename
 
 from ansible.errors import AnsibleParserError
 from ansible.playbook.attribute import FieldAttribute
+from ansible.playbook.block import Block
 from ansible.playbook.task_include import TaskInclude
 from ansible.playbook.role import Role
 from ansible.playbook.role.include import RoleInclude
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import Display
 
 __all__ = ['IncludeRole']
+
+display = Display()
 
 
 class IncludeRole(TaskInclude):
@@ -44,8 +41,8 @@ class IncludeRole(TaskInclude):
     """
 
     BASE = ('name', 'role')  # directly assigned
-    FROM_ARGS = ('tasks_from', 'vars_from', 'defaults_from')  # used to populate from dict in role
-    OTHER_ARGS = ('private', 'allow_duplicates')  # assigned to matching property
+    FROM_ARGS = ('tasks_from', 'vars_from', 'defaults_from', 'handlers_from')  # used to populate from dict in role
+    OTHER_ARGS = ('apply', 'public', 'allow_duplicates')  # assigned to matching property
     VALID_ARGS = tuple(frozenset(BASE + FROM_ARGS + OTHER_ARGS))  # all valid args
 
     # =================================================================================
@@ -53,7 +50,7 @@ class IncludeRole(TaskInclude):
 
     # private as this is a 'module options' vs a task property
     _allow_duplicates = FieldAttribute(isa='bool', default=True, private=True)
-    _private = FieldAttribute(isa='bool', default=None, private=True)
+    _public = FieldAttribute(isa='bool', default=False, private=True)
 
     def __init__(self, block=None, role=None, task_include=None):
 
@@ -66,7 +63,7 @@ class IncludeRole(TaskInclude):
 
     def get_name(self):
         ''' return the name of the task '''
-        return "%s : %s" % (self.action, self._role_name)
+        return self.name or "%s : %s" % (self.action, self._role_name)
 
     def get_block_list(self, play=None, variable_manager=None, loader=None):
 
@@ -80,8 +77,12 @@ class IncludeRole(TaskInclude):
         ri.vars.update(self.vars)
 
         # build role
-        actual_role = Role.load(ri, myplay, parent_role=self._parent_role, from_files=self._from_files)
+        actual_role = Role.load(ri, myplay, parent_role=self._parent_role, from_files=self._from_files,
+                                from_include=True)
         actual_role._metadata.allow_duplicates = self.allow_duplicates
+
+        if self.statically_loaded or self.public:
+            myplay.roles.append(actual_role)
 
         # save this for later use
         self._role_path = actual_role._role_path
@@ -94,14 +95,16 @@ class IncludeRole(TaskInclude):
             dep_chain = list(self._parent_role._parents)
             dep_chain.append(self._parent_role)
 
+        p_block = self.build_parent_block()
+
         blocks = actual_role.compile(play=myplay, dep_chain=dep_chain)
         for b in blocks:
-            b._parent = self
+            b._parent = p_block
 
         # updated available handlers in play
         handlers = actual_role.get_handler_blocks(play=myplay)
         for h in handlers:
-            h._parent = self
+            h._parent = p_block
         myplay.handlers = myplay.handlers + handlers
         return blocks, handlers
 
@@ -118,11 +121,8 @@ class IncludeRole(TaskInclude):
         if ir._role_name is None:
             raise AnsibleParserError("'name' is a required field for %s." % ir.action, obj=data)
 
-        if ir.private is not None:
-            display.deprecated(
-                msg='Supplying "private" for "include_role" is a no op, and is deprecated',
-                version='2.8'
-            )
+        if 'public' in ir.args and ir.action != 'include_role':
+            raise AnsibleParserError('Invalid options for %s: public' % ir.action, obj=data)
 
         # validate bad args, otherwise we silently ignore
         bad_opts = my_arg_names.difference(IncludeRole.VALID_ARGS)
@@ -133,6 +133,12 @@ class IncludeRole(TaskInclude):
         for key in my_arg_names.intersection(IncludeRole.FROM_ARGS):
             from_key = key.replace('_from', '')
             ir._from_files[from_key] = basename(ir.args.get(key))
+
+        apply_attrs = ir.args.get('apply', {})
+        if apply_attrs and ir.action != 'include_role':
+            raise AnsibleParserError('Invalid options for %s: apply' % ir.action, obj=data)
+        elif not isinstance(apply_attrs, dict):
+            raise AnsibleParserError('Expected a dict for apply but got %s instead' % type(apply_attrs), obj=data)
 
         # manual list as otherwise the options would set other task parameters we don't want.
         for option in my_arg_names.intersection(IncludeRole.OTHER_ARGS):

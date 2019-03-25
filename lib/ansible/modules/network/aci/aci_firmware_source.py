@@ -9,7 +9,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -17,43 +17,51 @@ module: aci_firmware_source
 short_description: Manage firmware image sources (firmware:OSource)
 description:
 - Manage firmware image sources on Cisco ACI fabrics.
-author:
-- Dag Wieers (@dagwieers)
 version_added: '2.5'
-notes:
-- More information about the internal APIC class B(firmware:OSource) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
 options:
   source:
     description:
     - The identifying name for the outside source of images, such as an HTTP or SCP server.
+    type: str
     required: yes
     aliases: [ name, source_name ]
   polling_interval:
     description:
     - Polling interval in minutes.
+    type: int
   url_protocol:
     description:
     - The Firmware download protocol.
+    type: str
     choices: [ http, local, scp, usbkey ]
     default: scp
     aliases: [ url_proto ]
   url:
     description:
       The firmware URL for the image(s) on the source.
+    type: str
   url_password:
     description:
       The Firmware password or key string.
+    type: str
   url_username:
     description:
       The username for the source.
+    type: str
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
+seealso:
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(firmware:OSource).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Dag Wieers (@dagwieers)
 '''
 
 EXAMPLES = r'''
@@ -66,6 +74,7 @@ EXAMPLES = r'''
     url: foo.bar.cisco.com/download/cisco/aci/aci-msft-pkg-3.1.1i.zip
     url_protocol: http
     state: present
+  delegate_to: localhost
 
 - name: Remove firmware source
   aci_firmware_source:
@@ -74,6 +83,7 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     source: aci-msft-pkg-3.1.1i.zip
     state: absent
+  delegate_to: localhost
 
 - name: Query a specific firmware source
   aci_firmware_source:
@@ -82,6 +92,8 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     source: aci-msft-pkg-3.1.1i.zip
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all firmware sources
   aci_firmware_source:
@@ -89,6 +101,8 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -123,7 +137,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -172,17 +186,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -192,13 +206,13 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 
 def main():
@@ -235,8 +249,8 @@ def main():
         root_class=dict(
             aci_class='firmwareOSource',
             aci_rn='fabric/fwrepop',
-            filter_target='eq(firmwareOSource.name, "{0}")'.format(source),
             module_object=source,
+            target_filter={'name': source},
         ),
     )
     aci.get_existing()

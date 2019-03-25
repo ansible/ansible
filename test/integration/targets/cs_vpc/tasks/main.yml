@@ -45,7 +45,22 @@
   assert:
     that:
     - vpc is failed
-    - 'vpc.msg == "VPC offering not found: does_not_exist"'
+    - 'vpc.msg == "VPC offering not found or not enabled: does_not_exist"'
+
+- name: test fail name substring match
+  cs_vpc:
+    name: "{{ cs_resource_prefix }}_vpc"
+    # Full name is "Redundant VPC offering"
+    vpc_offering: "Redundant"
+    zone: "{{ cs_common_zone_adv }}"
+    cidr: 10.10.1.0/16
+  ignore_errors: true
+  register: vpc
+- name: verify test fail name substring match
+  assert:
+    that:
+    - vpc is failed
+    - 'vpc.msg == "VPC offering not found or not enabled: Redundant"'
 
 - name: test create vpc with custom offering in check mode
   cs_vpc:
@@ -365,7 +380,6 @@
 
 - name: test get ip address in vpc
   cs_ip_address:
-    network: "{{ cs_resource_prefix }}_net_vpc"
     vpc: "{{ cs_resource_prefix }}_vpc"
     zone: "{{ cs_common_zone_adv }}"
   register: ip_address
@@ -563,7 +577,6 @@
 
 - name: test remove ip address from vpc
   cs_ip_address:
-    network: "{{ cs_resource_prefix }}_net_vpc"
     vpc: "{{ cs_resource_prefix }}_vpc"
     zone: "{{ cs_common_zone_adv }}"
     ip_address: "{{ ip_address.ip_address }}"

@@ -61,6 +61,11 @@ options:
        - Should the resource be present or absent.
      choices: [present, absent]
      default: present
+   project:
+     description:
+        - Unique name or ID of the project.
+     required: false
+     version_added: "2.7"
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
@@ -114,21 +119,29 @@ EXAMPLES = '''
     security_group: loadbalancer_sg
     protocol: 112
     remote_group: loadbalancer-node_sg
+
+# Create a security group rule for a given project
+- os_security_group_rule:
+    cloud: mordred
+    security_group: foo
+    protocol: icmp
+    remote_ip_prefix: 0.0.0.0/0
+    project: myproj
 '''
 
 RETURN = '''
 id:
   description: Unique rule UUID.
-  type: string
+  type: str
   returned: state == present
 direction:
   description: The direction in which the security group rule is applied.
-  type: string
+  type: str
   sample: 'egress'
   returned: state == present
 ethertype:
   description: One of IPv4 or IPv6.
-  type: string
+  type: str
   sample: 'IPv4'
   returned: state == present
 port_range_min:
@@ -145,17 +158,17 @@ port_range_max:
   returned: state == present
 protocol:
   description: The protocol that is matched by the security group rule.
-  type: string
+  type: str
   sample: 'tcp'
   returned: state == present
 remote_ip_prefix:
   description: The remote IP prefix to be associated with this security group rule.
-  type: string
+  type: str
   sample: '0.0.0.0/0'
   returned: state == present
 security_group_id:
   description: The security group ID to associate with this security group rule.
-  type: string
+  type: str
   returned: state == present
 '''
 
@@ -226,16 +239,16 @@ def _find_matching_rule(module, secgroup, remotegroup):
     remote_group_id = remotegroup['id']
 
     for rule in secgroup['security_group_rules']:
-        if (protocol == rule['protocol']
-                and remote_ip_prefix == rule['remote_ip_prefix']
-                and ethertype == rule['ethertype']
-                and direction == rule['direction']
-                and remote_group_id == rule['remote_group_id']
-                and _ports_match(protocol,
-                                 module.params['port_range_min'],
-                                 module.params['port_range_max'],
-                                 rule['port_range_min'],
-                                 rule['port_range_max'])):
+        if (protocol == rule['protocol'] and
+                remote_ip_prefix == rule['remote_ip_prefix'] and
+                ethertype == rule['ethertype'] and
+                direction == rule['direction'] and
+                remote_group_id == rule['remote_group_id'] and
+                _ports_match(protocol,
+                             module.params['port_range_min'],
+                             module.params['port_range_max'],
+                             rule['port_range_min'],
+                             rule['port_range_max'])):
             return rule
     return None
 
@@ -271,6 +284,7 @@ def main():
                        choices=['egress', 'ingress']),
         state=dict(default='present',
                    choices=['absent', 'present']),
+        project=dict(default=None),
     )
 
     module_kwargs = openstack_module_kwargs(
@@ -286,14 +300,29 @@ def main():
     state = module.params['state']
     security_group = module.params['security_group']
     remote_group = module.params['remote_group']
+    project = module.params['project']
     changed = False
 
     sdk, cloud = openstack_cloud_from_module(module)
     try:
-        secgroup = cloud.get_security_group(security_group)
+        if project is not None:
+            proj = cloud.get_project(project)
+            if proj is None:
+                module.fail_json(msg='Project %s could not be found' % project)
+            project_id = proj['id']
+        else:
+            project_id = cloud.current_project_id
+
+        if project_id:
+            filters = {'tenant_id': project_id}
+        else:
+            filters = None
+
+        secgroup = cloud.get_security_group(security_group, filters=filters)
 
         if remote_group:
-            remotegroup = cloud.get_security_group(remote_group)
+            remotegroup = cloud.get_security_group(remote_group,
+                                                   filters=filters)
         else:
             remotegroup = {'id': None}
 
@@ -307,6 +336,9 @@ def main():
 
             rule = _find_matching_rule(module, secgroup, remotegroup)
             if not rule:
+                kwargs = {}
+                if project_id:
+                    kwargs['project_id'] = project_id
                 rule = cloud.create_security_group_rule(
                     secgroup['id'],
                     port_range_min=module.params['port_range_min'],
@@ -315,7 +347,8 @@ def main():
                     remote_ip_prefix=module.params['remote_ip_prefix'],
                     remote_group_id=remotegroup['id'],
                     direction=module.params['direction'],
-                    ethertype=module.params['ethertype']
+                    ethertype=module.params['ethertype'],
+                    **kwargs
                 )
                 changed = True
             module.exit_json(changed=changed, rule=rule, id=rule['id'])
@@ -326,7 +359,7 @@ def main():
                 cloud.delete_security_group_rule(rule['id'])
                 changed = True
 
-            module.exit_json(changed=changed)
+        module.exit_json(changed=changed)
 
     except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))

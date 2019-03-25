@@ -1,41 +1,36 @@
 .. _intro_dynamic_inventory:
 .. _dynamic_inventory:
 
+******************************
 Working With Dynamic Inventory
-==============================
+******************************
 
 .. contents:: Topics
+   :local:
 
-Often a user of a configuration management system will want to keep inventory
-in a different software system.  Ansible provides a basic text-based system as described in
-:ref:`inventory` but what if you want to use something else?
+If your Ansible inventory fluctuates over time, with hosts spinning up and shutting down in response to business demands, the static inventory solutions described in :ref:`inventory` will not serve your needs. You may need to track hosts from multiple sources: cloud providers, LDAP, `Cobbler <https://cobbler.github.io>`_, and/or enterprise CMDB systems.
 
-Frequent examples include pulling inventory from a cloud provider, LDAP, `Cobbler <https://cobbler.github.io>`_,
-or a piece of expensive enterprisey CMDB software.
+Ansible integrates all of these options via a dynamic external inventory system. Ansible supports two ways to connect with external inventory:  :ref:`inventory_plugins` and `inventory scripts <https://github.com/ansible/ansible/tree/devel/contrib/inventory>`_.
 
-Ansible easily supports all of these options via an external inventory system.  The contrib/inventory directory contains some of these already -- including options for EC2/Eucalyptus, Rackspace Cloud, and OpenStack, examples of some of which will be detailed below.
+Inventory plugins take advantage of the most recent updates to Ansible's core code. We recommend plugins over scripts for dynamic inventory. You can :ref:`write your own plugin <developing_inventory>` to connect to additional dynamic inventory sources.
 
-:ref:`ansible_tower` also provides a database to store inventory results that is both web and REST Accessible.  Tower syncs with all Ansible dynamic inventory sources you might be using, and also includes a graphical inventory editor. By having a database record of all of your hosts, it's easy to correlate past event history and see which ones have had failures on their last playbook runs.
+You can still use inventory scripts if you choose. When we implemented inventory plugins, we ensured backwards compatibility via the script inventory plugin. The examples below illustrate how to use inventory scripts.
 
-For information about writing your own dynamic inventory source, see :ref:`developing_inventory`.
-
+If you'd like a GUI for handling dynamic inventory, the :ref:`ansible_tower` inventory database syncs with all your dynamic inventory sources, provides web and REST access to the results, and offers a graphical inventory editor. With a database record of all of your hosts, you can correlate past event history and see which hosts have had failures on their last playbook runs.
 
 .. _cobbler_example:
 
-Example: The Cobbler External Inventory Script
-``````````````````````````````````````````````
+Inventory Script Example: Cobbler
+=================================
 
-It is expected that many Ansible users with a reasonable amount of physical hardware may also be `Cobbler <https://cobbler.github.io>`_ users.  (note: Cobbler was originally written by Michael DeHaan and is now led by James Cammarata, who also works for Ansible, Inc).
+Ansible integrates seamlessly with `Cobbler <https://cobbler.github.io>`_, a Linux installation server originally written by Michael DeHaan and now led by James Cammarata, who works for Ansible.
 
 While primarily used to kickoff OS installations and manage DHCP and DNS, Cobbler has a generic
-layer that allows it to represent data for multiple configuration management systems (even at the same time), and has
-been referred to as a 'lightweight CMDB' by some admins.
+layer that can represent data for multiple configuration management systems (even at the same time) and serve as a 'lightweight CMDB'.
 
-To tie Ansible's inventory to Cobbler (optional), copy `this script <https://raw.github.com/ansible/ansible/devel/contrib/inventory/cobbler.py>`_ to ``/etc/ansible`` and ``chmod +x`` the file.  cobblerd will now need
-to be running when you are using Ansible and you'll need to use Ansible's  ``-i`` command line option (e.g. ``-i /etc/ansible/cobbler.py``).
-This particular script will communicate with Cobbler using Cobbler's XMLRPC API.
+To tie Ansible's inventory to Cobbler, copy `this script <https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/cobbler.py>`_ to ``/etc/ansible`` and ``chmod +x`` the file. Run ``cobblerd`` any time you use Ansible and use the ``-i`` command line option (e.g. ``-i /etc/ansible/cobbler.py``) to communicate with Cobbler using Cobbler's XMLRPC API.
 
-Also a ``cobbler.ini`` file should be added to ``/etc/ansible`` so Ansible knows where the Cobbler server is and some cache improvements can be used. For example::
+Add a ``cobbler.ini`` file in ``/etc/ansible`` so Ansible knows where the Cobbler server is and some cache improvements can be used. For example::
 
 
     [cobbler]
@@ -100,10 +95,10 @@ So in other words, you can use those variables in arguments/actions as well.
 
 .. _aws_example:
 
-Example: AWS EC2 External Inventory Script
-``````````````````````````````````````````
+Inventory Script Example: AWS EC2
+=================================
 
-If you use Amazon Web Services EC2, maintaining an inventory file might not be the best approach, because hosts may come and go over time, be managed by external applications, or you might even be using AWS autoscaling. For this reason, you can use the `EC2 external inventory  <https://raw.github.com/ansible/ansible/devel/contrib/inventory/ec2.py>`_ script.
+If you use Amazon Web Services EC2, maintaining an inventory file might not be the best approach, because hosts may come and go over time, be managed by external applications, or you might even be using AWS autoscaling. For this reason, you can use the `EC2 external inventory  <https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/ec2.py>`_ script.
 
 You can use this script in one of two ways. The easiest is to use Ansible's ``-i`` command line option and specify the path to the script after
 marking it executable::
@@ -243,22 +238,25 @@ explicitly clear the cache, you can run the ec2.py script with the ``--refresh-c
 
 .. _openstack_example:
 
-Example: OpenStack External Inventory Script
-````````````````````````````````````````````
+Inventory Script Example: OpenStack
+===================================
 
-If you use an OpenStack based cloud, instead of manually maintaining your own inventory file, you can use the openstack.py dynamic inventory to pull information about your compute instances directly from OpenStack.
+If you use an OpenStack-based cloud, instead of manually maintaining your own inventory file, you can use the ``openstack_inventory.py`` dynamic inventory to pull information about your compute instances directly from OpenStack.
 
-You can download the latest version of the OpenStack inventory script `here <https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/openstack.py>`_
+You can download the latest version of the OpenStack inventory script `here <https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/openstack_inventory.py>`_.
 
-You can use the inventory script explicitly (by passing the `-i openstack.py` argument to Ansible) or implicitly (by placing the script at `/etc/ansible/hosts`).
+You can use the inventory script explicitly (by passing the `-i openstack_inventory.py` argument to Ansible) or implicitly (by placing the script at `/etc/ansible/hosts`).
 
-Explicit use of inventory script
-++++++++++++++++++++++++++++++++
+Explicit use of OpenStack inventory script
+------------------------------------------
 
 Download the latest version of the OpenStack dynamic inventory script and make it executable::
 
-    wget https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/openstack.py
-    chmod +x openstack.py
+    wget https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/openstack_inventory.py
+    chmod +x openstack_inventory.py
+
+.. note::
+    Do not name it `openstack.py`. This name will conflict with imports from openstacksdk.
 
 Source an OpenStack RC file::
 
@@ -266,32 +264,32 @@ Source an OpenStack RC file::
 
 .. note::
 
-    An OpenStack RC file contains the environment variables required by the client tools to establish a connection with the cloud provider, such as the authentication URL, user name, password and region name. For more information on how to download, create or source an OpenStack RC file, please refer to `Set environment variables using the OpenStack RC file <http://docs.openstack.org/user-guide/common/cli_set_environment_variables_using_openstack_rc.html>`_.
+    An OpenStack RC file contains the environment variables required by the client tools to establish a connection with the cloud provider, such as the authentication URL, user name, password and region name. For more information on how to download, create or source an OpenStack RC file, please refer to `Set environment variables using the OpenStack RC file <https://docs.openstack.org/user-guide/common/cli_set_environment_variables_using_openstack_rc.html>`_.
 
 You can confirm the file has been successfully sourced by running a simple command, such as `nova list` and ensuring it return no errors.
 
 .. note::
 
-    The OpenStack command line clients are required to run the `nova list` command. For more information on how to install them, please refer to `Install the OpenStack command-line clients <http://docs.openstack.org/user-guide/common/cli_install_openstack_command_line_clients.html>`_.
+    The OpenStack command line clients are required to run the `nova list` command. For more information on how to install them, please refer to `Install the OpenStack command-line clients <https://docs.openstack.org/user-guide/common/cli_install_openstack_command_line_clients.html>`_.
 
 You can test the OpenStack dynamic inventory script manually to confirm it is working as expected::
 
-    ./openstack.py --list
+    ./openstack_inventory.py --list
 
-After a few moments you should see some JSON output with information about your compute instances. 
+After a few moments you should see some JSON output with information about your compute instances.
 
-Once you confirm the dynamic inventory script is working as expected, you can tell Ansible to use the `openstack.py` script as an inventory file, as illustrated below::
+Once you confirm the dynamic inventory script is working as expected, you can tell Ansible to use the `openstack_inventory.py` script as an inventory file, as illustrated below::
 
-    ansible -i openstack.py all -m ping
+    ansible -i openstack_inventory.py all -m ping
 
-Implicit use of inventory script
-++++++++++++++++++++++++++++++++
+Implicit use of OpenStack inventory script
+------------------------------------------
 
 Download the latest version of the OpenStack dynamic inventory script, make it executable and copy it to `/etc/ansible/hosts`::
 
-    wget https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/openstack.py
-    chmod +x openstack.py
-    sudo cp openstack.py /etc/ansible/hosts
+    wget https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/openstack_inventory.py
+    chmod +x openstack_inventory.py
+    sudo cp openstack_inventory.py /etc/ansible/hosts
 
 Download the sample configuration file, modify it to suit your needs and copy it to `/etc/ansible/openstack.yml`::
 
@@ -305,44 +303,27 @@ You can test the OpenStack dynamic inventory script manually to confirm it is wo
 
 After a few moments you should see some JSON output with information about your compute instances.
 
-Refresh the cache
-+++++++++++++++++
+Refreshing the cache
+--------------------
 
-Note that the OpenStack dynamic inventory script will cache results to avoid repeated API calls. To explicitly clear the cache, you can run the openstack.py (or hosts) script with the ``--refresh`` parameter::
+Note that the OpenStack dynamic inventory script will cache results to avoid repeated API calls. To explicitly clear the cache, you can run the openstack_inventory.py (or hosts) script with the ``--refresh`` parameter::
 
-    ./openstack.py --refresh --list
+    ./openstack_inventory.py --refresh --list
 
 .. _other_inventory_scripts:
 
 Other inventory scripts
-```````````````````````
+=======================
 
-In addition to Cobbler and EC2, inventory scripts are also available for::
-
-   BSD Jails
-   DigitalOcean
-   Google Compute Engine
-   Linode
-   OpenShift
-   OpenStack Nova
-   Ovirt
-   SpaceWalk
-   Vagrant (not to be confused with the provisioner in vagrant, which is preferred)
-   Zabbix
-
-Sections on how to use these in more detail will be added over time, but by looking at the "contrib/inventory" directory of the Ansible checkout
-it should be very obvious how to use them.  The process for the AWS inventory script is the same.
-
-If you develop an interesting inventory script that might be general purpose, please submit a pull request -- we'd likely be glad
-to include it in the project.
+You can find all included inventory scripts in the `contrib/inventory directory <https://github.com/ansible/ansible/tree/devel/contrib/inventory>`_. General usage is similar across all inventory scripts. You can also :ref:`write your own inventory script <developing_inventory>`.
 
 .. _using_multiple_sources:
 
 Using Inventory Directories and Multiple Inventory Sources
-``````````````````````````````````````````````````````````
+==========================================================
 
 If the location given to ``-i`` in Ansible is a directory (or as so configured in ``ansible.cfg``), Ansible can use multiple inventory sources
-at the same time.  When doing so, it is possible to mix both dynamic and statically managed inventory sources in the same ansible run.  Instant
+at the same time.  When doing so, it is possible to mix both dynamic and statically managed inventory sources in the same ansible run. Instant
 hybrid cloud!
 
 In an inventory directory, executable files will be treated as dynamic inventory sources and most other files as static sources. Files which end with any of the following will be ignored::
@@ -351,12 +332,12 @@ In an inventory directory, executable files will be treated as dynamic inventory
 
 You can replace this list with your own selection by configuring an ``inventory_ignore_extensions`` list in ansible.cfg, or setting the :envvar:`ANSIBLE_INVENTORY_IGNORE` environment variable. The value in either case should be a comma-separated list of patterns, as shown above.
 
-Any ``group_vars`` and ``host_vars`` subdirectories in an inventory directory will be interpreted as expected, making inventory directories a powerful way to organize different sets of configurations.
+Any ``group_vars`` and ``host_vars`` subdirectories in an inventory directory will be interpreted as expected, making inventory directories a powerful way to organize different sets of configurations. See :ref:`using_multiple_inventory_sources` for more information.
 
 .. _static_groups_of_dynamic:
 
 Static Groups of Dynamic Groups
-```````````````````````````````
+===============================
 
 When defining groups of groups in the static inventory file, the child groups
 must also be defined in the static inventory file, or ansible will return an
@@ -377,8 +358,7 @@ the dynamic groups as empty in the static inventory file. For example::
 
    :doc:`intro_inventory`
        All about static inventory files
-   `Mailing List <http://groups.google.com/group/ansible-project>`_
+   `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-

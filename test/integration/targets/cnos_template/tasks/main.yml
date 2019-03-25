@@ -1,0 +1,13 @@
+# This contain sample template execution tasks
+---
+- name: Creates directory
+  file: path=./commands state=directory
+
+- name: Replace Config CLI command template with values
+  template: src=demo_template.j2 dest=./commands/cnos_template_{{ inventory_hostname }}_commands.txt
+  with_items: "{{cnos_template_data}}"
+
+- name: Applying CLI commands on Switches
+  cnos_template: host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} commandfile=./commands/cnos_template_{{ inventory_hostname }}_commands.txt outputfile=./results/cnos_template_{{ inventory_hostname }}_output.txt
+  with_items: "{{cnos_template_data}}"
+# Completed file

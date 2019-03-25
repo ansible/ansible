@@ -1,3 +1,7 @@
 cloud/azure
-posix/ci/cloud/group3/azure
+shippable/azure/group4
 destructive
+azure_rm_virtualmachine_scaleset_facts
+azure_rm_virtualmachinescalesetinstance_facts
+azure_rm_virtualmachinescalesetextension
+azure_rm_virtualmachinescalesetextension_facts

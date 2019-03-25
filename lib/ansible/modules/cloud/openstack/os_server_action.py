@@ -54,7 +54,7 @@ options:
      description:
        - Ignored. Present for backwards compatibility
 requirements:
-    - "python >= 2.6"
+    - "python >= 2.7"
     - "openstacksdk"
 '''
 
@@ -94,7 +94,7 @@ def _action_url(server_id):
 def _wait(timeout, cloud, server, action, module, sdk):
     """Wait for the server to reach the desired state for the given action."""
 
-    for count in sdk.utils._iterate_timeout(
+    for count in sdk.utils.iterate_timeout(
             timeout,
             "Timeout waiting for server to complete %s" % action):
         try:
@@ -130,9 +130,6 @@ def main():
                            required_if=[('action', 'rebuild', ['image'])],
                            **module_kwargs)
 
-    if module._name == 'os_server_actions':
-        module.deprecate("The 'os_server_actions' module is being renamed 'os_server_action'", version=2.8)
-
     action = module.params['action']
     wait = module.params['wait']
     timeout = module.params['timeout']
@@ -163,9 +160,9 @@ def main():
             if not _system_state_change(action, status):
                 module.exit_json(changed=False)
 
-                cloud.compute.post(
-                    _action_url(server.id),
-                    json={'os-start': None})
+            cloud.compute.post(
+                _action_url(server.id),
+                json={'os-start': None})
             if wait:
                 _wait(timeout, cloud, server, action, module, sdk)
                 module.exit_json(changed=True)
@@ -174,9 +171,9 @@ def main():
             if not _system_state_change(action, status):
                 module.exit_json(changed=False)
 
-                cloud.compute.post(
-                    _action_url(server.id),
-                    json={'pause': None})
+            cloud.compute.post(
+                _action_url(server.id),
+                json={'pause': None})
             if wait:
                 _wait(timeout, cloud, server, action, module, sdk)
                 module.exit_json(changed=True)
@@ -185,9 +182,9 @@ def main():
             if not _system_state_change(action, status):
                 module.exit_json(changed=False)
 
-                cloud.compute.post(
-                    _action_url(server.id),
-                    json={'unpause': None})
+            cloud.compute.post(
+                _action_url(server.id),
+                json={'unpause': None})
             if wait:
                 _wait(timeout, cloud, server, action, module, sdk)
             module.exit_json(changed=True)
@@ -210,9 +207,9 @@ def main():
             if not _system_state_change(action, status):
                 module.exit_json(changed=False)
 
-                cloud.compute.post(
-                    _action_url(server.id),
-                    json={'suspend': None})
+            cloud.compute.post(
+                _action_url(server.id),
+                json={'suspend': None})
             if wait:
                 _wait(timeout, cloud, server, action, module, sdk)
             module.exit_json(changed=True)
@@ -221,9 +218,9 @@ def main():
             if not _system_state_change(action, status):
                 module.exit_json(changed=False)
 
-                cloud.compute.post(
-                    _action_url(server.id),
-                    json={'resume': None})
+            cloud.compute.post(
+                _action_url(server.id),
+                json={'resume': None})
             if wait:
                 _wait(timeout, cloud, server, action, module, sdk)
             module.exit_json(changed=True)
@@ -235,9 +232,9 @@ def main():
                 module.fail_json(msg="Image does not exist")
 
             # rebuild doesn't set a state, just do it
-                cloud.compute.post(
-                    _action_url(server.id),
-                    json={'rebuild': None})
+            cloud.compute.post(
+                _action_url(server.id),
+                json={'rebuild': None})
             if wait:
                 _wait(timeout, cloud, server, action, module, sdk)
             module.exit_json(changed=True)

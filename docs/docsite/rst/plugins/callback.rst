@@ -1,8 +1,11 @@
-.. contents:: Topics
-
+.. _callback_plugins:
 
 Callback Plugins
-----------------
+================
+
+.. contents::
+   :local:
+   :depth: 2
 
 Callback plugins enable adding new behaviors to Ansible when responding to events.
 By default, callback plugins control most of the output you see when running the command line programs,
@@ -10,19 +13,18 @@ but can also be used to add additional output, integrate with other tools and ma
 
 .. _callback_examples:
 
-Example Callback Plugins
-++++++++++++++++++++++++
+Example callback plugins
+------------------------
 
-The :doc:`_plays <callback/log_plays>` callback is an example of how to record playbook events to a log file,
-and the :doc:`mail <callback/mail>` callback sends email on playbook failures.
+The :ref:`log_plays <log_plays_callback>` callback is an example of how to record playbook events to a log file,
+and the :ref:`mail <mail_callback>` callback sends email on playbook failures.
 
-The :doc:`osx_say <callback/osx_say>` callback responds with computer synthesized speech on OS X in relation to playbook events.
-
+The :ref:`say <say_callback>` callback responds with computer synthesized speech in relation to playbook events.
 
 .. _enabling_callbacks:
 
-Enabling Callback Plugins
-++++++++++++++++++++++++++
+Enabling callback plugins
+-------------------------
 
 You can activate a custom callback by either dropping it into a ``callback_plugins`` directory adjacent to your play,  inside a role, or by putting it in one of the callback directory sources configured in :ref:`ansible.cfg <ansible_configuration_settings>`.
 
@@ -34,9 +36,8 @@ Most callbacks shipped with Ansible are disabled by default and need to be white
 
   #callback_whitelist = timer, mail, profile_roles
 
-
-Managing stdout
-```````````````
+Setting a callback plugin for ``ansible-playbook``
+--------------------------------------------------
 
 You can only have one plugin be the main manager of your console output. If you want to replace the default, you should define CALLBACK_TYPE = stdout in the subclass and then configure the stdout plugin in :ref:`ansible.cfg <ansible_configuration_settings>`. For example:
 
@@ -52,8 +53,8 @@ or for my custom callback:
 
 This only affects :ref:`ansible-playbook` by default.
 
-Managing AdHoc
-``````````````
+Setting a callback plugin for ad-hoc commands
+---------------------------------------------
 
 The :ref:`ansible` ad hoc command specifically uses a different callback plugin for stdout,
 so there is an extra setting in :ref:`ansible_configuration_settings` you need to add to use the stdout callback defined above:
@@ -72,12 +73,11 @@ You can also set this as an environment variable:
 
 .. _callback_plugin_list:
 
-Plugin List
-+++++++++++
+Plugin list
+-----------
 
-You can use ``ansible-doc -t callback -l`` to see the list of available plugins. 
+You can use ``ansible-doc -t callback -l`` to see the list of available plugins.
 Use ``ansible-doc -t callback <plugin name>`` to see specific documents and examples.
-
 
 .. toctree:: :maxdepth: 1
     :glob:
@@ -87,19 +87,19 @@ Use ``ansible-doc -t callback <plugin name>`` to see specific documents and exam
 
 .. seealso::
 
-   :doc:`action`
+   :ref:`action_plugins`
        Ansible Action plugins
-   :doc:`cache`
+   :ref:`cache_plugins`
        Ansible cache plugins
-   :doc:`connection`
+   :ref:`connection_plugins`
        Ansible connection plugins
-   :doc:`inventory`
+   :ref:`inventory_plugins`
        Ansible inventory plugins
-   :doc:`shell`
+   :ref:`shell_plugins`
        Ansible Shell plugins
-   :doc:`strategy`
+   :ref:`strategy_plugins`
        Ansible Strategy plugins
-   :doc:`vars`
+   :ref:`vars_plugins`
        Ansible Vars plugins
    `User Mailing List <https://groups.google.com/forum/#!forum/ansible-devel>`_
        Have a question?  Stop by the google group!

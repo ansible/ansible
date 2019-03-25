@@ -1,0 +1,2 @@
+bugfixes:
+    - preserve Noneness of pwdfile when it is None in virtualbox inventory plugin

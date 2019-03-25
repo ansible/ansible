@@ -99,7 +99,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 
@@ -113,22 +113,6 @@ from ansible.module_utils.basic import AnsibleModule
 PARAM_TO_DEFAULT_KEYMAP = {
     'msg_time': '15',
 }
-
-
-def execute_show_command(command, module, command_type='cli_show'):
-    device_info = get_capabilities(module)
-    network_api = device_info.get('network_api', 'nxapi')
-
-    if network_api == 'cliconf':
-        if 'show run' not in command:
-            command += ' | json'
-        cmds = [command]
-        body = run_commands(module, cmds)
-    elif network_api == 'nxapi':
-        cmds = [command]
-        body = run_commands(module, cmds)
-
-    return body
 
 
 def flatten_list(command_lists):
@@ -184,8 +168,8 @@ def get_commands_remove_udld_global(existing):
 
 
 def get_udld_global(module):
-    command = 'show udld global'
-    udld_table = execute_show_command(command, module)[0]
+    command = 'show udld global | json'
+    udld_table = run_commands(module, [command])[0]
 
     status = str(udld_table.get('udld-global-mode', None))
     if status == 'enabled-aggressive':

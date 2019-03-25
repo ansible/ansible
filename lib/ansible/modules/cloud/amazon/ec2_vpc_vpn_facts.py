@@ -16,12 +16,12 @@ description:
     - Gather facts about VPN Connections in AWS.
 version_added: "2.6"
 requirements: [ boto3 ]
-author: Madhura Naniwadekar(@Madhura-CSI)
+author: Madhura Naniwadekar (@Madhura-CSI)
 options:
   filters:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
-        See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeVpnConnections.html) for possible filters.
+        See U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeVpnConnections.html) for possible filters.
     required: false
   vpn_connection_ids:
     description:
@@ -59,16 +59,16 @@ vpn_connections:
       category:
         description: The category of the VPN connection.
         returned: always
-        type: string
+        type: str
         sample: VPN
       customer_gatway_configuration:
         description: The configuration information for the VPN connection's customer gateway (in the native XML format).
         returned: always
-        type: string
+        type: str
       customer_gateway_id:
         description: The ID of the customer gateway at your end of the VPN connection.
         returned: always
-        type: string
+        type: str
         sample: cgw-17a53c37
       options:
         description: The VPN connection options.
@@ -85,17 +85,17 @@ vpn_connections:
           destination_cidr_block:
             description: The CIDR block associated with the local subnet of the customer data center.
             returned: always
-            type: string
+            type: str
             sample: 10.0.0.0/16
           state:
             description: The current state of the static route.
             returned: always
-            type: string
+            type: str
             sample: available
       state:
         description: The current state of the VPN connection.
         returned: always
-        type: string
+        type: str
         sample: available
       tags:
         description: Any tags assigned to the VPN connection.
@@ -107,7 +107,7 @@ vpn_connections:
       type:
         description: The type of VPN connection.
         returned: always
-        type: string
+        type: str
         sample: ipsec.1
       vgw_telemetry:
          description: Information about the VPN tunnel.
@@ -127,27 +127,27 @@ vpn_connections:
          outside_ip_address:
              description: The Internet-routable IP address of the virtual private gateway's outside interface.
              returned: always
-             type: string
+             type: str
              sample: 13.127.79.191
          status:
              description: The status of the VPN tunnel.
              returned: always
-             type: string
+             type: str
              sample: DOWN
          status_message:
              description: If an error occurs, a description of the error.
              returned: always
-             type: string
+             type: str
              sample: IPSEC IS DOWN
       vpn_connection_id:
         description: The ID of the VPN connection.
         returned: always
-        type: string
+        type: str
         sample: vpn-f700d5c0
       vpn_gateway_id:
         description: The ID of the virtual private gateway at the AWS side of the VPN connection.
         returned: always
-        type: string
+        type: str
         sample: vgw-cbe56bfb
 '''
 

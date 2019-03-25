@@ -42,17 +42,24 @@ DOCUMENTATION = '''
         ini:
           - section: callback_slack
             key: username
+      validate_certs:
+        description: validate the SSL certificate of the Slack server. (For HTTPS URLs)
+        version_added: "2.8"
+        env:
+          - name: SLACK_VALIDATE_CERTS
+        ini:
+          - section: callback_slack
+            key: validate_certs
+        default: True
+        type: bool
 '''
 
 import json
 import os
 import uuid
 
-try:
-    from __main__ import cli
-except ImportError:
-    cli = None
-
+from ansible import context
+from ansible.module_utils._text import to_text
 from ansible.module_utils.urls import open_url
 from ansible.plugins.callback import CallbackBase
 
@@ -97,6 +104,7 @@ class CallbackModule(CallbackBase):
         self.channel = self.get_option('channel')
         self.username = self.get_option('username')
         self.show_invocation = (self._display.verbosity > 1)
+        self.validate_certs = self.get_option('validate_certs')
 
         if self.webhook_url is None:
             self.disabled = True
@@ -106,6 +114,10 @@ class CallbackModule(CallbackBase):
                                   'variable.')
 
     def send_msg(self, attachments):
+        headers = {
+            'Content-type': 'application/json',
+        }
+
         payload = {
             'channel': self.channel,
             'username': self.username,
@@ -119,11 +131,12 @@ class CallbackModule(CallbackBase):
         self._display.debug(data)
         self._display.debug(self.webhook_url)
         try:
-            response = open_url(self.webhook_url, data=data)
+            response = open_url(self.webhook_url, data=data, validate_certs=self.validate_certs,
+                                headers=headers)
             return response.read()
         except Exception as e:
-            self._display.warning('Could not submit message to Slack: %s' %
-                                  str(e))
+            self._display.warning(u'Could not submit message to Slack: %s' %
+                                  to_text(e))
 
     def v2_playbook_on_start(self, playbook):
         self.playbook_name = os.path.basename(playbook._file_name)
@@ -131,28 +144,27 @@ class CallbackModule(CallbackBase):
         title = [
             '*Playbook initiated* (_%s_)' % self.guid
         ]
-        invocation_items = []
-        if self._plugin_options and self.show_invocation:
-            tags = self.get_option('tags')
-            skip_tags = self.get_option('skip_tags')
-            extra_vars = self.get_option('extra_vars')
-            subset = self.get_option('subset')
-            inventory = os.path.basename(
-                os.path.realpath(self.get_option('inventory'))
-            )
 
-            invocation_items.append('Inventory:  %s' % inventory)
-            if tags and tags != 'all':
-                invocation_items.append('Tags:       %s' % tags)
+        invocation_items = []
+        if context.CLIARGS and self.show_invocation:
+            tags = context.CLIARGS['tags']
+            skip_tags = context.CLIARGS['skip_tags']
+            extra_vars = context.CLIARGS['extra_vars']
+            subset = context.CLIARGS['subset']
+            inventory = [os.path.abspath(i) for i in context.CLIARGS['inventory']]
+
+            invocation_items.append('Inventory:  %s' % ', '.join(inventory))
+            if tags and tags != ['all']:
+                invocation_items.append('Tags:       %s' % ', '.join(tags))
             if skip_tags:
-                invocation_items.append('Skip Tags:  %s' % skip_tags)
+                invocation_items.append('Skip Tags:  %s' % ', '.join(skip_tags))
             if subset:
                 invocation_items.append('Limit:      %s' % subset)
             if extra_vars:
                 invocation_items.append('Extra Vars: %s' %
                                         ' '.join(extra_vars))
 
-            title.append('by *%s*' % self.get_option('remote_user'))
+            title.append('by *%s*' % context.CLIARGS['remote_user'])
 
         title.append('\n\n*%s*' % self.playbook_name)
         msg_items = [' '.join(title)]
@@ -195,7 +207,7 @@ class CallbackModule(CallbackBase):
         hosts = sorted(stats.processed.keys())
 
         t = prettytable.PrettyTable(['Host', 'Ok', 'Changed', 'Unreachable',
-                                     'Failures'])
+                                     'Failures', 'Rescued', 'Ignored'])
 
         failures = False
         unreachable = False
@@ -209,7 +221,7 @@ class CallbackModule(CallbackBase):
                 unreachable = True
 
             t.add_row([h] + [s[k] for k in ['ok', 'changed', 'unreachable',
-                                            'failures']])
+                                            'failures', 'rescued', 'ignored']])
 
         attachments = []
         msg_items = [

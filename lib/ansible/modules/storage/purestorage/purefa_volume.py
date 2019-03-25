@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Simon Dodsley (simon@purestorage.com)
+# (c) 2018, Simon Dodsley (simon@purestorage.com)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -46,15 +46,23 @@ options:
   size:
     description:
     - Volume size in M, G, T or P units.
+  qos:
+    description:
+    - Bandwidth limit for volume in M or G units.
+      M will set MB/s
+      G will set GB/s
+      To clear an existing Qos setting using 0 (zero)
+    version_added: '2.8'
 extends_documentation_fragment:
 - purestorage.fa
 '''
 
 EXAMPLES = r'''
-- name: Create new volume named foo
+- name: Create new volume named foo with a QoS limit
   purefa_volume:
     name: foo
     size: 1T
+    qos: 58M
     fa_url: 10.10.10.2
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
     state: present
@@ -91,19 +99,47 @@ EXAMPLES = r'''
     fa_url: 10.10.10.2
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
     state: present
+
+- name: Clear volume QoS from volume foo
+  purefa_volume:
+    name: foo
+    qos: 0
+    fa_url: 10.10.10.2
+    api_token: e31060a7-21fc-e277-6240-25983c6c4592
+    state: present
 '''
 
 RETURN = r'''
+volume:
+    description: A dictionary describing the changed volume.  Only some
+        attributes below will be returned with various actions.
+    type: dict
+    returned: success
+    contains:
+        source:
+            description: Volume name of source volume used for volume copy
+            type: str
+        serial:
+            description: Volume serial number
+            type: str
+            sample: '361019ECACE43D83000120A4'
+        created:
+            description: Volume creation time
+            type: str
+            sample: '2019-03-13T22:49:24Z'
+        name:
+            description: Volume name
+            type: str
+        size:
+            description: Volume size in bytes
+            type: int
 '''
-
-try:
-    from purestorage import purestorage
-    HAS_PURESTORAGE = True
-except ImportError:
-    HAS_PURESTORAGE = False
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pure import get_system, purefa_argument_spec
+
+
+QOS_API_VERSION = "1.14"
 
 
 def human_to_bytes(size):
@@ -134,25 +170,52 @@ def get_volume(module, array):
     """Return Volume or None"""
     try:
         return array.get_volume(module.params['name'])
-    except:
+    except Exception:
         return None
+
+
+def get_destroyed_volume(module, array):
+    """Return Destroyed Volume or None"""
+    try:
+        if array.get_volume(module.params['name'], pending=True)['time_remaining'] != '':
+            return True
+        else:
+            return False
+    except Exception:
+        return False
 
 
 def get_target(module, array):
     """Return Volume or None"""
     try:
         return array.get_volume(module.params['target'])
-    except:
+    except Exception:
         return None
 
 
 def create_volume(module, array):
     """Create Volume"""
-    size = module.params['size']
+    changed = False
+    api_version = array._list_available_rest_versions()
+    if module.params['qos'] and QOS_API_VERSION in api_version:
+        if 549755813888 >= int(human_to_bytes(module.params['qos'])) >= 1048576:
+            try:
+                volume = array.create_volume(module.params['name'],
+                                             module.params['size'],
+                                             bandwidth_limit=module.params['qos'])
+                changed = True
+            except Exception:
+                module.fail_json(msg='Volume {0} creation failed.'.format(module.params['name']))
+        else:
+            module.fail_json(msg='QoS value {0} out of range.'.format(module.params['qos']))
+    else:
+        try:
+            volume = array.create_volume(module.params['name'], module.params['size'])
+            changed = True
+        except Exception:
+            module.fail_json(msg='Volume {0} creation failed.'.format(module.params['name']))
 
-    if not module.check_mode:
-        array.create_volume(module.params['name'], size)
-    module.exit_json(changed=True)
+    module.exit_json(changed=changed, volume=volume)
 
 
 def copy_from_volume(module, array):
@@ -162,39 +225,90 @@ def copy_from_volume(module, array):
     tgt = get_target(module, array)
 
     if tgt is None:
-        changed = True
-        if not module.check_mode:
-            array.copy_volume(module.params['name'],
-                              module.params['target'])
+        try:
+            volume = array.copy_volume(module.params['name'],
+                                       module.params['target'])
+            changed = True
+        except Exception:
+            module.fail_json(msg='Copy volume {0} to volume {1} failed.'.format(module.params['name'],
+                                                                                module.params['target']))
     elif tgt is not None and module.params['overwrite']:
-        changed = True
-        if not module.check_mode:
-            array.copy_volume(module.params['name'],
-                              module.params['target'],
-                              overwrite=module.params['overwrite'])
+        try:
+            volume = array.copy_volume(module.params['name'],
+                                       module.params['target'],
+                                       overwrite=module.params['overwrite'])
+            changed = True
+        except Exception:
+            module.fail_json(msg='Copy volume {0} to volume {1} failed.'.format(module.params['name'],
+                                                                                module.params['target']))
 
-    module.exit_json(changed=changed)
+    module.exit_json(changed=changed, volume=volume)
 
 
 def update_volume(module, array):
-    """Update Volume"""
-    changed = True
+    """Update Volume size and/or QoS"""
+    changed = False
+    api_version = array._list_available_rest_versions()
     vol = array.get_volume(module.params['name'])
-    if human_to_bytes(module.params['size']) > vol['size']:
-        if not module.check_mode:
-            array.extend_volume(module.params['name'], module.params['size'])
-    else:
-        changed = False
-    module.exit_json(changed=changed)
+    if QOS_API_VERSION in api_version:
+        vol_qos = array.get_volume(module.params['name'], qos=True)
+        if vol_qos['bandwidth_limit'] is None:
+            vol_qos['bandwidth_limit'] = 0
+    if module.params['size']:
+        if human_to_bytes(module.params['size']) != vol['size']:
+            if human_to_bytes(module.params['size']) > vol['size']:
+                try:
+                    volume = array.extend_volume(module.params['name'], module.params['size'])
+                    changed = True
+                except Exception:
+                    module.fail_json(msg='Volume {0} resize failed.'.format(module.params['name']))
+    if module.params['qos'] and QOS_API_VERSION in api_version:
+        if human_to_bytes(module.params['qos']) != vol_qos['bandwidth_limit']:
+            if module.params['qos'] == '0':
+                try:
+                    volume = array.set_volume(module.params['name'], bandwidth_limit='')
+                    changed = True
+                except Exception:
+                    module.fail_json(msg='Volume {0} QoS removal failed.'.format(module.params['name']))
+            elif 549755813888 >= int(human_to_bytes(module.params['qos'])) >= 1048576:
+                try:
+                    volume = array.set_volume(module.params['name'],
+                                              bandwidth_limit=module.params['qos'])
+                    changed = True
+                except Exception:
+                    module.fail_json(msg='Volume {0} QoS change failed.'.format(module.params['name']))
+            else:
+                module.fail_json(msg='QoS value {0} out of range. Check documentation.'.format(module.params['qos']))
+
+    module.exit_json(changed=changed, volume=volume)
 
 
 def delete_volume(module, array):
     """ Delete Volume"""
-    if not module.check_mode:
-        array.destroy_volume(module.params['name'])
+    changed = False
+    try:
+        volume = array.destroy_volume(module.params['name'])
         if module.params['eradicate']:
-            array.eradicate_volume(module.params['name'])
-    module.exit_json(changed=True)
+            try:
+                volume = array.eradicate_volume(module.params['name'])
+            except Exception:
+                module.fail_json(msg='Eradicate volume {0} failed.'.format(module.params['name']))
+        changed = True
+    except Exception:
+        module.fail_json(msg='Delete volume {0} failed.'.format(module.params['name']))
+    module.exit_json(changed=changed, volume=volume)
+
+
+def eradicate_volume(module, array):
+    """ Eradicate Deleted Volume"""
+    changed = False
+    if module.params['eradicate']:
+        try:
+            volume = array.eradicate_volume(module.params['name'])
+            changed = True
+        except Exception:
+            module.fail_json(msg='Eradication of volume {0} failed'.format(module.params['name']))
+    module.exit_json(changed=changed, volume=volume)
 
 
 def main():
@@ -205,27 +319,28 @@ def main():
         overwrite=dict(type='bool', default=False),
         eradicate=dict(type='bool', default=False),
         state=dict(type='str', default='present', choices=['absent', 'present']),
+        qos=dict(type='str'),
         size=dict(type='str'),
     ))
 
-    mutually_exclusive = [['size', 'target']]
+    mutually_exclusive = [['size', 'target'], ['qos', 'target']]
 
     module = AnsibleModule(argument_spec,
                            mutually_exclusive=mutually_exclusive,
-                           supports_check_mode=True)
-
-    if not HAS_PURESTORAGE:
-        module.fail_json(msg='purestorage sdk is required for this module in volume')
+                           supports_check_mode=False)
 
     size = module.params['size']
+    qos = module.params['qos']
     state = module.params['state']
     array = get_system(module)
     volume = get_volume(module, array)
+    if not volume:
+        destroyed = get_destroyed_volume(module, array)
     target = get_target(module, array)
 
     if state == 'present' and not volume and size:
         create_volume(module, array)
-    elif state == 'present' and volume and size:
+    elif state == 'present' and volume and (size or qos):
         update_volume(module, array)
     elif state == 'present' and volume and target:
         copy_from_volume(module, array)
@@ -233,6 +348,8 @@ def main():
         copy_from_volume(module, array)
     elif state == 'absent' and volume:
         delete_volume(module, array)
+    elif state == 'absent' and destroyed:
+        eradicate_volume(module, array)
     elif state == 'present' and not volume or not size:
         module.exit_json(changed=False)
     elif state == 'absent' and not volume:

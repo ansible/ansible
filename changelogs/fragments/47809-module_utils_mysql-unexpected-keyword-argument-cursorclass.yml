@@ -1,0 +1,2 @@
+bugfixes:
+- mysql - fixing unexpected keyword argument 'cursorclass' issue after migration from MySQLdb to PyMySQL.

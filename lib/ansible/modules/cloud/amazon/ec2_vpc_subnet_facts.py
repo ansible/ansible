@@ -38,7 +38,7 @@ options:
   filters:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
-        See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeSubnets.html) for possible filters.
+        See U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeSubnets.html) for possible filters.
 extends_documentation_fragment:
     - aws
     - ec2
@@ -72,7 +72,7 @@ EXAMPLES = '''
     filters:
       vpc-id: vpc-abcdef00
       "tag:Name": "{{ item }}"
-  with_items:
+  loop:
     - publicA
     - publicB
     - publicC
@@ -91,19 +91,19 @@ subnets:
         subnet_id:
             description: The ID of the Subnet.
             returned: always
-            type: string
+            type: str
         id:
             description: The ID of the Subnet (for backwards compatibility).
             returned: always
-            type: string
+            type: str
         vpc_id:
             description: The ID of the VPC .
             returned: always
-            type: string
+            type: str
         state:
             description: The state of the subnet.
             returned: always
-            type: string
+            type: str
         tags:
             description: A dict of tags associated with the Subnet.
             returned: always
@@ -111,27 +111,27 @@ subnets:
         map_public_ip_on_launch:
             description: True/False depending on attribute setting for public IP mapping.
             returned: always
-            type: boolean
+            type: bool
         default_for_az:
             description: True if this is the default subnet for AZ.
             returned: always
-            type: boolean
+            type: bool
         cidr_block:
             description: The IPv4 CIDR block assigned to the subnet.
             returned: always
-            type: string
+            type: str
         available_ip_address_count:
             description: Count of available IPs in subnet.
             returned: always
-            type: string
+            type: str
         availability_zone:
             description: The availability zone where the subnet exists.
             returned: always
-            type: string
+            type: str
         assign_ipv6_address_on_creation:
             description: True/False depending on attribute setting for IPv6 address assignment.
             returned: always
-            type: boolean
+            type: bool
         ipv6_cidr_block_association_set:
             description: An array of IPv6 cidr block association set information.
             returned: always
@@ -140,11 +140,11 @@ subnets:
                 association_id:
                     description: The association ID
                     returned: always
-                    type: string
+                    type: str
                 ipv6_cidr_block:
                     description: The IPv6 CIDR block that is associated with the subnet.
                     returned: always
-                    type: string
+                    type: str
                 ipv6_cidr_block_state:
                     description: A hash/dict that contains a single item. The state of the cidr block association.
                     returned: always
@@ -153,7 +153,7 @@ subnets:
                         state:
                             description: The CIDR block association state.
                             returned: always
-                            type: string
+                            type: str
 '''
 
 import traceback
@@ -168,6 +168,7 @@ from ansible.module_utils.ec2 import (
     camel_dict_to_snake_dict,
     ansible_dict_to_boto3_filter_list
 )
+from ansible.module_utils._text import to_native
 
 try:
     import botocore
@@ -209,7 +210,7 @@ def describe_subnets(connection, module):
     try:
         response = describe_subnets_with_backoff(connection, subnet_ids, filters)
     except botocore.exceptions.ClientError as e:
-        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     for subnet in response['Subnets']:
         # for backwards compatibility
@@ -240,7 +241,7 @@ def main():
         try:
             connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_params)
         except (botocore.exceptions.NoCredentialsError, botocore.exceptions.ProfileNotFound) as e:
-            module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+            module.fail_json(msg=to_native(e), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
     else:
         module.fail_json(msg="Region must be specified")
 

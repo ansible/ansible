@@ -28,7 +28,7 @@ short_description: Manages SNMP traps configuration on HUAWEI CloudEngine switch
 description:
     - Manages SNMP traps configurations on HUAWEI CloudEngine switches.
 author:
-    - wangdezhuang (@CloudEngine-Ansible)
+    - wangdezhuang (@QijunPan)
 options:
     feature_name:
         description:
@@ -98,7 +98,7 @@ RETURN = '''
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 proposed:
     description: k/v pairs of parameters passed into module

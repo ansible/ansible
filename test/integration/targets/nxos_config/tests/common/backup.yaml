@@ -12,6 +12,7 @@
     parents:
       - "interface {{ intname }}"
     match: none
+    provider: "{{ connection }}"
 
 - name: collect any backup files
   find: &backups
@@ -34,6 +35,7 @@
     parents:
       - "interface {{ intname }}"
     backup: yes
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -49,5 +51,81 @@
 - assert:
     that:
       - "backup_files.files is defined"
+
+- name: delete configurable backup file path
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - "{{ role_path }}/backup_test_dir/"
+    - "{{ role_path }}/backup/backup.cfg"
+
+- name: take configuration backup in custom filename and directory path
+  nxos_config:
+    backup: yes
+    backup_options:
+      filename: backup.cfg
+      dir_path: "{{ role_path }}/backup_test_dir/{{ inventory_hostname_short }}"
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: check if the backup file-1 exist
+  find:
+    paths: "{{ role_path }}/backup_test_dir/{{ inventory_hostname_short }}/backup.cfg"
+  register: backup_file
+  connection: local
+
+- assert:
+    that:
+      - "backup_file.files is defined"
+
+- name: take configuration backup in custom filename
+  nxos_config:
+    backup: yes
+    backup_options:
+      filename: backup.cfg
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: check if the backup file-2 exist
+  find:
+    paths: "{{ role_path }}/backup/backup.cfg"
+  register: backup_file
+  connection: local
+
+- assert:
+    that:
+      - "backup_file.files is defined"
+
+- name: take configuration backup in custom path and default filename
+  nxos_config:
+    backup: yes
+    backup_options:
+      dir_path: "{{ role_path }}/backup_test_dir/{{ inventory_hostname_short }}"
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: check if the backup file-3 exist
+  find:
+    paths: "{{ role_path }}/backup_test_dir/{{ inventory_hostname_short }}"
+    pattern: "{{ inventory_hostname_short }}_config*"
+  register: backup_file
+  connection: local
+
+- assert:
+    that:
+      - "backup_file.files is defined"
 
 - debug: msg="END common/backup.yaml on connection={{ ansible_connection }}"

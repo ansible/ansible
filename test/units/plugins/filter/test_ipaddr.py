@@ -17,11 +17,14 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import sys
 import pytest
 
-from ansible.compat.tests import unittest
-from ansible.plugins.filter.ipaddr import (ipaddr, _netmask_query, nthhost, next_nth_usable,
-                                           previous_nth_usable, network_in_usable, network_in_network, cidr_merge)
+from units.compat import unittest
+from ansible.errors import AnsibleFilterError
+from ansible.plugins.filter.ipaddr import (ipaddr, _netmask_query, nthhost, next_nth_usable, ipsubnet,
+                                           previous_nth_usable, network_in_usable, network_in_network,
+                                           cidr_merge, ipmath)
 netaddr = pytest.importorskip('netaddr')
 
 
@@ -35,15 +38,14 @@ class TestIpFilter(unittest.TestCase):
         self.assertEqual(ipaddr(address, 'netmask'), '255.255.255.255')
 
     def test_network(self):
-        # Unfixable in current state
-        # address = '1.12.1.34/32'
-        # self.assertEqual(ipaddr(address, 'network'), '1.12.1.34')
-        # address = '1.12.1.34/255.255.255.255'
-        # self.assertEqual(ipaddr(address, 'network'), '1.12.1.34')
-        # address = '1.12.1.34'
-        # self.assertEqual(ipaddr(address, 'network'), '1.12.1.34')
-        # address = '1.12.1.35/31'
-        # self.assertEqual(ipaddr(address, 'network'), '1.12.1.34')
+        address = '1.12.1.34/32'
+        self.assertEqual(ipaddr(address, 'network'), '1.12.1.34')
+        address = '1.12.1.34/255.255.255.255'
+        self.assertEqual(ipaddr(address, 'network'), '1.12.1.34')
+        address = '1.12.1.34'
+        self.assertEqual(ipaddr(address, 'network'), '1.12.1.34')
+        address = '1.12.1.35/31'
+        self.assertEqual(ipaddr(address, 'network'), '1.12.1.34')
         address = '1.12.1.34/24'
         self.assertEqual(ipaddr(address, 'network'), '1.12.1.0')
 
@@ -473,3 +475,74 @@ class TestIpFilter(unittest.TestCase):
         subnets = ['1.12.1.1', '1.12.1.255']
         self.assertEqual(cidr_merge(subnets), ['1.12.1.1/32', '1.12.1.255/32'])
         self.assertEqual(cidr_merge(subnets, 'span'), '1.12.1.0/24')
+
+    def test_ipmath(self):
+        self.assertEqual(ipmath('192.168.1.5', 5), '192.168.1.10')
+        self.assertEqual(ipmath('192.168.1.5', -5), '192.168.1.0')
+        self.assertEqual(ipmath('192.168.0.5', -10), '192.167.255.251')
+
+        self.assertEqual(ipmath('2001::1', 8), '2001::9')
+        self.assertEqual(ipmath('2001::1', 9), '2001::a')
+        self.assertEqual(ipmath('2001::1', 10), '2001::b')
+        self.assertEqual(ipmath('2001::5', -3), '2001::2')
+        self.assertEqual(
+            ipmath('2001::5', -10),
+            '2000:ffff:ffff:ffff:ffff:ffff:ffff:fffb'
+        )
+
+        expected = 'You must pass a valid IP address; invalid_ip is invalid'
+        with self.assertRaises(AnsibleFilterError) as exc:
+            ipmath('invalid_ip', 8)
+        self.assertEqual(exc.exception.message, expected)
+
+        expected = (
+            'You must pass an integer for arithmetic; '
+            'some_number is not a valid integer'
+        )
+        with self.assertRaises(AnsibleFilterError) as exc:
+            ipmath('1.2.3.4', 'some_number')
+        self.assertEqual(exc.exception.message, expected)
+
+    def test_ipsubnet(self):
+        test_cases = (
+            (('1.1.1.1/24', '30'), '64'),
+            (('1.1.1.1/25', '24'), '0'),
+            (('1.12.1.34/32', '1.12.1.34/24'), '35'),
+            (('192.168.50.0/24', '192.168.0.0/16'), '51'),
+            (('192.168.144.5', '192.168.0.0/16'), '36870'),
+            (('192.168.144.5', '192.168.144.5/24'), '6'),
+            (('192.168.144.5/32', '192.168.144.0/24'), '6'),
+            (('192.168.144.16/30', '192.168.144.0/24'), '5'),
+            (('192.168.144.5', ), '192.168.144.5/32'),
+            (('192.168.0.0/16', ), '192.168.0.0/16'),
+            (('192.168.144.5', ), '192.168.144.5/32'),
+            (('192.168.0.0/16', '20'), '16'),
+            (('192.168.0.0/16', '20', '0'), '192.168.0.0/20'),
+            (('192.168.0.0/16', '20', '-1'), '192.168.240.0/20'),
+            (('192.168.0.0/16', '20', '5'), '192.168.80.0/20'),
+            (('192.168.0.0/16', '20', '-5'), '192.168.176.0/20'),
+            (('192.168.144.5', '20'), '192.168.144.0/20'),
+            (('192.168.144.5', '18', '0'), '192.168.128.0/18'),
+            (('192.168.144.5', '18', '-1'), '192.168.144.4/31'),
+            (('192.168.144.5', '18', '5'), '192.168.144.0/23'),
+            (('192.168.144.5', '18', '-5'), '192.168.144.0/27'),
+            (('span', 'test', 'error'), False),
+            (('test', ), False),
+            (('192.168.144.5', '500000', '-5'), False),
+            (('192.168.144.5', '18', '500000'), False),
+            (('200000', '18', '-5'), '0.3.13.64/27'),
+        )
+        for args, res in test_cases:
+            self._test_ipsubnet(args, res)
+
+    def _test_ipsubnet(self, ipsubnet_args, expected_result):
+        if ipsubnet_args == ('1.1.1.1/25', '24') and expected_result == '0' and sys.version_info >= (3, 7):
+            return  # fails in netaddr on Python 3.7+
+
+        self.assertEqual(ipsubnet(*ipsubnet_args), expected_result)
+
+        with self.assertRaisesRegexp(AnsibleFilterError, 'You must pass a valid subnet or IP address; invalid_subnet is invalid'):
+            ipsubnet('192.168.144.5', 'invalid_subnet')
+
+        with self.assertRaisesRegexp(AnsibleFilterError, '192.168.144.0/30 is not in the subnet 192.168.144.4/30'):
+            ipsubnet('192.168.144.1/30', '192.168.144.5/30')

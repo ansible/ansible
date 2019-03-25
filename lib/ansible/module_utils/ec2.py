@@ -28,8 +28,10 @@
 
 import os
 import re
+import traceback
 
 from ansible.module_utils.ansible_release import __version__
+from ansible.module_utils.basic import missing_required_lib, env_fallback
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.cloud import CloudRetry
 from ansible.module_utils.six import string_types, binary_type, text_type
@@ -38,18 +40,22 @@ from ansible.module_utils.common.dict_transformations import (
     _camel_to_snake, _snake_to_camel,
 )
 
+BOTO_IMP_ERR = None
 try:
     import boto
     import boto.ec2  # boto does weird import stuff
     HAS_BOTO = True
 except ImportError:
+    BOTO_IMP_ERR = traceback.format_exc()
     HAS_BOTO = False
 
+BOTO3_IMP_ERR = None
 try:
     import boto3
     import botocore
     HAS_BOTO3 = True
-except:
+except Exception:
+    BOTO3_IMP_ERR = traceback.format_exc()
     HAS_BOTO3 = False
 
 try:
@@ -111,7 +117,8 @@ def boto3_conn(module, conn_type=None, resource=None, region=None, endpoint=None
         return _boto3_conn(conn_type=conn_type, resource=resource, region=region, endpoint=endpoint, **params)
     except ValueError as e:
         module.fail_json(msg="Couldn't connect to AWS: %s" % to_native(e))
-    except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError, botocore.exceptions.NoCredentialsError) as e:
+    except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError,
+            botocore.exceptions.NoCredentialsError, botocore.exceptions.ConfigParseError) as e:
         module.fail_json(msg=to_native(e))
     except botocore.exceptions.NoRegionError as e:
         module.fail_json(msg="The %s module requires a region and none was found in configuration, "
@@ -170,6 +177,7 @@ def boto_exception(err):
 
 def aws_common_argument_spec():
     return dict(
+        debug_botocore_endpoint_logs=dict(fallback=(env_fallback, ['ANSIBLE_DEBUG_BOTOCORE_LOGS']), default=False, type='bool'),
         ec2_url=dict(),
         aws_secret_key=dict(aliases=['ec2_secret_key', 'secret_key'], no_log=True),
         aws_access_key=dict(aliases=['ec2_access_key', 'access_key']),
@@ -253,7 +261,7 @@ def get_aws_connection_info(module, boto3=False):
                     if not region:
                         region = boto.config.get('Boto', 'ec2_region')
                 else:
-                    module.fail_json(msg="boto is required for this module. Please install boto and try again")
+                    module.fail_json(msg=missing_required_lib('boto'), exception=BOTO_IMP_ERR)
             elif HAS_BOTO3:
                 # here we don't need to make an additional call, will default to 'us-east-1' if the below evaluates to None.
                 try:
@@ -261,7 +269,7 @@ def get_aws_connection_info(module, boto3=False):
                 except botocore.exceptions.ProfileNotFound as e:
                     pass
             else:
-                module.fail_json(msg="Boto3 is required for this module. Please install boto3 and try again")
+                module.fail_json(msg=missing_required_lib('boto3'), exception=BOTO3_IMP_ERR)
 
     if not security_token:
         if os.environ.get('AWS_SECURITY_TOKEN'):
@@ -285,6 +293,7 @@ def get_aws_connection_info(module, boto3=False):
         boto_params['verify'] = validate_certs
 
         if profile_name:
+            boto_params = dict(aws_access_key_id=None, aws_secret_access_key=None, aws_session_token=None)
             boto_params['profile_name'] = profile_name
 
     else:
@@ -552,7 +561,11 @@ def _hashable_policy(policy, policy_list):
                 tupleified = tuple(tupleified)
             policy_list.append(tupleified)
     elif isinstance(policy, string_types) or isinstance(policy, binary_type):
-        return [(to_text(policy))]
+        policy = to_text(policy)
+        # convert root account ARNs to just account IDs
+        if policy.startswith('arn:aws:iam::') and policy.endswith(':root'):
+            policy = policy.split(':')[4]
+        return [policy]
     elif isinstance(policy, dict):
         sorted_keys = list(policy.keys())
         sorted_keys.sort()
@@ -711,7 +724,7 @@ def compare_aws_tags(current_tags_dict, new_tags_dict, purge_tags=True):
             tag_keys_to_unset.append(key)
 
     for key in set(new_tags_dict.keys()) - set(tag_keys_to_unset):
-        if new_tags_dict[key] != current_tags_dict.get(key):
+        if to_text(new_tags_dict[key]) != current_tags_dict.get(key):
             tag_key_value_pairs_to_set[key] = new_tags_dict[key]
 
     return tag_key_value_pairs_to_set, tag_keys_to_unset

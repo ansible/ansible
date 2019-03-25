@@ -11,7 +11,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -61,8 +61,8 @@ options:
         default: 'no'
     state:
         description:
-            - Assert the state of the virtual network. Use 'present' to create or update and
-              'absent' to delete.
+            - Assert the state of the virtual network. Use C(present) to create or update and
+              C(absent) to delete.
         default: present
         choices:
             - absent
@@ -81,8 +81,8 @@ author:
 EXAMPLES = '''
     - name: Create a virtual network
       azure_rm_virtualnetwork:
-        name: foobar
-        resource_group: Testing
+        resource_group: myResourceGroup
+        name: myVirtualNetwork
         address_prefixes_cidr:
             - "10.1.0.0/16"
             - "172.100.0.0/16"
@@ -95,8 +95,8 @@ EXAMPLES = '''
 
     - name: Delete a virtual network
       azure_rm_virtualnetwork:
-        name: foobar
-        resource_group: Testing
+        resource_group: myResourceGroup
+        name: myVirtualNetwork
         state: absent
 '''
 RETURN = '''
@@ -114,7 +114,7 @@ state:
             "127.0.0.3"
         ],
         "etag": 'W/"0712e87c-f02f-4bb3-8b9e-2da0390a3886"',
-        "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/virtualNetworks/my_test_network",
+        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/virtualNetworks/myVirtualNetwork",
         "location": "eastus",
         "name": "my_test_network",
         "provisioning_state": "Succeeded",
@@ -257,7 +257,7 @@ class AzureRMVirtualNetwork(AzureRMModuleBase):
                     changed = True
 
                 if self.dns_servers:
-                    existing_dns_set = set(vnet.dhcp_options.dns_servers)
+                    existing_dns_set = set(vnet.dhcp_options.dns_servers) if vnet.dhcp_options else set([])
                     requested_dns_set = set(self.dns_servers)
                     if existing_dns_set != requested_dns_set:
                         self.log('CHANGED: replacing DNS servers')
@@ -290,34 +290,35 @@ class AzureRMVirtualNetwork(AzureRMModuleBase):
                     self.log("Create virtual network {0}".format(self.name))
                     if not self.address_prefixes_cidr:
                         self.fail('Parameter error: address_prefixes_cidr required when creating a virtual network')
-                    vnet = self.network_models.VirtualNetwork(
+                    vnet_param = self.network_models.VirtualNetwork(
                         location=self.location,
                         address_space=self.network_models.AddressSpace(
                             address_prefixes=self.address_prefixes_cidr
                         )
                     )
                     if self.dns_servers:
-                        vnet.dhcp_options = self.network_models.DhcpOptions(
+                        vnet_param.dhcp_options = self.network_models.DhcpOptions(
                             dns_servers=self.dns_servers
                         )
                     if self.tags:
-                        vnet.tags = self.tags
-                    self.results['state'] = self.create_or_update_vnet(vnet)
+                        vnet_param.tags = self.tags
+                    self.results['state'] = self.create_or_update_vnet(vnet_param)
                 else:
                     # update existing virtual network
                     self.log("Update virtual network {0}".format(self.name))
-                    vnet = self.network_models.VirtualNetwork(
+                    vnet_param = self.network_models.VirtualNetwork(
                         location=results['location'],
                         address_space=self.network_models.AddressSpace(
                             address_prefixes=results['address_prefixes']
                         ),
-                        tags=results['tags']
+                        tags=results['tags'],
+                        subnets=vnet.subnets
                     )
                     if results.get('dns_servers'):
-                        vnet.dhcp_options = self.network_models.DhcpOptions(
+                        vnet_param.dhcp_options = self.network_models.DhcpOptions(
                             dns_servers=results['dns_servers']
                         )
-                    self.results['state'] = self.create_or_update_vnet(vnet)
+                    self.results['state'] = self.create_or_update_vnet(vnet_param)
             elif self.state == 'absent':
                 self.delete_virtual_network()
                 self.results['state']['status'] = 'Deleted'
@@ -343,6 +344,7 @@ class AzureRMVirtualNetwork(AzureRMModuleBase):
 
 def main():
     AzureRMVirtualNetwork()
+
 
 if __name__ == '__main__':
     main()

@@ -1,11 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright 2014, Red Hat, Inc.
-#     Tim Bielawa <tbielawa@redhat.com>
-#     Magnus Hedemark <mhedemar@redhat.com>
-# Copyright 2017, Dag Wieers <dag@wieers.com>
-
+# Copyright: (c) 2014, Red Hat, Inc.
+# Copyright: (c) 2014, Tim Bielawa <tbielawa@redhat.com>
+# Copyright: (c) 2014, Magnus Hedemark <mhedemar@redhat.com>
+# Copyright: (c) 2017, Dag Wieers <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
@@ -21,45 +20,51 @@ module: xml
 short_description: Manage bits and pieces of XML files or strings
 description:
 - A CRUD-like interface to managing bits of XML files.
-- You might also be interested in a brief tutorial from U(https://www.w3schools.com/xml/xpath_intro.asp)
-  and U(https://developer.mozilla.org/en-US/docs/Web/XPath).
 version_added: '2.4'
 options:
   path:
     description:
-    - Path to the file to operate on. File must exist ahead of time.
+    - Path to the file to operate on.
+    - This file must exist ahead of time.
     - This parameter is required, unless C(xmlstring) is given.
+    type: path
     required: yes
     aliases: [ dest, file ]
   xmlstring:
     description:
     - A string containing XML on which to operate.
     - This parameter is required, unless C(path) is given.
+    type: str
     required: yes
   xpath:
     description:
     - A valid XPath expression describing the item(s) you want to manipulate.
     - Operates on the document root, C(/), by default.
+    type: str
   namespaces:
     description:
     - The namespace C(prefix:uri) mapping for the XPath expression.
     - Needs to be a C(dict), not a C(list) of items.
+    type: dict
   state:
     description:
     - Set or remove an xpath selection (node(s), attribute(s)).
-    default: present
+    type: str
     choices: [ absent, present ]
+    default: present
     aliases: [ ensure ]
   attribute:
     description:
     - The attribute to select when using parameter C(value).
     - This is a string, not prepended with C(@).
+    type: raw
   value:
     description:
     - Desired state of the selected attribute.
     - Either a string, or to unset a value, the Python C(None) keyword (YAML Equivalent, C(null)).
     - Elements default to no value (but present).
     - Attributes default to an empty string.
+    type: raw
   add_children:
     description:
     - Add additional child-element(s) to a selected element for a given C(xpath).
@@ -67,37 +72,41 @@ options:
       (eg. C(children=ansible) to add an empty C(<ansible/>) child element),
       or a hash where the key is an element name and the value is the element value.
     - This parameter requires C(xpath) to be set.
+    type: list
   set_children:
     description:
     - Set the child-element(s) of a selected element for a given C(xpath).
     - Removes any existing children.
     - Child elements must be specified as in C(add_children).
     - This parameter requires C(xpath) to be set.
+    type: list
   count:
     description:
     - Search for a given C(xpath) and provide the count of any matches.
     - This parameter requires C(xpath) to be set.
     type: bool
-    default: 'no'
+    default: no
   print_match:
     description:
     - Search for a given C(xpath) and print out any matches.
     - This parameter requires C(xpath) to be set.
     type: bool
-    default: 'no'
+    default: no
   pretty_print:
     description:
     - Pretty print XML output.
     type: bool
-    default: 'no'
+    default: no
   content:
     description:
     - Search for a given C(xpath) and get content.
     - This parameter requires C(xpath) to be set.
+    type: str
     choices: [ attribute, text ]
   input_type:
     description:
     - Type of input for C(add_children) and C(set_children).
+    type: str
     choices: [ xml, yaml ]
     default: yaml
   backup:
@@ -105,16 +114,52 @@ options:
       - Create a backup file including the timestamp information so you can get
         the original file back if you somehow clobbered it incorrectly.
     type: bool
-    default: 'no'
+    default: no
+  strip_cdata_tags:
+    description:
+      - Remove CDATA tags surrounding text values.
+      - Note that this might break your XML file if text values contain characters that could be interpreted as XML.
+    type: bool
+    default: no
+    version_added: '2.7'
+  insertbefore:
+    description:
+      - Add additional child-element(s) before the first selected element for a given C(xpath).
+      - Child elements must be given in a list and each item may be either a string
+        (eg. C(children=ansible) to add an empty C(<ansible/>) child element),
+        or a hash where the key is an element name and the value is the element value.
+      - This parameter requires C(xpath) to be set.
+    type: bool
+    default: no
+    version_added: '2.8'
+  insertafter:
+    description:
+      - Add additional child-element(s) after the last selected element for a given C(xpath).
+      - Child elements must be given in a list and each item may be either a string
+        (eg. C(children=ansible) to add an empty C(<ansible/>) child element),
+        or a hash where the key is an element name and the value is the element value.
+      - This parameter requires C(xpath) to be set.
+    type: bool
+    default: no
+    version_added: '2.8'
 requirements:
 - lxml >= 2.3.0
 notes:
 - Use the C(--check) and C(--diff) options when testing your expressions.
 - The diff output is automatically pretty-printed, so may not reflect the actual file content, only the file structure.
 - This module does not handle complicated xpath expressions, so limit xpath selectors to simple expressions.
-- Beware that in case your XML elements are namespaced, you need to use the C(namespaces) parameter.
+- Beware that in case your XML elements are namespaced, you need to use the C(namespaces) parameter, see the examples.
 - Namespaces prefix should be used for all children of an element where namespace is defined, unless another namespace is defined for them.
-- More information about this module is available from the community wiki at U(https://github.com/ansible/community/wiki/Module:-xml)
+seealso:
+- name: Xml module development community wiki
+  description: More information related to the development of this xml module.
+  link: https://github.com/ansible/community/wiki/Module:-xml
+- name: Introduction to XPath
+  description: A brief tutorial on XPath (w3schools.com).
+  link: https://www.w3schools.com/xml/xpath_intro.asp
+- name: XPath Reference document
+  description: The reference documentation on XSLT/XPath (developer.mozilla.org).
+  link: https://developer.mozilla.org/en-US/docs/Web/XPath
 author:
 - Tim Bielawa (@tbielawa)
 - Magnus Hedemark (@magnus919)
@@ -122,20 +167,36 @@ author:
 '''
 
 EXAMPLES = r'''
-- name: Remove the subjective attribute of the rating element
+# Consider the following XML file:
+#
+# <business type="bar">
+#   <name>Tasty Beverage Co.</name>
+#     <beers>
+#       <beer>Rochefort 10</beer>
+#       <beer>St. Bernardus Abbot 12</beer>
+#       <beer>Schlitz</beer>
+#    </beers>
+#   <rating subjective="true">10</rating>
+#   <website>
+#     <mobilefriendly/>
+#     <address>http://tastybeverageco.com</address>
+#   </website>
+# </business>
+
+- name: Remove the 'subjective' attribute of the 'rating' element
   xml:
     path: /foo/bar.xml
     xpath: /business/rating/@subjective
     state: absent
 
-- name: Set the rating to 11
+- name: Set the rating to '11'
   xml:
     path: /foo/bar.xml
     xpath: /business/rating
     value: 11
 
 # Retrieve and display the number of nodes
-- name: Get count of beers nodes
+- name: Get count of 'beers' nodes
   xml:
     path: /foo/bar.xml
     xpath: /business/beers/beer
@@ -145,13 +206,14 @@ EXAMPLES = r'''
 - debug:
     var: hits.count
 
-- name: Add a phonenumber element to the business element
+# Example where parent XML nodes are created automatically
+- name: Add a 'phonenumber' element to the 'business' element
   xml:
     path: /foo/bar.xml
     xpath: /business/phonenumber
     value: 555-555-1234
 
-- name: Add several more beers to the beers element
+- name: Add several more beers to the 'beers' element
   xml:
     path: /foo/bar.xml
     xpath: /business/beers
@@ -160,12 +222,23 @@ EXAMPLES = r'''
     - beer: Old Motor Oil
     - beer: Old Curmudgeon
 
-- name: Add a validxhtml element to the website element
+- name: Add several more beers to the 'beers' element and add them before the 'Rochefort 10' element
+  xml:
+    path: /foo/bar.xml
+    xpath: '/business/beers/beer[text()=\"Rochefort 10\"]'
+    insertbefore: yes
+    add_children:
+    - beer: Old Rasputin
+    - beer: Old Motor Oil
+    - beer: Old Curmudgeon
+
+# NOTE: The 'state' defaults to 'present' and 'value' defaults to 'null' for elements
+- name: Add a 'validxhtml' element to the 'website' element
   xml:
     path: /foo/bar.xml
     xpath: /business/website/validxhtml
 
-- name: Add an empty validatedon attribute to the validxhtml element
+- name: Add an empty 'validatedon' attribute to the 'validxhtml' element
   xml:
     path: /foo/bar.xml
     xpath: /business/website/validxhtml/@validatedon
@@ -190,27 +263,27 @@ EXAMPLES = r'''
   debug:
     var: xmlresp.matches[0].validxhtml.validatedon
 
-- name: Remove all children from the website element (option 1)
+- name: Remove all children from the 'website' element (option 1)
   xml:
     path: /foo/bar.xml
     xpath: /business/website/*
     state: absent
 
-- name: Remove all children from the website element (option 2)
+- name: Remove all children from the 'website' element (option 2)
   xml:
     path: /foo/bar.xml
     xpath: /business/website
     children: []
 
-# In case of namespaces, like in below XML, they have to be explicitely stated
-# NOTE: there's the prefix "x" in front of the "bar", too
-#<?xml version='1.0' encoding='UTF-8'?>
-#<foo xmlns="http://x.test" xmlns:attr="http://z.test">
-#  <bar>
-#    <baz xmlns="http://y.test" attr:my_namespaced_attribute="true" />
-#  </bar>
-#</foo>
+# In case of namespaces, like in below XML, they have to be explicitely stated.
+#
+# <foo xmlns="http://x.test" xmlns:attr="http://z.test">
+#   <bar>
+#     <baz xmlns="http://y.test" attr:my_namespaced_attribute="true" />
+#   </bar>
+# </foo>
 
+# NOTE: There is the prefix 'x' in front of the 'bar' element, too.
 - name: Set namespaced '/x:foo/x:bar/y:baz/@z:my_namespaced_attribute' to 'false'
   xml:
     path: foo.xml
@@ -245,11 +318,11 @@ matches:
     returned: when parameter 'print_match' is set
 msg:
     description: A message related to the performed action(s).
-    type: string
+    type: str
     returned: always
 xmlstring:
     description: An XML string of the resulting output.
-    type: string
+    type: str
     returned: when parameter 'xmlstring' is set
 '''
 
@@ -259,19 +332,21 @@ import os
 import re
 import traceback
 
-from collections import MutableMapping
 from distutils.version import LooseVersion
 from io import BytesIO
 
+LXML_IMP_ERR = None
 try:
     from lxml import etree, objectify
     HAS_LXML = True
 except ImportError:
+    LXML_IMP_ERR = traceback.format_exc()
     HAS_LXML = False
 
-from ansible.module_utils.basic import AnsibleModule, json_dict_bytes_to_unicode
+from ansible.module_utils.basic import AnsibleModule, json_dict_bytes_to_unicode, missing_required_lib
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils.common._collections_compat import MutableMapping
 
 _IDENT = r"[a-zA-Z-][a-zA-Z0-9_\-\.]*"
 _NSIDENT = _IDENT + "|" + _IDENT + ":" + _IDENT
@@ -403,14 +478,33 @@ def set_target_children(module, tree, xpath, namespaces, children, in_type):
     finish(module, tree, xpath, namespaces, changed=changed)
 
 
-def add_target_children(module, tree, xpath, namespaces, children, in_type):
+def add_target_children(module, tree, xpath, namespaces, children, in_type, insertbefore, insertafter):
     if is_node(tree, xpath, namespaces):
         new_kids = children_to_nodes(module, children, in_type)
-        for node in tree.xpath(xpath, namespaces=namespaces):
-            node.extend(new_kids)
+        if insertbefore or insertafter:
+            insert_target_children(tree, xpath, namespaces, new_kids, insertbefore, insertafter)
+        else:
+            for node in tree.xpath(xpath, namespaces=namespaces):
+                node.extend(new_kids)
         finish(module, tree, xpath, namespaces, changed=True)
     else:
         finish(module, tree, xpath, namespaces)
+
+
+def insert_target_children(tree, xpath, namespaces, children, insertbefore, insertafter):
+    """
+    Insert the given children before or after the given xpath. If insertbefore is True, it is inserted before the
+    first xpath hit, with insertafter, it is inserted after the last xpath hit.
+    """
+    insert_target = tree.xpath(xpath, namespaces=namespaces)
+    loc_index = 0 if insertbefore else -1
+    index_in_parent = insert_target[loc_index].getparent().index(insert_target[loc_index])
+    parent = insert_target[0].getparent()
+    if insertafter:
+        index_in_parent += 1
+    for child in children:
+        parent.insert(index_in_parent, child)
+        index_in_parent += 1
 
 
 def _extract_xpstr(g):
@@ -732,20 +826,23 @@ def main():
             content=dict(type='str', choices=['attribute', 'text']),
             input_type=dict(type='str', default='yaml', choices=['xml', 'yaml']),
             backup=dict(type='bool', default=False),
+            strip_cdata_tags=dict(type='bool', default=False),
+            insertbefore=dict(type='bool', default=False),
+            insertafter=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
-        # TODO: Implement this as soon as #28662 (required_by functionality) is merged
-        # required_by=dict(
-        #    add_children=['xpath'],
-        #    attribute=['value'],
-        #    set_children=['xpath'],
-        #    value=['xpath'],
-        # ),
+        required_by=dict(
+            add_children=['xpath'],
+            attribute=['value'],
+            content=['xpath'],
+            set_children=['xpath'],
+            value=['xpath'],
+        ),
         required_if=[
-            ['content', 'attribute', ['xpath']],
-            ['content', 'text', ['xpath']],
             ['count', True, ['xpath']],
             ['print_match', True, ['xpath']],
+            ['insertbefore', True, ['xpath']],
+            ['insertafter', True, ['xpath']],
         ],
         required_one_of=[
             ['path', 'xmlstring'],
@@ -754,6 +851,7 @@ def main():
         mutually_exclusive=[
             ['add_children', 'content', 'count', 'print_match', 'set_children', 'value'],
             ['path', 'xmlstring'],
+            ['insertbefore', 'insertafter'],
         ],
     )
 
@@ -772,10 +870,13 @@ def main():
     print_match = module.params['print_match']
     count = module.params['count']
     backup = module.params['backup']
+    strip_cdata_tags = module.params['strip_cdata_tags']
+    insertbefore = module.params['insertbefore']
+    insertafter = module.params['insertafter']
 
     # Check if we have lxml 2.3.0 or newer installed
     if not HAS_LXML:
-        module.fail_json(msg='The xml ansible module requires the lxml python library installed on the managed machine')
+        module.fail_json(msg=missing_required_lib("lxml"), exception=LXML_IMP_ERR)
     elif LooseVersion('.'.join(to_native(f) for f in etree.LXML_VERSION)) < LooseVersion('2.3.0'):
         module.fail_json(msg='The xml ansible module requires lxml 2.3.0 or newer installed on the managed machine')
     elif LooseVersion('.'.join(to_native(f) for f in etree.LXML_VERSION)) < LooseVersion('3.0.0'):
@@ -800,7 +901,7 @@ def main():
 
     # Try to parse in the target XML file
     try:
-        parser = etree.XMLParser(remove_blank_text=pretty_print)
+        parser = etree.XMLParser(remove_blank_text=pretty_print, strip_cdata=strip_cdata_tags)
         doc = etree.parse(infile, parser)
     except etree.XMLSyntaxError as e:
         module.fail_json(msg="Error while parsing document: %s (%s)" % (xml_file or 'xml_string', e))
@@ -836,7 +937,7 @@ def main():
 
     # add_children set?
     if add_children:
-        add_target_children(module, doc, xpath, namespaces, add_children, input_type)
+        add_target_children(module, doc, xpath, namespaces, add_children, input_type, insertbefore, insertafter)
 
     # No?: Carry on
 

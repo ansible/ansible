@@ -121,72 +121,72 @@ RETURN = '''
 id:
   description: "UUID of the VPC."
   returned: success
-  type: string
+  type: str
   sample: 04589590-ac63-4ffc-93f5-b698b8ac38b6
 name:
   description: "Name of the VPC."
   returned: success
-  type: string
+  type: str
   sample: my_vpc
 display_text:
   description: "Display text of the VPC."
   returned: success
-  type: string
+  type: str
   sample: My example VPC
 cidr:
   description: "CIDR of the VPC."
   returned: success
-  type: string
+  type: str
   sample: 10.10.0.0/16
 network_domain:
   description: "Network domain of the VPC."
   returned: success
-  type: string
+  type: str
   sample: example.com
 region_level_vpc:
   description: "Whether the VPC is region level or not."
   returned: success
-  type: boolean
+  type: bool
   sample: true
 restart_required:
   description: "Whether the VPC router needs a restart or not."
   returned: success
-  type: boolean
+  type: bool
   sample: true
 distributed_vpc_router:
   description: "Whether the VPC uses distributed router or not."
   returned: success
-  type: boolean
+  type: bool
   sample: true
 redundant_vpc_router:
   description: "Whether the VPC has redundant routers or not."
   returned: success
-  type: boolean
+  type: bool
   sample: true
 domain:
   description: "Domain the VPC is related to."
   returned: success
-  type: string
+  type: str
   sample: example domain
 account:
   description: "Account the VPC is related to."
   returned: success
-  type: string
+  type: str
   sample: example account
 project:
   description: "Name of project the VPC is related to."
   returned: success
-  type: string
+  type: str
   sample: Production
 zone:
   description: "Name of zone the VPC is in."
   returned: success
-  type: string
+  type: str
   sample: ch-gva-2
 state:
   description: "State of the VPC."
   returned: success
-  type: string
+  type: str
   sample: Enabled
 tags:
   description: "List of resource tags associated with the VPC."
@@ -219,16 +219,28 @@ class AnsibleCloudStackVpc(AnsibleCloudStack):
 
     def get_vpc_offering(self, key=None):
         vpc_offering = self.module.params.get('vpc_offering')
-        args = {}
+        args = {
+            'state': 'Enabled',
+        }
         if vpc_offering:
             args['name'] = vpc_offering
+            fail_msg = "VPC offering not found or not enabled: %s" % vpc_offering
         else:
             args['isdefault'] = True
+            fail_msg = "No enabled default VPC offering found"
 
         vpc_offerings = self.query_api('listVPCOfferings', **args)
         if vpc_offerings:
-            return self._get_by_key(key, vpc_offerings['vpcoffering'][0])
-        self.module.fail_json(msg="VPC offering not found: %s" % vpc_offering)
+            # The API name argument filter also matches substrings, we have to
+            # iterate over the results to get an exact match
+            for vo in vpc_offerings['vpcoffering']:
+                if 'name' in args:
+                    if args['name'] == vo['name']:
+                        return self._get_by_key(key, vo)
+                #  Return the first offering found, if not queried for the name
+                else:
+                    return self._get_by_key(key, vo)
+        self.module.fail_json(msg=fail_msg)
 
     def get_vpc(self):
         if self.vpc:

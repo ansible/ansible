@@ -1,0 +1,2 @@
+minor_changes:
+- uri/urls - Support unix domain sockets (https://github.com/ansible/ansible/pull/43560)

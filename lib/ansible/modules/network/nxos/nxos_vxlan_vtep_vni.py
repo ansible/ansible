@@ -67,6 +67,12 @@ options:
     description:
       - Suppress arp under layer 2 VNI.
     type: bool
+  suppress_arp_disable:
+    description:
+      - Overrides the global ARP suppression config.
+        This is available on NX-OS 9K series running 9.2.x or higher.
+    type: bool
+    version_added: "2.8"
   state:
     description:
       - Determines whether the config should be present or not
@@ -98,6 +104,7 @@ from ansible.module_utils.network.common.config import CustomNetworkConfig
 BOOL_PARAMS = [
     'assoc_vrf',
     'suppress_arp',
+    'suppress_arp_disable',
 ]
 PARAM_TO_DEFAULT_KEYMAP = {
     'multicast_group': '',
@@ -111,7 +118,8 @@ PARAM_TO_COMMAND_KEYMAP = {
     'ingress_replication': 'ingress-replication protocol',
     'multicast_group': 'mcast-group',
     'peer_list': 'peer-ip',
-    'suppress_arp': 'suppress-arp'
+    'suppress_arp': 'suppress-arp',
+    'suppress_arp_disable': 'suppress-arp disable',
 }
 
 
@@ -213,11 +221,12 @@ def state_present(module, existing, proposed, candidate):
             evalue = existing_commands.get(key)
             dvalue = PARAM_TO_DEFAULT_KEYMAP.get('ingress_replication', 'default')
             if value != dvalue:
-                if evalue != dvalue:
+                if evalue and evalue != dvalue:
                     commands.append('no {0} {1}'.format(key, evalue))
                 commands.append('{0} {1}'.format(key, value))
             else:
-                commands.append('no {0} {1}'.format(key, evalue))
+                if evalue:
+                    commands.append('no {0} {1}'.format(key, evalue))
 
         elif value is True:
             commands.append(key)
@@ -286,26 +295,28 @@ def main():
         multicast_group=dict(required=False, type='str'),
         peer_list=dict(required=False, type='list'),
         suppress_arp=dict(required=False, type='bool'),
+        suppress_arp_disable=dict(required=False, type='bool'),
         ingress_replication=dict(required=False, type='str', choices=['bgp', 'static', 'default']),
         state=dict(choices=['present', 'absent'], default='present', required=False),
     )
 
     argument_spec.update(nxos_argument_spec)
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+    mutually_exclusive = [('suppress_arp', 'suppress_arp_disable'),
+                          ('assoc_vrf', 'multicast_group'),
+                          ('assoc_vrf', 'suppress_arp'),
+                          ('assoc_vrf', 'suppress_arp_disable'),
+                          ('assoc_vrf', 'ingress_replication')]
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        mutually_exclusive=mutually_exclusive,
+        supports_check_mode=True,
+    )
 
     warnings = list()
     check_args(module, warnings)
     result = {'changed': False, 'commands': [], 'warnings': warnings}
 
-    if module.params['assoc_vrf']:
-        mutually_exclusive_params = ['multicast_group',
-                                     'suppress_arp',
-                                     'ingress_replication']
-        for param in mutually_exclusive_params:
-            if module.params[param]:
-                module.fail_json(msg='assoc_vrf cannot be used with '
-                                     '{0} param'.format(param))
     if module.params['peer_list']:
         if module.params['peer_list'][0] != 'default' and module.params['ingress_replication'] != 'static':
             module.fail_json(msg='ingress_replication=static is required '

@@ -1,6 +1,6 @@
 ---
 # tasks file for test_s3
-# ============================================================
+
 - name: set up aws connection info
   set_fact:
     aws_connection_info: &aws_connection_info
@@ -9,333 +9,495 @@
       security_token: "{{ security_token }}"
       region: "{{ aws_region }}"
   no_log: yes
-# ============================================================
-- name: test create bucket
-  aws_s3:
-    bucket: "{{ bucket_name }}"
-    mode: create
-    <<: *aws_connection_info
-  register: result
-- name: assert changed is True
-  assert:
-    that:
-      - result.changed == True
-# ============================================================
-- name: trying to create a bucket name that already exists
-  aws_s3:
-    bucket: "{{ bucket_name }}"
-    mode: create
-    <<: *aws_connection_info
-  register: result
-- name: assert changed is False since the bucket already exists
-  assert:
-    that:
-      - result.changed == False
-# ============================================================
-- name: create temporary file object to put in a bucket
-  tempfile:
-  register: tmp1
-- name: make random contents
-  set_fact:
-      content: "{{ lookup('password', '/dev/null chars=ascii_letters,digits,hexdigits,punctuation') }}"
 
-- name: give temporary file data
-  copy:
-    content: "{{ content }}"
-    dest: "{{ tmp1.path }}"
-- name: get the stat of the file
-  stat:
-    path: "{{ tmp1.path }}"
-    get_checksum: yes
-  register: file1stat
-# ============================================================
-- name: test putting an object in the bucket
-  aws_s3:
-    bucket: "{{ bucket_name }}"
-    mode: put
-    src: "{{ tmp1.path }}"
-    object: delete.txt
-    <<: *aws_connection_info
-  retries: 3
-  delay: 3
-  register: result
-- name: assert object exists
-  assert:
-    that:
-      - result.changed == True
-      - result.msg == "PUT operation complete"
-# ============================================================
-- name: check that roles file lookups work as expected
-  aws_s3:
-    bucket: "{{ bucket_name }}"
-    mode: put
-    src: hello.txt
-    object: hello.txt
-    <<: *aws_connection_info
-  retries: 3
-  delay: 3
-  register: result
-- name: assert object exists
-  assert:
-    that:
-      - result.changed == True
-      - result.msg == "PUT operation complete"
-- name: remove hello.txt (deletion tests are later)
-  aws_s3:
-    bucket: "{{ bucket_name }}"
-    mode: delobj
-    object: hello.txt
-    <<: *aws_connection_info
-  retries: 3
-  delay: 3
-  register: result
-# ============================================================
-- name: create a second temp file to download the object from the bucket
-  tempfile:
-  register: tmp2
-- name: test get object
-  aws_s3:
-    bucket: "{{ bucket_name }}"
-    mode: get
-    dest: "{{ tmp2.path }}"
-    object: delete.txt
-    <<: *aws_connection_info
-  retries: 3
-  delay: 3
-  register: result
-  until: "result.msg == 'GET operation complete'"
-- name: get the stat of the file so we can compare the checksums
-  stat:
-    path: "{{ tmp2.path }}"
-    get_checksum: yes
-  register: file2stat
-- name: assert checksums are the same
-  assert:
-    that:
-      - file1stat.stat.checksum == file2stat.stat.checksum
-# ============================================================
-- name: test geturl of the object
-  aws_s3:
-    bucket: "{{ bucket_name }}"
-    mode: geturl
-    object: delete.txt
-    <<: *aws_connection_info
-  retries: 3
-  delay: 3
-  register: result
-  until: result.changed
-- name: assert we have the object's url
-  assert:
-    that:
-      - "'Download url:' in result.msg"
-      - result.changed == True
-# ============================================================
-- name: test getstr of the object
-  aws_s3:
-    bucket: "{{ bucket_name }}"
-    mode: getstr
-    object: delete.txt
-    <<: *aws_connection_info
-  retries: 3
-  delay: 3
-  register: result
-- name: assert that we have the object's contents
-  assert:
-    that:
-      - result.msg == "GET operation complete"
-      - result.contents == content
-# ============================================================
-- name: test list to get all objects in the bucket
-  aws_s3:
-    bucket: "{{ bucket_name }}"
-    mode: list
-    <<: *aws_connection_info
-  retries: 3
-  delay: 3
-  register: result
-- name: assert that the keys are correct
-  assert:
-    that:
-      - "'delete.txt' in result.s3_keys"
-      - result.msg == "LIST operation complete"
-# ============================================================
-- name: test delobj to just delete an object in the bucket
-  aws_s3:
-    bucket: "{{ bucket_name }}"
-    mode: delobj
-    object: delete.txt
-    <<: *aws_connection_info
-  retries: 3
-  delay: 3
-  register: result
-- name: assert that delete.txt is no longer an object in the bucket deleteme
-  assert:
-    that:
-      - "'Object deleted from bucket' in result.msg"
-      - result.changed == True
-- name: assert that delete.txt is no longer an object in the bucket deleteme
-  assert:
-    that:
-      - "'Object deleted from bucket' in result.msg"
-      - result.changed == True
-# ============================================================
-- name: test creation of empty path
-  aws_s3:
-    bucket: "{{ bucket_name }}"
-    mode: create
-    object: foo/bar/baz/
-    <<: *aws_connection_info
-  retries: 3
-  delay: 3
-  register: result
-- name: assert that empty path is created
-  assert:
-    that:
-      - "'Virtual directory foo/bar/baz/ created' in result.msg"
-      - result.changed == True
-- name: test deletion of empty path
-  aws_s3:
-    bucket: "{{ bucket_name }}"
-    mode: delobj
-    object: foo/bar/baz/
-    <<: *aws_connection_info
-  retries: 3
-  delay: 3
-# ============================================================
-- name: test delete bucket
-  aws_s3:
-    bucket: "{{ bucket_name }}"
-    mode: delete
-    <<: *aws_connection_info
-  register: result
-  retries: 3
-  delay: 3
-  until: result.changed
-- name: assert that changed is True
-  assert:
-    that:
-      - result.changed == True
-# ============================================================
-- name: delete temporary file 1
-  file:
-    state: absent
-    path: "{{ tmp1.path }}"
-- name: delete temporary file 2
-  file:
-    state: absent
-    path: "{{ tmp2.path }}"
-# ============================================================
-- name: test create a bucket with a dot in the name
-  aws_s3:
-    bucket: "{{ bucket_name + '.bucket' }}"
-    mode: create
-    <<: *aws_connection_info
-  register: result
-- name: assert that changed is True
-  assert:
-    that:
-      - result.changed == True
-# ============================================================
-- name: test delete a bucket with a dot in the name
-  aws_s3:
-    bucket: "{{ bucket_name + '.bucket' }}"
-    mode: delete
-    <<: *aws_connection_info
-  register: result
-- name: assert that changed is True
-  assert:
-    that:
-      - result.changed == True
-# ============================================================
-- name: test delete a nonexistent bucket
-  aws_s3:
-    bucket: "{{ bucket_name + '.bucket' }}"
-    mode: delete
-    <<: *aws_connection_info
-  register: result
-- name: assert that changed is False
-  assert:
-    that:
-      - result.changed == False
-# ============================================================
-- name: create a tempfile for the path
-  tempfile:
-  register: tmp1
+- block:
+    - name: test create bucket without permissions
+      aws_s3:
+        bucket: "{{ bucket_name }}"
+        mode: create
+      register: result
+      ignore_errors: yes
 
-- name: make tempfile 4 GB for OSX
-  command:
-    _raw_params: "dd if=/dev/zero of={{ tmp1.path }} bs=1m count=4096"
-  when: ansible_distribution == 'MacOSX'
+    - name: assert nice message returned
+      assert:
+        that:
+          - result is failed
+          - "result.msg != 'MODULE FAILURE'"
 
-- name: make tempfile 4 GB for linux
-  command:
-    _raw_params: "dd if=/dev/zero of={{ tmp1.path }} bs=1M count=4096"
-  when: ansible_distribution == 'Linux'
-
-- name: test multipart download - platform specific
-  block:
-    - name: make a bucket to upload the file
+    - name: test create bucket
       aws_s3:
         bucket: "{{ bucket_name }}"
         mode: create
         <<: *aws_connection_info
+      register: result
+    - name: assert changed is True
+      assert:
+        that:
+          - result.changed == True
 
-    - name: upload the file to the bucket
+    - name: trying to create a bucket name that already exists
+      aws_s3:
+        bucket: "{{ bucket_name }}"
+        mode: create
+        <<: *aws_connection_info
+      register: result
+    - name: assert changed is False since the bucket already exists
+      assert:
+        that:
+          - result.changed == False
+
+    - name: create temporary file object to put in a bucket
+      tempfile:
+      register: tmp1
+    - name: make random contents
+      set_fact:
+          content: "{{ lookup('password', '/dev/null chars=ascii_letters,digits,hexdigits,punctuation') }}"
+
+    - name: give temporary file data
+      copy:
+        content: "{{ content }}"
+        dest: "{{ tmp1.path }}"
+    - name: get the stat of the file
+      stat:
+        path: "{{ tmp1.path }}"
+        get_checksum: yes
+      register: file1stat
+
+    - name: test putting an object in the bucket
       aws_s3:
         bucket: "{{ bucket_name }}"
         mode: put
         src: "{{ tmp1.path }}"
-        object: multipart.txt
+        object: delete.txt
         <<: *aws_connection_info
+      retries: 3
+      delay: 3
+      register: result
+    - name: assert object exists
+      assert:
+        that:
+          - result.changed == True
+          - result.msg == "PUT operation complete"
 
-    - name: download file once
+    - name: test using aws_s3 with async
+      aws_s3:
+        bucket: "{{ bucket_name }}"
+        mode: put
+        src: "{{ tmp1.path }}"
+        object: delete.txt
+        <<: *aws_connection_info
+      register: test_async
+      async: 30
+      poll: 0
+    - name: ensure it completed
+      async_status:
+        jid: "{{ test_async.ansible_job_id }}"
+      register: status
+      until: status is finished
+      retries: 10
+
+    - name: check that roles file lookups work as expected
+      aws_s3:
+        bucket: "{{ bucket_name }}"
+        mode: put
+        src: hello.txt
+        object: hello.txt
+        <<: *aws_connection_info
+      retries: 3
+      delay: 3
+      register: result
+    - name: assert object exists
+      assert:
+        that:
+          - result.changed == True
+          - result.msg == "PUT operation complete"
+    - name: remove hello.txt (deletion tests are later)
+      aws_s3:
+        bucket: "{{ bucket_name }}"
+        mode: delobj
+        object: hello.txt
+        <<: *aws_connection_info
+      retries: 3
+      delay: 3
+      register: result
+
+    - name: create a second temp file to download the object from the bucket
+      tempfile:
+      register: tmp2
+
+    - name: test get object
       aws_s3:
         bucket: "{{ bucket_name }}"
         mode: get
-        dest: /tmp/multipart_download.txt
-        object: multipart.txt
-        overwrite: different
+        dest: "{{ tmp2.path }}"
+        object: delete.txt
+        <<: *aws_connection_info
+      retries: 3
+      delay: 3
+      register: result
+      until: "result.msg == 'GET operation complete'"
+    - name: get the stat of the file so we can compare the checksums
+      stat:
+        path: "{{ tmp2.path }}"
+        get_checksum: yes
+      register: file2stat
+    - name: assert checksums are the same
+      assert:
+        that:
+          - file1stat.stat.checksum == file2stat.stat.checksum
+
+    - name: test geturl of the object
+      aws_s3:
+        bucket: "{{ bucket_name }}"
+        mode: geturl
+        object: delete.txt
+        <<: *aws_connection_info
+      retries: 3
+      delay: 3
+      register: result
+      until: result.changed
+    - name: assert we have the object's url
+      assert:
+        that:
+          - "'Download url:' in result.msg"
+          - result.changed == True
+
+    - name: test getstr of the object
+      aws_s3:
+        bucket: "{{ bucket_name }}"
+        mode: getstr
+        object: delete.txt
+        <<: *aws_connection_info
+      retries: 3
+      delay: 3
+      register: result
+    - name: assert that we have the object's contents
+      assert:
+        that:
+          - result.msg == "GET operation complete"
+          - result.contents == content
+
+    - name: test list to get all objects in the bucket
+      aws_s3:
+        bucket: "{{ bucket_name }}"
+        mode: list
+        <<: *aws_connection_info
+      retries: 3
+      delay: 3
+      register: result
+    - name: assert that the keys are correct
+      assert:
+        that:
+          - "'delete.txt' in result.s3_keys"
+          - result.msg == "LIST operation complete"
+
+    - name: test delobj to just delete an object in the bucket
+      aws_s3:
+        bucket: "{{ bucket_name }}"
+        mode: delobj
+        object: delete.txt
+        <<: *aws_connection_info
+      retries: 3
+      delay: 3
+      register: result
+    - name: assert that delete.txt is no longer an object in the bucket deleteme
+      assert:
+        that:
+          - "'Object deleted from bucket' in result.msg"
+          - result.changed == True
+    - name: assert that delete.txt is no longer an object in the bucket deleteme
+      assert:
+        that:
+          - "'Object deleted from bucket' in result.msg"
+          - result.changed == True
+    - name: clean up temp file
+      file:
+        path: "{{ tmp2.path }}"
+        state: absent
+
+    - name: test putting an encrypted object in the bucket
+      aws_s3:
+        bucket: "{{ bucket_name }}"
+        mode: put
+        src: "{{ tmp1.path }}"
+        encrypt: yes
+        object: delete_encrypt.txt
+        <<: *aws_connection_info
+      retries: 3
+      delay: 3
+      register: result
+    - name: assert object exists
+      assert:
+        that:
+          - result.changed == True
+          - result.msg == "PUT operation complete"
+
+    - name: create a second temp file to download the object from the bucket
+      tempfile:
+      register: tmp2
+    - name: test get encrypted object
+      aws_s3:
+        bucket: "{{ bucket_name }}"
+        mode: get
+        dest: "{{ tmp2.path }}"
+        object: delete_encrypt.txt
+        <<: *aws_connection_info
+      retries: 3
+      delay: 3
+      register: result
+      until: "result.msg == 'GET operation complete'"
+    - name: get the stat of the file so we can compare the checksums
+      stat:
+        path: "{{ tmp2.path }}"
+        get_checksum: yes
+      register: file2stat
+    - name: assert checksums are the same
+      assert:
+        that:
+          - file1stat.stat.checksum == file2stat.stat.checksum
+    - name: delete encrypted file
+      aws_s3:
+        bucket: "{{ bucket_name }}"
+        mode: delobj
+        object: delete_encrypt.txt
+        <<: *aws_connection_info
+      retries: 3
+      delay: 3
+    - name: clean up temp file
+      file:
+        path: "{{ tmp2.path }}"
+        state: absent
+
+    - name: test putting an aws:kms encrypted object in the bucket
+      aws_s3:
+        bucket: "{{ bucket_name }}"
+        mode: put
+        src: "{{ tmp1.path }}"
+        encrypt: yes
+        encryption_mode: aws:kms
+        object: delete_encrypt_kms.txt
+        <<: *aws_connection_info
+      retries: 3
+      delay: 3
+      register: result
+    - name: assert object exists
+      assert:
+        that:
+          - result.changed == True
+          - result.msg == "PUT operation complete"
+
+    - name: create a second temp file to download the object from the bucket
+      tempfile:
+      register: tmp2
+    - name: test get KMS encrypted object
+      aws_s3:
+        bucket: "{{ bucket_name }}"
+        mode: get
+        dest: "{{ tmp2.path }}"
+        object: delete_encrypt_kms.txt
+        <<: *aws_connection_info
+      retries: 3
+      delay: 3
+      register: result
+      until: "result.msg == 'GET operation complete'"
+    - name: get the stat of the file so we can compare the checksums
+      stat:
+        path: "{{ tmp2.path }}"
+        get_checksum: yes
+      register: file2stat
+    - name: assert checksums are the same
+      assert:
+        that:
+          - file1stat.stat.checksum == file2stat.stat.checksum
+      # FIXME - could use a test that checks uploaded file is *actually* aws:kms encrypted
+    - name: test get KMS encrypted object using v4 signature
+      aws_s3:
+        bucket: "{{ bucket_name }}"
+        mode: get
+        dest: "{{ tmp2.path }}"
+        object: delete_encrypt_kms.txt
         <<: *aws_connection_info
       retries: 3
       delay: 3
       until: "result.msg == 'GET operation complete'"
-      register: result
-
-    - name: assert the file was downloaded once
-      assert:
-        that:
-          - result.changed
-
-    - name: download file again
+    - name: delete KMS encrypted file
       aws_s3:
         bucket: "{{ bucket_name }}"
-        mode: get
-        dest: /tmp/multipart_download.txt
-        object: multipart.txt
-        overwrite: different
+        mode: delobj
+        object: delete_encrypt_kms.txt
         <<: *aws_connection_info
-      register: result
+      retries: 3
+      delay: 3
+    - name: clean up temp file
+      file:
+        path: "{{ tmp2.path }}"
+        state: absent
 
-    - name: assert the file was not redownloaded
+    # FIXME: could use a test that checks non standard KMS key
+    #        but that would require ability to create and remove such keys.
+    #        PRs exist for that, but propose deferring until after merge.
+
+    - name: test creation of empty path
+      aws_s3:
+        bucket: "{{ bucket_name }}"
+        mode: create
+        object: foo/bar/baz/
+        <<: *aws_connection_info
+      retries: 3
+      delay: 3
+      register: result
+    - name: assert that empty path is created
       assert:
         that:
-          - not result.changed
+          - "'Virtual directory foo/bar/baz/ created' in result.msg"
+          - result.changed == True
+    - name: test deletion of empty path
+      aws_s3:
+        bucket: "{{ bucket_name }}"
+        mode: delobj
+        object: foo/bar/baz/
+        <<: *aws_connection_info
+      retries: 3
+      delay: 3
 
-    - name: delete file used for upload
+    - name: test delete bucket
+      aws_s3:
+        bucket: "{{ bucket_name }}"
+        mode: delete
+        <<: *aws_connection_info
+      register: result
+      retries: 3
+      delay: 3
+      until: result.changed
+    - name: assert that changed is True
+      assert:
+        that:
+          - result.changed == True
+
+    - name: test create a bucket with a dot in the name
+      aws_s3:
+        bucket: "{{ bucket_name + '.bucket' }}"
+        mode: create
+        <<: *aws_connection_info
+      register: result
+    - name: assert that changed is True
+      assert:
+        that:
+          - result.changed == True
+
+    - name: test delete a bucket with a dot in the name
+      aws_s3:
+        bucket: "{{ bucket_name + '.bucket' }}"
+        mode: delete
+        <<: *aws_connection_info
+      register: result
+    - name: assert that changed is True
+      assert:
+        that:
+          - result.changed == True
+
+    - name: test delete a nonexistent bucket
+      aws_s3:
+        bucket: "{{ bucket_name + '.bucket' }}"
+        mode: delete
+        <<: *aws_connection_info
+      register: result
+    - name: assert that changed is False
+      assert:
+        that:
+          - result.changed == False
+
+    - name: make tempfile 4 GB for OSX
+      command:
+        _raw_params: "dd if=/dev/zero of={{ tmp1.path }} bs=1m count=4096"
+      when: ansible_distribution == 'MacOSX'
+
+    - name: make tempfile 4 GB for linux
+      command:
+        _raw_params: "dd if=/dev/zero of={{ tmp1.path }} bs=1M count=4096"
+      when: ansible_system == 'Linux'
+
+    - name: test multipart download - platform specific
+      block:
+        - name: make a bucket to upload the file
+          aws_s3:
+            bucket: "{{ bucket_name }}"
+            mode: create
+            <<: *aws_connection_info
+
+        - name: upload the file to the bucket
+          aws_s3:
+            bucket: "{{ bucket_name }}"
+            mode: put
+            src: "{{ tmp1.path }}"
+            object: multipart.txt
+            <<: *aws_connection_info
+
+        - name: download file once
+          aws_s3:
+            bucket: "{{ bucket_name }}"
+            mode: get
+            dest: "{{ tmp2.path }}"
+            object: multipart.txt
+            overwrite: different
+            <<: *aws_connection_info
+          retries: 3
+          delay: 3
+          until: "result.msg == 'GET operation complete'"
+          register: result
+
+        - name: assert the file was downloaded once
+          assert:
+            that:
+              - result.changed
+
+        - name: download file again
+          aws_s3:
+            bucket: "{{ bucket_name }}"
+            mode: get
+            dest: "{{ tmp2.path }}"
+            object: multipart.txt
+            overwrite: different
+            <<: *aws_connection_info
+          register: result
+
+        - name: assert the file was not redownloaded
+          assert:
+            that:
+              - not result.changed
+      when: ansible_system == 'Linux' or ansible_distribution == 'MacOSX'
+
+  always:
+    ###### TEARDOWN STARTS HERE ######
+
+    - name: remove uploaded files
+      aws_s3:
+        bucket: "{{ bucket_name }}"
+        mode: delobj
+        object: "{{ item }}"
+        <<: *aws_connection_info
+      with_items:
+        - hello.txt
+        - delete.txt
+        - delete_encrypt.txt
+        - delete_encrypt_kms.txt
+      ignore_errors: yes
+
+    - name: delete temporary file 1
       file:
         state: absent
         path: "{{ tmp1.path }}"
+      ignore_errors: yes
 
-    - name: delete downloaded file
+    - name: delete temporary file 2
       file:
         state: absent
-        path: /tmp/multipart_download.txt
+        path: "{{ tmp2.path }}"
+      ignore_errors: yes
 
     - name: delete the bucket
       aws_s3:
         bucket: "{{ bucket_name }}"
         mode: delete
         <<: *aws_connection_info
-
-  when: ansible_distribution in ['MacOSX', 'Linux']
-# ============================================================
+      ignore_errors: yes

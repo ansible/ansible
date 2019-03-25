@@ -19,7 +19,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: avi_gslbservice_patch_member
-author: Gaurav Rastogi (grastogi@avinetworks.com)
+author: Gaurav Rastogi (@grastogi23) <grastogi@avinetworks.com>
 
 short_description: Avi API Module
 description:
@@ -114,10 +114,10 @@ HAS_AVI = True
 try:
     from ansible.module_utils.network.avi.avi import (
         avi_common_argument_spec, HAS_AVI)
-    from avi.sdk.avi_api import ApiSession
+    from avi.sdk.avi_api import ApiSession, AviCredentials
     from avi.sdk.utils.ansible_utils import (
         avi_obj_cmp, cleanup_absent_fields, ansible_return,
-        AviCheckModeResponse, AviCredentials)
+        AviCheckModeResponse)
 except ImportError:
     HAS_AVI = False
 

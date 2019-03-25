@@ -219,7 +219,7 @@ output:
 from ansible.module_utils._text import to_native
 from ansible.module_utils.aws.batch import AWSConnection, cc, set_api_params
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, HAS_BOTO3
+from ansible.module_utils.ec2 import ec2_argument_spec, HAS_BOTO3
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 
 import traceback

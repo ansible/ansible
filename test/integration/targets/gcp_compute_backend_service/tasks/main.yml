@@ -15,58 +15,50 @@
 # Pre-test setup
 - name: create a instance group
   gcp_compute_instance_group:
-      name: 'instancegroup-backendservice'
-      zone: 'us-central1-a'
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
-      state: present
+    name: instancegroup-backendservice
+    zone: us-central1-a
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: instancegroup
 - name: create a http health check
   gcp_compute_http_health_check:
-      name: 'httphealthcheck-backendservice'
-      healthy_threshold: 10
-      port: 8080
-      timeout_sec: 2
-      unhealthy_threshold: 5
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
-      state: present
+    name: httphealthcheck-backendservice
+    healthy_threshold: 10
+    port: 8080
+    timeout_sec: 2
+    unhealthy_threshold: 5
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: healthcheck
 - name: delete a backend service
   gcp_compute_backend_service:
-      name: "{{ resource_name }}"
-      backends:
-        - group: "{{ instancegroup }}"
-      health_checks:
-        - "{{ healthcheck.selfLink }}"
-      enable_cdn: true
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
-      state: absent
+    name: "{{ resource_name }}"
+    backends:
+    - group: "{{ instancegroup }}"
+    health_checks:
+    - "{{ healthcheck.selfLink }}"
+    enable_cdn: 'true'
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
 #----------------------------------------------------------
 - name: create a backend service
   gcp_compute_backend_service:
-      name: "{{ resource_name }}"
-      backends:
-        - group: "{{ instancegroup }}"
-      health_checks:
-        - "{{ healthcheck.selfLink }}"
-      enable_cdn: true
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
-      state: present
+    name: "{{ resource_name }}"
+    backends:
+    - group: "{{ instancegroup }}"
+    health_checks:
+    - "{{ healthcheck.selfLink }}"
+    enable_cdn: 'true'
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: result
 - name: assert changed is true
   assert:
@@ -74,28 +66,32 @@
       - result.changed == true
       - "result.kind == 'compute#backendService'"
 - name: verify that backend_service was created
-  shell: |
-    gcloud compute backend-services describe  --project="{{ gcp_project}}"  --global  "{{ resource_name }}"
-  register: results
-- name: verify that command succeeded
-  assert:
-    that:
-      - results.rc == 0
-# ----------------------------------------------------------------------------
-- name: create a backend service that already exists
-  gcp_compute_backend_service:
-      name: "{{ resource_name }}"
-      backends:
-        - group: "{{ instancegroup }}"
-      health_checks:
-        - "{{ healthcheck.selfLink }}"
-      enable_cdn: true
+  gcp_compute_backend_service_facts:
+      filters:
+         - name = {{ resource_name }}
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
       scopes:
         - https://www.googleapis.com/auth/compute
-      state: present
+  register: results
+- name: verify that command succeeded
+  assert:
+    that:
+      - results['items'] | length == 1
+# ----------------------------------------------------------------------------
+- name: create a backend service that already exists
+  gcp_compute_backend_service:
+    name: "{{ resource_name }}"
+    backends:
+    - group: "{{ instancegroup }}"
+    health_checks:
+    - "{{ healthcheck.selfLink }}"
+    enable_cdn: 'true'
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: result
 - name: assert changed is false
   assert:
@@ -105,18 +101,16 @@
 #----------------------------------------------------------
 - name: delete a backend service
   gcp_compute_backend_service:
-      name: "{{ resource_name }}"
-      backends:
-        - group: "{{ instancegroup }}"
-      health_checks:
-        - "{{ healthcheck.selfLink }}"
-      enable_cdn: true
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
-      state: absent
+    name: "{{ resource_name }}"
+    backends:
+    - group: "{{ instancegroup }}"
+    health_checks:
+    - "{{ healthcheck.selfLink }}"
+    enable_cdn: 'true'
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
   register: result
 - name: assert changed is true
   assert:
@@ -124,30 +118,32 @@
       - result.changed == true
       - result.has_key('kind') == False
 - name: verify that backend_service was deleted
-  shell: |
-    gcloud compute backend-services describe  --project="{{ gcp_project}}"  --global  "{{ resource_name }}"
-  register: results
-  failed_when: results.rc == 0
-- name: verify that command succeeded
-  assert:
-    that:
-      - results.rc == 1
-      - "\"'projects/{{ gcp_project }}/global/backendServices/{{ resource_name }}' was not found\" in results.stderr"
-# ----------------------------------------------------------------------------
-- name: delete a backend service that does not exist
-  gcp_compute_backend_service:
-      name: "{{ resource_name }}"
-      backends:
-        - group: "{{ instancegroup }}"
-      health_checks:
-        - "{{ healthcheck.selfLink }}"
-      enable_cdn: true
+  gcp_compute_backend_service_facts:
+      filters:
+         - name = {{ resource_name }}
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
       scopes:
         - https://www.googleapis.com/auth/compute
-      state: absent
+  register: results
+- name: verify that command succeeded
+  assert:
+    that:
+      - results['items'] | length == 0
+# ----------------------------------------------------------------------------
+- name: delete a backend service that does not exist
+  gcp_compute_backend_service:
+    name: "{{ resource_name }}"
+    backends:
+    - group: "{{ instancegroup }}"
+    health_checks:
+    - "{{ healthcheck.selfLink }}"
+    enable_cdn: 'true'
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
   register: result
 - name: assert changed is false
   assert:
@@ -156,28 +152,27 @@
       - result.has_key('kind') == False
 #---------------------------------------------------------
 # Post-test teardown
+# If errors happen, don't crash the playbook!
 - name: delete a http health check
   gcp_compute_http_health_check:
-      name: 'httphealthcheck-backendservice'
-      healthy_threshold: 10
-      port: 8080
-      timeout_sec: 2
-      unhealthy_threshold: 5
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
-      state: absent
+    name: httphealthcheck-backendservice
+    healthy_threshold: 10
+    port: 8080
+    timeout_sec: 2
+    unhealthy_threshold: 5
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
   register: healthcheck
+  ignore_errors: true
 - name: delete a instance group
   gcp_compute_instance_group:
-      name: 'instancegroup-backendservice'
-      zone: 'us-central1-a'
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
-      state: absent
+    name: instancegroup-backendservice
+    zone: us-central1-a
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
   register: instancegroup
+  ignore_errors: true

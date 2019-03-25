@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# (c) 2018, NetApp, Inc
+# (c) 2018-2019, NetApp, Inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -9,21 +9,20 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
 
 module: na_ontap_aggregate
-
-short_description: Manage NetApp ONTAP aggregates.
+short_description: NetApp ONTAP manage aggregates.
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
-author: Sumit Kumar (sumit4@netapp.com), Suhas Bangalore Shekar (bsuhas@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 
 description:
-- Create or destroy aggregates on NetApp cDOT.
+- Create, delete, or manage aggregates on ONTAP.
 
 options:
 
@@ -43,13 +42,21 @@ options:
     description:
     - The name of the aggregate to manage.
 
-  rename:
+  from_name:
     description:
-    - The name of the aggregate that replaces the current name.
+    - Name of the aggregate to be renamed.
+    version_added: '2.7'
 
   nodes:
     description:
-    - List of node for the aggregate
+    - Node(s) for the aggregate to be created on.  If no node specified, mgmt lif home will be used.
+    - If multiple nodes specified an aggr stripe will be made.
+
+  disk_type:
+    description:
+    - Type of disk to use to build aggregate
+    choices: ['ATA', 'BSAS', 'FCAL', 'FSAS', 'LUN', 'MSATA', 'SAS', 'SSD', 'VMDISK']
+    version_added: '2.7'
 
   disk_count:
     description:
@@ -59,6 +66,22 @@ options:
     - Either C(disk-count) or C(disks) must be supplied. Range [0..2^31-1].
     - Required when C(state=present).
 
+  disk_size:
+    description:
+    - Disk size to use in 4K block size.  Disks within 10% of specified size will be used.
+    version_added: '2.7'
+
+  raid_size:
+    description:
+    - Sets the maximum number of drives per raid group.
+    version_added: '2.7'
+
+  raid_type:
+    description:
+    - Specifies the type of RAID groups to use in the new aggregate.
+    choices: ['raid4', 'raid_dp', 'raid_tec']
+    version_added: '2.7'
+
   unmount_volumes:
     type: bool
     description:
@@ -66,15 +89,60 @@ options:
     - before the offline operation is executed.
     - By default, the system will reject any attempt to offline an aggregate that hosts one or more online volumes.
 
+  disks:
+    type: list
+    description:
+    - Specific list of disks to use for the new aggregate.
+    - To create a "mirrored" aggregate with a specific list of disks, both 'disks' and 'mirror_disks' options must be supplied.
+      Additionally, the same number of disks must be supplied in both lists.
+    version_added: '2.8'
+
+  is_mirrored:
+    type: bool
+    description:
+    - Specifies that the new aggregate be mirrored (have two plexes).
+    - If set to true, then the indicated disks will be split across the two plexes. By default, the new aggregate will not be mirrored.
+    - This option cannot be used when a specific list of disks is supplied with either the 'disks' or 'mirror_disks' options.
+    version_added: '2.8'
+
+  mirror_disks:
+    type: list
+    description:
+    - List of mirror disks to use. It must contain the same number of disks specified in 'disks'.
+    version_added: '2.8'
+
+  spare_pool:
+    description:
+    - Specifies the spare pool from which to select spare disks to use in creation of a new aggregate.
+    choices: ['Pool0', 'Pool1']
+    version_added: '2.8'
+
+  wait_for_online:
+    description:
+    - Set this parameter to 'true' for synchronous execution during create (wait until aggregate status is online)
+    - Set this parameter to 'false' for asynchronous execution
+    - For asynchronous, execution exits as soon as the request is sent, without checking aggregate status
+    type: bool
+    default: false
+    version_added: '2.8'
+
+  time_out:
+    description:
+      - time to wait for aggregate creation in seconds
+      - default is set to 100 seconds
+    default: 100
+    version_added: "2.8"
 '''
 
 EXAMPLES = """
-- name: Create Aggregates
+- name: Create Aggregates and wait 5 minutes until aggregate is online
   na_ontap_aggregate:
     state: present
     service_state: online
     name: ansibleAggr
     disk_count: 1
+    wait_for_online: True
+    time_out: 300
     hostname: "{{ netapp_hostname }}"
     username: "{{ netapp_username }}"
     password: "{{ netapp_password }}"
@@ -94,8 +162,8 @@ EXAMPLES = """
   na_ontap_aggregate:
     state: present
     service_state: online
-    name: ansibleAggr
-    rename: ansibleAggr2
+    from_name: ansibleAggr
+    name: ansibleAggr2
     disk_count: 1
     hostname: "{{ netapp_hostname }}"
     username: "{{ netapp_username }}"
@@ -115,12 +183,13 @@ EXAMPLES = """
 RETURN = """
 
 """
+import time
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 import ansible.module_utils.netapp as netapp_utils
-
+from ansible.module_utils.netapp_module import NetAppModule
 
 HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 
@@ -131,226 +200,272 @@ class NetAppOntapAggregate(object):
     def __init__(self):
         self.argument_spec = netapp_utils.na_ontap_host_argument_spec()
         self.argument_spec.update(dict(
-            state=dict(required=False, choices=[
-                       'present', 'absent'], default='present'),
-            service_state=dict(required=False, choices=['online', 'offline']),
             name=dict(required=True, type='str'),
-            rename=dict(required=False, type='str'),
+            disks=dict(required=False, type='list'),
             disk_count=dict(required=False, type='int', default=None),
+            disk_size=dict(required=False, type='int'),
+            disk_type=dict(required=False, choices=['ATA', 'BSAS', 'FCAL', 'FSAS', 'LUN', 'MSATA', 'SAS', 'SSD', 'VMDISK']),
+            from_name=dict(required=False, type='str'),
+            mirror_disks=dict(required=False, type='list'),
             nodes=dict(required=False, type='list'),
+            is_mirrored=dict(required=False, type='bool'),
+            raid_size=dict(required=False, type='int'),
+            raid_type=dict(required=False, choices=['raid4', 'raid_dp', 'raid_tec']),
+            service_state=dict(required=False, choices=['online', 'offline']),
+            spare_pool=dict(required=False, choices=['Pool0', 'Pool1']),
+            state=dict(required=False, choices=['present', 'absent'], default='present'),
             unmount_volumes=dict(required=False, type='bool'),
+            wait_for_online=dict(required=False, type='bool', default=False),
+            time_out=dict(required=False, type='int', default=100)
         ))
 
         self.module = AnsibleModule(
             argument_spec=self.argument_spec,
             required_if=[
-                ('service_state', 'offline', ['unmount_volumes'])
+                ('service_state', 'offline', ['unmount_volumes']),
+            ],
+            mutually_exclusive=[
+                ('is_mirrored', 'disks'),
+                ('is_mirrored', 'mirror_disks'),
+                ('is_mirrored', 'spare_pool'),
+                ('spare_pool', 'disks')
             ],
             supports_check_mode=True
         )
 
-        parameters = self.module.params
-
-        # set up state variables
-        self.state = parameters['state']
-        self.service_state = parameters['service_state']
-        self.name = parameters['name']
-        self.rename = parameters['rename']
-        self.disk_count = parameters['disk_count']
-        self.nodes = parameters['nodes']
-        self.unmount_volumes = parameters['unmount_volumes']
-
+        self.na_helper = NetAppModule()
+        self.parameters = self.na_helper.set_parameters(self.module.params)
+        if self.parameters.get('mirror_disks') is not None and self.parameters.get('disks') is None:
+            self.module.fail_json(mgs="mirror_disks require disks options to be set")
         if HAS_NETAPP_LIB is False:
-            self.module.fail_json(
-                msg="the python NetApp-Lib module is required")
+            self.module.fail_json(msg="the python NetApp-Lib module is required")
         else:
             self.server = netapp_utils.setup_na_ontap_zapi(module=self.module)
 
-    def get_aggr(self):
+    def aggr_get_iter(self, name):
         """
-        Checks if aggregate exists.
-
-        :return:
-            True if aggregate found
-            False if aggregate is not found
-        :rtype: bool
+        Return aggr-get-iter query results
+        :param name: Name of the aggregate
+        :return: NaElement if aggregate found, None otherwise
         """
 
         aggr_get_iter = netapp_utils.zapi.NaElement('aggr-get-iter')
         query_details = netapp_utils.zapi.NaElement.create_node_with_children(
-            'aggr-attributes', **{'aggregate-name': self.name})
-
+            'aggr-attributes', **{'aggregate-name': name})
         query = netapp_utils.zapi.NaElement('query')
         query.add_child_elem(query_details)
         aggr_get_iter.add_child_elem(query)
-
+        result = None
         try:
-            result = self.server.invoke_successfully(aggr_get_iter,
-                                                     enable_tunneling=False)
+            result = self.server.invoke_successfully(aggr_get_iter, enable_tunneling=False)
         except netapp_utils.zapi.NaApiError as error:
             # Error 13040 denotes an aggregate not being found.
             if to_native(error.code) == "13040":
-                return False
+                pass
             else:
-                self.module.fail_json(msg=to_native(
-                    error), exception=traceback.format_exc())
+                self.module.fail_json(msg=to_native(error), exception=traceback.format_exc())
+        return result
 
-        if (result.get_child_by_name('num-records') and
-                int(result.get_child_content('num-records')) >= 1):
-            return True
-        return False
+    def get_aggr(self, name=None):
+        """
+        Fetch details if aggregate exists.
+        :param name: Name of the aggregate to be fetched
+        :return:
+            Dictionary of current details if aggregate found
+            None if aggregate is not found
+        """
+        if name is None:
+            name = self.parameters['name']
+        aggr_get = self.aggr_get_iter(name)
+        if (aggr_get and aggr_get.get_child_by_name('num-records') and
+                int(aggr_get.get_child_content('num-records')) >= 1):
+            current_aggr = dict()
+            attr = aggr_get.get_child_by_name('attributes-list').get_child_by_name('aggr-attributes')
+            current_aggr['service_state'] = attr.get_child_by_name('aggr-raid-attributes').get_child_content('state')
+            return current_aggr
+        return None
 
     def aggregate_online(self):
         """
-        enable aggregate (online).
+        Set state of an offline aggregate to online
+        :return: None
         """
         online_aggr = netapp_utils.zapi.NaElement.create_node_with_children(
-            'aggr-online', **{'aggregate': self.name,
+            'aggr-online', **{'aggregate': self.parameters['name'],
                               'force-online': 'true'})
         try:
             self.server.invoke_successfully(online_aggr,
                                             enable_tunneling=True)
-            return True
         except netapp_utils.zapi.NaApiError as error:
-            if to_native(error.code) == "13060":
-                # Error 13060 denotes aggregate is already online
-                return False
-            else:
-                self.module.fail_json(msg='Error changing the state of aggregate %s to %s: %s' %
-                                      (self.name, self.service_state,
-                                       to_native(error)),
-                                      exception=traceback.format_exc())
+            self.module.fail_json(msg='Error changing the state of aggregate %s to %s: %s' %
+                                  (self.parameters['name'], self.parameters['service_state'], to_native(error)),
+                                  exception=traceback.format_exc())
 
     def aggregate_offline(self):
         """
-        disable aggregate (offline).
+        Set state of an online aggregate to offline
+        :return: None
         """
         offline_aggr = netapp_utils.zapi.NaElement.create_node_with_children(
-            'aggr-offline', **{'aggregate': self.name,
+            'aggr-offline', **{'aggregate': self.parameters['name'],
                                'force-offline': 'false',
-                               'unmount-volumes': str(self.unmount_volumes)})
+                               'unmount-volumes': str(self.parameters['unmount_volumes'])})
         try:
-            self.server.invoke_successfully(offline_aggr,
-                                            enable_tunneling=True)
-            return True
+            self.server.invoke_successfully(offline_aggr, enable_tunneling=True)
         except netapp_utils.zapi.NaApiError as error:
-            if to_native(error.code) == "13042":
-                # Error 13042 denotes aggregate is already offline
-                return False
-            else:
-                self.module.fail_json(msg='Error changing the state of aggregate %s to %s: %s' %
-                                      (self.name, self.service_state,
-                                       to_native(error)),
-                                      exception=traceback.format_exc())
+            self.module.fail_json(msg='Error changing the state of aggregate %s to %s: %s' %
+                                  (self.parameters['name'], self.parameters['service_state'], to_native(error)),
+                                  exception=traceback.format_exc())
 
     def create_aggr(self):
         """
-        create aggregate.
+        Create aggregate
+        :return: None
         """
-        aggr_create = netapp_utils.zapi.NaElement.create_node_with_children(
-            'aggr-create', **{'aggregate': self.name,
-                              'disk-count': str(self.disk_count)})
-        if self.nodes is not None:
+        if not self.parameters.get('disk_count'):
+            self.module.fail_json(msg='Error provisioning aggregate %s: \
+                                             disk_count is required' % self.parameters['name'])
+        options = {'aggregate': self.parameters['name'],
+                   'disk-count': str(self.parameters['disk_count'])
+                   }
+        if self.parameters.get('disk_type'):
+            options['disk-type'] = self.parameters['disk_type']
+        if self.parameters.get('raid_size'):
+            options['raid-size'] = str(self.parameters['raid_size'])
+        if self.parameters.get('raid_type'):
+            options['raid-type'] = self.parameters['raid_type']
+        if self.parameters.get('disk_size'):
+            options['disk-size'] = str(self.parameters['disk_size'])
+        if self.parameters.get('is_mirrored'):
+            options['is-mirrored'] = str(self.parameters['is_mirrored'])
+        if self.parameters.get('spare_pool'):
+            options['spare-pool'] = self.parameters['spare_pool']
+        if self.parameters.get('raid_type'):
+            options['raid-type'] = self.parameters['raid_type']
+        aggr_create = netapp_utils.zapi.NaElement.create_node_with_children('aggr-create', **options)
+        if self.parameters.get('nodes'):
             nodes_obj = netapp_utils.zapi.NaElement('nodes')
             aggr_create.add_child_elem(nodes_obj)
-            for node in self.nodes:
+            for node in self.parameters['nodes']:
                 nodes_obj.add_new_child('node-name', node)
+        if self.parameters.get('disks'):
+            disks_obj = netapp_utils.zapi.NaElement('disk-info')
+            for disk in self.parameters.get('disks'):
+                disks_obj.add_new_child('name', disk)
+            aggr_create.add_child_elem(disks_obj)
+        if self.parameters.get('mirror_disks'):
+            mirror_disks_obj = netapp_utils.zapi.NaElement('disk-info')
+            for disk in self.parameters.get('mirror_disks'):
+                mirror_disks_obj.add_new_child('name', disk)
+            aggr_create.add_child_elem(mirror_disks_obj)
+
         try:
-            self.server.invoke_successfully(aggr_create,
-                                            enable_tunneling=False)
+            self.server.invoke_successfully(aggr_create, enable_tunneling=False)
+            if self.parameters.get('wait_for_online'):
+                # round off time_out
+                retries = (self.parameters['time_out'] + 5) / 10
+                current = self.get_aggr()
+                status = None if current is None else current['service_state']
+                while status != 'online' and retries > 0:
+                    time.sleep(10)
+                    retries = retries - 1
+                    current = self.get_aggr()
+                    status = None if current is None else current['service_state']
         except netapp_utils.zapi.NaApiError as error:
-            self.module.fail_json(msg="Error provisioning aggregate %s: %s" % (self.name, to_native(error)),
+            self.module.fail_json(msg="Error provisioning aggregate %s: %s"
+                                      % (self.parameters['name'], to_native(error)),
                                   exception=traceback.format_exc())
 
     def delete_aggr(self):
         """
-        delete aggregate.
+        Delete aggregate.
+        :return: None
         """
         aggr_destroy = netapp_utils.zapi.NaElement.create_node_with_children(
-            'aggr-destroy', **{'aggregate': self.name})
+            'aggr-destroy', **{'aggregate': self.parameters['name']})
 
         try:
             self.server.invoke_successfully(aggr_destroy,
                                             enable_tunneling=False)
         except netapp_utils.zapi.NaApiError as error:
-            self.module.fail_json(msg="Error removing aggregate %s: %s" % (self.name, to_native(error)),
+            self.module.fail_json(msg="Error removing aggregate %s: %s" % (self.parameters['name'], to_native(error)),
                                   exception=traceback.format_exc())
 
     def rename_aggregate(self):
         """
-        rename aggregate.
+        Rename aggregate.
         """
         aggr_rename = netapp_utils.zapi.NaElement.create_node_with_children(
-            'aggr-rename', **{'aggregate': self.name,
-                              'new-aggregate-name':
-                                  self.rename})
+            'aggr-rename', **{'aggregate': self.parameters['from_name'],
+                              'new-aggregate-name': self.parameters['name']})
 
         try:
-            self.server.invoke_successfully(aggr_rename,
-                                            enable_tunneling=False)
+            self.server.invoke_successfully(aggr_rename, enable_tunneling=False)
         except netapp_utils.zapi.NaApiError as error:
-            self.module.fail_json(msg="Error renaming aggregate %s: %s" % (self.name, to_native(error)),
+            self.module.fail_json(msg="Error renaming aggregate %s: %s"
+                                      % (self.parameters['from_name'], to_native(error)),
                                   exception=traceback.format_exc())
 
-    def apply(self):
-        '''Apply action to aggregate'''
-        changed = False
-        size_changed = False
-        aggregate_exists = self.get_aggr()
-        rename_aggregate = False
+    def modify_aggr(self, modify):
+        """
+        Modify state of the aggregate
+        :param modify: dictionary of parameters to be modified
+        :return: None
+        """
+        if modify['service_state'] == 'offline':
+            self.aggregate_offline()
+        elif modify['service_state'] == 'online':
+            self.aggregate_online()
+
+    def asup_log_for_cserver(self, event_name):
+        """
+        Fetch admin vserver for the given cluster
+        Create and Autosupport log event with the given module name
+        :param event_name: Name of the event log
+        :return: None
+        """
         results = netapp_utils.get_cserver(self.server)
-        cserver = netapp_utils.setup_na_ontap_zapi(
-            module=self.module, vserver=results)
-        netapp_utils.ems_log_event("na_ontap_aggregate", cserver)
+        cserver = netapp_utils.setup_na_ontap_zapi(module=self.module, vserver=results)
+        netapp_utils.ems_log_event(event_name, cserver)
 
-        # check if anything needs to be changed (add/delete/update)
+    def apply(self):
+        """
+        Apply action to the aggregate
+        :return: None
+        """
+        self.asup_log_for_cserver("na_ontap_aggregate")
 
-        if aggregate_exists:
-            if self.state == 'absent':
-                changed = True
-
-            elif self.state == 'present':
-                if self.service_state:
-                    changed = True
-                if self.rename is not None and self.name != \
-                        self.rename:
-                    rename_aggregate = True
-                    changed = True
-
+        current = self.get_aggr()
+        # rename and create are mutually exclusive
+        rename, cd_action = None, None
+        if self.parameters.get('from_name'):
+            rename = self.na_helper.is_rename_action(self.get_aggr(self.parameters['from_name']), current)
+            if rename is None:
+                self.module.fail_json(msg="Error renaming: aggregate %s does not exist" % self.parameters['from_name'])
         else:
-            if self.state == 'present':
-                # Aggregate does not exist, but requested state is present.
-                if (self.rename is None) and self.disk_count:
-                    changed = True
+            cd_action = self.na_helper.get_cd_action(current, self.parameters)
+        modify = self.na_helper.get_modified_attributes(current, self.parameters)
 
-        if changed:
+        if self.na_helper.changed:
             if self.module.check_mode:
                 pass
             else:
-                if self.state == 'present':
-                    if not aggregate_exists:
-                        self.create_aggr()
-                        if self.service_state == 'offline':
-                            self.aggregate_offline()
-                    else:
-                        if self.service_state == 'online':
-                            size_changed = self.aggregate_online()
-                        elif self.service_state == 'offline':
-                            size_changed = self.aggregate_offline()
-                        if rename_aggregate:
-                            self.rename_aggregate()
-                        if not size_changed and not rename_aggregate:
-                            changed = False
-
-                elif self.state == 'absent':
-                    if self.service_state == 'offline':
-                        self.aggregate_offline()
+                if rename:
+                    self.rename_aggregate()
+                elif cd_action == 'create':
+                    self.create_aggr()
+                elif cd_action == 'delete':
                     self.delete_aggr()
-        self.module.exit_json(changed=changed)
+                elif modify:
+                    self.modify_aggr(modify)
+        self.module.exit_json(changed=self.na_helper.changed)
 
 
 def main():
-    ''' Create object and call apply '''
+    """
+    Create Aggregate class instance and invoke apply
+    :return: None
+    """
     obj_aggr = NetAppOntapAggregate()
     obj_aggr.apply()
 

@@ -52,7 +52,7 @@ options:
      description:
        - Ignored. Present for backwards compatibility
 requirements:
-    - "python >= 2.6"
+    - "python >= 2.7"
     - "openstacksdk"
 '''
 
@@ -136,8 +136,17 @@ def main():
             module.fail_json(msg="Role %s is not valid" % role)
         filters['role'] = r['id']
 
+        if domain:
+            d = cloud.get_domain(domain)
+            if d is None:
+                module.fail_json(msg="Domain %s is not valid" % domain)
+            filters['domain'] = d['id']
         if user:
-            u = cloud.get_user(user)
+            if domain:
+                u = cloud.get_user(user, domain_id=filters['domain'])
+            else:
+                u = cloud.get_user(user)
+
             if u is None:
                 module.fail_json(msg="User %s is not valid" % user)
             filters['user'] = u['id']
@@ -146,14 +155,14 @@ def main():
             if g is None:
                 module.fail_json(msg="Group %s is not valid" % group)
             filters['group'] = g['id']
-        if domain:
-            d = cloud.get_domain(domain)
-            if d is None:
-                module.fail_json(msg="Domain %s is not valid" % domain)
-            filters['domain'] = d['id']
         if project:
             if domain:
                 p = cloud.get_project(project, domain_id=filters['domain'])
+                # OpenStack won't allow us to use both a domain and project as
+                # filter. Once we identified the project (using the domain as
+                # a filter criteria), we need to remove the domain itself from
+                # the filters list.
+                filters.pop('domain')
             else:
                 p = cloud.get_project(project)
 

@@ -1,9 +1,9 @@
-# Guidelines for AWS modules
+# Guidelines for Ansible Amazon AWS module development
 
 The Ansible AWS modules and these guidelines are maintained by the Ansible AWS Working Group.  For
 further information see
-[the AWS working group community page](https://github.com/ansible/community/tree/master/group-aws).
-If you are planning to contribute AWS modules to Ansible then getting in touch with the the working
+[the AWS working group community page](https://github.com/ansible/community/wiki/aws).
+If you are planning to contribute AWS modules to Ansible then getting in touch with the working
 group will be a good way to start, especially because a similar module may already be under
 development.
 
@@ -25,7 +25,7 @@ the amount of boilerplate code.
 
 Change
 
-```
+```python
 from ansible.module_utils.basic import AnsibleModule
 ...
 module = AnsibleModule(...)
@@ -33,7 +33,7 @@ module = AnsibleModule(...)
 
 to
 
-```
+```python
 from ansible.module_utils.aws.core import AnsibleAWSModule
 ...
 module = AnsibleAWSModule(...)
@@ -45,9 +45,9 @@ are included. If you do find an issue, please raise a bug report.
 
 When porting, keep in mind that AnsibleAWSModule also will add the default ec2
 argument spec by default. In pre-port modules, you should see common arguments
-specfied with:
+specified with:
 
-```
+```python
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
@@ -207,14 +207,30 @@ extends_documentation_fragment:
 You should wrap any boto3 or botocore call in a try block. If an exception is thrown, then there
 are a number of possibilities for handling it.
 
-* use aws_module.fail_json_aws() to report the module failure in a standard way
-* retry using AWSRetry
-* use fail_json() to report the failure without using `ansible.module_utils.aws.core`
-* do something custom in the case where you know how to handle the exception
+* Catch the general `ClientError` or look for a specific error code with
+    `is_boto3_error_code`.
+* Use aws_module.fail_json_aws() to report the module failure in a standard way
+* Retry using AWSRetry
+* Use fail_json() to report the failure without using `ansible.module_utils.aws.core`
+* Do something custom in the case where you know how to handle the exception
 
-For more information on botocore exception handling see [the botocore error documentation](http://botocore.readthedocs.org/en/latest/client_upgrades.html#error-handling).
+For more information on botocore exception handling see [the botocore error documentation](https://botocore.readthedocs.io/en/latest/client_upgrades.html#error-handling).
 
-#### using fail_json_aws()
+### Using is_boto3_error_code
+
+To use `ansible.module_utils.aws.core.is_boto3_error_code` to catch a single
+AWS error code, call it in place of `ClientError` in your except clauses. In
+this case, *only* the `InvalidGroup.NotFound` error code will be caught here,
+and any other error will be raised for handling elsewhere in the program.
+
+```python
+try:
+    return connection.describe_security_groups(**kwargs)
+except is_boto3_error_code('InvalidGroup.NotFound'):
+    return {'SecurityGroups': []}
+```
+
+#### Using fail_json_aws()
 
 In the AnsibleAWSModule there is a special method, `module.fail_json_aws()` for nice reporting of
 exceptions.  Call this on your exception and it will report the error together with a traceback for
@@ -307,7 +323,7 @@ except botocore.exceptions.BotoCoreError as e:
     module.fail_json_aws(e, msg="Couldn't obtain frooble %s" % name)
 ```
 
-### API throttling and pagination
+### API throttling (rate limiting) and pagination
 
 For methods that return a lot of results, boto3 often provides
 [paginators](http://boto3.readthedocs.io/en/latest/guide/paginators.html). If the method
@@ -327,9 +343,9 @@ the [cloud module_utils](/lib/ansible/module_utils/cloud.py)
 and [AWS Architecture blog](https://www.awsarchitectureblog.com/2015/03/backoff.html)
 for more details.
 
-The combination of these two approaches is then
+The combination of these two approaches is then:
 
-```
+```python
 @AWSRetry.exponential_backoff(retries=5, delay=5)
 def describe_some_resource_with_backoff(client, **kwargs):
      paginator = client.get_paginator('describe_some_resource')
@@ -352,7 +368,7 @@ To handle authorization failures or parameter validation errors in
 `describe_some_resource_with_backoff`, where we just want to return `None` if
 the resource doesn't exist and not retry, we need:
 
-```
+```python
 @AWSRetry.exponential_backoff(retries=5, delay=5)
 def describe_some_resource_with_backoff(client, **kwargs):
      try:
@@ -378,7 +394,7 @@ To make use of AWSRetry easier, it can now be wrapped around a client returned
 by `AnsibleAWSModule`. any call from a client. To add retries to a client,
 create a client:
 
-```
+```python
 module.client('ec2', retry_decorator=AWSRetry.jittered_backoff(retries=10))
 ```
 
@@ -399,6 +415,13 @@ describe_instances(module.client('ec2'), InstanceIds=['i-123456789'])
 
 The call will be retried the specified number of times, so the calling functions
 don't need to be wrapped in the backoff decorator.
+
+You can also use customization for `retries`, `delay` and `max_delay` parameters used by
+`AWSRetry.jittered_backoff` API using module params. You can take a look into
+[cloudformation](/lib/ansible/modules/cloud/amazon/cloudformation.py) module for example.
+
+To make all Amazon modules uniform, prefix the module param with `backoff_`, so `retries` becomes `backoff_retries`
+ and likewise with `backoff_delay` and `backoff_max_delay`.
 
 ### Returning Values
 
@@ -540,15 +563,6 @@ if there are. This recursively sorts the dicts and makes them hashable before co
 This method should be used any time policies are being compared so that a change in order
 doesn't result in unnecessary changes.
 
-#### sort_json_policy_dict
-
-Pass any JSON policy dict to this function in order to sort any list contained therein. This is
-useful because AWS rarely return lists in the same order that they were submitted so without this
-function, comparison of identical policies returns false.
-
-Note if your goal is to check if two policies are the same you're better to use the `compare_policies`
-helper which sorts recursively.
-
 #### compare_aws_tags
 
 Pass two dicts of tags and an optional purge parameter and this function will return a dict
@@ -619,14 +633,66 @@ for every call, it's preferrable to use [YAML Anchors](http://blog.daemonl.com/2
 
 As explained in the [Integration Test guide](https://docs.ansible.com/ansible/latest/dev_guide/testing_integration.html#iam-policies-for-aws)
 there are defined IAM policies in `hacking/aws_config/testing_policies/` that contain the necessary permissions
-to run the AWS integration test.
+to run the AWS integration test. The permissions used by CI are more restrictive than those in `hacking/aws_config/testing_policies`; for CI we want
+the most restrictive policy possible that still allows the given tests to pass.
 
-If your module is interacting with a new service or otherwise requires new permissions you must update the
-appropriate policy file to grant the permissions needed to run your integration test.
+If your module interacts with a new service or otherwise requires new permissions, tests will fail when you submit a pull request and the
+[Ansibullbot](https://github.com/ansible/ansibullbot/blob/master/ISSUE_HELP.md) will tag your PR as needing revision.
+We do not automatically grant additional permissions to the roles used by the continuous integration builds. You must provide the minimum IAM permissions required to run your integration test.
 
-There is no process for automatically granting additional permissions to the roles used by the continuous
-integration builds, so the tests will initially fail when you submit a pull request and the
-[Ansibullbot](https://github.com/ansible/ansibullbot/blob/master/ISSUE_HELP.md) will tag it as needing revision.
-
-Once you're certain the failure is only due to the missing permissions, add a comment with the `ready_for_review`
+If your PR has test failures, check carefully to be certain the failure is only due to the missing permissions. If you've ruled out other sources of failure, add a comment with the `ready_for_review`
 tag and explain that it's due to missing permissions.
+
+Your pull request cannot be merged until the tests are passing. If your pull request is failing due to missing permissions,
+you must collect the minimum IAM permissions required to
+run the tests.
+
+There are two ways to figure out which IAM permissions you need for your PR to pass:
+
+* Start with the most permissive IAM policy, run the tests to collect information about which resources your tests actually use, then construct a policy based on that output. This approach only works on modules that use `AnsibleAWSModule`.
+* Start with the least permissive IAM policy, run the tests to discover a failure, add permissions for the resource that addresses that failure, then repeat. If your module uses `AnsibleModule` instead of `AnsibleAWSModule`, you must use this approach.
+
+To start with the most permissive IAM policy:
+
+1) [Create an IAM policy](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_create.html#access_policies_create-start) that allows all actions (set `Action` and `Resource` to `*`).
+2) Run your tests locally with this policy. On `AnsibleAWSModule`-based modules, the `debug_botocore_endpoint_logs` option is automatically set to `yes`, so you
+should see a list of `AWS ACTIONS` after the `PLAY RECAP` showing all the permissions used. If your tests use a `boto`/`AnsibleModule` module, you must start with the least permissive policy (see below).
+3) Modify your policy to allow only the actions your tests use. Restrict account, region, and prefix where possible. Wait a few minutes for your policy to update.
+4) Run the tests again with a user or role that allows only the new policy.
+5) If the tests fail, troubleshoot (see tips below), modify the policy, run the tests again, and repeat the process until the tests pass with a restrictive policy.
+6) Share the minimum policy in a comment on your PR.
+
+To start from the least permissive IAM policy:
+
+1) Run the integration tests locally with no IAM permissions.
+2) Examine the error when the tests reach a failure.
+    a) If the error message indicates the action used in the request, add the action to your policy.
+    b) If the error message does not indicate the action used in the request:
+        - Usually the action is a CamelCase version of the method name - for example, for an ec2 client the method `describe_security_groups` correlates to the action `ec2:DescribeSecurityGroups`.
+        - Refer to the documentation to identify the action.
+    c) If the error message indicates the resource ARN used in the request, limit the action to that resource.
+    d) If the error message does not indicate the resource ARN used:
+        - Determine if the action can be restricted to a resource by examining the documentation.
+        - If the action can be restricted, use the documentation to construct the ARN and add it to the policy.
+3) Add the action or resource that caused the failure to [an IAM policy](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_create.html#access_policies_create-start). Wait a few minutes for your policy to update.
+4) Run the tests again with this policy attached to your user or role.
+5) If the tests still fail at the same place with the same error you will need to troubleshoot (see tips below). If the first test passes, repeat steps 2 and 3 for the next error. Repeat the process until the tests pass with a restrictive policy.
+6) Share the minimum policy in a comment on your PR.
+
+Troubleshooting IAM policies:
+
+- When you make changes to a policy, wait a few minutes for the policy to update before re-running the tests.
+- Use the [policy simulator](https://policysim.aws.amazon.com/) to verify that each action (limited by resource when applicable) in your policy is allowed.
+- If you're restricting actions to certain resources, replace resources temporarily with `*`. If the tests pass with wildcard resources, there is a problem with the resource definition in your policy.
+- If the initial troubleshooting above doesn't provide any more insight, AWS may be using additional undisclosed resources and actions.
+- Examine the AWS FullAccess policy for the service for clues.
+- Re-read the AWS documentation, especially the [list of Actions, Resources and Condition Keys](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_actions-resources-contextkeys.html) for the various AWS services.
+- Look at the [cloudonaut](https://iam.cloudonaut.io) documentation as a troubleshooting cross-reference.
+- Use a search engine.
+- Ask in the Ansible IRC channel #ansible-aws.
+
+
+Some cases where tests should be marked as unsupported:
+1) The tests take longer than 10 or 15 minutes to complete
+2) The tests create expensive resources
+3) The tests create inline policies

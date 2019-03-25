@@ -14,7 +14,7 @@ short_description: Gather facts about availability zones in AWS.
 description:
     - Gather facts about availability zones in AWS.
 version_added: '2.5'
-author: 'Henrique Rodrigues (github.com/Sodki)'
+author: 'Henrique Rodrigues (@Sodki)'
 options:
   filters:
     description:
@@ -33,7 +33,7 @@ requirements: [botocore, boto3]
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-# Gather facts about all availabily zones
+# Gather facts about all availability zones
 - aws_az_facts:
 
 # Gather facts about a single availability zone

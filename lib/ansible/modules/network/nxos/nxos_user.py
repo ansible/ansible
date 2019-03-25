@@ -360,6 +360,7 @@ def main():
         have_users = [x['name'] for x in have]
         for item in set(have_users).difference(want_users):
             if item != 'admin':
+                item = item.replace("\\", "\\\\")
                 commands.append('no username %s' % item)
 
     result['commands'] = commands
@@ -375,6 +376,7 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

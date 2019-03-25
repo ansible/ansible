@@ -203,6 +203,7 @@ from copy import deepcopy
 
 from ansible.module_utils.network.nxos.nxos import load_config, run_commands
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, normalize_interface
+from ansible.module_utils.network.nxos.nxos import get_interface_type
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import conditional, remove_default_spec
 
@@ -229,27 +230,6 @@ def search_obj_in_list(name, lst):
             return o
 
     return None
-
-
-def get_interface_type(interface):
-    """Gets the type of interface
-    """
-    if interface.upper().startswith('ET'):
-        return 'ethernet'
-    elif interface.upper().startswith('VL'):
-        return 'svi'
-    elif interface.upper().startswith('LO'):
-        return 'loopback'
-    elif interface.upper().startswith('MG'):
-        return 'management'
-    elif interface.upper().startswith('MA'):
-        return 'management'
-    elif interface.upper().startswith('PO'):
-        return 'portchannel'
-    elif interface.upper().startswith('NV'):
-        return 'nve'
-    else:
-        return 'unknown'
 
 
 def get_interfaces_dict(module):
@@ -287,7 +267,7 @@ def get_vlan_interface_attributes(name, intf_type, module):
     command = 'show run interface {0} all'.format(name)
     try:
         body = execute_show_command(command, module)[0]
-    except IndexError:
+    except (IndexError, TypeError):
         return None
     if body:
         command_list = body.split('\n')
@@ -524,7 +504,7 @@ def map_config_to_obj(want, module):
         if body:
             try:
                 interface_table = body['TABLE_interface']['ROW_interface']
-            except KeyError:
+            except (KeyError, TypeError):
                 return list()
 
             if interface_table:
@@ -534,7 +514,12 @@ def map_config_to_obj(want, module):
                 intf_type = get_interface_type(w['name'])
 
                 if intf_type in ['portchannel', 'ethernet']:
-                    if not interface_table.get('eth_mode'):
+                    mode = interface_table.get('eth_mode')
+                    if mode in ('access', 'trunk', 'dot1q-tunnel'):
+                        obj['mode'] = 'layer2'
+                    elif mode in ('routed', 'layer3'):
+                        obj['mode'] = 'layer3'
+                    else:
                         obj['mode'] = 'layer3'
 
                 if intf_type == 'ethernet':
@@ -544,11 +529,6 @@ def map_config_to_obj(want, module):
                     obj['mtu'] = interface_table.get('eth_mtu')
                     obj['duplex'] = interface_table.get('eth_duplex')
                     speed = interface_table.get('eth_speed')
-                    mode = interface_table.get('eth_mode')
-                    if mode in ('access', 'trunk'):
-                        obj['mode'] = 'layer2'
-                    elif mode in ('routed', 'layer3'):
-                        obj['mode'] = 'layer3'
 
                     command = 'show run interface {0}'.format(obj['name'])
                     body = execute_show_command(command, module)[0]
@@ -577,6 +557,7 @@ def map_config_to_obj(want, module):
                                                             'nxapibug'))
                     obj['description'] = str(attributes.get('description',
                                                             'nxapi_bug'))
+                    obj['mtu'] = interface_table.get('svi_mtu')
 
                     command = 'show run interface {0}'.format(obj['name'])
                     body = execute_show_command(command, module)[0]
@@ -598,7 +579,7 @@ def map_config_to_obj(want, module):
                     obj['name'] = normalize_interface(interface_table.get('interface'))
                     obj['admin_state'] = interface_table.get('admin_state')
                     obj['description'] = interface_table.get('desc')
-                    obj['mode'] = interface_table.get('eth_mode')
+                    obj['mtu'] = interface_table.get('eth_mtu')
 
         objs.append(obj)
 
@@ -619,11 +600,12 @@ def check_declarative_intent_params(module, want):
             return
 
         cmd = [{'command': 'show interface {0}'.format(w['name']), 'output': 'text'}]
-        output = run_commands(module, cmd, check_rc=False)
-        if output:
-            out = output[0]
-        else:
+
+        try:
+            out = run_commands(module, cmd, check_rc=False)[0]
+        except (AttributeError, IndexError, TypeError):
             out = ''
+
         if want_tx_rate:
             match = re.search(r'output rate (\d+)', out, re.M)
             have_tx_rate = None

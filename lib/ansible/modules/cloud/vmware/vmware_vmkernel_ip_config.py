@@ -46,14 +46,14 @@ EXAMPLES = '''
 # Example command from Ansible Playbook
 
 - name: Configure IP address on ESX host
-  local_action:
-    module: vmware_vmkernel_ip_config
-    hostname: esxi_hostname
-    username: esxi_username
-    password: esxi_password
+  vmware_vmkernel_ip_config:
+    hostname: '{{ esxi_hostname }}'
+    username: '{{ esxi_username }}'
+    password: '{{ esxi_password }}'
     vmk_name: vmk0
     ip_address: 10.0.0.10
     subnet_mask: 255.255.255.0
+  delegate_to: localhost
 '''
 
 try:

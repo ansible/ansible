@@ -19,7 +19,7 @@ extends_documentation_fragment: ios
 version_added: "2.5"
 short_description: Manage Layer-2 interface on Cisco IOS devices.
 description:
-  - This module provides declarative management of Layer-2 interface on
+  - This module provides declarative management of Layer-2 interfaces on
     Cisco IOS devices.
 author:
   - Nathaniel Case (@qalthos)
@@ -118,7 +118,7 @@ from ansible.module_utils.network.ios.ios import ios_argument_spec
 
 def get_interface_type(interface):
     intf_type = 'unknown'
-    if interface.upper()[:2] in ('ET', 'GI'):
+    if interface.upper()[:2] in ('ET', 'GI', 'FA', 'TE', 'FO', 'HU', 'TWE'):
         intf_type = 'ethernet'
     elif interface.upper().startswith('VL'):
         intf_type = 'svi'
@@ -154,10 +154,18 @@ def interface_is_portchannel(name, module):
 
 def get_switchport(name, module):
     config = run_commands(module, ['show interface {0} switchport'.format(name)])[0]
-    mode = re.search(r'Administrative Mode: (?:.* )?(\w+)$', config, re.M).group(1)
-    access = re.search(r'Access Mode VLAN: (\d+)', config).group(1)
-    native = re.search(r'Trunking Native Mode VLAN: (\d+)', config).group(1)
-    trunk = re.search(r'Trunking VLANs Enabled: (.+)$', config, re.M).group(1)
+    mode = re.search(r'Administrative Mode: (?:.* )?(\w+)$', config, re.M)
+    access = re.search(r'Access Mode VLAN: (\d+)', config)
+    native = re.search(r'Trunking Native Mode VLAN: (\d+)', config)
+    trunk = re.search(r'Trunking VLANs Enabled: (.+)$', config, re.M)
+    if mode:
+        mode = mode.group(1)
+    if access:
+        access = access.group(1)
+    if native:
+        native = native.group(1)
+    if trunk:
+        trunk = trunk.group(1)
     if trunk == 'ALL':
         trunk = '1-4094'
 
@@ -295,11 +303,12 @@ def vlan_range_to_list(vlans):
         for part in vlans.split(','):
             if part.lower() == 'none':
                 break
-            if '-' in part:
-                start, stop = (int(i) for i in part.split('-'))
-                result.extend(range(start, stop + 1))
-            else:
-                result.append(int(part))
+            if part:
+                if '-' in part:
+                    start, stop = (int(i) for i in part.split('-'))
+                    result.extend(range(start, stop + 1))
+                else:
+                    result.append(int(part))
     return sorted(result)
 
 

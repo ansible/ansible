@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Ansible by Red Hat, inc
+# Copyright: (c) 2017, Ansible by Red Hat, inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -74,7 +74,7 @@ options:
   aggregate:
     description:
       - List of Interface definitions. Include multiple interface configurations together,
-        one each on a seperate line
+        one each on a separate line
   delay:
     description:
       - Time in seconds to wait before checking for the operational state on remote
@@ -195,7 +195,7 @@ import collections
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.iosxr.iosxr import get_config, load_config, build_xml
-from ansible.module_utils.network.iosxr.iosxr import run_command, iosxr_argument_spec, get_oper
+from ansible.module_utils.network.iosxr.iosxr import run_commands, iosxr_argument_spec, get_oper
 from ansible.module_utils.network.iosxr.iosxr import is_netconf, is_cliconf, etree_findall, etree_find
 from ansible.module_utils.network.common.utils import conditional, remove_default_spec
 
@@ -297,14 +297,18 @@ class CliConfiguration(ConfigBase):
 
     def map_config_to_obj(self):
         data = get_config(self._module, config_filter='interface')
-        interfaces = data.strip().rstrip('!').split('!')
+        data_lines = data.splitlines()
+        start_indexes = [i for i, e in enumerate(data_lines) if e.startswith('interface')]
+        end_indexes = [i for i, e in enumerate(data_lines) if e == '!']
 
-        if not interfaces:
+        intf_configs = list()
+        for start_index, end_index in zip(start_indexes, end_indexes):
+            intf_configs.append([i.strip() for i in data_lines[start_index:end_index]])
+
+        if not intf_configs:
             return list()
 
-        for interface in interfaces:
-            intf_config = interface.strip().splitlines()
-
+        for intf_config in intf_configs:
             name = intf_config[0].strip().split()[1]
 
             active = 'act'
@@ -318,7 +322,7 @@ class CliConfiguration(ConfigBase):
                 'speed': self.parse_config_argument(intf_config, 'speed'),
                 'duplex': self.parse_config_argument(intf_config, 'duplex'),
                 'mtu': self.parse_config_argument(intf_config, 'mtu'),
-                'enabled': True if not self.parse_shutdown(intf_config) else False,
+                'enabled': not bool(self.parse_shutdown(intf_config)),
                 'active': active,
                 'state': 'present'
             }
@@ -381,8 +385,8 @@ class CliConfiguration(ConfigBase):
             if self._result['changed']:
                 sleep(want_item['delay'])
 
-            command = 'show interfaces {!s}'.format(want_item['name'])
-            out = run_command(self._module, command)[0]
+            command = 'show interfaces {0!s}'.format(want_item['name'])
+            out = run_commands(self._module, command)[0]
 
             if want_state in ('up', 'down'):
                 match = re.search(r'%s (\w+)' % 'line protocol is', out, re.M)
@@ -395,7 +399,7 @@ class CliConfiguration(ConfigBase):
                             have_state = match.group(1)
 
                 if have_state is None or not conditional(want_state, have_state.strip()):
-                    failed_conditions.append('state ' + 'eq({!s})'.format(want_state))
+                    failed_conditions.append('state ' + 'eq({0!s})'.format(want_state))
 
             if want_tx_rate:
                 match = re.search(r'%s (\d+)' % 'output rate', out, re.M)
@@ -571,7 +575,7 @@ class NCConfiguration(ConfigBase):
 
             if want_state in ('up', 'down'):
                 if want_state not in line_state_map[want_item['name']]:
-                    failed_conditions.append('state ' + 'eq({!s})'.format(want_state))
+                    failed_conditions.append('state ' + 'eq({0!s})'.format(want_state))
 
             if want_tx_rate:
                 if want_tx_rate != data_rate_map[want_item['name']]['output-data-rate']:
@@ -634,7 +638,7 @@ def main():
     config_object = None
     if is_cliconf(module):
         module.deprecate("cli support for 'iosxr_interface' is deprecated. Use transport netconf instead",
-                         version='4 releases from v2.5')
+                         version='2.9')
         config_object = CliConfiguration(module)
     elif is_netconf(module):
         if module.params['active'] == 'preconfigure':

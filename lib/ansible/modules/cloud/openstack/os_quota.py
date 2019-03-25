@@ -17,7 +17,7 @@ module: os_quota
 short_description: Manage OpenStack Quotas
 extends_documentation_fragment: openstack
 version_added: "2.3"
-author: "Michael Gale (gale.michael@gmail.com)"
+author: "Michael Gale (@mgale) <gale.michael@gmail.com>"
 description:
     - Manage OpenStack Quotas. Quotas can be created,
       updated or deleted using this module. A quota will be updated
@@ -105,7 +105,7 @@ options:
 
 
 requirements:
-    - "python >= 2.6"
+    - "python >= 2.7"
     - "openstacksdk >= 0.13.0"
 '''
 
@@ -177,7 +177,7 @@ EXAMPLES = '''
 RETURN = '''
 openstack_quotas:
     description: Dictionary describing the project quota.
-    returned: Regardless if changes where made or note
+    returned: Regardless if changes where made or not
     type: complex
     contains:
         openstack_quotas: {
@@ -249,12 +249,12 @@ def _get_quotas(sdk, module, cloud, project):
     quota = {}
     try:
         quota['volume'] = _get_volume_quotas(cloud, project)
-    except sdk.exceptions.OpenStackCloudURINotFound:
+    except sdk.exceptions.NotFoundException:
         module.warn("No public endpoint for volumev2 service was found. Ignoring volume quotas.")
 
     try:
         quota['network'] = _get_network_quotas(cloud, project)
-    except sdk.exceptions.OpenStackCloudURINotFound:
+    except sdk.exceptions.NotFoundException:
         module.warn("No public endpoint for network service was found. Ignoring network quotas.")
 
     quota['compute'] = _get_compute_quotas(cloud, project)

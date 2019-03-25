@@ -1,0 +1,6 @@
+---
+subversion_packages:
+- subversion
+- libapache2-mod-svn
+apache_user: www-data
+apache_group: www-data

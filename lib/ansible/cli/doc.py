@@ -1,44 +1,35 @@
-# (c) 2014, James Tanner <tanner.jc@gmail.com>
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2014, James Tanner <tanner.jc@gmail.com>
+# Copyright: (c) 2018, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import datetime
+import json
 import os
 import textwrap
 import traceback
 import yaml
 
-from collections import Sequence
+import ansible.plugins.loader as plugin_loader
 
 from ansible import constants as C
+from ansible import context
 from ansible.cli import CLI
+from ansible.cli.arguments import optparse_helpers as opt_help
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils._text import to_native
+from ansible.module_utils.common._collections_compat import Sequence
 from ansible.module_utils.six import string_types
+from ansible.parsing.metadata import extract_metadata
+from ansible.parsing.plugin_docs import read_docstub
 from ansible.parsing.yaml.dumper import AnsibleDumper
-from ansible.plugins.loader import module_loader, action_loader, lookup_loader, callback_loader, cache_loader, \
-    vars_loader, connection_loader, strategy_loader, inventory_loader, shell_loader, fragment_loader
+from ansible.plugins.loader import action_loader, fragment_loader
+from ansible.utils.display import Display
 from ansible.utils.plugin_docs import BLACKLIST, get_docstring
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class DocCLI(CLI):
@@ -55,14 +46,14 @@ class DocCLI(CLI):
         super(DocCLI, self).__init__(args)
         self.plugin_list = set()
 
-    def parse(self):
+    def init_parser(self):
 
-        self.parser = CLI.base_parser(
+        super(DocCLI, self).init_parser(
             usage='usage: %prog [-l|-F|-s] [options] [-t <plugin type> ] [plugin]',
-            module_opts=True,
             desc="plugin documentation tool",
             epilog="See man pages for Ansible CLI options or website for tutorials https://docs.ansible.com"
         )
+        opt_help.add_module_options(self.parser)
 
         self.parser.add_option("-F", "--list_files", action="store_true", default=False, dest="list_files",
                                help='Show plugin names and their source files without summaries (implies --list)')
@@ -70,47 +61,37 @@ class DocCLI(CLI):
                                help='List available plugins')
         self.parser.add_option("-s", "--snippet", action="store_true", default=False, dest='show_snippet',
                                help='Show playbook snippet for specified plugin(s)')
-        self.parser.add_option("-a", "--all", action="store_true", default=False, dest='all_plugins',
-                               help='**For internal testing only** Show documentation for all plugins.')
+        self.parser.add_option("-j", "--json", action="store_true", default=False, dest='json_dump',
+                               help='**For internal testing only** Dump json metadata for all plugins.')
         self.parser.add_option("-t", "--type", action="store", default='module', dest='type', type='choice',
-                               help='Choose which plugin type (defaults to "module")',
+                               help='Choose which plugin type (defaults to "module"). '
+                                    'Available plugin types are : {0}'.format(C.DOCUMENTABLE_PLUGINS),
                                choices=C.DOCUMENTABLE_PLUGINS)
-        super(DocCLI, self).parse()
 
-        if [self.options.all_plugins, self.options.list_dir, self.options.list_files, self.options.show_snippet].count(True) > 1:
-            raise AnsibleOptionsError("Only one of -l, -F, -s or -a can be used at the same time.")
+    def post_process_args(self, options, args):
+        options, args = super(DocCLI, self).post_process_args(options, args)
 
-        display.verbosity = self.options.verbosity
+        if [options.json_dump, options.list_dir, options.list_files, options.show_snippet].count(True) > 1:
+            raise AnsibleOptionsError("Only one of -l, -F, -s, or -j can be used at the same time.")
+
+        display.verbosity = options.verbosity
+
+        return options, args
 
     def run(self):
 
         super(DocCLI, self).run()
 
-        plugin_type = self.options.type
+        plugin_type = context.CLIARGS['type']
 
-        # choose plugin type
-        if plugin_type == 'cache':
-            loader = cache_loader
-        elif plugin_type == 'callback':
-            loader = callback_loader
-        elif plugin_type == 'connection':
-            loader = connection_loader
-        elif plugin_type == 'lookup':
-            loader = lookup_loader
-        elif plugin_type == 'strategy':
-            loader = strategy_loader
-        elif plugin_type == 'vars':
-            loader = vars_loader
-        elif plugin_type == 'inventory':
-            loader = inventory_loader
-        elif plugin_type == 'shell':
-            loader = shell_loader
+        if plugin_type in C.DOCUMENTABLE_PLUGINS:
+            loader = getattr(plugin_loader, '%s_loader' % plugin_type)
         else:
-            loader = module_loader
+            raise AnsibleOptionsError("Unknown or undocumentable plugin type: %s" % plugin_type)
 
         # add to plugin path from command line
-        if self.options.module_path:
-            for path in self.options.module_path:
+        if context.CLIARGS['module_path']:
+            for path in context.CLIARGS['module_path']:
                 if path:
                     loader.add_directory(path)
 
@@ -119,96 +100,184 @@ class DocCLI(CLI):
         loader._paths = None  # reset so we can use subdirs below
 
         # list plugins names and filepath for type
-        if self.options.list_files:
+        if context.CLIARGS['list_files']:
             paths = loader._get_paths()
             for path in paths:
-                self.find_plugins(path, plugin_type)
+                self.plugin_list.update(DocCLI.find_plugins(path, plugin_type))
 
             list_text = self.get_plugin_list_filenames(loader)
-            self.pager(list_text)
+            DocCLI.pager(list_text)
             return 0
 
         # list plugins for type
-        if self.options.list_dir:
+        if context.CLIARGS['list_dir']:
             paths = loader._get_paths()
             for path in paths:
-                self.find_plugins(path, plugin_type)
+                self.plugin_list.update(DocCLI.find_plugins(path, plugin_type))
 
-            self.pager(self.get_plugin_list_text(loader))
+            DocCLI.pager(self.get_plugin_list_text(loader))
             return 0
 
-        # process all plugins of type
-        if self.options.all_plugins:
-            paths = loader._get_paths()
-            for path in paths:
-                self.find_plugins(path, plugin_type)
-            self.args = sorted(set(self.plugin_list))
+        # dump plugin desc/metadata as JSON
+        if context.CLIARGS['json_dump']:
+            plugin_data = {}
+            plugin_names = DocCLI.get_all_plugins_of_type(plugin_type)
+            for plugin_name in plugin_names:
+                plugin_info = DocCLI.get_plugin_metadata(plugin_type, plugin_name)
+                if plugin_info is not None:
+                    plugin_data[plugin_name] = plugin_info
 
-        if len(self.args) == 0:
+            DocCLI.pager(json.dumps(plugin_data, sort_keys=True, indent=4))
+
+            return 0
+
+        if len(context.CLIARGS['args']) == 0:
             raise AnsibleOptionsError("Incorrect options passed")
 
         # process command line list
         text = ''
-        for plugin in self.args:
-            try:
-                # if the plugin lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
-                filename = loader.find_plugin(plugin, mod_type='.py', ignore_deprecated=True, check_aliases=True)
-                if filename is None:
-                    display.warning("%s %s not found in:\n%s\n" % (plugin_type, plugin, search_paths))
-                    continue
+        for plugin in context.CLIARGS['args']:
+            textret = DocCLI.format_plugin_doc(plugin, loader, plugin_type, search_paths)
 
-                if any(filename.endswith(x) for x in C.BLACKLIST_EXTS):
-                    continue
-
-                try:
-                    doc, plainexamples, returndocs, metadata = get_docstring(filename, fragment_loader, verbose=(self.options.verbosity > 0))
-                except Exception:
-                    display.vvv(traceback.format_exc())
-                    display.error("%s %s has a documentation error formatting or is missing documentation." % (plugin_type, plugin), wrap_text=False)
-                    continue
-
-                if doc is not None:
-
-                    # assign from other sections
-                    doc['plainexamples'] = plainexamples
-                    doc['returndocs'] = returndocs
-                    doc['metadata'] = metadata
-
-                    # generate extra data
-                    if plugin_type == 'module':
-                        # is there corresponding action plugin?
-                        if plugin in action_loader:
-                            doc['action'] = True
-                        else:
-                            doc['action'] = False
-                    doc['filename'] = filename
-                    doc['now_date'] = datetime.date.today().strftime('%Y-%m-%d')
-                    if 'docuri' in doc:
-                        doc['docuri'] = doc[plugin_type].replace('_', '-')
-
-                    if self.options.show_snippet and plugin_type == 'module':
-                        text += self.get_snippet_text(doc)
-                    else:
-                        text += self.get_man_text(doc)
-                else:
-                    # this typically means we couldn't even parse the docstring, not just that the YAML is busted,
-                    # probably a quoting issue.
-                    raise AnsibleError("Parsing produced an empty object.")
-            except Exception as e:
-                display.vvv(traceback.format_exc())
-                raise AnsibleError("%s %s missing documentation (or could not parse documentation): %s\n" % (plugin_type, plugin, str(e)))
+            if textret:
+                text += textret
 
         if text:
-            self.pager(text)
+            DocCLI.pager(text)
+
         return 0
 
-    def find_plugins(self, path, ptype):
+    @staticmethod
+    def get_all_plugins_of_type(plugin_type):
+        loader = getattr(plugin_loader, '%s_loader' % plugin_type)
+        plugin_list = set()
+        paths = loader._get_paths()
+        for path in paths:
+            plugins_to_add = DocCLI.find_plugins(path, plugin_type)
+            plugin_list.update(plugins_to_add)
+        return sorted(set(plugin_list))
+
+    @staticmethod
+    def get_plugin_metadata(plugin_type, plugin_name):
+        # if the plugin lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
+        loader = getattr(plugin_loader, '%s_loader' % plugin_type)
+        filename = loader.find_plugin(plugin_name, mod_type='.py', ignore_deprecated=True, check_aliases=True)
+        if filename is None:
+            raise AnsibleError("unable to load {0} plugin named {1} ".format(plugin_type, plugin_name))
+
+        try:
+            doc, __, __, metadata = get_docstring(filename, fragment_loader, verbose=(context.CLIARGS['verbosity'] > 0))
+        except Exception:
+            display.vvv(traceback.format_exc())
+            raise AnsibleError(
+                "%s %s at %s has a documentation error formatting or is missing documentation." %
+                (plugin_type, plugin_name, filename))
+
+        if doc is None:
+            if 'removed' not in metadata.get('status', []):
+                raise AnsibleError(
+                    "%s %s at %s has a documentation error formatting or is missing documentation." %
+                    (plugin_type, plugin_name, filename))
+
+            # Removed plugins don't have any documentation
+            return None
+
+        return dict(
+            name=plugin_name,
+            namespace=DocCLI.namespace_from_plugin_filepath(filename, plugin_name, loader.package_path),
+            description=doc.get('short_description', "UNKNOWN"),
+            version_added=doc.get('version_added', "UNKNOWN")
+        )
+
+    @staticmethod
+    def namespace_from_plugin_filepath(filepath, plugin_name, basedir):
+        if not basedir.endswith('/'):
+            basedir += '/'
+        rel_path = filepath.replace(basedir, '')
+        extension_free = os.path.splitext(rel_path)[0]
+        namespace_only = extension_free.rsplit(plugin_name, 1)[0].strip('/_')
+        clean_ns = namespace_only.replace('/', '.')
+        if clean_ns == '':
+            clean_ns = None
+
+        return clean_ns
+
+    @staticmethod
+    def format_plugin_doc(plugin, loader, plugin_type, search_paths):
+        text = ''
+
+        try:
+            # if the plugin lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
+            filename = loader.find_plugin(plugin, mod_type='.py', ignore_deprecated=True, check_aliases=True)
+            if filename is None:
+                display.warning("%s %s not found in:\n%s\n" % (plugin_type, plugin, search_paths))
+                return
+
+            if any(filename.endswith(x) for x in C.BLACKLIST_EXTS):
+                return
+
+            try:
+                doc, plainexamples, returndocs, metadata = get_docstring(filename, fragment_loader,
+                                                                         verbose=(context.CLIARGS['verbosity'] > 0))
+            except Exception:
+                display.vvv(traceback.format_exc())
+                display.error(
+                    "%s %s has a documentation error formatting or is missing documentation." % (plugin_type, plugin),
+                    wrap_text=False)
+                return
+
+            if doc is not None:
+
+                # assign from other sections
+                doc['plainexamples'] = plainexamples
+                doc['returndocs'] = returndocs
+                doc['metadata'] = metadata
+
+                # generate extra data
+                if plugin_type == 'module':
+                    # is there corresponding action plugin?
+                    if plugin in action_loader:
+                        doc['action'] = True
+                    else:
+                        doc['action'] = False
+                doc['filename'] = filename
+                doc['now_date'] = datetime.date.today().strftime('%Y-%m-%d')
+                if 'docuri' in doc:
+                    doc['docuri'] = doc[plugin_type].replace('_', '-')
+
+                if context.CLIARGS['show_snippet'] and plugin_type == 'module':
+                    text += DocCLI.get_snippet_text(doc)
+                else:
+                    text += DocCLI.get_man_text(doc)
+
+                return text
+            else:
+                if 'removed' in metadata['status']:
+                    display.warning("%s %s has been removed\n" % (plugin_type, plugin))
+                    return
+
+                # this typically means we couldn't even parse the docstring, not just that the YAML is busted,
+                # probably a quoting issue.
+                raise AnsibleError("Parsing produced an empty object.")
+        except Exception as e:
+            display.vvv(traceback.format_exc())
+            raise AnsibleError(
+                "%s %s missing documentation (or could not parse documentation): %s\n" % (plugin_type, plugin, to_native(e)))
+
+    @staticmethod
+    def find_plugins(path, ptype):
 
         display.vvvv("Searching %s for plugins" % path)
 
+        plugin_list = set()
+
         if not os.path.exists(path):
             display.vvvv("%s does not exist" % path)
-            return
+            return plugin_list
+
+        if not os.path.isdir(path):
+            display.vvvv("%s is not a directory" % path)
+            return plugin_list
 
         bkey = ptype.upper()
         for plugin in os.listdir(path):
@@ -233,8 +302,10 @@ class DocCLI(CLI):
             plugin = plugin.lstrip('_')  # remove underscore from deprecated plugins
 
             if plugin not in BLACKLIST.get(bkey, ()):
-                self.plugin_list.add(plugin)
+                plugin_list.add(plugin)
                 display.vvvv("Added %s" % plugin)
+
+        return plugin_list
 
     def get_plugin_list_text(self, loader):
         columns = display.columns
@@ -257,15 +328,22 @@ class DocCLI(CLI):
 
                 doc = None
                 try:
-                    doc, plainexamples, returndocs, metadata = get_docstring(filename, fragment_loader)
+                    doc = read_docstub(filename)
                 except Exception:
                     display.warning("%s has a documentation formatting error" % plugin)
+                    continue
 
                 if not doc or not isinstance(doc, dict):
+                    with open(filename) as f:
+                        metadata = extract_metadata(module_data=f.read())
+                    if metadata[0]:
+                        if 'removed' not in metadata[0].get('status', []):
+                            display.warning("%s parsing did not produce documentation." % plugin)
+                        else:
+                            continue
                     desc = 'UNDOCUMENTED'
-                    display.warning("%s parsing did not produce documentation." % plugin)
                 else:
-                    desc = self.tty_ify(doc.get('short_description', 'INVALID SHORT DESCRIPTION').strip())
+                    desc = DocCLI.tty_ify(doc.get('short_description', 'INVALID SHORT DESCRIPTION').strip())
 
                 if len(desc) > linelimit:
                     desc = desc[:linelimit] + '...'
@@ -275,7 +353,7 @@ class DocCLI(CLI):
                 else:
                     text.append("%-*s %-*.*s" % (displace, plugin, linelimit, len(desc), desc))
             except Exception as e:
-                raise AnsibleError("Failed reading docs at %s: %s" % (plugin, to_native(e)))
+                raise AnsibleError("Failed reading docs at %s: %s" % (plugin, to_native(e)), orig_exc=e)
 
         if len(deprecated) > 0:
             text.append("\nDEPRECATED:")
@@ -304,7 +382,7 @@ class DocCLI(CLI):
                 text.append("%-*s %-*.*s" % (displace, plugin, linelimit, len(filename), filename))
 
             except Exception as e:
-                raise AnsibleError("Failed reading docs at %s: %s" % (plugin, to_native(e)))
+                raise AnsibleError("Failed reading docs at %s: %s" % (plugin, to_native(e)), orig_exc=e)
 
         return "\n".join(text)
 
@@ -319,10 +397,11 @@ class DocCLI(CLI):
                 ret.append(i)
         return os.pathsep.join(ret)
 
-    def get_snippet_text(self, doc):
+    @staticmethod
+    def get_snippet_text(doc):
 
         text = []
-        desc = CLI.tty_ify(doc['short_description'])
+        desc = DocCLI.tty_ify(doc['short_description'])
         text.append("- name: %s" % (desc))
         text.append("  %s:" % (doc['module']))
         pad = 31
@@ -332,9 +411,9 @@ class DocCLI(CLI):
         for o in sorted(doc['options'].keys()):
             opt = doc['options'][o]
             if isinstance(opt['description'], string_types):
-                desc = CLI.tty_ify(opt['description'])
+                desc = DocCLI.tty_ify(opt['description'])
             else:
-                desc = CLI.tty_ify(" ".join(opt['description']))
+                desc = DocCLI.tty_ify(" ".join(opt['description']))
 
             required = opt.get('required', False)
             if not isinstance(required, bool):
@@ -347,10 +426,14 @@ class DocCLI(CLI):
 
         return "\n".join(text)
 
-    def _dump_yaml(self, struct, indent):
-        return CLI.tty_ify('\n'.join([indent + line for line in yaml.dump(struct, default_flow_style=False, Dumper=AnsibleDumper).split('\n')]))
+    @staticmethod
+    def _dump_yaml(struct, indent):
+        return DocCLI.tty_ify('\n'.join([indent + line for line in
+                                         yaml.dump(struct, default_flow_style=False,
+                                                   Dumper=AnsibleDumper).split('\n')]))
 
-    def add_fields(self, text, fields, limit, opt_indent):
+    @staticmethod
+    def add_fields(text, fields, limit, opt_indent):
 
         for o in sorted(fields):
             opt = fields[o]
@@ -367,9 +450,9 @@ class DocCLI(CLI):
 
             if isinstance(opt['description'], list):
                 for entry in opt['description']:
-                    text.append(textwrap.fill(CLI.tty_ify(entry), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
+                    text.append(textwrap.fill(DocCLI.tty_ify(entry), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
             else:
-                text.append(textwrap.fill(CLI.tty_ify(opt['description']), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
+                text.append(textwrap.fill(DocCLI.tty_ify(opt['description']), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
             del opt['description']
 
             aliases = ''
@@ -386,37 +469,41 @@ class DocCLI(CLI):
             if 'default' in opt or not required:
                 default = "[Default: %s" % str(opt.pop('default', '(null)')) + "]"
 
-            text.append(textwrap.fill(CLI.tty_ify(aliases + choices + default), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
+            text.append(textwrap.fill(DocCLI.tty_ify(aliases + choices + default), limit,
+                                      initial_indent=opt_indent, subsequent_indent=opt_indent))
 
             if 'options' in opt:
                 text.append("%soptions:\n" % opt_indent)
-                self.add_fields(text, opt.pop('options'), limit, opt_indent + opt_indent)
+                DocCLI.add_fields(text, opt.pop('options'), limit, opt_indent + opt_indent)
 
             if 'spec' in opt:
                 text.append("%sspec:\n" % opt_indent)
-                self.add_fields(text, opt.pop('spec'), limit, opt_indent + opt_indent)
+                DocCLI.add_fields(text, opt.pop('spec'), limit, opt_indent + opt_indent)
 
             conf = {}
             for config in ('env', 'ini', 'yaml', 'vars', 'keywords'):
                 if config in opt and opt[config]:
                     conf[config] = opt.pop(config)
-                    for ignore in self.IGNORE:
+                    for ignore in DocCLI.IGNORE:
                         for item in conf[config]:
                             if ignore in item:
                                 del item[ignore]
 
             if conf:
-                text.append(self._dump_yaml({'set_via': conf}, opt_indent))
+                text.append(DocCLI._dump_yaml({'set_via': conf}, opt_indent))
 
             for k in sorted(opt):
                 if k.startswith('_'):
                     continue
                 if isinstance(opt[k], string_types):
-                    text.append('%s%s: %s' % (opt_indent, k, textwrap.fill(CLI.tty_ify(opt[k]), limit - (len(k) + 2), subsequent_indent=opt_indent)))
+                    text.append('%s%s: %s' % (opt_indent, k,
+                                              textwrap.fill(DocCLI.tty_ify(opt[k]),
+                                                            limit - (len(k) + 2),
+                                                            subsequent_indent=opt_indent)))
                 elif isinstance(opt[k], (Sequence)) and all(isinstance(x, string_types) for x in opt[k]):
-                    text.append(CLI.tty_ify('%s%s: %s' % (opt_indent, k, ', '.join(opt[k]))))
+                    text.append(DocCLI.tty_ify('%s%s: %s' % (opt_indent, k, ', '.join(opt[k]))))
                 else:
-                    text.append(self._dump_yaml({k: opt[k]}, opt_indent))
+                    text.append(DocCLI._dump_yaml({k: opt[k]}, opt_indent))
             text.append('')
 
     @staticmethod
@@ -428,54 +515,53 @@ class DocCLI(CLI):
                              'community': 'The Ansible Community',
                              'curated': 'A Third Party',
                              }
-        if doc['metadata'].get('metadata_version') in ('1.0', '1.1'):
-            return ["  * This module is maintained by %s" % support_level_msg[doc['metadata']['supported_by']]]
-
-        return []
+        return ["  * This module is maintained by %s" % support_level_msg[doc['metadata']['supported_by']]]
 
     @staticmethod
     def get_metadata_block(doc):
         text = []
-        if doc['metadata'].get('metadata_version') in ('1.0', '1.1'):
-            text.append("METADATA:")
-            text.append('\tSUPPORT LEVEL: %s' % doc['metadata']['supported_by'])
 
-            for k in (m for m in doc['metadata'] if m not in ('version', 'metadata_version', 'supported_by')):
-                if isinstance(k, list):
-                    text.append("\t%s: %s" % (k.capitalize(), ", ".join(doc['metadata'][k])))
-                else:
-                    text.append("\t%s: %s" % (k.capitalize(), doc['metadata'][k]))
-            return text
+        text.append("METADATA:")
+        text.append('\tSUPPORT LEVEL: %s' % doc['metadata']['supported_by'])
 
-        return []
+        for k in (m for m in doc['metadata'] if m != 'supported_by'):
+            if isinstance(k, list):
+                text.append("\t%s: %s" % (k.capitalize(), ", ".join(doc['metadata'][k])))
+            else:
+                text.append("\t%s: %s" % (k.capitalize(), doc['metadata'][k]))
+        return text
 
-    def get_man_text(self, doc):
+    @staticmethod
+    def get_man_text(doc):
 
-        self.IGNORE = self.IGNORE + (self.options.type,)
+        DocCLI.IGNORE = DocCLI.IGNORE + (context.CLIARGS['type'],)
         opt_indent = "        "
         text = []
         pad = display.columns * 0.20
         limit = max(display.columns - int(pad), 70)
 
-        text.append("> %s    (%s)\n" % (doc.get(self.options.type, doc.get('plugin_type')).upper(), doc.pop('filename')))
+        text.append("> %s    (%s)\n" % (doc.get(context.CLIARGS['type'], doc.get('plugin_type')).upper(), doc.pop('filename')))
 
         if isinstance(doc['description'], list):
             desc = " ".join(doc.pop('description'))
         else:
             desc = doc.pop('description')
 
-        text.append("%s\n" % textwrap.fill(CLI.tty_ify(desc), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
+        text.append("%s\n" % textwrap.fill(DocCLI.tty_ify(desc), limit, initial_indent=opt_indent,
+                                           subsequent_indent=opt_indent))
 
         if 'deprecated' in doc and doc['deprecated'] is not None and len(doc['deprecated']) > 0:
             text.append("DEPRECATED: \n")
             if isinstance(doc['deprecated'], dict):
+                if 'version' in doc['deprecated'] and 'removed_in' not in doc['deprecated']:
+                    doc['deprecated']['removed_in'] = doc['deprecated']['version']
                 text.append("\tReason: %(why)s\n\tWill be removed in: Ansible %(removed_in)s\n\tAlternatives: %(alternative)s" % doc.pop('deprecated'))
             else:
                 text.append("%s" % doc.pop('deprecated'))
             text.append("\n")
 
         try:
-            support_block = self.get_support_block(doc)
+            support_block = DocCLI.get_support_block(doc)
             if support_block:
                 text.extend(support_block)
         except Exception:
@@ -486,43 +572,83 @@ class DocCLI(CLI):
 
         if 'options' in doc and doc['options']:
             text.append("OPTIONS (= is mandatory):\n")
-            self.add_fields(text, doc.pop('options'), limit, opt_indent)
+            DocCLI.add_fields(text, doc.pop('options'), limit, opt_indent)
             text.append('')
 
         if 'notes' in doc and doc['notes'] and len(doc['notes']) > 0:
             text.append("NOTES:")
             for note in doc['notes']:
-                text.append(textwrap.fill(CLI.tty_ify(note), limit - 6, initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
+                text.append(textwrap.fill(DocCLI.tty_ify(note), limit - 6,
+                                          initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
+            text.append('')
             text.append('')
             del doc['notes']
 
+        if 'seealso' in doc and doc['seealso']:
+            text.append("SEE ALSO:")
+            for item in doc['seealso']:
+                if 'module' in item and 'description' in item:
+                    text.append(textwrap.fill(DocCLI.tty_ify('Module %s' % item['module']),
+                                limit - 6, initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
+                    text.append(textwrap.fill(DocCLI.tty_ify(item['description']),
+                                limit - 6, initial_indent=opt_indent, subsequent_indent=opt_indent))
+                    text.append(textwrap.fill(DocCLI.tty_ify('https://docs.ansible.com/ansible/latest/modules/%s_module.html' % item['module']),
+                                limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent))
+                elif 'module' in item:
+                    text.append(textwrap.fill(DocCLI.tty_ify('Module %s' % item['module']),
+                                limit - 6, initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
+                    text.append(textwrap.fill(DocCLI.tty_ify('The official documentation on the %s module.' % item['module']),
+                                limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
+                    text.append(textwrap.fill(DocCLI.tty_ify('https://docs.ansible.com/ansible/latest/modules/%s_module.html' % item['module']),
+                                limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent))
+                elif 'name' in item and 'link' in item and 'description' in item:
+                    text.append(textwrap.fill(DocCLI.tty_ify(item['name']),
+                                limit - 6, initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
+                    text.append(textwrap.fill(DocCLI.tty_ify(item['description']),
+                                limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
+                    text.append(textwrap.fill(DocCLI.tty_ify(item['link']),
+                                limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
+                elif 'ref' in item and 'description' in item:
+                    text.append(textwrap.fill(DocCLI.tty_ify('Ansible documentation [%s]' % item['ref']),
+                                limit - 6, initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
+                    text.append(textwrap.fill(DocCLI.tty_ify(item['description']),
+                                limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
+                    text.append(textwrap.fill(DocCLI.tty_ify('https://docs.ansible.com/ansible/latest/#stq=%s&stp=1' % item['ref']),
+                                limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
+
+            text.append('')
+            text.append('')
+            del doc['seealso']
+
         if 'requirements' in doc and doc['requirements'] is not None and len(doc['requirements']) > 0:
             req = ", ".join(doc.pop('requirements'))
-            text.append("REQUIREMENTS:%s\n" % textwrap.fill(CLI.tty_ify(req), limit - 16, initial_indent="  ", subsequent_indent=opt_indent))
+            text.append("REQUIREMENTS:%s\n" % textwrap.fill(DocCLI.tty_ify(req), limit - 16, initial_indent="  ", subsequent_indent=opt_indent))
 
         # Generic handler
         for k in sorted(doc):
-            if k in self.IGNORE or not doc[k]:
+            if k in DocCLI.IGNORE or not doc[k]:
                 continue
             if isinstance(doc[k], string_types):
-                text.append('%s: %s' % (k.upper(), textwrap.fill(CLI.tty_ify(doc[k]), limit - (len(k) + 2), subsequent_indent=opt_indent)))
+                text.append('%s: %s' % (k.upper(), textwrap.fill(DocCLI.tty_ify(doc[k]), limit - (len(k) + 2), subsequent_indent=opt_indent)))
             elif isinstance(doc[k], (list, tuple)):
                 text.append('%s: %s' % (k.upper(), ', '.join(doc[k])))
             else:
-                text.append(self._dump_yaml({k.upper(): doc[k]}, opt_indent))
+                text.append(DocCLI._dump_yaml({k.upper(): doc[k]}, opt_indent))
             del doc[k]
         text.append('')
 
         if 'plainexamples' in doc and doc['plainexamples'] is not None:
             text.append("EXAMPLES:")
+            text.append('')
             if isinstance(doc['plainexamples'], string_types):
                 text.append(doc.pop('plainexamples').strip())
             else:
                 text.append(yaml.dump(doc.pop('plainexamples'), indent=2, default_flow_style=False))
             text.append('')
+            text.append('')
 
         if 'returndocs' in doc and doc['returndocs'] is not None:
-            text.append("RETURN VALUES:\n")
+            text.append("RETURN VALUES:")
             if isinstance(doc['returndocs'], string_types):
                 text.append(doc.pop('returndocs'))
             else:
@@ -530,7 +656,7 @@ class DocCLI(CLI):
         text.append('')
 
         try:
-            metadata_block = self.get_metadata_block(doc)
+            metadata_block = DocCLI.get_metadata_block(doc)
             if metadata_block:
                 text.extend(metadata_block)
                 text.append('')

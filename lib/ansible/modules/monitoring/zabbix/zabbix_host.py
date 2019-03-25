@@ -16,16 +16,16 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: zabbix_host
-short_description: Zabbix host creates/updates/deletes
+short_description: Create/update/delete Zabbix hosts
 description:
    - This module allows you to create, modify and delete Zabbix host entries and associated group and template data.
 version_added: "2.0"
 author:
-    - "(@cove)"
-    - "Tony Minfei Ding"
-    - "Harrison Gu (@harrisongu)"
-    - "Werner Dijkerman"
-    - "Eike Frost (@eikef)"
+    - "Cove (@cove)"
+    - Tony Minfei Ding (!UNKNOWN)
+    - Harrison Gu (@harrisongu)
+    - Werner Dijkerman (@dj-wasabi)
+    - Eike Frost (@eikef)
 requirements:
     - "python >= 2.6"
     - "zabbix-api >= 0.5.3"
@@ -396,7 +396,7 @@ class Host(object):
         if len(proxy_list) < 1:
             self._module.fail_json(msg="Proxy not found: %s" % proxy_name)
         else:
-            return proxy_list[0]['proxyid']
+            return int(proxy_list[0]['proxyid'])
 
     # get group ids by group names
     def get_group_ids_by_group_names(self, group_names):
@@ -763,7 +763,7 @@ def main():
 
         # If proxy is not specified as a module parameter, use the existing setting
         if proxy is None:
-            proxy_id = zabbix_host_obj['proxy_hostid']
+            proxy_id = int(zabbix_host_obj['proxy_hostid'])
 
         if state == "absent":
             # remove host
@@ -814,12 +814,12 @@ def main():
                                          description, host_name, inventory_mode, inventory_zabbix,
                                          tls_accept, tls_psk_identity, tls_psk, tls_issuer, tls_subject, tls_connect,
                                          ipmi_authtype, ipmi_privilege, ipmi_username, ipmi_password):
-                host.link_or_clear_template(host_id, template_ids, tls_connect, tls_accept, tls_psk_identity,
-                                            tls_psk, tls_issuer, tls_subject, ipmi_authtype, ipmi_privilege,
-                                            ipmi_username, ipmi_password)
                 host.update_host(host_name, group_ids, status, host_id,
                                  interfaces, exist_interfaces, proxy_id, visible_name, description, tls_connect, tls_accept,
                                  tls_psk_identity, tls_psk, tls_issuer, tls_subject, ipmi_authtype, ipmi_privilege, ipmi_username, ipmi_password)
+                host.link_or_clear_template(host_id, template_ids, tls_connect, tls_accept, tls_psk_identity,
+                                            tls_psk, tls_issuer, tls_subject, ipmi_authtype, ipmi_privilege,
+                                            ipmi_username, ipmi_password)
                 host.update_inventory_mode(host_id, inventory_mode)
                 host.update_inventory_zabbix(host_id, inventory_zabbix)
 

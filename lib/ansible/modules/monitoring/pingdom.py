@@ -21,7 +21,7 @@ description:
 version_added: "1.2"
 author:
     - "Dylan Silva (@thaumos)"
-    - "Justin Johns"
+    - "Justin Johns (!UNKNOWN)"
 requirements:
     - "This pingdom python library: https://github.com/mbabineau/pingdom-python"
 options:
@@ -68,13 +68,17 @@ EXAMPLES = '''
     state: running
 '''
 
+import traceback
+
+PINGDOM_IMP_ERR = None
 try:
     import pingdom
     HAS_PINGDOM = True
-except:
+except Exception:
+    PINGDOM_IMP_ERR = traceback.format_exc()
     HAS_PINGDOM = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 
 def pause(checkid, uid, passwd, key):
@@ -114,7 +118,7 @@ def main():
     )
 
     if not HAS_PINGDOM:
-        module.fail_json(msg="Missing required pingdom module (check docs)")
+        module.fail_json(msg=missing_required_lib("pingdom"), exception=PINGDOM_IMP_ERR)
 
     checkid = module.params['checkid']
     state = module.params['state']

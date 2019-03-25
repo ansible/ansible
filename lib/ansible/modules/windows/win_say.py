@@ -25,33 +25,36 @@ options:
       - The text to be spoken.
       - Use either C(msg) or C(msg_file).
       - Optional so that you can use this module just to play sounds.
+    type: str
   msg_file:
     description:
       - Full path to a windows format text file containing the text to be spokend.
       - Use either C(msg) or C(msg_file).
       - Optional so that you can use this module just to play sounds.
+    type: path
   voice:
     description:
       - Which voice to use. See notes for how to discover installed voices.
       - If the requested voice is not available the default voice will be used.
         Example voice names from Windows 10 are C(Microsoft Zira Desktop) and C(Microsoft Hazel Desktop).
-    default: system default voice
+    type: str
   speech_speed:
     description:
       - How fast or slow to speak the text.
       - Must be an integer value in the range -10 to 10.
       - -10 is slowest, 10 is fastest.
+    type: int
     default: 0
   start_sound_path:
     description:
       - Full path to a C(.wav) file containing a sound to play before the text is spoken.
       - Useful on conference calls to alert other speakers that ansible has something to say.
+    type: path
   end_sound_path:
     description:
       - Full path to a C(.wav) file containing a sound to play after the text has been spoken.
       - Useful on conference calls to alert other speakers that ansible has finished speaking.
-author:
-- Jon Hawkesworth (@jhawkesworth)
+    type: path
 notes:
    - Needs speakers or headphones to do anything useful.
    - |
@@ -63,6 +66,11 @@ notes:
                  $speech.Dispose()
 
    - Speech can be surprisingly slow, so it's best to keep message text short.
+seealso:
+- module: win_msg
+- module: win_toast
+author:
+- Jon Hawkesworth (@jhawkesworth)
 '''
 
 EXAMPLES = r'''
@@ -91,18 +99,18 @@ EXAMPLES = r'''
 
 RETURN = r'''
 message_text:
-    description: the text that the module attempted to speak
+    description: The text that the module attempted to speak.
     returned: success
-    type: string
+    type: str
     sample: "Warning, deployment commencing in 5 minutes."
 voice:
-    description: the voice used to speak the text.
+    description: The voice used to speak the text.
     returned: success
-    type: string
+    type: str
     sample: Microsoft Hazel Desktop
 voice_info:
-    description: the voice used to speak the text.
+    description: The voice used to speak the text.
     returned: when requested voice could not be loaded
-    type: string
+    type: str
     sample: Could not load voice TestVoice, using system default voice
 '''

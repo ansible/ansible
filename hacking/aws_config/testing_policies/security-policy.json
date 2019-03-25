@@ -3,26 +3,93 @@
     "Statement": [
         {
             "Action": [
+                "iam:GetGroup",
+                "iam:GetInstanceProfile",
                 "iam:GetPolicy",
                 "iam:GetPolicyVersion",
                 "iam:GetRole",
+                "iam:GetRolePolicy",
+                "iam:GetUser",
+                "iam:ListAttachedGroupPolicies",
                 "iam:ListAttachedRolePolicies",
+                "iam:ListAttachedUserPolicies",
                 "iam:ListGroups",
+                "iam:ListInstanceProfiles",
                 "iam:ListInstanceProfilesForRole",
                 "iam:ListPolicies",
                 "iam:ListRoles",
                 "iam:ListRolePolicies",
-                "iam:ListUsers"
+                "iam:ListUsers",
+                "iam:ListAccountAliases"
             ],
             "Resource": "*",
             "Effect": "Allow",
             "Sid": "AllowReadOnlyIAMUse"
         },
         {
+            "Action": [
+                "iam:AttachRolePolicy",
+                "iam:CreateRole",
+                "iam:DeleteRole",
+                "iam:DetachRolePolicy",
+                "iam:PassRole"
+             ],
+            "Resource": "arn:aws:iam::{{ aws_account }}:role/ansible-test-*",
+            "Effect": "Allow",
+            "Sid": "AllowUpdateOfSpecificRoles"
+        },
+        {
+            "Action": [
+                "iam:CreateInstanceProfile",
+                "iam:DeleteInstanceProfile",
+                "iam:AddRoleToInstanceProfile",
+                "iam:RemoveRoleFromInstanceProfile"
+             ],
+            "Resource": "arn:aws:iam::{{ aws_account }}:instance-profile/ansible-test-*",
+            "Effect": "Allow",
+            "Sid": "AllowUpdateOfSpecificInstanceProfiles"
+        },
+        {
+            "Action": [
+                "ec2:ReplaceIamInstanceProfileAssociation"
+             ],
+            "Resource": "*",
+            "Condition": {
+              "ArnEquals": {
+                "ec2:InstanceProfile": "arn:aws:iam::{{ aws_account }}:instance-profile/ansible-test-*"
+              }
+            },
+            "Effect": "Allow",
+            "Sid": "AllowReplacementOfSpecificInstanceProfiles"
+        },
+
+        {
             "Sid": "AllowWAFusage",
             "Action": "waf:*",
             "Effect": "Allow",
             "Resource": "*"
+        },
+        {
+            "Sid": "AllowListingCloudwatchLogs",
+            "Effect": "Allow",
+            "Action": [
+                "logs:DescribeLogGroups"
+            ],
+            "Resource": [
+                "arn:aws:logs:{{aws_region}}:{{aws_account}}:log-group:*"
+            ]
+        },
+        {
+            "Sid": "AllowModifyingCloudwatchLogs",
+            "Effect": "Allow",
+            "Action": [
+                "logs:CreateLogGroup",
+                "logs:PutRetentionPolicy",
+                "logs:DeleteLogGroup"
+            ],
+            "Resource": [
+                "arn:aws:logs:{{aws_region}}:{{aws_account}}:log-group:ansible-testing*"
+            ]
         }
     ]
 }

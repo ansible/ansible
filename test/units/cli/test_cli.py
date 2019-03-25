@@ -19,8 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock
+from units.compat import unittest
+from units.compat.mock import patch, MagicMock
 
 from units.mock.loader import DictDataLoader
 
@@ -30,11 +30,6 @@ from ansible import cli
 
 
 class TestCliVersion(unittest.TestCase):
-
-    def test_version(self):
-        ver = cli.CLI.version('ansible-cli-test')
-        self.assertIn('ansible-cli-test', ver)
-        self.assertIn('python version', ver)
 
     def test_version_info(self):
         version_info = cli.CLI.version_info()

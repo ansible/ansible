@@ -42,6 +42,7 @@
                 "ec2:AssociateVpcCidrBlock",
                 "ec2:AssociateSubnetCidrBlock",
                 "ec2:AttachInternetGateway",
+                "ec2:AttachNetworkInterface",
                 "ec2:AttachVpnGateway",
                 "ec2:CreateCustomerGateway",
                 "ec2:CreateDhcpOptions",
@@ -80,6 +81,7 @@
                 "ec2:DisassociateSubnetCidrBlock",
                 "ec2:ImportKeyPair",
                 "ec2:ModifyImageAttribute",
+                "ec2:ModifyInstanceAttribute",
                 "ec2:ModifySubnetAttribute",
                 "ec2:ModifyVpcAttribute",
                 "ec2:RegisterImage",
@@ -95,11 +97,15 @@
                 "ec2:AuthorizeSecurityGroupIngress",
                 "ec2:AuthorizeSecurityGroupEgress",
                 "ec2:CreateTags",
+                "ec2:CreateVolume",
                 "ec2:DeleteRouteTable",
                 "ec2:DeleteSecurityGroup",
+                "ec2:DeleteVolume",
                 "ec2:RevokeSecurityGroupEgress",
                 "ec2:RevokeSecurityGroupIngress",
                 "ec2:RunInstances",
+                "ec2:StartInstances",
+                "ec2:StopInstances",
                 "ec2:TerminateInstances",
                 "ec2:UpdateSecurityGroupRuleDescriptionsIngress",
                 "ec2:UpdateSecurityGroupRuleDescriptionsEgress"
@@ -107,29 +113,6 @@
             "Resource": [
                 "arn:aws:ec2:{{aws_region}}::image/*",
                 "arn:aws:ec2:{{aws_region}}:{{aws_account}}:*"
-            ]
-        },
-        {
-            "Sid": "UnspecifiedCodeRepositories",
-            "Effect": "Allow",
-            "Action": [
-                "ecr:DescribeRepositories",
-                "ecr:CreateRepository"
-            ],
-            "Resource": "*"
-        },
-        {
-            "Sid": "SpecifiedCodeRepositories",
-            "Effect": "Allow",
-            "Action": [
-                "ecr:GetRepositoryPolicy",
-                "ecr:SetRepositoryPolicy",
-                "ecr:DeleteRepository",
-                "ecr:DeleteRepositoryPolicy",
-                "ecr:DeleteRepositoryPolicy"
-            ],
-            "Resource": [
-                "arn:aws:ecr:{{aws_region}}:{{aws_account}}:repository/ansible-*"
             ]
         },
 {# According to http://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/load-balancer-authentication-access-control.html #}
@@ -235,31 +218,10 @@
             "Resource": [
                 "arn:aws:iam::{{aws_account}}:role/ansible_lambda_role",
                 "arn:aws:iam::{{aws_account}}:role/ecsInstanceRole",
-                "arn:aws:iam::{{aws_account}}:role/ecsServiceRole"
+                "arn:aws:iam::{{aws_account}}:role/ecsServiceRole",
+                "arn:aws:iam::{{aws_account}}:role/aws_eks_cluster_role",
+                "arn:aws:iam::{{aws_account}}:role/ecsTaskExecutionRole"
             ]
-        },
-        {
-          "Sid": "AllowECSManagement",
-          "Effect": "Allow",
-          "Action": [
-            "application-autoscaling:Describe*",
-            "application-autoscaling:PutScalingPolicy",
-            "application-autoscaling:RegisterScalableTarget",
-            "cloudwatch:DescribeAlarms",
-            "cloudwatch:PutMetricAlarm",
-            "ecs:CreateCluster",
-            "ecs:CreateService",
-            "ecs:DeleteCluster",
-            "ecs:DeleteService",
-            "ecs:Describe*",
-            "ecs:DeregisterTaskDefinition",
-            "ecs:List*",
-            "ecs:RegisterTaskDefinition",
-            "ecs:UpdateService"
-          ],
-          "Resource": [
-            "*"
-          ]
         },
         {
           "Sid": "AllowSESManagement",
@@ -276,7 +238,14 @@
             "ses:GetIdentityPolicies",
             "ses:PutIdentityPolicy",
             "ses:DeleteIdentityPolicy",
-            "ses:ListIdentityPolicies"
+            "ses:ListIdentityPolicies",
+            "ses:SetIdentityFeedbackForwardingEnabled",
+            "ses:ListReceiptRuleSets",
+            "ses:DescribeReceiptRuleSet",
+            "ses:DescribeActiveReceiptRuleSet",
+            "ses:SetActiveReceiptRuleSet",
+            "ses:CreateReceiptRuleSet",
+            "ses:DeleteReceiptRuleSet"
           ],
           "Resource": [
             "*"
@@ -288,9 +257,13 @@
             "Action": [
               "SNS:CreateTopic",
               "SNS:DeleteTopic",
-              "SNS:ListTopics",
               "SNS:GetTopicAttributes",
-              "SNS:ListSubscriptionsByTopic"
+              "SNS:ListSubscriptions",
+              "SNS:ListSubscriptionsByTopic",
+              "SNS:ListTopics",
+              "SNS:SetTopicAttributes",
+              "SNS:Subscribe",
+              "SNS:Unsubscribe"
             ],
             "Resource": [
               "*"

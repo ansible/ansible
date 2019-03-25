@@ -40,7 +40,7 @@ extends_documentation_fragment:
 EXAMPLES = '''
 # Get facts about an instance
 - rds_instance_facts:
-    name: new-database
+    db_instance_identifier: new-database
   register: new_database_facts
 
 # Get all RDS instances
@@ -66,7 +66,7 @@ instances:
     availability_zone:
       description: Availability Zone in which the database resides
       returned: always
-      type: string
+      type: str
       sample: us-west-2b
     backup_retention_period:
       description: Days for which backups are retained
@@ -76,7 +76,7 @@ instances:
     ca_certificate_identifier:
       description: ID for the CA certificate
       returned: always
-      type: string
+      type: str
       sample: rds-ca-2015
     copy_tags_to_snapshot:
       description: Whether DB tags should be copied to the snapshot
@@ -86,17 +86,17 @@ instances:
     db_instance_arn:
       description: ARN of the database instance
       returned: always
-      type: string
+      type: str
       sample: arn:aws:rds:us-west-2:111111111111:db:helloworld-rds
     db_instance_class:
       description: Instance class of the database instance
       returned: always
-      type: string
+      type: str
       sample: db.t2.small
     db_instance_identifier:
       description: Database instance identifier
       returned: always
-      type: string
+      type: str
       sample: helloworld-rds
     db_instance_port:
       description: Port used by the database instance
@@ -106,12 +106,12 @@ instances:
     db_instance_status:
       description: Status of the database instance
       returned: always
-      type: string
+      type: str
       sample: available
     db_name:
       description: Name of the database
       returned: always
-      type: string
+      type: str
       sample: management
     db_parameter_groups:
       description: List of database parameter groups
@@ -121,12 +121,12 @@ instances:
         db_parameter_group_name:
           description: Name of the database parameter group
           returned: always
-          type: string
+          type: str
           sample: psql-pg-helloworld
         parameter_apply_status:
           description: Whether the parameter group has been applied
           returned: always
-          type: string
+          type: str
           sample: in-sync
     db_security_groups:
       description: List of security groups used by the database instance
@@ -141,17 +141,17 @@ instances:
         db_subnet_group_description:
           description: Description of the DB subnet group
           returned: always
-          type: string
+          type: str
           sample: My database subnet group
         db_subnet_group_name:
           description: Name of the database subnet group
           returned: always
-          type: string
+          type: str
           sample: my-subnet-group
         subnet_group_status:
           description: Subnet group status
           returned: always
-          type: string
+          type: str
           sample: Complete
         subnets:
           description: List of subnets in the subnet group
@@ -166,27 +166,27 @@ instances:
                 name:
                   description: Name of the availability zone
                   returned: always
-                  type: string
+                  type: str
                   sample: us-west-2c
             subnet_identifier:
               description: Subnet ID
               returned: always
-              type: string
+              type: str
               sample: subnet-abcd1234
             subnet_status:
               description: Subnet status
               returned: always
-              type: string
+              type: str
               sample: Active
         vpc_id:
           description: VPC id of the subnet group
           returned: always
-          type: string
+          type: str
           sample: vpc-abcd1234
     dbi_resource_id:
       description: AWS Region-unique, immutable identifier for the DB instance
       returned: always
-      type: string
+      type: str
       sample: db-AAAAAAAAAAAAAAAAAAAAAAAAAA
     domain_memberships:
       description: List of domain memberships
@@ -201,12 +201,12 @@ instances:
         address:
           description: Database endpoint address
           returned: always
-          type: string
+          type: str
           sample: helloworld-rds.ctrqpe3so1sf.us-west-2.rds.amazonaws.com
         hosted_zone_id:
           description: Route53 hosted zone ID
           returned: always
-          type: string
+          type: str
           sample: Z1PABCD0000000
         port:
           description: Database endpoint port
@@ -216,12 +216,12 @@ instances:
     engine:
       description: Database engine
       returned: always
-      type: string
+      type: str
       sample: postgres
     engine_version:
       description: Database engine version
       returned: always
-      type: string
+      type: str
       sample: 9.5.10
     iam_database_authentication_enabled:
       description: Whether database authentication through IAM is enabled
@@ -231,27 +231,27 @@ instances:
     instance_create_time:
       description: Date and time the instance was created
       returned: always
-      type: string
+      type: str
       sample: '2017-10-10T04:00:07.434000+00:00'
     kms_key_id:
       description: KMS Key ID
       returned: always
-      type: string
+      type: str
       sample: arn:aws:kms:us-west-2:111111111111:key/abcd1234-0000-abcd-1111-0123456789ab
     latest_restorable_time:
       description: Latest time to which a database can be restored with point-in-time restore
       returned: always
-      type: string
+      type: str
       sample: '2018-05-17T00:03:56+00:00'
     license_model:
       description: License model
       returned: always
-      type: string
+      type: str
       sample: postgresql-license
     master_username:
       description: Database master username
       returned: always
-      type: string
+      type: str
       sample: dbadmin
     monitoring_interval:
       description: Interval, in seconds, between points when Enhanced Monitoring metrics are collected for the DB instance
@@ -271,12 +271,12 @@ instances:
         option_group_name:
           description: Option group name
           returned: always
-          type: string
+          type: str
           sample: default:postgres-9-5
         status:
           description: Status of option group
           returned: always
-          type: string
+          type: str
           sample: in-sync
     pending_modified_values:
       description: Modified values pending application
@@ -291,12 +291,12 @@ instances:
     preferred_backup_window:
       description: Preferred backup window
       returned: always
-      type: string
+      type: str
       sample: 04:00-05:00
     preferred_maintenance_window:
       description: Preferred maintenance window
       returned: always
-      type: string
+      type: str
       sample: mon:05:00-mon:05:30
     publicly_accessible:
       description: Whether the DB is publicly accessible
@@ -316,7 +316,7 @@ instances:
     storage_type:
       description: Storage type of the Database instance
       returned: always
-      type: string
+      type: str
       sample: gp2
     tags:
       description: Tags used by the database instance
@@ -331,16 +331,16 @@ instances:
         status:
           description: Status of the VPC security group
           returned: always
-          type: string
+          type: str
           sample: active
         vpc_security_group_id:
           description: VPC Security Group ID
           returned: always
-          type: string
+          type: str
           sample: sg-abcd1234
 '''
 
-from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, boto3_tag_list_to_ansible_dict, AWSRetry, camel_dict_to_snake_dict
 
 
@@ -363,9 +363,9 @@ def instance_facts(module, conn):
     paginator = conn.get_paginator('describe_db_instances')
     try:
         results = paginator.paginate(**params).build_full_result()['DBInstances']
-    except conn.exceptions.from_code('DBInstanceNotFound'):
+    except is_boto3_error_code('DBInstanceNotFound'):
         results = []
-    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:  # pylint: disable=duplicate-except
         module.fail_json_aws(e, "Couldn't get instance information")
 
     for instance in results:

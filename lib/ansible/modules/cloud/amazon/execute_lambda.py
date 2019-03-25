@@ -74,7 +74,7 @@ options:
     description:
       - Which version/alias of the function to run. This defaults to the
         C(LATEST) revision, but can be set to any existing version or alias.
-        See https;//docs.aws.amazon.com/lambda/latest/dg/versioning-aliases.html
+        See U(https://docs.aws.amazon.com/lambda/latest/dg/versioning-aliases.html)
         for details.
     default: LATEST
   payload:
@@ -121,7 +121,7 @@ output:
     sample: "{ 'output': 'something' }"
 logs:
     description: The last 4KB of the function logs. Only provided if I(tail_log) is true
-    type: string
+    type: str
     returned: if I(tail_log) == true
 status:
     description: C(StatusCode) of API call exit (200 for synchronous invokes, 202 for async)
@@ -237,7 +237,7 @@ def main():
                          exception=traceback.format_exc())
     except botocore.exceptions.ParamValidationError as ve:
         module.fail_json(msg="Parameters to `invoke` failed to validate",
-                         exception=traceback.format_exc(ve))
+                         exception=traceback.format_exc())
     except Exception as e:
         module.fail_json(msg="Unexpected failure while invoking Lambda function",
                          exception=traceback.format_exc())

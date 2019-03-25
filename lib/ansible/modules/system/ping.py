@@ -25,15 +25,16 @@ description:
    - This is NOT ICMP ping, this is just a trivial test module that requires Python on the remote-node.
    - For Windows targets, use the M(win_ping) module instead.
    - For Network targets, use the M(net_ping) module instead.
-notes:
-   - For Windows targets, use the M(win_ping) module instead.
-   - For Network targets, use the M(net_ping) module instead.
 options:
   data:
     description:
       - Data to return for the C(ping) return value.
       - If this parameter is set to C(crash), the module will cause an exception.
+    type: str
     default: pong
+seealso:
+- module: net_ping
+- module: win_ping
 author:
     - Ansible Core Team
     - Michael DeHaan
@@ -55,7 +56,7 @@ RETURN = '''
 ping:
     description: value provided with the data parameter
     returned: success
-    type: string
+    type: str
     sample: pong
 '''
 

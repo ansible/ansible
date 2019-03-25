@@ -14,8 +14,6 @@
     description: test-interface-1
     mtu: 1800
     state: present
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -24,8 +22,6 @@
     name: "{{ test_interface_1 }}"
     description: test-interface-initial
     state: present
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -41,8 +37,6 @@
     description: test-interface
     mtu: 2000
     state: present
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
   register: result
 

@@ -1,0 +1,7 @@
+---
+subversion_packages:
+- apache24
+- mod_dav_svn
+- subversion
+apache_user: www
+apache_group: www

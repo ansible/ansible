@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division)
 __metaclass__ = type
 
-from ansible.compat.tests.mock import Mock, patch
+from units.compat.mock import Mock, patch
 
 from .. base import BaseFactsTest
 
@@ -88,7 +88,7 @@ class TestLSBFacts(BaseFactsTest):
         self.assertIsInstance(facts_dict, dict)
         self.assertEqual(facts_dict['lsb']['release'], '14.04')
         self.assertEqual(facts_dict['lsb']['id'], 'Ubuntu')
-        self.assertEqual(facts_dict['lsb']['description'], '"Ubuntu 14.04.3 LTS"')
+        self.assertEqual(facts_dict['lsb']['description'], 'Ubuntu 14.04.3 LTS')
         self.assertEqual(facts_dict['lsb']['codename'], 'trusty')
 
     def test_etc_lsb_release_no_decimal_release(self):
@@ -104,5 +104,5 @@ class TestLSBFacts(BaseFactsTest):
         self.assertIsInstance(facts_dict, dict)
         self.assertEqual(facts_dict['lsb']['release'], '11')
         self.assertEqual(facts_dict['lsb']['id'], 'AwesomeOS')
-        self.assertEqual(facts_dict['lsb']['description'], '"AwesomeÖS 11"')
+        self.assertEqual(facts_dict['lsb']['description'], 'AwesomeÖS 11')
         self.assertEqual(facts_dict['lsb']['codename'], 'stonehenge')

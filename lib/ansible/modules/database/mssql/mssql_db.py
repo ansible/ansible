@@ -61,7 +61,7 @@ notes:
 requirements:
    - python >= 2.7
    - pymssql
-author: Vedit Firat Arig
+author: Vedit Firat Arig (@vedit)
 '''
 
 EXAMPLES = '''
@@ -86,15 +86,18 @@ RETURN = '''
 '''
 
 import os
+import traceback
 
+PYMSSQL_IMP_ERR = None
 try:
     import pymssql
 except ImportError:
+    PYMSSQL_IMP_ERR = traceback.format_exc()
     mssql_found = False
 else:
     mssql_found = True
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 
 def db_exists(conn, cursor, db):
@@ -111,7 +114,7 @@ def db_create(conn, cursor, db):
 def db_delete(conn, cursor, db):
     try:
         cursor.execute("ALTER DATABASE [%s] SET single_user WITH ROLLBACK IMMEDIATE" % db)
-    except:
+    except Exception:
         pass
     cursor.execute("DROP DATABASE [%s]" % db)
     return not db_exists(conn, cursor, db)
@@ -155,7 +158,7 @@ def main():
     )
 
     if not mssql_found:
-        module.fail_json(msg="pymssql python module is required")
+        module.fail_json(msg=missing_required_lib('pymssql'), exception=PYMSSQL_IMP_ERR)
 
     db = module.params['name']
     state = module.params['state']

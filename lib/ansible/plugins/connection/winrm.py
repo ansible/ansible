@@ -37,7 +37,7 @@ DOCUMENTATION = """
       port:
         description:
             - port for winrm to connect on remote target
-            - The default is the https (5896) port, if using http it should be 5895
+            - The default is the https (5986) port, if using http it should be 5985
         vars:
           - name: ansible_port
           - name: ansible_winrm_port
@@ -97,7 +97,7 @@ DOCUMENTATION = """
 """
 
 import base64
-import inspect
+import logging
 import os
 import re
 import traceback
@@ -112,21 +112,32 @@ try:
 except ImportError:
     pass
 
+from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.errors import AnsibleFileNotFound
+from ansible.module_utils.json_utils import _filter_non_json_lines
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six.moves.urllib.parse import urlunsplit
 from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.module_utils.six import binary_type
+from ansible.module_utils.six import binary_type, PY3
 from ansible.plugins.connection import ConnectionBase
-from ansible.plugins.shell.powershell import leaf_exec
+from ansible.plugins.shell.powershell import _parse_clixml
 from ansible.utils.hashing import secure_hash
 from ansible.utils.path import makedirs_safe
+from ansible.utils.display import Display
+
+# getargspec is deprecated in favour of getfullargspec in Python 3 but
+# getfullargspec is not available in Python 2
+if PY3:
+    from inspect import getfullargspec as getargspec
+else:
+    from inspect import getargspec
 
 try:
     import winrm
     from winrm import Response
     from winrm.protocol import Protocol
+    import requests.exceptions
     HAS_WINRM = True
 except ImportError as e:
     HAS_WINRM = False
@@ -139,11 +150,18 @@ except ImportError as e:
     HAS_XMLTODICT = False
     XMLTODICT_IMPORT_ERR = e
 
+HAS_PEXPECT = False
 try:
     import pexpect
-    HAS_PEXPECT = True
+    # echo was added in pexpect 3.3+ which is newer than the RHEL package
+    # we can only use pexpect for kerb auth if echo is a valid kwarg
+    # https://github.com/ansible/ansible/issues/43462
+    if hasattr(pexpect, 'spawn'):
+        argspec = getargspec(pexpect.spawn.__init__)
+        if 'echo' in argspec.args:
+            HAS_PEXPECT = True
 except ImportError as e:
-    HAS_PEXPECT = False
+    pass
 
 # used to try and parse the hostname and detect if IPv6 is being used
 try:
@@ -152,11 +170,7 @@ try:
 except ImportError:
     HAS_IPADDRESS = False
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class Connection(ConnectionBase):
@@ -164,7 +178,6 @@ class Connection(ConnectionBase):
 
     transport = 'winrm'
     module_implementation_preferences = ('.ps1', '.exe', '')
-    become_methods = ['runas']
     allow_executable = False
     has_pipelining = True
     allow_extras = True
@@ -181,19 +194,19 @@ class Connection(ConnectionBase):
 
         super(Connection, self).__init__(*args, **kwargs)
 
-    def set_options(self, task_keys=None, var_options=None, direct=None):
-        if not HAS_WINRM:
-            return
+        if not C.DEFAULT_DEBUG:
+            logging.getLogger('requests_credssp').setLevel(logging.INFO)
+            logging.getLogger('requests_kerberos').setLevel(logging.INFO)
+            logging.getLogger('urllib3').setLevel(logging.INFO)
 
-        super(Connection, self).set_options(task_keys=None, var_options=var_options, direct=direct)
-
+    def _build_winrm_kwargs(self):
+        # this used to be in set_options, as win_reboot needs to be able to
+        # override the conn timeout, we need to be able to build the args
+        # after setting individual options. This is called by _connect before
+        # starting the WinRM connection
         self._winrm_host = self.get_option('remote_addr')
         self._winrm_user = self.get_option('remote_user')
         self._winrm_pass = self._play_context.password
-
-        self._become_method = self._play_context.become_method
-        self._become_user = self._play_context.become_user
-        self._become_pass = self._play_context.become_pass
 
         self._winrm_port = self.get_option('port')
 
@@ -244,7 +257,7 @@ class Connection(ConnectionBase):
         internal_kwarg_mask = set(['self', 'endpoint', 'transport', 'username', 'password', 'scheme', 'path', 'kinit_mode', 'kinit_cmd'])
 
         self._winrm_kwargs = dict(username=self._winrm_user, password=self._winrm_pass)
-        argspec = inspect.getargspec(Protocol.__init__)
+        argspec = getargspec(Protocol.__init__)
         supported_winrm_args = set(argspec.args)
         supported_winrm_args.update(internal_kwarg_mask)
         passed_winrm_args = set([v.replace('ansible_winrm_', '') for v in self.get_option('_extras')])
@@ -294,7 +307,7 @@ class Connection(ConnectionBase):
                          % principal)
             try:
                 child = pexpect.spawn(command, kinit_cmdline, timeout=60,
-                                      env=krb5env)
+                                      env=krb5env, echo=False)
             except pexpect.ExceptionPexpect as err:
                 err_msg = "Kerberos auth failure when calling kinit cmd " \
                           "'%s': %s" % (command, to_native(err))
@@ -336,8 +349,13 @@ class Connection(ConnectionBase):
             rc = p.returncode != 0
 
         if rc != 0:
+            # one last attempt at making sure the password does not exist
+            # in the output
+            exp_msg = to_native(stderr.strip())
+            exp_msg = exp_msg.replace(to_native(password), "<redacted>")
+
             err_msg = "Kerberos auth failure for principal %s with %s: %s" \
-                      % (principal, proc_mechanism, to_native(stderr.strip()))
+                      % (principal, proc_mechanism, exp_msg)
             raise AnsibleConnectionFailure(err_msg)
 
         display.vvvvv("kinit succeeded for principal %s" % principal)
@@ -351,7 +369,7 @@ class Connection(ConnectionBase):
 
         winrm_host = self._winrm_host
         if HAS_IPADDRESS:
-            display.vvvv("checking if winrm_host %s is an IPv6 address" % winrm_host)
+            display.debug("checking if winrm_host %s is an IPv6 address" % winrm_host)
             try:
                 ipaddress.IPv6Address(winrm_host)
             except ipaddress.AddressValueError:
@@ -434,7 +452,9 @@ class Connection(ConnectionBase):
                         self._winrm_send_input(self.protocol, self.shell_id, command_id, data, eof=is_last)
 
             except Exception as ex:
-                display.warning("FATAL ERROR DURING FILE TRANSFER: %s" % to_text(ex))
+                display.warning("ERROR DURING WINRM SEND INPUT - attempting to recover: %s %s"
+                                % (type(ex).__name__, to_text(ex)))
+                display.debug(traceback.format_exc())
                 stdin_push_failed = True
 
             # NB: this can hang if the receiver is still running (eg, network failed a Send request but the server's still happy).
@@ -454,13 +474,23 @@ class Connection(ConnectionBase):
             display.vvvvvv('WINRM STDERR %s' % to_text(response.std_err), host=self._winrm_host)
 
             if stdin_push_failed:
-                stderr = to_bytes(response.std_err, encoding='utf-8')
-                if self.is_clixml(stderr):
-                    stderr = self.parse_clixml_stream(stderr)
+                # There are cases where the stdin input failed but the WinRM service still processed it. We attempt to
+                # see if stdout contains a valid json return value so we can ignore this error
+                try:
+                    filtered_output, dummy = _filter_non_json_lines(response.std_out)
+                    json.loads(filtered_output)
+                except ValueError:
+                    # stdout does not contain a return response, stdin input was a fatal error
+                    stderr = to_bytes(response.std_err, encoding='utf-8')
+                    if self.is_clixml(stderr):
+                        stderr = self.parse_clixml_stream(stderr)
 
-                raise AnsibleError('winrm send_input failed; \nstdout: %s\nstderr %s' % (to_native(response.std_out), to_native(stderr)))
+                    raise AnsibleError('winrm send_input failed; \nstdout: %s\nstderr %s'
+                                       % (to_native(response.std_out), to_native(stderr)))
 
             return response
+        except requests.exceptions.ConnectionError as exc:
+            raise AnsibleConnectionFailure('winrm connection error: %s' % to_native(exc))
         finally:
             if command_id:
                 self.protocol.cleanup_command(self.shell_id, command_id)
@@ -474,29 +504,15 @@ class Connection(ConnectionBase):
 
         super(Connection, self)._connect()
         if not self.protocol:
+            self._build_winrm_kwargs()  # build the kwargs from the options set
             self.protocol = self._winrm_connect()
             self._connected = True
         return self
 
-    def _reset(self):  # used by win_reboot (and any other action that might need to bounce the state)
+    def reset(self):
         self.protocol = None
         self.shell_id = None
         self._connect()
-
-    def _create_raw_wrapper_payload(self, cmd, environment=None):
-        environment = {} if environment is None else environment
-
-        payload = {
-            'module_entry': to_text(base64.b64encode(to_bytes(cmd))),
-            'powershell_modules': {},
-            'actions': ['exec'],
-            'exec': to_text(base64.b64encode(to_bytes(leaf_exec))),
-            'environment': environment,
-            'min_ps_version': None,
-            'min_os_version': None
-        }
-
-        return json.dumps(payload)
 
     def _wrapper_payload_stream(self, payload, buffer_size=200000):
         payload_bytes = to_bytes(payload)
@@ -522,24 +538,14 @@ class Connection(ConnectionBase):
         result.std_err = to_bytes(result.std_err)
 
         # parse just stderr from CLIXML output
-        if self.is_clixml(result.std_err):
+        if result.std_err.startswith(b"#< CLIXML"):
             try:
-                result.std_err = self.parse_clixml_stream(result.std_err)
+                result.std_err = _parse_clixml(result.std_err)
             except Exception:
                 # unsure if we're guaranteed a valid xml doc- use raw output in case of error
                 pass
 
         return (result.status_code, result.std_out, result.std_err)
-
-    def is_clixml(self, value):
-        return value.startswith(b"#< CLIXML")
-
-    # hacky way to get just stdout- not always sure of doc framing here, so use with care
-    def parse_clixml_stream(self, clixml_doc, stream_name='Error'):
-        clear_xml = clixml_doc.replace(b'#< CLIXML\r\n', b'')
-        doc = xmltodict.parse(clear_xml)
-        lines = [l.get('#text', '').replace('_x000D__x000A_', '') for l in doc.get('Objs', {}).get('S', {}) if l.get('@S') == stream_name]
-        return '\r\n'.join(lines)
 
     # FUTURE: determine buffer size at runtime via remote winrm config?
     def _put_file_stdin_iterator(self, in_path, out_path, buffer_size=250000):

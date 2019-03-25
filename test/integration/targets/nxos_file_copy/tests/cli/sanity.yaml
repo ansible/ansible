@@ -6,6 +6,10 @@
     commands:
       - terminal dont-ask
       - delete network-integration.cfg
+      - delete bootflash:/dir1/dir2/dir3/network-integration_copy.cfg
+      - rmdir dir1/dir2/dir3
+      - rmdir dir1/dir2
+      - rmdir dir1
   ignore_errors: yes
 
 - name: "Setup - Turn on feature scp-server"
@@ -53,9 +57,27 @@
 
   - assert: *false
 
-  - name: "Setup - Remove existing file"
-    nxos_command: *remove_file
-    register: result
+  - block:
+    - name: "Copy file using file_pull"
+      nxos_file_copy: &copy_pull
+        file_pull: True
+        file_pull_timeout: 1200
+        remote_file: "/network-integration.cfg"
+        local_file: "network-integration_copy.cfg"
+        local_file_directory: "dir1/dir2/dir3"
+        remote_scp_server: "{{ inventory_hostname_short }}"
+        remote_scp_server_user: "{{ ansible_ssh_user }}"
+        remote_scp_server_password: "{{ ansible_ssh_pass }}"
+      register: result
+
+    - assert: *true
+
+    - name: "Overwrite the file"
+      nxos_file_copy: *copy_pull
+      register: result
+
+    - assert: *true
+  ignore_errors: yes
 
   rescue:
 

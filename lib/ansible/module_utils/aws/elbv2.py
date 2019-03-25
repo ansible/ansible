@@ -152,27 +152,31 @@ class ElasticLoadBalancerV2(object):
         :return: bool True if they match otherwise False
         """
 
-        subnet_id_list = []
-        subnets = []
+        subnet_mapping_id_list = []
+        subnet_mappings = []
 
         # Check if we're dealing with subnets or subnet_mappings
         if self.subnets is not None:
-            # We need to first get the subnet ID from the list
-            subnets = self.subnets
+            # Convert subnets to subnet_mappings format for comparison
+            for subnet in self.subnets:
+                subnet_mappings.append({'SubnetId': subnet})
 
         if self.subnet_mappings is not None:
-            # Make a list from the subnet_mappings dict
-            subnets_from_mappings = []
-            for subnet_mapping in self.subnet_mappings:
-                subnets.append(subnet_mapping['SubnetId'])
+            # Use this directly since we're comparing as a mapping
+            subnet_mappings = self.subnet_mappings
 
+        # Build a subnet_mapping style struture of what's currently
+        # on the load balancer
         for subnet in self.elb['AvailabilityZones']:
-            subnet_id_list.append(subnet['SubnetId'])
+            this_mapping = {'SubnetId': subnet['SubnetId']}
+            for address in subnet.get('LoadBalancerAddresses', []):
+                if 'AllocationId' in address:
+                    this_mapping['AllocationId'] = address['AllocationId']
+                    break
 
-        if set(subnet_id_list) != set(subnets):
-            return False
-        else:
-            return True
+            subnet_mapping_id_list.append(this_mapping)
+
+        return set(frozenset(mapping.items()) for mapping in subnet_mapping_id_list) == set(frozenset(mapping.items()) for mapping in subnet_mappings)
 
     def modify_subnets(self):
         """
@@ -228,6 +232,7 @@ class ApplicationLoadBalancer(ElasticLoadBalancerV2):
         self.access_logs_s3_bucket = module.params.get("access_logs_s3_bucket")
         self.access_logs_s3_prefix = module.params.get("access_logs_s3_prefix")
         self.idle_timeout = module.params.get("idle_timeout")
+        self.http2 = module.params.get("http2")
 
         if self.elb is not None and self.elb['Type'] != 'application':
             self.module.fail_json(msg="The load balancer type you are trying to manage is not application. Try elb_network_lb module instead.")
@@ -246,6 +251,8 @@ class ApplicationLoadBalancer(ElasticLoadBalancerV2):
         # Other parameters
         if self.subnets is not None:
             params['Subnets'] = self.subnets
+        if self.subnet_mappings is not None:
+            params['SubnetMappings'] = self.subnet_mappings
         if self.security_groups is not None:
             params['SecurityGroups'] = self.security_groups
         params['Scheme'] = self.scheme
@@ -271,20 +278,18 @@ class ApplicationLoadBalancer(ElasticLoadBalancerV2):
 
         update_attributes = []
 
-        if self.access_logs_enabled and self.elb_attributes['access_logs_s3_enabled'] != "true":
-            update_attributes.append({'Key': 'access_logs.s3.enabled', 'Value': "true"})
-        if not self.access_logs_enabled and self.elb_attributes['access_logs_s3_enabled'] != "false":
-            update_attributes.append({'Key': 'access_logs.s3.enabled', 'Value': 'false'})
+        if self.access_logs_enabled is not None and str(self.access_logs_enabled).lower() != self.elb_attributes['access_logs_s3_enabled']:
+            update_attributes.append({'Key': 'access_logs.s3.enabled', 'Value': str(self.access_logs_enabled).lower()})
         if self.access_logs_s3_bucket is not None and self.access_logs_s3_bucket != self.elb_attributes['access_logs_s3_bucket']:
             update_attributes.append({'Key': 'access_logs.s3.bucket', 'Value': self.access_logs_s3_bucket})
         if self.access_logs_s3_prefix is not None and self.access_logs_s3_prefix != self.elb_attributes['access_logs_s3_prefix']:
             update_attributes.append({'Key': 'access_logs.s3.prefix', 'Value': self.access_logs_s3_prefix})
-        if self.deletion_protection and self.elb_attributes['deletion_protection_enabled'] != "true":
-            update_attributes.append({'Key': 'deletion_protection.enabled', 'Value': "true"})
-        if self.deletion_protection is not None and not self.deletion_protection and self.elb_attributes['deletion_protection_enabled'] != "false":
-            update_attributes.append({'Key': 'deletion_protection.enabled', 'Value': "false"})
+        if self.deletion_protection is not None and str(self.deletion_protection).lower() != self.elb_attributes['deletion_protection_enabled']:
+            update_attributes.append({'Key': 'deletion_protection.enabled', 'Value': str(self.deletion_protection).lower()})
         if self.idle_timeout is not None and str(self.idle_timeout) != self.elb_attributes['idle_timeout_timeout_seconds']:
             update_attributes.append({'Key': 'idle_timeout.timeout_seconds', 'Value': str(self.idle_timeout)})
+        if self.http2 is not None and str(self.http2).lower() != self.elb_attributes['routing_http2_enabled']:
+            update_attributes.append({'Key': 'routing.http2.enabled', 'Value': str(self.http2).lower()})
 
         if update_attributes:
             try:
@@ -360,6 +365,8 @@ class NetworkLoadBalancer(ElasticLoadBalancerV2):
         # Other parameters
         if self.subnets is not None:
             params['Subnets'] = self.subnets
+        if self.subnet_mappings is not None:
+            params['SubnetMappings'] = self.subnet_mappings
         params['Scheme'] = self.scheme
         if self.tags:
             params['Tags'] = self.tags
@@ -400,6 +407,14 @@ class NetworkLoadBalancer(ElasticLoadBalancerV2):
                 if self.new_load_balancer:
                     AWSRetry.jittered_backoff()(self.connection.delete_load_balancer)(LoadBalancerArn=self.elb['LoadBalancerArn'])
                 self.module.fail_json_aws(e)
+
+    def modify_subnets(self):
+        """
+        Modify elb subnets to match module parameters (unsupported for NLB)
+        :return:
+        """
+
+        self.module.fail_json(msg='Modifying subnets and elastic IPs is not supported for Network Load Balancer')
 
 
 class ELBListeners(object):
@@ -689,7 +704,7 @@ class ELBListenerRules(object):
         for current_rule in self.current_rules:
             current_rule_passed_to_module = False
             for new_rule in self.rules[:]:
-                if current_rule['Priority'] == new_rule['Priority']:
+                if current_rule['Priority'] == str(new_rule['Priority']):
                     current_rule_passed_to_module = True
                     # Remove what we match so that what is left can be marked as 'to be added'
                     rules_to_add.remove(new_rule)

@@ -1,0 +1,204 @@
+{
+    "update_device_interface": [
+        {
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/device/FGT1/global/system/interface/port2"
+            },
+            "datagram_sent": {
+                "ip": "10.1.1.1/24",
+                "allowaccess": [
+                    "ping",
+                    "telnet",
+                    "https",
+                    "http"
+                ]
+            },
+            "paramgram_used": {
+                "adom": "ansible",
+                "install_config": "disable",
+                "device_unique_name": "FGT1",
+                "interface": "port2",
+                "device_hostname": null,
+                "interface_ip": "10.1.1.1/24",
+                "interface_allow_access": "ping, telnet, https, http"
+            },
+            "post_method": "update"
+        },
+        {
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/device/FGT2/global/system/interface/port2"
+            },
+            "datagram_sent": {
+                "ip": "10.1.2.1/24",
+                "allowaccess": [
+                    "ping",
+                    "telnet",
+                    "https",
+                    "http"
+                ]
+            },
+            "paramgram_used": {
+                "adom": "ansible",
+                "install_config": "disable",
+                "device_unique_name": "FGT2",
+                "interface": "port2",
+                "device_hostname": null,
+                "interface_ip": "10.1.2.1/24",
+                "interface_allow_access": "ping, telnet, https, http"
+            },
+            "post_method": "update"
+        },
+        {
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/device/FGT3/global/system/interface/port2"
+            },
+            "datagram_sent": {
+                "ip": "10.1.3.1/24",
+                "allowaccess": [
+                    "ping",
+                    "telnet",
+                    "https",
+                    "http"
+                ]
+            },
+            "paramgram_used": {
+                "adom": "ansible",
+                "install_config": "disable",
+                "device_unique_name": "FGT3",
+                "interface": "port2",
+                "device_hostname": null,
+                "interface_ip": "10.1.3.1/24",
+                "interface_allow_access": "ping, telnet, https, http"
+            },
+            "post_method": "update"
+        }
+    ],
+    "update_device_hostname": [
+        {
+            "paramgram_used": {
+                "adom": "ansible",
+                "interface": null,
+                "device_unique_name": "FGT1",
+                "install_config": "disable",
+                "device_hostname": "ansible-fgt01",
+                "interface_ip": null,
+                "interface_allow_access": null
+            },
+            "datagram_sent": {
+                "hostname": "ansible-fgt01"
+            },
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "pm/config/device/FGT1/global/system/global"
+            },
+            "post_method": "update"
+        },
+        {
+            "paramgram_used": {
+                "adom": "ansible",
+                "interface": null,
+                "device_unique_name": "FGT2",
+                "install_config": "disable",
+                "device_hostname": "ansible-fgt02",
+                "interface_ip": null,
+                "interface_allow_access": null
+            },
+            "datagram_sent": {
+                "hostname": "ansible-fgt02"
+            },
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "pm/config/device/FGT2/global/system/global"
+            },
+            "post_method": "update"
+        },
+        {
+            "paramgram_used": {
+                "adom": "ansible",
+                "interface": null,
+                "device_unique_name": "FGT3",
+                "install_config": "disable",
+                "device_hostname": "ansible-fgt03",
+                "interface_ip": null,
+                "interface_allow_access": null
+            },
+            "datagram_sent": {
+                "hostname": "ansible-fgt03"
+            },
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "pm/config/device/FGT3/global/system/global"
+            },
+            "post_method": "update"
+        }
+    ],
+    "exec_config": [
+        {
+            "url": "/securityconsole/install/device",
+            "paramgram_used": {
+                "adom": "ansible",
+                "interface": null,
+                "device_unique_name": "FGT1",
+                "install_config": "enable",
+                "device_hostname": null,
+                "interface_ip": null,
+                "interface_allow_access": null
+            },
+            "datagram_sent": {
+                "scope": {
+                    "name": "FGT1"
+                },
+                "flags": "none",
+                "adom": "ansible"
+            },
+            "raw_response": {
+                "task": 243
+            },
+            "post_method": "exec"
+        },
+        {
+            "url": "/securityconsole/install/device",
+            "raw_response": {
+                "task": 244
+            },
+            "datagram_sent": {
+                "scope": {
+                    "name": "FGT2, FGT3"
+                },
+                "flags": "none",
+                "adom": "ansible"
+            },
+            "paramgram_used": {
+                "adom": "ansible",
+                "install_config": "enable",
+                "device_unique_name": "FGT2, FGT3",
+                "interface": null,
+                "device_hostname": null,
+                "interface_ip": null,
+                "interface_allow_access": null
+            },
+            "post_method": "exec"
+        }
+    ]
+}

@@ -1,7 +1,6 @@
 #!powershell
 
 # Copyright: (c) 2017, Ansible Project
-
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
@@ -18,7 +17,7 @@ $state = Get-AnsibleParam -obj $params -name "state" -type "str" -validateset "a
 
 # used in template/copy when dest is the path to a dir and source is a file
 $original_basename = Get-AnsibleParam -obj $params -name "_original_basename" -type "str"
-if ((Test-Path -Path $path -PathType Container) -and ($null -ne $original_basename)) {
+if ((Test-Path -LiteralPath $path -PathType Container) -and ($null -ne $original_basename)) {
     $path = Join-Path -Path $path -ChildPath $original_basename
 }
 
@@ -53,12 +52,9 @@ namespace Ansible.Command {
 }
 "@
 $original_tmp = $env:TMP
-$original_temp = $env:TEMP
 $env:TMP = $_remote_tmp
-$env:TEMP = $_remote_tmp
 Add-Type -TypeDefinition $symlink_util
 $env:TMP = $original_tmp
-$env:TEMP = $original_temp
 
 # Used to delete directories and files with logic on handling symbolic links
 function Remove-File($file, $checkmode) {
@@ -86,7 +82,7 @@ function Remove-File($file, $checkmode) {
 }
 
 function Remove-Directory($directory, $checkmode) {
-    foreach ($file in Get-ChildItem $directory.FullName) {
+    foreach ($file in Get-ChildItem -LiteralPath $directory.FullName) {
         Remove-File -file $file -checkmode $checkmode
     }
     Remove-Item -LiteralPath $directory.FullName -Force -Recurse -WhatIf:$checkmode
@@ -106,7 +102,7 @@ if ($state -eq "touch") {
 }
 
 if (Test-Path -LiteralPath $path) {
-    $fileinfo = Get-Item -LiteralPath $path
+    $fileinfo = Get-Item -LiteralPath $path -Force
     if ($state -eq "absent") {
         Remove-File -file $fileinfo -checkmode $check_mode
         $result.changed = $true

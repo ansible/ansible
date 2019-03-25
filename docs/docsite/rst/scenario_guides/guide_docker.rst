@@ -3,7 +3,7 @@ Getting Started with Docker
 
 Ansible offers the following modules for orchestrating Docker containers:
 
-    docker_service
+    docker_compose
         Use your existing Docker compose files to orchestrate containers on a single Docker daemon or on
         Swarm. Supports compose versions 1 and 2.
 
@@ -14,8 +14,8 @@ Ansible offers the following modules for orchestrating Docker containers:
     docker_image
         Provides full control over images, including: build, pull, push, tag and remove.
 
-    docker_image_facts
-        Inspects one or more images in the Docker host's image cache, providing the information as facts for making
+    docker_image_info
+        Inspects one or more images in the Docker host's image cache, providing the information for making
         decision or assertions in a playbook.
 
     docker_login
@@ -34,7 +34,7 @@ Still using Dockerfile to build images? Check out `ansible-container <https://gi
 and start building images from your Ansible playbooks.
 
 Use the *shipit* command in `ansible-container <https://github.com/ansible/ansible-container>`_
-to launch your docker-compose file on `OpenShift <https://www.openshift.org/>`_. Go from an app on your laptop to a fully
+to launch your docker-compose file on `OpenShift <https://www.okd.io/>`_. Go from an app on your laptop to a fully
 scalable app in the cloud in just a few moments.
 
 There's more planned. See the latest ideas and thinking at the `Ansible proposal repo <https://github.com/ansible/proposals/tree/master/docker>`_.
@@ -42,14 +42,31 @@ There's more planned. See the latest ideas and thinking at the `Ansible proposal
 Requirements
 ------------
 
-Using the docker modules requires having `docker-py <https://docker-py.readthedocs.org/en/stable/>`_
-installed on the host running Ansible. You will need to have >= 1.7.0 installed.
+Using the docker modules requires having the `Docker SDK for Python <https://docker-py.readthedocs.io/en/stable/>`_
+installed on the host running Ansible. You will need to have >= 1.7.0 installed. For Python 2.7 or
+Python 3, you can install it as follows:
+
+.. code-block:: bash
+
+    $ pip install docker
+
+For Python 2.6, you need a version before 2.0. For these versions, the SDK was called ``docker-py``,
+so you need to install it as follows:
 
 .. code-block:: bash
 
     $ pip install 'docker-py>=1.7.0'
 
-The docker_service module also requires `docker-compose <https://github.com/docker/compose>`_
+Please note that only one of ``docker`` and ``docker-py`` must be installed. Installing both will result in
+a broken installation. If this happens, Ansible will detect it and inform you about it::
+
+    Cannot have both the docker-py and docker python modules installed together as they use the same
+    namespace and cause a corrupt installation. Please uninstall both packages, and re-install only
+    the docker-py or docker python module. It is recommended to install the docker module if no support
+    for Python 2.6 is required. Please note that simply uninstalling one of the modules can leave the
+    other module in a broken state.
+
+The docker_compose module also requires `docker-compose <https://github.com/docker/compose>`_
 
 .. code-block:: bash
 
@@ -177,9 +194,8 @@ examples to get you started:
 
     # Simple playbook to invoke with the above example:
 
-        - name: Test docker_inventory
+        - name: Test docker_inventory, this will not connect to any hosts
           hosts: all
-          connection: local
           gather_facts: no
           tasks:
             - debug: msg="Container - {{ inventory_hostname }}"

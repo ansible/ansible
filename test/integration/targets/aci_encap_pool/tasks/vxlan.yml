@@ -33,7 +33,7 @@
 - name: assertion test - present
   assert:
     that:
-      - create_vxlan_check_mode.changed == true
+      - create_vxlan_check_mode is changed
       - 'create_vxlan_check_mode.sent == {"fvnsVxlanInstP": {"attributes": {"descr": "Ansible Test", "name": "anstest"}}}'
 
 - name: create vxlan pool - creation works
@@ -44,7 +44,7 @@
 - name: assertion test - present
   assert:
     that:
-      - create_vxlan.changed == true
+      - create_vxlan is changed
       - create_vxlan.previous == []
       - create_vxlan.sent == create_vxlan_check_mode.sent
 
@@ -56,7 +56,7 @@
 - name: assertion test - present
   assert:
     that:
-      - idempotent_vxlan.changed == false
+      - idempotent_vxlan is not changed
       - 'idempotent_vxlan.previous.0.fvnsVxlanInstP.attributes.name == "anstest"'
       - idempotent_vxlan.sent == {}
 
@@ -69,7 +69,7 @@
 - name: assertion test - present
   assert:
     that:
-      - update_vxlan.changed == true
+      - update_vxlan is changed
       - 'update_vxlan.sent == {"fvnsVxlanInstP": {"attributes": {"descr": "Ansible Test Change"}}}'
 
 - name: create vxlan pool - used for query
@@ -81,7 +81,7 @@
 - name: assertion test - present
   assert:
     that:
-      - create_vxlan_2.changed == true
+      - create_vxlan_2 is changed
 
 - name: create vxlan pool with pool allocation mode - failure message works
   aci_encap_pool:
@@ -94,7 +94,7 @@
 - name: assertion test - present
   assert:
     that:
-      - create_vxlan_alloc_mode.failed == true
+      - create_vxlan_alloc_mode is failed
       - "create_vxlan_alloc_mode.msg == 'vxlan pools do not support setting the \\'pool_allocation_mode\\'; please remove this parameter from the task'"
 
 - name: get vxlan pool - get object works
@@ -106,7 +106,7 @@
 - name: assertion test - query
   assert:
     that:
-      - query_vxlan.changed == false
+      - query_vxlan is not changed
       - query_vxlan.current | length == 1
       - '"infra/vxlanns-anstest.json" in query_vxlan.url'
 
@@ -119,7 +119,7 @@
 - name: assertion test - query
   assert:
     that:
-      - query_vxlan_all.changed == false
+      - query_vxlan_all is not changed
       - query_vxlan_all.current | length > 1
       - '"class/fvnsVxlanInstP.json" in query_vxlan_all.url'
 
@@ -132,7 +132,7 @@
 - name: assertion test - absent
   assert:
     that:
-      - delete_vxlan_check_mode.changed == true
+      - delete_vxlan_check_mode is changed
       - delete_vxlan_check_mode.previous != []
 
 - name: delete vxlan pool - deletion works
@@ -143,7 +143,7 @@
 - name: assertion test - absent
   assert:
     that:
-      - delete_vxlan.changed == true
+      - delete_vxlan is changed
       - delete_vxlan.previous == delete_vxlan_check_mode.previous
       - delete_vxlan.previous.0.fvnsVxlanInstP.attributes.name == "anstest"
 
@@ -162,7 +162,7 @@
 - name: assertion test - absent
   assert:
     that:
-      - delete_vxlan_idempotent.changed == false
+      - delete_vxlan_idempotent is not changed
       - delete_vxlan_idempotent.previous == []
 
 - name: delete vxlan pool - cleanup
@@ -173,5 +173,5 @@
 - name: assertion test - absent
   assert:
     that:
-      - delete_vxlan_pool_fail.failed == true
+      - delete_vxlan_pool_fail is failed
       - 'delete_vxlan_pool_fail.msg == "state is absent but all of the following are missing: pool"'

@@ -15,6 +15,10 @@ DOCUMENTATION = '''
         - Every element of every layer is combined to create a host for every layer combination
         - Parent groups can be defined with reference to hosts and other groups using the same template variables
     options:
+      plugin:
+         description: token that ensures this is a source file for the 'generator' plugin.
+         required: True
+         choices: ['generator']
       hosts:
         description:
           - The C(name) key is a template used to generate
@@ -69,24 +73,21 @@ EXAMPLES = '''
 
 import os
 
+from itertools import product
+
 from ansible import constants as C
 from ansible.errors import AnsibleParserError
-from ansible.plugins.cache import FactCache
 from ansible.plugins.inventory import BaseInventoryPlugin
-
-from itertools import product
 
 
 class InventoryModule(BaseInventoryPlugin):
-    """ constructs groups and vars using Jinaj2 template expressions """
+    """ constructs groups and vars using Jinja2 template expressions """
 
     NAME = 'generator'
 
     def __init__(self):
 
         super(InventoryModule, self).__init__()
-
-        self._cache = FactCache()
 
     def verify_file(self, path):
 

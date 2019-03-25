@@ -113,7 +113,7 @@ RETURN = '''
 firewall_policy_id:
     description: The fire wall policy id
     returned: success
-    type: string
+    type: str
     sample: fc36f1bfd47242e488a9c44346438c05
 firewall_policy:
     description: The fire wall policy information
@@ -153,27 +153,32 @@ firewall_policy:
 __version__ = '${version}'
 
 import os
+import traceback
 from ansible.module_utils.six.moves.urllib.parse import urlparse
 from time import sleep
 from distutils.version import LooseVersion
 
+REQUESTS_IMP_ERR = None
 try:
     import requests
 except ImportError:
+    REQUESTS_IMP_ERR = traceback.format_exc()
     REQUESTS_FOUND = False
 else:
     REQUESTS_FOUND = True
 
+CLC_IMP_ERR = None
 try:
     import clc as clc_sdk
     from clc import APIFailedResponse
 except ImportError:
+    CLC_IMP_ERR = traceback.format_exc()
     CLC_FOUND = False
     clc_sdk = None
 else:
     CLC_FOUND = True
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 
 class ClcFirewallPolicy:
@@ -189,11 +194,9 @@ class ClcFirewallPolicy:
         self.firewall_dict = {}
 
         if not CLC_FOUND:
-            self.module.fail_json(
-                msg='clc-python-sdk required for this module')
+            self.module.fail_json(msg=missing_required_lib('clc-sdk'), exception=CLC_IMP_ERR)
         if not REQUESTS_FOUND:
-            self.module.fail_json(
-                msg='requests library is required for this module')
+            self.module.fail_json(msg=missing_required_lib('requests'), exception=REQUESTS_IMP_ERR)
         if requests.__version__ and LooseVersion(
                 requests.__version__) < LooseVersion('2.5.0'):
             self.module.fail_json(

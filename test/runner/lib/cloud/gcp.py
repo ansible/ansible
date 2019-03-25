@@ -6,18 +6,15 @@ from __future__ import absolute_import, print_function
 import os
 
 from lib.util import (
-    ApplicationError,
     display,
-    is_shippable,
+    ConfigParser,
 )
 
 from lib.cloud import (
     CloudProvider,
     CloudEnvironment,
+    CloudEnvironmentConfig,
 )
-
-from lib.core_ci import (
-    AnsibleCoreCI, )
 
 
 class GcpCloudProvider(CloudProvider):
@@ -46,22 +43,19 @@ class GcpCloudProvider(CloudProvider):
 
 class GcpCloudEnvironment(CloudEnvironment):
     """GCP cloud environment plugin. Updates integration test environment after delegation."""
+    def get_environment_config(self):
+        """
+        :rtype: CloudEnvironmentConfig
+        """
+        parser = ConfigParser()
+        parser.read(self.config_path)
 
-    def configure_environment(self, env, cmd):
-        """
-        :type env: dict[str, str]
-        :type cmd: list[str]
-        """
-        cmd.append('-e')
-        cmd.append('@%s' % self.config_path)
+        ansible_vars = dict(
+            resource_prefix=self.resource_prefix,
+        )
 
-        cmd.append('-e')
-        cmd.append('resource_prefix=%s' % self.resource_prefix)
+        ansible_vars.update(dict(parser.items('default')))
 
-    def on_failure(self, target, tries):
-        """
-        :type target: TestTarget
-        :type tries: int
-        """
-        if not tries and self.managed:
-            display.notice('%s failed' % target.name)
+        return CloudEnvironmentConfig(
+            ansible_vars=ansible_vars,
+        )

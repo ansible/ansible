@@ -24,22 +24,25 @@ options:
   drive:
     description:
       - The drive of the pagefile.
+    type: str
   initial_size:
     description:
       - The initial size of the pagefile in megabytes.
+    type: int
   maximum_size:
     description:
       - The maximum size of the pagefile in megabytes.
+    type: int
   override:
     description:
       - Override the current pagefile on the drive.
     type: bool
-    default: 'yes'
+    default: yes
   system_managed:
     description:
       - Configures current pagefile to be managed by the system.
     type: bool
-    default: 'no'
+    default: no
   automatic:
     description:
       - Configures AutomaticManagedPagefile for the entire system.
@@ -48,15 +51,16 @@ options:
     description:
       - Remove all pagefiles in the system, not including automatic managed.
     type: bool
-    default: 'no'
+    default: no
   test_path:
     description:
       - Use Test-Path on the drive to make sure the drive is accessible before creating the pagefile.
     type: bool
-    default: 'yes'
+    default: yes
   state:
     description:
       - State of the pagefile.
+    type: str
     choices: [ absent, present, query ]
     default: query
 notes:
@@ -122,7 +126,7 @@ RETURN = r'''
 automatic_managed_pagefiles:
     description: Whether the pagefiles is automatically managed.
     returned: When state is query.
-    type: boolean
+    type: bool
     sample: true
 pagefiles:
     description: Contains caption, description, initial_size, maximum_size and name for each pagefile in the system.

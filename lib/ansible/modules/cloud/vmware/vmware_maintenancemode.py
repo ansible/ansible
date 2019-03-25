@@ -70,31 +70,32 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = '''
 - name: Enter VSAN-Compliant Maintenance Mode
   vmware_maintenancemode:
-    hostname: vc_host
-    username: vc_user
-    password: vc_pass
-    esxi_hostname: esxi.host.example
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    esxi_hostname: "{{ esxi_hostname }}"
     vsan: ensureObjectAccessibility
     evacuate: yes
     timeout: 3600
     state: present
+  delegate_to: localhost
 '''
 
 RETURN = '''
 hostsystem:
     description: Name of vim reference
     returned: always
-    type: string
+    type: str
     sample: "'vim.HostSystem:host-236'"
 hostname:
     description: Name of host in vCenter
     returned: always
-    type: string
+    type: str
     sample: "esxi.local.domain"
 status:
     description: Action taken
     returned: always
-    type: string
+    type: str
     sample: "ENTER"
 '''
 

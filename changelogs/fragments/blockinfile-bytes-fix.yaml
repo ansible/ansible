@@ -1,0 +1,2 @@
+bugfixes:
+  - blockinfile - use bytes rather than a native string to prevent a stacktrace in Python 3 when writing to the file (https://github.com/ansible/ansible/issues/46237)

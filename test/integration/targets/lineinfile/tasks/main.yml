@@ -36,18 +36,27 @@
     line: "New line at the beginning"
     insertbefore: "BOF"
     backup: yes
-  register: result
+  register: result1
+
+- name: insert a line at the beginning of the file again
+  lineinfile:
+    dest: "{{ output_dir }}/test.txt"
+    state: present
+    line: "New line at the beginning"
+    insertbefore: "BOF"
+  register: result2
 
 - name: assert that the line was inserted at the head of the file
   assert:
     that:
-      - result is changed
-      - "result.msg == 'line added'"
-      - "result.backup != ''"
+      - result1 is changed
+      - result2 is not changed
+      - result1.msg == 'line added'
+      - result1.backup != ''
 
 - name: stat the backup file
   stat:
-    path: "{{ result.backup }}"
+    path: "{{ result1.backup }}"
   register: result
 
 - name: assert the backup file matches the previous hash
@@ -482,6 +491,14 @@
   register: _multitest_1
   with_items: "{{ test_regexp }}"
 
+- name: Assert that the line is added once only
+  assert:
+    that:
+      - _multitest_1.results.0 is changed
+      - _multitest_1.results.1 is not changed
+      - _multitest_1.results.2 is not changed
+      - _multitest_1.results.3 is not changed
+
 - name: Do the same thing again to check for changes
   lineinfile:
     path: "{{ output_dir }}/testmultiple.txt"
@@ -490,14 +507,13 @@
   register: _multitest_2
   with_items: "{{ test_regexp }}"
 
-- name: Assert that the file was changed the first time but not the second time
+- name: Assert that the line is not added anymore
   assert:
     that:
-      - item.0 is changed
-      - item.1 is not changed
-  with_together:
-    - "{{ _multitest_1.results }}"
-    - "{{ _multitest_2.results }}"
+      - _multitest_2.results.0 is not changed
+      - _multitest_2.results.1 is not changed
+      - _multitest_2.results.2 is not changed
+      - _multitest_2.results.3 is not changed
 
 - name: Stat the insertafter file
   stat:
@@ -507,9 +523,23 @@
 - name: Assert that the insertafter file matches expected checksum
   assert:
     that:
-      - result.stat.checksum == '282fedf460b3ed7357667a9c8b457ec67b53b6ea'
+      - result.stat.checksum == 'c6733b6c53ddd0e11e6ba39daa556ef8f4840761'
 
 # Test insertbefore
+
+- name: Deploy the testmultiple file
+  copy:
+    src: testmultiple.txt
+    dest: "{{ output_dir }}/testmultiple.txt"
+  register: result
+
+- name: Assert that the testmultiple file was deployed
+  assert:
+    that:
+      - result is changed
+      - result.checksum == '3e0090a34fb641f3c01e9011546ff586260ea0ea'
+      - result.state == 'file'
+
 - name: Write the same line to a file inserted before different lines
   lineinfile:
     path: "{{ output_dir }}/testmultiple.txt"
@@ -517,6 +547,14 @@
     line: "{{ item.replace }}"
   register: _multitest_3
   with_items: "{{ test_regexp }}"
+
+- name: Assert that the line is added once only
+  assert:
+    that:
+      - _multitest_3.results.0 is changed
+      - _multitest_3.results.1 is not changed
+      - _multitest_3.results.2 is not changed
+      - _multitest_3.results.3 is not changed
 
 - name: Do the same thing again to check for changes
   lineinfile:
@@ -526,14 +564,13 @@
   register: _multitest_4
   with_items: "{{ test_regexp }}"
 
-- name: Assert that the file was changed the first time but not the second time
+- name: Assert that the line is not added anymore
   assert:
     that:
-      - item.0 is changed
-      - item.1 is not changed
-  with_together:
-    - "{{ _multitest_3.results }}"
-    - "{{ _multitest_4.results }}"
+      - _multitest_4.results.0 is not changed
+      - _multitest_4.results.1 is not changed
+      - _multitest_4.results.2 is not changed
+      - _multitest_4.results.3 is not changed
 
 - name: Stat the insertbefore file
   stat:
@@ -543,7 +580,7 @@
 - name: Assert that the insertbefore file matches expected checksum
   assert:
     that:
-      - result.stat.checksum == 'a8452bb3643be8d18ba3fc212632b1633bd9f885'
+      - result.stat.checksum == '5d298651fbc377b45257da10308a9dc2fe1f8be5'
 
 ###################################################################
 # Issue 36156
@@ -616,7 +653,7 @@
 - name: Assert that the file was changed when no regexp was provided
   assert:
     that:
-      - item is changed
+      - item is not changed
   with_items: "{{ _multitest_7.results }}"
 
 - name: Stat the file
@@ -627,7 +664,7 @@
 - name: Assert that the file contents match what is expected
   assert:
     that:
-      - result.stat.checksum == '5bf50f3d74afd20de4010ca5c04bc7037b062d30'
+      - result.stat.checksum == '06e2c456e5028dd7bcd0b117b5927a1139458c82'
 
 # Test insertbefore
 - name: Deploy the test.conf file
@@ -696,7 +733,7 @@
 - name: Assert that the file was changed when no regexp was provided
   assert:
     that:
-      - item is changed
+      - item is not changed
   with_items: "{{ _multitest_10.results }}"
 
 - name: Stat the file
@@ -707,4 +744,77 @@
 - name: Assert that the file contents match what is expected
   assert:
     that:
-      - result.stat.checksum == 'eca8d8ea089d4ea57a3b87d4091599ca8b60dfd2'
+      - result.stat.checksum == 'c3be9438a07c44d4c256cebfcdbca15a15b1db91'
+
+- name: Copy empty file to test with insertbefore
+  copy:
+    src: testempty.txt
+    dest: "{{ output_dir }}/testempty.txt"
+
+- name: Add a line to empty file with insertbefore
+  lineinfile:
+    path: "{{ output_dir }}/testempty.txt"
+    line: top
+    insertbefore: '^not in the file$'
+  register: oneline_insbefore_test1
+
+- name: Add a line to file with only one line using insertbefore
+  lineinfile:
+    path: "{{ output_dir }}/testempty.txt"
+    line: top
+    insertbefore: '^not in the file$'
+  register: oneline_insbefore_test2
+
+- name: Stat the file
+  stat:
+    path:  "{{ output_dir }}/testempty.txt"
+  register: oneline_insbefore_file
+
+- name: Assert that insertebefore worked properly with a one line file
+  assert:
+    that:
+      - oneline_insbefore_test1 is changed
+      - oneline_insbefore_test2 is not changed
+      - oneline_insbefore_file.stat.checksum == '4dca56d05a21f0d018cd311f43e134e4501cf6d9'
+
+###################################################################
+# Issue 29443
+# When using an empty regexp, replace the last line (since it matches every line)
+# but also provide a warning.
+
+- name: Deploy the test file for lineinfile
+  copy:
+    src: test.txt
+    dest: "{{ output_dir }}/test.txt"
+  register: result
+
+- name: Assert that the test file was deployed
+  assert:
+    that:
+      - result is changed
+      - result.checksum == '5feac65e442c91f557fc90069ce6efc4d346ab51'
+      - result.state == 'file'
+
+- name: Insert a line in the file using an empty string as a regular expression
+  lineinfile:
+    path: "{{ output_dir }}/test.txt"
+    regexp: ''
+    line: This is line 6
+  register: insert_empty_regexp
+
+- name: Stat the file
+  stat:
+    path: "{{ output_dir }}/test.txt"
+  register: result
+
+- name: Assert that the file contents match what is expected and a warning was displayed
+  assert:
+    that:
+      - insert_empty_regexp is changed
+      - warning_message in insert_empty_regexp.warnings
+      - result.stat.checksum == '23555a98ceaa88756b4c7c7bba49d9f86eed868f'
+  vars:
+    warning_message: >-
+      The regular expression is an empty string, which will match every line in the file.
+      This may have unintended consequences, such as replacing the last line in the file rather than appending.
+      If this is desired, use '^' to match every line in the file and avoid this warning.

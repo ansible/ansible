@@ -119,3 +119,22 @@ class TestGem(ModuleTestCase):
 
         update_environ = run_command.call_args[1].get('environ_update', {})
         assert update_environ.get('GEM_HOME') == '/opt/dummy'
+
+    def test_passes_add_force_option(self):
+        set_module_args({
+            'name': 'dummy',
+            'force': True,
+        })
+
+        self.patch_rubygems_version()
+        self.patch_installed_versions([])
+        run_command = self.patch_run_command()
+
+        with pytest.raises(AnsibleExitJson) as exc:
+            gem.main()
+
+        result = exc.value.args[0]
+        assert result['changed']
+        assert run_command.called
+
+        assert '--force' in get_command(run_command)

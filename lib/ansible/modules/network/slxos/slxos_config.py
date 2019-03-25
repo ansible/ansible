@@ -1,22 +1,8 @@
 #!/usr/bin/python
-#
-# (c) 2018 Extreme Networks Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+
+# Copyright: (c) 2018, Extreme Networks Inc.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 from __future__ import (absolute_import, division, print_function)
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -44,7 +30,6 @@ options:
         in the device running-config.  Be sure to note the configuration
         command syntax as some commands are automatically modified by the
         device config parser.
-    default: null
     aliases: ['commands']
   parents:
     description:
@@ -52,7 +37,6 @@ options:
         the commands should be checked against.  If the parents argument
         is omitted, the commands are checked against the set of top
         level or global commands.
-    default: null
   src:
     description:
       - Specifies the source path to the file that contains the configuration
@@ -60,7 +44,6 @@ options:
         either be the full path on the Ansible control host or a relative
         path from the playbook or role root directory.  This argument is mutually
         exclusive with I(lines), I(parents).
-    default: null
   before:
     description:
       - The ordered set of commands to push on to the command stack if
@@ -68,14 +51,12 @@ options:
         the opportunity to perform configuration commands prior to pushing
         any changes without affecting how the set of commands are matched
         against the system.
-    default: null
   after:
     description:
       - The ordered set of commands to append to the end of the command
         stack if a change needs to be made.  Just like with I(before) this
         allows the playbook designer to append a set of commands to be
         executed after the command set.
-    default: null
   match:
     description:
       - Instructs the module on the way to perform the matching of
@@ -109,11 +90,11 @@ options:
     description:
       - This argument will cause the module to create a full backup of
         the current C(running-config) from the remote device before any
-        changes are made.  The backup file is written to the C(backup)
-        folder in the playbook root directory.  If the directory does not
-        exist, it is created.
-    default: no
+        changes are made. If the C(backup_options) value is not given,
+        the backup file is written to the C(backup) folder in the playbook
+        root directory. If the directory does not exist, it is created.
     type: bool
+    default: 'no'
   running_config:
     description:
       - The module, by default, will connect to the remote device and
@@ -123,7 +104,6 @@ options:
         every task in a playbook.  The I(running_config) argument allows the
         implementer to pass in the configuration to use as the base
         config for comparison.
-    default: null
     aliases: ['config']
   defaults:
     description:
@@ -176,6 +156,28 @@ options:
         of the current device's configuration against.  When specifying this
         argument, the task should also modify the C(diff_against) value and
         set it to I(intended).
+  backup_options:
+    description:
+      - This is a dict object containing configurable options related to backup file path.
+        The value of this option is read only when C(backup) is set to I(yes), if C(backup) is set
+        to I(no) this option will be silently ignored.
+    suboptions:
+      filename:
+        description:
+          - The filename to be used to store the backup configuration. If the the filename
+            is not given it will be generated based on the hostname, current time and date
+            in format defined by <hostname>_config.<current-date>@<current-time>
+      dir_path:
+        description:
+          - This option provides the path ending with directory name in which the backup
+            configuration file will be stored. If the directory does not exist it will be first
+            created and the filename is either the value of C(filename) or default filename
+            as described in C(filename) options description. If the path value is not given
+            in that case a I(backup) directory will be created in the current working directory
+            and backup configuration will be copied in C(filename) within I(backup) directory.
+        type: path
+    type: dict
+    version_added: "2.8"
 """
 
 EXAMPLES = """
@@ -225,6 +227,14 @@ EXAMPLES = """
 - name: save running to startup when modified
   slxos_config:
     save_when: modified
+
+- name: configurable backup path
+  slxos_config:
+    lines: hostname {{ inventory_hostname }}
+    backup: yes
+    backup_options:
+      filename: backup.cfg
+      dir_path: /home/user
 """
 
 RETURN = """
@@ -241,17 +251,13 @@ commands:
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
-  type: string
+  type: str
   sample: /playbooks/ansible/backup/slxos_config.2018-02-12@18:26:34
 """
-import re
-import time
 
 from ansible.module_utils.network.slxos.slxos import run_commands, get_config, load_config
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
-from ansible.module_utils.six import iteritems
 
 __metaclass__ = type
 
@@ -302,6 +308,10 @@ def save_config(module, result):
 def main():
     """ main entry point for module execution
     """
+    backup_spec = dict(
+        filename=dict(),
+        dir_path=dict(type='path')
+    )
     argument_spec = dict(
         src=dict(type='path'),
 
@@ -320,6 +330,7 @@ def main():
 
         defaults=dict(type='bool', default=False),
         backup=dict(type='bool', default=False),
+        backup_options=dict(type='dict', options=backup_spec),
 
         save_when=dict(choices=['always', 'never', 'modified', 'changed'], default='never'),
 

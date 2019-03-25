@@ -1,0 +1,72 @@
+# state=present
+
+- name: Test addition - {{ method }}
+  flatpak_remote:
+    name: flatpak-test
+    flatpakrepo_url: /tmp/flatpak/repo/dummy-repo.flatpakrepo
+    state: present
+    method: "{{ method }}"
+  register: addition_result
+
+- name: Verify addition test result - {{ method }}
+  assert:
+    that:
+      - "addition_result.changed == true"
+    msg: "state=preset shall add flatpak when absent"
+
+- name: Test idempotency of addition - {{ method }}
+  flatpak_remote:
+    name: flatpak-test
+    flatpakrepo_url: /tmp/flatpak/repo/dummy-repo.flatpakrepo
+    state: present
+    method: "{{ method }}"
+  register: double_addition_result
+
+- name: Verify idempotency of addition test result - {{ method }}
+  assert:
+    that:
+      - "double_addition_result.changed == false"
+    msg: "state=present shall not do anything when flatpak is already present"
+
+- name: Test updating remote url does not do anything - {{ method }}
+  flatpak_remote:
+    name: flatpak-test
+    flatpakrepo_url: https://a.different/repo.flatpakrepo
+    state: present
+    method: "{{ method }}"
+  register: url_update_result
+
+- name: Verify updating remote url does not do anything - {{ method }}
+  assert:
+    that:
+      - "url_update_result.changed == false"
+    msg: "Trying to update the URL of an existing flatpak remote shall not do anything"
+
+
+# state=absent
+
+- name: Test removal - {{ method }}
+  flatpak_remote:
+    name: flatpak-test
+    state: absent
+    method: "{{ method }}"
+  register: removal_result
+
+- name: Verify removal test result - {{ method }}
+  assert:
+    that:
+      - "removal_result.changed == true"
+    msg: "state=absent shall remove flatpak when present"
+
+- name: Test idempotency of removal - {{ method }}
+  flatpak_remote:
+    name: flatpak-test
+    state: absent
+    method: "{{ method }}"
+  register: double_removal_result
+
+- name: Verify idempotency of removal test result - {{ method }}
+  assert:
+    that:
+      - "double_removal_result.changed == false"
+    msg: "state=absent shall not do anything when flatpak is not present"

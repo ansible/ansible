@@ -52,7 +52,7 @@ options:
      description:
        - Ignored. Present for backwards compatibility
 requirements:
-    - "python >= 2.6"
+    - "python >= 2.7"
     - "openstacksdk"
 '''
 
@@ -89,23 +89,23 @@ zone:
     contains:
         id:
             description: Unique zone ID
-            type: string
+            type: str
             sample: "c1c530a3-3619-46f3-b0f6-236927b2618c"
         name:
             description: Zone name
-            type: string
+            type: str
             sample: "example.net."
         type:
             description: Zone type
-            type: string
+            type: str
             sample: "PRIMARY"
         email:
             description: Zone owner email
-            type: string
+            type: str
             sample: "test@example.net"
         description:
             description: Zone description
-            type: string
+            type: str
             sample: "Test description"
         ttl:
             description: Zone TTL value

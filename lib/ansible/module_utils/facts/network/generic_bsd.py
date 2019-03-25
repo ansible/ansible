@@ -109,7 +109,7 @@ class GenericBsdIfconfigNetwork(Network):
             all_ipv4_addresses=[],
             all_ipv6_addresses=[],
         )
-        # FreeBSD, DragonflyBSD, NetBSD, OpenBSD and OS X all implicitly add '-a'
+        # FreeBSD, DragonflyBSD, NetBSD, OpenBSD and macOS all implicitly add '-a'
         # when running the command 'ifconfig'.
         # Solaris must explicitly run the command 'ifconfig -a'.
         rc, out, err = self.module.run_command([ifconfig_path, ifconfig_options])

@@ -1,20 +1,18 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2012, Mark Theunissen <mark.theunissen@gmail.com>
+# Copyright: (c) 2012, Mark Theunissen <mark.theunissen@gmail.com>
 # Sponsored by Four Kitchens http://fourkitchens.com.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: mysql_db
 short_description: Add or remove MySQL databases from a remote host.
@@ -56,16 +54,23 @@ options:
     type: bool
     default: 'yes'
     version_added: "2.1"
+  ignore_tables:
+    description:
+      - A list of table names that will be ignored in the dump of the form database_name.table_name
+    required: false
+    default: []
+    version_added: "2.7"
 author: "Ansible Core Team"
 requirements:
    - mysql (command line binary)
    - mysqldump (command line binary)
 notes:
-   - Requires the python-mysqldb package on the remote host, as well as mysql and mysqldump binaries.
+   - Requires the mysql and mysqldump binaries on the remote host.
+   - This module is B(not idempotent) when I(state) is C(import), and will import the dump file each time if run more than once.
 extends_documentation_fragment: mysql
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Create a new database with name 'bobdata'
   mysql_db:
     name: bobdata
@@ -100,16 +105,9 @@ import pipes
 import subprocess
 import traceback
 
-try:
-    import MySQLdb
-except ImportError:
-    mysqldb_found = False
-else:
-    mysqldb_found = True
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import mysql_quote_identifier
-from ansible.module_utils.mysql import mysql_connect, mysqldb_found
+from ansible.module_utils.mysql import mysql_connect, mysql_driver, mysql_driver_fail_msg
 from ansible.module_utils._text import to_native
 
 
@@ -130,7 +128,7 @@ def db_delete(cursor, db):
 
 
 def db_dump(module, host, user, password, db_name, target, all_databases, port, config_file, socket=None, ssl_cert=None, ssl_key=None, ssl_ca=None,
-            single_transaction=None, quick=None):
+            single_transaction=None, quick=None, ignore_tables=None):
     cmd = module.get_bin_path('mysqldump', True)
     # If defined, mysqldump demands --defaults-extra-file be the first option
     if config_file:
@@ -143,7 +141,7 @@ def db_dump(module, host, user, password, db_name, target, all_databases, port, 
         cmd += " --ssl-cert=%s" % pipes.quote(ssl_cert)
     if ssl_key is not None:
         cmd += " --ssl-key=%s" % pipes.quote(ssl_key)
-    if ssl_cert is not None:
+    if ssl_ca is not None:
         cmd += " --ssl-ca=%s" % pipes.quote(ssl_ca)
     if socket is not None:
         cmd += " --socket=%s" % pipes.quote(socket)
@@ -157,6 +155,9 @@ def db_dump(module, host, user, password, db_name, target, all_databases, port, 
         cmd += " --single-transaction=true"
     if quick:
         cmd += " --quick"
+    if ignore_tables:
+        for an_ignored_table in ignore_tables:
+            cmd += " --ignore-table={0}".format(an_ignored_table)
 
     path = None
     if os.path.splitext(target)[-1] == '.gz':
@@ -187,14 +188,14 @@ def db_import(module, host, user, password, db_name, target, all_databases, port
         cmd.append("--user=%s" % pipes.quote(user))
     if password:
         cmd.append("--password=%s" % pipes.quote(password))
-    if socket is not None:
-        cmd.append("--socket=%s" % pipes.quote(socket))
     if ssl_cert is not None:
         cmd.append("--ssl-cert=%s" % pipes.quote(ssl_cert))
     if ssl_key is not None:
         cmd.append("--ssl-key=%s" % pipes.quote(ssl_key))
-    if ssl_cert is not None:
+    if ssl_ca is not None:
         cmd.append("--ssl-ca=%s" % pipes.quote(ssl_ca))
+    if socket is not None:
+        cmd.append("--socket=%s" % pipes.quote(socket))
     else:
         cmd.append("--host=%s" % pipes.quote(host))
         cmd.append("--port=%i" % port)
@@ -247,29 +248,30 @@ def db_create(cursor, db, encoding, collation):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            login_user=dict(default=None),
-            login_password=dict(default=None, no_log=True),
-            login_host=dict(default="localhost"),
-            login_port=dict(default=3306, type='int'),
-            login_unix_socket=dict(default=None),
-            name=dict(required=True, aliases=['db']),
-            encoding=dict(default=""),
-            collation=dict(default=""),
-            target=dict(default=None, type='path'),
-            state=dict(default="present", choices=["absent", "present", "dump", "import"]),
-            ssl_cert=dict(default=None, type='path'),
-            ssl_key=dict(default=None, type='path'),
-            ssl_ca=dict(default=None, type='path'),
-            connect_timeout=dict(default=30, type='int'),
-            config_file=dict(default="~/.my.cnf", type='path'),
-            single_transaction=dict(default=False, type='bool'),
-            quick=dict(default=True, type='bool'),
+            login_user=dict(type='str'),
+            login_password=dict(type='str', no_log=True),
+            login_host=dict(type='str', default='localhost'),
+            login_port=dict(type='int', default=3306),
+            login_unix_socket=dict(type='str'),
+            name=dict(type='str', required=True, aliases=['db']),
+            encoding=dict(type='str', default=''),
+            collation=dict(type='str', default=''),
+            target=dict(type='path'),
+            state=dict(type='str', default='present', choices=['absent', 'dump', 'import', 'present']),
+            ssl_cert=dict(type='path'),
+            ssl_key=dict(type='path'),
+            ssl_ca=dict(type='path'),
+            connect_timeout=dict(type='int', default=30),
+            config_file=dict(type='path', default='~/.my.cnf'),
+            single_transaction=dict(type='bool', default=False),
+            quick=dict(type='bool', default=True),
+            ignore_tables=dict(type='list', default=[]),
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
-    if not mysqldb_found:
-        module.fail_json(msg="The MySQL-python module is required.")
+    if mysql_driver is None:
+        module.fail_json(msg=mysql_driver_fail_msg)
 
     db = module.params["name"]
     encoding = module.params["encoding"]
@@ -288,6 +290,10 @@ def main():
     login_password = module.params["login_password"]
     login_user = module.params["login_user"]
     login_host = module.params["login_host"]
+    ignore_tables = module.params["ignore_tables"]
+    for a_table in ignore_tables:
+        if a_table == "":
+            module.fail_json(msg="Name of ignored table cannot be empty")
     single_transaction = module.params["single_transaction"]
     quick = module.params["quick"]
 
@@ -333,7 +339,7 @@ def main():
                 rc, stdout, stderr = db_dump(module, login_host, login_user,
                                              login_password, db, target, all_databases,
                                              login_port, config_file, socket, ssl_cert, ssl_key,
-                                             ssl_ca, single_transaction, quick)
+                                             ssl_ca, single_transaction, quick, ignore_tables)
                 if rc != 0:
                     module.fail_json(msg="%s" % stderr)
                 else:

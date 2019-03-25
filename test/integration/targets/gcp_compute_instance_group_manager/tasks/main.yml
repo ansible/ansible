@@ -15,75 +15,65 @@
 # Pre-test setup
 - name: create a network
   gcp_compute_network:
-      name: 'network-instancetemplate'
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
-      state: present
+    name: network-instancetemplate
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: network
 - name: create a address
   gcp_compute_address:
-      name: 'address-instancetemplate'
-      region: 'us-west1'
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
-      state: present
+    name: address-instancetemplate
+    region: us-west1
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: address
 - name: create a instance template
   gcp_compute_instance_template:
-      name: "{{ resource_name }}"
-      properties:
-        disks:
-          - auto_delete: true
-            boot: true
-            initialize_params:
-              source_image: 'projects/ubuntu-os-cloud/global/images/family/ubuntu-1604-lts'
-        machine_type: n1-standard-1
-        network_interfaces:
-          - network: "{{ network }}"
-            access_configs:
-              - name: 'test-config'
-                type: 'ONE_TO_ONE_NAT'
-                nat_ip: "{{ address }}"
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
-      state: present
+    name: "{{ resource_name }}"
+    properties:
+      disks:
+      - auto_delete: 'true'
+        boot: 'true'
+        initialize_params:
+          source_image: projects/ubuntu-os-cloud/global/images/family/ubuntu-1604-lts
+      machine_type: n1-standard-1
+      network_interfaces:
+      - network: "{{ network }}"
+        access_configs:
+        - name: test-config
+          type: ONE_TO_ONE_NAT
+          nat_ip: "{{ address }}"
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: instancetemplate
 - name: delete a instance group manager
   gcp_compute_instance_group_manager:
-      name: "{{ resource_name }}"
-      base_instance_name: 'test1-child'
-      instance_template: "{{ instancetemplate }}"
-      target_size: 3
-      zone: 'us-west1-a'
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
-      state: absent
+    name: "{{ resource_name }}"
+    base_instance_name: test1-child
+    instance_template: "{{ instancetemplate }}"
+    target_size: 3
+    zone: us-west1-a
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
 #----------------------------------------------------------
 - name: create a instance group manager
   gcp_compute_instance_group_manager:
-      name: "{{ resource_name }}"
-      base_instance_name: 'test1-child'
-      instance_template: "{{ instancetemplate }}"
-      target_size: 3
-      zone: 'us-west1-a'
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
-      state: present
+    name: "{{ resource_name }}"
+    base_instance_name: test1-child
+    instance_template: "{{ instancetemplate }}"
+    target_size: 3
+    zone: us-west1-a
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: result
 - name: assert changed is true
   assert:
@@ -91,27 +81,32 @@
       - result.changed == true
       - "result.kind == 'compute#instanceGroupManager'"
 - name: verify that instance_group_manager was created
-  shell: |
-    gcloud compute instance-groups managed describe  --zone=us-west1-a  --project="{{ gcp_project}}"  "{{ resource_name }}"
-  register: results
-- name: verify that command succeeded
-  assert:
-    that:
-      - results.rc == 0
-# ----------------------------------------------------------------------------
-- name: create a instance group manager that already exists
-  gcp_compute_instance_group_manager:
-      name: "{{ resource_name }}"
-      base_instance_name: 'test1-child'
-      instance_template: "{{ instancetemplate }}"
-      target_size: 3
-      zone: 'us-west1-a'
+  gcp_compute_instance_group_manager_facts:
+      filters:
+         - name = {{ resource_name }}
+      zone: us-west1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
       scopes:
         - https://www.googleapis.com/auth/compute
-      state: present
+  register: results
+- name: verify that command succeeded
+  assert:
+    that:
+      - results['items'] | length == 1
+# ----------------------------------------------------------------------------
+- name: create a instance group manager that already exists
+  gcp_compute_instance_group_manager:
+    name: "{{ resource_name }}"
+    base_instance_name: test1-child
+    instance_template: "{{ instancetemplate }}"
+    target_size: 3
+    zone: us-west1-a
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: result
 - name: assert changed is false
   assert:
@@ -121,17 +116,15 @@
 #----------------------------------------------------------
 - name: delete a instance group manager
   gcp_compute_instance_group_manager:
-      name: "{{ resource_name }}"
-      base_instance_name: 'test1-child'
-      instance_template: "{{ instancetemplate }}"
-      target_size: 3
-      zone: 'us-west1-a'
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
-      state: absent
+    name: "{{ resource_name }}"
+    base_instance_name: test1-child
+    instance_template: "{{ instancetemplate }}"
+    target_size: 3
+    zone: us-west1-a
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
   register: result
 - name: assert changed is true
   assert:
@@ -139,29 +132,32 @@
       - result.changed == true
       - result.has_key('kind') == False
 - name: verify that instance_group_manager was deleted
-  shell: |
-    gcloud compute instance-groups managed describe  --zone=us-west1-a  --project="{{ gcp_project}}"  "{{ resource_name }}"
-  register: results
-  failed_when: results.rc == 0
-- name: verify that command succeeded
-  assert:
-    that:
-      - results.rc == 1
-      - "\"'projects/{{ gcp_project }}/zones/us-west1-a/instanceGroupManagers/{{ resource_name }}' was not found\" in results.stderr"
-# ----------------------------------------------------------------------------
-- name: delete a instance group manager that does not exist
-  gcp_compute_instance_group_manager:
-      name: "{{ resource_name }}"
-      base_instance_name: 'test1-child'
-      instance_template: "{{ instancetemplate }}"
-      target_size: 3
-      zone: 'us-west1-a'
+  gcp_compute_instance_group_manager_facts:
+      filters:
+         - name = {{ resource_name }}
+      zone: us-west1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
       scopes:
         - https://www.googleapis.com/auth/compute
-      state: absent
+  register: results
+- name: verify that command succeeded
+  assert:
+    that:
+      - results['items'] | length == 0
+# ----------------------------------------------------------------------------
+- name: delete a instance group manager that does not exist
+  gcp_compute_instance_group_manager:
+    name: "{{ resource_name }}"
+    base_instance_name: test1-child
+    instance_template: "{{ instancetemplate }}"
+    target_size: 3
+    zone: us-west1-a
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
   register: result
 - name: assert changed is false
   assert:
@@ -170,47 +166,45 @@
       - result.has_key('kind') == False
 #---------------------------------------------------------
 # Post-test teardown
+# If errors happen, don't crash the playbook!
 - name: delete a instance template
   gcp_compute_instance_template:
-      name: "{{ resource_name }}"
-      properties:
-        disks:
-          - auto_delete: true
-            boot: true
-            initialize_params:
-              source_image: 'projects/ubuntu-os-cloud/global/images/family/ubuntu-1604-lts'
-        machine_type: n1-standard-1
-        network_interfaces:
-          - network: "{{ network }}"
-            access_configs:
-              - name: 'test-config'
-                type: 'ONE_TO_ONE_NAT'
-                nat_ip: "{{ address }}"
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
-      state: absent
+    name: "{{ resource_name }}"
+    properties:
+      disks:
+      - auto_delete: 'true'
+        boot: 'true'
+        initialize_params:
+          source_image: projects/ubuntu-os-cloud/global/images/family/ubuntu-1604-lts
+      machine_type: n1-standard-1
+      network_interfaces:
+      - network: "{{ network }}"
+        access_configs:
+        - name: test-config
+          type: ONE_TO_ONE_NAT
+          nat_ip: "{{ address }}"
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
   register: instancetemplate
+  ignore_errors: true
 - name: delete a address
   gcp_compute_address:
-      name: 'address-instancetemplate'
-      region: 'us-west1'
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
-      state: absent
+    name: address-instancetemplate
+    region: us-west1
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
   register: address
+  ignore_errors: true
 - name: delete a network
   gcp_compute_network:
-      name: 'network-instancetemplate'
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
-      state: absent
+    name: network-instancetemplate
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
   register: network
+  ignore_errors: true

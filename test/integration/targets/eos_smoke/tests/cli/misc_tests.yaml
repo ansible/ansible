@@ -15,7 +15,7 @@
     - assert:
         that:
           - 'result.failed == true'
-          - '"privileged mode required" in result.module_stderr'
+          - '"privileged mode required" in result.msg'
 
     - name: command that doesn't require become
       eos_command:

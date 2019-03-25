@@ -95,13 +95,14 @@ options:
     required: false
     default: no
     version_added: "2.4"
+    type: bool
 
 requirements:
   - boto3 >= 1.4.4
   - botocore
   - python-dateutil
 
-author: tedder
+author: Ted Timmons (@tedder)
 extends_documentation_fragment:
 - aws
 - ec2

@@ -107,7 +107,7 @@ def get_volume(module, array):
     """Return Volume or None"""
     try:
         return array.get_volume(module.params['name'])
-    except:
+    except Exception:
         return None
 
 
@@ -115,7 +115,7 @@ def get_target(module, array):
     """Return Volume or None"""
     try:
         return array.get_volume(module.params['target'])
-    except:
+    except Exception:
         return None
 
 
@@ -126,15 +126,19 @@ def get_snapshot(module, array):
         for s in array.get_volume(module.params['name'], snap='true'):
             if s['name'] == snapname:
                 return snapname
-    except:
+    except Exception:
         return None
 
 
 def create_snapshot(module, array):
     """Create Snapshot"""
+    changed = True
     if not module.check_mode:
-        array.create_snapshot(module.params['name'], suffix=module.params['suffix'])
-    module.exit_json(changed=True)
+        try:
+            array.create_snapshot(module.params['name'], suffix=module.params['suffix'])
+        except Exception:
+            changed = False
+    module.exit_json(changed=changed)
 
 
 def create_from_snapshot(module, array):
@@ -165,12 +169,19 @@ def update_snapshot(module, array):
 
 def delete_snapshot(module, array):
     """ Delete Snapshot"""
+    changed = True
     if not module.check_mode:
         snapname = module.params['name'] + "." + module.params['suffix']
-        array.destroy_volume(snapname)
-        if module.params['eradicate']:
-            array.eradicate_volume(snapname)
-    module.exit_json(changed=True)
+        try:
+            array.destroy_volume(snapname)
+            if module.params['eradicate']:
+                try:
+                    array.eradicate_volume(snapname)
+                except Exception:
+                    changed = False
+        except Exception:
+            changed = False
+    module.exit_json(changed=changed)
 
 
 def main():

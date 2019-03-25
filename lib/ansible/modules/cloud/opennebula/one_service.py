@@ -187,7 +187,7 @@ service_id:
     sample: 153
 service_name:
     description: service name
-    type: string
+    type: str
     returned: success
     sample: app1
 group_id:
@@ -197,7 +197,7 @@ group_id:
     sample: 1
 group_name:
     description: service's group name
-    type: string
+    type: str
     returned: success
     sample: one-users
 owner_id:
@@ -207,12 +207,12 @@ owner_id:
     sample: 143
 owner_name:
     description: service's owner name
-    type: string
+    type: str
     returned: success
     sample: ansible-test
 state:
     description: state of service instance
-    type: string
+    type: str
     returned: success
     sample: RUNNING
 mode:
@@ -693,7 +693,7 @@ def main():
                                ['template_id', 'template_name', 'cardinality'],
                                ['service_id', 'custom_attrs']
                            ],
-                           required_together=['role', 'cardinality'],
+                           required_together=[['role', 'cardinality']],
                            supports_check_mode=True)
 
     auth = get_connection_info(module)

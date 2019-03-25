@@ -42,6 +42,12 @@ options:
     description:
     - UUID of the instance to manage if known, this is VMware's unique identifier.
     - This is required if name is not supplied.
+  use_instance_uuid:
+    description:
+    - Whether to use the VMWare instance UUID rather than the BIOS UUID.
+    default: no
+    type: bool
+    version_added: '2.8'
   folder:
     description:
     - Destination folder, absolute or relative path to find an existing guest or create the new guest.
@@ -84,24 +90,23 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = r'''
 - name: Set the state of a virtual machine to poweroff
   vmware_guest_powerstate:
-    hostname: 192.0.2.44
-    username: administrator@vsphere.local
-    password: vmware
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: no
-    folder: /testvms
-    name: testvm_2
+    folder: /"{{ datacenter_name }}"/vm/my_folder
+    name: "{{ guest_name }}"
     state: powered-off
   delegate_to: localhost
   register: deploy
 
 - name: Set the state of a virtual machine to poweroff at given scheduled time
   vmware_guest_powerstate:
-    hostname: 192.0.2.44
-    username: administrator@vsphere.local
-    password: vmware
-    validate_certs: no
-    folder: /datacenter-1/vm/my_folder
-    name: testvm_2
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    folder: /"{{ datacenter_name }}"/vm/my_folder
+    name: "{{ guest_name }}"
     state: powered-off
     scheduled_at: "09/01/2018 10:18"
   delegate_to: localhost
@@ -109,11 +114,10 @@ EXAMPLES = r'''
 
 - name: Wait for the virtual machine to shutdown
   vmware_guest_powerstate:
-    hostname: 192.0.2.44
-    username: administrator@vsphere.local
-    password: vmware
-    validate_certs: no
-    name: testvm_2
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: "{{ guest_name }}"
     state: shutdown-guest
     state_change_timeout: 200
   delegate_to: localhost
@@ -141,6 +145,7 @@ def main():
         name=dict(type='str'),
         name_match=dict(type='str', choices=['first', 'last'], default='first'),
         uuid=dict(type='str'),
+        use_instance_uuid=dict(type='bool', default=False),
         folder=dict(type='str', default='/vm'),
         force=dict(type='bool', default=False),
         scheduled_at=dict(type='str'),
@@ -209,7 +214,7 @@ def main():
                                      "given are invalid: %s" % (module.params.get('state'),
                                                                 to_native(e.msg)))
         else:
-            result = set_vm_power_state(pyv.content, vm, module.params['state'], module.params['force'])
+            result = set_vm_power_state(pyv.content, vm, module.params['state'], module.params['force'], module.params['state_change_timeout'])
     else:
         module.fail_json(msg="Unable to set power state for non-existing virtual machine : '%s'" % (module.params.get('uuid') or module.params.get('name')))
 

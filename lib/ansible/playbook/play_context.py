@@ -23,67 +23,25 @@ __metaclass__ = type
 
 import os
 import pwd
-import random
-import re
-import string
 import sys
 
 from ansible import constants as C
+from ansible import context
 from ansible.errors import AnsibleError
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.six.moves import shlex_quote
-from ansible.module_utils._text import to_bytes
-from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.plugins import get_plugin_class
+from ansible.utils.display import Display
+from ansible.plugins.loader import get_shell_plugin
 from ansible.utils.ssh_functions import check_for_controlpersist
 
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 __all__ = ['PlayContext']
 
-# TODO: needs to be configurable
-b_SU_PROMPT_LOCALIZATIONS = [
-    to_bytes('Password'),
-    to_bytes('암호'),
-    to_bytes('パスワード'),
-    to_bytes('Adgangskode'),
-    to_bytes('Contraseña'),
-    to_bytes('Contrasenya'),
-    to_bytes('Hasło'),
-    to_bytes('Heslo'),
-    to_bytes('Jelszó'),
-    to_bytes('Lösenord'),
-    to_bytes('Mật khẩu'),
-    to_bytes('Mot de passe'),
-    to_bytes('Parola'),
-    to_bytes('Parool'),
-    to_bytes('Pasahitza'),
-    to_bytes('Passord'),
-    to_bytes('Passwort'),
-    to_bytes('Salasana'),
-    to_bytes('Sandi'),
-    to_bytes('Senha'),
-    to_bytes('Wachtwoord'),
-    to_bytes('ססמה'),
-    to_bytes('Лозинка'),
-    to_bytes('Парола'),
-    to_bytes('Пароль'),
-    to_bytes('गुप्तशब्द'),
-    to_bytes('शब्दकूट'),
-    to_bytes('సంకేతపదము'),
-    to_bytes('හස්පදය'),
-    to_bytes('密码'),
-    to_bytes('密碼'),
-    to_bytes('口令'),
-]
 
 TASK_ATTRIBUTE_OVERRIDES = (
     'become',
@@ -114,9 +72,6 @@ RESET_VARS = (
     'ansible_ssh_pipelining',
     'ansible_ssh_executable',
 )
-
-OPTION_FLAGS = ('connection', 'remote_user', 'private_key_file', 'verbosity', 'force_handlers', 'step', 'start_at_task', 'diff',
-                'ssh_common_args', 'docker_extra_args', 'sftp_extra_args', 'scp_extra_args', 'ssh_extra_args')
 
 
 class PlayContext(Base):
@@ -168,28 +123,21 @@ class PlayContext(Base):
     _become_flags = FieldAttribute(isa='string', default=C.DEFAULT_BECOME_FLAGS)
     _prompt = FieldAttribute(isa='string')
 
-    # DEPRECATED: backwards compatibility fields for sudo/su
-    _sudo_exe = FieldAttribute(isa='string', default=C.DEFAULT_SUDO_EXE)
-    _sudo_flags = FieldAttribute(isa='string', default=C.DEFAULT_SUDO_FLAGS)
-    _sudo_pass = FieldAttribute(isa='string')
-    _su_exe = FieldAttribute(isa='string', default=C.DEFAULT_SU_EXE)
-    _su_flags = FieldAttribute(isa='string', default=C.DEFAULT_SU_FLAGS)
-    _su_pass = FieldAttribute(isa='string')
-
     # general flags
     _verbosity = FieldAttribute(isa='int', default=0)
-    _only_tags = FieldAttribute(isa='set', default=set())
-    _skip_tags = FieldAttribute(isa='set', default=set())
-    _force_handlers = FieldAttribute(isa='bool', default=False)
+    _only_tags = FieldAttribute(isa='set', default=set)
+    _skip_tags = FieldAttribute(isa='set', default=set)
+
     _start_at_task = FieldAttribute(isa='string')
     _step = FieldAttribute(isa='bool', default=False)
 
-    # Fact gathering settings
-    _gather_subset = FieldAttribute(isa='string', default=C.DEFAULT_GATHER_SUBSET)
-    _gather_timeout = FieldAttribute(isa='string', default=C.DEFAULT_GATHER_TIMEOUT)
-    _fact_path = FieldAttribute(isa='string', default=C.DEFAULT_FACT_PATH)
+    # "PlayContext.force_handlers should not be used, the calling code should be using play itself instead"
+    _force_handlers = FieldAttribute(isa='bool', default=False)
 
-    def __init__(self, play=None, options=None, passwords=None, connection_lockfd=None):
+    def __init__(self, play=None, passwords=None, connection_lockfd=None):
+        # Note: play is really not optional.  The only time it could be omitted is when we create
+        # a PlayContext just so we can invoke its deserialize method to load it from a serialized
+        # data source.
 
         super(PlayContext, self).__init__()
 
@@ -199,6 +147,8 @@ class PlayContext(Base):
         self.password = passwords.get('conn_pass', '')
         self.become_pass = passwords.get('become_pass', '')
 
+        self._become_plugin = None
+
         self.prompt = ''
         self.success_key = ''
 
@@ -206,38 +156,13 @@ class PlayContext(Base):
         self.connection_lockfd = connection_lockfd
 
         # set options before play to allow play to override them
-        if options:
-            self.set_options(options)
+        if context.CLIARGS:
+            self.set_attributes_from_cli()
 
         if play:
-            self.set_play(play)
+            self.set_attributes_from_play(play)
 
-    def set_play(self, play):
-        '''
-        Configures this connection information instance with data from
-        the play class.
-        '''
-
-        if play.connection:
-            self.connection = play.connection
-
-        if play.remote_user:
-            self.remote_user = play.remote_user
-
-        if play.port:
-            self.port = int(play.port)
-
-        if play.become is not None:
-            self.become = play.become
-        if play.become_method:
-            self.become_method = play.become_method
-        if play.become_user:
-            self.become_user = play.become_user
-
-        if play.force_handlers is not None:
-            self.force_handlers = play.force_handlers
-
-    def set_options_from_plugin(self, plugin):
+    def set_attributes_from_plugin(self, plugin):
         # generic derived from connection plugin, temporary for backwards compat, in the end we should not set play_context properties
 
         # get options for plugins
@@ -248,46 +173,29 @@ class PlayContext(Base):
                 if flag:
                     setattr(self, flag, self.connection.get_option(flag))
 
-        # TODO: made irrelavent by above
-        # get ssh options
-        # for flag in ('ssh_common_args', 'docker_extra_args', 'sftp_extra_args', 'scp_extra_args', 'ssh_extra_args'):
-        #     setattr(self, flag, getattr(options, flag, ''))
+    def set_attributes_from_play(self, play):
+        self.force_handlers = play.force_handlers
 
-    def set_options(self, options):
+    def set_attributes_from_cli(self):
         '''
         Configures this connection information instance with data from
         options specified by the user on the command line. These have a
         lower precedence than those set on the play or host.
         '''
+        if context.CLIARGS.get('timeout', False):
+            self.timeout = int(context.CLIARGS['timeout'])
 
-        # privilege escalation
-        self.become = options.become
-        self.become_method = options.become_method
-        self.become_user = options.become_user
+        # From the command line.  These should probably be used directly by plugins instead
+        # For now, they are likely to be moved to FieldAttribute defaults
+        self.private_key_file = context.CLIARGS.get('private_key_file')  # Else default
+        self.verbosity = context.CLIARGS.get('verbosity')  # Else default
+        self.ssh_common_args = context.CLIARGS.get('ssh_common_args')  # Else default
+        self.ssh_extra_args = context.CLIARGS.get('ssh_extra_args')  # Else default
+        self.sftp_extra_args = context.CLIARGS.get('sftp_extra_args')  # Else default
+        self.scp_extra_args = context.CLIARGS.get('scp_extra_args')  # Else default
 
-        self.check_mode = boolean(options.check, strict=False)
-        self.diff = boolean(options.diff, strict=False)
-
-        #  general flags (should we move out?)
-        #  should only be 'non plugin' flags
-        for flag in OPTION_FLAGS:
-            attribute = getattr(options, flag, False)
-            if attribute:
-                setattr(self, flag, attribute)
-
-        if hasattr(options, 'timeout') and options.timeout:
-            self.timeout = int(options.timeout)
-
-        # get the tag info from options. We check to see if the options have
-        # the attribute, as it is not always added via the CLI
-        if hasattr(options, 'tags'):
-            self.only_tags.update(options.tags)
-
-        if len(self.only_tags) == 0:
-            self.only_tags = set(['all'])
-
-        if hasattr(options, 'skip_tags'):
-            self.skip_tags.update(options.skip_tags)
+        # Not every cli that uses PlayContext has these command line args so have a default
+        self.start_at_task = context.CLIARGS.get('start_at_task', None)  # Else default
 
     def set_task_and_variable_override(self, task, variables, templar):
         '''
@@ -378,13 +286,6 @@ class PlayContext(Base):
                     attrs_considered.append(attr)
                 # no else, as no other vars should be considered
 
-        # become legacy updates -- from commandline
-        if not new_info.become_pass:
-            if new_info.become_method == 'sudo' and new_info.sudo_pass:
-                new_info.become_pass = new_info.sudo_pass
-            elif new_info.become_method == 'su' and new_info.su_pass:
-                new_info.become_pass = new_info.su_pass
-
         # become legacy updates -- from inventory file (inventory overrides
         # commandline)
         for become_pass_name in C.MAGIC_VARIABLE_MAPPING.get('become_pass'):
@@ -444,131 +345,43 @@ class PlayContext(Base):
 
         return new_info
 
+    def set_become_plugin(self, plugin):
+        self._become_plugin = plugin
+
     def make_become_cmd(self, cmd, executable=None):
         """ helper function to create privilege escalation commands """
+        display.deprecated(
+            "PlayContext.make_become_cmd should not be used, the calling code should be using become plugins instead",
+            version="2.12"
+        )
 
-        prompt = None
-        success_key = None
-        self.prompt = None
+        if not cmd or not self.become:
+            return cmd
 
-        if self.become:
+        become_method = self.become_method
+
+        # load/call become plugins here
+        plugin = self._become_plugin
+
+        if plugin:
+            options = {
+                'become_exe': self.become_exe or become_method,
+                'become_flags': self.become_flags or '',
+                'become_user': self.become_user,
+                'become_pass': self.become_pass
+            }
+            plugin.set_options(direct=options)
 
             if not executable:
                 executable = self.executable
 
-            becomecmd = None
-            randbits = ''.join(random.choice(string.ascii_lowercase) for x in range(32))
-            success_key = 'BECOME-SUCCESS-%s' % randbits
-            success_cmd = shlex_quote('echo %s; %s' % (success_key, cmd))
-
-            if executable:
-                command = '%s -c %s' % (executable, success_cmd)
-            else:
-                command = success_cmd
-
-            # set executable to use for the privilege escalation method, with various overrides
-            exe = self.become_exe or getattr(self, '%s_exe' % self.become_method, self.become_method)
-
-            # set flags to use for the privilege escalation method, with various overrides
-            flags = self.become_flags or getattr(self, '%s_flags' % self.become_method, '')
-
-            if self.become_method == 'sudo':
-                # If we have a password, we run sudo with a randomly-generated
-                # prompt set using -p. Otherwise we run it with default -n, which makes
-                # it fail if it would have prompted for a password.
-                # Cannot rely on -n as it can be removed from defaults, which should be
-                # done for older versions of sudo that do not support the option.
-                #
-                # Passing a quoted compound command to sudo (or sudo -s)
-                # directly doesn't work, so we shellquote it with shlex_quote()
-                # and pass the quoted string to the user's shell.
-
-                # force quick error if password is required but not supplied, should prevent sudo hangs.
-                if self.become_pass:
-                    prompt = '[sudo via ansible, key=%s] password: ' % randbits
-                    becomecmd = '%s %s -p "%s" -u %s %s' % (exe, flags.replace('-n', ''), prompt, self.become_user, command)
-                else:
-                    becomecmd = '%s %s -u %s %s' % (exe, flags, self.become_user, command)
-
-            elif self.become_method == 'su':
-
-                # passing code ref to examine prompt as simple string comparisson isn't good enough with su
-                def detect_su_prompt(b_data):
-                    b_password_string = b"|".join([br'(\w+\'s )?' + x for x in b_SU_PROMPT_LOCALIZATIONS])
-                    # Colon or unicode fullwidth colon
-                    b_password_string = b_password_string + to_bytes(u' ?(:|：) ?')
-                    b_SU_PROMPT_LOCALIZATIONS_RE = re.compile(b_password_string, flags=re.IGNORECASE)
-                    return bool(b_SU_PROMPT_LOCALIZATIONS_RE.match(b_data))
-                prompt = detect_su_prompt
-
-                becomecmd = '%s %s %s -c %s' % (exe, flags, self.become_user, shlex_quote(command))
-
-            elif self.become_method == 'pbrun':
-
-                prompt = 'Password:'
-                becomecmd = '%s %s -u %s %s' % (exe, flags, self.become_user, success_cmd)
-
-            elif self.become_method == 'ksu':
-                def detect_ksu_prompt(b_data):
-                    return re.match(b"Kerberos password for .*@.*:", b_data)
-
-                prompt = detect_ksu_prompt
-                becomecmd = '%s %s %s -e %s' % (exe, self.become_user, flags, command)
-
-            elif self.become_method == 'pfexec':
-
-                # No user as it uses it's own exec_attr to figure it out
-                becomecmd = '%s %s "%s"' % (exe, flags, success_cmd)
-
-            elif self.become_method == 'runas':
-                # become is handled inside the WinRM connection plugin
-                if not self.become_user:
-                    raise AnsibleError(("The 'runas' become method requires a username "
-                                        "(specify with the '--become-user' CLI arg, the 'become_user' keyword, or the 'ansible_become_user' variable)"))
-                becomecmd = cmd
-
-            elif self.become_method == 'doas':
-
-                prompt = 'doas (%s@' % self.remote_user
-                exe = self.become_exe or 'doas'
-
-                if not self.become_pass:
-                    flags += ' -n '
-
-                if self.become_user:
-                    flags += ' -u %s ' % self.become_user
-
-                # FIXME: make shell independent
-                becomecmd = '%s %s %s -c %s' % (exe, flags, executable, success_cmd)
-
-            elif self.become_method == 'dzdo':
-
-                exe = self.become_exe or 'dzdo'
-                if self.become_pass:
-                    prompt = '[dzdo via ansible, key=%s] password: ' % randbits
-                    becomecmd = '%s %s -p %s -u %s %s' % (exe, flags, shlex_quote(prompt), self.become_user, command)
-                else:
-                    becomecmd = '%s %s -u %s %s' % (exe, flags, self.become_user, command)
-
-            elif self.become_method == 'pmrun':
-
-                exe = self.become_exe or 'pmrun'
-
-                prompt = 'Enter UPM user password:'
-                becomecmd = '%s %s %s' % (exe, flags, shlex_quote(command))
-
-            elif self.become_method == 'machinectl':
-
-                exe = self.become_exe or 'machinectl'
-                becomecmd = '%s shell -q %s %s@ %s' % (exe, flags, self.become_user, command)
-
-            else:
-                raise AnsibleError("Privilege escalation method not found: %s" % self.become_method)
-
+            shell = get_shell_plugin(executable=executable)
+            cmd = plugin.build_become_command(cmd, shell)
+            # for backwards compat:
             if self.become_pass:
-                self.prompt = prompt
-            self.success_key = success_key
-            return becomecmd
+                self.prompt = plugin.prompt
+        else:
+            raise AnsibleError("Privilege escalation method not found: %s" % become_method)
 
         return cmd
 

@@ -1,3 +1,5 @@
+.. _module_defaults:
+
 Module defaults
 ===============
 
@@ -72,3 +74,43 @@ Setting a default AWS region for specific EC2-related modules::
           region: '{{ my_region }}'
         ec2_vpc_net_facts:
           region: '{{ my_region }}'
+
+.. _module_defaults_groups:
+
+Module defaults groups
+----------------------
+
+.. versionadded:: 2.7
+
+Ansible 2.7 adds a preview-status feature to group together modules that share common sets of parameters. This makes
+it easier to author playbooks making heavy use of API-based modules such as cloud modules.
+
++-------+---------------------------+-----------------+
+| Group | Purpose                   | Ansible Version |
++=======+===========================+=================+
+| aws   | Amazon Web Services       | 2.7             |
++-------+---------------------------+-----------------+
+| azure | Azure                     | 2.7             |
++-------+---------------------------+-----------------+
+| gcp   | Google Cloud Platform     | 2.7             |
++-------+---------------------------+-----------------+
+| k8s   | Kubernetes                | 2.8             |
++-------+---------------------------+-----------------+
+
+Use the groups with `module_defaults` by prefixing the group name with `group/` - e.g. `group/aws`
+
+In a playbook, you can set module defaults for whole groups of modules, such as setting a common AWS region.
+
+.. code-block:: YAML
+
+    # example_play.yml
+    - hosts: localhost
+      module_defaults:
+        group/aws:
+          region: us-west-2
+      tasks:
+      - aws_s3_bucket_facts:
+      # now the region is shared between both facts modules
+      - ec2_ami_facts:
+          filters:
+            name: 'RHEL*7.5*'

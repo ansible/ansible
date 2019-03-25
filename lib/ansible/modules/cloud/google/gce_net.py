@@ -166,25 +166,25 @@ RETURN = '''
 allowed:
     description: Rules (ports and protocols) specified by this firewall rule.
     returned: When specified
-    type: string
+    type: str
     sample: "tcp:80;icmp"
 
 fwname:
     description: Name of the firewall rule.
     returned: When specified
-    type: string
+    type: str
     sample: "my-fwname"
 
 ipv4_range:
     description: IPv4 range of the specified network or subnetwork.
     returned: when specified or when a subnetwork is created
-    type: string
+    type: str
     sample: "10.0.0.0/16"
 
 name:
     description: Name of the network.
     returned: always
-    type: string
+    type: str
     sample: "my-network"
 
 src_range:
@@ -202,19 +202,19 @@ src_tags:
 state:
     description: State of the item operated on.
     returned: always
-    type: string
+    type: str
     sample: "present"
 
 subnet_name:
     description: Name of the subnetwork.
     returned: when specified or when a subnetwork is created
-    type: string
+    type: str
     sample: "my-subnetwork"
 
 subnet_region:
     description: Region of the specified subnet.
     returned: when specified or when a subnetwork is created
-    type: string
+    type: str
     sample: "us-east1"
 
 target_tags:
@@ -272,7 +272,7 @@ def sorted_allowed_list(allowed_list):
     # sort by protocol
     allowed_by_protocol = sorted(allowed_list, key=lambda x: x['IPProtocol'])
     # sort the ports list
-    return sorted(allowed_by_protocol, key=lambda y: y.get('ports', []).sort())
+    return sorted(allowed_by_protocol, key=lambda y: sorted(y.get('ports', [])))
 
 
 def main():

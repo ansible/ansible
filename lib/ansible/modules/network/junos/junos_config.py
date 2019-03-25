@@ -61,10 +61,11 @@ options:
         remote device configuration back to initial defaults.  This
         argument will effectively remove all current configuration
         statements on the remote device.
+    type: bool
   confirm:
     description:
-      - The C(confirm) argument will configure a time out value for
-        the commit to be confirmed before it is automatically
+      - The C(confirm) argument will configure a time out value in minutes
+        for the commit to be confirmed before it is automatically
         rolled back.  If the C(confirm) argument is set to False, this
         argument is silently ignored.  If the value for this argument
         is set to 0, the commit is confirmed immediately.
@@ -91,17 +92,17 @@ options:
     description:
       - This argument will cause the module to create a full backup of
         the current C(running-config) from the remote device before any
-        changes are made.  The backup file is written to the C(backup)
-        folder in the playbook root directory or role root directory, if
-        playbook is part of an ansible role. If the directory does not exist,
-        it is created.
+        changes are made. If the C(backup_options) value is not given,
+        the backup file is written to the C(backup) folder in the playbook
+        root directory or role root directory, if playbook is part of an
+        ansible role. If the directory does not exist, it is created.
     type: bool
     default: 'no'
     version_added: "2.2"
   update:
     description:
       - This argument will decide how to load the configuration
-        data particulary when the candidate configuration and loaded
+        data particularly when the candidate configuration and loaded
         configuration contain conflicting statements. Following are
         accepted values.
         C(merge) combines the data in the loaded configuration with the
@@ -112,8 +113,14 @@ options:
         it with the loaded configuration.
         C(replace) substitutes each hierarchy level in the loaded configuration
         for the corresponding level.
+        C(update) is similar to the override option. The new configuration completely
+        replaces the existing configuration. The difference comes when the configuration
+        is later committed. This option performs a 'diff' between the new candidate
+        configuration and the existing committed configuration. It then only notifies
+        system processes responsible for the changed portions of the configuration, and
+        only marks the actual configuration changes as 'changed'.
     default: merge
-    choices: ['merge', 'override', 'replace']
+    choices: ['merge', 'override', 'replace', 'update']
     version_added: "2.3"
   confirm_commit:
     description:
@@ -122,6 +129,35 @@ options:
     type: bool
     default: 'no'
     version_added: "2.4"
+  check_commit:
+    description:
+      - This argument will check correctness of syntax; do not apply changes.
+      - Note that this argument can be used to confirm verified configuration done via commit confirmed operation
+    type: bool
+    default: 'no'
+    version_added: "2.8"
+  backup_options:
+    description:
+      - This is a dict object containing configurable options related to backup file path.
+        The value of this option is read only when C(backup) is set to I(yes), if C(backup) is set
+        to I(no) this option will be silently ignored.
+    suboptions:
+      filename:
+        description:
+          - The filename to be used to store the backup configuration. If the the filename
+            is not given it will be generated based on the hostname, current time and date
+            in format defined by <hostname>_config.<current-date>@<current-time>
+      dir_path:
+        description:
+          - This option provides the path ending with directory name in which the backup
+            configuration file will be stored. If the directory does not exist it will be first
+            created and the filename is either the value of C(filename) or default filename
+            as described in C(filename) options description. If the path value is not given
+            in that case a I(backup) directory will be created in the current working directory
+            and backup configuration will be copied in C(filename) within I(backup) directory.
+        type: path
+    type: dict
+    version_added: "2.8"
 requirements:
   - ncclient (>=v0.5.2)
 notes:
@@ -131,6 +167,7 @@ notes:
     L(Network FAQ,../network/user_guide/faq.html#why-do-the-config-modules-always-return-changed-true-with-abbreviated-commands).
   - Loading JSON-formatted configuration I(json) is supported
     starting in Junos OS Release 16.1 onwards.
+  - Update C(override) not currently compatible with C(set) notation.
   - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
   - Recommended connection is C(netconf). See L(the Junos OS Platform Options,../network/user_guide/platform_junos.html).
   - This module also works with C(local) connections for legacy playbooks.
@@ -149,6 +186,17 @@ EXAMPLES = """
       - set vlans vlan01 description "Test vlan"
     comment: update config
 
+- name: Set routed VLAN interface (RVI) IPv4 address
+  junos_config:
+    lines:
+      - set vlans vlan01 vlan-id 1
+      - set interfaces irb unit 10 family inet address 10.0.0.1/24
+      - set vlans vlan01 l3-interface irb.10
+
+- name: Check correctness of commit configuration
+  junos_config:
+    check_commit: yes
+
 - name: rollback the configuration to id 10
   junos_config:
     rollback: 10
@@ -156,6 +204,13 @@ EXAMPLES = """
 - name: zero out the current configuration
   junos_config:
     zeroize: yes
+
+- name: Set VLAN access and trunking
+  junos_config:
+    lines:
+      - set vlans vlan02 vlan-id 6
+      - set interfaces ge-0/0/6.0 family ethernet-switching interface-mode access vlan members vlan02
+      - set interfaces ge-0/0/6.0 family ethernet-switching interface-mode trunk vlan members vlan02
 
 - name: confirm a previous commit
   junos_config:
@@ -166,14 +221,42 @@ EXAMPLES = """
     lines:
       # - set int ge-0/0/1 unit 0 desc "Test interface"
       - set interfaces ge-0/0/1 unit 0 description "Test interface"
+
+- name: configurable backup path
+  junos_config:
+    src: srx.cfg
+    backup: yes
+    backup_options:
+      filename: backup.cfg
+      dir_path: /home/user
 """
 
 RETURN = """
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
-  type: string
+  type: str
   sample: /playbooks/ansible/backup/config.2016-07-16@22:28:34
+filename:
+  description: The name of the backup file
+  returned: when backup is yes and filename is not specified in backup options
+  type: str
+  sample: junos01_config.2016-07-16@22:28:34
+shortname:
+  description: The full path to the backup file excluding the timestamp
+  returned: when backup is yes and filename is not specified in backup options
+  type: str
+  sample: /playbooks/ansible/backup/junos01_config
+date:
+  description: The date extracted from the backup file name
+  returned: when backup is yes
+  type: str
+  sample: "2016-07-16"
+time:
+  description: The time extracted from the backup file name
+  returned: when backup is yes
+  type: str
+  sample: "22:28:34"
 """
 import re
 import json
@@ -182,7 +265,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.netconf import exec_rpc
 from ansible.module_utils.network.junos.junos import get_diff, load_config, get_configuration
 from ansible.module_utils.network.junos.junos import commit_configuration, discard_changes, locked_config
-from ansible.module_utils.network.junos.junos import junos_argument_spec, load_configuration, get_connection, tostring
+from ansible.module_utils.network.junos.junos import junos_argument_spec, load_configuration, tostring
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native, to_text
 
@@ -283,6 +366,10 @@ def configure_device(module, warnings, candidate):
 def main():
     """ main entry point for module execution
     """
+    backup_spec = dict(
+        filename=dict(),
+        dir_path=dict(type='path')
+    )
     argument_spec = dict(
         lines=dict(type='list'),
 
@@ -298,9 +385,11 @@ def main():
         confirm=dict(default=0, type='int'),
         comment=dict(default=DEFAULT_COMMENT),
         confirm_commit=dict(type='bool', default=False),
+        check_commit=dict(type='bool', default=False),
 
         # config operations
         backup=dict(type='bool', default=False),
+        backup_options=dict(type='dict', options=backup_spec),
         rollback=dict(type='int'),
 
         zeroize=dict(default=False, type='bool'),
@@ -375,6 +464,9 @@ def main():
 
                     if module._diff:
                         result['diff'] = {'prepared': diff}
+
+        elif module.params['check_commit']:
+            commit_configuration(module, check=True)
 
         elif module.params['confirm_commit']:
             with locked_config(module):

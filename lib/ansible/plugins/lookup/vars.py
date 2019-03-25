@@ -11,7 +11,7 @@ DOCUMENTATION = """
     description:
       - Retrieves the value of an Ansible variable.
     options:
-      _term:
+      _terms:
         description: The variable names to look up.
         required: True
       default:
@@ -54,7 +54,7 @@ EXAMPLES = """
 RETURN = """
 _value:
   description:
-    - valueof the variables requested.
+    - value of the variables requested.
 """
 
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
@@ -78,15 +78,15 @@ class LookupModule(LookupBase):
                 raise AnsibleError('Invalid setting identifier, "%s" is not a string, its a %s' % (term, type(term)))
 
             try:
-                if term in myvars:
+                try:
                     value = myvars[term]
-                elif 'hostvars' in myvars and term in myvars['hostvars']:
-                    # maybe it is a host var?
-                    value = myvars['hostvars'][term]
-                else:
-                    raise AnsibleUndefinedVariable('No variable found with this name: %s' % term)
-                ret.append(self._templar.template(value, fail_on_undefined=True))
+                except KeyError:
+                    try:
+                        value = myvars['hostvars'][myvars['inventory_hostname']][term]
+                    except KeyError:
+                        raise AnsibleUndefinedVariable('No variable found with this name: %s' % term)
 
+                ret.append(self._templar.template(value, fail_on_undefined=True))
             except AnsibleUndefinedVariable:
                 if default is not None:
                     ret.append(default)

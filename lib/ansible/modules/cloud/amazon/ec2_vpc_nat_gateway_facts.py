@@ -25,9 +25,9 @@ options:
   filters:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
-        See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeNatGateways.html)
+        See U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeNatGateways.html)
         for possible filters.
-author: Karen Cheng(@Etherdaemon)
+author: Karen Cheng (@Etherdaemon)
 extends_documentation_fragment:
   - aws
   - ec2

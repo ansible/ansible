@@ -140,12 +140,12 @@ config:
 file:
   description: Path to the handler configuration file
   returned: success
-  type: string
+  type: str
   sample: "/etc/sensu/conf.d/handlers/irc.json"
 name:
   description: Name of the handler
   returned: success
-  type: string
+  type: str
   sample: "irc"
 '''
 
@@ -258,6 +258,7 @@ def main():
     except (OSError, IOError) as e:
         module.fail_json(msg='Unable to write file {0}: {1}'.format(path,
                                                                     str(e)))
+
 
 if __name__ == '__main__':
     main()

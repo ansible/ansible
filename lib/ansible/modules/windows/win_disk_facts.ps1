@@ -5,6 +5,7 @@
 
 #Requires -Module Ansible.ModuleUtils.Legacy
 #AnsibleRequires -OSVersion 6.2
+
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version 2.0
 

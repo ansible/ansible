@@ -22,8 +22,8 @@ version_added: "0.7"
 options:
   name:
     description:
-      - The name of a Python library to install or the url of the remote package.
-      - As of 2.2 you can supply a list of names.
+      - The name of a Python library to install or the url(bzr+,hg+,git+,svn+) of the remote package.
+      - This can be a list (since 2.2) and contain version specifiers (since 2.7).
   version:
     description:
       - The version number to install of the Python library specified in the I(name) parameter.
@@ -98,9 +98,9 @@ options:
     description:
       - The system umask to apply before installing the pip package. This is
         useful, for example, when installing on systems that have a very
-        restrictive umask by default (e.g., 0077) and you want to pip install
+        restrictive umask by default (e.g., "0077") and you want to pip install
         packages which are to be used by all users. Note that this requires you
-        to specify desired umask mode in octal, with a leading 0 (e.g., 0077).
+        to specify desired umask mode as an octal string, (e.g., "0022").
     version_added: "2.1"
 notes:
    - Please note that virtualenv (U(http://www.virtualenv.org/)) must be
@@ -111,6 +111,7 @@ notes:
 requirements:
 - pip
 - virtualenv
+- setuptools
 author:
 - Matt Wright (@mattupstate)
 '''
@@ -122,8 +123,24 @@ EXAMPLES = '''
 
 # Install (Bottle) python package on version 0.11.
 - pip:
-    name: bottle
-    version: 0.11
+    name: bottle==0.11
+
+# Install (bottle) python package with version specifiers
+- pip:
+    name: bottle>0.10,<0.20,!=0.11
+
+# Install multi python packages with version specifiers
+- pip:
+    name:
+      - django>1.11.0,<1.12.0
+      - bottle>0.10,<0.20,!=0.11
+
+# Install python package using a proxy - it doesn't use the standard environment variables, please use the CAPITALIZED ones below
+- pip:
+    name: six
+  environment:
+    HTTP_PROXY: '127.0.0.1:8080'
+    HTTPS_PROXY: '127.0.0.1:8080'
 
 # Install (MyApp) using one of the remote protocols (bzr+,hg+,git+,svn+). You do not have to supply '-e' option in extra_args.
 - pip:
@@ -186,16 +203,57 @@ EXAMPLES = '''
 # Install (Bottle) while ensuring the umask is 0022 (to ensure other users can use it)
 - pip:
     name: bottle
-    umask: 0022
+    umask: "0022"
   become: True
+'''
+
+RETURN = '''
+cmd:
+  description: pip command used by the module
+  returned: success
+  type: str
+  sample: pip2 install ansible six
+name:
+  description: list of python modules targetted by pip
+  returned: success
+  type: list
+  sample: ['ansible', 'six']
+requirements:
+  description: Path to the requirements file
+  returned: success, if a requirements file was provided
+  type: str
+  sample: "/srv/git/project/requirements.txt"
+version:
+  description: Version of the package specified in 'name'
+  returned: success, if a name and version were provided
+  type: str
+  sample: "2.5.1"
+virtualenv:
+  description: Path to the virtualenv
+  returned: success, if a virtualenv path was provided
+  type: str
+  sample: "/tmp/virtualenv"
 '''
 
 import os
 import re
 import sys
 import tempfile
+import operator
+import shlex
+import traceback
+from distutils.version import LooseVersion
 
-from ansible.module_utils.basic import AnsibleModule, is_executable
+SETUPTOOLS_IMP_ERR = None
+try:
+    from pkg_resources import Requirement
+
+    HAS_SETUPTOOLS = True
+except ImportError:
+    HAS_SETUPTOOLS = False
+    SETUPTOOLS_IMP_ERR = traceback.format_exc()
+
+from ansible.module_utils.basic import AnsibleModule, is_executable, missing_required_lib
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import PY3
 
@@ -205,6 +263,58 @@ from ansible.module_utils.six import PY3
 # don't end up in the output of pip freeze.
 _SPECIAL_PACKAGE_CHECKERS = {'setuptools': 'import setuptools; print(setuptools.__version__)',
                              'pip': 'import pkg_resources; print(pkg_resources.get_distribution("pip").version)'}
+
+_VCS_RE = re.compile(r'(svn|git|hg|bzr)\+')
+
+op_dict = {">=": operator.ge, "<=": operator.le, ">": operator.gt,
+           "<": operator.lt, "==": operator.eq, "!=": operator.ne, "~=": operator.ge}
+
+
+def _is_vcs_url(name):
+    """Test whether a name is a vcs url or not."""
+    return re.match(_VCS_RE, name)
+
+
+def _is_package_name(name):
+    """Test whether the name is a package name or a version specifier."""
+    return not name.lstrip().startswith(tuple(op_dict.keys()))
+
+
+def _recover_package_name(names):
+    """Recover package names as list from user's raw input.
+
+    :input: a mixed and invalid list of names or version specifiers
+    :return: a list of valid package name
+
+    eg.
+    input: ['django>1.11.1', '<1.11.3', 'ipaddress', 'simpleproject>1.1.0', '<2.0.0']
+    return: ['django>1.11.1,<1.11.3', 'ipaddress', 'simpleproject>1.1.0,<2.0.0']
+
+    input: ['django>1.11.1,<1.11.3,ipaddress', 'simpleproject>1.1.0,<2.0.0']
+    return: ['django>1.11.1,<1.11.3', 'ipaddress', 'simpleproject>1.1.0,<2.0.0']
+    """
+    # rebuild input name to a flat list so we can tolerate any combination of input
+    tmp = []
+    for one_line in names:
+        tmp.extend(one_line.split(","))
+    names = tmp
+
+    # reconstruct the names
+    name_parts = []
+    package_names = []
+    in_brackets = False
+    for name in names:
+        if _is_package_name(name) and not in_brackets:
+            if name_parts:
+                package_names.append(",".join(name_parts))
+            name_parts = []
+        if "[" in name:
+            in_brackets = True
+        if in_brackets and "]" in name:
+            in_brackets = False
+        name_parts.append(name)
+    package_names.append(",".join(name_parts))
+    return package_names
 
 
 def _get_cmd_options(module, cmd):
@@ -218,19 +328,11 @@ def _get_cmd_options(module, cmd):
     return cmd_options
 
 
-def _get_full_name(name, version=None):
-    if version is None:
-        resp = name
-    else:
-        resp = name + '==' + version
-    return resp
-
-
 def _get_packages(module, pip, chdir):
     '''Return results of pip command to get packages.'''
     # Try 'pip list' command first.
     command = '%s list --format=freeze' % pip
-    lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
+    lang_env = {'LANG': 'C', 'LC_ALL': 'C', 'LC_MESSAGES': 'C'}
     rc, out, err = module.run_command(command, cwd=chdir, environ_update=lang_env)
 
     # If there was an error (pip version too old) then use 'pip freeze'.
@@ -240,18 +342,19 @@ def _get_packages(module, pip, chdir):
         if rc != 0:
             _fail(module, command, out, err)
 
-    return (command, out, err)
+    return command, out, err
 
 
-def _is_present(name, version, installed_pkgs, pkg_command):
+def _is_present(module, req, installed_pkgs, pkg_command):
     '''Return whether or not package is installed.'''
     for pkg in installed_pkgs:
         if '==' in pkg:
             pkg_name, pkg_version = pkg.split('==')
+            pkg_name = Package.canonicalize_name(pkg_name)
         else:
             continue
 
-        if pkg_name == name and (version is None or version == pkg_version):
+        if pkg_name == req.package_name and req.is_satisfied_by(pkg_version):
             return True
 
     return False
@@ -303,7 +406,7 @@ def _get_pip(module, env=None, executable=None):
                 # (therefore, that pip was not found)
                 module.fail_json(msg='Unable to find pip in the virtualenv, %s, ' % env +
                                      'under any of these names: %s. ' % (', '.join(candidate_pip_basenames)) +
-                                     'Make sire pip is present in the virtualenv.')
+                                     'Make sure pip is present in the virtualenv.')
 
     return pip
 
@@ -389,12 +492,73 @@ def setup_virtualenv(module, env, chdir, out, err):
     return out, err
 
 
+class Package:
+    """Python distribution package metadata wrapper.
+
+    A wrapper class for Requirement, which provides
+    API to parse package name, version specifier,
+    test whether a package is already satisfied.
+    """
+
+    _CANONICALIZE_RE = re.compile(r'[-_.]+')
+
+    def __init__(self, name_string, version_string=None):
+        self._plain_package = False
+        self.package_name = name_string
+        self._requirement = None
+
+        if version_string:
+            version_string = version_string.lstrip()
+            separator = '==' if version_string[0].isdigit() else ' '
+            name_string = separator.join((name_string, version_string))
+        try:
+            self._requirement = Requirement.parse(name_string)
+            # old pkg_resource will replace 'setuptools' with 'distribute' when it's already installed
+            if self._requirement.project_name == "distribute" and "setuptools" in name_string:
+                self.package_name = "setuptools"
+                self._requirement.project_name = "setuptools"
+            else:
+                self.package_name = Package.canonicalize_name(self._requirement.project_name)
+            self._plain_package = True
+        except ValueError as e:
+            pass
+
+    @property
+    def has_version_specifier(self):
+        if self._plain_package:
+            return bool(self._requirement.specs)
+        return False
+
+    def is_satisfied_by(self, version_to_test):
+        if not self._plain_package:
+            return False
+        try:
+            return self._requirement.specifier.contains(version_to_test)
+        except AttributeError:
+            # old setuptools has no specifier, do fallback
+            version_to_test = LooseVersion(version_to_test)
+            return all(
+                op_dict[op](version_to_test, LooseVersion(ver))
+                for op, ver in self._requirement.specs
+            )
+
+    @staticmethod
+    def canonicalize_name(name):
+        # This is taken from PEP 503.
+        return Package._CANONICALIZE_RE.sub("-", name).lower()
+
+    def __str__(self):
+        if self._plain_package:
+            return to_native(self._requirement)
+        return self.package_name
+
+
 def main():
     state_map = dict(
-        present='install',
-        absent='uninstall -y',
-        latest='install -U',
-        forcereinstall='install -U --force-reinstall',
+        present=['install'],
+        absent=['uninstall', '-y'],
+        latest=['install', '-U'],
+        forcereinstall=['install', '-U', '--force-reinstall'],
     )
 
     module = AnsibleModule(
@@ -419,6 +583,10 @@ def main():
         supports_check_mode=True,
     )
 
+    if not HAS_SETUPTOOLS:
+        module.fail_json(msg=missing_required_lib("setuptools"),
+                         exception=SETUPTOOLS_IMP_ERR)
+
     state = module.params['state']
     name = module.params['name']
     version = module.params['version']
@@ -429,7 +597,7 @@ def main():
     env = module.params['virtualenv']
 
     venv_created = False
-    if chdir:
+    if env and chdir:
         env = os.path.join(chdir, env)
 
     if umask and not isinstance(umask, int):
@@ -460,7 +628,7 @@ def main():
 
         pip = _get_pip(module, env, module.params['executable'])
 
-        cmd = '%s %s' % (pip, state_map[state])
+        cmd = [pip] + state_map[state]
 
         # If there's a virtualenv we want things we install to be able to use other
         # installations that exist as binaries within this virtualenv. Example: we
@@ -477,9 +645,26 @@ def main():
         has_vcs = False
         if name:
             for pkg in name:
-                if bool(pkg and re.match(r'(svn|git|hg|bzr)\+', pkg)):
+                if pkg and _is_vcs_url(pkg):
                     has_vcs = True
                     break
+
+            # convert raw input package names to Package instances
+            packages = [Package(pkg) for pkg in _recover_package_name(name)]
+            # check invalid combination of arguments
+            if version is not None:
+                if len(packages) > 1:
+                    module.fail_json(
+                        msg="'version' argument is ambiguous when installing multiple package distributions. "
+                            "Please specify version restrictions next to each package in 'name' argument."
+                    )
+                if packages[0].has_version_specifier:
+                    module.fail_json(
+                        msg="The 'version' argument conflicts with any version specifier provided along with a package name. "
+                            "Please keep the version specifier, but remove the 'version' argument."
+                    )
+                # if the version specifier is provided by version, append that into the package
+                packages[0] = Package(to_native(packages[0]), version)
 
         if module.params['editable']:
             args_list = []  # used if extra_args is not used at all
@@ -491,13 +676,12 @@ def main():
                 extra_args = ' '.join(args_list)
 
         if extra_args:
-            cmd += ' %s' % extra_args
+            cmd.extend(shlex.split(extra_args))
 
         if name:
-            for pkg in name:
-                cmd += ' %s' % _get_full_name(pkg, version)
+            cmd.extend(to_native(p) for p in packages)
         elif requirements:
-            cmd += ' -r %s' % requirements
+            cmd.extend(['-r', requirements])
         else:
             module.exit_json(
                 changed=False,
@@ -528,8 +712,8 @@ def main():
                                 pkg_list.append(formatted_dep)
                                 out += '%s\n' % formatted_dep
 
-                for pkg in name:
-                    is_present = _is_present(pkg, version, pkg_list, pkg_cmd)
+                for package in packages:
+                    is_present = _is_present(module, package, pkg_list, pkg_cmd)
                     if (state == 'present' and not is_present) or (state == 'absent' and is_present):
                         changed = True
                         break

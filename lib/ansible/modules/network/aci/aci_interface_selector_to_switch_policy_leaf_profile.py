@@ -9,7 +9,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -17,29 +17,35 @@ module: aci_interface_selector_to_switch_policy_leaf_profile
 short_description: Bind interface selector profiles to switch policy leaf profiles (infra:RsAccPortP)
 description:
 - Bind interface selector profiles to switch policy leaf profiles on Cisco ACI fabrics.
-notes:
-- This module requires an existing leaf profile, the module M(aci_switch_policy_leaf_profile) can be used for this.
-- More information about the internal APIC class B(infra:RsAccPortP) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
-author:
-- Bruno Calogero (@brunocalogero)
 version_added: '2.5'
 options:
   leaf_profile:
     description:
     - Name of the Leaf Profile to which we add a Selector.
+    type: str
     aliases: [ leaf_profile_name ]
   interface_selector:
     description:
     - Name of Interface Profile Selector to be added and associated with the Leaf Profile.
+    type: str
     aliases: [ name, interface_selector_name, interface_profile_name ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
+notes:
+- This module requires an existing leaf profile, the module M(aci_switch_policy_leaf_profile) can be used for this.
+seealso:
+- module: aci_switch_policy_leaf_profile
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(infra:RsAccPortP).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Bruno Calogero (@brunocalogero)
 '''
 
 EXAMPLES = r'''
@@ -51,6 +57,7 @@ EXAMPLES = r'''
     leaf_profile: sw_name
     interface_selector: interface_profile_name
     state: present
+  delegate_to: localhost
 
 - name: Remove an interface selector profile associated with a switch policy leaf profile
   aci_interface_selector_to_switch_policy_leaf_profile:
@@ -60,6 +67,7 @@ EXAMPLES = r'''
     leaf_profile: sw_name
     interface_selector: interface_profile_name
     state: absent
+  delegate_to: localhost
 
 - name: Query an interface selector profile associated with a switch policy leaf profile
   aci_interface_selector_to_switch_policy_leaf_profile:
@@ -69,6 +77,8 @@ EXAMPLES = r'''
     leaf_profile: sw_name
     interface_selector: interface_profile_name
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -103,7 +113,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -152,17 +162,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -172,12 +182,12 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 
 def main():
@@ -210,14 +220,14 @@ def main():
         root_class=dict(
             aci_class='infraNodeP',
             aci_rn='infra/nprof-{0}'.format(leaf_profile),
-            filter_target='eq(infraNodeP.name, "{0}")'.format(leaf_profile),
-            module_object=leaf_profile
+            module_object=leaf_profile,
+            target_filter={'name': leaf_profile},
         ),
         subclass_1=dict(
             aci_class='infraRsAccPortP',
             aci_rn='rsaccPortP-[{0}]'.format(interface_selector_tDn),
-            filter_target='eq(infraRsAccPortP.name, "{0}")'.format(interface_selector),
             module_object=interface_selector,
+            target_filter={'name': interface_selector},
         )
     )
 

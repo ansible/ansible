@@ -24,6 +24,7 @@ import getpass
 from base64 import b64encode
 from datetime import datetime
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.urls import open_url
 from ansible.plugins.callback import CallbackBase
 
@@ -48,13 +49,14 @@ DOCUMENTATION = """
           - section: callback_grafana_annotations
             key: grafana_url
       validate_grafana_certs:
-        description: (bool) validate the SSL certificate of the Grafana server. (For HTTPS url)
+        description: validate the SSL certificate of the Grafana server. (For HTTPS url)
         env:
           - name: GRAFANA_VALIDATE_CERT
         ini:
           - section: callback_grafana_annotations
             key: validate_grafana_certs
         default: True
+        type: bool
       http_agent:
         description: The HTTP 'User-agent' value to set in HTTP requets.
         env:
@@ -258,4 +260,4 @@ class CallbackModule(CallbackBase):
                                 url_username=self.grafana_user, url_password=self.grafana_password,
                                 http_agent=self.http_agent, force_basic_auth=self.force_basic_auth)
         except Exception as e:
-            self._display.error('Could not submit message to Grafana: %s' % str(e))
+            self._display.error(u'Could not submit message to Grafana: %s' % to_text(e))

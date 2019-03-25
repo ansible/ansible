@@ -9,7 +9,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -17,43 +17,51 @@ module: aci_fabric_node
 short_description: Manage Fabric Node Members (fabric:NodeIdentP)
 description:
 - Manage Fabric Node Members on Cisco ACI fabrics.
-notes:
-- More information about the internal APIC class B(fabric:NodeIdentP) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
-author:
-- Bruno Calogero (@brunocalogero)
 version_added: '2.5'
 options:
   pod_id:
     description:
     - The pod id of the new Fabric Node Member.
+    type: int
   serial:
     description:
     - Serial Number for the new Fabric Node Member.
+    type: str
     aliases: [ serial_number ]
   node_id:
     description:
     - Node ID Number for the new Fabric Node Member.
+    type: int
   switch:
     description:
     - Switch Name for the new Fabric Node Member.
+    type: str
     aliases: [ name, switch_name ]
   description:
     description:
     - Description for the new Fabric Node Member.
+    type: str
     aliases: [ descr ]
   role:
     description:
     - Role for the new Fabric Node Member.
+    type: str
     aliases: [ role_name ]
     choices: [ leaf, spine, unspecified ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
+seealso:
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(fabric:NodeIdentP).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Bruno Calogero (@brunocalogero)
 '''
 
 EXAMPLES = r'''
@@ -66,6 +74,7 @@ EXAMPLES = r'''
     node_id: 1011
     switch: fab4-sw1011
     state: present
+  delegate_to: localhost
 
 - name: Remove fabric node
   aci_fabric_node:
@@ -75,6 +84,7 @@ EXAMPLES = r'''
     serial: FDO2031124L
     node_id: 1011
     state: absent
+  delegate_to: localhost
 
 - name: Query fabric nodes
   aci_fabric_node:
@@ -82,6 +92,8 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -116,7 +128,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -165,17 +177,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: '?rsp-prop-include=config-only'
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -185,12 +197,12 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 
 # NOTE: (This problem is also present on the APIC GUI)
@@ -230,8 +242,8 @@ def main():
         root_class=dict(
             aci_class='fabricNodeIdentP',
             aci_rn='controller/nodeidentpol/nodep-{0}'.format(serial),
-            filter_target='eq(fabricNodeIdentP.serial, "{0}")'.format(serial),
             module_object=serial,
+            target_filter={'serial': serial},
         )
     )
 
@@ -245,7 +257,10 @@ def main():
                 name=switch,
                 nodeId=node_id,
                 podId=pod_id,
-                rn='nodep-{0}'.format(serial),
+                # NOTE: Originally we were sending 'rn', but now we need 'dn' for idempotency
+                # FIXME: Did this change with ACI version ?
+                dn='uni/controller/nodeidentpol/nodep-{0}'.format(serial),
+                # rn='nodep-{0}'.format(serial),
                 role=role,
                 serial=serial,
             )

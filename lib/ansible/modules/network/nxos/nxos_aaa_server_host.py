@@ -82,9 +82,6 @@ EXAMPLES = '''
         address: 1.2.3.4
         acct_port: 2084
         host_timeout: 10
-        host: "{{ inventory_hostname }}"
-        username: "{{ un }}"
-        password: "{{ pwd }}"
 
 # Radius Server Host Key Configuration
   - name: "Radius Server Host Key Configuration"
@@ -94,9 +91,6 @@ EXAMPLES = '''
         address: 1.2.3.4
         key: hello
         encrypt_type: 7
-        host:  inventory_hostname }}
-        username: "{{ un }}"
-        password: "{{ pwd }}"
 
 # TACACS Server Host Configuration
   - name: "Tacacs Server Host Configuration"
@@ -106,9 +100,7 @@ EXAMPLES = '''
         tacacs_port: 89
         host_timeout: 10
         address: 5.6.7.8
-        host:  inventory_hostname }}
-        username:  un }}
-        password:  pwd }}
+
 '''
 
 RETURN = '''
@@ -138,7 +130,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 import re
@@ -309,6 +301,8 @@ def main():
             delta = proposed
         else:
             for key, value in proposed.items():
+                if key == 'encrypt_type':
+                    delta[key] = value
                 if value != existing.get(key):
                     if value != 'default' or existing.get(key):
                         delta[key] = value

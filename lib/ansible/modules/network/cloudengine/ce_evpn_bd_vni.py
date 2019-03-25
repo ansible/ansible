@@ -28,7 +28,7 @@ short_description: Manages EVPN VXLAN Network Identifier (VNI) on HUAWEI CloudEn
 description:
     - Manages Ethernet Virtual Private Network (EVPN) VXLAN Network
       Identifier (VNI) configurations on HUAWEI CloudEngine switches.
-author: Zhijin Zhou (@CloudEngine-Ansible)
+author: Zhijin Zhou (@QijunPan)
 notes:
     - Ensure that EVPN has been configured to serve as the VXLAN control plane when state is present.
     - Ensure that a bridge domain (BD) has existed when state is present.
@@ -244,7 +244,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 

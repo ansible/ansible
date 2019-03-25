@@ -62,6 +62,7 @@ EXAMPLES = r'''
     password: '{{ vcenter_password }}'
     esxi_hostname: '{{ esxi_hostname }}'
     state: present
+  delegate_to: localhost
 
 - name: Exit host systems from lockdown mode
   vmware_host_lockdown:
@@ -70,6 +71,7 @@ EXAMPLES = r'''
     password: '{{ vcenter_password }}'
     esxi_hostname: '{{ esxi_hostname }}'
     state: absent
+  delegate_to: localhost
 
 - name: Enter host systems into lockdown mode
   vmware_host_lockdown:
@@ -80,6 +82,7 @@ EXAMPLES = r'''
         - '{{ esxi_hostname_1 }}'
         - '{{ esxi_hostname_2 }}'
     state: present
+  delegate_to: localhost
 
 - name: Exit host systems from lockdown mode
   vmware_host_lockdown:
@@ -90,6 +93,7 @@ EXAMPLES = r'''
         - '{{ esxi_hostname_1 }}'
         - '{{ esxi_hostname_2 }}'
     state: absent
+  delegate_to: localhost
 
 - name: Enter all host system from cluster into lockdown mode
   vmware_host_lockdown:
@@ -98,6 +102,7 @@ EXAMPLES = r'''
     password: '{{ vcenter_password }}'
     cluster_name: '{{ cluster_name }}'
     state: present
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -117,7 +122,7 @@ results:
 '''
 
 try:
-    from pyvmomi import vim, vmodl
+    from pyvmomi import vim
 except ImportError:
     pass
 
@@ -189,7 +194,7 @@ def main():
     argument_spec = vmware_argument_spec()
     argument_spec.update(
         cluster_name=dict(type='str', required=False),
-        esxi_hostname=dict(type='str', required=False),
+        esxi_hostname=dict(type='list', required=False),
         state=dict(str='str', default='present', choices=['present', 'absent'], required=False),
     )
 

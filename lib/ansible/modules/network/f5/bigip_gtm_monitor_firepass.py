@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -23,12 +23,14 @@ options:
   name:
     description:
       - Monitor name.
+    type: str
     required: True
   parent:
     description:
       - The parent template of this monitor template. Once this value has
         been set, it cannot be changed. By default, this value is the C(tcp)
         parent on the C(Common) partition.
+    type: str
     default: /Common/firepass_gtm
   ip:
     description:
@@ -36,12 +38,14 @@ options:
         provided when creating a new monitor, then the default value will be
         '*'.
       - If this value is an IP address, then a C(port) number must be specified.
+    type: str
   port:
     description:
       - Port address part of the IP/port definition. If this parameter is not
         provided when creating a new monitor, then the default value will be
         '*'. Note that if specifying an IP address, a value between 1 and 65535
         must be specified.
+    type: str
   interval:
     description:
       - The interval specifying how frequently the monitor instance of this
@@ -49,6 +53,7 @@ options:
       - If this parameter is not provided when creating a new monitor, then
         the default value will be 30.
       - This value B(must) be less than the C(timeout) value.
+    type: int
   timeout:
     description:
       - The number of seconds in which the node or service must respond to
@@ -59,24 +64,28 @@ options:
         interval number of seconds plus 1 second.
       - If this parameter is not provided when creating a new monitor, then
         the default value will be 90.
+    type: int
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
   state:
     description:
       - When C(present), ensures that the monitor exists.
       - When C(absent), ensures the monitor is removed.
-    default: present
+    type: str
     choices:
       - present
       - absent
+    default: present
   probe_timeout:
     description:
       - Specifies the number of seconds after which the system times out the probe request
         to the system.
       - When creating a new monitor, if this parameter is not provided, then the default
         value will be C(5).
+    type: int
   ignore_down_response:
     description:
       - Specifies that the monitor allows more than one probe attempt per interval.
@@ -91,23 +100,27 @@ options:
   target_username:
     description:
       - Specifies the user name, if the monitored target requires authentication.
+    type: str
   target_password:
     description:
       - Specifies the password, if the monitored target requires authentication.
+    type: str
   update_password:
     description:
       - C(always) will update passwords if the C(target_password) is specified.
       - C(on_create) will only set the password for newly created monitors.
-    default: always
+    type: str
     choices:
       - always
       - on_create
+    default: always
   cipher_list:
     description:
       - Specifies the list of ciphers for this monitor.
       - The items in the cipher list are separated with the colon C(:) symbol.
       - When creating a new monitor, if this parameter is not specified, the default
         list is C(HIGH:!ADH).
+    type: str
   max_load_average:
     description:
       - Specifies the number that the monitor uses to mark the Secure Access Manager
@@ -119,6 +132,7 @@ options:
       - When the average exceeds the setting, the monitor marks the system down.
       - When creating a new monitor, if this parameter is not specified, the default
         is C(12).
+    type: int
   concurrency_limit:
     description:
       - Specifies the maximum percentage of licensed connections currently in use under
@@ -128,9 +142,11 @@ options:
       - When the number of in-use licensed connections exceeds 95 percent, the monitor
         marks the Secure Access Manager system down.
       - When creating a new monitor, if this parameter is not specified, the default is C(95).
+    type: int
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
@@ -139,28 +155,31 @@ EXAMPLES = r'''
     name: my_monitor
     ip: 1.1.1.1
     port: 80
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
 - name: Remove FirePass Monitor
   bigip_gtm_monitor_firepass:
     name: my_monitor
     state: absent
-    server: lb.mydomain.com
-    user: admin
-    password: secret
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
 - name: Add FirePass monitor for all addresses, port 514
   bigip_gtm_monitor_firepass:
     name: my_monitor
-    server: lb.mydomain.com
-    user: admin
     port: 514
-    password: secret
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 '''
 
@@ -168,17 +187,17 @@ RETURN = r'''
 parent:
   description: New parent template of the monitor.
   returned: changed
-  type: string
+  type: str
   sample: firepass_gtm
 ip:
   description: The new IP of IP/port definition.
   returned: changed
-  type: string
+  type: str
   sample: 10.12.13.14
 port:
   description: The new port the monitor checks the resource on.
   returned: changed
-  type: string
+  type: str
   sample: 8080
 interval:
   description: The new interval in which to run the monitor check.
@@ -203,7 +222,7 @@ probe_timeout:
 cipher_list:
   description: The new value for the cipher list.
   returned: changed
-  type: string
+  type: str
   sample: +3DES:+kEDH
 max_load_average:
   description: The new value for the max load average.
@@ -221,35 +240,23 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
 
 try:
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from library.module_utils.network.f5.common import transform_name
+    from library.module_utils.network.f5.icontrol import module_provisioned
+    from library.module_utils.network.f5.ipaddress import is_valid_ip
 except ImportError:
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
-
-try:
-    import netaddr
-    HAS_NETADDR = True
-except ImportError:
-    HAS_NETADDR = False
+    from ansible.module_utils.network.f5.common import transform_name
+    from ansible.module_utils.network.f5.icontrol import module_provisioned
+    from ansible.module_utils.network.f5.ipaddress import is_valid_ip
 
 
 class Parameters(AnsibleF5Parameters):
@@ -261,7 +268,7 @@ class Parameters(AnsibleF5Parameters):
         'password': 'target_password',
         'cipherlist': 'cipher_list',
         'concurrencyLimit': 'concurrency_limit',
-        'maxLoadAverage': 'max_load_average'
+        'maxLoadAverage': 'max_load_average',
     }
 
     api_attributes = [
@@ -275,7 +282,7 @@ class Parameters(AnsibleF5Parameters):
         'password',
         'cipherlist',
         'concurrencyLimit',
-        'maxLoadAverage'
+        'maxLoadAverage',
     ]
 
     returnables = [
@@ -348,15 +355,14 @@ class ModuleParameters(Parameters):
         return int(self._values['timeout'])
 
     @property
-    def ip(self):
+    def ip(self):  # lgtm [py/similar-function]
         if self._values['ip'] is None:
             return None
-        try:
-            if self._values['ip'] in ['*', '0.0.0.0']:
-                return '*'
-            result = str(netaddr.IPAddress(self._values['ip']))
-            return result
-        except netaddr.core.AddrFormatError:
+        if self._values['ip'] in ['*', '0.0.0.0']:
+            return '*'
+        elif is_valid_ip(self._values['ip']):
+            return self._values['ip']
+        else:
             raise F5ModuleError(
                 "The provided 'ip' parameter is not an IP address."
             )
@@ -524,7 +530,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -555,32 +561,6 @@ class ModuleManager(object):
             return True
         return False
 
-    def should_update(self):
-        result = self._update_changed_options()
-        if result:
-            return True
-        return False
-
-    def exec_module(self):
-        changed = False
-        result = dict()
-        state = self.want.state
-
-        try:
-            if state == "present":
-                changed = self.present()
-            elif state == "absent":
-                changed = self.absent()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
-
-        reportable = ReportableChanges(params=self.changes.to_return())
-        changes = reportable.to_return()
-        result.update(**changes)
-        result.update(dict(changed=changed))
-        self._announce_deprecations(result)
-        return result
-
     def _announce_deprecations(self, result):
         warnings = result.pop('__warnings', [])
         for warning in warnings:
@@ -609,18 +589,43 @@ class ModuleManager(object):
         if self.want.concurrency_limit is None:
             self.want.update({'concurrency_limit': 95})
 
+    def exec_module(self):
+        if not module_provisioned(self.client, 'gtm'):
+            raise F5ModuleError(
+                "GTM must be provisioned to use this module."
+            )
+        changed = False
+        result = dict()
+        state = self.want.state
+
+        if state == "present":
+            changed = self.present()
+        elif state == "absent":
+            changed = self.absent()
+
+        reportable = ReportableChanges(params=self.changes.to_return())
+        changes = reportable.to_return()
+        result.update(**changes)
+        result.update(dict(changed=changed))
+        self._announce_deprecations(result)
+        return result
+
     def present(self):
         if self.exists():
             return self.update()
         else:
             return self.create()
 
-    def exists(self):
-        result = self.client.api.tm.gtm.monitor.firepass_s.firepass.exists(
-            name=self.want.name,
-            partition=self.want.partition
-        )
-        return result
+    def absent(self):
+        if self.exists():
+            return self.remove()
+        return False
+
+    def should_update(self):
+        result = self._update_changed_options()
+        if result:
+            return True
+        return False
 
     def update(self):
         self.have = self.read_current_from_device()
@@ -647,42 +652,90 @@ class ModuleManager(object):
         self.create_on_device()
         return True
 
+    def exists(self):
+        uri = "https://{0}:{1}/mgmt/tm/gtm/monitor/firepass/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name),
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
+
     def create_on_device(self):
         params = self.changes.api_params()
-        self.client.api.tm.gtm.monitor.firepass_s.firepass.create(
-            name=self.want.name,
-            partition=self.want.partition,
-            **params
+        params['name'] = self.want.name
+        params['partition'] = self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/gtm/monitor/firepass/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
         )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return response['selfLink']
 
     def update_on_device(self):
         params = self.changes.api_params()
-        resource = self.client.api.tm.gtm.monitor.firepass_s.firepass.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/gtm/monitor/firepass/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name),
         )
-        resource.modify(**params)
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
 
-    def absent(self):
-        if self.exists():
-            return self.remove()
-        return False
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def remove_from_device(self):
-        resource = self.client.api.tm.gtm.monitor.firepass_s.firepass.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/gtm/monitor/firepass/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name),
         )
-        if resource:
-            resource.delete()
+        response = self.client.api.delete(uri)
+        if response.status == 200:
+            return True
+        raise F5ModuleError(response.content)
 
     def read_current_from_device(self):
-        resource = self.client.api.tm.gtm.monitor.firepass_s.firepass.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/gtm/monitor/firepass/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name),
         )
-        result = resource.attrs
-        return ApiParameters(params=result)
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return ApiParameters(params=response)
 
 
 class ArgumentSpec(object):
@@ -692,7 +745,7 @@ class ArgumentSpec(object):
             name=dict(required=True),
             parent=dict(default='/Common/firepass_gtm'),
             ip=dict(),
-            port=dict(type='int'),
+            port=dict(),
             interval=dict(type='int'),
             timeout=dict(type='int'),
             ignore_down_response=dict(type='bool'),
@@ -725,21 +778,14 @@ def main():
 
     module = AnsibleModule(
         argument_spec=spec.argument_spec,
-        supports_check_mode=spec.supports_check_mode
+        supports_check_mode=spec.supports_check_mode,
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
-    if not HAS_NETADDR:
-        module.fail_json(msg="The python netaddr module is required")
 
     try:
-        client = F5Client(**module.params)
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
         module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
         module.fail_json(msg=str(ex))
 
 

@@ -1,3 +1,7 @@
+:orphan:
+
+.. _testing_integration:
+
 *****************
 Integration tests
 *****************
@@ -21,15 +25,32 @@ It provides tab completion in ``bash`` for the ``ansible-test`` test runner.
 Configuration
 =============
 
+ansible-test command
+--------------------
+
+The example below assumes ``bin/`` is in your ``$PATH``. An easy way to achieve that
+is to initialize your environment with the ``env-setup`` command::
+
+    source hacking/env-setup
+    ansible-test --help
+
+You can also call ``ansible-test`` with the full path::
+
+    bin/ansible-test --help
+
+integration_config.yml
+----------------------
+
 Making your own version of ``integration_config.yml`` can allow for setting some
 tunable parameters to help run the tests better in your environment.  Some
-tests (e.g. cloud) will only run when access credentials are provided.  For
-more information about supported credentials, refer to ``credentials.template``.
+tests (e.g. cloud) will only run when access credentials are provided.  For more
+information about supported credentials, refer to the various ``cloud-config-*.template``
+files in the ``test/integration/`` directory.
 
 Prerequisites
 =============
 
-The tests will assume things like hg, svn, and git are installed and in path.  Some tests
+Some tests assume things like hg, svn, and git are installed, and in path.  Some tests
 (such as those for Amazon Web Services) need separate definitions, which will be covered
 later in this document.
 
@@ -43,7 +64,7 @@ outside of those test subdirectories.  They will also not reconfigure or bounce 
 
 .. note:: Running integration tests within Docker
 
-   To protect your system from any potential changes caused by integration tests, and to ensure the a sensible set of dependencies are available we recommend that you always run integration tests with the ``--docker`` option. See the `list of supported docker images <https://github.com/ansible/ansible/blob/devel/test/runner/completion/docker.txt>`_ for options.
+   To protect your system from any potential changes caused by integration tests, and to ensure a sensible set of dependencies are available we recommend that you always run integration tests with the ``--docker`` option. See the `list of supported docker images <https://github.com/ansible/ansible/blob/devel/test/runner/completion/docker.txt>`_ for options.
 
 .. note:: Avoiding pulling new Docker images
 
@@ -51,15 +72,19 @@ outside of those test subdirectories.  They will also not reconfigure or bounce 
 
 Run as follows for all POSIX platform tests executed by our CI system::
 
-    test/runner/ansible-test integration --docker fedora25 -v posix/ci/
+    ansible-test integration --docker fedora29 -v shippable/
 
-You can select specific tests as well, such as for individual modules::
+You can target a specific tests as well, such as for individual modules::
 
-    test/runner/ansible-test integration -v ping
+    ansible-test integration -v ping
 
-By installing ``argcomplete`` you can obtain a full list by doing::
+Use the following command to list all the available targets::
 
-    test/runner/ansible-test integration <tab><tab>
+    ansible-test integration --list-targets
+
+.. note:: Bash users
+
+   If you use ``bash`` with ``argcomplete``, obtain a full list by doing: ``ansible-test integration <tab><tab>``
 
 Destructive Tests
 =================
@@ -67,7 +92,7 @@ Destructive Tests
 These tests are allowed to install and remove some trivial packages.  You will likely want to devote these
 to a virtual environment, such as Docker.  They won't reformat your filesystem::
 
-    test/runner/ansible-test integration --docker fedora25 -v destructive/
+    ansible-test integration --docker fedora29 -v destructive/
 
 Windows Tests
 =============
@@ -90,7 +115,7 @@ Define Windows inventory::
 
 Run the Windows tests executed by our CI system::
 
-    test/runner/ansible-test windows-integration -v windows/ci/
+    ansible-test windows-integration -v shippable/
 
 Tests in Docker containers
 ==========================
@@ -109,12 +134,12 @@ Running Integration Tests
 
 To run all CI integration test targets for POSIX platforms in a Ubuntu 16.04 container::
 
-    test/runner/ansible-test integration -v posix/ci/ --docker
+    ansible-test integration --docker ubuntu1604 -v shippable/
 
 You can also run specific tests or select a different Linux distribution.
 For example, to run tests for the ``ping`` module on a Ubuntu 14.04 container::
 
-    test/runner/ansible-test integration -v ping --docker ubuntu1404
+    ansible-test integration -v ping --docker ubuntu1404
 
 Container Images
 ----------------
@@ -126,11 +151,8 @@ Most container images are for testing with Python 2:
 
   - centos6
   - centos7
-  - fedora24
-  - fedora25
-  - opensuse42.1
-  - opensuse42.2
-  - ubuntu1204
+  - fedora28
+  - opensuse15py2
   - ubuntu1404
   - ubuntu1604
 
@@ -139,13 +161,17 @@ Python 3
 
 To test with Python 3 use the following images:
 
+  - fedora29
+  - opensuse15
   - ubuntu1604py3
+  - ubuntu1804
+
 
 Legacy Cloud Tests
 ==================
 
 Some of the cloud tests run as normal integration tests, and others run as legacy tests; see the
-:doc:`testing_integration_legacy` page for more information.
+:ref:`testing_integration_legacy` page for more information.
 
 
 Other configuration for Cloud Tests

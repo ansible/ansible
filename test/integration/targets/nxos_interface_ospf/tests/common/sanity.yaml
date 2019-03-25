@@ -8,12 +8,14 @@
 - name: "Setup - Disable feature OSPF"
   nxos_feature: &disable
     feature: ospf
+    provider: "{{ connection }}"
     state: disabled
   ignore_errors: yes
 
 - name: "Setup - Enable feature OSPF"
   nxos_feature: &enable
     feature: ospf
+    provider: "{{ connection }}"
     state: enabled
   ignore_errors: yes
 
@@ -21,6 +23,7 @@
   nxos_config: &intdefault
     lines:
       - "default interface {{ testint }}"
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: "Remove switchport config"
@@ -29,6 +32,7 @@
       - no switchport
     parents:
       - "interface {{ testint }}"
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: "Remove possibly existing port-channel and loopback ints"
@@ -38,6 +42,7 @@
       - no interface port-channel11
       - no interface loopback55
       - no interface loopback77
+    provider: "{{ connection }}"
   ignore_errors: yes
 
 - block:
@@ -50,6 +55,8 @@
       passive_interface: true
       hello_interval: 15
       dead_interval: 75
+      network: point-to-point
+      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -74,6 +81,8 @@
       passive_interface: false
       hello_interval: 17
       dead_interval: 70
+      network: broadcast
+      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -93,6 +102,7 @@
       cost: default
       hello_interval: 10
       dead_interval: default
+      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -114,6 +124,7 @@
       message_digest_algorithm_type: md5
       message_digest_encryption_type: 3des
       message_digest_password: b69f7bc54725b1bfd1ea93afa7b09400
+      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -135,6 +146,7 @@
       message_digest_algorithm_type: default
       message_digest_encryption_type: default
       message_digest_password: default
+      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -154,6 +166,7 @@
         - interface loopback55
         - interface loopback77
       match: none
+      provider: "{{ connection }}"
 
   - name: "Ensure port-channels are layer3"
     nxos_config:
@@ -161,6 +174,7 @@
         - no switchport
       parents:
         - "interface {{ item }}"
+      provider: "{{ connection }}"
     with_items:
       - port-channel10
       - port-channel11
@@ -174,6 +188,7 @@
       passive_interface: true
       hello_interval: 15
       dead_interval: 75
+      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -194,6 +209,7 @@
       passive_interface: true
       hello_interval: 15
       dead_interval: 75
+      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -209,10 +225,11 @@
     nxos_interface_ospf: &configurelb
       interface: LOOPBACK55
       ospf: 1
-      area: 4.4.4.4
+      area: 192.0.2.4
       cost: 55
       hello_interval: 15
       dead_interval: 75
+      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -232,6 +249,7 @@
       cost: 77
       hello_interval: 45
       dead_interval: 75
+      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -252,6 +270,7 @@
       passive_interface: true
       hello_interval: 15
       dead_interval: 75
+      provider: "{{ connection }}"
       state: absent
     register: result
 

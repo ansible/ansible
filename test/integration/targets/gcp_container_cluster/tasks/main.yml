@@ -15,70 +15,69 @@
 # Pre-test setup
 - name: delete a cluster
   gcp_container_cluster:
-      name: "{{ resource_name }}"
-      initial_node_count: 2
-      master_auth:
-        username: "cluster_admin"
-        password: "my-secret-password"
-      node_config:
-        machine_type: "n1-standard-4"
-        disk_size_gb: 500
-      zone: 'us-central1-a'
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/cloud-platform
-      state: absent
+    name: my-cluster
+    initial_node_count: 2
+    master_auth:
+      username: cluster_admin
+      password: my-secret-password
+    node_config:
+      machine_type: n1-standard-4
+      disk_size_gb: 500
+    location: us-central1-a
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
 #----------------------------------------------------------
 - name: create a cluster
   gcp_container_cluster:
-      name: "{{ resource_name }}"
-      initial_node_count: 2
-      master_auth:
-        username: "cluster_admin"
-        password: "my-secret-password"
-      node_config:
-        machine_type: "n1-standard-4"
-        disk_size_gb: 500
-      zone: 'us-central1-a'
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/cloud-platform
-      state: present
+    name: my-cluster
+    initial_node_count: 2
+    master_auth:
+      username: cluster_admin
+      password: my-secret-password
+    node_config:
+      machine_type: n1-standard-4
+      disk_size_gb: 500
+    location: us-central1-a
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: result
 - name: assert changed is true
   assert:
     that:
       - result.changed == true
 - name: verify that cluster was created
-  shell: |
-    gcloud container clusters describe  --project="{{ gcp_project}}"  --zone=us-central1-a  "{{ resource_name }}"
-  register: results
-- name: verify that command succeeded
-  assert:
-    that:
-      - results.rc == 0
-# ----------------------------------------------------------------------------
-- name: create a cluster that already exists
-  gcp_container_cluster:
-      name: "{{ resource_name }}"
-      initial_node_count: 2
-      master_auth:
-        username: "cluster_admin"
-        password: "my-secret-password"
-      node_config:
-        machine_type: "n1-standard-4"
-        disk_size_gb: 500
-      zone: 'us-central1-a'
+  gcp_container_cluster_facts:
+      location: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
       scopes:
         - https://www.googleapis.com/auth/cloud-platform
-      state: present
+  register: results
+- name: verify that command succeeded
+  assert:
+    that:
+      - "'my-cluster' in \"{{ results['items'] | map(attribute='name') | list }}\""
+# ----------------------------------------------------------------------------
+- name: create a cluster that already exists
+  gcp_container_cluster:
+    name: my-cluster
+    initial_node_count: 2
+    master_auth:
+      username: cluster_admin
+      password: my-secret-password
+    node_config:
+      machine_type: n1-standard-4
+      disk_size_gb: 500
+    location: us-central1-a
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: result
 - name: assert changed is false
   assert:
@@ -87,54 +86,53 @@
 #----------------------------------------------------------
 - name: delete a cluster
   gcp_container_cluster:
-      name: "{{ resource_name }}"
-      initial_node_count: 2
-      master_auth:
-        username: "cluster_admin"
-        password: "my-secret-password"
-      node_config:
-        machine_type: "n1-standard-4"
-        disk_size_gb: 500
-      zone: 'us-central1-a'
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/cloud-platform
-      state: absent
+    name: my-cluster
+    initial_node_count: 2
+    master_auth:
+      username: cluster_admin
+      password: my-secret-password
+    node_config:
+      machine_type: n1-standard-4
+      disk_size_gb: 500
+    location: us-central1-a
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
   register: result
 - name: assert changed is true
   assert:
     that:
       - result.changed == true
 - name: verify that cluster was deleted
-  shell: |
-    gcloud container clusters describe  --project="{{ gcp_project}}"  --zone=us-central1-a  "{{ resource_name }}"
-  register: results
-  failed_when: results.rc == 0
-- name: verify that command succeeded
-  assert:
-    that:
-      - results.rc == 1
-      - "\"No cluster named '{{ resource_name }}' in {{ gcp_project }}.\" in results.stderr"
-# ----------------------------------------------------------------------------
-- name: delete a cluster that does not exist
-  gcp_container_cluster:
-      name: "{{ resource_name }}"
-      initial_node_count: 2
-      master_auth:
-        username: "cluster_admin"
-        password: "my-secret-password"
-      node_config:
-        machine_type: "n1-standard-4"
-        disk_size_gb: 500
-      zone: 'us-central1-a'
+  gcp_container_cluster_facts:
+      location: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
       scopes:
         - https://www.googleapis.com/auth/cloud-platform
-      state: absent
+  register: results
+- name: verify that command succeeded
+  assert:
+    that:
+      - "'my-cluster' not in \"{{ results['items'] | map(attribute='name') | list }}\""
+# ----------------------------------------------------------------------------
+- name: delete a cluster that does not exist
+  gcp_container_cluster:
+    name: my-cluster
+    initial_node_count: 2
+    master_auth:
+      username: cluster_admin
+      password: my-secret-password
+    node_config:
+      machine_type: n1-standard-4
+      disk_size_gb: 500
+    location: us-central1-a
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
   register: result
 - name: assert changed is false
   assert:

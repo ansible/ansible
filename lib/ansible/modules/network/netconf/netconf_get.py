@@ -26,6 +26,7 @@ description:
       the IETF. It is documented in RFC 6241.
     - This module allows the user to fetch configuration and state data from NETCONF
       enabled network devices.
+extends_documentation_fragment: network_agnostic
 options:
   source:
     description:
@@ -51,15 +52,13 @@ options:
     choices: ['json', 'pretty', 'xml']
   lock:
     description:
-      - Instructs the module to explicitly lock the datastore specified as C(source) before fetching
-        configuration and/or state information from remote host. If the value is I(never) in that case
-        the C(source) datastore is never locked, if the value is I(if-supported) the C(source) datastore
-        is locked only if the Netconf server running on remote host supports locking of that datastore,
-        if the lock on C(source) datastore is not supported module will report appropriate error before
-        executing lock. If the value is I(always) the lock operation on C(source) datastore will always
-        be executed irrespective if the remote host supports it or not, if it doesn't the module with
-        fail will the execption message received from remote host and might vary based on the platform.
-    default: 'never'
+      - Instructs the module to explicitly lock the datastore specified as C(source). If no
+        I(source) is defined, the I(running) datastore will be locked. By setting the option
+        value I(always) is will explicitly lock the datastore mentioned in C(source) option.
+        By setting the option value I(never) it will not lock the C(source) datastore. The
+        value I(if-supported) allows better interworking with NETCONF servers, which do not
+        support the (un)lock operation for all supported datastores.
+    default: never
     choices: ['never', 'always', 'if-supported']
 requirements:
   - ncclient (>=v0.5.2)
@@ -90,26 +89,33 @@ EXAMPLES = """
 
 - name: get schema list using subtree w/ namespaces
   netconf_get:
-    format: json
+    display: json
     filter: <netconf-state xmlns="urn:ietf:params:xml:ns:yang:ietf-netconf-monitoring"><schemas><schema/></schemas></netconf-state>
-    lock: False
+    lock: never
 
 - name: get schema list using xpath
   netconf_get:
-    format: json
+    display: xml
     filter: /netconf-state/schemas/schema
 
 - name: get interface confiugration with filter (iosxr)
   netconf_get:
+    display: pretty
     filter: <interface-configurations xmlns="http://cisco.com/ns/yang/Cisco-IOS-XR-ifmgr-cfg"></interface-configurations>
+    lock: if-supported
 
-- name: Get system configuration data from running datastore state (sros)
+- name: Get system configuration data from running datastore state (junos)
   netconf_get:
     source: running
-    filter: <state xmlns="urn:nokia.com:sros:ns:yang:sr:conf"/>
-    lock: True
+    filter: <configuration><system></system></configuration>
+    lock: if-supported
 
-- name: Get state data (sros)
+- name: Get complete configuration data from running datastore (SROS)
+  netconf_get:
+    source: running
+    filter: <configure xmlns="urn:nokia.com:sros:ns:yang:sr:conf"/>
+
+- name: Get complete state data (SROS)
   netconf_get:
     filter: <state xmlns="urn:nokia.com:sros:ns:yang:sr:state"/>
 """
@@ -119,7 +125,7 @@ stdout:
   description: The raw XML string containing configuration or state data
                received from the underlying ncclient library.
   returned: always apart from low-level errors (such as action plugin)
-  type: string
+  type: str
   sample: '...'
 stdout_lines:
   description: The value of stdout split into a list
@@ -203,28 +209,19 @@ def main():
     if filter_type == 'xpath' and not operations.get('supports_xpath', False):
         module.fail_json(msg="filter value '%s' of type xpath is not supported on this device" % filter)
 
-    execute_lock = True if lock in ('always', 'if-supported') else False
+    # If source is None, NETCONF <get> operation is issued, reading config/state data
+    # from the running datastore. The python expression "(source or 'running')" results
+    # in the value of source (if not None) or the value 'running' (if source is None).
 
-    if lock == 'always' and not operations.get('supports_lock', False):
-        module.fail_json(msg='lock operation is not supported on this device')
-
-    if execute_lock:
-        if source is None:
-            # if source is None, in that case operation is 'get' and `get` supports
-            # fetching data only from running datastore
-            if 'running' not in operations.get('lock_datastore', []):
-                # lock is not supported, don't execute lock operation
-                if lock == 'if-supported':
-                    execute_lock = False
-                else:
-                    module.warn("lock operation on 'running' source is not supported on this device")
-        else:
-            if source not in operations.get('lock_datastore', []):
-                if lock == 'if-supported':
-                    # lock is not supported, don't execute lock operation
-                    execute_lock = False
-                else:
-                    module.warn("lock operation on '%s' source is not supported on this device" % source)
+    if lock == 'never':
+        execute_lock = False
+    elif (source or 'running') in operations.get('lock_datastore', []):
+        # lock is requested (always/if-support) and supported => lets do it
+        execute_lock = True
+    else:
+        # lock is requested (always/if-supported) but not supported => issue warning
+        module.warn("lock operation on '%s' source is not supported on this device" % (source or 'running'))
+        execute_lock = (lock == 'always')
 
     if display == 'json' and not HAS_JXMLEASE:
         module.fail_json(msg='jxmlease is required to display response in json format'
@@ -246,7 +243,7 @@ def main():
     elif display == 'json':
         try:
             output = jxmlease.parse(xml_resp)
-        except:
+        except Exception:
             raise ValueError(xml_resp)
     elif display == 'pretty':
         output = tostring(response, pretty_print=True)
@@ -257,6 +254,7 @@ def main():
     }
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

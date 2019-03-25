@@ -1,0 +1,95 @@
+- vars:
+    is_rhel: "{{ ansible_os_family == 'RedHat' and ansible_distribution != 'Fedora' }}"
+    is_rhel6: "{{ is_rhel and ansible_distribution_major_version == '6' }}"
+    is_rhel7: "{{ is_rhel and ansible_distribution_major_version == '7' }}"
+    is_rhel8: "{{ is_rhel and ansible_distribution_major_version == '8' }}"
+    is_ubuntu14: "{{ ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '14' }}"
+  block:
+    - include_tasks: "{{ lookup('first_found', params) }}"
+      vars:
+        params:
+          - '{{ ansible_distribution }}.yml'
+          - '{{ ansible_os_family }}.yml'
+      when: not is_rhel6 and not is_rhel8
+    - include_tasks: RHEL8.yml
+      when: is_rhel8
+
+    - name: Install Python requirements
+      vars:
+        # Inttalling requests >=2.12.0 on Ubuntu 14.04 breaks certificate validation. We restrict to an older version
+        # to ensure out get_url tests work out fine. This is only an issue if pyOpenSSL is also installed.
+        # Not sure why RHEL7 needs this specific version
+        extra_packages: "{{ '' if not (is_rhel7 or is_ubuntu14) else ',requests==2.6.0' }}"
+      pip:
+        state: present
+        name: 'docker{{ extra_packages }}'
+        extra_args: "-c {{ remote_constraints }}"
+
+    # Detect docker CLI, API and docker-py versions
+    - name: Check Docker CLI version
+      command: "docker version -f {% raw %}'{{.Client.Version}}'{% endraw %}"
+      register: docker_cli_version_stdout
+      ignore_errors: yes
+
+    - name: Check Docker API version
+      command: "{{ ansible_python.executable }} -c 'import docker; print(docker.from_env().version()[\"ApiVersion\"])'"
+      register: docker_api_version_stdout
+      ignore_errors: yes
+
+    - name: Check docker-py API version
+      command: "{{ ansible_python.executable }} -c 'import docker; print(docker.__version__)'"
+      register: docker_py_version_stdout
+      ignore_errors: yes
+
+    - set_fact:
+        docker_cli_version: "{{ (docker_cli_version_stdout.stdout | default('0.0')) or '0.0' }}"
+        docker_api_version: "{{ docker_api_version_stdout.stdout or '0.0' }}"
+        docker_py_version: "{{ docker_py_version_stdout.stdout or '0.0' }}"
+
+    - debug:
+        msg: "Docker CLI version: {{ docker_cli_version }}; Docker API version: {{ docker_api_version }}; docker-py library version: {{ docker_py_version }}"
+
+    - block:
+      # Cleanup docker daemon
+      - name: "Remove all ansible-test-* docker containers"
+        shell: 'docker ps --no-trunc --format {% raw %}"{{.Names}}"{% endraw %} | grep "^ansible-test-" | xargs -r docker rm -f'
+        register: docker_containers
+      - name: "Remove all ansible-test-* docker volumes"
+        shell: 'docker volume ls --format {% raw %}"{{.Name}}"{% endraw %} | grep "^ansible-test-" | xargs -r docker volume rm -f'
+        register: docker_volumes
+      - name: "Remove all ansible-test-* docker networks"
+        shell: 'docker network ls --no-trunc --format {% raw %}"{{.Name}}"{% endraw %} | grep "^ansible-test-" | xargs -r docker network rm'
+        register: docker_networks
+      - name: Cleaned docker resources
+        debug:
+          var: docker_resources
+        vars:
+          docker_resources:
+            containers: "{{ docker_containers.stdout_lines }}"
+            volumes: "{{ docker_volumes.stdout_lines }}"
+            networks: "{{ docker_networks.stdout_lines }}"
+
+      # List all existing docker resources
+      - name: List all docker containers
+        command: docker ps --no-trunc -a
+        register: docker_containers
+      - name: List all docker volumes
+        command: docker volume ls
+        register: docker_volumes
+      - name: List all docker networks
+        command: docker network ls --no-trunc
+        register: docker_networks
+      - name: List all docker images
+        command: docker images --no-trunc -a
+        register: docker_images
+      - name: Still existing docker resources
+        debug:
+          var: docker_resources
+        vars:
+          docker_resources:
+            containers: "{{ docker_containers.stdout_lines }}"
+            volumes: "{{ docker_volumes.stdout_lines }}"
+            networks: "{{ docker_networks.stdout_lines }}"
+            images: "{{ docker_images.stdout_lines }}"
+
+      when: docker_cli_version is version('0.0', '>')

@@ -3,13 +3,15 @@
 # Makefile for Ansible
 #
 # useful targets:
+#   make clean ---------------- clean up
+#   make webdocs -------------- produce ansible doc at docs/docsite/_build/html
 #   make sdist ---------------- produce a tarball
 #   make srpm ----------------- produce a SRPM
 #   make rpm  ----------------- produce RPMs
 #   make deb-src -------------- produce a DEB source
 #   make deb ------------------ produce a DEB
 #   make docs ----------------- rebuild the manpages (results are checked in)
-#   make tests ---------------- run the tests (see https://docs.ansible.com/ansible/dev_guide/testing_units.html for requirements)
+#   make tests ---------------- run the tests (see https://docs.ansible.com/ansible/devel/dev_guide/testing_units.html for requirements)
 #   make pyflakes, make pep8 -- source code checks
 
 ########################################################
@@ -29,9 +31,10 @@ ASCII2MAN = rst2man.py $< $@
 else
 ASCII2MAN = @echo "ERROR: rst2man from docutils command is not installed but is required to build $(MANPAGES)" && exit 1
 endif
-GENERATE_CLI = docs/bin/generate_man.py
 
 PYTHON=python
+GENERATE_CLI = $(PYTHON) docs/bin/generate_man.py
+
 SITELIB = $(shell $(PYTHON) -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
 
 # fetch version from project release.py as single source-of-truth
@@ -122,7 +125,7 @@ ifneq ($(REPOTAG),)
 endif
 
 # ansible-test parameters
-ANSIBLE_TEST ?= test/runner/ansible-test
+ANSIBLE_TEST ?= bin/ansible-test
 TEST_FLAGS ?=
 
 # ansible-test units parameters (make test / make test-py3)
@@ -217,7 +220,6 @@ clean:
 	rm -f AUTHORS.TXT
 	@echo "Cleaning up docsite"
 	$(MAKE) -C docs/docsite clean
-	$(MAKE) -C docs/api clean
 
 .PHONY: python
 python:
@@ -231,17 +233,28 @@ install_manpages:
 	gzip -9 $(wildcard ./docs/man/man1/ansible*.1)
 	cp $(wildcard ./docs/man/man1/ansible*.1.gz) $(PREFIX)/man/man1/
 
+.PHONY: sdist_check
+sdist_check:
+	$(PYTHON) packaging/sdist/check-link-behavior.py
+
 .PHONY: sdist
-sdist: clean docs
-	$(PYTHON) setup.py sdist
+sdist: sdist_check clean docs
+	_ANSIBLE_SDIST_FROM_MAKEFILE=1 $(PYTHON) setup.py sdist
+
+# Official releases generate the changelog as the last commit before the release.
+# Snapshots shouldn't result in new checkins so the changelog is generated as
+# part of creating the tarball.
+.PHONY: snapshot
+snapshot: sdist_check clean docs changelog
+	_ANSIBLE_SDIST_FROM_MAKEFILE=1 $(PYTHON) setup.py sdist
 
 .PHONY: sdist_upload
 sdist_upload: clean docs
 	$(PYTHON) setup.py sdist upload 2>&1 |tee upload.log
 
-.PHONY: changelog_reno
-changelog_reno:
-	reno -d changelogs/ report --title 'Ansible $(MAJOR_VERSION) "$(CODENAME)" Release Notes' --collapse-pre-release --no-show-source --earliest-version v$(MAJOR_VERSION).0a1 --output changelogs/CHANGELOG-v$(MAJOR_VERSION).rst
+.PHONY: changelog
+changelog:
+	PYTHONPATH=./lib packaging/release/changelogs/changelog.py release -vv && PYTHONPATH=./lib packaging/release/changelogs/changelog.py generate -vv
 
 .PHONY: rpmcommon
 rpmcommon: sdist
@@ -398,4 +411,3 @@ alldocs: docs webdocs
 
 version:
 	@echo $(VERSION)
-

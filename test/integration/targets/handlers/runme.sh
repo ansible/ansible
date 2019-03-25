@@ -2,7 +2,16 @@
 
 set -eux
 
+export ANSIBLE_FORCE_HANDLERS
+
+ANSIBLE_FORCE_HANDLERS=false
+
+# simple handler test
 ansible-playbook test_handlers.yml -i inventory.handlers -v "$@" --tags scenario1
+
+# simple from_handlers test
+ansible-playbook from_handlers.yml -i inventory.handlers -v "$@" --tags scenario1
+
 ansible-playbook test_listening_handlers.yml -i inventory.handlers -v "$@"
 
 [ "$(ansible-playbook test_handlers.yml -i inventory.handlers -v "$@" --tags scenario2 -l A \
@@ -63,3 +72,13 @@ set +e
 result="$(ansible-playbook test_handlers_any_errors_fatal.yml -e output_dir=$output_dir -i inventory.handlers -v "$@" 2>&1)"
 set -e
 [ ! -f $output_dir/should_not_exist_B ] || (rm -f $output_dir/should_not_exist_B && exit 1)
+
+# https://github.com/ansible/ansible/issues/47287
+[ "$(ansible-playbook test_handlers_including_task.yml -i ../../inventory -v "$@" | egrep -o 'failed=[0-9]+')" = "failed=0" ]
+
+# https://github.com/ansible/ansible/issues/27237
+set +e
+result="$(ansible-playbook test_handlers_template_run_once.yml -i inventory.handlers "$@" 2>&1)"
+set -e
+grep -q "handler A" <<< "$result"
+grep -q "handler B" <<< "$result"

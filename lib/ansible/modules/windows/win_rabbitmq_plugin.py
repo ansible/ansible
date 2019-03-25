@@ -15,12 +15,11 @@ short_description: Manage RabbitMQ plugins
 description:
   - Manage RabbitMQ plugins.
 version_added: "2.4"
-author:
-  - Artem Zinenko (@ar7z1)
 options:
   names:
     description:
       - Comma-separated list of plugin names.
+    type: str
     required: yes
     aliases: [ name ]
   new_only:
@@ -28,15 +27,19 @@ options:
       - Only enable missing plugins.
       - Does not disable plugins that are not in the names list.
     type: bool
-    default: "no"
+    default: no
   state:
     description:
       - Specify if plugins are to be enabled or disabled.
+    type: str
     choices: [ disabled, enabled ]
     default: enabled
   prefix:
     description:
       - Specify a custom install prefix to a Rabbit.
+    type: str
+author:
+  - Artem Zinenko (@ar7z1)
 '''
 
 EXAMPLES = r'''
@@ -48,12 +51,12 @@ EXAMPLES = r'''
 
 RETURN = r'''
 enabled:
-  description: list of plugins enabled during task run
+  description: List of plugins enabled during task run.
   returned: always
   type: list
   sample: ["rabbitmq_management"]
 disabled:
-  description: list of plugins disabled during task run
+  description: List of plugins disabled during task run.
   returned: always
   type: list
   sample: ["rabbitmq_management"]

@@ -23,8 +23,8 @@ version_added: "1.2"
 author:
     - "Andrew Newdigate (@suprememoocow)"
     - "Dylan Silva (@thaumos)"
-    - "Justin Johns"
-    - "Bruce Pennypacker"
+    - "Justin Johns (!UNKNOWN)"
+    - "Bruce Pennypacker (@bpennypacker)"
 requirements:
     - PagerDuty API access
 options:
@@ -35,31 +35,27 @@ options:
         choices: [ "running", "started", "ongoing", "absent" ]
     name:
         description:
-            - PagerDuty unique subdomain.
-        required: true
+            - PagerDuty unique subdomain. Obsolete. It is not used with PagerDuty REST v2 API.
     user:
         description:
-            - PagerDuty user ID.
-        required: true
-    passwd:
-        description:
-            - PagerDuty user password.
-        required: true
+            - PagerDuty user ID. Obsolete. Please, use I(token) for authorization.
     token:
         description:
-            - A pagerduty token, generated on the pagerduty site. Can be used instead of
-              user/passwd combination.
+            - A pagerduty token, generated on the pagerduty site. It is used for authorization.
         required: true
         version_added: '1.8'
     requester_id:
         description:
-            - ID of user making the request. Only needed when using a token and creating a maintenance_window.
-        required: true
+            - ID of user making the request. Only needed when creating a maintenance_window.
         version_added: '1.8'
     service:
         description:
             - A comma separated list of PagerDuty service IDs.
         aliases: [ services ]
+    window_id:
+        description:
+            - ID of maintenance window. Only needed when absent a maintenance_window.
+        version_added: "2.7"
     hours:
         description:
             - Length of maintenance window in hours.
@@ -83,28 +79,21 @@ options:
 '''
 
 EXAMPLES = '''
-# List ongoing maintenance windows using a user/passwd
-- pagerduty:
-    name: companyabc
-    user: example@example.com
-    passwd: password123
-    state: ongoing
-
 # List ongoing maintenance windows using a token
 - pagerduty:
     name: companyabc
     token: xxxxxxxxxxxxxx
     state: ongoing
 
-# Create a 1 hour maintenance window for service FOO123, using a user/passwd
+# Create a 1 hour maintenance window for service FOO123
 - pagerduty:
     name: companyabc
     user: example@example.com
-    passwd: password123
+    token: yourtoken
     state: running
     service: FOO123
 
-# Create a 5 minute maintenance window for service FOO123, using a token
+# Create a 5 minute maintenance window for service FOO123
 - pagerduty:
     name: companyabc
     token: xxxxxxxxxxxxxx
@@ -118,7 +107,6 @@ EXAMPLES = '''
 - pagerduty:
     name: companyabc
     user: example@example.com
-    passwd: password123
     state: running
     service: FOO123
     hours: 4
@@ -129,9 +117,22 @@ EXAMPLES = '''
 - pagerduty:
     name: companyabc
     user: example@example.com
-    passwd: password123
     state: absent
-    service: '{{ pd_window.result.maintenance_window.id }}'
+    window_id: '{{ pd_window.result.maintenance_window.id }}'
+
+# Delete a maintenance window from a separate playbook than its creation, and if it is the only existing maintenance window.
+- pagerduty:
+    requester_id: XXXXXXX
+    token: yourtoken
+    state: ongoing
+  register: pd_window
+
+- pagerduty:
+    requester_id: XXXXXXX
+    token: yourtoken
+    state: absent
+    window_id: "{{ pd_window.result.maintenance_windows[0].id }}"
+
 '''
 
 import datetime
@@ -143,87 +144,86 @@ from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_bytes
 
 
-def auth_header(user, passwd, token):
-    if token:
-        return "Token token=%s" % token
+class PagerDutyRequest(object):
+    def __init__(self, module, name, user, token):
+        self.module = module
+        self.name = name
+        self.user = user
+        self.token = token
+        self.headers = {
+            'Content-Type': 'application/json',
+            "Authorization": self._auth_header(),
+            'Accept': 'application/vnd.pagerduty+json;version=2'
+        }
 
-    auth = base64.b64encode(to_bytes('%s:%s' % (user, passwd)).replace('\n', ''))
-    return "Basic %s" % auth
+    def ongoing(self, http_call=fetch_url):
+        url = "https://api.pagerduty.com/maintenance_windows?filter=ongoing"
+        headers = dict(self.headers)
 
+        response, info = http_call(self.module, url, headers=headers)
+        if info['status'] != 200:
+            self.module.fail_json(msg="failed to lookup the ongoing window: %s" % info['msg'])
 
-def ongoing(module, name, user, passwd, token):
-    url = "https://" + name + ".pagerduty.com/api/v1/maintenance_windows/ongoing"
-    headers = {"Authorization": auth_header(user, passwd, token)}
+        json_out = self._read_response(response)
 
-    response, info = fetch_url(module, url, headers=headers)
-    if info['status'] != 200:
-        module.fail_json(msg="failed to lookup the ongoing window: %s" % info['msg'])
+        return False, json_out, False
 
-    try:
-        json_out = json.loads(response.read())
-    except:
-        json_out = ""
+    def create(self, requester_id, service, hours, minutes, desc, http_call=fetch_url):
+        if not requester_id:
+            self.module.fail_json(msg="requester_id is required when maintenance window should be created")
 
-    return False, json_out, False
+        url = 'https://api.pagerduty.com/maintenance_windows'
 
+        headers = dict(self.headers)
+        headers.update({'From': requester_id})
 
-def create(module, name, user, passwd, token, requester_id, service, hours, minutes, desc):
-    now = datetime.datetime.utcnow()
-    later = now + datetime.timedelta(hours=int(hours), minutes=int(minutes))
-    start = now.strftime("%Y-%m-%dT%H:%M:%SZ")
-    end = later.strftime("%Y-%m-%dT%H:%M:%SZ")
+        start, end = self._compute_start_end_time(hours, minutes)
+        services = self._create_services_payload(service)
 
-    url = "https://" + name + ".pagerduty.com/api/v1/maintenance_windows"
-    headers = {
-        'Authorization': auth_header(user, passwd, token),
-        'Content-Type': 'application/json',
-    }
-    request_data = {'maintenance_window': {'start_time': start, 'end_time': end, 'description': desc, 'service_ids': service}}
+        request_data = {'maintenance_window': {'start_time': start, 'end_time': end, 'description': desc, 'services': services}}
 
-    if requester_id:
-        request_data['requester_id'] = requester_id
-    else:
-        if token:
-            module.fail_json(msg="requester_id is required when using a token")
+        data = json.dumps(request_data)
+        response, info = http_call(self.module, url, data=data, headers=headers, method='POST')
+        if info['status'] != 201:
+            self.module.fail_json(msg="failed to create the window: %s" % info['msg'])
 
-    data = json.dumps(request_data)
-    response, info = fetch_url(module, url, data=data, headers=headers, method='POST')
-    if info['status'] != 201:
-        module.fail_json(msg="failed to create the window: %s" % info['msg'])
+        json_out = self._read_response(response)
 
-    try:
-        json_out = json.loads(response.read())
-    except:
-        json_out = ""
+        return False, json_out, True
 
-    return False, json_out, True
+    def _create_services_payload(self, service):
+        if (isinstance(service, list)):
+            return [{'id': s, 'type': 'service_reference'} for s in service]
+        else:
+            return [{'id': service, 'type': 'service_reference'}]
 
+    def _compute_start_end_time(self, hours, minutes):
+        now = datetime.datetime.utcnow()
+        later = now + datetime.timedelta(hours=int(hours), minutes=int(minutes))
+        start = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+        end = later.strftime("%Y-%m-%dT%H:%M:%SZ")
+        return start, end
 
-def absent(module, name, user, passwd, token, requester_id, service):
-    url = "https://" + name + ".pagerduty.com/api/v1/maintenance_windows/" + service[0]
-    headers = {
-        'Authorization': auth_header(user, passwd, token),
-        'Content-Type': 'application/json',
-    }
-    request_data = {}
+    def absent(self, window_id, http_call=fetch_url):
+        url = "https://api.pagerduty.com/maintenance_windows/" + window_id
+        headers = dict(self.headers)
 
-    if requester_id:
-        request_data['requester_id'] = requester_id
-    else:
-        if token:
-            module.fail_json(msg="requester_id is required when using a token")
+        response, info = http_call(self.module, url, headers=headers, method='DELETE')
+        if info['status'] != 204:
+            self.module.fail_json(msg="failed to delete the window: %s" % info['msg'])
 
-    data = json.dumps(request_data)
-    response, info = fetch_url(module, url, data=data, headers=headers, method='DELETE')
-    if info['status'] != 204:
-        module.fail_json(msg="failed to delete the window: %s" % info['msg'])
+        json_out = self._read_response(response)
 
-    try:
-        json_out = json.loads(response.read())
-    except:
-        json_out = ""
+        return False, json_out, True
 
-    return False, json_out, True
+    def _auth_header(self):
+        return "Token token=%s" % self.token
+
+    def _read_response(self, response):
+        try:
+            return json.loads(response.read())
+        except Exception:
+            return ""
 
 
 def main():
@@ -231,11 +231,11 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             state=dict(required=True, choices=['running', 'started', 'ongoing', 'absent']),
-            name=dict(required=True),
+            name=dict(required=False),
             user=dict(required=False),
-            passwd=dict(required=False, no_log=True),
-            token=dict(required=False, no_log=True),
+            token=dict(required=True, no_log=True),
             service=dict(required=False, type='list', aliases=["services"]),
+            window_id=dict(required=False),
             requester_id=dict(required=False),
             hours=dict(default='1', required=False),
             minutes=dict(default='0', required=False),
@@ -247,30 +247,28 @@ def main():
     state = module.params['state']
     name = module.params['name']
     user = module.params['user']
-    passwd = module.params['passwd']
-    token = module.params['token']
     service = module.params['service']
+    window_id = module.params['window_id']
     hours = module.params['hours']
     minutes = module.params['minutes']
     token = module.params['token']
     desc = module.params['desc']
     requester_id = module.params['requester_id']
 
-    if not token and not (user or passwd):
-        module.fail_json(msg="neither user and passwd nor token specified")
+    pd = PagerDutyRequest(module, name, user, token)
 
     if state == "running" or state == "started":
         if not service:
             module.fail_json(msg="service not specified")
-        (rc, out, changed) = create(module, name, user, passwd, token, requester_id, service, hours, minutes, desc)
+        (rc, out, changed) = pd.create(requester_id, service, hours, minutes, desc)
         if rc == 0:
             changed = True
 
     if state == "ongoing":
-        (rc, out, changed) = ongoing(module, name, user, passwd, token)
+        (rc, out, changed) = pd.ongoing()
 
     if state == "absent":
-        (rc, out, changed) = absent(module, name, user, passwd, token, requester_id, service)
+        (rc, out, changed) = pd.absent(window_id)
 
     if rc != 0:
         module.fail_json(msg="failed", result=out)

@@ -47,8 +47,8 @@ EXAMPLES = '''
   tower_job_list:
     status: running
     query: {"playbook": "testing.yml"}
-    register: testing_jobs
     tower_config_file: "~/tower_cli.cfg"
+  register: testing_jobs
 '''
 
 RETURN = '''
@@ -78,13 +78,11 @@ results:
 '''
 
 
-from ansible.module_utils.basic import AnsibleModule
-
-from ansible.module_utils.ansible_tower import tower_auth_config, tower_check_mode, tower_argument_spec, HAS_TOWER_CLI
+from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, tower_check_mode
 
 try:
     import tower_cli
-    import tower_cli.utils.exceptions as exc
+    import tower_cli.exceptions as exc
 
     from tower_cli.conf import settings
 except ImportError:
@@ -92,21 +90,17 @@ except ImportError:
 
 
 def main():
-    argument_spec = tower_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         status=dict(choices=['pending', 'waiting', 'running', 'error', 'failed', 'canceled', 'successful']),
         page=dict(type='int'),
         all_pages=dict(type='bool', default=False),
         query=dict(type='dict'),
-    ))
+    )
 
-    module = AnsibleModule(
+    module = TowerModule(
         argument_spec=argument_spec,
         supports_check_mode=True
     )
-
-    if not HAS_TOWER_CLI:
-        module.fail_json(msg='ansible-tower-cli required for this module')
 
     json_output = {}
 
@@ -124,7 +118,7 @@ def main():
             if query:
                 params['query'] = query.items()
             json_output = job.list(**params)
-        except (exc.ConnectionError, exc.BadRequest) as excinfo:
+        except (exc.ConnectionError, exc.BadRequest, exc.AuthError) as excinfo:
             module.fail_json(msg='Failed to list jobs: {0}'.format(excinfo), changed=False)
 
     module.exit_json(**json_output)

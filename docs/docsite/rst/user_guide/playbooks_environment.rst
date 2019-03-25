@@ -9,14 +9,17 @@ It is quite possible that you may need to get package updates through a proxy, o
 updates through a proxy and access other packages not through a proxy.  Or maybe a script you might wish to 
 call may also need certain environment variables set to run properly.
 
-Ansible makes it easy for you to configure your environment by using the 'environment' keyword.  Here is an example::
+Ansible makes it easy for you to configure the remote execution environment by using the 'environment' keyword.  Here is an example::
 
     - hosts: all
       remote_user: root
 
       tasks:
 
-        - apt: name=cobbler state=installed
+        - name: Install cobbler
+          package:
+            name: cobbler
+            state: present
           environment:
             http_proxy: http://proxy.example.com:8080
 
@@ -32,7 +35,10 @@ The environment can also be stored in a variable, and accessed like so::
 
       tasks:
 
-        - apt: name=cobbler state=installed
+        - name: Install cobbler
+          package:
+            name: cobbler
+            state: present
           environment: "{{proxy_env}}"
 
 You can also use it at a play level::
@@ -114,13 +120,13 @@ You might also want to simply specify the environment for a single task::
         PATH: '{{ rbenv_root }}/bin:{{ rbenv_root }}/shims:{{ rbenv_plugins }}/ruby-build/bin:{{ ansible_env.PATH }}'
 
 .. note::
-   ``environment:`` is not currently supported for Windows targets
+   ``environment:`` does not affect Ansible itself, ONLY the context of the specific task action and this does not include Ansible's own configuration settings.
 
 .. seealso::
 
    :doc:`playbooks`
        An introduction to playbooks
-   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

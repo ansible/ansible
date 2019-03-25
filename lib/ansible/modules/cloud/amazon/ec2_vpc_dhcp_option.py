@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = """
@@ -49,7 +49,7 @@ options:
     description:
       - NetBIOS node type to advertise in the DHCP options.
         The AWS recommendation is to use 2 (when using netbios name services)
-        http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_DHCP_Options.html
+        U(https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_DHCP_Options.html)
   vpc_id:
     description:
       - VPC ID to associate with the requested DHCP option set.
@@ -114,7 +114,7 @@ new_options:
       domain-name: "my.example.com"
 dhcp_options_id:
     description: The aws resource id of the primary DCHP options set created, found or removed
-    type: string
+    type: str
     returned: when available
 changed:
     description: Whether the dhcp options were changed
@@ -286,10 +286,6 @@ def main():
     )
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
-    if module._name == 'ec2_vpc_dhcp_options':
-        module.deprecate("The 'ec2_vpc_dhcp_options' module has been renamed "
-                         "'ec2_vpc_dhcp_option' (option is no longer plural)",
-                         version=2.8)
 
     params = module.params
     found = False

@@ -1,7 +1,6 @@
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -11,12 +10,9 @@ import yaml
 from ansible.module_utils._text import to_text
 from ansible.parsing.metadata import extract_metadata
 from ansible.parsing.yaml.loader import AnsibleLoader
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 def read_docstring(filename, verbose=True, ignore_errors=True):
@@ -29,7 +25,8 @@ def read_docstring(filename, verbose=True, ignore_errors=True):
         'doc': None,
         'plainexamples': None,
         'returndocs': None,
-        'metadata': None
+        'metadata': None,
+        'seealso': None,
     }
 
     string_to_vars = {
@@ -39,8 +36,8 @@ def read_docstring(filename, verbose=True, ignore_errors=True):
     }
 
     try:
-        b_module_data = open(filename, 'rb').read()
-        M = ast.parse(b_module_data)
+        with open(filename, 'rb') as b_module_data:
+            M = ast.parse(b_module_data.read())
 
         for child in M.body:
             if isinstance(child, ast.Assign):
@@ -68,15 +65,57 @@ def read_docstring(filename, verbose=True, ignore_errors=True):
         # Metadata is per-file and a dict rather than per-plugin/function and yaml
         data['metadata'] = extract_metadata(module_ast=M)[0]
 
-        # remove version
         if data['metadata']:
+            # remove version
             for x in ('version', 'metadata_version'):
                 if x in data['metadata']:
                     del data['metadata'][x]
-    except:
+        else:
+            # Add default metadata
+            data['metadata'] = {'supported_by': 'community',
+                                'status': ['preview']}
+    except Exception:
         if verbose:
             display.error("unable to parse %s" % filename)
         if not ignore_errors:
             raise
+
+    return data
+
+
+def read_docstub(filename):
+    """
+    Quickly find short_description using string methods instead of node parsing.
+    This does not return a full set of documentation strings and is intended for
+    operations like ansible-doc -l.
+    """
+
+    t_module_data = open(filename, 'r')
+    in_documentation = False
+    capturing = False
+    indent_detection = ''
+    doc_stub = []
+
+    for line in t_module_data:
+        if in_documentation:
+            # start capturing the stub until indentation returns
+            if capturing and line.startswith(indent_detection):
+                doc_stub.append(line)
+
+            elif capturing and not line.startswith(indent_detection):
+                break
+
+            elif line.lstrip().startswith('short_description:'):
+                capturing = True
+                # Detect that the short_description continues on the next line if it's indented more
+                # than short_description itself.
+                indent_detection = ' ' * (len(line) - len(line.lstrip()) + 1)
+                doc_stub.append(line)
+
+        elif line.startswith('DOCUMENTATION') and '=' in line:
+            in_documentation = True
+
+    short_description = r''.join(doc_stub).strip().rstrip('.')
+    data = AnsibleLoader(short_description, file_name=filename).get_single_data()
 
     return data

@@ -17,6 +17,7 @@ from lib.util import (
     SubprocessError,
     display,
     intercept_command,
+    read_lines_without_comments,
 )
 
 from lib.ansible_util import (
@@ -37,15 +38,15 @@ class AnsibleDocTest(SanityMultipleVersion):
         :type python_version: str
         :rtype: TestResult
         """
-        with open('test/sanity/ansible-doc/skip.txt', 'r') as skip_fd:
-            skip_modules = set(skip_fd.read().splitlines())
+        skip_file = 'test/sanity/ansible-doc/skip.txt'
+        skip_modules = set(read_lines_without_comments(skip_file, remove_blank_lines=True))
 
+        # This should use documentable plugins from constants instead
         plugin_type_blacklist = set([
             # not supported by ansible-doc
             'action',
-            'cliconf',
+            'doc_fragments',
             'filter',
-            'httpapi',
             'netconf',
             'terminal',
             'test',

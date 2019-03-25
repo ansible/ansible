@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -9,8 +9,8 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+                    'status': ['stableinterface'],
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -26,6 +26,7 @@ options:
         When C(absent), ensures that the pool is removed from the system. When
         C(enabled) or C(disabled), ensures that the pool is enabled or disabled
         (respectively) on the remote device.
+    type: str
     choices:
       - present
       - absent
@@ -35,6 +36,7 @@ options:
   preferred_lb_method:
     description:
       - The load balancing mode that the system tries first.
+    type: str
     choices:
       - round-robin
       - return-to-dns
@@ -58,6 +60,7 @@ options:
     description:
       - The load balancing mode that the system tries if the
         C(preferred_lb_method) is unsuccessful in picking a pool.
+    type: str
     choices:
       - round-robin
       - return-to-dns
@@ -76,6 +79,7 @@ options:
       - The load balancing mode that the system tries if both the
         C(preferred_lb_method) and C(alternate_lb_method)s are unsuccessful
         in picking a pool.
+    type: str
     choices:
       - round-robin
       - return-to-dns
@@ -102,11 +106,13 @@ options:
         directs requests when it cannot use one of its pools to do so.
         Note that the system uses the fallback IP only if you select the
         C(fallback_ip) load balancing method.
+    type: str
   type:
     description:
       - The type of GTM pool that you want to create. On BIG-IP releases
         prior to version 12, this parameter is not required. On later versions
         of BIG-IP, this is a required parameter.
+    type: str
     choices:
       - a
       - aaaa
@@ -117,10 +123,12 @@ options:
   name:
     description:
       - Name of the GTM pool.
+    type: str
     required: True
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
     version_added: 2.5
   members:
@@ -131,17 +139,21 @@ options:
       server:
         description:
           - Name of the server which the pool member is a part of.
+        type: str
         required: True
       virtual_server:
         description:
           - Name of the virtual server, associated with the server, that the pool member is a part of.
+        type: str
         required: True
+    type: list
     version_added: 2.6
   monitors:
     description:
       - Specifies the health monitors that the system currently uses to monitor this resource.
       - When C(availability_requirements.type) is C(require), you may only have a single monitor in the
         C(monitors) list.
+    type: list
     version_added: 2.6
   availability_requirements:
     description:
@@ -153,13 +165,18 @@ options:
         description:
           - Monitor rule type when C(monitors) is specified.
           - When creating a new pool, if this value is not specified, the default of 'all' will be used.
-        choices: ['all', 'at_least', 'require']
+        type: str
+        choices:
+          - all
+          - at_least
+          - require
       at_least:
         description:
           - Specifies the minimum number of active health monitors that must be successful
             before the link is considered up.
           - This parameter is only relevant when a C(type) of C(at_least) is used.
           - This parameter will be ignored if a type of either C(all) or C(require) is used.
+        type: int
       number_of_probes:
         description:
           - Specifies the minimum number of probes that must succeed for this server to be declared up.
@@ -168,6 +185,7 @@ options:
           - The value of this parameter should always be B(lower) than, or B(equal to), the value of C(number_of_probers).
           - This parameter is only relevant when a C(type) of C(require) is used.
           - This parameter will be ignored if a type of either C(all) or C(at_least) is used.
+        type: int
       number_of_probers:
         description:
           - Specifies the number of probers that should be used when running probes.
@@ -176,37 +194,67 @@ options:
           - The value of this parameter should always be B(higher) than, or B(equal to), the value of C(number_of_probers).
           - This parameter is only relevant when a C(type) of C(require) is used.
           - This parameter will be ignored if a type of either C(all) or C(at_least) is used.
+        type: int
+    type: dict
     version_added: 2.6
-notes:
-  - Requires the netaddr Python package on the host. This is as easy as
-    pip install netaddr.
+  max_answers_returned:
+    description:
+      - Specifies the maximum number of available virtual servers that the system lists in a response.
+      - The maximum is 500.
+    type: int
+    version_added: 2.8
+  ttl:
+    description:
+      - Specifies the number of seconds that the IP address, once found, is valid.
+    type: int
+    version_added: 2.8
 extends_documentation_fragment: f5
-requirements:
-  - netaddr
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
+'''
+
+EXAMPLES = r'''
+- name: Create a GTM pool
+  bigip_gtm_pool:
+    name: my_pool
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
+  delegate_to: localhost
+
+- name: Disable pool
+  bigip_gtm_pool:
+    state: disabled
+    name: my_pool
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
+  delegate_to: localhost
 '''
 
 RETURN = r'''
 preferred_lb_method:
   description: New preferred load balancing method for the pool.
   returned: changed
-  type: string
+  type: str
   sample: topology
 alternate_lb_method:
   description: New alternate load balancing method for the pool.
   returned: changed
-  type: string
+  type: str
   sample: drop-packet
 fallback_lb_method:
   description: New fallback load balancing method for the pool.
   returned: changed
-  type: string
+  type: str
   sample: fewest-hops
 fallback_ip:
   description: New fallback IP used when load balacing using the C(fallback_ip) method.
   returned: changed
-  type: string
+  type: str
   sample: 10.10.10.10
 monitors:
   description: The new list of monitors for the resource.
@@ -221,30 +269,16 @@ members:
     server:
       description: The name of the server portion of the member.
       returned: changed
-      type: string
+      type: str
     virtual_server:
       description: The name of the virtual server portion of the member.
       returned: changed
-      type: string
-'''
-
-EXAMPLES = r'''
-- name: Create a GTM pool
-  bigip_gtm_pool:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
-    name: my_pool
-  delegate_to: localhost
-
-- name: Disable pool
-  bigip_gtm_pool:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
-    state: disabled
-    name: my_pool
-  delegate_to: localhost
+      type: str
+max_answers_returned:
+  description: The new Maximum Answers Returned value.
+  returned: changed
+  type: int
+  sample: 25
 '''
 
 import copy
@@ -255,37 +289,25 @@ from ansible.module_utils.basic import env_fallback
 from distutils.version import LooseVersion
 
 try:
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-        from f5.sdk_exception import LazyAttributesRequired
-    except ImportError:
-        HAS_F5SDK = False
+    from library.module_utils.network.f5.common import transform_name
+    from library.module_utils.network.f5.icontrol import tmos_version
+    from library.module_utils.network.f5.icontrol import module_provisioned
+    from library.module_utils.network.f5.ipaddress import is_valid_ip
 except ImportError:
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-        from f5.sdk_exception import LazyAttributesRequired
-    except ImportError:
-        HAS_F5SDK = False
-
-try:
-    from netaddr import IPAddress, AddrFormatError
-    HAS_NETADDR = True
-except ImportError:
-    HAS_NETADDR = False
+    from ansible.module_utils.network.f5.common import transform_name
+    from ansible.module_utils.network.f5.icontrol import tmos_version
+    from ansible.module_utils.network.f5.icontrol import module_provisioned
+    from ansible.module_utils.network.f5.ipaddress import is_valid_ip
 
 
 class Parameters(AnsibleF5Parameters):
@@ -298,7 +320,8 @@ class Parameters(AnsibleF5Parameters):
         'fallbackIpv6': 'fallback_ip',
         'fallbackIp': 'fallback_ip',
         'membersReference': 'members',
-        'monitor': 'monitors'
+        'monitor': 'monitors',
+        'maxAnswersReturned': 'max_answers_returned',
     }
 
     updatables = [
@@ -309,6 +332,8 @@ class Parameters(AnsibleF5Parameters):
         'monitors',
         'preferred_lb_method',
         'state',
+        'max_answers_returned',
+        'ttl',
     ]
 
     returnables = [
@@ -319,7 +344,10 @@ class Parameters(AnsibleF5Parameters):
         'monitors',
         'preferred_lb_method',
         'enabled',
-        'disabled'
+        'disabled',
+        'availability_requirements',
+        'max_answers_returned',
+        'ttl',
     ]
 
     api_attributes = [
@@ -333,33 +361,10 @@ class Parameters(AnsibleF5Parameters):
         'loadBalancingMode',
         'members',
         'verifyMemberAvailability',
-        # The monitor attribute is not included here, because it can break the
-        # API calls to the device. If this bug is ever fixed, uncomment this code.
-        #
-        # monitor
+        'monitor',
+        'maxAnswersReturned',
+        'ttl',
     ]
-
-    def to_return(self):
-        result = {}
-        for returnable in self.returnables:
-            result[returnable] = getattr(self, returnable)
-        result = self._filter_params(result)
-        return result
-
-    @property
-    def collection(self):
-        type_map = dict(
-            a='a_s',
-            aaaa='aaaas',
-            cname='cnames',
-            mx='mxs',
-            naptr='naptrs',
-            srv='srvs'
-        )
-        if self._values['type'] is None:
-            return None
-        wideip_type = self._values['type']
-        return type_map[wideip_type]
 
     @property
     def type(self):
@@ -384,14 +389,9 @@ class Parameters(AnsibleF5Parameters):
             return 'any'
         if self._values['fallback_ip'] == 'any6':
             return 'any6'
-        try:
-            address = IPAddress(self._values['fallback_ip'])
-            if address.version == 4:
-                return str(address.ip)
-            elif address.version == 6:
-                return str(address.ip)
-            return None
-        except AddrFormatError:
+        if is_valid_ip(self._values['fallback_ip']):
+            return self._values['fallback_ip']
+        else:
             raise F5ModuleError(
                 'The provided fallback address is not a valid IPv4 address'
             )
@@ -463,7 +463,6 @@ class ApiParameters(Parameters):
             result = 'require {0} from {1} {{ {2} }}'.format(self.number_of_probes, self.number_of_probers, monitors)
         else:
             result = ' and '.join(monitors).strip()
-
         return result
 
     @property
@@ -622,15 +621,25 @@ class ModuleParameters(Parameters):
 
 
 class Changes(Parameters):
-    pass
+    def to_return(self):
+        result = {}
+        for returnable in self.returnables:
+            result[returnable] = getattr(self, returnable)
+        result = self._filter_params(result)
+        return result
 
 
 class UsableChanges(Changes):
     @property
     def monitors(self):
-        if self._values['monitors'] is None:
+        monitor_string = self._values['monitors']
+        if monitor_string is None:
             return None
-        return self._values['monitors']
+        if '{' in monitor_string and '}':
+            tmp = monitor_string.strip('}').split('{')
+            monitor = ''.join(tmp).rstrip()
+            return monitor
+        return monitor_string
 
     @property
     def members(self):
@@ -659,6 +668,93 @@ class ReportableChanges(Changes):
                 virtual_server=fq_name(self.partition, parts[1])
             ))
         return results
+
+    @property
+    def monitors(self):
+        if self._values['monitors'] is None:
+            return []
+        try:
+            result = re.findall(r'/\w+/[^\s}]+', self._values['monitors'])
+            result.sort()
+            return result
+        except Exception:
+            return self._values['monitors']
+
+    @property
+    def availability_requirement_type(self):
+        if self._values['monitors'] is None:
+            return None
+        if 'min ' in self._values['monitors']:
+            return 'at_least'
+        elif 'require ' in self._values['monitors']:
+            return 'require'
+        else:
+            return 'all'
+
+    @property
+    def number_of_probes(self):
+        """Returns the probes value from the monitor string.
+        The monitor string for a Require monitor looks like this.
+            require 1 from 2 { /Common/tcp }
+        This method parses out the first of the numeric values. This values represents
+        the "probes" value that can be updated in the module.
+        Returns:
+             int: The probes value if found. None otherwise.
+        """
+        if self._values['monitors'] is None:
+            return None
+        pattern = r'require\s+(?P<probes>\d+)\s+from'
+        matches = re.search(pattern, self._values['monitors'])
+        if matches is None:
+            return None
+        return int(matches.group('probes'))
+
+    @property
+    def number_of_probers(self):
+        """Returns the probers value from the monitor string.
+        The monitor string for a Require monitor looks like this.
+            require 1 from 2 { /Common/tcp }
+        This method parses out the first of the numeric values. This values represents
+        the "probers" value that can be updated in the module.
+        Returns:
+             int: The probers value if found. None otherwise.
+        """
+        if self._values['monitors'] is None:
+            return None
+        pattern = r'require\s+\d+\s+from\s+(?P<probers>\d+)\s+'
+        matches = re.search(pattern, self._values['monitors'])
+        if matches is None:
+            return None
+        return int(matches.group('probers'))
+
+    @property
+    def at_least(self):
+        """Returns the 'at least' value from the monitor string.
+        The monitor string for a Require monitor looks like this.
+            min 1 of { /Common/gateway_icmp }
+        This method parses out the first of the numeric values. This values represents
+        the "at_least" value that can be updated in the module.
+        Returns:
+             int: The at_least value if found. None otherwise.
+        """
+        if self._values['monitors'] is None:
+            return None
+        pattern = r'min\s+(?P<least>\d+)\s+of\s+'
+        matches = re.search(pattern, self._values['monitors'])
+        if matches is None:
+            return None
+        return int(matches.group('least'))
+
+    @property
+    def availability_requirements(self):
+        if self._values['monitors'] is None:
+            return None
+        result = dict()
+        result['type'] = self.availability_requirement_type
+        result['at_least'] = self.at_least
+        result['number_of_probers'] = self.number_of_probers
+        result['number_of_probes'] = self.number_of_probes
+        return result
 
 
 class Difference(object):
@@ -711,11 +807,12 @@ class Difference(object):
 
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = F5RestClient(**self.module.params)
         self.kwargs = kwargs
-        self.client = kwargs.get('client', None)
 
     def exec_module(self):
-        if not self.gtm_provisioned():
+        if not module_provisioned(self.client, 'gtm'):
             raise F5ModuleError(
                 "GTM must be provisioned to use this module."
             )
@@ -732,25 +829,17 @@ class ModuleManager(object):
             return UntypedManager(**self.kwargs)
 
     def version_is_less_than_12(self):
-        version = self.client.api.tmos_version
+        version = tmos_version(self.client)
         if LooseVersion(version) < LooseVersion('12.0.0'):
             return True
         else:
             return False
 
-    def gtm_provisioned(self):
-        resource = self.client.api.tm.sys.dbs.db.load(
-            name='provisioned.cpu.gtm'
-        )
-        if int(resource.value) == 0:
-            return False
-        return True
-
 
 class BaseManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.have = None
         self.want = ModuleParameters(params=self.module.params)
         self.changes = UsableChanges()
@@ -786,13 +875,10 @@ class BaseManager(object):
         result = dict()
         state = self.want.state
 
-        try:
-            if state in ["present", "disabled"]:
-                changed = self.present()
-            elif state == "absent":
-                changed = self.absent()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        if state in ["present", "disabled"]:
+            changed = self.present()
+        elif state == "absent":
+            changed = self.absent()
 
         reportable = ReportableChanges(params=self.changes.to_return())
         changes = reportable.to_return()
@@ -864,36 +950,6 @@ class BaseManager(object):
             raise F5ModuleError("Failed to delete the GTM pool")
         return True
 
-    def update_monitors_on_device(self):
-        """Updates the monitors string on a virtual server
-
-        There is a long-standing bug in GTM virtual servers where the monitor value
-        is a string that includes braces. These braces cause the REST API to panic and
-        fail to update or create any resources that have an "at_least" or "require"
-        set of availability_requirements.
-
-        This method exists to do a tmsh command to cause the update to take place on
-        the device.
-
-        Preferably, this method can be removed and the bug be fixed. The API should
-        be working, obviously, but the more concerning issue is if tmsh commands change
-        over time, breaking this method.
-        """
-        command = 'tmsh modify gtm pool {0} /{1}/{2} monitor {3}'.format(
-            self.want.type, self.want.partition, self.want.name, self.want.monitors
-        )
-        output = self.client.api.tm.util.bash.exec_cmd(
-            'run',
-            utilCmdArgs='-c "{0}"'.format(command)
-        )
-        try:
-            if hasattr(output, 'commandResult'):
-                if len(output.commandResult.strip()) > 0:
-                    raise F5ModuleError(output.commandResult)
-        except (AttributeError, NameError, LazyAttributesRequired):
-            pass
-        return True
-
 
 class TypedManager(BaseManager):
     def __init__(self, *args, **kwargs):
@@ -920,112 +976,184 @@ class TypedManager(BaseManager):
         return super(TypedManager, self).present()
 
     def exists(self):
-        pools = self.client.api.tm.gtm.pools
-        collection = getattr(pools, self.want.collection)
-        resource = getattr(collection, self.want.type)
-        result = resource.exists(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/gtm/pool/{2}/{3}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.type,
+            transform_name(self.want.partition, self.want.name)
         )
-        return result
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
 
     def update_on_device(self):
         params = self.changes.api_params()
-        pools = self.client.api.tm.gtm.pools
-        collection = getattr(pools, self.want.collection)
-        resource = getattr(collection, self.want.type)
-        result = resource.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/gtm/pool/{2}/{3}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.type,
+            transform_name(self.want.partition, self.want.name)
         )
-        if params:
-            result.modify(**params)
-        if self.want.monitors:
-            self.update_monitors_on_device()
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def read_current_from_device(self):
-        pools = self.client.api.tm.gtm.pools
-        collection = getattr(pools, self.want.collection)
-        resource = getattr(collection, self.want.type)
-        result = resource.load(
-            name=self.want.name,
-            partition=self.want.partition,
-            requests_params=dict(
-                params=dict(
-                    expandSubcollections='true'
-                )
-            )
+        uri = "https://{0}:{1}/mgmt/tm/gtm/pool/{2}/{3}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.type,
+            transform_name(self.want.partition, self.want.name)
         )
-        result = result.attrs
-        return ApiParameters(params=result)
+
+        query = '?expandSubcollections=true'
+        resp = self.client.api.get(uri + query)
+
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return ApiParameters(params=response)
 
     def create_on_device(self):
         params = self.changes.api_params()
-        pools = self.client.api.tm.gtm.pools
-        collection = getattr(pools, self.want.collection)
-        resource = getattr(collection, self.want.type)
-        resource.create(
-            name=self.want.name,
-            partition=self.want.partition,
-            **params
+        params['name'] = self.want.name
+        params['partition'] = self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/gtm/pool/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.type
         )
-        if self.want.monitors:
-            self.update_monitors_on_device()
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return response['selfLink']
 
     def remove_from_device(self):
-        pools = self.client.api.tm.gtm.pools
-        collection = getattr(pools, self.want.collection)
-        resource = getattr(collection, self.want.type)
-        resource = resource.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/gtm/pool/{2}/{3}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.type,
+            transform_name(self.want.partition, self.want.name)
         )
-        if resource:
-            resource.delete()
+        response = self.client.api.delete(uri)
+        if response.status == 200:
+            return True
+        raise F5ModuleError(response.content)
 
 
 class UntypedManager(BaseManager):
     def exists(self):
-        result = self.client.api.tm.gtm.pools.pool.exists(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/gtm/pool/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        return result
-
-    def update_on_device(self):
-        params = self.changes.api_params()
-        resource = self.client.api.tm.gtm.pools.pool.load(
-            name=self.want.name,
-            partition=self.want.partition
-        )
-        resource.modify(**params)
-        if self.want.monitors:
-            self.update_monitors_on_device()
-
-    def read_current_from_device(self):
-        resource = self.client.api.tm.gtm.pools.pool.load(
-            name=self.want.name,
-            partition=self.want.partition
-        )
-        result = resource.attrs
-        return ApiParameters(params=result)
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
 
     def create_on_device(self):
         params = self.changes.api_params()
-        self.client.api.tm.gtm.pools.pool.create(
-            name=self.want.name,
-            partition=self.want.partition,
-            **params
+        params['name'] = self.want.name
+        params['partition'] = self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/gtm/pool/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
         )
-        if self.want.monitors:
-            self.update_monitors_on_device()
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return response['selfLink']
+
+    def update_on_device(self):
+        params = self.changes.api_params()
+        uri = "https://{0}:{1}/mgmt/tm/gtm/pool/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
+        )
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+    def read_current_from_device(self):
+        uri = "https://{0}:{1}/mgmt/tm/gtm/pool/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return ApiParameters(params=response)
 
     def remove_from_device(self):
-        resource = self.client.api.tm.gtm.pools.pool.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/gtm/pool/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        resource.delete()
+        response = self.client.api.delete(uri)
+        if response.status == 200:
+            return True
+        raise F5ModuleError(response.content)
 
 
 class ArgumentSpec(object):
@@ -1102,6 +1230,8 @@ class ArgumentSpec(object):
                 ]
             ),
             monitors=dict(type='list'),
+            max_answers_returned=dict(type='int'),
+            ttl=dict(type='int')
         )
         self.argument_spec = {}
         self.argument_spec.update(f5_argument_spec)
@@ -1121,19 +1251,12 @@ def main():
         supports_check_mode=spec.supports_check_mode,
         required_if=spec.required_if
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
-    if not HAS_NETADDR:
-        module.fail_json(msg="The python netaddr module is required")
 
     try:
-        client = F5Client(**module.params)
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
         module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
         module.fail_json(msg=str(ex))
 
 

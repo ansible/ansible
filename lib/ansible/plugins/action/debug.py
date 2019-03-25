@@ -28,15 +28,11 @@ class ActionModule(ActionBase):
     ''' Print statements during execution '''
 
     TRANSFERS_FILES = False
-    VALID_ARGS = frozenset(('msg', 'var', 'verbosity'))
+    _VALID_ARGS = frozenset(('msg', 'var', 'verbosity'))
 
     def run(self, tmp=None, task_vars=None):
         if task_vars is None:
             task_vars = dict()
-
-        for arg in self._task.args:
-            if arg not in self.VALID_ARGS:
-                return {"failed": True, "msg": "'%s' is not a valid option in debug" % arg}
 
         if 'msg' in self._task.args and 'var' in self._task.args:
             return {"failed": True, "msg": "'msg' and 'var' are incompatible options"}
@@ -53,7 +49,7 @@ class ActionModule(ActionBase):
 
             elif 'var' in self._task.args:
                 try:
-                    results = self._templar.template(self._task.args['var'], convert_bare=True, fail_on_undefined=True, bare_deprecated=False)
+                    results = self._templar.template(self._task.args['var'], convert_bare=True, fail_on_undefined=True)
                     if results == self._task.args['var']:
                         # if results is not str/unicode type, raise an exception
                         if not isinstance(results, string_types):
@@ -78,5 +74,7 @@ class ActionModule(ActionBase):
         else:
             result['skipped_reason'] = "Verbosity threshold not met."
             result['skipped'] = True
+
+        result['failed'] = False
 
         return result

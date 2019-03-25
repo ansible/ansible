@@ -31,7 +31,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: avi_useraccount
-author: Chaitanya Deshpande (chaitanya.deshpande@avinetworks.com)
+author: Chaitanya Deshpande (@chaitanyaavi) <chaitanya.deshpande@avinetworks.com>
 
 short_description: Avi UserAccount Module
 description:
@@ -78,8 +78,8 @@ from copy import deepcopy
 
 try:
     from ansible.module_utils.network.avi.avi import (
-        avi_common_argument_spec, ansible_return, AviCredentials, HAS_AVI)
-    from avi.sdk.avi_api import ApiSession
+        avi_common_argument_spec, ansible_return, HAS_AVI)
+    from avi.sdk.avi_api import ApiSession, AviCredentials
     from avi.sdk.utils.ansible_utils import avi_obj_cmp, cleanup_absent_fields
 
 except ImportError:
@@ -115,7 +115,7 @@ def main():
             token=api_creds.token, port=api_creds.port)
         password_changed = True
         return ansible_return(module, None, False, req=data)
-    except:
+    except Exception:
         pass
 
     if not password_changed:

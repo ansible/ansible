@@ -1,4 +1,6 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -36,6 +38,13 @@ options:
       - Domain to work with. Can be the domain name (e.g. "mydomain.com") or the numeric ID of the domain in DNS Made Easy (e.g. "839989") for faster
         resolution
     required: true
+
+  sandbox:
+    description:
+      - Decides if the sandbox API should be used. Otherwise (default) the production API of DNS Made Easy is used.
+    type: bool
+    default: 'no'
+    version_added: 2.7
 
   record_name:
     description:
@@ -368,12 +377,18 @@ from ansible.module_utils.six import string_types
 
 class DME2(object):
 
-    def __init__(self, apikey, secret, domain, module):
+    def __init__(self, apikey, secret, domain, sandbox, module):
         self.module = module
 
         self.api = apikey
         self.secret = secret
-        self.baseurl = 'https://api.dnsmadeeasy.com/V2.0/'
+
+        if sandbox:
+            self.baseurl = 'https://api.sandbox.dnsmadeeasy.com/V2.0/'
+            self.module.warn(warning="Sandbox is enabled. All actions are made against the URL %s" % self.baseurl)
+        else:
+            self.baseurl = 'https://api.dnsmadeeasy.com/V2.0/'
+
         self.domain = str(domain)
         self.domain_map = None      # ["domain_name"] => ID
         self.record_map = None      # ["record_name"] => ID
@@ -537,6 +552,7 @@ def main():
             account_key=dict(required=True),
             account_secret=dict(required=True, no_log=True),
             domain=dict(required=True),
+            sandbox=dict(default='no', type='bool'),
             state=dict(required=True, choices=['present', 'absent']),
             record_name=dict(required=False),
             record_type=dict(required=False, choices=[
@@ -562,9 +578,9 @@ def main():
             ip5=dict(required=False),
             validate_certs=dict(default='yes', type='bool'),
         ),
-        required_together=(
+        required_together=[
             ['record_value', 'record_ttl', 'record_type']
-        ),
+        ],
         required_if=[
             ['failover', True, ['autoFailover', 'port', 'protocol', 'ip1', 'ip2']],
             ['monitor', True, ['port', 'protocol', 'maxEmails', 'systemDescription', 'ip1']]
@@ -575,7 +591,7 @@ def main():
     sensitivities = dict(Low=8, Medium=5, High=3)
 
     DME = DME2(module.params["account_key"], module.params[
-               "account_secret"], module.params["domain"], module)
+               "account_secret"], module.params["domain"], module.params["sandbox"], module)
     state = module.params["state"]
     record_name = module.params["record_name"]
     record_type = module.params["record_type"]
@@ -630,7 +646,7 @@ def main():
                 if not contact_list_id.isdigit() and contact_list_id != '':
                     contact_list = DME.getContactListByName(contact_list_id)
                     if not contact_list:
-                        module.fail_json(msg="Contact list {} does not exist".format(contact_list_id))
+                        module.fail_json(msg="Contact list {0} does not exist".format(contact_list_id))
                     contact_list_id = contact_list.get('id', '')
                 new_monitor['contactListId'] = contact_list_id
             else:

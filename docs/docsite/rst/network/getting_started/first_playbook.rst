@@ -1,8 +1,11 @@
+
+.. _first_network_playbook:
+
 ***************************************************
 Run Your First Command and Playbook
 ***************************************************
 
-Put the concepts you learned to work with this quick tutorial. Install Ansible, execute a network configuration command manually, execute the same command with Ansible, then create a playbook so you can execute the command any time on multiple network devices. 
+Put the concepts you learned to work with this quick tutorial. Install Ansible, execute a network configuration command manually, execute the same command with Ansible, then create a playbook so you can execute the command any time on multiple network devices.
 
 .. contents:: Topics
 
@@ -86,22 +89,17 @@ The playbook contains one play with two tasks, and should generate output like t
 .. code-block:: bash
 
    $ ansible-playbook -i vyos.example.net, -u ansible -k -e ansible_network_os=vyos first_playbook.yml
-   
+
    PLAY [First Playbook]
    ***************************************************************************************************************************
-   
-   TASK [Gathering Facts]
-   ***************************************************************************************************************************
-   ok: [vyos.example.net]
 
    TASK [Get config for VyOS devices]
    ***************************************************************************************************************************
    ok: [vyos.example.net]
-   
+
    TASK [Display the config]
    ***************************************************************************************************************************
    ok: [vyos.example.net] => {
-       "failed": false, 
        "msg": "The hostname is vyos and the OS is VyOS"
    }
 
@@ -114,15 +112,11 @@ The extended first playbook has four tasks in a single play. Run it with the sam
 
 .. code-block:: bash
 
-   $ ansible-playbook -i vyos.example.net, -u ansible -k -e ansible_network_os=vyos first_playbook_ext.yml 
+   $ ansible-playbook -i vyos.example.net, -u ansible -k -e ansible_network_os=vyos first_playbook_ext.yml
 
    PLAY [First Playbook]
    ************************************************************************************************************************************
-   
-   TASK [Gathering Facts]
-   ***********************************************************************************************************************************
-   ok: [vyos.example.net]
-   
+
    TASK [Get config for VyOS devices]
    **********************************************************************************************************************************
    ok: [vyos.example.net]
@@ -130,10 +124,9 @@ The extended first playbook has four tasks in a single play. Run it with the sam
    TASK [Display the config]
    *************************************************************************************************************************************
    ok: [vyos.example.net] => {
-       "failed": false, 
        "msg": "The hostname is vyos and the OS is VyOS"
    }
-   
+
    TASK [Update the hostname]
    *************************************************************************************************************************************
    changed: [vyos.example.net]
@@ -141,17 +134,16 @@ The extended first playbook has four tasks in a single play. Run it with the sam
    TASK [Get changed config for VyOS devices]
    *************************************************************************************************************************************
    ok: [vyos.example.net]
-   
+
    TASK [Display the changed config]
    *************************************************************************************************************************************
    ok: [vyos.example.net] => {
-       "failed": false, 
        "msg": "The hostname is vyos-changed and the OS is VyOS"
    }
-   
+
    PLAY RECAP
    ************************************************************************************************************************************
-   vyos.example.net           : ok=6    changed=1    unreachable=0    failed=0   
+   vyos.example.net           : ok=6    changed=1    unreachable=0    failed=0
 
 
-This playbook is useful. However, running it still requires several command-line flags. Also, running a playbook against a single device is not a huge efficiency gain over making the same change manually. The next step to harnessing the full power of Ansible is to use an inventory file to organize your managed nodes into groups with information like the ``ansible_network_os`` and the SSH user. 
+This playbook is useful. However, running it still requires several command-line flags. Also, running a playbook against a single device is not a huge efficiency gain over making the same change manually. The next step to harnessing the full power of Ansible is to use an inventory file to organize your managed nodes into groups with information like the ``ansible_network_os`` and the SSH user.

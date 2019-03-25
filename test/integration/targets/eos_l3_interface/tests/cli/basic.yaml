@@ -10,8 +10,6 @@
   eos_l3_interface:
     name: "{{ test_interface_1 }}"
     state: absent
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -20,8 +18,6 @@
     name: "{{ test_interface_1 }}"
     ipv4: 192.108.1.1/24
     state: present
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -36,8 +32,6 @@
     name: "{{ test_interface_1 }}"
     ipv4: 192.108.1.1/24
     state: present
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -50,8 +44,6 @@
     name: "{{ test_interface_1 }}"
     ipv4: 197.108.0.1/24
     state: present
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -66,8 +58,6 @@
     name: "{{ test_interface_1 }}"
     ipv6: fd5d:12c9:2201:1::1/64
     state: present
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -82,8 +72,6 @@
     name: "{{ test_interface_1 }}"
     ipv6: fd5d:12c9:2201:1::1/64
     state: present
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -96,8 +84,6 @@
     name: "{{ test_interface_1 }}"
     ipv6: fd58:12c9:2201:1::1/64
     state: present
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -111,8 +97,6 @@
   eos_l3_interface:
     name: "{{ test_interface_1 }}"
     state: absent
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -127,8 +111,6 @@
   eos_l3_interface:
     name: "{{ test_interface_1 }}"
     state: absent
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -136,8 +118,6 @@
   eos_l3_interface:
     name: "{{ test_interface_2 }}"
     state: absent
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -146,8 +126,6 @@
     aggregate:
     - { name: "{{ test_interface_1 }}", ipv4: 192.108.1.1/24, ipv6: "fd5d:12c9:2201:2::2/64" }
     - { name: "{{ test_interface_2 }}", ipv4: 192.109.1.2/16, ipv6: "fd5e:12c9:2201:3::3/32" }
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -166,8 +144,6 @@
     aggregate:
     - { name: "{{ test_interface_1 }}", ipv4: 192.108.1.1/24, ipv6: "fd5d:12c9:2201:2::2/64" }
     - { name: "{{ test_interface_2 }}", ipv4: 192.109.1.2/16, ipv6: "fd5e:12c9:2201:3::3/32" }
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -180,8 +156,6 @@
     aggregate:
     - { name: "{{ test_interface_1 }}", ipv4: 193.118.1.1/8, ipv6: "fd5a:12c9:2201:4::4/32" }
     - { name: "{{ test_interface_2 }}", ipv4: 192.119.2.2/24, ipv6: "fd5b:12c9:2201:5::5/90" }
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -202,8 +176,6 @@
     - { name: "{{ test_interface_1 }}" }
     - { name: "{{ test_interface_2 }}" }
     state: absent
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -223,8 +195,6 @@
     - { name: "{{ test_interface_1 }}" }
     - { name: "{{ test_interface_2 }}" }
     state: absent
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
   register: result
 

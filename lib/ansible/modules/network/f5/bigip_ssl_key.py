@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -9,10 +9,11 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+                    'status': ['stableinterface'],
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
+---
 module: bigip_ssl_key
 short_description: Import/Delete SSL keys from BIG-IP
 description:
@@ -25,6 +26,7 @@ options:
       - Sets the contents of a key directly to the specified value. This is
         used with lookup plugins or for anything with formatting or templating.
         This must be provided when C(state) is C(present).
+    type: str
     aliases:
       - key_content
   state:
@@ -32,20 +34,24 @@ options:
       - When C(present), ensures that the key is uploaded to the device. When
         C(absent), ensures that the key is removed from the device. If the key
         is currently in use, the module will not be able to remove the key.
-    default: present
+    type: str
     choices:
       - present
       - absent
+    default: present
   name:
     description:
       - The name of the key.
+    type: str
     required: True
   passphrase:
     description:
       - Passphrase on key.
+    type: str
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
     version_added: 2.5
 notes:
@@ -59,26 +65,29 @@ requirements:
   - BIG-IP >= v12
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
 - name: Use a file lookup to import key
   bigip_ssl_key:
     name: key-name
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: present
     content: "{{ lookup('file', '/path/to/key.key') }}"
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Delete key
   bigip_ssl_key:
     name: key-name
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: absent
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 '''
 
@@ -89,17 +98,17 @@ key_filename:
       C(cert_filename) will be similar to each other, however the
       C(key_filename) will have a C(.key) extension.
   returned: created
-  type: string
+  type: str
   sample: cert1.key
 key_checksum:
   description: SHA1 checksum of the key that was provided.
   returned: changed and created
-  type: string
+  type: str
   sample: cf23df2207d99a74fbe169e3eba035e633b65d94
 key_source_path:
   description: Path on BIG-IP where the source of the key is stored
   returned: created
-  type: string
+  type: str
   sample: /var/config/rest/downloads/cert1.key
 '''
 
@@ -111,27 +120,19 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
 
 try:
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from library.module_utils.network.f5.common import transform_name
+    from library.module_utils.network.f5.icontrol import upload_file
 except ImportError:
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from ansible.module_utils.network.f5.common import transform_name
+    from ansible.module_utils.network.f5.icontrol import upload_file
 
 try:
     from StringIO import StringIO
@@ -146,22 +147,37 @@ class Parameters(AnsibleF5Parameters):
         'sourcePath': 'key_source_path'
     }
 
-    updatables = ['key_source_path']
+    updatables = [
+        'key_checksum',
+        'key_source_path',
+    ]
 
-    returnables = ['key_filename', 'key_checksum', 'key_source_path']
+    returnables = [
+        'key_filename',
+        'key_checksum',
+        'key_source_path',
+    ]
 
-    api_attributes = ['passphrase', 'sourcePath']
+    api_attributes = [
+        'passphrase',
+        'sourcePath',
+    ]
 
-    def to_return(self):
-        result = {}
-        try:
-            for returnable in self.returnables:
-                result[returnable] = getattr(self, returnable)
-            result = self._filter_params(result)
-        except Exception:
-            pass
-        return result
 
+class ApiParameters(Parameters):
+    @property
+    def checksum(self):
+        if self._values['checksum'] is None:
+            return None
+        pattern = r'SHA1:\d+:(?P<value>[\w+]{40})'
+        matches = re.match(pattern, self._values['checksum'])
+        if matches:
+            return matches.group('value')
+        else:
+            return None
+
+
+class ModuleParameters(Parameters):
     def _get_hash(self, content):
         k = hashlib.sha1()
         s = StringIO(content)
@@ -193,99 +209,123 @@ class Parameters(AnsibleF5Parameters):
         )
         return result
 
-    @property
-    def checksum(self):
-        if self._values['checksum'] is None:
-            return None
-        pattern = r'SHA1:\d+:(?P<value>[\w+]{40})'
-        matches = re.match(pattern, self._values['checksum'])
-        if matches:
-            return matches.group('value')
-        else:
-            return None
-
 
 class Changes(Parameters):
+    def to_return(self):
+        result = {}
+        try:
+            for returnable in self.returnables:
+                result[returnable] = getattr(self, returnable)
+            result = self._filter_params(result)
+        except Exception:
+            pass
+        return result
+
+
+class UsableChanges(Changes):
     pass
+
+
+class ReportableChanges(Changes):
+    pass
+
+
+class Difference(object):
+    def __init__(self, want, have=None):
+        self.want = want
+        self.have = have
+
+    def compare(self, param):
+        try:
+            result = getattr(self, param)
+            return result
+        except AttributeError:
+            return self.__default(param)
+
+    def __default(self, param):
+        attr1 = getattr(self.want, param)
+        try:
+            attr2 = getattr(self.have, param)
+            if attr1 != attr2:
+                return attr1
+        except AttributeError:
+            return attr1
+
+    @property
+    def key_checksum(self):
+        if self.want.key_checksum is None:
+            return None
+        if self.want.key_checksum != self.have.checksum:
+            return self.want.key_checksum
+
+    @property
+    def key_source_path(self):
+        if self.want.key_source_path is None:
+            return None
+        if self.want.key_source_path == self.have.key_source_path:
+            if self.key_checksum:
+                return self.want.key_source_path
+        if self.want.key_source_path != self.have.key_source_path:
+            return self.want.key_source_path
 
 
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
-        self.have = None
-        self.want = Parameters(params=self.module.params)
-        self.changes = Changes()
+        self.client = F5RestClient(**self.module.params)
+        self.want = ModuleParameters(params=self.module.params)
+        self.have = ApiParameters()
+        self.changes = UsableChanges()
+
+    def _announce_deprecations(self, result):
+        warnings = result.pop('__warnings', [])
+        for warning in warnings:
+            self.client.module.deprecate(
+                msg=warning['msg'],
+                version=warning['version']
+            )
+
+    def _set_changed_options(self):
+        changed = {}
+        for key in Parameters.returnables:
+            if getattr(self.want, key) is not None:
+                changed[key] = getattr(self.want, key)
+        if changed:
+            self.changes = UsableChanges(params=changed)
+
+    def _update_changed_options(self):
+        diff = Difference(self.want, self.have)
+        updatables = Parameters.updatables
+        changed = dict()
+        for k in updatables:
+            change = diff.compare(k)
+            if change is None:
+                continue
+            else:
+                if isinstance(change, dict):
+                    changed.update(change)
+                else:
+                    changed[k] = change
+        if changed:
+            self.changes = UsableChanges(params=changed)
+            return True
+        return False
 
     def exec_module(self):
         changed = False
         result = dict()
         state = self.want.state
 
-        try:
-            if state == "present":
-                changed = self.present()
-            elif state == "absent":
-                changed = self.absent()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        if state == "present":
+            changed = self.present()
+        elif state == "absent":
+            changed = self.absent()
 
-        changes = self.changes.to_return()
+        reportable = ReportableChanges(params=self.changes.to_return())
+        changes = reportable.to_return()
         result.update(**changes)
         result.update(dict(changed=changed))
-        return result
-
-    def _set_changed_options(self):
-        changed = {}
-        try:
-            for key in Parameters.returnables:
-                if getattr(self.want, key) is not None:
-                    changed[key] = getattr(self.want, key)
-            if changed:
-                self.changes = Changes(params=changed)
-        except Exception:
-            pass
-
-    def _update_changed_options(self):
-        changed = {}
-        try:
-            for key in Parameters.updatables:
-                if getattr(self.want, key) is not None:
-                    attr1 = getattr(self.want, key)
-                    attr2 = getattr(self.have, key)
-                    if attr1 != attr2:
-                        changed[key] = attr1
-                if self.want.key_checksum != self.have.checksum:
-                    changed['key_checksum'] = self.want.key_checksum
-            if changed:
-                self.changes = Changes(params=changed)
-                return True
-        except Exception:
-            pass
-        return False
-
-    def should_update(self):
-        result = self._update_changed_options()
-        if result:
-            return True
-        return False
-
-    def update_on_device(self):
-        content = StringIO(self.want.content)
-        self.client.api.shared.file_transfer.uploads.upload_stringio(
-            content, self.want.key_filename
-        )
-        resource = self.client.api.tm.sys.file.ssl_keys.ssl_key.load(
-            name=self.want.key_filename,
-            partition=self.want.partition
-        )
-        resource.update()
-
-    def exists(self):
-        result = self.client.api.tm.sys.file.ssl_keys.ssl_key.exists(
-            name=self.want.key_filename,
-            partition=self.want.partition
-        )
+        self._announce_deprecations(result)
         return result
 
     def present(self):
@@ -294,22 +334,10 @@ class ModuleManager(object):
         else:
             return self.create()
 
-    def create(self):
-        if self.want.content is None:
-            return False
-        self._set_changed_options()
-        if self.module.check_mode:
-            return True
-        self.create_on_device()
-        return True
-
-    def read_current_from_device(self):
-        resource = self.client.api.tm.sys.file.ssl_keys.ssl_key.load(
-            name=self.want.key_filename,
-            partition=self.want.partition
-        )
-        result = resource.attrs
-        return Parameters(params=result)
+    def absent(self):
+        if self.exists():
+            return self.remove()
+        return False
 
     def update(self):
         self.have = self.read_current_from_device()
@@ -320,28 +348,20 @@ class ModuleManager(object):
         self.update_on_device()
         return True
 
-    def create_on_device(self):
-        content = StringIO(self.want.content)
-        self.client.api.shared.file_transfer.uploads.upload_stringio(
-            content, self.want.key_filename
-        )
-        self.client.api.tm.sys.file.ssl_keys.ssl_key.create(
-            sourcePath=self.want.key_source_path,
-            name=self.want.key_filename,
-            partition=self.want.partition
-        )
-
-    def absent(self):
-        if self.exists():
-            return self.remove()
+    def should_update(self):
+        result = self._update_changed_options()
+        if result:
+            return True
         return False
 
-    def remove_from_device(self):
-        resource = self.client.api.tm.sys.file.ssl_keys.ssl_key.load(
-            name=self.want.key_filename,
-            partition=self.want.partition
-        )
-        resource.delete()
+    def create(self):
+        if self.want.content is None:
+            return False
+        self._set_changed_options()
+        if self.module.check_mode:
+            return True
+        self.create_on_device()
+        return True
 
     def remove(self):
         if self.module.check_mode:
@@ -350,6 +370,106 @@ class ModuleManager(object):
         if self.exists():
             raise F5ModuleError("Failed to delete the key")
         return True
+
+    def exists(self):
+        uri = "https://{0}:{1}/mgmt/tm/sys/file/ssl-key/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.key_filename)
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
+
+    def upload_file_to_device(self, content, name):
+        url = 'https://{0}:{1}/mgmt/shared/file-transfer/uploads'.format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
+        )
+        try:
+            upload_file(self.client, url, content, name)
+        except F5ModuleError:
+            raise F5ModuleError(
+                "Failed to upload the file."
+            )
+
+    def update_on_device(self):
+        content = StringIO(self.want.content)
+        self.upload_file_to_device(content, self.want.key_filename)
+        params = self.changes.api_params()
+        uri = "https://{0}:{1}/mgmt/tm/sys/file/ssl-key/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.key_filename)
+        )
+        resp = self.client.api.put(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+    def create_on_device(self):
+        params = self.changes.api_params()
+        content = StringIO(self.want.content)
+        self.upload_file_to_device(content, self.want.key_filename)
+        params['name'] = self.want.key_filename
+        params['partition'] = self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/sys/file/ssl-key/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+    def read_current_from_device(self):
+        uri = "https://{0}:{1}/mgmt/tm/sys/file/ssl-key/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.key_filename)
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return ApiParameters(params=response)
+
+    def remove_from_device(self):
+        uri = "https://{0}:{1}/mgmt/tm/sys/file/ssl-key/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.key_filename)
+        )
+        response = self.client.api.delete(uri)
+        if response.status == 200:
+            return True
+        raise F5ModuleError(response.content)
 
 
 class ArgumentSpec(object):
@@ -387,17 +507,12 @@ def main():
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
 
     try:
-        client = F5Client(**module.params)
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
         module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
         module.fail_json(msg=str(ex))
 
 

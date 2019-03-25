@@ -83,12 +83,14 @@ import time
 import traceback
 
 HAS_XMPP = True
+XMPP_IMP_ERR = None
 try:
     import xmpp
 except ImportError:
+    XMPP_IMP_ERR = traceback.format_exc()
     HAS_XMPP = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
 
 
@@ -108,7 +110,7 @@ def main():
     )
 
     if not HAS_XMPP:
-        module.fail_json(msg="The required python xmpp library (xmpppy) is not installed")
+        module.fail_json(msg=missing_required_lib('xmpppy'), exception=XMPP_IMP_ERR)
 
     jid = xmpp.JID(module.params['user'])
     user = jid.getNode()
@@ -141,7 +143,9 @@ def main():
         if nick:  # sending to room instead of user, need to join
             msg.setType('groupchat')
             msg.setTag('x', namespace='http://jabber.org/protocol/muc#user')
-            conn.send(xmpp.Presence(to=module.params['to']))
+            join = xmpp.Presence(to=module.params['to'])
+            join.setTag('x', namespace='http://jabber.org/protocol/muc')
+            conn.send(join)
             time.sleep(1)
         else:
             msg.setType('chat')

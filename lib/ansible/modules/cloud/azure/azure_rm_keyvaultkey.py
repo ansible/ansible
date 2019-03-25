@@ -39,9 +39,8 @@ options:
             - PEM password.
     state:
         description:
-            - Assert the state of the key. Use 'present' to create a key and
-              'absent' to delete a key.
-        required: false
+            - Assert the state of the key. Use C(present) to create a key and
+              C(absent) to delete a key.
         default: present
         choices:
             - absent
@@ -52,7 +51,7 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Ian Philpot (@tripdubroot)"
+    - "Ian Philpot (@iphilpot)"
 
 '''
 
@@ -86,10 +85,11 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 try:
     import re
     import codecs
-    from azure.keyvault import KeyVaultClient, KeyVaultId
+    from azure.keyvault import KeyVaultClient, KeyVaultId, KeyVaultAuthentication
     from azure.keyvault.models import KeyAttributes, JsonWebKey
     from azure.common.credentials import ServicePrincipalCredentials
     from azure.keyvault.models.key_vault_error import KeyVaultErrorException
+    from msrestazure.azure_active_directory import MSIAuthentication
     from OpenSSL import crypto
 except ImportError:
     # This is handled in azure_rm_common
@@ -138,7 +138,7 @@ class AzureRMKeyVaultKey(AzureRMModuleBase):
             setattr(self, key, kwargs[key])
 
         # Create KeyVaultClient
-        self.client = KeyVaultClient(self.azure_credentials)
+        self.client = self.get_keyvault_client()
 
         results = dict()
         changed = False
@@ -178,6 +178,35 @@ class AzureRMKeyVaultKey(AzureRMModuleBase):
 
         return self.results
 
+    def get_keyvault_client(self):
+        try:
+            self.log("Get KeyVaultClient from MSI")
+            credentials = MSIAuthentication(resource='https://vault.azure.net')
+            return KeyVaultClient(credentials)
+        except Exception:
+            self.log("Get KeyVaultClient from service principal")
+
+        # Create KeyVault Client using KeyVault auth class and auth_callback
+        def auth_callback(server, resource, scope):
+            if self.credentials['client_id'] is None or self.credentials['secret'] is None:
+                self.fail('Please specify client_id, secret and tenant to access azure Key Vault.')
+
+            tenant = self.credentials.get('tenant')
+            if not self.credentials['tenant']:
+                tenant = "common"
+
+            authcredential = ServicePrincipalCredentials(
+                client_id=self.credentials['client_id'],
+                secret=self.credentials['secret'],
+                tenant=tenant,
+                cloud_environment=self._cloud_environment,
+                resource="https://vault.azure.net")
+
+            token = authcredential.token
+            return token['token_type'], token['access_token']
+
+        return KeyVaultClient(KeyVaultAuthentication(auth_callback))
+
     def get_key(self, name, version=''):
         ''' Gets an existing key '''
         key_bundle = self.client.get_key(self.keyvault_uri, name, version)
@@ -187,7 +216,7 @@ class AzureRMKeyVaultKey(AzureRMModuleBase):
 
     def create_key(self, name, tags, kty='RSA'):
         ''' Creates a key '''
-        key_bundle = self.client.create_key(self.keyvault_uri, name, kty, tags=tags)
+        key_bundle = self.client.create_key(vault_base_url=self.keyvault_uri, key_name=name, kty=kty, tags=tags)
         key_id = KeyVaultId.parse_key_id(key_bundle.key.kid)
         return key_id.id
 
@@ -273,6 +302,7 @@ class AzureRMKeyVaultKey(AzureRMModuleBase):
 
 def main():
     AzureRMKeyVaultKey()
+
 
 if __name__ == '__main__':
     main()

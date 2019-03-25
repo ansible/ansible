@@ -48,13 +48,12 @@ options:
                ce. Possible values include: 'SystemAssigned'"
     state:
         description:
-            - Assert the state of the SQL server. Use 'present' to create or update a server and
-              'absent' to delete a server.
+            - Assert the state of the SQL server. Use C(present) to create or update a server and
+              C(absent) to delete a server.
         default: present
         choices:
             - absent
             - present
-        version_added: "2.6"
 
 extends_documentation_fragment:
     - azure
@@ -68,7 +67,7 @@ author:
 EXAMPLES = '''
   - name: Create (or update) SQL Server
     azure_rm_sqlserver:
-      resource_group: resource_group
+      resource_group: myResourceGroup
       name: server_name
       location: westus
       admin_username: mylogin
@@ -81,7 +80,7 @@ id:
         - Resource ID.
     returned: always
     type: str
-    sample: /subscriptions/00000000-1111-2222-3333-444444444444/resourceGroups/sqlcrudtest-7398/providers/Microsoft.Sql/servers/sqlcrudtest-4645
+    sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Sql/servers/sqlcrudtest-4645
 version:
     description:
         - The version of the server.
@@ -107,7 +106,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from msrestazure.azure_operation import AzureOperationPoller
+    from msrest.polling import LROPoller
     from azure.mgmt.sql import SqlManagementClient
     from msrest.serialization import Model
 except ImportError:
@@ -119,7 +118,7 @@ class Actions:
     NoAction, Create, Update, Delete = range(4)
 
 
-class AzureRMServers(AzureRMModuleBase):
+class AzureRMSqlServer(AzureRMModuleBase):
     """Configuration class for an Azure RM SQL Server resource"""
 
     def __init__(self):
@@ -133,29 +132,23 @@ class AzureRMServers(AzureRMModuleBase):
                 required=True
             ),
             location=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             admin_username=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             admin_password=dict(
                 type='str',
-                no_log=True,
-                required=False
+                no_log=True
             ),
             version=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             identity=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             state=dict(
                 type='str',
-                required=False,
                 default='present',
                 choices=['present', 'absent']
             )
@@ -164,15 +157,15 @@ class AzureRMServers(AzureRMModuleBase):
         self.resource_group = None
         self.name = None
         self.parameters = dict()
+        self.tags = None
 
         self.results = dict(changed=False)
-        self.mgmt_client = None
         self.state = None
         self.to_do = Actions.NoAction
 
-        super(AzureRMServers, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                             supports_check_mode=True,
-                                             supports_tags=True)
+        super(AzureRMSqlServer, self).__init__(derived_arg_spec=self.module_arg_spec,
+                                               supports_check_mode=True,
+                                               supports_tags=True)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
@@ -196,9 +189,6 @@ class AzureRMServers(AzureRMModuleBase):
         response = None
         results = dict()
 
-        self.mgmt_client = self.get_mgmt_svc_client(SqlManagementClient,
-                                                    base_url=self._cloud_environment.endpoints.resource_manager)
-
         resource_group = self.get_resource_group(self.resource_group)
 
         if "location" not in self.parameters:
@@ -218,6 +208,9 @@ class AzureRMServers(AzureRMModuleBase):
                 self.to_do = Actions.Delete
             elif self.state == 'present':
                 self.log("Need to check if SQL Server instance has to be deleted or may be updated")
+                update_tags, newtags = self.update_tags(old_response.get('tags', dict()))
+                if update_tags:
+                    self.tags = newtags
                 self.to_do = Actions.Update
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
@@ -227,6 +220,7 @@ class AzureRMServers(AzureRMModuleBase):
                 self.results['changed'] = True
                 return self.results
 
+            self.parameters['tags'] = self.tags
             response = self.create_update_sqlserver()
             response.pop('administrator_login_password', None)
 
@@ -269,10 +263,10 @@ class AzureRMServers(AzureRMModuleBase):
         self.log("Creating / Updating the SQL Server instance {0}".format(self.name))
 
         try:
-            response = self.mgmt_client.servers.create_or_update(self.resource_group,
-                                                                 self.name,
-                                                                 self.parameters)
-            if isinstance(response, AzureOperationPoller):
+            response = self.sql_client.servers.create_or_update(self.resource_group,
+                                                                self.name,
+                                                                self.parameters)
+            if isinstance(response, LROPoller):
                 response = self.get_poller_result(response)
 
         except CloudError as exc:
@@ -288,8 +282,8 @@ class AzureRMServers(AzureRMModuleBase):
         '''
         self.log("Deleting the SQL Server instance {0}".format(self.name))
         try:
-            response = self.mgmt_client.servers.delete(self.resource_group,
-                                                       self.name)
+            response = self.sql_client.servers.delete(self.resource_group,
+                                                      self.name)
         except CloudError as e:
             self.log('Error attempting to delete the SQL Server instance.')
             self.fail("Error deleting the SQL Server instance: {0}".format(str(e)))
@@ -305,8 +299,8 @@ class AzureRMServers(AzureRMModuleBase):
         self.log("Checking if the SQL Server instance {0} is present".format(self.name))
         found = False
         try:
-            response = self.mgmt_client.servers.get(self.resource_group,
-                                                    self.name)
+            response = self.sql_client.servers.get(self.resource_group,
+                                                   self.name)
             found = True
             self.log("Response : {0}".format(response))
             self.log("SQL Server instance : {0} found".format(response.name))
@@ -320,7 +314,8 @@ class AzureRMServers(AzureRMModuleBase):
 
 def main():
     """Main execution"""
-    AzureRMServers()
+    AzureRMSqlServer()
+
 
 if __name__ == '__main__':
     main()

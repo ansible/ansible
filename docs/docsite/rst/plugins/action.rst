@@ -1,3 +1,5 @@
+.. _action_plugins:
+
 Action Plugins
 ==============
 
@@ -12,41 +14,43 @@ The 'normal' action plugin is used for modules that do not already have an actio
 
 .. _enabling_action:
 
-Enabling Action Plugins
+Enabling action plugins
 -----------------------
 
 You can enable a custom action plugin by either dropping it into the ``action_plugins`` directory adjacent to your play, inside a role, or by putting it in one of the action plugin directory sources configured in :ref:`ansible.cfg <ansible_configuration_settings>`.
 
 .. _using_action:
 
-Using Action Plugins
+Using action plugins
 --------------------
 
 Action plugin are executed by default when an associated module is used; no action is required.
 
-Plugin List
+Plugin list
 -----------
 
-You can use ``ansible-doc -t cache -l`` to see the list of available plugins.
-Use ``ansible-doc -t cache <plugin name>`` to see specific documentation and examples.
+You cannot list action plugins directly, they show up as their counterpart modules:
+
+Use ``ansible-doc -l`` to see the list of available modules.
+Use ``ansible-doc <name>`` to see specific documentation and examples, this should note if the module has a corresponding action plugin.
 
 .. seealso::
 
-   :doc:`cache`
+   :ref:`cache_plugins`
        Ansible Cache plugins
-   :doc:`callback`
+   :ref:`callback_plugins`
        Ansible callback plugins
-   :doc:`connection`
+   :ref:`connection_plugins`
        Ansible connection plugins
-   :doc:`inventory`
+   :ref:`inventory_plugins`
        Ansible inventory plugins
-   :doc:`shell`
+   :ref:`shell_plugins`
        Ansible Shell plugins
-   :doc:`strategy`
+   :ref:`strategy_plugins`
        Ansible Strategy plugins
-   :doc:`vars`
+   :ref:`vars_plugins`
        Ansible Vars plugins
-   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

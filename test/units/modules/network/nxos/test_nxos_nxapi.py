@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.nxos import nxos_nxapi
 from .nxos_module import TestNxosModule, load_fixture, set_module_args
 
@@ -39,7 +39,7 @@ class TestNxosNxapiModule(TestNxosModule):
 
         self.mock_get_capabilities = patch('ansible.modules.network.nxos.nxos_nxapi.get_capabilities')
         self.get_capabilities = self.mock_get_capabilities.start()
-        self.get_capabilities.return_value = {'device_info': {'network_os_platform': 'N7K-C7018'}, 'network_api': 'cliconf'}
+        self.get_capabilities.return_value = {'device_info': {'network_os_platform': 'N7K-C7018', 'network_os_version': '8.3(1)'}, 'network_api': 'cliconf'}
 
     def tearDown(self):
         super(TestNxosNxapiModule, self).tearDown()

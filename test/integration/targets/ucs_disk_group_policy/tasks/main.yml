@@ -1,0 +1,193 @@
+# Test code for the UCS modules
+# Copyright 2018, David Soper (@dsoper2)
+
+- name: Test that we have a UCS host, UCS username, and UCS password
+  fail:
+    msg: 'Please define the following variables: ucs_hostname, ucs_username and ucs_password.'
+  when: ucs_hostname is not defined or ucs_username is not defined or ucs_password is not defined
+  vars:
+    login_info: &login_info
+      hostname: "{{ ucs_hostname }}"
+      username: "{{ ucs_username }}"
+      password: "{{ ucs_password }}"
+
+# Setup (clean environment)
+- name: Disk Group Policy absent
+  ucs_disk_group_policy: &disk_group_policy_absent
+    <<: *login_info
+    name: DEE-DG
+    state: absent
+
+
+# Test present (check_mode)
+- name: Disk Group Policy present (check_mode)
+  ucs_disk_group_policy: &disk_group_policy_present
+    <<: *login_info
+    name: DEE-DG
+    raid_level: mirror
+    configuration_mode: manual
+    manual_disks:
+    - slot_num: '1'
+      role: normal
+    - slot_num: '2'
+      role: normal
+  check_mode: yes
+  register: cm_disk_group_policy_present
+
+
+# Present (normal mode)
+- name: Disk Group Policy present (normal mode)
+  ucs_disk_group_policy: *disk_group_policy_present
+  register: nm_disk_group_policy_present
+
+
+# Test present again (idempotent)
+- name: Disk Group Policy present again (check_mode)
+  ucs_disk_group_policy: *disk_group_policy_present
+  check_mode: yes
+  register: cm_disk_group_policy_present_again
+
+
+# Present again (normal mode)
+- name: Disk Group Policy present again (normal mode)
+  ucs_disk_group_policy: *disk_group_policy_present
+  register: nm_disk_group_policy_present_again
+
+
+# Verfiy present
+- name: Verify Disk Group Policy present results
+  assert:
+    that:
+    - cm_disk_group_policy_present.changed == nm_disk_group_policy_present.changed == true
+    - cm_disk_group_policy_present_again.changed == nm_disk_group_policy_present_again.changed == false
+
+
+# Test change (check_mode)
+- name: Disk Group Policy change (check_mode)
+  ucs_disk_group_policy: &disk_group_policy_change
+    <<: *login_info
+    name: DEE-DG
+    description: Testing Ansible
+    raid_level: stripe
+    configuration_mode: manual
+    manual_disks:
+    - slot_num: '1'
+      role: normal
+    - slot_num: '2'
+      role: normal
+      state: absent
+  check_mode: yes
+  register: cm_disk_group_policy_change
+
+
+# Change (normal mode)
+- name: Disk Group Policy change (normal mode)
+  ucs_disk_group_policy: *disk_group_policy_change
+  register: nm_disk_group_policy_change
+
+
+# Test change again (idempotent)
+- name: Disk Group Policy again (check_mode)
+  ucs_disk_group_policy: *disk_group_policy_change
+  check_mode: yes
+  register: cm_disk_group_policy_change_again
+
+
+# Change again (normal mode)
+- name: Disk Group Policy change again (normal mode)
+  ucs_disk_group_policy: *disk_group_policy_change
+  register: nm_disk_group_policy_change_again
+
+
+# Verfiy change
+- name: Verify Disk Group Policy change results
+  assert:
+    that:
+    - cm_disk_group_policy_change.changed == nm_disk_group_policy_change.changed == true
+    - cm_disk_group_policy_change_again.changed == nm_disk_group_policy_change_again.changed == false
+
+
+# Clean environment for next tests
+- name: Disk Group Policy absent for automatic testing
+  ucs_disk_group_policy: &disk_group_policy_absent_auto
+    <<: *login_info
+    name: DEE-DG
+    state: absent
+
+
+# Test automatic configuration mode (check_mode)
+- name: Disk Group Policy automatic (check_mode)
+  ucs_disk_group_policy: &disk_group_policy_auto
+    <<: *login_info
+    name: DEE-DG
+    raid_level: mirror
+    configuration_mode: automatic
+    drive_type: SSD
+    num_drives: 2
+    virtual_drive:
+      access_policy: platform-default
+      io_policy: direct
+      strip_size: 64KB
+  check_mode: yes
+  register: cm_disk_group_policy_auto
+
+
+# Automatic configuration (normal mode)
+- name: Disk Group Policy automatic (normal mode)
+  ucs_disk_group_policy: *disk_group_policy_auto
+  register: nm_disk_group_policy_auto
+
+
+# Test automatic configuration again (idempotent)
+- name: Disk Group Policy automatic again (check_mode)
+  ucs_disk_group_policy: *disk_group_policy_auto
+  check_mode: yes
+  register: cm_disk_group_policy_auto_again
+
+
+# Automatic configuration again (normal mode)
+- name: Disk Group Policy automatic again (normal mode)
+  ucs_disk_group_policy: *disk_group_policy_auto
+  register: nm_disk_group_policy_auto_again
+
+
+# Verfiy Automatic configuration 
+- name: Verify Disk Group Policy automatic results
+  assert:
+    that:
+    - cm_disk_group_policy_auto.changed == nm_disk_group_policy_auto.changed == true
+    - cm_disk_group_policy_auto_again.changed == nm_disk_group_policy_auto_again.changed == false
+
+
+# Teardown (clean environment)
+- name: Disk Group Policy absent (check_mode)
+  ucs_disk_group_policy: *disk_group_policy_absent
+  check_mode: yes
+  register: cm_disk_group_policy_absent
+
+
+# Absent (normal mode)
+- name: Disk Group Policy absent (normal mode)
+  ucs_disk_group_policy: *disk_group_policy_absent
+  register: nm_disk_group_policy_absent
+
+
+# Test absent again (idempotent)
+- name: Disk Group Policy absent again (check_mode)
+  ucs_disk_group_policy: *disk_group_policy_absent
+  check_mode: yes
+  register: cm_disk_group_policy_absent_again
+
+
+# Absent again (normal mode)
+- name: Disk Group Policy absent again (normal mode)
+  ucs_disk_group_policy: *disk_group_policy_absent
+  register: nm_disk_group_policy_absent_again
+
+
+# Verfiy absent
+- name: Verify Disk Group Policy absent results
+  assert:
+    that:
+    - cm_disk_group_policy_absent.changed == nm_disk_group_policy_absent.changed == true
+    - cm_disk_group_policy_absent_again.changed == nm_disk_group_policy_absent_again.changed == false

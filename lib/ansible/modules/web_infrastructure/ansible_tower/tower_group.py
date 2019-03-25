@@ -93,11 +93,11 @@ EXAMPLES = '''
 
 import os
 
-from ansible.module_utils.ansible_tower import tower_argument_spec, tower_auth_config, tower_check_mode, HAS_TOWER_CLI
+from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, tower_check_mode
 
 try:
     import tower_cli
-    import tower_cli.utils.exceptions as exc
+    import tower_cli.exceptions as exc
 
     from tower_cli.conf import settings
 except ImportError:
@@ -105,8 +105,7 @@ except ImportError:
 
 
 def main():
-    argument_spec = tower_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         name=dict(required=True),
         description=dict(),
         inventory=dict(required=True),
@@ -124,12 +123,9 @@ def main():
         overwrite_vars=dict(),
         update_on_launch=dict(type='bool', default=False),
         state=dict(choices=['present', 'absent'], default='present'),
-    ))
+    )
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
-
-    if not HAS_TOWER_CLI:
-        module.fail_json(msg='ansible-tower-cli required for this module')
+    module = TowerModule(argument_spec=argument_spec, supports_check_mode=True)
 
     name = module.params.get('name')
     inventory = module.params.get('inventory')
@@ -170,13 +166,12 @@ def main():
                 result = group.delete(**params)
         except (exc.NotFound) as excinfo:
             module.fail_json(msg='Failed to update the group, inventory not found: {0}'.format(excinfo), changed=False)
-        except (exc.ConnectionError, exc.BadRequest, exc.NotFound) as excinfo:
+        except (exc.ConnectionError, exc.BadRequest, exc.NotFound, exc.AuthError) as excinfo:
             module.fail_json(msg='Failed to update the group: {0}'.format(excinfo), changed=False)
 
     json_output['changed'] = result['changed']
     module.exit_json(**json_output)
 
 
-from ansible.module_utils.basic import AnsibleModule
 if __name__ == '__main__':
     main()

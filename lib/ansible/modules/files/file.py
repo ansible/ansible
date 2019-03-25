@@ -12,115 +12,184 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: file
-version_added: "historical"
-short_description: Sets attributes of files
+version_added: historical
+short_description: Manage files and file properties
 extends_documentation_fragment: files
 description:
-     - Sets attributes of files, symlinks, and directories, or removes
-       files/symlinks/directories. Many other modules support the same options as
-       the C(file) module - including M(copy), M(template), and M(assemble).
-     - For Windows targets, use the M(win_file) module instead.
-notes:
-    - For Windows targets, use the M(win_file) module instead.
-    - See also M(copy), M(template), M(assemble)
-author:
-    - Ansible Core Team
-    - Michael DeHaan
+- Set attributes of files, symlinks or directories.
+- Alternatively, remove files, symlinks or directories.
+- Many other modules support the same options as the C(file) module - including M(copy), M(template), and M(assemble).
+- For Windows targets, use the M(win_file) module instead.
 options:
   path:
     description:
-      - 'path to the file being managed.  Aliases: I(dest), I(name)'
-    required: true
+    - Path to the file being managed.
+    type: path
+    required: yes
     aliases: [ dest, name ]
   state:
     description:
-      - If C(directory), all intermediate subdirectories will be created if they
-        do not exist. Since Ansible 1.7 they will be created with the supplied permissions.
-        If C(file), the file will NOT be created if it does not exist; see the C(touch)
-        value or the M(copy) or M(template) module if you want that behavior.  If C(link), the
-        symbolic link will be created or changed. Use C(hard) for hardlinks. If C(absent),
-        directories will be recursively deleted, and files or symlinks will be unlinked.
-        Note that C(absent) will not cause C(file) to fail if the C(path) does not exist
-        as the state did not change.
-        If C(touch) (new in 1.4), an empty file will be created if the C(path) does not
-        exist, while an existing file or directory will receive updated file access and
-        modification times (similar to the way `touch` works from the command line).
+    - If C(absent), directories will be recursively deleted, and files or symlinks will
+      be unlinked. Note that C(absent) will not cause C(file) to fail if the C(path) does
+      not exist as the state did not change.
+    - If C(directory), all intermediate subdirectories will be created if they
+      do not exist. Since Ansible 1.7 they will be created with the supplied permissions.
+    - If C(file), without any other options this works mostly as a 'stat' and will return the current state of C(path).
+      Even with other options (i.e C(mode)), the file will be modified but will NOT be created if it does not exist;
+      see the C(touch) value or the M(copy) or M(template) module if you want that behavior.
+    - If C(hard), the hard link will be created or changed.
+    - If C(link), the symbolic link will be created or changed.
+    - If C(touch) (new in 1.4), an empty file will be created if the C(path) does not
+      exist, while an existing file or directory will receive updated file access and
+      modification times (similar to the way C(touch) works from the command line).
+    type: str
     default: file
     choices: [ absent, directory, file, hard, link, touch ]
   src:
     description:
-      - path of the file to link to (applies only to C(state=link) and C(state=hard)). Will accept
-        absolute, relative and nonexisting paths. Relative paths are relative to the file being
-        created (C(path)) which is how the UNIX command C(ln -s SRC DEST) treats relative paths.
+    - Path of the file to link to.
+    - This applies only to C(state=link) and C(state=hard).
+    - Will accept absolute, relative and non-existing paths.
+    - Relative paths are relative to the file being created (C(path)) which is how
+      the Unix command C(ln -s SRC DEST) treats relative paths.
+    type: path
   recurse:
     description:
-      - recursively set the specified file attributes (applies only to directories)
+    - Recursively set the specified file attributes on directory contents.
+    - This applies only to C(state=directory).
     type: bool
-    default: 'no'
-    version_added: "1.1"
+    default: no
+    version_added: '1.1'
   force:
     description:
-      - 'force the creation of the symlinks in two cases: the source file does
-        not exist (but will appear later); the destination exists and is a file (so, we need to unlink the
-        "path" file and create symlink to the "src" file in place of it).'
+    - >
+      Force the creation of the symlinks in two cases: the source file does
+      not exist (but will appear later); the destination exists and is a file (so, we need to unlink the
+      C(path) file and create symlink to the C(src) file in place of it).
     type: bool
-    default: 'no'
+    default: no
   follow:
     description:
-      - 'This flag indicates that filesystem links, if they exist, should be followed.'
-      - 'Previous to Ansible 2.5, this was C(no) by default.'
+    - This flag indicates that filesystem links, if they exist, should be followed.
+    - Previous to Ansible 2.5, this was C(no) by default.
     type: bool
-    default: 'yes'
-    version_added: "1.8"
+    default: yes
+    version_added: '1.8'
+  modification_time:
+    description:
+    - This parameter indicates the time the file's modification time should be set to.
+    - Should be C(preserve) when no modification is required, C(YYYYMMDDHHMM.SS) when using default time format, or C(now).
+    - Default is None meaning that C(preserve) is the default for C(state=[file,directory,link,hard]) and C(now) is default for C(state=touch).
+    type: str
+    version_added: "2.7"
+  modification_time_format:
+    description:
+    - When used with C(modification_time), indicates the time format that must be used.
+    - Based on default Python format (see time.strftime doc).
+    type: str
+    default: "%Y%m%d%H%M.%S"
+    version_added: '2.7'
+  access_time:
+    description:
+    - This parameter indicates the time the file's access time should be set to.
+    - Should be C(preserve) when no modification is required, C(YYYYMMDDHHMM.SS) when using default time format, or C(now).
+    - Default is C(None) meaning that C(preserve) is the default for C(state=[file,directory,link,hard]) and C(now) is default for C(state=touch).
+    type: str
+    version_added: '2.7'
+  access_time_format:
+    description:
+    - When used with C(access_time), indicates the time format that must be used.
+    - Based on default Python format (see time.strftime doc).
+    type: str
+    default: "%Y%m%d%H%M.%S"
+    version_added: '2.7'
+seealso:
+- module: assemble
+- module: copy
+- module: stat
+- module: template
+- module: win_file
+author:
+- Ansible Core Team
+- Michael DeHaan
 '''
 
-EXAMPLES = '''
-# change file ownership, group and mode. When specifying mode using octal numbers, first digit should always be 0.
-- file:
+EXAMPLES = r'''
+- name: Change file ownership, group and permissions
+  file:
     path: /etc/foo.conf
     owner: foo
     group: foo
-    mode: 0644
-- file:
+    mode: '0644'
+
+- name: Create an insecure file
+  file:
     path: /work
     owner: root
     group: root
-    mode: 01777
-- file:
+    mode: '1777'
+
+- name: Create a symbolic link
+  file:
     src: /file/to/link/to
     dest: /path/to/symlink
     owner: foo
     group: foo
     state: link
-- file:
+
+- name: Create two hard links
+  file:
     src: '/tmp/{{ item.src }}'
     dest: '{{ item.dest }}'
     state: link
   with_items:
-    - { src: 'x', dest: 'y' }
-    - { src: 'z', dest: 'k' }
+    - { src: x, dest: y }
+    - { src: z, dest: k }
 
-# touch a file, using symbolic modes to set the permissions (equivalent to 0644)
-- file:
+- name: Touch a file, using symbolic modes to set the permissions (equivalent to 0644)
+  file:
     path: /etc/foo.conf
     state: touch
-    mode: "u=rw,g=r,o=r"
+    mode: u=rw,g=r,o=r
 
-# touch the same file, but add/remove some permissions
-- file:
+- name: Touch the same file, but add/remove some permissions
+  file:
     path: /etc/foo.conf
     state: touch
-    mode: "u+rw,g-wx,o-rwx"
+    mode: u+rw,g-wx,o-rwx
 
-# create a directory if it doesn't exist
-- file:
+- name: Touch again the same file, but dont change times this makes the task idempotent
+  file:
+    path: /etc/foo.conf
+    state: touch
+    mode: u+rw,g-wx,o-rwx
+    modification_time: preserve
+    access_time: preserve
+
+- name: Create a directory if it does not exist
+  file:
     path: /etc/some_directory
     state: directory
-    mode: 0755
+    mode: '0755'
+
+- name: Update modification and access time of given file
+  file:
+    path: /etc/some_file
+    state: file
+    modification_time: now
+    access_time: now
+
+- name: Set access time based on seconds from epoch value
+  file:
+    path: /etc/another_file
+    state: file
+    access_time: '{{ "%Y%m%d%H%M.%S" | strftime(stat_var.stat.atime) }}'
+'''
+RETURN = r'''
+
 '''
 
 import errno
@@ -147,6 +216,11 @@ class AnsibleModuleError(Exception):
 
 class ParameterError(AnsibleModuleError):
     pass
+
+
+class Sentinel(object):
+    def __new__(cls, *args, **kwargs):
+        return cls
 
 
 def _ansible_excepthook(exc_type, exc_value, tb):
@@ -212,22 +286,28 @@ def get_state(path):
     ''' Find out current state '''
 
     b_path = to_bytes(path, errors='surrogate_or_strict')
-    if os.path.lexists(b_path):
-        if os.path.islink(b_path):
-            return 'link'
-        elif os.path.isdir(b_path):
-            return 'directory'
-        elif os.stat(b_path).st_nlink > 1:
-            return 'hard'
+    try:
+        if os.path.lexists(b_path):
+            if os.path.islink(b_path):
+                return 'link'
+            elif os.path.isdir(b_path):
+                return 'directory'
+            elif os.stat(b_path).st_nlink > 1:
+                return 'hard'
 
-        # could be many other things, but defaulting to file
-        return 'file'
+            # could be many other things, but defaulting to file
+            return 'file'
 
-    return 'absent'
+        return 'absent'
+    except OSError as e:
+        if e.errno == errno.ENOENT:  # It may already have been removed
+            return 'absent'
+        else:
+            raise
 
 
 # This should be moved into the common file utilities
-def recursive_set_attributes(b_path, follow, file_args):
+def recursive_set_attributes(b_path, follow, file_args, mtime, atime):
     changed = False
     for b_root, b_dirs, b_files in os.walk(b_path):
         for b_fsobj in b_dirs + b_files:
@@ -236,11 +316,14 @@ def recursive_set_attributes(b_path, follow, file_args):
                 tmp_file_args = file_args.copy()
                 tmp_file_args['path'] = to_native(b_fsname, errors='surrogate_or_strict')
                 changed |= module.set_fs_attributes_if_different(tmp_file_args, changed, expand=False)
+                changed |= update_timestamp_for_file(tmp_file_args['path'], mtime, atime)
+
             else:
                 # Change perms on the link
                 tmp_file_args = file_args.copy()
                 tmp_file_args['path'] = to_native(b_fsname, errors='surrogate_or_strict')
                 changed |= module.set_fs_attributes_if_different(tmp_file_args, changed, expand=False)
+                changed |= update_timestamp_for_file(tmp_file_args['path'], mtime, atime)
 
                 if follow:
                     b_fsname = os.path.join(b_root, os.readlink(b_fsname))
@@ -248,12 +331,13 @@ def recursive_set_attributes(b_path, follow, file_args):
                     if os.path.exists(b_fsname):
                         if os.path.isdir(b_fsname):
                             # Link is a directory so change perms on the directory's contents
-                            changed |= recursive_set_attributes(b_fsname, follow, file_args)
+                            changed |= recursive_set_attributes(b_fsname, follow, file_args, mtime, atime)
 
                         # Change perms on the file pointed to by the link
                         tmp_file_args = file_args.copy()
                         tmp_file_args['path'] = to_native(b_fsname, errors='surrogate_or_strict')
                         changed |= module.set_fs_attributes_if_different(tmp_file_args, changed, expand=False)
+                        changed |= update_timestamp_for_file(tmp_file_args['path'], mtime, atime)
     return changed
 
 
@@ -271,6 +355,87 @@ def initial_diff(path, state, prev_state):
 #
 # States
 #
+
+
+def get_timestamp_for_time(formatted_time, time_format):
+    if formatted_time == 'preserve':
+        return None
+    elif formatted_time == 'now':
+        return Sentinel
+    else:
+        try:
+            struct = time.strptime(formatted_time, time_format)
+            struct_time = time.mktime(struct)
+        except (ValueError, OverflowError) as e:
+            raise AnsibleModuleError(results={'msg': 'Error while obtaining timestamp for time %s using format %s: %s'
+                                              % (formatted_time, time_format, to_native(e, nonstring='simplerepr'))})
+
+        return struct_time
+
+
+def update_timestamp_for_file(path, mtime, atime, diff=None):
+    try:
+        # When mtime and atime are set to 'now', rely on utime(path, None) which does not require ownership of the file
+        # https://github.com/ansible/ansible/issues/50943
+        if mtime is Sentinel and atime is Sentinel:
+            # It's not exact but we can't rely on os.stat(path).st_mtime after setting os.utime(path, None) as it may
+            # not be updated. Just use the current time for the diff values
+            mtime = atime = time.time()
+
+            previous_mtime = os.stat(path).st_mtime
+            previous_atime = os.stat(path).st_atime
+
+            set_time = None
+        else:
+            # If both parameters are None 'preserve', nothing to do
+            if mtime is None and atime is None:
+                return False
+
+            previous_mtime = os.stat(path).st_mtime
+            previous_atime = os.stat(path).st_atime
+
+            if mtime is None:
+                mtime = previous_mtime
+            elif mtime is Sentinel:
+                mtime = time.time()
+
+            if atime is None:
+                atime = previous_atime
+            elif atime is Sentinel:
+                atime = time.time()
+
+            # If both timestamps are already ok, nothing to do
+            if mtime == previous_mtime and atime == previous_atime:
+                return False
+
+            set_time = (atime, mtime)
+
+        os.utime(path, set_time)
+
+        if diff is not None:
+            if 'before' not in diff:
+                diff['before'] = {}
+            if 'after' not in diff:
+                diff['after'] = {}
+            if mtime != previous_mtime:
+                diff['before']['mtime'] = previous_mtime
+                diff['after']['mtime'] = mtime
+            if atime != previous_atime:
+                diff['before']['atime'] = previous_atime
+                diff['after']['atime'] = atime
+    except OSError as e:
+        raise AnsibleModuleError(results={'msg': 'Error while updating modification or access time: %s'
+                                          % to_native(e, nonstring='simplerepr'), 'path': path})
+    return True
+
+
+def keep_backward_compatibility_on_timestamps(parameter, state):
+    if state in ['file', 'hard', 'directory', 'link'] and parameter is None:
+        return 'preserve'
+    elif state == 'touch' and parameter is None:
+        return 'now'
+    else:
+        return parameter
 
 
 def execute_diff_peek(path):
@@ -311,55 +476,38 @@ def ensure_absent(path):
                                                           'path': path})
 
         diff = initial_diff(path, 'absent', prev_state)
-        result.update({'path': path, 'changed': True, 'diff': diff})
+        result.update({'path': path, 'changed': True, 'diff': diff, 'state': 'absent'})
     else:
-        result.update({'path': path, 'changed': False})
+        result.update({'path': path, 'changed': False, 'state': 'absent'})
 
     return result
 
 
-def execute_touch(path, follow):
+def execute_touch(path, follow, timestamps):
     b_path = to_bytes(path, errors='surrogate_or_strict')
     prev_state = get_state(b_path)
+    changed = False
+    result = {'dest': path}
+    mtime = get_timestamp_for_time(timestamps['modification_time'], timestamps['modification_time_format'])
+    atime = get_timestamp_for_time(timestamps['access_time'], timestamps['access_time_format'])
 
     if not module.check_mode:
         if prev_state == 'absent':
             # Create an empty file if the filename did not already exist
             try:
                 open(b_path, 'wb').close()
+                changed = True
             except (OSError, IOError) as e:
                 raise AnsibleModuleError(results={'msg': 'Error, could not touch target: %s'
                                                          % to_native(e, nonstring='simplerepr'),
                                                   'path': path})
 
-        elif prev_state in ('file', 'directory', 'hard'):
-            # Update the timestamp if the file already existed
-            try:
-                os.utime(b_path, None)
-            except OSError as e:
-                raise AnsibleModuleError(results={'msg': 'Error while touching existing target: %s'
-                                                         % to_native(e, nonstring='simplerepr'),
-                                                  'path': path})
-
-        elif prev_state == 'link' and follow:
-            # Update the timestamp of the pointed to file
-            b_link_target = os.readlink(b_path)
-            try:
-                os.utime(b_link_target, None)
-            except OSError as e:
-                raise AnsibleModuleError(results={'msg': 'Error while touching existing target: %s'
-                                                         % to_native(e, nonstring='simplerepr'),
-                                                  'path': path})
-
-        else:
-            raise AnsibleModuleError(results={'msg': 'Can only touch files, directories, and'
-                                                     ' hardlinks (%s is %s)' % (path, prev_state)})
-
         # Update the attributes on the file
         diff = initial_diff(path, 'touch', prev_state)
         file_args = module.load_file_common_arguments(module.params)
         try:
-            module.set_fs_attributes_if_different(file_args, True, diff, expand=False)
+            changed = module.set_fs_attributes_if_different(file_args, changed, diff, expand=False)
+            changed |= update_timestamp_for_file(file_args['path'], mtime, atime, diff)
         except SystemExit as e:
             if e.code:
                 # We take this to mean that fail_json() was called from
@@ -369,14 +517,17 @@ def execute_touch(path, follow):
                     os.remove(b_path)
             raise
 
-    # Unfortunately, touch always changes the file because it updates file's timestamp
-    return {'dest': path, 'changed': True}
+        result['changed'] = changed
+        result['diff'] = diff
+    return result
 
 
-def ensure_file_attributes(path, follow):
+def ensure_file_attributes(path, follow, timestamps):
     b_path = to_bytes(path, errors='surrogate_or_strict')
     prev_state = get_state(b_path)
     file_args = module.load_file_common_arguments(module.params)
+    mtime = get_timestamp_for_time(timestamps['modification_time'], timestamps['modification_time_format'])
+    atime = get_timestamp_for_time(timestamps['access_time'], timestamps['access_time_format'])
 
     if prev_state != 'file':
         if follow and prev_state == 'link':
@@ -393,13 +544,16 @@ def ensure_file_attributes(path, follow):
 
     diff = initial_diff(path, 'file', prev_state)
     changed = module.set_fs_attributes_if_different(file_args, False, diff, expand=False)
+    changed |= update_timestamp_for_file(file_args['path'], mtime, atime, diff)
     return {'path': path, 'changed': changed, 'diff': diff}
 
 
-def ensure_directory(path, follow, recurse):
+def ensure_directory(path, follow, recurse, timestamps):
     b_path = to_bytes(path, errors='surrogate_or_strict')
     prev_state = get_state(b_path)
     file_args = module.load_file_common_arguments(module.params)
+    mtime = get_timestamp_for_time(timestamps['modification_time'], timestamps['modification_time_format'])
+    atime = get_timestamp_for_time(timestamps['access_time'], timestamps['access_time_format'])
 
     # For followed symlinks, we need to operate on the target of the link
     if follow and prev_state == 'link':
@@ -441,6 +595,7 @@ def ensure_directory(path, follow, recurse):
                     tmp_file_args = file_args.copy()
                     tmp_file_args['path'] = curpath
                     changed = module.set_fs_attributes_if_different(tmp_file_args, changed, diff, expand=False)
+                    changed |= update_timestamp_for_file(file_args['path'], mtime, atime, diff)
         except Exception as e:
             raise AnsibleModuleError(results={'msg': 'There was an issue creating %s as requested:'
                                                      ' %s' % (curpath, to_native(e)),
@@ -457,19 +612,20 @@ def ensure_directory(path, follow, recurse):
     #
 
     changed = module.set_fs_attributes_if_different(file_args, changed, diff, expand=False)
-
+    changed |= update_timestamp_for_file(file_args['path'], mtime, atime, diff)
     if recurse:
-        changed |= recursive_set_attributes(b_path, follow, file_args)
+        changed |= recursive_set_attributes(b_path, follow, file_args, mtime, atime)
 
     return {'path': path, 'changed': changed, 'diff': diff}
 
 
-def ensure_symlink(path, src, follow, force):
+def ensure_symlink(path, src, follow, force, timestamps):
     b_path = to_bytes(path, errors='surrogate_or_strict')
     b_src = to_bytes(src, errors='surrogate_or_strict')
     prev_state = get_state(b_path)
     file_args = module.load_file_common_arguments(module.params)
-
+    mtime = get_timestamp_for_time(timestamps['modification_time'], timestamps['modification_time_format'])
+    atime = get_timestamp_for_time(timestamps['access_time'], timestamps['access_time_format'])
     # source is both the source of a symlink or an informational passing of the src for a template module
     # or copy module, even if this module never uses it, it is needed to key off some things
     if src is None:
@@ -572,15 +728,18 @@ def ensure_symlink(path, src, follow, force):
                     ' set to False to avoid this.')
     else:
         changed = module.set_fs_attributes_if_different(file_args, changed, diff, expand=False)
+        changed |= update_timestamp_for_file(file_args['path'], mtime, atime, diff)
 
     return {'dest': path, 'src': src, 'changed': changed, 'diff': diff}
 
 
-def ensure_hardlink(path, src, follow, force):
+def ensure_hardlink(path, src, follow, force, timestamps):
     b_path = to_bytes(path, errors='surrogate_or_strict')
     b_src = to_bytes(src, errors='surrogate_or_strict')
     prev_state = get_state(b_path)
     file_args = module.load_file_common_arguments(module.params)
+    mtime = get_timestamp_for_time(timestamps['modification_time'], timestamps['modification_time_format'])
+    atime = get_timestamp_for_time(timestamps['access_time'], timestamps['access_time_format'])
 
     # src is the source of a hardlink.  We require it if we are creating a new hardlink
     if src is None and not os.path.exists(b_path):
@@ -679,6 +838,7 @@ def ensure_hardlink(path, src, follow, force):
         return {'dest': path, 'src': src, 'changed': changed, 'diff': diff}
 
     changed = module.set_fs_attributes_if_different(file_args, changed, diff, expand=False)
+    changed |= update_timestamp_for_file(file_args['path'], mtime, atime, diff)
 
     return {'dest': path, 'src': src, 'changed': changed, 'diff': diff}
 
@@ -689,17 +849,21 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(choices=['file', 'directory', 'link', 'hard', 'touch', 'absent'], default=None),
-            path=dict(aliases=['dest', 'name'], required=True, type='path'),
-            _original_basename=dict(required=False),  # Internal use only, for recursive ops
-            recurse=dict(default=False, type='bool'),
-            force=dict(required=False, default=False, type='bool'),  # Note: Should not be in file_common_args in future
-            follow=dict(required=False, default=True, type='bool'),  # Note: Different default than file_common_args
-            _diff_peek=dict(default=None),  # Internal use only, for internal checks in the action plugins
-            src=dict(required=False, default=None, type='path'),  # Note: Should not be in file_common_args in future
+            state=dict(type='str', choices=['absent', 'directory', 'file', 'hard', 'link', 'touch']),
+            path=dict(type='path', required=True, aliases=['dest', 'name']),
+            _original_basename=dict(type='str'),  # Internal use only, for recursive ops
+            recurse=dict(type='bool', default=False),
+            force=dict(type='bool', default=False),  # Note: Should not be in file_common_args in future
+            follow=dict(type='bool', default=True),  # Note: Different default than file_common_args
+            _diff_peek=dict(type='str'),  # Internal use only, for internal checks in the action plugins
+            src=dict(type='path'),  # Note: Should not be in file_common_args in future
+            modification_time=dict(type='str'),
+            modification_time_format=dict(type='str', default='%Y%m%d%H%M.%S'),
+            access_time=dict(type='str'),
+            access_time_format=dict(type='str', default='%Y%m%d%H%M.%S'),
         ),
         add_file_common_args=True,
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     # When we rewrite basic.py, we will do something similar to this on instantiating an AnsibleModule
@@ -714,21 +878,27 @@ def main():
     path = params['path']
     src = params['src']
 
+    timestamps = {}
+    timestamps['modification_time'] = keep_backward_compatibility_on_timestamps(params['modification_time'], state)
+    timestamps['modification_time_format'] = params['modification_time_format']
+    timestamps['access_time'] = keep_backward_compatibility_on_timestamps(params['access_time'], state)
+    timestamps['access_time_format'] = params['access_time_format']
+
     # short-circuit for diff_peek
     if params['_diff_peek'] is not None:
         appears_binary = execute_diff_peek(to_bytes(path, errors='surrogate_or_strict'))
         module.exit_json(path=path, changed=False, appears_binary=appears_binary)
 
     if state == 'file':
-        result = ensure_file_attributes(path, follow)
+        result = ensure_file_attributes(path, follow, timestamps)
     elif state == 'directory':
-        result = ensure_directory(path, follow, recurse)
+        result = ensure_directory(path, follow, recurse, timestamps)
     elif state == 'link':
-        result = ensure_symlink(path, src, follow, force)
+        result = ensure_symlink(path, src, follow, force, timestamps)
     elif state == 'hard':
-        result = ensure_hardlink(path, src, follow, force)
+        result = ensure_hardlink(path, src, follow, force, timestamps)
     elif state == 'touch':
-        result = execute_touch(path, follow)
+        result = execute_touch(path, follow, timestamps)
     elif state == 'absent':
         result = ensure_absent(path)
 

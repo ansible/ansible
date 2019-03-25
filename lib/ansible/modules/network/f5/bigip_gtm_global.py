@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -33,6 +33,7 @@ options:
   synchronization_group_name:
     description:
       - Specifies the name of the synchronization group to which the system belongs.
+    type: str
   synchronize_zone_files:
     description:
       - Specifies that the system synchronizes Domain Name System (DNS) zone files among the
@@ -41,6 +42,7 @@ options:
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
@@ -49,10 +51,11 @@ EXAMPLES = r'''
     synchronization: yes
     synchronization_group_name: my-group
     synchronize_zone_files: yes
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 '''
 
@@ -65,60 +68,49 @@ synchronization:
 synchronization_group_name:
   description: The synchronization group name.
   returned: changed
-  type: string
+  type: str
   sample: my-group
 synchronize_zone_files:
   description: Whether or not the system will sync zone files.
   returned: changed
-  type: string
+  type: str
   sample: my-group
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.basic import env_fallback
 
 try:
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from library.module_utils.network.f5.icontrol import module_provisioned
 except ImportError:
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from ansible.module_utils.network.f5.icontrol import module_provisioned
 
 
 class Parameters(AnsibleF5Parameters):
     api_map = {
         'synchronizationGroupName': 'synchronization_group_name',
-        'synchronizeZoneFiles': 'synchronize_zone_files'
+        'synchronizeZoneFiles': 'synchronize_zone_files',
     }
 
     api_attributes = [
-        'synchronizeZoneFiles', 'synchronizationGroupName', 'synchronization'
+        'synchronizeZoneFiles', 'synchronizationGroupName', 'synchronization',
     ]
 
     returnables = [
-        'synchronization', 'synchronization_group_name', 'synchronize_zone_files'
+        'synchronization', 'synchronization_group_name', 'synchronize_zone_files',
     ]
 
     updatables = [
-        'synchronization', 'synchronization_group_name', 'synchronize_zone_files'
+        'synchronization', 'synchronization_group_name', 'synchronize_zone_files',
     ]
 
 
@@ -222,7 +214,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -245,27 +237,6 @@ class ModuleManager(object):
             return True
         return False
 
-    def should_update(self):
-        result = self._update_changed_options()
-        if result:
-            return True
-        return False
-
-    def exec_module(self):
-        result = dict()
-
-        try:
-            changed = self.present()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
-
-        reportable = ReportableChanges(params=self.changes.to_return())
-        changes = reportable.to_return()
-        result.update(**changes)
-        result.update(dict(changed=changed))
-        self._announce_deprecations(result)
-        return result
-
     def _announce_deprecations(self, result):
         warnings = result.pop('__warnings', [])
         for warning in warnings:
@@ -273,6 +244,22 @@ class ModuleManager(object):
                 msg=warning['msg'],
                 version=warning['version']
             )
+
+    def exec_module(self):  # lgtm [py/similar-function]
+        if not module_provisioned(self.client, 'gtm'):
+            raise F5ModuleError(
+                "GTM must be provisioned to use this module."
+            )
+        result = dict()
+
+        changed = self.present()
+
+        reportable = ReportableChanges(params=self.changes.to_return())
+        changes = reportable.to_return()
+        result.update(**changes)
+        result.update(dict(changed=changed))
+        self._announce_deprecations(result)
+        return result
 
     def present(self):
         return self.update()
@@ -286,15 +273,47 @@ class ModuleManager(object):
         self.update_on_device()
         return True
 
+    def should_update(self):
+        result = self._update_changed_options()
+        if result:
+            return True
+        return False
+
     def update_on_device(self):
         params = self.changes.api_params()
-        resource = self.client.api.tm.gtm.global_settings.general.load()
-        resource.modify(**params)
+        uri = "https://{0}:{1}/mgmt/tm/gtm/global-settings/general/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def read_current_from_device(self):
-        resource = self.client.api.tm.gtm.global_settings.general.load()
-        result = resource.attrs
-        return ApiParameters(params=result)
+        uri = "https://{0}:{1}/mgmt/tm/gtm/global-settings/general/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return ApiParameters(params=response)
 
 
 class ArgumentSpec(object):
@@ -315,19 +334,14 @@ def main():
 
     module = AnsibleModule(
         argument_spec=spec.argument_spec,
-        supports_check_mode=spec.supports_check_mode
+        supports_check_mode=spec.supports_check_mode,
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
 
     try:
-        client = F5Client(**module.params)
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
         module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
         module.fail_json(msg=str(ex))
 
 

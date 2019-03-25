@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Ansible by Red Hat, inc
+# Copyright: (c) 2017, Ansible by Red Hat, inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -17,33 +17,33 @@ DOCUMENTATION = """
 module: ios_l3_interface
 version_added: "2.5"
 author: "Ganesh Nalawade (@ganeshrn)"
-short_description: Manage L3 interfaces on Cisco IOS network devices.
+short_description: Manage Layer-3 interfaces on Cisco IOS network devices.
 description:
-  - This module provides declarative management of L3 interfaces
+  - This module provides declarative management of Layer-3 interfaces
     on IOS network devices.
 notes:
   - Tested against IOS 15.2
 options:
   name:
     description:
-      - Name of the L3 interface to be configured eg. GigabitEthernet0/2
+      - Name of the Layer-3 interface to be configured eg. GigabitEthernet0/2
   ipv4:
     description:
-      - IPv4 address to be set for the L3 interface mentioned in I(name) option.
+      - IPv4 address to be set for the Layer-3 interface mentioned in I(name) option.
         The address format is <ipv4 address>/<mask>, the mask is number
         in range 0-32 eg. 192.168.0.1/24
   ipv6:
     description:
-      - IPv6 address to be set for the L3 interface mentioned in I(name) option.
+      - IPv6 address to be set for the Layer-3 interface mentioned in I(name) option.
         The address format is <ipv6 address>/<mask>, the mask is number
         in range 0-128 eg. fd5d:12c9:2201:1::1/64
   aggregate:
     description:
-      - List of L3 interfaces definitions. Each of the entry in aggregate list should
+      - List of Layer-3 interfaces definitions. Each of the entry in aggregate list should
         define name of interface C(name) and a optional C(ipv4) or C(ipv6) address.
   state:
     description:
-      - State of the L3 interface configuration. It indicates if the configuration should
+      - State of the Layer-3 interface configuration. It indicates if the configuration should
         be present or absent on remote device.
     default: present
     choices: ['present', 'absent']
@@ -188,12 +188,12 @@ def map_obj_to_commands(updates, module):
                     address = ipv4.split('/')
                     if len(address) == 2:
                         ipv4 = '{0} {1}'.format(address[0], to_netmask(address[1]))
-                    commands.append('no ip address {}'.format(ipv4))
+                    commands.append('no ip address {0}'.format(ipv4))
                 else:
                     commands.append('no ip address')
             if obj_in_have['ipv6']:
                 if ipv6:
-                    commands.append('no ipv6 address {}'.format(ipv6))
+                    commands.append('no ipv6 address {0}'.format(ipv6))
                 else:
                     commands.append('no ipv6 address')
                     if 'dhcp' in obj_in_have['ipv6']:
@@ -205,11 +205,11 @@ def map_obj_to_commands(updates, module):
                     address = ipv4.split('/')
                     if len(address) == 2:
                         ipv4 = '{0} {1}'.format(address[0], to_netmask(address[1]))
-                    commands.append('ip address {}'.format(ipv4))
+                    commands.append('ip address {0}'.format(ipv4))
 
             if ipv6:
                 if obj_in_have is None or obj_in_have.get('ipv6') is None or ipv6.lower() not in [addr.lower() for addr in obj_in_have['ipv6']]:
-                    commands.append('ipv6 address {}'.format(ipv6))
+                    commands.append('ipv6 address {0}'.format(ipv6))
 
         if commands[-1] == interface:
             commands.pop(-1)
@@ -218,7 +218,7 @@ def map_obj_to_commands(updates, module):
 
 
 def map_config_to_obj(module):
-    config = get_config(module, flags=['| section interface'])
+    config = get_config(module)
     configobj = NetworkConfig(indent=1, contents=config)
 
     match = re.findall(r'^interface (\S+)', config, re.M)

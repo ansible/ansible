@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 
-# Copyright (c) 2016, Adfinis SyGroup AG
+# Copyright: (c) 2016, Adfinis SyGroup AG
 # Tobias Rueetschi <tobias.ruetschi@adfinis-sygroup.ch>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -18,7 +18,8 @@ DOCUMENTATION = '''
 ---
 module: udm_dns_zone
 version_added: "2.2"
-author: "Tobias Rueetschi (@2-B)"
+author:
+- Tobias Rüetschi (@keachi)
 short_description: Manage dns zones on a univention corporate server
 description:
     - "This module allows to manage dns zones on a univention corporate server (UCS).
@@ -121,7 +122,7 @@ def convert_time(time):
         return ('0', 'seconds')
     for unit in units:
         if time >= unit[0]:
-            return ('{}'.format(time // unit[0]), unit[1])
+            return ('{0}'.format(time // unit[0]), unit[1])
 
 
 def main():
@@ -171,22 +172,22 @@ def main():
     changed = False
 
     obj = list(ldap_search(
-        '(&(objectClass=dNSZone)(zoneName={}))'.format(zone),
+        '(&(objectClass=dNSZone)(zoneName={0}))'.format(zone),
         attr=['dNSZone']
     ))
 
     exists = bool(len(obj))
-    container = 'cn=dns,{}'.format(base_dn())
-    dn = 'zoneName={},{}'.format(zone, container)
+    container = 'cn=dns,{0}'.format(base_dn())
+    dn = 'zoneName={0},{1}'.format(zone, container)
     if contact == '':
-        contact = 'root@{}.'.format(zone)
+        contact = 'root@{0}.'.format(zone)
 
     if state == 'present':
         try:
             if not exists:
-                obj = umc_module_for_add('dns/{}'.format(type), container)
+                obj = umc_module_for_add('dns/{0}'.format(type), container)
             else:
-                obj = umc_module_for_edit('dns/{}'.format(type), dn)
+                obj = umc_module_for_edit('dns/{0}'.format(type), dn)
             obj['zone'] = zone
             obj['nameserver'] = nameserver
             obj['a'] = interfaces
@@ -210,18 +211,18 @@ def main():
                     obj.modify()
         except Exception as e:
             module.fail_json(
-                msg='Creating/editing dns zone {} failed: {}'.format(zone, e)
+                msg='Creating/editing dns zone {0} failed: {1}'.format(zone, e)
             )
 
     if state == 'absent' and exists:
         try:
-            obj = umc_module_for_edit('dns/{}'.format(type), dn)
+            obj = umc_module_for_edit('dns/{0}'.format(type), dn)
             if not module.check_mode:
                 obj.remove()
             changed = True
         except Exception as e:
             module.fail_json(
-                msg='Removing dns zone {} failed: {}'.format(zone, e)
+                msg='Removing dns zone {0} failed: {1}'.format(zone, e)
             )
 
     module.exit_json(

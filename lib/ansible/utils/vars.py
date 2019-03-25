@@ -23,14 +23,15 @@ import ast
 import random
 import uuid
 
-from collections import MutableMapping
 from json import dumps
 
 
 from ansible import constants as C
+from ansible import context
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.parsing.splitter import parse_kv
 
 
@@ -69,7 +70,7 @@ def _validate_mutable_mappings(a, b):
         for x in [a, b]:
             try:
                 myvars.append(dumps(x))
-            except:
+            except Exception:
                 myvars.append(to_native(x))
         raise AnsibleError("failed to combine variables, expected dicts but got a '{0}' and a '{1}': \n{2}\n{3}".format(
             a.__class__.__name__, b.__class__.__name__, myvars[0], myvars[1])
@@ -119,32 +120,33 @@ def merge_hash(a, b):
     return result
 
 
-def load_extra_vars(loader, options):
+def load_extra_vars(loader):
     extra_vars = {}
-    if hasattr(options, 'extra_vars'):
-        for extra_vars_opt in options.extra_vars:
-            data = None
-            extra_vars_opt = to_text(extra_vars_opt, errors='surrogate_or_strict')
-            if extra_vars_opt.startswith(u"@"):
-                # Argument is a YAML file (JSON is a subset of YAML)
-                data = loader.load_from_file(extra_vars_opt[1:])
-            elif extra_vars_opt and extra_vars_opt[0] in u'[{':
-                # Arguments as YAML
-                data = loader.load(extra_vars_opt)
-            else:
-                # Arguments as Key-value
-                data = parse_kv(extra_vars_opt)
+    for extra_vars_opt in context.CLIARGS.get('extra_vars', tuple()):
+        data = None
+        extra_vars_opt = to_text(extra_vars_opt, errors='surrogate_or_strict')
+        if extra_vars_opt.startswith(u"@"):
+            # Argument is a YAML file (JSON is a subset of YAML)
+            data = loader.load_from_file(extra_vars_opt[1:])
+        elif extra_vars_opt and extra_vars_opt[0] in u'[{':
+            # Arguments as YAML
+            data = loader.load(extra_vars_opt)
+        else:
+            # Arguments as Key-value
+            data = parse_kv(extra_vars_opt)
 
-            if isinstance(data, MutableMapping):
-                extra_vars = combine_vars(extra_vars, data)
-            else:
-                raise AnsibleOptionsError("Invalid extra vars data supplied. '%s' could not be made into a dictionary" % extra_vars_opt)
+        if isinstance(data, MutableMapping):
+            extra_vars = combine_vars(extra_vars, data)
+        else:
+            raise AnsibleOptionsError("Invalid extra vars data supplied. '%s' could not be made into a dictionary" % extra_vars_opt)
 
     return extra_vars
 
 
-def load_options_vars(options, version):
+def load_options_vars(version):
 
+    if version is None:
+        version = 'Unknown'
     options_vars = {'ansible_version': version}
     attrs = {'check': 'check_mode',
              'diff': 'diff_mode',
@@ -156,7 +158,7 @@ def load_options_vars(options, version):
              'verbosity': 'verbosity'}
 
     for attr, alias in attrs.items():
-        opt = getattr(options, attr, None)
+        opt = context.CLIARGS.get(attr)
         if opt is not None:
             options_vars['ansible_%s' % alias] = opt
 

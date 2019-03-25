@@ -25,14 +25,11 @@ from ansible.module_utils._text import to_bytes
 from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
+from ansible.utils.display import Display
 from ansible.utils.hashing import checksum, checksum_s, md5, secure_hash
 from ansible.utils.path import makedirs_safe
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class ActionModule(ActionBase):
@@ -55,9 +52,7 @@ class ActionModule(ActionBase):
             dest = self._task.args.get('dest', None)
             flat = boolean(self._task.args.get('flat'), strict=False)
             fail_on_missing = boolean(self._task.args.get('fail_on_missing', True), strict=False)
-            validate_checksum = boolean(self._task.args.get('validate_checksum',
-                                                            self._task.args.get('validate_md5', True)),
-                                        strict=False)
+            validate_checksum = boolean(self._task.args.get('validate_checksum', True), strict=False)
 
             # validate source and dest are strings FIXME: use basic.py and module specs
             if not isinstance(source, string_types):
@@ -65,13 +60,6 @@ class ActionModule(ActionBase):
 
             if not isinstance(dest, string_types):
                 result['msg'] = "Invalid type supplied for dest option, it must be a string"
-
-            # validate_md5 is the deprecated way to specify validate_checksum
-            if 'validate_md5' in self._task.args and 'validate_checksum' in self._task.args:
-                result['msg'] = "validate_checksum and validate_md5 cannot both be specified"
-
-            if 'validate_md5' in self._task.args:
-                display.deprecated('Use validate_checksum instead of validate_md5', version='2.8')
 
             if source is None or dest is None:
                 result['msg'] = "src and dest are required"
@@ -159,7 +147,7 @@ class ActionModule(ActionBase):
                 elif remote_checksum == '4':
                     result['msg'] = "python isn't present on the system.  Unable to compute checksum"
                 elif remote_checksum == '5':
-                    result['msg'] = "stdlib json or simplejson was not found on the remote machine. Only the raw module can work without those installed"
+                    result['msg'] = "stdlib json was not found on the remote machine. Only the raw module can work without those installed"
                 # Historically, these don't fail because you may want to transfer
                 # a log file that possibly MAY exist but keep going to fetch other
                 # log files. Today, this is better achieved by adding

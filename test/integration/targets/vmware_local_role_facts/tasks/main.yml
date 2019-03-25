@@ -1,0 +1,66 @@
+# Test code for the vmware_local_role_facts module
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Set list of Roles in fact
+  set_fact:
+    role_list:
+      - Admin
+      - NoCryptoAdmin
+      - NoAccess
+      - Anonymous
+      - ReadOnly
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
+- name: kill vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/killall
+
+- name: start vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/spawn?esx=1
+  register: vcsim_instance
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
+
+- debug: var=vcsim_instance
+
+- name: Gather Role facts
+  vmware_local_role_facts:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    validate_certs: no
+  register: role_details
+
+- name: Test if role id is present for role
+  assert:
+    that: "{{ role_details.local_role_facts | json_query(s_query) != [] }}"
+  vars:
+    s_query: "[?role_name == '{{ item }}'].role_id"
+  with_items: "{{ role_list }}"
+
+- name: Gather Role facts in check mode
+  vmware_local_role_facts:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    validate_certs: no
+  register: role_details
+  check_mode: yes
+
+- name: Test if role id is present for role
+  assert:
+    that: "{{ role_details.local_role_facts | json_query(s_query) != [] }}"
+  vars:
+    s_query: "[?role_name == '{{ item }}'].role_id"
+  with_items: "{{ role_list }}"

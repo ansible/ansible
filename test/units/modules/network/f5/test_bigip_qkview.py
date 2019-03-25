@@ -8,15 +8,12 @@ __metaclass__ = type
 
 import os
 import json
+import pytest
 import sys
 
-from nose.plugins.skip import SkipTest
 if sys.version_info < (2, 7):
-    raise SkipTest("F5 Ansible modules require Python >= 2.7")
+    pytestmark = pytest.mark.skip("F5 Ansible modules require Python >= 2.7")
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import Mock
-from ansible.compat.tests.mock import patch
 from ansible.module_utils.basic import AnsibleModule
 
 try:
@@ -25,21 +22,27 @@ try:
     from library.modules.bigip_qkview import MadmLocationManager
     from library.modules.bigip_qkview import BulkLocationManager
     from library.modules.bigip_qkview import ArgumentSpec
-    from library.module_utils.network.f5.common import F5ModuleError
-    from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    from test.unit.modules.utils import set_module_args
+
+    # In Ansible 2.8, Ansible changed import paths.
+    from test.units.compat import unittest
+    from test.units.compat.mock import Mock
+    from test.units.compat.mock import patch
+
+    from test.units.modules.utils import set_module_args
 except ImportError:
-    try:
-        from ansible.modules.network.f5.bigip_qkview import Parameters
-        from ansible.modules.network.f5.bigip_qkview import ModuleManager
-        from ansible.modules.network.f5.bigip_qkview import MadmLocationManager
-        from ansible.modules.network.f5.bigip_qkview import BulkLocationManager
-        from ansible.modules.network.f5.bigip_qkview import ArgumentSpec
-        from ansible.module_utils.network.f5.common import F5ModuleError
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-        from units.modules.utils import set_module_args
-    except ImportError:
-        raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
+    from ansible.modules.network.f5.bigip_qkview import Parameters
+    from ansible.modules.network.f5.bigip_qkview import ModuleManager
+    from ansible.modules.network.f5.bigip_qkview import MadmLocationManager
+    from ansible.modules.network.f5.bigip_qkview import BulkLocationManager
+    from ansible.modules.network.f5.bigip_qkview import ArgumentSpec
+
+    # Ansible 2.8 imports
+    from units.compat import unittest
+    from units.compat.mock import Mock
+    from units.compat.mock import patch
+
+    from units.modules.utils import set_module_args
+
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
@@ -103,9 +106,11 @@ class TestMadmLocationManager(unittest.TestCase):
     def test_create_qkview_default_options(self, *args):
         set_module_args(dict(
             dest='/tmp/foo.qkview',
-            server='localhost',
-            user='admin',
-            password='password'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -141,9 +146,11 @@ class TestBulkLocationManager(unittest.TestCase):
     def test_create_qkview_default_options(self, *args):
         set_module_args(dict(
             dest='/tmp/foo.qkview',
-            server='localhost',
-            user='admin',
-            password='password'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(

@@ -20,11 +20,17 @@
 #
 
 '''
+Important note (2018/10)
+========================
+This inventory script is in maintenance mode: only critical bug fixes but no new features.
+There's new Azure external inventory script at https://github.com/ansible/ansible/blob/devel/lib/ansible/plugins/inventory/azure_rm.py,
+with better performance and latest new features. Please go to the link to get latest Azure inventory.
+
 Azure External Inventory Script
 ===============================
 Generates dynamic inventory by making API requests to the Azure Resource
 Manager using the Azure Python SDK. For instruction on installing the
-Azure Python SDK see http://azure-sdk-for-python.readthedocs.org/
+Azure Python SDK see https://azure-sdk-for-python.readthedocs.io/
 
 Authentication
 --------------
@@ -261,6 +267,7 @@ AZURE_CONFIG_SETTINGS = dict(
     group_by_location='AZURE_GROUP_BY_LOCATION',
     group_by_security_group='AZURE_GROUP_BY_SECURITY_GROUP',
     group_by_tag='AZURE_GROUP_BY_TAG',
+    group_by_os_family='AZURE_GROUP_BY_OS_FAMILY',
     use_private_ip='AZURE_USE_PRIVATE_IP'
 )
 
@@ -326,10 +333,10 @@ class AzureRM(object):
         # get authentication authority
         # for adfs, user could pass in authority or not.
         # for others, use default authority from cloud environment
-        if self.credentials.get('adfs_authority_url') is None:
-            self._adfs_authority_url = self._cloud_environment.endpoints.active_directory
-        else:
+        if self.credentials.get('adfs_authority_url'):
             self._adfs_authority_url = self.credentials.get('adfs_authority_url')
+        else:
+            self._adfs_authority_url = self._cloud_environment.endpoints.active_directory
 
         # get resource from cloud environment
         self._resource = self._cloud_environment.endpoints.active_directory_resource_id
@@ -347,13 +354,13 @@ class AzureRM(object):
                 self.credentials.get('client_id') is not None and \
                 self.credentials.get('tenant') is not None:
 
-                self.azure_credentials = self.acquire_token_with_username_password(
-                    self._adfs_authority_url,
-                    self._resource,
-                    self.credentials['ad_user'],
-                    self.credentials['password'],
-                    self.credentials['client_id'],
-                    self.credentials['tenant'])
+            self.azure_credentials = self.acquire_token_with_username_password(
+                self._adfs_authority_url,
+                self._resource,
+                self.credentials['ad_user'],
+                self.credentials['password'],
+                self.credentials['client_id'],
+                self.credentials['tenant'])
 
         elif self.credentials.get('ad_user') is not None and self.credentials.get('password') is not None:
             tenant = self.credentials.get('tenant')
@@ -390,7 +397,7 @@ class AzureRM(object):
         for key in AZURE_CREDENTIAL_ENV_MAPPING:
             try:
                 credentials[key] = config.get(profile, key, raw=True)
-            except:
+            except Exception:
                 pass
 
         if credentials.get('client_id') is not None or credentials.get('ad_user') is not None:
@@ -425,6 +432,7 @@ class AzureRM(object):
 
     def _get_msi_credentials(self, subscription_id_param=None):
         credentials = MSIAuthentication()
+        subscription_id_param = subscription_id_param or os.environ.get(AZURE_CREDENTIAL_ENV_MAPPING['subscription_id'], None)
         try:
             # try to get the subscription in MSI to test whether MSI is enabled
             subscription_client = SubscriptionClient(credentials)
@@ -571,6 +579,7 @@ class AzureInventory(object):
         self.replace_dash_in_groups = False
         self.group_by_resource_group = True
         self.group_by_location = True
+        self.group_by_os_family = True
         self.group_by_security_group = True
         self.group_by_tag = True
         self.include_powerstate = True
@@ -627,6 +636,8 @@ class AzureInventory(object):
                             help='Active Directory User')
         parser.add_argument('--password', action='store',
                             help='password')
+        parser.add_argument('--adfs_authority_url', action='store',
+                            help='Azure ADFS authority url')
         parser.add_argument('--cloud_environment', action='store',
                             help='Azure Cloud Environment name or metadata discovery URL')
         parser.add_argument('--resource-groups', action='store',
@@ -644,7 +655,7 @@ class AzureInventory(object):
             # get VMs for requested resource groups
             for resource_group in self.resource_groups:
                 try:
-                    virtual_machines = self._compute_client.virtual_machines.list(resource_group)
+                    virtual_machines = self._compute_client.virtual_machines.list(resource_group.lower())
                 except Exception as exc:
                     sys.exit("Error: fetching virtual machines for resource group {0} - {1}".format(resource_group, str(exc)))
                 if self._args.host or self.tags:
@@ -703,7 +714,7 @@ class AzureInventory(object):
 
             host_vars['os_disk'] = dict(
                 name=machine.storage_profile.os_disk.name,
-                operating_system_type=machine.storage_profile.os_disk.os_type.value
+                operating_system_type=machine.storage_profile.os_disk.os_type.value.lower()
             )
 
             if self.include_powerstate:
@@ -802,15 +813,21 @@ class AzureInventory(object):
             sys.exit("Error: fetching instanceview for host {0} - {1}".format(name, str(exc)))
 
         return next((s.code.replace('PowerState/', '')
-                    for s in vm.instance_view.statuses if s.code.startswith('PowerState')), None)
+                     for s in vm.instance_view.statuses if s.code.startswith('PowerState')), None)
 
     def _add_host(self, vars):
 
         host_name = self._to_safe(vars['name'])
         resource_group = self._to_safe(vars['resource_group'])
+        operating_system_type = self._to_safe(vars['os_disk']['operating_system_type'].lower())
         security_group = None
         if vars.get('security_group'):
             security_group = self._to_safe(vars['security_group'])
+
+        if self.group_by_os_family:
+            if not self._inventory.get(operating_system_type):
+                self._inventory[operating_system_type] = []
+            self._inventory[operating_system_type].append(host_name)
 
         if self.group_by_resource_group:
             if not self._inventory.get(resource_group):
@@ -904,7 +921,7 @@ class AzureInventory(object):
         try:
             config = cp.ConfigParser()
             config.read(path)
-        except:
+        except Exception:
             pass
 
         if config is not None:
@@ -912,7 +929,7 @@ class AzureInventory(object):
             for key in AZURE_CONFIG_SETTINGS:
                 try:
                     settings[key] = config.get('azure', key, raw=True)
-                except:
+                except Exception:
                     pass
 
         return settings

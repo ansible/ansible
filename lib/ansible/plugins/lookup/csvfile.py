@@ -30,7 +30,7 @@ DOCUMENTATION = """
         default: utf-8
         version_added: "2.1"
     notes:
-      - The default is for TSV files (tab delimeted) not CSV (comma delimted) ... yes the name is misleading.
+      - The default is for TSV files (tab delimited) not CSV (comma delimited) ... yes the name is misleading.
 """
 
 EXAMPLES = """
@@ -39,6 +39,17 @@ EXAMPLES = """
 
 - name: msg="Match 'Li' on the first column, but return the 3rd column (columns start counting after the match)"
   debug: msg="The atomic mass of Lithium is {{ lookup('csvfile', 'Li file=elements.csv delimiter=, col=2') }}"
+
+- name: Define Values From CSV File
+  set_fact:
+    loop_ip: "{{ lookup('csvfile', bgp_neighbor_ip +' file=bgp_neighbors.csv delimiter=, col=1') }}"
+    int_ip: "{{ lookup('csvfile', bgp_neighbor_ip +' file=bgp_neighbors.csv delimiter=, col=2') }}"
+    int_mask: "{{ lookup('csvfile', bgp_neighbor_ip +' file=bgp_neighbors.csv delimiter=, col=3') }}"
+    int_name: "{{ lookup('csvfile', bgp_neighbor_ip +' file=bgp_neighbors.csv delimiter=, col=4') }}"
+    local_as: "{{ lookup('csvfile', bgp_neighbor_ip +' file=bgp_neighbors.csv delimiter=, col=5') }}"
+    neighbor_as: "{{ lookup('csvfile', bgp_neighbor_ip +' file=bgp_neighbors.csv delimiter=, col=6') }}"
+    neigh_int_ip: "{{ lookup('csvfile', bgp_neighbor_ip +' file=bgp_neighbors.csv delimiter=, col=7') }}"
+  delegate_to: localhost
 """
 
 RETURN = """
@@ -49,12 +60,12 @@ RETURN = """
 
 import codecs
 import csv
-from collections import MutableSequence
 
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.plugins.lookup import LookupBase
 from ansible.module_utils.six import PY2
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common._collections_compat import MutableSequence
 
 
 class CSVRecoder:

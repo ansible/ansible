@@ -3,7 +3,6 @@
 
 import json
 import sys
-from collections import MutableMapping
 from io import BytesIO
 
 import pytest
@@ -11,6 +10,7 @@ import pytest
 import ansible.module_utils.basic
 from ansible.module_utils.six import PY3, string_types
 from ansible.module_utils._text import to_bytes
+from ansible.module_utils.common._collections_compat import MutableMapping
 
 
 @pytest.fixture
@@ -25,6 +25,10 @@ def stdin(mocker, request):
     elif isinstance(request.param, MutableMapping):
         if 'ANSIBLE_MODULE_ARGS' not in request.param:
             request.param = {'ANSIBLE_MODULE_ARGS': request.param}
+        if '_ansible_remote_tmp' not in request.param['ANSIBLE_MODULE_ARGS']:
+            request.param['ANSIBLE_MODULE_ARGS']['_ansible_remote_tmp'] = '/tmp'
+        if '_ansible_keep_remote_files' not in request.param['ANSIBLE_MODULE_ARGS']:
+            request.param['ANSIBLE_MODULE_ARGS']['_ansible_keep_remote_files'] = False
         args = json.dumps(request.param)
     else:
         raise Exception('Malformed data to the stdin pytest fixture')

@@ -35,48 +35,81 @@
   when: ansible_pkg_mgr  ==  'pkgng'
 
 - name: prep our file
-  copy: src=foo.txt dest={{output_dir}}/foo-unarchive.txt
+  copy: src=foo.txt dest={{remote_tmp_dir}}/foo-unarchive.txt
 
 - name: prep a tar file
-  shell: tar cvf test-unarchive.tar foo-unarchive.txt chdir={{output_dir}}
+  shell: tar cvf test-unarchive.tar foo-unarchive.txt chdir={{remote_tmp_dir}}
 
 - name: prep a tar.gz file
-  shell: tar czvf test-unarchive.tar.gz foo-unarchive.txt chdir={{output_dir}}
+  shell: tar czvf test-unarchive.tar.gz foo-unarchive.txt chdir={{remote_tmp_dir}}
 
 - name: prep a chmodded file for zip
-  copy: src=foo.txt dest={{output_dir}}/foo-unarchive-777.txt mode=0777
+  copy: src=foo.txt dest={{remote_tmp_dir}}/foo-unarchive-777.txt mode=0777
 
 - name: prep a windows permission file for our zip
-  copy: src=foo.txt dest={{output_dir}}/FOO-UNAR.TXT
+  copy: src=foo.txt dest={{remote_tmp_dir}}/FOO-UNAR.TXT
 
 # This gets around an unzip timestamp bug in some distributions
 # Recent unzip on Ubuntu and BSD will randomly round some timestamps up.
 # But that doesn't seem to happen when the timestamp has an even second.
 - name: Bug work around
-  command: touch -t "201705111530.00" {{output_dir}}/foo-unarchive.txt {{output_dir}}/foo-unarchive-777.txt {{output_dir}}/FOO-UNAR.TXT
+  command: touch -t "201705111530.00" {{remote_tmp_dir}}/foo-unarchive.txt {{remote_tmp_dir}}/foo-unarchive-777.txt {{remote_tmp_dir}}/FOO-UNAR.TXT
 # See Ubuntu bug 1691636: https://bugs.launchpad.net/ubuntu/+source/unzip/+bug/1691636
 # When these are fixed, this code should be removed.
 
 - name: prep a zip file
-  shell: zip test-unarchive.zip foo-unarchive.txt foo-unarchive-777.txt chdir={{output_dir}}
+  shell: zip test-unarchive.zip foo-unarchive.txt foo-unarchive-777.txt chdir={{remote_tmp_dir}}
+
+- name: Prepare - Create test dirs
+  file:
+    path: "{{remote_tmp_dir}}/{{item}}"
+    state: directory
+  with_items:
+    - created/include
+    - created/exclude
+    - created/other
+
+- name: Prepare - Create test files
+  file:
+    path: "{{remote_tmp_dir}}/created/{{item}}"
+    state: touch
+  with_items:
+    - include/include-1.txt
+    - include/include-2.txt
+    - include/include-3.txt
+    - exclude/exclude-1.txt
+    - exclude/exclude-2.txt
+    - exclude/exclude-3.txt
+    - other/include-1.ext
+    - other/include-2.ext
+    - other/exclude-1.ext
+    - other/exclude-2.ext
+    - other/other-1.ext
+    - other/other-2.ext
+
+- name: Prepare - zip file
+  shell: zip -r {{remote_tmp_dir}}/unarchive-00.zip * chdir={{remote_tmp_dir}}/created/
+
+- name: Prepare - tar file
+  shell: tar czvf {{remote_tmp_dir}}/unarchive-00.tar * chdir={{remote_tmp_dir}}/created/
 
 - name: add a file with Windows permissions to zip file
-  shell: zip -k test-unarchive.zip FOO-UNAR.TXT chdir={{output_dir}}
+  shell: zip -k test-unarchive.zip FOO-UNAR.TXT chdir={{remote_tmp_dir}}
 
 - name: prep a subdirectory
-  file: path={{output_dir}}/unarchive-dir state=directory
+  file: path={{remote_tmp_dir}}/unarchive-dir state=directory
 
 - name: prep our file
-  copy: src=foo.txt dest={{output_dir}}/unarchive-dir/foo-unarchive.txt
+  copy: src=foo.txt dest={{remote_tmp_dir}}/unarchive-dir/foo-unarchive.txt
 
 - name: prep a tar.gz file with directory
-  shell: tar czvf test-unarchive-dir.tar.gz unarchive-dir  chdir={{output_dir}}
+  shell: tar czvf test-unarchive-dir.tar.gz unarchive-dir  chdir={{remote_tmp_dir}}
 
 - name: create our tar unarchive destination
-  file: path={{output_dir}}/test-unarchive-tar state=directory
+  file: path={{remote_tmp_dir}}/test-unarchive-tar state=directory
 
 - name: unarchive a tar file
-  unarchive: src={{output_dir}}/test-unarchive.tar dest="{{output_dir | expanduser}}/test-unarchive-tar" remote_src=yes
+  unarchive: src={{remote_tmp_dir}}/test-unarchive.tar dest="{{remote_tmp_dir}}/test-unarchive-tar" remote_src=yes
   register: unarchive01
 
 - name: verify that the file was marked as changed
@@ -85,16 +118,16 @@
       - "unarchive01.changed == true"
 
 - name: verify that the file was unarchived
-  file: path={{output_dir}}/test-unarchive-tar/foo-unarchive.txt state=file
+  file: path={{remote_tmp_dir}}/test-unarchive-tar/foo-unarchive.txt state=file
 
 - name: remove our tar unarchive destination
-  file: path={{output_dir}}/test-unarchive-tar state=absent
+  file: path={{remote_tmp_dir}}/test-unarchive-tar state=absent
 
 - name: create our tar.gz unarchive destination
-  file: path={{output_dir}}/test-unarchive-tar-gz state=directory
+  file: path={{remote_tmp_dir}}/test-unarchive-tar-gz state=directory
 
 - name: unarchive a tar.gz file
-  unarchive: src={{output_dir}}/test-unarchive.tar.gz dest={{output_dir | expanduser}}/test-unarchive-tar-gz remote_src=yes
+  unarchive: src={{remote_tmp_dir}}/test-unarchive.tar.gz dest={{remote_tmp_dir}}/test-unarchive-tar-gz remote_src=yes
   register: unarchive02
 
 - name: verify that the file was marked as changed
@@ -105,16 +138,16 @@
       - "'files' not in unarchive02"
 
 - name: verify that the file was unarchived
-  file: path={{output_dir}}/test-unarchive-tar-gz/foo-unarchive.txt state=file
+  file: path={{remote_tmp_dir}}/test-unarchive-tar-gz/foo-unarchive.txt state=file
 
 - name: remove our tar.gz unarchive destination
-  file: path={{output_dir}}/test-unarchive-tar-gz state=absent
+  file: path={{remote_tmp_dir}}/test-unarchive-tar-gz state=absent
 
 - name: create our tar.gz unarchive destination for creates
-  file: path={{output_dir}}/test-unarchive-tar-gz state=directory
+  file: path={{remote_tmp_dir}}/test-unarchive-tar-gz state=directory
 
 - name: unarchive a tar.gz file with creates set
-  unarchive: src={{output_dir}}/test-unarchive.tar.gz dest={{output_dir | expanduser}}/test-unarchive-tar-gz remote_src=yes creates={{output_dir}}/test-unarchive-tar-gz/foo-unarchive.txt
+  unarchive: src={{remote_tmp_dir}}/test-unarchive.tar.gz dest={{remote_tmp_dir}}/test-unarchive-tar-gz remote_src=yes creates={{remote_tmp_dir}}/test-unarchive-tar-gz/foo-unarchive.txt
   register: unarchive02b
 
 - name: verify that the file was marked as changed
@@ -123,10 +156,10 @@
       - "unarchive02b.changed == true"
 
 - name: verify that the file was unarchived
-  file: path={{output_dir}}/test-unarchive-tar-gz/foo-unarchive.txt state=file
+  file: path={{remote_tmp_dir}}/test-unarchive-tar-gz/foo-unarchive.txt state=file
 
 - name: unarchive a tar.gz file with creates over an existing file
-  unarchive: src={{output_dir}}/test-unarchive.tar.gz dest={{output_dir | expanduser}}/test-unarchive-tar-gz remote_src=yes creates={{output_dir}}/test-unarchive-tar-gz/foo-unarchive.txt
+  unarchive: src={{remote_tmp_dir}}/test-unarchive.tar.gz dest={{remote_tmp_dir}}/test-unarchive-tar-gz remote_src=yes creates={{remote_tmp_dir}}/test-unarchive-tar-gz/foo-unarchive.txt
   register: unarchive02c
 
 - name: verify that the file was not marked as changed
@@ -136,10 +169,10 @@
 
 - name: unarchive a tar.gz file with creates over an existing file using complex_args
   unarchive:
-    src: "{{output_dir}}/test-unarchive.tar.gz"
-    dest: "{{output_dir | expanduser}}/test-unarchive-tar-gz"
+    src: "{{remote_tmp_dir}}/test-unarchive.tar.gz"
+    dest: "{{remote_tmp_dir}}/test-unarchive-tar-gz"
     remote_src: yes
-    creates: "{{output_dir}}/test-unarchive-tar-gz/foo-unarchive.txt"
+    creates: "{{remote_tmp_dir}}/test-unarchive-tar-gz/foo-unarchive.txt"
   register: unarchive02d
 
 - name: verify that the file was not marked as changed
@@ -148,13 +181,13 @@
       - "unarchive02d.changed == false"
 
 - name: remove our tar.gz unarchive destination
-  file: path={{output_dir}}/test-unarchive-tar-gz state=absent
+  file: path={{remote_tmp_dir}}/test-unarchive-tar-gz state=absent
 
 - name: create our zip unarchive destination
-  file: path={{output_dir}}/test-unarchive-zip state=directory
+  file: path={{remote_tmp_dir}}/test-unarchive-zip state=directory
 
 - name: unarchive a zip file
-  unarchive: src={{output_dir}}/test-unarchive.zip dest={{output_dir | expanduser}}/test-unarchive-zip remote_src=yes list_files=True
+  unarchive: src={{remote_tmp_dir}}/test-unarchive.zip dest={{remote_tmp_dir}}/test-unarchive-zip remote_src=yes list_files=True
   register: unarchive03
 
 - name: verify that the file was marked as changed
@@ -169,14 +202,14 @@
       - "'FOO-UNAR.TXT' in unarchive03['files']"
 
 - name: verify that the file was unarchived
-  file: path={{output_dir}}/test-unarchive-zip/{{item}} state=file
+  file: path={{remote_tmp_dir}}/test-unarchive-zip/{{item}} state=file
   with_items:
     - foo-unarchive.txt
     - foo-unarchive-777.txt
     - FOO-UNAR.TXT
 
 - name: repeat the last request to verify no changes
-  unarchive: src={{output_dir}}/test-unarchive.zip dest={{output_dir | expanduser}}/test-unarchive-zip remote_src=yes list_files=True
+  unarchive: src={{remote_tmp_dir}}/test-unarchive.zip dest={{remote_tmp_dir}}/test-unarchive-zip remote_src=yes list_files=True
   register: unarchive03b
 
 - name: verify that the task was not marked as changed
@@ -184,31 +217,46 @@
     that:
       - "unarchive03b.changed == false"
 
-- name: "Create {{ output_dir }}/exclude directory"
+- name: "Create {{ remote_tmp_dir }}/exclude directory"
   file:
     state: directory
-    path: "{{ output_dir }}/exclude"
+    path: "{{ remote_tmp_dir }}/exclude-{{item}}"
+  with_items:
+    - zip
+    - tar
 
-- name: Unpack zip file excluding one file.
+- name: Unpack archive file excluding regular and glob files.
   unarchive:
-    src: "{{ output_dir }}/test-unarchive.zip"
-    dest: "{{ output_dir }}/exclude"
-    exclude: "foo-unarchive-*.txt"
+    src: "{{ remote_tmp_dir }}/unarchive-00.{{item}}"
+    dest: "{{ remote_tmp_dir }}/exclude-{{item}}"
+    remote_src: yes
+    exclude: 
+      - "exclude/exclude-*.txt"
+      - "other/exclude-1.ext"
+  with_items:
+    - zip
+    - tar
 
 - name: verify that the file was unarchived
-  shell: find {{ output_dir }}/exclude chdir={{ output_dir }}
-  register: unarchive_dir01
+  shell: find {{ remote_tmp_dir }}/exclude-{{item}} chdir={{ remote_tmp_dir }}
+  register: unarchive00
+  with_items:
+    - zip
+    - tar
 
-- name: verify that zip extraction excluded file
+- name: verify that archive extraction excluded the files
   assert:
     that:
-      - "'foo-unarchive-777.txt' not in unarchive_dir01.stdout"
+      - "'exclude/exclude-1.txt' not in item.stdout"
+      - "'other/exclude-1.ext' not in item.stdout"
+  with_items:
+    - "{{ unarchive00.results }}"
 
 - name: remove our zip unarchive destination
-  file: path={{output_dir}}/test-unarchive-zip state=absent
+  file: path={{remote_tmp_dir}}/test-unarchive-zip state=absent
 
 - name: remove our test files for the archive
-  file: path={{output_dir}}/{{item}} state=absent
+  file: path={{remote_tmp_dir}}/{{item}} state=absent
   with_items:
     - foo-unarchive.txt
     - foo-unarchive-777.txt
@@ -224,7 +272,7 @@
   when: unarchive04.stat.exists
 
 - name: try unarchiving to /tmp
-  unarchive: src={{output_dir}}/test-unarchive.tar.gz dest=/tmp remote_src=yes
+  unarchive: src={{remote_tmp_dir}}/test-unarchive.tar.gz dest=/tmp remote_src=yes
   register: unarchive05
 
 - name: verify that the file was marked as changed
@@ -239,12 +287,12 @@
   file: path=/tmp/foo-unarchive.txt state=absent
 
 - name: create our unarchive destination
-  file: path={{output_dir}}/test-unarchive-tar-gz state=directory
+  file: path={{remote_tmp_dir}}/test-unarchive-tar-gz state=directory
 
 - name: unarchive and set mode to 0600, directories 0700
   unarchive:
-    src: "{{ output_dir }}/test-unarchive.tar.gz"
-    dest: "{{ output_dir | expanduser }}/test-unarchive-tar-gz"
+    src: "{{ remote_tmp_dir }}/test-unarchive.tar.gz"
+    dest: "{{ remote_tmp_dir }}/test-unarchive-tar-gz"
     remote_src: yes
     mode: "u+rwX,g-rwx,o-rwx"
     list_files: True
@@ -252,7 +300,7 @@
 
 - name: Test that the file modes were changed
   stat:
-    path: "{{ output_dir | expanduser }}/test-unarchive-tar-gz/foo-unarchive.txt"
+    path: "{{ remote_tmp_dir }}/test-unarchive-tar-gz/foo-unarchive.txt"
   register: unarchive06_stat
 
 - name: Test that the file modes were changed
@@ -266,22 +314,22 @@
       - "'foo-unarchive.txt' in unarchive06['files']"
 
 - name: remove our tar.gz unarchive destination
-  file: path={{ output_dir }}/test-unarchive-tar-gz state=absent
+  file: path={{ remote_tmp_dir }}/test-unarchive-tar-gz state=absent
 
 - name: create our unarchive destination
-  file: path={{output_dir}}/test-unarchive-tar-gz state=directory
+  file: path={{remote_tmp_dir}}/test-unarchive-tar-gz state=directory
 
 - name: unarchive over existing extraction and set mode to 0644
   unarchive:
-    src: "{{ output_dir }}/test-unarchive.tar.gz"
-    dest: "{{ output_dir | expanduser }}/test-unarchive-tar-gz"
+    src: "{{ remote_tmp_dir }}/test-unarchive.tar.gz"
+    dest: "{{ remote_tmp_dir }}/test-unarchive-tar-gz"
     remote_src: yes
     mode: "u+rwX,g-wx,o-wx,g+r,o+r"
   register: unarchive06_2
 
 - name: Test that the file modes were changed
   stat:
-    path: "{{ output_dir | expanduser }}/test-unarchive-tar-gz/foo-unarchive.txt"
+    path: "{{ remote_tmp_dir }}/test-unarchive-tar-gz/foo-unarchive.txt"
   register: unarchive06_2_stat
 
 - debug: var=unarchive06_2_stat.stat.mode
@@ -293,8 +341,8 @@
 
 - name: Repeat the last request to verify no changes
   unarchive:
-    src: "{{ output_dir }}/test-unarchive.tar.gz"
-    dest: "{{ output_dir | expanduser }}/test-unarchive-tar-gz"
+    src: "{{ remote_tmp_dir }}/test-unarchive.tar.gz"
+    dest: "{{ remote_tmp_dir }}/test-unarchive-tar-gz"
     remote_src: yes
     mode: "u+rwX-x,g-wx,o-wx,g+r,o+r"
     list_files: True
@@ -310,15 +358,15 @@
       - "'foo-unarchive.txt' in unarchive07['files']"
 
 - name: remove our tar.gz unarchive destination
-  file: path={{ output_dir }}/test-unarchive-tar-gz state=absent
+  file: path={{ remote_tmp_dir }}/test-unarchive-tar-gz state=absent
 
 - name: create our unarchive destination
-  file: path={{output_dir}}/test-unarchive-zip state=directory
+  file: path={{remote_tmp_dir}}/test-unarchive-zip state=directory
 
 - name: unarchive and set mode to 0601, directories 0700
   unarchive:
-    src: "{{ output_dir }}/test-unarchive.zip"
-    dest: "{{ output_dir | expanduser }}/test-unarchive-zip"
+    src: "{{ remote_tmp_dir }}/test-unarchive.zip"
+    dest: "{{ remote_tmp_dir }}/test-unarchive-zip"
     remote_src: yes
     mode: "u+rwX-x,g-rwx,o=x"
     list_files: True
@@ -326,7 +374,7 @@
 
 - name: Test that the file modes were changed
   stat:
-    path: "{{ output_dir | expanduser }}/test-unarchive-zip/foo-unarchive.txt"
+    path: "{{ remote_tmp_dir }}/test-unarchive-zip/foo-unarchive.txt"
   register: unarchive08_stat
 
 - name: Test that the file modes were changed
@@ -343,8 +391,8 @@
 
 - name: unarchive zipfile a second time and set mode to 0601, directories 0700
   unarchive:
-    src: "{{ output_dir }}/test-unarchive.zip"
-    dest: "{{ output_dir | expanduser }}/test-unarchive-zip"
+    src: "{{ remote_tmp_dir }}/test-unarchive.zip"
+    dest: "{{ remote_tmp_dir }}/test-unarchive-zip"
     remote_src: yes
     mode: "u+rwX-x,g-rwx,o=x"
     list_files: True
@@ -352,7 +400,7 @@
 
 - name: Test that the file modes were not changed
   stat:
-    path: "{{ output_dir | expanduser }}/test-unarchive-zip/foo-unarchive.txt"
+    path: "{{ remote_tmp_dir }}/test-unarchive-zip/foo-unarchive.txt"
   register: unarchive08_stat
 
 - debug:
@@ -374,18 +422,18 @@
       - "'FOO-UNAR.TXT' in unarchive08['files']"
 
 - name: remove our zip unarchive destination
-  file: path={{ output_dir }}/test-unarchive-zip state=absent
+  file: path={{ remote_tmp_dir }}/test-unarchive-zip state=absent
 
 - name: create our unarchive destination
-  file: path={{output_dir}}/test-unarchive-tar-gz state=directory
+  file: path={{remote_tmp_dir}}/test-unarchive-tar-gz state=directory
 
 - name: create a directory with quotable chars
-  file: path="{{ output_dir }}/test-quotes~root" state=directory
+  file: path="{{ remote_tmp_dir }}/test-quotes~root" state=directory
 
 - name: unarchive into directory with quotable chars
   unarchive:
-    src: "{{ output_dir }}/test-unarchive.tar.gz"
-    dest: "{{ output_dir | expanduser }}/test-quotes~root"
+    src: "{{ remote_tmp_dir }}/test-unarchive.tar.gz"
+    dest: "{{ remote_tmp_dir }}/test-quotes~root"
     remote_src: yes
   register: unarchive08
 
@@ -396,8 +444,8 @@
 
 - name: unarchive into directory with quotable chars a second time
   unarchive:
-    src: "{{ output_dir }}/test-unarchive.tar.gz"
-    dest: "{{ output_dir | expanduser }}/test-quotes~root"
+    src: "{{ remote_tmp_dir }}/test-unarchive.tar.gz"
+    dest: "{{ remote_tmp_dir }}/test-quotes~root"
     remote_src: yes
   register: unarchive09
 
@@ -407,11 +455,11 @@
       - "unarchive09.changed == false"
 
 - name: remove quotable chars test
-  file: path="{{ output_dir }}/test-quotes~root" state=absent
+  file: path="{{ remote_tmp_dir }}/test-quotes~root" state=absent
 
 - name: create our unarchive destination
   file:
-    path: "{{ output_dir }}/test-unarchive-nonascii-くらとみ-tar-gz"
+    path: "{{ remote_tmp_dir }}/test-unarchive-nonascii-くらとみ-tar-gz"
     state: directory
 
 - name: test that unarchive works with an archive that contains non-ascii filenames
@@ -419,14 +467,14 @@
     # Both the filename of the tarball and the filename inside the tarball have
     # nonascii chars
     src: "test-unarchive-nonascii-くらとみ.tar.gz"
-    dest: "{{ output_dir }}/test-unarchive-nonascii-くらとみ-tar-gz"
+    dest: "{{ remote_tmp_dir }}/test-unarchive-nonascii-くらとみ-tar-gz"
     mode: "u+rwX,go+rX"
     remote_src: no
   register: nonascii_result0
 
 - name: Check that file is really there
   stat:
-    path: "{{ output_dir | expanduser }}/test-unarchive-nonascii-くらとみ-tar-gz/storage/àâæçéèïîôœ(copy)!@#$%^&-().jpg"
+    path: "{{ remote_tmp_dir }}/test-unarchive-nonascii-くらとみ-tar-gz/storage/àâæçéèïîôœ(copy)!@#$%^&-().jpg"
   register: nonascii_stat0
 
 - name: Assert that nonascii tests succeeded
@@ -436,17 +484,17 @@
       - "nonascii_stat0.stat.exists == true"
 
 - name: remove nonascii test
-  file: path="{{ output_dir }}/test-unarchive-nonascii-くらとみ-tar-gz" state=absent
+  file: path="{{ remote_tmp_dir }}/test-unarchive-nonascii-くらとみ-tar-gz" state=absent
 
 # Test that unarchiving is performed if files are missing
 # https://github.com/ansible/ansible-modules-core/issues/1064
 - name: create our unarchive destination
-  file: path={{output_dir}}/test-unarchive-tar-gz state=directory
+  file: path={{remote_tmp_dir}}/test-unarchive-tar-gz state=directory
 
 - name: unarchive a tar that has directories
   unarchive:
-    src: "{{ output_dir }}/test-unarchive-dir.tar.gz"
-    dest: "{{ output_dir }}/test-unarchive-tar-gz"
+    src: "{{ remote_tmp_dir }}/test-unarchive-dir.tar.gz"
+    dest: "{{ remote_tmp_dir }}/test-unarchive-tar-gz"
     mode: "0700"
     remote_src: yes
   register: unarchive10
@@ -458,18 +506,18 @@
 
 - name: Change the mode of the toplevel dir
   file:
-    path: "{{ output_dir }}/test-unarchive-tar-gz/unarchive-dir"
+    path: "{{ remote_tmp_dir }}/test-unarchive-tar-gz/unarchive-dir"
     mode: 0701
 
 - name: Remove a file from the extraction point
   file:
-    path: "{{ output_dir }}/test-unarchive-tar-gz/unarchive-dir/foo-unarchive.txt"
+    path: "{{ remote_tmp_dir }}/test-unarchive-tar-gz/unarchive-dir/foo-unarchive.txt"
     state: absent
 
 - name: unarchive a tar that has directories
   unarchive:
-    src: "{{ output_dir }}/test-unarchive-dir.tar.gz"
-    dest: "{{ output_dir }}/test-unarchive-tar-gz"
+    src: "{{ remote_tmp_dir }}/test-unarchive-dir.tar.gz"
+    dest: "{{ remote_tmp_dir }}/test-unarchive-tar-gz"
     mode: "0700"
     remote_src: yes
   register: unarchive10_1
@@ -480,7 +528,7 @@
       - "unarchive10_1.changed == true"
 
 - name: remove our tar.gz unarchive destination
-  file: path={{ output_dir }}/test-unarchive-tar-gz state=absent
+  file: path={{ remote_tmp_dir }}/test-unarchive-tar-gz state=absent
 
 #
 # Symlink tests
@@ -488,26 +536,26 @@
 
 - name: Create a destination dir
   file:
-    path: "{{ output_dir }}/test-unarchive-tar-gz"
+    path: "{{ remote_tmp_dir }}/test-unarchive-tar-gz"
     state: directory
 
 - name: Create a symlink to the detination dir
   file:
-    path: "{{ output_dir }}/link-to-unarchive-dir"
-    src: "{{ output_dir }}/test-unarchive-tar-gz"
+    path: "{{ remote_tmp_dir }}/link-to-unarchive-dir"
+    src: "{{ remote_tmp_dir }}/test-unarchive-tar-gz"
     state: "link"
 
 - name: test that unarchive works when dest is a symlink to a dir
   unarchive:
-    src: "{{ output_dir }}/test-unarchive.tar.gz"
-    dest: "{{ output_dir | expanduser }}/link-to-unarchive-dir"
+    src: "{{ remote_tmp_dir }}/test-unarchive.tar.gz"
+    dest: "{{ remote_tmp_dir }}/link-to-unarchive-dir"
     mode: "u+rwX,go+rX"
     remote_src: yes
   register: unarchive_11
 
 - name: Check that file is really there
   stat:
-    path: "{{ output_dir | expanduser }}/test-unarchive-tar-gz/foo-unarchive.txt"
+    path: "{{ remote_tmp_dir }}/test-unarchive-tar-gz/foo-unarchive.txt"
   register: unarchive11_stat0
 
 - name: Assert that unarchive when dest is a symlink to a dir worked
@@ -517,23 +565,23 @@
       - "unarchive11_stat0.stat.exists == true"
 
 - name: remove our tar.gz unarchive destination
-  file: path={{ output_dir }}/test-unarchive-tar-gz state=absent
+  file: path={{ remote_tmp_dir }}/test-unarchive-tar-gz state=absent
 
 - name: Create a file
   file:
-    path: "{{ output_dir }}/test-unarchive-tar-gz"
+    path: "{{ remote_tmp_dir }}/test-unarchive-tar-gz"
     state: touch
 
 - name: Create a symlink to the file
   file:
-    path: "{{ output_dir }}/link-to-unarchive-file"
-    src: "{{ output_dir }}/test-unarchive-tar-gz"
+    path: "{{ remote_tmp_dir }}/link-to-unarchive-file"
+    src: "{{ remote_tmp_dir }}/test-unarchive-tar-gz"
     state: "link"
 
 - name: test that unarchive fails when dest is a link to a file
   unarchive:
-    src: "{{ output_dir }}/test-unarchive.tar.gz"
-    dest: "{{ output_dir | expanduser }}/link-to-unarchive-file"
+    src: "{{ remote_tmp_dir }}/test-unarchive.tar.gz"
+    dest: "{{ remote_tmp_dir }}/link-to-unarchive-file"
     mode: "u+rwX,go+rX"
     remote_src: yes
   ignore_errors: True
@@ -545,4 +593,24 @@
       - "unarchive_12.failed == true"
 
 - name: remove our tar.gz unarchive destination
-  file: path={{ output_dir }}/test-unarchive-tar-gz state=absent
+  file: path={{ remote_tmp_dir }}/test-unarchive-tar-gz state=absent
+
+# Test downloading a file before unarchiving it
+- name: create our unarchive destination
+  file: path={{remote_tmp_dir}}/test-unarchive-tar-gz state=directory
+
+- name: unarchive a tar from an URL
+  unarchive:
+    src: "https://releases.ansible.com/ansible/ansible-latest.tar.gz"
+    dest: "{{ remote_tmp_dir }}/test-unarchive-tar-gz"
+    mode: "0700"
+    remote_src: yes
+  register: unarchive13
+
+- name: Test that unarchive succeeded
+  assert:
+    that:
+      - "unarchive13.changed == true"
+
+- name: remove our tar.gz unarchive destination
+  file: path={{ remote_tmp_dir }}/test-unarchive-tar-gz state=absent

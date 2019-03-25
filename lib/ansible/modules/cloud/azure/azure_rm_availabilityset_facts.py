@@ -1,7 +1,7 @@
 #!/usr/bin/python
-#
-# Copyright (c) 2016 Julien Stroheker, <juliens@microsoft.com>
+# -*- coding: utf-8 -*-
 
+# Copyright: (c) 2016, Julien Stroheker <juliens@microsoft.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -32,7 +32,6 @@ options:
     tags:
         description:
             - List of tags to be matched
-        version_added: 2.6
 
 extends_documentation_fragment:
     - azure
@@ -45,11 +44,11 @@ EXAMPLES = '''
     - name: Get facts for one availability set
       azure_rm_availabilityset_facts:
         name: Testing
-        resource_group: TestRG
+        resource_group: myResourceGroup
 
     - name: Get facts for all availability sets in a specific resource group
       azure_rm_availabilityset_facts:
-        resource_group: TestRG
+        resource_group: myResourceGroup
 
 '''
 
@@ -75,7 +74,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-except:
+except Exception:
     # handled in azure_rm_common
     pass
 
@@ -127,7 +126,7 @@ class AzureRMAvailabilitySetFacts(AzureRMModuleBase):
     def get_item(self):
         """Get a single availability set"""
 
-        self.log('Get properties for {}'.format(self.name))
+        self.log('Get properties for {0}'.format(self.name))
 
         item = None
         result = []
@@ -154,7 +153,7 @@ class AzureRMAvailabilitySetFacts(AzureRMModuleBase):
         try:
             response = self.compute_client.availability_sets.list(self.resource_group)
         except CloudError as exc:
-            self.fail('Failed to list all items - {}'.format(str(exc)))
+            self.fail('Failed to list all items - {0}'.format(str(exc)))
 
         results = []
         for item in response:
@@ -172,6 +171,7 @@ def main():
     """Main module execution code path"""
 
     AzureRMAvailabilitySetFacts()
+
 
 if __name__ == '__main__':
     main()

@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = '''
 ---
 module: aws_config_delivery_channel
 short_description: Manage AWS Config delivery channels
@@ -50,7 +50,7 @@ extends_documentation_fragment:
   - ec2
 '''
 
-EXAMPLES = r'''
+EXAMPLES = '''
 - name: Create Delivery Channel for AWS Config
   aws_config_delivery_channel:
     name: test_delivery_channel
@@ -60,7 +60,7 @@ EXAMPLES = r'''
     delivery_frequency: 'Twelve_Hours'
 '''
 
-RETURN = r'''#'''
+RETURN = '''#'''
 
 
 try:
@@ -69,7 +69,7 @@ try:
 except ImportError:
     pass  # handled by AnsibleAWSModule
 
-from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
 from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, AWSRetry
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict
 
@@ -88,9 +88,9 @@ def resource_exists(client, module, params):
             aws_retry=True,
         )
         return channel['DeliveryChannels'][0]
-    except client.exceptions.from_code('NoSuchDeliveryChannelException'):
+    except is_boto3_error_code('NoSuchDeliveryChannelException'):
         return
-    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:  # pylint: disable=duplicate-except
         module.fail_json_aws(e)
 
 
@@ -104,12 +104,12 @@ def create_resource(client, module, params, result):
         result['changed'] = True
         result['channel'] = camel_dict_to_snake_dict(resource_exists(client, module, params))
         return result
-    except client.exceptions.from_code('InvalidS3KeyPrefixException') as e:
+    except is_boto3_error_code('InvalidS3KeyPrefixException') as e:
         module.fail_json_aws(e, msg="The `s3_prefix` parameter was invalid. Try '/' for no prefix")
-    except client.exceptions.from_code('InsufficientDeliveryPolicyException') as e:
+    except is_boto3_error_code('InsufficientDeliveryPolicyException') as e:  # pylint: disable=duplicate-except
         module.fail_json_aws(e, msg="The `s3_prefix` or `s3_bucket` parameter is invalid. "
                              "Make sure the bucket exists and is available")
-    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:  # pylint: disable=duplicate-except
         module.fail_json_aws(e, msg="Couldn't create AWS Config delivery channel")
 
 
@@ -129,12 +129,12 @@ def update_resource(client, module, params, result):
             result['changed'] = True
             result['channel'] = camel_dict_to_snake_dict(resource_exists(client, module, params))
             return result
-        except client.exceptions.from_code('InvalidS3KeyPrefixException') as e:
+        except is_boto3_error_code('InvalidS3KeyPrefixException') as e:
             module.fail_json_aws(e, msg="The `s3_prefix` parameter was invalid. Try '/' for no prefix")
-        except client.exceptions.from_code('InsufficientDeliveryPolicyException') as e:
+        except is_boto3_error_code('InsufficientDeliveryPolicyException') as e:  # pylint: disable=duplicate-except
             module.fail_json_aws(e, msg="The `s3_prefix` or `s3_bucket` parameter is invalid. "
                                  "Make sure the bucket exists and is available")
-        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:  # pylint: disable=duplicate-except
             module.fail_json_aws(e, msg="Couldn't create AWS Config delivery channel")
 
 

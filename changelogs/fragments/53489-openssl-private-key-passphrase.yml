@@ -1,0 +1,6 @@
+bugfixes:
+- "openssl_privatekey - no longer hang or crash when passphrase does not match or was
+   not specified, but key is protected with one. Also regenerate key if passphrase is
+   specified but existing key has no passphrase."
+- "openssl_csr, openssl_certificate, openssl_publickey - properly validate private key
+   passphrase; if it doesn't match, fail (and not crash or ignore)."

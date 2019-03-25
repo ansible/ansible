@@ -104,64 +104,70 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = r'''
 - name: Add Management Network VM Portgroup
   vmware_portgroup:
-    hostname: esxi_hostname
-    username: esxi_username
-    password: esxi_password
-    switch_name: vswitch_name
-    portgroup_name: portgroup_name
-    vlan_id: vlan_id
+    hostname: "{{ esxi_hostname }}"
+    username: "{{ esxi_username }}"
+    password: "{{ esxi_password }}"
+    switch_name: "{{ vswitch_name }}"
+    portgroup_name: "{{ portgroup_name }}"
+    vlan_id: "{{ vlan_id }}"
+  delegate_to: localhost
 
 - name: Add Portgroup with Promiscuous Mode Enabled
   vmware_portgroup:
-    hostname: esxi_hostname
-    username: esxi_username
-    password: esxi_password
-    switch_name: vswitch_name
-    portgroup_name: portgroup_name
+    hostname: "{{ esxi_hostname }}"
+    username: "{{ esxi_username }}"
+    password: "{{ esxi_password }}"
+    switch_name: "{{ vswitch_name }}"
+    portgroup_name: "{{ portgroup_name }}"
     network_policy:
         promiscuous_mode: True
+  delegate_to: localhost
 
 - name: Add Management Network VM Portgroup to specific hosts
   vmware_portgroup:
-    hostname: vCenter_hostname
-    username: esxi_username
-    password: esxi_password
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     hosts: [esxi_hostname_one]
-    switch_name: vswitch_name
-    portgroup_name: portgroup_name
-    vlan_id: vlan_id
+    switch_name: "{{ vswitch_name }}"
+    portgroup_name: "{{ portgroup_name }}"
+    vlan_id: "{{ vlan_id }}"
+  delegate_to: localhost
 
 - name: Add Management Network VM Portgroup to all hosts in a cluster
   vmware_portgroup:
-    hostname: vCenter_hostname
-    username: esxi_username
-    password: esxi_password
-    cluster_name: rh_engineering
-    switch_name: vswitch_name
-    portgroup_name: portgroup_name
-    vlan_id: vlan_id
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    cluster_name: "{{ cluster_name }}"
+    switch_name: "{{ vswitch_name }}"
+    portgroup_name: "{{ portgroup_name }}"
+    vlan_id: "{{ vlan_id }}"
+  delegate_to: localhost
 
 - name: Remove Management Network VM Portgroup to all hosts in a cluster
   vmware_portgroup:
-    hostname: vCenter_hostname
-    username: esxi_username
-    password: esxi_password
-    cluster_name: rh_engineering
-    switch_name: vswitch_name
-    portgroup_name: portgroup_name
-    vlan_id: vlan_id
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    cluster_name: "{{ cluster_name }}"
+    switch_name: "{{ vswitch_name }}"
+    portgroup_name: "{{ portgroup_name }}"
+    vlan_id: "{{ vlan_id }}"
     state: absent
+  delegate_to: localhost
 
 - name: Add Portgroup with teaming policy
   vmware_portgroup:
-    hostname: esxi_hostname
-    username: esxi_username
-    password: esxi_password
-    switch_name: vswitch_name
-    portgroup_name: portgroup_name
+    hostname: "{{ esxi_hostname }}"
+    username: "{{ esxi_username }}"
+    password: "{{ esxi_password }}"
+    switch_name: "{{ vswitch_name }}"
+    portgroup_name: "{{ portgroup_name }}"
     teaming_policy:
       load_balance_policy: 'failover_explicit'
       inbound_policy: True
+  delegate_to: localhost
   register: teaming_result
 '''
 

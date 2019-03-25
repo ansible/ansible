@@ -13,6 +13,7 @@
       flush_routes: true
       enforce_rtr_alert: true
       restart: false
+      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -33,6 +34,7 @@
       flush_routes: false
       enforce_rtr_alert: false
       restart: "{{restart|default(omit)}}"
+      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -50,6 +52,7 @@
 
   - name: Configure igmp state as values
     nxos_igmp: &sdefault
+      provider: "{{ connection }}"
       state: default
     register: result
 

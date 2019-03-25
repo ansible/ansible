@@ -1,0 +1,106 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  MMM      MMM       KKK                          TTTTTTTTTTT      KKK
+
+  MMMM    MMMM       KKK                          TTTTTTTTTTT      KKK
+
+  MMM MMMM MMM  III  KKK  KKK  RRRRRR     OOOOOO      TTT     III  KKK  KKK
+
+  MMM  MM  MMM  III  KKKKK     RRR  RRR  OOO  OOO     TTT     III  KKKKK
+
+  MMM      MMM  III  KKK KKK   RRRRRR    OOO  OOO     TTT     III  KKK KKK
+
+  MMM      MMM  III  KKK  KKK  RRR  RRR   OOOOOO      TTT     III  KKK  KKK
+
+
+
+  MikroTik RouterOS 6.42.5 (c) 1999-2018       http://www.mikrotik.com/
+
+
+[?]             Gives the list of available commands
+
+command [?]     Gives help on the command and list of arguments
+
+
+
+[Tab]           Completes the command/word. If the input is ambiguous,
+
+                a second [Tab] gives possible options
+
+
+
+/               Move up to base level
+
+..              Move up one level
+
+/command        Use command at the base level
+
+[9999B
+[9999BZ  [6n<[c[4l[20l[?47l[?7h[?5l[?25h[H[9999B[6n
+
+
+
+[admin@MainRouter] >                                                      
+[admin@MainRouter] > /system routerboard print
+[admin@MainRouter] > /system routerboard print
+
+       routerboard: yes
+             model: 750GL
+     serial-number: 1234567890AB
+     firmware-type: ar7240
+  factory-firmware: 3.09
+  current-firmware: 6.41.2
+  upgrade-firmware: 6.42.5
+
+
+
+
+
+[admin@MainRouter] >                                                      
+[admin@MainRouter] > /system identity print
+[admin@MainRouter] > /system identity print
+
+  name: MikroTik
+
+
+
+
+
+[admin@MainRouter] >                                                      
+[admin@MainRouter] > /system package print
+[admin@MainRouter] > /system package print
+
+Flags: [m[1mX[m - disabled 
+[m[1m #   NAME                    VERSION                    SCHEDULED              
+[m 0   routeros-mipsbe         6.42.5                                            
+ 1   system                  6.42.5                                            
+ 2   ipv6                    6.42.5                                            
+ 3   wireless                6.42.5                                            
+ 4   hotspot                 6.42.5                                            
+ 5   dhcp                    6.42.5                                            
+ 6   mpls                    6.42.5                                            
+ 7   routing                 6.42.5                                            
+ 8   ppp                     6.42.5                                            
+ 9   security                6.42.5                                            
+10   advanced-tools          6.42.5                                            
+
+
+
+
+
+[admin@MainRouter] >                                                      
+[admin@MainRouter] > 

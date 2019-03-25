@@ -33,7 +33,11 @@
 - include: create_user.yml user_name={{user_name_1}} user_password={{ user_password_1 }}
 
 - name: create mysql user that already exist (expect changed=false)
-  mysql_user: name={{user_name_1}} password={{user_password_1}} state=present
+  mysql_user:
+    name: '{{user_name_1}}'
+    password: '{{user_password_1}}'
+    state: present
+    login_unix_socket: '{{ mysql_socket }}'
   register: result
 
 - name: assert output message mysql user was not created
@@ -43,7 +47,11 @@
 # remove mysql user and verify user is removed from mysql database
 #
 - name: remove mysql user state=absent (expect changed=true)
-  mysql_user: name={{ user_name_1 }} password={{ user_password_1 }} state=absent
+  mysql_user:
+    name: '{{ user_name_1 }}'
+    password: '{{ user_password_1 }}'
+    state: absent
+    login_unix_socket: '{{ mysql_socket }}'
   register: result
 
 - name: assert output message mysql user was removed
@@ -55,7 +63,11 @@
 # remove mysql user that does not exist on mysql database
 #
 - name: remove mysql user that does not exist state=absent (expect changed=false)
-  mysql_user: name={{ user_name_1 }} password={{ user_password_1 }} state=absent
+  mysql_user:
+    name: '{{ user_name_1 }}'
+    password: '{{ user_password_1 }}'
+    state: absent
+    login_unix_socket: '{{ mysql_socket }}'
   register: result
 
 - name: assert output message mysql user that does not exist
@@ -67,7 +79,11 @@
 # Create user with no privileges and verify default privileges are assign
 #
 - name: create user with select privilege state=present (expect changed=true)
-  mysql_user: name={{ user_name_1 }} password={{ user_password_1 }} state=present
+  mysql_user:
+    name: '{{ user_name_1 }}'
+    password: '{{ user_password_1 }}'
+    state: present
+    login_unix_socket: '{{ mysql_socket }}'
   register: result
 
 - include: assert_user.yml user_name={{user_name_1}} priv=USAGE
@@ -80,7 +96,12 @@
 # Create user with select privileges and verify select privileges are assign
 #
 - name: create user with select privilege state=present (expect changed=true)
-  mysql_user: name={{ user_name_2 }} password={{ user_password_2 }} state=present priv=*.*:SELECT
+  mysql_user:
+    name: '{{ user_name_2 }}'
+    password: '{{ user_password_2 }}'
+    state: present
+    priv: '*.*:SELECT'
+    login_unix_socket: '{{ mysql_socket }}'
   register: result
 
 - include: assert_user.yml user_name={{user_name_2}} priv=SELECT
@@ -93,7 +114,12 @@
 # Assert user has access to multiple databases
 #
 - name: give users access to multiple databases
-  mysql_user: name={{ item[0]  }} priv={{ item[1] }}.*:ALL append_privs=yes password={{ user_password_1 }}
+  mysql_user:
+    name: '{{ item[0] }}'
+    priv: '{{ item[1] }}.*:ALL'
+    append_privs: yes
+    password: '{{ user_password_1 }}'
+    login_unix_socket: '{{ mysql_socket }}'
   with_nested:
     - [ '{{ user_name_1 }}', '{{ user_name_2 }}']
     - "{{db_names}}"
@@ -119,7 +145,12 @@
 - include: remove_user.yml user_name={{user_name_2}} user_password={{ user_password_1 }}
 
 - name: give user access to database via wildcard
-  mysql_user: name={{ user_name_1 }} priv=%db.*:SELECT append_privs=yes password={{ user_password_1 }}
+  mysql_user:
+    name: '{{ user_name_1 }}'
+    priv: '%db.*:SELECT'
+    append_privs: yes
+    password: '{{ user_password_1 }}'
+    login_unix_socket: '{{ mysql_socket }}'
 
 - name: show grants access for user1 on multiple database
   command: mysql "-e SHOW GRANTS FOR '{{ user_name_1 }}'@'localhost';"
@@ -132,7 +163,12 @@
       - "'SELECT' in result.stdout"
 
 - name: change user access to database via wildcard
-  mysql_user: name={{ user_name_1 }} priv=%db.*:INSERT append_privs=yes password={{ user_password_1 }}
+  mysql_user:
+    name: '{{ user_name_1 }}'
+    priv: '%db.*:INSERT'
+    append_privs: yes
+    password: '{{ user_password_1 }}'
+    login_unix_socket: '{{ mysql_socket }}'
 
 - name: show grants access for user1 on multiple database
   command: mysql "-e SHOW GRANTS FOR '{{ user_name_1 }}'@'localhost';"
@@ -171,3 +207,7 @@
 # Assert creating user with SELECT privileges, attempt to create database and append privileges to create database
 #
 - include: test_privs.yml current_privilege='INSERT,DELETE' current_append_privs=yes
+
+- import_tasks: issue-29511.yaml
+  tags:
+    - issue-29511

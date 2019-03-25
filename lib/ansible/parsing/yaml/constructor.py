@@ -27,12 +27,9 @@ from ansible.parsing.yaml.objects import AnsibleMapping, AnsibleSequence, Ansibl
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 from ansible.utils.unsafe_proxy import wrap_var
 from ansible.parsing.vault import VaultLib
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class AnsibleConstructor(SafeConstructor):
@@ -81,16 +78,13 @@ class AnsibleConstructor(SafeConstructor):
 
         return mapping
 
-    def construct_yaml_str(self, node, unsafe=False):
+    def construct_yaml_str(self, node):
         # Override the default string handling function
         # to always return unicode objects
         value = self.construct_scalar(node)
         ret = AnsibleUnicode(value)
 
         ret.ansible_pos = self._node_position_info(node)
-
-        if unsafe:
-            ret = wrap_var(ret)
 
         return ret
 
@@ -116,7 +110,7 @@ class AnsibleConstructor(SafeConstructor):
         data.ansible_pos = self._node_position_info(node)
 
     def construct_yaml_unsafe(self, node):
-        return self.construct_yaml_str(node, unsafe=True)
+        return wrap_var(self.construct_yaml_str(node))
 
     def _node_position_info(self, node):
         # the line number where the previous token has ended (plus empty lines)

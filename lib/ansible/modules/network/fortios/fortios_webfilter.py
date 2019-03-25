@@ -1,21 +1,7 @@
 #!/usr/bin/python
-# Copyright 2018 Fortinet, Inc.
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
+
+# Copyright: (c) 2018, Fortinet, Inc.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 
@@ -47,7 +33,7 @@ requirements:
 options:
     host:
        description:
-            - FortiOS or FortiGate ip adress.
+            - FortiOS or FortiGate ip address.
        required: true
     username:
         description:
@@ -67,7 +53,6 @@ options:
         description:
             - Container for a group of url entries that the FortiGate
               must act upon
-        default: null
         suboptions:
             id:
                 description:
@@ -80,7 +65,6 @@ options:
             comment:
                 description:
                     - Optional comments.
-                default: null
             one-arm-ips-urlfilter:
                 description:
                     - Enable/disable DNS resolver for one-arm IPS URL filter operation.
@@ -169,7 +153,6 @@ options:
         description:
             - Container for a group of content-filtering entries that
               the FortiGate must act upon
-        default: null
         suboptions:
             id:
                 description:
@@ -181,7 +164,6 @@ options:
             comment:
                 description:
                     - Optional comments.
-                default: null
             entries:
                 description:
                     - Content filter entries.
@@ -319,57 +301,57 @@ RETURN = '''
 build:
   description: Build number of the fortigate image
   returned: always
-  type: string
+  type: str
   sample: '1547'
 http_method:
   description: Last method used to provision the content into FortiGate
   returned: always
-  type: string
+  type: str
   sample: 'PUT'
 http_status:
   description: Last result given by FortiGate on last operation applied
   returned: always
-  type: string
+  type: str
   sample: "200"
 mkey:
   description: Master key (id) used in the last call to FortiGate
   returned: success
-  type: string
+  type: str
   sample: "key1"
 name:
   description: Name of the table used to fulfill the request
   returned: always
-  type: string
+  type: str
   sample: "urlfilter"
 path:
   description: Path of the table used to fulfill the request
   returned: always
-  type: string
+  type: str
   sample: "webfilter"
 revision:
   description: Internal revision number
   returned: always
-  type: string
+  type: str
   sample: "17.0.2.10658"
 serial:
   description: Serial number of the unit
   returned: always
-  type: string
+  type: str
   sample: "FGVMEVYYQT3AB5352"
 status:
   description: Indication of the operation's result
   returned: always
-  type: string
+  type: str
   sample: "success"
 vdom:
   description: Virtual domain used
   returned: always
-  type: string
+  type: str
   sample: "root"
 version:
   description: Version of the FortiGate
   returned: always
-  type: string
+  type: str
   sample: "v5.6.3"
 
 '''

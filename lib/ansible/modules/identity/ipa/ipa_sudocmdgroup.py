@@ -30,7 +30,7 @@ options:
   state:
     description: State to ensure
     default: present
-    choices: ['present', 'absent']
+    choices: ['present', 'absent', 'enabled', 'disabled']
   sudocmd:
     description:
     - List of sudo commands to assign to the group.
@@ -172,6 +172,7 @@ def main():
         module.exit_json(changed=changed, sudorule=sudocmdgroup)
     except Exception as e:
         module.fail_json(msg=to_native(e), exception=traceback.format_exc())
+
 
 if __name__ == '__main__':
     main()

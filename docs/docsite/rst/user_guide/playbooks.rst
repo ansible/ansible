@@ -3,7 +3,7 @@
 Working With Playbooks
 ======================
 
-Playbooks are Ansible's configuration, deployment, and orchestration language.  They can describe a policy you want your remote systems to enforce, or a set of steps in a general IT process.
+Playbooks are Ansible's configuration, deployment, and orchestration language. They can describe a policy you want your remote systems to enforce, or a set of steps in a general IT process.
 
 If Ansible modules are the tools in your workshop, playbooks are your instruction manuals, and your inventory of hosts are your raw material.
 

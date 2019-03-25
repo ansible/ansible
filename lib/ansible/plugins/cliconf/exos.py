@@ -19,6 +19,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+cliconf: exos
+short_description: Use exos cliconf to run command on Extreme EXOS platform
+description:
+  - This exos plugin provides low level abstraction apis for
+    sending and receiving CLI commands from Extreme EXOS network devices.
+version_added: "2.6"
+"""
+
 import re
 import json
 
@@ -35,7 +45,7 @@ class Cliconf(CliconfBase):
         device_info = {}
         device_info['network_os'] = 'exos'
 
-        reply = self.get(b'show switch detail')
+        reply = self.get('show switch detail')
         data = to_text(reply, errors='surrogate_or_strict').strip()
 
         match = re.search(r'ExtremeXOS version  (\S+)', data)
@@ -54,12 +64,12 @@ class Cliconf(CliconfBase):
 
     def get_config(self, source='running', flags=None):
         if source not in ('running', 'startup'):
-            return self.invalid_params("fetching configuration from %s is not supported" % source)
+            raise ValueError("fetching configuration from %s is not supported" % source)
         if source == 'running':
             cmd = 'show configuration'
         else:
             cmd = 'debug cfgmgr show configuration file'
-            reply = self.get(b'show switch | include "Config Selected"')
+            reply = self.get('show switch | include "Config Selected"')
             data = to_text(reply, errors='surrogate_or_strict').strip()
             match = re.search(r': +(\S+)\.cfg', data)
             if match:
@@ -87,12 +97,34 @@ class Cliconf(CliconfBase):
             self.send_command(to_bytes(command), to_bytes(prompt), to_bytes(answer),
                               False, newline)
 
-    def get(self, command, prompt=None, answer=None, sendonly=False):
-        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly)
+    def get(self, command, prompt=None, answer=None, sendonly=False, check_all=False):
+        return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
+
+    def get_device_operations(self):
+        return {
+            'supports_diff_replace': True,
+            'supports_commit': False,
+            'supports_rollback': False,
+            'supports_defaults': True,
+            'supports_onbox_diff': False,
+            'supports_commit_comment': False,
+            'supports_multiline_delimiter': False,
+            'supports_diff_match': True,
+            'supports_diff_ignore_lines': True,
+            'supports_generate_diff': True,
+            'supports_replace': True
+        }
+
+    def get_option_values(self):
+        return {
+            'format': ['text'],
+            'diff_match': ['line', 'strict', 'exact', 'none'],
+            'diff_replace': ['line', 'block'],
+            'output': ['text']
+        }
 
     def get_capabilities(self):
-        result = {}
-        result['rpc'] = self.get_base_rpc()
-        result['network_api'] = 'cliconf'
-        result['device_info'] = self.get_device_info()
+        result = super(Cliconf, self).get_capabilities()
+        result['device_operations'] = self.get_device_operations()
+        result.update(self.get_option_values())
         return json.dumps(result)

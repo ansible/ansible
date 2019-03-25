@@ -17,7 +17,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from ansible.compat.tests.mock import patch, Mock, call
+from units.compat.mock import patch, Mock, call
 from .netscaler_module import TestModule
 import copy
 import tempfile

@@ -1,0 +1,85 @@
+---
+- name: reset without giving a VM
+  action: cs_instance_password_reset
+  ignore_errors: yes
+  register: reset1
+- name: verify that the argument was missing
+  assert:
+    that:
+    - reset1 is failed
+    - "reset1.msg == 'missing required arguments: vm'"
+
+- name: disable password_enabled on default template
+  cs_template:
+    name: "{{ cs_common_template }}"
+    template_filter: all
+    password_enabled: no
+
+- name: cleanup test VM
+  cs_instance:
+    name: test-nopassword
+    zone: "{{ cs_common_zone_adv }}"
+    state: expunged
+- name: create test VM
+  cs_instance:
+    name: test-nopassword
+    template: "{{ cs_common_template }}"
+    service_offering: "{{ cs_common_service_offering }}"
+    zone: "{{ cs_common_zone_adv }}"
+    state: started
+  register: testvm_nopass
+  until: testvm_nopass is success
+  retries: 12
+  delay: 10
+- name: stop test VM
+  cs_instance:
+    name: test-nopassword
+    zone: "{{ cs_common_zone_adv }}"
+    state: stopped
+- name: reset nopassword
+  cs_instance_password_reset:
+    vm: test-nopassword
+    zone: "{{ cs_common_zone_adv }}"
+  ignore_errors: yes
+  register: reset2
+- name: verify that template was not pw enabled
+  assert:
+    that:
+    - reset2 is failed
+    - reset2.msg.endswith("the template is not password enabled'")
+
+- name: enable password_enabled on default template
+  cs_template:
+    name: "{{ cs_common_template }}"
+    template_filter: all
+    password_enabled: yes
+
+- name: cleanup test VM
+  cs_instance:
+    name: test-password
+    zone: "{{ cs_common_zone_adv }}"
+    state: expunged
+- name: create test VM
+  cs_instance:
+    name: test-password
+    template: "{{ cs_common_template }}"
+    service_offering: "{{ cs_common_service_offering }}"
+    zone: "{{ cs_common_zone_adv }}"
+    state: started
+- name: stop test VM
+  cs_instance:
+    name: test-password
+    zone: "{{ cs_common_zone_adv }}"
+    state: stopped
+- name: reset password
+  cs_instance_password_reset:
+    vm: test-password
+    zone: "{{ cs_common_zone_adv }}"
+  register: reset3
+- debug:
+    var: reset3.password
+- name: verify that a password was set
+  assert:
+    that:
+    - reset3 is success
+    - reset3.password != ''

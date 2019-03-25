@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Ansible by Red Hat, inc
+# Copyright: (c) 2017, Ansible by Red Hat, inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -50,6 +50,7 @@ options:
     description:
       - Purge links not defined in the I(aggregate) parameter.
     default: no
+    type: bool
 extends_documentation_fragment: eos
 """
 
@@ -140,10 +141,10 @@ def map_obj_to_commands(updates, module):
 
         if state == 'absent':
             if obj_in_have:
-                commands.append('no interface port-channel {}'.format(group))
+                commands.append('no interface port-channel {0}'.format(group))
 
         elif state == 'present':
-            cmd = ['interface port-channel {}'.format(group),
+            cmd = ['interface port-channel {0}'.format(group),
                    'end']
             if not obj_in_have:
                 if not group:
@@ -151,11 +152,11 @@ def map_obj_to_commands(updates, module):
                 commands.extend(cmd)
 
                 if min_links != 'None':
-                    commands.append('port-channel min-links {}'.format(min_links))
+                    commands.append('port-channel min-links {0}'.format(min_links))
 
                 if members:
                     for m in members:
-                        commands.append('interface {}'.format(m))
+                        commands.append('interface {0}'.format(m))
                         commands.append('channel-group {0} mode {1}'.format(group, mode))
 
             else:
@@ -163,27 +164,27 @@ def map_obj_to_commands(updates, module):
                     if 'members' not in obj_in_have.keys():
                         for m in members:
                             commands.extend(cmd)
-                            commands.append('interface {}'.format(m))
+                            commands.append('interface {0}'.format(m))
                             commands.append('channel-group {0} mode {1}'.format(group, mode))
 
                     elif set(members) != set(obj_in_have['members']):
                         missing_members = list(set(members) - set(obj_in_have['members']))
                         for m in missing_members:
                             commands.extend(cmd)
-                            commands.append('interface {}'.format(m))
+                            commands.append('interface {0}'.format(m))
                             commands.append('channel-group {0} mode {1}'.format(group, mode))
 
                         superfluous_members = list(set(obj_in_have['members']) - set(members))
                         for m in superfluous_members:
                             commands.extend(cmd)
-                            commands.append('interface {}'.format(m))
-                            commands.append('no channel-group {}'.format(group))
+                            commands.append('interface {0}'.format(m))
+                            commands.append('no channel-group {0}'.format(group))
 
     if purge:
         for h in have:
             obj_in_want = search_obj_in_list(h['group'], want)
             if not obj_in_want:
-                commands.append('no interface port-channel {}'.format(h['group']))
+                commands.append('no interface port-channel {0}'.format(h['group']))
 
     return commands
 
@@ -220,9 +221,9 @@ def parse_mode(group, member, config):
     mode = None
 
     for line in config.strip().split('!'):
-        match_int = re.findall(r'interface {}\\b'.format(member), line, re.M)
+        match_int = re.findall(r'interface {0}\\b'.format(member), line, re.M)
         if match_int:
-            match = re.search(r'channel-group {} mode (\S+)'.format(group), line, re.M)
+            match = re.search(r'channel-group {0} mode (\S+)'.format(group), line, re.M)
             if match:
                 mode = match.group(1)
 
@@ -233,7 +234,7 @@ def parse_members(group, config):
     members = []
 
     for line in config.strip().split('!'):
-        match_group = re.findall(r'channel-group {} mode'.format(group), line, re.M)
+        match_group = re.findall(r'channel-group {0} mode'.format(group), line, re.M)
         if match_group:
             match = re.search(r'interface (\S+)', line, re.M)
             if match:
@@ -262,7 +263,7 @@ def parse_min_links(group, config):
     min_links = ''
 
     for line in config.strip().split('!'):
-        match_pc = re.findall(r'interface Port-Channel{}\\b'.format(group), line, re.M)
+        match_pc = re.findall(r'interface Port-Channel{0}\\b'.format(group), line, re.M)
         if match_pc:
             match = re.search(r'port-channel min-links (\S+)', line, re.M)
             if match:
@@ -343,6 +344,7 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

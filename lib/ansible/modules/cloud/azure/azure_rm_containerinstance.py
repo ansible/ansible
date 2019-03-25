@@ -39,7 +39,7 @@ options:
         default: linux
     state:
         description:
-            - Assert the state of the container instance. Use 'present' to create or update an container instance and 'absent' to delete it.
+            - Assert the state of the container instance. Use C(present) to create or update an container instance and C(absent) to delete it.
         default: present
         choices:
             - absent
@@ -50,6 +50,12 @@ options:
         choices:
             - public
             - none
+        default: 'none'
+    dns_name_label:
+        description:
+            - The Dns name label for the IP.
+        type: str
+        version_added: "2.8"
     ports:
         description:
             - List of ports exposed within the container group.
@@ -88,6 +94,40 @@ options:
             ports:
                 description:
                     - List of ports exposed within the container group.
+            environment_variables:
+                description:
+                    - List of container environment variables.
+                    - When updating existing container all existing variables will be replaced by new ones.
+                type: dict
+                suboptions:
+                    name:
+                        description:
+                            - Environment variable name.
+                        type: str
+                    value:
+                        description:
+                            - Environment variable value.
+                        type: str
+                    is_secure:
+                        description:
+                            - Is variable secure.
+                        type: bool
+                version_added: "2.8"
+            commands:
+                description:
+                    - List of commands to execute within the container instance in exec form.
+                    - When updating existing container all existing commands will be replaced by new ones.
+                type: list
+                version_added: "2.8"
+    restart_policy:
+        description:
+            - Restart policy for all containers within the container group.
+        type: str
+        choices:
+            - always
+            - on_failure
+            - never
+        version_added: "2.8"
     force_update:
         description:
             - Force update of existing container instance. Any update will result in deletion and recreation of existing containers.
@@ -96,6 +136,7 @@ options:
 
 extends_documentation_fragment:
     - azure
+    - azure_tags
 
 author:
     - "Zim Kalinowski (@zikalino)"
@@ -105,7 +146,7 @@ author:
 EXAMPLES = '''
   - name: Create sample container group
     azure_rm_containerinstance:
-      resource_group: testrg
+      resource_group: myResourceGroup
       name: mynewcontainergroup
       os_type: linux
       ip_address: public
@@ -125,7 +166,7 @@ id:
         - Resource ID
     returned: always
     type: str
-    sample: /subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/TestGroup/providers/Microsoft.ContainerInstance/containerGroups/aci1b6dd89
+    sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.ContainerInstance/containerGroups/aci1b6dd89
 provisioning_state:
     description:
         - Provisioning state of the container.
@@ -141,9 +182,11 @@ ip_address:
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+from ansible.module_utils.common.dict_transformations import _snake_to_camel
 
 try:
     from msrestazure.azure_exceptions import CloudError
+    from msrest.polling import LROPoller
     from azure.mgmt.containerinstance import ContainerInstanceManagementClient
 except ImportError:
     # This is handled in azure_rm_common
@@ -219,6 +262,9 @@ class AzureRMContainerInstance(AzureRMModuleBase):
                 default='none',
                 choices=['public', 'none']
             ),
+            dns_name_label=dict(
+                type='str',
+            ),
             ports=dict(
                 type='list',
                 default=[]
@@ -240,6 +286,10 @@ class AzureRMContainerInstance(AzureRMModuleBase):
                 type='list',
                 required=True
             ),
+            restart_policy=dict(
+                type='str',
+                choices=['always', 'on_failure', 'never']
+            ),
             force_update=dict(
                 type='bool',
                 default=False
@@ -251,31 +301,31 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         self.location = None
         self.state = None
         self.ip_address = None
-
+        self.dns_name_label = None
         self.containers = None
+        self.restart_policy = None
+
+        self.tags = None
 
         self.results = dict(changed=False, state=dict())
-        self.client = None
         self.cgmodels = None
 
         super(AzureRMContainerInstance, self).__init__(derived_arg_spec=self.module_arg_spec,
                                                        supports_check_mode=True,
-                                                       supports_tags=False)
+                                                       supports_tags=True)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
 
-        for key in list(self.module_arg_spec.keys()):
+        for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
 
         resource_group = None
         response = None
         results = dict()
 
-        self.client = self.get_mgmt_svc_client(ContainerInstanceManagementClient)
-
         # since this client hasn't been upgraded to expose models directly off the OperationClass, fish them out
-        self.cgmodels = self.client.container_groups.models
+        self.cgmodels = self.containerinstance_client.container_groups.models
 
         resource_group = self.get_resource_group(self.resource_group)
 
@@ -301,6 +351,10 @@ class AzureRMContainerInstance(AzureRMModuleBase):
                 self.log("Container instance deleted")
             elif self.state == 'present':
                 self.log("Need to check if container group has to be deleted or may be updated")
+                update_tags, newtags = self.update_tags(response.get('tags', dict()))
+                if update_tags:
+                    self.tags = newtags
+
                 if self.force_update:
                     self.log('Deleting container instance before update')
                     if not self.check_mode:
@@ -347,7 +401,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
                 ports = []
                 for port in self.ports:
                     ports.append(self.cgmodels.Port(port=port, protocol="TCP"))
-                ip_address = self.cgmodels.IpAddress(ports=ports, ip=self.ip_address)
+                ip_address = self.cgmodels.IpAddress(ports=ports, dns_name_label=self.dns_name_label, type='public')
 
         containers = []
 
@@ -356,31 +410,46 @@ class AzureRMContainerInstance(AzureRMModuleBase):
             image = container_def.get("image")
             memory = container_def.get("memory", 1.5)
             cpu = container_def.get("cpu", 1)
+            commands = container_def.get("commands")
             ports = []
+            variables = []
 
             port_list = container_def.get("ports")
             if port_list:
                 for port in port_list:
                     ports.append(self.cgmodels.ContainerPort(port=port))
 
+            variable_list = container_def.get("environment_variables")
+            if variable_list:
+                for variable in variable_list:
+                    variables.append(self.cgmodels.EnvironmentVariable(name=variable.get('name'),
+                                                                       value=variable.get('value') if not variable.get('is_secure') else None,
+                                                                       secure_value=variable.get('value') if variable.get('is_secure') else None))
+
             containers.append(self.cgmodels.Container(name=name,
                                                       image=image,
                                                       resources=self.cgmodels.ResourceRequirements(
                                                           requests=self.cgmodels.ResourceRequests(memory_in_gb=memory, cpu=cpu)
                                                       ),
-                                                      ports=ports))
+                                                      ports=ports,
+                                                      command=commands,
+                                                      environment_variables=variables))
 
         parameters = self.cgmodels.ContainerGroup(location=self.location,
                                                   containers=containers,
                                                   image_registry_credentials=registry_credentials,
-                                                  restart_policy=None,
+                                                  restart_policy=_snake_to_camel(self.restart_policy, True) if self.restart_policy else None,
                                                   ip_address=ip_address,
                                                   os_type=self.os_type,
-                                                  volumes=None)
+                                                  volumes=None,
+                                                  tags=self.tags)
 
-        response = self.client.container_groups.create_or_update(resource_group_name=self.resource_group,
-                                                                 container_group_name=self.name,
-                                                                 container_group=parameters)
+        response = self.containerinstance_client.container_groups.create_or_update(resource_group_name=self.resource_group,
+                                                                                   container_group_name=self.name,
+                                                                                   container_group=parameters)
+
+        if isinstance(response, LROPoller):
+            response = self.get_poller_result(response)
 
         return response.as_dict()
 
@@ -391,7 +460,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         :return: True
         '''
         self.log("Deleting the container instance {0}".format(self.name))
-        response = self.client.container_groups.delete(resource_group_name=self.resource_group, container_group_name=self.name)
+        response = self.containerinstance_client.container_groups.delete(resource_group_name=self.resource_group, container_group_name=self.name)
         return True
 
     def get_containerinstance(self):
@@ -403,7 +472,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
         self.log("Checking if the container instance {0} is present".format(self.name))
         found = False
         try:
-            response = self.client.container_groups.get(resource_group_name=self.resource_group, container_group_name=self.name)
+            response = self.containerinstance_client.container_groups.get(resource_group_name=self.resource_group, container_group_name=self.name)
             found = True
             self.log("Response : {0}".format(response))
             self.log("Container instance : {0} found".format(response.name))
@@ -418,6 +487,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
 def main():
     """Main execution"""
     AzureRMContainerInstance()
+
 
 if __name__ == '__main__':
     main()

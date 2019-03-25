@@ -2,12 +2,6 @@
 # Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- name: store the vcenter container ip
-  set_fact:
-    vcsim: "{{ lookup('env', 'vcenter_host') }}"
-
-- debug: var=vcsim
-
 - name: Wait for Flask controller to come up online
   wait_for:
     host: "{{ vcsim }}"
@@ -84,7 +78,6 @@
     - DC0_C0_H1
     - DC0_C0_H2
 
-
 - name: Disable vvold for {{ host1 }}
   vmware_host_firewall_manager:
     hostname: "{{ vcsim }}"
@@ -111,5 +104,67 @@
         - host_result.rule_set_state[item]['vvold']['current_state'] == False
         - host_result.rule_set_state[item]['vvold']['desired_state'] == False
         - host_result.rule_set_state[item]['vvold']['previous_state'] == True
+  with_items:
+    - "{{ host1 }}"
+
+- name: Enable vvold rule set on all hosts of {{ ccr1 }} in check mode
+  vmware_host_firewall_manager:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance.json.username }}"
+    password: "{{ vcsim_instance.json.password }}"
+    validate_certs: no
+    cluster_name: "{{ ccr1 }}"
+    rules:
+      - name: vvold
+        enabled: True
+  register: all_hosts_result_check_mode
+  check_mode: yes
+
+- debug: msg="{{ all_hosts_result_check_mode }}"
+
+- name: ensure everything is changed for all hosts of {{ ccr1 }}
+  assert:
+    that:
+        - all_hosts_result_check_mode.changed
+        - all_hosts_result_check_mode.rule_set_state is defined
+
+- name: ensure facts are gathered for all hosts of {{ ccr1 }}
+  assert:
+    that:
+        - all_hosts_result_check_mode.rule_set_state[item]['vvold']['current_state'] == True
+        - all_hosts_result_check_mode.rule_set_state[item]['vvold']['desired_state'] == True
+        - all_hosts_result_check_mode.rule_set_state[item]['vvold']['previous_state'] == False
+  with_items:
+    - DC0_C0_H0
+    - DC0_C0_H1
+    - DC0_C0_H2
+
+- name: Disable vvold for {{ host1 }} in check mode
+  vmware_host_firewall_manager:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance.json.username }}"
+    password: "{{ vcsim_instance.json.password }}"
+    validate_certs: no
+    esxi_hostname: "{{ host1 }}"
+    rules:
+      - name: vvold
+        enabled: False
+  register: host_result_check_mode
+  check_mode: yes
+
+- debug: msg="{{ host_result_check_mode }}"
+
+- name: ensure vvold is disabled for {{ host1 }}
+  assert:
+    that:
+        - host_result_check_mode.changed == False
+        - host_result_check_mode.rule_set_state is defined
+
+- name: ensure facts are gathered for {{ host1 }}
+  assert:
+    that:
+        - host_result_check_mode.rule_set_state[item]['vvold']['current_state'] == False
+        - host_result_check_mode.rule_set_state[item]['vvold']['desired_state'] == False
+        - host_result_check_mode.rule_set_state[item]['vvold']['previous_state'] == False
   with_items:
     - "{{ host1 }}"

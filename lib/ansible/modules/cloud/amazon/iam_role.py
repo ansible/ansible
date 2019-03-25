@@ -17,7 +17,7 @@ author: "Rob White (@wimnat)"
 options:
   path:
     description:
-      - The path to the role. For more information about paths, see U(http://docs.aws.amazon.com/IAM/latest/UserGuide/reference_identifiers.html).
+      - The path to the role. For more information about paths, see U(https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_identifiers.html).
     default: "/"
   name:
     description:
@@ -27,6 +27,14 @@ options:
     description:
       - Provide a description of the new role
     version_added: "2.5"
+  boundary:
+    description:
+      - Add the ARN of an IAM managed policy to restrict the permissions this role can pass on to IAM roles/users that it creates.
+      - Boundaries cannot be set on Instance Profiles, so if this option is specified then C(create_instance_profile) must be false.
+      - This is intended for roles/users that have permissions to create new IAM objects.
+      - For more information on boundaries, see U(https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html)
+    aliases: [boundary_policy_arn]
+    version_added: "2.7"
   assume_role_policy_document:
     description:
       - The trust relationship policy document that grants an entity permission to assume the role.
@@ -79,8 +87,7 @@ EXAMPLES = '''
   iam_role:
     name: mynewrole
     assume_role_policy_document: "{{ lookup('file','policy.json') }}"
-    managed_policy:
-      -
+    managed_policy: []
 
 - name: Delete the role
   iam_role:
@@ -97,32 +104,32 @@ iam_role:
     contains:
         path:
             description: the path to the role
-            type: string
+            type: str
             returned: always
             sample: /
         role_name:
             description: the friendly name that identifies the role
-            type: string
+            type: str
             returned: always
             sample: myrole
         role_id:
             description: the stable and unique string identifying the role
-            type: string
+            type: str
             returned: always
             sample: ABCDEFF4EZ4ABCDEFV4ZC
         arn:
             description: the Amazon Resource Name (ARN) specifying the role
-            type: string
+            type: str
             returned: always
             sample: "arn:aws:iam::1234567890:role/mynewrole"
         create_date:
             description: the date and time, in ISO 8601 date-time format, when the role was created
-            type: string
+            type: str
             returned: always
             sample: "2016-08-14T04:36:28+00:00"
         assume_role_policy_document:
             description: the policy that grants an entity permission to assume the role
-            type: string
+            type: str
             returned: always
             sample: {
                         'statement': [
@@ -150,9 +157,9 @@ iam_role:
 '''
 
 from ansible.module_utils._text import to_native
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info, boto3_conn, sort_json_policy_dict
-from ansible.module_utils.ec2 import HAS_BOTO3
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info, boto3_conn, compare_policies
+from ansible.module_utils.ec2 import AWSRetry
 
 import json
 import traceback
@@ -160,12 +167,11 @@ import traceback
 try:
     from botocore.exceptions import ClientError, BotoCoreError
 except ImportError:
-    pass  # caught by imported HAS_BOTO3
+    pass  # caught by AnsibleAWSModule
 
 
 def compare_assume_role_policy_doc(current_policy_doc, new_policy_doc):
-
-    if sort_json_policy_dict(current_policy_doc) == sort_json_policy_dict(json.loads(new_policy_doc)):
+    if not compare_policies(current_policy_doc, json.loads(new_policy_doc)):
         return True
     else:
         return False
@@ -218,13 +224,14 @@ def remove_policies(connection, module, policies_to_remove, params):
 
 
 def create_or_update_role(connection, module):
-
     params = dict()
     params['Path'] = module.params.get('path')
     params['RoleName'] = module.params.get('name')
     params['AssumeRolePolicyDocument'] = module.params.get('assume_role_policy_document')
     if module.params.get('description') is not None:
         params['Description'] = module.params.get('description')
+    if module.params.get('boundary') is not None:
+        params['PermissionsBoundary'] = module.params.get('boundary')
     managed_policies = module.params.get('managed_policy')
     create_instance_profile = module.params.get('create_instance_profile')
     if managed_policies:
@@ -239,6 +246,10 @@ def create_or_update_role(connection, module):
         try:
             if not module.check_mode:
                 role = connection.create_role(**params)
+                # 'Description' is documented as key of the role returned by create_role
+                # but appears to be an AWS bug (the value is not returned using the AWS CLI either).
+                # Get the role after creating it.
+                role = get_role_with_backoff(connection, module, params['RoleName'])
             else:
                 role = {'MadeInCheckMode': True}
                 role['AssumeRolePolicyDocument'] = json.loads(params['AssumeRolePolicyDocument'])
@@ -324,6 +335,40 @@ def create_or_update_role(connection, module):
             if not module.check_mode:
                 connection.add_role_to_instance_profile(InstanceProfileName=params['RoleName'], RoleName=params['RoleName'])
 
+    # Check Description update
+    if not role.get('MadeInCheckMode') and params.get('Description') and role['Description'] != params['Description']:
+        try:
+            if not module.check_mode:
+                connection.update_role_description(RoleName=params['RoleName'], Description=params['Description'])
+
+            changed = True
+        except (BotoCoreError, ClientError) as e:
+            module.fail_json(msg="Unable to update description for role {0}: {1}".format(params['RoleName'], to_native(e)),
+                             exception=traceback.format_exc())
+
+    # Check if permission boundary needs update
+    if not role.get('MadeInCheckMode') and (
+            (role.get('PermissionsBoundary') or {}).get('PermissionsBoundaryArn') or
+            params.get('PermissionsBoundary') is not None):
+        # the existing role has a boundary
+        if module.params.get('boundary') is None:
+            pass
+        elif module.params.get('boundary') == '':
+            if (role.get('PermissionsBoundary') or {}).get('PermissionsBoundaryArn'):
+                try:
+                    if not module.check_mode:
+                        connection.delete_role_permissions_boundary(RoleName=params['RoleName'])
+                    changed = True
+                except (BotoCoreError, ClientError) as e:
+                    module.fail_json_aws(e, msg="Unable to remove permission boundary for role {0}: {1}".format(params['RoleName'], to_native(e)))
+        elif (role.get('PermissionsBoundary') or {}).get('PermissionsBoundaryArn') != params['PermissionsBoundary']:
+            try:
+                if not module.check_mode:
+                    connection.put_role_permissions_boundary(RoleName=params['RoleName'], PermissionsBoundary=params['PermissionsBoundary'])
+                changed = True
+            except (BotoCoreError, ClientError) as e:
+                module.fail_json_aws(e, msg="Unable to update permission boundary for role {0}: {1}".format(params['RoleName'], to_native(e)))
+
     # Get the role again
     if not role.get('MadeInCheckMode', False):
         role = get_role(connection, module, params['RoleName'])
@@ -337,7 +382,9 @@ def destroy_role(connection, module):
     params = dict()
     params['RoleName'] = module.params.get('name')
 
-    if get_role(connection, module, params['RoleName']):
+    role = get_role(connection, module, params['RoleName'])
+
+    if role:
 
         # We need to remove any instance profiles from the role before we delete it
         try:
@@ -348,6 +395,12 @@ def destroy_role(connection, module):
         except BotoCoreError as e:
             module.fail_json(msg="Unable to list instance profiles for role {0}: {1}".format(params['RoleName'], to_native(e)),
                              exception=traceback.format_exc())
+
+        if role.get('PermissionsBoundary') is not None:
+            try:
+                connection.delete_role_permissions_boundary(RoleName=params['RoleName'])
+            except (ClientError, BotoCoreError) as e:
+                module.fail_json_aws(e, msg="Could not delete role permission boundary on role {0}: {1}".format(params['RoleName'], e))
 
         # Now remove the role from the instance profile(s)
         for profile in instance_profiles:
@@ -389,6 +442,13 @@ def destroy_role(connection, module):
     module.exit_json(changed=True)
 
 
+def get_role_with_backoff(connection, module, name):
+    try:
+        return AWSRetry.jittered_backoff(catch_extra_error_codes=['NoSuchEntity'])(connection.get_role)(RoleName=name)['Role']
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json(msg="Unable to get role {0}: {1}".format(name, to_native(e)), exception=traceback.format_exc())
+
+
 def get_role(connection, module, name):
     try:
         return connection.get_role(RoleName=name)['Role']
@@ -419,30 +479,28 @@ def get_attached_policy_list(connection, module, name):
 
 def main():
 
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            name=dict(type='str', required=True),
-            path=dict(type='str', default="/"),
-            assume_role_policy_document=dict(type='json'),
-            managed_policy=dict(type='list', aliases=['managed_policies']),
-            state=dict(type='str', choices=['present', 'absent'], default='present'),
-            description=dict(type='str'),
-            create_instance_profile=dict(type='bool', default=True),
-            purge_policies=dict(type='bool', default=True),
-        )
+    argument_spec = dict(
+        name=dict(type='str', required=True),
+        path=dict(type='str', default="/"),
+        assume_role_policy_document=dict(type='json'),
+        managed_policy=dict(type='list', aliases=['managed_policies']),
+        state=dict(type='str', choices=['present', 'absent'], default='present'),
+        description=dict(type='str'),
+        boundary=dict(type='str', aliases=['boundary_policy_arn']),
+        create_instance_profile=dict(type='bool', default=True),
+        purge_policies=dict(type='bool', default=True),
     )
+    module = AnsibleAWSModule(argument_spec=argument_spec,
+                              required_if=[('state', 'present', ['assume_role_policy_document'])],
+                              supports_check_mode=True)
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                           required_if=[('state', 'present', ['assume_role_policy_document'])],
-                           supports_check_mode=True)
+    if module.params.get('boundary') and module.params.get('create_instance_profile'):
+        module.fail_json(msg="When using a boundary policy, `create_instance_profile` must be set to `false`.")
+    if module.params.get('boundary') is not None and not module.botocore_at_least('1.10.57'):
+        module.fail_json(msg="When using a boundary policy, botocore must be at least v1.10.57. "
+                         "Current versions: boto3-{boto3_version} botocore-{botocore_version}".format(**module._gather_versions()))
 
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
-
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-
-    connection = boto3_conn(module, conn_type='client', resource='iam', region=region, endpoint=ec2_url, **aws_connect_params)
+    connection = module.client('iam')
 
     state = module.params.get("state")
 

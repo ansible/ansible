@@ -1,7 +1,7 @@
 #!/usr/bin/python
 """ this is interface module
 
- (c) 2018, NetApp, Inc
+ (c) 2018-2019, NetApp, Inc
  # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 """
 
@@ -11,19 +11,19 @@ __metaclass__ = type
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
-    'supported_by': 'community'
+    'supported_by': 'certified'
 }
 
 DOCUMENTATION = '''
 ---
 
 module: na_ontap_interface
-short_description: ONTAP LIF configuration
+short_description: NetApp ONTAP LIF configuration
 
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
-author: chhaya gunawat (chhayag@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 
 description:
     - Creating / deleting and modifying the LIF.
@@ -43,7 +43,7 @@ options:
   home_node:
     description:
     - Specifies the LIF's home node.
-    - Required when C(state=present).
+    - By default, the first node from the cluster is considered as home node
 
   home_port:
     description:
@@ -53,6 +53,7 @@ options:
   role:
     description:
     - Specifies the role of the LIF.
+    - When setting role as "intercluster", setting protocol is not supported.
     - Required when C(state=present).
 
   address:
@@ -77,6 +78,14 @@ options:
   failover_policy:
     description:
     - Specifies the failover policy for the LIF.
+    - Possible values are 'disabled', 'system-defined', 'local-only', 'sfo-partner-only', and 'broadcast-domain-wide'
+
+  subnet_name:
+    description:
+    - Subnet where the interface address is allocated from.
+      If the option is not used, the IP address will need to be provided by
+      the administrator during configuration.
+    version_added: '2.8'
 
   admin_status:
     choices: ['up', 'down']
@@ -87,12 +96,14 @@ options:
     description:
        If true, data LIF will revert to its home node under certain circumstances such as startup, and load balancing
        migration capability is disabled automatically
+    type: bool
 
   protocols:
     description:
-       Specifies the list of data protocols configured on the LIF. By default, the values in this element are nfs, cifs and fcache.
-       Other supported protocols are iscsi and fcp. A LIF can be configured to not support any data protocols by specifying 'none'.
-       Protocol values of none, iscsi or fcp can't be combined with any other data protocol(s).
+    - Specifies the list of data protocols configured on the LIF. By default, the values in this element are nfs, cifs and fcache.
+    - Other supported protocols are iscsi and fcp. A LIF can be configured to not support any data protocols by specifying 'none'.
+    - Protocol values of none, iscsi, fc-nvme or fcp can't be combined with any other data protocol(s).
+    - address, netmask and firewall_policy parameters are not supported for 'fc-nvme' option.
 
 '''
 
@@ -133,6 +144,7 @@ RETURN = """
 
 import traceback
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.netapp_module import NetAppModule
 from ansible.module_utils._text import to_native
 import ansible.module_utils.netapp as netapp_utils
 
@@ -141,49 +153,32 @@ HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 
 class NetAppOntapInterface(object):
     ''' object to describe  interface info '''
-
     def __init__(self):
 
         self.argument_spec = netapp_utils.na_ontap_host_argument_spec()
-        self.argument_spec.update(dict(
-            state=dict(required=False, choices=[
-                       'present', 'absent'], default='present'),
-            interface_name=dict(required=True, type='str'),
-            home_node=dict(required=False, type='str', default=None),
-            home_port=dict(required=False, type='str'),
-            role=dict(required=False, type='str'),
-            address=dict(required=False, type='str'),
-            netmask=dict(required=False, type='str'),
-            vserver=dict(required=True, type='str'),
-            firewall_policy=dict(required=False, type='str', default=None),
-            failover_policy=dict(required=False, type='str', default=None),
-            admin_status=dict(required=False, choices=['up', 'down']),
-            is_auto_revert=dict(required=False, type='str', default=None),
-            protocols=dict(required=False, type='list')
-
-        ))
+        self.argument_spec.update(
+            state=dict(type='str', default='present', choices=['absent', 'present']),
+            interface_name=dict(type='str', required=True),
+            home_node=dict(type='str'),
+            home_port=dict(type='str'),
+            role=dict(type='str'),
+            address=dict(type='str'),
+            netmask=dict(type='str'),
+            vserver=dict(type='str', required=True),
+            firewall_policy=dict(type='str'),
+            failover_policy=dict(type='str'),
+            admin_status=dict(type='str', choices=['up', 'down']),
+            subnet_name=dict(type='str'),
+            is_auto_revert=dict(type='bool'),
+            protocols=dict(type='list'),
+        )
 
         self.module = AnsibleModule(
             argument_spec=self.argument_spec,
-            supports_check_mode=True
+            supports_check_mode=True,
         )
-
-        params = self.module.params
-
-        # set up state variables
-        self.state = params['state']
-        self.interface_name = params['interface_name']
-        self.home_node = params['home_node']
-        self.home_port = params['home_port']
-        self.role = params['role']
-        self.vserver = params['vserver']
-        self.address = params['address']
-        self.netmask = params['netmask']
-        self.admin_status = params['admin_status']
-        self.failover_policy = params['failover_policy']
-        self.firewall_policy = params['firewall_policy']
-        self.is_auto_revert = params['is_auto_revert']
-        self.protocols = params['protocols']
+        self.na_helper = NetAppModule()
+        self.parameters = self.na_helper.set_parameters(self.module.params)
 
         if HAS_NETAPP_LIB is False:
             self.module.fail_json(
@@ -191,7 +186,7 @@ class NetAppOntapInterface(object):
         else:
             self.server = netapp_utils.setup_na_ontap_zapi(module=self.module)
 
-    def get_interface(self):
+    def get_interface(self, interface_name=None):
         """
         Return details about the interface
         :param:
@@ -200,159 +195,186 @@ class NetAppOntapInterface(object):
         :return: Details about the interface. None if not found.
         :rtype: dict
         """
+        if interface_name is None:
+            interface_name = self.parameters['interface_name']
         interface_info = netapp_utils.zapi.NaElement('net-interface-get-iter')
-        interface_attributes = netapp_utils.zapi.NaElement(
-            'net-interface-info')
-        interface_attributes.add_new_child(
-            'interface-name', self.interface_name)
+        interface_attributes = netapp_utils.zapi.NaElement('net-interface-info')
+        interface_attributes.add_new_child('interface-name', interface_name)
         query = netapp_utils.zapi.NaElement('query')
         query.add_child_elem(interface_attributes)
         interface_info.add_child_elem(query)
         result = self.server.invoke_successfully(interface_info, True)
         return_value = None
-
         if result.get_child_by_name('num-records') and \
                 int(result.get_child_content('num-records')) >= 1:
 
             interface_attributes = result.get_child_by_name('attributes-list').\
                 get_child_by_name('net-interface-info')
             return_value = {
-                'interface_name': self.interface_name,
-                'admin_status': interface_attributes.get_child_content('administrative-status'),
-                'home_port': interface_attributes.get_child_content('home-port'),
-                'home_node': interface_attributes.get_child_content('home-node'),
-                'address': interface_attributes.get_child_content('address'),
-                'netmask': interface_attributes.get_child_content('netmask'),
-                'failover_policy': interface_attributes.get_child_content('failover-policy'),
-                'firewall_policy': interface_attributes.get_child_content('firewall-policy'),
-                'is_auto_revert': interface_attributes.get_child_content('is-auto-revert'),
+                'interface_name': self.parameters['interface_name'],
+                'admin_status': interface_attributes['administrative-status'],
+                'home_port': interface_attributes['home-port'],
+                'home_node': interface_attributes['home-node'],
+                'failover_policy': interface_attributes['failover-policy'].replace('_', '-'),
+                'is_auto_revert': True if interface_attributes['is-auto-revert'] == 'true' else False,
             }
+            if interface_attributes.get_child_by_name('address'):
+                return_value['address'] = interface_attributes['address']
+            if interface_attributes.get_child_by_name('netmask'):
+                return_value['netmask'] = interface_attributes['netmask']
+            if interface_attributes.get_child_by_name('firewall-policy'):
+                return_value['firewall_policy'] = interface_attributes['firewall-policy']
         return return_value
+
+    def set_options(self, options, parameters):
+        """ set attributes for create or modify """
+        if parameters.get('home_port') is not None:
+            options['home-port'] = parameters['home_port']
+        if parameters.get('subnet_name') is not None:
+            options['subnet-name'] = parameters['subnet_name']
+        if parameters.get('address') is not None:
+            options['address'] = parameters['address']
+        if parameters.get('netmask') is not None:
+            options['netmask'] = parameters['netmask']
+        if parameters.get('failover_policy') is not None:
+            options['failover-policy'] = parameters['failover_policy']
+        if parameters.get('firewall_policy') is not None:
+            options['firewall-policy'] = parameters['firewall_policy']
+        if parameters.get('is_auto_revert') is not None:
+            options['is-auto-revert'] = 'true' if parameters['is_auto_revert'] is True else 'false'
+        if parameters.get('admin_status') is not None:
+            options['administrative-status'] = parameters['admin_status']
+
+    def set_protocol_option(self, required_keys):
+        """ set protocols for create """
+        if self.parameters.get('protocols') is not None:
+            data_protocols_obj = netapp_utils.zapi.NaElement('data-protocols')
+            for protocol in self.parameters.get('protocols'):
+                if protocol.lower() == 'fc-nvme':
+                    required_keys.remove('address')
+                    required_keys.remove('home_port')
+                    required_keys.remove('netmask')
+                    not_required_params = set(['address', 'netmask', 'firewall_policy'])
+                    if not not_required_params.isdisjoint(set(self.parameters.keys())):
+                        self.module.fail_json(msg='Error: Following parameters for creating interface are not supported'
+                                                  ' for data-protocol fc-nvme: %s' % ', '.join(not_required_params))
+                data_protocols_obj.add_new_child('data-protocol', protocol)
+            return data_protocols_obj
+        return None
+
+    def get_home_node_for_cluster(self):
+        ''' get the first node name from this cluster '''
+        get_node = netapp_utils.zapi.NaElement('cluster-node-get-iter')
+        attributes = {
+            'query': {
+                'cluster-node-info': {}
+            }
+        }
+        get_node.translate_struct(attributes)
+        try:
+            result = self.server.invoke_successfully(get_node, enable_tunneling=True)
+        except netapp_utils.zapi.NaApiError as exc:
+            self.module.fail_json(msg='Error fetching node for interface %s: %s' %
+                                  (self.parameters['interface_name'], to_native(exc)),
+                                  exception=traceback.format_exc())
+        if result.get_child_by_name('num-records') and int(result.get_child_content('num-records')) >= 1:
+            attributes = result.get_child_by_name('attributes-list')
+            return attributes.get_child_by_name('cluster-node-info').get_child_content('node-name')
+        return None
+
+    def validate_create_parameters(self, keys):
+        '''
+            Validate if required parameters for create are present.
+            Parameter requirement might vary based on given data-protocol.
+            :return: None
+        '''
+        if self.parameters.get('home_node') is None:
+            node = self.get_home_node_for_cluster()
+            if node is not None:
+                self.parameters['home_node'] = node
+        # validate if mandatory parameters are present for create
+        if not keys.issubset(set(self.parameters.keys())):
+            self.module.fail_json(msg='Error: Missing one or more required parameters for creating interface: %s'
+                                      % ', '.join(keys))
+        # if role is intercluster, protocol cannot be specified
+        if self.parameters['role'] == "intercluster" and self.parameters.get('protocols') is not None:
+            self.module.fail_json(msg='Error: Protocol cannot be specified for intercluster role,'
+                                      'failed to create interface')
 
     def create_interface(self):
         ''' calling zapi to create interface '''
+        required_keys = set(['role', 'address', 'home_port', 'netmask'])
+        data_protocols_obj = self.set_protocol_option(required_keys)
+        self.validate_create_parameters(required_keys)
 
-        options = {'interface-name': self.interface_name,
-                   'vserver': self.vserver}
-        if self.home_port is not None:
-            options['home-port'] = self.home_port
-        if self.home_node is not None:
-            options['home-node'] = self.home_node
-        if self.address is not None:
-            options['address'] = self.address
-        if self.netmask is not None:
-            options['netmask'] = self.netmask
-        if self.role is not None:
-            options['role'] = self.role
-        if self.failover_policy is not None:
-            options['failover-policy'] = self.failover_policy
-        if self.firewall_policy is not None:
-            options['firewall-policy'] = self.firewall_policy
-        if self.is_auto_revert is not None:
-            options['is-auto-revert'] = self.is_auto_revert
-        if self.admin_status is not None:
-            options['administrative-status'] = self.admin_status
-
-        interface_create = netapp_utils.zapi.NaElement.create_node_with_children(
-            'net-interface-create', **options)
-        if self.protocols is not None:
-            data_protocols_obj = netapp_utils.zapi.NaElement('data-protocols')
+        options = {'interface-name': self.parameters['interface_name'],
+                   'role': self.parameters['role'],
+                   'home-node': self.parameters.get('home_node'),
+                   'vserver': self.parameters['vserver']}
+        self.set_options(options, self.parameters)
+        interface_create = netapp_utils.zapi.NaElement.create_node_with_children('net-interface-create', **options)
+        if data_protocols_obj is not None:
             interface_create.add_child_elem(data_protocols_obj)
-            for protocol in self.protocols:
-                data_protocols_obj.add_new_child('data-protocol', protocol)
-
         try:
-            self.server.invoke_successfully(interface_create,
-                                            enable_tunneling=True)
+            self.server.invoke_successfully(interface_create, enable_tunneling=True)
         except netapp_utils.zapi.NaApiError as exc:
             self.module.fail_json(msg='Error Creating interface %s: %s' %
-                                  (self.interface_name, to_native(exc)), exception=traceback.format_exc())
+                                  (self.parameters['interface_name'], to_native(exc)), exception=traceback.format_exc())
 
     def delete_interface(self, current_status):
         ''' calling zapi to delete interface '''
         if current_status == 'up':
-            self.admin_status = 'down'
-            self.modify_interface()
+            self.parameters['admin_status'] = 'down'
+            self.modify_interface({'admin_status': 'down'})
 
         interface_delete = netapp_utils.zapi.NaElement.create_node_with_children(
-            'net-interface-delete', **{'interface-name': self.interface_name,
-                                       'vserver': self.vserver})
+            'net-interface-delete', **{'interface-name': self.parameters['interface_name'],
+                                       'vserver': self.parameters['vserver']})
         try:
-            self.server.invoke_successfully(interface_delete,
-                                            enable_tunneling=True)
+            self.server.invoke_successfully(interface_delete, enable_tunneling=True)
         except netapp_utils.zapi.NaApiError as exc:
-            self.module.fail_json(msg='Error deleting interface %s: %s' % (self.interface_name, to_native(exc)),
+            self.module.fail_json(msg='Error deleting interface %s: %s' % (self.parameters['interface_name'], to_native(exc)),
                                   exception=traceback.format_exc())
 
-    def modify_interface(self):
+    def modify_interface(self, modify):
         """
         Modify the interface.
         """
-        options = {'interface-name': self.interface_name,
-                   'vserver': self.vserver
+        options = {'interface-name': self.parameters['interface_name'],
+                   'vserver': self.parameters['vserver']
                    }
-        if self.admin_status is not None:
-            options['administrative-status'] = self.admin_status
-        if self.failover_policy is not None:
-            options['failover-policy'] = self.failover_policy
-        if self.firewall_policy is not None:
-            options['firewall-policy'] = self.firewall_policy
-        if self.is_auto_revert is not None:
-            options['is-auto-revert'] = self.is_auto_revert
-        if self.netmask is not None:
-            options['netmask'] = self.netmask
-        if self.address is not None:
-            options['address'] = self.address
-
-        interface_modify = netapp_utils.zapi.NaElement.create_node_with_children(
-            'net-interface-modify', **options)
+        self.set_options(options, modify)
+        interface_modify = netapp_utils.zapi.NaElement.create_node_with_children('net-interface-modify', **options)
         try:
-            self.server.invoke_successfully(interface_modify,
-                                            enable_tunneling=True)
-        except netapp_utils.zapi.NaApiError as e:
-            self.module.fail_json(msg='Error modifying interface %s: %s' % (self.interface_name, to_native(e)),
-                                  exception=traceback.format_exc())
+            self.server.invoke_successfully(interface_modify, enable_tunneling=True)
+        except netapp_utils.zapi.NaApiError as err:
+            self.module.fail_json(msg='Error modifying interface %s: %s' % (self.parameters['interface_name'],
+                                  to_native(err)), exception=traceback.format_exc())
 
-    def apply(self):
-        ''' calling all interface features '''
-        changed = False
-        interface_exists = False
+    def autosupport_log(self):
         results = netapp_utils.get_cserver(self.server)
         cserver = netapp_utils.setup_na_ontap_zapi(
             module=self.module, vserver=results)
         netapp_utils.ems_log_event("na_ontap_interface", cserver)
-        interface_detail = self.get_interface()
-        if interface_detail:
-            interface_exists = True
-            if self.state == 'absent':
-                changed = True
 
-            elif self.state == 'present':
-                if (self.admin_status is not None and self.admin_status != interface_detail['admin_status']) or \
-                   (self.address is not None and self.address != interface_detail['address']) or \
-                   (self.netmask is not None and self.netmask != interface_detail['netmask']) or \
-                   (self.failover_policy is not None and self.failover_policy != interface_detail['failover_policy']) or \
-                   (self.firewall_policy is not None and self.firewall_policy != interface_detail['firewall_policy']) or \
-                   (self.is_auto_revert is not None and self.is_auto_revert != interface_detail['is_auto_revert']):
-                    changed = True
-        else:
-            if self.state == 'present':
-                changed = True
-
-        if changed:
+    def apply(self):
+        ''' calling all interface features '''
+        self.autosupport_log()
+        current = self.get_interface()
+        # rename and create are mutually exclusive
+        cd_action = self.na_helper.get_cd_action(current, self.parameters)
+        modify = self.na_helper.get_modified_attributes(current, self.parameters)
+        if self.na_helper.changed:
             if self.module.check_mode:
                 pass
             else:
-                if self.state == 'present':
-                    if interface_exists is False:
-                        self.create_interface()
-                    else:
-                        self.modify_interface()
-
-                elif self.state == 'absent':
-                    self.delete_interface(interface_detail['admin_status'])
-
-        self.module.exit_json(changed=changed)
+                if cd_action == 'create':
+                    self.create_interface()
+                elif cd_action == 'delete':
+                    self.delete_interface(current['admin_status'])
+                elif modify:
+                    self.modify_interface(modify)
+        self.module.exit_json(changed=self.na_helper.changed)
 
 
 def main():

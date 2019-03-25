@@ -123,7 +123,7 @@ options:
     purge_origins:
       description: Whether to remove any origins that aren't listed in I(origins)
       default: false
-
+      type: bool
     default_cache_behavior:
       description:
         - A config element that is a complex object specifying the default cache behavior of the distribution. If not specified, the I(target_origin_id) is
@@ -152,6 +152,7 @@ options:
               I(lambda_function_associations[])
                 I(lambda_function_arn)
                 I(event_type)
+              I(field_level_encryption_id)
 
     cache_behaviors:
       description:
@@ -180,26 +181,27 @@ options:
             I(max_ttl)
             I(compress)
             I(lambda_function_associations[])
+            I(field_level_encryption_id)
 
     purge_cache_behaviors:
       description: Whether to remove any cache behaviors that aren't listed in I(cache_behaviors). This switch
         also allows the reordering of cache_behaviors.
       default: false
-
+      type: bool
     custom_error_responses:
       description:
         - A config element that is a I(list[]) of complex custom error responses to be specified for the distribution. This attribute configures custom http
           error messages returned to the user.
           Each custom error response object comprises the attributes
             I(error_code)
-            I(reponse_page_path)
+            I(response_page_path)
             I(response_code)
             I(error_caching_min_ttl)
 
     purge_custom_error_responses:
       description: Whether to remove any custom error responses that aren't listed in I(custom_error_responses)
       default: false
-
+      type: bool
     comment:
       description:
         - A comment that describes the cloudfront distribution. If not specified, it defaults to a
@@ -438,7 +440,7 @@ aliases:
 arn:
   description: Amazon Resource Name of the distribution
   returned: always
-  type: string
+  type: str
   sample: arn:aws:cloudfront::123456789012:distribution/E1234ABCDEFGHI
 cache_behaviors:
   description: Cloudfront cache behaviors
@@ -507,7 +509,7 @@ cache_behaviors:
                 forward:
                   description: Which cookies to forward to the origin for this cache behavior
                   returned: always
-                  type: string
+                  type: str
                   sample: none
                 whitelisted_names:
                   description: The names of the cookies to forward to the origin for this cache behavior
@@ -590,7 +592,7 @@ cache_behaviors:
         path_pattern:
           description: Path pattern that determines this cache behavior
           returned: always
-          type: string
+          type: str
           sample: /path/to/files/*
         smooth_streaming:
           description: Whether smooth streaming is enabled
@@ -600,7 +602,7 @@ cache_behaviors:
         target_origin_id:
           description: Id of origin reference by this cache behavior
           returned: always
-          type: string
+          type: str
           sample: origin_abcd
         trusted_signers:
           description: Trusted signers
@@ -620,7 +622,7 @@ cache_behaviors:
         viewer_protocol_policy:
           description: Policy of how to handle http/https
           returned: always
-          type: string
+          type: str
           sample: redirect-to-https
     quantity:
       description: Count of cache behaviors
@@ -631,12 +633,12 @@ cache_behaviors:
 caller_reference:
   description: Idempotency reference given when creating cloudfront distribution
   returned: always
-  type: string
+  type: str
   sample: '1484796016700'
 comment:
   description: Any comments you want to include about the distribution
   returned: always
-  type: string
+  type: str
   sample: 'my first cloudfront distribution'
 custom_error_responses:
   description: Custom error responses to use for error handling
@@ -649,7 +651,7 @@ custom_error_responses:
       type: complex
       contains:
         error_caching_min_ttl:
-          description: Mininum time to cache this error response
+          description: Minimum time to cache this error response
           returned: always
           type: int
           sample: 300
@@ -661,12 +663,12 @@ custom_error_responses:
         response_code:
           description: Response code to return to the requester
           returned: always
-          type: string
+          type: str
           sample: '500'
         response_page_path:
           description: Path that contains the error page to display
           returned: always
-          type: string
+          type: str
           sample: /errors/5xx.html
     quantity:
       description: Count of custom error response items
@@ -735,7 +737,7 @@ default_cache_behavior:
             forward:
               description: Which cookies to forward to the origin for this cache behavior
               returned: always
-              type: string
+              type: str
               sample: none
             whitelisted_names:
               description: The names of the cookies to forward to the origin for this cache behavior
@@ -818,7 +820,7 @@ default_cache_behavior:
     path_pattern:
       description: Path pattern that determines this cache behavior
       returned: always
-      type: string
+      type: str
       sample: /path/to/files/*
     smooth_streaming:
       description: Whether smooth streaming is enabled
@@ -828,7 +830,7 @@ default_cache_behavior:
     target_origin_id:
       description: Id of origin reference by this cache behavior
       returned: always
-      type: string
+      type: str
       sample: origin_abcd
     trusted_signers:
       description: Trusted signers
@@ -848,13 +850,13 @@ default_cache_behavior:
     viewer_protocol_policy:
       description: Policy of how to handle http/https
       returned: always
-      type: string
+      type: str
       sample: redirect-to-https
 default_root_object:
   description: The object that you want CloudFront to request from your origin (for example, index.html)
     when a viewer requests the root URL for your distribution
   returned: always
-  type: string
+  type: str
   sample: ''
 diff:
   description: Difference between previous configuration and new configuration
@@ -864,7 +866,7 @@ diff:
 domain_name:
   description: Domain name of cloudfront distribution
   returned: always
-  type: string
+  type: str
   sample: d1vz8pzgurxosf.cloudfront.net
 enabled:
   description: Whether the cloudfront distribution is enabled or not
@@ -874,12 +876,12 @@ enabled:
 http_version:
   description: Version of HTTP supported by the distribution
   returned: always
-  type: string
+  type: str
   sample: http2
 id:
   description: Cloudfront distribution ID
   returned: always
-  type: string
+  type: str
   sample: E123456ABCDEFG
 in_progress_invalidation_batches:
   description: The number of invalidation batches currently in progress
@@ -894,7 +896,7 @@ is_ipv6_enabled:
 last_modified_time:
   description: Date and time distribution was last modified
   returned: always
-  type: string
+  type: str
   sample: '2017-10-13T01:51:12.656000+00:00'
 logging:
   description: Logging information
@@ -904,7 +906,7 @@ logging:
     bucket:
       description: S3 bucket logging destination
       returned: always
-      type: string
+      type: str
       sample: logs-example-com.s3.amazonaws.com
     enabled:
       description: Whether logging is enabled
@@ -919,7 +921,7 @@ logging:
     prefix:
       description: Prefix added to logging object names
       returned: always
-      type: string
+      type: str
       sample: cloudfront/test
 origins:
   description: Origins in the cloudfront distribution
@@ -964,7 +966,7 @@ origins:
             origin_protocol_policy:
               description: Policy of which protocols are supported
               returned: always
-              type: string
+              type: str
               sample: https-only
             origin_read_timeout:
               description: Timeout for reads to the origin
@@ -992,17 +994,17 @@ origins:
         domain_name:
           description: Domain name of the origin
           returned: always
-          type: string
+          type: str
           sample: test-origin.example.com
         id:
           description: ID of the origin
           returned: always
-          type: string
+          type: str
           sample: test-origin.example.com
         origin_path:
           description: Subdirectory to prefix the request from the S3 or HTTP origin
           returned: always
-          type: string
+          type: str
           sample: ''
     quantity:
       description: Count of origins
@@ -1012,7 +1014,7 @@ origins:
 price_class:
   description: Price class of cloudfront distribution
   returned: always
-  type: string
+  type: str
   sample: PriceClass_All
 restrictions:
   description: Restrictions in use by Cloudfront
@@ -1037,12 +1039,12 @@ restrictions:
         restriction_type:
           description: Type of restriction
           returned: always
-          type: string
+          type: str
           sample: blacklist
 status:
   description: Status of the cloudfront distribution
   returned: always
-  type: string
+  type: str
   sample: InProgress
 tags:
   description: Distribution tags
@@ -1058,38 +1060,39 @@ viewer_certificate:
     acm_certificate_arn:
       description: ARN of ACM certificate
       returned: when certificate comes from ACM
-      type: string
+      type: str
       sample: arn:aws:acm:us-east-1:123456789012:certificate/abcd1234-1234-1234-abcd-123456abcdef
     certificate:
       description: Reference to certificate
       returned: always
-      type: string
+      type: str
       sample: arn:aws:acm:us-east-1:123456789012:certificate/abcd1234-1234-1234-abcd-123456abcdef
     certificate_source:
       description: Where certificate comes from
       returned: always
-      type: string
+      type: str
       sample: acm
     minimum_protocol_version:
       description: Minimum SSL/TLS protocol supported by this distribution
       returned: always
-      type: string
+      type: str
       sample: TLSv1
     ssl_support_method:
       description: Support for pre-SNI browsers or not
       returned: always
-      type: string
+      type: str
       sample: sni-only
 web_acl_id:
   description: ID of Web Access Control List (from WAF service)
   returned: always
-  type: string
+  type: str
   sample: abcd1234-1234-abcd-abcd-abcd12345678
 '''
 
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.aws.cloudfront_facts import CloudFrontFactsServiceManager
+from ansible.module_utils.common.dict_transformations import recursive_diff
 from ansible.module_utils.ec2 import get_aws_connection_info
 from ansible.module_utils.ec2 import ec2_argument_spec, boto3_conn, compare_aws_tags
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ansible_dict_to_boto3_tag_list
@@ -1142,24 +1145,6 @@ def ansible_list_to_cloudfront_list(list_items=None, include_quantity=True):
     if len(list_items) > 0:
         result['items'] = list_items
     return result
-
-
-def recursive_diff(dict1, dict2):
-    left = dict((k, v) for (k, v) in dict1.items() if k not in dict2)
-    right = dict((k, v) for (k, v) in dict2.items() if k not in dict1)
-    for k in (set(dict1.keys()) & set(dict2.keys())):
-        if isinstance(dict1[k], dict) and isinstance(dict2[k], dict):
-            result = recursive_diff(dict1[k], dict2[k])
-            if result:
-                left[k] = result[0]
-                right[k] = result[1]
-        elif dict1[k] != dict2[k]:
-            left[k] = dict1[k]
-            right[k] = dict2[k]
-    if left or right:
-        return left, right
-    else:
-        return None
 
 
 def create_distribution(client, module, config, tags):
@@ -1426,7 +1411,7 @@ class CloudFrontValidationManager(object):
                                                                           Comment=comment))
             oai = client.create_cloud_front_origin_access_identity(**cfoai_config)['CloudFrontOriginAccessIdentity']['Id']
         except Exception as e:
-                self.module.fail_json_aws(e, msg="Couldn't create Origin Access Identity for id %s" % origin['id'])
+            self.module.fail_json_aws(e, msg="Couldn't create Origin Access Identity for id %s" % origin['id'])
         return "origin-access-identity/cloudfront/%s" % oai
 
     def validate_origin(self, client, existing_config, origin, default_origin_path):
@@ -1505,6 +1490,7 @@ class CloudFrontValidationManager(object):
         cache_behavior = self.validate_allowed_methods(config, cache_behavior.get('allowed_methods'), cache_behavior)
         cache_behavior = self.validate_lambda_function_associations(config, cache_behavior.get('lambda_function_associations'), cache_behavior)
         cache_behavior = self.validate_trusted_signers(config, cache_behavior.get('trusted_signers'), cache_behavior)
+        cache_behavior = self.validate_field_level_encryption_id(config, cache_behavior.get('field_level_encryption_id'), cache_behavior)
         return cache_behavior
 
     def validate_cache_behavior_first_level_keys(self, config, cache_behavior, valid_origins, is_default_cache):
@@ -1586,6 +1572,14 @@ class CloudFrontValidationManager(object):
             return cache_behavior
         except Exception as e:
             self.module.fail_json_aws(e, msg="Error validating lambda function associations")
+
+    def validate_field_level_encryption_id(self, config, field_level_encryption_id, cache_behavior):
+        # only set field_level_encryption_id if it's already set or if it was passed
+        if field_level_encryption_id is not None:
+            cache_behavior['field_level_encryption_id'] = field_level_encryption_id
+        elif 'field_level_encryption_id' in config:
+            cache_behavior['field_level_encryption_id'] = config.get('field_level_encryption_id')
+        return cache_behavior
 
     def validate_allowed_methods(self, config, allowed_methods, cache_behavior):
         try:
@@ -1802,7 +1796,7 @@ class CloudFrontValidationManager(object):
 
     def wait_until_processed(self, client, wait_timeout, distribution_id, caller_reference):
         if distribution_id is None:
-            distribution_id = self.validate_distribution_id_from_caller_reference(caller_reference=caller_reference)
+            distribution_id = self.validate_distribution_from_caller_reference(caller_reference=caller_reference)['Id']
 
         try:
             waiter = client.get_waiter('distribution_deployed')

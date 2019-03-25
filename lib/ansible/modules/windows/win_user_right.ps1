@@ -1,7 +1,6 @@
 #!powershell
-# This file is part of Ansible
 
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
@@ -268,12 +267,9 @@ namespace Ansible
 "@
 
 $original_tmp = $env:TMP
-$original_temp = $env:TEMP
 $env:TMP = $_remote_tmp
-$env:TEMP = $_remote_tmp
 Add-Type -TypeDefinition $sec_helper_util
 $env:TMP = $original_tmp
-$env:TEMP = $original_temp
 
 Function Compare-UserList($existing_users, $new_users) {  
     $added_users = [String[]]@()

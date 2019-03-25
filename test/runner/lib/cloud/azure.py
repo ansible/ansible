@@ -7,11 +7,13 @@ from lib.util import (
     ApplicationError,
     display,
     is_shippable,
+    ConfigParser,
 )
 
 from lib.cloud import (
     CloudProvider,
     CloudEnvironment,
+    CloudEnvironmentConfig,
 )
 
 from lib.http import (
@@ -124,6 +126,8 @@ class AzureCloudProvider(CloudProvider):
 
             config = '\n'.join('%s: %s' % (key, values[key]) for key in sorted(values))
 
+            config = '[default]\n' + config
+
         self._write_config(config)
 
     def _create_ansible_core_ci(self):
@@ -135,22 +139,22 @@ class AzureCloudProvider(CloudProvider):
 
 class AzureCloudEnvironment(CloudEnvironment):
     """Azure cloud environment plugin. Updates integration test environment after delegation."""
-    def configure_environment(self, env, cmd):
+    def get_environment_config(self):
         """
-        :type env: dict[str, str]
-        :type cmd: list[str]
+        :rtype: CloudEnvironmentConfig
         """
-        config = get_config(self.config_path)
+        env_vars = get_config(self.config_path)
 
-        cmd.append('-e')
-        cmd.append('resource_prefix=%s' % self.resource_prefix)
-        cmd.append('-e')
-        cmd.append('resource_group=%s' % config['RESOURCE_GROUP'])
-        cmd.append('-e')
-        cmd.append('resource_group_secondary=%s' % config['RESOURCE_GROUP_SECONDARY'])
+        ansible_vars = dict(
+            resource_prefix=self.resource_prefix,
+        )
 
-        for key in config:
-            env[key] = config[key]
+        ansible_vars.update(dict((key.lower(), value) for key, value in env_vars.items()))
+
+        return CloudEnvironmentConfig(
+            env_vars=env_vars,
+            ansible_vars=ansible_vars,
+        )
 
     def on_failure(self, target, tries):
         """
@@ -161,22 +165,16 @@ class AzureCloudEnvironment(CloudEnvironment):
             display.notice('If %s failed due to permissions, the test policy may need to be updated. '
                            'For help, consult @mattclay or @gundalow on GitHub or #ansible-devel on IRC.' % target.name)
 
-    @property
-    def inventory_hosts(self):
-        """
-        :rtype: str | None
-        """
-        return 'azure'
-
 
 def get_config(config_path):
     """
     :type config_path: str
     :rtype: dict[str, str]
     """
-    with open(config_path, 'r') as config_fd:
-        lines = [line for line in config_fd.read().splitlines() if ':' in line and line.strip() and not line.strip().startswith('#')]
-        config = dict((kvp[0].strip(), kvp[1].strip()) for kvp in [line.split(':', 1) for line in lines])
+    parser = ConfigParser()
+    parser.read(config_path)
+
+    config = dict((key.upper(), value) for key, value in parser.items('default'))
 
     rg_vars = (
         'RESOURCE_GROUP',

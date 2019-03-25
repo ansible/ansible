@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -56,6 +56,7 @@ options:
 author: Nick Aslanidis (@naslanidis)
 extends_documentation_fragment:
   - ec2
+  - aws
 '''
 
 EXAMPLES = '''
@@ -103,7 +104,7 @@ RETURN = '''
 result:
   description: The result of the create, or delete action.
   returned: success
-  type: dictionary
+  type: dict
 '''
 
 import time
@@ -116,6 +117,7 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
+from ansible.module_utils.aws.core import is_boto3_error_code
 from ansible.module_utils.aws.waiters import get_waiter
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import HAS_BOTO3, boto3_conn, ec2_argument_spec, get_aws_connection_info, AWSRetry
@@ -220,9 +222,9 @@ def create_vgw(client, module):
     except botocore.exceptions.WaiterError as e:
         module.fail_json(msg="Failed to wait for Vpn Gateway {0} to be available".format(response['VpnGateway']['VpnGatewayId']),
                          exception=traceback.format_exc())
-    except client.exceptions.from_code('VpnGatewayLimitExceeded') as e:
+    except is_boto3_error_code('VpnGatewayLimitExceeded'):
         module.fail_json(msg="Too many VPN gateways exist in this account.", exception=traceback.format_exc())
-    except botocore.exceptions.ClientError as e:
+    except botocore.exceptions.ClientError as e:  # pylint: disable=duplicate-except
         module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
     result = response

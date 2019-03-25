@@ -21,7 +21,7 @@ __metaclass__ = type
 
 import json
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.ios import ios_vlan
 from ansible.modules.network.ios.ios_vlan import parse_vlan_brief
 from units.modules.utils import set_module_args
@@ -57,6 +57,12 @@ class TestIosVlanModule(TestIosModule):
             'vlan 3',
             'name test',
         ]
+        self.assertEqual(result['commands'], expected_commands)
+
+    def test_ios_vlan_id_startwith_9(self):
+        set_module_args({'vlan_id': '9', 'name': 'vlan9', 'state': 'present'})
+        result = self.execute_module(changed=False)
+        expected_commands = []
         self.assertEqual(result['commands'], expected_commands)
 
     def test_ios_vlan_rename(self):
@@ -120,6 +126,14 @@ class TestIosVlanModule(TestIosModule):
                 ],
                 'state': 'active',
                 'vlan_id': '2',
+            },
+            {
+                'name': 'vlan9',
+                'interfaces': [
+                    'GigabitEthernet1/0/6',
+                ],
+                'state': 'active',
+                'vlan_id': '9',
             },
             {
                 'name': 'fddi-default',

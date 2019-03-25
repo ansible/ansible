@@ -1,0 +1,47 @@
+# Test behaviour common to all tower modules
+- name: Check that SSL is available
+  tower_organization:
+    name: Default
+  register: result
+
+- name: Check we haven't changed anything
+  assert:
+    that: result is not changed
+
+- name: Check that SSL is available and verify_ssl is enabled (task must fail)
+  tower_organization:
+    name: Default
+  environment:
+    TOWER_CERTIFICATE: /dev/null  # force check failure
+  ignore_errors: true
+  register: check_ssl_is_used
+
+- name: Check that connection failed
+  assert:
+    that:
+      - check_ssl_is_used is failed
+      - >
+          'Could not establish a secure connection' in check_ssl_is_used.module_stderr
+          or 'OpenSSL.SSL.Error' in check_ssl_is_used.module_stderr
+        # 'Could not establish a secure connection': when pyOpenSSL isn't available
+        # 'OpenSSL.SSL.Error': with pyOpenSSL, see https://github.com/urllib3/urllib3/pull/1517
+
+- name: Disable verify_ssl in ~/.tower_cli.cfg
+  copy:
+    dest: ~/.tower_cli.cfg
+    content: |
+      [general]
+      verify_ssl = False
+    force: false  # ensure remote file doesn't exist
+
+- block:
+    - name: Check that verify_ssl is disabled (task must not fail)
+      tower_organization:
+        name: Default
+      environment:
+        TOWER_CERTIFICATE: /dev/null  # should not fail because verify_ssl is disabled
+  always:
+    - name: Delete ~/.tower_cli.cfg
+      file:
+        path: ~/.tower_cli.cfg
+        state: absent

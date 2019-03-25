@@ -1,0 +1,388 @@
+{
+    "fmgr_fwobj_ippool_modify": [
+        {
+            "paramgram_used": {
+                "source-endip": null,
+                "arp-intf": null,
+                "num-blocks-per-user": null,
+                "name": "Ansible_pool4_overload",
+                "adom": "ansible",
+                "startip": "10.10.10.10",
+                "dynamic_mapping": {
+                    "endip": null,
+                    "num-blocks-per-user": null,
+                    "block-size": null,
+                    "startip": null,
+                    "arp-intf": null,
+                    "comments": null,
+                    "source-endip": null,
+                    "arp-reply": null,
+                    "pba-timeout": null,
+                    "associated-interface": null,
+                    "source-startip": null,
+                    "permit-any-host": null,
+                    "type": null
+                },
+                "comments": "Created by ansible",
+                "permit-any-host": null,
+                "arp-reply": "enable",
+                "pba-timeout": null,
+                "endip": "10.10.10.100",
+                "associated-interface": null,
+                "mode": "add",
+                "source-startip": null,
+                "type": "overload",
+                "block-size": null
+            },
+            "datagram_sent": {
+                "endip": "10.10.10.100",
+                "name": "Ansible_pool4_overload",
+                "startip": "10.10.10.10",
+                "comments": "Created by ansible",
+                "arp-reply": "enable",
+                "type": "overload"
+            },
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/ansible/obj/firewall/ippool"
+            },
+            "post_method": "add"
+        },
+        {
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/ansible/obj/firewall/ippool"
+            },
+            "datagram_sent": {
+                "endip": "10.10.20.100",
+                "name": "Ansible_pool4_121",
+                "startip": "10.10.20.10",
+                "comments": "Created by ansible",
+                "arp-reply": "enable",
+                "type": "one-to-one"
+            },
+            "paramgram_used": {
+                "permit-any-host": null,
+                "dynamic_mapping": {
+                    "endip": null,
+                    "num-blocks-per-user": null,
+                    "block-size": null,
+                    "startip": null,
+                    "arp-intf": null,
+                    "comments": null,
+                    "source-endip": null,
+                    "arp-reply": null,
+                    "pba-timeout": null,
+                    "associated-interface": null,
+                    "source-startip": null,
+                    "permit-any-host": null,
+                    "type": null
+                },
+                "num-blocks-per-user": null,
+                "name": "Ansible_pool4_121",
+                "adom": "ansible",
+                "startip": "10.10.20.10",
+                "arp-intf": null,
+                "comments": "Created by ansible",
+                "source-endip": null,
+                "arp-reply": "enable",
+                "pba-timeout": null,
+                "endip": "10.10.20.100",
+                "associated-interface": null,
+                "mode": "add",
+                "source-startip": null,
+                "type": "one-to-one",
+                "block-size": null
+            },
+            "post_method": "add"
+        },
+        {
+            "paramgram_used": {
+                "source-endip": "192.168.20.20",
+                "arp-intf": null,
+                "num-blocks-per-user": null,
+                "name": "Ansible_pool4_fixed_port",
+                "adom": "ansible",
+                "startip": "10.10.40.10",
+                "dynamic_mapping": {
+                    "endip": null,
+                    "num-blocks-per-user": null,
+                    "block-size": null,
+                    "startip": null,
+                    "arp-intf": null,
+                    "comments": null,
+                    "source-endip": null,
+                    "arp-reply": null,
+                    "pba-timeout": null,
+                    "associated-interface": null,
+                    "source-startip": null,
+                    "permit-any-host": null,
+                    "type": null
+                },
+                "comments": "Created by ansible",
+                "permit-any-host": null,
+                "arp-reply": "enable",
+                "pba-timeout": null,
+                "endip": "10.10.40.100",
+                "associated-interface": null,
+                "mode": "add",
+                "source-startip": "192.168.20.1",
+                "type": "fixed-port-range",
+                "block-size": null
+            },
+            "datagram_sent": {
+                "endip": "10.10.40.100",
+                "name": "Ansible_pool4_fixed_port",
+                "startip": "10.10.40.10",
+                "comments": "Created by ansible",
+                "source-endip": "192.168.20.20",
+                "arp-reply": "enable",
+                "source-startip": "192.168.20.1",
+                "type": "fixed-port-range"
+            },
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/ansible/obj/firewall/ippool"
+            },
+            "post_method": "add"
+        },
+        {
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/ansible/obj/firewall/ippool"
+            },
+            "datagram_sent": {
+                "endip": "10.10.30.100",
+                "num-blocks-per-user": 1,
+                "name": "Ansible_pool4_port_block_allocation",
+                "startip": "10.10.30.10",
+                "comments": "Created by ansible",
+                "arp-reply": "enable",
+                "type": "port-block-allocation",
+                "block-size": 128
+            },
+            "paramgram_used": {
+                "permit-any-host": null,
+                "dynamic_mapping": {
+                    "endip": null,
+                    "num-blocks-per-user": null,
+                    "block-size": null,
+                    "startip": null,
+                    "arp-intf": null,
+                    "comments": null,
+                    "source-endip": null,
+                    "arp-reply": null,
+                    "pba-timeout": null,
+                    "associated-interface": null,
+                    "source-startip": null,
+                    "permit-any-host": null,
+                    "type": null
+                },
+                "num-blocks-per-user": 1,
+                "name": "Ansible_pool4_port_block_allocation",
+                "adom": "ansible",
+                "startip": "10.10.30.10",
+                "arp-intf": null,
+                "comments": "Created by ansible",
+                "source-endip": null,
+                "arp-reply": "enable",
+                "pba-timeout": null,
+                "endip": "10.10.30.100",
+                "associated-interface": null,
+                "mode": "add",
+                "source-startip": null,
+                "type": "port-block-allocation",
+                "block-size": 128
+            },
+            "post_method": "add"
+        },
+        {
+            "paramgram_used": {
+                "source-endip": null,
+                "arp-intf": null,
+                "num-blocks-per-user": null,
+                "name": "Ansible_pool4_overload",
+                "adom": "ansible",
+                "startip": null,
+                "dynamic_mapping": {
+                    "endip": null,
+                    "num-blocks-per-user": null,
+                    "block-size": null,
+                    "startip": null,
+                    "arp-intf": null,
+                    "comments": null,
+                    "source-endip": null,
+                    "arp-reply": null,
+                    "pba-timeout": null,
+                    "associated-interface": null,
+                    "source-startip": null,
+                    "permit-any-host": null,
+                    "type": null
+                },
+                "comments": "Created by ansible",
+                "permit-any-host": null,
+                "arp-reply": null,
+                "pba-timeout": null,
+                "endip": null,
+                "associated-interface": null,
+                "mode": "delete",
+                "source-startip": null,
+                "type": null,
+                "block-size": null
+            },
+            "datagram_sent": {},
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/ansible/obj/firewall/ippool/Ansible_pool4_overload"
+            },
+            "post_method": "delete"
+        },
+        {
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/ansible/obj/firewall/ippool/Ansible_pool4_121"
+            },
+            "datagram_sent": {},
+            "paramgram_used": {
+                "permit-any-host": null,
+                "dynamic_mapping": {
+                    "endip": null,
+                    "num-blocks-per-user": null,
+                    "block-size": null,
+                    "startip": null,
+                    "arp-intf": null,
+                    "comments": null,
+                    "source-endip": null,
+                    "arp-reply": null,
+                    "pba-timeout": null,
+                    "associated-interface": null,
+                    "source-startip": null,
+                    "permit-any-host": null,
+                    "type": null
+                },
+                "num-blocks-per-user": null,
+                "name": "Ansible_pool4_121",
+                "adom": "ansible",
+                "startip": null,
+                "arp-intf": null,
+                "comments": "Created by ansible",
+                "source-endip": null,
+                "arp-reply": null,
+                "pba-timeout": null,
+                "endip": null,
+                "associated-interface": null,
+                "mode": "delete",
+                "source-startip": null,
+                "type": null,
+                "block-size": null
+            },
+            "post_method": "delete"
+        },
+        {
+            "paramgram_used": {
+                "source-endip": null,
+                "arp-intf": null,
+                "num-blocks-per-user": null,
+                "name": "Ansible_pool4_fixed_port",
+                "adom": "ansible",
+                "startip": null,
+                "dynamic_mapping": {
+                    "endip": null,
+                    "num-blocks-per-user": null,
+                    "block-size": null,
+                    "startip": null,
+                    "arp-intf": null,
+                    "comments": null,
+                    "source-endip": null,
+                    "arp-reply": null,
+                    "pba-timeout": null,
+                    "associated-interface": null,
+                    "source-startip": null,
+                    "permit-any-host": null,
+                    "type": null
+                },
+                "comments": "Created by ansible",
+                "permit-any-host": null,
+                "arp-reply": null,
+                "pba-timeout": null,
+                "endip": null,
+                "associated-interface": null,
+                "mode": "delete",
+                "source-startip": null,
+                "type": null,
+                "block-size": null
+            },
+            "datagram_sent": {},
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/ansible/obj/firewall/ippool/Ansible_pool4_fixed_port"
+            },
+            "post_method": "delete"
+        },
+        {
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/ansible/obj/firewall/ippool/Ansible_pool4_port_block_allocation"
+            },
+            "datagram_sent": {},
+            "paramgram_used": {
+                "permit-any-host": null,
+                "dynamic_mapping": {
+                    "num-blocks-per-user": null,
+                    "source-endip": null,
+                    "arp-reply": null,
+                    "pba-timeout": null,
+                    "endip": null,
+                    "block-size": null,
+                    "startip": null,
+                    "arp-intf": null,
+                    "comments": null,
+                    "permit-any-host": null,
+                    "associated-interface": null,
+                    "source-startip": null,
+                    "type": null
+                },
+                "num-blocks-per-user": null,
+                "name": "Ansible_pool4_port_block_allocation",
+                "adom": "ansible",
+                "startip": null,
+                "arp-intf": null,
+                "comments": "Created by ansible",
+                "source-endip": null,
+                "arp-reply": null,
+                "pba-timeout": null,
+                "endip": null,
+                "associated-interface": null,
+                "mode": "delete",
+                "source-startip": null,
+                "type": null,
+                "block-size": null
+            },
+            "post_method": "delete"
+        }
+    ]
+}

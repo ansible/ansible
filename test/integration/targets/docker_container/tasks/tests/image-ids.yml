@@ -1,0 +1,78 @@
+---
+- name: Registering container name
+  set_fact:
+    cname: "{{ cname_prefix ~ '-iid' }}"
+- name: Registering container name
+  set_fact:
+    cnames: "{{ cnames }} + [cname]"
+
+- name: Pull images
+  docker_image:
+    name: "{{ image }}"
+    pull: true
+  loop:
+    - "hello-world:latest"
+    - "alpine:3.8"
+  loop_control:
+    loop_var: image
+
+- name: Get image ID of hello-world and alpine images
+  docker_image_info:
+    name:
+    - "hello-world:latest"
+    - "alpine:3.8"
+  register: image_info
+
+- assert:
+    that:
+      - image_info.images | length == 2
+
+- name: Print image IDs
+  debug:
+    msg: "hello-world: {{ image_info.images[0].Id }}; alpine: {{ image_info.images[1].Id }}"
+
+- name: Create container with hello-world image via ID
+  docker_container:
+    image: "{{ image_info.images[0].Id }}"
+    name: "{{ cname }}"
+    state: present
+    force_kill: yes
+  register: create_1
+
+- name: Create container with hello-world image via ID (idempotent)
+  docker_container:
+    image: "{{ image_info.images[0].Id }}"
+    name: "{{ cname }}"
+    state: present
+    force_kill: yes
+  register: create_2
+
+- name: Create container with alpine image via ID
+  docker_container:
+    image: "{{ image_info.images[1].Id }}"
+    name: "{{ cname }}"
+    state: present
+    force_kill: yes
+  register: create_3
+
+- name: Create container with alpine image via ID (idempotent)
+  docker_container:
+    image: "{{ image_info.images[1].Id }}"
+    name: "{{ cname }}"
+    state: present
+    force_kill: yes
+  register: create_4
+
+- name: Cleanup
+  docker_container:
+    name: "{{ cname }}"
+    state: absent
+    force_kill: yes
+  diff: no
+
+- assert:
+    that:
+      - create_1 is changed
+      - create_2 is not changed
+      - create_3 is changed
+      - create_4 is not changed

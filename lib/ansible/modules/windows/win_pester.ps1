@@ -1,9 +1,7 @@
 #!powershell
-# This file is part of Ansible
 
+# Copyright: (c) 2017, Erwan Quelin (@equelin) <erwan.quelin@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-
-# Author: Erwan Quelin (mail:erwan.quelin@gmail.com - GitHub: @equelin - Twitter: @erwanquelin)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
 
@@ -15,8 +13,8 @@ $diff_mode = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -d
 
 # Modules parameters
 
-$path = Get-AnsibleParam -obj $params -name "path" -type "string" -failifempty $true
-$minimum_version = Get-AnsibleParam -obj $params -name "minimum_version" -type "string" -failifempty $false
+$path = Get-AnsibleParam -obj $params -name "path" -type "str" -failifempty $true
+$minimum_version = Get-AnsibleParam -obj $params -name "minimum_version" -type "str" -failifempty $false
 
 $result = @{
     changed = $false

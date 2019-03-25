@@ -1,0 +1,448 @@
+---
+# Test code for the netapp_e_iscsi_interface module
+# (c) 2018, NetApp, Inc
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+
+# ***********************
+# *** Local test data ***
+# ***********************
+- name: NetApp Test iSCSI Interface module
+  fail:
+    msg: 'Please define netapp_e_api_username, netapp_e_api_password, netapp_e_api_host, and netapp_e_ssid.'
+  when:  netapp_e_api_username is undefined or netapp_e_api_password is undefined
+          or netapp_e_api_host is undefined or netapp_e_ssid is undefined
+  vars:
+    credentials: &creds
+      api_url: "https://{{ netapp_e_api_host }}/devmgr/v2"
+      api_username: "{{ netapp_e_api_username }}"
+      api_password: "{{ netapp_e_api_password }}"
+      ssid: "{{ netapp_e_ssid }}"
+      validate_certs: no
+    array: &array
+        subnet: 255.255.255.0
+        gateway: 10.10.10.1
+        A:
+        - channel: 1
+          max_frame_size: 1500
+        - channel: 2
+          max_frame_size: 2000
+        - channel: 3
+          max_frame_size: 9000
+        - channel: 4
+          max_frame_size: 1500
+        - channel: 5
+          max_frame_size: 2000
+        - channel: 6
+          max_frame_size: 9000
+        B:
+        - channel: 1
+          max_frame_size: 9000
+        - channel: 2
+          max_frame_size: 1500
+        - channel: 3
+          max_frame_size: 2000
+        - channel: 4
+          max_frame_size: 9000
+        - channel: 5
+          max_frame_size: 1500
+        - channel: 6
+          max_frame_size: 2000
+
+
+# ***************************************************
+# *** Ensure python jmespath package is installed ***
+# ***************************************************
+- name: Ensure that jmespath is installed
+  pip:
+    name: jmespath
+    state: enabled
+  register: jmespath
+- fail:
+    msg: "Restart playbook, the jmespath package was installed and is need for the playbook's execution."
+  when: jmespath.changed
+
+
+# ************************************
+# *** Set local playbook test data ***
+# ************************************
+- name: set credentials
+  set_fact:
+    credentials: *creds
+- name: set array
+  set_fact:
+    array: *array
+
+- name: Show some debug information
+  debug:
+    msg: "Using user={{ credentials.api_username }} on server={{ credentials.api_url }}."
+
+
+# *****************************************
+# *** Disable all controller A channels ***
+# *****************************************
+- name: Disable all controller A ports
+  netapp_e_iscsi_interface:
+    <<: *creds
+    controller: "A"
+    channel: "{{ item.channel }}"
+    state: disabled
+  loop: "{{ lookup('list', array.A) }}"
+
+# Delay to give time for the asynchronous symbol call has complete
+- pause:
+    seconds: 30
+
+# Request all controller's iscsi host interface information
+- name: Collect iscsi port information
+  uri:
+    url: "{{ xpath_filter_url }}?query=controller/hostInterfaces//iscsi"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: result
+  vars:
+    xpath_filter_url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/graph/xpath-filter"
+
+# Extract controller A's port information from the iscsi host interfaces list
+#   Note: min filter is used because there are only two controller ids and the smaller corresponds with controller A
+- name: Get controller A's controllerId
+  set_fact:
+    controller_a_id: "{{ result | json_query('json[*].controllerId') | min }}"
+
+# Collect all port information associated with controller A
+- name: Get controller A's port information
+  set_fact:
+    controller_a: "{{ result | json_query(controller_a_query) }}"
+  vars:
+    controller_a_query: "json[?controllerId=='{{ controller_a_id }}']"
+
+# Confirm controller A's ports are disabled
+- name: Verify all controller A ports are disabled
+  assert:
+    that: "{{ item.ipv4Enabled == false }}"
+    msg: "Controller A, channel {{ item.channel }} is not disabled"
+  loop: "{{ controller_a }}"
+
+
+# *****************************************
+# *** Disable all controller B channels ***
+# *****************************************
+- name: Disable all controller B ports
+  netapp_e_iscsi_interface:
+    <<: *creds
+    controller: "B"
+    channel: "{{ item.channel }}"
+    state: disabled
+  loop: "{{ lookup('list', array.B) }}"
+
+# Delay to give time for the asynchronous symbol call has complete
+- pause:
+    seconds: 30
+
+# Request all controller's iscsi host interface information
+- name: Collect iscsi port information
+  uri:
+    url: "{{ xpath_filter_url }}?query=controller/hostInterfaces//iscsi"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: result
+  vars:
+    xpath_filter_url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/graph/xpath-filter"
+
+# Extract controller B's port information from the iscsi host interfaces list
+#   Note: min filter is used because there are only two controller ids and the smaller corresponds with controller B
+- name: Get controller B's controllerId
+  set_fact:
+    controller_b_id: "{{ result | json_query('json[*].controllerId') | max }}"
+
+# Collect all port information associated with controller B
+- name: Get controller B's port information
+  set_fact:
+    controller_b: "{{ result | json_query(controller_b_query) }}"
+  vars:
+    controller_b_query: "json[?controllerId=='{{ controller_b_id }}']"
+
+# Confirm controller B's ports are disabled
+- name: Verify all controller B ports are disabled
+  assert:
+    that: "{{ item.ipv4Enabled == false }}"
+    msg: "Controller B, channel {{ item.channel }} is not disabled"
+  loop: "{{ controller_b }}"
+
+
+# *****************************************************
+# *** Configure all controller A's ports statically ***
+# *****************************************************
+- name: Configure controller A's port to use a static configuration method
+  netapp_e_iscsi_interface:
+    <<: *creds
+    controller: "A"
+    channel: "{{ item.channel }}"
+    state: enabled
+    config_method: static
+    address: "{{ array.gateway.split('.')[:3] | join('.') }}.{{ item.channel }}"
+    subnet_mask: "{{ array.subnet }}"
+    gateway: "{{ array.gateway }}"
+    max_frame_size: "{{ item.max_frame_size }}"
+  loop: "{{ lookup('list', array.A) }}"
+
+# Delay to give time for the asynchronous symbol call has complete
+- pause:
+    seconds: 30
+
+# Request a list of iscsi host interfaces
+- name: Collect array information
+  uri:
+    url: "{{ xpath_filter }}?query=controller/hostInterfaces//iscsi"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: result
+  vars:
+    xpath_filter: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/graph/xpath-filter"
+
+# Extract controller A's port information from the iscsi host interfaces list
+#   Note: min filter is used because there are only two controller ids and the smaller corresponds with controller A
+- name: Get controller A's controllerId
+  set_fact:
+    controller_a_id: "{{ result | json_query('json[*].controllerId') | min }}"
+
+# Compile any iscsi port information associated with controller A
+- name: Get controller A's port information
+  set_fact:
+    controller_a: "{{ result | json_query(controller_a_query) }}"
+  vars:
+    controller_a_query: "json[?controllerId=='{{ controller_a_id }}']"
+
+# Confirm that controller A ports are statically defined with the expected MTU, gateway, subnet and ipv4 address
+- name: Verify expected controller A's port configuration
+  assert:
+    that: "{{ item[0].channel != item[1].channel or
+              ( item[0].ipv4Data.ipv4AddressConfigMethod == 'configStatic' and
+                item[0].interfaceData.ethernetData.maximumFramePayloadSize == item[1].max_frame_size and
+                item[0].ipv4Data.ipv4AddressData.ipv4GatewayAddress == array.gateway and
+                item[0].ipv4Data.ipv4AddressData.ipv4SubnetMask == array.subnet and
+                item[0].ipv4Data.ipv4AddressData.ipv4Address == partial_address + item[1].channel | string ) }}"
+    msg: "Failed to configure controller A, channel {{ item[0].channel }}"
+  loop: "{{ query('nested', lookup('list', controller_a), lookup('list', array.A) ) }}"
+  vars:
+    partial_address: "{{ array.gateway.split('.')[:3] | join('.') + '.' }}"
+
+
+# *******************************************************************************************
+# *** Configure controller B's channels for dhcp and specific frame maximum payload sizes ***
+# *******************************************************************************************
+- name: Configure controller B's ports to use dhcp with different MTU
+  netapp_e_iscsi_interface:
+    <<: *creds
+    controller: "B"
+    channel: "{{ item.channel }}"
+    state: enabled
+    config_method: dhcp
+    max_frame_size: "{{ item.max_frame_size }}"
+  loop: "{{ lookup('list', array.B) }}"
+
+# Delay to give time for the asynchronous symbol call has complete
+- pause:
+    seconds: 30
+
+# request a list of iscsi host interfaces
+- name: Collect array information
+  uri:
+    url: "{{ xpath_filter_url }}?query=controller/hostInterfaces//iscsi"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: result
+  vars:
+    xpath_filter_url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/graph/xpath-filter"
+
+# Extract controller B's port information from the iscsi host interfaces list
+#   Note: max filter is used because there are only two controller ids and the larger corresponds with controller B
+- name: Get controller B's controllerId
+  set_fact:
+    controller_b_id: "{{ result | json_query('json[*].controllerId') | max }}"
+- name: Get controller B port information list
+  set_fact:
+    controller_b: "{{ result | json_query(controller_b_query) }}"
+  vars:
+    controller_b_query: "json[?controllerId=='{{ controller_b_id }}']"
+
+# Using a nested loop of array information and expected information, verify that each channel has the appropriate max
+#   frame payload size and is configured for dhcp
+- name: Verify expected controller B's port configuration
+  assert:
+    that: "{{ item[0].channel != item[1].channel or
+              ( item[0].ipv4Data.ipv4AddressConfigMethod == 'configDhcp' and
+                item[0].interfaceData.ethernetData.maximumFramePayloadSize == item[1].max_frame_size ) }}"
+    msg: >
+            Failed to configure controller channel {{ item[0].channel }} for dhcp
+            and/or maximum frame size of {{ item[1].max_frame_size }}!
+  loop: "{{ query('nested', lookup('list', controller_b), lookup('list', array.B)) }}"
+
+
+# *******************************************************************************************
+# *** Configure controller A's channels for dhcp and specific frame maximum payload sizes ***
+# *******************************************************************************************
+- name: Configure controller A's ports to use dhcp with different MTU
+  netapp_e_iscsi_interface:
+    <<: *creds
+    controller: "A"
+    channel: "{{ item.channel }}"
+    state: enabled
+    config_method: dhcp
+    max_frame_size: "{{ item.max_frame_size }}"
+  loop: "{{ lookup('list', array.A) }}"
+
+# Delay to give time for the asynchronous symbol call has complete
+- pause:
+    seconds: 30
+
+# Request a list of iscsi host interfaces
+- name: Collect array information
+  uri:
+    url: "{{ xpath_filter_url }}?query=controller/hostInterfaces//iscsi"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: result
+  vars:
+    xpath_filter_url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/graph/xpath-filter"
+
+# Extract controller A's port information from the iscsi host interfaces list
+#   Note: min filter is used because there are only two controller ids and the larger corresponds with controller A
+- name: Get controller A's controllerId
+  set_fact:
+    controller_a_id: "{{ result | json_query('json[*].controllerId') | min }}"
+- name: Get controller A port information list
+  set_fact:
+    controller_a: "{{ result | json_query(controller_a_query) }}"
+  vars:
+    controller_a_query: "json[?controllerId=='{{ controller_a_id }}']"
+
+# Using a nested loop of array information and expected information, verify that each channel has the appropriate max
+#   frame payload size and is configured for dhcp
+- name: Verify expected controller A's port configuration
+  assert:
+    that: "{{ item[0].channel != item[1].channel or
+              ( item[0].ipv4Data.ipv4AddressConfigMethod == 'configDhcp' and
+                item[0].interfaceData.ethernetData.maximumFramePayloadSize == item[1].max_frame_size ) }}"
+    msg: >
+            Failed to configure controller channel {{ item[0].channel }} for dhcp
+            and/or maximum frame size of {{ item[1].max_frame_size }}!
+  loop: "{{ query('nested', lookup('list', controller_a), lookup('list', array.A)) }}"
+
+
+# *****************************************************
+# *** Configure all controller B's ports statically ***
+# *****************************************************
+- name: Configure controller B's ports to use a static configuration method
+  netapp_e_iscsi_interface:
+    <<: *creds
+    controller: "B"
+    channel: "{{ item.channel }}"
+    state: enabled
+    config_method: static
+    address: "{{ array.gateway.split('.')[:3] | join('.') }}.{{ item.channel }}"
+    subnet_mask: "{{ array.subnet }}"
+    gateway: "{{ array.gateway }}"
+    max_frame_size: "{{ item.max_frame_size }}"
+  loop: "{{ lookup('list', array.B) }}"
+
+# Delay to give time for the asynchronous symbol call has complete
+- pause:
+    seconds: 30
+
+# request a list of iscsi host interfaces
+- name: Collect array information
+  uri:
+    url: "{{ xpath_filter }}?query=controller/hostInterfaces//iscsi"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: result
+  vars:
+    xpath_filter: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/graph/xpath-filter"
+
+# Extract controller B's port information from the iscsi host interfaces list
+#   Note: min filter is used because there are only two controller ids and the smaller corresponds with controller B
+- name: Get controller B's controllerId
+  set_fact:
+    controller_b_id: "{{ result | json_query('json[*].controllerId') | max }}"
+
+# Compile any iscsi port information associated with controller B
+- name: Get controller B's port information
+  set_fact:
+    controller_b: "{{ result | json_query(controller_b_query) }}"
+  vars:
+    controller_b_query: "json[?controllerId=='{{ controller_b_id }}']"
+
+# Confirm that controller B ports are statically defined with the expected MTU, gateway, subnet and ipv4 address
+- name: Verify expected controller B's port configuration
+  assert:
+    that: "{{ item[0].channel != item[1].channel or
+              ( item[0].ipv4Data.ipv4AddressConfigMethod == 'configStatic' and
+                item[0].interfaceData.ethernetData.maximumFramePayloadSize == item[1].max_frame_size and
+                item[0].ipv4Data.ipv4AddressData.ipv4GatewayAddress == array.gateway and
+                item[0].ipv4Data.ipv4AddressData.ipv4SubnetMask == array.subnet and
+                item[0].ipv4Data.ipv4AddressData.ipv4Address == partial_address + item[1].channel | string ) }}"
+    msg: "Failed to configure controller B, channel {{ item[0].channel }}"
+  loop: "{{ query('nested', lookup('list', controller_b), lookup('list', array.B) ) }}"
+  vars:
+    partial_address: "{{ array.gateway.split('.')[:3] | join('.') + '.' }}"
+
+
+# **************************************
+# *** Disable all controller B ports ***
+# **************************************
+- name: Disable all controller B's ports
+  netapp_e_iscsi_interface:
+    <<: *creds
+    controller: "B"
+    channel: "{{ item.channel }}"
+    state: disabled
+  loop: "{{ lookup('list', array.B) }}"
+
+# Delay to give time for the asynchronous symbol call has complete
+- pause:
+    seconds: 30
+
+# Request controller iscsi host interface information
+- name: Collect iscsi port information
+  uri:
+    url: "{{ xpath_filter_url }}?query=controller/hostInterfaces//iscsi"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: result
+  vars:
+    xpath_filter_url: "{{ credentials.api_url }}/storage-systems/{{ credentials.ssid }}/graph/xpath-filter"
+
+# Extract controller A's port information from the iscsi host interfaces list
+#   Note: min filter is used because there are only two controller ids and the smaller corresponds with controller B
+- name: Get controller B's controllerId
+  set_fact:
+    controller_b_id: "{{ result | json_query('json[*].controllerId') | max }}"
+
+# Compile any iscsi port information associated with controller B
+- name: Get controller B's port information
+  set_fact:
+    controller_b: "{{ result | json_query(controller_b_query) }}"
+  vars:
+    controller_b_query: "json[?controllerId=='{{ controller_b_id }}']"
+
+# Confirm that all of controller B's ports are disabled
+- name: Verify all controller B ports are disabled
+  assert:
+    that: "{{ item.ipv4Enabled == false }}"
+    msg: "Controller B, channel {{ item.channel }} is not disabled"
+  loop: "{{ controller_b }}"

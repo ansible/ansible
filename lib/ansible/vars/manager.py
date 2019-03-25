@@ -22,7 +22,7 @@ __metaclass__ = type
 import os
 import sys
 
-from collections import defaultdict, MutableMapping
+from collections import defaultdict
 
 try:
     from hashlib import sha1
@@ -32,24 +32,22 @@ except ImportError:
 from jinja2.exceptions import UndefinedError
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound, AnsibleAssertionError
+from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound, AnsibleAssertionError, AnsibleTemplateError
 from ansible.inventory.host import Host
 from ansible.inventory.helpers import sort_groups, get_group_vars
-from ansible.module_utils._text import to_native
-from ansible.module_utils.six import iteritems, text_type
+from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils.common._collections_compat import Mapping, MutableMapping, Sequence
+from ansible.module_utils.six import iteritems, text_type, string_types
 from ansible.plugins.loader import lookup_loader, vars_loader
-from ansible.plugins.cache import FactCache
+from ansible.vars.fact_cache import FactCache
 from ansible.template import Templar
+from ansible.utils.display import Display
 from ansible.utils.listify import listify_lookup_plugin_terms
-from ansible.utils.vars import combine_vars
+from ansible.utils.vars import combine_vars, load_extra_vars, load_options_vars
 from ansible.utils.unsafe_proxy import wrap_var
-from ansible.vars.clean import namespace_facts
+from ansible.vars.clean import namespace_facts, clean_facts
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 def preprocess_vars(a):
@@ -78,8 +76,7 @@ class VariableManager:
     _ALLOWED = frozenset(['plugins_by_group', 'groups_plugins_play', 'groups_plugins_inventory', 'groups_inventory',
                           'all_plugins_play', 'all_plugins_inventory', 'all_inventory'])
 
-    def __init__(self, loader=None, inventory=None):
-
+    def __init__(self, loader=None, inventory=None, version_info=None):
         self._nonpersistent_fact_cache = defaultdict(dict)
         self._vars_cache = defaultdict(dict)
         self._extra_vars = defaultdict(dict)
@@ -89,14 +86,25 @@ class VariableManager:
         self._loader = loader
         self._hostvars = None
         self._omit_token = '__omit_place_holder__%s' % sha1(os.urandom(64)).hexdigest()
-        self._options_vars = defaultdict(dict)
+        self._templar = Templar(loader=self._loader)
 
-        # bad cache plugin is not fatal error
+        self._options_vars = load_options_vars(version_info)
+
+        # If the basedir is specified as the empty string then it results in cwd being used.
+        # This is not a safe location to load vars from.
+        basedir = self._options_vars.get('basedir', False)
+        self.safe_basedir = bool(basedir is False or basedir)
+
+        # load extra vars
+        self._extra_vars = load_extra_vars(loader=self._loader)
+
+        # load fact cache
         try:
             self._fact_cache = FactCache()
         except AnsibleError as e:
-            display.warning(to_native(e))
+            # bad cache plugin is not fatal error
             # fallback to a dict as in memory cache
+            display.warning(to_native(e))
             self._fact_cache = {}
 
     def __getstate__(self):
@@ -110,6 +118,7 @@ class VariableManager:
             omit_token=self._omit_token,
             options_vars=self._options_vars,
             inventory=self._inventory,
+            safe_basedir=self.safe_basedir,
         )
         return data
 
@@ -123,33 +132,14 @@ class VariableManager:
         self._omit_token = data.get('omit_token', '__omit_place_holder__%s' % sha1(os.urandom(64)).hexdigest())
         self._inventory = data.get('inventory', None)
         self._options_vars = data.get('options_vars', dict())
+        self.safe_basedir = data.get('safe_basedir', False)
 
     @property
     def extra_vars(self):
-        ''' ensures a clean copy of the extra_vars are made '''
-        return self._extra_vars.copy()
-
-    @extra_vars.setter
-    def extra_vars(self, value):
-        ''' ensures a clean copy of the extra_vars are used to set the value '''
-        if not isinstance(value, MutableMapping):
-            raise AnsibleAssertionError("the type of 'value' for extra_vars should be a MutableMapping, but is a %s" % type(value))
-        self._extra_vars = value.copy()
+        return self._extra_vars
 
     def set_inventory(self, inventory):
         self._inventory = inventory
-
-    @property
-    def options_vars(self):
-        ''' ensures a clean copy of the options_vars are made '''
-        return self._options_vars.copy()
-
-    @options_vars.setter
-    def options_vars(self, value):
-        ''' ensures a clean copy of the options_vars are used to set the value '''
-        if not isinstance(value, dict):
-            raise AnsibleAssertionError("the type of 'value' for options_vars should be a dict, but is a %s" % type(value))
-        self._options_vars = value.copy()
 
     def get_vars(self, play=None, host=None, task=None, include_hostvars=True, include_delegate_to=True, use_cache=True):
         '''
@@ -183,7 +173,9 @@ class VariableManager:
         )
 
         # default for all cases
-        basedirs = [self._loader.get_basedir()]
+        basedirs = []
+        if self.safe_basedir:  # avoid adhoc/console loading cwd
+            basedirs = [self._loader.get_basedir()]
 
         if play:
             # first we compile any vars specified in defaults/main.yml
@@ -199,7 +191,7 @@ class VariableManager:
                 basedirs = [task.get_search_path()[0]]
             elif C.PLAYBOOK_VARS_ROOT != 'top':
                 # preserves default basedirs, only option pre 2.3
-                raise AnsibleError('Unkown playbook vars logic: %s' % C.PLAYBOOK_VARS_ROOT)
+                raise AnsibleError('Unknown playbook vars logic: %s' % C.PLAYBOOK_VARS_ROOT)
 
             # if we have a task in this context, and that task has a role, make
             # sure it sees its defaults above any other roles, as we previously
@@ -237,7 +229,7 @@ class VariableManager:
                 for inventory_dir in self._inventory._sources:
                     if ',' in inventory_dir and not os.path.exists(inventory_dir):  # skip host lists
                         continue
-                    elif not os.path.isdir(inventory_dir):  # always pass 'inventory directory'
+                    elif not os.path.isdir(to_bytes(inventory_dir)):  # always pass 'inventory directory'
                         inventory_dir = os.path.dirname(inventory_dir)
 
                     for plugin in vars_loader.all():
@@ -302,13 +294,14 @@ class VariableManager:
             all_vars = combine_vars(all_vars, _plugins_play([host]))
 
             # finally, the facts caches for this host, if it exists
+            # TODO: cleaning of facts should eventually become part of taskresults instead of vars
             try:
-                facts = self._fact_cache.get(host.name, {})
+                facts = wrap_var(self._fact_cache.get(host.name, {}))
                 all_vars.update(namespace_facts(facts))
 
                 # push facts to main namespace
                 if C.INJECT_FACTS_AS_VARS:
-                    all_vars = combine_vars(all_vars, wrap_var(facts))
+                    all_vars = combine_vars(all_vars, wrap_var(clean_facts(facts)))
                 else:
                     # always 'promote' ansible_local
                     all_vars = combine_vars(all_vars, wrap_var({'ansible_local': facts.get('ansible_local', {})}))
@@ -325,7 +318,7 @@ class VariableManager:
                     # and magic vars so we can properly template the vars_files entries
                     temp_vars = combine_vars(all_vars, self._extra_vars)
                     temp_vars = combine_vars(temp_vars, magic_variables)
-                    templar = Templar(loader=self._loader, variables=temp_vars)
+                    self._templar.set_available_variables(temp_vars)
 
                     # we assume each item in the list is itself a list, as we
                     # support "conditional includes" for vars_files, which mimics
@@ -339,7 +332,13 @@ class VariableManager:
                     # raise an error, which is silently ignored at this point.
                     try:
                         for vars_file in vars_file_list:
-                            vars_file = templar.template(vars_file)
+                            vars_file = self._templar.template(vars_file)
+                            if not (isinstance(vars_file, Sequence)):
+                                raise AnsibleError(
+                                    "Invalid vars_files entry found: %r\n"
+                                    "vars_files entries should be either a string type or "
+                                    "a list of string types after template expansion" % vars_file
+                                )
                             try:
                                 data = preprocess_vars(self._loader.load_from_file(vars_file, unsafe=True))
                                 if data is not None:
@@ -417,7 +416,7 @@ class VariableManager:
         # if we have a task and we're delegating to another host, figure out the
         # variables for that host now so we don't have to rely on hostvars later
         if task and task.delegate_to is not None and include_delegate_to:
-            all_vars['ansible_delegated_vars'] = self._get_delegated_vars(play, task, all_vars)
+            all_vars['ansible_delegated_vars'], all_vars['_ansible_loop_cache'] = self._get_delegated_vars(play, task, all_vars)
 
         # 'vars' magic var
         if task or play:
@@ -438,7 +437,24 @@ class VariableManager:
         variables['ansible_playbook_python'] = sys.executable
 
         if play:
-            variables['role_names'] = [r._role_name for r in play.roles]
+            # This is a list of all role names of all dependencies for all roles for this play
+            dependency_role_names = list(set([d._role_name for r in play.roles for d in r.get_all_dependencies()]))
+            # This is a list of all role names of all roles for this play
+            play_role_names = [r._role_name for r in play.roles]
+
+            # ansible_role_names includes all role names, dependent or directly referenced by the play
+            variables['ansible_role_names'] = list(set(dependency_role_names + play_role_names))
+            # ansible_play_role_names includes the names of all roles directly referenced by this play
+            # roles that are implicitly referenced via dependencies are not listed.
+            variables['ansible_play_role_names'] = play_role_names
+            # ansible_dependent_role_names includes the names of all roles that are referenced via dependencies
+            # dependencies that are also explicitly named as roles are included in this list
+            variables['ansible_dependent_role_names'] = dependency_role_names
+
+            # DEPRECATED: role_names should be deprecated in favor of ansible_role_names or ansible_play_role_names
+            variables['role_names'] = variables['ansible_play_role_names']
+
+            variables['ansible_play_name'] = play.get_name()
 
         if task:
             if task._role:
@@ -449,8 +465,7 @@ class VariableManager:
         if self._inventory is not None:
             variables['groups'] = self._inventory.get_groups_dict()
             if play:
-                templar = Templar(loader=self._loader)
-                if templar.is_template(play.hosts):
+                if self._templar.is_template(play.hosts):
                     pattern = 'all'
                 else:
                     pattern = play.hosts or 'all'
@@ -475,41 +490,59 @@ class VariableManager:
         return variables
 
     def _get_delegated_vars(self, play, task, existing_variables):
+        if not hasattr(task, 'loop'):
+            # This "task" is not a Task, so we need to skip it
+            return {}, None
+
         # we unfortunately need to template the delegate_to field here,
         # as we're fetching vars before post_validate has been called on
         # the task that has been passed in
         vars_copy = existing_variables.copy()
-        templar = Templar(loader=self._loader, variables=vars_copy)
+        self._templar.set_available_variables(vars_copy)
 
         items = []
+        has_loop = True
         if task.loop_with is not None:
             if task.loop_with in lookup_loader:
                 try:
-                    loop_terms = listify_lookup_plugin_terms(terms=task.loop, templar=templar,
+                    loop_terms = listify_lookup_plugin_terms(terms=task.loop, templar=self._templar,
                                                              loader=self._loader, fail_on_undefined=True, convert_bare=False)
-                    items = lookup_loader.get(task.loop_with, loader=self._loader, templar=templar).run(terms=loop_terms, variables=vars_copy)
-                except AnsibleUndefinedVariable:
+                    items = lookup_loader.get(task.loop_with, loader=self._loader, templar=self._templar).run(terms=loop_terms, variables=vars_copy)
+                except AnsibleTemplateError:
                     # This task will be skipped later due to this, so we just setup
                     # a dummy array for the later code so it doesn't fail
                     items = [None]
             else:
                 raise AnsibleError("Failed to find the lookup named '%s' in the available lookup plugins" % task.loop_with)
         elif task.loop is not None:
-            items = templar.template(task.loop)
+            try:
+                items = self._templar.template(task.loop)
+            except AnsibleTemplateError:
+                # This task will be skipped later due to this, so we just setup
+                # a dummy array for the later code so it doesn't fail
+                items = [None]
         else:
+            has_loop = False
             items = [None]
 
         delegated_host_vars = dict()
         item_var = getattr(task.loop_control, 'loop_var', 'item')
+        cache_items = False
         for item in items:
             # update the variables with the item value for templating, in case we need it
             if item is not None:
                 vars_copy[item_var] = item
 
-            templar.set_available_variables(vars_copy)
-            delegated_host_name = templar.template(task.delegate_to, fail_on_undefined=False)
+            self._templar.set_available_variables(vars_copy)
+            delegated_host_name = self._templar.template(task.delegate_to, fail_on_undefined=False)
+            if delegated_host_name != task.delegate_to:
+                cache_items = True
             if delegated_host_name is None:
                 raise AnsibleError(message="Undefined delegate_to host for task:", obj=task._ds)
+            if not isinstance(delegated_host_name, string_types):
+                raise AnsibleError(message="the field 'delegate_to' has an invalid type (%s), and could not be"
+                                           " converted to a string type." % type(delegated_host_name),
+                                   obj=task._ds)
             if delegated_host_name in delegated_host_vars:
                 # no need to repeat ourselves, as the delegate_to value
                 # does not appear to be tied to the loop item variable
@@ -563,46 +596,58 @@ class VariableManager:
                 include_delegate_to=False,
                 include_hostvars=False,
             )
-        return delegated_host_vars
+
+        _ansible_loop_cache = None
+        if has_loop and cache_items:
+            # delegate_to templating produced a change, so we will cache the templated items
+            # in a special private hostvar
+            # this ensures that delegate_to+loop doesn't produce different results than TaskExecutor
+            # which may reprocess the loop
+            _ansible_loop_cache = items
+
+        return delegated_host_vars, _ansible_loop_cache
 
     def clear_facts(self, hostname):
         '''
         Clears the facts for a host
         '''
-        if hostname in self._fact_cache:
-            del self._fact_cache[hostname]
+        self._fact_cache.pop(hostname, None)
 
     def set_host_facts(self, host, facts):
         '''
         Sets or updates the given facts for a host in the fact cache.
         '''
 
-        if not isinstance(facts, dict):
-            raise AnsibleAssertionError("the type of 'facts' to set for host_facts should be a dict but is a %s" % type(facts))
+        if not isinstance(facts, Mapping):
+            raise AnsibleAssertionError("the type of 'facts' to set for host_facts should be a Mapping but is a %s" % type(facts))
 
-        if host.name not in self._fact_cache:
-            self._fact_cache[host.name] = facts
+        try:
+            host_cache = self._fact_cache[host.name]
+        except KeyError:
+            # We get to set this as new
+            host_cache = facts
         else:
-            try:
-                self._fact_cache.update(host.name, facts)
-            except KeyError:
-                self._fact_cache[host.name] = facts
+            if not isinstance(host_cache, MutableMapping):
+                raise TypeError('The object retrieved for {0} must be a MutableMapping but was'
+                                ' a {1}'.format(host.name, type(host_cache)))
+            # Update the existing facts
+            host_cache.update(facts)
+
+        # Save the facts back to the backing store
+        self._fact_cache[host.name] = host_cache
 
     def set_nonpersistent_facts(self, host, facts):
         '''
         Sets or updates the given facts for a host in the fact cache.
         '''
 
-        if not isinstance(facts, dict):
-            raise AnsibleAssertionError("the type of 'facts' to set for nonpersistent_facts should be a dict but is a %s" % type(facts))
+        if not isinstance(facts, Mapping):
+            raise AnsibleAssertionError("the type of 'facts' to set for nonpersistent_facts should be a Mapping but is a %s" % type(facts))
 
-        if host.name not in self._nonpersistent_fact_cache:
+        try:
+            self._nonpersistent_fact_cache[host.name].update(facts)
+        except KeyError:
             self._nonpersistent_fact_cache[host.name] = facts
-        else:
-            try:
-                self._nonpersistent_fact_cache[host.name].update(facts)
-            except KeyError:
-                self._nonpersistent_fact_cache[host.name] = facts
 
     def set_host_variable(self, host, varname, value):
         '''

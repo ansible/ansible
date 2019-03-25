@@ -41,7 +41,7 @@ More information
 Various resources exist to start learning ACI, here is a list of interesting articles from the community.
 
 - `Adam Raffe: Learning ACI <https://adamraffe.com/learning-aci/>`_
-- `Luca Relandini: ACI for dummies <http://lucarelandini.blogspot.be/2015/03/aci-for-dummies.html>`_
+- `Luca Relandini: ACI for dummies <https://lucarelandini.blogspot.be/2015/03/aci-for-dummies.html>`_
 - `Cisco DevNet Learning Labs about ACI <https://learninglabs.cisco.com/labs/tags/ACI>`_
 
 
@@ -51,7 +51,7 @@ Using the ACI modules
 ---------------------
 The Ansible ACI modules provide a user-friendly interface to managing your ACI environment using Ansible playbooks.
 
-For instance ensuring that a specific tenant exists, is done using the following Ansible task using module `aci_tenant <aci_tenant_module>`:
+For instance ensuring that a specific tenant exists, is done using the following Ansible task using module :ref:`aci_tenant <aci_tenant_module>`:
 
 .. code-block:: yaml
 
@@ -65,7 +65,9 @@ For instance ensuring that a specific tenant exists, is done using the following
         description: Customer XYZ
         state: present
 
-A complete list of existing ACI modules is available for the latest stable release on the :ref:`list of network modules <network_modules>`. You can also view the `current development version <http://docs.ansible.com/ansible/devel/modules/list_of_network_modules.html#aci>`_.
+A complete list of existing ACI modules is available for the latest stable release on the :ref:`list of network modules <network_modules>`. You can also view the `current development version <https://docs.ansible.com/ansible/devel/modules/list_of_network_modules.html#aci>`_.
+
+If you want to learn how to write your own ACI modules to contribute, look at the :ref:`Developing Cisco ACI modules <aci_dev_guide>` section.
 
 Querying ACI configuration
 ..........................
@@ -82,6 +84,7 @@ A module can also be used to query a specific object.
     
         tenant: customer-xyz
         state: query
+      register: my_tenant
 
 Or query all objects.
 
@@ -96,7 +99,92 @@ Or query all objects.
         state: query
       register: all_tenants
 
-After registering the return values of the `aci_tenant <aci_tenant_module>` task as shown above, you can access all tenant information from variable ``all_tenants``.
+After registering the return values of the :ref:`aci_tenant <aci_tenant_module>` task as shown above, you can access all tenant information from variable ``all_tenants``.
+
+
+Running on the controller locally
+.................................
+As originally designed, Ansible modules are shipped to and run on the remote target(s), however the ACI modules (like most network-related modules) do not run on the network devices or controller (in this case the APIC), but they talk directly to the APIC's REST interface.
+
+For this very reason, the modules need to run on the local Ansible controller (or are delegated to another system that *can* connect to the APIC).
+
+
+Gathering facts
+```````````````
+Because we run the modules on the Ansible controller gathering facts will not work. That is why when using these ACI modules it is mandatory to disable facts gathering. You can do this globally in your ``ansible.cfg`` or by adding ``gather_facts: no`` to every play.
+
+.. code-block:: yaml
+   :emphasize-lines: 3
+
+    - name: Another play in my playbook
+      hosts: my-apic-1
+      gather_facts: no
+      tasks:
+      - name: Create a tenant
+        aci_tenant:
+          ...
+
+Delegating to localhost
+```````````````````````
+So let us assume we have our target configured in the inventory using the FQDN name as the ``ansible_host`` value, as shown below.
+
+.. code-block:: yaml
+   :emphasize-lines: 3
+
+    apics:
+      my-apic-1:
+        ansible_host: apic01.fqdn.intra
+        ansible_user: admin
+        ansible_password: my-password
+
+One way to set this up is to add to every task the directive: ``delegate_to: localhost``.
+
+.. code-block:: yaml
+   :emphasize-lines: 8
+
+    - name: Query all tenants
+      aci_tenant:
+        host: '{{ ansible_host }}'
+        username: '{{ ansible_user }}'
+        password: '{{ ansible_password }}'
+    
+        state: query
+      delegate_to: localhost
+      register: all_tenants
+
+If one would forget to add this directive, Ansible will attempt to connect to the APIC using SSH and attempt to copy the module and run it remotely. This will fail with a clear error, yet may be confusing to some.
+
+
+Using the local connection method
+`````````````````````````````````
+Another option frequently used, is to tie the ``local`` connection method to this target so that every subsequent task for this target will use the local connection method (hence run it locally, rather than use SSH).
+
+In this case the inventory may look like this:
+
+.. code-block:: yaml
+   :emphasize-lines: 6
+
+    apics:
+      my-apic-1:
+        ansible_host: apic01.fqdn.intra
+        ansible_user: admin
+        ansible_password: my-password
+        ansible_connection: local
+
+But used tasks do not need anything special added.
+
+.. code-block:: yaml
+
+    - name: Query all tenants
+      aci_tenant:
+        host: '{{ ansible_host }}'
+        username: '{{ ansible_user }}'
+        password: '{{ ansible_password }}'
+    
+        state: query
+      register: all_tenants
+
+.. hint:: For clarity we have added ``delegate_to: localhost`` to all the examples in the module documentation. This helps to ensure first-time users can easily copy&paste parts and make them work with a minimum of effort.
 
 
 Common parameters
@@ -141,9 +229,9 @@ Proxy support
 .............
 By default, if an environment variable ``<protocol>_proxy`` is set on the target host, requests will be sent through that proxy. This behaviour can be overridden by setting a variable for this task (see :ref:`playbooks_environment`), or by using the ``use_proxy`` module parameter.
 
-HTTP redirects can redirect from HTTP to HTTPS so you should be sure that your proxy environment for both protocols is correct.
+HTTP redirects can redirect from HTTP to HTTPS so ensure that the proxy environment for both protocols is correctly configured.
 
-If you don't need proxy support, but the system may have it configured nevertheless, you can add this parameter setting: ``use_proxy: no`` to avoid accidental proxy usage.
+If proxy support is not needed, but the system may have it configured nevertheless, use the parameter ``use_proxy: no`` to avoid accidental system proxy usage.
 
 .. hint:: Selective proxy support using the ``no_proxy`` environment variable is also supported.
 
@@ -193,6 +281,7 @@ More information
 ................
 Various resources exist to start learn more about ACI programmability, we recommend the following links:
 
+- :ref:`Developing Cisco ACI modules <aci_dev_guide>`
 - `Jacob McGill: Automating Cisco ACI with Ansible <https://blogs.cisco.com/developer/automating-cisco-aci-with-ansible-eliminates-repetitive-day-to-day-tasks>`_
 - `Cisco DevNet Learning Labs about ACI and Ansible <https://learninglabs.cisco.com/labs/tags/ACI,Ansible>`_
 
@@ -228,7 +317,7 @@ Signature-based authentication using certificates
 Using signature-based authentication is more efficient and more reliable than password-based authentication.
 
 Generate certificate and private key
-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+````````````````````````````````````
 Signature-based authentication requires a (self-signed) X.509 certificate with private key, and a configuration step for your AAA user in ACI. To generate a working X.509 certificate and private key, use the following procedure:
 
 .. code-block:: bash
@@ -236,7 +325,7 @@ Signature-based authentication requires a (self-signed) X.509 certificate with p
     $ openssl req -new -newkey rsa:1024 -days 36500 -nodes -x509 -keyout admin.key -out admin.crt -subj '/CN=Admin/O=Your Company/C=US'
 
 Configure your local user
-,,,,,,,,,,,,,,,,,,,,,,,,,
+`````````````````````````
 Perform the following steps:
 
 - Add the X.509 certificate to your ACI AAA local user at :guilabel:`ADMIN` » :guilabel:`AAA`
@@ -262,16 +351,17 @@ You can automate this by using the following Ansible task:
     
         aaa_user: admin
         certificate_name: admin
-        certificate: "{{ lookup('file', 'pki/admin.crt') }}"  # This wil read the certificate data from a local file
+        certificate: "{{ lookup('file', 'pki/admin.crt') }}"  # This will read the certificate data from a local file
 
 .. note:: Signature-based authentication only works with local users.
 
 
 Use signature-based authentication with Ansible
-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+```````````````````````````````````````````````
 You need the following parameters with your ACI module(s) for it to work:
 
 .. code-block:: yaml
+   :emphasize-lines: 2,3
 
     username: admin
     private_key: pki/admin.key
@@ -280,7 +370,7 @@ You need the following parameters with your ACI module(s) for it to work:
 .. hint:: If you use a certificate name in ACI that matches the private key's basename, you can leave out the ``certificate_name`` parameter like the example above.
 
 More information
-,,,,,,,,,,,,,,,,
+````````````````
 Detailed information about Signature-based Authentication is available from `Cisco APIC Signature-Based Transactions <https://www.cisco.com/c/en/us/td/docs/switches/datacenter/aci/apic/sw/kb/b_KB_Signature_Based_Transactions.html>`_.
 
 
@@ -368,7 +458,7 @@ For instance, if you would like to ensure a specific tenant exists on ACI, these
         state: present
 
 
-.. hint:: The XML format is more practical when there is a need to template the REST payload (inline), but the YAML format is more convenient for maintaing your infrastructure-as-code and feels more naturely integrated with Ansible playbooks. The dedicated modules offer a more simple, abstracted, but also a more limited experience. Use what feels best for your use-case.
+.. hint:: The XML format is more practical when there is a need to template the REST payload (inline), but the YAML format is more convenient for maintaining your infrastructure-as-code and feels more naturally integrated with Ansible playbooks. The dedicated modules offer a more simple, abstracted, but also a more limited experience. Use what feels best for your use-case.
 
 
 More information
@@ -398,7 +488,7 @@ You can use the below task after you started to build your APICs and configured 
 
     - name: Waiting for all controllers to be ready
       aci_rest:
-        host: '{{ apic_ip }}'
+        host: my-apic-1
         private_key: pki/admin.key
         method: get
         path: /api/node/class/topSystem.json?query-target-filter=eq(topSystem.role,"controller")
@@ -416,7 +506,7 @@ The below example waits until the cluster is fully-fit. In this example you know
 
     - name: Waiting for cluster to be fully-fit
       aci_rest:
-        host: '{{ apic_ip }}'
+        host: my-apic-1
         private_key: pki/admin.key
         method: get
         path: /api/node/class/infraWiNode.json?query-target-filter=wcard(infraWiNode.dn,"topology/pod-1/node-1/av")
@@ -427,7 +517,6 @@ The below example waits until the cluster is fully-fit. In this example you know
         infrawinode.imdata[0].infraWiNode.attributes.health == 'fully-fit' and
         infrawinode.imdata[1].infraWiNode.attributes.health == 'fully-fit' and
         infrawinode.imdata[2].infraWiNode.attributes.health == 'fully-fit'
-    #    all(apic.infraWiNode.attributes.health == 'fully-fit' for apic in infrawinode.imdata)
       retries: 30
       delay: 30
 
@@ -459,7 +548,7 @@ The :ref:`aci_rest <aci_rest_module>` module is a wrapper around the APIC REST A
 All below issues either have been reported to the vendor, and most can simply be avoided.
 
     Too many consecutive API calls may result in connection throttling
-        Starting with ACI v3.1 the APIC will actively throttle password-based authenticated connection rates over a specific treshold. This is as part of an anti-DDOS measure but can act up when using Ansible with ACI using password-based authentication. Currently, one solution is to increase this treshold within the nginx configuration, but using signature-based authentication is recommended.
+        Starting with ACI v3.1 the APIC will actively throttle password-based authenticated connection rates over a specific treshold. This is as part of an anti-DDOS measure but can act up when using Ansible with ACI using password-based authentication. Currently, one solution is to increase this threshold within the nginx configuration, but using signature-based authentication is recommended.
 
         **NOTE:** It is advisable to use signature-based authentication with ACI as it not only prevents connection-throttling, but also improves general performance when using the ACI modules.
 
@@ -488,20 +577,22 @@ ACI Ansible community
 ---------------------
 If you have specific issues with the ACI modules, or a feature request, or you like to contribute to the ACI project by proposing changes or documentation updates, look at the Ansible Community wiki ACI page at: https://github.com/ansible/community/wiki/Network:-ACI
 
-You will find our roadmap, an overview of open ACI issues and pull-requests and more information about who we are. If you have an interest in using ACI with Ansible, feel free to join ! We occasionally meet online to track progress and prepare for new Ansible releases.
+You will find our roadmap, an overview of open ACI issues and pull-requests, and more information about who we are. If you have an interest in using ACI with Ansible, feel free to join! We occasionally meet online to track progress and prepare for new Ansible releases.
 
 
 .. seealso::
 
-   :ref:`network_guide`
-       A detailed guide on how to use Ansible for automating network infrastructure.
    :ref:`List of ACI modules <aci_network_modules>`
        A complete list of supported ACI modules.
+   :ref:`Developing Cisco ACI modules <aci_dev_guide>`
+       A walkthough on how to develop new Cisco ACI modules to contribute back.
    `ACI community <https://github.com/ansible/community/wiki/Network:-ACI>`_
        The Ansible ACI community wiki page, includes roadmap, ideas and development documentation.
+   :ref:`network_guide`
+       A detailed guide on how to use Ansible for automating network infrastructure.
    `Network Working Group <https://github.com/ansible/community/tree/master/group-network>`_
        The Ansible Network community page, includes contact information and meeting information.
    `#ansible-network <https://webchat.freenode.net/?channels=ansible-network>`_
        The #ansible-network IRC chat channel on Freenode.net.
-   `User Mailing List <http://groups.google.com/group/ansible-project>`_
+   `User Mailing List <https://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!

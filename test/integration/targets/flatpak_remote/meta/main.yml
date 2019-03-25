@@ -1,0 +1,3 @@
+dependencies:
+  - prepare_tests
+  - setup_flatpak_remote

@@ -1,0 +1,283 @@
+# Test code for the MSO modules
+# Copyright: (c) 2018, Dag Wieers (@dagwieers) <dag@wieers.com>
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Test that we have an ACI MultiSite host, username and password
+  fail:
+    msg: 'Please define the following variables: mso_hostname, mso_username and mso_password.'
+  when: mso_hostname is not defined or mso_username is not defined or mso_password is not defined
+
+
+# CLEAN ENVIRONMENT
+- name: Remove label ansible_test2
+  mso_label: &label_absent
+    host: '{{ mso_hostname }}'
+    username: '{{ mso_username }}'
+    password: '{{ mso_password }}'
+    validate_certs: '{{ mso_validate_certs | default(false) }}'
+    use_ssl: '{{ mso_use_ssl | default(true) }}'
+    use_proxy: '{{ mso_use_proxy | default(true) }}'
+    output_level: '{{ mso_output_level | default("info") }}'
+    label: ansible_test2
+    state: absent
+
+- name: Remove label ansible_test
+  mso_label:
+    <<: *label_absent
+    label: ansible_test
+  register: cm_remove_label
+
+
+# ADD LABEL
+- name: Add label (check_mode)
+  mso_label: &label_present
+    host: '{{ mso_hostname }}'
+    username: '{{ mso_username }}'
+    password: '{{ mso_password }}'
+    validate_certs: '{{ mso_validate_certs | default(false) }}'
+    use_ssl: '{{ mso_use_ssl | default(true) }}'
+    use_proxy: '{{ mso_use_proxy | default(true) }}'
+    output_level: '{{ mso_output_level | default("info") }}'
+    label: ansible_test
+    state: present
+  check_mode: yes
+  register: cm_add_label
+
+- name: Verify cm_add_label
+  assert:
+    that:
+    - cm_add_label is changed
+    - cm_add_label.previous == {}
+    - cm_add_label.current.displayName == 'ansible_test'
+    - cm_add_label.current.id is not defined
+    - cm_add_label.current.type == 'site'
+
+- name: Add label (normal mode)
+  mso_label: *label_present
+  register: nm_add_label
+
+- name: nm_Verify add_label
+  assert:
+    that:
+    - nm_add_label is changed
+    - nm_add_label.previous == {}
+    - nm_add_label.current.displayName == 'ansible_test'
+    - nm_add_label.current.id is defined
+    - nm_add_label.current.type == 'site'
+
+- name: Add label again (check_mode)
+  mso_label: *label_present
+  check_mode: yes
+  register: cm_add_label_again
+
+- name: Verify cm_add_label_again
+  assert:
+    that:
+    - cm_add_label_again is not changed
+    - cm_add_label_again.previous.displayName == 'ansible_test'
+    - cm_add_label_again.previous.type == 'site'
+    - cm_add_label_again.current.displayName == 'ansible_test'
+    - cm_add_label_again.current.id == nm_add_label.current.id
+    - cm_add_label_again.current.type == 'site'
+
+- name: Add label again (normal mode)
+  mso_label: *label_present
+  register: nm_add_label_again
+
+- name: Verify nm_add_label_again
+  assert:
+    that:
+    - nm_add_label_again is not changed
+    - nm_add_label_again.previous.displayName == 'ansible_test'
+    - nm_add_label_again.previous.type == 'site'
+    - nm_add_label_again.current.displayName == 'ansible_test'
+    - nm_add_label_again.current.id == nm_add_label.current.id
+    - nm_add_label_again.current.type == 'site'
+
+
+# CHANGE LABEL
+- name: Change label (check_mode)
+  mso_label:
+    <<: *label_present
+    label_id: '{{ nm_add_label.current.id }}'
+    label: ansible_test2
+  check_mode: yes
+  register: cm_change_label
+
+- name: Verify cm_change_label
+  assert:
+    that:
+    - cm_change_label is changed
+    - cm_change_label.current.displayName == 'ansible_test2'
+    - cm_change_label.current.id == nm_add_label.current.id
+    - cm_change_label.current.type == 'site'
+
+- name: Change label (normal mode)
+  mso_label:
+    <<: *label_present
+    label_id: '{{ nm_add_label.current.id }}'
+    label: ansible_test2
+    output_level: debug
+  register: nm_change_label
+
+- name: Verify nm_change_label
+  assert:
+    that:
+    - nm_change_label is changed
+    - cm_change_label.current.displayName == 'ansible_test2'
+    - nm_change_label.current.id == nm_add_label.current.id
+    - nm_change_label.current.type == 'site'
+
+- name: Change label again (check_mode)
+  mso_label:
+    <<: *label_present
+    label_id: '{{ nm_add_label.current.id }}'
+    label: ansible_test2
+  check_mode: yes
+  register: cm_change_label_again
+
+- name: Verify cm_change_label_again
+  assert:
+    that:
+    - cm_change_label_again is not changed
+    - cm_change_label_again.current.displayName == 'ansible_test2'
+    - cm_change_label_again.current.id == nm_add_label.current.id
+    - cm_change_label_again.current.type == 'site'
+
+- name: Change label again (normal mode)
+  mso_label:
+    <<: *label_present
+    label_id: '{{ nm_add_label.current.id }}'
+    label: ansible_test2
+  register: nm_change_label_again
+
+- name: Verify nm_change_label_again
+  assert:
+    that:
+    - nm_change_label_again is not changed
+    - nm_change_label_again.current.displayName == 'ansible_test2'
+    - nm_change_label_again.current.id == nm_add_label.current.id
+    - nm_change_label_again.current.type == 'site'
+
+
+# QUERY ALL LABELS
+- name: Query all labels (check_mode)
+  mso_label: &label_query
+    host: '{{ mso_hostname }}'
+    username: '{{ mso_username }}'
+    password: '{{ mso_password }}'
+    validate_certs: '{{ mso_validate_certs | default(false) }}'
+    use_ssl: '{{ mso_use_ssl | default(true) }}'
+    use_proxy: '{{ mso_use_proxy | default(true) }}'
+    output_level: '{{ mso_output_level | default("info") }}'
+    state: query
+  check_mode: yes
+  register: cm_query_all_labels
+
+- name: Query all labels (normal mode)
+  mso_label: *label_query
+  register: nm_query_all_labels
+
+- name: Verify query_all_labels
+  assert:
+    that:
+    - cm_query_all_labels is not changed
+    - nm_query_all_labels is not changed
+    # NOTE: Order of labels is not stable between calls
+    #- cm_query_all_labels == nm_query_all_labels
+
+
+# QUERY A LABEL
+- name: Query our label
+  mso_label:
+    <<: *label_query
+    label: ansible_test2
+  check_mode: yes
+  register: cm_query_label
+
+- name: Query our label
+  mso_label:
+    <<: *label_query
+    label: ansible_test2
+  register: nm_query_label
+
+- name: Verify query_label
+  assert:
+    that:
+    - cm_query_label is not changed
+    - cm_query_label.current.displayName == 'ansible_test2'
+    - cm_query_label.current.id == nm_add_label.current.id
+    - cm_query_label.current.type == 'site'
+    - nm_query_label is not changed
+    - nm_query_label.current.displayName == 'ansible_test2'
+    - nm_query_label.current.id == nm_add_label.current.id
+    - nm_query_label.current.type == 'site'
+    - cm_query_label == nm_query_label
+
+
+# REMOVE LABEL
+- name: Remove label (check_mode)
+  mso_label: *label_absent
+  check_mode: yes
+  register: cm_remove_label
+
+- name: Verify cm_remove_label
+  assert:
+    that:
+    - cm_remove_label is changed
+    - cm_remove_label.current == {}
+
+- name: Remove label (normal mode)
+  mso_label: *label_absent
+  register: nm_remove_label
+
+- name: Verify nm_remove_label
+  assert:
+    that:
+    - nm_remove_label is changed
+    - nm_remove_label.current == {}
+
+- name: Remove label again (check_mode)
+  mso_label: *label_absent
+  check_mode: yes
+  register: cm_remove_label_again
+
+- name: Verify cm_remove_label_again
+  assert:
+    that:
+    - cm_remove_label_again is not changed
+    - cm_remove_label_again.current == {}
+
+- name: Remove label again (normal mode)
+  mso_label: *label_absent
+  register: nm_remove_label_again
+
+- name: Verify nm_remove_label_again
+  assert:
+    that:
+    - nm_remove_label_again is not changed
+    - nm_remove_label_again.current == {}
+
+
+# QUERY NON-EXISTING LABEL
+- name: Query non-existing label (check_mode)
+  mso_label:
+    <<: *label_query
+    label: ansible_test
+  check_mode: yes
+  register: cm_query_non_label
+
+- name: Query non-existing label (normal mode)
+  mso_label:
+    <<: *label_query
+    label: ansible_test
+  register: nm_query_non_label
+
+# TODO: Implement more tests
+- name: Verify query_non_label
+  assert:
+    that:
+    - cm_query_non_label is not changed
+    - nm_query_non_label is not changed
+    - cm_query_non_label == nm_query_non_label

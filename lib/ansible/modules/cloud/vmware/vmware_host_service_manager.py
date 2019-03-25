@@ -68,9 +68,10 @@ EXAMPLES = r'''
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
-    cluster_name: cluster_name
+    cluster_name: '{{ cluster_name }}'
     service_name: ntpd
     state: present
+  delegate_to: localhost
 
 - name: Start ntpd setting for an ESXi Host
   vmware_host_service_manager:
@@ -80,6 +81,7 @@ EXAMPLES = r'''
     esxi_hostname: '{{ esxi_hostname }}'
     service_name: ntpd
     state: present
+  delegate_to: localhost
 
 - name: Start ntpd setting for an ESXi Host with Service policy
   vmware_host_service_manager:
@@ -90,6 +92,7 @@ EXAMPLES = r'''
     service_name: ntpd
     service_policy: on
     state: present
+  delegate_to: localhost
 
 - name: Stop ntpd setting for an ESXi Host
   vmware_host_service_manager:
@@ -99,6 +102,7 @@ EXAMPLES = r'''
     esxi_hostname: '{{ esxi_hostname }}'
     service_name: ntpd
     state: absent
+  delegate_to: localhost
 '''
 
 RETURN = r'''#
@@ -144,20 +148,24 @@ class VmwareServiceManager(PyVmomi):
                 try:
                     if self.desired_state in ['start', 'present']:
                         if not actual_service_state:
-                            host_service_system.StartService(id=self.service_name)
+                            if not self.module.check_mode:
+                                host_service_system.StartService(id=self.service_name)
                             changed_state = True
                     elif self.desired_state in ['stop', 'absent']:
                         if actual_service_state:
-                            host_service_system.StopService(id=self.service_name)
+                            if not self.module.check_mode:
+                                host_service_system.StopService(id=self.service_name)
                             changed_state = True
                     elif self.desired_state == 'restart':
-                        host_service_system.RestartService(id=self.service_name)
+                        if not self.module.check_mode:
+                            host_service_system.RestartService(id=self.service_name)
                         changed_state = True
 
                     if self.desired_policy:
                         if actual_service_policy != self.desired_policy:
-                            host_service_system.UpdateServicePolicy(id=self.service_name,
-                                                                    policy=self.desired_policy)
+                            if not self.module.check_mode:
+                                host_service_system.UpdateServicePolicy(id=self.service_name,
+                                                                        policy=self.desired_policy)
                             changed_state = True
 
                     host_service_state.append(changed_state)
@@ -201,7 +209,8 @@ def main():
         argument_spec=argument_spec,
         required_one_of=[
             ['cluster_name', 'esxi_hostname'],
-        ]
+        ],
+        supports_check_mode=True
     )
 
     vmware_host_service = VmwareServiceManager(module)

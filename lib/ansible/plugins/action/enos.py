@@ -21,25 +21,22 @@ import sys
 import copy
 
 from ansible import constants as C
-from ansible.plugins.action.normal import ActionModule as _ActionModule
+from ansible.plugins.action.network import ActionModule as ActionNetworkModule
 from ansible.module_utils.network.enos.enos import enos_provider_spec
 from ansible.module_utils.network.common.utils import load_provider
 from ansible.module_utils.connection import Connection
 from ansible.module_utils._text import to_text
+from ansible.utils.display import Display
+
+display = Display()
 
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
-
-
-class ActionModule(_ActionModule):
+class ActionModule(ActionNetworkModule):
 
     def run(self, tmp=None, task_vars=None):
         del tmp  # tmp no longer has any effect
 
+        self._config_module = True if self._task.action == 'enos_config' else False
         socket_path = None
         if self._play_context.connection == 'local':
             provider = load_provider(enos_provider_spec, self._task.args)
@@ -51,13 +48,15 @@ class ActionModule(_ActionModule):
             pc.remote_user = provider['username'] or self._play_context.connection_user
             pc.password = provider['password'] or self._play_context.password
             pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
-            pc.timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
+            command_timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
             pc.become = provider['authorize'] or True
             pc.become_pass = provider['auth_pass']
             pc.become_method = 'enable'
 
             display.vvv('using connection plugin %s (was local)' % pc.connection, pc.remote_addr)
             connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
+            connection.set_options(direct={'persistent_command_timeout': command_timeout})
+
             socket_path = connection.run()
             display.vvvv('socket_path: %s' % socket_path, pc.remote_addr)
             if not socket_path:

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# (c) 2018, NetApp, Inc
+# (c) 2018-2019, NetApp, Inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -12,13 +12,14 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 module: na_ontap_volume_clone
-short_description: Manage NetApp Ontap volume clones.
+short_description: NetApp ONTAP manage volume clones.
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
-author: Chris Archibald (carchi@netapp.com), Kevin Hutton (khutton@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 description:
-- Create NetApp Ontap volume clones.
+- Create NetApp ONTAP volume clones.
+- A FlexClone License is required to use this module
 options:
   state:
     description:
@@ -54,20 +55,25 @@ options:
     description:
     - The volume-type setting which should be used for the volume clone.
     choices: ['rw', 'dp']
+  junction_path:
+    version_added: '2.8'
+    description:
+    - Junction path of the volume.
 '''
 
 EXAMPLES = """
     - name: create volume clone
       na_ontap_volume_clone:
-        state=present
-        username=admin
-        password=netapp1!
-        hostname=10.193.74.27
-        vserver=vs_hack
-        parent_volume=normal_volume
-        volume=clone_volume_7
-        space_reserve=none
-        parent_snapshot=backup1
+        state: present
+        username: "{{ netapp username }}"
+        password: "{{ netapp password }}"
+        hostname: "{{ netapp hostname }}"
+        vserver: vs_hack
+        parent_volume: normal_volume
+        volume: clone_volume_7
+        space_reserve: none
+        parent_snapshot: backup1
+        junction_path: /clone_volume_7
 """
 
 RETURN = """
@@ -99,6 +105,7 @@ class NetAppOntapVolumeClone(object):
             qos_policy_group_name=dict(required=False, type='str', default=None),
             space_reserve=dict(required=False, choices=['volume', 'none'], default=None),
             volume_type=dict(required=False, choices=['rw', 'dp']),
+            junction_path=dict(required=False, type='str', default=None)
         ))
 
         self.module = AnsibleModule(
@@ -118,6 +125,7 @@ class NetAppOntapVolumeClone(object):
         self.volume = parameters['volume']
         self.volume_type = parameters['volume_type']
         self.vserver = parameters['vserver']
+        self.junction_path = parameters['junction_path']
 
         if HAS_NETAPP_LIB is False:
             self.module.fail_json(msg="the python NetApp-Lib module is required")
@@ -142,23 +150,23 @@ class NetAppOntapVolumeClone(object):
             clone_obj.add_new_child("parent-vserver", self.parent_vserver)
         if self.volume_type:
             clone_obj.add_new_child("volume-type", self.volume_type)
+        if self.junction_path:
+            clone_obj.add_new_child("junction-path", self.junction_path)
         self.server.invoke_successfully(clone_obj, True)
 
     def does_volume_clone_exists(self):
         clone_obj = netapp_utils.zapi.NaElement('volume-clone-get')
         clone_obj.add_new_child("volume", self.volume)
-        attributes_obj = netapp_utils.zapi.NaElement('desired-attributes')
-        info_obj = netapp_utils.zapi.NaElement('volume-clone-info')
-        clone_obj.add_child_elem(attributes_obj)
-        attributes_obj.add_child_elem(info_obj)
-        attributes_obj.add_new_child("volume", self.volume)
-        attributes_obj.add_new_child("vserver", self.vserver)
-        attributes_obj.add_new_child("parent-volume", self.parent_volume)
         try:
-            self.server.invoke_successfully(clone_obj, True)
-        except:
+            results = self.server.invoke_successfully(clone_obj, True)
+        except netapp_utils.zapi.NaApiError:
             return False
-        return True
+        attributes = results.get_child_by_name('attributes')
+        info = attributes.get_child_by_name('volume-clone-info')
+        parent_volume = info.get_child_content('parent-volume')
+        if parent_volume == self.parent_volume:
+            return True
+        self.module.fail_json(msg="Error clone %s already exists for parent %s" % (self.volume, parent_volume))
 
     def apply(self):
         """

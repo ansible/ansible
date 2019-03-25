@@ -1,15 +1,19 @@
-.. contents:: Topics
+.. _shell_plugins:
 
 Shell Plugins
--------------
+=============
+
+.. contents::
+   :local:
+   :depth: 2
 
 Shell plugins work to ensure that the basic commands Ansible runs are properly formatted to work with
 the target machine and allow the user to configure certain behaviors related to how Ansible executes tasks.
 
 .. _enabling_shell:
 
-Enabling Shell Plugins
-++++++++++++++++++++++
+Enabling shell plugins
+----------------------
 
 You can add a custom shell plugin by dropping it into a ``shell_plugins`` directory adjacent to your play, inside a role,
 or by putting it in one of the shell plugin directory sources configured in :ref:`ansible.cfg <ansible_configuration_settings>`.
@@ -19,8 +23,8 @@ or by putting it in one of the shell plugin directory sources configured in :ref
 
 .. _using_shell:
 
-Using Shell Plugins
-+++++++++++++++++++
+Using shell plugins
+-------------------
 
 In addition to the default configuration settings in :ref:`ansible_configuration_settings`, you can use
 the connection variable :ref:`ansible_shell_type <ansible_shell_type>` to select the plugin to use.
@@ -36,19 +40,19 @@ detailed in the plugin themselves (linked below).
 
 .. seealso::
 
-   :doc:`../user_guide/playbooks`
+   :ref:`about_playbooks`
        An introduction to playbooks
-   :doc:`inventory`
+   :ref:`inventory_plugins`
        Ansible inventory plugins
-   :doc:`callback`
+   :ref:`callback_plugins`
        Ansible callback plugins
-   :doc:`../user_guide/playbooks_filters`
+   :ref:`playbooks_filters`
        Jinja2 filter plugins
-   :doc:`../user_guide/playbooks_tests`
+   :ref:`playbooks_tests`
        Jinja2 test plugins
-   :doc:`../user_guide/playbooks_lookups`
+   :ref:`playbooks_lookups`
        Jinja2 lookup plugins
-   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

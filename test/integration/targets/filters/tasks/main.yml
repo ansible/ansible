@@ -1,20 +1,7 @@
-# test code
-# (c) 2014, Michael DeHaan <michael.dehaan@gmail.com>
-
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# test code for filters
+# Copyright: (c) 2014, Michael DeHaan <michael.dehaan@gmail.com>
+# Copyright: (c) 2019, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 - name: a dummy task to test the changed and success filters
   shell: echo hi
@@ -169,6 +156,19 @@
       - _bad_urlsplit_filter is failed
       - "'unknown URL component' in _bad_urlsplit_filter.msg"
 
+- name: Test urldecode filter
+  set_fact:
+    urldecoded_string: key="@{}é&%£ foo bar '(;\<>""°)
+
+- name: Test urlencode filter
+  set_fact:
+    urlencoded_string: '{{ urldecoded_string|urlencode }}'
+
+- name: Verify urlencode en urldecode
+  assert:
+    that:
+    - urldecoded_string == urlencoded_string|urldecode
+
 - name: Flatten tests
   block:
     - name: use flatten
@@ -176,6 +176,7 @@
         flat_full: '{{orig_list|flatten}}'
         flat_one: '{{orig_list|flatten(levels=1)}}'
         flat_two: '{{orig_list|flatten(levels=2)}}'
+        flat_tuples: '{{ [1,3] | zip([2,4]) | list | flatten }}'
 
     - name: Verify flatten filter works as expected
       assert:
@@ -183,6 +184,7 @@
           - flat_full == [1, 2, 3, 4, 5, 6, 7]
           - flat_one == [1, 2, 3, [4, [5]], 6, 7]
           - flat_two == [1, 2, 3, 4, [5], 6, 7]
+          - flat_tuples == [1, 2, 3, 4]
   vars:
     orig_list: [1, 2, [3, [4, [5]], 6], 7]
 
@@ -193,3 +195,81 @@
     - "'QW5zaWJsZSAtIOOBj+OCieOBqOOBvwo=' | b64decode == 'Ansible - くらとみ\n'"
     - "'Ansible - くらとみ\n' | b64encode(encoding='utf-16-le') == 'QQBuAHMAaQBiAGwAZQAgAC0AIABPMIkwaDB/MAoA'"
     - "'QQBuAHMAaQBiAGwAZQAgAC0AIABPMIkwaDB/MAoA' | b64decode(encoding='utf-16-le') == 'Ansible - くらとみ\n'"
+
+- name: Test random_mac filter bad argument type
+  debug:
+    var: "0 | random_mac"
+  register: _bad_random_mac_filter
+  ignore_errors: yes
+
+- name: Verify random_mac filter showed a bad argument type error message
+  assert:
+    that:
+      - _bad_random_mac_filter is failed
+      - "_bad_random_mac_filter.msg is match('Invalid value type (.*int.*) for random_mac .*')"
+
+- name: Test random_mac filter bad argument value
+  debug:
+    var: "'dummy' | random_mac"
+  register: _bad_random_mac_filter
+  ignore_errors: yes
+
+- name: Verify random_mac filter showed a bad argument value error message
+  assert:
+    that:
+      - _bad_random_mac_filter is failed
+      - "_bad_random_mac_filter.msg is match('Invalid value (.*) for random_mac: .* not hexa byte')"
+
+- name: Test random_mac filter prefix too big
+  debug:
+    var: "'00:00:00:00:00:00' | random_mac"
+  register: _bad_random_mac_filter
+  ignore_errors: yes
+
+- name: Verify random_mac filter showed a prefix too big error message
+  assert:
+    that:
+      - _bad_random_mac_filter is failed
+      - "_bad_random_mac_filter.msg is match('Invalid value (.*) for random_mac: 5 colon.* separated items max')"
+
+- name:  Verify random_mac filter
+  assert:
+    that:
+            - "'00:00:00' | random_mac is match('^00:00:00:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]$')"
+            - "'00:00:00' | random_mac != '00:00:00' | random_mac"
+
+- name: Verify that union can be chained
+  vars:
+    unions: '{{ [1,2,3]|union([4,5])|union([6,7]) }}'
+  assert:
+    that:
+      - "unions|type_debug == 'list'"
+      - "unions|length == 7"
+
+- name: Test union with unhashable item
+  vars:
+    unions: '{{ [1,2,3]|union([{}]) }}'
+  assert:
+    that:
+      - "unions|type_debug == 'list'"
+      - "unions|length == 4"
+
+- name: Test ipaddr filter
+  assert:
+    that:
+      - "'192.168.0.1/32' | ipaddr('netmask') == '255.255.255.255'"
+      - "'192.168.0.1/24' | ipaddr('netmask') == '255.255.255.0'"
+      - "not '192.168.0.1/31' | ipaddr('broadcast')"
+      - "'192.168.0.1/24' | ipaddr('broadcast') == '192.168.0.255'"
+      - "'192.168.0.1/24' | ipaddr('prefix') == 24"
+      - "'192.168.0.1/24' | ipaddr('address') == '192.168.0.1'"
+      - "'192.168.0.1/24' | ipaddr('network') == '192.168.0.0'"
+      - "'fe80::dead:beef/64' | ipaddr('broadcast') == 'fe80::ffff:ffff:ffff:ffff'"
+      - "'::1/120' | ipaddr('netmask') == 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ff00'"
+
+- name: Ensure dict2items works with hostvars
+  debug:
+    msg: "{{ item.key }}"
+  loop: "{{ hostvars|dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"

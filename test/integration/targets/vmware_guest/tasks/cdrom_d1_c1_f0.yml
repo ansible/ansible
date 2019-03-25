@@ -35,7 +35,7 @@
     folder: "/{{ (clusterlist['json'][0]|basename).split('_')[0] }}/vm"
     name: CDROM-Test
     datacenter: "{{ (clusterlist['json'][0]|basename).split('_')[0] }}"
-    cluster: "{{ clusterlist['json'][0] }}"
+    cluster: "{{ clusterlist['json'][0]|basename }}"
     resource_pool: Resources
     guest_id: centos64Guest
     hardware:
@@ -125,3 +125,83 @@
     that:
       - "cdrom_vm.failed == false"
       - "cdrom_vm.changed == true"
+
+- name: Create VM with multiple disks and a CDROM - GitHub issue 38679
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    folder: "/{{ (clusterlist['json'][0]|basename).split('_')[0] }}/vm"
+    name: CDROM-Test-38679
+    datacenter: "{{ (clusterlist['json'][0]|basename).split('_')[0] }}"
+    cluster: "{{ clusterlist['json'][0].split('/')[-1] }}"
+    resource_pool: Resources
+    guest_id: centos64Guest
+    hardware:
+      memory_mb: 512
+      num_cpus: 1
+      scsi: paravirtual
+    disk:
+    - size_mb: 128
+      type: thin
+      datastore: LocalDS_0
+    - size_mb: 128
+      type: thin
+      datastore: LocalDS_0
+    - size_mb: 128
+      type: thin
+      datastore: LocalDS_0
+    cdrom:
+      type: iso
+      iso_path: "[LocalDS_0] base.iso"
+  register: cdrom_vm
+
+- debug: var=cdrom_vm
+
+- name: assert the VM was created
+  assert:
+    that:
+      - "cdrom_vm.failed == false"
+      - "cdrom_vm.changed == true"
+
+# VCSIM fails with invalidspec exception but real vCenter PASS testcase
+# Commenting this testcase till the time
+#- name: Again create VM with multiple disks and a CDROM - GitHub issue 38679
+#  vmware_guest:
+#    validate_certs: False
+#    hostname: "{{ vcsim }}"
+#    username: "{{ vcsim_instance['json']['username'] }}"
+#    password: "{{ vcsim_instance['json']['password'] }}"
+#    folder: "/{{ (clusterlist['json'][0]|basename).split('_')[0] }}/vm"
+#    name: CDROM-Test-38679
+#    datacenter: "{{ (clusterlist['json'][0]|basename).split('_')[0] }}"
+#    cluster: "{{ clusterlist['json'][0] }}"
+#    resource_pool: Resources
+#    guest_id: centos64Guest
+#    hardware:
+#      memory_mb: 512
+#      num_cpus: 1
+#      scsi: paravirtual
+#    disk:
+#    - size_mb: 128
+#      type: thin
+#      datastore: LocalDS_0
+#    - size_mb: 128
+#      type: thin
+#      datastore: LocalDS_0
+#    - size_mb: 128
+#      type: thin
+#      datastore: LocalDS_0
+#    cdrom:
+#      type: iso
+#      iso_path: "[LocalDS_0] base.iso"
+#  register: cdrom_vm
+
+#- debug: var=cdrom_vm
+
+#- name: assert the VM was created
+#  assert:
+#    that:
+#      - "cdrom_vm.failed == false"
+#      - "cdrom_vm.changed == false"

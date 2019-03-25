@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -16,70 +16,75 @@ module: aci_filter_entry
 short_description: Manage filter entries (vz:Entry)
 description:
 - Manage filter entries for a filter on Cisco ACI fabrics.
-notes:
-- The C(tenant) and C(filter) used must exist before using this module in your playbook.
-  The M(aci_tenant) and M(aci_filter) modules can be used for this.
-- More information about the internal APIC class B(vz:Entry) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
-author:
-- Jacob McGill (@jmcgill298)
 version_added: '2.4'
 options:
   arp_flag:
     description:
     - The arp flag to use when the ether_type is arp.
     - The APIC defaults to C(unspecified) when unset during creation.
+    type: str
     choices: [ arp_reply, arp_request, unspecified ]
   description:
     description:
     - Description for the Filter Entry.
+    type: str
     aliases: [ descr ]
   dst_port:
     description:
     - Used to set both destination start and end ports to the same value when ip_protocol is tcp or udp.
+    - Accepted values are any valid TCP/UDP port range.
     - The APIC defaults to C(unspecified) when unset during creation.
-    choices: [ Valid TCP/UDP Port Ranges]
+    type: str
   dst_port_end:
     description:
     - Used to set the destination end port when ip_protocol is tcp or udp.
+    - Accepted values are any valid TCP/UDP port range.
     - The APIC defaults to C(unspecified) when unset during creation.
-    choices: [ Valid TCP/UDP Port Ranges]
+    type: str
   dst_port_start:
     description:
     - Used to set the destination start port when ip_protocol is tcp or udp.
+    - Accepted values are any valid TCP/UDP port range.
     - The APIC defaults to C(unspecified) when unset during creation.
-    choices: [ Valid TCP/UDP Port Ranges]
+    type: str
   entry:
     description:
     - Then name of the Filter Entry.
+    type: str
     aliases: [ entry_name, filter_entry, name ]
   ether_type:
     description:
     - The Ethernet type.
     - The APIC defaults to C(unspecified) when unset during creation.
+    type: str
     choices: [ arp, fcoe, ip, mac_security, mpls_ucast, trill, unspecified ]
   filter:
     description:
-      The name of Filter that the entry should belong to.
+    - The name of Filter that the entry should belong to.
+    type: str
     aliases: [ filter_name ]
   icmp_msg_type:
     description:
     - ICMPv4 message type; used when ip_protocol is icmp.
     - The APIC defaults to C(unspecified) when unset during creation.
+    type: str
     choices: [ dst_unreachable, echo, echo_reply, src_quench, time_exceeded, unspecified ]
   icmp6_msg_type:
     description:
     - ICMPv6 message type; used when ip_protocol is icmpv6.
     - The APIC defaults to C(unspecified) when unset during creation.
+    type: str
     choices: [ dst_unreachable, echo_request, echo_reply, neighbor_advertisement, neighbor_solicitation, redirect, time_exceeded, unspecified ]
   ip_protocol:
     description:
     - The IP Protocol type when ether_type is ip.
     - The APIC defaults to C(unspecified) when unset during creation.
+    type: str
     choices: [ eigrp, egp, icmp, icmpv6, igmp, igp, l2tp, ospfigp, pim, tcp, udp, unspecified ]
   state:
     description:
     - present, absent, query
+    type: str
     default: present
     choices: [ absent, present, query ]
   stateful:
@@ -89,8 +94,20 @@ options:
   tenant:
     description:
     - The name of the tenant.
+    type: str
     aliases: [ tenant_name ]
 extends_documentation_fragment: aci
+notes:
+- The C(tenant) and C(filter) used must exist before using this module in your playbook.
+  The M(aci_tenant) and M(aci_filter) modules can be used for this.
+seealso:
+- module: aci_tenant
+- module: aci_filter
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(vz:Entry).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Jacob McGill (@jmcgill298)
 '''
 
 EXAMPLES = r'''
@@ -105,6 +122,7 @@ EXAMPLES = r'''
     icmp_msg_type: "{{ icmp_msg_type }}"
     filter: "{{ filter }}"
     descr: "{{ descr }}"
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -139,7 +157,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -188,17 +206,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -208,12 +226,12 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 VALID_ARP_FLAGS = ['arp_reply', 'arp_request', 'unspecified']
 VALID_ETHER_TYPES = ['arp', 'fcoe', 'ip', 'mac_security', 'mpls_ucast', 'trill', 'unspecified']
@@ -247,7 +265,7 @@ def main():
         ip_protocol=dict(choices=VALID_IP_PROTOCOLS, type='str'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         stateful=dict(type='bool'),
-        tenant=dict(type="str", aliases=['tenant_name']),  # Not required for querying all objects
+        tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
     )
 
     module = AnsibleModule(
@@ -299,20 +317,20 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='vzFilter',
             aci_rn='flt-{0}'.format(filter_name),
-            filter_target='eq(vzFilter.name, "{0}")'.format(filter_name),
             module_object=filter_name,
+            target_filter={'name': filter_name},
         ),
         subclass_2=dict(
             aci_class='vzEntry',
             aci_rn='e-{0}'.format(entry),
-            filter_target='eq(vzEntry.name, "{0}")'.format(entry),
-            module_object=entry
+            module_object=entry,
+            target_filter={'name': entry},
         ),
     )
 

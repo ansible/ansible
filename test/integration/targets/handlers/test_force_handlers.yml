@@ -4,7 +4,6 @@
   tags: normal
   hosts: testgroup
   gather_facts: False
-  connection: local
   roles:
   - { role: test_force_handlers }
   tasks:
@@ -14,7 +13,6 @@
   tags: force_true_in_play
   hosts: testgroup
   gather_facts: False
-  connection: local
   force_handlers: True
   roles:
   - { role: test_force_handlers, tags: force_true_in_play }
@@ -24,7 +22,6 @@
   tags: force_false_in_play
   hosts: testgroup
   gather_facts: False
-  connection: local
   force_handlers: False
   roles:
   - { role: test_force_handlers, tags: force_false_in_play }

@@ -1,0 +1,191 @@
+- name: Create Slack notification
+  tower_notification:
+    name: notification1
+    notification_type: slack
+    token: a_token
+    channels:
+      - general
+    state: present
+  register: result
+
+- assert:
+    that:
+      - result is changed
+
+- name: Delete Slack notification
+  tower_notification:
+    name: notification1
+    notification_type: slack
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - result is changed
+
+- name: Add webhook notification
+  tower_notification:
+    name: notification2
+    notification_type: webhook
+    url: http://www.example.com/hook
+    headers:
+      X-Custom-Header: value123
+    state: present
+  register: result
+
+- assert:
+    that:
+      - result is changed
+
+- name: Delete webhook notification
+  tower_notification:
+    name: notification2
+    notification_type: webhook
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - result is changed
+
+- name: Add email notification
+  tower_notification:
+    name: notification3
+    notification_type: email
+    username: user
+    password: s3cr3t
+    sender: tower@example.com
+    recipients:
+      - user1@example.com
+    host: smtp.example.com
+    port: 25
+    use_tls: no
+    use_ssl: no
+    state: present
+  register: result
+
+- assert:
+    that:
+      - result is changed
+
+- name: Delete email notification
+  tower_notification:
+    name: notification3
+    notification_type: email
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - result is changed
+
+- name: Add twilio notification
+  tower_notification:
+    name: notification4
+    notification_type: twilio
+    account_token: a_token
+    account_sid: a_sid
+    from_number: '+15551112222'
+    to_numbers:
+      - '+15553334444'
+    state: present
+  register: result
+
+- assert:
+    that:
+      - result is changed
+
+- name: Delete twilio notification
+  tower_notification:
+    name: notification4
+    notification_type: twilio
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - result is changed
+
+- name: Add PagerDuty notification
+  tower_notification:
+    name: notification5
+    notification_type: pagerduty
+    token: a_token
+    subdomain: sub
+    client_name: client
+    service_key: a_key
+    state: present
+  register: result
+
+- assert:
+    that:
+      - result is changed
+
+- name: Delete PagerDuty notification
+  tower_notification:
+    name: notification5
+    notification_type: pagerduty
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - result is changed
+
+- name: Add HipChat notification
+  tower_notification:
+    name: notification6
+    notification_type: hipchat
+    token: a_token
+    message_from: user1
+    api_url: https://hipchat.example.com
+    color: red
+    rooms:
+      - room-A
+    notify: yes
+    state: present
+  register: result
+
+- assert:
+    that:
+      - result is changed
+
+- name: Delete HipChat notification
+  tower_notification:
+    name: notification6
+    notification_type: hipchat
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - result is changed
+
+- name: Add IRC notification
+  tower_notification:
+    name: notification7
+    notification_type: irc
+    nickname: tower
+    password: s3cr3t
+    targets:
+      - user1
+    port: 8080
+    server: irc.example.com
+    use_ssl: no
+    state: present
+  register: result
+
+- assert:
+    that:
+      - result is changed
+
+- name: Delete IRC notification
+  tower_notification:
+    name: notification7
+    notification_type: irc
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - result is changed

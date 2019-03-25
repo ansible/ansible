@@ -565,7 +565,7 @@ class FedoraHostname(Hostname):
 
 class SLESHostname(Hostname):
     platform = 'Linux'
-    distribution = 'Suse linux enterprise server '
+    distribution = 'Sles'
     try:
         distribution_version = get_distribution_version()
         # cast to float may raise ValueError on non SLES, we use float for a little more safety over int
@@ -579,7 +579,7 @@ class SLESHostname(Hostname):
 
 class OpenSUSEHostname(Hostname):
     platform = 'Linux'
-    distribution = 'Opensuse '
+    distribution = 'Opensuse'
     strategy_class = SystemdStrategy
 
 
@@ -589,33 +589,9 @@ class ArchHostname(Hostname):
     strategy_class = SystemdStrategy
 
 
-class RedHat5Hostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Redhat'
-    strategy_class = RedHatStrategy
-
-
 class RHELHostname(Hostname):
     platform = 'Linux'
-    distribution = 'Red hat enterprise linux'
-    strategy_class = RedHatStrategy
-
-
-class RedHatServerHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Red hat enterprise linux server'
-    strategy_class = RedHatStrategy
-
-
-class RedHatWorkstationHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Red hat enterprise linux workstation'
-    strategy_class = RedHatStrategy
-
-
-class RedHatAtomicHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Red hat enterprise linux atomic host'
+    distribution = 'Redhat'
     strategy_class = RedHatStrategy
 
 
@@ -625,21 +601,9 @@ class CentOSHostname(Hostname):
     strategy_class = RedHatStrategy
 
 
-class CentOSLinuxHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Centos linux'
-    strategy_class = RedHatStrategy
-
-
 class CloudlinuxHostname(Hostname):
     platform = 'Linux'
     distribution = 'Cloudlinux'
-    strategy_class = RedHatStrategy
-
-
-class CloudlinuxServerHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Cloudlinux server'
     strategy_class = RedHatStrategy
 
 
@@ -649,27 +613,15 @@ class ScientificHostname(Hostname):
     strategy_class = RedHatStrategy
 
 
-class ScientificLinuxHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Scientific linux'
-    strategy_class = RedHatStrategy
-
-
-class ScientificLinuxCERNHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Scientific linux cern slc'
-    strategy_class = RedHatStrategy
-
-
 class OracleLinuxHostname(Hostname):
     platform = 'Linux'
-    distribution = 'Oracle linux server'
+    distribution = 'Oracle'
     strategy_class = RedHatStrategy
 
 
 class VirtuozzoLinuxHostname(Hostname):
     platform = 'Linux'
-    distribution = 'Virtuozzo linux'
+    distribution = 'Virtuozzo'
     strategy_class = RedHatStrategy
 
 
@@ -715,9 +667,15 @@ class DevuanHostname(Hostname):
     strategy_class = DebianStrategy
 
 
+class RaspbianHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Raspbian'
+    strategy_class = DebianStrategy
+
+
 class GentooHostname(Hostname):
     platform = 'Linux'
-    distribution = 'Gentoo base system'
+    distribution = 'Gentoo'
     strategy_class = OpenRCStrategy
 
 

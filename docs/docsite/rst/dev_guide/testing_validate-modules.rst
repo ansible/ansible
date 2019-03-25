@@ -1,3 +1,5 @@
+:orphan:
+
 ****************
 validate-modules
 ****************
@@ -83,6 +85,8 @@ Errors
   208       ``module_utils`` imports should import specific components, not ``*``
   209       Only the following ``from __future__`` imports are allowed:
             ``absolute_import``, ``division``, and ``print_function``.
+  210       ``subprocess.Popen`` used instead of ``module.run_command``
+  211       ``os.call`` used instead of ``module.run_command``
   ..
 ---------   -------------------
   **3xx**   **Documentation**
@@ -104,19 +108,27 @@ Errors
   316       Invalid ``ANSIBLE_METADATA`` schema
   317       option is marked as required but specifies a default.
             Arguments with a default should not be marked as required
-  318       Module deprecated, but DOCUMENTATION.deprecated is missing
+  318       Module marked as deprecated or removed in at least one of the filename, its metadata, or
+            in DOCUMENTATION (setting DOCUMENTATION.deprecated for deprecation or removing all
+            documentation for removed) but not in all three places.
   319       ``RETURN`` fragments missing  or invalid
   320       ``DOCUMENTATION.options`` must be a dictionary/hash when used
   321       ``Exception`` attempting to import module for ``argument_spec`` introspection
   322       argument is listed in the argument_spec, but not documented in the module
   323       argument is listed in DOCUMENTATION.options, but not accepted by the module
   324       Value for "default" from the argument_spec does not match the documentation
-  325       argument_spec defines type="bool" but documentation does not
+  325       argument_spec defines type different than documentation does
   326       Value for "choices" from the argument_spec does not match the documentation
   327       Default value from the documentation is not compatible with type defined in the argument_spec
   328       Choices value from the documentation is not compatible with type defined in the argument_spec
   329       Default value from the argument_spec is not compatible with type defined in the argument_spec
   330       Choices value from the argument_spec is not compatible with type defined in the argument_spec
+  331       argument in argument_spec must be a dictionary/hash when used
+  332       ``AnsibleModule`` schema validation error
+  333       ``ANSIBLE_METADATA.status`` of deprecated or removed can't include other statuses
+  334       ``ANSIBLE_METADATA`` cannot be changed in a point release for a stable branch
+  335       argument_spec implies type="str" but documentation defines it as different data type
+  336       argument in argument_spec is not a valid python identifier
   ..
 ---------   -------------------
   **4xx**   **Syntax**

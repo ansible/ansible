@@ -78,22 +78,22 @@ snapshots:
     availability_zone:
       description: The availability zone of the database from which the snapshot was taken
       returned: always
-      type: string
+      type: str
       sample: us-west-2b
     db_instance_identifier:
       description: Database instance identifier
       returned: always
-      type: string
+      type: str
       sample: hello-world-rds
     db_snapshot_arn:
       description: Snapshot ARN
       returned: always
-      type: string
+      type: str
       sample: arn:aws:rds:us-west-2:111111111111:snapshot:rds:hello-world-rds-us1-2018-05-16-04-03
     db_snapshot_identifier:
       description: Snapshot name
       returned: always
-      type: string
+      type: str
       sample: rds:hello-world-rds-us1-2018-05-16-04-03
     encrypted:
       description: Whether the snapshot was encrypted
@@ -103,12 +103,12 @@ snapshots:
     engine:
       description: Database engine
       returned: always
-      type: string
+      type: str
       sample: postgres
     engine_version:
       description: Database engine version
       returned: always
-      type: string
+      type: str
       sample: 9.5.10
     iam_database_authentication_enabled:
       description: Whether database authentication through IAM is enabled
@@ -118,27 +118,27 @@ snapshots:
     instance_create_time:
       description: Time the Instance was created
       returned: always
-      type: string
+      type: str
       sample: '2017-10-10T04:00:07.434000+00:00'
     kms_key_id:
       description: ID of the KMS Key encrypting the snapshot
       returned: always
-      type: string
+      type: str
       sample: arn:aws:kms:us-west-2:111111111111:key/abcd1234-1234-aaaa-0000-1234567890ab
     license_model:
       description: License model
       returned: always
-      type: string
+      type: str
       sample: postgresql-license
     master_username:
       description: Database master username
       returned: always
-      type: string
+      type: str
       sample: dbadmin
     option_group_name:
       description: Database option group name
       returned: always
-      type: string
+      type: str
       sample: default:postgres-9-5
     percent_progress:
       description: Perecent progress of snapshot
@@ -148,22 +148,22 @@ snapshots:
     snapshot_create_time:
       description: Time snapshot was created
       returned: always
-      type: string
+      type: str
       sample: '2018-05-16T04:03:33.871000+00:00'
     snapshot_type:
       description: Type of snapshot
       returned: always
-      type: string
+      type: str
       sample: automated
     status:
       description: Status of snapshot
       returned: always
-      type: string
+      type: str
       sample: available
     storage_type:
       description: Storage type of underlying DB
       returned: always
-      type: string
+      type: str
       sample: gp2
     tags:
       description: Snapshot tags
@@ -173,7 +173,7 @@ snapshots:
     vpc_id:
       description: ID of VPC containing the DB
       returned: always
-      type: string
+      type: str
       sample: vpc-abcd1234
 cluster_snapshots:
   description: List of cluster snapshots
@@ -195,32 +195,32 @@ cluster_snapshots:
     cluster_create_time:
       description: Date and time the cluster was created
       returned: always
-      type: string
+      type: str
       sample: '2018-05-17T00:13:40.223000+00:00'
     db_cluster_identifier:
       description: Database cluster identifier
       returned: always
-      type: string
+      type: str
       sample: test-aurora-cluster
     db_cluster_snapshot_arn:
       description: ARN of the database snapshot
       returned: always
-      type: string
+      type: str
       sample: arn:aws:rds:ca-central-1:111111111111:cluster-snapshot:test-aurora-snapshot
     db_cluster_snapshot_identifier:
       description: Snapshot identifier
       returned: always
-      type: string
+      type: str
       sample: test-aurora-snapshot
     engine:
       description: Database engine
       returned: always
-      type: string
+      type: str
       sample: aurora
     engine_version:
       description: Database engine version
       returned: always
-      type: string
+      type: str
       sample: 5.6.10a
     iam_database_authentication_enabled:
       description: Whether database authentication through IAM is enabled
@@ -230,17 +230,17 @@ cluster_snapshots:
     kms_key_id:
       description: ID of the KMS Key encrypting the snapshot
       returned: always
-      type: string
+      type: str
       sample: arn:aws:kms:ca-central-1:111111111111:key/abcd1234-abcd-1111-aaaa-0123456789ab
     license_model:
       description: License model
       returned: always
-      type: string
+      type: str
       sample: aurora
     master_username:
       description: Database master username
       returned: always
-      type: string
+      type: str
       sample: shertel
     percent_progress:
       description: Perecent progress of snapshot
@@ -255,17 +255,17 @@ cluster_snapshots:
     snapshot_create_time:
       description: Date and time when the snapshot was created
       returned: always
-      type: string
+      type: str
       sample: '2018-05-17T00:23:23.731000+00:00'
     snapshot_type:
       description: Type of snapshot
       returned: always
-      type: string
+      type: str
       sample: manual
     status:
       description: Status of snapshot
       returned: always
-      type: string
+      type: str
       sample: creating
     storage_encrypted:
       description: Whether the snapshot is encrypted
@@ -280,16 +280,16 @@ cluster_snapshots:
     vpc_id:
       description: VPC of the database
       returned: always
-      type: string
+      type: str
       sample: vpc-abcd1234
 '''
 
-from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
 from ansible.module_utils.ec2 import AWSRetry, boto3_tag_list_to_ansible_dict, camel_dict_to_snake_dict
 
 try:
     import botocore
-except BaseException:
+except Exception:
     pass  # caught by imported HAS_BOTO3
 
 
@@ -297,9 +297,9 @@ def common_snapshot_facts(module, conn, method, prefix, params):
     paginator = conn.get_paginator(method)
     try:
         results = paginator.paginate(**params).build_full_result()['%ss' % prefix]
-    except conn.exceptions.from_code('%sNotFound' % prefix):
+    except is_boto3_error_code('%sNotFound' % prefix):
         results = []
-    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:  # pylint: disable=duplicate-except
         module.fail_json_aws(e, "trying to get snapshot information")
 
     for snapshot in results:

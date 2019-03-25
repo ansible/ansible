@@ -1,11 +1,12 @@
 .. _intro_inventory:
 .. _inventory:
 
-
+**********************
 Working with Inventory
-======================
+**********************
 
-.. contents:: Topics
+.. contents::
+   :local:
 
 Ansible works against multiple systems in your infrastructure at the same time.
 It does this by selecting portions of systems listed in Ansible's inventory,
@@ -14,12 +15,12 @@ You can specify a different inventory file using the ``-i <path>`` option on the
 
 Not only is this inventory configurable, but you can also use multiple inventory files at the same time and
 pull inventory from dynamic or cloud sources or different formats (YAML, ini, etc), as described in :ref:`intro_dynamic_inventory`.
-Introduced in version 2.4, Ansible has inventory plugins to make this flexible and customizable.
+Introduced in version 2.4, Ansible has :ref:`inventory_plugins` to make this flexible and customizable.
 
 .. _inventoryformat:
 
-Hosts and Groups
-++++++++++++++++
+Inventory basics: hosts and groups
+==================================
 
 The inventory file can be in one of many formats, depending on the inventory plugins you have.
 For this example, the format for ``/etc/ansible/hosts`` is an INI-like (one of Ansible's defaults) and looks like this:
@@ -58,10 +59,94 @@ A YAML version would look like:
           two.example.com:
           three.example.com:
 
+.. _host_multiple_groups:
 
-It is ok to put systems in more than one group, for instance a server could be both a webserver and a dbserver.
-If you do, note that variables will come from all of the groups they are a member of. Variable precedence is detailed in a later chapter.
+Hosts in multiple groups
+------------------------
 
+You can put systems in more than one group, for instance a server could be both a webserver and in a specific datacenter.  For example, you could create groups that track:
+
+* What - An application, stack or microservice. (For example, database servers, web servers, etc).
+* Where - A datacenter or region, to talk to local DNS, storage, etc. (For example, east, west).
+* When - The development stage, to avoid testing on production resources. (For example, prod, test).
+
+Extending the previous YAML inventory to include what, when, and where would look like:
+
+.. code-block:: yaml
+
+  all:
+    hosts:
+      mail.example.com:
+    children:
+      webservers:
+        hosts:
+          foo.example.com:
+          bar.example.com:
+      dbservers:
+        hosts:
+          one.example.com:
+          two.example.com:
+          three.example.com:
+      east:
+        hosts:
+          foo.example.com:
+          one.example.com:
+          two.example.com:
+      west:
+        hosts:
+          bar.example.com:
+          three.example.com:
+      prod:
+        hosts:
+          foo.example.com:
+          one.example.com:
+          two.example.com:
+      test:
+        hosts:
+          bar.example.com:
+          three.example.com:
+
+You can see that ``one.example.com`` exists in the ``dbservers``, ``east``, and ``prod`` groups.
+
+You could also use nested groups to simplify ``prod`` and ``test`` in this inventory, for the same result:
+
+.. code-block:: yaml
+
+  all:
+    hosts:
+      mail.example.com:
+    children:
+      webservers:
+        hosts:
+          foo.example.com:
+          bar.example.com:
+      dbservers:
+        hosts:
+          one.example.com:
+          two.example.com:
+          three.example.com:
+      east:
+        hosts:
+          foo.example.com:
+          one.example.com:
+          two.example.com:
+      west:
+        hosts:
+          bar.example.com:
+          three.example.com:
+      prod:
+        children:
+          east:
+      test:
+        children:
+          west:
+
+
+If you do have systems in multiple groups, note that variables will come from all of the groups they are a member of. Variable precedence is detailed in :ref:`ansible_variable_precedence`.
+
+
+Hosts and non-standard ports
+-----------------------------
 If you have hosts that run on non-standard SSH ports you can put the port number after the hostname with a colon.
 Ports listed in your SSH config file won't be used with the `paramiko` connection but will be used with the `openssh` connection.
 
@@ -94,16 +179,30 @@ In the above example, trying to ansible against the host alias "jumper" (which m
 Note that this is using a feature of the inventory file to define some special variables.
 Generally speaking, this is not the best way to define variables that describe your system policy, but we'll share suggestions on doing this later.
 
-.. note:: Values passed in the INI format using the ``key=value`` syntax are not interpreted as Python literal structure
-          (strings, numbers, tuples, lists, dicts, booleans, None), but as a string. For example ``var=FALSE`` would create a string equal to 'FALSE'.
-          Do not rely on types set during definition, always make sure you specify type with a filter when needed when consuming the variable.
+.. note:: Values passed in the INI format using the ``key=value`` syntax are interpreted differently depending on where they are declared.
+          * When declared inline with the host, INI values are interpreted as Python literal structures
+          (strings, numbers, tuples, lists, dicts, booleans, None). Host lines accept multiple ``key=value`` parameters per line. Therefore they need a way to indicate that a space is part of a value rather than a separator.
+          * When declared in a ``:vars`` section, INI values are interpreted as strings. For example ``var=FALSE`` would create a string equal to 'FALSE'. Unlike host lines, ``:vars`` sections accept only a single entry per line, so everything after the ``=`` must be the value for the entry.
+          * Do not rely on types set during definition, always make sure you specify type with a filter when needed when consuming the variable.
+          * Consider using YAML format for inventory sources to avoid confusion on the actual type of a variable. The YAML inventory plugin processes variable values consistently and correctly.
 
 If you are adding a lot of hosts following similar patterns, you can do this rather than listing each hostname:
+
+In INI:
 
 .. code-block:: guess
 
     [webservers]
     www[01:50].example.com
+
+In YAML:
+
+.. code-block:: yaml
+
+    ...
+      webservers:
+        hosts:
+          www[01:50].example.com:
 
 For numeric patterns, leading zeros can be included or removed, as desired. Ranges are inclusive.  You can also define alphabetic ranges:
 
@@ -126,8 +225,8 @@ As mentioned above, setting these in the inventory file is only a shorthand, and
 
 .. _host_variables:
 
-Host Variables
-++++++++++++++
+Assigning a variable to one machine: host variables
+===================================================
 
 As described above, it is easy to assign variables to hosts that will be used later in playbooks:
 
@@ -137,10 +236,22 @@ As described above, it is easy to assign variables to hosts that will be used la
    host1 http_port=80 maxRequestsPerChild=808
    host2 http_port=303 maxRequestsPerChild=909
 
+The YAML version:
+
+.. code-block:: yaml
+
+    atlanta:
+      host1:
+        http_port: 80
+        maxRequestsPerChild: 808
+      host2:
+        http_port: 303
+        maxRequestsPerChild: 909
+
 .. _group_variables:
 
-Group Variables
-+++++++++++++++
+Assigning a variable to many machines: group variables
+======================================================
 
 Variables can also be applied to an entire group at once:
 
@@ -172,11 +283,11 @@ Be aware that this is only a convenient way to apply variables to multiple hosts
 
 .. _subgroups:
 
-Groups of Groups, and Group Variables
-+++++++++++++++++++++++++++++++++++++
+Inheriting variable values: group variables for groups of groups
+----------------------------------------------------------------
 
-It is also possible to make groups of groups using the ``:children`` suffix in INI or the ``children:`` entry in YAML.
-You can apply variables using ``:vars`` or ``vars:``:
+You can make groups of groups using the ``:children`` suffix in INI or the ``children:`` entry in YAML.
+You can apply variables to these groups of groups using ``:vars`` or ``vars:``:
 
 
 .. code-block:: guess
@@ -241,7 +352,7 @@ Child groups have a couple of properties to note:
 .. _default_groups:
 
 Default groups
-++++++++++++++
+==============
 
 There are two default groups: ``all`` and ``ungrouped``. ``all`` contains every host.
 ``ungrouped`` contains all hosts that don't have another group aside from ``all``.
@@ -250,22 +361,18 @@ Though ``all`` and ``ungrouped`` are always present, they can be implicit and no
 
 .. _splitting_out_vars:
 
-Splitting Out Host and Group Specific Data
-++++++++++++++++++++++++++++++++++++++++++
+Organizing host and group variables
+===================================
 
-The preferred practice in Ansible is to not store variables in the main inventory file.
+Although you can store variables in the main inventory file, storing separate host and group variables files may help you track your variable values more easily.
 
-In addition to storing variables directly in the inventory file, host and group variables can be stored in individual files relative to the inventory file (not directory, it is always the file).
+Host and group variables can be stored in individual files relative to the inventory file (not directory, it is always the file).
 
 These variable files are in YAML format. Valid file extensions include '.yml', '.yaml', '.json', or no file extension.
 See :ref:`yaml_syntax` if you are new to YAML.
 
-Assuming the inventory file path is::
-
-    /etc/ansible/hosts
-
-If the host is named 'foosball', and in groups 'raleigh' and 'webservers', variables
-in YAML files at the following locations will be made available to the host::
+Let's say, for example, that you keep your inventory file at ``/etc/ansible/hosts``. You have a host named 'foosball' that's a member of two groups: 'raleigh' and 'webservers'. That host will use variables
+in YAML files at the following locations::
 
     /etc/ansible/group_vars/raleigh # can optionally end in '.yml', '.yaml', or '.json'
     /etc/ansible/group_vars/webservers
@@ -289,22 +396,26 @@ Ansible will read all the files in these directories in lexicographical order. A
 
 All hosts that are in the 'raleigh' group will have the variables defined in these files
 available to them. This can be very useful to keep your variables organized when a single
-file starts to be too big, or when you want to use :doc:`Ansible Vault<playbooks_vault>` on a part of a group's
+file starts to be too big, or when you want to use :ref:`Ansible Vault<playbooks_vault>` on a part of a group's
 variables.
 
 Tip: The ``group_vars/`` and ``host_vars/`` directories can exist in
 the playbook directory OR the inventory directory. If both paths exist, variables in the playbook
 directory will override variables set in the inventory directory.
 
+Tip: The ``ansible-playbook`` command looks for playbooks in the current working directory by default. Other Ansible commands (for example, ``ansible``, ``ansible-console``, etc.) will only look for ``group_vars/`` and ``host_vars/`` in the
+inventory directory unless you provide the ``--playbook-dir`` option
+on the command line.
+
 Tip: Keeping your inventory file and variables in a git repo (or other version control)
 is an excellent way to track changes to your inventory and host variables.
 
 .. _how_we_merge:
 
-How Variables Are Merged
-++++++++++++++++++++++++
+How variables are merged
+========================
 
-By default variables are merged/flattened to the specific host before a play is run. This keeps Ansible focused on the Host and Task, so groups don't really survive outside of inventory and host matching. By default, Ansible overwrites variables including the ones defined for a group and/or host (see the `hash_merge` setting to change this) . The order/precedence is (from lowest to highest):
+By default variables are merged/flattened to the specific host before a play is run. This keeps Ansible focused on the Host and Task, so groups don't really survive outside of inventory and host matching. By default, Ansible overwrites variables including the ones defined for a group and/or host (see :ref:`DEFAULT_HASH_BEHAVIOUR<DEFAULT_HASH_BEHAVIOUR>`). The order/precedence is (from lowest to highest):
 
 - all group (because it is the 'parent' of all other groups)
 - parent group
@@ -322,15 +433,73 @@ Starting in Ansible version 2.4, users can use the group variable ``ansible_grou
     a_group:
         testvar: a
         ansible_group_priority: 10
-    b_group
+    b_group：
         testvar: b
 
 In this example, if both groups have the same priority, the result would normally have been ``testvar == b``, but since we are giving the ``a_group`` a higher priority the result will be ``testvar == a``.
 
+.. note:: ``ansible_group_priority`` can only be set in the inventory source and not in group_vars/ as the variable is used in the loading of group_vars.
+
+.. _using_multiple_inventory_sources:
+
+Using multiple inventory sources
+================================
+
+As an advanced use case you can target multiple inventory sources (directories, dynamic inventory scripts
+or files supported by inventory plugins) at the same time by giving multiple inventory parameters from the command
+line or by configuring :envvar:`ANSIBLE_INVENTORY`. This can be useful when you want to target normally
+separate environments, like staging and production, at the same time for a specific action.
+
+Target two sources from the command line like this::
+
+    ansible-playbook get_logs.yml -i staging -i production
+
+Keep in mind that if there are variable conflicts in the inventories, they are resolved according
+to the rules described in :ref:`how_we_merge` and :ref:`ansible_variable_precedence`.
+The merging order is controlled by the order of the inventory source parameters.
+If ``[all:vars]`` in staging inventory defines ``myvar = 1``, but production inventory defines ``myvar = 2``,
+the playbook will be run with ``myvar = 2``. The result would be reversed if the playbook was run with
+``-i production -i staging``.
+
+**Aggregating inventory sources with a directory**
+
+You can also create an inventory by combining multiple inventory sources and source types under a directory.
+This can be useful for combining static and dynamic hosts and managing them as one inventory.
+The following inventory combines an inventory plugin source, a dynamic inventory script,
+and a file with static hosts::
+
+    inventory/
+      openstack.yml          # configure inventory plugin to get hosts from Openstack cloud
+      dynamic-inventory.py   # add additional hosts with dynamic inventory script
+      static-inventory       # add static hosts and groups
+      group_vars/
+        all.yml              # assign variables to all hosts
+
+You can target this inventory directory simply like this::
+
+    ansible-playbook example.yml -i inventory
+
+It can be useful to control the merging order of the inventory sources if there's variable
+conflicts or group of groups dependencies to the other inventory sources. The inventories
+are merged in alphabetical order according to the filenames so the result can
+be controlled by adding prefixes to the files::
+
+    inventory/
+      01-openstack.yml          # configure inventory plugin to get hosts from Openstack cloud
+      02-dynamic-inventory.py   # add additional hosts with dynamic inventory script
+      03-static-inventory       # add static hosts
+      group_vars/
+        all.yml                 # assign variables to all hosts
+
+If ``01-openstack.yml`` defines ``myvar = 1`` for the group ``all``, ``02-dynamic-inventory.py`` defines ``myvar = 2``,
+and ``03-static-inventory`` defines ``myvar = 3``, the playbook will be run with ``myvar = 3``.
+
+For more details on inventory plugins and dynamic inventory scripts see :ref:`inventory_plugins` and :ref:`intro_dynamic_inventory`.
+
 .. _behavioral_parameters:
 
-List of Behavioral Inventory Parameters
-+++++++++++++++++++++++++++++++++++++++
+Connecting to hosts: behavioral inventory parameters
+====================================================
 
 As described above, setting the following variables control how Ansible interacts with remote hosts.
 
@@ -346,15 +515,15 @@ General for all connections:
 ansible_host
     The name of the host to connect to, if different from the alias you wish to give to it.
 ansible_port
-    The ssh port number, if not 22
+    The connection port number, if not the default (22 for ssh)
 ansible_user
-    The default ssh user name to use.
+    The user name to use when connecting to the host
+ansible_password
+    The password to use to authenticate to the host (never store this variable in plain text; always use a vault. See :ref:`best_practices_for_variables_and_vaults`)
 
 
 Specific to the SSH connection:
 
-ansible_ssh_pass
-    The ssh password to use (never store this variable in plain text; always use a vault. See :ref:`best_practices_for_variables_and_vaults`)
 ansible_ssh_private_key_file
     Private key file used by ssh.  Useful if using multiple keys and you don't want to use SSH agent.
 ansible_ssh_common_args
@@ -373,7 +542,7 @@ ansible_ssh_executable (added in version 2.2)
     This setting overrides the default behavior to use the system :command:`ssh`. This can override the ``ssh_executable`` setting in :file:`ansible.cfg`.
 
 
-Privilege escalation (see :doc:`Ansible Privilege Escalation<become>` for further details):
+Privilege escalation (see :ref:`Ansible Privilege Escalation<become>` for further details):
 
 ansible_become
     Equivalent to ``ansible_sudo`` or ``ansible_su``, allows to force privilege escalation
@@ -381,8 +550,8 @@ ansible_become_method
     Allows to set privilege escalation method
 ansible_become_user
     Equivalent to ``ansible_sudo_user`` or ``ansible_su_user``, allows to set the user you become through privilege escalation
-ansible_become_pass
-    Equivalent to ``ansible_sudo_pass`` or ``ansible_su_pass``, allows you to set the privilege escalation password (never store this variable in plain text; always use a vault. See :ref:`best_practices_for_variables_and_vaults`)
+ansible_become_password
+    Equivalent to ``ansible_sudo_password`` or ``ansible_su_password``, allows you to set the privilege escalation password (never store this variable in plain text; always use a vault. See :ref:`best_practices_for_variables_and_vaults`)
 ansible_become_exe
     Equivalent to ``ansible_sudo_exe`` or ``ansible_su_exe``, allows you to set the executable for the escalation method selected
 ansible_become_flags
@@ -430,7 +599,7 @@ Examples from an Ansible-INI host file::
   ruby_module_host  ansible_ruby_interpreter=/usr/bin/ruby.1.9.3
 
 Non-SSH connection types
-++++++++++++++++++++++++
+------------------------
 
 As stated in the previous section, Ansible executes playbooks over SSH but it is not limited to this connection type.
 With the host specific parameter ``ansible_connection=<connector>``, the connection type can be changed.
@@ -480,14 +649,15 @@ Here is an example of how to instantly deploy to created containers::
 
 .. seealso::
 
+   :ref:`inventory_plugins`
+       Pulling inventory from dynamic or static sources
    :ref:`intro_dynamic_inventory`
        Pulling inventory from dynamic sources, such as cloud providers
    :ref:`intro_adhoc`
        Examples of basic commands
    :ref:`working_with_playbooks`
        Learning Ansible's configuration, deployment, and orchestration language.
-   `Mailing List <http://groups.google.com/group/ansible-project>`_
+   `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-

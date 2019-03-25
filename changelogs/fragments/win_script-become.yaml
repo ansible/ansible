@@ -1,0 +1,2 @@
+minor_changes:
+- win_script - added support for running a script with become 

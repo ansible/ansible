@@ -1,0 +1,2 @@
+bugfixes:
+- "openssl_csr - fix problem with idempotency of keyUsage option."

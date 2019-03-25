@@ -11,7 +11,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -22,11 +22,13 @@ short_description: Manage Azure resource groups.
 description:
     - Create, update and delete a resource group.
 options:
-    force:
+    force_delete_nonempty:
         description:
-            - Remove a resource group and all associated resources. Use with state 'absent' to delete a resource
+            - Remove a resource group and all associated resources. Use with state C(absent) to delete a resource.
               group that contains resources.
         type: bool
+        aliases:
+            - force
         default: 'no'
     location:
         description:
@@ -38,8 +40,8 @@ options:
         required: true
     state:
         description:
-            - Assert the state of the resource group. Use 'present' to create or update and
-              'absent' to delete. When 'absent' a resource group containing resources will not be removed unless the
+            - Assert the state of the resource group. Use C(present) to create or update and
+              C(absent) to delete. When C(absent) a resource group containing resources will not be removed unless the
               force option is used.
         default: present
         choices:
@@ -80,7 +82,7 @@ state:
     returned: always
     type: dict
     sample: {
-        "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing",
+        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup",
         "location": "westus",
         "name": "Testing",
         "provisioning_state": "Succeeded",
@@ -116,14 +118,14 @@ class AzureRMResourceGroup(AzureRMModuleBase):
             name=dict(type='str', required=True),
             state=dict(type='str', default='present', choices=['present', 'absent']),
             location=dict(type='str'),
-            force=dict(type='bool', default=False)
+            force_delete_nonempty=dict(type='bool', default=False, aliases=['force'])
         )
 
         self.name = None
         self.state = None
         self.location = None
         self.tags = None
-        self.force = None
+        self.force_delete_nonempty = None
 
         self.results = dict(
             changed=False,
@@ -201,8 +203,9 @@ class AzureRMResourceGroup(AzureRMModuleBase):
                     )
                 self.results['state'] = self.create_or_update_resource_group(params)
             elif self.state == 'absent':
-                if contains_resources and not self.force:
-                    self.fail("Error removing resource group {0}. Resources exist within the group.".format(self.name))
+                if contains_resources and not self.force_delete_nonempty:
+                    self.fail("Error removing resource group {0}. Resources exist within the group. "
+                              "Use `force_delete_nonempty` to force delete.".format(self.name))
                 self.delete_resource_group()
 
         return self.results
@@ -250,6 +253,7 @@ class AzureRMResourceGroup(AzureRMModuleBase):
 
 def main():
     AzureRMResourceGroup()
+
 
 if __name__ == '__main__':
     main()

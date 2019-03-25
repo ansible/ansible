@@ -5,12 +5,6 @@
 # TODO: vcsim does not support service management
 #       commenting this testcase till the time.
 
-- name: store the vcenter container ip
-  set_fact:
-    vcsim: "{{ lookup('env', 'vcenter_host') }}"
-
-- debug: var=vcsim
-
 - name: Wait for Flask controller to come up online
   wait_for:
     host: "{{ vcsim }}"
@@ -83,7 +77,41 @@
     state: absent
   register: single_hosts_result
 
-- name: ensure facts are gathered for all hosts
+- name: ensure facts are gathered
   assert:
     that:
         - single_hosts_result.changed == False
+
+- name: Start ntpd service on all hosts in given cluster in check mode
+  vmware_host_service_manager:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance.json.username }}"
+    password: "{{ vcsim_instance.json.password }}"
+    validate_certs: no
+    cluster_name: "{{ ccr1 }}"
+    service_name: ntpd
+    state: present
+  register: all_hosts_result_check_mode
+  check_mode: yes
+
+- name: ensure facts are gathered for all hosts
+  assert:
+    that:
+        - all_hosts_result_check_mode.changed
+
+- name: Stop ntpd service on a given host in check mode
+  vmware_host_service_manager:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance.json.username }}"
+    password: "{{ vcsim_instance.json.password }}"
+    validate_certs: no
+    esxi_hostname: "{{ host1 }}"
+    service_name: ntpd
+    state: absent
+  register: single_hosts_result_check_mode
+  check_mode: yes
+
+- name: ensure facts are gathered
+  assert:
+    that:
+        - single_hosts_result_check_mode.changed == False

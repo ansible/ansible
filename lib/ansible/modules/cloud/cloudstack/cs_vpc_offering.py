@@ -53,6 +53,7 @@ options:
     description:
       - Poll async jobs until job has finished.
     default: true
+    type: bool
 extends_documentation_fragment: cloudstack
 '''
 
@@ -65,8 +66,36 @@ EXAMPLES = '''
     state: enabled
     supported_services: [ Dns, Dhcp ]
     service_providers:
-      - {service: 'dns', provider: 'virtualrouter'}
-      - {service: 'dhcp', provider: 'virtualrouter'}
+      - {service: 'dns', provider: 'VpcVirtualRouter'}
+      - {service: 'dhcp', provider: 'VpcVirtualRouter'}
+
+# Create a vpc offering with redundant router
+- local_action:
+    module: cs_vpc_offering
+    name: "my_vpc_offering"
+    display_text: "vpc offering description"
+    supported_services: [ Dns, Dhcp, SourceNat ]
+    service_providers:
+      - {service: 'dns', provider: 'VpcVirtualRouter'}
+      - {service: 'dhcp', provider: 'VpcVirtualRouter'}
+      - {service: 'SourceNat', provider: 'VpcVirtualRouter'}
+    service_capabilities:
+      - {service: 'SourceNat', capabilitytype: 'RedundantRouter', capabilityvalue: true}
+
+# Create a region level vpc offering with distributed router
+- local_action:
+    module: cs_vpc_offering
+    name: "my_vpc_offering"
+    display_text: "vpc offering description"
+    state: present
+    supported_services: [ Dns, Dhcp, SourceNat ]
+    service_providers:
+      - {service: 'dns', provider: 'VpcVirtualRouter'}
+      - {service: 'dhcp', provider: 'VpcVirtualRouter'}
+      - {service: 'SourceNat', provider: 'VpcVirtualRouter'}
+    service_capabilities:
+      - {service: 'Connectivity', capabilitytype: 'DistributedRouter', capabilityvalue: true}
+      - {service: 'Connectivity', capabilitytype: 'RegionLevelVPC', capabilityvalue: true}
 
 # Remove a vpc offering
 - local_action:
@@ -80,27 +109,27 @@ RETURN = '''
 id:
   description: UUID of the vpc offering.
   returned: success
-  type: string
+  type: str
   sample: a6f7a5fc-43f8-11e5-a151-feff819cdc9f
 name:
   description: The name of the vpc offering
   returned: success
-  type: string
+  type: str
   sample: MyCustomVPCOffering
 display_text:
   description: The display text of the vpc offering
   returned: success
-  type: string
+  type: str
   sample: My vpc offering
 state:
   description: The state of the vpc offering
   returned: success
-  type: string
+  type: str
   sample: Enabled
 service_offering_id:
   description: The service offering ID.
   returned: success
-  type: string
+  type: str
   sample: c5f7a5fc-43f8-11e5-a151-feff819cdc9f
 is_default:
   description: Whether VPC offering is the default offering or not.
@@ -189,6 +218,7 @@ class AnsibleCloudStackVPCOffering(AnsibleCloudStack):
             'supportedservices': self.module.params.get('supported_services'),
             'serviceproviderlist': self.module.params.get('service_providers'),
             'serviceofferingid': self.get_service_offering_id(),
+            'servicecapabilitylist': self.module.params.get('service_capabilities'),
         }
 
         required_params = [

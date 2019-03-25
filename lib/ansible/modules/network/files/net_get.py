@@ -18,10 +18,11 @@ DOCUMENTATION = """
 module: net_get
 version_added: "2.6"
 author: "Deepak Agrawal (@dagrawal)"
-short_description: Copy files from a network device to Ansible Controller
+short_description: Copy a file from a network device to Ansible Controller
 description:
-  - This module provides functionlity to copy file from network device to
+  - This module provides functionality to copy file from network device to
     ansible controller.
+extends_documentation_fragment: network_agnostic
 options:
   src:
     description:
@@ -40,7 +41,7 @@ options:
         either be the full path on the Ansible control host or a relative
         path from the playbook or role root directory.
     default:
-      - Same filename as specified in src. The path will be playbook root
+      - Same filename as specified in I(src). The path will be playbook root
         or role root directory if playbook is part of a role.
 
 requirements:
@@ -48,20 +49,20 @@ requirements:
 
 notes:
    - Some devices need specific configurations to be enabled before scp can work
-     These configuration should be pre-configued before using this module
-     e.g ios - C(ip scp server enable)
-   - User privileage to do scp on network device should be pre-configured
-     e.g. ios - need user privileage 15 by default for allowing scp
-   - Default destination of source file
+     These configuration should be pre-configured before using this module
+     e.g ios - C(ip scp server enable).
+   - User privilege to do scp on network device should be pre-configured
+     e.g. ios - need user privilege 15 by default for allowing scp.
+   - Default destination of source file.
 """
 
 EXAMPLES = """
-- name: copy file from the network device to ansible controller
+- name: copy file from the network device to Ansible controller
   net_get:
     src: running_cfg_ios1.txt
 
 - name: copy file from ios to common location at /tmp
-  network_put:
+  net_get:
     src: running_cfg_sw1.txt
     dest : /tmp/ios1.txt
 """

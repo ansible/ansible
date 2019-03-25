@@ -1,6 +1,7 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
-# (c) 2015, Paul Markham <pmarkham@netrefinery.com>
+# Copyright: (c) 2015, Paul Markham <pmarkham@netrefinery.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -10,16 +11,16 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: solaris_zone
 short_description: Manage Solaris zones
 description:
-   - Create, start, stop and delete Solaris zones. This module doesn't currently allow
-     changing of options for a zone that's already been created.
+  - Create, start, stop and delete Solaris zones.
+  - This module does not currently allow changing of options for a zone that is already been created.
 version_added: "2.0"
 author:
-- Paul Markham
+- Paul Markham (@pmarkham)
 requirements:
   - Solaris 10 or 11
 options:
@@ -35,50 +36,59 @@ options:
       - C(configured), configure the ready so that it's to be attached.
       - C(attached), attach a zone, but do not boot it.
       - C(detached), shutdown and detach a zone
+    type: str
     choices: [ absent, attached, configured, detached, installed, present, running, started, stopped ]
     default: present
     required: true
   name:
     description:
       - Zone name.
+    type: str
     required: true
   path:
     description:
       - The path where the zone will be created. This is required when the zone is created, but not
         used otherwise.
+    type: str
   sparse:
     description:
       - Whether to create a sparse (C(true)) or whole root (C(false)) zone.
     type: bool
-    default: 'no'
+    default: no
   root_password:
     description:
       - The password hash for the root account. If not specified, the zone's root account
         will not have a password.
+    type: str
   config:
     description:
       - 'The zonecfg configuration commands for this zone. See zonecfg(1M) for the valid options
         and syntax. Typically this is a list of options separated by semi-colons or new lines, e.g.
         "set auto-boot=true;add net;set physical=bge0;set address=10.1.1.1;end"'
-    default: empty string
+    type: str
+    default: ''
   create_options:
     description:
       - 'Extra options to the zonecfg(1M) create command.'
-    default: empty string
+    type: str
+    default: ''
   install_options:
     description:
       - 'Extra options to the zoneadm(1M) install command. To automate Solaris 11 zone creation,
          use this to specify the profile XML file, e.g. install_options="-c sc_profile.xml"'
-    default: empty string
+    type: str
+    default: ''
   attach_options:
     description:
       - 'Extra options to the zoneadm attach command. For example, this can be used to specify
         whether a minimum or full update of packages is required and if any packages need to
         be deleted. For valid values, see zoneadm(1M)'
-    default: empty string
+    type: str
+    default: ''
   timeout:
     description:
       - Timeout, in seconds, for zone to boot.
+    type: int
     default: 600
 '''
 

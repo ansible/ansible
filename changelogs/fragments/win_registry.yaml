@@ -1,0 +1,5 @@
+bugfixes:
+- win_regedit - Fix issue where creating a new key would set the ``(Default)`` key property to an empty string instead of undefined
+- win_regedit - Support registry paths with special characters - https://github.com/ansible/ansible/issues/41791
+- win_reg_stat - Support registry paths with special characters - https://github.com/ansible/ansible/issues/41791
+- win_reg_stat - Fix issue where the key's ``(Default)`` property was not being returned if it was set

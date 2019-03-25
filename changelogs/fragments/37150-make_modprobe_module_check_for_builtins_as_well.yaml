@@ -1,0 +1,3 @@
+---
+bugfixes:
+- "modprobe - The modprobe module now detects builtin kernel modules. If a kernel module is builtin the modprobe module will now: succeed (without incorrectly reporting changed) if ``state`` is ``present``; and fail if ``state`` is ``absent`` (with an error message like ``modprobe: ERROR: Module nfs is builtin.``). (https://github.com/ansible/ansible/pull/37150)"

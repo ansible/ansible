@@ -42,7 +42,7 @@ options:
      description:
        - Ignored. Present for backwards compatibility
 requirements:
-    - "python >= 2.6"
+    - "python >= 2.7"
     - "openstacksdk"
 '''
 
@@ -78,19 +78,19 @@ group:
     contains:
         id:
             description: Unique group ID
-            type: string
+            type: str
             sample: "ee6156ff04c645f481a6738311aea0b0"
         name:
             description: Group name
-            type: string
+            type: str
             sample: "demo"
         description:
             description: Group description
-            type: string
+            type: str
             sample: "Demo Group"
         domain_id:
             description: Domain for the group
-            type: string
+            type: str
             sample: "default"
 '''
 

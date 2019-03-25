@@ -1,14 +1,5 @@
-- include: RedHat.yml
-  when: ansible_os_family == 'RedHat' and ansible_distribution != 'Fedora' and ansible_distribution_major_version != '6'
+- include_tasks: test_secrets.yml
+  when: docker_py_version is version('2.1.0', '>=') and docker_api_version is version('1.25', '>=')
 
-- include: Fedora.yml 
-  when: ansible_distribution == 'Fedora'
-
-- include: OpenSuse.yml
-  when: ansible_os_family == 'Suse'
-
-- include: Ubuntu.yml
-  when: ansible_os_family == 'Debian'
-
-- include: test_secrets.yml
-  when: ansible_os_family != 'RedHat' or ansible_distribution_major_version != '6'
+- fail: msg="Too old docker / docker-py version to run docker_secrets tests!"
+  when: not(docker_py_version is version('2.1.0', '>=') and docker_api_version is version('1.25', '>=')) and (ansible_distribution != 'CentOS' or ansible_distribution_major_version|int > 6)

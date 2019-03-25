@@ -14,14 +14,14 @@ DOCUMENTATION = """
     version_added: "1.3"
     short_description: list of inventory hosts matching a host pattern
     description:
-      - "This lookup understands 'host patterns' as used bye the `hosts:` keyword in plays
+      - "This lookup understands 'host patterns' as used by the `hosts:` keyword in plays
         and can return a list of matching hosts from inventory"
     notes:
       - this is only worth for 'hostname patterns' it is easier to loop over the group/group_names variables otherwise.
 """
 
 EXAMPLES = """
-- name: show all the hosts matching the pattern, ie all but the group www
+- name: show all the hosts matching the pattern, i.e. all but the group www
   debug:
     msg: "{{ item }}"
   with_inventory_hostnames:

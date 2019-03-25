@@ -21,7 +21,7 @@ author: "Ricardo Carrillo Cruz (@rcarrillocruz)"
 description:
     - Retrieve facts about a one or more OpenStack domains
 requirements:
-    - "python >= 2.6"
+    - "python >= 2.7"
     - "sdk"
 options:
    name:
@@ -70,15 +70,15 @@ openstack_domains:
         id:
             description: Unique UUID.
             returned: success
-            type: string
+            type: str
         name:
             description: Name given to the domain.
             returned: success
-            type: string
+            type: str
         description:
             description: Description of the domain.
             returned: success
-            type: string
+            type: str
         enabled:
             description: Flag to indicate if the domain is enabled.
             returned: success
@@ -111,7 +111,7 @@ def main():
             # Let's suppose user is passing domain ID
             try:
                 domains = opcloud.get_domain(name)
-            except:
+            except Exception:
                 domains = opcloud.search_domains(filters={'name': name})
 
         else:

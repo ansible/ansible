@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -9,8 +9,9 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+                    'status': ['stableinterface'],
+                    'supported_by': 'certified'}
+
 DOCUMENTATION = r'''
 ---
 module: bigip_gtm_wide_ip
@@ -26,6 +27,7 @@ options:
         for a wide IP.
       - The C(round_robin) value is deprecated and will be removed in Ansible 2.9.
       - The C(global_availability) value is deprecated and will be removed in Ansible 2.9.
+    type: str
     required: True
     aliases: ['lb_method']
     choices:
@@ -41,6 +43,7 @@ options:
       - Wide IP name. This name must be formatted as a fully qualified
         domain name (FQDN). You can also use the alias C(wide_ip) but this
         is deprecated and will be removed in a future Ansible version.
+    type: str
     required: True
     aliases:
       - wide_ip
@@ -50,6 +53,7 @@ options:
         type in addition to name, since pool members need different attributes
         depending on the response RDATA they are meant to supply. This value
         is required if you are using BIG-IP versions >= 12.0.0.
+    type: str
     choices:
       - a
       - aaaa
@@ -64,16 +68,18 @@ options:
         is enabled.
       - When C(absent), ensures that the Wide IP has been removed.
       - When C(disabled), ensures that the Wide IP exists and is disabled.
-    default: present
+    type: str
     choices:
       - present
       - absent
       - disabled
       - enabled
+    default: present
     version_added: 2.4
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
     version_added: 2.5
   pools:
@@ -81,80 +87,106 @@ options:
       - The pools that you want associated with the Wide IP.
       - If C(ratio) is not provided when creating a new Wide IP, it will default
         to 1.
+    type: list
     suboptions:
       name:
         description:
           - The name of the pool to include.
+        type: str
         required: True
       ratio:
         description:
           - Ratio for the pool.
           - The system uses this number with the Ratio load balancing method.
+        type: int
     version_added: 2.5
   irules:
-    version_added: 2.6
     description:
       - List of rules to be applied.
       - If you want to remove all existing iRules, specify a single empty value; C("").
         See the documentation for an example.
+    type: list
+    version_added: 2.6
+  aliases:
+    description:
+      - Specifies alternate domain names for the web site content you are load
+        balancing.
+      - You can use the same wildcard characters for aliases as you can for actual
+        wide IP names.
+    type: list
+    version_added: 2.7
+  last_resort_pool:
+    description:
+      - Specifies which GTM pool, for the system to use as the last resort pool for
+        the wide IP.
+      - The valid pools for this parameter are those with the C(type) specified in this
+        module.
+    type: str
+    version_added: 2.8
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
 - name: Set lb method
   bigip_gtm_wide_ip:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     pool_lb_method: round-robin
     name: my-wide-ip.example.com
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
 - name: Add iRules to the Wide IP
   bigip_gtm_wide_ip:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     pool_lb_method: round-robin
     name: my-wide-ip.example.com
     irules:
       - irule1
       - irule2
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
 - name: Remove one iRule from the Virtual Server
   bigip_gtm_wide_ip:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     pool_lb_method: round-robin
     name: my-wide-ip.example.com
     irules:
       - irule1
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
 - name: Remove all iRules from the Virtual Server
   bigip_gtm_wide_ip:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     pool_lb_method: round-robin
     name: my-wide-ip.example.com
     irules: ""
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
 - name: Assign a pool with ratio to the Wide IP
   bigip_gtm_wide_ip:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     pool_lb_method: round-robin
     name: my-wide-ip.example.com
     pools:
       - name: pool1
         ratio: 100
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 '''
 
@@ -162,18 +194,23 @@ RETURN = r'''
 lb_method:
   description: The new load balancing method used by the wide IP.
   returned: changed
-  type: string
+  type: str
   sample: topology
 state:
   description: The new state of the wide IP.
   returned: changed
-  type: string
+  type: str
   sample: disabled
 irules:
   description: iRules set on the Wide IP.
   returned: changed
   type: list
   sample: ['/Common/irule1', '/Common/irule2']
+aliases:
+  description: Aliases set on the Wide IP.
+  returned: changed
+  type: list
+  sample: ['alias1.foo.com', '*.wildcard.domain']
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -182,50 +219,63 @@ from ansible.module_utils.six import iteritems
 from distutils.version import LooseVersion
 
 try:
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
-    from library.module_utils.network.f5.common import is_valid_fqdn
     from library.module_utils.network.f5.common import f5_argument_spec
-
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from library.module_utils.network.f5.common import transform_name
+    from library.module_utils.network.f5.common import is_valid_fqdn
+    from library.module_utils.network.f5.icontrol import tmos_version
+    from library.module_utils.network.f5.icontrol import module_provisioned
 except ImportError:
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
-    from ansible.module_utils.network.f5.common import is_valid_fqdn
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from ansible.module_utils.network.f5.common import transform_name
+    from ansible.module_utils.network.f5.common import is_valid_fqdn
+    from ansible.module_utils.network.f5.icontrol import tmos_version
+    from ansible.module_utils.network.f5.icontrol import module_provisioned
 
 
 class Parameters(AnsibleF5Parameters):
     api_map = {
         'poolLbMode': 'pool_lb_method',
         'rules': 'irules',
+        'lastResortPool': 'last_resort_pool',
     }
 
     updatables = [
-        'pool_lb_method', 'state', 'pools', 'irules', 'enabled', 'disabled'
+        'pool_lb_method',
+        'state',
+        'pools',
+        'irules',
+        'enabled',
+        'disabled',
+        'aliases',
+        'last_resort_pool',
     ]
 
     returnables = [
-        'name', 'pool_lb_method', 'state', 'pools', 'irules'
+        'name',
+        'pool_lb_method',
+        'state',
+        'pools',
+        'irules',
+        'aliases',
+        'last_resort_pool',
     ]
 
     api_attributes = [
-        'poolLbMode', 'enabled', 'disabled', 'pools', 'rules'
+        'poolLbMode',
+        'enabled',
+        'disabled',
+        'pools',
+        'rules',
+        'aliases',
+        'lastResortPool',
     ]
 
 
@@ -246,7 +296,7 @@ class ApiParameters(Parameters):
     def pools(self):
         result = []
         if self._values['pools'] is None:
-            return None
+            return []
         pools = sorted(self._values['pools'], key=lambda x: x['order'])
         for item in pools:
             pool = dict()
@@ -260,8 +310,22 @@ class ApiParameters(Parameters):
             result.append(pool)
         return result
 
+    @property
+    def last_resort_pool(self):
+        if self._values['last_resort_pool'] in [None, '', 'none']:
+            return ''
+        return self._values['last_resort_pool']
+
 
 class ModuleParameters(Parameters):
+    @property
+    def last_resort_pool(self):
+        if self._values['last_resort_pool'] in [None, '', 'none']:
+            return ''
+        return '{0} {1}'.format(
+            self.type, fq_name(self.partition, self._values['last_resort_pool'])
+        )
+
     @property
     def pool_lb_method(self):
         if self._values['pool_lb_method'] is None:
@@ -358,6 +422,15 @@ class ModuleParameters(Parameters):
             results.append(result)
         return results
 
+    @property
+    def aliases(self):
+        if self._values['aliases'] is None:
+            return None
+        if len(self._values['aliases']) == 1 and self._values['aliases'][0] == '':
+            return ''
+        self._values['aliases'].sort()
+        return self._values['aliases']
+
 
 class Changes(Parameters):
     def to_return(self):
@@ -393,6 +466,14 @@ class ReportableChanges(Changes):
             pool_lb_method=self._values['pool_lb_method'],
         )
         return result
+
+    @property
+    def last_resort_pool(self):
+        if self._values['last_resort_pool'] is None:
+            return None
+        if self._values['last_resort_pool'] in ['', 'none']:
+            return 'none'
+        return self._values['last_resort_pool'].split(' ')[1]
 
 
 class Difference(object):
@@ -436,6 +517,15 @@ class Difference(object):
             return want
 
     @property
+    def last_resort_pool(self):
+        if self.want.last_resort_pool is None:
+            return None
+        if self.want.last_resort_pool == '' and self.have.last_resort_pool == '':
+            return None
+        if self.want.last_resort_pool != self.have.last_resort_pool:
+            return self.want.last_resort_pool
+
+    @property
     def state(self):
         if self.want.state == 'disabled' and self.have.enabled:
             return self.want.state
@@ -458,14 +548,31 @@ class Difference(object):
         if sorted(set(self.want.irules)) != sorted(set(self.have.irules)):
             return self.want.irules
 
+    @property
+    def aliases(self):
+        if self.want.aliases is None:
+            return None
+        if self.want.aliases == '' and self.have.aliases is None:
+            return None
+        if self.want.aliases == '' and len(self.have.aliases) > 0:
+            return []
+        if self.have.aliases is None:
+            return self.want.aliases
+        if set(self.want.aliases) != set(self.have.aliases):
+            return self.want.aliases
+
 
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.kwargs = kwargs
 
     def exec_module(self):
+        if not module_provisioned(self.client, 'gtm'):
+            raise F5ModuleError(
+                "GTM must be provisioned to use this module."
+            )
         if self.version_is_less_than_12():
             manager = self.get_manager('untyped')
         else:
@@ -479,7 +586,7 @@ class ModuleManager(object):
             return UntypedManager(**self.kwargs)
 
     def version_is_less_than_12(self):
-        version = self.client.api.tmos_version
+        version = tmos_version(self.client)
         if LooseVersion(version) < LooseVersion('12.0.0'):
             return True
         else:
@@ -489,7 +596,7 @@ class ModuleManager(object):
 class BaseManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -525,13 +632,10 @@ class BaseManager(object):
         result = dict()
         state = self.want.state
 
-        try:
-            if state in ["present", "disabled"]:
-                changed = self.present()
-            elif state == "absent":
-                changed = self.absent()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        if state in ["present", "disabled"]:
+            changed = self.present()
+        elif state == "absent":
+            changed = self.absent()
 
         reportable = ReportableChanges(params=self.changes.to_return())
         changes = reportable.to_return()
@@ -596,42 +700,89 @@ class BaseManager(object):
 
 class UntypedManager(BaseManager):
     def exists(self):
-        return self.client.api.tm.gtm.wideips.wideip.exists(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/gtm/wideip/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
 
     def update_on_device(self):
         params = self.changes.api_params()
-        result = self.client.api.tm.gtm.wideips.wipeip.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/gtm/wideip/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        result.modify(**params)
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def read_current_from_device(self):
-        resource = self.client.api.tm.gtm.wideips.wideip.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/gtm/wideip/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        result = resource.attrs
-        return ApiParameters(params=result)
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return ApiParameters(params=response)
 
     def create_on_device(self):
         params = self.changes.api_params()
-        self.client.api.tm.gtm.wideips.wideip.create(
-            name=self.want.name,
-            partition=self.want.partition,
-            **params
+        params['name'] = self.want.name
+        params['partition'] = self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/gtm/wideip/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
         )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return response['selfLink']
 
     def remove_from_device(self):
-        result = self.client.api.tm.gtm.wideips.wideip.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/gtm/wideip/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        if result:
-            result.delete()
+        response = self.client.api.delete(uri)
+        if response.status == 200:
+            return True
+        raise F5ModuleError(response.content)
 
 
 class TypedManager(BaseManager):
@@ -642,69 +793,96 @@ class TypedManager(BaseManager):
                 "The 'type' option is required for BIG-IP instances "
                 "greater than or equal to 12.x"
             )
-        type_map = dict(
-            a='a_s',
-            aaaa='aaaas',
-            cname='cnames',
-            mx='mxs',
-            naptr='naptrs',
-            srv='srvs'
-        )
-        self.collection = type_map[self.want.type]
 
     def exists(self):
-        wideips = self.client.api.tm.gtm.wideips
-        collection = getattr(wideips, self.collection)
-        resource = getattr(collection, self.want.type)
-        result = resource.exists(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/gtm/wideip/{2}/{3}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.type,
+            transform_name(self.want.partition, self.want.name)
         )
-        return result
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
 
     def update_on_device(self):
         params = self.changes.api_params()
-        wideips = self.client.api.tm.gtm.wideips
-        collection = getattr(wideips, self.collection)
-        resource = getattr(collection, self.want.type)
-        result = resource.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/gtm/wideip/{2}/{3}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.type,
+            transform_name(self.want.partition, self.want.name)
         )
-        result.modify(**params)
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def read_current_from_device(self):
-        wideips = self.client.api.tm.gtm.wideips
-        collection = getattr(wideips, self.collection)
-        resource = getattr(collection, self.want.type)
-        result = resource.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/gtm/wideip/{2}/{3}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.type,
+            transform_name(self.want.partition, self.want.name)
         )
-        result = result.attrs
-        return ApiParameters(params=result)
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return ApiParameters(params=response)
 
     def create_on_device(self):
         params = self.changes.api_params()
-        wideips = self.client.api.tm.gtm.wideips
-        collection = getattr(wideips, self.collection)
-        resource = getattr(collection, self.want.type)
-        resource.create(
-            name=self.want.name,
-            partition=self.want.partition,
-            **params
+        params['name'] = self.want.name
+        params['partition'] = self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/gtm/wideip/{2}/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.type
         )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return response['selfLink']
 
     def remove_from_device(self):
-        wideips = self.client.api.tm.gtm.wideips
-        collection = getattr(wideips, self.collection)
-        resource = getattr(collection, self.want.type)
-        result = resource.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/gtm/wideip/{2}/{3}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.type,
+            transform_name(self.want.partition, self.want.name)
         )
-        if result:
-            result.delete()
+        response = self.client.api.delete(uri)
+        if response.status == 200:
+            return True
+        raise F5ModuleError(response.content)
 
 
 class ArgumentSpec(object):
@@ -748,6 +926,10 @@ class ArgumentSpec(object):
             irules=dict(
                 type='list',
             ),
+            aliases=dict(
+                type='list'
+            ),
+            last_resort_pool=dict(),
         )
         self.argument_spec = {}
         self.argument_spec.update(f5_argument_spec)
@@ -759,20 +941,15 @@ def main():
 
     module = AnsibleModule(
         argument_spec=spec.argument_spec,
-        supports_check_mode=spec.supports_check_mode
+        supports_check_mode=spec.supports_check_mode,
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
 
     try:
-        client = F5Client(**module.params)
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
         module.exit_json(**results)
-    except F5ModuleError as e:
-        cleanup_tokens(client)
-        module.fail_json(msg=str(e))
+    except F5ModuleError as ex:
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

@@ -1,4 +1,4 @@
-|PyPI version| |Docs badge| |Build Status|
+|PyPI version| |Docs badge| |Chat badge| |Build Status| |Code Of Conduct| |Mailing Lists| |License|
 
 *******
 Ansible
@@ -13,7 +13,7 @@ balancers.
 Read the documentation and more at https://ansible.com/
 
 You can find installation instructions
-`here <https://docs.ansible.com/intro_getting_started.html>`_ for a
+`here <https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html>`_ for a
 variety of platforms.
 
 Most users should probably install a released version of Ansible from ``pip``, a package manager or
@@ -26,33 +26,30 @@ Ansible this way.
 Design Principles
 =================
 
-*  Have a dead simple setup process and a minimal learning curve
-*  Manage machines very quickly and in parallel
+*  Have a dead simple setup process and a minimal learning curve.
+*  Manage machines very quickly and in parallel.
 *  Avoid custom-agents and additional open ports, be agentless by
-   leveraging the existing SSH daemon
+   leveraging the existing SSH daemon.
 *  Describe infrastructure in a language that is both machine and human
-   friendly
-*  Focus on security and easy auditability/review/rewriting of content
+   friendly.
+*  Focus on security and easy auditability/review/rewriting of content.
 *  Manage new remote machines instantly, without bootstrapping any
-   software
-*  Allow module development in any dynamic language, not just Python
-*  Be usable as non-root
+   software.
+*  Allow module development in any dynamic language, not just Python.
+*  Be usable as non-root.
 *  Be the easiest IT automation system to use, ever.
 
 Get Involved
 ============
 
 *  Read `Community
-   Information <https://docs.ansible.com/community.html>`_ for all
+   Information <https://docs.ansible.com/ansible/latest/community>`_ for all
    kinds of ways to contribute to and interact with the project,
    including mailing list information and how to submit bug reports and
    code to Ansible.
-*  All code submissions are done through pull requests. Take care to
-   make sure no merge commits are in the submission, and use
-   ``git rebase`` vs ``git merge`` for this reason. If submitting a
-   large code change (other than modules), it's probably a good idea to
-   join ansible-devel and talk about what you would like to do or add
-   first to avoid duplicate efforts. This not only helps everyone
+*  All code submissions are done through pull requests to the ``devel`` branch.
+*  Feel free to talk to us before making larger changes
+   to avoid duplicate efforts. This not only helps everyone
    know what's going on, it also helps save time and effort if we decide
    some changes are needed.
 *  Users list:
@@ -63,17 +60,22 @@ Get Involved
    `ansible-announce <https://groups.google.com/group/ansible-announce>`_
    -- read only
 *  irc.freenode.net: #ansible
+*  For the full list of Email Lists, IRC channels see the
+   `Communication page <https://docs.ansible.com/ansible/latest/community/communication.html>`_
 
 Branch Info
 ===========
 
 *  Releases are named after Led Zeppelin songs. (Releases prior to 2.0
    were named after Van Halen songs.)
-*  The devel branch corresponds to the release actively under
+*  The ``devel`` branch corresponds to the release actively under
    development.
+*  The ``stable-2.x`` branches exist for current releases.
 *  Various release-X.Y branches exist for previous releases.
-*  We'd love to have your contributions, read `Community
-   Information <https://docs.ansible.com/community.html>`_ for notes on
+*  For information about the active branches see the
+   `Ansible release and maintenance <https://docs.ansible.com/ansible/latest/reference_appendices/release_and_maintenance.html>`_ page.
+*  We'd love to have your contributions, read the `Community
+   Guide <https://docs.ansible.com/ansible/latest/community>`_ for notes on
    how to get started.
 
 Roadmap
@@ -82,31 +84,17 @@ Roadmap
 Based on team and community feedback, an initial roadmap will be published for a major or minor version (ex: 2.0, 2.1).
 Subminor versions will generally not have roadmaps published.
 
-Ansible 2.1 was the first release which published this and asked for feedback in this manner.
-Feedback on the roadmap and the new process is quite welcome.
-The team is aiming for further transparency and better inclusion of both community desires and submissions.
-
-These are the team's *best guess* roadmaps based on the Ansible team's experience and are also based on requests and feedback from the community.
-There are things that may not make it due to time constraints, lack of community maintainers, etc.
-Each roadmap is published both as an idea of what is upcoming in Ansible, and as a medium for seeking further feedback from the community.
-
-There are multiple places for you to submit feedback:
-
-- Add to the agenda of an IRC `Core Team Meeting <https://github.com/ansible/community/blob/master/meetings/README.md>`_ (preferred)
-- Ansible's google-group: ansible-devel
-- AnsibleFest conferences
-- IRC Freenode channel: #ansible-devel (this one may have things lost in lots of conversation)
-
-For additional details consult the published `Ansible Roadmap <https://docs.ansible.com/ansible/devel/roadmap/>`_.
+The `Ansible Roadmap page <https://docs.ansible.com/ansible/devel/roadmap/>`_ details what is planned and how to influence the roadmap.
 
 Authors
 =======
 
 Ansible was created by `Michael DeHaan <https://github.com/mpdehaan>`_
-(michael.dehaan/gmail/com) and has contributions from over 1000 users
+(michael.dehaan/gmail/com) and has contributions from over 4000 users
 (and growing). Thanks everyone!
 
-Ansible is sponsored by `Ansible, Inc <https://ansible.com>`_
+`Ansible <https://www.ansible.com>`_ is sponsored by `Red Hat, Inc.
+<https://www.redhat.com>`_
 
 License
 =======
@@ -118,6 +106,17 @@ See `COPYING <COPYING>`_ to see the full text.
 .. |PyPI version| image:: https://img.shields.io/pypi/v/ansible.svg
    :target: https://pypi.org/project/ansible
 .. |Docs badge| image:: https://img.shields.io/badge/docs-latest-brightgreen.svg
-   :target: https://docs.ansible.com/ansible
+   :target: https://docs.ansible.com/ansible/latest/
 .. |Build Status| image:: https://api.shippable.com/projects/573f79d02a8192902e20e34b/badge?branch=devel
    :target: https://app.shippable.com/projects/573f79d02a8192902e20e34b
+.. |Chat badge| image:: https://img.shields.io/badge/chat-IRC-brightgreen.svg
+   :target: https://docs.ansible.com/ansible/latest/community/communication.html
+.. |Code Of Conduct| image:: https://img.shields.io/badge/code%20of%20conduct-Ansible-silver.svg
+   :target: https://docs.ansible.com/ansible/latest/community/code_of_conduct.html
+   :alt: Ansible Code of Conduct
+.. |Mailing Lists| image:: https://img.shields.io/badge/mailing%20lists-Ansible-orange.svg
+   :target: https://docs.ansible.com/ansible/latest/community/communication.html#mailing-list-information
+   :alt: Ansible mailing lists
+.. |License| image:: https://img.shields.io/badge/license-GPL%20v3.0-brightgreen.svg
+   :target: COPYING
+   :alt: Repository License

@@ -25,7 +25,7 @@ version_added: "2.4"
 short_description: Manages VPN instance address family on HUAWEI CloudEngine switches.
 description:
     - Manages VPN instance address family of HUAWEI CloudEngine switches.
-author: Yang yang (@CloudEngine-Ansible)
+author: Yang yang (@QijunPan)
 notes:
     - If I(state=absent), the vrf will be removed, regardless of the
       non-required parameters.
@@ -176,7 +176,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 

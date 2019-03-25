@@ -22,10 +22,9 @@ DOCUMENTATION = """
       remote_user:
         description:
             - The user to execute as inside the container
-        default: The set user as per docker's configuration
         vars:
             - name: ansible_user
-            - name: ansible_docker4_user
+            - name: ansible_docker_user
       docker_extra_args:
         description:
             - Extra arguments to pass to the docker command line
@@ -52,13 +51,9 @@ from ansible.errors import AnsibleError, AnsibleFileNotFound
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
+from ansible.utils.display import Display
 
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class Connection(ConnectionBase):
@@ -66,7 +61,6 @@ class Connection(ConnectionBase):
 
     transport = 'docker'
     has_pipelining = True
-    become_methods = frozenset(C.BECOME_METHODS)
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
@@ -246,9 +240,13 @@ class Connection(ConnectionBase):
         # running containers, so we use docker exec to implement this
         # Although docker version 1.8 and later provide support, the
         # owner and group of the files are always set to root
-        args = self._build_exec_cmd([self._play_context.executable, "-c", "dd of=%s bs=%s" % (out_path, BUFSIZE)])
-        args = [to_bytes(i, errors='surrogate_or_strict') for i in args]
         with open(to_bytes(in_path, errors='surrogate_or_strict'), 'rb') as in_file:
+            if not os.fstat(in_file.fileno()).st_size:
+                count = ' count=0'
+            else:
+                count = ''
+            args = self._build_exec_cmd([self._play_context.executable, "-c", "dd of=%s bs=%s%s" % (out_path, BUFSIZE, count)])
+            args = [to_bytes(i, errors='surrogate_or_strict') for i in args]
             try:
                 p = subprocess.Popen(args, stdin=in_file,
                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE)

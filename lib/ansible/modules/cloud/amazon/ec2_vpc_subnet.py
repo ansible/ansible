@@ -18,7 +18,9 @@ short_description: Manage subnets in AWS virtual private clouds
 description:
     - Manage subnets in AWS virtual private clouds
 version_added: "2.0"
-author: Robert Estelle (@erydo), Brad Davidson (@brandond)
+author:
+- Robert Estelle (@erydo)
+- Brad Davidson (@brandond)
 requirements: [ boto3 ]
 options:
   az:
@@ -121,27 +123,27 @@ subnet:
         id:
             description: Subnet resource id
             returned: I(state=present)
-            type: string
+            type: str
             sample: subnet-b883b2c4
         cidr_block:
             description: The IPv4 CIDR of the Subnet
             returned: I(state=present)
-            type: string
+            type: str
             sample: "10.0.0.0/16"
         ipv6_cidr_block:
             description: The IPv6 CIDR block actively associated with the Subnet
             returned: I(state=present)
-            type: string
+            type: str
             sample: "2001:db8:0:102::/64"
         availability_zone:
             description: Availability zone of the Subnet
             returned: I(state=present)
-            type: string
+            type: str
             sample: us-east-1a
         state:
             description: state of the Subnet
             returned: I(state=present)
-            type: string
+            type: str
             sample: available
         tags:
             description: tags attached to the Subnet, includes name
@@ -151,32 +153,32 @@ subnet:
         map_public_ip_on_launch:
             description: whether public IP is auto-assigned to new instances
             returned: I(state=present)
-            type: boolean
+            type: bool
             sample: false
         assign_ipv6_address_on_creation:
             description: whether IPv6 address is auto-assigned to new instances
             returned: I(state=present)
-            type: boolean
+            type: bool
             sample: false
         vpc_id:
             description: the id of the VPC where this Subnet exists
             returned: I(state=present)
-            type: string
+            type: str
             sample: vpc-67236184
         available_ip_address_count:
             description: number of available IPv4 addresses
             returned: I(state=present)
-            type: string
+            type: str
             sample: 251
         default_for_az:
             description: indicates whether this is the default Subnet for this Availability Zone
             returned: I(state=present)
-            type: boolean
+            type: bool
             sample: false
         ipv6_association_id:
             description: The IPv6 association ID for the currently associated CIDR
             returned: I(state=present)
-            type: string
+            type: str
             sample: subnet-cidr-assoc-b85c74d2
         ipv6_cidr_block_association_set:
             description: An array of IPv6 cidr block association set information.
@@ -186,11 +188,11 @@ subnet:
                 association_id:
                     description: The association ID
                     returned: always
-                    type: string
+                    type: str
                 ipv6_cidr_block:
                     description: The IPv6 CIDR block that is associated with the subnet.
                     returned: always
-                    type: string
+                    type: str
                 ipv6_cidr_block_state:
                     description: A hash/dict that contains a single item. The state of the cidr block association.
                     returned: always
@@ -199,13 +201,12 @@ subnet:
                         state:
                             description: The CIDR block association state.
                             returned: always
-                            type: string
+                            type: str
 '''
 
 
 import time
 import traceback
-from distutils.version import LooseVersion
 
 try:
     import botocore
@@ -255,7 +256,7 @@ def describe_subnets_with_backoff(client, **params):
 
 
 def waiter_params(module, params, start_time):
-    if LooseVersion(botocore.__version__) >= "1.7.0":
+    if not module.botocore_at_least("1.7.0"):
         remaining_wait_timeout = int(module.params['wait_timeout'] + start_time - time.time())
         params['WaiterConfig'] = {'Delay': 5, 'MaxAttempts': remaining_wait_timeout // 5}
     return params
@@ -578,7 +579,7 @@ def main():
     if module.params.get('assign_instances_ipv6') and not module.params.get('ipv6_cidr'):
         module.fail_json(msg="assign_instances_ipv6 is True but ipv6_cidr is None or an empty string")
 
-    if LooseVersion(botocore.__version__) < "1.7.0":
+    if not module.botocore_at_least("1.7.0"):
         module.warn("botocore >= 1.7.0 is required to use wait_timeout for custom wait times")
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)

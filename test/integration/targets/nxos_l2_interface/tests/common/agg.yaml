@@ -10,6 +10,7 @@
 - name: "Setup vlans"
   nxos_vlan:
     vlan_range: "6,15"
+    provider: "{{ connection }}"
 
 - name: Setup - Ensure interfaces are layer2
   nxos_interface:
@@ -17,12 +18,14 @@
       - { name: "{{ intname1 }}" }
       - { name: "{{ intname2 }}" }
     mode: layer2
+    provider: "{{ connection }}"
 
 - name: Setup - Remove interface aggregate before testing
   nxos_l2_interface:
     aggregate:
       - { name: "{{ intname1 }}", mode: access, access_vlan: 6 }
       - { name: "{{ intname2 }}", mode: access, access_vlan: 15 }
+    provider: "{{ connection }}"
     state: absent
 
 - name: Sleep for 2 seconds on Fretta Platform
@@ -35,6 +38,7 @@
       aggregate:
         - { name: "{{ intname1 }}", mode: access, access_vlan: 6 }
         - { name: "{{ intname2 }}", mode: access, access_vlan: 15 }
+      provider: "{{ connection }}"
     register: result
 
   - assert:
@@ -58,6 +62,7 @@
       aggregate:
         - { name: "{{ intname1 }}", mode: access, access_vlan: 6 }
         - { name: "{{ intname2 }}", mode: access, access_vlan: 15 }
+      provider: "{{ connection }}"
       state: absent
     register: result
 
@@ -81,6 +86,7 @@
   - name: "remove vlans"
     nxos_vlan:
       vlan_range: "6,15"
+      provider: "{{ connection }}"
       state: absent
     ignore_errors: yes
 
@@ -89,6 +95,7 @@
       aggregate:
         - { name: "{{ intname1 }}", mode: access, access_vlan: 6 }
         - { name: "{{ intname2 }}", mode: access, access_vlan: 15 }
+      provider: "{{ connection }}"
       state: absent
     ignore_errors: yes
 

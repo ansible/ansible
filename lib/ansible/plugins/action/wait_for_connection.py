@@ -22,13 +22,11 @@ __metaclass__ = type
 import time
 from datetime import datetime, timedelta
 
+from ansible.module_utils._text import to_text
 from ansible.plugins.action import ActionBase
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class TimedOutException(Exception):
@@ -37,6 +35,7 @@ class TimedOutException(Exception):
 
 class ActionModule(ActionBase):
     TRANSFERS_FILES = False
+    _VALID_ARGS = frozenset(('connect_timeout', 'delay', 'sleep', 'timeout'))
 
     DEFAULT_CONNECT_TIMEOUT = 5
     DEFAULT_DELAY = 0
@@ -82,12 +81,12 @@ class ActionModule(ActionBase):
             display.vvv("wait_for_connection: attempting ping module test")
             # call connection reset between runs if it's there
             try:
-                self._connection._reset()
+                self._connection.reset()
             except AttributeError:
                 pass
 
             # Use win_ping on winrm/powershell, else use ping
-            if hasattr(self._connection, '_shell_type') and self._connection._shell_type == 'powershell':
+            if getattr(self._connection._shell, "_IS_WINDOWS", False):
                 ping_result = self._execute_module(module_name='win_ping', module_args=dict(), task_vars=task_vars)
             else:
                 ping_result = self._execute_module(module_name='ping', module_args=dict(), task_vars=task_vars)
@@ -111,7 +110,7 @@ class ActionModule(ActionBase):
 
         except TimedOutException as e:
             result['failed'] = True
-            result['msg'] = str(e)
+            result['msg'] = to_text(e)
 
         elapsed = datetime.now() - start
         result['elapsed'] = elapsed.seconds

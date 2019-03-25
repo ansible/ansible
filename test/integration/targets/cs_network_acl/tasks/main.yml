@@ -4,6 +4,7 @@
     name: "{{ cs_resource_prefix }}_vpc"
     display_text: "{{ cs_resource_prefix }}_display_text"
     cidr: 10.10.0.0/16
+    vpc_offering: Redundant VPC offering
     zone: "{{ cs_common_zone_adv }}"
   register: vpc
 - name: verify setup vpc

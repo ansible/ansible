@@ -23,10 +23,10 @@ extends_documentation_fragment:
   - ec2
 options:
     name:
-        description: Name of the Web Application Firewall condition to manage
+        description: Name of the Web Application Firewall condition to manage.
         required: yes
     type:
-        description: the type of matching to perform
+        description: the type of matching to perform.
         choices:
         - byte
         - geo
@@ -37,25 +37,28 @@ options:
         - xss
     filters:
         description:
-        - A list of the filters against which to match
-        - For I(type)=C(byte), valid keys are C(field_to_match), C(position), C(header), C(transformation)
-        - For I(type)=C(geo), the only valid key is C(country)
-        - For I(type)=C(ip), the only valid key is C(ip_address)
-        - For I(type)=C(regex), valid keys are C(field_to_match), C(transformation) and C(regex_pattern)
-        - For I(type)=C(size), valid keys are C(field_to_match), C(transformation), C(comparison) and C(size)
-        - For I(type)=C(sql), valid keys are C(field_to_match) and C(transformation)
-        - For I(type)=C(xss), valid keys are C(field_to_match) and C(transformation)
-        - I(field_to_match) can be one of C(uri), C(query_string), C(header) C(method) and C(body)
-        - If I(field_to_match) is C(header), then C(header) must also be specified
-        - I(transformation) can be one of C(none), C(compress_white_space), C(html_entity_decode), C(lowercase), C(cmd_line), C(url_decode)
-        - I(position), can be one of C(exactly), C(starts_with), C(ends_with), C(contains), C(contains_word),
-        - I(comparison) can be one of C(EQ), C(NE), C(LE), C(LT), C(GE), C(GT),
-        - I(target_string) is a maximum of 50 bytes
-        - I(regex_pattern) is a dict with a C(name) key and C(regex_strings) list of strings to match
+        - A list of the filters against which to match.
+        - For I(type)=C(byte), valid keys are C(field_to_match), C(position), C(header), C(transformation).
+        - For I(type)=C(geo), the only valid key is C(country).
+        - For I(type)=C(ip), the only valid key is C(ip_address).
+        - For I(type)=C(regex), valid keys are C(field_to_match), C(transformation) and C(regex_pattern).
+        - For I(type)=C(size), valid keys are C(field_to_match), C(transformation), C(comparison) and C(size).
+        - For I(type)=C(sql), valid keys are C(field_to_match) and C(transformation).
+        - For I(type)=C(xss), valid keys are C(field_to_match) and C(transformation).
+        - I(field_to_match) can be one of C(uri), C(query_string), C(header) C(method) and C(body).
+        - If I(field_to_match) is C(header), then C(header) must also be specified.
+        - I(transformation) can be one of C(none), C(compress_white_space), C(html_entity_decode), C(lowercase), C(cmd_line), C(url_decode).
+        - I(position), can be one of C(exactly), C(starts_with), C(ends_with), C(contains), C(contains_word).
+        - I(comparison) can be one of C(EQ), C(NE), C(LE), C(LT), C(GE), C(GT).
+        - I(target_string) is a maximum of 50 bytes.
+        - I(regex_pattern) is a dict with a C(name) key and C(regex_strings) list of strings to match.
     purge_filters:
-        description: Whether to remove existing filters from a condition if not passed in I(filters). Defaults to false
+        description:
+        - Whether to remove existing filters from a condition if not passed in I(filters).
+        default: False
+        type: bool
     state:
-        description: Whether the condition should be C(present) or C(absent)
+        description: Whether the condition should be C(present) or C(absent).
         choices:
         - present
         - absent
@@ -140,12 +143,12 @@ condition:
     condition_id:
       description: type-agnostic ID for the condition
       returned: when state is present
-      type: string
+      type: str
       sample: dd74b1ff-8c06-4a4f-897a-6b23605de413
     byte_match_set_id:
       description: ID for byte match set
       returned: always
-      type: string
+      type: str
       sample: c4882c96-837b-44a2-a762-4ea87dbf812b
     byte_match_tuples:
       description: list of byte match tuples
@@ -159,23 +162,23 @@ condition:
           contains:
             data:
               description: Which specific header (if type is header)
-              type: string
+              type: str
               sample: content-type
             type:
               description: Type of field
-              type: string
+              type: str
               sample: HEADER
         positional_constraint:
           description: Position in the field to match
-          type: string
+          type: str
           sample: STARTS_WITH
         target_string:
           description: String to look for
-          type: string
+          type: str
           sample: Hello
         text_transformation:
           description: Transformation to apply to the field before matching
-          type: string
+          type: str
           sample: NONE
     geo_match_constraints:
       description: List of geographical constraints
@@ -184,16 +187,16 @@ condition:
       contains:
         type:
           description: Type of geo constraint
-          type: string
+          type: str
           sample: Country
         value:
           description: Value of geo constraint (typically a country code)
-          type: string
+          type: str
           sample: AT
     geo_match_set_id:
       description: ID of the geo match set
       returned: when type is geo and state is present
-      type: string
+      type: str
       sample: dd74b1ff-8c06-4a4f-897a-6b23605de413
     ip_set_descriptors:
       description: list of IP address filters
@@ -203,27 +206,27 @@ condition:
         type:
           description: Type of IP address (IPV4 or IPV6)
           returned: always
-          type: string
+          type: str
           sample: IPV4
         value:
           description: IP address
           returned: always
-          type: string
+          type: str
           sample: 10.0.0.0/8
     ip_set_id:
       description: ID of condition
       returned: when type is ip and state is present
-      type: string
+      type: str
       sample: 78ad334a-3535-4036-85e6-8e11e745217b
     name:
       description: Name of condition
       returned: when state is present
-      type: string
+      type: str
       sample: my_waf_condition
     regex_match_set_id:
       description: ID of the regex match set
       returned: when type is regex and state is present
-      type: string
+      type: str
       sample: 5ea3f6a8-3cd3-488b-b637-17b79ce7089c
     regex_match_tuples:
       description: List of regex matches
@@ -237,20 +240,20 @@ condition:
             type:
               description: The field name
               returned: when type is regex and state is present
-              type: string
+              type: str
               sample: QUERY_STRING
         regex_pattern_set_id:
           description: ID of the regex pattern
-          type: string
+          type: str
           sample: 6fdf7f2d-9091-445c-aef2-98f3c051ac9e
         text_transformation:
           description: transformation applied to the text before matching
-          type: string
+          type: str
           sample: NONE
     size_constraint_set_id:
       description: ID of the size constraint set
       returned: when type is size and state is present
-      type: string
+      type: str
       sample: de84b4b3-578b-447e-a9a0-0db35c995656
     size_constraints:
       description: List of size constraints to apply
@@ -259,7 +262,7 @@ condition:
       contains:
         comparison_operator:
           description: Comparison operator to apply
-          type: string
+          type: str
           sample: GT
         field_to_match:
           description: Field on which the size constraint is applied
@@ -267,7 +270,7 @@ condition:
           contains:
             type:
               description: Field name
-              type: string
+              type: str
               sample: QUERY_STRING
         size:
           description: size to compare against the field
@@ -275,12 +278,12 @@ condition:
           sample: 300
         text_transformation:
           description: transformation applied to the text before matching
-          type: string
+          type: str
           sample: NONE
     sql_injection_match_set_id:
       description: ID of the SQL injection match set
       returned: when type is sql and state is present
-      type: string
+      type: str
       sample: de84b4b3-578b-447e-a9a0-0db35c995656
     sql_injection_match_tuples:
       description: List of SQL injection match sets
@@ -293,16 +296,16 @@ condition:
           contains:
             type:
               description: Field name
-              type: string
+              type: str
               sample: QUERY_STRING
         text_transformation:
           description: transformation applied to the text before matching
-          type: string
+          type: str
           sample: URL_DECODE
     xss_match_set_id:
       description: ID of the XSS match set
       returned: when type is xss and state is present
-      type: string
+      type: str
       sample: de84b4b3-578b-447e-a9a0-0db35c995656
     xss_match_tuples:
       description: List of XSS match sets
@@ -315,11 +318,11 @@ condition:
           contains:
             type:
               description: Field name
-              type: string
+              type: str
               sample: QUERY_STRING
         text_transformation:
           description: transformation applied to the text before matching
-          type: string
+          type: str
           sample: URL_DECODE
 '''
 

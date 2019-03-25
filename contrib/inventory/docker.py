@@ -32,7 +32,7 @@ script contacts can be defined using environment variables or a configuration fi
 Requirements
 ------------
 
-Using the docker modules requires having docker-py <https://docker-py.readthedocs.org/en/stable/>
+Using the docker modules requires having docker-py <https://docker-py.readthedocs.io/en/stable/>
 installed on the host running Ansible. To install docker-py:
 
    pip install docker-py
@@ -196,6 +196,8 @@ When run in --list mode (the default), container instances are grouped by:
  - container name
  - container short id
  - image_name  (image_<image name>)
+ - stack_name  (stack_<stack name>)
+ - service_name  (service_<service name>)
  - docker_host
  - running
  - stopped
@@ -364,7 +366,7 @@ from collections import defaultdict
 for path in [os.getcwd(), '', os.path.dirname(os.path.abspath(__file__))]:
     try:
         del sys.path[sys.path.index(path)]
-    except:
+    except Exception:
         pass
 
 HAS_DOCKER_PY = True
@@ -391,6 +393,7 @@ except ImportError as exc:
         class Client:
             pass
 
+DEFAULT_DOCKER_CONFIG_FILE = os.path.splitext(os.path.basename(__file__))[0] + '.yml'
 DEFAULT_DOCKER_HOST = 'unix://var/run/docker.sock'
 DEFAULT_TLS = False
 DEFAULT_TLS_VERIFY = False
@@ -621,6 +624,14 @@ class DockerInventory(object):
                 if image_name:
                     self.groups["image_%s" % (image_name)].append(name)
 
+                stack_name = inspect.get('Config', dict()).get('Labels', dict()).get('com.docker.stack.namespace')
+                if stack_name:
+                    self.groups["stack_%s" % stack_name].append(name)
+
+                service_name = inspect.get('Config', dict()).get('Labels', dict()).get('com.docker.swarm.service.name')
+                if service_name:
+                    self.groups["service_%s" % service_name].append(name)
+
                 self.groups[id].append(name)
                 self.groups[name].append(name)
                 if short_id not in self.groups:
@@ -784,29 +795,29 @@ class DockerInventory(object):
 
     def _parse_config_file(self):
         config = dict()
-        config_path = None
+        config_file = DEFAULT_DOCKER_CONFIG_FILE
 
         if self._args.config_file:
-            config_path = self._args.config_file
+            config_file = self._args.config_file
         elif self._env_args.config_file:
-            config_path = self._env_args.config_file
+            config_file = self._env_args.config_file
 
-        if config_path:
-            try:
-                config_file = os.path.abspath(config_path)
-                # default config path is docker.yml in same directory as this script
-                # old behaviour is docker.yml in current directory. Handle both.
-                if not os.path.exists(config_file):
-                    config_file = os.path.abspath(os.path.basename(config_path))
-            except:
-                config_file = None
+        config_file = os.path.abspath(config_file)
 
-            if config_file and os.path.exists(config_file):
-                with open(config_file) as f:
-                    try:
-                        config = yaml.safe_load(f.read())
-                    except Exception as exc:
-                        self.fail("Error: parsing %s - %s" % (config_path, str(exc)))
+        if os.path.isfile(config_file):
+            with open(config_file) as f:
+                try:
+                    config = yaml.safe_load(f.read())
+                except Exception as exc:
+                    self.fail("Error: parsing %s - %s" % (config_file, str(exc)))
+        else:
+            msg = "Error: config file given by {} does not exist - " + config_file
+            if self._args.config_file:
+                self.fail(msg.format('command line argument'))
+            elif self._env_args.config_file:
+                self.fail(msg.format(DOCKER_ENV_ARGS.get('config_file')))
+            else:
+                self.log(msg.format('DEFAULT_DOCKER_CONFIG_FILE'))
         return config
 
     def log(self, msg, pretty_print=False):
@@ -831,9 +842,6 @@ class DockerInventory(object):
     def _parse_cli_args(self):
         # Parse command line arguments
 
-        basename = os.path.splitext(os.path.basename(__file__))[0]
-        default_config = os.path.join(os.path.dirname(__file__), basename + '.yml')
-
         parser = argparse.ArgumentParser(
             description='Return Ansible inventory for one or more Docker hosts.')
         parser.add_argument('--list', action='store_true', default=True,
@@ -844,8 +852,8 @@ class DockerInventory(object):
                             help='Only get information for a specific container.')
         parser.add_argument('--pretty', action='store_true', default=False,
                             help='Pretty print JSON output(default: False)')
-        parser.add_argument('--config-file', action='store', default=default_config,
-                            help="Name of the config file to use. Default is %s" % (default_config))
+        parser.add_argument('--config-file', action='store', default=None,
+                            help="Name of the config file to use. Default is %s" % (DEFAULT_DOCKER_CONFIG_FILE))
         parser.add_argument('--docker-host', action='store', default=None,
                             help="The base url or Unix sock path to connect to the docker daemon. Defaults to %s"
                                  % (DEFAULT_DOCKER_HOST))
@@ -888,5 +896,6 @@ def main():
         fail("Failed to import docker-py. Try `pip install docker-py` - %s" % (HAS_DOCKER_ERROR))
 
     DockerInventory().run()
+
 
 main()

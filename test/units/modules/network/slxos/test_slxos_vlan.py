@@ -20,11 +20,10 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import re
-import json
 
-from ansible.compat.tests.mock import patch
-from ansible.modules.network.slxos import slxos_vlan
+from units.compat.mock import patch
 from units.modules.utils import set_module_args
+from ansible.modules.network.slxos import slxos_vlan
 from .slxos_module import TestSlxosModule, load_fixture
 
 
@@ -116,7 +115,7 @@ class TestSlxosVlanModule(TestSlxosModule):
             }
         )
 
-    def test_slxos_vlan_state_absent_nonexistant_vlan(self, *args, **kwargs):
+    def test_slxos_vlan_state_absent_nonexistent_vlan(self, *args, **kwargs):
         set_module_args(dict(
             vlan_id=100,
             state='absent'

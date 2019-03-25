@@ -1,3 +1,8 @@
 cloud/azure
 destructive
-posix/ci/cloud/group2/azure
+shippable/azure/group4
+azure_rm_sqlserver_facts
+azure_rm_sqldatabase
+azure_rm_sqldatabase_facts
+azure_rm_sqlfirewallrule
+azure_rm_sqlfirewallrule_facts

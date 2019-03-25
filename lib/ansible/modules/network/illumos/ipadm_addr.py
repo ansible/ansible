@@ -45,6 +45,7 @@ options:
               IP addresses do not persist across reboots.
         required: false
         default: false
+        type: bool
     wait:
         description:
             - Specifies the time in seconds we wait for obtaining address via DHCP.
@@ -76,32 +77,32 @@ RETURN = '''
 addrobj:
     description: address object name
     returned: always
-    type: string
+    type: str
     sample: bge0/v4
 state:
     description: state of the target
     returned: always
-    type: string
+    type: str
     sample: present
 temporary:
     description: specifies if operation will persist across reboots
     returned: always
-    type: boolean
+    type: bool
     sample: True
 addrtype:
     description: address type
     returned: always
-    type: string
+    type: str
     sample: static
 address:
     description: IP address
     returned: only if addrtype is 'static'
-    type: string
+    type: str
     sample: 1.3.3.7/32
 wait:
     description: time we wait for DHCP
     returned: only if addrtype is 'dhcp'
-    type: string
+    type: str
     sample: 10
 '''
 

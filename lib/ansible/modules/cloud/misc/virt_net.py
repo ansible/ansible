@@ -129,6 +129,12 @@ EXAMPLES = '''
 - virt_net:
     autostart: no
     name: br_nat
+
+# Add a new host in the dhcp pool
+- virt_net:
+    name: br_nat
+    command: modify
+    xml: "<host mac='FC:C2:33:00:6c:3c' name='my_vm' ip='192.168.122.30'/>"
 '''
 
 try:
@@ -224,7 +230,7 @@ class LibvirtConnection(object):
         else:
             try:
                 state = self.find_entry(entryid).isActive()
-            except:
+            except Exception:
                 return self.module.exit_json(changed=True)
             if not state:
                 return self.module.exit_json(changed=True)
@@ -268,8 +274,8 @@ class LibvirtConnection(object):
                         res = 0
                     if res == 0:
                         return True
-            #  command, section, parentIndex, xml, flags=0
-            self.module.fail_json(msg='updating this is not supported yet %s' % to_native(xml))
+        #  command, section, parentIndex, xml, flags=0
+        self.module.fail_json(msg='updating this is not supported yet %s' % to_native(xml))
 
     def destroy(self, entryid):
         if not self.module.check_mode:
@@ -297,7 +303,7 @@ class LibvirtConnection(object):
             try:
                 state = self.find_entry(entryid).isActive()
                 return ENTRY_STATE_ACTIVE_MAP.get(state, "unknown")
-            except:
+            except Exception:
                 return ENTRY_STATE_ACTIVE_MAP.get("inactive", "unknown")
 
     def get_uuid(self, entryid):
@@ -310,7 +316,7 @@ class LibvirtConnection(object):
         xml = etree.fromstring(self.find_entry(entryid).XMLDesc(0))
         try:
             result = xml.xpath('/network/forward')[0].get('mode')
-        except:
+        except Exception:
             raise ValueError('Forward mode not specified')
         return result
 
@@ -318,7 +324,7 @@ class LibvirtConnection(object):
         xml = etree.fromstring(self.find_entry(entryid).XMLDesc(0))
         try:
             result = xml.xpath('/network/domain')[0].get('name')
-        except:
+        except Exception:
             raise ValueError('Domain not specified')
         return result
 
@@ -326,7 +332,7 @@ class LibvirtConnection(object):
         xml = etree.fromstring(self.find_entry(entryid).XMLDesc(0))
         try:
             result = xml.xpath('/network/mac')[0].get('address')
-        except:
+        except Exception:
             raise ValueError('MAC address not specified')
         return result
 
@@ -340,7 +346,7 @@ class LibvirtConnection(object):
         else:
             try:
                 return self.find_entry(entryid).autostart()
-            except:
+            except Exception:
                 return self.module.exit_json(changed=True)
 
     def set_autostart(self, entryid, val):
@@ -349,7 +355,7 @@ class LibvirtConnection(object):
         else:
             try:
                 state = self.find_entry(entryid).autostart()
-            except:
+            except Exception:
                 return self.module.exit_json(changed=True)
             if bool(state) != val:
                 return self.module.exit_json(changed=True)
@@ -371,7 +377,7 @@ class LibvirtConnection(object):
         else:
             try:
                 self.find_entry(entryid)
-            except:
+            except Exception:
                 return self.module.exit_json(changed=True)
 
 
@@ -504,7 +510,7 @@ def core(module):
 
         res['changed'] = False
         if state in ['active']:
-            if v.status(name) is not 'active':
+            if v.status(name) != 'active':
                 res['changed'] = True
                 res['msg'] = v.start(name)
         elif state in ['present']:
@@ -518,13 +524,13 @@ def core(module):
         elif state in ['inactive']:
             entries = v.list_nets()
             if name in entries:
-                if v.status(name) is not 'inactive':
+                if v.status(name) != 'inactive':
                     res['changed'] = True
                     res['msg'] = v.destroy(name)
         elif state in ['undefined', 'absent']:
             entries = v.list_nets()
             if name in entries:
-                if v.status(name) is not 'inactive':
+                if v.status(name) != 'inactive':
                     v.destroy(name)
                 res['changed'] = True
                 res['msg'] = v.undefine(name)

@@ -45,13 +45,41 @@
   delegate_to: localhost
   register: snmp_v2_disable
 
-# - debug:
-#     msg: '{{snmp_v2_disable}}'
-
 - assert:
     that:
       - snmp_v2_disable.data.v2CommunityString is not defined
       - snmp_v2_disable.data.v2cEnabled == False
+
+- name: Enable SNMPv2c with org_id
+  meraki_snmp:
+    auth_key: '{{auth_key}}'
+    org_id: '{{test_org_id}}'
+    state: present
+    v2c_enabled: true
+  delegate_to: localhost
+  register: snmp_v2_enable_id
+
+- debug:
+    msg: '{{snmp_v2_enable_id}}'
+
+- assert:
+    that:
+      - snmp_v2_enable_id.data.v2CommunityString is defined
+      - snmp_v2_enable_id.data.v2cEnabled == true
+
+- name: Disable SNMPv2c with org_id
+  meraki_snmp:
+    auth_key: '{{auth_key}}'
+    org_id: '{{test_org_id}}'
+    state: present
+    v2c_enabled: False
+  delegate_to: localhost
+  register: snmp_v2_disable_id
+
+- assert:
+    that:
+      - snmp_v2_disable_id.data.v2CommunityString is not defined
+      - snmp_v2_disable_id.data.v2cEnabled == False
 
 - name: Enable SNMPv3
   meraki_snmp:

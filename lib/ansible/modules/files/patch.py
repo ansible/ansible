@@ -27,54 +27,59 @@ options:
   basedir:
     description:
       - Path of a base directory in which the patch file will be applied.
-        May be omitted when C(dest) option is specified, otherwise required.
+      - May be omitted when C(dest) option is specified, otherwise required.
+    type: path
   dest:
     description:
       - Path of the file on the remote machine to be patched.
       - The names of the files to be patched are usually taken from the patch
         file, but if there's just one file to be patched it can specified with
         this option.
+    type: path
     aliases: [ originalfile ]
   src:
     description:
       - Path of the patch file as accepted by the GNU patch tool. If
         C(remote_src) is 'no', the patch source file is looked up from the
         module's I(files) directory.
+    type: path
     required: true
     aliases: [ patchfile ]
   state:
-    version_added: "2.6"
     description:
       - Whether the patch should be applied or reverted.
+    type: str
     choices: [ absent, present ]
     default: present
+    version_added: "2.6"
   remote_src:
     description:
       - If C(no), it will search for src at originating/master machine, if C(yes) it will
         go to the remote/target machine for the C(src).
     type: bool
-    default: 'no'
+    default: no
   strip:
     description:
       - Number that indicates the smallest prefix containing leading slashes
         that will be stripped from each file name found in the patch file.
-        For more information see the strip parameter of the GNU patch tool.
+      - For more information see the strip parameter of the GNU patch tool.
+    type: int
     default: 0
   backup:
     version_added: "2.0"
     description:
-      - Passes C(--backup --version-control=numbered) to patch,
-        producing numbered backup copies.
+      - Passes C(--backup --version-control=numbered) to patch, producing numbered backup copies.
     type: bool
-    default: 'no'
+    default: no
   binary:
     version_added: "2.0"
     description:
       - Setting to C(yes) will disable patch's heuristic for transforming CRLF
-        line endings into LF. Line endings of src and dest must match. If set to
-        C(no), C(patch) will replace CRLF in C(src) files on POSIX.
+        line endings into LF.
+      - Line endings of src and dest must match.
+      - If set to C(no), C(patch) will replace CRLF in C(src) files on POSIX.
     type: bool
-    default: 'no'
+    default: no
 notes:
   - This module requires GNU I(patch) utility to be installed on the remote host.
 '''
@@ -100,7 +105,7 @@ EXAMPLES = r'''
 
 import os
 from traceback import format_exc
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, get_platform
 from ansible.module_utils._text import to_native
 
 
@@ -108,10 +113,19 @@ class PatchError(Exception):
     pass
 
 
+def add_dry_run_option(opts):
+    # Older versions of FreeBSD, OpenBSD and NetBSD support the --check option only.
+    if get_platform().lower() in ['openbsd', 'netbsd', 'freebsd']:
+        opts.append('--check')
+    else:
+        opts.append('--dry-run')
+
+
 def is_already_applied(patch_func, patch_file, basedir, dest_file=None, binary=False, strip=0, state='present'):
-    opts = ['--quiet', '--forward', '--dry-run',
+    opts = ['--quiet', '--forward',
             "--strip=%s" % strip, "--directory='%s'" % basedir,
             "--input='%s'" % patch_file]
+    add_dry_run_option(opts)
     if binary:
         opts.append('--binary')
     if dest_file:
@@ -128,7 +142,7 @@ def apply_patch(patch_func, patch_file, basedir, dest_file=None, binary=False, s
             "--strip=%s" % strip, "--directory='%s'" % basedir,
             "--input='%s'" % patch_file]
     if dry_run:
-        opts.append('--dry-run')
+        add_dry_run_option(opts)
     if binary:
         opts.append('--binary')
     if dest_file:

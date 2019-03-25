@@ -35,27 +35,23 @@ options:
         required: true
     state:
         description:
-            - Assert the state of the availability set. Use 'present' to create or update a availability set and
-              'absent' to delete a availability set.
+            - Assert the state of the availability set. Use C(present) to create or update a availability set and
+              C(absent) to delete a availability set.
         default: present
         choices:
             - absent
             - present
-        required: false
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
-        required: false
     platform_update_domain_count:
         description:
             - Update domains indicate groups of virtual machines and underlying physical hardware that can be rebooted at the same time. Default is 5.
         default: 5
-        required: false
     platform_fault_domain_count:
         description:
             - Fault domains define the group of virtual machines that share a common power source and network switch. Should be between 1 and 3. Default is 3
         default: 3
-        required: false
     sku:
         description:
             - Define if the availability set supports managed disks.
@@ -63,7 +59,6 @@ options:
         choices:
             - Classic
             - Aligned
-        required: false
 extends_documentation_fragment:
     - azure
     - azure_tags
@@ -77,13 +72,13 @@ EXAMPLES = '''
       azure_rm_availabilityset:
         name: myavailabilityset
         location: eastus
-        resource_group: Testing
+        resource_group: myResourceGroup
 
     - name: Create an availability set with advanced options
       azure_rm_availabilityset:
         name: myavailabilityset
         location: eastus
-        resource_group: Testing
+        resource_group: myResourceGroup
         platform_update_domain_count: 5
         platform_fault_domain_count: 3
         sku: Aligned
@@ -92,13 +87,13 @@ EXAMPLES = '''
       azure_rm_availabilityset:
         name: myavailabilityset
         location: eastus
-        resource_group: Testing
+        resource_group: myResourceGroup
         state: absent
 '''
 
 RETURN = '''
 state:
-    description: Current state of the avaibility set
+    description: Current state of the availability set
     returned: always
     type: dict
 changed:
@@ -118,7 +113,7 @@ except ImportError:
 
 def availability_set_to_dict(avaset):
     '''
-    Serialazing the availability set from the API to Dict
+    Serializing the availability set from the API to Dict
     :return: dict
     '''
     return dict(
@@ -147,28 +142,23 @@ class AzureRMAvailabilitySet(AzureRMModuleBase):
             ),
             state=dict(
                 type='str',
-                required=False,
                 default='present',
                 choices=['present', 'absent']
             ),
             location=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             platform_update_domain_count=dict(
                 type='int',
-                default=5,
-                required=False
+                default=5
             ),
             platform_fault_domain_count=dict(
                 type='int',
-                default=3,
-                required=False
+                default=3
             ),
             sku=dict(
                 type='str',
                 default='Classic',
-                required=False,
                 choices=['Classic', 'Aligned']
             )
         )
@@ -242,7 +232,7 @@ class AzureRMAvailabilitySet(AzureRMModuleBase):
     def faildeploy(self, param):
         '''
         Helper method to push fail message in the console.
-        Usefull to notify that the users cannot change some values in a Availibility Set
+        Useful to notify that the users cannot change some values in a Availability Set
 
         :param: variable's name impacted
         :return: void
@@ -308,6 +298,7 @@ class AzureRMAvailabilitySet(AzureRMModuleBase):
 def main():
     """Main execution"""
     AzureRMAvailabilitySet()
+
 
 if __name__ == '__main__':
     main()

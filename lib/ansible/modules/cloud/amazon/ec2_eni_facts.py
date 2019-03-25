@@ -31,7 +31,7 @@ options:
   filters:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
-        See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeNetworkInterfaces.html) for possible filters.
+        See U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeNetworkInterfaces.html) for possible filters.
 extends_documentation_fragment:
     - aws
     - ec2
@@ -83,12 +83,12 @@ network_interfaces:
     availability_zone:
       description: Availability zone of ENI
       returned: always
-      type: string
+      type: str
       sample: "us-east-1b"
     description:
       description: Description text for ENI
       returned: always
-      type: string
+      type: str
       sample: "My favourite network interface"
     groups:
       description: List of attached security groups
@@ -103,12 +103,12 @@ network_interfaces:
     id:
       description: The id of the ENI (alias for network_interface_id)
       returned: always
-      type: string
+      type: str
       sample: "eni-392fsdf"
     interface_type:
       description: Type of the network interface
       returned: always
-      type: string
+      type: str
       sample: "interface"
     ipv6_addresses:
       description: List of IPv6 addresses for this interface
@@ -118,27 +118,27 @@ network_interfaces:
     mac_address:
       description: MAC address of the network interface
       returned: always
-      type: string
+      type: str
       sample: "0a:f8:10:2f:ab:a1"
     network_interface_id:
       description: The id of the ENI
       returned: always
-      type: string
+      type: str
       sample: "eni-392fsdf"
     owner_id:
       description: AWS account id of the owner of the ENI
       returned: always
-      type: string
+      type: str
       sample: "4415120123456"
     private_dns_name:
       description: Private DNS name for the ENI
       returned: always
-      type: string
+      type: str
       sample: "ip-172-16-1-180.ec2.internal"
     private_ip_address:
       description: Private IP address for the ENI
       returned: always
-      type: string
+      type: str
       sample: "172.16.1.180"
     private_ip_addresses:
       description: List of private IP addresses attached to the ENI
@@ -148,7 +148,7 @@ network_interfaces:
     requester_id:
       description: The ID of the entity that launched the ENI
       returned: always
-      type: string
+      type: str
       sample: "AIDAIONYVJQNIAZFT3ABC"
     requester_managed:
       description:  Indicates whether the network interface is being managed by an AWS service.
@@ -163,12 +163,12 @@ network_interfaces:
     status:
       description: Indicates if the network interface is attached to an instance or not
       returned: always
-      type: string
+      type: str
       sample: "in-use"
     subnet_id:
       description: Subnet ID the ENI is in
       returned: always
-      type: string
+      type: str
       sample: "subnet-7bbf01234"
     tag_set:
       description: Dictionary of tags added to the ENI
@@ -178,7 +178,7 @@ network_interfaces:
     vpc_id:
       description: ID of the VPC the network interface it part of
       returned: always
-      type: string
+      type: str
       sample: "vpc-b3f1f123"
 '''
 

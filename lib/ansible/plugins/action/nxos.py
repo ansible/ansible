@@ -19,28 +19,27 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import sys
 import copy
+import re
+import sys
 
 from ansible import constants as C
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import Connection
-from ansible.plugins.action.normal import ActionModule as _ActionModule
+from ansible.plugins.action.network import ActionModule as ActionNetworkModule
 from ansible.module_utils.network.common.utils import load_provider
 from ansible.module_utils.network.nxos.nxos import nxos_provider_spec
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
-class ActionModule(_ActionModule):
+class ActionModule(ActionNetworkModule):
 
     def run(self, tmp=None, task_vars=None):
         del tmp  # tmp no longer has any effect
 
+        self._config_module = True if self._task.action == 'nxos_config' else False
         socket_path = None
 
         if (self._play_context.connection == 'httpapi' or self._task.args.get('provider', {}).get('transport') == 'nxapi') \
@@ -54,6 +53,26 @@ class ActionModule(_ActionModule):
                 self._task.args['username'] = self._play_context.remote_user
             elif self._play_context.connection == 'local':
                 self._task.args['username'] = self._play_context.connection_user
+
+        if self._task.action == 'nxos_install_os':
+            persistent_command_timeout = 0
+            persistent_connect_timeout = 0
+            connection = self._connection
+            if connection.transport == 'local':
+                persistent_command_timeout = C.PERSISTENT_COMMAND_TIMEOUT
+                persistent_connect_timeout = C.PERSISTENT_CONNECT_TIMEOUT
+            else:
+                persistent_command_timeout = connection.get_option('persistent_command_timeout')
+                persistent_connect_timeout = connection.get_option('persistent_connect_timeout')
+
+            display.vvvv('PERSISTENT_COMMAND_TIMEOUT is %s' % str(persistent_command_timeout), self._play_context.remote_addr)
+            display.vvvv('PERSISTENT_CONNECT_TIMEOUT is %s' % str(persistent_connect_timeout), self._play_context.remote_addr)
+            if persistent_command_timeout < 600 or persistent_connect_timeout < 600:
+                msg = 'PERSISTENT_COMMAND_TIMEOUT and PERSISTENT_CONNECT_TIMEOUT'
+                msg += ' must be set to 600 seconds or higher when using nxos_install_os module.'
+                msg += ' Current persistent_command_timeout setting:' + str(persistent_command_timeout)
+                msg += ' Current persistent_connect_timeout setting:' + str(persistent_connect_timeout)
+                return {'failed': True, 'msg': msg}
 
         if self._play_context.connection in ('network_cli', 'httpapi'):
             provider = self._task.args.get('provider', {})
@@ -79,7 +98,6 @@ class ActionModule(_ActionModule):
                 pc.remote_user = provider['username'] or self._play_context.connection_user
                 pc.password = provider['password'] or self._play_context.password
                 pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
-                pc.timeout = int(provider['timeout']) if provider['timeout'] else None
                 pc.become = provider['authorize'] or False
                 if pc.become:
                     pc.become_method = 'enable'
@@ -88,8 +106,8 @@ class ActionModule(_ActionModule):
                 display.vvv('using connection plugin %s (was local)' % pc.connection, pc.remote_addr)
                 connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
 
-                if connection._play_context.timeout is None:
-                    connection._play_context.timeout = connection.get_option('persistent_command_timeout')
+                command_timeout = int(provider['timeout']) if provider['timeout'] else connection.get_option('persistent_command_timeout')
+                connection.set_options(direct={'persistent_command_timeout': command_timeout})
 
                 socket_path = connection.run()
                 display.vvvv('socket_path: %s' % socket_path, pc.remote_addr)
@@ -112,8 +130,10 @@ class ActionModule(_ActionModule):
                 socket_path = self._connection.socket_path
 
             conn = Connection(socket_path)
+            # Match prompts ending in )# except those with (maint-mode)#
+            config_prompt = re.compile(r'^.*\((?!maint-mode).*\)#$')
             out = conn.get_prompt()
-            while to_text(out, errors='surrogate_then_replace').strip().endswith(')#'):
+            while config_prompt.match(to_text(out, errors='surrogate_then_replace').strip()):
                 display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
                 conn.send_command('exit')
                 out = conn.get_prompt()

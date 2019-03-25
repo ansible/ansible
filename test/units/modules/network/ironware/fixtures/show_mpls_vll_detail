@@ -9,7 +9,7 @@ VLL TEST-VLL, VC-ID 111, VLL-INDEX 4
   COS              : 1
   Extended Counters: Enabled
 
-  Vll-Peer         : 1.1.1.1
+  Vll-Peer         : 192.0.2.1
     State          : DOWN - PW is Down (Reason:Wait for peer label)
     Remote VC type : --                Remote VC MTU  : --
     Local label    : --                Remote label   : --

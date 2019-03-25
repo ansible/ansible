@@ -93,19 +93,12 @@ import re
 
 
 def execute_show_command(module, command):
-    format = 'json'
+    format = 'text'
     cmds = [{
         'command': command,
         'output': format,
     }]
-    output = run_commands(module, cmds, False)
-    if len(output) == 0 or len(output[0]) == 0:
-        # If we get here the platform does not
-        # support structured output.  Resend as
-        # text.
-        cmds[0]['output'] = 'text'
-        output = run_commands(module, cmds, False)
-
+    output = run_commands(module, cmds)
     return output
 
 
@@ -130,7 +123,7 @@ def map_config_to_obj(module):
     output = execute_show_command(module, command)[0]
 
     if "Invalid command" in output:
-        module.fail_json(msg="banner: exec may not be supported on this platform.  Possible values are : exec | motd")
+        module.fail_json(msg="banner: %s may not be supported on this platform.  Possible values are : exec | motd" % module.params['banner'])
 
     if isinstance(output, dict):
         output = list(output.values())
@@ -197,7 +190,17 @@ def main():
 
     if commands:
         if not module.check_mode:
-            load_config(module, commands)
+            msgs = load_config(module, commands, True)
+            if msgs:
+                for item in msgs:
+                    if item:
+                        if isinstance(item, dict):
+                            err_str = item['clierror']
+                        else:
+                            err_str = item
+                        if 'more than 40 lines' in err_str or 'buffer overflowed' in err_str:
+                            load_config(module, commands)
+
         result['changed'] = True
 
     module.exit_json(**result)

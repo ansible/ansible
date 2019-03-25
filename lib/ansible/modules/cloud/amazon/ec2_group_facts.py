@@ -19,7 +19,8 @@ description:
     - Gather facts about ec2 security groups in AWS.
 version_added: "2.3"
 requirements: [ boto3 ]
-author: "Henrique Rodrigues (github.com/Sodki)"
+author:
+- Henrique Rodrigues (@Sodki)
 options:
   filters:
     description:

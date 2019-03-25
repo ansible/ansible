@@ -1,5 +1,7 @@
- # Copyright (c) 2017 Ansible Project
- # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
+# Copyright (c) 2017 Ansible Project
+# Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
+
+#Requires -Module Ansible.ModuleUtils.PrivilegeUtil
 
 Function Load-LinkUtils() {
     $link_util = @'
@@ -44,21 +46,6 @@ namespace Ansible
         public string[] HardTargets { get; internal set; }
     }
 
-    [StructLayout(LayoutKind.Sequential)]
-    public struct LUID
-    {
-        public UInt32 LowPart;
-        public Int32 HighPart;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    public struct TOKEN_PRIVILEGES
-    {
-        public UInt32 PrivilegeCount;
-        public LUID Luid;
-        public UInt32 Attributes;
-    }
-
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     public struct REPARSE_DATA_BUFFER
     {
@@ -78,10 +65,6 @@ namespace Ansible
     {
         public const int MAXIMUM_REPARSE_DATA_BUFFER_SIZE = 1024 * 16;
 
-        private const int TOKEN_ADJUST_PRIVILEGES = 0x00000020;
-        private const int TOKEN_QUERY = 0x00000008;
-        private const int SE_PRIVILEGE_ENABLED = 0x00000002;
-
         private const UInt32 FILE_FLAG_BACKUP_SEMANTICS = 0x02000000;
         private const UInt32 FILE_FLAG_OPEN_REPARSE_POINT = 0x00200000;
 
@@ -100,34 +83,6 @@ namespace Ansible
 
         private const UInt32 SYMBOLIC_LINK_FLAG_FILE = 0x00000000;
         private const UInt32 SYMBOLIC_LINK_FLAG_DIRECTORY = 0x00000001;
-
-        [DllImport("kernel32.dll")]
-        private static extern IntPtr GetCurrentProcess();
-
-        [DllImport("kernel32.dll")]
-        private static extern bool CloseHandle(
-            IntPtr hObject);
-
-        [DllImport("advapi32.dll")]
-        private static extern bool OpenProcessToken(
-            IntPtr ProcessHandle,
-            UInt32 DesiredAccess,
-            out IntPtr TokenHandle);
-
-        [DllImport("advapi32.dll", CharSet = CharSet.Auto)]
-        private static extern bool LookupPrivilegeValue(
-            string lpSystemName,
-            string lpName,
-            [MarshalAs(UnmanagedType.Struct)] out LUID lpLuid);
-
-        [DllImport("advapi32.dll")]
-        private static extern bool AdjustTokenPrivileges(
-            IntPtr TokenHandle,
-            [MarshalAs(UnmanagedType.Bool)] bool DisableAllPrivileges,
-            ref TOKEN_PRIVILEGES NewState,
-            UInt32 BufferLength,
-            IntPtr PreviousState,
-            IntPtr ReturnLength);
 
         [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
         private static extern SafeFileHandle CreateFile(
@@ -205,33 +160,6 @@ namespace Ansible
             string lpFileName,
             string lpExistingFileName,
             IntPtr lpSecurityAttributes);
-
-        public static void EnablePrivilege(string privilege)
-        {
-            TOKEN_PRIVILEGES tkpPrivileges;
-
-            IntPtr hToken;
-            if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, out hToken))
-                throw new LinkUtilWin32Exception("OpenProcessToken failed");
-
-            try
-            {
-                LUID luid;
-                if (!LookupPrivilegeValue(null, privilege, out luid))
-                    throw new LinkUtilWin32Exception(String.Format("LookupPrivilegeValue({0}) failed", privilege));
-
-                tkpPrivileges.PrivilegeCount = 1;
-                tkpPrivileges.Luid = luid;
-                tkpPrivileges.Attributes = SE_PRIVILEGE_ENABLED;
-
-                if (!AdjustTokenPrivileges(hToken, false, ref tkpPrivileges, 0, IntPtr.Zero, IntPtr.Zero))
-                    throw new LinkUtilWin32Exception(String.Format("AdjustTokenPrivileges({0}) failed", privilege));
-            }
-            finally
-            {
-                CloseHandle(hToken);
-            }
-        }
 
         public static LinkInfo GetLinkInfo(string linkPath)
         {
@@ -466,7 +394,6 @@ namespace Ansible
 
     # FUTURE: find a better way to get the _ansible_remote_tmp variable
     $original_tmp = $env:TMP
-    $original_temp = $env:TEMP
 
     $remote_tmp = $original_tmp
     $module_params = Get-Variable -Name complex_args -ErrorAction SilentlyContinue
@@ -478,12 +405,14 @@ namespace Ansible
     }
 
     $env:TMP = $remote_tmp
-    $env:TEMP = $remote_tmp
     Add-Type -TypeDefinition $link_util
     $env:TMP = $original_tmp
-    $env:TEMP = $original_temp
 
-    [Ansible.LinkUtil]::EnablePrivilege("SeBackupPrivilege")
+    # enable the SeBackupPrivilege if it is disabled
+    $state = Get-AnsiblePrivilege -Name SeBackupPrivilege
+    if ($state -eq $false) {
+        Set-AnsiblePrivilege -Name SeBackupPrivilege -Value $true
+    }
 }
 
 Function Get-Link($link_path) {
@@ -496,7 +425,7 @@ Function Remove-Link($link_path) {
 }
 
 Function New-Link($link_path, $link_target, $link_type) {
-    if (-not (Test-Path -Path $link_target)) {
+    if (-not (Test-Path -LiteralPath $link_target)) {
         throw "link_target '$link_target' does not exist, cannot create link"
     }
     
@@ -505,13 +434,13 @@ Function New-Link($link_path, $link_target, $link_type) {
             $type = [Ansible.LinkType]::SymbolicLink
         }
         "junction" {
-            if (Test-Path -Path $link_target -PathType Leaf) {
+            if (Test-Path -LiteralPath $link_target -PathType Leaf) {
                 throw "cannot set the target for a junction point to a file"
             }
             $type = [Ansible.LinkType]::JunctionPoint
         }
         "hard" {
-            if (Test-Path -Path $link_target -PathType Container) {
+            if (Test-Path -LiteralPath $link_target -PathType Container) {
                 throw "cannot set the target for a hard link to a directory"
             }
             $type = [Ansible.LinkType]::HardLink

@@ -1,0 +1,121 @@
+---
+- name: setup vpc
+  cs_vpc:
+    name: "{{ cs_resource_prefix }}_vpc_ip_address"
+    cidr: 10.10.111.0/16
+    zone: "{{ cs_common_zone_adv }}"
+  register: vpc
+- name: verify setup vpc
+  assert:
+    that:
+    - vpc is successful
+
+- name: setup clean ip_address with tags
+  cs_ip_address:
+    state: absent
+    vpc: "{{ cs_resource_prefix }}_vpc_ip_address"
+    tags:
+      - key: unique_id
+        value: "86cdce4c-dce7-11e8-8394-00262df3bf70"
+    zone: "{{ cs_common_zone_adv }}"
+
+- name: test associate ip_address in vpc with tags in check mode
+  cs_ip_address:
+    vpc: "{{ cs_resource_prefix }}_vpc_ip_address"
+    tags:
+      - key: unique_id
+        value: "86cdce4c-dce7-11e8-8394-00262df3bf70"
+    zone: "{{ cs_common_zone_adv }}"
+  register: ip_address_tag
+  check_mode: yes
+- name: verify test associate ip_address in vpc with tags in check mode
+  assert:
+    that:
+    - ip_address_tag is successful
+    - ip_address_tag is changed
+
+- name: test associate ip_address in vpc with tags
+  cs_ip_address:
+    vpc: "{{ cs_resource_prefix }}_vpc_ip_address"
+    tags:
+      - key: unique_id
+        value: "86cdce4c-dce7-11e8-8394-00262df3bf70"
+    zone: "{{ cs_common_zone_adv }}"
+  register: ip_address_tag
+- name: verify test associate ip_address in vpc with tags
+  assert:
+    that:
+    - ip_address_tag is successful
+    - ip_address_tag is changed
+    - ip_address_tag.ip_address is defined
+    - ip_address_tag.tags.0.key == "unique_id"
+    - ip_address_tag.tags.0.value == "86cdce4c-dce7-11e8-8394-00262df3bf70"
+
+- name: test associate ip_address in vpc with tags idempotence
+  cs_ip_address:
+    vpc: "{{ cs_resource_prefix }}_vpc_ip_address"
+    tags:
+      - key: unique_id
+        value: "86cdce4c-dce7-11e8-8394-00262df3bf70"
+    zone: "{{ cs_common_zone_adv }}"
+  register: ip_address_tag
+- name: verify test associate ip_address in vpc with tags idempotence
+  assert:
+    that:
+    - ip_address_tag is successful
+    - ip_address_tag is not changed
+    - ip_address_tag.ip_address is defined
+    - ip_address_tag.state == "Allocated"
+    - ip_address_tag.tags.0.key == "unique_id"
+    - ip_address_tag.tags.0.value == "86cdce4c-dce7-11e8-8394-00262df3bf70"
+
+- name: test disassociate ip_address in vpc in check mode
+  cs_ip_address:
+    state: absent
+    ip_address: "{{ ip_address_tag.ip_address  }}"
+    vpc: "{{ cs_resource_prefix }}_vpc_ip_address"
+    zone: "{{ cs_common_zone_adv }}"
+  check_mode: true
+  register: ip_address
+- name: verify test disassociate ip_address in vpc in check mode
+  assert:
+    that:
+    - ip_address is successful
+    - ip_address is changed
+
+- name: test disassociate ip_address in vpc
+  cs_ip_address:
+    state: absent
+    ip_address: "{{ ip_address_tag.ip_address  }}"
+    vpc: "{{ cs_resource_prefix }}_vpc_ip_address"
+    zone: "{{ cs_common_zone_adv }}"
+  register: ip_address
+- name: verify test disassociate ip_address in vpc
+  assert:
+    that:
+    - ip_address is successful
+    - ip_address is changed
+
+- name: test disassociate ip_address in vpc idempotence
+  cs_ip_address:
+    state: absent
+    ip_address: "{{ ip_address_tag.ip_address  }}"
+    vpc: "{{ cs_resource_prefix }}_vpc_ip_address"
+    zone: "{{ cs_common_zone_adv }}"
+  register: ip_address
+- name: verify test disassociate ip_address in vpc idempotence
+  assert:
+    that:
+    - ip_address is successful
+    - ip_address is not changed
+
+- name: cleanup vpc
+  cs_vpc:
+    name: "{{ cs_resource_prefix }}_vpc_ip_address"
+    zone: "{{ cs_common_zone_adv }}"
+    state: absent
+  register: vpc
+- name: verify cleanup vpc
+  assert:
+    that:
+    - vpc is successful

@@ -48,6 +48,13 @@ options:
     required: false
     default: no
     type: bool
+  http2:
+    description:
+      - Indicates whether to enable HTTP2 routing.
+    required: false
+    default: no
+    type: bool
+    version_added: 2.6
   idle_timeout:
     description:
       - The number of seconds to wait before an idle connection is closed.
@@ -95,7 +102,7 @@ options:
   state:
     description:
       - Create or destroy the load balancer.
-    required: true
+    default: present
     choices: [ 'present', 'absent' ]
   tags:
     description:
@@ -112,6 +119,12 @@ options:
     description:
       - The time in seconds to use in conjunction with I(wait).
     version_added: 2.6
+  purge_rules:
+    description:
+      - When set to no, keep the existing load balancer rules in place. Will modify and add, but will not delete.
+    default: yes
+    type: bool
+    version_added: 2.7
 extends_documentation_fragment:
     - aws
     - ec2
@@ -208,17 +221,17 @@ RETURN = '''
 access_logs_s3_bucket:
     description: The name of the S3 bucket for the access logs.
     returned: when state is present
-    type: string
+    type: str
     sample: mys3bucket
 access_logs_s3_enabled:
     description: Indicates whether access logs stored in Amazon S3 are enabled.
     returned: when state is present
-    type: string
+    type: str
     sample: true
 access_logs_s3_prefix:
     description: The prefix for the location in the S3 bucket.
     returned: when state is present
-    type: string
+    type: str
     sample: /my/logs
 availability_zones:
     description: The Availability Zones for the load balancer.
@@ -228,32 +241,32 @@ availability_zones:
 canonical_hosted_zone_id:
     description: The ID of the Amazon Route 53 hosted zone associated with the load balancer.
     returned: when state is present
-    type: string
+    type: str
     sample: ABCDEF12345678
 created_time:
     description: The date and time the load balancer was created.
     returned: when state is present
-    type: string
+    type: str
     sample: "2015-02-12T02:14:02+00:00"
 deletion_protection_enabled:
     description: Indicates whether deletion protection is enabled.
     returned: when state is present
-    type: string
+    type: str
     sample: true
 dns_name:
     description: The public DNS name of the load balancer.
     returned: when state is present
-    type: string
+    type: str
     sample: internal-my-elb-123456789.ap-southeast-2.elb.amazonaws.com
 idle_timeout_timeout_seconds:
     description: The idle timeout value, in seconds.
     returned: when state is present
-    type: string
+    type: str
     sample: 60
 ip_address_type:
     description:  The type of IP addresses used by the subnets for the load balancer.
     returned: when state is present
-    type: string
+    type: str
     sample: ipv4
 listeners:
     description: Information about the listeners.
@@ -263,12 +276,12 @@ listeners:
         listener_arn:
             description: The Amazon Resource Name (ARN) of the listener.
             returned: when state is present
-            type: string
+            type: str
             sample: ""
         load_balancer_arn:
             description: The Amazon Resource Name (ARN) of the load balancer.
             returned: when state is present
-            type: string
+            type: str
             sample: ""
         port:
             description: The port on which the load balancer is listening.
@@ -278,7 +291,7 @@ listeners:
         protocol:
             description: The protocol for connections from clients to the load balancer.
             returned: when state is present
-            type: string
+            type: str
             sample: HTTPS
         certificates:
             description: The SSL server certificate.
@@ -288,42 +301,47 @@ listeners:
                 certificate_arn:
                     description: The Amazon Resource Name (ARN) of the certificate.
                     returned: when state is present
-                    type: string
+                    type: str
                     sample: ""
         ssl_policy:
             description: The security policy that defines which ciphers and protocols are supported.
             returned: when state is present
-            type: string
+            type: str
             sample: ""
         default_actions:
             description: The default actions for the listener.
             returned: when state is present
-            type: string
+            type: str
             contains:
                 type:
                     description: The type of action.
                     returned: when state is present
-                    type: string
+                    type: str
                     sample: ""
                 target_group_arn:
                     description: The Amazon Resource Name (ARN) of the target group.
                     returned: when state is present
-                    type: string
+                    type: str
                     sample: ""
 load_balancer_arn:
     description: The Amazon Resource Name (ARN) of the load balancer.
     returned: when state is present
-    type: string
+    type: str
     sample: arn:aws:elasticloadbalancing:ap-southeast-2:0123456789:loadbalancer/app/my-elb/001122334455
 load_balancer_name:
     description: The name of the load balancer.
     returned: when state is present
-    type: string
+    type: str
     sample: my-elb
+routing_http2_enabled:
+    description: Indicates whether HTTP/2 is enabled.
+    returned: when state is present
+    type: str
+    sample: true
 scheme:
     description: Internet-facing or internal load balancer.
     returned: when state is present
-    type: string
+    type: str
     sample: internal
 security_groups:
     description: The IDs of the security groups for the load balancer.
@@ -345,12 +363,12 @@ tags:
 type:
     description: The type of load balancer.
     returned: when state is present
-    type: string
+    type: str
     sample: application
 vpc_id:
     description: The ID of the VPC for the load balancer.
     returned: when state is present
-    type: string
+    type: str
     sample: vpc-0011223344
 '''
 
@@ -432,10 +450,11 @@ def create_or_update_elb(elb_obj):
             rules_to_add, rules_to_modify, rules_to_delete = rules_obj.compare_rules()
 
             # Delete rules
-            for rule in rules_to_delete:
-                rule_obj = ELBListenerRule(elb_obj.connection, elb_obj.module, {'RuleArn': rule}, rules_obj.listener_arn)
-                rule_obj.delete()
-                elb_obj.changed = True
+            if elb_obj.module.params['purge_rules']:
+                for rule in rules_to_delete:
+                    rule_obj = ELBListenerRule(elb_obj.connection, elb_obj.module, {'RuleArn': rule}, rules_obj.listener_arn)
+                    rule_obj.delete()
+                    elb_obj.changed = True
 
             # Add rules
             for rule in rules_to_add:
@@ -490,6 +509,7 @@ def main():
             access_logs_s3_bucket=dict(type='str'),
             access_logs_s3_prefix=dict(type='str'),
             deletion_protection=dict(type='bool'),
+            http2=dict(type='bool'),
             idle_timeout=dict(type='int'),
             listeners=dict(type='list',
                            elements='dict',
@@ -508,10 +528,11 @@ def main():
             subnets=dict(type='list'),
             security_groups=dict(type='list'),
             scheme=dict(default='internet-facing', choices=['internet-facing', 'internal']),
-            state=dict(choices=['present', 'absent'], type='str'),
+            state=dict(choices=['present', 'absent'], default='present'),
             tags=dict(type='dict'),
             wait_timeout=dict(type='int'),
-            wait=dict(default=False, type='bool')
+            wait=dict(default=False, type='bool'),
+            purge_rules=dict(default=True, type='bool')
         )
     )
 
@@ -519,9 +540,9 @@ def main():
                               required_if=[
                                   ('state', 'present', ['subnets', 'security_groups'])
                               ],
-                              required_together=(
+                              required_together=[
                                   ['access_logs_enabled', 'access_logs_s3_bucket', 'access_logs_s3_prefix']
-                              )
+                              ]
                               )
 
     # Quick check of listeners parameters
@@ -547,6 +568,7 @@ def main():
         create_or_update_elb(elb)
     else:
         delete_elb(elb)
+
 
 if __name__ == '__main__':
     main()

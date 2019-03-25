@@ -20,7 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 
 import json
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.nso import nso_config
 from units.modules.utils import set_module_args, AnsibleFailJson
 from . import nso_module
@@ -49,7 +49,8 @@ class TestNsoConfig(nso_module.TestNsoModule):
         data = nso_module.load_fixture('config_config.json')
         set_module_args({
             'username': 'user', 'password': 'password',
-            'url': 'http://localhost:8080/jsonrpc', 'data': data
+            'url': 'http://localhost:8080/jsonrpc', 'data': data,
+            'validate_certs': False
         })
         self.execute_module(failed=True)
 
@@ -77,7 +78,8 @@ class TestNsoConfig(nso_module.TestNsoModule):
         data = nso_module.load_fixture('config_empty_data.json')
         set_module_args({
             'username': 'user', 'password': 'password',
-            'url': 'http://localhost:8080/jsonrpc', 'data': data
+            'url': 'http://localhost:8080/jsonrpc', 'data': data,
+            'validate_certs': False
         })
         self.execute_module(changed=False, changes=[], diffs=[])
 
@@ -120,7 +122,8 @@ class TestNsoConfig(nso_module.TestNsoModule):
         data = nso_module.load_fixture('config_config.json')
         set_module_args({
             'username': 'user', 'password': 'password',
-            'url': 'http://localhost:8080/jsonrpc', 'data': data
+            'url': 'http://localhost:8080/jsonrpc', 'data': data,
+            'validate_certs': False
         })
         self.execute_module(changed=True, changes=[
             {'path': '/l3vpn:vpn/l3vpn{company}/endpoint{branch-office1}/ce-device', 'type': 'set', 'from': None, 'to': 'ce6'},

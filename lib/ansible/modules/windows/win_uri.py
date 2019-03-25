@@ -22,25 +22,30 @@ options:
   url:
     description:
     - Supports FTP, HTTP or HTTPS URLs in the form of (ftp|http|https)://host.domain:port/path.
+    type: str
     required: yes
   method:
     description:
     - The HTTP Method of the request or response.
-    choices: [ CONNECT, DELETE, GET, HEAD, MERGE, OPTIONS, PATCH, POST, PUT, REFRESH, TRACE ]
+    type: str
     default: GET
   content_type:
     description:
     - Sets the "Content-Type" header.
+    type: str
   body:
     description:
     - The body of the HTTP request/response to the web service.
+    type: raw
   user:
     description:
     - Username to use for authentication.
+    type: str
     version_added: '2.4'
   password:
     description:
     - Password to use for authentication.
+    type: str
     version_added: '2.4'
   force_basic_auth:
     description:
@@ -50,34 +55,27 @@ options:
     - This option forces the sending of the Basic authentication header upon
       the initial request.
     type: bool
-    default: 'no'
+    default: no
     version_added: '2.5'
   dest:
     description:
     - Output the response body to a file.
+    type: path
     version_added: '2.3'
   headers:
     description:
     - Extra headers to set on the request, see the examples for more details on
       how to set this.
-  use_basic_parsing:
-    description:
-    - As of Ansible 2.5, this option is no longer valid and cannot be changed from C(yes), this option will be removed
-      in Ansible 2.7.
-    - Before Ansible 2.5, this module relies upon 'Invoke-WebRequest', which by default uses the Internet Explorer Engine
-      to parse a webpage.
-    - There's an edge-case where if a user hasn't run IE before, this will fail.
-    - The only advantage to using the Internet Explorer praser is that you can traverse the DOM in a powershell script.
-    - That isn't useful for Ansible, so by default we toggle 'UseBasicParsing'. However, you can toggle that off here.
-    type: bool
-    default: 'yes'
+    type: dict
   creates:
     description:
     - A filename, when it already exists, this step will be skipped.
+    type: path
     version_added: '2.4'
   removes:
     description:
     - A filename, when it does not exist, this step will be skipped.
+    type: path
     version_added: '2.4'
   return_content:
     description:
@@ -86,13 +84,14 @@ options:
       "application/json", then the JSON is additionally loaded into a key
       called C(json) in the dictionary results.
     type: bool
-    default: 'no'
+    default: no
     version_added: '2.4'
   status_code:
     description:
     - A valid, numeric, HTTP status code that signifies success of the request.
     - Can also be comma separated list of status codes.
-    default: 200
+    type: list
+    default: [ 200 ]
     version_added: '2.4'
   timeout:
     description:
@@ -102,6 +101,7 @@ options:
       If your request contains a host name that requires resolution, and you set
       C(timeout) to a value greater than zero, but less than 15 seconds, it can
       take 15 seconds or more before your request times out.
+    type: int
     default: 30
     version_added: '2.4'
   follow_redirects:
@@ -111,6 +111,7 @@ options:
      - C(none) will not follow any redirects.
      - C(safe) will follow only "safe" redirects, where "safe" means that the client is only
        doing a C(GET) or C(HEAD) on the URI to which it is being redirected.
+    type: str
     choices: [ all, none, safe ]
     default: safe
     version_added: '2.4'
@@ -121,7 +122,8 @@ options:
     - If C(maximum_redirection) is set to 0 (zero)
       or C(follow_redirects) is set to C(none),
       or set to C(safe) when not doing C(GET) or C(HEAD) it prevents all redirection.
-    default: 5
+    type: int
+    default: 50
     version_added: '2.4'
   validate_certs:
     description:
@@ -129,7 +131,7 @@ options:
       set to C(no) used on personally controlled sites using self-signed
       certificates.
     type: bool
-    default: 'yes'
+    default: yes
     version_added: '2.4'
   client_cert:
     description:
@@ -138,14 +140,17 @@ options:
       certificate file is not password protected.
     - Other authentication types can set I(client_cert_password) when the cert
       is password protected.
+    type: path
     version_added: '2.4'
   client_cert_password:
     description:
     - The password for the client certificate (.pfx) file that is used for a
       secure web request.
+    type: str
     version_added: '2.5'
-notes:
-- For non-Windows targets, use the M(uri) module instead.
+seealso:
+- module: uri
+- module: win_get_url
 author:
 - Corwin Brown (@blakfeld)
 - Dag Wieers (@dagwieers)
@@ -178,10 +183,15 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-url:
-  description: The Target URL
+elapsed:
+  description: The number of seconds that elapsed while performing the download.
   returned: always
-  type: string
+  type: float
+  sample: 23.2
+url:
+  description: The Target URL.
+  returned: always
+  type: str
   sample: https://www.ansible.com
 status_code:
   description: The HTTP Status Code of the response.
@@ -189,14 +199,14 @@ status_code:
   type: int
   sample: 200
 status_description:
-  description: A summery of the status.
+  description: A summary of the status.
   returned: success
-  type: string
+  type: str
   sample: OK
 content:
   description: The raw content of the HTTP response.
   returned: success and return_content is True
-  type: string
+  type: str
   sample: '{"foo": "bar"}'
 content_length:
   description: The byte size of the response.
@@ -204,7 +214,7 @@ content_length:
   type: int
   sample: 54447
 json:
-  description: The json structure returned under content as a dictionary
+  description: The json structure returned under content as a dictionary.
   returned: success and Content-Type is "application/json" or "application/javascript" and return_content is True
   type: dict
   sample: {"this-is-dependent": "on the actual return content"}

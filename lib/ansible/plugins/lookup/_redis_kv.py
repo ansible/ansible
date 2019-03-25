@@ -11,7 +11,7 @@ DOCUMENTATION = """
     short_description: fetch data from Redis
     deprecated:
         why: This lookup uses options intermingled with terms which blurs the interface between settings and data
-        removed_in: '2.9'
+        version: '2.9'
         alternative: new 'redis' lookup
     description:
       - this lookup returns a list of items given to it, if any of the top level items is also a list it will flatten it, but it will not recurse
@@ -88,6 +88,6 @@ class LookupModule(LookupBase):
                 if res is None:
                     res = ""
                 ret.append(res)
-            except:
+            except Exception:
                 ret.append("")  # connection failed or key not found
         return ret

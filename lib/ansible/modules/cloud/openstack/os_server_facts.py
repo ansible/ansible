@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 ---
 module: os_server_facts
 short_description: Retrieve facts about one or more compute instances
-author: Monty
+author: Monty (@emonty)
 version_added: "2.0"
 description:
     - Retrieve facts about server instances from OpenStack.
@@ -24,7 +24,7 @@ notes:
     - This module creates a new top-level C(openstack_servers) fact, which
       contains a list of servers.
 requirements:
-    - "python >= 2.6"
+    - "python >= 2.7"
     - "openstacksdk"
 options:
    server:
@@ -37,17 +37,31 @@ options:
           of additional API calls.
      type: bool
      default: 'no'
+   filters:
+     description:
+        - restrict results to servers matching a dictionary of
+          filters
+     version_added: "2.8"
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
+   all_projects:
+     description:
+       - Whether to list servers from all projects or just the current auth
+         scoped project.
+     type: bool
+     default: 'no'
+     version_added: "2.8"
 extends_documentation_fragment: openstack
 '''
 
 EXAMPLES = '''
-# Gather facts about all servers named <web*>:
+# Gather facts about all servers named <web*> that are in an active state:
 - os_server_facts:
     cloud: rax-dfw
     server: web*
+    filters:
+      vm_state: active
 - debug:
     var: openstack_servers
 '''
@@ -62,15 +76,18 @@ def main():
 
     argument_spec = openstack_full_argument_spec(
         server=dict(required=False),
-        detailed=dict(required=False, type='bool'),
+        detailed=dict(required=False, type='bool', default=False),
+        filters=dict(required=False, type='dict', default=None),
+        all_projects=dict(required=False, type='bool', default=False),
     )
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, **module_kwargs)
 
     sdk, cloud = openstack_cloud_from_module(module)
     try:
-        openstack_servers = cloud.list_servers(
-            detailed=module.params['detailed'])
+        openstack_servers = cloud.search_servers(
+            detailed=module.params['detailed'], filters=module.params['filters'],
+            all_projects=module.params['all_projects'])
 
         if module.params['server']:
             # filter servers by name

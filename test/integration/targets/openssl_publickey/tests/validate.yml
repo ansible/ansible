@@ -1,3 +1,4 @@
+---
 - name: Validate public key (test - privatekey modulus)
   shell: 'openssl rsa -noout -modulus -in {{ output_dir }}/privatekey.pem'
   register: privatekey_modulus
@@ -81,3 +82,27 @@
     that:
       - publickey4_modulus.stdout == privatekey4_modulus.stdout
   when: openssl_version.stdout is version('0.9.8zh', '>=')
+
+- name: Validate public key 5 (test - privatekey's pubkey)
+  command: 'openssl ec -in {{ output_dir }}/privatekey5.pem -pubout'
+  register: privatekey5_pubkey
+
+- name: Validate public key 5 (test - publickey pubkey)
+  # Fancy way of writing "cat {{ output_dir }}/publickey5.pub"
+  command: 'openssl ec -pubin -in {{ output_dir }}/publickey5.pub -pubout'
+  register: publickey5_pubkey
+
+- name: Validate public key 5 (assert)
+  assert:
+    that:
+      - publickey5_pubkey.stdout == privatekey5_pubkey.stdout
+
+- name:
+  assert:
+    that:
+      - passphrase_error_1 is failed
+      - "'assphrase' in passphrase_error_1.msg or 'assword' in passphrase_error_1.msg"
+      - passphrase_error_2 is failed
+      - "'assphrase' in passphrase_error_1.msg or 'assword' in passphrase_error_2.msg"
+      - passphrase_error_3 is failed
+      - "'assphrase' in passphrase_error_1.msg or 'assword' in passphrase_error_3.msg"

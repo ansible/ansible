@@ -21,13 +21,10 @@ __metaclass__ = type
 
 import os
 
-from collections import defaultdict
-
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import MagicMock, mock_open, patch
+from units.compat import unittest
+from units.compat.mock import MagicMock, patch
 from ansible.inventory.manager import InventoryManager
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.six.moves import builtins
 from ansible.playbook.play import Play
 
 
@@ -63,14 +60,27 @@ class TestVariableManager(unittest.TestCase):
         extra_vars = dict(a=1, b=2, c=3)
         mock_inventory = MagicMock()
         v = VariableManager(loader=fake_loader, inventory=mock_inventory)
-        v.extra_vars = extra_vars
 
-        vars = v.get_vars(use_cache=False)
+        # override internal extra_vars loading
+        v._extra_vars = extra_vars
 
+        myvars = v.get_vars(use_cache=False)
         for (key, val) in iteritems(extra_vars):
-            self.assertEqual(vars.get(key), val)
+            self.assertEqual(myvars.get(key), val)
 
-        self.assertIsNot(v.extra_vars, extra_vars)
+    def test_variable_manager_options_vars(self):
+        fake_loader = DictDataLoader({})
+
+        options_vars = dict(a=1, b=2, c=3)
+        mock_inventory = MagicMock()
+        v = VariableManager(loader=fake_loader, inventory=mock_inventory)
+
+        # override internal options_vars loading
+        v._extra_vars = options_vars
+
+        myvars = v.get_vars(use_cache=False)
+        for (key, val) in iteritems(options_vars):
+            self.assertEqual(myvars.get(key), val)
 
     def test_variable_manager_play_vars(self):
         fake_loader = DictDataLoader({})
@@ -187,7 +197,6 @@ class TestVariableManager(unittest.TestCase):
 
         inv1 = InventoryManager(loader=fake_loader, sources=['/etc/ansible/inventory1'])
         v = VariableManager(inventory=mock_inventory, loader=fake_loader)
-        v._fact_cache = defaultdict(dict)
 
         play1 = Play.load(dict(
             hosts=['all'],
@@ -285,7 +294,6 @@ class TestVariableManager(unittest.TestCase):
         })
 
         v = VariableManager(loader=fake_loader, inventory=mock_inventory)
-        v._fact_cache = defaultdict(dict)
 
         play1 = Play.load(dict(
             hosts=['all'],

@@ -27,7 +27,7 @@ options:
       - Filter facts
     choices: [ status, result ]
 notes:
-  - See http://cloudinit.readthedocs.io/ for more information abount cloud-init.
+  - See http://cloudinit.readthedocs.io/ for more information about cloud-init.
 '''
 
 EXAMPLES = '''

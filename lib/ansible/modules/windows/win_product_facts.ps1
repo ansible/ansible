@@ -1,22 +1,16 @@
 #!powershell
-# -*- coding: utf-8 -*-
 
-# Copyright: (c) 2017, Dag Wieers (dagwieers) <dag@wieers.com>
+# Copyright: (c) 2017, Dag Wieers (@dagwieers) <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-#Requires -Module Ansible.ModuleUtils.Legacy
+#AnsibleRequires -CSharpUtil Ansible.Basic
 
-$ErrorActionPreference = "Stop"
-
-# This module does not use any module parameters, this avoids pslint complaining
-#$params = Parse-Args -arguments $args -supports_check_mode $true
-
-$result = @{
-    changed = $false
-    ansible_facts = @{
-        ansible_os_product_id = (Get-CimInstance Win32_OperatingSystem).SerialNumber
-    }
+# This modules does not accept any options
+$spec = @{
+    supports_check_mode = $true
 }
+
+$module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
 
 # First try to find the product key from ACPI
 try {
@@ -63,6 +57,29 @@ if (-not $product_key) {
     }
 }
 
-$result.ansible_facts.ansible_os_product_key = $product_key
+# Retrieve license information
+$license_info = Get-CimInstance SoftwareLicensingProduct | Where-Object PartialProductKey
 
-Exit-Json -obj $result
+$winlicense_status = switch ($license_info.LicenseStatus) {
+    0 { "Unlicensed" }
+    1 { "Licensed" }
+    2 { "OOBGrace" }
+    3 { "OOTGrace" }
+    4 { "NonGenuineGrace" }
+    5 { "Notification" }
+    6 { "ExtendedGrace" }
+    default { $null }
+}
+
+$winlicense_edition = $license_info.Name
+$winlicense_channel = $license_info.ProductKeyChannel
+
+$module.Result.ansible_facts = @{
+    ansible_os_product_id = (Get-CimInstance Win32_OperatingSystem).SerialNumber
+    ansible_os_product_key = $product_key
+    ansible_os_license_edition = $winlicense_edition
+    ansible_os_license_channel = $winlicense_channel 
+    ansible_os_license_status = $winlicense_status 
+}
+
+$module.ExitJson()

@@ -11,7 +11,7 @@
 Ansible supports a few ways of providing configuration variables, mainly through environment variables, command line switches and an ini file named ``ansible.cfg``.
 
 Starting at Ansible 2.4 the ``ansible-config`` utility allows users to see all the configuration settings available, their defaults, how to set them and
-where their current value comes from. See :doc:ansible-config for more information.
+where their current value comes from. See :ref:`ansible-config` for more information.
 
 .. _ansible_configuration_settings_locations:
 
@@ -38,6 +38,52 @@ Ansible will process the above list and use the first file found, all others are
 
         # some basic default values...
         inventory = /etc/ansible/hosts  ; This points to the file that lists your hosts
+
+
+.. _cfg_in_world_writable_dir:
+
+Avoiding security risks with ``ansible.cfg`` in the current directory
+---------------------------------------------------------------------
+
+
+If Ansible were to load ``ansible.cfg`` from a world-writable current working
+directory, it would create a serious security risk. Another user could place
+their own config file there, designed to make Ansible run malicious code both
+locally and remotely, possibly with elevated privileges. For this reason,
+Ansible will not automatically load a config file from the current working
+directory if the directory is world-writable.
+
+If you depend on using Ansible with a config file in the current working
+directory, the best way to avoid this problem is to restrict access to your
+Ansible directories to particular user(s) and/or group(s). If your Ansible
+directories live on a filesystem which has to emulate Unix permissions, like
+Vagrant or Windows Subsystem for Linux (WSL), you may, at first, not know how
+you can fix this as ``chmod``, ``chown``, and ``chgrp`` might not work there.
+In most of those cases, the correct fix is to modify the mount options of the
+filesystem so the files and directories are readable and writable by the users
+and groups running Ansible but closed to others.  For more details on the
+correct settings, see:
+
+* for Vagrant, Jeremy Kendall's `blog post <http://jeremykendall.net/2013/08/09/vagrant-synced-folders-permissions/>`_ covers synced folder permissions.
+* for WSL, the `WSL docs <https://docs.microsoft.com/en-us/windows/wsl/wsl-config#set-wsl-launch-settings>`_
+  and this `Microsoft blog post <https://blogs.msdn.microsoft.com/commandline/2018/01/12/chmod-chown-wsl-improvements/>`_ cover mount options.
+
+If you absolutely depend on storing your Ansible config in a world-writable current
+working directory, you can explicitly specify the config file via the
+:envvar:`ANSIBLE_CONFIG` environment variable. Please take
+appropriate steps to mitigate the security concerns above before doing so.
+
+
+Relative paths for configuration
+--------------------------------
+
+You can specify a relative path for many configuration options. In most of
+those cases the path used will be relative to the ``ansible.cfg`` file used
+for the current execution. If you need a path relative to your current working
+directory (CWD) you can use the ``{%raw%}{{CWD}}{%endraw%}`` macro to specify
+it. We do not recommend this approach, as using your CWD as the root of
+relative paths can be a security risk. For example:
+``cd /tmp; secureinfo=./newrootpassword ansible-playbook ~/safestuff/change_root_pwd.yml``.
 
 
 Common Options

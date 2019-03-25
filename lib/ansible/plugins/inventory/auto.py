@@ -7,15 +7,14 @@ __metaclass__ = type
 DOCUMENTATION = '''
     name: auto
     plugin_type: inventory
-    authors:
+    author:
       - Matt Davis <@nitzmahone>
     short_description: Loads and executes an inventory plugin specified in a YAML config
     description:
-        - By whitelisting C(auto) as the final inventory plugin, any YAML inventory config file with a
+        - By whitelisting C(auto) inventory plugin, any YAML inventory config file with a
           C(plugin) key at its root will automatically cause the named plugin to be loaded and executed with that
           config. This effectively provides automatic whitelisting of all installed/accessible inventory plugins.
         - To disable this behavior, remove C(auto) from the C(INVENTORY_ENABLED) config element.
-    options:
 '''
 
 EXAMPLES = '''
@@ -40,7 +39,10 @@ class InventoryModule(BaseInventoryPlugin):
     def parse(self, inventory, loader, path, cache=True):
         config_data = loader.load_from_file(path, cache=False)
 
-        plugin_name = config_data.get('plugin')
+        try:
+            plugin_name = config_data.get('plugin', None)
+        except AttributeError:
+            plugin_name = None
 
         if not plugin_name:
             raise AnsibleParserError("no root 'plugin' key found, '{0}' is not a valid YAML inventory plugin config file".format(path))
@@ -54,3 +56,5 @@ class InventoryModule(BaseInventoryPlugin):
             raise AnsibleParserError("inventory config '{0}' could not be verified by plugin '{1}'".format(path, plugin_name))
 
         plugin.parse(inventory, loader, path, cache=cache)
+        if getattr(plugin, '_cache', None):
+            plugin.update_cache_if_changed()

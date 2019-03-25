@@ -8,11 +8,6 @@
     port: 5000
     state: started
 
-- name: store the vcenter container ip
-  set_fact:
-    vcsim: "{{ lookup('env', 'vcenter_host') }}"
-- debug: var=vcsim
-
 - name: kill vcsim
   uri:
     url: http://{{ vcsim }}:5000/killall
@@ -56,7 +51,8 @@
 
 - debug: var=poweroff_d1_c1_f1
 
-- name: make sure no changes were made
+# vcsim (v0.18.0) VMs are spawned PoweredOn
+- name: make sure changes were made
   assert:
     that:
-        - "poweroff_d1_c1_f1.results|map(attribute='changed')|unique|list == [False]"
+        - "poweroff_d1_c1_f1.results|map(attribute='changed')|unique|list == [True]"

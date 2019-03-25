@@ -48,11 +48,25 @@ options:
     description:
       - Native VLAN to be configured in trunk port. The value of C(native_vlan)
         should be vlan id.
+  enhanced_layer:
+    description:
+      - True if your device has Enhanced Layer 2 Software (ELS).
+    default: True
+    type: bool
+    version_added: "2.7"
   unit:
     description:
       - Logical interface number. Value of C(unit) should be of type
         integer.
     default: 0
+  filter_input:
+    description:
+      - The name of input filter of ethernet-switching.
+    version_added: "2.8"
+  filter_output:
+    description:
+      - The name of output filter of ethernet-switching.
+    version_added: "2.8"
   state:
     description:
       - State of the Layer-2 Interface configuration.
@@ -118,7 +132,7 @@ RETURN = """
 diff:
   description: Configuration difference before and after applying change.
   returned: when configuration is changed and diff option is enabled.
-  type: string
+  type: str
   sample: >
         [edit interfaces]
         +   ge-0/0/1 {
@@ -139,14 +153,9 @@ from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import remove_default_spec
-from ansible.module_utils.network.junos.junos import junos_argument_spec
+from ansible.module_utils.network.junos.junos import junos_argument_spec, tostring
 from ansible.module_utils.network.junos.junos import load_config, map_params_to_obj, map_obj_to_ele
 from ansible.module_utils.network.junos.junos import commit_configuration, discard_changes, locked_config, to_param_list
-
-try:
-    from lxml.etree import tostring
-except ImportError:
-    from xml.etree.ElementTree import tostring
 
 USE_PERSISTENT_CONNECTION = True
 
@@ -176,7 +185,10 @@ def main():
         native_vlan=dict(type='int'),
         trunk_vlans=dict(type='list'),
         unit=dict(default=0, type='int'),
+        filter_input=dict(),
+        filter_output=dict(),
         description=dict(),
+        enhanced_layer=dict(default=True, type='bool'),
         state=dict(default='present', choices=['present', 'absent']),
         active=dict(default=True, type='bool')
     )
@@ -223,6 +235,8 @@ def main():
         ('mode', {'xpath': 'interface-mode', 'top': 'unit/family/ethernet-switching'}),
         ('access_vlan', {'xpath': 'members', 'top': 'unit/family/ethernet-switching/vlan'}),
         ('trunk_vlans', {'xpath': 'members', 'top': 'unit/family/ethernet-switching/vlan'}),
+        ('filter_input', {'xpath': 'input', 'top': 'unit/family/ethernet-switching/filter'}),
+        ('filter_output', {'xpath': 'output', 'top': 'unit/family/ethernet-switching/filter'}),
         ('native_vlan', {'xpath': 'native-vlan-id'}),
         ('description', 'description')
     ])
@@ -239,6 +253,9 @@ def main():
         item = param.copy()
 
         validate_param_values(module, param_to_xpath_map, param=item)
+
+        param_to_xpath_map['mode']['xpath'] = \
+            'interface-mode' if param['enhanced_layer'] else 'port-mode'
 
         want = map_params_to_obj(module, param_to_xpath_map, param=item)
         requests.append(map_obj_to_ele(module, want, top, param=item))

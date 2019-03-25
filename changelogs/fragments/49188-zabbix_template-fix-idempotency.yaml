@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - zabbix_template - Fixed idempotency of the module when using ``link_templates``, ``macros`` or ``template_json`` options (https://github.com/ansible/ansible/issues/48337)

@@ -32,7 +32,7 @@ description:
       Keycloak API and its documentation at U(http://www.keycloak.org/docs-api/3.3/rest-api/).
       Aliases are provided so camelCased versions can be used as well.
 
-    - The Keycloak API does not always enforce for only sensible settings to be used -- you can set
+    - The Keycloak API does not always sanity check inputs e.g. you can set
       SAML-specific settings on an OpenID Connect client for instance and vice versa. Be careful.
       If you do not specify a setting, usually a sensible default is chosen.
 
@@ -44,6 +44,10 @@ options:
             - On C(absent), the client will be removed if it exists
         choices: ['present', 'absent']
         default: 'present'
+
+    realm:
+        description:
+            - The realm to create the client in.
 
     client_id:
         description:
@@ -90,6 +94,7 @@ options:
     enabled:
         description:
             - Is this client enabled or not?
+        type: bool
 
     client_authenticator_type:
         description:
@@ -153,6 +158,7 @@ options:
               This is 'bearerOnly' in the Keycloak REST API.
         aliases:
             - bearerOnly
+        type: bool
 
     consent_required:
         description:
@@ -160,6 +166,7 @@ options:
               This is 'consentRequired' in the Keycloak REST API.
         aliases:
             - consentRequired
+        type: bool
 
     standard_flow_enabled:
         description:
@@ -167,13 +174,15 @@ options:
               This is 'standardFlowEnabled' in the Keycloak REST API.
         aliases:
             - standardFlowEnabled
+        type: bool
 
     implicit_flow_enabled:
         description:
             - Enable implicit flow for this client or not (OpenID connect).
-              This is 'implictFlowEnabled' in the Keycloak REST API.
+              This is 'implicitFlowEnabled' in the Keycloak REST API.
         aliases:
             - implicitFlowEnabled
+        type: bool
 
     direct_access_grants_enabled:
         description:
@@ -181,6 +190,7 @@ options:
               This is 'directAccessGrantsEnabled' in the Keycloak REST API.
         aliases:
             - directAccessGrantsEnabled
+        type: bool
 
     service_accounts_enabled:
         description:
@@ -188,6 +198,7 @@ options:
               This is 'serviceAccountsEnabled' in the Keycloak REST API.
         aliases:
             - serviceAccountsEnabled
+        type: bool
 
     authorization_services_enabled:
         description:
@@ -195,6 +206,7 @@ options:
               This is 'authorizationServicesEnabled' in the Keycloak REST API.
         aliases:
             - authorizationServicesEnabled
+        type: bool
 
     public_client:
         description:
@@ -202,6 +214,7 @@ options:
               This is 'publicClient' in the Keycloak REST API.
         aliases:
             - publicClient
+        type: bool
 
     frontchannel_logout:
         description:
@@ -209,6 +222,7 @@ options:
               This is 'frontchannelLogout' in the Keycloak REST API.
         aliases:
             - frontchannelLogout
+        type: bool
 
     protocol:
         description:
@@ -221,6 +235,7 @@ options:
               This is 'fullScopeAllowed' in the Keycloak REST API.
         aliases:
             - fullScopeAllowed
+        type: bool
 
     node_re_registration_timeout:
         description:
@@ -251,6 +266,7 @@ options:
               This is 'useTemplateConfig' in the Keycloak REST API.
         aliases:
             - useTemplateConfig
+        type: bool
 
     use_template_scope:
         description:
@@ -258,6 +274,7 @@ options:
               This is 'useTemplateScope' in the Keycloak REST API.
         aliases:
             - useTemplateScope
+        type: bool
 
     use_template_mappers:
         description:
@@ -265,6 +282,7 @@ options:
               This is 'useTemplateMappers' in the Keycloak REST API.
         aliases:
             - useTemplateMappers
+        type: bool
 
     surrogate_auth_required:
         description:
@@ -272,6 +290,7 @@ options:
               This is 'surrogateAuthRequired' in the Keycloak REST API.
         aliases:
             - surrogateAuthRequired
+        type: bool
 
     authorization_settings:
         description:
@@ -577,7 +596,7 @@ RETURN = '''
 msg:
   description: Message as to what action was taken
   returned: always
-  type: string
+  type: str
   sample: "Client testclient has been updated"
 
 proposed:
@@ -722,13 +741,20 @@ def main():
     changeset = dict()
 
     for client_param in client_params:
-        # lists in the Keycloak API are sorted
         new_param_value = module.params.get(client_param)
+
+        # some lists in the Keycloak API are sorted, some are not.
         if isinstance(new_param_value, list):
-            try:
-                new_param_value = sorted(new_param_value)
-            except TypeError:
-                pass
+            if client_param in ['attributes']:
+                try:
+                    new_param_value = sorted(new_param_value)
+                except TypeError:
+                    pass
+        # Unfortunately, the ansible argument spec checker introduces variables with null values when
+        # they are not specified
+        if client_param == 'protocol_mappers':
+            new_param_value = [dict((k, v) for k, v in x.items() if x[k] is not None) for x in new_param_value]
+
         changeset[camel(client_param)] = new_param_value
 
     # Whether creating or updating a client, take the before-state and merge the changeset into it
@@ -774,6 +800,7 @@ def main():
                 if module._diff:
                     result['diff'] = dict(before=sanitize_cr(before_client),
                                           after=sanitize_cr(updated_client))
+                result['changed'] = (before_client != updated_client)
 
                 module.exit_json(**result)
 
@@ -806,6 +833,7 @@ def main():
             module.exit_json(**result)
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

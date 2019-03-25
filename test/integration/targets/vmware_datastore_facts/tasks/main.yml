@@ -3,13 +3,6 @@
 # Copyright (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- name: store the vcenter container ip
-  set_fact:
-    vcsim: "{{ lookup('env', 'vcenter_host') }}"
-
-- debug:
-    var: vcsim
-
 - name: Wait for Flask controller to come up online
   wait_for:
     host: "{{ vcsim }}"
@@ -38,7 +31,7 @@
 
 - set_fact:
     cl1: "{{ clusters['json'][0] }}"
-    
+
 - name: get a list of Datacenters from vcsim
   uri:
     url: http://{{ vcsim }}:5000/govc_find?filter=DC
@@ -54,7 +47,7 @@
 
 - set_fact:
     ds1: "{{ datastores['json'][0] }}"
-  
+
 # Testcase 0001: Get a full list of datastores in a datacenter
 - name: get list of facts about datastores
   vmware_datastore_facts:
@@ -109,3 +102,41 @@
     that:
       - "datastore_facts_0003['datastores'][0]['name'] == ds1 | basename"
       - "datastore_facts_0003['datastores'][0]['capacity'] is defined"
+
+- name: get list of extended facts about one datastore
+  vmware_datastore_facts:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    datacenter: "{{ dc1 | basename }}"
+    name: "{{ ds1 | basename }}"
+    gather_nfs_mount_info: True
+    gather_vmfs_mount_info: True
+  register: datastore_facts_0004
+
+- debug:
+    msg: "{{ datastore_facts_0004 }}"
+
+- assert:
+    that:
+      - "datastore_facts_0004['datastores'][0]['name'] == ds1 | basename"
+      - "datastore_facts_0004['datastores'][0]['capacity'] is defined"
+
+- name: get list of facts about one datastore in check mode
+  vmware_datastore_facts:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    datacenter: "{{ dc1 | basename }}"
+    name: "{{ ds1 | basename }}"
+  register: datastore_facts_0005
+
+- debug:
+    msg: "{{ datastore_facts_0005 }}"
+
+- assert:
+    that:
+      - "datastore_facts_0005['datastores'][0]['name'] == ds1 | basename"
+      - "datastore_facts_0005['datastores'][0]['capacity'] is defined"

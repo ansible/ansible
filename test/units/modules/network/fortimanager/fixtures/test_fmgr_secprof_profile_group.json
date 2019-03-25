@@ -1,0 +1,68 @@
+{
+    "fmgr_firewall_profile_group_modify": [
+        {
+            "paramgram_used": {
+                "ssl-ssh-profile": null,
+                "waf-profile": null,
+                "adom": "root",
+                "webfilter-profile": null,
+                "profile-protocol-options": null,
+                "application-list": null,
+                "icap-profile": null,
+                "voip-profile": null,
+                "ips-sensor": null,
+                "dnsfilter-profile": null,
+                "av-profile": null,
+                "spamfilter-profile": null,
+                "dlp-sensor": null,
+                "mode": "delete",
+                "ssh-filter-profile": null,
+                "mms-profile": null,
+                "name": "Ansible_TEST_Profile_Group"
+            },
+            "datagram_sent": {},
+            "raw_response": {
+                "status": {
+                    "message": "Object does not exist",
+                    "code": -3
+                },
+                "url": "/pm/config/adom/root/obj/firewall/profile-group/Ansible_TEST_Profile_Group"
+            },
+            "post_method": "delete"
+        },
+        {
+            "raw_response": {
+                "status": {
+                    "message": "datasrc invalid. object: firewall profile-group av-profile Ansible_TEST_Profile_Group. detail: Ansible_AV_Profile. solution: data not exist",
+                    "code": -10131
+                },
+                "url": "/pm/config/adom/root/obj/firewall/profile-group"
+            },
+            "datagram_sent": {
+                "av-profile": "Ansible_AV_Profile",
+                "profile-protocol-options": "default",
+                "name": "Ansible_TEST_Profile_Group"
+            },
+            "paramgram_used": {
+                "ssl-ssh-profile": null,
+                "application-list": null,
+                "waf-profile": null,
+                "adom": "root",
+                "webfilter-profile": null,
+                "ips-sensor": null,
+                "spamfilter-profile": null,
+                "icap-profile": null,
+                "dnsfilter-profile": null,
+                "name": "Ansible_TEST_Profile_Group",
+                "voip-profile": null,
+                "av-profile": "Ansible_AV_Profile",
+                "mode": "set",
+                "dlp-sensor": null,
+                "mms-profile": null,
+                "ssh-filter-profile": null,
+                "profile-protocol-options": "default"
+            },
+            "post_method": "set"
+        }
+    ]
+}

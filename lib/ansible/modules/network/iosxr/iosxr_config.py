@@ -114,10 +114,10 @@ options:
     description:
       - This argument will cause the module to create a full backup of
         the current C(running-config) from the remote device before any
-        changes are made.  The backup file is written to the C(backup)
-        folder in the playbook root directory or role root directory, if
-        playbook is part of an ansible role. If the directory does not exist,
-        it is created.
+        changes are made. If the C(backup_options) value is not given,
+        the backup file is written to the C(backup) folder in the playbook
+        root directory or role root directory, if playbook is part of an
+        ansible role. If the directory does not exist, it is created.
     type: bool
     default: 'no'
     version_added: "2.2"
@@ -135,6 +135,36 @@ options:
     type: bool
     default: 'no'
     version_added: "2.4"
+  label:
+    description:
+      - Allows a commit label to be specified to be included when the
+        configuration is committed. A valid label must begin with an alphabet
+        and not exceed 30 characters, only alphabets, digits, hyphens and
+        underscores are allowed. If the configuration is not changed or
+        committed, this argument is ignored.
+    version_added: "2.7"
+  backup_options:
+    description:
+      - This is a dict object containing configurable options related to backup file path.
+        The value of this option is read only when C(backup) is set to I(yes), if C(backup) is set
+        to I(no) this option will be silently ignored.
+    suboptions:
+      filename:
+        description:
+          - The filename to be used to store the backup configuration. If the the filename
+            is not given it will be generated based on the hostname, current time and date
+            in format defined by <hostname>_config.<current-date>@<current-time>
+      dir_path:
+        description:
+          - This option provides the path ending with directory name in which the backup
+            configuration file will be stored. If the directory does not exist it will be first
+            created and the filename is either the value of C(filename) or default filename
+            as described in C(filename) options description. If the path value is not given
+            in that case a I(backup) directory will be created in the current working directory
+            and backup configuration will be copied in C(filename) within I(backup) directory.
+        type: path
+    type: dict
+    version_added: "2.8"
 """
 
 EXAMPLES = """
@@ -162,6 +192,14 @@ EXAMPLES = """
       - shutdown
     # parents: int g0/0/0/1
     parents: interface GigabitEthernet0/0/0/1
+
+- name: configurable backup path
+  iosxr_config:
+    src: config.cfg
+    backup: yes
+    backup_options:
+      filename: backup.cfg
+      dir_path: /home/user
 """
 
 RETURN = """
@@ -173,21 +211,39 @@ commands:
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
-  type: string
-  sample: /playbooks/ansible/backup/iosxr01.2016-07-16@22:28:34
+  type: str
+  sample: /playbooks/ansible/backup/iosxr01_config.2016-07-16@22:28:34
+filename:
+  description: The name of the backup file
+  returned: when backup is yes and filename is not specified in backup options
+  type: str
+  sample: iosxr01_config.2016-07-16@22:28:34
+shortname:
+  description: The full path to the backup file excluding the timestamp
+  returned: when backup is yes and filename is not specified in backup options
+  type: str
+  sample: /playbooks/ansible/backup/iosxr01_config
+date:
+  description: The date extracted from the backup file name
+  returned: when backup is yes
+  type: str
+  sample: "2016-07-16"
+time:
+  description: The time extracted from the backup file name
+  returned: when backup is yes
+  type: str
+  sample: "22:28:34"
 """
 import re
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.iosxr.iosxr import load_config, get_config
+from ansible.module_utils.connection import ConnectionError
+from ansible.module_utils.network.iosxr.iosxr import load_config, get_config, get_connection
 from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, copy_file
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 
 DEFAULT_COMMIT_COMMENT = 'configured by iosxr_config'
-
-CONFIG_MISPLACED_CHILDREN = [
-    re.compile(r'end-\s*(.+)$')
-]
 
 
 def copy_file_to_node(module):
@@ -208,6 +264,18 @@ def check_args(module, warnings):
     if module.params['comment']:
         if len(module.params['comment']) > 60:
             module.fail_json(msg='comment argument cannot be more than 60 characters')
+    if module.params['label']:
+        label = module.params['label']
+        if len(label) > 30:
+            module.fail_json(msg='label argument cannot be more than 30 characters')
+        if not label[0].isalpha():
+            module.fail_json(msg='label argument must begin with an alphabet')
+        valid_chars = re.match(r'[\w-]*$', label)
+        if not valid_chars:
+            module.fail_json(
+                msg='label argument must only contain alphabets,' +
+                'digits, underscores or hyphens'
+            )
     if module.params['force']:
         warnings.append('The force argument is deprecated, please use '
                         'match=none instead.  This argument will be '
@@ -218,40 +286,19 @@ def get_running_config(module):
     contents = module.params['config']
     if not contents:
         contents = get_config(module)
-    return NetworkConfig(indent=1, contents=contents)
+    return contents
 
 
 def get_candidate(module):
-    candidate = NetworkConfig(indent=1)
+    candidate = ''
     if module.params['src']:
-        candidate.load(module.params['src'])
+        candidate = module.params['src']
     elif module.params['lines']:
+        candidate_obj = NetworkConfig(indent=1)
         parents = module.params['parents'] or list()
-        candidate.add(module.params['lines'], parents=parents)
+        candidate_obj.add(module.params['lines'], parents=parents)
+        candidate = dumps(candidate_obj, 'raw')
     return candidate
-
-
-def sanitize_candidate_config(config):
-    last_parents = None
-    for regex in CONFIG_MISPLACED_CHILDREN:
-        for index, line in enumerate(config):
-            if line._parents:
-                last_parents = line._parents
-            m = regex.search(line.text)
-            if m and m.group(0):
-                config[index]._parents = last_parents
-
-
-def sanitize_running_config(config):
-    last_parents = None
-    for regex in CONFIG_MISPLACED_CHILDREN:
-        for index, line in enumerate(config):
-            if line._parents:
-                last_parents = line._parents
-            m = regex.search(line.text)
-            if m and m.group(0):
-                config[index].text = ' ' + m.group(0)
-                config[index]._parents = last_parents
 
 
 def run(module, result):
@@ -262,34 +309,34 @@ def run(module, result):
     comment = module.params['comment']
     admin = module.params['admin']
     check_mode = module.check_mode
+    label = module.params['label']
 
     candidate_config = get_candidate(module)
     running_config = get_running_config(module)
 
-    sanitize_candidate_config(candidate_config.items)
-    sanitize_running_config(running_config.items)
-
     commands = None
-    if match != 'none' and replace != 'config':
-        commands = candidate_config.difference(running_config, path=path, match=match, replace=replace)
-    elif replace_config:
-        can_config = candidate_config.difference(running_config, path=path, match=match, replace=replace)
-        candidate = dumps(can_config, 'commands').split('\n')
-        run_config = running_config.difference(candidate_config, path=path, match=match, replace=replace)
-        running = dumps(run_config, 'commands').split('\n')
+    replace_file_path = None
+    connection = get_connection(module)
+    try:
+        response = connection.get_diff(candidate=candidate_config, running=running_config, diff_match=match, path=path, diff_replace=replace)
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
 
-        if len(candidate) > 1 or len(running) > 1:
+    config_diff = response.get('config_diff')
+
+    if replace_config:
+        running_base_diff_resp = connection.get_diff(candidate=running_config, running=candidate_config, diff_match=match, path=path, diff_replace=replace)
+        if config_diff or running_base_diff_resp['config_diff']:
             ret = copy_file_to_node(module)
             if not ret:
                 module.fail_json(msg='Copy of config file to the node failed')
 
             commands = ['load harddisk:/ansible_config.txt']
-    else:
-        commands = candidate_config.items
+            replace_file_path = 'harddisk:/ansible_config.txt'
 
-    if commands:
+    if config_diff or commands:
         if not replace_config:
-            commands = dumps(commands, 'commands').split('\n')
+            commands = config_diff.split('\n')
 
         if any((module.params['lines'], module.params['src'])):
             if module.params['before']:
@@ -301,7 +348,11 @@ def run(module, result):
             result['commands'] = commands
 
         commit = not check_mode
-        diff = load_config(module, commands, commit=commit, replace=replace_config, comment=comment, admin=admin)
+        diff = load_config(
+            module, commands, commit=commit,
+            replace=replace_file_path, comment=comment, admin=admin,
+            label=label
+        )
         if diff:
             result['diff'] = dict(prepared=diff)
 
@@ -311,6 +362,10 @@ def run(module, result):
 def main():
     """main entry point for module execution
     """
+    backup_spec = dict(
+        filename=dict(),
+        dir_path=dict(type='path')
+    )
     argument_spec = dict(
         src=dict(type='path'),
 
@@ -329,8 +384,10 @@ def main():
 
         config=dict(),
         backup=dict(type='bool', default=False),
+        backup_options=dict(type='dict', options=backup_spec),
         comment=dict(default=DEFAULT_COMMIT_COMMENT),
-        admin=dict(type='bool', default=False)
+        admin=dict(type='bool', default=False),
+        label=dict()
     )
 
     argument_spec.update(iosxr_argument_spec)
@@ -359,7 +416,8 @@ def main():
     if module.params['backup']:
         result['__backup__'] = get_config(module)
 
-    run(module, result)
+    if any((module.params['src'], module.params['lines'])):
+        run(module, result)
 
     module.exit_json(**result)
 

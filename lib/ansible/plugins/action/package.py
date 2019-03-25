@@ -19,12 +19,9 @@ __metaclass__ = type
 
 from ansible.errors import AnsibleAction, AnsibleActionFail
 from ansible.plugins.action import ActionBase
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class ActionModule(ActionBase):

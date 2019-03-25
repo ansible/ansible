@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -22,43 +22,56 @@ options:
   name:
     description:
       - Monitor name.
+    type: str
     required: True
   parent:
     description:
       - The parent template of this monitor template. Once this value has
         been set, it cannot be changed. By default, this value is the C(http)
         parent on the C(Common) partition.
-    default: "/Common/http"
+    type: str
+    default: /Common/http
+  description:
+    description:
+      - The description of the monitor.
+    type: str
+    version_added: 2.7
   send:
     description:
       - The send string for the monitor call. When creating a new monitor, if
         this value is not provided, the default C(GET /\r\n) will be used.
+    type: str
   receive:
     description:
       - The receive string for the monitor call.
+    type: str
   receive_disable:
     description:
       - This setting works like C(receive), except that the system marks the node
         or pool member disabled when its response matches the C(receive_disable)
         string but not C(receive). To use this setting, you must specify both
         C(receive_disable) and C(receive).
+    type: str
   ip:
     description:
       - IP address part of the IP/port definition. If this parameter is not
         provided when creating a new monitor, then the default value will be
         '*'.
+    type: str
   port:
     description:
       - Port address part of the IP/port definition. If this parameter is not
         provided when creating a new monitor, then the default value will be
         '*'. Note that if specifying an IP address, a value between 1 and 65535
         must be specified.
+    type: str
   interval:
     description:
       - The interval specifying how frequently the monitor instance of this
         template will run. If this parameter is not provided when creating
         a new monitor, then the default value will be 5. This value B(must)
         be less than the C(timeout) value.
+    type: int
   timeout:
     description:
       - The number of seconds in which the node or service must respond to
@@ -68,6 +81,7 @@ options:
         number to any number you want, however, it should be 3 times the
         interval number of seconds plus 1 second. If this parameter is not
         provided when creating a new monitor, then the default value will be 16.
+    type: int
   time_until_up:
     description:
       - Specifies the amount of time in seconds after the first successful
@@ -75,31 +89,48 @@ options:
         node to be marked up immediately after a valid response is received
         from the node. If this parameter is not provided when creating
         a new monitor, then the default value will be 0.
+    type: int
   target_username:
     description:
       - Specifies the user name, if the monitored target requires authentication.
+    type: str
   target_password:
     description:
       - Specifies the password, if the monitored target requires authentication.
+    type: str
+  reverse:
+    description:
+      - Specifies whether the monitor operates in reverse mode.
+      - When the monitor is in reverse mode, a successful receive string match
+        marks the monitored object down instead of up. You can use the
+        this mode only if you configure the C(receive) option.
+      - This parameter is not compatible with the C(time_until_up) parameter. If
+        C(time_until_up) is specified, it must be C(0). Or, if it already exists, it
+        must be C(0).
+    type: bool
+    version_added: 2.8
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
     version_added: 2.5
   state:
     description:
       - When C(present), ensures that the monitor exists.
       - When C(absent), ensures the monitor is removed.
-    default: present
+    type: str
     choices:
       - present
       - absent
+    default: present
     version_added: 2.5
 notes:
   - Requires BIG-IP software version >= 12
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
@@ -107,30 +138,33 @@ EXAMPLES = r'''
   bigip_monitor_http:
     state: present
     ip: 10.10.10.10
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: my_http_monitor
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Remove HTTP Monitor
   bigip_monitor_http:
     state: absent
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: my_http_monitor
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Include a username and password in the HTTP monitor
   bigip_monitor_http:
     state: absent
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: my_http_monitor
     target_username: monitor_user
     target_password: monitor_pass
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 '''
 
@@ -138,12 +172,17 @@ RETURN = r'''
 parent:
   description: New parent template of the monitor.
   returned: changed
-  type: string
+  type: str
   sample: http
+description:
+  description: The description of the monitor.
+  returned: changed
+  type: str
+  sample: Important_Monitor
 ip:
   description: The new IP of IP/port definition.
   returned: changed
-  type: string
+  type: str
   sample: 10.12.13.14
 interval:
   description: The new interval in which to run the monitor check.
@@ -160,41 +199,36 @@ time_until_up:
   returned: changed
   type: int
   sample: 2
+reverse:
+  description: Whether the monitor operates in reverse mode.
+  returned: changed
+  type: bool
+  sample: yes
 '''
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
 
 try:
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from library.module_utils.network.f5.common import transform_name
+    from library.module_utils.network.f5.common import flatten_boolean
+    from library.module_utils.network.f5.ipaddress import is_valid_ip
+    from library.module_utils.network.f5.compare import cmp_str_with_none
 except ImportError:
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
-
-try:
-    import netaddr
-    HAS_NETADDR = True
-except ImportError:
-    HAS_NETADDR = False
+    from ansible.module_utils.network.f5.common import transform_name
+    from ansible.module_utils.network.f5.common import flatten_boolean
+    from ansible.module_utils.network.f5.ipaddress import is_valid_ip
+    from ansible.module_utils.network.f5.compare import cmp_str_with_none
 
 
 class Parameters(AnsibleF5Parameters):
@@ -202,33 +236,51 @@ class Parameters(AnsibleF5Parameters):
         'timeUntilUp': 'time_until_up',
         'defaultsFrom': 'parent',
         'recv': 'receive',
-        'recvDisable': 'receive_disable'
+        'recvDisable': 'receive_disable',
     }
 
     api_attributes = [
-        'timeUntilUp', 'defaultsFrom', 'interval', 'timeout', 'recv', 'send',
-        'destination', 'username', 'password', 'recvDisable'
+        'timeUntilUp',
+        'defaultsFrom',
+        'interval',
+        'timeout',
+        'recv',
+        'send',
+        'destination',
+        'username',
+        'password',
+        'recvDisable',
+        'description',
+        'reverse',
     ]
 
     returnables = [
-        'parent', 'send', 'receive', 'ip', 'port', 'interval', 'timeout',
-        'time_until_up', 'receive_disable'
+        'parent',
+        'send',
+        'receive',
+        'ip',
+        'port',
+        'interval',
+        'timeout',
+        'time_until_up',
+        'receive_disable',
+        'description',
+        'reverse',
     ]
 
     updatables = [
-        'destination', 'send', 'receive', 'interval', 'timeout', 'time_until_up',
-        'target_username', 'target_password', 'receive_disable'
+        'destination',
+        'send',
+        'receive',
+        'interval',
+        'timeout',
+        'time_until_up',
+        'target_username',
+        'target_password',
+        'receive_disable',
+        'description',
+        'reverse',
     ]
-
-    def to_return(self):
-        result = {}
-        try:
-            for returnable in self.returnables:
-                result[returnable] = getattr(self, returnable)
-            result = self._filter_params(result)
-        except Exception:
-            pass
-        return result
 
     @property
     def destination(self):
@@ -266,12 +318,11 @@ class Parameters(AnsibleF5Parameters):
     def ip(self):
         if self._values['ip'] is None:
             return None
-        try:
-            if self._values['ip'] in ['*', '0.0.0.0']:
-                return '*'
-            result = str(netaddr.IPAddress(self._values['ip']))
-            return result
-        except netaddr.core.AddrFormatError:
+        if self._values['ip'] in ['*', '0.0.0.0']:
+            return '*'
+        elif is_valid_ip(self._values['ip']):
+            return self._values['ip']
+        else:
             raise F5ModuleError(
                 "The provided 'ip' parameter is not an IP address."
             )
@@ -309,9 +360,55 @@ class Parameters(AnsibleF5Parameters):
     def password(self):
         return self._values['target_password']
 
+    @property
+    def reverse(self):
+        return flatten_boolean(self._values['reverse'])
+
+
+class ApiParameters(Parameters):
+    @property
+    def description(self):
+        if self._values['description'] in [None, 'none']:
+            return None
+        return self._values['description']
+
+
+class ModuleParameters(Parameters):
+    @property
+    def description(self):
+        if self._values['description'] is None:
+            return None
+        elif self._values['description'] in ['none', '']:
+            return ''
+        return self._values['description']
+
 
 class Changes(Parameters):
-    pass
+    def to_return(self):
+        result = {}
+        try:
+            for returnable in self.returnables:
+                result[returnable] = getattr(self, returnable)
+            result = self._filter_params(result)
+        except Exception:
+            pass
+        return result
+
+
+class UsableChanges(Changes):
+    @property
+    def reverse(self):
+        if self._values['reverse'] is None:
+            return None
+        elif self._values['reverse'] == 'yes':
+            return 'enabled'
+        return 'disabled'
+
+
+class ReportableChanges(Changes):
+    @property
+    def reverse(self):
+        return flatten_boolean(self._values['reverse'])
 
 
 class Difference(object):
@@ -380,14 +477,22 @@ class Difference(object):
         except AttributeError:
             return attr1
 
+    @property
+    def description(self):
+        return cmp_str_with_none(self.want.description, self.have.description)
+
+    @property
+    def receive_disable(self):
+        return cmp_str_with_none(self.want.receive_disable, self.have.receive_disable)
+
 
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
-        self.have = None
-        self.want = Parameters(params=self.module.params)
-        self.changes = Changes()
+        self.client = F5RestClient(**self.module.params)
+        self.want = ModuleParameters(params=self.module.params)
+        self.have = ApiParameters()
+        self.changes = UsableChanges()
 
     def _set_changed_options(self):
         changed = {}
@@ -395,7 +500,7 @@ class ModuleManager(object):
             if getattr(self.want, key) is not None:
                 changed[key] = getattr(self.want, key)
         if changed:
-            self.changes = Changes(params=changed)
+            self.changes = UsableChanges(params=changed)
 
     def _update_changed_options(self):
         diff = Difference(self.want, self.have)
@@ -411,40 +516,40 @@ class ModuleManager(object):
                 else:
                     changed[k] = change
         if changed:
-            self.changes = Changes(params=changed)
+            self.changes = UsableChanges(params=changed)
             return True
         return False
 
-    def _announce_deprecations(self):
-        warnings = []
-        if self.want:
-            warnings += self.want._values.get('__warnings', [])
-        if self.have:
-            warnings += self.have._values.get('__warnings', [])
-        for warning in warnings:
-            self.module.deprecate(
-                msg=warning['msg'],
-                version=warning['version']
-            )
+    def should_update(self):
+        result = self._update_changed_options()
+        if result:
+            return True
+        return False
 
     def exec_module(self):
         changed = False
         result = dict()
         state = self.want.state
 
-        try:
-            if state == "present":
-                changed = self.present()
-            elif state == "absent":
-                changed = self.absent()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        if state == "present":
+            changed = self.present()
+        elif state == "absent":
+            changed = self.absent()
 
-        changes = self.changes.to_return()
+        reportable = ReportableChanges(params=self.changes.to_return())
+        changes = reportable.to_return()
         result.update(**changes)
         result.update(dict(changed=changed))
-        self._announce_deprecations()
+        self._announce_deprecations(result)
         return result
+
+    def _announce_deprecations(self, result):
+        warnings = result.pop('__warnings', [])
+        for warning in warnings:
+            self.client.module.deprecate(
+                msg=warning['msg'],
+                version=warning['version']
+            )
 
     def present(self):
         if self.exists():
@@ -452,8 +557,65 @@ class ModuleManager(object):
         else:
             return self.create()
 
+    def exists(self):
+        uri = "https://{0}:{1}/mgmt/tm/ltm/monitor/http/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
+
+    def update(self):
+        self.have = self.read_current_from_device()
+        if not self.should_update():
+            return False
+        if self.want.reverse == 'enabled':
+            if not self.want.receive and not self.have.receive:
+                raise F5ModuleError(
+                    "A 'receive' string must be specified when setting 'reverse'."
+                )
+            if self.want.time_until_up != 0 and self.have.time_until_up != 0:
+                raise F5ModuleError(
+                    "Monitors with the 'reverse' attribute are not currently compatible with 'time_until_up'."
+                )
+        if self.module.check_mode:
+            return True
+        self.update_on_device()
+        return True
+
+    def remove(self):
+        if self.module.check_mode:
+            return True
+        self.remove_from_device()
+        if self.exists():
+            raise F5ModuleError("Failed to delete the monitor.")
+        return True
+
     def create(self):
         self._set_changed_options()
+        if self.want.reverse == 'enabled':
+            if self.want.time_until_up != 0:
+                raise F5ModuleError(
+                    "Monitors with the 'reverse' attribute are not currently compatible with 'time_until_up'."
+                )
+            if not self.want.receive:
+                raise F5ModuleError(
+                    "A 'receive' string must be specified when setting 'reverse'."
+                )
+        self._set_default_creation_values()
+        if self.module.check_mode:
+            return True
+        self.create_on_device()
+        return True
+
+    def _set_default_creation_values(self):
         if self.want.timeout is None:
             self.want.update({'timeout': 16})
         if self.want.interval is None:
@@ -466,77 +628,79 @@ class ModuleManager(object):
             self.want.update({'port': '*'})
         if self.want.send is None:
             self.want.update({'send': 'GET /\r\n'})
-        if self.module.check_mode:
-            return True
-        self.create_on_device()
-        return True
 
-    def should_update(self):
-        result = self._update_changed_options()
-        if result:
-            return True
-        return False
+    def create_on_device(self):
+        params = self.changes.api_params()
+        params['name'] = self.want.name
+        params['partition'] = self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/monitor/http/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
+        )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
 
-    def update(self):
-        self.have = self.read_current_from_device()
-        if not self.should_update():
-            return False
-        if self.module.check_mode:
-            return True
-        self.update_on_device()
-        return True
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+    def update_on_device(self):
+        params = self.changes.api_params()
+        uri = "https://{0}:{1}/mgmt/tm/ltm/monitor/http/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
+        )
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def absent(self):
         if self.exists():
             return self.remove()
         return False
 
-    def remove(self):
-        if self.module.check_mode:
+    def remove_from_device(self):
+        uri = "https://{0}:{1}/mgmt/tm/ltm/monitor/http/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
+        )
+        resp = self.client.api.delete(uri)
+        if resp.status == 200:
             return True
-        self.remove_from_device()
-        if self.exists():
-            raise F5ModuleError("Failed to delete the monitor.")
-        return True
 
     def read_current_from_device(self):
-        resource = self.client.api.tm.ltm.monitor.https.http.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/monitor/http/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        result = resource.attrs
-        return Parameters(params=result)
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
 
-    def exists(self):
-        result = self.client.api.tm.ltm.monitor.https.http.exists(
-            name=self.want.name,
-            partition=self.want.partition
-        )
-        return result
-
-    def update_on_device(self):
-        params = self.want.api_params()
-        result = self.client.api.tm.ltm.monitor.https.http.load(
-            name=self.want.name,
-            partition=self.want.partition
-        )
-        result.modify(**params)
-
-    def create_on_device(self):
-        params = self.want.api_params()
-        self.client.api.tm.ltm.monitor.https.http.create(
-            name=self.want.name,
-            partition=self.want.partition,
-            **params
-        )
-
-    def remove_from_device(self):
-        result = self.client.api.tm.ltm.monitor.https.http.load(
-            name=self.want.name,
-            partition=self.want.partition
-        )
-        if result:
-            result.delete()
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return ApiParameters(params=response)
 
 
 class ArgumentSpec(object):
@@ -545,12 +709,14 @@ class ArgumentSpec(object):
         argument_spec = dict(
             name=dict(required=True),
             parent=dict(default='/Common/http'),
+            description=dict(),
             send=dict(),
             receive=dict(),
-            receive_disable=dict(required=False),
+            receive_disable=dict(),
             ip=dict(),
-            port=dict(type='int'),
+            port=dict(),
             interval=dict(type='int'),
+            reverse=dict(type='bool'),
             timeout=dict(type='int'),
             time_until_up=dict(type='int'),
             target_username=dict(),
@@ -574,21 +740,14 @@ def main():
 
     module = AnsibleModule(
         argument_spec=spec.argument_spec,
-        supports_check_mode=spec.supports_check_mode
+        supports_check_mode=spec.supports_check_mode,
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
-    if not HAS_NETADDR:
-        module.fail_json(msg="The python netaddr module is required")
 
     try:
-        client = F5Client(**module.params)
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
         module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
         module.fail_json(msg=str(ex))
 
 

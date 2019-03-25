@@ -24,24 +24,21 @@ import re
 
 from ansible.plugins.terminal import TerminalBase
 from ansible.errors import AnsibleConnectionFailure
+from ansible.utils.display import Display
 
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class TerminalModule(TerminalBase):
 
     terminal_stdout_re = [
-        re.compile(br"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$|%"),
+        re.compile(br"({primary:node\d+})?[\r\n]?[\w@+\-\.:\/\[\]]+[>#%] ?$"),
     ]
 
     terminal_stderr_re = [
         re.compile(br"unknown command"),
-        re.compile(br"syntax error,")
+        re.compile(br"syntax error"),
+        re.compile(br"[\r\n]error:")
     ]
 
     def on_open_shell(self):
@@ -49,7 +46,7 @@ class TerminalModule(TerminalBase):
             prompt = self._get_prompt()
             if prompt.strip().endswith(b'%'):
                 display.vvv('starting cli', self._connection._play_context.remote_addr)
-                self._exec_cli_command('cli')
+                self._exec_cli_command(b'cli')
             for c in (b'set cli timestamp disable', b'set cli screen-length 0', b'set cli screen-width 1024'):
                 self._exec_cli_command(c)
         except AnsibleConnectionFailure:

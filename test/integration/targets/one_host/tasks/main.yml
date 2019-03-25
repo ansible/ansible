@@ -72,11 +72,11 @@
   one_host:
     name: badhost
     state: absent
-    api_url: "{{ opennebula_url }}"
-    api_username: "{{ opennebula_username }}"
-    api_password: "{{ opennebula_password }}"
     validate_certs: false
   environment:
+    ONE_URL: "{{ opennebula_url }}"
+    ONE_USERNAME: "{{ opennebula_username }}"
+    ONE_PASSWORD: "{{ opennebula_password }}"
     PYONE_TEST_FIXTURE: "{{ opennebula_test_fixture }}"
     PYONE_TEST_FIXTURE_FILE: /tmp/opennebula-fixtures.json.gz
     PYONE_TEST_FIXTURE_REPLAY: "{{ opennebula_test_fixture_replay }}"

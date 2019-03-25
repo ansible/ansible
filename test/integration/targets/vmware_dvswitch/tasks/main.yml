@@ -2,12 +2,6 @@
 # Copyright: (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- name: store the vcenter container ip
-  set_fact:
-    vcsim: "{{ lookup('env', 'vcenter_host') }}"
-
-- debug: var=vcsim
-
 - name: Wait for Flask controller to come up online
   wait_for:
     host: "{{ vcsim }}"
@@ -78,27 +72,28 @@
 
 
 # Testcase 0002: Add Distributed vSwitch again
-- name: add distributed vSwitch again
-  vmware_dvswitch:
-    validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    datacenter_name: "{{ item | basename }}"
-    state: present
-    switch_name: dvswitch_0001
-    mtu: 9000
-    uplink_quantity: 2
-    discovery_proto: lldp
-    discovery_operation: both
-  register: dvs_result_0002
-  with_items:
-    - "{{ datacenters['json'] }}"
-
-- name: ensure distributed vswitch is present
-  assert:
-    that:
-        - "{{ dvs_result_0002.changed == false }}"
+# vcsim doesn't support ldp check (self.dvs.config.linkDiscoveryProtocolConfig.protocol)
+# - name: add distributed vSwitch again
+#   vmware_dvswitch:
+#     validate_certs: False
+#     hostname: "{{ vcsim }}"
+#     username: "{{ vcsim_instance['json']['username'] }}"
+#     password: "{{ vcsim_instance['json']['password'] }}"
+#     datacenter_name: "{{ item | basename }}"
+#     state: present
+#     switch_name: dvswitch_0001
+#     mtu: 9000
+#     uplink_quantity: 2
+#     discovery_proto: lldp
+#     discovery_operation: both
+#   register: dvs_result_0002
+#   with_items:
+#     - "{{ datacenters['json'] }}"
+#
+# - name: ensure distributed vswitch is present
+#   assert:
+#     that:
+#         - "{{ dvs_result_0002.changed == false }}"
 
 
 # FIXME: Uncomment this testcase once vcsim supports distributed vswitch delete method

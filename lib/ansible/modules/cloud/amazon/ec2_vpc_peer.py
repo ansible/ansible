@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -16,7 +16,7 @@ module: ec2_vpc_peer
 short_description: create, delete, accept, and reject VPC peering connections between two VPCs.
 description:
   - Read the AWS documentation for VPC Peering Connections
-    U(http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/vpc-peering.html)
+    U(https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/vpc-peering.html).
 version_added: "2.2"
 options:
   vpc_id:
@@ -50,7 +50,7 @@ options:
     required: false
     default: present
     choices: ['present', 'absent', 'accept', 'reject']
-author: Mike Mochan(@mmochan)
+author: Mike Mochan (@mmochan)
 extends_documentation_fragment:
     - aws
     - ec2
@@ -126,7 +126,7 @@ EXAMPLES = '''
     region: us-east-1
     vpc_id: vpc-12345678
     peer_vpc_id: vpc-87654321
-    peer_vpc_region: us-west-2
+    peer_region: us-west-2
     state: present
     tags:
       Name: Peering connection for us-east-1 VPC to us-west-2 VPC
@@ -211,7 +211,7 @@ RETURN = '''
 task:
   description: The result of the create, accept, reject or delete action.
   returned: success
-  type: dictionary
+  type: dict
 '''
 
 try:
@@ -220,9 +220,11 @@ except ImportError:
     pass  # caught by imported HAS_BOTO3
 
 import distutils.version
+import traceback
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info, HAS_BOTO3
+from ansible.module_utils.aws.core import is_boto3_error_code
 
 
 def tags_changed(pcx_id, client, module):
@@ -328,8 +330,13 @@ def remove_peer_connection(client, module):
 def peer_status(client, module):
     params = dict()
     params['VpcPeeringConnectionIds'] = [module.params.get('peering_id')]
-    vpc_peering_connection = client.describe_vpc_peering_connections(**params)
-    return vpc_peering_connection['VpcPeeringConnections'][0]['Status']['Code']
+    try:
+        vpc_peering_connection = client.describe_vpc_peering_connections(**params)
+        return vpc_peering_connection['VpcPeeringConnections'][0]['Status']['Code']
+    except is_boto3_error_code('InvalidVpcPeeringConnectionId.Malformed') as e:  # pylint: disable=duplicate-except
+        module.fail_json(msg='Malformed connection ID: {0}'.format(e), traceback=traceback.format_exc())
+    except botocore.exceptions.ClientError as e:  # pylint: disable=duplicate-except
+        module.fail_json(msg='Error while describing peering connection by peering_id: {0}'.format(e), traceback=traceback.format_exc())
 
 
 def accept_reject(state, client, module):
@@ -396,11 +403,20 @@ def main():
             state=dict(default='present', choices=['present', 'absent', 'accept', 'reject'])
         )
     )
-    module = AnsibleModule(argument_spec=argument_spec)
+    required_if = [
+        ('state', 'present', ['vpc_id', 'peer_vpc_id']),
+        ('state', 'accept', ['peering_id']),
+        ('state', 'reject', ['peering_id'])
+    ]
+
+    module = AnsibleModule(argument_spec=argument_spec, required_if=required_if)
 
     if not HAS_BOTO3:
         module.fail_json(msg='json, botocore and boto3 are required.')
     state = module.params.get('state')
+    peering_id = module.params.get('peering_id')
+    vpc_id = module.params.get('vpc_id')
+    peer_vpc_id = module.params.get('peer_vpc_id')
     try:
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
         client = boto3_conn(module, conn_type='client', resource='ec2',
@@ -412,6 +428,9 @@ def main():
         (changed, results) = create_peer_connection(client, module)
         module.exit_json(changed=changed, peering_id=results)
     elif state == 'absent':
+        if not peering_id and (not vpc_id or not peer_vpc_id):
+            module.fail_json(msg='state is absent but one of the following is missing: peering_id or [vpc_id, peer_vpc_id]')
+
         remove_peer_connection(client, module)
     else:
         (changed, results) = accept_reject(state, client, module)

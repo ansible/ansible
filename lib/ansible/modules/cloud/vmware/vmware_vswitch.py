@@ -68,11 +68,10 @@ extends_documentation_fragment:
 
 EXAMPLES = '''
 - name: Add a VMware vSwitch
-  action:
-    module: vmware_vswitch
-    hostname: esxi_hostname
-    username: esxi_username
-    password: esxi_password
+  vmware_vswitch:
+    hostname: '{{ esxi_hostname }}'
+    username: '{{ esxi_username }}'
+    password: '{{ esxi_password }}'
     switch: vswitch_name
     nics: vmnic_name
     mtu: 9000
@@ -80,18 +79,18 @@ EXAMPLES = '''
 
 - name: Add a VMWare vSwitch without any physical NIC attached
   vmware_vswitch:
-    hostname: 192.168.10.1
-    username: admin
-    password: password123
+    hostname: '{{ esxi_hostname }}'
+    username: '{{ esxi_username }}'
+    password: '{{ esxi_password }}'
     switch: vswitch_0001
     mtu: 9000
   delegate_to: localhost
 
 - name: Add a VMWare vSwitch with multiple NICs
   vmware_vswitch:
-    hostname: esxi_hostname
-    username: esxi_username
-    password: esxi_password
+    hostname: '{{ esxi_hostname }}'
+    username: '{{ esxi_username }}'
+    password: '{{ esxi_password }}'
     switch: vmware_vswitch_0004
     nics:
     - vmnic1
@@ -101,9 +100,9 @@ EXAMPLES = '''
 
 - name: Add a VMware vSwitch to a specific host system
   vmware_vswitch:
-    hostname: 192.168.10.1
-    username: esxi_username
-    password: esxi_password
+    hostname: '{{ esxi_hostname }}'
+    username: '{{ esxi_username }}'
+    password: '{{ esxi_password }}'
     esxi_hostname: DC0_H0
     switch_name: vswitch_001
     nic_name: vmnic0
@@ -115,7 +114,7 @@ RETURN = """
 result:
     description: information about performed operation
     returned: always
-    type: string
+    type: str
     sample: "vSwitch 'vSwitch_1002' is created successfully"
 """
 
@@ -177,7 +176,7 @@ class VMwareHostVirtualSwitch(PyVmomi):
 
     def process_state(self):
         """
-        Function to manage internal state of vSwitch
+        Manage internal state of vSwitch
         """
         vswitch_states = {
             'absent': {
@@ -201,7 +200,7 @@ class VMwareHostVirtualSwitch(PyVmomi):
 
     def state_create_vswitch(self):
         """
-        Function to create a virtual switch
+        Create a virtual switch
 
         Source from
         https://github.com/rreubenur/pyvmomi-community-samples/blob/patch-1/samples/create_vswitch.py
@@ -252,13 +251,13 @@ class VMwareHostVirtualSwitch(PyVmomi):
 
     def state_exit_unchanged(self):
         """
-        Function to declare exit without unchanged
+        Declare exit without unchanged
         """
         self.module.exit_json(changed=False)
 
     def state_destroy_vswitch(self):
         """
-        Function to remove vSwitch from configuration
+        Remove vSwitch from configuration
 
         """
         results = dict(changed=False, result="")
@@ -288,7 +287,7 @@ class VMwareHostVirtualSwitch(PyVmomi):
 
     def state_update_vswitch(self):
         """
-        Function to update vSwitch
+        Update vSwitch
 
         """
         results = dict(changed=False, result="No change in vSwitch '%s'" % self.switch)
@@ -305,19 +304,18 @@ class VMwareHostVirtualSwitch(PyVmomi):
             all_nics += remain_pnic
             diff = True
 
-        # vSwitch needs every parameter again while updating,
-        # even if we are updating any one of them
-        vss_spec = vim.host.VirtualSwitch.Specification()
-        vss_spec.bridge = vim.host.VirtualSwitch.BondBridge(nicDevice=all_nics)
-        vss_spec.numPorts = self.number_of_ports
-        vss_spec.mtu = self.mtu
-
         if vswitch_pnic_info['mtu'] != self.mtu or \
                 vswitch_pnic_info['num_ports'] != self.number_of_ports:
             diff = True
 
         try:
             if diff:
+                vss_spec = vim.host.VirtualSwitch.Specification()
+                if all_nics:
+                    vss_spec.bridge = vim.host.VirtualSwitch.BondBridge(nicDevice=all_nics)
+                vss_spec.numPorts = self.number_of_ports
+                vss_spec.mtu = self.mtu
+
                 network_mgr = self.host_system.configManager.networkSystem
                 if network_mgr:
                     network_mgr.UpdateVirtualSwitch(vswitchName=self.switch,
@@ -361,7 +359,7 @@ class VMwareHostVirtualSwitch(PyVmomi):
 
     def check_vswitch_configuration(self):
         """
-        Function to check if vSwitch exists
+        Check if vSwitch exists
         Returns: 'present' if vSwitch exists or 'absent' if not
 
         """
@@ -374,7 +372,7 @@ class VMwareHostVirtualSwitch(PyVmomi):
     @staticmethod
     def find_vswitch_by_name(host, vswitch_name):
         """
-        Function to find and return vSwitch managed object
+        Find and return vSwitch managed object
         Args:
             host: Host system managed object
             vswitch_name: Name of vSwitch to find

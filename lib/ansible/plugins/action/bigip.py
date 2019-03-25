@@ -27,23 +27,23 @@ from ansible import constants as C
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import Connection
 from ansible.module_utils.network.common.utils import load_provider
-from ansible.plugins.action.normal import ActionModule as _ActionModule
+from ansible.plugins.action.network import ActionModule as ActionNetworkModule
+from ansible.utils.display import Display
 
 try:
     from library.module_utils.network.f5.common import f5_provider_spec
-except:
+except Exception:
     from ansible.module_utils.network.f5.common import f5_provider_spec
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
-class ActionModule(_ActionModule):
+class ActionModule(ActionNetworkModule):
 
     def run(self, tmp=None, task_vars=None):
+        del tmp  # tmp no longer has any effect
+
+        self._config_module = True if self._task.action == 'bigip_imish_config' else False
         socket_path = None
         transport = 'rest'
 
@@ -66,10 +66,12 @@ class ActionModule(_ActionModule):
                 pc.remote_user = provider.get('user', self._play_context.connection_user)
                 pc.password = provider.get('password', self._play_context.password)
                 pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
-                pc.timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
+                command_timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
 
                 display.vvv('using connection plugin %s' % pc.connection, pc.remote_addr)
                 connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
+                connection.set_options(direct={'persistent_command_timeout': command_timeout})
+
                 socket_path = connection.run()
                 display.vvvv('socket_path: %s' % socket_path, pc.remote_addr)
                 if not socket_path:
@@ -80,8 +82,6 @@ class ActionModule(_ActionModule):
                     }
 
                 task_vars['ansible_socket'] = socket_path
-        else:
-            return {'failed': True, 'msg': 'Connection type %s is not valid for this module' % self._play_context.connection}
 
         if (self._play_context.connection == 'local' and transport == 'cli') or self._play_context.connection == 'network_cli':
             # make sure we are in the right cli context which should be
@@ -95,5 +95,5 @@ class ActionModule(_ActionModule):
                 conn.send_command('exit')
                 out = conn.get_prompt()
 
-        result = super(ActionModule, self).run(tmp, task_vars)
+        result = super(ActionModule, self).run(task_vars=task_vars)
         return result

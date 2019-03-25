@@ -1,0 +1,38 @@
+---
+
+- name: "Make sure that the Floating IP is absent"
+  digital_ocean_floating_ip:
+    state: absent
+    ip: "8.8.8.8"
+    oauth_token: "{{ digitalocean_oauth_token }}"
+  register: result
+
+- name: Verify that the Floating IP didn't change
+  assert:
+    that:
+      - "not result.changed"
+
+- name: "Create a Floating IP"
+  digital_ocean_floating_ip:
+    state: present
+    region: "lon1"
+    oauth_token: "{{ digitalocean_oauth_token }}"
+  register: result
+
+- name: Verify that a Floating IP was created
+  assert:
+    that:
+      - "result.changed"
+
+- name: "Destroy Floating IP"
+  digital_ocean_floating_ip:
+    state: absent
+    ip: "{{ result.data.floating_ip.ip }}"
+    region: "lon1"
+    oauth_token: "{{ digitalocean_oauth_token }}"
+  register: result
+
+- name: Verify that a Floating IP was deleted
+  assert:
+    that:
+      - " result.changed"

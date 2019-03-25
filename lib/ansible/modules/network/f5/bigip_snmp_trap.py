@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -9,10 +9,11 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+                    'status': ['stableinterface'],
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
+---
 module: bigip_snmp_trap
 short_description: Manipulate SNMP trap information on a BIG-IP
 description:
@@ -22,22 +23,29 @@ options:
   name:
     description:
       - Name of the SNMP configuration endpoint.
+    type: str
     required: True
   snmp_version:
     description:
       - Specifies to which Simple Network Management Protocol (SNMP) version
         the trap destination applies.
-    choices: ['1', '2c']
+    type: str
+    choices:
+      - '1'
+      - '2c'
   community:
     description:
       - Specifies the community name for the trap destination.
+    type: str
   destination:
     description:
       - Specifies the address for the trap destination. This can be either an
         IP address or a hostname.
+    type: str
   port:
     description:
       - Specifies the port for the trap destination.
+    type: str
   network:
     description:
       - Specifies the name of the trap network. This option is not supported in
@@ -47,6 +55,7 @@ options:
         value when configuring a BIG-IP will cause the module to stop and report
         an error. The usual remedy is to choose one of the other options, such as
         C(management).
+    type: str
     choices:
       - other
       - management
@@ -55,13 +64,15 @@ options:
     description:
       - When C(present), ensures that the resource exists.
       - When C(absent), ensures that the resource does not exist.
-    default: present
+    type: str
     choices:
       - present
       - absent
+    default: present
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
     version_added: 2.5
 notes:
@@ -72,6 +83,7 @@ notes:
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
@@ -83,9 +95,10 @@ EXAMPLES = r'''
     network: management
     port: 9000
     snmp_version: 1
-    server: lb.mydomain.com
-    user: admin
-    password: secret
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Create snmp v2 trap
@@ -96,9 +109,10 @@ EXAMPLES = r'''
     network: default
     port: 7000
     snmp_version: 2c
-    server: lb.mydomain.com
-    user: admin
-    password: secret
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 '''
 
@@ -106,7 +120,7 @@ RETURN = r'''
 snmp_version:
   description: The new C(snmp_version) configured on the remote device.
   returned: changed and success
-  type: string
+  type: str
   sample: 2c
 community:
   description: The new C(community) name for the trap destination.
@@ -116,17 +130,17 @@ community:
 destination:
   description: The new address for the trap destination in either IP or hostname form.
   returned: changed and success
-  type: string
+  type: str
   sample: 1.2.3.4
 port:
   description: The new C(port) of the trap destination.
   returned: changed and success
-  type: string
+  type: str
   sample: 900
 network:
   description: The new name of the network the SNMP trap is on.
   returned: changed and success
-  type: string
+  type: str
   sample: management
 '''
 
@@ -135,34 +149,26 @@ from ansible.module_utils.basic import env_fallback
 from distutils.version import LooseVersion
 
 try:
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from library.module_utils.network.f5.common import transform_name
+    from library.module_utils.network.f5.icontrol import tmos_version
 except ImportError:
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from ansible.module_utils.network.f5.common import transform_name
+    from ansible.module_utils.network.f5.icontrol import tmos_version
 
 
 class Parameters(AnsibleF5Parameters):
     api_map = {
         'version': 'snmp_version',
         'community': 'community',
-        'host': 'destination'
+        'host': 'destination',
     }
 
     @property
@@ -187,15 +193,27 @@ class Parameters(AnsibleF5Parameters):
 
 class V3Parameters(Parameters):
     updatables = [
-        'snmp_version', 'community', 'destination', 'port', 'network'
+        'snmp_version',
+        'community',
+        'destination',
+        'port',
+        'network',
     ]
 
     returnables = [
-        'snmp_version', 'community', 'destination', 'port', 'network'
+        'snmp_version',
+        'community',
+        'destination',
+        'port',
+        'network',
     ]
 
     api_attributes = [
-        'version', 'community', 'host', 'port', 'network'
+        'version',
+        'community',
+        'host',
+        'port',
+        'network',
     ]
 
     @property
@@ -216,15 +234,27 @@ class V3Parameters(Parameters):
 
 class V2Parameters(Parameters):
     updatables = [
-        'snmp_version', 'community', 'destination', 'port', 'network'
+        'snmp_version',
+        'community',
+        'destination',
+        'port',
+        'network',
     ]
 
     returnables = [
-        'snmp_version', 'community', 'destination', 'port', 'network'
+        'snmp_version',
+        'community',
+        'destination',
+        'port',
+        'network',
     ]
 
     api_attributes = [
-        'version', 'community', 'host', 'port', 'network'
+        'version',
+        'community',
+        'host',
+        'port',
+        'network',
     ]
 
     @property
@@ -242,15 +272,24 @@ class V2Parameters(Parameters):
 
 class V1Parameters(Parameters):
     updatables = [
-        'snmp_version', 'community', 'destination', 'port'
+        'snmp_version',
+        'community',
+        'destination',
+        'port',
     ]
 
     returnables = [
-        'snmp_version', 'community', 'destination', 'port'
+        'snmp_version',
+        'community',
+        'destination',
+        'port',
     ]
 
     api_attributes = [
-        'version', 'community', 'host', 'port'
+        'version',
+        'community',
+        'host',
+        'port',
     ]
 
     @property
@@ -261,7 +300,7 @@ class V1Parameters(Parameters):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.kwargs = kwargs
 
     def exec_module(self):
@@ -280,7 +319,7 @@ class ModuleManager(object):
         Returns:
             bool: True when it is missing. False otherwise.
         """
-        version = self.client.api.tmos_version
+        version = tmos_version(self.client)
         if LooseVersion(version) < LooseVersion('12.1.0'):
             return True
         else:
@@ -292,7 +331,7 @@ class ModuleManager(object):
         Returns:
             bool: True when it is missing. False otherwise.
         """
-        version = self.client.api.tmos_version
+        version = tmos_version(self.client)
         if LooseVersion(version) < LooseVersion('13.1.0'):
             return True
         else:
@@ -302,7 +341,7 @@ class ModuleManager(object):
 class BaseManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.have = None
 
     def exec_module(self):
@@ -310,24 +349,14 @@ class BaseManager(object):
         result = dict()
         state = self.want.state
 
-        try:
-            if state == "present":
-                changed = self.present()
-            elif state == "absent":
-                changed = self.absent()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        if state == "present":
+            changed = self.present()
+        elif state == "absent":
+            changed = self.absent()
 
         changes = self.changes.to_return()
         result.update(**changes)
         result.update(dict(changed=changed))
-        return result
-
-    def exists(self):
-        result = self.client.api.tm.sys.snmp.traps_s.trap.exists(
-            name=self.want.name,
-            partition=self.want.partition
-        )
         return result
 
     def present(self):
@@ -335,6 +364,19 @@ class BaseManager(object):
             return self.update()
         else:
             return self.create()
+
+    def absent(self):
+        if self.exists():
+            return self.remove()
+        return False
+
+    def remove(self):
+        if self.module.check_mode:
+            return True
+        self.remove_from_device()
+        if self.exists():
+            raise F5ModuleError("Failed to delete the snmp trap")
+        return True
 
     def create(self):
         self._set_changed_options()
@@ -363,42 +405,69 @@ class BaseManager(object):
         self.update_on_device()
         return True
 
+    def exists(self):
+        uri = "https://{0}:{1}/mgmt/tm/sys/snmp/traps/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
+
     def update_on_device(self):
         params = self.want.api_params()
-        result = self.client.api.tm.sys.snmp.traps_s.trap.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/sys/snmp/traps/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        result.modify(**params)
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def create_on_device(self):
         params = self.want.api_params()
-        self.client.api.tm.sys.snmp.traps_s.trap.create(
-            name=self.want.name,
-            partition=self.want.partition,
-            **params
+        params['name'] = self.want.name
+        params['partition'] = self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/sys/snmp/traps/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
         )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
 
-    def absent(self):
-        if self.exists():
-            return self.remove()
-        return False
-
-    def remove(self):
-        if self.module.check_mode:
-            return True
-        self.remove_from_device()
-        if self.exists():
-            raise F5ModuleError("Failed to delete the snmp trap")
-        return True
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def remove_from_device(self):
-        result = self.client.api.tm.sys.snmp.traps_s.trap.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/sys/snmp/traps/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        if result:
-            result.delete()
+        resp = self.client.api.delete(uri)
+        if resp.status == 200:
+            return True
 
 
 class V3Manager(BaseManager):
@@ -432,12 +501,23 @@ class V3Manager(BaseManager):
         return False
 
     def read_current_from_device(self):
-        resource = self.client.api.tm.sys.snmp.traps_s.trap.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/sys/snmp/traps/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        result = resource.attrs
-        return V3Parameters(params=result)
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return V3Parameters(params=response)
 
 
 class V2Manager(BaseManager):
@@ -471,13 +551,24 @@ class V2Manager(BaseManager):
         return False
 
     def read_current_from_device(self):
-        resource = self.client.api.tm.sys.snmp.traps_s.trap.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/sys/snmp/traps/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        result = resource.attrs
-        self._ensure_network(result)
-        return V2Parameters(params=result)
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        self._ensure_network(response)
+        return V2Parameters(params=response)
 
     def _ensure_network(self, result):
         # BIG-IP's value for "default" is that the key does not
@@ -521,12 +612,23 @@ class V1Manager(BaseManager):
         return False
 
     def read_current_from_device(self):
-        resource = self.client.api.tm.sys.snmp.traps_s.trap.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/sys/snmp/traps/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        result = resource.attrs
-        return V1Parameters(params=result)
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return V1Parameters(params=response)
 
 
 class ArgumentSpec(object):
@@ -566,17 +668,12 @@ def main():
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
 
     try:
-        client = F5Client(**module.params)
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
         module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
         module.fail_json(msg=str(ex))
 
 

@@ -26,13 +26,10 @@ from ansible.module_utils.six import iteritems
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.playbook.block import Block
 from ansible.playbook.task import Task
+from ansible.utils.display import Display
 
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 __all__ = ['PlayIterator']
@@ -154,31 +151,25 @@ class PlayIterator:
         self._variable_manager = variable_manager
 
         # Default options to gather
-        gather_subset = play_context.gather_subset
-        gather_timeout = play_context.gather_timeout
-        fact_path = play_context.fact_path
-
-        # Retrieve subset to gather
-        if self._play.gather_subset is not None:
-            gather_subset = self._play.gather_subset
-        # Retrieve timeout for gather
-        if self._play.gather_timeout is not None:
-            gather_timeout = self._play.gather_timeout
-        # Retrieve fact_path
-        if self._play.fact_path is not None:
-            fact_path = self._play.fact_path
+        gather_subset = self._play.gather_subset
+        gather_timeout = self._play.gather_timeout
+        fact_path = self._play.fact_path
 
         setup_block = Block(play=self._play)
         # Gathering facts with run_once would copy the facts from one host to
         # the others.
         setup_block.run_once = False
         setup_task = Task(block=setup_block)
-        setup_task.action = 'setup'
+        setup_task.action = 'gather_facts'
         setup_task.name = 'Gathering Facts'
-        setup_task.tags = ['always']
         setup_task.args = {
             'gather_subset': gather_subset,
         }
+
+        # Unless play is specifically tagged, gathering should 'always' run
+        if not self._play.tags:
+            setup_task.tags = ['always']
+
         if gather_timeout:
             setup_task.args['gather_timeout'] = gather_timeout
         if fact_path:
@@ -189,22 +180,17 @@ class PlayIterator:
             setup_task.when = self._play._included_conditional[:]
         setup_block.block = [setup_task]
 
-        setup_block = setup_block.filter_tagged_tasks(play_context, all_vars)
+        setup_block = setup_block.filter_tagged_tasks(all_vars)
         self._blocks.append(setup_block)
-        self.cache_block_tasks(setup_block)
 
         for block in self._play.compile():
-            new_block = block.filter_tagged_tasks(play_context, all_vars)
+            new_block = block.filter_tagged_tasks(all_vars)
             if new_block.has_tasks():
-                self.cache_block_tasks(new_block)
                 self._blocks.append(new_block)
-
-        for handler_block in self._play.handlers:
-            self.cache_block_tasks(handler_block)
 
         self._host_states = {}
         start_at_matched = False
-        batch = inventory.get_hosts(self._play.hosts)
+        batch = inventory.get_hosts(self._play.hosts, order=self._play.order)
         self.batch_size = len(batch)
         for host in batch:
             self._host_states[host.name] = HostState(blocks=self._blocks)
@@ -301,7 +287,7 @@ class PlayIterator:
 
                     if (gathering == 'implicit' and implied) or \
                        (gathering == 'explicit' and boolean(self._play.gather_facts, strict=False)) or \
-                       (gathering == 'smart' and implied and not (self._variable_manager._fact_cache.get(host.name, {}).get('module_setup', False))):
+                       (gathering == 'smart' and implied and not (self._variable_manager._fact_cache.get(host.name, {}).get('_ansible_facts_gathered', False))):
                         # The setup block is always self._blocks[0], as we inject it
                         # during the play compilation in __init__ above.
                         setup_block = self._blocks[0]
@@ -513,6 +499,18 @@ class PlayIterator:
     def is_failed(self, host):
         s = self.get_host_state(host)
         return self._check_failed_state(s)
+
+    def get_active_state(self, state):
+        '''
+        Finds the active state, recursively if necessary when there are child states.
+        '''
+        if state.run_state == self.ITERATING_TASKS and state.tasks_child_state is not None:
+            return self.get_active_state(state.tasks_child_state)
+        elif state.run_state == self.ITERATING_RESCUE and state.rescue_child_state is not None:
+            return self.get_active_state(state.rescue_child_state)
+        elif state.run_state == self.ITERATING_ALWAYS and state.always_child_state is not None:
+            return self.get_active_state(state.always_child_state)
+        return state
 
     def get_original_task(self, host, task):
         # now a noop because we've changed the way we do caching

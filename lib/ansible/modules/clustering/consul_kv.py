@@ -233,7 +233,7 @@ def set_value(module):
     value = module.params.get('value')
 
     if value is NOT_SET:
-        raise AssertionError('Cannot set value of "%s" to `NOT_SET`', (key, ))
+        raise AssertionError('Cannot set value of "%s" to `NOT_SET`' % key)
 
     index, changed = _has_value_changed(consul_api, key, value)
 
@@ -283,7 +283,7 @@ def get_consul_api(module, token=None):
 def test_dependencies(module):
     if not python_consul_installed:
         module.fail_json(msg="python-consul required for this module. "
-                             "see http://python-consul.readthedocs.org/en/latest/#installation")
+                             "see https://python-consul.readthedocs.io/en/latest/#installation")
 
 
 def main():
@@ -304,7 +304,7 @@ def main():
             value=dict(type='str', default=NOT_SET),
             session=dict(type='str'),
         ),
-        supports_check_mode=False
+        supports_check_mode=True
     )
 
     test_dependencies(module)

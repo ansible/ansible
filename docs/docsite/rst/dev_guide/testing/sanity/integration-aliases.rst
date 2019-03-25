@@ -13,16 +13,25 @@ Tests must be configured to run in exactly one group. This is done by adding the
 
 The following are examples of some of the available groups:
 
-- ``posix/ci/group1``
-- ``windows/ci/group2``
-- ``posix/ci/cloud/group3/azure``
-- ``posix/ci/cloud/group4/aws``
+- ``shippable/posix/group1``
+- ``shippable/windows/group2``
+- ``shippable/azure/group3``
+- ``shippable/aws/group1``
+- ``shippable/cloud/group1``
 
 Groups are used to balance tests across multiple CI jobs to minimize test run time.
 They also improve efficiency by keeping tests with similar requirements running together.
 
 When selecting a group for a new test, use the same group as existing tests similar to the one being added.
 If more than one group is available, select one randomly.
+
+Setup
+-----
+
+Aliases can be used to execute setup targets before running tests:
+
+- ``setup/once/TARGET`` - Run the target ``TARGET`` before the first target that requires it.
+- ``setup/always/TARGET`` - Run the target ``TARGET`` before each target that requires it.
 
 Requirements
 ------------
@@ -32,6 +41,21 @@ Aliases can be used to express some test requirements:
 - ``needs/privileged`` - Requires ``--docker-privileged`` when running tests with ``--docker``.
 - ``needs/root`` - Requires running tests as ``root`` or with ``--docker``.
 - ``needs/ssh`` - Requires SSH connections to localhost (or the test container with ``--docker``) without a password.
+- ``needs/httptester`` - Requires use of the http-test-container to run tests.
+
+Dependencies
+------------
+
+Some test dependencies are automatically discovered:
+
+- Ansible role dependencies defined in ``meta/main.yml`` files.
+- Setup targets defined with ``setup/*`` aliases.
+- Symbolic links from one target to a file in another target.
+
+Aliases can be used to declare dependencies that are not handled automatically:
+
+- ``needs/target/TARGET`` - Requires use of the test target ``TARGET``.
+- ``needs/file/PATH`` - Requires use of the file ``PATH`` relative to the git root.
 
 Skipping
 --------
@@ -39,8 +63,19 @@ Skipping
 Aliases can be used to skip platforms using one of the following:
 
 - ``skip/freebsd`` - Skip tests on FreeBSD.
-- ``skip/osx`` - Skip tests on macOS / OS X.
+- ``skip/osx`` - Skip tests on macOS.
 - ``skip/rhel`` - Skip tests on RHEL.
+- ``skip/docker`` - Skip tests when running in a Docker container.
+
+Platform versions, as specified using the ``--remote`` option with ``/`` removed, can also be skipped:
+
+- ``skip/freebsd11.1`` - Skip tests on FreeBSD 11.1.
+- ``skip/rhel7.6`` - Skip tests on RHEL 7.6.
+
+Windows verssions, as specified using the ``--windows`` option can also be skipped:
+
+- ``skip/windows/2008`` - Skip tests on Windows Server 2008.
+- ``skip/windows/2012-R2`` - Skip tests on Windows Server 2012 R2.
 
 Aliases can be used to skip Python major versions using one of the following:
 
@@ -53,6 +88,14 @@ For more fine grained skipping, use conditionals in integration test playbooks, 
 
    when: ansible_distribution in ('Ubuntu')
 
+
+Miscellaneous
+-------------
+
+There are several other aliases available as well:
+
+- ``destructive`` - Requires ``--allow-destructive`` to run without ``--docker`` or ``--remote``.
+- ``hidden`` - Target is ignored. Usable as a dependency. Automatic for ``setup_`` and ``prepare_`` prefixed targets.
 
 Unstable
 --------

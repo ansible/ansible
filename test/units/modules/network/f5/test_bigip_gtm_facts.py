@@ -10,13 +10,16 @@ import os
 import json
 import sys
 
-from nose.plugins.skip import SkipTest
-if sys.version_info < (2, 7):
-    raise SkipTest("F5 Ansible modules require Python >= 2.7")
+import pytest
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import Mock
-from ansible.compat.tests.mock import patch
+pytestmark = []
+
+if sys.version_info < (2, 7):
+    pytestmark.append(pytest.mark.skip("F5 Ansible modules require Python >= 2.7"))
+
+from units.compat import unittest
+from units.compat.mock import Mock
+from units.compat.mock import patch
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 
@@ -60,7 +63,10 @@ except ImportError:
         from f5.utils.responses.handlers import Stats
         from units.modules.utils import set_module_args
     except ImportError:
-        raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
+        pytestmark.append(pytest.mark.skip("F5 Ansible modules require the f5-sdk Python library"))
+        # pytestmark will cause this test to skip but we have to define A so that classes can be
+        # defined below
+        A = object
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
@@ -115,7 +121,7 @@ class TestManager(unittest.TestCase):
     def test_get_typed_pool_facts(self, *args):
         set_module_args(dict(
             include='pool',
-            password='passsword',
+            password='password',
             server='localhost',
             user='admin'
         ))

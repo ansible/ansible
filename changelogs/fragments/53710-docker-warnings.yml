@@ -1,0 +1,3 @@
+bugfixes:
+- "docker_network - now returns warnings from docker daemon on network creation."
+- "docker_swarm_service - now returns warnings from docker daemon on service creation."

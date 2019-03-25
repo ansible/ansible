@@ -4,12 +4,6 @@
 
 # TODO: vcsim does not support networkConfig related to operations
 
-- name: store the vcenter container ip
-  set_fact:
-    vcsim: "{{ lookup('env', 'vcenter_host') }}"
-
-- debug: var=vcsim
-
 - name: Wait for Flask controller to come up online
   wait_for:
     host: "{{ vcsim }}"
@@ -59,3 +53,19 @@
 - assert:
     that:
       - switch_facts.hosts_vswitch_facts is defined
+
+- name: Gather vswitch facts about all hosts in given cluster in check mode
+  vmware_vswitch_facts:
+    hostname: "{{ vcsim }}"
+    username: "{{ user }}"
+    password: "{{ passwd }}"
+    esxi_hostname: "{{ host1 }}"
+    validate_certs: no
+  register: switch_facts_check_mode
+  check_mode: yes
+
+- debug: var=switch_facts_check_mode
+
+- assert:
+    that:
+      - switch_facts_check_mode.hosts_vswitch_facts is defined

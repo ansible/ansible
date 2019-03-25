@@ -61,6 +61,7 @@ RETURN = '''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_text
 
 
 class Namespace(object):
@@ -77,9 +78,10 @@ class Namespace(object):
 
     def exists(self):
         '''Check if the namespace already exists'''
-        rtc, out, err = self._netns(['exec', self.name, 'ls'])
-        if rtc != 0:
-            self.module.fail_json(msg=err)
+        rc, out, err = self.module.run_command('ip netns list')
+        if rc != 0:
+            self.module.fail_json(msg=to_text(err))
+        return self.name in out
 
     def add(self):
         '''Create network namespace'''
@@ -99,7 +101,7 @@ class Namespace(object):
         changed = False
 
         if self.state == 'present' and self.exists():
-                changed = True
+            changed = True
 
         elif self.state == 'absent' and self.exists():
             changed = True

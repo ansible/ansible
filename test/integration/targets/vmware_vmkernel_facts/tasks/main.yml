@@ -4,12 +4,6 @@
 
 # TODO: vcsim does not support HostVirtualNicManager related to operations
 
-- name: store the vcenter container ip
-  set_fact:
-    vcsim: "{{ lookup('env', 'vcenter_host') }}"
-
-- debug: var=vcsim
-
 - name: Wait for Flask controller to come up online
   wait_for:
     host: "{{ vcsim }}"
@@ -45,7 +39,7 @@
 
 - debug: var=host1
 
-- name: Gather VNICs facts about all hosts in given cluster
+- name: Gather VMkernel facts about all hosts in given cluster
   vmware_vmkernel_facts:
     hostname: "{{ vcsim }}"
     username: "{{ user }}"
@@ -59,3 +53,19 @@
 - assert:
     that:
       - host_vmkernel.host_vmk_facts is defined
+
+- name: Gather VMkernel facts about all hosts in given cluster in check mode
+  vmware_vmkernel_facts:
+    hostname: "{{ vcsim }}"
+    username: "{{ user }}"
+    password: "{{ passwd }}"
+    esxi_hostname: "{{ host1 }}"
+    validate_certs: no
+  register: host_vmkernel_check_mode
+  check_mode: yes
+
+- debug: var=host_vmkernel
+
+- assert:
+    that:
+      - host_vmkernel_check_mode.host_vmk_facts is defined

@@ -21,7 +21,7 @@ author: "Ricardo Carrillo Cruz (@rcarrillocruz)"
 description:
     - Retrieve facts about a one or more OpenStack users
 requirements:
-    - "python >= 2.6"
+    - "python >= 2.7"
     - "openstacksdk"
 options:
    name:
@@ -83,11 +83,11 @@ openstack_users:
         id:
             description: Unique UUID.
             returned: success
-            type: string
+            type: str
         name:
             description: Name given to the user.
             returned: success
-            type: string
+            type: str
         enabled:
             description: Flag to indicate if the user is enabled
             returned: success
@@ -95,19 +95,19 @@ openstack_users:
         domain_id:
             description: Domain ID containing the user
             returned: success
-            type: string
+            type: str
         default_project_id:
             description: Default project ID of the user
             returned: success
-            type: string
+            type: str
         email:
             description: Email of the user
             returned: success
-            type: string
+            type: str
         username:
             description: Username of the user
             returned: success
-            type: string
+            type: str
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -135,7 +135,7 @@ def main():
                 # We assume admin is passing domain id
                 dom = opcloud.get_domain(domain)['id']
                 domain = dom
-            except:
+            except Exception:
                 # If we fail, maybe admin is passing a domain name.
                 # Note that domains have unique names, just like id.
                 dom = opcloud.search_domains(filters={'name': domain})

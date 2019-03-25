@@ -23,6 +23,25 @@
     that:
     - '(after.stdout |int) - (before.stdout|int) >= 4'
 
+- name: test subsecond pause
+  block:
+    - name: Measure time before loop with .5s pause
+      set_fact:
+        times: "{{times|default([]) + [ lookup('pipe','date +%s.%3N') ]}}"
+      with_sequence: count=3
+      loop_control:
+        pause: 0.6
+
+    - name: ensure lag, since there is 3 rounds, and 0.5 seconds between, it should last 1.2 seconds, but allowing leeway due to CI lag
+      assert:
+        that:
+            - tdiff|float >= 1.2
+            - tdiff|int < 3
+      vars:
+        tdiff: '{{ times[2]|float - times[0]|float }}'
+  when:
+    - ansible_facts['distribution'] not in ("MacOSX", "FreeBSD")
+
 #
 # Tests of loop syntax with args
 #
@@ -177,31 +196,6 @@
   loop_control:
     index_var: my_idx
 
-#
-# loop_control/label
-# https://github.com/ansible/ansible/pull/36430
-#
-
-- set_fact:
-    loopthis:
-        - name: foo
-          label: foo_label
-        - name: bar
-          label: bar_label
-
-- name: check that item label is updated each iteration
-  debug:
-    msg: "{{ looped_var.name }}"
-  with_items: "{{ loopthis }}"
-  loop_control:
-    loop_var: looped_var
-    label: "looped_var {{ looped_var.label }}"
-  register: output
-
-- assert:
-    that:
-      - "output.results[0]['_ansible_item_label'] == 'looped_var foo_label'"
-      - "output.results[1]['_ansible_item_label'] == 'looped_var bar_label'"
 
 # The following test cases are to ensure that we don't have a regression on
 # GitHub Issue https://github.com/ansible/ansible/issues/35481
@@ -223,3 +217,111 @@
 - assert:
     that:
       - with_list_passed_a_dict is failed
+
+- debug:
+    var: "item"
+  loop:
+    - "{{ ansible_search_path }}"
+  register: loop_search_path
+
+- assert:
+    that:
+      - ansible_search_path == loop_search_path.results.0.item
+
+# https://github.com/ansible/ansible/issues/45189
+- name: with_X conditional delegate_to shortcircuit on templating error
+  debug:
+    msg: "loop"
+  when: false
+  delegate_to: localhost
+  with_list: "{{ fake_var }}"
+  register: result
+  failed_when: result is not skipped
+
+- name: loop conditional delegate_to shortcircuit on templating error
+  debug:
+      msg: "loop"
+  when: false
+  delegate_to: localhost
+  loop: "{{ fake_var }}"
+  register: result
+  failed_when: result is not skipped
+
+- name: Loop on literal empty list
+  debug:
+  loop: []
+  register: literal_empty_list
+  failed_when: literal_empty_list is not skipped
+
+# https://github.com/ansible/ansible/issues/47372
+- name: Loop unsafe list
+  debug:
+    var: item
+  with_items: "{{ things|list|unique }}"
+  vars:
+    things:
+      - !unsafe foo
+      - !unsafe bar
+
+- name: extended loop info
+  assert:
+    that:
+      - ansible_loop.nextitem == 'orange'
+      - ansible_loop.index == 1
+      - ansible_loop.index0 == 0
+      - ansible_loop.first
+      - not ansible_loop.last
+      - ansible_loop.previtem is undefined
+      - ansible_loop.allitems == ['apple', 'orange', 'banana']
+      - ansible_loop.revindex == 3
+      - ansible_loop.revindex0 == 2
+      - ansible_loop.length == 3
+  loop:
+    - apple
+    - orange
+    - banana
+  loop_control:
+    extended: true
+  when: item == 'apple'
+
+- name: extended loop info 2
+  assert:
+    that:
+      - ansible_loop.nextitem == 'banana'
+      - ansible_loop.index == 2
+      - ansible_loop.index0 == 1
+      - not ansible_loop.first
+      - not ansible_loop.last
+      - ansible_loop.previtem == 'apple'
+      - ansible_loop.allitems == ['apple', 'orange', 'banana']
+      - ansible_loop.revindex == 2
+      - ansible_loop.revindex0 == 1
+      - ansible_loop.length == 3
+  loop:
+    - apple
+    - orange
+    - banana
+  loop_control:
+    extended: true
+  when: item == 'orange'
+
+- name: extended loop info 3
+  assert:
+    that:
+      - ansible_loop.nextitem is undefined
+      - ansible_loop.index == 3
+      - ansible_loop.index0 == 2
+      - not ansible_loop.first
+      - ansible_loop.last
+      - ansible_loop.previtem == 'orange'
+      - ansible_loop.allitems == ['apple', 'orange', 'banana']
+      - ansible_loop.revindex == 1
+      - ansible_loop.revindex0 == 0
+      - ansible_loop.length == 3
+  loop:
+    - apple
+    - orange
+    - banana
+  loop_control:
+    extended: true
+  when: item == 'banana'

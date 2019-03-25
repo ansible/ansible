@@ -8,37 +8,14 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.parsing.yaml.objects import AnsibleUnicode
 from ansible.plugins.action import ActionBase
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class ActionModule(ActionBase):
 
     DEFAULT_REBOOT_TIMEOUT = 1200
-
-    def _validate_categories(self, category_names):
-        valid_categories = [
-            'Application',
-            'Connectors',
-            'CriticalUpdates',
-            'DefinitionUpdates',
-            'DeveloperKits',
-            'FeaturePacks',
-            'Guidance',
-            'SecurityUpdates',
-            'ServicePacks',
-            'Tools',
-            'UpdateRollups',
-            'Updates'
-        ]
-        for name in category_names:
-            if name not in valid_categories:
-                raise AnsibleError("Unknown category_name %s, must be one of "
-                                   "(%s)" % (name, ','.join(valid_categories)))
 
     def _run_win_updates(self, module_args, task_vars, use_task):
         display.vvv("win_updates: running win_updates module")
@@ -157,28 +134,12 @@ class ActionModule(ActionBase):
         result = super(ActionModule, self).run(tmp, task_vars)
         del tmp  # tmp no longer has any effect
 
-        category_names = self._task.args.get('category_names', [
-            'CriticalUpdates',
-            'SecurityUpdates',
-            'UpdateRollups',
-        ])
-        if isinstance(category_names, AnsibleUnicode):
-            category_names = [cat.strip() for cat in category_names.split(",")]
-
         state = self._task.args.get('state', 'installed')
         reboot = self._task.args.get('reboot', False)
         reboot_timeout = self._task.args.get('reboot_timeout',
                                              self.DEFAULT_REBOOT_TIMEOUT)
         use_task = boolean(self._task.args.get('use_scheduled_task', False),
                            strict=False)
-
-        # Validate the options
-        try:
-            self._validate_categories(category_names)
-        except AnsibleError as exc:
-            result['failed'] = True
-            result['msg'] = to_text(exc)
-            return result
 
         if state not in ['installed', 'searched']:
             result['failed'] = True
@@ -213,7 +174,7 @@ class ActionModule(ActionBase):
         # so we just return the result as is
         # https://github.com/ansible/ansible/issues/38232
         failed = result.get('failed', False)
-        if "updates" not in result.keys() or failed:
+        if ("updates" not in result.keys() and self._task.async_val == 0) or failed:
             result['failed'] = True
             return result
 

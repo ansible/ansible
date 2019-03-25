@@ -12,9 +12,14 @@ DOCUMENTATION = '''
     description:
         - Uses a YAML configuration file with a valid YAML or C(.config) extension to define var expressions and group conditionals
         - The Jinja2 conditionals that qualify a host for membership.
-        - The JInja2 exprpessions are calculated and assigned to the variables
+        - The Jinja2 expressions are calculated and assigned to the variables
         - Only variables already available from previous inventories or the fact cache can be used for templating.
         - When I(strict) is False, failed expressions will be ignored (assumes vars were missing).
+    options:
+        plugin:
+            description: token that ensures this is a source file for the 'constructed' plugin.
+            required: True
+            choices: ['constructed']
     extends_documentation_fragment:
       - constructed
 '''
@@ -48,9 +53,19 @@ EXAMPLES = r'''
         - prefix: distro
           key: ansible_distribution
 
+        # the following examples assume the first inventory is from contrib/inventory/ec2.py
         # this creates a group per ec2 architecture and assign hosts to the matching ones (arch_x86_64, arch_sparc, etc)
         - prefix: arch
           key: ec2_architecture
+
+        # this creates a group per ec2 region like "us_west_1"
+        - prefix: ""
+          separator: ""
+          key: ec2_region
+
+        # this creates a common parent group for all ec2 availability zones
+        - key: ec2_placement
+          parent_group: all_ec2_zones
 '''
 
 import os
@@ -58,14 +73,14 @@ import os
 from ansible import constants as C
 from ansible.errors import AnsibleParserError
 from ansible.inventory.helpers import get_group_vars
-from ansible.plugins.cache import FactCache
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
 from ansible.module_utils._text import to_native
 from ansible.utils.vars import combine_vars
+from ansible.vars.fact_cache import FactCache
 
 
 class InventoryModule(BaseInventoryPlugin, Constructable):
-    """ constructs groups and vars using Jinaj2 template expressions """
+    """ constructs groups and vars using Jinja2 template expressions """
 
     NAME = 'constructed'
 

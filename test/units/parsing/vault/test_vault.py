@@ -29,8 +29,8 @@ import tempfile
 from binascii import hexlify
 import pytest
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock
+from units.compat import unittest
+from units.compat.mock import patch, MagicMock
 
 from ansible import errors
 from ansible.module_utils import six
@@ -751,20 +751,6 @@ class TestVaultLib(unittest.TestCase):
         self.assertEqual(cipher_name, u'TEST', msg="cipher name was not properly set")
         self.assertEqual(b_version, b"9.9", msg="version was not properly set")
 
-    def test_encrypt_decrypt_aes(self):
-        self.v.cipher_name = u'AES'
-        vault_secrets = self._vault_secrets_from_password('default', 'ansible')
-        self.v.secrets = vault_secrets
-        # AES encryption code has been removed, so this is old output for
-        # AES-encrypted 'foobar' with password 'ansible'.
-        b_vaulttext = b'''$ANSIBLE_VAULT;1.1;AES
-53616c7465645f5fc107ce1ef4d7b455e038a13b053225776458052f8f8f332d554809d3f150bfa3
-fe3db930508b65e0ff5947e4386b79af8ab094017629590ef6ba486814cf70f8e4ab0ed0c7d2587e
-786a5a15efeb787e1958cbdd480d076c
-'''
-        b_plaintext = self.v.decrypt(b_vaulttext)
-        self.assertEqual(b_plaintext, b"foobar", msg="decryption failed")
-
     def test_encrypt_decrypt_aes256(self):
         self.v.cipher_name = u'AES256'
         plaintext = u"foobar"
@@ -928,13 +914,6 @@ fe3db930508b65e0ff5947e4386b79af8ab094017629590ef6ba486814cf70f8e4ab0ed0c7d2587e
         b_ciphertext, b_version, cipher_name, vault_id = vault.parse_vaulttext_envelope(b_vaulttext)
         self.assertEqual('ansible_devel', vault_id)
         self.assertEqual(b'1.2', b_version)
-
-    def test_encrypt_encrypted(self):
-        self.v.cipher_name = u'AES'
-        b_vaulttext = b"$ANSIBLE_VAULT;9.9;TEST\n%s" % hexlify(b"ansible")
-        vaulttext = to_text(b_vaulttext, errors='strict')
-        self.assertRaises(errors.AnsibleError, self.v.encrypt, b_vaulttext)
-        self.assertRaises(errors.AnsibleError, self.v.encrypt, vaulttext)
 
     def test_decrypt_decrypted(self):
         plaintext = u"ansible"

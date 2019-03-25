@@ -2,22 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2016 Red Hat, Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -90,8 +75,15 @@ options:
             - Specify format of the disk.
             - Note that this option isn't idempotent as it's not currently possible to change format of the disk via API.
         choices: ['raw', 'cow']
+    content_type:
+        description:
+            - Specify if the disk is a data disk or ISO image
+        choices: ['data', 'iso']
+        default: 'data'
+        version_added: "2.8"
     sparse:
         required: False
+        type: bool
         version_added: "2.5"
         description:
             - "I(True) if the disk should be sparse (also known as I(thin provision)).
@@ -115,6 +107,7 @@ options:
             - "Please take a look at C(image_path) documentation to see the correct
                usage of this parameter."
         version_added: "2.3"
+        type: bool
     profile:
         description:
             - "Disk profile name to be attached to disk. By default profile is chosen by oVirt/RHV engine."
@@ -125,9 +118,11 @@ options:
     bootable:
         description:
             - "I(True) if the disk should be bootable. By default when disk is created it isn't bootable."
+        type: bool
     shareable:
         description:
             - "I(True) if the disk should be shareable. By default when disk is created it isn't shareable."
+        type: bool
     logical_unit:
         description:
             - "Dictionary which describes LUN to be directly attached to VM:"
@@ -147,6 +142,7 @@ options:
             - "Note that this parameter isn't idempotent, as it's not possible
                to check if the disk should be or should not be sparsified."
         version_added: "2.4"
+        type: bool
     openstack_volume_type:
         description:
             - "Name of the openstack volume type. This is valid when working
@@ -161,6 +157,25 @@ options:
                your playbook accordingly to not export the disk all the time.
                This option is valid only for template disks."
         version_added: "2.4"
+    host:
+        description:
+            - "When the hypervisor name is specified the newly created disk or
+               an existing disk will refresh its information about the
+               underlying storage( Disk size, Serial, Product ID, Vendor ID ...)
+               The specified host will be used for gathering the storage
+               related information. This option is only valid for passthrough
+               disks. This option requires at least the logical_unit.id to be
+               specified"
+        version_added: "2.8"
+    wipe_after_delete:
+        description:
+            - "If the disk's Wipe After Delete is enabled, then the disk is first wiped."
+        type: bool
+    activate:
+        description:
+            - I(True) if the disk should be activated.
+        version_added: "2.8"
+        type: bool
 extends_documentation_fragment: ovirt
 '''
 
@@ -195,6 +210,13 @@ EXAMPLES = '''
     size: 10GiB
     format: cow
     interface: virtio
+
+# Change Disk Name
+- ovirt_disk:
+    id: 00000000-0000-0000-0000-000000000000
+    storage_domain: data
+    name: "new_disk_name"
+    vm_name: rhel7
 
 # Upload local image to disk and attach it to vm:
 # Since Ansible 2.3
@@ -231,6 +253,18 @@ EXAMPLES = '''
     storage_domain: data
     description: somedescriptionhere
     quota_id: "{{ ovirt_quotas[0]['id'] }}"
+
+# Upload an ISO image
+# Since Ansible 2.8
+-  ovirt_disk:
+     name: myiso
+     upload_image_path: /path/to/iso/image
+     storage_domain: data
+     size: 4 GiB
+     wait: true
+     bootable: true
+     format: raw
+     content_type: iso
 '''
 
 
@@ -261,12 +295,10 @@ import ssl
 
 from ansible.module_utils.six.moves.http_client import HTTPSConnection, IncompleteRead
 from ansible.module_utils.six.moves.urllib.parse import urlparse
-
 try:
     import ovirtsdk4.types as otypes
 except ImportError:
     pass
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ovirt import (
     BaseModule,
@@ -365,34 +397,28 @@ def transfer(connection, module, direction, transfer_func):
 
 def download_disk_image(connection, module):
     def _transfer(transfer_service, proxy_connection, proxy_url, transfer_ticket):
-        disks_service = connection.system_service().disks_service()
-        disk = disks_service.disk_service(module.params['id']).get()
-        size = disk.actual_size
+        BUF_SIZE = 128 * 1024
         transfer_headers = {
             'Authorization': transfer_ticket,
         }
-        with open(module.params['download_image_path'], "wb") as mydisk:
+        proxy_connection.request(
+            'GET',
+            proxy_url.path,
+            headers=transfer_headers,
+        )
+        r = proxy_connection.getresponse()
+        path = module.params["download_image_path"]
+        image_size = int(r.getheader('Content-Length'))
+        with open(path, "wb") as mydisk:
             pos = 0
-            MiB_per_request = 8
-            chunk_size = 1024 * 1024 * MiB_per_request
-            while pos < size:
-                transfer_service.extend()
-                transfer_headers['Range'] = 'bytes=%d-%d' % (pos, min(size, pos + chunk_size) - 1)
-                proxy_connection.request(
-                    'GET',
-                    proxy_url.path,
-                    headers=transfer_headers,
-                )
-                r = proxy_connection.getresponse()
-                if r.status >= 300:
-                    raise Exception("Error: %s" % r.read())
+            while pos < image_size:
+                to_read = min(image_size - pos, BUF_SIZE)
+                chunk = r.read(to_read)
+                if not chunk:
+                    raise RuntimeError("Socket disconnected")
+                mydisk.write(chunk)
+                pos += len(chunk)
 
-                try:
-                    mydisk.write(r.read())
-                except IncompleteRead as e:
-                    mydisk.write(e.partial)
-                    break
-                pos += chunk_size
     return transfer(
         connection,
         module,
@@ -403,28 +429,24 @@ def download_disk_image(connection, module):
 
 def upload_disk_image(connection, module):
     def _transfer(transfer_service, proxy_connection, proxy_url, transfer_ticket):
+        BUF_SIZE = 128 * 1024
         path = module.params['upload_image_path']
-        transfer_headers = {
-            'Authorization': transfer_ticket,
-        }
+
+        image_size = os.path.getsize(path)
+        proxy_connection.putrequest("PUT", proxy_url.path)
+        proxy_connection.putheader('Content-Length', "%d" % (image_size,))
+        proxy_connection.endheaders()
         with open(path, "rb") as disk:
             pos = 0
-            MiB_per_request = 8
-            size = os.path.getsize(path)
-            chunk_size = 1024 * 1024 * MiB_per_request
-            while pos < size:
-                transfer_service.extend()
-                transfer_headers['Content-Range'] = "bytes %d-%d/%d" % (pos, min(pos + chunk_size, size) - 1, size)
-                proxy_connection.request(
-                    'PUT',
-                    proxy_url.path,
-                    disk.read(chunk_size),
-                    headers=transfer_headers,
-                )
-                r = proxy_connection.getresponse()
-                if r.status >= 400:
-                    raise Exception("Failed to upload disk image.")
-                pos += chunk_size
+            while pos < image_size:
+                to_read = min(image_size - pos, BUF_SIZE)
+                chunk = disk.read(to_read)
+                if not chunk:
+                    transfer_service.pause()
+                    raise RuntimeError("Unexpected end of file at pos=%d" % pos)
+                proxy_connection.send(chunk)
+                pos += len(chunk)
+
     return transfer(
         connection,
         module,
@@ -444,6 +466,9 @@ class DisksModule(BaseModule):
             format=otypes.DiskFormat(
                 self._module.params.get('format')
             ) if self._module.params.get('format') else None,
+            content_type=otypes.DiskContentType(
+                self._module.params.get('content_type')
+            ) if self._module.params.get('content_type') else None,
             sparse=self._module.params.get(
                 'sparse'
             ) if self._module.params.get(
@@ -462,6 +487,7 @@ class DisksModule(BaseModule):
             ],
             quota=otypes.Quota(id=self._module.params.get('quota_id')) if self.param('quota_id') else None,
             shareable=self._module.params.get('shareable'),
+            wipe_after_delete=self.param('wipe_after_delete'),
             lun_storage=otypes.HostStorage(
                 type=otypes.StorageType(
                     logical_unit.get('storage_type', 'iscsi')
@@ -478,7 +504,7 @@ class DisksModule(BaseModule):
                 ],
             ) if logical_unit else None,
         )
-        if hasattr(disk, 'initial_size'):
+        if hasattr(disk, 'initial_size') and self._module.params['upload_image_path']:
             disk.initial_size = convert_to_bytes(
                 self._module.params.get('size')
             )
@@ -528,10 +554,12 @@ class DisksModule(BaseModule):
 
     def _update_check(self, entity):
         return (
+            equal(self._module.params.get('name'), entity.name) and
             equal(self._module.params.get('description'), entity.description) and
             equal(self.param('quota_id'), getattr(entity.quota, 'id', None)) and
             equal(convert_to_bytes(self._module.params.get('size')), entity.provisioned_size) and
-            equal(self._module.params.get('shareable'), entity.shareable)
+            equal(self._module.params.get('shareable'), entity.shareable) and
+            equal(self.param('wipe_after_delete'), entity.wipe_after_delete)
         )
 
 
@@ -544,15 +572,28 @@ class DiskAttachmentsModule(DisksModule):
                 self._module.params.get('interface')
             ) if self._module.params.get('interface') else None,
             bootable=self._module.params.get('bootable'),
-            active=True,
+            active=self.param('activate'),
         )
 
     def update_check(self, entity):
         return (
             super(DiskAttachmentsModule, self)._update_check(follow_link(self._connection, entity.disk)) and
             equal(self._module.params.get('interface'), str(entity.interface)) and
-            equal(self._module.params.get('bootable'), entity.bootable)
+            equal(self._module.params.get('bootable'), entity.bootable) and
+            equal(self.param('activate'), entity.active)
         )
+
+
+def searchable_attributes(module):
+    """
+    Return all searchable disk attributes passed to module.
+    """
+    attributes = {
+        'name': module.params.get('name'),
+        'Storage.name': module.params.get('storage_domain'),
+        'vm_names': module.params.get('vm_name'),
+    }
+    return dict((k, v) for k, v in attributes.items() if v is not None)
 
 
 def main():
@@ -573,6 +614,7 @@ def main():
         profile=dict(default=None),
         quota_id=dict(default=None),
         format=dict(default='cow', choices=['raw', 'cow']),
+        content_type=dict(default='data', choices=['data', 'iso']),
         sparse=dict(default=None, type='bool'),
         bootable=dict(default=None, type='bool'),
         shareable=dict(default=None, type='bool'),
@@ -583,14 +625,24 @@ def main():
         sparsify=dict(default=None, type='bool'),
         openstack_volume_type=dict(default=None),
         image_provider=dict(default=None),
+        host=dict(default=None),
+        wipe_after_delete=dict(type='bool', default=None),
+        activate=dict(default=None, type='bool'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
 
-    if module._name == 'ovirt_disks':
-        module.deprecate("The 'ovirt_disks' module is being renamed 'ovirt_disk'", version=2.8)
+    lun = module.params.get('logical_unit')
+    host = module.params['host']
+    # Fail when host is specified with the LUN id. Lun id is needed to identify
+    # an existing disk if already available inthe environment.
+    if (host and lun is None) or (host and lun.get("id") is None):
+        module.fail_json(
+            msg="Can not use parameter host ({0!s}) without "
+            "specifying the logical_unit id".format(host)
+        )
 
     check_sdk(module)
     check_params(module)
@@ -607,7 +659,6 @@ def main():
             service=disks_service,
         )
 
-        lun = module.params.get('logical_unit')
         if lun:
             disk = _search_by_lun(disks_service, lun.get('id'))
 
@@ -616,6 +667,7 @@ def main():
         if state in ('present', 'detached', 'attached'):
             ret = disks_module.create(
                 entity=disk,
+                search_params=searchable_attributes(module),
                 result_state=otypes.DiskStatus.OK if lun is None else None,
                 fail_condition=lambda d: d.status == otypes.DiskStatus.ILLEGAL if lun is None else False,
             )
@@ -637,13 +689,14 @@ def main():
                 ret['changed'] = ret['changed'] or downloaded
 
             # Disk sparsify, only if disk is of image type:
-            disk = disks_service.disk_service(module.params['id']).get()
-            if disk.storage_type == otypes.DiskStorageType.IMAGE:
-                ret = disks_module.action(
-                    action='sparsify',
-                    action_condition=lambda d: module.params['sparsify'],
-                    wait_condition=lambda d: d.status == otypes.DiskStatus.OK,
-                )
+            if not module.check_mode:
+                disk = disks_service.disk_service(module.params['id']).get()
+                if disk.storage_type == otypes.DiskStorageType.IMAGE:
+                    ret = disks_module.action(
+                        action='sparsify',
+                        action_condition=lambda d: module.params['sparsify'],
+                        wait_condition=lambda d: d.status == otypes.DiskStatus.OK,
+                    )
 
         # Export disk as image to glance domain
         elif state == 'exported':
@@ -696,6 +749,13 @@ def main():
                     )
             elif state == 'detached':
                 ret = disk_attachments_module.remove()
+
+        # When the host parameter is specified and the disk is not being
+        # removed, refresh the information about the LUN.
+        if state != 'absent' and host:
+            hosts_service = connection.system_service().hosts_service()
+            host_id = get_id_by_name(hosts_service, host)
+            disks_service.disk_service(disk.id).refresh_lun(otypes.Host(id=host_id))
 
         module.exit_json(**ret)
     except Exception as e:

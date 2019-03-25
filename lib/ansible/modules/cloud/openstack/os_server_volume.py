@@ -44,7 +44,7 @@ options:
      description:
        - Ignored. Present for backwards compatibility
 requirements:
-    - "python >= 2.6"
+    - "python >= 2.7"
     - "openstacksdk"
 '''
 
@@ -139,7 +139,7 @@ def main():
                 result='Detached volume from server'
             )
 
-    except (sdk.exceptions.OpenStackCloudException, sdk.exceptions.OpenStackCloudTimeout) as e:
+    except (sdk.exceptions.OpenStackCloudException, sdk.exceptions.ResourceTimeout) as e:
         module.fail_json(msg=str(e))
 
 

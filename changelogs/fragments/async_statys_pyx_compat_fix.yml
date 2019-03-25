@@ -1,0 +1,2 @@
+bugfixes:
+    - use to_native (py2/3 safe) instead of str for 'textualizing' intput in async_status

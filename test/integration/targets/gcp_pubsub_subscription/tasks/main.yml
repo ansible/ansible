@@ -15,68 +15,58 @@
 # Pre-test setup
 - name: create a topic
   gcp_pubsub_topic:
-      name: 'topic-subscription'
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/pubsub
-      state: present
+    name: topic-subscription
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: topic
 - name: delete a subscription
   gcp_pubsub_subscription:
-      name: "{{ resource_name }}"
-      topic: "{{ topic }}"
-      push_config:
-        push_endpoint: 'https://myapp.graphite.cloudnativeapp.com/webhook/sub1'
-      ack_deadline_seconds: 300
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/pubsub
-      state: absent
+    name: "{{ resource_name }}"
+    topic: "{{ topic }}"
+    ack_deadline_seconds: 300
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
 #----------------------------------------------------------
 - name: create a subscription
   gcp_pubsub_subscription:
-      name: "{{ resource_name }}"
-      topic: "{{ topic }}"
-      push_config:
-        push_endpoint: 'https://myapp.graphite.cloudnativeapp.com/webhook/sub1'
-      ack_deadline_seconds: 300
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/pubsub
-      state: present
+    name: "{{ resource_name }}"
+    topic: "{{ topic }}"
+    ack_deadline_seconds: 300
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: result
 - name: assert changed is true
   assert:
     that:
       - result.changed == true
 - name: verify that subscription was created
-  shell: |
-    gcloud beta pubsub subscriptions list  --project="{{ gcp_project}}"  | grep "{{ resource_name }}"  | grep 'test-topic1'
-  register: results
-- name: verify that command succeeded
-  assert:
-    that:
-      - results.rc == 0
-# ----------------------------------------------------------------------------
-- name: create a subscription that already exists
-  gcp_pubsub_subscription:
-      name: "{{ resource_name }}"
-      topic: "{{ topic }}"
-      push_config:
-        push_endpoint: 'https://myapp.graphite.cloudnativeapp.com/webhook/sub1'
-      ack_deadline_seconds: 300
+  gcp_pubsub_subscription_facts:
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
       scopes:
         - https://www.googleapis.com/auth/pubsub
-      state: present
+  register: results
+- name: verify that command succeeded
+  assert:
+    that:
+      - "\"{{resource_name}}\" in \"{{ results['items'] | map(attribute='name') | list }}\""
+# ----------------------------------------------------------------------------
+- name: create a subscription that already exists
+  gcp_pubsub_subscription:
+    name: "{{ resource_name }}"
+    topic: "{{ topic }}"
+    ack_deadline_seconds: 300
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: result
 - name: assert changed is false
   assert:
@@ -85,46 +75,40 @@
 #----------------------------------------------------------
 - name: delete a subscription
   gcp_pubsub_subscription:
-      name: "{{ resource_name }}"
-      topic: "{{ topic }}"
-      push_config:
-        push_endpoint: 'https://myapp.graphite.cloudnativeapp.com/webhook/sub1'
-      ack_deadline_seconds: 300
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/pubsub
-      state: absent
+    name: "{{ resource_name }}"
+    topic: "{{ topic }}"
+    ack_deadline_seconds: 300
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
   register: result
 - name: assert changed is true
   assert:
     that:
       - result.changed == true
 - name: verify that subscription was deleted
-  shell: |
-    gcloud beta pubsub subscriptions list  --project="{{ gcp_project}}"  | grep "{{ resource_name }}"  | grep 'test-topic1'
-  register: results
-  failed_when: results.rc == 0
-- name: verify that command succeeded
-  assert:
-    that:
-      - results.rc == 1
-      - "\"{{ resource_name }} was not found.\" in results.stderr"
-# ----------------------------------------------------------------------------
-- name: delete a subscription that does not exist
-  gcp_pubsub_subscription:
-      name: "{{ resource_name }}"
-      topic: "{{ topic }}"
-      push_config:
-        push_endpoint: 'https://myapp.graphite.cloudnativeapp.com/webhook/sub1'
-      ack_deadline_seconds: 300
+  gcp_pubsub_subscription_facts:
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
       scopes:
         - https://www.googleapis.com/auth/pubsub
-      state: absent
+  register: results
+- name: verify that command succeeded
+  assert:
+    that:
+      - "\"{{resource_name}}\" not in \"{{ results['items'] | map(attribute='name') | list }}\""
+# ----------------------------------------------------------------------------
+- name: delete a subscription that does not exist
+  gcp_pubsub_subscription:
+    name: "{{ resource_name }}"
+    topic: "{{ topic }}"
+    ack_deadline_seconds: 300
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
   register: result
 - name: assert changed is false
   assert:
@@ -132,13 +116,13 @@
       - result.changed == false
 #---------------------------------------------------------
 # Post-test teardown
+# If errors happen, don't crash the playbook!
 - name: delete a topic
   gcp_pubsub_topic:
-      name: 'topic-subscription'
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/pubsub
-      state: absent
+    name: topic-subscription
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
   register: topic
+  ignore_errors: true

@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = '''
 ---
 module: aws_config_rule
 short_description: Manage AWS Config resources
@@ -86,7 +86,7 @@ extends_documentation_fragment:
   - ec2
 '''
 
-EXAMPLES = r'''
+EXAMPLES = '''
 - name: Create Config Rule for AWS Config
   aws_config_rule:
     name: test_config_rule
@@ -101,7 +101,7 @@ EXAMPLES = r'''
 
 '''
 
-RETURN = r'''#'''
+RETURN = '''#'''
 
 
 try:
@@ -110,7 +110,7 @@ try:
 except ImportError:
     pass  # handled by AnsibleAWSModule
 
-from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
 from ansible.module_utils.ec2 import AWSRetry, camel_dict_to_snake_dict
 
 
@@ -121,9 +121,9 @@ def rule_exists(client, module, params):
             aws_retry=True,
         )
         return rule['ConfigRules'][0]
-    except client.exceptions.from_code('NoSuchConfigRuleException'):
+    except is_boto3_error_code('NoSuchConfigRuleException'):
         return
-    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:  # pylint: disable=duplicate-except
         module.fail_json_aws(e)
 
 

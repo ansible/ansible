@@ -46,9 +46,9 @@ Other YAML files may be included in certain directories. For example, it is comm
     # roles/example/tasks/main.yml
     - name: added in 2.4, previously you used 'include'
       import_tasks: redhat.yml
-      when: ansible_os_platform|lower == 'redhat'
+      when: ansible_facts['os_family']|lower == 'redhat'
     - import_tasks: debian.yml
-      when: ansible_os_platform|lower == 'debian'
+      when: ansible_facts['os_family']|lower == 'debian'
 
     # roles/example/tasks/redhat.yml
     - yum:
@@ -70,8 +70,8 @@ The classic (original) way to use roles is via the ``roles:`` option for a given
     ---
     - hosts: webservers
       roles:
-         - common
-         - webservers
+        - common
+        - webservers
 
 This designates the following behaviors, for each role 'x':
 
@@ -149,13 +149,13 @@ Or, using the newer syntax::
     - hosts: webservers
       tasks:
       - include_role:
-           name: foo_app_instance
+          name: foo_app_instance
         vars:
           dir: '/opt/a'
           app_port: 5000
       ...
 
-You can conditionally import a role and execute it's tasks::
+You can conditionally import a role and execute its tasks::
 
     ---
 
@@ -163,7 +163,7 @@ You can conditionally import a role and execute it's tasks::
       tasks:
       - include_role:
           name: some_role
-        when: "ansible_os_family == 'RedHat'"
+        when: "ansible_facts['os_family'] == 'RedHat'"
 
 
 
@@ -173,9 +173,11 @@ Finally, you may wish to assign tags to the tasks inside the roles you specify. 
 
     - hosts: webservers
       roles:
-        - role: bar
-          tags: ["foo"]
-        # using YAML shorthand, this is equivalent to the above
+        - role: foo
+          tags:
+            - bar
+            - baz
+        # using YAML shorthand, this is equivalent to the above:
         - { role: foo, tags: ["bar", "baz"] }
 
 Or, again, using the newer syntax::
@@ -282,8 +284,8 @@ Role dependencies allow you to automatically pull in other roles when using a ro
 
 .. note::
     Role dependencies must use the classic role definition style.
-
-Role dependencies are always executed before the role that includes them, and may be recursive. Dependencies also follow the duplication rules specified above. If another role also lists it as a dependency, it will not be run again based on the same rules given above.
+    
+Role dependencies are always executed before the role that includes them, and may be recursive. Dependencies also follow the duplication rules specified above. If another role also lists it as a dependency, it will not be run again based on the same rules given above. See :ref:`Galaxy role dependencies <galaxy_dependencies>` for more details.
 
 .. note::
     Always remember that when using ``allow_duplicates: true``, it needs to be in the dependent role's ``meta/main.yml``, not the parent.
@@ -397,7 +399,7 @@ Ansible Galaxy
 
 The client ``ansible-galaxy`` is included in Ansible. The Galaxy client allows you to download roles from Ansible Galaxy, and also provides an excellent default framework for creating your own roles. 
 
-Read the Ansible Galaxy introduction <https://galaxy.ansible.com/intro>_ page for more information
+Read the `Ansible Galaxy documentation <https://galaxy.ansible.com/docs/>`_ page for more information
 
 .. seealso::
 
@@ -421,6 +423,6 @@ Read the Ansible Galaxy introduction <https://galaxy.ansible.com/intro>_ page fo
        Learn how to extend Ansible by writing your own modules
    `GitHub Ansible examples <https://github.com/ansible/ansible-examples>`_
        Complete playbook files from the GitHub project source
-   `Mailing List <http://groups.google.com/group/ansible-project>`_
+   `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
 

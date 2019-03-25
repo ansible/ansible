@@ -1,0 +1,61 @@
+{
+    "_meta": {
+        "hostvars": {
+            "alice": {
+                "status": "single"
+            }, 
+            "bobby": {
+                "in_trouble": true, 
+                "popular": false
+            }, 
+            "cindy": {
+                "in_trouble": true, 
+                "popular": true
+            }, 
+            "greg": {
+                "in_trouble": true, 
+                "popular": true
+            }, 
+            "jan": {
+                "in_trouble": true, 
+                "popular": false
+            }, 
+            "marcia": {
+                "in_trouble": true, 
+                "popular": true
+            }, 
+            "peter": {
+                "in_trouble": true, 
+                "popular": false
+            }
+        }
+    }, 
+    "all": {
+        "children": [
+            "cousins", 
+            "kids", 
+            "the-maid", 
+            "ungrouped"
+        ]
+    }, 
+    "cousins": {
+        "children": [
+            "redheads"
+        ]
+    }, 
+    "kids": {
+        "hosts": [
+            "bobby", 
+            "cindy", 
+            "greg", 
+            "jan", 
+            "marcia", 
+            "peter"
+        ]
+    }, 
+    "the-maid": {
+        "hosts": [
+            "alice"
+        ]
+    }
+}

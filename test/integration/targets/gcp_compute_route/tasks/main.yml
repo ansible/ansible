@@ -15,45 +15,39 @@
 # Pre-test setup
 - name: create a network
   gcp_compute_network:
-      name: 'network-route'
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
-      state: present
+    name: network-route
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: network
 - name: delete a route
   gcp_compute_route:
-      name: "{{ resource_name }}"
-      dest_range: '192.168.6.0/24'
-      next_hop_gateway: 'global/gateways/default-internet-gateway'
-      network: "{{ network }}"
-      tags:
-        - backends
-        - databases
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
-      state: absent
+    name: "{{ resource_name }}"
+    dest_range: 192.168.6.0/24
+    next_hop_gateway: global/gateways/default-internet-gateway
+    network: "{{ network }}"
+    tags:
+    - backends
+    - databases
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
 #----------------------------------------------------------
 - name: create a route
   gcp_compute_route:
-      name: "{{ resource_name }}"
-      dest_range: '192.168.6.0/24'
-      next_hop_gateway: 'global/gateways/default-internet-gateway'
-      network: "{{ network }}"
-      tags:
-        - backends
-        - databases
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
-      state: present
+    name: "{{ resource_name }}"
+    dest_range: 192.168.6.0/24
+    next_hop_gateway: global/gateways/default-internet-gateway
+    network: "{{ network }}"
+    tags:
+    - backends
+    - databases
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: result
 - name: assert changed is true
   assert:
@@ -61,29 +55,33 @@
       - result.changed == true
       - "result.kind == 'compute#route'"
 - name: verify that route was created
-  shell: |
-    gcloud compute routes describe  --project="{{ gcp_project}}"  "{{ resource_name }}"
-  register: results
-- name: verify that command succeeded
-  assert:
-    that:
-      - results.rc == 0
-# ----------------------------------------------------------------------------
-- name: create a route that already exists
-  gcp_compute_route:
-      name: "{{ resource_name }}"
-      dest_range: '192.168.6.0/24'
-      next_hop_gateway: 'global/gateways/default-internet-gateway'
-      network: "{{ network }}"
-      tags:
-        - backends
-        - databases
+  gcp_compute_route_facts:
+      filters:
+         - name = {{ resource_name }}
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
       scopes:
         - https://www.googleapis.com/auth/compute
-      state: present
+  register: results
+- name: verify that command succeeded
+  assert:
+    that:
+      - results['items'] | length == 1
+# ----------------------------------------------------------------------------
+- name: create a route that already exists
+  gcp_compute_route:
+    name: "{{ resource_name }}"
+    dest_range: 192.168.6.0/24
+    next_hop_gateway: global/gateways/default-internet-gateway
+    network: "{{ network }}"
+    tags:
+    - backends
+    - databases
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: result
 - name: assert changed is false
   assert:
@@ -93,19 +91,17 @@
 #----------------------------------------------------------
 - name: delete a route
   gcp_compute_route:
-      name: "{{ resource_name }}"
-      dest_range: '192.168.6.0/24'
-      next_hop_gateway: 'global/gateways/default-internet-gateway'
-      network: "{{ network }}"
-      tags:
-        - backends
-        - databases
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
-      state: absent
+    name: "{{ resource_name }}"
+    dest_range: 192.168.6.0/24
+    next_hop_gateway: global/gateways/default-internet-gateway
+    network: "{{ network }}"
+    tags:
+    - backends
+    - databases
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
   register: result
 - name: assert changed is true
   assert:
@@ -113,31 +109,33 @@
       - result.changed == true
       - result.has_key('kind') == False
 - name: verify that route was deleted
-  shell: |
-    gcloud compute routes describe  --project="{{ gcp_project}}"  "{{ resource_name }}"
-  register: results
-  failed_when: results.rc == 0
-- name: verify that command succeeded
-  assert:
-    that:
-      - results.rc == 1
-      - "\"'projects/{{ gcp_project }}/global/routes/{{ resource_name }}' was not found\" in results.stderr"
-# ----------------------------------------------------------------------------
-- name: delete a route that does not exist
-  gcp_compute_route:
-      name: "{{ resource_name }}"
-      dest_range: '192.168.6.0/24'
-      next_hop_gateway: 'global/gateways/default-internet-gateway'
-      network: "{{ network }}"
-      tags:
-        - backends
-        - databases
+  gcp_compute_route_facts:
+      filters:
+         - name = {{ resource_name }}
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
       scopes:
         - https://www.googleapis.com/auth/compute
-      state: absent
+  register: results
+- name: verify that command succeeded
+  assert:
+    that:
+      - results['items'] | length == 0
+# ----------------------------------------------------------------------------
+- name: delete a route that does not exist
+  gcp_compute_route:
+    name: "{{ resource_name }}"
+    dest_range: 192.168.6.0/24
+    next_hop_gateway: global/gateways/default-internet-gateway
+    network: "{{ network }}"
+    tags:
+    - backends
+    - databases
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
   register: result
 - name: assert changed is false
   assert:
@@ -146,13 +144,13 @@
       - result.has_key('kind') == False
 #---------------------------------------------------------
 # Post-test teardown
+# If errors happen, don't crash the playbook!
 - name: delete a network
   gcp_compute_network:
-      name: 'network-route'
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
-      state: absent
+    name: network-route
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
   register: network
+  ignore_errors: true

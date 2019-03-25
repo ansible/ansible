@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = '''
 ---
 module: aws_config_aggregator
 short_description: Manage AWS Config aggregations across multiple accounts
@@ -63,7 +63,7 @@ extends_documentation_fragment:
   - ec2
 '''
 
-EXAMPLES = r'''
+EXAMPLES = '''
 - name: Create cross-account aggregator
   aws_config_aggregator:
     name: test_config_rule
@@ -76,35 +76,33 @@ EXAMPLES = r'''
       all_aws_regions: yes
 '''
 
-RETURN = r'''#'''
+RETURN = '''#'''
 
 
 try:
     import botocore
-    from botocore.exceptions import BotoCoreError, ClientError
 except ImportError:
     pass  # handled by AnsibleAWSModule
 
-from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, AWSRetry
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict
+from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
+from ansible.module_utils.ec2 import AWSRetry, camel_dict_to_snake_dict
 
 
-def resource_exists(client, module, resource_type, params):
+def resource_exists(client, module, params):
     try:
         aggregator = client.describe_configuration_aggregators(
             ConfigurationAggregatorNames=[params['name']]
         )
         return aggregator['ConfigurationAggregators'][0]
-    except client.exceptions.from_code('NoSuchConfigurationAggregatorException'):
+    except is_boto3_error_code('NoSuchConfigurationAggregatorException'):
         return
-    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:  # pylint: disable=duplicate-except
         module.fail_json_aws(e)
 
 
 def create_resource(client, module, params, result):
     try:
-        response = client.put_configuration_aggregator(
+        client.put_configuration_aggregator(
             ConfigurationAggregatorName=params['ConfigurationAggregatorName'],
             AccountAggregationSources=params['AccountAggregationSources'],
             OrganizationAggregationSource=params['OrganizationAggregationSource']

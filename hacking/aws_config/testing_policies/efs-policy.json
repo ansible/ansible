@@ -1,0 +1,36 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "ManageNetwork",
+            "Effect": "Allow",
+            "Action": [
+                "ec2:CreateNetworkInterface",
+                "ec2:CreateSubnet",
+                "ec2:CreateTags",
+                "ec2:CreateVpc",
+                "ec2:DeleteNetworkInterface",
+                "ec2:DeleteSubnet",
+                "ec2:DeleteVpc",
+                "ec2:DescribeNetworkInterfaceAttribute",
+                "ec2:DescribeNetworkInterfaces",
+                "ec2:DescribeSecurityGroups",
+                "ec2:DescribeSubnets",
+                "ec2:DescribeTags",
+                "ec2:DescribeVpcAttribute",
+                "ec2:DescribeVpcClassicLink",
+                "ec2:DescribeVpcs",
+                "ec2:ModifyVpcAttribute"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "ManageEFS",
+            "Effect": "Allow",
+            "Action": [
+                "elasticfilesystem:*"
+            ],
+            "Resource": "*"
+        }
+    ]
+}

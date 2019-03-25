@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -9,8 +9,8 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+                    'status': ['stableinterface'],
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -33,6 +33,7 @@ options:
   frequency:
     description:
       - Specifies the schedule for the automatic update check.
+    type: str
     choices:
       - daily
       - monthly
@@ -40,24 +41,27 @@ options:
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
 - name: Enable automatic update checking
   bigip_software_update:
     auto_check: yes
-    password: secret
-    server: lb.mydomain.com
-    user: admin
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Disable automatic update checking and phoning home
   bigip_software_update:
     auto_check: no
     auto_phone_home: no
-    password: secret
-    server: lb.mydomain.com
-    user: admin
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 '''
 
@@ -75,36 +79,22 @@ auto_phone_home:
 frequency:
   description: Frequency of auto update checks
   returned: changed
-  type: string
+  type: str
   sample: weekly
 '''
 
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import f5_argument_spec
-
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
 except ImportError:
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import f5_argument_spec
-
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -114,15 +104,15 @@ class Parameters(AnsibleF5Parameters):
     }
 
     api_attributes = [
-        'autoCheck', 'autoPhonehome', 'frequency'
+        'autoCheck', 'autoPhonehome', 'frequency',
     ]
 
     updatables = [
-        'auto_check', 'auto_phone_home', 'frequency'
+        'auto_check', 'auto_phone_home', 'frequency',
     ]
 
     returnables = [
-        'auto_check', 'auto_phone_home', 'frequency'
+        'auto_check', 'auto_phone_home', 'frequency',
     ]
 
 
@@ -211,7 +201,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.have = None
         self.want = ModuleParameters(params=self.module.params)
         self.changes = UsableChanges()
@@ -219,10 +209,7 @@ class ModuleManager(object):
     def exec_module(self):
         result = dict()
 
-        try:
-            changed = self.update()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        changed = self.update()
 
         reportable = ReportableChanges(params=self.changes.to_return())
         changes = reportable.to_return()
@@ -272,15 +259,41 @@ class ModuleManager(object):
         self.update_on_device()
         return True
 
+    def read_current_from_device(self):
+        uri = "https://{0}:{1}/mgmt/tm/sys/software/update/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return ApiParameters(params=response)
+
     def update_on_device(self):
         params = self.changes.api_params()
-        result = self.client.api.tm.sys.software.update.load()
-        result.modify(**params)
+        uri = "https://{0}:{1}/mgmt/tm/sys/software/update/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
 
-    def read_current_from_device(self):
-        resource = self.client.api.tm.sys.software.update.load()
-        result = resource.attrs
-        return ApiParameters(params=result)
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
 
 class ArgumentSpec(object):
@@ -309,17 +322,12 @@ def main():
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
 
     try:
-        client = F5Client(**module.params)
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
         module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
         module.fail_json(msg=str(ex))
 
 

@@ -33,37 +33,44 @@ DOCUMENTATION = '''
 ---
 module: cnos_image
 author: "Anil Kumar Muraleedharan (@amuraleedhar)"
-short_description: Perform firmware upgrade/download from a remote server on devices running Lenovo CNOS
+short_description: Perform firmware upgrade/download from a remote server on
+                   devices running Lenovo CNOS
 description:
-    - This module allows you to work with switch firmware images. It provides a way to download a firmware image
-     to a network device from a remote server using FTP, SFTP, TFTP, or SCP. The first step is to create a directory
-     from where the remote server can be reached. The next step is to provide the full file path of the image's
-     location. Authentication details required by the remote server must be provided as well. By default, this
-     method makes the newly downloaded firmware image the active image, which will be used by the switch during the
-     next restart.
+    - This module allows you to work with switch firmware images. It provides a
+     way to download a firmware image to a network device from a remote server
+     using FTP, SFTP, TFTP, or SCP. The first step is to create a directory
+     from where the remote server can be reached. The next step is to provide
+     the full file path of the image's location. Authentication details
+     required by the remote server must be provided as well. By default, this
+     method makes the newly downloaded firmware image the active image, which
+     will be used by the switch during the next restart.
      This module uses SSH to manage network device configuration.
      The results of the operation will be placed in a directory named 'results'
-     that must be created by the user in their local directory to where the playbook is run.
-     For more information about this module from Lenovo and customizing it usage for your
-     use cases, please visit U(http://systemx.lenovofiles.com/help/index.jsp?topic=%2Fcom.lenovo.switchmgt.ansible.doc%2Fcnos_image.html)
+     that must be created by the user in their local directory to where the
+     playbook is run.
 version_added: "2.3"
 extends_documentation_fragment: cnos
 options:
     protocol:
         description:
-            - This refers to the protocol used by the network device to interact with the remote server from where
-             to download the firmware image. The choices are FTP, SFTP, TFTP, or SCP. Any other protocols will
-             result in error. If this parameter is not specified, there is no default value to be used.
+            - This refers to the protocol used by the network device to
+             interact with the remote server from where to download the
+             firmware image. The choices are FTP, SFTP, TFTP, or SCP. Any other
+             protocols will result in error. If this parameter is not specified
+             there is no default value to be used.
         required: true
         choices: [SFTP, SCP, FTP, TFTP]
     serverip:
         description:
-            - This specifies the IP Address of the remote server from where the software image will be downloaded.
+            - This specifies the IP Address of the remote server from where the
+             software image will be downloaded.
         required: true
     imgpath:
         description:
-            - This specifies the full file path of the image located on the remote server. In case the relative path
-             is used as the variable value, the root folder for the user of the server needs to be specified.
+            - This specifies the full file path of the image located on the
+             remote server. In case the relative path is used as the variable
+             value, the root folder for the user of the server needs to be
+             specified.
         required: true
     imgtype:
         description:
@@ -72,22 +79,19 @@ options:
         choices: [all, boot, os, onie]
     serverusername:
         description:
-            - Specify the username for the server relating to the protocol used.
+            - Specify the username for the server relating to the protocol used
         required: true
     serverpassword:
         description:
-            - Specify the password for the server relating to the protocol used.
+            - Specify the password for the server relating to the protocol used
 '''
 EXAMPLES = '''
-Tasks : The following are examples of using the module cnos_image. These are written in the main.yml file of the tasks directory.
+Tasks : The following are examples of using the module cnos_image. These are
+  written in the main.yml file of the tasks directory.
 ---
 - name: Test Image transfer
   cnos_image:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_image_{{ inventory_hostname }}_output.txt"
       protocol: "sftp"
       serverip: "10.241.106.118"
@@ -98,11 +102,7 @@ Tasks : The following are examples of using the module cnos_image. These are wri
 
 - name: Test Image tftp
   cnos_image:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_image_{{ inventory_hostname }}_output.txt"
       protocol: "tftp"
       serverip: "10.241.106.118"
@@ -115,38 +115,88 @@ RETURN = '''
 msg:
   description: Success or failure message
   returned: always
-  type: string
+  type: str
   sample: "Image file tranferred to device"
 '''
 
 import sys
-try:
-    import paramiko
-    HAS_PARAMIKO = True
-except ImportError:
-    HAS_PARAMIKO = False
 import time
 import socket
 import array
 import json
 import time
 import re
+import os
 try:
     from ansible.module_utils.network.cnos import cnos
     HAS_LIB = True
-except:
+except Exception:
     HAS_LIB = False
 from ansible.module_utils.basic import AnsibleModule
 from collections import defaultdict
+
+
+def doImageDownload(module, prompt, answer):
+    protocol = module.params['protocol'].lower()
+    server = module.params['serverip']
+    imgPath = module.params['imgpath']
+    imgType = module.params['imgtype']
+    username = module.params['serverusername']
+    password = module.params['serverpassword']
+    retVal = ''
+    command = "copy " + protocol + " " + protocol + "://" + username + "@"
+    command = command + server + "/" + imgPath + " system-image "
+    command = command + imgType + " vrf management"
+    cmd = []
+    if(protocol == "scp"):
+        prompt = ['timeout', 'Confirm download operation', 'Password',
+                  'Do you want to change that to the standby image']
+        answer = ['240', 'y', password, 'y']
+        scp_cmd = [{'command': command, 'prompt': prompt, 'answer': answer,
+                    'check_all': True}]
+        cmd.extend(scp_cmd)
+        retVal = retVal + str(cnos.run_cnos_commands(module, cmd))
+    elif(protocol == "sftp"):
+        prompt = ['Confirm download operation', 'Password',
+                  'Do you want to change that to the standby image']
+        answer = ['y', password, 'y']
+        sftp_cmd = [{'command': command, 'prompt': prompt, 'answer': answer,
+                     'check_all': True}]
+        cmd.extend(sftp_cmd)
+        retVal = retVal + str(cnos.run_cnos_commands(module, cmd))
+    elif(protocol == "ftp"):
+        prompt = ['Confirm download operation', 'Password',
+                  'Do you want to change that to the standby image']
+        answer = ['y', password, 'y']
+        ftp_cmd = [{'command': command, 'prompt': prompt, 'answer': answer,
+                    'check_all': True}]
+        cmd.extend(ftp_cmd)
+        retVal = retVal + str(cnos.run_cnos_commands(module, cmd))
+    elif(protocol == "tftp"):
+        command = "copy " + protocol + " " + protocol + "://" + server
+        command = command + "/" + imgPath + " system-image " + imgType
+        command = command + " vrf management"
+        prompt = ['Confirm download operation',
+                  'Do you want to change that to the standby image']
+        answer = ['y', 'y']
+        tftp_cmd = [{'command': command, 'prompt': prompt, 'answer': answer,
+                     'check_all': True}]
+        cmd.extend(tftp_cmd)
+        retVal = retVal + str(cnos.run_cnos_commands(module, cmd))
+    else:
+        return "Error-110"
+
+    return retVal
+# EOM
 
 
 def main():
     module = AnsibleModule(
         argument_spec=dict(
             outputfile=dict(required=True),
-            host=dict(required=True),
-            username=dict(required=True),
-            password=dict(required=True, no_log=True),
+            host=dict(required=False),
+            username=dict(required=False),
+            password=dict(required=False, no_log=True),
             enablePassword=dict(required=False, no_log=True),
             deviceType=dict(required=True),
             protocol=dict(required=True),
@@ -157,58 +207,23 @@ def main():
             serverpassword=dict(required=False, no_log=True),),
         supports_check_mode=False)
 
-    username = module.params['username']
-    password = module.params['password']
-    enablePassword = module.params['enablePassword']
     outputfile = module.params['outputfile']
-    host = module.params['host']
-    deviceType = module.params['deviceType']
     protocol = module.params['protocol'].lower()
-    imgserverip = module.params['serverip']
-    imgpath = module.params['imgpath']
-    imgtype = module.params['imgtype']
-    imgserveruser = module.params['serverusername']
-    imgserverpwd = module.params['serverpassword']
-    output = ""
-    timeout = 120
-    tftptimeout = 600
-    if not HAS_PARAMIKO:
-        module.fail_json(msg='paramiko is required for this module')
+    output = ''
 
-    # Create instance of SSHClient object
-    remote_conn_pre = paramiko.SSHClient()
-
-    # Automatically add untrusted hosts (make sure okay for security policy in your environment)
-    remote_conn_pre.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-
-    # initiate SSH connection with the switch
-    remote_conn_pre.connect(host, username=username, password=password)
-    time.sleep(2)
-
-    # Use invoke_shell to establish an 'interactive session'
-    remote_conn = remote_conn_pre.invoke_shell()
-    time.sleep(2)
-
-    # Enable and then send command
-    output = output + cnos.waitForDeviceResponse("\n", ">", 2, remote_conn)
-
-    output = output + cnos.enterEnableModeForDevice(enablePassword, 3, remote_conn)
-
-    # Make terminal length = 0
-    output = output + cnos.waitForDeviceResponse("terminal length 0\n", "#", 2, remote_conn)
-
-    transfer_status = ""
     # Invoke method for image transfer from server
-    if(protocol == "tftp" or protocol == "ftp"):
-        transfer_status = cnos.doImageTransfer(protocol, tftptimeout, imgserverip, imgpath, imgtype, imgserveruser, imgserverpwd, remote_conn)
-    elif(protocol == "sftp" or protocol == "scp"):
-        transfer_status = cnos.doSecureImageTransfer(protocol, timeout, imgserverip, imgpath, imgtype, imgserveruser, imgserverpwd, remote_conn)
+    if(protocol == "tftp" or protocol == "ftp" or protocol == "sftp" or
+       protocol == "scp"):
+        transfer_status = doImageDownload(module, None, None)
     else:
         transfer_status = "Invalid Protocol option"
 
     output = output + "\n Image Transfer status \n" + transfer_status
 
     # Save it into the file
+    path = outputfile.rsplit('/', 1)
+    if not os.path.exists(path[0]):
+        os.makedirs(path[0])
     file = open(outputfile, "a")
     file.write(output)
     file.close()
@@ -219,6 +234,7 @@ def main():
         module.exit_json(changed=True, msg="Image file tranferred to device")
     else:
         module.fail_json(msg=errorMsg)
+
 
 if __name__ == '__main__':
     main()

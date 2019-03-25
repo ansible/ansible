@@ -33,6 +33,14 @@ options:
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
+    show_kubeconfig:
+        description:
+            - Show kubeconfig of the AKS cluster.
+            - Note the operation will cost more network overhead, not recommended when listing AKS.
+        version_added: 2.8
+        choices:
+            - user
+            - admin
 
 extends_documentation_fragment:
     - azure
@@ -45,7 +53,7 @@ EXAMPLES = '''
     - name: Get facts for one Azure Kubernetes Service
       azure_rm_aks_facts:
         name: Testing
-        resource_group: TestRG
+        resource_group: myResourceGroup
 
     - name: Get facts for all Azure Kubernetes Services
       azure_rm_aks_facts:
@@ -68,7 +76,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 try:
     from msrestazure.azure_exceptions import CloudError
     from azure.common import AzureHttpError
-except:
+except Exception:
     # handled in azure_rm_common
     pass
 
@@ -83,17 +91,20 @@ class AzureRMManagedClusterFacts(AzureRMModuleBase):
         self.module_args = dict(
             name=dict(type='str'),
             resource_group=dict(type='str'),
-            tags=dict(type='list')
+            tags=dict(type='list'),
+            show_kubeconfig=dict(type='str', choices=['user', 'admin']),
         )
 
         self.results = dict(
             changed=False,
-            aks=[]
+            aks=[],
+            available_versions=[]
         )
 
         self.name = None
         self.resource_group = None
         self.tags = None
+        self.show_kubeconfig = None
 
         super(AzureRMManagedClusterFacts, self).__init__(
             derived_arg_spec=self.module_args,
@@ -122,13 +133,14 @@ class AzureRMManagedClusterFacts(AzureRMModuleBase):
         result = []
 
         try:
-            item = self.containerservice_client.managed_clusters.get(
-                self.resource_group, self.name)
+            item = self.managedcluster_client.managed_clusters.get(self.resource_group, self.name)
         except CloudError:
             pass
 
         if item and self.has_tags(item.tags, self.tags):
             result = [self.serialize_obj(item, AZURE_OBJECT_CLASS)]
+            if self.show_kubeconfig:
+                result[0]['kube_config'] = self.get_aks_kubeconfig(self.resource_group, self.name)
 
         return result
 
@@ -138,17 +150,31 @@ class AzureRMManagedClusterFacts(AzureRMModuleBase):
         self.log('List all Azure Kubernetes Services')
 
         try:
-            response = self.containerservice_client.managed_clusters.list(
-                self.resource_group)
+            response = self.managedcluster_client.managed_clusters.list(self.resource_group)
         except AzureHttpError as exc:
             self.fail('Failed to list all items - {0}'.format(str(exc)))
 
         results = []
         for item in response:
             if self.has_tags(item.tags, self.tags):
-                results.append(self.serialize_obj(item, AZURE_OBJECT_CLASS))
+                item_dict = self.serialize_obj(item, AZURE_OBJECT_CLASS)
+                if self.show_kubeconfig:
+                    item_dict['kube_config'] = self.get_aks_kubeconfig(self.resource_group, item.name)
+                results.append(item_dict)
 
         return results
+
+    def get_aks_kubeconfig(self, resource_group, name):
+        '''
+        Gets kubeconfig for the specified AKS instance.
+
+        :return: AKS instance kubeconfig
+        '''
+        if not self.show_kubeconfig:
+            return ''
+        role_name = 'cluster{0}'.format(str.capitalize(self.show_kubeconfig))
+        access_profile = self.managedcluster_client.managed_clusters.get_access_profile(resource_group, name, role_name)
+        return access_profile.kube_config.decode('utf-8')
 
 
 def main():

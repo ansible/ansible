@@ -2,21 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # (c) 2016, René Moser <mail@renemoser.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -29,112 +15,131 @@ module: cs_cluster
 short_description: Manages host clusters on Apache CloudStack based clouds.
 description:
     - Create, update and remove clusters.
-version_added: "2.1"
-author: "René Moser (@resmo)"
+version_added: '2.1'
+author: René Moser (@resmo)
 options:
   name:
     description:
       - name of the cluster.
+    type: str
     required: true
   zone:
     description:
       - Name of the zone in which the cluster belongs to.
       - If not set, default zone is used.
+    type: str
   pod:
     description:
       - Name of the pod in which the cluster belongs to.
+    type: str
   cluster_type:
     description:
       - Type of the cluster.
-      - Required if C(state=present)
-    choices: [ 'CloudManaged', 'ExternalManaged' ]
+      - Required if I(state=present)
+    type: str
+    choices: [ CloudManaged, ExternalManaged ]
   hypervisor:
     description:
       - Name the hypervisor to be used.
-      - Required if C(state=present).
-    choices: [ 'KVM', 'VMware', 'BareMetal', 'XenServer', 'LXC', 'HyperV', 'UCS', 'OVM' ]
+      - Required if I(state=present).
+    type: str
+    choices: [ KVM, VMware, BareMetal, XenServer, LXC, HyperV, UCS, OVM ]
   url:
     description:
       - URL for the cluster
+    type: str
   username:
     description:
       - Username for the cluster.
+    type: str
   password:
     description:
       - Password for the cluster.
+    type: str
   guest_vswitch_name:
     description:
       - Name of virtual switch used for guest traffic in the cluster.
       - This would override zone wide traffic label setting.
+    type: str
   guest_vswitch_type:
     description:
       - Type of virtual switch used for guest traffic in the cluster.
       - Allowed values are, vmwaresvs (for VMware standard vSwitch) and vmwaredvs (for VMware distributed vSwitch)
-    choices: [ 'vmwaresvs', 'vmwaredvs' ]
+    type: str
+    choices: [ vmwaresvs, vmwaredvs ]
   public_vswitch_name:
     description:
       - Name of virtual switch used for public traffic in the cluster.
       - This would override zone wide traffic label setting.
+    type: str
   public_vswitch_type:
     description:
       - Type of virtual switch used for public traffic in the cluster.
       - Allowed values are, vmwaresvs (for VMware standard vSwitch) and vmwaredvs (for VMware distributed vSwitch)
-    choices: [ 'vmwaresvs', 'vmwaredvs' ]
+    type: str
+    choices: [ vmwaresvs, vmwaredvs ]
   vms_ip_address:
     description:
       - IP address of the VSM associated with this cluster.
+    type: str
   vms_username:
     description:
       - Username for the VSM associated with this cluster.
+    type: str
   vms_password:
     description:
       - Password for the VSM associated with this cluster.
+    type: str
   ovm3_cluster:
     description:
       - Ovm3 native OCFS2 clustering enabled for cluster.
+    type: str
   ovm3_pool:
     description:
       - Ovm3 native pooling enabled for cluster.
+    type: str
   ovm3_vip:
     description:
       - Ovm3 vip to use for pool (and cluster).
+    type: str
   state:
     description:
       - State of the cluster.
-    default: 'present'
-    choices: [ 'present', 'absent', 'disabled', 'enabled' ]
+    type: str
+    choices: [ present, absent, disabled, enabled ]
+    default: present
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# Ensure a cluster is present
-- local_action:
-    module: cs_cluster
+- name: Ensure a cluster is present
+  cs_cluster:
     name: kvm-cluster-01
     zone: ch-zrh-ix-01
     hypervisor: KVM
     cluster_type: CloudManaged
+  delegate_to: localhost
 
-# Ensure a cluster is disabled
-- local_action:
-    module: cs_cluster
+- name: Ensure a cluster is disabled
+  cs_cluster:
     name: kvm-cluster-01
     zone: ch-zrh-ix-01
     state: disabled
+  delegate_to: localhost
 
-# Ensure a cluster is enabled
-- local_action:
-    module: cs_cluster
+- name: Ensure a cluster is enabled
+  cs_cluster:
     name: kvm-cluster-01
     zone: ch-zrh-ix-01
     state: enabled
+  delegate_to: localhost
 
-# Ensure a cluster is absent
-- local_action:
-    module: cs_cluster
+- name: Ensure a cluster is absent
+  cs_cluster:
     name: kvm-cluster-01
     zone: ch-zrh-ix-01
     state: absent
+  delegate_to: localhost
 '''
 
 RETURN = '''
@@ -142,57 +147,57 @@ RETURN = '''
 id:
   description: UUID of the cluster.
   returned: success
-  type: string
+  type: str
   sample: 04589590-ac63-4ffc-93f5-b698b8ac38b6
 name:
   description: Name of the cluster.
   returned: success
-  type: string
+  type: str
   sample: cluster01
 allocation_state:
   description: State of the cluster.
   returned: success
-  type: string
+  type: str
   sample: Enabled
 cluster_type:
   description: Type of the cluster.
   returned: success
-  type: string
+  type: str
   sample: ExternalManaged
 cpu_overcommit_ratio:
   description: The CPU overcommit ratio of the cluster.
   returned: success
-  type: string
+  type: str
   sample: 1.0
 memory_overcommit_ratio:
   description: The memory overcommit ratio of the cluster.
   returned: success
-  type: string
+  type: str
   sample: 1.0
 managed_state:
   description: Whether this cluster is managed by CloudStack.
   returned: success
-  type: string
+  type: str
   sample: Managed
 ovm3_vip:
   description: Ovm3 VIP to use for pooling and/or clustering
   returned: success
-  type: string
+  type: str
   sample: 10.10.10.101
 hypervisor:
   description: Hypervisor of the cluster
   returned: success
-  type: string
+  type: str
   sample: VMware
 zone:
   description: Name of zone the cluster is in.
   returned: success
-  type: string
+  type: str
   sample: ch-gva-2
 pod:
   description: Name of pod the cluster is in.
   returned: success
-  type: string
+  type: str
   sample: pod01
 '''
 

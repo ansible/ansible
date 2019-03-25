@@ -55,6 +55,10 @@
         update_homebrew: no
       become: yes
       become_user: "{{ brew_stat.stat.pw_name }}"
+      # Newer versions of brew want to compile a package which takes a long time. Do not upgrade homebrew until a
+      # proper solution can be found
+      environment:
+        HOMEBREW_NO_AUTO_UPDATE: True
   when:
     - ansible_python_version.split('.')[0] == '2'
     - ansible_os_family == 'Darwin'

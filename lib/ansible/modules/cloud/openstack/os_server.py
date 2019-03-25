@@ -27,7 +27,8 @@ description:
 options:
    name:
      description:
-        - Name that has to be given to the instance
+        - Name that has to be given to the instance. It is also possible to
+          specify the ID of the instance instead of its name if I(state) is I(absent).
      required: true
    image:
      description:
@@ -166,7 +167,7 @@ options:
      description:
        - Availability zone in which to create the server.
 requirements:
-    - "python >= 2.6"
+    - "python >= 2.7"
     - "openstacksdk"
 '''
 
@@ -380,6 +381,29 @@ EXAMPLES = '''
           echo "  down ip route del 10.0.0.0/8" >> /etc/network/interfaces.d/eth0.conf
           ifdown eth0 && ifup eth0
           {% endraw %}
+
+# Create a new instance with server group for (anti-)affinity
+# server group ID is returned from os_server_group module.
+- name: launch a compute instance
+  hosts: localhost
+  tasks:
+    - name: launch an instance
+      os_server:
+        state: present
+        name: vm1
+        image: 4f905f38-e52a-43d2-b6ec-754a13ffb529
+        flavor: 4
+        scheduler_hints:
+          group: f5c8c61a-9230-400a-8ed2-3b023c190a7f
+
+# Deletes an instance via its ID
+- name: remove an instance
+  hosts: localhost
+  tasks:
+    - name: remove an instance
+      os_server:
+        name: abcdef01-2345-6789-0abc-def0123456789
+        state: absent
 
 '''
 
@@ -615,11 +639,7 @@ def _check_security_groups(module, cloud, server):
         return changed, server
 
     module_security_groups = set(module.params['security_groups'])
-    # Workaround a bug in shade <= 1.20.0
-    if server.security_groups is not None:
-        server_security_groups = set(sg.name for sg in server.security_groups)
-    else:
-        server_security_groups = set()
+    server_security_groups = set(sg['name'] for sg in server.security_groups)
 
     add_sgs = module_security_groups - server_security_groups
     remove_sgs = server_security_groups - module_security_groups

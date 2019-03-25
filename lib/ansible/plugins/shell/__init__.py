@@ -46,6 +46,7 @@ class ShellBase(AnsiblePlugin):
                         'LC_MESSAGES': module_locale}
 
         self.tmpdir = None
+        self.executable = None
 
     def _normalize_system_tmpdirs(self):
         # Normalize the tmp directory strings. We don't use expanduser/expandvars because those
@@ -65,15 +66,20 @@ class ShellBase(AnsiblePlugin):
 
         super(ShellBase, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
 
-        # set env
-        self.env.update(self.get_option('environment'))
+        # set env if needed, deal with environment's 'dual nature' list of dicts or dict
+        env = self.get_option('environment')
+        if isinstance(env, list):
+            for env_dict in env:
+                self.env.update(env_dict)
+        else:
+            self.env.update(env)
 
         # We can remove the try: except in the future when we make ShellBase a proper subset of
         # *all* shells.  Right now powershell and third party shells which do not use the
         # shell_common documentation fragment (and so do not have system_tmpdirs) will fail
         try:
             self._normalize_system_tmpdirs()
-        except AnsibleError:
+        except KeyError:
             pass
 
     def env_prefix(self, **kwargs):
@@ -215,3 +221,7 @@ class ShellBase(AnsiblePlugin):
     def wrap_for_exec(self, cmd):
         """wrap script execution with any necessary decoration (eg '&' for quoted powershell script paths)"""
         return cmd
+
+    def quote(self, cmd):
+        """Returns a shell-escaped string that can be safely used as one token in a shell command line"""
+        return shlex_quote(cmd)

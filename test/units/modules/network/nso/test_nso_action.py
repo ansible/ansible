@@ -20,10 +20,12 @@ from __future__ import (absolute_import, division, print_function)
 
 import json
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.nso import nso_action
 from . import nso_module
 from .nso_module import MockResponse
+
+from units.modules.utils import set_module_args
 
 
 class TestNsoAction(nso_module.TestNsoModule):
@@ -42,11 +44,12 @@ class TestNsoAction(nso_module.TestNsoModule):
         ]
         open_url_mock.side_effect = lambda *args, **kwargs: nso_module.mock_call(calls, *args, **kwargs)
 
-        nso_module.set_module_args({
+        set_module_args({
             'username': 'user', 'password': 'password',
             'url': 'http://localhost:8080/jsonrpc',
             'path': path,
-            'input': action_input
+            'input': action_input,
+            'validate_certs': False
         })
         self.execute_module(failed=True, msg='NSO get_schema invalid params. path = /ncs:devices/device{ce0}/missing')
 
@@ -66,11 +69,12 @@ class TestNsoAction(nso_module.TestNsoModule):
         ]
         open_url_mock.side_effect = lambda *args, **kwargs: nso_module.mock_call(calls, *args, **kwargs)
 
-        nso_module.set_module_args({
+        set_module_args({
             'username': 'user', 'password': 'password',
             'url': 'http://localhost:8080/jsonrpc',
             'path': path,
-            'input': action_input
+            'input': action_input,
+            'validate_certs': False
         })
         self.execute_module(failed=True, msg='/ncs:devices/device{ce0}/description is not an action')
 
@@ -92,11 +96,12 @@ class TestNsoAction(nso_module.TestNsoModule):
         ]
         open_url_mock.side_effect = lambda *args, **kwargs: nso_module.mock_call(calls, *args, **kwargs)
 
-        nso_module.set_module_args({
+        set_module_args({
             'username': 'user', 'password': 'password',
             'url': 'http://localhost:8080/jsonrpc',
             'path': path,
-            'input': action_input
+            'input': action_input,
+            'validate_certs': False
         })
         self.execute_module(changed=True, output=output)
 
@@ -119,12 +124,13 @@ class TestNsoAction(nso_module.TestNsoModule):
         ]
         open_url_mock.side_effect = lambda *args, **kwargs: nso_module.mock_call(calls, *args, **kwargs)
 
-        nso_module.set_module_args({
+        set_module_args({
             'username': 'user', 'password': 'password',
             'url': 'http://localhost:8080/jsonrpc',
             'path': path,
             'input': action_input,
-            'output_required': output
+            'output_required': output,
+            'validate_certs': False
         })
         self.execute_module(changed=True, output=output)
 
@@ -147,12 +153,13 @@ class TestNsoAction(nso_module.TestNsoModule):
         ]
         open_url_mock.side_effect = lambda *args, **kwargs: nso_module.mock_call(calls, *args, **kwargs)
 
-        nso_module.set_module_args({
+        set_module_args({
             'username': 'user', 'password': 'password',
             'url': 'http://localhost:8080/jsonrpc',
             'path': path,
             'input': action_input,
-            'output_required': output_mismatch
+            'output_required': output_mismatch,
+            'validate_certs': False
         })
         self.execute_module(failed=True, msg="version value mismatch. expected [{'name': 'v1'}, {'name': 'v3'}] got [{'name': 'v1'}, {'name': 'v2'}]")
 

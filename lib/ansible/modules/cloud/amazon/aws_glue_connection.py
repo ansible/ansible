@@ -90,22 +90,22 @@ connection_properties:
 connection_type:
     description: The type of the connection.
     returned: when state is present
-    type: string
+    type: str
     sample: JDBC
 creation_time:
     description: The time this connection definition was created.
     returned: when state is present
-    type: string
+    type: str
     sample: "2018-04-21T05:19:58.326000+00:00"
 description:
     description: Description of the job being defined.
     returned: when state is present
-    type: string
+    type: str
     sample: My first Glue job
 last_updated_time:
     description: The last time this connection definition was updated.
     returned: when state is present
-    type: string
+    type: str
     sample: "2018-04-21T05:19:58.326000+00:00"
 match_criteria:
     description: A list of criteria that can be used in selecting this connection.
@@ -115,7 +115,7 @@ match_criteria:
 name:
     description: The name of the connection definition.
     returned: when state is present
-    type: string
+    type: str
     sample: my-glue-connection
 physical_connection_requirements:
     description: A dict of physical connection requirements, such as VPC and SecurityGroup,
@@ -324,6 +324,7 @@ def main():
         create_or_update_glue_connection(connection_glue, connection_ec2, module, glue_connection)
     else:
         delete_glue_connection(connection_glue, module, glue_connection)
+
 
 if __name__ == '__main__':
     main()

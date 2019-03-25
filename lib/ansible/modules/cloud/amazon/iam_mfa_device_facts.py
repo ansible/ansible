@@ -48,11 +48,11 @@ mfa_devices:
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-# List MFA devices (more details: http://docs.aws.amazon.com/IAM/latest/APIReference/API_ListMFADevices.html)
+# List MFA devices (more details: https://docs.aws.amazon.com/IAM/latest/APIReference/API_ListMFADevices.html)
 - iam_mfa_device_facts:
   register: mfa_devices
 
-# Assume an existing role (more details: http://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html)
+# Assume an existing role (more details: https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html)
 - sts_assume_role:
     mfa_serial_number: "{{ mfa_devices.mfa_devices[0].serial_number }}"
     role_arn: "arn:aws:iam::123456789012:role/someRole"

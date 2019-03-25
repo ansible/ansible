@@ -19,21 +19,55 @@ You'll also want to read up on :doc:`playbooks_reuse_roles`, as the 'pre_task' a
 
 Be aware that certain tasks are impossible to delegate, i.e. `include`, `add_host`, `debug`, etc as they always execute on the controller.
 
+
 .. _rolling_update_batch_size:
 
 Rolling Update Batch Size
 `````````````````````````
-
 
 By default, Ansible will try to manage all of the machines referenced in a play in parallel.  For a rolling update use case, you can define how many hosts Ansible should manage at a single time by using the ``serial`` keyword::
 
 
     - name: test play
       hosts: webservers
-      serial: 3
+      serial: 2
+      gather_facts: False
+      tasks:
+      - name: task one
+        command: hostname
+      - name: task two
+        command: hostname
 
-In the above example, if we had 100 hosts, 3 hosts in the group 'webservers'
-would complete the play completely before moving on to the next 3 hosts.
+In the above example, if we had 4 hosts in the group 'webservers', 2
+would complete the play completely before moving on to the next 2 hosts::
+
+
+    PLAY [webservers] ****************************************
+
+    TASK [task one] ******************************************
+    changed: [web2]
+    changed: [web1]
+
+    TASK [task two] ******************************************
+    changed: [web1]
+    changed: [web2]
+
+    PLAY [webservers] ****************************************
+
+    TASK [task one] ******************************************
+    changed: [web3]
+    changed: [web4]
+
+    TASK [task two] ******************************************
+    changed: [web3]
+    changed: [web4]
+
+    PLAY RECAP ***********************************************
+    web1      : ok=2    changed=2    unreachable=0    failed=0
+    web2      : ok=2    changed=2    unreachable=0    failed=0
+    web3      : ok=2    changed=2    unreachable=0    failed=0
+    web4      : ok=2    changed=2    unreachable=0    failed=0
+
 
 The ``serial`` keyword can also be specified as a percentage, which will be applied to the total number of hosts in a
 play, in order to determine the number of hosts per pass::
@@ -76,6 +110,7 @@ You can also mix and match the values::
 
 .. note::
      No matter how small the percentage, the number of hosts per pass will always be 1 or greater.
+
 
 .. _maximum_failure_percentage:
 
@@ -195,7 +230,7 @@ The directive `delegate_facts` may be set to `True` to assign the task's gathere
           loop: "{{groups['dbservers']}}"
 
 The above will gather facts for the machines in the dbservers group and assign the facts to those machines and not to app_servers.
-This way you can lookup `hostvars['dbhost1']['default_ipv4']['address']` even though dbservers were not part of the play, or left out by using `--limit`.
+This way you can lookup `hostvars['dbhost1']['ansible_default_ipv4']['address']` even though dbservers were not part of the play, or left out by using `--limit`.
 
 
 .. _run_once:
@@ -317,7 +352,7 @@ In this example Ansible will start the software upgrade on the front ends only i
        An introduction to playbooks
    `Ansible Examples on GitHub <https://github.com/ansible/ansible-examples>`_
        Many examples of full-stack deployments
-   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

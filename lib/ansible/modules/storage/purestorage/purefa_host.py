@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Simon Dodsley (simon@purestorage.com)
+# Copyright: (c) 2017, Simon Dodsley (simon@purestorage.com)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -20,6 +20,8 @@ description:
 - Create, delete or modify hosts on Pure Storage FlashArrays.
 author:
 - Simon Dodsley (@sdodsley)
+notes:
+- If specifying C(lun) option ensure host support requested value
 options:
   host:
     description:
@@ -35,24 +37,42 @@ options:
     description:
     - Defines the host connection protocol for volumes.
     default: iscsi
-    choices: [ fc, iscsi, mixed ]
+    choices: [ fc, iscsi, nvme, mixed ]
   wwns:
     description:
     - List of wwns of the host if protocol is fc or mixed.
   iqn:
     description:
     - List of IQNs of the host if protocol is iscsi or mixed.
+  nqn:
+    description:
+    - List of NQNs of the host if protocol is nvme or mixed.
+    version_added: '2.8'
   volume:
     description:
     - Volume name to map to the host.
+  lun:
+    description:
+    - LUN ID to assign to volume for host. Must be unique.
+    - If not provided the ID will be automatically assigned.
+    - Range for LUN ID is 1 to 4095.
+    version_added: '2.8'
+  personality:
+    description:
+    - Define which operating system the host is. Recommend for
+      ActiveCluster integration.
+    default: ''
+    choices: ['hpux', 'vms', 'aix', 'esxi', 'solaris', 'hitachi-vsp', 'oracle-vm-server', 'delete', '']
+    version_added: '2.7'
 extends_documentation_fragment:
 - purestorage.fa
 '''
 
 EXAMPLES = r'''
-- name: Create new new host
+- name: Create new AIX host
   purefa_host:
     host: foo
+    personaility: aix
     fa_url: 10.10.10.2
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
 
@@ -82,10 +102,21 @@ EXAMPLES = r'''
     fa_url: 10.10.10.2
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
 
+- name: Make host bar with NVMe ports
+  purefa_host:
+    host: bar
+    protocol: nvme
+    nqn:
+    - nqn.2014-08.com.vendor:nvme:nvm-subsystem-sn-d78432
+    fa_url: 10.10.10.2
+    api_token: e31060a7-21fc-e277-6240-25983c6c4592
+
 - name: Make mixed protocol host
   purefa_host:
     host: bar
     protocol: mixed
+    nqn:
+    - nqn.2014-08.com.vendor:nvme:nvm-subsystem-sn-d78432
     iqn:
     - iqn.1994-05.com.redhat:7d366003914
     wwns:
@@ -94,10 +125,11 @@ EXAMPLES = r'''
     fa_url: 10.10.10.2
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
 
-- name: Map host foo to volume bar
+- name: Map host foo to volume bar as LUN ID 12
   purefa_host:
     host: foo
     volume: bar
+    lun: 12
     fa_url: 10.10.10.2
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
 '''
@@ -109,6 +141,10 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pure import get_system, purefa_argument_spec
 
 
+AC_REQUIRED_API_VERSION = '1.14'
+NVME_API_VERSION = '1.16'
+
+
 try:
     from purestorage import purestorage
     HAS_PURESTORAGE = True
@@ -117,50 +153,158 @@ except ImportError:
 
 
 def _set_host_initiators(module, array):
+    """Set host initiators."""
+    if module.params['protocol'] in ['nvme', 'mixed']:
+        if module.params['nqn']:
+            try:
+                array.set_host(module.params['host'],
+                               nqnlist=module.params['nqn'])
+            except Exception:
+                module.fail_json(msg='Setting of NVMe NQN failed.')
     if module.params['protocol'] in ['iscsi', 'mixed']:
         if module.params['iqn']:
-            array.set_host(module.params['host'], addiqnlist=module.params['iqn'])
+            try:
+                array.set_host(module.params['host'],
+                               iqnlist=module.params['iqn'])
+            except Exception:
+                module.fail_json(msg='Setting of iSCSI IQN failed.')
     if module.params['protocol'] in ['fc', 'mixed']:
         if module.params['wwns']:
-            array.set_host(module.params['host'], addwwnlist=module.params['wwns'])
+            try:
+                array.set_host(module.params['host'],
+                               wwnlist=module.params['wwns'])
+            except Exception:
+                module.fail_json(msg='Setting of FC WWNs failed.')
+
+
+def _update_host_initiators(module, array):
+    """Change host initiator if iscsi or nvme or add new FC WWNs"""
+    if module.params['protocol'] in ['nvme', 'mixed']:
+        if module.params['nqn']:
+            try:
+                array.set_host(module.params['host'],
+                               nqnlist=module.params['nqn'])
+            except Exception:
+                module.fail_json(msg='Change of NVMe NQN failed.')
+    if module.params['protocol'] in ['iscsi', 'mixed']:
+        if module.params['iqn']:
+            try:
+                array.set_host(module.params['host'],
+                               iqnlist=module.params['iqn'])
+            except Exception:
+                module.fail_json(msg='Change of iSCSI IQN failed.')
+    if module.params['protocol'] in ['fc', 'mixed']:
+        if module.params['wwns']:
+            try:
+                array.set_host(module.params['host'],
+                               addwwnlist=module.params['wwns'])
+            except Exception:
+                module.fail_json(msg='FC WWN additiona failed.')
+
+
+def _connect_new_volume(module, array, answer=False):
+    """Connect volume to host"""
+    api_version = array._list_available_rest_versions()
+    if AC_REQUIRED_API_VERSION in api_version and module.params['lun']:
+        try:
+            array.connect_host(module.params['host'],
+                               module.params['volume'],
+                               lun=module.params['lun'])
+            answer = True
+        except Exception:
+            module.fail_json(msg='LUN ID {0} invalid. Check for duplicate LUN IDs.'.format(module.params['lun']))
+    else:
+        array.connect_host(module.params['host'], module.params['volume'])
+        answer = True
+    return answer
+
+
+def _set_host_personality(module, array):
+    """Set host personality. Only called when supported"""
+    if module.params['personality'] != 'delete':
+        array.set_host(module.params['host'],
+                       personality=module.params['personality'])
+    else:
+        array.set_host(module.params['host'], personality='')
+
+
+def _update_host_personality(module, array, answer=False):
+    """Change host personality. Only called when supported"""
+    personality = array.get_host(module.params['host'], personality=True)['personality']
+    if personality is None and module.params['personality'] != 'delete':
+        array.set_host(module.params['host'],
+                       personality=module.params['personality'])
+        answer = True
+    if personality is not None:
+        if module.params['personality'] == 'delete':
+            array.set_host(module.params['host'], personality='')
+            answer = True
+        elif personality != module.params['personality']:
+            array.set_host(module.params['host'],
+                           personality=module.params['personality'])
+            answer = True
+    return answer
 
 
 def get_host(module, array):
-
     host = None
-
-    for h in array.list_hosts():
-        if h["name"] == module.params['host']:
-            host = h
+    for hst in array.list_hosts():
+        if hst["name"] == module.params['host']:
+            host = hst
             break
-
     return host
 
 
 def make_host(module, array):
-    if not module.check_mode:
-        try:
-            host = array.create_host(module.params['host'])
-            _set_host_initiators(module, array)
-            if module.params['volume']:
+    changed = False
+    try:
+        array.create_host(module.params['host'])
+        changed = True
+    except Exception:
+        module.fail_json(msg='Host {0} creation failed.'.format(module.params['host']))
+    try:
+        _set_host_initiators(module, array)
+        api_version = array._list_available_rest_versions()
+        if AC_REQUIRED_API_VERSION in api_version and module.params['personality']:
+            _set_host_personality(module, array)
+        if module.params['volume']:
+            if module.params['lun']:
+                array.connect_host(module.params['host'],
+                                   module.params['volume'],
+                                   lun=module.params['lun'])
+            else:
                 array.connect_host(module.params['host'], module.params['volume'])
-            changed = True
-        except:
-            changed = False
+    except Exception:
+        module.fail_json(msg='Host {0} configuration failed.'.format(module.params['host']))
     module.exit_json(changed=changed)
 
 
 def update_host(module, array):
     changed = False
+    volumes = array.list_host_connections(module.params['host'])
+    if module.params['iqn'] or module.params['wwns']:
+        _update_host_initiators(module, array)
+        changed = True
+    if module.params['volume']:
+        current_vols = [vol['vol'] for vol in volumes]
+        if not module.params['volume'] in current_vols:
+            changed = _connect_new_volume(module, array)
+    api_version = array._list_available_rest_versions()
+    if AC_REQUIRED_API_VERSION in api_version:
+        if module.params['personality']:
+            changed = _update_host_personality(module, array)
     module.exit_json(changed=changed)
 
 
 def delete_host(module, array):
-    changed = True
-    if not module.check_mode:
+    changed = False
+    try:
         for vol in array.list_host_connections(module.params['host']):
             array.disconnect_host(module.params['host'], vol["vol"])
         array.delete_host(module.params['host'])
+        changed = True
+    except Exception:
+        module.fail_json(msg='Host {0} deletion failed'.format(module.params['host']))
     module.exit_json(changed=changed)
 
 
@@ -169,36 +313,44 @@ def main():
     argument_spec.update(dict(
         host=dict(type='str', required=True),
         state=dict(type='str', default='present', choices=['absent', 'present']),
-        protocol=dict(type='str', default='iscsi', choices=['fc', 'iscsi', 'mixed']),
+        protocol=dict(type='str', default='iscsi', choices=['fc', 'iscsi', 'nvme', 'mixed']),
+        nqn=dict(type='list'),
         iqn=dict(type='list'),
         wwns=dict(type='list'),
         volume=dict(type='str'),
+        lun=dict(type='int'),
+        personality=dict(type='str', default='',
+                         choices=['hpux', 'vms', 'aix', 'esxi', 'solaris',
+                                  'hitachi-vsp', 'oracle-vm-server', 'delete', '']),
     ))
 
-    module = AnsibleModule(argument_spec, supports_check_mode=True)
+    module = AnsibleModule(argument_spec, supports_check_mode=False)
 
     if not HAS_PURESTORAGE:
         module.fail_json(msg='purestorage sdk is required for this module in host')
 
-    state = module.params['state']
-    protocol = module.params['protocol']
     array = get_system(module)
+    api_version = array._list_available_rest_versions()
+    if module.params['nqn'] is not None and NVME_API_VERSION not in api_version:
+        module.fail_json(msg='NVMe protocol not supported. Please upgrade your array.')
+    state = module.params['state']
     host = get_host(module, array)
-
+    if module.params['lun'] and not 1 <= module.params['lun'] <= 4095:
+        module.fail_json(msg='LUN ID of {0} is out of range (1 to 4095)'.format(module.params['lun']))
     if module.params['volume']:
         try:
             array.get_volume(module.params['volume'])
-        except:
-            module.fail_json(msg='Volume {} not found'.format(module.params['volume']))
+        except Exception:
+            module.fail_json(msg='Volume {0} not found'.format(module.params['volume']))
 
-    if host and state == 'present':
+    if host is None and state == 'present':
+        make_host(module, array)
+    elif host and state == 'present':
         update_host(module, array)
     elif host and state == 'absent':
         delete_host(module, array)
     elif host is None and state == 'absent':
         module.exit_json(changed=False)
-    else:
-        make_host(module, array)
 
 
 if __name__ == '__main__':

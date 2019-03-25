@@ -11,15 +11,24 @@ __metaclass__ = type
 DOCUMENTATION = '''
     name: openstack
     plugin_type: inventory
-    authors:
+    author:
       - Marco Vito Moscaritolo <marco@agavee.com>
       - Jesse Keating <jesse.keating@rackspace.com>
     short_description: OpenStack inventory source
+    requirements:
+        - openstacksdk
+    extends_documentation_fragment:
+        - inventory_cache
+        - constructed
     description:
         - Get inventory hosts from OpenStack clouds
         - Uses openstack.(yml|yaml) YAML configuration file to configure the inventory plugin
         - Uses standard clouds.yaml YAML configuration file to configure cloud credentials
     options:
+        plugin:
+            description: token that ensures this is a source file for the 'openstack' plugin.
+            required: True
+            choices: ['openstack']
         show_all:
             description: toggles showing all vms vs only those with a working IP
             type: bool
@@ -99,6 +108,7 @@ fail_on_errors: yes
 '''
 
 import collections
+import sys
 
 from ansible.errors import AnsibleParserError
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
@@ -146,10 +156,12 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         if 'clouds' in self._config_data:
             self._config_data = {}
 
+        if cache:
+            cache = self.get_option('cache')
         source_data = None
-        if cache and cache_key in self._cache:
+        if cache:
             try:
-                source_data = self._cache[cache_key]
+                source_data = self.cache.get(cache_key)
             except KeyError:
                 pass
 
@@ -161,8 +173,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             else:
                 config_files = None
 
-            # TODO(mordred) Integrate shade's logging with ansible's logging
-            sdk.enable_logging()
+            # Redict logging to stderr so it does not mix with output
+            # particular ansible-inventory JSON output
+            # TODO(mordred) Integrate openstack's logging with ansible's logging
+            sdk.enable_logging(stream=sys.stderr)
 
             cloud_inventory = sdk_inventory.OpenStackInventory(
                 config_files=config_files,
@@ -185,7 +199,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             source_data = cloud_inventory.list_hosts(
                 expand=expand_hostvars, fail_on_cloud_config=fail_on_errors)
 
-            self._cache[cache_key] = source_data
+            if self.cache is not None:
+                self.cache.set(cache_key, source_data)
 
         self._populate_from_source(source_data)
 
@@ -228,7 +243,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
             # create composite vars
             self._set_composite_vars(
-                self._config_data.get('compose'), hostvars, host)
+                self._config_data.get('compose'), hostvars[host], host)
 
             # actually update inventory
             for key in hostvars[host]:
@@ -236,7 +251,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
             # constructed groups based on conditionals
             self._add_host_to_composed_groups(
-                self._config_data.get('groups'), hostvars, host)
+                self._config_data.get('groups'), hostvars[host], host)
+
+            # constructed groups based on jinja expressions
+            self._add_host_to_keyed_groups(
+                self._config_data.get('keyed_groups'), hostvars[host], host)
 
         for group_name, group_hosts in groups.items():
             self.inventory.add_group(group_name)
@@ -254,7 +273,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         groups.append(cloud)
 
         # Create a group on region
-        groups.append(region)
+        if region:
+            groups.append(region)
 
         # And one by cloud_region
         groups.append("%s_%s" % (cloud, region))

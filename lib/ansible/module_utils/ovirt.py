@@ -18,7 +18,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import collections
 import inspect
 import os
 import time
@@ -27,10 +26,14 @@ from abc import ABCMeta, abstractmethod
 from datetime import datetime
 from distutils.version import LooseVersion
 
+from ansible.module_utils.cloud import CloudRetry
+from ansible.module_utils.common._collections_compat import Mapping
+
 try:
     from enum import Enum  # enum is a ovirtsdk4 requirement
     import ovirtsdk4 as sdk
     import ovirtsdk4.version as sdk_version
+    import ovirtsdk4.types as otypes
     HAS_SDK = LooseVersion(sdk_version.VERSION) >= LooseVersion('4.2.4')
 except ImportError:
     HAS_SDK = False
@@ -68,7 +71,21 @@ def get_dict_of_struct(struct, connection=None, fetch_nested=False, attributes=N
         nested = False
 
         if isinstance(value, sdk.Struct):
-            return get_dict_of_struct(value)
+            if not fetch_nested or not value.href:
+                return get_dict_of_struct(value)
+
+            # Fetch nested values of struct:
+            try:
+                value = connection.follow_link(value)
+            except sdk.Error:
+                value = None
+            nested_obj = dict(
+                (attr, convert_value(getattr(value, attr)))
+                for attr in attributes if getattr(value, attr, None)
+            )
+            nested_obj['id'] = getattr(value, 'id', None)
+            nested_obj['href'] = getattr(value, 'href', None)
+            return nested_obj
         elif isinstance(value, Enum) or isinstance(value, datetime):
             return str(value)
         elif isinstance(value, list) or isinstance(value, sdk.List):
@@ -164,7 +181,7 @@ def convert_to_bytes(param):
     param = ''.join(param.split())
 
     # Convert to bytes:
-    if param[-3].lower() in ['k', 'm', 'g', 't', 'p']:
+    if len(param) > 3 and param[-3].lower() in ['k', 'm', 'g', 't', 'p']:
         return int(param[:-3]) * BYTES_MAP.get(param[-3:].lower(), 1)
     elif param.isdigit():
         return int(param) * 2**10
@@ -511,7 +528,7 @@ class BaseModule(object):
 
     def diff_update(self, after, update):
         for k, v in update.items():
-            if isinstance(v, collections.Mapping):
+            if isinstance(v, Mapping):
                 after[k] = self.diff_update(after.get(k, dict()), v)
             else:
                 after[k] = update[k]
@@ -524,6 +541,7 @@ class BaseModule(object):
         fail_condition=lambda e: False,
         search_params=None,
         update_params=None,
+        _wait=None,
         **kwargs
     ):
         """
@@ -604,7 +622,7 @@ class BaseModule(object):
                 service=entity_service,
                 condition=state_condition,
                 fail_condition=fail_condition,
-                wait=self._module.params['wait'],
+                wait=_wait if _wait is not None else self._module.params['wait'],
                 timeout=self._module.params['timeout'],
                 poll_interval=self._module.params['poll_interval'],
             )
@@ -786,3 +804,46 @@ class BaseModule(object):
             entity = search_by_attributes(self._service, list_params=list_params, name=self._module.params['name'])
 
         return entity
+
+    def _get_major(self, full_version):
+        if full_version is None or full_version == "":
+            return None
+        if isinstance(full_version, otypes.Version):
+            return int(full_version.major)
+        return int(full_version.split('.')[0])
+
+    def _get_minor(self, full_version):
+        if full_version is None or full_version == "":
+            return None
+        if isinstance(full_version, otypes.Version):
+            return int(full_version.minor)
+        return int(full_version.split('.')[1])
+
+
+def _sdk4_error_maybe():
+    """
+    Allow for ovirtsdk4 not being installed.
+    """
+    if HAS_SDK:
+        return sdk.Error
+    return type(None)
+
+
+class OvirtRetry(CloudRetry):
+    base_class = _sdk4_error_maybe()
+
+    @staticmethod
+    def status_code_from_exception(error):
+        return error.code
+
+    @staticmethod
+    def found(response_code, catch_extra_error_codes=None):
+        # This is a list of error codes to retry.
+        retry_on = [
+            # HTTP status: Conflict
+            409,
+        ]
+        if catch_extra_error_codes:
+            retry_on.extend(catch_extra_error_codes)
+
+        return response_code in retry_on

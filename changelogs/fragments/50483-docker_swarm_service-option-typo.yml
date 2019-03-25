@@ -1,0 +1,2 @@
+bugfixes:
+- "docker_swarm_service - fixing wrong option type for ``update_order`` which prevented using that option."

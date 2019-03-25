@@ -17,7 +17,9 @@ module: os_keystone_role
 short_description: Manage OpenStack Identity Roles
 extends_documentation_fragment: openstack
 version_added: "2.1"
-author: "Monty Taylor (@emonty), David Shrewsbury (@Shrews)"
+author:
+  - Monty Taylor (@emonty)
+  - David Shrewsbury (@Shrews)
 description:
     - Manage OpenStack Identity Roles.
 options:
@@ -35,7 +37,7 @@ options:
        - Ignored. Present for backwards compatibility
      required: false
 requirements:
-    - "python >= 2.6"
+    - "python >= 2.7"
     - "openstacksdk"
 '''
 
@@ -61,11 +63,11 @@ role:
     contains:
         id:
             description: Unique role ID.
-            type: string
+            type: str
             sample: "677bfab34c844a01b88a217aa12ec4c2"
         name:
             description: Role name.
-            type: string
+            type: str
             sample: "demo"
 '''
 

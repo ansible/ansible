@@ -23,8 +23,8 @@ import string
 import textwrap
 
 from ansible import constants as C
-from ansible.compat.tests import mock
-from ansible.compat.tests import unittest
+from units.compat import mock
+from units.compat import unittest
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text
 from units.mock.path import mock_unfrackpath_noop

@@ -11,7 +11,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -82,7 +82,7 @@ options:
             source_address_prefix:
                 description:
                   - The CIDR or source IP range.
-                  - Asterix C(*) can also be used to match all source IPs.
+                  - Asterisk C(*) can also be used to match all source IPs.
                   - Default tags such as C(VirtualNetwork), C(AzureLoadBalancer) and C(Internet) can also be used.
                   - If this is an ingress rule, specifies where network traffic originates from.
                   - It can accept string type or a list of string type.
@@ -91,7 +91,7 @@ options:
                 description:
                   - The destination address prefix.
                   - CIDR or destination IP range.
-                  - Asterix C(*) can also be used to match all source IPs.
+                  - Asterisk C(*) can also be used to match all source IPs.
                   - Default tags such as C(VirtualNetwork), C(AzureLoadBalancer) and C(Internet) can also be used.
                   - It can accept string type or a list of string type.
                 default: "*"
@@ -115,8 +115,8 @@ options:
                 default: Inbound
     state:
         description:
-            - Assert the state of the security group. Set to 'present' to create or update a security group. Set to
-              'absent' to remove a security group.
+            - Assert the state of the security group. Set to C(present) to create or update a security group. Set to
+              C(absent) to remove a security group.
         default: present
         choices:
             - absent
@@ -136,18 +136,18 @@ EXAMPLES = '''
 
 # Create a security group
 - azure_rm_securitygroup:
-      resource_group: mygroup
+      resource_group: myResourceGroup
       name: mysecgroup
       purge_rules: yes
       rules:
           - name: DenySSH
-            protocol: TCP
+            protocol: Tcp
             destination_port_range: 22
             access: Deny
             priority: 100
             direction: Inbound
           - name: 'AllowSSH'
-            protocol: TCP
+            protocol: Tcp
             source_address_prefix:
               - '174.109.158.0/24'
               - '174.109.159.0/24'
@@ -155,20 +155,30 @@ EXAMPLES = '''
             access: Allow
             priority: 101
             direction: Inbound
+          - name: 'AllowMultiplePorts'
+            protocol: Tcp
+            source_address_prefix:
+              - '174.109.158.0/24'
+              - '174.109.159.0/24'
+            destination_port_range:
+              - 80
+              - 443
+            access: Allow
+            priority: 102
 
 # Update rules on existing security group
 - azure_rm_securitygroup:
-      resource_group: mygroup
+      resource_group: myResourceGroup
       name: mysecgroup
       rules:
           - name: DenySSH
-            protocol: TCP
+            protocol: Tcp
             destination_port_range: 22-23
             access: Deny
             priority: 100
             direction: Inbound
           - name: AllowSSHFromHome
-            protocol: TCP
+            protocol: Tcp
             source_address_prefix: '174.109.158.0/24'
             destination_port_range: 22-23
             access: Allow
@@ -180,7 +190,7 @@ EXAMPLES = '''
 
 # Delete security group
 - azure_rm_securitygroup:
-      resource_group: mygroup
+      resource_group: myResourceGroup
       name: mysecgroup
       state: absent
 '''
@@ -199,7 +209,7 @@ state:
                 "destination_port_range": "*",
                 "direction": "Inbound",
                 "etag": 'W/"edf48d56-b315-40ca-a85d-dbcb47f2da7d"',
-                "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/defaultSecurityRules/AllowVnetInBound",
+                "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/defaultSecurityRules/AllowVnetInBound",
                 "name": "AllowVnetInBound",
                 "priority": 65000,
                 "protocol": "*",
@@ -214,7 +224,7 @@ state:
                 "destination_port_range": "*",
                 "direction": "Inbound",
                 "etag": 'W/"edf48d56-b315-40ca-a85d-dbcb47f2da7d"',
-                "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/defaultSecurityRules/AllowAzureLoadBalancerInBound",
+                "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/defaultSecurityRules/AllowAzureLoadBalancerInBound",
                 "name": "AllowAzureLoadBalancerInBound",
                 "priority": 65001,
                 "protocol": "*",
@@ -229,7 +239,7 @@ state:
                 "destination_port_range": "*",
                 "direction": "Inbound",
                 "etag": 'W/"edf48d56-b315-40ca-a85d-dbcb47f2da7d"',
-                "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/defaultSecurityRules/DenyAllInBound",
+                "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/defaultSecurityRules/DenyAllInBound",
                 "name": "DenyAllInBound",
                 "priority": 65500,
                 "protocol": "*",
@@ -244,7 +254,7 @@ state:
                 "destination_port_range": "*",
                 "direction": "Outbound",
                 "etag": 'W/"edf48d56-b315-40ca-a85d-dbcb47f2da7d"',
-                "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/defaultSecurityRules/AllowVnetOutBound",
+                "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/defaultSecurityRules/AllowVnetOutBound",
                 "name": "AllowVnetOutBound",
                 "priority": 65000,
                 "protocol": "*",
@@ -259,7 +269,7 @@ state:
                 "destination_port_range": "*",
                 "direction": "Outbound",
                 "etag": 'W/"edf48d56-b315-40ca-a85d-dbcb47f2da7d"',
-                "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/defaultSecurityRules/AllowInternetOutBound",
+                "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/defaultSecurityRules/AllowInternetOutBound",
                 "name": "AllowInternetOutBound",
                 "priority": 65001,
                 "protocol": "*",
@@ -274,7 +284,7 @@ state:
                 "destination_port_range": "*",
                 "direction": "Outbound",
                 "etag": 'W/"edf48d56-b315-40ca-a85d-dbcb47f2da7d"',
-                "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/defaultSecurityRules/DenyAllOutBound",
+                "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/defaultSecurityRules/DenyAllOutBound",
                 "name": "DenyAllOutBound",
                 "priority": 65500,
                 "protocol": "*",
@@ -283,7 +293,7 @@ state:
                 "source_port_range": "*"
             }
         ],
-        "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/mysecgroup",
+        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/mysecgroup",
         "location": "westus",
         "name": "mysecgroup",
         "network_interfaces": [],
@@ -295,7 +305,7 @@ state:
                 "destination_port_range": "22",
                 "direction": "Inbound",
                 "etag": 'W/"edf48d56-b315-40ca-a85d-dbcb47f2da7d"',
-                "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/securityRules/DenySSH",
+                "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/securityRules/DenySSH",
                 "name": "DenySSH",
                 "priority": 100,
                 "protocol": "Tcp",
@@ -310,7 +320,7 @@ state:
                 "destination_port_range": "22",
                 "direction": "Inbound",
                 "etag": 'W/"edf48d56-b315-40ca-a85d-dbcb47f2da7d"',
-                "id": "/subscriptions/3f7e29ba-24e0-42f6-8d9c-5149a14bda37/resourceGroups/Testing/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/securityRules/AllowSSH",
+                "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/mysecgroup/securityRules/AllowSSH",
                 "name": "AllowSSH",
                 "priority": 101,
                 "protocol": "Tcp",
@@ -338,6 +348,7 @@ except ImportError:
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 from ansible.module_utils.six import integer_types
+from ansible.module_utils._text import to_native
 
 
 def validate_rule(self, rule, rule_type=None):
@@ -376,6 +387,11 @@ def compare_rules_change(old_list, new_list, purge_list):
             new_list.append(old_rule)
         else:  # one rule is removed
             changed = True
+    # Compare new list and old list is the same? here only compare names
+    if not changed:
+        new_names = [to_native(x['name']) for x in new_list]
+        old_names = [to_native(x['name']) for x in old_list]
+        changed = (set(new_names) != set(old_names))
     return changed, new_list
 
 
@@ -536,7 +552,6 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
         self.rules = None
         self.state = None
         self.tags = None
-        self.client = None  # type: azure.mgmt.network.NetworkManagementClient
         self.nsg_models = None  # type: azure.mgmt.network.models
 
         self.results = dict(
@@ -548,11 +563,10 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
                                                    supports_check_mode=True)
 
     def exec_module(self, **kwargs):
-        self.client = self.get_mgmt_svc_client(NetworkManagementClient)
         # tighten up poll interval for security groups; default 30s is an eternity
         # this value is still overridden by the response Retry-After header (which is set on the initial operation response to 10s)
-        self.client.config.long_running_operation_timeout = 3
-        self.nsg_models = self.client.network_security_groups.models
+        self.network_client.config.long_running_operation_timeout = 3
+        self.nsg_models = self.network_client.network_security_groups.models
 
         for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
@@ -580,7 +594,7 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
                     self.fail("Error validating default rule {0} - {1}".format(rule, str(exc)))
 
         try:
-            nsg = self.client.network_security_groups.get(self.resource_group, self.name)
+            nsg = self.network_client.network_security_groups.get(self.resource_group, self.name)
             results = create_network_security_group_dict(nsg)
             self.log("Found security group:")
             self.log(results, pretty_print=True)
@@ -668,9 +682,9 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
         parameters.location = results.get('location')
 
         try:
-            poller = self.client.network_security_groups.create_or_update(resource_group_name=self.resource_group,
-                                                                          network_security_group_name=self.name,
-                                                                          parameters=parameters)
+            poller = self.network_client.network_security_groups.create_or_update(resource_group_name=self.resource_group,
+                                                                                  network_security_group_name=self.name,
+                                                                                  parameters=parameters)
             result = self.get_poller_result(poller)
         except CloudError as exc:
             self.fail("Error creating/updating security group {0} - {1}".format(self.name, str(exc)))
@@ -678,7 +692,7 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
 
     def delete(self):
         try:
-            poller = self.client.network_security_groups.delete(resource_group_name=self.resource_group, network_security_group_name=self.name)
+            poller = self.network_client.network_security_groups.delete(resource_group_name=self.resource_group, network_security_group_name=self.name)
             result = self.get_poller_result(poller)
         except CloudError as exc:
             raise Exception("Error deleting security group {0} - {1}".format(self.name, str(exc)))

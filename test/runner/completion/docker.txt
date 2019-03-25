@@ -1,10 +1,11 @@
-centos6@sha256:41eb4b870ce400202945ccf572d45bf5f2f5ebb50e9dee244de73b9d0278db30
-centos7@sha256:bd571611112cccefdaa951ea640177cbb77c8ee011f958d2562781d90594ea9c
-default@sha256:b651e5964e192c12ef574646a9c724e72fd94615d37d47ffad986408b2097a07
-fedora24@sha256:7b642c5d25b779a3a605fb8f70d9d92972f2004a5266fe364264809899fb1117
-fedora25@sha256:828c71d87f1636f4d09916b8e2d87fc9a615d361a9afed22e8843ffb3d2729d2
-opensuse42.2@sha256:3c59cd694fe69860d299a10afaa84f4e0b3db0c4139232431e9801e1a0775b0a
-opensuse42.3@sha256:d62cc5f0de0ffddbd32c73271290a4593613bd94fa09b615ac0c025a10bdbe3c
-ubuntu1404@sha256:4372bfbedf2d44e421fc9e5266ffd9d55074b4ad19f81270aeb3ff893245423c
-ubuntu1604@sha256:1ce833540387eab6d2de9ece9068ae94e5f58dced696bc3080b276bc7da116a7
-ubuntu1604py3@sha256:3dc2000073c4445e6dbbfd943b0a02e57427435af7e537346e314c90740b13fd
+default name=quay.io/ansible/default-test-container:1.6.0 python=3
+centos6 name=quay.io/ansible/centos6-test-container:1.4.0 seccomp=unconfined
+centos7 name=quay.io/ansible/centos7-test-container:1.4.0 seccomp=unconfined
+fedora28 name=quay.io/ansible/fedora28-test-container:1.5.0
+fedora29 name=quay.io/ansible/fedora29-test-container:1.5.0 python=3
+opensuse15py2 name=quay.io/ansible/opensuse15py2-test-container:1.7.0
+opensuse15 name=quay.io/ansible/opensuse15-test-container:1.7.0 python=3
+ubuntu1404 name=quay.io/ansible/ubuntu1404-test-container:1.4.0 seccomp=unconfined
+ubuntu1604 name=quay.io/ansible/ubuntu1604-test-container:1.4.0 seccomp=unconfined
+ubuntu1604py3 name=quay.io/ansible/ubuntu1604py3-test-container:1.4.0 seccomp=unconfined python=3
+ubuntu1804 name=quay.io/ansible/ubuntu1804-test-container:1.6.0 seccomp=unconfined python=3

@@ -1,8 +1,11 @@
+.. _windows_setup:
+
 Setting up a Windows Host
 =========================
 This document discusses the setup that is required before Ansible can communicate with a Microsoft Windows host.
 
-.. contents:: Topics
+.. contents::
+   :local:
 
 Host Requirements
 `````````````````
@@ -11,7 +14,7 @@ Windows host must meet the following requirements:
 
 * Ansible's supported Windows versions generally match those under current
   and extended support from Microsoft. Supported desktop OSs include
-  Windows 7, 8.1, and 10, and supported server OSs are Windows Server 2008, 
+  Windows 7, 8.1, and 10, and supported server OSs are Windows Server 2008,
   2008 R2, 2012, 2012 R2, and 2016.
 
 * Ansible requires PowerShell 3.0 or newer and at least .NET 4.0 to be
@@ -20,7 +23,7 @@ Windows host must meet the following requirements:
 * A WinRM listener should be created and activated. More details for this can be
   found below.
 
-.. Note:: While these are the base requirements for Ansible connectivity, some Ansible 
+.. Note:: While these are the base requirements for Ansible connectivity, some Ansible
     modules have additional requirements, such as a newer OS or PowerShell
     version. Please consult the module's documentation page
     to determine whether a host meets those requirements.
@@ -32,7 +35,7 @@ requirement. You can use the `Upgrade-PowerShell.ps1 <https://github.com/jborean
 
 This is an example of how to run this script from PowerShell:
 
-.. code-block:: guess
+.. code-block:: powershell
 
     $url = "https://raw.githubusercontent.com/jborean93/ansible-windows/master/scripts/Upgrade-PowerShell.ps1"
     $file = "$env:temp\Upgrade-PowerShell.ps1"
@@ -42,16 +45,16 @@ This is an example of how to run this script from PowerShell:
     (New-Object -TypeName System.Net.WebClient).DownloadFile($url, $file)
     Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Force
 
-    # version can be 3.0, 4.0 or 5.1
+    # Version can be 3.0, 4.0 or 5.1
     &$file -Version 5.1 -Username $username -Password $password -Verbose
 
 Once completed, you will need to remove auto logon
 and set the execution policy back to the default of ``Restricted``. You can
 do this with the following PowerShell commands:
 
-.. code-block:: guess
+.. code-block:: powershell
 
-    # this isn't needed but is a good security practice to complete
+    # This isn't needed but is a good security practice to complete
     Set-ExecutionPolicy -ExecutionPolicy Restricted -Force
 
     $reg_winlogon_path = "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon"
@@ -59,7 +62,7 @@ do this with the following PowerShell commands:
     Remove-ItemProperty -Path $reg_winlogon_path -Name DefaultUserName -ErrorAction SilentlyContinue
     Remove-ItemProperty -Path $reg_winlogon_path -Name DefaultPassword -ErrorAction SilentlyContinue
 
-The script works by checking to see what programs need to be installed 
+The script works by checking to see what programs need to be installed
 (such as .NET Framework 4.5.2) and what PowerShell version is required. If a reboot
 is required and the ``username`` and ``password`` parameters are set, the
 script will automatically reboot and logon when it comes back up from the
@@ -76,21 +79,21 @@ actions are required.
 .. Note:: Windows Server 2008 can only install PowerShell 3.0; specifying a
     newer version will result in the script failing.
 
-.. Note:: The ``username`` and ``password`` parameters are stored in plain text 
-    in the registry. Make sure the cleanup commands are run after the script finishes 
+.. Note:: The ``username`` and ``password`` parameters are stored in plain text
+    in the registry. Make sure the cleanup commands are run after the script finishes
     to ensure no credentials are still stored on the host.
 
 WinRM Memory Hotfix
 -------------------
 When running on PowerShell v3.0, there is a bug with the WinRM service that
 limits the amount of memory available to WinRM. Without this hotfix installed,
-Ansible will fail to execute certain commands on the Windows host. These 
-hotfixes should installed as part of the system bootstapping or
+Ansible will fail to execute certain commands on the Windows host. These
+hotfixes should installed as part of the system bootstrapping or
 imaging process. The script `Install-WMF3Hotfix.ps1 <https://github.com/jborean93/ansible-windows/blob/master/scripts/Install-WMF3Hotfix.ps1>`_ can be used to install the hotfix on affected hosts.
 
 The following PowerShell command will install the hotfix:
 
-.. code-block:: guess
+.. code-block:: powershell
 
     $url = "https://raw.githubusercontent.com/jborean93/ansible-windows/master/scripts/Install-WMF3Hotfix.ps1"
     $file = "$env:temp\Install-WMF3Hotfix.ps1"
@@ -113,7 +116,7 @@ authentication option on the service.
 
 To use this script, run the following in PowerShell:
 
-.. code-block:: guess
+.. code-block:: powershell
 
     $url = "https://raw.githubusercontent.com/ansible/ansible/devel/examples/scripts/ConfigureRemotingForAnsible.ps1"
     $file = "$env:temp\ConfigureRemotingForAnsible.ps1"
@@ -126,10 +129,10 @@ There are different switches and parameters (like ``-EnableCredSSP`` and
 ``-ForceNewSSLCert``) that can be set alongside this script. The documentation
 for these options are located at the top of the script itself.
 
-.. Note:: The ConfigureRemotingForAnsible.ps1 script is intended for training and 
+.. Note:: The ConfigureRemotingForAnsible.ps1 script is intended for training and
     development purposes only and should not be used in a
-    production environment, since it enables settings (like ``Basic`` authentication) 
-    that can be inherently insecure. 
+    production environment, since it enables settings (like ``Basic`` authentication)
+    that can be inherently insecure.
 
 WinRM Listener
 --------------
@@ -137,11 +140,15 @@ The WinRM services listens for requests on one or more ports. Each of these port
 listener created and configured.
 
 To view the current listeners that are running on the WinRM service, run the
-following command::
+following command:
+
+.. code-block:: powershell
 
     winrm enumerate winrm/config/Listener
 
-This will output something like the following::
+This will output something like the following:
+
+.. code-block:: guess
 
     Listener
         Address = *
@@ -186,8 +193,9 @@ the key options that are useful to understand are:
   in the connection. To get the details of the certificate itself, run this
   command with the relevant certificate thumbprint in PowerShell:
 
+  .. comment: Pygments powershell lexer does not support colons (i.e. URLs)
   .. code-block:: guess
-    
+
     $thumbprint = "E6CDAA82EEAF2ECE8546E05DB7F3E01AA47D76CE"
     Get-ChildItem -Path cert:\LocalMachine\My -Recurse | Where-Object { $_.Thumbprint -eq $thumbprint } | Select-Object *
 
@@ -198,18 +206,18 @@ There are three ways to set up a WinRM listener:
 * Using ``winrm quickconfig`` for HTTP or
   ``winrm quickconfig -transport:https`` for HTTPS. This is the easiest option
   to use when running outside of a domain environment and a simple listener is
-  required. Unlike the other options, this process also has the added benefit of 
-  opening up the Firewall for the ports required and starts the WinRM service. 
+  required. Unlike the other options, this process also has the added benefit of
+  opening up the Firewall for the ports required and starts the WinRM service.
 
-* Using Group Policy Objects. This is the best way to create a listener when the 
-  host is a member of a domain because the configuration is done automatically 
-  without any user input. For more information on group policy objects, see the 
+* Using Group Policy Objects. This is the best way to create a listener when the
+  host is a member of a domain because the configuration is done automatically
+  without any user input. For more information on group policy objects, see the
   `Group Policy Objects documentation <https://msdn.microsoft.com/en-us/library/aa374162(v=vs.85).aspx>`_.
 
 * Using PowerShell to create the listener with a specific configuration. This
   can be done by running the following PowerShell commands:
 
-  .. code-block:: guess
+  .. code-block:: powershell
 
       $selector_set = @{
           Address = "*"
@@ -232,12 +240,13 @@ Delete WinRM Listener
 +++++++++++++++++++++
 To remove a WinRM listener:
 
+.. comment: Pygments powershell lexer does not support colons (i.e. URLs)
 .. code-block:: guess
 
-    # remove all listeners
+    # Remove all listeners
     Remove-Item -Path WSMan:\localhost\Listener\* -Recurse -Force
 
-    # only remove listeners that are run over HTTPS
+    # Only remove listeners that are run over HTTPS
     Get-ChildItem -Path WSMan:\localhost\Listener | Where-Object { $_.Keys -contains "Transport=HTTPS" } | Remove-Item -Recurse -Force
 
 .. Note:: The ``Keys`` object is an array of strings, so it can contain different
@@ -246,16 +255,20 @@ To remove a WinRM listener:
 
 WinRM Service Options
 ---------------------
-There are a number of options that can be set to control the behavior of the WinRM service component, 
+There are a number of options that can be set to control the behavior of the WinRM service component,
 including authentication options and memory settings.
 
 To get an output of the current service configuration options, run the
-following command::
+following command:
+
+.. code-block:: powershell
 
     winrm get winrm/config/Service
     winrm get winrm/config/Winrs
 
-This will output something like the following::
+This will output something like the following:
+
+.. code-block:: guess
 
     Service
         RootSDDL = O:NSG:BAD:P(A;;GA;;;BA)(A;;GR;;;IU)S:P(AU;FA;GA;;;WD)(AU;SA;GXGW;;;WD)
@@ -314,7 +327,7 @@ options are:
 
 * ``Service\CertificateThumbprint``: This is the thumbprint of the certificate
   used to encrypt the TLS channel used with CredSSP authentication. By default
-  this is empty; a self-signed certificate is generated when the WinRM service 
+  this is empty; a self-signed certificate is generated when the WinRM service
   starts and is used in the TLS process.
 
 * ``Winrs\MaxShellRunTime``: This is the maximum time, in milliseconds, that a
@@ -326,6 +339,7 @@ options are:
 To modify a setting under the ``Service`` key in PowerShell, the following
 command can be used:
 
+.. comment: Pygments powershell lexer does not support colons (i.e. URLs)
 .. code-block:: guess
 
     # substitute {path} with the path to the option after winrm/config/Service
@@ -337,12 +351,13 @@ command can be used:
 To modify a setting under the ``Winrs`` key in PowerShell, the following
 command can be used:
 
+.. comment: Pygments powershell lexer does not support colons (i.e. URLs)
 .. code-block:: guess
 
-    # substitute {path} with the path to the option after winrm/config/Winrs
+    # Substitute {path} with the path to the option after winrm/config/Winrs
     Set-Item -Path WSMan:\localhost\Shell\{path} -Value "value here"
 
-    # for example, to change Winrs\MaxShellRunTime run
+    # For example, to change Winrs\MaxShellRunTime run
     Set-Item -Path WSMan:\localhost\Shell\MaxShellRunTime -Value 2147483647
 
 .. Note:: If running in a domain environment, some of these options are set by
@@ -352,20 +367,23 @@ command can be used:
 Common WinRM Issues
 -------------------
 Because WinRM has a wide range of configuration options, it can be difficult
-to setup and configure. Because of this complexity, issues that are shown by Ansible 
-could in fact be issues with the host setup instead. 
+to setup and configure. Because of this complexity, issues that are shown by Ansible
+could in fact be issues with the host setup instead.
 
-One easy way to determine whether a problem is a host issue is to 
+One easy way to determine whether a problem is a host issue is to
 run the following command from another Windows host to connect to the
-target Windows host::
+target Windows host:
 
-    # test out HTTP
+.. comment: Pygments powershell lexer does not support -u:Username
+.. code-block:: guess
+
+    # Test out HTTP
     winrs -r:http://server:5985/wsman -u:Username -p:Password ipconfig
 
-    # test out HTTPS (will fail if the cert is not verifiable)
+    # Test out HTTPS (will fail if the cert is not verifiable)
     winrs -r:http://server:5985/wsman -u:Username -p:Password -ssl ipconfig
 
-    # test out HTTPS, ignoring certificate verification
+    # Test out HTTPS, ignoring certificate verification
     $username = "Username"
     $password = ConvertTo-SecureString -String "Password" -AsPlainText -Force
     $cred = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $username, $password
@@ -384,7 +402,7 @@ connection. Some things to check for this are:
   ``ansible_user`` and ``ansible_password``
 
 * Ensure that the user is a member of the local Administrators group or has been explicitly
-  granted access (a connection test with the ``winrs`` command can be used to 
+  granted access (a connection test with the ``winrs`` command can be used to
   rule this out).
 
 * Make sure that the authentication option set by ``ansible_winrm_transport`` is enabled under
@@ -408,7 +426,7 @@ connection. Some things to check for this are:
 
 HTTP 500 Error
 ++++++++++++++
-These indicate an error has occured with the WinRM service. Some things
+These indicate an error has occurred with the WinRM service. Some things
 to check for include:
 
 * Verify that the number of current open shells has not exceeded either
@@ -422,7 +440,7 @@ Ansible is unable to reach the host. Some things to check for include:
 
 * Make sure the firewall is not set to block the configured WinRM listener ports
 * Ensure that a WinRM listener is enabled on the port and path set by the host vars
-* Ensure that the ``winrm`` service is running on the Windows host and configured for 
+* Ensure that the ``winrm`` service is running on the Windows host and configured for
   automatic start
 
 Connection Refused Errors
@@ -439,17 +457,121 @@ Sometimes an installer may restart the WinRM or HTTP service and cause this erro
 best way to deal with this is to use ``win_psexec`` from another
 Windows host.
 
+Windows SSH Setup
+`````````````````
+Ansible 2.8 has added experimental support for using SSH to connect to a
+Windows host.
+
+.. warning::
+    Use this feature at your own risk!
+    Using SSH with Windows is experimental, the implementation may make
+    backwards incompatible changes in feature releases. The server side
+    components can be unreliable depending on the version that is installed.
+
+Installing Win32-OpenSSH
+------------------------
+The first step to using SSH with Windows is to install the `Win32-OpenSSH <https://github.com/PowerShell/Win32-OpenSSH>`_
+service on the Windows host. Microsoft offers a way to install ``Win32-OpenSSH`` through a Windows
+capability but currently the version that is installed through this process is
+too old to work with Ansible. To install ``Win32-OpenSSH`` for use with
+Ansible, select one of these three installation options:
+
+* Manually install the service, following the `install instructions <https://github.com/PowerShell/Win32-OpenSSH/wiki/Install-Win32-OpenSSH>`_
+  from Microsoft.
+
+* Use ``win_chocolatey`` to install the service::
+
+    - name: install the Win32-OpenSSH service
+      win_chocolatey:
+        name: openssh
+        package_params: /SSHServerFeature
+        state: present
+
+* Use an existing Ansible Galaxy role like `jborean93.win_openssh <https://galaxy.ansible.com/jborean93/win_openssh>`_::
+
+    # Make sure the role has been downloaded first
+    ansible-galaxy install jborean93.win_openssh
+
+    # main.yml
+    - name: install Win32-OpenSSH service
+      hosts: windows
+      gather_facts: no
+      roles:
+      - role: jborean93.win_openssh
+        opt_openssh_setup_service: True
+
+.. note:: ``Win32-OpenSSH`` is still a beta product and is constantly
+    being updated to include new features and bugfixes. If you are using SSH as
+    a connection option for Windows, it is highly recommend you install the
+    latest release from one of the 3 methods above.
+
+Configuring the Win32-OpenSSH shell
+-----------------------------------
+
+By default ``Win32-OpenSSH`` will use ``cmd.exe`` as a shell. To configure a
+different shell, use an Ansible task to define the registry setting::
+
+    - name: set the default shell to PowerShell
+      win_regedit:
+        path: HKLM:\SOFTWARE\OpenSSH
+        name: DefaultShell
+        data: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+        type: string
+        state: present
+
+    # Or revert the settings back to the default, cmd
+    - name: set the default shell to cmd
+      win_regedit:
+        path: HKLM:\SOFTWARE\OpenSSH
+        name: DefaultShell
+        state: absent
+
+Win32-OpenSSH Authentication
+----------------------------
+Win32-OpenSSH authentication with Windows is similar to SSH
+authentication on Unix/Linux hosts. You can use a plaintext password or
+SSH public key authentication, add public keys to an ``authorized_key`` file
+in the ``.ssh`` folder of the user's profile directory, and configure the
+service using the ``sshd_config`` file used by the SSH service as you would on
+a Unix/Linux host.
+
+When using SSH key authentication with Ansible, the remote session won't have access to the
+user's credentials and will fail when attempting to access a network resource.
+This is also known as the double-hop or credential delegation issue. There are
+two ways to work around this issue:
+
+* Use plaintext password auth by setting ``ansible_password``
+* Use ``become`` on the task with the credentials of the user that needs access to the remote resource
+
+Configuring Ansible for SSH on Windows
+--------------------------------------
+To configure Ansible to use SSH for Windows hosts, you must set two connection variables:
+
+* set ``ansible_connection`` to ``ssh``
+* set ``ansible_shell_type`` to ``cmd`` or ``powershell``
+
+The ``ansible_shell_type`` variable should reflect the ``DefaultShell``
+configured on the Windows host. Set to ``cmd`` for the default shell or set to
+``powershell`` if the ``DefaultShell`` has been changed to PowerShell.
+
+Known issues with SSH on Windows
+--------------------------------
+Using SSH with Windows is experimental, and we expect to uncover more issues.
+Here are the known ones:
+
+* Win32-OpenSSH versions older than ``v7.9.0.0p1-Beta`` do not work when ``powershell`` is the shell type
+* While SCP should work, SFTP is the recommended SSH file transfer mechanism to use when copying or fetching a file
+
+
 .. seealso::
 
-   :doc:`index`
-       The documentation index
-   :doc:`playbooks`
+   :ref:`about_playbooks`
        An introduction to playbooks
-   :doc:`playbooks_best_practices`
+   :ref:`playbooks_best_practices`
        Best practices advice
    :ref:`List of Windows Modules <windows_modules>`
        Windows specific module list, all implemented in PowerShell
-   `User Mailing List <http://groups.google.com/group/ansible-project>`_
+   `User Mailing List <https://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

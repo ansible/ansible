@@ -1,0 +1,62 @@
+---
+- name: Create volume in check mode
+  cloudscale_volume:
+    name: '{{ cloudscale_resource_prefix }}-check-mode'
+    size_gb: 50
+  register: check_mode_vol
+  check_mode: True
+- name: Delete volume created in check mode
+  cloudscale_volume:
+    name: '{{ cloudscale_resource_prefix }}-check-mode'
+    state: 'absent'
+  register: check_mode_delete
+- name: 'VERIFY: Create volume in check mode'
+  assert:
+    that:
+      - check_mode_vol is successful
+      - check_mode_vol is changed
+      - check_mode_delete is successful
+      - check_mode_delete is not changed
+
+- name: Create volume
+  cloudscale_volume:
+    name: '{{ cloudscale_resource_prefix }}-vol'
+    size_gb: 50
+- name: Attach volume in check mode
+  cloudscale_volume:
+    name: '{{ cloudscale_resource_prefix }}-vol'
+    server_uuids:
+      - '{{ server.uuid }}'
+  check_mode: True
+  register: check_mode_attach
+- name: Detach volume
+  cloudscale_volume:
+    name: '{{ cloudscale_resource_prefix }}-vol'
+    server_uuids: []
+  register: check_mode_detach
+- name: 'VERIFY: Attach volume in check mode'
+  assert:
+    that:
+      - check_mode_attach is successful
+      - check_mode_attach is changed
+      - check_mode_detach is successful
+      - check_mode_detach is not changed
+
+- name: Resize volume in check mode
+  cloudscale_volume:
+    name: '{{ cloudscale_resource_prefix }}-vol'
+    size_gb: 100
+  register: check_mode_resize
+  check_mode: True
+- name: Get volume info
+  cloudscale_volume:
+    name: '{{ cloudscale_resource_prefix }}-vol'
+  register: check_mode_info
+- name: 'VERIFY: Resize volume in check mode'
+  assert:
+    that:
+      - check_mode_resize is successful
+      - check_mode_resize is changed
+      - check_mode_info is successful
+      - check_mode_info is not changed
+      - check_mode_info.size_gb == 50

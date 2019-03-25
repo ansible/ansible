@@ -19,13 +19,12 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from collections import Mapping
-
 from jinja2.utils import missing
 
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
+from ansible.module_utils.common._collections_compat import Mapping
 
 
 __all__ = ['AnsibleJ2Vars']
@@ -108,7 +107,7 @@ class AnsibleJ2Vars(Mapping):
             except AnsibleUndefinedVariable:
                 raise
             except Exception as e:
-                msg = getattr(e, 'message') or to_native(e)
+                msg = getattr(e, 'message', None) or to_native(e)
                 raise AnsibleError("An unhandled exception occurred while templating '%s'. "
                                    "Error was a %s, original message: %s" % (to_native(variable), type(e), msg))
 

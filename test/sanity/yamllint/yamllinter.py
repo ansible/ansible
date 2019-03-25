@@ -147,7 +147,7 @@ class YamlChecker(object):
             for body_statement in module_ast.body:
                 if isinstance(body_statement, ast.Assign):
                     check_assignment(body_statement, module_doc_types)
-        elif path.startswith('lib/ansible/utils/module_docs_fragments/'):
+        elif path.startswith('lib/ansible/plugins/doc_fragments/'):
             for body_statement in module_ast.body:
                 if isinstance(body_statement, ast.ClassDef):
                     for class_statement in body_statement.body:

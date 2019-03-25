@@ -20,9 +20,9 @@ author: "Davide Agnello (@dagnello)"
 description:
     - Retrieve facts about a image image from OpenStack.
 notes:
-    - Facts are placed in the C(openstack) variable.
+    - Facts are placed in the C(openstack_image) variable.
 requirements:
-    - "python >= 2.6"
+    - "python >= 2.7"
     - "openstacksdk"
 options:
    image:
@@ -68,27 +68,27 @@ openstack_image:
         id:
             description: Unique UUID.
             returned: success
-            type: string
+            type: str
         name:
             description: Name given to the image.
             returned: success
-            type: string
+            type: str
         status:
             description: Image status.
             returned: success
-            type: string
+            type: str
         created_at:
             description: Image created at timestamp.
             returned: success
-            type: string
+            type: str
         deleted:
             description: Image deleted flag.
             returned: success
-            type: boolean
+            type: bool
         container_format:
             description: Container format of the image.
             returned: success
-            type: string
+            type: str
         min_ram:
             description: Min amount of RAM required for this image.
             returned: success
@@ -96,11 +96,11 @@ openstack_image:
         disk_format:
             description: Disk format of the image.
             returned: success
-            type: string
+            type: str
         updated_at:
             description: Image updated at timestamp.
             returned: success
-            type: string
+            type: str
         properties:
             description: Additional properties associated with the image.
             returned: success
@@ -112,23 +112,23 @@ openstack_image:
         protected:
             description: Image protected flag.
             returned: success
-            type: boolean
+            type: bool
         checksum:
             description: Checksum for the image.
             returned: success
-            type: string
+            type: str
         owner:
             description: Owner for the image.
             returned: success
-            type: string
+            type: str
         is_public:
             description: Is public flag of the image.
             returned: success
-            type: boolean
+            type: bool
         deleted_at:
             description: Image deleted at timestamp.
             returned: success
-            type: string
+            type: str
         size:
             description: Size of the image.
             returned: success

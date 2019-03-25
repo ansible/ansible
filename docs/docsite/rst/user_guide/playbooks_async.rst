@@ -30,6 +30,11 @@ poll value is 10 seconds if you do not specify a value for `poll`::
    'async' keyword, the task runs synchronously, which is Ansible's
    default.
 
+.. note::
+  As of Ansible 2.3, async does not support check mode and will fail the
+  task when run in check mode. See :doc:`playbooks_checkmode` on how to
+  skip a task in check mode.
+
 Alternatively, if you do not need to wait on the task to complete, you may
 run the task asynchronously by specifying a poll value of 0::
 
@@ -46,7 +51,7 @@ run the task asynchronously by specifying a poll value of 0::
         poll: 0
 
 .. note::
-   You shouldn't attempt run a task asynchronously by specifying a poll value of 0:: to with operations that require
+   You shouldn't attempt run a task asynchronously by specifying a poll value of 0 with operations that require
    exclusive locks (such as yum transactions) if you expect to run other
    commands later in the playbook against those same resources.
 
@@ -62,7 +67,7 @@ following::
       - name: 'YUM - async task'
         yum:
           name: docker-io
-          state: installed
+          state: present
         async: 1000
         poll: 0
         register: yum_sleeper
@@ -95,8 +100,7 @@ of tasks running concurrently, you can do it this way::
           - 5
         durations: "{{ item }}"
       include_tasks: execute_batch.yml
-      loop:
-        - "{{ sleep_durations | batch(2) | list }}"
+      loop: "{{ sleep_durations | batch(2) | list }}"
 
     #####################
     # execute_batch.yml
@@ -124,8 +128,7 @@ of tasks running concurrently, you can do it this way::
 
    :doc:`playbooks`
        An introduction to playbooks
-   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-

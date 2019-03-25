@@ -39,10 +39,9 @@ options:
   name:
     description:
       - Name of the application pool.
+    type: str
     required: yes
   state:
-    choices: [ absent, present, restarted, started, stopped ]
-    default: present
     description:
       - The state of the application pool.
       - If C(absent) will ensure the app pool is removed.
@@ -51,40 +50,48 @@ options:
         is never idempotent.
       - If C(started) will ensure the app pool exists and is started.
       - If C(stopped) will ensure the app pool exists and is stopped.
+    type: str
+    choices: [ absent, present, restarted, started, stopped ]
+    default: present
+seealso:
+- module: win_iis_virtualdirectory
+- module: win_iis_webapplication
+- module: win_iis_webbinding
+- module: win_iis_website
 author:
 - Henrik Wallström (@henrikwallstrom)
 - Jordan Borean (@jborean93)
 '''
 
 EXAMPLES = r'''
-- name: return information about an existing application pool
+- name: Return information about an existing application pool
   win_iis_webapppool:
     name: DefaultAppPool
     state: present
 
-- name: create a new application pool in 'Started' state
+- name: Create a new application pool in 'Started' state
   win_iis_webapppool:
     name: AppPool
     state: started
 
-- name: stop an application pool
+- name: Stop an application pool
   win_iis_webapppool:
     name: AppPool
     state: stopped
 
-- name: restart an application pool (non-idempotent)
+- name: Restart an application pool (non-idempotent)
   win_iis_webapppool:
     name: AppPool
     state: restart
 
-- name: change application pool attributes using new dict style
+- name: Change application pool attributes using new dict style
   win_iis_webapppool:
     name: AppPool
     attributes:
       managedRuntimeVersion: v4.0
       autoStart: no
 
-- name: creates an application pool, sets attributes and starts it
+- name: Creates an application pool, sets attributes and starts it
   win_iis_webapppool:
     name: AnotherAppPool
     state: started
@@ -94,7 +101,7 @@ EXAMPLES = r'''
 
 # In the below example we are setting attributes in child element processModel
 # https://www.iis.net/configreference/system.applicationhost/applicationpools/add/processmodel
-- name: manage child element and set identity of application pool
+- name: Manage child element and set identity of application pool
   win_iis_webapppool:
     name: IdentitiyAppPool
     state: started
@@ -103,9 +110,9 @@ EXAMPLES = r'''
       processModel.identityType: SpecificUser
       processModel.userName: '{{ansible_user}}'
       processModel.password: '{{ansible_password}}'
-      processModel.loadUserProfile: True
+      processModel.loadUserProfile: true
 
-- name: manage a timespan attribute
+- name: Manage a timespan attribute
   win_iis_webapppool:
     name: TimespanAppPool
     state: started
@@ -122,7 +129,7 @@ attributes:
   description: Application Pool attributes that were set and processed by this
     module invocation.
   returned: success
-  type: dictionary
+  type: dict
   sample:
     enable32BitAppOnWin64: "true"
     managedRuntimeVersion: "v4.0"
@@ -138,7 +145,7 @@ info:
     attributes:
       description: Key value pairs showing the current Application Pool attributes.
       returned: success
-      type: dictionary
+      type: dict
       sample:
         autoStart: true
         managedRuntimeLoader: "webengine4.dll"
@@ -156,7 +163,7 @@ info:
     cpu:
       description: Key value pairs showing the current Application Pool cpu attributes.
       returned: success
-      type: dictionary
+      type: dict
       sample:
         action: "NoAction"
         limit: 0
@@ -166,7 +173,7 @@ info:
     failure:
       description: Key value pairs showing the current Application Pool failure attributes.
       returned: success
-      type: dictionary
+      type: dict
       sample:
         autoShutdownExe: ""
         orphanActionExe: ""
@@ -176,12 +183,12 @@ info:
     name:
       description: Name of Application Pool that was processed by this module invocation.
       returned: success
-      type: string
+      type: str
       sample: "DefaultAppPool"
     processModel:
       description: Key value pairs showing the current Application Pool processModel attributes.
       returned: success
-      type: dictionary
+      type: dict
       sample:
         identityType: "ApplicationPoolIdentity"
         logonType: "LogonBatch"
@@ -191,7 +198,7 @@ info:
     recycling:
       description: Key value pairs showing the current Application Pool recycling attributes.
       returned: success
-      type: dictionary
+      type: dict
       sample:
         disallowOverlappingRotation: false
         disallowRotationOnConfigChange: false
@@ -199,6 +206,6 @@ info:
     state:
       description: Current runtime state of the pool as the module completed.
       returned: success
-      type: string
+      type: str
       sample: "Started"
 '''

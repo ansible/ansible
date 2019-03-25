@@ -9,7 +9,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -17,29 +17,33 @@ module: aci_interface_policy_leaf_profile
 short_description: Manage fabric interface policy leaf profiles (infra:AccPortP)
 description:
 - Manage fabric interface policy leaf profiles on Cisco ACI fabrics.
-notes:
-- More information about the internal APIC class B(infra:AccPortP) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
-author:
-- Bruno Calogero (@brunocalogero)
 version_added: '2.5'
 options:
   leaf_interface_profile:
     description:
     - The name of the Fabric access policy leaf interface profile.
+    type: str
     required: yes
     aliases: [ name, leaf_interface_profile_name ]
   description:
     description:
     - Description for the Fabric access policy leaf interface profile.
+    type: str
     aliases: [ descr ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
+seealso:
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(infra:AccPortP).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Bruno Calogero (@brunocalogero)
 '''
 
 EXAMPLES = r'''
@@ -51,6 +55,7 @@ EXAMPLES = r'''
     leaf_interface_profile: leafintprfname
     description:  leafintprfname description
     state: present
+  delegate_to: localhost
 
 - name: Remove a leaf_interface_profile
   aci_interface_policy_leaf_profile:
@@ -59,6 +64,7 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     leaf_interface_profile: leafintprfname
     state: absent
+  delegate_to: localhost
 
 - name: Remove all leaf_interface_profiles
   aci_interface_policy_leaf_profile:
@@ -66,6 +72,7 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: absent
+  delegate_to: localhost
 
 - name: Query a leaf_interface_profile
   aci_interface_policy_leaf_profile:
@@ -74,6 +81,8 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     leaf_interface_profile: leafintprfname
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -108,7 +117,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -157,17 +166,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -177,12 +186,12 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 
 def main():
@@ -211,8 +220,8 @@ def main():
         root_class=dict(
             aci_class='infraAccPortP',
             aci_rn='infra/accportprof-{0}'.format(leaf_interface_profile),
-            filter_target='eq(infraAccPortP.name, "{0}")'.format(leaf_interface_profile),
-            module_object=leaf_interface_profile
+            module_object=leaf_interface_profile,
+            target_filter={'name': leaf_interface_profile},
         ),
     )
     aci.get_existing()

@@ -19,22 +19,26 @@ module: cs_instance_facts
 short_description: Gathering facts from the API of instances from Apache CloudStack based clouds.
 description:
     - Gathering facts from the API of an instance.
-version_added: "2.1"
-author: "René Moser (@resmo)"
+version_added: '2.1'
+author: René Moser (@resmo)
 options:
   name:
     description:
       - Name or display name of the instance.
+    type: str
     required: true
   domain:
     description:
       - Domain the instance is related to.
+    type: str
   account:
     description:
       - Account the instance is related to.
+    type: str
   project:
     description:
       - Project the instance is related to.
+    type: str
 extends_documentation_fragment: cloudstack
 '''
 
@@ -57,92 +61,92 @@ RETURN = '''
 id:
   description: UUID of the instance.
   returned: success
-  type: string
+  type: str
   sample: 04589590-ac63-4ffc-93f5-b698b8ac38b6
 name:
   description: Name of the instance.
   returned: success
-  type: string
+  type: str
   sample: web-01
 display_name:
   description: Display name of the instance.
   returned: success
-  type: string
+  type: str
   sample: web-01
 group:
   description: Group name of the instance is related.
   returned: success
-  type: string
+  type: str
   sample: web
 created:
   description: Date of the instance was created.
   returned: success
-  type: string
+  type: str
   sample: 2014-12-01T14:57:57+0100
 password_enabled:
   description: True if password setting is enabled.
   returned: success
-  type: boolean
+  type: bool
   sample: true
 password:
   description: The password of the instance if exists.
   returned: success
-  type: string
+  type: str
   sample: Ge2oe7Do
 ssh_key:
   description: Name of SSH key deployed to instance.
   returned: success
-  type: string
+  type: str
   sample: key@work
 domain:
   description: Domain the instance is related to.
   returned: success
-  type: string
+  type: str
   sample: example domain
 account:
   description: Account the instance is related to.
   returned: success
-  type: string
+  type: str
   sample: example account
 project:
   description: Name of project the instance is related to.
   returned: success
-  type: string
+  type: str
   sample: Production
 default_ip:
   description: Default IP address of the instance.
   returned: success
-  type: string
+  type: str
   sample: 10.23.37.42
 public_ip:
   description: Public IP address with instance via static NAT rule.
   returned: success
-  type: string
+  type: str
   sample: 1.2.3.4
 iso:
   description: Name of ISO the instance was deployed with.
   returned: success
-  type: string
+  type: str
   sample: Debian-8-64bit
 template:
   description: Name of template the instance was deployed with.
   returned: success
-  type: string
+  type: str
   sample: Debian-8-64bit
 service_offering:
   description: Name of the service offering the instance has.
   returned: success
-  type: string
+  type: str
   sample: 2cpu_2gb
 zone:
   description: Name of zone the instance is in.
   returned: success
-  type: string
+  type: str
   sample: ch-gva-2
 state:
   description: State of the instance.
   returned: success
-  type: string
+  type: str
   sample: Running
 security_groups:
   description: Security groups the instance is in.
@@ -157,23 +161,23 @@ affinity_groups:
 tags:
   description: List of resource tags associated with the instance.
   returned: success
-  type: dict
+  type: list
   sample: '[ { "key": "foo", "value": "bar" } ]'
 hypervisor:
   description: Hypervisor related to this instance.
   returned: success
-  type: string
+  type: str
   sample: KVM
 host:
   description: Host the instance is running on.
   returned: success and instance is running
-  type: string
+  type: str
   sample: host01.example.com
   version_added: '2.6'
 instance_name:
   description: Internal name of the instance (ROOT admin only).
   returned: success
-  type: string
+  type: str
   sample: i-44-3992-VM
 volumes:
   description: List of dictionaries of the volumes attached to the instance.

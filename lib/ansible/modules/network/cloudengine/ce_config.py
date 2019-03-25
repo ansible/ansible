@@ -24,7 +24,7 @@ DOCUMENTATION = """
 ---
 module: ce_config
 version_added: "2.4"
-author: "QijunPan (@CloudEngine-Ansible)"
+author: "QijunPan (@QijunPan)"
 short_description: Manage Huawei CloudEngine configuration sections.
 description:
   - Huawei CloudEngine configurations use a simple block indent file syntax
@@ -92,9 +92,9 @@ options:
     description:
       - This argument will cause the module to create a full backup of
         the current C(current-configuration) from the remote device before any
-        changes are made.  The backup file is written to the C(backup)
-        folder in the playbook root directory.  If the directory does not
-        exist, it is created.
+        changes are made. If the C(backup_options) value is not given,
+        the backup file is written to the C(backup) folder in the playbook
+        root directory. If the directory does not exist, it is created.
     type: bool
     default: 'no'
   config:
@@ -125,6 +125,28 @@ options:
         return changed.
     type: bool
     default: 'no'
+  backup_options:
+    description:
+      - This is a dict object containing configurable options related to backup file path.
+        The value of this option is read only when C(backup) is set to I(yes), if C(backup) is set
+        to I(no) this option will be silently ignored.
+    suboptions:
+      filename:
+        description:
+          - The filename to be used to store the backup configuration. If the the filename
+            is not given it will be generated based on the hostname, current time and date
+            in format defined by <hostname>_config.<current-date>@<current-time>
+      dir_path:
+        description:
+          - This option provides the path ending with directory name in which the backup
+            configuration file will be stored. If the directory does not exist it will be first
+            created and the filename is either the value of C(filename) or default filename
+            as described in C(filename) options description. If the path value is not given
+            in that case a I(backup) directory will be created in the current working directory
+            and backup configuration will be copied in C(filename) within I(backup) directory.
+        type: path
+    type: dict
+    version_added: "2.8"
 """
 
 EXAMPLES = """
@@ -174,6 +196,15 @@ EXAMPLES = """
       before: undo acl 2000
       replace: block
       provider: "{{ cli }}"
+
+  - name: configurable backup path
+    ce_config:
+      lines: sysname {{ inventory_hostname }}
+      provider: "{{ cli }}"
+      backup: yes
+      backup_options:
+        filename: backup.cfg
+        dir_path: /home/user
 """
 
 RETURN = """
@@ -185,7 +216,7 @@ updates:
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
-  type: string
+  type: str
   sample: /playbooks/ansible/backup/ce_config.2016-07-16@22:28:34
 """
 from ansible.module_utils.basic import AnsibleModule
@@ -254,6 +285,10 @@ def run(module, result):
 def main():
     """ main entry point for module execution
     """
+    backup_spec = dict(
+        filename=dict(),
+        dir_path=dict(type='path')
+    )
     argument_spec = dict(
         src=dict(type='path'),
 
@@ -269,6 +304,7 @@ def main():
         defaults=dict(type='bool', default=False),
 
         backup=dict(type='bool', default=False),
+        backup_options=dict(type='dict', options=backup_spec),
         save=dict(type='bool', default=False),
     )
 

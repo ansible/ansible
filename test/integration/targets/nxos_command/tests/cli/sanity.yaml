@@ -26,7 +26,7 @@
   - name: "Configure BGP defaults"
     nxos_bgp: &configure_default
       asn: 65535
-      router_id: 1.1.1.1
+      router_id: 192.0.2.1
       state: present
     register: result
 

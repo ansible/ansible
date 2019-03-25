@@ -24,11 +24,11 @@ Remote Connection Information
 `````````````````````````````
 
 Before we get started, it's important to understand how Ansible communicates with remote
-machines over SSH.
+machines over the `SSH protocol <https://www.ssh.com/ssh/protocol/>`_.
 
 By default, Ansible will try to use native
 OpenSSH for remote communication when possible.  This enables ControlPersist (a performance feature), Kerberos, and options in ``~/.ssh/config`` such as Jump Host setup.  However, when using Enterprise Linux 6 operating systems as the control machine (Red Hat Enterprise Linux and derivatives such as CentOS), the version of OpenSSH may be too old to support ControlPersist. On these operating systems, Ansible will fallback into using a high-quality Python implementation of
-OpenSSH called 'paramiko'.  If you wish to use features like Kerberized SSH and more, consider using Fedora, OS X, or Ubuntu as your control machine until a newer version of OpenSSH is available for your platform.
+OpenSSH called 'paramiko'.  If you wish to use features like Kerberized SSH and more, consider using Fedora, macOS, or Ubuntu as your control machine until a newer version of OpenSSH is available for your platform.
 
 Occasionally you'll encounter a device that doesn't support SFTP. This is rare, but should it occur, you can switch to SCP mode in :ref:`intro_configuration`.
 
@@ -82,19 +82,13 @@ If you would like to access sudo mode, there are also flags to do that:
 
     # as bruce
     $ ansible all -m ping -u bruce
-    # as bruce, sudoing to root
-    $ ansible all -m ping -u bruce --sudo
+    # as bruce, sudoing to root (sudo is default method)
+    $ ansible all -m ping -u bruce --become
     # as bruce, sudoing to batman
-    $ ansible all -m ping -u bruce --sudo --sudo-user batman
+    $ ansible all -m ping -u bruce --become --become-user batman
 
-    # With latest version of ansible `sudo` is deprecated so use become
-    # as bruce, sudoing to root
-    $ ansible all -m ping -u bruce -b
-    # as bruce, sudoing to batman
-    $ ansible all -m ping -u bruce -b --become-user batman
-
-(The sudo implementation is changeable in Ansible's configuration file if you happen to want to use a sudo
-replacement.  Flags passed to sudo (like -H) can also be set there.)
+The sudo implementation (and other methods of changing the current user) can be modified in Ansible's configuration
+if you happen to want to use a sudo replacement. Flags passed to sudo (like -H) can also be set.
 
 Now run a live command on all of your nodes:
 
@@ -159,7 +153,7 @@ To enable basic logging on the control machine see :ref:`intro_configuration` do
        Examples of basic commands
    :ref:`working_with_playbooks`
        Learning Ansible's configuration management language
-   `Mailing List <http://groups.google.com/group/ansible-project>`_
+   `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

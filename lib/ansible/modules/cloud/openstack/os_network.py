@@ -69,7 +69,15 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-requirements: ["openstacksdk"]
+   port_security_enabled:
+     description:
+        -  Whether port security is enabled on the network or not.
+           Network will use OpenStack defaults if this option is
+           not utilised.
+     type: bool
+     version_added: "2.8"
+requirements:
+     - "openstacksdk"
 '''
 
 EXAMPLES = '''
@@ -89,11 +97,11 @@ network:
     contains:
         id:
             description: Network ID.
-            type: string
+            type: str
             sample: "4bb4f9a5-3bd2-4562-bf6a-d17a6341bb56"
         name:
             description: Network name.
-            type: string
+            type: str
             sample: "ext_network"
         shared:
             description: Indicates whether this network is shared across all tenants.
@@ -101,11 +109,11 @@ network:
             sample: false
         status:
             description: Network status.
-            type: string
+            type: str
             sample: "ACTIVE"
         mtu:
             description: The MTU of a network resource.
-            type: integer
+            type: int
             sample: 0
         admin_state_up:
             description: The administrative state of the network.
@@ -121,7 +129,7 @@ network:
             sample: true
         tenant_id:
             description: The tenant ID.
-            type: string
+            type: str
             sample: "06820f94b9f54b119636be2728d216fc"
         subnets:
             description: The associated subnets.
@@ -129,15 +137,15 @@ network:
             sample: []
         "provider:physical_network":
             description: The physical network where this network object is implemented.
-            type: string
+            type: str
             sample: my_vlan_net
         "provider:network_type":
             description: The type of physical network that maps to this network resource.
-            type: string
+            type: str
             sample: vlan
         "provider:segmentation_id":
             description: An isolated segment on the physical network.
-            type: string
+            type: str
             sample: 101
 '''
 
@@ -153,9 +161,10 @@ def main():
         external=dict(default=False, type='bool'),
         provider_physical_network=dict(required=False),
         provider_network_type=dict(required=False),
-        provider_segmentation_id=dict(required=False),
+        provider_segmentation_id=dict(required=False, type='int'),
         state=dict(default='present', choices=['absent', 'present']),
-        project=dict(default=None)
+        project=dict(default=None),
+        port_security_enabled=dict(type='bool')
     )
 
     module_kwargs = openstack_module_kwargs()
@@ -170,6 +179,7 @@ def main():
     provider_network_type = module.params['provider_network_type']
     provider_segmentation_id = module.params['provider_segmentation_id']
     project = module.params.get('project')
+    port_security_enabled = module.params.get('port_security_enabled')
 
     sdk, cloud = openstack_cloud_from_module(module)
     try:
@@ -196,10 +206,12 @@ def main():
 
                 if project_id is not None:
                     net = cloud.create_network(name, shared, admin_state_up,
-                                               external, provider, project_id)
+                                               external, provider, project_id,
+                                               port_security_enabled=port_security_enabled)
                 else:
                     net = cloud.create_network(name, shared, admin_state_up,
-                                               external, provider)
+                                               external, provider,
+                                               port_security_enabled=port_security_enabled)
                 changed = True
             else:
                 changed = False

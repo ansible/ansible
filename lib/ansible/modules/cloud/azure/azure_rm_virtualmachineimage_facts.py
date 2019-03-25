@@ -11,7 +11,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -90,7 +90,7 @@ azure_vmimages:
 
 try:
     from msrestazure.azure_exceptions import CloudError
-except:
+except Exception:
     # This is handled in azure_rm_common
     pass
 
@@ -214,6 +214,7 @@ class AzureRMVirtualMachineImageFacts(AzureRMModuleBase):
 
 def main():
     AzureRMVirtualMachineImageFacts()
+
 
 if __name__ == '__main__':
     main()

@@ -109,12 +109,12 @@ command:
         name:
             description: The name of the job command.
             returned: when state is present
-            type: string
+            type: str
             sample: glueetl
         script_location:
             description: Specifies the S3 path to a script that executes a job.
             returned: when state is present
-            type: string
+            type: str
             sample: mybucket/myscript.py
 connections:
     description: The connections used for this job.
@@ -124,7 +124,7 @@ connections:
 created_on:
     description: The time and date that this job definition was created.
     returned: when state is present
-    type: string
+    type: str
     sample: "2018-04-21T05:19:58.326000+00:00"
 default_arguments:
     description: The default arguments for this job, specified as name-value pairs.
@@ -134,12 +134,12 @@ default_arguments:
 description:
     description: Description of the job being defined.
     returned: when state is present
-    type: string
+    type: str
     sample: My first Glue job
 job_name:
     description: The name of the AWS Glue job.
     returned: always
-    type: string
+    type: str
     sample: my-glue-job
 execution_property:
     description: An ExecutionProperty specifying the maximum number of concurrent runs allowed for this job.
@@ -156,7 +156,7 @@ execution_property:
 last_modified_on:
     description: The last point in time when this job definition was modified.
     returned: when state is present
-    type: string
+    type: str
     sample: "2018-04-21T05:19:58.326000+00:00"
 max_retries:
     description: The maximum number of times to retry this job after a JobRun fails.
@@ -166,12 +166,12 @@ max_retries:
 name:
     description: The name assigned to this job definition.
     returned: when state is present
-    type: string
+    type: str
     sample: my-glue-job
 role:
     description: The name or ARN of the IAM role associated with this job.
     returned: when state is present
-    type: string
+    type: str
     sample: my-iam-role
 timeout:
     description: The job timeout in minutes.
@@ -360,6 +360,7 @@ def main():
         create_or_update_glue_job(connection, module, glue_job)
     else:
         delete_glue_job(connection, module, glue_job)
+
 
 if __name__ == '__main__':
     main()

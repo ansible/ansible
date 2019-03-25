@@ -1,9 +1,8 @@
-- name: {{ role_name }} playbook to deprovision the application
+- name: "{{ role_name }} playbook to deprovision the application"
   hosts: localhost
   gather_facts: false
   connection: local
   vars:
     apb_action: deprovision
   roles:
-  - role: {{ role_name }}
-    
+    - role: {{ role_name }}

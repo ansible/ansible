@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -68,29 +68,29 @@ EXAMPLES = r'''
 - name: Save the running configuration of the BIG-IP
   bigip_config:
     save: yes
-    server: lb.mydomain.com
-    password: secret
-    user: admin
-    validate_certs: no
+    provider:
+      server: lb.mydomain.com
+      password: secret
+      user: admin
   delegate_to: localhost
 
 - name: Reset the BIG-IP configuration, for example, to RMA the device
   bigip_config:
     reset: yes
     save: yes
-    server: lb.mydomain.com
-    password: secret
-    user: admin
-    validate_certs: no
+    provider:
+      server: lb.mydomain.com
+      password: secret
+      user: admin
   delegate_to: localhost
 
 - name: Load an SCF configuration
   bigip_config:
     merge_content: "{{ lookup('file', '/path/to/config.scf') }}"
-    server: lb.mydomain.com
-    password: secret
-    user: admin
-    validate_certs: no
+    provider:
+      server: lb.mydomain.com
+      password: secret
+      user: admin
   delegate_to: localhost
 '''
 
@@ -107,38 +107,30 @@ stdout_lines:
   sample: [['...', '...'], ['...'], ['...']]
 '''
 
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
+
 import os
 import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from library.module_utils.network.f5.icontrol import upload_file
 except ImportError:
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
-
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO
+    from ansible.module_utils.network.f5.icontrol import upload_file
 
 
 class Parameters(AnsibleF5Parameters):
@@ -155,7 +147,7 @@ class Parameters(AnsibleF5Parameters):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = Parameters(params=self.module.params)
         self.changes = Parameters()
 
@@ -177,10 +169,8 @@ class ModuleManager(object):
 
     def exec_module(self):
         result = {}
-        try:
-            changed = self.execute()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+
+        changed = self.execute()
 
         result.update(**self.changes.to_return())
         result.update(dict(changed=changed))
@@ -231,13 +221,29 @@ class ModuleManager(object):
 
     def reset_device(self):
         command = 'tmsh load sys config default'
-        output = self.client.api.tm.util.bash.exec_cmd(
-            'run',
+        uri = "https://{0}:{1}/mgmt/tm/util/bash".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        args = dict(
+            command='run',
             utilCmdArgs='-c "{0}"'.format(command)
         )
-        if hasattr(output, 'commandResult'):
-            return str(output.commandResult)
-        return None
+        resp = self.client.api.post(uri, json=args)
+
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+        if 'commandResult' in response:
+            return str(response['commandResult'])
 
     def merge(self, verify=True):
         temp_name = next(tempfile._get_candidate_names())
@@ -256,40 +262,94 @@ class ModuleManager(object):
         return response
 
     def merge_on_device(self, remote_path, verify=True):
-        result = None
-
         command = 'tmsh load sys config file {0} merge'.format(
             remote_path
         )
         if verify:
             command += ' verify'
 
-        output = self.client.api.tm.util.bash.exec_cmd(
-            'run',
+        uri = "https://{0}:{1}/mgmt/tm/util/bash".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        args = dict(
+            command='run',
             utilCmdArgs='-c "{0}"'.format(command)
         )
-        if hasattr(output, 'commandResult'):
-            result = str(output.commandResult)
-        return result
+        resp = self.client.api.post(uri, json=args)
+
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+        if 'commandResult' in response:
+            return str(response['commandResult'])
 
     def remove_temporary_file(self, remote_path):
-        self.client.api.tm.util.unix_rm.exec_cmd(
-            'run',
+        uri = "https://{0}:{1}/mgmt/tm/util/unix-rm".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        args = dict(
+            command='run',
             utilCmdArgs=remote_path
         )
+        resp = self.client.api.post(uri, json=args)
+
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def move_on_device(self, remote_path):
-        self.client.api.tm.util.unix_mv.exec_cmd(
-            'run',
+        uri = "https://{0}:{1}/mgmt/tm/util/unix-mv".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        args = dict(
+            command='run',
             utilCmdArgs='{0} /tmp/{1}'.format(
                 remote_path, os.path.basename(remote_path)
             )
         )
+        resp = self.client.api.post(uri, json=args)
+
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def upload_to_device(self, temp_name):
         template = StringIO(self.want.merge_content)
-        upload = self.client.api.shared.file_transfer.uploads
-        upload.upload_stringio(template, temp_name)
+        url = 'https://{0}:{1}/mgmt/shared/file-transfer/uploads'.format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
+        )
+        try:
+            upload_file(self.client, url, template, temp_name)
+        except F5ModuleError:
+            raise F5ModuleError(
+                "Failed to upload the file."
+            )
 
     def save(self):
         if self.module.check_mode:
@@ -297,15 +357,30 @@ class ModuleManager(object):
         return self.save_on_device()
 
     def save_on_device(self):
-        result = None
         command = 'tmsh save sys config'
-        output = self.client.api.tm.util.bash.exec_cmd(
-            'run',
+        uri = "https://{0}:{1}/mgmt/tm/util/bash".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        args = dict(
+            command='run',
             utilCmdArgs='-c "{0}"'.format(command)
         )
-        if hasattr(output, 'commandResult'):
-            result = str(output.commandResult)
-        return result
+        resp = self.client.api.post(uri, json=args)
+
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+        if 'commandResult' in response:
+            return str(response['commandResult'])
 
 
 class ArgumentSpec(object):
@@ -338,17 +413,12 @@ def main():
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
 
     try:
-        client = F5Client(**module.params)
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
         module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
         module.fail_json(msg=str(ex))
 
 

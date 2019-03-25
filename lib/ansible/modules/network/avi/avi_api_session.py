@@ -19,7 +19,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: avi_api_session
-author: Gaurav Rastogi (grastogi@avinetworks.com)
+author: Gaurav Rastogi (@grastogi23) <grastogi@avinetworks.com>
 
 short_description: Avi API Module
 description:
@@ -115,8 +115,8 @@ from copy import deepcopy
 
 try:
     from ansible.module_utils.network.avi.avi import (
-        avi_common_argument_spec, ansible_return, AviCredentials, HAS_AVI)
-    from avi.sdk.avi_api import ApiSession
+        avi_common_argument_spec, ansible_return, HAS_AVI)
+    from avi.sdk.avi_api import ApiSession, AviCredentials
     from avi.sdk.utils.ansible_utils import avi_obj_cmp, cleanup_absent_fields
 
 except ImportError:

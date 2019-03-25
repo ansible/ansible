@@ -34,7 +34,7 @@ options:
     required: yes
   subscription:
     description:
-       - Dictionary containing a subscripton name associated with a topic (required), along with optional ack_deadline, push_endpoint and pull.
+       - Dictionary containing a subscription name associated with a topic (required), along with optional ack_deadline, push_endpoint and pull.
          For pulling from a subscription, message_ack (bool), max_messages (int) and return_immediate are available as subfields.
          See subfields name, push_endpoint and ack_deadline for more information.
   name:
@@ -327,6 +327,7 @@ def main():
     json_output['changed'] = changed
     json_output.update(mod_params)
     module.exit_json(**json_output)
+
 
 if __name__ == '__main__':
     main()

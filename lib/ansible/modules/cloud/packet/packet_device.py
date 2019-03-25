@@ -29,8 +29,8 @@ version_added: "2.3"
 
 author:
     - Tomas Karasek (@t0mk) <tom.to.the.k@gmail.com>
-    - Matt Baldwin <baldwin@stackpointcloud.com>
-    - Thibaud Morel l'Horset <teebes@gmail.com>
+    - Matt Baldwin (@baldwinSPC) <baldwin@stackpointcloud.com>
+    - Thibaud Morel l'Horset (@teebes) <teebes@gmail.com>
 
 options:
   auth_token:
@@ -72,6 +72,7 @@ options:
     default: false
     version_added: "2.4"
     aliases: [lock]
+    type: bool
 
   operating_system:
     description:
@@ -114,7 +115,7 @@ options:
   ipxe_script_url:
     description:
       - URL of custom iPXE script for provisioning.
-      - More about custome iPXE for Packet devices at U(https://help.packet.net/technical/infrastructure/custom-ipxe).
+      - More about custom iPXE for Packet devices at U(https://help.packet.net/technical/infrastructure/custom-ipxe).
     version_added: "2.4"
   always_pxe:
     description:
@@ -122,6 +123,7 @@ options:
       - Normally, the PXE process happens only on the first boot. Set this arg to have your device continuously boot to iPXE.
     default: false
     version_added: "2.4"
+    type: bool
 
 
 requirements:
@@ -635,6 +637,7 @@ def main():
     except Exception as e:
         module.fail_json(msg='failed to set device state %s, error: %s' %
                          (state, to_native(e)), exception=traceback.format_exc())
+
 
 if __name__ == '__main__':
     main()

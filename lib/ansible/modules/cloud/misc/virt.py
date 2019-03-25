@@ -25,12 +25,14 @@ options:
     description:
       - name of the guest VM being managed. Note that VM must be previously
         defined with xml.
-    required: true
+      - This option is required unless I(command) is C(list_vms).
   state:
     description:
       - Note that there may be some lag for state requests like C(shutdown)
         since these refer only to VM states. After starting a guest, it may not
         be immediately accessible.
+        state and command are mutually exclusive except when command=list_vms. In
+        this case all VMs in specified state will be listed.
     choices: [ destroyed, paused, running, shutdown ]
   command:
     description:
@@ -55,7 +57,7 @@ requirements:
 author:
     - Ansible Core Team
     - Michael DeHaan
-    - Seth Vidal
+    - Seth Vidal (@skvidal)
 '''
 
 EXAMPLES = '''
@@ -69,27 +71,49 @@ EXAMPLES = '''
 # ansible host -m virt -a "name=alpha command=get_xml"
 # ansible host -m virt -a "name=alpha command=create uri=lxc:///"
 
----
-# a playbook example of defining and launching an LXC guest
-tasks:
-  - name: define vm
-    virt:
-        name: foo
-        command: define
-        xml: "{{ lookup('template', 'container-template.xml.j2') }}"
-        uri: 'lxc:///'
-  - name: start vm
-    virt:
-        name: foo
-        state: running
-        uri: 'lxc:///'
+# defining and launching an LXC guest
+- name: define vm
+  virt:
+    command: define
+    xml: "{{ lookup('template', 'container-template.xml.j2') }}"
+    uri: 'lxc:///'
+- name: start vm
+  virt:
+    name: foo
+    state: running
+    uri: 'lxc:///'
+
+# setting autostart on a qemu VM (default uri)
+- name: set autostart for a VM
+  virt:
+    name: foo
+    autostart: yes
+
+# Defining a VM and making is autostart with host. VM will be off after this task
+- name: define vm from xml and set autostart
+  virt:
+    command: define
+    xml: "{{ lookup('template', 'vm_template.xml.j2') }}"
+    autostart: yes
+
+# Listing VMs
+- name: list all VMs
+  virt:
+    command: list_vms
+  register: all_vms
+
+- name: list only running VMs
+  virt:
+    command: list_vms
+    state: running
+  register: running_vms
 '''
 
 RETURN = '''
 # for list_vms command
 list_vms:
     description: The list of vms defined on the remote system
-    type: dictionary
+    type: list
     returned: success
     sample: [
         "build.example.org",
@@ -98,7 +122,7 @@ list_vms:
 # for status command
 status:
     description: The status of the VM, among running, crashed, paused and shutdown
-    type: string
+    type: str
     sample: "success"
     returned: success
 '''
@@ -107,10 +131,13 @@ import traceback
 
 try:
     import libvirt
+    from libvirt import libvirtError
 except ImportError:
     HAS_VIRT = False
 else:
     HAS_VIRT = True
+
+import re
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
@@ -327,7 +354,7 @@ class Virt(object):
                         results.append(x.name())
                 else:
                     results.append(x.name())
-            except:
+            except Exception:
                 pass
         return results
 
@@ -446,27 +473,38 @@ def core(module):
             res = {command: res}
         return VIRT_SUCCESS, res
 
+    if autostart is not None and command != 'define':
+        if not guest:
+            module.fail_json(msg="autostart requires 1 argument: name")
+        try:
+            v.get_vm(guest)
+        except VMNotFound:
+            module.fail_json(msg="domain %s not found" % guest)
+        res['changed'] = v.autostart(guest, autostart)
+        if not command and not state:
+            return VIRT_SUCCESS, res
+
     if state:
         if not guest:
             module.fail_json(msg="state change requires a guest specified")
 
         if state == 'running':
-            if v.status(guest) is 'paused':
+            if v.status(guest) == 'paused':
                 res['changed'] = True
                 res['msg'] = v.unpause(guest)
-            elif v.status(guest) is not 'running':
+            elif v.status(guest) != 'running':
                 res['changed'] = True
                 res['msg'] = v.start(guest)
         elif state == 'shutdown':
-            if v.status(guest) is not 'shutdown':
+            if v.status(guest) != 'shutdown':
                 res['changed'] = True
                 res['msg'] = v.shutdown(guest)
         elif state == 'destroyed':
-            if v.status(guest) is not 'shutdown':
+            if v.status(guest) != 'shutdown':
                 res['changed'] = True
                 res['msg'] = v.destroy(guest)
         elif state == 'paused':
-            if v.status(guest) is 'running':
+            if v.status(guest) == 'running':
                 res['changed'] = True
                 res['msg'] = v.pause(guest)
         else:
@@ -474,25 +512,53 @@ def core(module):
 
         return VIRT_SUCCESS, res
 
-    if autostart is not None and v.autostart(guest, autostart):
-        res['changed'] = True
-
     if command:
         if command in VM_COMMANDS:
-            if not guest:
-                module.fail_json(msg="%s requires 1 argument: guest" % command)
             if command == 'define':
                 if not xml:
                     module.fail_json(msg="define requires xml argument")
+                if guest:
+                    # there might be a mismatch between quest 'name' in the module and in the xml
+                    module.warn("'xml' is given - ignoring 'name'")
+                found_name = re.search('<name>(.*)</name>', xml).groups()
+                if found_name:
+                    domain_name = found_name[0]
+                else:
+                    module.fail_json(msg="Could not find domain 'name' in xml")
+
+                # From libvirt docs (https://libvirt.org/html/libvirt-libvirt-domain.html#virDomainDefineXML):
+                # -- A previous definition for this domain would be overridden if it already exists.
+                #
+                # In real world testing with libvirt versions 1.2.17-13, 2.0.0-10 and 3.9.0-14
+                # on qemu and lxc domains results in:
+                # operation failed: domain '<name>' already exists with <uuid>
+                #
+                # In case a domain would be indeed overwritten, we should protect idempotency:
                 try:
-                    v.get_vm(guest)
+                    existing_domain = v.get_vm(domain_name)
                 except VMNotFound:
-                    v.define(xml)
-                    res = {'changed': True, 'created': guest}
-                return VIRT_SUCCESS, res
-            res = getattr(v, command)(guest)
-            if not isinstance(res, dict):
-                res = {command: res}
+                    existing_domain = None
+                try:
+                    domain = v.define(xml)
+                    if existing_domain:
+                        # if we are here, then libvirt redefined existing domain as the doc promised
+                        if existing_domain.XMLDesc() != domain.XMLDesc():
+                            res = {'changed': True, 'change_reason': 'config changed'}
+                    else:
+                        res = {'changed': True, 'created': domain.name()}
+                except libvirtError as e:
+                    if e.get_error_code() != 9:  # 9 means 'domain already exists' error
+                        module.fail_json(msg='libvirtError: %s' % e.message)
+                if autostart is not None and v.autostart(domain_name, autostart):
+                    res = {'changed': True, 'change_reason': 'autostart'}
+
+            elif not guest:
+                module.fail_json(msg="%s requires 1 argument: guest" % command)
+            else:
+                res = getattr(v, command)(guest)
+                if not isinstance(res, dict):
+                    res = {command: res}
+
             return VIRT_SUCCESS, res
 
         elif hasattr(v, command):

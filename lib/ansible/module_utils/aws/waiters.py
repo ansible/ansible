@@ -179,6 +179,50 @@ waf_data = {
     }
 }
 
+eks_data = {
+    "version": 2,
+    "waiters": {
+        "ClusterActive": {
+            "delay": 20,
+            "maxAttempts": 60,
+            "operation": "DescribeCluster",
+            "acceptors": [
+                {
+                    "state": "success",
+                    "matcher": "path",
+                    "argument": "cluster.status",
+                    "expected": "ACTIVE"
+                },
+                {
+                    "state": "retry",
+                    "matcher": "error",
+                    "expected": "ResourceNotFoundException"
+                }
+            ]
+        }
+    }
+}
+
+
+rds_data = {
+    "version": 2,
+    "waiters": {
+        "DBInstanceStopped": {
+            "delay": 20,
+            "maxAttempts": 60,
+            "operation": "DescribeDBInstances",
+            "acceptors": [
+                {
+                    "state": "success",
+                    "matcher": "pathAll",
+                    "argument": "DBInstances[].DBInstanceStatus",
+                    "expected": "stopped"
+                },
+            ]
+        }
+    }
+}
+
 
 def ec2_model(name):
     ec2_models = core_waiter.WaiterModel(waiter_config=ec2_data)
@@ -188,6 +232,16 @@ def ec2_model(name):
 def waf_model(name):
     waf_models = core_waiter.WaiterModel(waiter_config=waf_data)
     return waf_models.get_waiter(name)
+
+
+def eks_model(name):
+    eks_models = core_waiter.WaiterModel(waiter_config=eks_data)
+    return eks_models.get_waiter(name)
+
+
+def rds_model(name):
+    rds_models = core_waiter.WaiterModel(waiter_config=rds_data)
+    return rds_models.get_waiter(name)
 
 
 waiters_by_name = {
@@ -250,6 +304,18 @@ waiters_by_name = {
         waf_model('ChangeTokenInSync'),
         core_waiter.NormalizedOperationMethod(
             waf.get_change_token_status
+        )),
+    ('EKS', 'cluster_active'): lambda eks: core_waiter.Waiter(
+        'cluster_active',
+        eks_model('ClusterActive'),
+        core_waiter.NormalizedOperationMethod(
+            eks.describe_cluster
+        )),
+    ('RDS', 'db_instance_stopped'): lambda rds: core_waiter.Waiter(
+        'db_instance_stopped',
+        rds_model('DBInstanceStopped'),
+        core_waiter.NormalizedOperationMethod(
+            rds.describe_db_instances
         )),
 }
 

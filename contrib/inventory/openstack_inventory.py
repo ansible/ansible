@@ -57,11 +57,9 @@ import os
 import sys
 import time
 from distutils.version import StrictVersion
+from io import StringIO
 
-try:
-    import json
-except:
-    import simplejson as json
+import json
 
 import openstack as sdk
 from openstack.cloud import inventory as sdk_inventory
@@ -81,7 +79,8 @@ def get_groups_from_server(server_vars, namegroup=True):
     groups.append(cloud)
 
     # Create a group on region
-    groups.append(region)
+    if region:
+        groups.append(region)
 
     # And one by cloud_region
     groups.append("%s_%s" % (cloud, region))
@@ -191,8 +190,13 @@ def is_cache_stale(cache_file, cache_expiration_time, refresh=False):
 
 
 def get_cache_settings(cloud=None):
-    config = cloud_config.OpenStackConfig(
-        config_files=cloud_config.CONFIG_FILES + CONFIG_FILES).get_one()
+    config_files = cloud_config.CONFIG_FILES + CONFIG_FILES
+    if cloud:
+        config = cloud_config.OpenStackConfig(
+            config_files=config_files).get_one(cloud=cloud)
+    else:
+        config = cloud_config.OpenStackConfig(
+            config_files=config_files).get_all()[0]
     # For inventory-wide caching
     cache_expiration_time = config.get_cache_expiration_time()
     cache_path = config.get_cache_path()
@@ -230,6 +234,8 @@ def parse_args():
 def main():
     args = parse_args()
     try:
+        # openstacksdk library may write to stdout, so redirect this
+        sys.stdout = StringIO()
         config_files = cloud_config.CONFIG_FILES + CONFIG_FILES
         sdk.enable_logging(debug=args.debug)
         inventory_args = dict(
@@ -250,6 +256,7 @@ def main():
 
         inventory = sdk_inventory.OpenStackInventory(**inventory_args)
 
+        sys.stdout = sys.__stdout__
         if args.list:
             output = get_host_groups(inventory, refresh=args.refresh, cloud=args.cloud)
         elif args.host:

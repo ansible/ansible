@@ -1,0 +1,12 @@
+---
+test_config_data1:
+  - {configType: "running-config", protocol: "sftp", serverip: "10.241.106.118", serverusername: "root", serverpassword: "root123", rcpath: "/root/cnos_config/"}
+
+test_config_data2:
+  - {configType: "startup-config", protocol: "sftp", serverip: "10.241.106.118", serverusername: "root", serverpassword: "root123", rcpath: "/root/cnos_config/"}
+
+test_config_data3:
+  - {configType: running-config, protocol: "tftp", serverip: "10.241.106.118", rcpath: "/root/cnos_config/"}
+
+test_config_data4:
+  - {configType: startup-config, protocol: "tftp", serverip: "10.241.106.118", rcpath: "/root/cnos_config/"}

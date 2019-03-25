@@ -1,9 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2013, Balazs Pocze <banyek@gawker.com>
+# Copyright: (c) 2013, Balazs Pocze <banyek@gawker.com>
 # Certain parts are taken from Mark Theunissen's mysqldb module
-#
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -15,20 +14,21 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: mysql_replication
-
 short_description: Manage MySQL replication
 description:
     - Manages MySQL server replication, slave, master status get and change master host.
 version_added: "1.3"
-author: "Balazs Pocze (@banyek)"
+author:
+- Balazs Pocze (@banyek)
 options:
     mode:
         description:
             - module operating mode. Could be getslave (SHOW SLAVE STATUS), getmaster (SHOW MASTER STATUS), changemaster (CHANGE MASTER TO), startslave
               (START SLAVE), stopslave (STOP SLAVE), resetslave (RESET SLAVE), resetslaveall (RESET SLAVE ALL)
+        type: str
         choices:
             - getslave
             - getmaster
@@ -40,59 +40,74 @@ options:
         default: getslave
     master_host:
         description:
-            - same as mysql variable
+            - Same as mysql variable.
+        type: str
     master_user:
         description:
-            - same as mysql variable
+            - Same as mysql variable.
+        type: str
     master_password:
         description:
-            - same as mysql variable
+            - Same as mysql variable.
+        type: str
     master_port:
         description:
-            - same as mysql variable
+            - Same as mysql variable.
+        type: int
     master_connect_retry:
         description:
-            - same as mysql variable
+            - Same as mysql variable.
+        type: int
     master_log_file:
         description:
-            - same as mysql variable
+            - Same as mysql variable.
+        type: str
     master_log_pos:
         description:
-            - same as mysql variable
+            - Same as mysql variable.
+        type: int
     relay_log_file:
         description:
-            - same as mysql variable
+            - Same as mysql variable.
+        type: str
     relay_log_pos:
         description:
-            - same as mysql variable
+            - Same as mysql variable.
+        type: int
     master_ssl:
         description:
-            - same as mysql variable
-        choices: [ 0, 1 ]
+            - Same as mysql variable.
+        type: bool
     master_ssl_ca:
         description:
-            - same as mysql variable
+            - Same as mysql variable.
+        type: str
     master_ssl_capath:
         description:
-            - same as mysql variable
+            - Same as mysql variable.
+        type: str
     master_ssl_cert:
         description:
-            - same as mysql variable
+            - Same as mysql variable.
+        type: str
     master_ssl_key:
         description:
-            - same as mysql variable
+            - Same as mysql variable.
+        type: str
     master_ssl_cipher:
         description:
-            - same as mysql variable
+            - Same as mysql variable.
+        type: str
     master_auto_position:
         description:
-            - does the host uses GTID based replication or not
+            - Whether the host uses GTID based replication or not.
+        type: bool
         version_added: "2.0"
-
-extends_documentation_fragment: mysql
+extends_documentation_fragment:
+- mysql
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 # Stop mysql slave thread
 - mysql_replication:
     mode: stopslave
@@ -118,15 +133,8 @@ EXAMPLES = '''
 import os
 import warnings
 
-try:
-    import MySQLdb
-except ImportError:
-    mysqldb_found = False
-else:
-    mysqldb_found = True
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.mysql import mysql_connect
+from ansible.module_utils.mysql import mysql_connect, mysql_driver, mysql_driver_fail_msg
 from ansible.module_utils._text import to_native
 
 
@@ -146,7 +154,7 @@ def stop_slave(cursor):
     try:
         cursor.execute("STOP SLAVE")
         stopped = True
-    except:
+    except Exception:
         stopped = False
     return stopped
 
@@ -155,7 +163,7 @@ def reset_slave(cursor):
     try:
         cursor.execute("RESET SLAVE")
         reset = True
-    except:
+    except Exception:
         reset = False
     return reset
 
@@ -164,7 +172,7 @@ def reset_slave_all(cursor):
     try:
         cursor.execute("RESET SLAVE ALL")
         reset = True
-    except:
+    except Exception:
         reset = False
     return reset
 
@@ -173,7 +181,7 @@ def start_slave(cursor):
     try:
         cursor.execute("START SLAVE")
         started = True
-    except:
+    except Exception:
         started = False
     return started
 
@@ -187,33 +195,34 @@ def changemaster(cursor, chm, chm_params):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            login_user=dict(default=None),
-            login_password=dict(default=None, no_log=True),
-            login_host=dict(default="localhost"),
-            login_port=dict(default=3306, type='int'),
-            login_unix_socket=dict(default=None),
-            mode=dict(default="getslave", choices=["getmaster", "getslave", "changemaster", "stopslave", "startslave", "resetslave", "resetslaveall"]),
-            master_auto_position=dict(default=False, type='bool'),
-            master_host=dict(default=None),
-            master_user=dict(default=None),
-            master_password=dict(default=None, no_log=True),
-            master_port=dict(default=None, type='int'),
-            master_connect_retry=dict(default=None, type='int'),
-            master_log_file=dict(default=None),
-            master_log_pos=dict(default=None, type='int'),
-            relay_log_file=dict(default=None),
-            relay_log_pos=dict(default=None, type='int'),
-            master_ssl=dict(default=False, type='bool'),
-            master_ssl_ca=dict(default=None),
-            master_ssl_capath=dict(default=None),
-            master_ssl_cert=dict(default=None),
-            master_ssl_key=dict(default=None),
-            master_ssl_cipher=dict(default=None),
-            connect_timeout=dict(default=30, type='int'),
-            config_file=dict(default="~/.my.cnf", type='path'),
-            ssl_cert=dict(default=None),
-            ssl_key=dict(default=None),
-            ssl_ca=dict(default=None),
+            login_user=dict(type='str'),
+            login_password=dict(type='str', no_log=True),
+            login_host=dict(type='str', default='localhost'),
+            login_port=dict(type='int', default=3306),
+            login_unix_socket=dict(type='str'),
+            mode=dict(type='str', default='getslave', choices=[
+                'getmaster', 'getslave', 'changemaster', 'stopslave', 'startslave', 'resetslave', 'resetslaveall']),
+            master_auto_position=dict(type='bool', default=False),
+            master_host=dict(type='str'),
+            master_user=dict(type='str'),
+            master_password=dict(type='str', no_log=True),
+            master_port=dict(type='int'),
+            master_connect_retry=dict(type='int'),
+            master_log_file=dict(type='str'),
+            master_log_pos=dict(type='int'),
+            relay_log_file=dict(type='str'),
+            relay_log_pos=dict(type='int'),
+            master_ssl=dict(type='bool', default=False),
+            master_ssl_ca=dict(type='str'),
+            master_ssl_capath=dict(type='str'),
+            master_ssl_cert=dict(type='str'),
+            master_ssl_key=dict(type='str'),
+            master_ssl_cipher=dict(type='str'),
+            connect_timeout=dict(type='int', default=30),
+            config_file=dict(type='path', default='~/.my.cnf'),
+            ssl_cert=dict(type='path'),
+            ssl_key=dict(type='path'),
+            ssl_ca=dict(type='path'),
         )
     )
     mode = module.params["mode"]
@@ -239,16 +248,16 @@ def main():
     connect_timeout = module.params['connect_timeout']
     config_file = module.params['config_file']
 
-    if not mysqldb_found:
-        module.fail_json(msg="The MySQL-python module is required.")
+    if mysql_driver is None:
+        module.fail_json(msg=mysql_driver_fail_msg)
     else:
-        warnings.filterwarnings('error', category=MySQLdb.Warning)
+        warnings.filterwarnings('error', category=mysql_driver.Warning)
 
     login_password = module.params["login_password"]
     login_user = module.params["login_user"]
 
     try:
-        cursor = mysql_connect(module, login_user, login_password, config_file, ssl_cert, ssl_key, ssl_ca, None, 'MySQLdb.cursors.DictCursor',
+        cursor = mysql_connect(module, login_user, login_password, config_file, ssl_cert, ssl_key, ssl_ca, None, 'mysql_driver.cursors.DictCursor',
                                connect_timeout=connect_timeout)
     except Exception as e:
         if os.path.exists(config_file):
@@ -325,7 +334,7 @@ def main():
             chm.append("MASTER_AUTO_POSITION = 1")
         try:
             changemaster(cursor, chm, chm_params)
-        except MySQLdb.Warning as e:
+        except mysql_driver.Warning as e:
             result['warning'] = to_native(e)
         except Exception as e:
             module.fail_json(msg='%s. Query == CHANGE MASTER TO %s' % (to_native(e), chm))

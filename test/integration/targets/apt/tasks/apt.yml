@@ -8,6 +8,16 @@
     python_apt: python3-apt
   when: ansible_python_version is version('3', '>=')
 
+- name: use Debian mirror
+  set_fact:
+    distro_mirror: http://ftp.debian.org/debian
+  when: ansible_distribution == 'Debian'
+
+- name: use Ubuntu mirror
+  set_fact:
+    distro_mirror: http://archive.ubuntu.com/ubuntu
+  when: ansible_distribution == 'Ubuntu'
+
 # UNINSTALL 'python-apt'
 #  The `apt` module has the smarts to auto-install `python-apt`.  To test, we
 #  will first uninstall `python-apt`.
@@ -132,6 +142,18 @@
 - name: uninstall hello with apt
   apt: pkg=hello state=absent purge=yes
 
+- name: install deb file from URL
+  apt: deb="{{ distro_mirror }}/pool/main/h/hello/hello_{{ hello_version.stdout }}_{{ hello_architecture.stdout }}.deb"
+  register: apt_url
+
+- name: verify installation of hello
+  assert:
+    that:
+        - "apt_url.changed"
+
+- name: uninstall hello with apt
+  apt: pkg=hello state=absent purge=yes
+
 - name: force install of deb
   apt: deb="/var/cache/apt/archives/hello_{{ hello_version.stdout }}_{{ hello_architecture.stdout }}.deb" force=true
   register: dpkg_force
@@ -236,3 +258,62 @@
   assert:
     that:
       - apt_result is not changed
+
+# check policy_rc_d parameter 
+
+- name: Install unscd but forbid service start
+  apt:
+    name: unscd
+    policy_rc_d: 101
+
+- name: Stop unscd service
+  service:
+    name: unscd
+    state: stopped
+  register: service_unscd_stop
+
+- name: unscd service shouldn't have been stopped by previous task
+  assert:
+    that: service_unscd_stop is not changed
+
+- name: Uninstall unscd
+  apt:
+    name: unscd
+    policy_rc_d: 101
+
+- name: Create incorrect /usr/sbin/policy-rc.d
+  copy:
+    dest: /usr/sbin/policy-rc.d
+    content: apt integration test
+    mode: 0755
+
+- name: Install unscd but forbid service start
+  apt:
+    name: unscd
+    policy_rc_d: 101
+
+- name: Stop unscd service
+  service:
+    name: unscd
+    state: stopped
+  register: service_unscd_stop
+
+- name: unscd service shouldn't have been stopped by previous task
+  assert:
+    that: service_unscd_stop is not changed
+
+- name: Create incorrect /usr/sbin/policy-rc.d
+  copy:
+    dest: /usr/sbin/policy-rc.d
+    content: apt integration test
+    mode: 0755
+  register: policy_rc_d
+
+- name: Check if /usr/sbin/policy-rc.d was correctly backed-up during unscd install
+  assert:
+    that: policy_rc_d is not changed
+
+- name: Delete /usr/sbin/policy-rc.d
+  file:
+    path: /usr/sbin/policy-rc.d
+    state: absent

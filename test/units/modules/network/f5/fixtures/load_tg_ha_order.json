@@ -1,0 +1,22 @@
+{
+  "kind": "tm:cm:traffic-group:traffic-groupstate",
+  "name": "traffic-group-2",
+  "partition": "Common",
+  "fullPath": "/Common/traffic-group-2",
+  "generation": 227,
+  "selfLink": "https://localhost/mgmt/tm/cm/traffic-group/~Common~traffic-group-2?ver=12.1.4",
+  "autoFailbackEnabled": "true",
+  "autoFailbackTime": 60,
+  "haLoadFactor": 1,
+  "isFloating": "true",
+  "mac": "none",
+  "unitId": 1,
+  "haOrder": [
+    "/Common/v12-1.ansible.local"
+  ],
+  "haOrderReference": [
+    {
+      "link": "https://localhost/mgmt/tm/cm/device/~Common~v12-1.ansible.local?ver=12.1.4"
+    }
+  ]
+}

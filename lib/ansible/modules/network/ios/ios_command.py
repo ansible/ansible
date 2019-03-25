@@ -139,45 +139,28 @@ failed_conditions:
   type: list
   sample: ['...', '...']
 """
-import re
 import time
 
+from ansible.module_utils._text import to_text
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.common.parsing import Conditional
+from ansible.module_utils.network.common.utils import transform_commands, to_lines
 from ansible.module_utils.network.ios.ios import run_commands
 from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.common.utils import ComplexList
-from ansible.module_utils.network.common.parsing import Conditional
-from ansible.module_utils.six import string_types
-
-
-def to_lines(stdout):
-    for item in stdout:
-        if isinstance(item, string_types):
-            item = str(item).split('\n')
-        yield item
 
 
 def parse_commands(module, warnings):
-    command = ComplexList(dict(
-        command=dict(key=True),
-        prompt=dict(),
-        answer=dict()
-    ), module)
-    commands = command(module.params['commands'])
-    for item in list(commands):
-        configure_type = re.match(r'conf(?:\w*)(?:\s+(\w+))?', item['command'])
-        if module.check_mode:
-            if configure_type and configure_type.group(1) not in ('confirm', 'replace', 'revert', 'network'):
-                module.fail_json(
-                    msg='ios_command does not support running config mode '
-                        'commands.  Please use ios_config instead'
-                )
+    commands = transform_commands(module)
+
+    if module.check_mode:
+        for item in list(commands):
             if not item['command'].startswith('show'):
                 warnings.append(
-                    'only show commands are supported when using check mode, not '
-                    'executing `%s`' % item['command']
+                    'Only show commands are supported when using check mode, not '
+                    'executing %s' % item['command']
                 )
                 commands.remove(item)
+
     return commands
 
 
@@ -199,22 +182,23 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
-    result = {'changed': False}
-
     warnings = list()
+    result = {'changed': False, 'warnings': warnings}
     check_args(module, warnings)
     commands = parse_commands(module, warnings)
-    result['warnings'] = warnings
-
     wait_for = module.params['wait_for'] or list()
-    conditionals = [Conditional(c) for c in wait_for]
+
+    try:
+        conditionals = [Conditional(c) for c in wait_for]
+    except AttributeError as exc:
+        module.fail_json(msg=to_text(exc))
 
     retries = module.params['retries']
     interval = module.params['interval']
     match = module.params['match']
 
     while retries > 0:
-        responses = run_commands(module, commands)
+        responses, timestamps = run_commands(module, commands, return_timestamps=True)
 
         for item in list(conditionals):
             if item(responses):
@@ -235,9 +219,9 @@ def main():
         module.fail_json(msg=msg, failed_conditions=failed_conditions)
 
     result.update({
-        'changed': False,
         'stdout': responses,
-        'stdout_lines': list(to_lines(responses))
+        'stdout_lines': list(to_lines(responses)),
+        'timestamps': timestamps
     })
 
     module.exit_json(**result)

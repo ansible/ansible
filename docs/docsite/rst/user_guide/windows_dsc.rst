@@ -2,6 +2,7 @@ Desired State Configuration
 ===========================
 
 .. contents:: Topics
+   :local:
 
 What is Desired State Configuration?
 ````````````````````````````````````
@@ -28,7 +29,7 @@ DSC and Ansible modules have a common goal which is to define and ensure the sta
 resource. Because of
 this, resources like the DSC `File resource <https://docs.microsoft.com/en-us/powershell/dsc/fileresource>`_
 and Ansible ``win_file`` can be used to achieve the same result. Deciding which to use depends 
-on the scenario. 
+on the scenario.
 
 Reasons for using an Ansible module over a DSC resource:
 
@@ -40,7 +41,7 @@ Reasons for using an Ansible module over a DSC resource:
   better checks
 * DSC resources do not support diff mode, while some Ansible modules do
 * Custom resources require further installation steps to be run on the host
-  beforehand, while Ansible modules are in built-in to Ansible
+  beforehand, while Ansible modules are built-in to Ansible
 * There are bugs in a DSC resource where an Ansible module works
 
 Reasons for using a DSC resource over an Ansible module:
@@ -60,8 +61,10 @@ The ``win_dsc`` module takes in a free-form of options so that it changes
 according to the resource it is managing. A list of built in resources can be
 found at `resources <https://docs.microsoft.com/en-us/powershell/dsc/resources>`_.
 
-Using the the `Registry <https://docs.microsoft.com/en-us/powershell/dsc/registryresource>`_
-resource as an example, this is the DSC definition as documented by Microsoft::
+Using the `Registry <https://docs.microsoft.com/en-us/powershell/dsc/registryresource>`_
+resource as an example, this is the DSC definition as documented by Microsoft:
+
+.. code-block:: powershell
 
     Registry [string] #ResourceName
     {
@@ -84,15 +87,78 @@ options are parameters that are used to define the resource, such as ``Key`` and
 keeping the case as-is is recommended becuase it makes it easier to distinguish DSC
 resource options from Ansible's ``win_dsc`` options.
 
-This is what the Ansible task version of the above DSC Registry resource would look like::
+This is what the Ansible task version of the above DSC Registry resource would look like:
 
-    - name: use win_dsc module with the Registry DSC resource
+.. code-block:: yaml+jinja
+
+    - name: Use win_dsc module with the Registry DSC resource
       win_dsc:
         resource_name: Registry
         Ensure: Present
         Key: HKEY_LOCAL_MACHINE\SOFTWARE\ExampleKey
         ValueName: TestValue
         ValueData: TestData
+
+Starting in Ansible 2.8, the ``win_dsc`` module automatically validates the
+input options from Ansible with the DSC definition. This means Ansible will
+fail if the option name is incorrect, a mandatory option is not set, or the
+value is not a valid choice. When running Ansible with a verbosity level of 3
+or more (``-vvv``), the return value will contain the possible invocation
+options based on the ``resource_name`` specified. Here is an example of the
+invocation output for the above ``Registry`` task::
+
+    changed: [2016] => {
+        "changed": true,
+        "invocation": {
+            "module_args": {
+                "DependsOn": null,
+                "Ensure": "Present",
+                "Force": null,
+                "Hex": null,
+                "Key": "HKEY_LOCAL_MACHINE\\SOFTWARE\\ExampleKey",
+                "PsDscRunAsCredential_password": null,
+                "PsDscRunAsCredential_username": null,
+                "ValueData": [
+                    "TestData"
+                ],
+                "ValueName": "TestValue",
+                "ValueType": null,
+                "module_version": "latest",
+                "resource_name": "Registry"
+            }
+        },
+        "module_version": "1.1",
+        "reboot_required": false,
+        "verbose_set": [
+            "Perform operation 'Invoke CimMethod' with following parameters, ''methodName' = ResourceSet,'className' = MSFT_DSCLocalConfigurationManager,'namespaceName' = root/Microsoft/Windows/DesiredStateConfiguration'.",
+            "An LCM method call arrived from computer SERVER2016 with user sid S-1-5-21-3088887838-4058132883-1884671576-1105.",
+            "[SERVER2016]: LCM:  [ Start  Set      ]  [[Registry]DirectResourceAccess]",
+            "[SERVER2016]:                            [[Registry]DirectResourceAccess] (SET) Create registry key 'HKLM:\\SOFTWARE\\ExampleKey'",
+            "[SERVER2016]:                            [[Registry]DirectResourceAccess] (SET) Set registry key value 'HKLM:\\SOFTWARE\\ExampleKey\\TestValue' to 'TestData' of type 'String'",
+            "[SERVER2016]: LCM:  [ End    Set      ]  [[Registry]DirectResourceAccess]  in 0.1930 seconds.",
+            "[SERVER2016]: LCM:  [ End    Set      ]    in  0.2720 seconds.",
+            "Operation 'Invoke CimMethod' complete.",
+            "Time taken for configuration job to complete is 0.402 seconds"
+        ],
+        "verbose_test": [
+            "Perform operation 'Invoke CimMethod' with following parameters, ''methodName' = ResourceTest,'className' = MSFT_DSCLocalConfigurationManager,'namespaceName' = root/Microsoft/Windows/DesiredStateConfiguration'.",
+            "An LCM method call arrived from computer SERVER2016 with user sid S-1-5-21-3088887838-4058132883-1884671576-1105.",
+            "[SERVER2016]: LCM:  [ Start  Test     ]  [[Registry]DirectResourceAccess]",
+            "[SERVER2016]:                            [[Registry]DirectResourceAccess] Registry key 'HKLM:\\SOFTWARE\\ExampleKey' does not exist",
+            "[SERVER2016]: LCM:  [ End    Test     ]  [[Registry]DirectResourceAccess] False in 0.2510 seconds.",
+            "[SERVER2016]: LCM:  [ End    Set      ]    in  0.3310 seconds.",
+            "Operation 'Invoke CimMethod' complete.",
+            "Time taken for configuration job to complete is 0.475 seconds"
+        ]
+    }
+
+The ``invocation.module_args`` key shows the actual values that were set as
+well as other possible values that were not set. Unfortunately this will not
+show the default value for a DSC property, only what was set from the Ansible
+task. Any ``*_password`` option will be masked in the output for security
+reasons, if there are any other sensitive module options, set ``no_log: True``
+on the task to stop all task output from being logged.
+
 
 Property Types
 --------------
@@ -105,42 +171,56 @@ require certain rules.
 PSCredential
 ++++++++++++
 A ``[PSCredential]`` object is used to store credentials in a secure way, but
-Ansible has no way to serialize this over JSON. To set a DSC PSCredential property, 
-the definition of that parameter should have two entries that are suffixed with 
-``_username`` and ``_password`` for the username and password respectively. 
-For example::
+Ansible has no way to serialize this over JSON. To set a DSC PSCredential property,
+the definition of that parameter should have two entries that are suffixed with
+``_username`` and ``_password`` for the username and password respectively.
+For example:
 
-    PsDscRunAsCredential_username: '{{ansible_user}}'
-    PsDscRunAsCredential_password: '{{ansible_password}}'
+.. code-block:: yaml+jinja
+
+    PsDscRunAsCredential_username: '{{ ansible_user }}'
+    PsDscRunAsCredential_password: '{{ ansible_password }}'
 
     SourceCredential_username: AdminUser
     SourceCredential_password: PasswordForAdminUser
 
-.. Note:: You should set ``no_log: true`` on the task definition in
-    Ansible to ensure any credentials used are not stored in any log file or
-    console output.
+.. Note:: On versions of Ansible older than 2.8, you should set ``no_log: yes``
+    on the task definition in Ansible to ensure any credentials used are not
+    stored in any log file or console output.
+
+A ``[PSCredential]`` is defined with ``EmbeddedInstance("MSFT_Credential")`` in
+a DSC resource MOF definition.
 
 CimInstance Type
 ++++++++++++++++
 A ``[CimInstance]`` object is used by DSC to store a dictionary object based on
 a custom class defined by that resource. Defining a value that takes in a
 ``[CimInstance]`` in YAML is the same as defining a dictionary in YAML.
-For example, to define a ``[CimInstance]`` value in Ansible::
+For example, to define a ``[CimInstance]`` value in Ansible:
+
+.. code-block:: yaml+jinja
 
     # [CimInstance]AuthenticationInfo == MSFT_xWebAuthenticationInformation
-    AuthenticationInfo
+    AuthenticationInfo:
       Anonymous: no
       Basic: yes
       Digest: no
       Windows: yes
 
 In the above example, the CIM instance is a representation of the class
-``MSFT_xWebAuthenticationInformation <https://github.com/PowerShell/xWebAdministration/blob/dev/DSCResources/MSFT_xWebsite/MSFT_xWebsite.schema.mof>``_.
+`MSFT_xWebAuthenticationInformation <https://github.com/PowerShell/xWebAdministration/blob/dev/DSCResources/MSFT_xWebsite/MSFT_xWebsite.schema.mof>`_.
 This class accepts four boolean variables, ``Anonymous``, ``Basic``,
 ``Digest``, and ``Windows``. The keys to use in a ``[CimInstance]`` depend on
 the class it represents. Please read through the documentation of the resource
 to determine the keys that can be used and the types of each key value. The
 class definition is typically located in the ``<resource name>.schema.mof``.
+
+HashTable Type
+++++++++++++++
+A ``[HashTable]`` object is also a dictionary but does not have a strict set of
+keys that can/need to be defined. Like a ``[CimInstance]``, define it like a
+normal dictionary value in YAML. A ``[HashTable]]`` is defined with
+``EmbeddedInstance("MSFT_KeyValuePair")`` in a DSC resource MOF definition.
 
 Arrays
 ++++++
@@ -148,7 +228,9 @@ Simple type arrays like ``[string[]]`` or ``[UInt32[]]`` are defined as a list
 or as a comma separated string which are then cast to their type. Using a list
 is recommended because the values are not manually parsed by the ``win_dsc``
 module before being passed to the DSC engine. For example, to define a simple
-type array in Ansible::
+type array in Ansible:
+
+.. code-block:: yaml+jinja
 
     # [string[]]
     ValueData: entry1, entry2, entry3
@@ -164,7 +246,9 @@ type array in Ansible::
     - 3010
 
 Complex type arrays like ``[CimInstance[]]`` (array of dicts), can be defined
-like this example::
+like this example:
+
+.. code-block:: yaml+jinja
 
     # [CimInstance[]]BindingInfo == MSFT_xWebBindingInformation
     BindingInfo:
@@ -179,34 +263,58 @@ like this example::
       Port: 80
       IPAddress: '*'
 
-The above example, is an array with two values of the class ``MSFT_xWebBindingInformation <https://github.com/PowerShell/xWebAdministration/blob/dev/DSCResources/MSFT_xWebsite/MSFT_xWebsite.schema.mof>``_.
+The above example, is an array with two values of the class `MSFT_xWebBindingInformation <https://github.com/PowerShell/xWebAdministration/blob/dev/DSCResources/MSFT_xWebsite/MSFT_xWebsite.schema.mof>`_.
 When defining a ``[CimInstance[]]``, be sure to read the resource documentation
 to find out what keys to use in the definition.
+
+DateTime
+++++++++
+A ``[DateTime]`` object is a DateTime string representing the date and time in
+the `ISO 8601 <https://www.w3.org/TR/NOTE-datetime>`_ date time format. The
+value for a ``[DateTime]`` field should be quoted in YAML to ensure the string
+is properly serialized to the Windows host. Here is an example of how to define
+a ``[DateTime]`` value in Ansible:
+
+.. code-block:: yaml+jinja
+
+    # As UTC-0 (No timezone)
+    DateTime: '2019-02-22T13:57:31.2311892+00:00'
+
+    # As UTC+4
+    DateTime: '2019-02-22T17:57:31.2311892+04:00'
+
+    # As UTC-4
+    DateTime: '2019-02-22T09:57:31.2311892-04:00'
+
+All the values above are equal to a UTC date time of February 22nd 2019 at
+1:57pm with 31 seconds and 2311892 milliseconds.
 
 Run As Another User
 -------------------
 By default, DSC runs each resource as the SYSTEM account and not the account
 that Ansible use to run the module. This means that resources that are dynamically
 loaded based on a user profile, like the ``HKEY_CURRENT_USER`` registry hive,
-will be loaded under the ``SYSTEM`` profile. The parameter 
-`PsDscRunAsCredential`` is a parameter that can be set for every DSC resource
+will be loaded under the ``SYSTEM`` profile. The parameter
+``PsDscRunAsCredential`` is a parameter that can be set for every DSC resource
 force the DSC engine to run under a different account. As
 ``PsDscRunAsCredential`` has a type of ``PSCredential``, it is defined with the
 ``_username`` and ``_password`` suffix.
 
 Using the Registry resource type as an example, this is how to define a task
-to access the ``HKEY_CURRENT_USER`` hive of the Ansible user::
+to access the ``HKEY_CURRENT_USER`` hive of the Ansible user:
 
-    - name: use win_dsc with PsDscRunAsCredential to run as a different user
+.. code-block:: yaml+jinja
+
+    - name: Use win_dsc with PsDscRunAsCredential to run as a different user
       win_dsc:
         resource_name: Registry
         Ensure: Present
         Key: HKEY_CURRENT_USER\ExampleKey
         ValueName: TestValue
         ValueData: TestData
-        PsDscRunAsCredential_username: '{{ansible_user}}'
-        PsDscRunAsCredential_password: '{{ansible_password}}'
-      no_log: true
+        PsDscRunAsCredential_username: '{{ ansible_user }}'
+        PsDscRunAsCredential_password: '{{ ansible_password }}'
+      no_log: yes
 
 Custom DSC Resources
 ````````````````````
@@ -222,10 +330,10 @@ The ``Find-DscResource`` cmdlet can also be used to find custom resources. For e
 
 .. code-block:: powershell
 
-    # find all DSC resources in the configured repositories
+    # Find all DSC resources in the configured repositories
     Find-DscResource
 
-    # find all DSC resources that relate to SQL
+    # Find all DSC resources that relate to SQL
     Find-DscResource -ModuleName "*sql*"
 
 .. Note:: DSC resources developed by Microsoft that start with ``x``, means the
@@ -240,9 +348,11 @@ There are three ways that a DSC resource can be installed on a host:
 * Saving the module manually and copying it another host
 
 This is an example of installing the ``xWebAdministration`` resources using
-``win_psmodule``::
+``win_psmodule``:
 
-    - name: install xWebAdministration DSC resource
+.. code-block:: yaml+jinja
+
+    - name: Install xWebAdministration DSC resource
       win_psmodule:
         name: xWebAdministration
         state: present
@@ -254,7 +364,10 @@ The first two methods above only work when the host has access to the internet.
 When a host does not have internet access, the module must first be installed
 using the methods above on another host with internet access and then copied
 across. To save a module to a local filepath, the following PowerShell cmdlet
-can be run::
+can be run:
+
+.. comment: Pygments powershell lexer does not support colons (i.e. URLs)
+.. code-block:: guess
 
     Save-Module -Name xWebAdministration -Path C:\temp
 
@@ -270,21 +383,21 @@ Examples
 Extract a zip file
 ------------------
 
-.. code-block:: yaml
+.. code-block:: yaml+jinja
 
-  - name: extract a zip file
+  - name: Extract a zip file
     win_dsc:
       resource_name: Archive
-      Destination: c:\temp\output
+      Destination: C:\temp\output
       Path: C:\temp\zip.zip
       Ensure: Present
 
 Create a directory
 ------------------
 
-.. code-block:: yaml
+.. code-block:: yaml+jinja
 
-    - name: create file with some text
+    - name: Create file with some text
       win_dsc:
         resource_name: File
         DestinationPath: C:\temp\file
@@ -294,7 +407,7 @@ Create a directory
         Ensure: Present
         Type: File
 
-    - name: create directory that is hidden is set with the System attribute
+    - name: Create directory that is hidden is set with the System attribute
       win_dsc:
         resource_name: File
         DestinationPath: C:\temp\hidden-directory
@@ -305,14 +418,14 @@ Create a directory
 Interact with Azure
 -------------------
 
-.. code-block:: yaml
+.. code-block:: yaml+jinja
 
-    - name: install xAzure DSC resources
+    - name: Install xAzure DSC resources
       win_psmodule:
         name: xAzure
         state: present
-    
-    - name: create virtual machine in Azure
+
+    - name: Create virtual machine in Azure
       win_dsc:
         resource_name: xAzureVM
         ImageName: a699494373c04fc0bc8f2bb1389d6106__Windows-Server-2012-R2-201409.01-en.us-127GB.vhd
@@ -320,31 +433,31 @@ Interact with Azure
         ServiceName: ServiceName
         StorageAccountName: StorageAccountName
         InstanceSize: Medium
-        Windows: True
+        Windows: yes
         Ensure: Present
-        Credential_username: '{{ansible_user}}'
-        Credential_password: '{{ansible_password}}'
+        Credential_username: '{{ ansible_user }}'
+        Credential_password: '{{ ansible_password }}'
 
 Setup IIS Website
 -----------------
 
-.. code-block:: yaml
+.. code-block:: yaml+jinja
 
-    - name: install xWebAdministration module
+    - name: Install xWebAdministration module
       win_psmodule:
         name: xWebAdministration
         state: present
 
-    - name: install IIS features that are required
+    - name: Install IIS features that are required
       win_dsc:
         resource_name: WindowsFeature
-        Name: '{{item}}'
+        Name: '{{ item }}'
         Ensure: Present
-      with_items:
+      loop:
       - Web-Server
       - Web-Asp-Net45
 
-    - name: setup web content
+    - name: Setup web content
       win_dsc:
         resource_name: File
         DestinationPath: C:\inetpub\IISSite\index.html
@@ -356,7 +469,7 @@ Setup IIS Website
           </html>
         Ensure: present
 
-    - name: create new website
+    - name: Create new website
       win_dsc:
         resource_name: xWebsite
         Name: NewIISSite
@@ -387,9 +500,9 @@ Setup IIS Website
        An introduction to playbooks
    :doc:`playbooks_best_practices`
        Best practices advice
-   `List of Windows Modules :ref:`<windows_modules>`
+   :ref:`List of Windows Modules <windows_modules>`
        Windows specific module list, all implemented in PowerShell
-   `User Mailing List <http://groups.google.com/group/ansible-project>`_
+   `User Mailing List <https://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

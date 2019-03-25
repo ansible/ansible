@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -9,8 +9,8 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+                    'status': ['stableinterface'],
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -25,6 +25,7 @@ options:
   name:
     description:
       - The name of the vCMP guest to manage.
+    type: str
     required: True
   vlans:
     description:
@@ -34,11 +35,13 @@ options:
       - The order of these VLANs is not important; in fact, it's ignored. This module will
         order the VLANs for you automatically. Therefore, if you deliberately re-order them
         in subsequent tasks, you will find that this module will B(not) register a change.
+    type: list
   initial_image:
     description:
       - Specifies the base software release ISO image file for installing the TMOS
         hypervisor instance and any licensed BIG-IP modules onto the guest's virtual
         disk. When creating a new guest, this parameter is required.
+    type: str
   mgmt_network:
     description:
       - Specifies the method by which the management address is used in the vCMP guest.
@@ -60,6 +63,7 @@ options:
         management network. This immediately connects all of the guest's VMs to the
         physical management network. Changing this property while the guest is in the
         C(configured) or C(provisioned) state has no immediate effect.
+    type: str
     choices:
       - bridged
       - isolated
@@ -77,11 +81,13 @@ options:
         parameter is required if the C(mgmt_network) parameter is C(bridged).
       - When creating a new guest, if you do not specify a network or network mask,
         a default of C(/24) (C(255.255.255.0)) will be assumed.
+    type: str
   mgmt_route:
     description:
       - Specifies the gateway address for the C(mgmt_address).
       - If this value is not specified when creating a new guest, it is set to C(none).
       - The value C(none) can be used during an update to remove this value.
+    type: str
   state:
     description:
       - The state of the vCMP guest on the system. Each state implies the actions of
@@ -97,13 +103,14 @@ options:
       - When C(present), ensures the guest is properly provisioned and starts
         the guest so that it is in a running state.
       - When C(absent), removes the vCMP from the system.
-    default: "present"
+    type: str
     choices:
       - configured
       - disabled
       - provisioned
       - present
       - absent
+    default: present
   cores_per_slot:
     description:
       - Specifies the number of cores that the system allocates to the guest.
@@ -113,10 +120,43 @@ options:
       - The number you can specify depends on the type of hardware you have.
       - In the event of a reboot, the system persists the guest to the same slot on
         which it ran prior to the reboot.
+    type: int
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
+  number_of_slots:
+    description:
+      - Specifies the number of slots for the system to use for creating the guest.
+      - This value dictates how many cores a guest is allocated from each slot that
+        it is assigned to.
+      - Possible values are dependent on the type of blades being used in this cluster.
+      - The default value depends on the type of blades being used in this cluster.
+    type: int
+    version_added: 2.7
+  min_number_of_slots:
+    description:
+      - Specifies the minimum number of slots that the guest must be assigned to in
+        order to deploy.
+      - This field dictates the number of slots that the guest must be assigned to.
+      - If at the end of any allocation attempt the guest is not assigned to at least
+        this many slots, the attempt fails and the change that initiated it is reverted.
+      - A guest's C(min_number_of_slots) value cannot be greater than its C(number_of_slots).
+    type: int
+    version_added: 2.7
+  allowed_slots:
+    description:
+      - Contains those slots that the guest is allowed to be assigned to.
+      - When the host determines which slots this guest should be assigned to, only slots
+        in this list will be considered.
+      - This is a good way to force guests to be assigned only to particular slots, or,
+        by configuring disjoint C(allowed_slots) on two guests, that those guests are
+        never assigned to the same slot.
+      - By default this list includes every available slot in the cluster. This means,
+        by default, the guest may be assigned to any slot.
+    type: list
+    version_added: 2.7
 notes:
   - This module can take a lot of time to deploy vCMP guests. This is an intrinsic
     limitation of the vCMP system because it is booting real VMs on the BIG-IP
@@ -126,36 +166,36 @@ notes:
     means that it is not unusual for a vCMP host with many guests to take a
     long time (60+ minutes) to reboot and bring all the guests online. The
     BIG-IP chassis will be available before all vCMP guests are online.
-  - netaddr
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
 - name: Create a vCMP guest
   bigip_vcmp_guest:
     name: foo
-    password: secret
-    server: lb.mydomain.com
-    state: present
-    user: admin
     mgmt_network: bridge
     mgmt_address: 10.20.30.40/24
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Create a vCMP guest with specific VLANs
   bigip_vcmp_guest:
     name: foo
-    password: secret
-    server: lb.mydomain.com
-    state: present
-    user: admin
     mgmt_network: bridge
     mgmt_address: 10.20.30.40/24
     vlans:
       - vlan1
       - vlan2
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Remove vCMP guest and disk
@@ -163,6 +203,10 @@ EXAMPLES = r'''
     name: guest1
     state: absent
     delete_virtual_disk: yes
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   register: result
 '''
 
@@ -181,37 +225,23 @@ from ansible.module_utils.basic import env_fallback
 from collections import namedtuple
 
 try:
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-        from f5.utils.responses.handlers import Stats
-    except ImportError:
-        HAS_F5SDK = False
+    from library.module_utils.network.f5.urls import parseStats
+    from library.module_utils.network.f5.ipaddress import is_valid_ip
+    from library.module_utils.compat.ipaddress import ip_interface
 except ImportError:
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-        from f5.utils.responses.handlers import Stats
-    except ImportError:
-        HAS_F5SDK = False
-
-try:
-    from netaddr import IPAddress, AddrFormatError, IPNetwork
-    HAS_NETADDR = True
-except ImportError:
-    HAS_NETADDR = False
+    from ansible.module_utils.network.f5.urls import parseStats
+    from ansible.module_utils.network.f5.ipaddress import is_valid_ip
+    from ansible.module_utils.compat.ipaddress import ip_interface
 
 
 class Parameters(AnsibleF5Parameters):
@@ -221,44 +251,66 @@ class Parameters(AnsibleF5Parameters):
         'managementIp': 'mgmt_address',
         'initialImage': 'initial_image',
         'virtualDisk': 'virtual_disk',
-        'coresPerSlot': 'cores_per_slot'
+        'coresPerSlot': 'cores_per_slot',
+        'slots': 'number_of_slots',
+        'minSlots': 'min_number_of_slots',
+        'allowedSlots': 'allowed_slots',
     }
 
     api_attributes = [
-        'vlans', 'managementNetwork', 'managementIp', 'initialImage', 'managementGw',
-        'state'
+        'vlans',
+        'managementNetwork',
+        'managementIp',
+        'initialImage',
+        'managementGw',
+        'state',
+        'coresPerSlot',
+        'slots',
+        'minSlots',
+        'allowedSlots',
     ]
 
     returnables = [
-        'vlans', 'mgmt_network', 'mgmt_address', 'initial_image', 'mgmt_route',
-        'name'
+        'vlans',
+        'mgmt_network',
+        'mgmt_address',
+        'initial_image',
+        'mgmt_route',
+        'name',
+        'cores_per_slot',
+        'number_of_slots',
+        'min_number_of_slots',
+        'allowed_slots',
     ]
 
     updatables = [
-        'vlans', 'mgmt_network', 'mgmt_address', 'initial_image', 'mgmt_route',
-        'state'
+        'vlans',
+        'mgmt_network',
+        'mgmt_address',
+        'initial_image',
+        'mgmt_route',
+        'state',
+        'cores_per_slot',
+        'number_of_slots',
+        'min_number_of_slots',
+        'allowed_slots',
     ]
 
-    def to_return(self):
-        result = {}
-        try:
-            for returnable in self.returnables:
-                result[returnable] = getattr(self, returnable)
-            result = self._filter_params(result)
-        except Exception:
-            pass
-        return result
 
+class ApiParameters(Parameters):
+    pass
+
+
+class ModuleParameters(Parameters):
     @property
     def mgmt_route(self):
         if self._values['mgmt_route'] is None:
             return None
         elif self._values['mgmt_route'] == 'none':
             return 'none'
-        try:
-            result = IPAddress(self._values['mgmt_route'])
-            return str(result)
-        except AddrFormatError:
+        if is_valid_ip(self._values['mgmt_route']):
+            return self._values['mgmt_route']
+        else:
             raise F5ModuleError(
                 "The specified 'mgmt_route' is not a valid IP address"
             )
@@ -268,17 +320,15 @@ class Parameters(AnsibleF5Parameters):
         if self._values['mgmt_address'] is None:
             return None
         try:
-            addr = IPNetwork(self._values['mgmt_address'])
-            result = '{0}/{1}'.format(addr.ip, addr.prefixlen)
-            return result
-        except AddrFormatError:
+            addr = ip_interface(u'%s' % str(self._values['mgmt_address']))
+            return str(addr.with_prefixlen)
+        except ValueError:
             raise F5ModuleError(
                 "The specified 'mgmt_address' is not a valid IP address"
             )
 
     @property
     def mgmt_tuple(self):
-        result = None
         Destination = namedtuple('Destination', ['ip', 'subnet'])
         try:
             parts = self._values['mgmt_address'].split('/')
@@ -287,7 +337,7 @@ class Parameters(AnsibleF5Parameters):
             elif len(parts) < 2:
                 result = Destination(ip=parts[0], subnet=None)
             else:
-                F5ModuleError(
+                raise F5ModuleError(
                     "The provided mgmt_address is malformed."
                 )
         except ValueError:
@@ -321,14 +371,52 @@ class Parameters(AnsibleF5Parameters):
         )
 
     def initial_image_exists(self, image):
-        collection = self.client.api.tm.sys.software.images.get_collection()
-        for resource in collection:
-            if resource.name.startswith(image):
+        uri = "https://{0}:{1}/mgmt/tm/sys/software/image/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        for resource in response['items']:
+            if resource['name'].startswith(image):
                 return True
         return False
 
+    @property
+    def allowed_slots(self):
+        if self._values['allowed_slots'] is None:
+            return None
+        result = self._values['allowed_slots']
+        result.sort()
+        return result
+
 
 class Changes(Parameters):
+    def to_return(self):
+        result = {}
+        try:
+            for returnable in self.returnables:
+                change = getattr(self, returnable)
+                if isinstance(change, dict):
+                    result.update(change)
+                else:
+                    result[returnable] = change
+            result = self._filter_params(result)
+        except Exception:
+            pass
+        return result
+
+
+class UsableChanges(Changes):
+    pass
+
+
+class ReportableChanges(Changes):
     pass
 
 
@@ -358,18 +446,28 @@ class Difference(object):
         want = self.want.mgmt_tuple
         if want.subnet is None:
             raise F5ModuleError(
-                "A subnet must be specified when changing the mgmt_address"
+                "A subnet must be specified when changing the mgmt_address."
             )
         if self.want.mgmt_address != self.have.mgmt_address:
             return self.want.mgmt_address
+
+    @property
+    def allowed_slots(self):
+        if self.want.allowed_slots is None:
+            return None
+        if self.have.allowed_slots is None:
+            return self.want.allowed_slots
+        if set(self.want.allowed_slots) != set(self.have.allowed_slots):
+            return self.want.allowed_slots
 
 
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
-        self.want = Parameters(client=self.client, params=self.module.params)
-        self.changes = Changes()
+        self.client = F5RestClient(**self.module.params)
+        self.want = ModuleParameters(client=self.client, params=self.module.params)
+        self.have = None
+        self.changes = ReportableChanges()
 
     def _set_changed_options(self):
         changed = {}
@@ -377,7 +475,7 @@ class ModuleManager(object):
             if getattr(self.want, key) is not None:
                 changed[key] = getattr(self.want, key)
         if changed:
-            self.changes = Changes(params=changed)
+            self.changes = UsableChanges(params=changed)
 
     def _update_changed_options(self):
         diff = Difference(self.want, self.have)
@@ -390,9 +488,17 @@ class ModuleManager(object):
             else:
                 changed[k] = change
         if changed:
-            self.changes = Parameters(params=changed)
+            self.changes = UsableChanges(params=changed)
             return True
         return False
+
+    def _announce_deprecations(self, result):
+        warnings = result.pop('__warnings', [])
+        for warning in warnings:
+            self.module.deprecate(
+                msg=warning['msg'],
+                version=warning['version']
+            )
 
     def should_update(self):
         result = self._update_changed_options()
@@ -405,27 +511,17 @@ class ModuleManager(object):
         result = dict()
         state = self.want.state
 
-        try:
-            if state in ['configured', 'provisioned', 'deployed']:
-                changed = self.present()
-            elif state == "absent":
-                changed = self.absent()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        if state in ['configured', 'provisioned', 'deployed']:
+            changed = self.present()
+        elif state == "absent":
+            changed = self.absent()
 
-        changes = self.changes.to_return()
+        reportable = ReportableChanges(params=self.changes.to_return())
+        changes = reportable.to_return()
         result.update(**changes)
         result.update(dict(changed=changed))
         self._announce_deprecations(result)
         return result
-
-    def _announce_deprecations(self, result):
-        warnings = result.pop('__warnings', [])
-        for warning in warnings:
-            self.module.deprecate(
-                msg=warning['msg'],
-                version=warning['version']
-            )
 
     def present(self):
         if self.exists():
@@ -433,11 +529,10 @@ class ModuleManager(object):
         else:
             return self.create()
 
-    def exists(self):
-        result = self.client.api.tm.vcmp.guests.guest.exists(
-            name=self.want.name
-        )
-        return result
+    def absent(self):
+        if self.exists():
+            return self.remove()
+        return False
 
     def update(self):
         self.have = self.read_current_from_device()
@@ -445,6 +540,9 @@ class ModuleManager(object):
             return False
         if self.module.check_mode:
             return True
+        if self.changes.cores_per_slot:
+            if not self.is_configured():
+                self.configure()
         self.update_on_device()
         if self.want.state == 'provisioned':
             self.provision()
@@ -483,60 +581,155 @@ class ModuleManager(object):
             self.configure()
         return True
 
-    def create_on_device(self):
-        params = self.want.api_params()
-        self.client.api.tm.vcmp.guests.guest.create(
-            name=self.want.name,
-            **params
+    def exists(self):
+        uri = "https://{0}:{1}/mgmt/tm/vcmp/guest/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.name
         )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
+
+    def create_on_device(self):
+        params = self.changes.api_params()
+        params['name'] = self.want.name
+        uri = "https://{0}:{1}/mgmt/tm/vcmp/guest/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return response['selfLink']
 
     def update_on_device(self):
         params = self.changes.api_params()
-        resource = self.client.api.tm.vcmp.guests.guest.load(
-            name=self.want.name
+        uri = "https://{0}:{1}/mgmt/tm/vcmp/guest/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.name
         )
-        resource.modify(**params)
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
 
-    def absent(self):
-        if self.exists():
-            return self.remove()
-        return False
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def remove_from_device(self):
-        resource = self.client.api.tm.vcmp.guests.guest.load(
-            name=self.want.name
+        uri = "https://{0}:{1}/mgmt/tm/vcmp/guest/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.name
         )
-        if resource:
-            resource.delete()
+        response = self.client.api.delete(uri)
+        if response.status == 200:
+            return True
+        raise F5ModuleError(response.content)
 
     def read_current_from_device(self):
-        resource = self.client.api.tm.vcmp.guests.guest.load(
-            name=self.want.name
+        uri = "https://{0}:{1}/mgmt/tm/vcmp/guest/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.name
         )
-        result = resource.attrs
-        return Parameters(params=result)
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return ApiParameters(params=response)
 
     def remove_virtual_disk(self):
         if self.virtual_disk_exists():
             return self.remove_virtual_disk_from_device()
         return False
 
+    def get_virtual_disk_on_device(self):
+        """Checks if a virtual disk exists for a guest
+
+        The virtual disk names can differ based on the device vCMP is installed on.
+        For instance, on a shuttle-series device with no slots, you will see disks
+        that resemble the following
+
+          guest1.img
+
+        On an 8-blade Viprion with slots though, you will see
+
+          guest1.img/1
+
+        The "/1" in this case is the slot that it is a part of. This method looks
+        for the virtual-disk without the trailing slot.
+
+        Returns:
+            dict
+        """
+
+        uri = "https://{0}:{1}/mgmt/tm/vcmp/virtual-disk/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+        for resource in response['items']:
+            check = '{0}'.format(self.have.virtual_disk)
+            if resource['name'].startswith(check):
+                return resource
+            else:
+                return False
+
     def virtual_disk_exists(self):
-        collection = self.client.api.tm.vcmp.virtual_disks.get_collection()
-        for resource in collection:
-            check = '{0}/'.format(self.have.virtual_disk)
-            if resource.name.startswith(check):
-                return True
+        response = self.get_virtual_disk_on_device()
+        if response:
+            return True
         return False
 
     def remove_virtual_disk_from_device(self):
-        collection = self.client.api.tm.vcmp.virtual_disks.get_collection()
-        for resource in collection:
-            check = '{0}/'.format(self.have.virtual_disk)
-            if resource.name.startswith(check):
-                resource.delete()
-                return True
-        return False
+        response = self.get_virtual_disk_on_device()
+        uri = "https://{0}:{1}/mgmt/tm/vcmp/virtual-disk/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            response['name']
+        )
+        response = self.client.api.delete(uri)
+        if response.status == 200:
+            return True
+        raise F5ModuleError(response.content)
 
     def is_configured(self):
         """Checks to see if guest is disabled
@@ -546,35 +739,85 @@ class ModuleManager(object):
 
         :return:
         """
+        uri = "https://{0}:{1}/mgmt/tm/vcmp/guest/{2}/stats".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.name
+        )
+        resp = self.client.api.get(uri)
+
         try:
-            res = self.client.api.tm.vcmp.guests.guest.load(name=self.want.name)
-            Stats(res.stats.load())
-            return False
-        except iControlUnexpectedHTTPError as ex:
-            if 'Object not found - ' in str(ex):
-                return True
-            raise
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return True
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+        return False
 
     def is_provisioned(self):
+        uri = "https://{0}:{1}/mgmt/tm/vcmp/guest/{2}/stats".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.name
+        )
+        resp = self.client.api.get(uri)
+
         try:
-            res = self.client.api.tm.vcmp.guests.guest.load(name=self.want.name)
-            stats = Stats(res.stats.load())
-            if stats.stat['requestedState']['description'] == 'provisioned':
-                if stats.stat['vmStatus']['description'] == 'stopped':
+            response = resp.json()
+        except ValueError:
+            return False
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+
+        result = parseStats(response)
+
+        if 'stats' in result:
+            if result['stats']['requestedState'] == 'provisioned':
+                if result['stats']['vmStatus'] == 'stopped':
                     return True
-        except iControlUnexpectedHTTPError:
-            pass
         return False
 
     def is_deployed(self):
+        uri = "https://{0}:{1}/mgmt/tm/vcmp/guest/{2}/stats".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.name
+        )
+        resp = self.client.api.get(uri)
+
         try:
-            res = self.client.api.tm.vcmp.guests.guest.load(name=self.want.name)
-            stats = Stats(res.stats.load())
-            if stats.stat['requestedState']['description'] == 'deployed':
-                if stats.stat['vmStatus']['description'] == 'running':
+            response = resp.json()
+        except ValueError:
+            return False
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+
+        result = parseStats(response)
+
+        if 'stats' in result:
+            if result['stats']['requestedState'] == 'deployed':
+                if result['stats']['vmStatus'] == 'running':
                     return True
-        except iControlUnexpectedHTTPError:
-            pass
         return False
 
     def configure(self):
@@ -585,8 +828,23 @@ class ModuleManager(object):
         return True
 
     def configure_on_device(self):
-        resource = self.client.api.tm.vcmp.guests.guest.load(name=self.want.name)
-        resource.modify(state='configured')
+        params = dict(state='configured')
+        uri = "https://{0}:{1}/mgmt/tm/vcmp/guest/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.name
+        )
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def wait_for_configured(self):
         nops = 0
@@ -602,8 +860,23 @@ class ModuleManager(object):
         self.wait_for_provisioned()
 
     def provision_on_device(self):
-        resource = self.client.api.tm.vcmp.guests.guest.load(name=self.want.name)
-        resource.modify(state='provisioned')
+        params = dict(state='provisioned')
+        uri = "https://{0}:{1}/mgmt/tm/vcmp/guest/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.name
+        )
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def wait_for_provisioned(self):
         nops = 0
@@ -619,8 +892,23 @@ class ModuleManager(object):
         self.wait_for_deployed()
 
     def deploy_on_device(self):
-        resource = self.client.api.tm.vcmp.guests.guest.load(name=self.want.name)
-        resource.modify(state='deployed')
+        params = dict(state='deployed')
+        uri = "https://{0}:{1}/mgmt/tm/vcmp/guest/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.name
+        )
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def wait_for_deployed(self):
         nops = 0
@@ -645,9 +933,13 @@ class ArgumentSpec(object):
                 choices=['configured', 'disabled', 'provisioned', 'absent', 'present']
             ),
             delete_virtual_disk=dict(
-                type='bool', default='no'
+                type='bool',
+                default='no'
             ),
             cores_per_slot=dict(type='int'),
+            number_of_slots=dict(type='int'),
+            min_number_of_slots=dict(type='int'),
+            allowed_slots=dict(type='list'),
             partition=dict(
                 default='Common',
                 fallback=(env_fallback, ['F5_PARTITION'])
@@ -666,21 +958,15 @@ def main():
 
     module = AnsibleModule(
         argument_spec=spec.argument_spec,
-        supports_check_mode=spec.supports_check_mode
+        supports_check_mode=spec.supports_check_mode,
+        required_if=spec.required_if
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
-    if not HAS_NETADDR:
-        module.fail_json(msg="The python netaddr module is required")
 
     try:
-        client = F5Client(**module.params)
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
         module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
         module.fail_json(msg=str(ex))
 
 

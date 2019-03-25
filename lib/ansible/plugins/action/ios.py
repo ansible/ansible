@@ -22,25 +22,22 @@ __metaclass__ = type
 import sys
 import copy
 
-from ansible import constants as C
 from ansible.module_utils._text import to_text
-from ansible.module_utils.connection import Connection
-from ansible.plugins.action.normal import ActionModule as _ActionModule
+from ansible.module_utils.connection import Connection, ConnectionError
+from ansible.plugins.action.network import ActionModule as ActionNetworkModule
 from ansible.module_utils.network.common.utils import load_provider
 from ansible.module_utils.network.ios.ios import ios_provider_spec
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
-class ActionModule(_ActionModule):
+class ActionModule(ActionNetworkModule):
 
     def run(self, tmp=None, task_vars=None):
         del tmp  # tmp no longer has any effect
 
+        self._config_module = True if self._task.action == 'ios_config' else False
         socket_path = None
 
         if self._play_context.connection == 'network_cli':
@@ -58,7 +55,6 @@ class ActionModule(_ActionModule):
             pc.remote_user = provider['username'] or self._play_context.connection_user
             pc.password = provider['password'] or self._play_context.password
             pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
-            pc.timeout = int(provider['timeout']) if provider['timeout'] else None
             pc.become = provider['authorize'] or False
             if pc.become:
                 pc.become_method = 'enable'
@@ -67,8 +63,8 @@ class ActionModule(_ActionModule):
             display.vvv('using connection plugin %s (was local)' % pc.connection, pc.remote_addr)
             connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
 
-            if connection._play_context.timeout is None:
-                connection._play_context.timeout = connection.get_option('persistent_command_timeout')
+            command_timeout = int(provider['timeout']) if provider['timeout'] else connection.get_option('persistent_command_timeout')
+            connection.set_options(direct={'persistent_command_timeout': command_timeout})
 
             socket_path = connection.run()
             display.vvvv('socket_path: %s' % socket_path, pc.remote_addr)
@@ -87,11 +83,14 @@ class ActionModule(_ActionModule):
             socket_path = self._connection.socket_path
 
         conn = Connection(socket_path)
-        out = conn.get_prompt()
-        while to_text(out, errors='surrogate_then_replace').strip().endswith(')#'):
-            display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
-            conn.send_command('exit')
+        try:
             out = conn.get_prompt()
+            while to_text(out, errors='surrogate_then_replace').strip().endswith(')#'):
+                display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
+                conn.send_command('exit')
+                out = conn.get_prompt()
+        except ConnectionError as exc:
+            return {'failed': True, 'msg': to_text(exc)}
 
         result = super(ActionModule, self).run(task_vars=task_vars)
         return result

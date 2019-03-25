@@ -11,32 +11,34 @@ import json
 import pytest
 import sys
 
-from nose.plugins.skip import SkipTest
 if sys.version_info < (2, 7):
-    raise SkipTest("F5 Ansible modules require Python >= 2.7")
+    pytestmark = pytest.mark.skip("F5 Ansible modules require Python >= 2.7")
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import Mock
-from ansible.compat.tests.mock import patch
 from ansible.module_utils.basic import AnsibleModule
 
 try:
     from library.modules.bigip_device_dns import Parameters
     from library.modules.bigip_device_dns import ModuleManager
     from library.modules.bigip_device_dns import ArgumentSpec
-    from library.module_utils.network.f5.common import F5ModuleError
-    from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    from test.unit.modules.utils import set_module_args
+
+    # In Ansible 2.8, Ansible changed import paths.
+    from test.units.compat import unittest
+    from test.units.compat.mock import Mock
+    from test.units.compat.mock import patch
+
+    from test.units.modules.utils import set_module_args
 except ImportError:
-    try:
-        from ansible.modules.network.f5.bigip_device_dns import Parameters
-        from ansible.modules.network.f5.bigip_device_dns import ModuleManager
-        from ansible.modules.network.f5.bigip_device_dns import ArgumentSpec
-        from ansible.module_utils.network.f5.common import F5ModuleError
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-        from units.modules.utils import set_module_args
-    except ImportError:
-        raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
+    from ansible.modules.network.f5.bigip_device_dns import Parameters
+    from ansible.modules.network.f5.bigip_device_dns import ModuleManager
+    from ansible.modules.network.f5.bigip_device_dns import ArgumentSpec
+
+    # Ansible 2.8 imports
+    from units.compat import unittest
+    from units.compat.mock import Mock
+    from units.compat.mock import patch
+
+    from units.modules.utils import set_module_args
+
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
@@ -67,9 +69,6 @@ class TestParameters(unittest.TestCase):
             ip_version=4,
             name_servers=['10.10.10.10', '11.11.11.11'],
             search=['14.14.14.14', '15.15.15.15'],
-            server='localhost',
-            user='admin',
-            password='password'
         )
         p = Parameters(params=args)
         assert p.cache == 'disable'
@@ -77,14 +76,14 @@ class TestParameters(unittest.TestCase):
         assert p.search == ['14.14.14.14', '15.15.15.15']
 
         # BIG-IP considers "ipv4" to be an empty value
-        assert p.ip_version == ''
+        assert p.ip_version == 4
 
     def test_ipv6_parameter(self):
         args = dict(
             ip_version=6
         )
         p = Parameters(params=args)
-        assert p.ip_version == 'options inet6'
+        assert p.ip_version == 6
 
 
 class TestManager(unittest.TestCase):
@@ -98,9 +97,11 @@ class TestManager(unittest.TestCase):
             ip_version=4,
             name_servers=['10.10.10.10', '11.11.11.11'],
             search=['14.14.14.14', '15.15.15.15'],
-            server='localhost',
-            user='admin',
-            password='password'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         # Configure the parameters that would be returned by querying the
@@ -113,7 +114,8 @@ class TestManager(unittest.TestCase):
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            required_one_of=self.spec.required_one_of
         )
         mm = ModuleManager(module=module)
 

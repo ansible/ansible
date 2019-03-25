@@ -29,10 +29,10 @@ DOCUMENTATION = """
 module: slxos_linkagg
 version_added: "2.6"
 author: "Matthew Stone (@bigmstone)"
-short_description: Manage link aggregation groups on Extreme Networks SLXOS network devices
+short_description: Manage link aggregation groups on Extreme Networks SLX-OS network devices
 description:
   - This module provides declarative management of link aggregation groups
-    on Extreme Networks SLXOS network devices.
+    on Extreme Networks SLX-OS network devices.
 notes:
   - Tested against SLX-OS 17s.1.02
 options:

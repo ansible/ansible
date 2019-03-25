@@ -234,7 +234,7 @@ def aos_blueprint(module):
 
     try:
         aos = get_aos_session(module, margs['session'])
-    except:
+    except Exception:
         module.fail_json(msg="Unable to login to the AOS server")
 
     item_name = False
@@ -253,7 +253,7 @@ def aos_blueprint(module):
         my_blueprint = find_collection_item(aos.Blueprints,
                                             item_name=item_name,
                                             item_id=item_id)
-    except:
+    except Exception:
         module.fail_json(msg="Unable to find the Blueprint based on name or ID, something went wrong")
 
     # ----------------------------------------------------

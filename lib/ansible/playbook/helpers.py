@@ -25,12 +25,9 @@ from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable, Ansible
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import string_types
 from ansible.parsing.mod_args import ModuleArgsParser
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 def load_list_of_blocks(ds, play, parent_block=None, role=None, task_include=None, use_handlers=False, variable_manager=None, loader=None):
@@ -159,7 +156,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     is_static = True
                 elif t.static is not None:
                     display.deprecated("The use of 'static' has been deprecated. "
-                                       "Use 'import_tasks' for static inclusion, or 'include_tasks' for dynamic inclusion")
+                                       "Use 'import_tasks' for static inclusion, or 'include_tasks' for dynamic inclusion", version='2.12')
                     is_static = t.static
                 else:
                     is_static = C.DEFAULT_TASK_INCLUDES_STATIC or \
@@ -189,7 +186,19 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                         if not isinstance(parent_include, TaskInclude):
                             parent_include = parent_include._parent
                             continue
-                        parent_include_dir = os.path.dirname(templar.template(parent_include.args.get('_raw_params')))
+                        try:
+                            parent_include_dir = os.path.dirname(templar.template(parent_include.args.get('_raw_params')))
+                        except AnsibleUndefinedVariable as e:
+                            if not parent_include.statically_loaded:
+                                raise AnsibleParserError(
+                                    "Error when evaluating variable in dynamic parent include path: %s. "
+                                    "When using static imports, the parent dynamic include cannot utilize host facts "
+                                    "or variables from inventory" % parent_include.args.get('_raw_params'),
+                                    obj=task_ds,
+                                    suppress_extended_error=True,
+                                    orig_exc=e
+                                )
+                            raise
                         if cumulative_path is None:
                             cumulative_path = parent_include_dir
                         elif not os.path.isabs(cumulative_path):
@@ -212,9 +221,9 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                             include_target = templar.template(t.args['_raw_params'])
                         except AnsibleUndefinedVariable as e:
                             raise AnsibleParserError(
-                                "Error when evaluating variable in include name: %s.\n\n"
-                                "When using static includes, ensure that any variables used in their names are defined in vars/vars_files\n"
-                                "or extra-vars passed in from the command line. Static includes cannot use variables from inventory\n"
+                                "Error when evaluating variable in import path: %s.\n\n"
+                                "When using static imports, ensure that any variables used in their names are defined in vars/vars_files\n"
+                                "or extra-vars passed in from the command line. Static imports cannot use variables from facts or inventory\n"
                                 "sources like group or host vars." % t.args['_raw_params'],
                                 obj=task_ds,
                                 suppress_extended_error=True,
@@ -238,7 +247,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                         # nested includes, and we want the include order printed correctly
                         display.vv("statically imported: %s" % include_file)
                     except AnsibleFileNotFound:
-                        if t.static or \
+                        if action != 'include' or t.static or \
                            C.DEFAULT_TASK_INCLUDES_STATIC or \
                            C.DEFAULT_HANDLER_INCLUDES_STATIC and use_handlers:
                             raise
@@ -248,7 +257,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                             "later. In the future, this will be an error unless 'static: no' is used "
                             "on the include task. If you do not want missing includes to be considered "
                             "dynamic, use 'static: yes' on the include or set the global ansible.cfg "
-                            "options to make all includes static for tasks and/or handlers" % include_file, version="2.7"
+                            "options to make all includes static for tasks and/or handlers" % include_file, version="2.12"
                         )
                         task_list.append(t)
                         continue
@@ -285,7 +294,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                                 suppress_extended_error=True,
                             )
                         display.deprecated("You should not specify tags in the include parameters. All tags should be specified using the task-level option",
-                                           version="2.7")
+                                           version="2.12")
                     else:
                         tags = ti_copy.tags[:]
 
@@ -323,7 +332,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
 
                 elif ir.static is not None:
                     display.deprecated("The use of 'static' for 'include_role' has been deprecated. "
-                                       "Use 'import_role' for static inclusion, or 'include_role' for dynamic inclusion")
+                                       "Use 'import_role' for static inclusion, or 'include_role' for dynamic inclusion", version='2.12')
                     is_static = ir.static
 
                 if is_static:

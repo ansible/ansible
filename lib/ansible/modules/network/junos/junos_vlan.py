@@ -28,8 +28,20 @@ options:
     required: true
   vlan_id:
     description:
-      - ID of the VLAN.
+      - ID of the VLAN. Range 1-4094.
     required: true
+  l3_interface:
+    description:
+      -  Name of logical layer 3 interface.
+    version_added: "2.7"
+  filter_input:
+    description:
+      - The name of input filter.
+    version_added: "2.8"
+  filter_output:
+    description:
+      - The name of output filter.
+    version_added: "2.8"
   description:
     description:
       - Text description of VLANs.
@@ -67,6 +79,13 @@ EXAMPLES = """
     vlan_id: 20
     name: test-vlan
 
+- name: Link to logical layer 3 interface
+  junos_vlan:
+    vlan_name: test
+    vlan_id: 20
+    l3-interface: vlan.20
+    name: test-vlan
+
 - name: remove VLAN configuration
   junos_vlan:
     vlan_name: test
@@ -102,7 +121,7 @@ RETURN = """
 diff.prepared:
   description: Configuration difference before and after applying change.
   returned: when configuration is changed and diff option is enabled.
-  type: string
+  type: str
   sample: >
          [edit vlans]
          +   test-vlan-1 {
@@ -115,14 +134,9 @@ from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import remove_default_spec
-from ansible.module_utils.network.junos.junos import junos_argument_spec
+from ansible.module_utils.network.junos.junos import junos_argument_spec, tostring
 from ansible.module_utils.network.junos.junos import load_config, map_params_to_obj, map_obj_to_ele, to_param_list
 from ansible.module_utils.network.junos.junos import commit_configuration, discard_changes, locked_config
-
-try:
-    from lxml.etree import tostring
-except ImportError:
-    from xml.etree.ElementTree import tostring
 
 USE_PERSISTENT_CONNECTION = True
 
@@ -150,6 +164,9 @@ def main():
         vlan_id=dict(type='int'),
         description=dict(),
         interfaces=dict(),
+        l3_interface=dict(),
+        filter_input=dict(),
+        filter_output=dict(),
         state=dict(default='present', choices=['present', 'absent']),
         active=dict(default=True, type='bool')
     )
@@ -187,6 +204,9 @@ def main():
     param_to_xpath_map.update([
         ('name', {'xpath': 'name', 'is_key': True}),
         ('vlan_id', 'vlan-id'),
+        ('l3_interface', 'l3-interface'),
+        ('filter_input', 'forwarding-options/filter/input'),
+        ('filter_output', 'forwarding-options/filter/output'),
         ('description', 'description')
     ])
 
@@ -223,6 +243,7 @@ def main():
                 result['diff'] = {'prepared': diff}
 
     module.exit_json(**result)
+
 
 if __name__ == "__main__":
     main()

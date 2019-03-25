@@ -121,7 +121,7 @@ RETURN = '''
 result:
     description: Message detailing run result
     returned: success
-    type: string
+    type: str
     sample: "Workflow action run completed."
 '''
 
@@ -318,6 +318,7 @@ def main():
         module.exit_json(**result)
     except Exception as e:
         module.fail_json(msg=str(e))
+
 
 if __name__ == '__main__':
     main()

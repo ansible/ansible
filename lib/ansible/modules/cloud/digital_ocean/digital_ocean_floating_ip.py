@@ -39,7 +39,6 @@ options:
     description:
      - DigitalOcean OAuth token.
     required: true
-
 notes:
   - Version 2 of DigitalOcean API is used.
 requirements:
@@ -302,12 +301,12 @@ def main():
             validate_certs=dict(type='bool', default=True),
             timeout=dict(type='int', default=30),
         ),
-        required_if=([
+        required_if=[
             ('state', 'delete', ['ip'])
-        ]),
-        mutually_exclusive=(
+        ],
+        mutually_exclusive=[
             ['region', 'droplet_id']
-        ),
+        ],
     )
 
     core(module)

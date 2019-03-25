@@ -4,7 +4,7 @@
 Junos OS Platform Options
 ***************************************
 
-Juniper Junos OS supports multiple connections. This page offers details on how each connection works in Ansible 2.5 and how to use it. 
+Juniper Junos OS supports multiple connections. This page offers details on how each connection works in Ansible and how to use it.
 
 .. contents:: Topics
 
@@ -34,8 +34,8 @@ Connections Available
 
 For legacy playbooks, Ansible still supports ``ansible_connection=local`` on all JUNOS modules. We recommend modernizing to use ``ansible_connection=netconf`` or ``ansible_connection=network_cli`` as soon as possible.
 
-Using CLI in Ansible 2.5
-================================================================================
+Using CLI in Ansible
+====================
 
 Example CLI inventory ``[junos:vars]``
 --------------------------------------
@@ -46,11 +46,11 @@ Example CLI inventory ``[junos:vars]``
    ansible_connection=network_cli
    ansible_network_os=junos
    ansible_user=myuser
-   ansible_ssh_pass=!vault...
+   ansible_password=!vault...
    ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p -q bastion01"'
 
 
-- If you are using SSH keys (including an ssh-agent) you can remove the ``ansible_ssh_pass`` configuration.
+- If you are using SSH keys (including an ssh-agent) you can remove the ``ansible_password`` configuration.
 - If you are accessing your host directly (not through a bastion/jump host) you can remove the ``ansible_ssh_common_args`` configuration.
 - If you are accessing your host through a bastion/jump host, you cannot include your SSH password in the ``ProxyCommand`` directive. To prevent secrets from leaking out (for example in ``ps`` output), SSH does not support providing passwords via environment variables.
 
@@ -65,8 +65,8 @@ Example CLI Task
      when: ansible_network_os == 'junos'
 
 
-Using NETCONF in Ansible 2.5
-================================================================================
+Using NETCONF in Ansible
+========================
 
 Enabling NETCONF
 ----------------
@@ -96,7 +96,7 @@ Example NETCONF inventory ``[junos:vars]``
    ansible_connection=netconf
    ansible_network_os=junos
    ansible_user=myuser
-   ansible_ssh_pass=!vault | 
+   ansible_password=!vault |
    ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p -q bastion01"'
 
 

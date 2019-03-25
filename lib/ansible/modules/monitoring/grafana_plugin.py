@@ -61,7 +61,7 @@ RETURN = '''
 ---
 version:
   description: version of the installed / removed plugin.
-  type: string
+  type: str
   returned: allways
 '''
 
@@ -106,15 +106,15 @@ def grafana_cli_bin(params):
         raise GrafanaCliException('grafana-cli binary is not present or not in PATH')
     else:
         if 'grafana_plugin_url' in params and params['grafana_plugin_url']:
-            grafana_cli = '{} {} {}'.format(grafana_cli, '--pluginUrl', params['grafana_plugin_url'])
+            grafana_cli = '{0} {1} {2}'.format(grafana_cli, '--pluginUrl', params['grafana_plugin_url'])
         if 'grafana_plugins_dir' in params and params['grafana_plugins_dir']:
-            grafana_cli = '{} {} {}'.format(grafana_cli, '--pluginsDir', params['grafana_plugins_dir'])
+            grafana_cli = '{0} {1} {2}'.format(grafana_cli, '--pluginsDir', params['grafana_plugins_dir'])
         if 'grafana_repo' in params and params['grafana_repo']:
-            grafana_cli = '{} {} {}'.format(grafana_cli, '--repo', params['grafana_repo'])
+            grafana_cli = '{0} {1} {2}'.format(grafana_cli, '--repo', params['grafana_repo'])
         if 'validate_certs' in params and params['validate_certs'] is False:
-            grafana_cli = '{} {}'.format(grafana_cli, '--insecure')
+            grafana_cli = '{0} {1}'.format(grafana_cli, '--insecure')
 
-        return '{} {}'.format(grafana_cli, 'plugins')
+        return '{0} {1}'.format(grafana_cli, 'plugins')
 
 
 def get_grafana_plugin_version(module, params):
@@ -125,7 +125,7 @@ def get_grafana_plugin_version(module, params):
     :param params: ansible module params.
     '''
     grafana_cli = grafana_cli_bin(params)
-    rc, stdout, stderr = module.run_command('{} ls'.format(grafana_cli))
+    rc, stdout, stderr = module.run_command('{0} ls'.format(grafana_cli))
     stdout_lines = stdout.split("\n")
     for line in stdout_lines:
         if line.find(' @ ') != -1:
@@ -155,9 +155,9 @@ def grafana_plugin(module, params):
                             'version': grafana_plugin_version}
                 else:
                     if params['version'] == 'latest' or params['version'] is None:
-                        cmd = '{} update {}'.format(grafana_cli, params['name'])
+                        cmd = '{0} update {1}'.format(grafana_cli, params['name'])
                     else:
-                        cmd = '{} install {} {}'.format(grafana_cli, params['name'], params['version'])
+                        cmd = '{0} install {1} {2}'.format(grafana_cli, params['name'], params['version'])
             else:
                 return {'msg': 'Grafana plugin already installed',
                         'changed': False,
@@ -165,13 +165,13 @@ def grafana_plugin(module, params):
         else:
             if 'version' in params:
                 if params['version'] == 'latest' or params['version'] is None:
-                    cmd = '{} install {}'.format(grafana_cli, params['name'])
+                    cmd = '{0} install {1}'.format(grafana_cli, params['name'])
                 else:
-                    cmd = '{} install {} {}'.format(grafana_cli, params['name'], params['version'])
+                    cmd = '{0} install {1} {2}'.format(grafana_cli, params['name'], params['version'])
             else:
-                cmd = '{} install {}'.format(grafana_cli, params['name'])
+                cmd = '{0} install {1}'.format(grafana_cli, params['name'])
     else:
-        cmd = '{} uninstall {}'.format(grafana_cli, params['name'])
+        cmd = '{0} uninstall {1}'.format(grafana_cli, params['name'])
 
     rc, stdout, stderr = module.run_command(cmd)
     if rc == 0:
@@ -183,11 +183,11 @@ def grafana_plugin(module, params):
                     plugin_name, plugin_version = line.split(' @ ')
                 else:
                     plugin_version = None
-                return {'msg': 'Grafana plugin {} installed : {}'.format(params['name'], cmd),
+                return {'msg': 'Grafana plugin {0} installed : {1}'.format(params['name'], cmd),
                         'changed': True,
                         'version': plugin_version}
     else:
-        raise GrafanaCliException("'{}' execution returned an error : [{}] {} {}".format(cmd, rc, stdout, stderr))
+        raise GrafanaCliException("'{0}' execution returned an error : [{1}] {2} {3}".format(cmd, rc, stdout, stderr))
 
 
 def main():
@@ -210,13 +210,13 @@ def main():
     except GrafanaCliException as e:
         module.fail_json(
             failed=True,
-            msg="{}".format(e)
+            msg="{0}".format(e)
         )
         return
     except Exception as e:
         module.fail_json(
             failed=True,
-            msg="{} : {} ".format(type(e), e)
+            msg="{0} : {1} ".format(type(e), e)
         )
         return
 
@@ -225,6 +225,7 @@ def main():
         **result
     )
     return
+
 
 if __name__ == '__main__':
     main()

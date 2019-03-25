@@ -1,15 +1,16 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+                    'status': ['stableinterface'],
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -23,19 +24,22 @@ options:
     description:
       - A list of NTP servers to set on the device. At least one of C(ntp_servers)
         or C(timezone) is required.
+    type: list
   state:
     description:
       - The state of the NTP servers on the system. When C(present), guarantees
         that the NTP servers are set on the system. When C(absent), removes the
         specified NTP servers from the device configuration.
-    default: present
+    type: str
     choices:
       - absent
       - present
+    default: present
   timezone:
     description:
       - The timezone to set for NTP lookups. At least one of C(ntp_servers) or
         C(timezone) is required.
+    type: str
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -47,19 +51,19 @@ EXAMPLES = r'''
   bigip_device_ntp:
     ntp_servers:
       - 192.0.2.23
-    password: secret
-    server: lb.mydomain.com
-    user: admin
-    validate_certs: no
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Set timezone
   bigip_device_ntp:
-    password: secret
-    server: lb.mydomain.com
     timezone: America/Los_Angeles
-    user: admin
-    validate_certs: no
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 '''
 
@@ -72,39 +76,31 @@ ntp_servers:
 timezone:
   description: The timezone that was set on the device
   returned: changed
-  type: string
+  type: str
   sample: true
 '''
 
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from library.module_utils.network.f5.common import is_empty_list
 except ImportError:
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from ansible.module_utils.network.f5.common import is_empty_list
 
 
 class Parameters(AnsibleF5Parameters):
     api_map = {
-        'servers': 'ntp_servers'
+        'servers': 'ntp_servers',
     }
 
     api_attributes = [
@@ -112,56 +108,150 @@ class Parameters(AnsibleF5Parameters):
     ]
 
     updatables = [
-        'ntp_servers', 'timezone'
+        'ntp_servers', 'timezone',
     ]
 
     returnables = [
-        'ntp_servers', 'timezone'
+        'ntp_servers', 'timezone',
     ]
 
     absentables = [
-        'ntp_servers'
+        'ntp_servers',
     ]
 
+
+class ApiParameters(Parameters):
+    pass
+
+
+class ModuleParameters(Parameters):
+    @property
+    def ntp_servers(self):
+        ntp_servers = self._values['ntp_servers']
+        if ntp_servers is None:
+            return None
+        if is_empty_list(ntp_servers):
+            return []
+        return ntp_servers
+
+
+class Changes(Parameters):
     def to_return(self):
         result = {}
-        for returnable in self.returnables:
-            result[returnable] = getattr(self, returnable)
-        result = self._filter_params(result)
+        try:
+            for returnable in self.returnables:
+                change = getattr(self, returnable)
+                if isinstance(change, dict):
+                    result.update(change)
+                else:
+                    result[returnable] = change
+            result = self._filter_params(result)
+        except Exception:
+            pass
         return result
+
+
+class UsableChanges(Changes):
+    pass
+
+
+class ReportableChanges(Changes):
+    pass
+
+
+class Difference(object):
+    def __init__(self, want, have=None):
+        self.want = want
+        self.have = have
+
+    def compare(self, param):
+        try:
+            result = getattr(self, param)
+            return result
+        except AttributeError:
+            return self.__default(param)
+
+    def __default(self, param):
+        attr1 = getattr(self.want, param)
+        try:
+            attr2 = getattr(self.have, param)
+            if attr1 != attr2:
+                return attr1
+        except AttributeError:
+            return attr1
+
+    @property
+    def ntp_servers(self):
+        state = self.want.state
+        if self.want.ntp_servers is None:
+            return None
+        if state == 'absent':
+            if self.have.ntp_servers is None and self.want.ntp_servers:
+                return None
+            if set(self.want.ntp_servers) == set(self.have.ntp_servers):
+                return []
+            if set(self.want.ntp_servers) != set(self.have.ntp_servers):
+                return list(set(self.want.ntp_servers).difference(self.have.ntp_servers))
+        if not self.want.ntp_servers:
+            if self.have.ntp_servers is None:
+                return None
+            if self.have.ntp_servers is not None:
+                return self.want.ntp_servers
+        if self.have.ntp_servers is None:
+            return self.want.ntp_servers
+        if set(self.want.ntp_servers) != set(self.have.ntp_servers):
+            return self.want.ntp_servers
 
 
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
-        self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
-        self.have = None
-        self.want = Parameters(params=self.module.params)
-        self.changes = Parameters()
+        self.module = kwargs.pop('module', None)
+        self.client = F5RestClient(**self.module.params)
+        self.want = ModuleParameters(params=self.module.params)
+        self.have = ApiParameters()
+        self.changes = UsableChanges()
+
+    def _announce_deprecations(self, result):
+        warnings = result.pop('__warnings', [])
+        for warning in warnings:
+            self.module.deprecate(
+                msg=warning['msg'],
+                version=warning['version']
+            )
 
     def _update_changed_options(self):
-        changed = {}
-        for key in Parameters.updatables:
-            if getattr(self.want, key) is not None:
-                attr1 = getattr(self.want, key)
-                attr2 = getattr(self.have, key)
-                if attr1 != attr2:
-                    changed[key] = attr1
+        diff = Difference(self.want, self.have)
+        updatables = Parameters.updatables
+        changed = dict()
+        for k in updatables:
+            change = diff.compare(k)
+            if change is None:
+                continue
+            else:
+                if isinstance(change, dict):
+                    changed.update(change)
+                else:
+                    changed[k] = change
         if changed:
-            self.changes = Parameters(params=changed)
+            self.changes = UsableChanges(params=changed)
             return True
         return False
 
     def _absent_changed_options(self):
-        changed = {}
-        for key in Parameters.absentables:
-            if getattr(self.want, key) is not None:
-                set_want = set(getattr(self.want, key))
-                set_have = set(getattr(self.have, key))
-                if set_want != set_have:
-                    changed[key] = list(set_want)
+        diff = Difference(self.want, self.have)
+        absentables = Parameters.absentables
+        changed = dict()
+        for k in absentables:
+            change = diff.compare(k)
+            if change is None:
+                continue
+            else:
+                if isinstance(change, dict):
+                    changed.update(change)
+                else:
+                    changed[k] = change
         if changed:
-            self.changes = Parameters(params=changed)
+            self.changes = UsableChanges(params=changed)
             return True
         return False
 
@@ -170,17 +260,16 @@ class ModuleManager(object):
         result = dict()
         state = self.want.state
 
-        try:
-            if state == "present":
-                changed = self.update()
-            elif state == "absent":
-                changed = self.absent()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        if state == "present":
+            changed = self.update()
+        elif state == "absent":
+            changed = self.absent()
 
-        changes = self.changes.to_return()
+        reportable = ReportableChanges(params=self.changes.to_return())
+        changes = reportable.to_return()
         result.update(**changes)
         result.update(dict(changed=changed))
+        self._announce_deprecations(result)
         return result
 
     def update(self):
@@ -214,19 +303,58 @@ class ModuleManager(object):
         return True
 
     def update_on_device(self):
-        params = self.want.api_params()
-        resource = self.client.api.tm.sys.ntp.load()
-        resource.update(**params)
+        params = self.changes.api_params()
+        uri = "https://{0}:{1}/mgmt/tm/sys/ntp/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def read_current_from_device(self):
-        resource = self.client.api.tm.sys.ntp.load()
-        result = resource.attrs
-        return Parameters(params=result)
+        uri = "https://{0}:{1}/mgmt/tm/sys/ntp/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return ApiParameters(params=response)
 
     def absent_on_device(self):
         params = self.changes.api_params()
-        resource = self.client.api.tm.sys.ntp.load()
-        resource.update(**params)
+        uri = "https://{0}:{1}/mgmt/tm/sys/ntp/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
 
 class ArgumentSpec(object):
@@ -259,17 +387,12 @@ def main():
         supports_check_mode=spec.supports_check_mode,
         required_one_of=spec.required_one_of
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
 
     try:
-        client = F5Client(**module.params)
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
         module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
         module.fail_json(msg=str(ex))
 
 

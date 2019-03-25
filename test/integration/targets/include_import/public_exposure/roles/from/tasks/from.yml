@@ -1,0 +1,5 @@
+- debug:
+    msg: from
+
+- set_fact:
+    from_tasks_var: from_tasks

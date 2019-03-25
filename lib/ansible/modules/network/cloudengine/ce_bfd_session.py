@@ -28,7 +28,7 @@ short_description: Manages BFD session configuration on HUAWEI CloudEngine devic
 description:
     - Manages BFD session configuration, creates a BFD session or deletes a specified BFD session
       on HUAWEI CloudEngine devices.
-author: QijunPan (@CloudEngine-Ansible)
+author: QijunPan (@QijunPan)
 options:
     session_name:
         description:
@@ -158,7 +158,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 

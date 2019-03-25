@@ -32,6 +32,7 @@ options:
       specified by I(thumbprint).
     - When exporting a certificate, if I(path) is a directory then the module
       will fail, otherwise the file will be replaced if needed.
+    type: str
     choices: [ absent, exported, present ]
     default: present
   path:
@@ -40,10 +41,12 @@ options:
     - This is required when I(state) is C(present) or C(exported).
     - When I(state) is C(absent) and I(thumbprint) is not specified, the
       thumbprint is derived from the certificate at this path.
+    type: path
   thumbprint:
     description:
     - The thumbprint as a hex string to either export or remove.
     - See the examples for how to specify the thumbprint.
+    type: str
   store_name:
     description:
     - The store name to use when importing a certificate or searching for a
@@ -56,7 +59,7 @@ options:
     - "C(Root): The X.509 certificate store for trusted root certificate authorities (CAs)"
     - "C(TrustedPeople): The X.509 certificate store for directly trusted people and resources"
     - "C(TrustedPublisher): The X.509 certificate store for directly trusted publishers"
-    default: My
+    type: str
     choices:
     - AddressBook
     - AuthRoot
@@ -66,6 +69,7 @@ options:
     - Root
     - TrustedPeople
     - TrustedPublisher
+    default: My
   store_location:
     description:
     - The store location to use when importing a certificate or searching for a
@@ -79,6 +83,7 @@ options:
       set when C(state=exported) and C(file_type=pkcs12).
     - If the pkcs12 file has no password set or no password should be set on
       the exported file, do not set this option.
+    type: str
   key_exportable:
     description:
     - Whether to allow the private key to be exported.
@@ -86,11 +91,11 @@ options:
       the certificate and the private key cannot be exported.
     - Used when C(state=present) only.
     type: bool
-    default: 'yes'
+    default: yes
   key_storage:
     description:
     - Specifies where Windows will store the private key when it is imported.
-    - When set to C(default), the default option as set by Windows is used.
+    - When set to C(default), the default option as set by Windows is used, typically C(user).
     - When set to C(machine), the key is stored in a path accessible by various
       users.
     - When set to C(user), the key is stored in a path only accessible by the
@@ -98,6 +103,7 @@ options:
     - Used when C(state=present) only and cannot be changed once imported.
     - See U(https://msdn.microsoft.com/en-us/library/system.security.cryptography.x509certificates.x509keystorageflags.aspx)
       for more details.
+    type: str
     choices: [ default, machine, user ]
     default: default
   file_type:
@@ -109,6 +115,7 @@ options:
       the certificate and private key unlike the other options.
     - When C(pkcs12) is set and the private key is not exportable or accessible
       by the current user, it will throw an exception.
+    type: str
     choices: [ der, pem, pkcs12 ]
     default: der
 notes:
@@ -117,17 +124,21 @@ notes:
   Kerberos with credential delegation, or use C(become) to bypass these
   restrictions.
 - The certificates must be located on the Windows host to be set with I(path).
+- When importing a certificate for usage in IIS, it is generally required
+  to use the C(machine) key_storage option, as both C(default) and C(user)
+  will make the private key unreadable to IIS APPPOOL identities and prevent
+  binding the certificate to the https endpoint.
 author:
 - Jordan Borean (@jborean93)
 '''
 
 EXAMPLES = r'''
-- name: import a certificate
+- name: Import a certificate
   win_certificate_store:
     path: C:\Temp\cert.pem
     state: present
 
-- name: import pfx certificate that is password protected
+- name: Import pfx certificate that is password protected
   win_certificate_store:
     path: C:\Temp\cert.pfx
     state: present
@@ -135,7 +146,7 @@ EXAMPLES = r'''
   become: yes
   become_method: runas
 
-- name: import pfx certificate without password and set private key as un-exportable
+- name: Import pfx certificate without password and set private key as un-exportable
   win_certificate_store:
     path: C:\Temp\cert.pfx
     state: present
@@ -144,30 +155,30 @@ EXAMPLES = r'''
   vars:
     ansible_winrm_transport: credssp
 
-- name: remove a certificate based on file thumbprint
+- name: Remove a certificate based on file thumbprint
   win_certificate_store:
     path: C:\Temp\cert.pem
     state: absent
 
-- name: remove a certificate based on thumbprint
+- name: Remove a certificate based on thumbprint
   win_certificate_store:
     thumbprint: BD7AF104CF1872BDB518D95C9534EA941665FD27
     state: absent
 
-- name: remove certificate based on thumbprint is CurrentUser/TrustedPublishers store
+- name: Remove certificate based on thumbprint is CurrentUser/TrustedPublishers store
   win_certificate_store:
     thumbprint: BD7AF104CF1872BDB518D95C9534EA941665FD27
     state: absent
     store_location: CurrentUser
     store_name: TrustedPublisher
 
-- name: export certificate as der encoded file
+- name: Export certificate as der encoded file
   win_certificate_store:
     path: C:\Temp\cert.cer
     state: exported
     file_type: der
 
-- name: export certificate and key as pfx encoded file
+- name: Export certificate and key as pfx encoded file
   win_certificate_store:
     path: C:\Temp\cert.pfx
     state: exported
@@ -176,6 +187,15 @@ EXAMPLES = r'''
   become: yes
   become_method: runas
   become_user: SYSTEM
+
+- name: Import certificate be used by IIS
+  win_certificate_store:
+    path: C:\Temp\cert.pfx
+    file_type: pkcs12
+    password: StrongPassword!
+    store_location: LocalMachine
+    key_storage: machine
+    state: present
 '''
 
 RETURN = r'''

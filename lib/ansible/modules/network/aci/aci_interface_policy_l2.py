@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -16,44 +16,50 @@ module: aci_interface_policy_l2
 short_description: Manage Layer 2 interface policies (l2:IfPol)
 description:
 - Manage Layer 2 interface policies on Cisco ACI fabrics.
-author:
-- Dag Wieers (@dagwieers)
 version_added: '2.4'
-notes:
-- More information about the internal APIC class B(l2:IfPol) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
 options:
   l2_policy:
     description:
     - The name of the Layer 2 interface policy.
+    type: str
     required: yes
     aliases: [ name ]
   description:
     description:
     - The description of the Layer 2 interface policy.
+    type: str
     aliases: [ descr ]
   qinq:
     description:
     - Determines if QinQ is disabled or if the port should be considered a core or edge port.
     - The APIC defaults to C(disabled) when unset during creation.
+    type: str
     choices: [ core, disabled, edge ]
   vepa:
     description:
     - Determines if Virtual Ethernet Port Aggregator is disabled or enabled.
-    - The APIC defaults to C(disabled) when unset during creation.
-    choices: [ disabled, enabled ]
+    - The APIC defaults to C(no) when unset during creation.
+    type: bool
   vlan_scope:
     description:
     - The scope of the VLAN.
     - The APIC defaults to C(global) when unset during creation.
+    type: str
     choices: [ global, portlocal ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
+seealso:
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(l2:IfPol).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Dag Wieers (@dagwieers)
 '''
 
 EXAMPLES = r'''
@@ -64,6 +70,7 @@ EXAMPLES = r'''
     l2_policy: '{{ l2_policy }}'
     vlan_scope: '{{ vlan_policy }}'
     description: '{{ description }}'
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -98,7 +105,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -147,17 +154,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -167,21 +174,25 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 # Mapping dicts are used to normalize the proposed data to what the APIC expects, which will keep diffs accurate
-QINQ_MAPPING = dict(core='corePort', disabled='disabled', edge='edgePort')
+QINQ_MAPPING = dict(
+    core='corePort',
+    disabled='disabled',
+    edge='edgePort',
+)
 
 
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        l2_policy=dict(type='str', required=False, aliases=['name']),  # Not required for querying all policies
+        l2_policy=dict(type='str', aliases=['name']),  # Not required for querying all policies
         description=dict(type='str', aliases=['descr']),
         vlan_scope=dict(type='str', choices=['global', 'portlocal']),  # No default provided on purpose
         qinq=dict(type='str', choices=['core', 'disabled', 'edge']),
@@ -213,8 +224,8 @@ def main():
         root_class=dict(
             aci_class='l2IfPol',
             aci_rn='infra/l2IfP-{0}'.format(l2_policy),
-            filter_target='eq(l2IfPol.name, "{0}")'.format(l2_policy),
             module_object=l2_policy,
+            target_filter={'name': l2_policy},
         ),
     )
 

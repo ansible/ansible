@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2016, Adam Števko <adam.stevko@gmail.com>
+# Copyright: (c) 2016, Adam Števko <adam.stevko@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: beadm
 short_description: Manage ZFS boot environments on FreeBSD/Solaris/illumos systems.
@@ -26,47 +26,43 @@ options:
     name:
         description:
             - ZFS boot environment name.
-        aliases: [ "be" ]
+        type: str
         required: True
+        aliases: [ "be" ]
     snapshot:
         description:
             - If specified, the new boot environment will be cloned from the given
               snapshot or inactive boot environment.
-        required: false
-        default: false
+        type: str
     description:
         description:
             - Associate a description with a new boot environment. This option is
               available only on Solarish platforms.
-        required: false
-        default: false
+        type: str
     options:
         description:
-            - Create the datasets for new BE with specific ZFS properties. Multiple
-              options can be specified. This option is available only on
-              Solarish platforms.
-        required: false
-        default: false
+            - Create the datasets for new BE with specific ZFS properties.
+            - Multiple options can be specified.
+            - This option is available only on Solarish platforms.
+        type: str
     mountpoint:
         description:
-            - Path where to mount the ZFS boot environment
-        required: false
-        default: false
+            - Path where to mount the ZFS boot environment.
+        type: path
     state:
         description:
             - Create or delete ZFS boot environment.
-        required: false
-        default: "present"
-        choices: [ "present", "absent", "activated", "mounted", "unmounted" ]
+        type: str
+        choices: [ absent, activated, mounted, present, unmounted ]
+        default: present
     force:
         description:
             - Specifies if the unmount should be forced.
-        required: false
-        default: false
         type: bool
+        default: false
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Create ZFS boot environment
   beadm:
     name: upgrade-be
@@ -107,41 +103,41 @@ EXAMPLES = '''
     state: activated
 '''
 
-RETURN = '''
+RETURN = r'''
 name:
     description: BE name
     returned: always
-    type: string
+    type: str
     sample: pre-upgrade
 snapshot:
     description: ZFS snapshot to create BE from
     returned: always
-    type: string
+    type: str
     sample: rpool/ROOT/oi-hipster@fresh
 description:
     description: BE description
     returned: always
-    type: string
+    type: str
     sample: Upgrade from 9.0 to 10.0
 options:
     description: BE additional options
     returned: always
-    type: string
+    type: str
     sample: compression=on
 mountpoint:
     description: BE mountpoint
     returned: always
-    type: string
+    type: str
     sample: /mnt/be
 state:
     description: state of the target
     returned: always
-    type: string
+    type: str
     sample: present
 force:
-    description: if forced action is wanted
+    description: If forced action is wanted
     returned: always
-    type: boolean
+    type: bool
     sample: False
 '''
 
@@ -254,8 +250,8 @@ class BE(object):
                 # On FreeBSD, we exclude currently mounted BE on /, as it is
                 # special and can be activated even if it is mounted. That is not
                 # possible with non-root BEs.
-                if line.split('\t')[2] is not '-' and \
-                        line.split('\t')[2] is not '/':
+                if line.split('\t')[2] != '-' and \
+                        line.split('\t')[2] != '/':
                     return True
             else:
                 if out.split(';')[3]:
@@ -288,18 +284,15 @@ class BE(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(required=True, aliases=['be'], type='str'),
+            name=dict(type='str', required=True, aliases=['be']),
             snapshot=dict(type='str'),
             description=dict(type='str'),
             options=dict(type='str'),
-            mountpoint=dict(default=False, type='path'),
-            state=dict(
-                default='present',
-                choices=['present', 'absent', 'activated',
-                         'mounted', 'unmounted']),
-            force=dict(default=False, type='bool'),
+            mountpoint=dict(type='path'),
+            state=dict(type='str', default='present', choices=['absent', 'activated', 'mounted', 'present', 'unmounted']),
+            force=dict(type='bool', default=False),
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     be = BE(module)

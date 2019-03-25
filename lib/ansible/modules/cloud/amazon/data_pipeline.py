@@ -16,8 +16,8 @@ DOCUMENTATION = '''
 module: data_pipeline
 version_added: "2.4"
 author:
-  - Raghu Udiyar <raghusiddarth@gmail.com> (@raags)
-  - Sloane Hertel <shertel@redhat.com>
+  - Raghu Udiyar (@raags) <raghusiddarth@gmail.com>
+  - Sloane Hertel (@s-hertel) <shertel@redhat.com>
 requirements: [ "boto3" ]
 short_description: Create and manage AWS Datapipelines
 extends_documentation_fragment:
@@ -27,7 +27,7 @@ description:
     - Create and manage AWS Datapipelines. Creation is not idempotent in AWS, so the I(uniqueId) is created by hashing the options (minus objects)
       given to the datapipeline.
     - The pipeline definition must be in the format given here
-      U(http://docs.aws.amazon.com/datapipeline/latest/APIReference/API_PutPipelineDefinition.html#API_PutPipelineDefinition_RequestSyntax).
+      U(https://docs.aws.amazon.com/datapipeline/latest/APIReference/API_PutPipelineDefinition.html#API_PutPipelineDefinition_RequestSyntax).
     - Also operations will wait for a configurable amount of time to ensure the pipeline is in the requested state.
 options:
   name:

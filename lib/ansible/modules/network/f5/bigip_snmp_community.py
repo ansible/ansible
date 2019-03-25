@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -27,14 +27,19 @@ options:
     description:
       - When C(present), ensures that the address list and entries exists.
       - When C(absent), ensures the address list is removed.
-    default: present
+    type: str
     choices:
       - present
       - absent
+    default: present
   version:
     description:
       - Specifies to which Simple Network Management Protocol (SNMP) version the trap destination applies.
-    choices: ['v1', 'v2c', 'v3']
+    type: str
+    choices:
+      - v1
+      - v2c
+      - v3
     default: v2c
   name:
     description:
@@ -42,11 +47,13 @@ options:
       - When C(version) is C(v1) or C(v2c), this parameter is required.
       - The name C(public) is a reserved name on the BIG-IP. This module handles that name differently
         than others. Functionally, you should not see a difference however.
+    type: str
   community:
     description:
       - Specifies the community string (password) for access to the MIB.
       - This parameter is only relevant when C(version) is C(v1), or C(v2c). If C(version) is
         something else, this parameter is ignored.
+    type: str
   source:
     description:
       - Specifies the source address for access to the MIB.
@@ -59,23 +66,27 @@ options:
       - This parameter should be provided when C(state) is C(absent), so that the correct community
         is removed. To remove the C(public) SNMP community that comes with a BIG-IP, this parameter
         should be set to C(default).
+    type: str
   port:
     description:
       - Specifies the port for the trap destination.
       - This parameter is only relevant when C(version) is C(v1), or C(v2c). If C(version) is
         something else, this parameter is ignored.
+    type: int
   oid:
     description:
       - Specifies the object identifier (OID) for the record.
       - When C(version) is C(v3), this parameter is required.
       - When C(version) is either C(v1) or C(v2c), if this value is specified, then C(source)
         must not be set to C(all).
+    type: str
   access:
     description:
       - Specifies the user's access level to the MIB.
       - When creating a new community, if this parameter is not specified, the default is C(ro).
       - When C(ro), specifies that the user can view the MIB, but cannot modify the MIB.
       - When C(rw), specifies that the user can view and modify the MIB.
+    type: str
     choices:
       - ro
       - rw
@@ -88,7 +99,10 @@ options:
         be used.
       - This parameter is only relevant when C(version) is C(v1), or C(v2c). If C(version) is
         something else, this parameter is ignored.
-    choices: ['4', '6']
+    type: str
+    choices:
+      - '4'
+      - '6'
   snmp_username:
     description:
       - Specifies the name of the user for whom you want to grant access to the SNMP v3 MIB.
@@ -96,6 +110,7 @@ options:
         else, this parameter is ignored.
       - When creating a new SNMP C(v3) community, this parameter is required.
       - This parameter cannot be changed once it has been set.
+    type: str
   snmp_auth_protocol:
     description:
       - Specifies the authentication method for the user.
@@ -104,6 +119,7 @@ options:
       - When C(none), specifies that user does not require authentication.
       - When creating a new SNMP C(v3) community, if this parameter is not specified, the default
         of C(sha) will be used.
+    type: str
     choices:
       - md5
       - sha
@@ -113,6 +129,7 @@ options:
       - Specifies the password for the user.
       - When creating a new SNMP C(v3) community, this parameter is required.
       - This value must be at least 8 characters long.
+    type: str
   snmp_privacy_protocol:
     description:
       - Specifies the encryption protocol.
@@ -123,6 +140,7 @@ options:
       - When C(none), specifies that the system does not encrypt the user information.
       - When creating a new SNMP C(v3) community, if this parameter is not specified, the
         default of C(aes) will be used.
+    type: str
     choices:
       - aes
       - des
@@ -132,21 +150,25 @@ options:
       - Specifies the password for the user.
       - When creating a new SNMP C(v3) community, this parameter is required.
       - This value must be at least 8 characters long.
+    type: str
   update_password:
     description:
       - C(always) will allow to update passwords if the user chooses to do so.
         C(on_create) will only set the password for newly created resources.
-    default: always
+    type: str
     choices:
       - always
       - on_create
+    default: always
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
@@ -157,10 +179,10 @@ EXAMPLES = r'''
     source: all
     oid: .1
     access: ro
-    password: secret
-    server: lb.mydomain.com
-    state: present
-    user: admin
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Create an SMNP v3 read-write community
@@ -174,61 +196,92 @@ EXAMPLES = r'''
     snmp_privacy_password: secret
     oid: .1
     access: rw
-    password: secret
-    server: lb.mydomain.com
-    state: present
-    user: admin
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Remove the default 'public' SNMP community
   bigip_snmp_community:
     name: public
     source: default
-    password: secret
-    server: lb.mydomain.com
     state: absent
-    user: admin
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 '''
 
 RETURN = r'''
-param1:
-  description: The new param1 value of the resource.
+community:
+  description: The new community value.
   returned: changed
-  type: bool
-  sample: true
-param2:
-  description: The new param2 value of the resource.
+  type: str
+  sample: community1
+oid:
+  description: The new OID value.
   returned: changed
-  type: string
-  sample: Foo is bar
+  type: str
+  sample: .1
+ip_version:
+  description: The new IP version value.
+  returned: changed
+  type: str
+  sample: .1
+snmp_auth_protocol:
+  description: The new SNMP auth protocol.
+  returned: changed
+  type: str
+  sample: sha
+snmp_privacy_protocol:
+  description: The new SNMP privacy protocol.
+  returned: changed
+  type: str
+  sample: aes
+access:
+  description: The new access level for the MIB.
+  returned: changed
+  type: str
+  sample: ro
+source:
+  description: The new source address to access the MIB.
+  returned: changed
+  type: str
+  sample: 1.1.1.1
+snmp_username:
+  description: The new SNMP username.
+  returned: changed
+  type: str
+  sample: user1
+snmp_auth_password:
+  description: The new password of the given snmp_username.
+  returned: changed
+  type: str
+  sample: secret1
+snmp_privacy_password:
+  description: The new password of the given snmp_username.
+  returned: changed
+  type: str
+  sample: secret2
 '''
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
 
 try:
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from library.module_utils.network.f5.common import transform_name
 except ImportError:
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from ansible.module_utils.network.f5.common import transform_name
 
 
 class Parameters(AnsibleF5Parameters):
@@ -241,23 +294,48 @@ class Parameters(AnsibleF5Parameters):
         'username': 'snmp_username',
         'securityLevel': 'security_level',
         'authPassword': 'snmp_auth_password',
-        'privacyPassword': 'snmp_privacy_password'
+        'privacyPassword': 'snmp_privacy_password',
     }
 
     api_attributes = [
-        'source', 'oidSubset', 'ipv6', 'communityName', 'access', 'authPassword',
-        'authProtocol', 'username', 'securityLevel', 'privacyProtocol', 'privacyPassword'
+        'source',
+        'oidSubset',
+        'ipv6',
+        'communityName',
+        'access',
+        'authPassword',
+        'authProtocol',
+        'username',
+        'securityLevel',
+        'privacyProtocol',
+        'privacyPassword',
     ]
 
     returnables = [
-        'community', 'oid', 'ip_version', 'snmp_auth_protocol', 'snmp_privacy_protocol',
-        'access', 'source', 'snmp_username', 'snmp_auth_password', 'snmp_privacy_password'
+        'community',
+        'oid',
+        'ip_version',
+        'snmp_auth_protocol',
+        'snmp_privacy_protocol',
+        'access',
+        'source',
+        'snmp_username',
+        'snmp_auth_password',
+        'snmp_privacy_password',
     ]
 
     updatables = [
-        'community', 'oid', 'ip_version', 'snmp_auth_protocol', 'snmp_privacy_protocol',
-        'access', 'source', 'snmp_auth_password', 'snmp_privacy_password', 'security_level',
-        'snmp_username'
+        'community',
+        'oid',
+        'ip_version',
+        'snmp_auth_protocol',
+        'snmp_privacy_protocol',
+        'access',
+        'source',
+        'snmp_auth_password',
+        'snmp_privacy_password',
+        'security_level',
+        'snmp_username',
     ]
 
     @property
@@ -457,7 +535,7 @@ class ModuleManager(object):
 class BaseManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -499,13 +577,10 @@ class BaseManager(object):
         result = dict()
         state = self.want.state
 
-        try:
-            if state == "present":
-                changed = self.present()
-            elif state == "absent":
-                changed = self.absent()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        if state == "present":
+            changed = self.present()
+        elif state == "absent":
+            changed = self.absent()
 
         reportable = ReportableChanges(params=self.changes.to_return())
         changes = reportable.to_return()
@@ -571,43 +646,87 @@ class V1Manager(BaseManager):
         return True
 
     def exists(self):
-        result = self.client.api.tm.sys.snmp.communities_s.community.exists(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/sys/snmp/communities/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        return result
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
 
     def create_on_device(self):
         params = self.changes.api_params()
-        self.client.api.tm.sys.snmp.communities_s.community.create(
-            name=self.want.name,
-            partition=self.want.partition,
-            **params
+        params['name'] = self.want.name
+        params['partition'] = self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/sys/snmp/communities/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
         )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def update_on_device(self):
         params = self.changes.api_params()
-        resource = self.client.api.tm.sys.snmp.communities_s.community.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/sys/snmp/communities/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        resource.modify(**params)
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def remove_from_device(self):
-        resource = self.client.api.tm.sys.snmp.communities_s.community.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/sys/snmp/communities/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        if resource:
-            resource.delete()
+        resp = self.client.api.delete(uri)
+        if resp.status == 200:
+            return True
 
     def read_current_from_device(self):
-        resource = self.client.api.tm.sys.snmp.communities_s.community.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/sys/snmp/communities/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        result = resource.attrs
-        return ApiParameters(params=result)
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return ApiParameters(params=response)
 
 
 class V2Manager(BaseManager):
@@ -648,43 +767,87 @@ class V2Manager(BaseManager):
         return True
 
     def exists(self):
-        result = self.client.api.tm.sys.snmp.users_s.user.exists(
-            name=self.want.snmp_username,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/sys/snmp/users/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.snmp_username)
         )
-        return result
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
 
     def create_on_device(self):
         params = self.changes.api_params()
-        self.client.api.tm.sys.snmp.users_s.user.create(
-            name=self.want.snmp_username,
-            partition=self.want.partition,
-            **params
+        params['name'] = self.want.snmp_username
+        params['partition'] = self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/sys/snmp/users/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
         )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def update_on_device(self):
         params = self.changes.api_params()
-        resource = self.client.api.tm.sys.snmp.users_s.user.load(
-            name=self.want.snmp_username,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/sys/snmp/users/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.snmp_username)
         )
-        resource.modify(**params)
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def remove_from_device(self):
-        resource = self.client.api.tm.sys.snmp.users_s.user.load(
-            name=self.want.snmp_username,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/sys/snmp/users/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.snmp_username)
         )
-        if resource:
-            resource.delete()
+        resp = self.client.api.delete(uri)
+        if resp.status == 200:
+            return True
 
     def read_current_from_device(self):
-        resource = self.client.api.tm.sys.snmp.users_s.user.load(
-            name=self.want.snmp_username,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/sys/snmp/users/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.snmp_username)
         )
-        result = resource.attrs
-        return ApiParameters(params=result)
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return ApiParameters(params=response)
 
 
 class ArgumentSpec(object):
@@ -743,17 +906,12 @@ def main():
         supports_check_mode=spec.supports_check_mode,
         required_if=spec.required_if
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
 
     try:
-        client = F5Client(**module.params)
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
         module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
         module.fail_json(msg=str(ex))
 
 

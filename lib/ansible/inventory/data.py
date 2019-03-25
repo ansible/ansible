@@ -25,15 +25,12 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.inventory.group import Group
 from ansible.inventory.host import Host
-from ansible.module_utils.six import iteritems
+from ansible.module_utils.six import iteritems, string_types
+from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars
 from ansible.utils.path import basedir
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class InventoryData(object):
@@ -159,15 +156,24 @@ class InventoryData(object):
         return matching_host
 
     def add_group(self, group):
-        ''' adds a group to inventory if not there already '''
+        ''' adds a group to inventory if not there already, returns named actually used '''
 
-        if group not in self.groups:
-            g = Group(group)
-            self.groups[group] = g
-            self._groups_dict_cache = {}
-            display.debug("Added group %s to inventory" % group)
+        if group:
+            if not isinstance(group, string_types):
+                raise AnsibleError("Invalid group name supplied, expected a string but got %s for %s" % (type(group), group))
+            if group not in self.groups:
+                g = Group(group)
+                if g.name not in self.groups:
+                    self.groups[g.name] = g
+                    self._groups_dict_cache = {}
+                    display.debug("Added group %s to inventory" % group)
+                group = g.name
+            else:
+                display.debug("group %s already in inventory" % group)
         else:
-            display.debug("group %s already in inventory" % group)
+            raise AnsibleError("Invalid empty/false group name provided: %s" % group)
+
+        return group
 
     def remove_group(self, group):
 
@@ -183,50 +189,59 @@ class InventoryData(object):
     def add_host(self, host, group=None, port=None):
         ''' adds a host to inventory and possibly a group if not there already '''
 
-        g = None
-        if group:
-            if group in self.groups:
-                g = self.groups[group]
-            else:
-                raise AnsibleError("Could not find group %s in inventory" % group)
+        if host:
+            if not isinstance(host, string_types):
+                raise AnsibleError("Invalid host name supplied, expected a string but got %s for %s" % (type(host), host))
 
-        if host not in self.hosts:
-            h = Host(host, port)
-            self.hosts[host] = h
-            if self.current_source:  # set to 'first source' in which host was encountered
-                self.set_variable(host, 'inventory_file', self.current_source)
-                self.set_variable(host, 'inventory_dir', basedir(self.current_source))
-            else:
-                self.set_variable(host, 'inventory_file', None)
-                self.set_variable(host, 'inventory_dir', None)
-            display.debug("Added host %s to inventory" % (host))
-
-            # set default localhost from inventory to avoid creating an implicit one. Last localhost defined 'wins'.
-            if host in C.LOCALHOST:
-                if self.localhost is None:
-                    self.localhost = self.hosts[host]
-                    display.vvvv("Set default localhost to %s" % h)
+            # TODO: add to_safe_host_name
+            g = None
+            if group:
+                if group in self.groups:
+                    g = self.groups[group]
                 else:
-                    display.warning("A duplicate localhost-like entry was found (%s). First found localhost was %s" % (h, self.localhost.name))
-        else:
-            h = self.hosts[host]
+                    raise AnsibleError("Could not find group %s in inventory" % group)
 
-        if g:
-            g.add_host(h)
-            self._groups_dict_cache = {}
-            display.debug("Added host %s to group %s" % (host, group))
+            if host not in self.hosts:
+                h = Host(host, port)
+                self.hosts[host] = h
+                if self.current_source:  # set to 'first source' in which host was encountered
+                    self.set_variable(host, 'inventory_file', self.current_source)
+                    self.set_variable(host, 'inventory_dir', basedir(self.current_source))
+                else:
+                    self.set_variable(host, 'inventory_file', None)
+                    self.set_variable(host, 'inventory_dir', None)
+                display.debug("Added host %s to inventory" % (host))
+
+                # set default localhost from inventory to avoid creating an implicit one. Last localhost defined 'wins'.
+                if host in C.LOCALHOST:
+                    if self.localhost is None:
+                        self.localhost = self.hosts[host]
+                        display.vvvv("Set default localhost to %s" % h)
+                    else:
+                        display.warning("A duplicate localhost-like entry was found (%s). First found localhost was %s" % (h, self.localhost.name))
+            else:
+                h = self.hosts[host]
+
+            if g:
+                g.add_host(h)
+                self._groups_dict_cache = {}
+                display.debug("Added host %s to group %s" % (host, group))
+        else:
+            raise AnsibleError("Invalid empty host name provided: %s" % host)
+
+        return host
 
     def remove_host(self, host):
 
-        if host in self.hosts:
-            del self.hosts[host]
+        if host.name in self.hosts:
+            del self.hosts[host.name]
 
         for group in self.groups:
             g = self.groups[group]
             g.remove_host(host)
 
     def set_variable(self, entity, varname, value):
-        ''' sets a varible for an inventory object '''
+        ''' sets a variable for an inventory object '''
 
         if entity in self.groups:
             inv_object = self.groups[entity]

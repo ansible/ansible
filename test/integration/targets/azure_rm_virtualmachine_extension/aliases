@@ -1,3 +1,4 @@
 cloud/azure
-posix/ci/cloud/group5/azure
+shippable/azure/group5
 destructive
+azure_rm_virtualmachineextension_facts

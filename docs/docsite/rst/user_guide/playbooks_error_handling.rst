@@ -93,6 +93,15 @@ In previous version of Ansible, this can still be accomplished as follows::
         msg: "the command failed"
       when: "'FAILED' in command_result.stderr"
 
+You can also combine multiple conditions to specify this behavior as follows::
+
+    - name: Check if a file exists in temp and fail task if it does
+      command: ls /tmp/this_should_not_be_here
+      register: result
+      failed_when:
+        - '"No such" not in result.stdout'
+        - result.rc == 0
+
 .. _override_the_changed_result:
 
 Overriding The Changed Result
@@ -115,6 +124,15 @@ does not cause handlers to fire::
       # this will never report 'changed' status
       - shell: wall 'beep'
         changed_when: False
+
+You can also combine multiple conditions to override "changed" result::
+
+    - command: /bin/fake_command
+      register: result
+      ignore_errors: True
+      changed_when:
+        - '"ERROR" in result.stderr'
+        - result.rc == 2
 
 Aborting the play
 `````````````````
@@ -141,7 +159,7 @@ for finer-grained control ``max_fail_percentage`` can be used to abort the run a
        Conditional statements in playbooks
    :doc:`playbooks_variables`
        All about variables
-   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

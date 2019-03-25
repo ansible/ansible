@@ -1,4 +1,4 @@
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.module_utils.six.moves import xmlrpc_client
 
 import pytest
@@ -10,7 +10,7 @@ def get_method_name(request_body):
 
 @pytest.fixture
 def mock_request(request, mocker):
-    responses = request.getfuncargvalue('testcase')['calls']
+    responses = request.getfixturevalue('testcase')['calls']
     module_name = request.module.TESTED_MODULE
 
     def transport_request(host, handler, request_body, verbose=0):

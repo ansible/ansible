@@ -201,25 +201,19 @@
 
 # WITH_FIRST_FOUND
 
-- name: create file for test
-  shell: echo "foo" > {{ output_dir }}/foo1
-
-- name: create file for test
-  shell: echo "bar" > {{ output_dir }}/bar1
-
 - name: test with_first_found
   #shell: echo {{ item }}
   set_fact: "first_found={{ item }}"
   with_first_found:
-    - "{{ output_dir + '/does_not_exist' }}"
-    - "{{ output_dir + '/foo1' }}"
-    - "{{ output_dir + '/bar1' }}"
+    - "{{ role_path + '/files/does_not_exist' }}"
+    - "{{ role_path + '/files/foo1' }}"
+    - "{{ role_path + '/files/bar1' }}"
 
 - name: set expected
-  set_fact: first_expected="{{ output_dir | expanduser + '/foo1' }}"
+  set_fact: first_expected="{{ role_path + '/files/foo1' }}"
 
 - name: set unexpected
-  set_fact: first_unexpected="{{ output_dir | expanduser + '/bar1' }}"
+  set_fact: first_unexpected="{{ role_path + '/files/bar1' }}"
 
 - name: verify with_first_found results
   assert:

@@ -58,6 +58,12 @@ options:
         set to C(no) when no other option exists.
     default: 'yes'
     type: bool
+  timeout:
+    description:
+      - The timeout in seconds for the upload to the datastore.
+    default: 10
+    type: int
+    version_added: "2.8"
 
 notes:
   - "This module ought to be run from a system that can access vCenter directly and has the file to transfer.
@@ -67,19 +73,19 @@ notes:
 
 EXAMPLES = '''
 - vsphere_copy:
-    host: vhost
-    login: vuser
-    password: vpass
+    host: '{{ vhost }}'
+    login: '{{ vuser }}'
+    password: '{{ vpass }}'
     src: /some/local/file
     datacenter: DC1 Someplace
     datastore: datastore1
     path: some/remote/file
-  transport: local
+  delegate_to: localhost
 
 - vsphere_copy:
-    host: vhost
-    login: vuser
-    password: vpass
+    host: '{{ vhost }}'
+    login: '{{ vuser }}'
+    password: '{{ vpass }}'
     src: /other/local/file
     datacenter: DC2 Someplace
     datastore: datastore2
@@ -94,14 +100,14 @@ import socket
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six.moves.urllib.parse import urlencode
+from ansible.module_utils.six.moves.urllib.parse import urlencode, quote
 from ansible.module_utils._text import to_native
 from ansible.module_utils.urls import open_url
 
 
 def vmware_path(datastore, datacenter, path):
     ''' Constructs a URL path that VSphere accepts reliably '''
-    path = "/folder/%s" % path.lstrip("/")
+    path = "/folder/%s" % quote(path.lstrip("/"))
     # Due to a software bug in vSphere, it fails to handle ampersand in datacenter names
     # The solution is to do what vSphere does (when browsing) and double-encode ampersands, maybe others ?
     datacenter = datacenter.replace('&', '%26')
@@ -126,6 +132,7 @@ def main():
             datastore=dict(required=True),
             dest=dict(required=True, aliases=['path']),
             validate_certs=dict(default=True, type='bool'),
+            timeout=dict(default=10, type='int')
         ),
         # Implementing check-mode using HEAD is impossible, since size/date is not 100% reliable
         supports_check_mode=False,
@@ -139,6 +146,7 @@ def main():
     datastore = module.params.get('datastore')
     dest = module.params.get('dest')
     validate_certs = module.params.get('validate_certs')
+    timeout = module.params.get('timeout')
 
     fd = open(src, "rb")
     atexit.register(fd.close)
@@ -155,7 +163,7 @@ def main():
     }
 
     try:
-        r = open_url(url, data=data, headers=headers, method='PUT',
+        r = open_url(url, data=data, headers=headers, method='PUT', timeout=timeout,
                      url_username=login, url_password=password, validate_certs=validate_certs,
                      force_basic_auth=True)
     except socket.error as e:

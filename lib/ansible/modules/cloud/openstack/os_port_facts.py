@@ -22,7 +22,7 @@ description:
 notes:
     - Facts are placed in the C(openstack_ports) variable.
 requirements:
-    - "python >= 2.6"
+    - "python >= 2.7"
     - "openstacksdk"
 options:
     port:
@@ -70,7 +70,7 @@ openstack_ports:
             description: The administrative state of the router, which is
                          up (true) or down (false).
             returned: success
-            type: boolean
+            type: bool
             sample: true
         allowed_address_pairs:
             description: A set of zero or more allowed address pairs. An
@@ -81,7 +81,7 @@ openstack_ports:
         "binding:host_id":
             description: The UUID of the host where the port is allocated.
             returned: success
-            type: string
+            type: str
             sample: "b4bd682d-234a-4091-aa5b-4b025a6a7759"
         "binding:profile":
             description: A dictionary the enables the application running on
@@ -106,17 +106,17 @@ openstack_ports:
             description: The virtual network interface card (vNIC) type that is
                          bound to the neutron port.
             returned: success
-            type: string
+            type: str
             sample: "normal"
         device_id:
             description: The UUID of the device that uses this port.
             returned: success
-            type: string
+            type: str
             sample: "b4bd682d-234a-4091-aa5b-4b025a6a7759"
         device_owner:
             description: The UUID of the entity that uses this port.
             returned: success
-            type: string
+            type: str
             sample: "network:router_interface"
         dns_assignment:
             description: DNS assignment information.
@@ -125,7 +125,7 @@ openstack_ports:
         dns_name:
             description: DNS name
             returned: success
-            type: string
+            type: str
             sample: ""
         extra_dhcp_opts:
             description: A set of zero or more extra DHCP option pairs.
@@ -141,32 +141,32 @@ openstack_ports:
         id:
             description: The UUID of the port.
             returned: success
-            type: string
+            type: str
             sample: "3ec25c97-7052-4ab8-a8ba-92faf84148de"
         ip_address:
             description: The IP address.
             returned: success
-            type: string
+            type: str
             sample: "127.0.0.1"
         mac_address:
             description: The MAC address.
             returned: success
-            type: string
+            type: str
             sample: "00:00:5E:00:53:42"
         name:
             description: The port name.
             returned: success
-            type: string
+            type: str
             sample: "port_name"
         network_id:
             description: The UUID of the attached network.
             returned: success
-            type: string
+            type: str
             sample: "dd1ede4f-3952-4131-aab6-3b8902268c7d"
         port_security_enabled:
             description: The port security status. The status is enabled (true) or disabled (false).
             returned: success
-            type: boolean
+            type: bool
             sample: false
         security_groups:
             description: The UUIDs of any attached security groups.
@@ -175,12 +175,12 @@ openstack_ports:
         status:
             description: The port status.
             returned: success
-            type: string
+            type: str
             sample: "ACTIVE"
         tenant_id:
             description: The UUID of the tenant who owns the network.
             returned: success
-            type: string
+            type: str
             sample: "51fce036d7984ba6af4f6c849f65ef00"
 '''
 

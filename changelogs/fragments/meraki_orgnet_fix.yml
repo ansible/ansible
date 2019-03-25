@@ -1,0 +1,2 @@
+bugfixes:
+  - Meraki - Lookups using org_name or net_name no longer query Meraki twice, only once. Major performance improvements.

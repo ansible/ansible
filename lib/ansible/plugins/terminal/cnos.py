@@ -10,7 +10,7 @@
 #
 # (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
-# Contains terminal Plugin methods for ENOS Config Module
+# Contains terminal Plugin methods for CNOS Config Module
 # Lenovo Networking
 #
 from __future__ import (absolute_import, division, print_function)

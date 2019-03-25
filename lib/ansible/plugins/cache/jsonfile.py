@@ -18,7 +18,6 @@ DOCUMENTATION = '''
         required: True
         description:
           - Path in which the cache plugin will save the JSON files
-        type: list
         env:
           - name: ANSIBLE_CACHE_PLUGIN_CONNECTION
         ini:
@@ -43,11 +42,7 @@ DOCUMENTATION = '''
 '''
 
 import codecs
-
-try:
-    import simplejson as json
-except ImportError:
-    import json
+import json
 
 from ansible.parsing.ajson import AnsibleJSONEncoder, AnsibleJSONDecoder
 from ansible.plugins.cache import BaseFileCacheModule

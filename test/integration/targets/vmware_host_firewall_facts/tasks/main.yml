@@ -2,12 +2,6 @@
 # Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- name: store the vcenter container ip
-  set_fact:
-    vcsim: "{{ lookup('env', 'vcenter_host') }}"
-
-- debug: var=vcsim
-
 - name: Wait for Flask controller to come up online
   wait_for:
     host: "{{ vcsim }}"
@@ -80,3 +74,33 @@
     that:
       - "not firewall_0002_results.changed"
       - "firewall_0002_results.hosts_firewall_facts is defined"
+
+- name: Gather firewall facts for all ESXi host from given cluster in check mode
+  vmware_host_firewall_facts:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance.json.username }}"
+    password: "{{ vcsim_instance.json.password }}"
+    validate_certs: no
+    cluster_name: "{{ ccr1 }}"
+  register: firewall_0003_results
+  check_mode: yes
+
+- assert:
+    that:
+      - "not firewall_0003_results.changed"
+      - "firewall_0003_results.hosts_firewall_facts is defined"
+
+- name: Gather firewall facts for ESXi host in check mode
+  vmware_host_firewall_facts:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance.json.username }}"
+    password: "{{ vcsim_instance.json.password }}"
+    validate_certs: no
+    esxi_hostname: "{{ host1 }}"
+  register: firewall_0004_results
+  check_mode: yes
+
+- assert:
+    that:
+      - "not firewall_0004_results.changed"
+      - "firewall_0004_results.hosts_firewall_facts is defined"

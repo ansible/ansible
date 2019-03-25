@@ -11,13 +11,14 @@ import json
 import pytest
 import sys
 
-from nose.plugins.skip import SkipTest
-if sys.version_info < (2, 7):
-    raise SkipTest("F5 Ansible modules require Python >= 2.7")
+pytestmark = []
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import Mock
-from ansible.compat.tests.mock import patch
+if sys.version_info < (2, 7):
+    pytestmark.append(pytest.mark.skip("F5 Ansible modules require Python >= 2.7"))
+
+from units.compat import unittest
+from units.compat.mock import Mock
+from units.compat.mock import patch
 from ansible.module_utils.basic import AnsibleModule
 
 try:
@@ -38,7 +39,8 @@ except ImportError:
         from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
         from units.modules.utils import set_module_args
     except ImportError:
-        raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
+        pytestmark.append(pytest.mark.skip("F5 Ansible modules require the f5-sdk Python library"))
+
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}

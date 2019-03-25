@@ -121,19 +121,12 @@ failed_conditions:
 """
 import time
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.iosxr.iosxr import run_command, iosxr_argument_spec
-from ansible.module_utils.network.iosxr.iosxr import command_spec
 from ansible.module_utils.network.common.parsing import Conditional
-from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_native
-
-
-def to_lines(stdout):
-    for item in stdout:
-        if isinstance(item, string_types):
-            item = to_native(item, errors='surrogate_or_strict').split('\n')
-        yield item
+from ansible.module_utils.network.common.utils import to_lines
+from ansible.module_utils.network.iosxr.iosxr import run_commands, iosxr_argument_spec
+from ansible.module_utils.network.iosxr.iosxr import command_spec
 
 
 def parse_commands(module, warnings):
@@ -145,21 +138,16 @@ def parse_commands(module, warnings):
             command = item
         if module.check_mode and not command.startswith('show'):
             warnings.append(
-                'only show commands are supported when using check mode, not '
-                'executing `%s`' % command
+                'Only show commands are supported when using check mode, not '
+                'executing %s' % command
             )
             commands.remove(item)
-        elif command.startswith('conf'):
-            module.fail_json(
-                msg='iosxr_command does not support running config mode '
-                    'commands.  Please use iosxr_config instead'
-            )
 
     return commands
 
 
 def main():
-    spec = dict(
+    argument_spec = dict(
         commands=dict(type='list', required=True),
 
         wait_for=dict(type='list', aliases=['waitfor']),
@@ -169,26 +157,28 @@ def main():
         interval=dict(default=1, type='int')
     )
 
-    spec.update(iosxr_argument_spec)
+    argument_spec.update(iosxr_argument_spec)
+    argument_spec.update(command_spec)
 
-    spec.update(command_spec)
-
-    module = AnsibleModule(argument_spec=spec,
+    module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
     warnings = list()
-
+    result = {'changed': False, 'warnings': warnings}
     commands = parse_commands(module, warnings)
-
     wait_for = module.params['wait_for'] or list()
-    conditionals = [Conditional(c) for c in wait_for]
+
+    try:
+        conditionals = [Conditional(c) for c in wait_for]
+    except AttributeError as exc:
+        module.fail_json(msg=to_text(exc))
 
     retries = module.params['retries']
     interval = module.params['interval']
     match = module.params['match']
 
     while retries > 0:
-        responses = run_command(module, commands)
+        responses, timestamps = run_commands(module, commands, return_timestamps=True)
 
         for item in list(conditionals):
             if item(responses):
@@ -208,14 +198,14 @@ def main():
         msg = 'One or more conditional statements have not been satisfied'
         module.fail_json(msg=msg, failed_conditions=failed_conditions)
 
-    result = {
-        'changed': False,
+    result.update({
         'stdout': responses,
-        'warnings': warnings,
-        'stdout_lines': list(to_lines(responses))
-    }
+        'stdout_lines': list(to_lines(responses)),
+        'timestamps': timestamps
+    })
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

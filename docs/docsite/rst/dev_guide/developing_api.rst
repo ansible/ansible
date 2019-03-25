@@ -1,20 +1,19 @@
 .. _developing_api:
 
+**********
 Python API
-==========
-
-.. note:: This document is out of date; 'ansible.parsing.dataloader' and 'ansible.runner' are not available in the current version of Ansible.
+**********
 
 .. contents:: Topics
 
-.. note:: This API is intended for internal Ansible use. Ansible may make changes to this API at any time that could break backward compatibility with older versions of the API. Because of this, external use is not supported by Ansible. 
+.. note:: This API is intended for internal Ansible use. Ansible may make changes to this API at any time that could break backward compatibility with older versions of the API. Because of this, external use is not supported by Ansible.
 
 There are several ways to use Ansible from an API perspective.   You can use
 the Ansible Python API to control nodes, you can extend Ansible to respond to various Python events, you can
 write plugins, and you can plug in inventory data from external data sources.  This document
 gives a basic overview and examples of the Ansible execution and playbook API.
 
-If you would like to use Ansible programmatically from a language other than Python, trigger events asynchronously, 
+If you would like to use Ansible programmatically from a language other than Python, trigger events asynchronously,
 or have access control and logging demands, please see the `Ansible Tower documentation <https://docs.ansible.com/ansible-tower/>`_.
 
 .. note:: Because Ansible relies on forking processes, this API is not thread safe.
@@ -22,7 +21,7 @@ or have access control and logging demands, please see the `Ansible Tower docume
 .. _python_api_example:
 
 Python API example
-------------------
+==================
 
 This example is a simple demonstration that shows how to minimally run a couple of tasks::
 
@@ -30,13 +29,14 @@ This example is a simple demonstration that shows how to minimally run a couple 
 
     import json
     import shutil
-    from collections import namedtuple
+    from ansible.module_utils.common.collections import ImmutableDict
     from ansible.parsing.dataloader import DataLoader
     from ansible.vars.manager import VariableManager
     from ansible.inventory.manager import InventoryManager
     from ansible.playbook.play import Play
     from ansible.executor.task_queue_manager import TaskQueueManager
     from ansible.plugins.callback import CallbackBase
+    from ansible import context
     import ansible.constants as C
 
     class ResultCallback(CallbackBase):
@@ -54,9 +54,9 @@ This example is a simple demonstration that shows how to minimally run a couple 
             host = result._host
             print(json.dumps({host.name: result._result}, indent=4))
 
-    # since API is constructed for CLI it expects certain options to always be set, named tuple 'fakes' the args parsing options object
-    Options = namedtuple('Options', ['connection', 'module_path', 'forks', 'become', 'become_method', 'become_user', 'check', 'diff'])
-    options = Options(connection='local', module_path=['/to/mymodules'], forks=10, become=None, become_method=None, become_user=None, check=False, diff=False)
+    # since the API is constructed for CLI it expects certain options to always be set in the context object
+    context.CLIARGS = ImmutableDict(connection='local', module_path=['/to/mymodules'], forks=10, become=None,
+                                    become_method=None, become_user=None, check=False, diff=False)
 
     # initialize needed objects
     loader = DataLoader() # Takes care of finding and reading yaml, json and ini files
@@ -68,10 +68,10 @@ This example is a simple demonstration that shows how to minimally run a couple 
     # create inventory, use path to host config file as source or hosts in a comma separated string
     inventory = InventoryManager(loader=loader, sources='localhost,')
 
-    # variable manager takes care of merging all the different sources to give you a unifed view of variables available in each context
+    # variable manager takes care of merging all the different sources to give you a unified view of variables available in each context
     variable_manager = VariableManager(loader=loader, inventory=inventory)
 
-    # create datastructure that represents our play, including tasks, this is basically what our YAML loader does internally.
+    # create data structure that represents our play, including tasks, this is basically what our YAML loader does internally.
     play_source =  dict(
             name = "Ansible Play",
             hosts = 'localhost',
@@ -93,16 +93,15 @@ This example is a simple demonstration that shows how to minimally run a couple 
                   inventory=inventory,
                   variable_manager=variable_manager,
                   loader=loader,
-                  options=options,
                   passwords=passwords,
                   stdout_callback=results_callback,  # Use our custom callback instead of the ``default`` callback plugin, which prints to stdout
               )
         result = tqm.run(play) # most interesting data for a play is actually sent to the callback's methods
     finally:
-        # we always need to cleanup child procs and the structres we use to communicate with them
+        # we always need to cleanup child procs and the structures we use to communicate with them
         if tqm is not None:
             tqm.cleanup()
-        
+
         # Remove ansible tmpdir
         shutil.rmtree(C.DEFAULT_LOCAL_TMP, True)
 
@@ -110,7 +109,7 @@ This example is a simple demonstration that shows how to minimally run a couple 
 .. note:: Ansible emits warnings and errors via the display object, which prints directly to stdout, stderr and the Ansible log.
 
 The source code for the ``ansible``
-command line tools (``lib/ansible/cli/``) is `available on Github <https://github.com/ansible/ansible/tree/devel/lib/ansible/cli>`_.
+command line tools (``lib/ansible/cli/``) is `available on GitHub <https://github.com/ansible/ansible/tree/devel/lib/ansible/cli>`_.
 
 .. seealso::
 
@@ -120,8 +119,7 @@ command line tools (``lib/ansible/cli/``) is `available on Github <https://githu
        How to develop modules
    :doc:`developing_plugins`
        How to develop plugins
-   `Development Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `Development Mailing List <https://groups.google.com/group/ansible-devel>`_
        Mailing list for development topics
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-

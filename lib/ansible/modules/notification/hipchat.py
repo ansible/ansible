@@ -67,7 +67,9 @@ options:
     default: 'https://api.hipchat.com/v1'
     version_added: 1.6.0
 
-author: "WAKAYAMA Shirou (@shirou), BOURDEL Paul (@pb8226)"
+author:
+- Shirou Wakayama (@shirou)
+- Paul Bourdel (@pb8226)
 '''
 
 EXAMPLES = '''

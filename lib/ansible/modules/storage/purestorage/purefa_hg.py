@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Simon Dodsley (simon@purestorage.com)
+# (c) 2018, Simon Dodsley (simon@purestorage.com)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -125,8 +125,8 @@ def make_hostgroup(module, array):
 
     try:
         array.create_hgroup(module.params['hostgroup'])
-    except:
-        module.fail_json(msg='Failed to create hostgroup {0}'.format(module.params['hostgroup']))
+    except Exception:
+        changed = False
     if module.params['host']:
         array.set_hgroup(module.params['hostgroup'], hostlist=module.params['host'])
     if module.params['volume']:
@@ -146,7 +146,7 @@ def update_hostgroup(module, array):
                 try:
                     array.set_hgroup(module.params['hostgroup'], addhostlist=new_hosts)
                     changed = True
-                except:
+                except Exception:
                     module.fail_josn(msg='Failed to add host(s) to hostgroup')
         if module.params['volume']:
             if volumes:
@@ -156,14 +156,14 @@ def update_hostgroup(module, array):
                     try:
                         array.connect_hgroup(module.params['hostgroup'], cvol)
                         changed = True
-                    except:
+                    except Exception:
                         changed = False
             else:
                 for cvol in module.params['volume']:
                     try:
                         array.connect_hgroup(module.params['hostgroup'], cvol)
                         changed = True
-                    except:
+                    except Exception:
                         changed = False
     else:
         if module.params['host']:
@@ -172,7 +172,7 @@ def update_hostgroup(module, array):
                 try:
                     array.set_hgroup(module.params['hostgroup'], remhostlist=old_hosts)
                     changed = True
-                except:
+                except Exception:
                     changed = False
         if module.params['volume']:
             old_volumes = list(set(module.params['volume']).difference(set([vol['name'] for vol in volumes])))
@@ -180,7 +180,7 @@ def update_hostgroup(module, array):
                 try:
                     array.disconnect_hgroup(module.params['hostgroup'], cvol)
                     changed = True
-                except:
+                except Exception:
                     changed = False
 
     module.exit_json(changed=changed)
@@ -188,14 +188,24 @@ def update_hostgroup(module, array):
 
 def delete_hostgroup(module, array):
     changed = True
-    for vol in array.list_hgroup_connections(module.params['hostgroup']):
-        array.disconnect_hgroup(module.params['hostgroup'], vol["vol"])
-    host = array.get_hgroup(module.params['hostgroup'])
-    array.set_hgroup(module.params['hostgroup'], remhostlist=host['hosts'])
     try:
-        array.delete_hgroup(module.params['hostgroup'])
-    except:
-        module.fail_json(msg='Failed to delete hostgroup {0}'.format(module.params['hostgroup']))
+        vols = array.list_hgroup_connections(module.params['hostgroup'])
+        for vol in vols:
+            try:
+                array.disconnect_hgroup(module.params['hostgroup'], vol["vol"])
+            except Exception:
+                changed = False
+        host = array.get_hgroup(module.params['hostgroup'])
+        try:
+            array.set_hgroup(module.params['hostgroup'], remhostlist=host['hosts'])
+            try:
+                array.delete_hgroup(module.params['hostgroup'])
+            except Exception:
+                changed = False
+        except Exception:
+            changed = False
+    except Exception:
+        changed = False
     module.exit_json(changed=changed)
 
 
@@ -221,14 +231,14 @@ def main():
         try:
             for hst in module.params['host']:
                 array.get_host(hst)
-        except:
+        except Exception:
             module.fail_json(msg='Host {0} not found'.format(hst))
 
     if module.params['volume']:
         try:
             for vol in module.params['volume']:
                 array.get_volume(vol)
-        except:
+        except Exception:
             module.fail_json(msg='Volume {0} not found'.format(vol))
 
     if hostgroup and state == 'present':
@@ -243,6 +253,7 @@ def main():
         module.exit_json(changed=False)
     else:
         make_hostgroup(module, array)
+
 
 if __name__ == '__main__':
     main()

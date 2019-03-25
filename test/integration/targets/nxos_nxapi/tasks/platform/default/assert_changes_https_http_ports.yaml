@@ -1,0 +1,20 @@
+---
+- name: Assert HTTPS & HTTP configuration changes
+  assert:
+    that:
+      - result.stdout[0]['TABLE_listen_on_port']['ROW_listen_on_port'][1].l_port
+      - result.stdout[0]['TABLE_listen_on_port']['ROW_listen_on_port'][1].l_port|string is search("500")
+      - result.stdout[0]['TABLE_listen_on_port']['ROW_listen_on_port'][0].l_port
+      - result.stdout[0]['TABLE_listen_on_port']['ROW_listen_on_port'][0].l_port|string is search("99")
+      - result.stdout[0]['operation_status'].o_status == 'nxapi enabled'
+  when: result.stdout[0].TABLE_listen_on_port is defined
+
+- name: Assert HTTPS & HTTP configuration changes 9.2 or greater
+  assert:
+    that:
+      - result.stdout[0]['https_port']
+      - result.stdout[0]['https_port']|string is search("500")
+      - result.stdout[0]['http_port']
+      - result.stdout[0]['http_port']|string is search("99")
+      - result.stdout[0]['nxapi_status'] == 'nxapi enabled'
+  when: result.stdout[0].https_port is defined or result.stdout[0].http_port is defined

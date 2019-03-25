@@ -60,14 +60,24 @@ don't need to be wrapped in the backoff decorator.
 
 """
 
+import re
+import logging
+import traceback
 from functools import wraps
-from ansible.module_utils.basic import AnsibleModule
+from distutils.version import LooseVersion
+
+try:
+    from cStringIO import StringIO
+except ImportError:
+    # Python 3
+    from io import StringIO
+
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
 from ansible.module_utils.ec2 import HAS_BOTO3, camel_dict_to_snake_dict, ec2_argument_spec, boto3_conn, get_aws_connection_info
-import traceback
 
 # We will also export HAS_BOTO3 so end user modules can use it.
-__all__ = ('AnsibleAWSModule', 'HAS_BOTO3',)
+__all__ = ('AnsibleAWSModule', 'HAS_BOTO3', 'is_boto3_error_code')
 
 
 class AnsibleAWSModule(object):
@@ -112,19 +122,44 @@ class AnsibleAWSModule(object):
 
         if local_settings["check_boto3"] and not HAS_BOTO3:
             self._module.fail_json(
-                msg='Python modules "botocore" or "boto3" are missing, please install both')
+                msg=missing_required_lib('botocore or boto3'))
 
         self.check_mode = self._module.check_mode
+        self._diff = self._module._diff
         self._name = self._module._name
+
+        self._botocore_endpoint_log_stream = StringIO()
+        self.logger = None
+        if self.params.get('debug_botocore_endpoint_logs'):
+            self.logger = logging.getLogger('botocore.endpoint')
+            self.logger.setLevel(logging.DEBUG)
+            self.logger.addHandler(logging.StreamHandler(self._botocore_endpoint_log_stream))
 
     @property
     def params(self):
         return self._module.params
 
+    def _get_resource_action_list(self):
+        actions = []
+        for ln in self._botocore_endpoint_log_stream.getvalue().split('\n'):
+            ln = ln.strip()
+            if not ln:
+                continue
+            found_operational_request = re.search(r"OperationModel\(name=.*?\)", ln)
+            if found_operational_request:
+                operation_request = found_operational_request.group(0)[20:-1]
+                resource = re.search(r"https://.*?\.", ln).group(0)[8:-1]
+                actions.append("{0}:{1}".format(resource, operation_request))
+        return list(set(actions))
+
     def exit_json(self, *args, **kwargs):
+        if self.params.get('debug_botocore_endpoint_logs'):
+            kwargs['resource_actions'] = self._get_resource_action_list()
         return self._module.exit_json(*args, **kwargs)
 
     def fail_json(self, *args, **kwargs):
+        if self.params.get('debug_botocore_endpoint_logs'):
+            kwargs['resource_actions'] = self._get_resource_action_list()
         return self._module.fail_json(*args, **kwargs)
 
     def debug(self, *args, **kwargs):
@@ -132,6 +167,15 @@ class AnsibleAWSModule(object):
 
     def warn(self, *args, **kwargs):
         return self._module.warn(*args, **kwargs)
+
+    def deprecate(self, *args, **kwargs):
+        return self._module.deprecate(*args, **kwargs)
+
+    def boolean(self, *args, **kwargs):
+        return self._module.boolean(*args, **kwargs)
+
+    def md5(self, *args, **kwargs):
+        return self._module.md5(*args, **kwargs)
 
     def client(self, service, retry_decorator=None):
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(self, boto3=True)
@@ -178,7 +222,7 @@ class AnsibleAWSModule(object):
         if response is not None:
             failure.update(**camel_dict_to_snake_dict(response))
 
-        self._module.fail_json(**failure)
+        self.fail_json(**failure)
 
     def _gather_versions(self):
         """Gather AWS SDK (boto3 and botocore) dependency versions
@@ -192,6 +236,30 @@ class AnsibleAWSModule(object):
         import botocore
         return dict(boto3_version=boto3.__version__,
                     botocore_version=botocore.__version__)
+
+    def boto3_at_least(self, desired):
+        """Check if the available boto3 version is greater than or equal to a desired version.
+
+        Usage:
+            if module.params.get('assign_ipv6_address') and not module.boto3_at_least('1.4.4'):
+                # conditionally fail on old boto3 versions if a specific feature is not supported
+                module.fail_json(msg="Boto3 can't deal with EC2 IPv6 addresses before version 1.4.4.")
+        """
+        existing = self._gather_versions()
+        return LooseVersion(existing['boto3_version']) >= LooseVersion(desired)
+
+    def botocore_at_least(self, desired):
+        """Check if the available botocore version is greater than or equal to a desired version.
+
+        Usage:
+            if not module.botocore_at_least('1.2.3'):
+                module.fail_json(msg='The Serverless Elastic Load Compute Service is not in botocore before v1.2.3')
+            if not module.botocore_at_least('1.5.3'):
+                module.warn('Botocore did not include waiters for Service X before 1.5.3. '
+                            'To wait until Service X resources are fully available, update botocore.')
+        """
+        existing = self._gather_versions()
+        return LooseVersion(existing['botocore_version']) >= LooseVersion(desired)
 
 
 class _RetryingBotoClientWrapper(object):
@@ -225,3 +293,37 @@ class _RetryingBotoClientWrapper(object):
             return wrapped
         else:
             return unwrapped
+
+
+def is_boto3_error_code(code, e=None):
+    """Check if the botocore exception is raised by a specific error code.
+
+    Returns ClientError if the error code matches, a dummy exception if it does not have an error code or does not match
+
+    Example:
+    try:
+        ec2.describe_instances(InstanceIds=['potato'])
+    except is_boto3_error_code('InvalidInstanceID.Malformed'):
+        # handle the error for that code case
+    except botocore.exceptions.ClientError as e:
+        # handle the generic error case for all other codes
+    """
+    from botocore.exceptions import ClientError
+    if e is None:
+        import sys
+        dummy, e, dummy = sys.exc_info()
+    if isinstance(e, ClientError) and e.response['Error']['Code'] == code:
+        return ClientError
+    return type('NeverEverRaisedException', (Exception,), {})
+
+
+def get_boto3_client_method_parameters(client, method_name, required=False):
+    op = client.meta.method_to_api_mapping.get(method_name)
+    input_shape = client._service_model.operation_model(op).input_shape
+    if not input_shape:
+        parameters = []
+    elif required:
+        parameters = list(input_shape.required_members)
+    else:
+        parameters = list(input_shape.members.keys())
+    return parameters

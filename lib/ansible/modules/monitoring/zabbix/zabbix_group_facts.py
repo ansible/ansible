@@ -29,43 +29,18 @@ description:
    - This module allows you to search for Zabbix hostgroup entries.
 version_added: "2.6"
 author:
-    - "(@redwhitemiko)"
+    - "Michael Miko (@RedWhiteMiko)"
 requirements:
     - "python >= 2.6"
     - zabbix-api
 options:
-    server_url:
-        description:
-            - Url of Zabbix server, with protocol (http or https).
-        required: true
-        aliases: [ "url" ]
-    login_user:
-        description:
-            - Zabbix user name, used to authenticate against the server.
-        required: true
-    login_password:
-        description:
-            - Zabbix user password.
-        required: true
-    http_login_user:
-        description:
-            - Basic Auth login
-        required: false
-        default: null
-    http_login_password:
-        description:
-            - Basic Auth password
-        required: false
-        default: null
     hostgroup_name:
         description:
             - Name of the hostgroup in Zabbix.
             - hostgroup is the unique identifier used and cannot be updated using this module.
         required: true
-    timeout:
-        description:
-            - The timeout of API request (seconds).
-        default: 10
+extends_documentation_fragment:
+    - zabbix
 '''
 
 EXAMPLES = '''
@@ -92,8 +67,8 @@ try:
     class ZabbixAPIExtends(ZabbixAPI):
         hostinterface = None
 
-        def __init__(self, server, timeout, user, passwd, **kwargs):
-            ZabbixAPI.__init__(self, server, timeout=timeout, user=user, passwd=passwd)
+        def __init__(self, server, timeout, user, passwd, validate_certs, **kwargs):
+            ZabbixAPI.__init__(self, server, timeout=timeout, user=user, passwd=passwd, validate_certs=validate_certs)
             self.hostinterface = ZabbixAPISubClass(self, dict({"prefix": "hostinterface"}, **kwargs))
 
     HAS_ZABBIX_API = True
@@ -122,26 +97,29 @@ def main():
             hostgroup_name=dict(type='list', required=True),
             http_login_user=dict(type='str', required=False, default=None),
             http_login_password=dict(type='str', required=False, default=None, no_log=True),
+            validate_certs=dict(type='bool', required=False, default=True),
             timeout=dict(type='int', default=10)
         ),
         supports_check_mode=True
     )
 
     if not HAS_ZABBIX_API:
-        module.fail_json(msg="Missing requried zabbix-api module (check docs or install with: pip install zabbix-api)")
+        module.fail_json(msg="Missing required zabbix-api module (check docs or install with: pip install zabbix-api)")
 
     server_url = module.params['server_url']
     login_user = module.params['login_user']
     login_password = module.params['login_password']
     http_login_user = module.params['http_login_user']
     http_login_password = module.params['http_login_password']
+    validate_certs = module.params['validate_certs']
     hostgroup_name = module.params['hostgroup_name']
     timeout = module.params['timeout']
 
     zbx = None
     # login to zabbix
     try:
-        zbx = ZabbixAPIExtends(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password)
+        zbx = ZabbixAPIExtends(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password,
+                               validate_certs=validate_certs)
         zbx.login(login_user, login_password)
     except Exception as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
@@ -149,6 +127,7 @@ def main():
     host = Host(module, zbx)
     host_groups = host.get_group_ids_by_group_names(hostgroup_name)
     module.exit_json(host_groups=host_groups)
+
 
 if __name__ == '__main__':
     main()

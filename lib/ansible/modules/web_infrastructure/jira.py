@@ -123,6 +123,7 @@ options:
     description:
       - Require valid SSL certificates (set to `false` if you'd like to use self-signed certificates)
     default: true
+    type: bool
 
 notes:
   - "Currently this only works with basic-auth."
@@ -262,7 +263,7 @@ def request(url, user, passwd, timeout, data=None, method=None):
     body = response.read()
 
     if body:
-        return json.loads(body)
+        return json.loads(to_text(body, errors='surrogate_or_strict'))
     else:
         return {}
 
@@ -283,8 +284,10 @@ def create(restbase, user, passwd, params):
     createfields = {
         'project': {'key': params['project']},
         'summary': params['summary'],
-        'description': params['description'],
         'issuetype': {'name': params['issuetype']}}
+
+    if params['description']:
+        createfields['description'] = params['description']
 
     # Merge in any additional or overridden fields
     if params['fields']:
@@ -367,8 +370,9 @@ def link(restbase, user, passwd, params):
 
     return ret
 
+
 # Some parameters are required depending on the operation:
-OP_REQUIRED = dict(create=['project', 'issuetype', 'summary', 'description'],
+OP_REQUIRED = dict(create=['project', 'issuetype', 'summary'],
                    comment=['issue', 'comment'],
                    edit=[],
                    fetch=['issue'],

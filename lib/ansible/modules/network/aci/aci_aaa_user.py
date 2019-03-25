@@ -9,7 +9,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -17,26 +17,18 @@ module: aci_aaa_user
 short_description: Manage AAA users (aaa:User)
 description:
 - Manage AAA users on Cisco ACI fabrics.
-notes:
-- This module is not idempotent when C(aaa_password) is being used
-  (even if that password was already set identically). This
-  appears to be an inconsistency wrt. the idempotent nature
-  of the APIC REST API. The vendor has been informed.
-  More information in :ref:`the ACI documentation <aci_guide_known_issues>`.
-- More information about the internal APIC class B(aaa:User) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
-author:
-- Dag Wieers (@dagwieers)
 requirements:
-  - python-dateutil
+- python-dateutil
 version_added: '2.5'
 options:
   aaa_password:
     description:
     - The password of the locally-authenticated user.
+    type: str
   aaa_password_lifetime:
     description:
     - The lifetime of the locally-authenticated user password.
+    type: int
   aaa_password_update_required:
     description:
     - Whether this account needs password update.
@@ -44,6 +36,7 @@ options:
   aaa_user:
     description:
     - The name of the locally-authenticated user user to add.
+    type: str
     aliases: [ name, user ]
   clear_password_history:
     description:
@@ -52,10 +45,12 @@ options:
   description:
     description:
     - Description for the AAA user.
+    type: str
     aliases: [ descr ]
   email:
     description:
     - The email address of the locally-authenticated user.
+    type: str
   enabled:
     description:
     - The status of the locally-authenticated user account.
@@ -63,6 +58,7 @@ options:
   expiration:
     description:
     - The expiration date of the locally-authenticated user account.
+    type: str
   expires:
     description:
     - Whether to enable an expiration date for the locally-authenticated user account.
@@ -70,19 +66,36 @@ options:
   first_name:
     description:
     - The first name of the locally-authenticated user.
+    type: str
   last_name:
     description:
     - The last name of the locally-authenticated user.
+    type: str
   phone:
     description:
     - The phone number of the locally-authenticated user.
+    type: str
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
+notes:
+- This module is not idempotent when C(aaa_password) is being used
+  (even if that password was already set identically). This
+  appears to be an inconsistency wrt. the idempotent nature
+  of the APIC REST API. The vendor has been informed.
+  More information in :ref:`the ACI documentation <aci_guide_known_issues>`.
+seealso:
+- module: aci_aaa_user_certificate
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(aaa:User).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Dag Wieers (@dagwieers)
 '''
 
 EXAMPLES = r'''
@@ -100,6 +113,7 @@ EXAMPLES = r'''
     first_name: Dag
     last_name: Wieers
     state: present
+  delegate_to: localhost
 
 - name: Remove a user
   aci_aaa_user:
@@ -108,6 +122,7 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     aaa_user: dag
     state: absent
+  delegate_to: localhost
 
 - name: Query a user
   aci_aaa_user:
@@ -116,6 +131,8 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     aaa_user: dag
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all users
   aci_aaa_user:
@@ -123,6 +140,8 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -157,7 +176,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -206,17 +225,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: '?rsp-prop-include=config-only'
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -226,12 +245,9 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
-
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
-from ansible.module_utils.basic import AnsibleModule
 
 try:
     from dateutil.tz import tzutc
@@ -240,6 +256,9 @@ try:
 except ImportError:
     HAS_DATEUTIL = False
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
+
 
 def main():
     argument_spec = aci_argument_spec()
@@ -247,7 +266,7 @@ def main():
         aaa_password=dict(type='str', no_log=True),
         aaa_password_lifetime=dict(type='int'),
         aaa_password_update_required=dict(type='bool'),
-        aaa_user=dict(type='str', required=True, aliases=['name']),  # Not required for querying all objects
+        aaa_user=dict(type='str', aliases=['name']),  # Not required for querying all objects
         clear_password_history=dict(type='bool'),
         description=dict(type='str', aliases=['descr']),
         email=dict(type='str'),
@@ -279,7 +298,7 @@ def main():
     aaa_password_lifetime = module.params['aaa_password_lifetime']
     aaa_password_update_required = aci.boolean(module.params['aaa_password_update_required'])
     aaa_user = module.params['aaa_user']
-    clear_password_history = module.params['clear_password_history']
+    clear_password_history = aci.boolean(module.params['clear_password_history'], 'yes', 'no')
     description = module.params['description']
     email = module.params['email']
     enabled = aci.boolean(module.params['enabled'], 'active', 'inactive')
@@ -300,8 +319,8 @@ def main():
         root_class=dict(
             aci_class='aaaUser',
             aci_rn='userext/user-{0}'.format(aaa_user),
-            filter_target='eq(aaaUser.name, "{0}")'.format(aaa_user),
             module_object=aaa_user,
+            target_filter={'name': aaa_user},
         ),
     )
     aci.get_existing()
@@ -312,6 +331,7 @@ def main():
             class_config=dict(
                 accountStatus=enabled,
                 clearPwdHistory=clear_password_history,
+                descr=description,
                 email=email,
                 expiration=expiration,
                 expires=expires,

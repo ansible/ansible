@@ -9,6 +9,7 @@
     lines:
       - no ip domain-list {{ item }}
     match: none
+    provider: "{{ connection }}"
   ignore_errors: yes
   with_items:
       - ansible.com
@@ -19,6 +20,7 @@
     domain_search:
       - ansible.com
       - redhat.com
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -32,6 +34,7 @@
     domain_search:
       - ansible.com
       - redhat.com
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -42,6 +45,7 @@
   nxos_system:
     domain_search:
       - ansible.com
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -53,6 +57,7 @@
   nxos_system:
     domain_search:
       - ansible.com
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -64,6 +69,7 @@
     domain_search:
       - ansible.com
       - redhat.com
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -76,6 +82,7 @@
     domain_search:
       - ansible.com
       - redhat.com
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -87,6 +94,7 @@
     domain_search:
       - ansible.com
       - eng.ansible.com
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -101,6 +109,7 @@
     domain_search:
       - ansible.com
       - eng.ansible.com
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -112,6 +121,7 @@
     lines:
       - no ip domain-list {{ item }}
     match: none
+    provider: "{{ connection }}"
   ignore_errors: yes
   with_items:
       - ansible.com

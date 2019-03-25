@@ -1,0 +1,2 @@
+minor_changes:
+- Added Ansible.Basic C# util that contains a module wrapper and handles common functions like argument parsing and module return. This is gives the user more visibility over what the module has run and aligns PowerShell modules more closely to how Python modules are defined.

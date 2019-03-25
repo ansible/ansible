@@ -6,22 +6,24 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+import copy
 import os
 import re
+import datetime
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.connection import exec_command
-from ansible.module_utils.network.common.utils import to_list, ComplexList
+from ansible.module_utils.network.common.utils import to_list
+from ansible.module_utils.network.common.utils import ComplexList
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
+from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE
 from collections import defaultdict
 
-try:
-    from icontrol.exceptions import iControlUnexpectedHTTPError
-    HAS_F5SDK = True
-except ImportError:
-    HAS_F5SDK = False
+
+MANAGED_BY_ANNOTATION_VERSION = 'f5-ansible.version'
+MANAGED_BY_ANNOTATION_MODIFIED = 'f5-ansible.last_modified'
 
 
 f5_provider_spec = {
@@ -52,6 +54,8 @@ f5_provider_spec = {
         default='rest'
     ),
     'timeout': dict(type='int'),
+    'auth_provider': dict(),
+    'proxy_to': dict(),
 }
 
 f5_argument_spec = {
@@ -61,31 +65,29 @@ f5_argument_spec = {
 f5_top_spec = {
     'server': dict(
         removed_in_version=2.9,
-        fallback=(env_fallback, ['F5_SERVER'])
     ),
     'user': dict(
         removed_in_version=2.9,
-        fallback=(env_fallback, ['F5_USER', 'ANSIBLE_NET_USERNAME'])
     ),
     'password': dict(
         removed_in_version=2.9,
         no_log=True,
         aliases=['pass', 'pwd'],
-        fallback=(env_fallback, ['F5_PASSWORD', 'ANSIBLE_NET_PASSWORD'])
     ),
     'validate_certs': dict(
         removed_in_version=2.9,
         type='bool',
-        fallback=(env_fallback, ['F5_VALIDATE_CERTS'])
     ),
     'server_port': dict(
         removed_in_version=2.9,
         type='int',
-        fallback=(env_fallback, ['F5_SERVER_PORT'])
     ),
     'transport': dict(
         removed_in_version=2.9,
         choices=['cli', 'rest']
+    ),
+    'auth_provider': dict(
+        default=None
     )
 }
 f5_argument_spec.update(f5_top_spec)
@@ -103,6 +105,13 @@ def load_params(params):
                 params[key] = value
 
 
+def is_empty_list(seq):
+    if len(seq) == 1:
+        if seq[0] == '' or seq[0] == 'none':
+            return True
+    return False
+
+
 # Fully Qualified name (with the partition)
 def fqdn_name(partition, value):
     """This method is not used
@@ -116,7 +125,7 @@ def fqdn_name(partition, value):
     return fq_name(partition, value)
 
 
-def fq_name(partition, value):
+def fq_name(partition, value, sub_path=''):
     """Returns a 'Fully Qualified' name
 
     A BIG-IP expects most names of resources to be in a fully-qualified
@@ -148,16 +157,29 @@ def fq_name(partition, value):
         value (string): The name that you want to attach a partition to.
             This value will be returned unchanged if it has a partition
             attached to it already.
+        sub_path (string): The sub path element. If defined the sub_path
+            will be inserted between partition and value.
+            This will also work on FQ names.
     Returns:
         string: The fully qualified name, given the input parameters.
     """
-    if value is not None:
+    if value is not None and sub_path == '':
         try:
             int(value)
             return '/{0}/{1}'.format(partition, value)
         except (ValueError, TypeError):
             if not value.startswith('/'):
                 return '/{0}/{1}'.format(partition, value)
+    if value is not None and sub_path != '':
+        try:
+            int(value)
+            return '/{0}/{1}/{2}'.format(partition, sub_path, value)
+        except (ValueError, TypeError):
+            if value.startswith('/'):
+                dummy, partition, name = value.split('/')
+                return '/{0}/{1}/{2}'.format(partition, sub_path, name)
+            if not value.startswith('/'):
+                return '/{0}/{1}/{2}'.format(partition, sub_path, value)
     return value
 
 
@@ -191,14 +213,15 @@ def run_commands(module, commands, check_rc=True):
     return responses
 
 
-def cleanup_tokens(client):
-    try:
-        resource = client.api.shared.authz.tokens_s.token.load(
-            name=client.api.icrs.token
-        )
-        resource.delete()
-    except Exception:
-        pass
+def flatten_boolean(value):
+    truthy = list(BOOLEANS_TRUE) + ['enabled', 'True']
+    falsey = list(BOOLEANS_FALSE) + ['disabled', 'False']
+    if value is None:
+        return None
+    elif value in truthy:
+        return 'yes'
+    elif value in falsey:
+        return 'no'
 
 
 def is_cli(module):
@@ -262,68 +285,40 @@ def is_valid_fqdn(host):
     return False
 
 
-def dict2tuple(items):
-    """Convert a dictionary to a list of tuples
+def transform_name(partition='', name='', sub_path=''):
+    if partition != '':
+        if name.startswith(partition + '/'):
+            name = name.replace(partition + '/', '')
+        if name.startswith('/' + partition + '/'):
+            name = name.replace('/' + partition + '/', '')
 
-    This method is used in cases where dictionaries need to be compared. Due
-    to dictionaries inherently having no order, it is easier to compare list
-    of tuples because these lists can be converted to sets.
+    if name:
+        name = name.replace('/', '~')
 
-    This conversion only supports dicts of simple values. Do not give it dicts
-    that contain sub-dicts. This will not give you the result you want when using
-    the returned tuple for comparison.
-
-    Args:
-        items (dict): The dictionary of items that should be converted
-
-    Returns:
-        list: Returns a list of tuples upon success. Otherwise, an empty list.
-    """
-    result = []
-    for x in items:
-        tmp = [(str(k), str(v)) for k, v in iteritems(x)]
-        result += tmp
-    return result
-
-
-def compare_dictionary(want, have):
-    """Performs a dictionary comparison
-
-    Args:
-        want (dict): Dictionary to compare with second parameter.
-        have (dict): Dictionary to compare with first parameter.
-
-    Returns:
-        bool:
-    """
-    if want == [] and have is None:
-        return None
-    if want is None:
-        return None
-    w = dict2tuple(want)
-    h = dict2tuple(have)
-    if set(w) == set(h):
-        return None
+    if partition:
+        partition = partition.replace('/', '~')
+        if not partition.startswith('~'):
+            partition = '~' + partition
     else:
-        return want
+        if sub_path:
+            raise F5ModuleError(
+                'When giving the subPath component include partition as well.'
+            )
+
+    if sub_path and partition:
+        sub_path = '~' + sub_path
+
+    if name and partition:
+        name = '~' + name
+
+    result = partition + sub_path + name
+    return result
 
 
 def is_ansible_debug(module):
     if module._debug and module._verbosity >= 4:
         return True
     return False
-
-
-def fail_json(module, ex, client=None):
-    if is_ansible_debug(module) and client:
-        module.fail_json(msg=str(ex), __f5debug__=client.api.debug_output)
-    module.fail_json(msg=str(ex))
-
-
-def exit_json(module, results, client=None):
-    if is_ansible_debug(module) and client:
-        results['__f5debug__'] = client.api.debug_output
-    module.exit_json(**results)
 
 
 def is_uuid(uuid=None):
@@ -344,6 +339,62 @@ def is_uuid(uuid=None):
     if re.match(pattern, uuid):
         return True
     return False
+
+
+def on_bigip():
+    if os.path.exists('/usr/bin/tmsh'):
+        return True
+    return False
+
+
+def mark_managed_by(ansible_version, params):
+    metadata = []
+    result = copy.deepcopy(params)
+    found1 = False
+    found2 = False
+    mark1 = dict(
+        name=MANAGED_BY_ANNOTATION_VERSION,
+        value=ansible_version,
+        persist='true'
+    )
+    mark2 = dict(
+        name=MANAGED_BY_ANNOTATION_MODIFIED,
+        value=str(datetime.datetime.utcnow()),
+        persist='true'
+    )
+
+    if 'metadata' not in result:
+        result['metadata'] = [mark1, mark2]
+        return result
+
+    for x in params['metadata']:
+        if x['name'] == MANAGED_BY_ANNOTATION_VERSION:
+            found1 = True
+            metadata.append(mark1)
+        if x['name'] == MANAGED_BY_ANNOTATION_MODIFIED:
+            found2 = True
+            metadata.append(mark1)
+        else:
+            metadata.append(x)
+    if not found1:
+        metadata.append(mark1)
+    if not found2:
+        metadata.append(mark2)
+
+    result['metadata'] = metadata
+    return result
+
+
+def only_has_managed_metadata(metadata):
+    managed = [
+        MANAGED_BY_ANNOTATION_MODIFIED,
+        MANAGED_BY_ANNOTATION_VERSION,
+    ]
+
+    for x in metadata:
+        if x['name'] not in managed:
+            return False
+    return True
 
 
 class Noop(object):
@@ -388,71 +439,117 @@ class F5BaseClient(object):
         """
         self._client = None
 
+    @staticmethod
+    def validate_params(key, store):
+        if key in store and store[key] is not None:
+            return True
+        else:
+            return False
+
     def merge_provider_params(self):
         result = dict()
+        provider = self.params.get('provider', None)
+        if not provider:
+            provider = {}
 
-        provider = self.params.get('provider', {})
+        self.merge_provider_server_param(result, provider)
+        self.merge_provider_server_port_param(result, provider)
+        self.merge_provider_validate_certs_param(result, provider)
+        self.merge_provider_auth_provider_param(result, provider)
+        self.merge_provider_user_param(result, provider)
+        self.merge_provider_password_param(result, provider)
+        self.merge_proxy_to_param(result, provider)
 
-        if provider.get('server', None):
-            result['server'] = provider.get('server', None)
-        elif self.params.get('server', None):
-            result['server'] = self.params.get('server', None)
-        elif os.environ.get('F5_SERVER', None):
-            result['server'] = os.environ.get('F5_SERVER', None)
+        return result
 
-        if provider.get('server_port', None):
-            result['server_port'] = provider.get('server_port', None)
-        elif self.params.get('server_port', None):
-            result['server_port'] = self.params.get('server_port', None)
-        elif os.environ.get('F5_SERVER_PORT', None):
-            result['server_port'] = os.environ.get('F5_SERVER_PORT', None)
+    def merge_provider_server_param(self, result, provider):
+        if self.validate_params('server', provider):
+            result['server'] = provider['server']
+        elif self.validate_params('server', self.params):
+            result['server'] = self.params['server']
+        elif self.validate_params('F5_SERVER', os.environ):
+            result['server'] = os.environ['F5_SERVER']
+        else:
+            raise F5ModuleError('Server parameter cannot be None or missing, please provide a valid value')
+
+    def merge_provider_server_port_param(self, result, provider):
+        if self.validate_params('server_port', provider):
+            result['server_port'] = provider['server_port']
+        elif self.validate_params('server_port', self.params):
+            result['server_port'] = self.params['server_port']
+        elif self.validate_params('F5_SERVER_PORT', os.environ):
+            result['server_port'] = os.environ['F5_SERVER_PORT']
         else:
             result['server_port'] = 443
 
-        if provider.get('validate_certs', None) is not None:
-            result['validate_certs'] = provider.get('validate_certs', None)
-        elif self.params.get('validate_certs', None) is not None:
-            result['validate_certs'] = self.params.get('validate_certs', None)
-        elif os.environ.get('F5_VALIDATE_CERTS', None) is not None:
-            result['validate_certs'] = os.environ.get('F5_VALIDATE_CERTS', None)
+    def merge_provider_validate_certs_param(self, result, provider):
+        if self.validate_params('validate_certs', provider):
+            result['validate_certs'] = provider['validate_certs']
+        elif self.validate_params('validate_certs', self.params):
+            result['validate_certs'] = self.params['validate_certs']
+        elif self.validate_params('F5_VALIDATE_CERTS', os.environ):
+            result['validate_certs'] = os.environ['F5_VALIDATE_CERTS']
         else:
             result['validate_certs'] = True
-
-        if provider.get('auth_provider', None):
-            result['auth_provider'] = provider.get('auth_provider', None)
-        elif self.params.get('auth_provider', None):
-            result['auth_provider'] = self.params.get('auth_provider', None)
-        else:
-            result['auth_provider'] = None
-
-        if provider.get('user', None):
-            result['user'] = provider.get('user', None)
-        elif self.params.get('user', None):
-            result['user'] = self.params.get('user', None)
-        elif os.environ.get('F5_USER', None):
-            result['user'] = os.environ.get('F5_USER', None)
-        elif os.environ.get('ANSIBLE_NET_USERNAME', None):
-            result['user'] = os.environ.get('ANSIBLE_NET_USERNAME', None)
-        else:
-            result['user'] = None
-
-        if provider.get('password', None):
-            result['password'] = provider.get('password', None)
-        elif self.params.get('user', None):
-            result['password'] = self.params.get('password', None)
-        elif os.environ.get('F5_PASSWORD', None):
-            result['password'] = os.environ.get('F5_PASSWORD', None)
-        elif os.environ.get('ANSIBLE_NET_PASSWORD', None):
-            result['password'] = os.environ.get('ANSIBLE_NET_PASSWORD', None)
-        else:
-            result['password'] = None
-
         if result['validate_certs'] in BOOLEANS_TRUE:
             result['validate_certs'] = True
         else:
             result['validate_certs'] = False
 
-        return result
+    def merge_provider_auth_provider_param(self, result, provider):
+        if self.validate_params('auth_provider', provider):
+            result['auth_provider'] = provider['auth_provider']
+        elif self.validate_params('auth_provider', self.params):
+            result['auth_provider'] = self.params['auth_provider']
+        elif self.validate_params('F5_AUTH_PROVIDER', os.environ):
+            result['auth_provider'] = os.environ['F5_AUTH_PROVIDER']
+        else:
+            result['auth_provider'] = None
+
+        # Handle a specific case of the user specifying ``|default(omit)``
+        # as the value to the auth_provider.
+        #
+        # In this case, Ansible will inject the omit-placeholder value
+        # and the module params incorrectly interpret this. This case
+        # can occur when specifying ``|default(omit)`` for a variable
+        # value defined in the ``environment`` section of a Play.
+        #
+        # An example of the omit placeholder is shown below.
+        #
+        #  __omit_place_holder__11bd71a2840bff144594b9cc2149db814256f253
+        #
+        if result['auth_provider'] is not None and '__omit_place_holder__' in result['auth_provider']:
+            result['auth_provider'] = None
+
+    def merge_provider_user_param(self, result, provider):
+        if self.validate_params('user', provider):
+            result['user'] = provider['user']
+        elif self.validate_params('user', self.params):
+            result['user'] = self.params['user']
+        elif self.validate_params('F5_USER', os.environ):
+            result['user'] = os.environ.get('F5_USER')
+        elif self.validate_params('ANSIBLE_NET_USERNAME', os.environ):
+            result['user'] = os.environ.get('ANSIBLE_NET_USERNAME')
+        else:
+            result['user'] = None
+
+    def merge_provider_password_param(self, result, provider):
+        if self.validate_params('password', provider):
+            result['password'] = provider['password']
+        elif self.validate_params('password', self.params):
+            result['password'] = self.params['password']
+        elif self.validate_params('F5_PASSWORD', os.environ):
+            result['password'] = os.environ.get('F5_PASSWORD')
+        elif self.validate_params('ANSIBLE_NET_PASSWORD', os.environ):
+            result['password'] = os.environ.get('ANSIBLE_NET_PASSWORD')
+        else:
+            result['password'] = None
+
+    def merge_proxy_to_param(self, result, provider):
+        if self.validate_params('proxy_to', provider):
+            result['proxy_to'] = provider['proxy_to']
+        else:
+            result['proxy_to'] = None
 
 
 class AnsibleF5Parameters(object):
@@ -472,6 +569,16 @@ class AnsibleF5Parameters(object):
         if params:
             self._params.update(params)
             for k, v in iteritems(params):
+                # Adding this here because ``username`` is a connection parameter
+                # and in cases where it is also an API parameter, we run the risk
+                # of overriding the specified parameter with the connection parameter.
+                #
+                # Since this is a problem, and since "username" is never a valid
+                # parameter outside its usage in connection params (where we do not
+                # use the ApiParameter or ModuleParameters classes) it is safe to
+                # skip over it if it is provided.
+                if k == 'password':
+                    continue
                 if self.api_map is not None and k in self.api_map:
                     map_key = self.api_map[k]
                 else:

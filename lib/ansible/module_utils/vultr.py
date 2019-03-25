@@ -14,6 +14,7 @@ from ansible.module_utils.urls import fetch_url
 
 
 VULTR_API_ENDPOINT = "https://api.vultr.com"
+VULTR_USER_AGENT = 'Ansible Vultr'
 
 
 def vultr_argument_spec():
@@ -30,6 +31,10 @@ def vultr_argument_spec():
 class Vultr:
 
     def __init__(self, module, namespace):
+
+        if module._name.startswith('vr_'):
+            module.deprecate("The Vultr modules were renamed. The prefix of the modules changed from vr_ to vultr_", version='2.11')
+
         self.module = module
 
         # Namespace use for returns
@@ -43,9 +48,9 @@ class Vultr:
         # For caching HTTP API responses
         self.api_cache = dict()
 
-        # Reads the config from vultr.ini
         try:
-            config = self.read_ini_config()
+            config = self.read_env_variables()
+            config.update(Vultr.read_ini_config(self.module.params.get('api_account')))
         except KeyError:
             config = {}
 
@@ -61,6 +66,9 @@ class Vultr:
                                "in section '%s' in the ini config file has not an int value: timeout, retries. "
                                "Error was %s" % (self.module.params.get('api_account'), to_native(e)))
 
+        if not self.api_config.get('api_key'):
+            self.module.fail_json(msg="The API key is not speicied. Please refer to the documentation.")
+
         # Common vultr returns
         self.result['vultr_api'] = {
             'api_account': self.module.params.get('api_account'),
@@ -72,34 +80,35 @@ class Vultr:
         # Headers to be passed to the API
         self.headers = {
             'API-Key': "%s" % self.api_config['api_key'],
-            'User-Agent': "Ansible Vultr",
+            'User-Agent': VULTR_USER_AGENT,
             'Accept': 'application/json',
         }
 
-    def read_ini_config(self):
-        ini_group = self.module.params.get('api_account')
-
+    def read_env_variables(self):
         keys = ['key', 'timeout', 'retries', 'endpoint']
         env_conf = {}
         for key in keys:
             if 'VULTR_API_%s' % key.upper() not in os.environ:
-                break
-            else:
-                env_conf[key] = os.environ['VULTR_API_%s' % key.upper()]
-        else:
-            return env_conf
+                continue
+            env_conf[key] = os.environ['VULTR_API_%s' % key.upper()]
 
+        return env_conf
+
+    @staticmethod
+    def read_ini_config(ini_group):
         paths = (
             os.path.join(os.path.expanduser('~'), '.vultr.ini'),
             os.path.join(os.getcwd(), 'vultr.ini'),
         )
         if 'VULTR_API_CONFIG' in os.environ:
             paths += (os.path.expanduser(os.environ['VULTR_API_CONFIG']),)
-        if not any((os.path.exists(c) for c in paths)):
-            self.module.fail_json(msg="Config file not found. Tried : %s" % ", ".join(paths))
 
         conf = configparser.ConfigParser()
         conf.read(paths)
+
+        if not conf._sections.get(ini_group):
+            return dict()
+
         return dict(conf.items(ini_group))
 
     def fail_json(self, **kwargs):
@@ -160,8 +169,7 @@ class Vultr:
                 timeout=self.api_config['api_timeout'],
             )
 
-            # Did we hit the rate limit?
-            if info.get('status') and info.get('status') != 503:
+            if info.get('status') == 200:
                 break
 
             # Vultr has a rate limiting requests per second, try to be polite
@@ -193,7 +201,7 @@ class Vultr:
             return {}
 
         try:
-            return self.module.from_json(to_text(res))
+            return self.module.from_json(to_native(res)) or {}
         except ValueError as e:
             self.module.fail_json(msg="Could not process response into json: %s" % e)
 
@@ -210,30 +218,95 @@ class Vultr:
 
         if not r_list:
             return {}
-
-        for r_id, r_data in r_list.items():
-            if r_data[key] == value:
-                self.api_cache.update({
-                    resource: r_data
-                })
-                return r_data
+        elif isinstance(r_list, list):
+            for r_data in r_list:
+                if str(r_data[key]) == str(value):
+                    self.api_cache.update({
+                        resource: r_data
+                    })
+                    return r_data
+        elif isinstance(r_list, dict):
+            for r_id, r_data in r_list.items():
+                if str(r_data[key]) == str(value):
+                    self.api_cache.update({
+                        resource: r_data
+                    })
+                    return r_data
 
         self.module.fail_json(msg="Could not find %s with %s: %s" % (resource, key, value))
 
+    @staticmethod
+    def normalize_result(resource, schema, remove_missing_keys=True):
+        if remove_missing_keys:
+            fields_to_remove = set(resource.keys()) - set(schema.keys())
+            for field in fields_to_remove:
+                resource.pop(field)
+
+        for search_key, config in schema.items():
+            if search_key in resource:
+                if 'convert_to' in config:
+                    if config['convert_to'] == 'int':
+                        resource[search_key] = int(resource[search_key])
+                    elif config['convert_to'] == 'float':
+                        resource[search_key] = float(resource[search_key])
+                    elif config['convert_to'] == 'bool':
+                        resource[search_key] = True if resource[search_key] == 'yes' else False
+
+                if 'transform' in config:
+                    resource[search_key] = config['transform'](resource[search_key])
+
+                if 'key' in config:
+                    resource[config['key']] = resource[search_key]
+                    del resource[search_key]
+
+        return resource
+
     def get_result(self, resource):
         if resource:
-            for search_key, config in self.returns.items():
-                if search_key in resource:
-                    if 'convert_to' in config:
-                        if config['convert_to'] == 'int':
-                            resource[search_key] = int(resource[search_key])
-                        elif config['convert_to'] == 'float':
-                            resource[search_key] = float(resource[search_key])
-                        elif config['convert_to'] == 'bool':
-                            resource[search_key] = True if resource[search_key] == 'yes' else False
+            if isinstance(resource, list):
+                self.result[self.namespace] = [Vultr.normalize_result(item, self.returns) for item in resource]
+            else:
+                self.result[self.namespace] = Vultr.normalize_result(resource, self.returns)
 
-                    if 'key' in config:
-                        self.result[self.namespace][config['key']] = resource[search_key]
-                    else:
-                        self.result[self.namespace][search_key] = resource[search_key]
         return self.result
+
+    def get_plan(self, plan=None, key='name'):
+        value = plan or self.module.params.get('plan')
+
+        return self.query_resource_by_key(
+            key=key,
+            value=value,
+            resource='plans',
+            use_cache=True
+        )
+
+    def get_firewallgroup(self, firewallgroup=None, key='description'):
+        value = firewallgroup or self.module.params.get('firewallgroup')
+
+        return self.query_resource_by_key(
+            key=key,
+            value=value,
+            resource='firewall',
+            query_by='group_list',
+            use_cache=True
+        )
+
+    def get_application(self, application=None, key='name'):
+        value = application or self.module.params.get('application')
+
+        return self.query_resource_by_key(
+            key=key,
+            value=value,
+            resource='app',
+            use_cache=True
+        )
+
+    def get_region(self, region=None, key='name'):
+        value = region or self.module.params.get('region')
+
+        return self.query_resource_by_key(
+            key=key,
+            value=value,
+            resource='regions',
+            use_cache=True
+        )

@@ -1,0 +1,2 @@
+bugfixes:
+- win_uri - allow to send a JSON array with just one item into - https://github.com/ansible/ansible/issues/49483

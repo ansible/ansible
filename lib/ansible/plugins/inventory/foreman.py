@@ -10,18 +10,36 @@ DOCUMENTATION = '''
     plugin_type: inventory
     short_description: foreman inventory source
     version_added: "2.6"
+    requirements:
+        - requests >= 1.1
     description:
         - Get inventory hosts from the foreman service.
+        - "Uses a configuration file as an inventory source, it must end in ``.foreman.yml`` or ``.foreman.yaml`` and has a ``plugin: foreman`` entry."
     extends_documentation_fragment:
         - inventory_cache
     options:
+      plugin:
+        description: the name of this plugin, it should always be set to 'foreman' for this plugin to recognize it as it's own.
+        required: True
+        choices: ['foreman']
       url:
         description: url to foreman
-        default: 'http://localhost:300'
+        default: 'http://localhost:3000'
+        env:
+            - name: FOREMAN_SERVER
+              version_added: "2.8"
       user:
         description: foreman authentication user
+        required: True
+        env:
+            - name: FOREMAN_USER
+              version_added: "2.8"
       password:
-        description: forman authentication password
+        description: foreman authentication password
+        required: True
+        env:
+            - name: FOREMAN_PASSWORD
+              version_added: "2.8"
       validate_certs:
         description: verify SSL certificate if using https
         type: boolean
@@ -42,14 +60,21 @@ DOCUMENTATION = '''
         default: False
 '''
 
-import re
+EXAMPLES = '''
+# my.foreman.yml
+plugin: foreman
+url: http://localhost:2222
+user: ansible-tester
+password: secure
+validate_certs: False
+'''
 
-from collections import MutableMapping
 from distutils.version import LooseVersion
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_native
-from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable
+from ansible.module_utils.common._collections_compat import MutableMapping
+from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable, to_safe_group_name
 
 # 3rd party imports
 try:
@@ -57,7 +82,7 @@ try:
     if LooseVersion(requests.__version__) < LooseVersion('1.1.0'):
         raise ImportError
 except ImportError:
-        raise AnsibleError('This script requires python-requests 1.1 as a minimum version')
+    raise AnsibleError('This script requires python-requests 1.1 as a minimum version')
 
 from requests.auth import HTTPBasicAuth
 
@@ -82,8 +107,10 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
 
         valid = False
         if super(InventoryModule, self).verify_file(path):
-            if path.endswith('.foreman.yaml') or path.endswith('.foreman.yml'):
+            if path.endswith(('foreman.yaml', 'foreman.yml')):
                 valid = True
+            else:
+                self.display.vvv('Skipping due to inventory source not ending in "foreman.yaml" nor "foreman.yml"')
         return valid
 
     def _get_session(self):
@@ -98,7 +125,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
         if not self.use_cache or url not in self._cache.get(self.cache_key, {}):
 
             if self.cache_key not in self._cache:
-                self._cache[self.cache_key] = {'url': ''}
+                self._cache[self.cache_key] = {url: ''}
 
             results = []
             s = self._get_session()
@@ -135,7 +162,9 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                     # get next page
                     params['page'] += 1
 
-            self._cache[self.cache_key][url] = results
+            # Set the cache if it is enabled or if the cache was refreshed
+            if self.use_cache or self.get_option('cache'):
+                self._cache[self.cache_key][url] = results
 
         return self._cache[self.cache_key][url]
 
@@ -146,8 +175,8 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
         url = "%s/api/v2/hosts/%s" % (self.foreman_url, hid)
         ret = self._get_json(url, [404])
         if not ret or not isinstance(ret, MutableMapping) or not ret.get('all_parameters', False):
-            ret = {'all_parameters': [{}]}
-        return ret.get('all_parameters')[0]
+            ret = []
+        return ret.get('all_parameters')
 
     def _get_facts_by_id(self, hid):
         url = "%s/api/v2/hosts/%s/facts" % (self.foreman_url, hid)
@@ -165,14 +194,6 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
             raise ValueError("More than one set of facts returned for '%s'" % host)
         return facts
 
-    def to_safe(self, word):
-        '''Converts 'bad' characters in a string to underscores so they can be used as Ansible groups
-        #> ForemanInventory.to_safe("foo-bar baz")
-        'foo_barbaz'
-        '''
-        regex = r"[^A-Za-z0-9\_]"
-        return re.sub(regex, "_", word.replace(" ", ""))
-
     def _populate(self):
 
         for host in self._get_hosts():
@@ -183,8 +204,8 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                 # create directly mapped groups
                 group_name = host.get('hostgroup_title', host.get('hostgroup_name'))
                 if group_name:
-                    group_name = self.to_safe('%s%s' % (self.get_option('group_prefix'), group_name.lower()))
-                    self.inventory.add_group(group_name)
+                    group_name = to_safe_group_name('%s%s' % (self.get_option('group_prefix'), group_name.lower().replace(" ", "")))
+                    group_name = self.inventory.add_group(group_name)
                     self.inventory.add_child(group_name, host['name'])
 
                 # set host vars from host info
@@ -200,11 +221,12 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
 
                 # set host vars from params
                 if self.get_option('want_params'):
-                    for k, v in self._get_all_params_by_id(host['id']).items():
+                    for p in self._get_all_params_by_id(host['id']):
                         try:
-                            self.inventory.set_variable(host['name'], k, v)
+                            self.inventory.set_variable(host['name'], p['name'], p['value'])
                         except ValueError as e:
-                            self.display.warning("Could not set parameter hostvar for %s, skipping %s: %s" % (host, k, to_native(e)))
+                            self.display.warning("Could not set hostvar %s to '%s' for the '%s' host, skipping:  %s" %
+                                                 (p['name'], to_native(p['value']), host, to_native(e)))
 
                 # set host vars from facts
                 if self.get_option('want_facts'):

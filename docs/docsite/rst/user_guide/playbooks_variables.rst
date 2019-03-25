@@ -1,28 +1,28 @@
 .. _playbooks_variables:
 
-Variables
-=========
+***************
+Using Variables
+***************
 
-.. contents:: Topics
+.. contents::
+   :local:
 
 While automation exists to make it easier to make things repeatable, all systems are not exactly alike; some may require configuration that is slightly different from others. In some instances, the observed behavior or state of one system might influence how you configure other systems. For example, you might need to find out the IP address of a system and use it as a configuration value on another system.
 
 Ansible uses *variables* to help deal with differences between systems.
 
-To understand variables you'll also want to read :doc:`playbooks_conditionals` and :doc:`playbooks_loops`.
+To understand variables you'll also want to read :ref:`playbooks_conditionals` and :ref:`playbooks_loops`.
 Useful things like the **group_by** module
 and the ``when`` conditional can also be used with variables, and to help manage differences between systems.
 
-The ansible-examples github repository contains many examples of how variables are used in Ansible.
-
-For advice on best practices, refer to :ref:`best_practices_for_variables_and_vaults` in the *Best Practices* chapter.
+The `ansible-examples github repository <https://github.com/ansible/ansible-examples>`_ contains many examples of how variables are used in Ansible.
 
 .. _valid_variable_names:
 
-What Makes A Valid Variable Name
-````````````````````````````````
+Creating valid variable names
+=============================
 
-Before we start using variables, it's important to know what are valid variable names.
+Before you start using variables, it's important to know what are valid variable names.
 
 Variable names should be letters, numbers, and underscores.  Variables should always start with a letter.
 
@@ -53,23 +53,18 @@ are any of the known public attributes:
 
 .. _variables_in_inventory:
 
-Variables Defined in Inventory
-``````````````````````````````
+Defining variables in inventory
+===============================
 
-We've actually already covered a lot about variables in another section, so far this shouldn't be terribly new, but
-a bit of a refresher.
-
-Often you'll want to set variables based on what groups a machine is in.  For instance, maybe machines in Boston
-want to use 'boston.ntp.example.com' as an NTP server.
-
-See the :doc:`intro_inventory` document for multiple ways on how to define variables in inventory.
+Often you'll want to set variables for an individual host, or for a group of hosts in your inventory. For instance, machines in Boston
+may all use 'boston.ntp.example.com' as an NTP server. The :ref:`intro_inventory` page has details on setting :ref:`host_variables` and :ref:`group_variables` in inventory.
 
 .. _playbook_variables:
 
-Variables Defined in a Playbook
-```````````````````````````````
+Defining variables in a playbook
+================================
 
-In a playbook, it's possible to define variables directly inline like so::
+You can define variables directly in a playbook::
 
    - hosts: webservers
      vars:
@@ -79,36 +74,30 @@ This can be nice as it's right there when you are reading the playbook.
 
 .. _included_variables:
 
-Variables defined from included files and roles
-```````````````````````````````````````````````
+Defining variables in included files and roles
+==============================================
 
-It turns out we've already talked about variables in another place too.
-
-As described in :doc:`playbooks_reuse_roles`, variables can also be included in the playbook via include files, which may or may
-not be part of an "Ansible Role".  Usage of roles is preferred as it provides a nice organizational system.
+As described in :ref:`playbooks_reuse_roles`, variables can also be included in the playbook via include files, which may or may
+not be part of an Ansible Role.  Usage of roles is preferred as it provides a nice organizational system.
 
 .. _about_jinja2:
 
-Using Variables: About Jinja2
-`````````````````````````````
+Using variables with Jinja2
+===========================
 
-It's nice enough to know about how to define variables, but how do you use them?
-
-Ansible allows you to reference variables in your playbooks using the Jinja2 templating system.  While you can do a lot of complex things in Jinja, only the basics are things you really need to learn at first.
-
-For example, in a simple template, you can do something like::
+Once you've defined variables, you can use them in your playbooks using the Jinja2 templating system.  Here's a simple Jinja2 template::
 
     My amp goes to {{ max_amp_value }}
 
-And that will provide the most basic form of variable substitution.
+This expression provides the most basic form of variable substitution.
 
-This is also valid directly in playbooks, and you'll occasionally want to do things like::
+You can use the same syntax in playbooks. For example::
 
     template: src=foo.cfg.j2 dest={{ remote_install_path }}/foo.cfg
 
-In the above example, we used a variable to help decide where to place a file.
+Here the variable defines the location of a file, which can vary from one system to another.
 
-Inside a template you automatically have access to all of the variables that are in scope for a host.  Actually
+Inside a template you automatically have access to all variables that are in scope for a host.  Actually
 it's more than that -- you can also read variables about other hosts.  We'll show how to do that in a bit.
 
 .. note:: ansible allows Jinja2 loops and conditionals in templates, but in playbooks, we do not use them.  Ansible
@@ -118,26 +107,20 @@ it's more than that -- you can also read variables about other hosts.  We'll sho
 
 .. seealso::
 
-    :doc:`playbooks_templating`
+    :ref:`playbooks_templating`
         More information about Jinja2 templating
 
 .. _jinja2_filters:
 
-Jinja2 Filters
-``````````````
+Transforming variables with Jinja2 filters
+==========================================
 
-.. note:: These are infrequently utilized features.  Use them if they fit a use case you have, but this is optional knowledge.
-
-Filters in Jinja2 are a way of transforming template expressions from one kind of data into another.  Jinja2
-ships with many of these. See `builtin filters`_ in the official Jinja2 template documentation.
-
-In addition to those, Ansible supplies many more. See the :doc:`playbooks_filters` document
-for a list of available filters and example usage guide.
+Jinja2 filters let you transform the value of a variable within a template expression. For example, the ``capitalize`` filter capitalizes any value passed to it; the ``to_yaml`` and ``to_json`` filters change the format of your variable values. Jinja2 includes many `built-in filters <http://jinja.pocoo.org/docs/templates/#builtin-filters>`_ and Ansible supplies :ref:`many more filters <playbooks_filters>`.
 
 .. _yaml_gotchas:
 
-Hey Wait, A YAML Gotcha
-```````````````````````
+Hey wait, a YAML gotcha
+=======================
 
 YAML syntax requires that if you start a value with ``{{ foo }}`` you quote the whole line, since it wants to be
 sure you aren't trying to start a YAML dictionary.  This is covered on the :ref:`yaml_syntax` documentation.
@@ -156,20 +139,26 @@ Do it like this and you'll be fine::
 
 .. _vars_and_facts:
 
-Information discovered from systems: Facts
-``````````````````````````````````````````
+Variables discovered from systems: Facts
+========================================
 
 There are other places where variables can come from, but these are a type of variable that are discovered, not set by the user.
 
-Facts are information derived from speaking with your remote systems.
+Facts are information derived from speaking with your remote systems. You can find a complete set under the ``ansible_facts`` variable,
+most facts are also 'injected' as top level variables preserving the ``ansible_`` prefix, but some are dropped due to conflicts.
+This can be disabled via the :ref:`INJECT_FACTS_AS_VARS` setting.
 
 An example of this might be the IP address of the remote host, or what the operating system is.
 
-To see what information is available, try the following::
+To see what information is available, try the following in a play::
+
+    - debug: var=ansible_facts
+
+To see the 'raw' information as gathered::
 
     ansible hostname -m setup
 
-This will return a large amount of variable data, which may look like this, as taken from Ansible 1.4 running on a Ubuntu 12.04 system
+This will return a large amount of variable data, which may look like this on Ansible 2.7:
 
 .. code-block:: json
 
@@ -180,33 +169,46 @@ This will return a large amount of variable data, which may look like this, as t
         "ansible_all_ipv6_addresses": [
             "REDACTED IPV6 ADDRESS"
         ],
+        "ansible_apparmor": {
+            "status": "disabled"
+        },
         "ansible_architecture": "x86_64",
-        "ansible_bios_date": "09/20/2012",
-        "ansible_bios_version": "6.00",
+        "ansible_bios_date": "11/28/2013",
+        "ansible_bios_version": "4.1.5",
         "ansible_cmdline": {
-            "BOOT_IMAGE": "/boot/vmlinuz-3.5.0-23-generic",
-            "quiet": true,
+            "BOOT_IMAGE": "/boot/vmlinuz-3.10.0-862.14.4.el7.x86_64",
+            "console": "ttyS0,115200",
+            "no_timer_check": true,
+            "nofb": true,
+            "nomodeset": true,
             "ro": true,
-            "root": "UUID=4195bff4-e157-4e41-8701-e93f0aec9e22",
-            "splash": true
+            "root": "LABEL=cloudimg-rootfs",
+            "vga": "normal"
         },
         "ansible_date_time": {
-            "date": "2013-10-02",
-            "day": "02",
-            "epoch": "1380756810",
-            "hour": "19",
-            "iso8601": "2013-10-02T23:33:30Z",
-            "iso8601_micro": "2013-10-02T23:33:30.036070Z",
-            "minute": "33",
+            "date": "2018-10-25",
+            "day": "25",
+            "epoch": "1540469324",
+            "hour": "12",
+            "iso8601": "2018-10-25T12:08:44Z",
+            "iso8601_basic": "20181025T120844109754",
+            "iso8601_basic_short": "20181025T120844",
+            "iso8601_micro": "2018-10-25T12:08:44.109968Z",
+            "minute": "08",
             "month": "10",
-            "second": "30",
-            "time": "19:33:30",
-            "tz": "EDT",
-            "year": "2013"
+            "second": "44",
+            "time": "12:08:44",
+            "tz": "UTC",
+            "tz_offset": "+0000",
+            "weekday": "Thursday",
+            "weekday_number": "4",
+            "weeknumber": "43",
+            "year": "2018"
         },
         "ansible_default_ipv4": {
             "address": "REDACTED",
             "alias": "eth0",
+            "broadcast": "REDACTED",
             "gateway": "REDACTED",
             "interface": "eth0",
             "macaddress": "REDACTED",
@@ -216,103 +218,176 @@ This will return a large amount of variable data, which may look like this, as t
             "type": "ether"
         },
         "ansible_default_ipv6": {},
+        "ansible_device_links": {
+            "ids": {},
+            "labels": {
+                "xvda1": [
+                    "cloudimg-rootfs"
+                ],
+                "xvdd": [
+                    "config-2"
+                ]
+            },
+            "masters": {},
+            "uuids": {
+                "xvda1": [
+                    "cac81d61-d0f8-4b47-84aa-b48798239164"
+                ],
+                "xvdd": [
+                    "2018-10-25-12-05-57-00"
+                ]
+            }
+        },
         "ansible_devices": {
-            "fd0": {
+            "xvda": {
                 "holders": [],
                 "host": "",
+                "links": {
+                    "ids": [],
+                    "labels": [],
+                    "masters": [],
+                    "uuids": []
+                },
                 "model": null,
-                "partitions": {},
-                "removable": "1",
-                "rotational": "1",
-                "scheduler_mode": "deadline",
-                "sectors": "0",
-                "sectorsize": "512",
-                "size": "0.00 Bytes",
-                "support_discard": "0",
-                "vendor": null
-            },
-            "sda": {
-                "holders": [],
-                "host": "SCSI storage controller: LSI Logic / Symbios Logic 53c1030 PCI-X Fusion-MPT Dual Ultra320 SCSI (rev 01)",
-                "model": "VMware Virtual S",
                 "partitions": {
-                    "sda1": {
-                        "sectors": "39843840",
+                    "xvda1": {
+                        "holders": [],
+                        "links": {
+                            "ids": [],
+                            "labels": [
+                                "cloudimg-rootfs"
+                            ],
+                            "masters": [],
+                            "uuids": [
+                                "cac81d61-d0f8-4b47-84aa-b48798239164"
+                            ]
+                        },
+                        "sectors": "83883999",
                         "sectorsize": 512,
-                        "size": "19.00 GB",
-                        "start": "2048"
-                    },
-                    "sda2": {
-                        "sectors": "2",
-                        "sectorsize": 512,
-                        "size": "1.00 KB",
-                        "start": "39847934"
-                    },
-                    "sda5": {
-                        "sectors": "2093056",
-                        "sectorsize": 512,
-                        "size": "1022.00 MB",
-                        "start": "39847936"
+                        "size": "40.00 GB",
+                        "start": "2048",
+                        "uuid": "cac81d61-d0f8-4b47-84aa-b48798239164"
                     }
                 },
                 "removable": "0",
-                "rotational": "1",
+                "rotational": "0",
+                "sas_address": null,
+                "sas_device_handle": null,
                 "scheduler_mode": "deadline",
-                "sectors": "41943040",
+                "sectors": "83886080",
                 "sectorsize": "512",
-                "size": "20.00 GB",
+                "size": "40.00 GB",
                 "support_discard": "0",
-                "vendor": "VMware,"
+                "vendor": null,
+                "virtual": 1
             },
-            "sr0": {
+            "xvdd": {
                 "holders": [],
-                "host": "IDE interface: Intel Corporation 82371AB/EB/MB PIIX4 IDE (rev 01)",
-                "model": "VMware IDE CDR10",
+                "host": "",
+                "links": {
+                    "ids": [],
+                    "labels": [
+                        "config-2"
+                    ],
+                    "masters": [],
+                    "uuids": [
+                        "2018-10-25-12-05-57-00"
+                    ]
+                },
+                "model": null,
                 "partitions": {},
-                "removable": "1",
-                "rotational": "1",
+                "removable": "0",
+                "rotational": "0",
+                "sas_address": null,
+                "sas_device_handle": null,
                 "scheduler_mode": "deadline",
-                "sectors": "2097151",
+                "sectors": "131072",
                 "sectorsize": "512",
-                "size": "1024.00 MB",
+                "size": "64.00 MB",
                 "support_discard": "0",
-                "vendor": "NECVMWar"
+                "vendor": null,
+                "virtual": 1
+            },
+            "xvde": {
+                "holders": [],
+                "host": "",
+                "links": {
+                    "ids": [],
+                    "labels": [],
+                    "masters": [],
+                    "uuids": []
+                },
+                "model": null,
+                "partitions": {
+                    "xvde1": {
+                        "holders": [],
+                        "links": {
+                            "ids": [],
+                            "labels": [],
+                            "masters": [],
+                            "uuids": []
+                        },
+                        "sectors": "167770112",
+                        "sectorsize": 512,
+                        "size": "80.00 GB",
+                        "start": "2048",
+                        "uuid": null
+                    }
+                },
+                "removable": "0",
+                "rotational": "0",
+                "sas_address": null,
+                "sas_device_handle": null,
+                "scheduler_mode": "deadline",
+                "sectors": "167772160",
+                "sectorsize": "512",
+                "size": "80.00 GB",
+                "support_discard": "0",
+                "vendor": null,
+                "virtual": 1
             }
         },
-        "ansible_distribution": "Ubuntu",
-        "ansible_distribution_release": "precise",
-        "ansible_distribution_version": "12.04",
+        "ansible_distribution": "CentOS",
+        "ansible_distribution_file_parsed": true,
+        "ansible_distribution_file_path": "/etc/redhat-release",
+        "ansible_distribution_file_variety": "RedHat",
+        "ansible_distribution_major_version": "7",
+        "ansible_distribution_release": "Core",
+        "ansible_distribution_version": "7.5.1804",
+        "ansible_dns": {
+            "nameservers": [
+                "127.0.0.1"
+            ]
+        },
         "ansible_domain": "",
+        "ansible_effective_group_id": 1000,
+        "ansible_effective_user_id": 1000,
         "ansible_env": {
-            "COLORTERM": "gnome-terminal",
-            "DISPLAY": ":0",
-            "HOME": "/home/mdehaan",
-            "LANG": "C",
-            "LESSCLOSE": "/usr/bin/lesspipe %s %s",
-            "LESSOPEN": "| /usr/bin/lesspipe %s",
-            "LOGNAME": "root",
-            "LS_COLORS": "rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arj=01;31:*.taz=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.zip=01;31:*.z=01;31:*.Z=01;31:*.dz=01;31:*.gz=01;31:*.lz=01;31:*.xz=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.jpg=01;35:*.jpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.axv=01;35:*.anx=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.axa=00;36:*.oga=00;36:*.spx=00;36:*.xspf=00;36:",
-            "MAIL": "/var/mail/root",
-            "OLDPWD": "/root/ansible/docsite",
-            "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-            "PWD": "/root/ansible",
+            "HOME": "/home/zuul",
+            "LANG": "en_US.UTF-8",
+            "LESSOPEN": "||/usr/bin/lesspipe.sh %s",
+            "LOGNAME": "zuul",
+            "MAIL": "/var/mail/zuul",
+            "PATH": "/usr/local/bin:/usr/bin",
+            "PWD": "/home/zuul",
+            "SELINUX_LEVEL_REQUESTED": "",
+            "SELINUX_ROLE_REQUESTED": "",
+            "SELINUX_USE_CURRENT_RANGE": "",
             "SHELL": "/bin/bash",
-            "SHLVL": "1",
-            "SUDO_COMMAND": "/bin/bash",
-            "SUDO_GID": "1000",
-            "SUDO_UID": "1000",
-            "SUDO_USER": "mdehaan",
-            "TERM": "xterm",
-            "USER": "root",
-            "USERNAME": "root",
-            "XAUTHORITY": "/home/mdehaan/.Xauthority",
-            "_": "/usr/local/bin/ansible"
+            "SHLVL": "2",
+            "SSH_CLIENT": "REDACTED 55672 22",
+            "SSH_CONNECTION": "REDACTED 55672 REDACTED 22",
+            "USER": "zuul",
+            "XDG_RUNTIME_DIR": "/run/user/1000",
+            "XDG_SESSION_ID": "1",
+            "_": "/usr/bin/python2"
         },
         "ansible_eth0": {
             "active": true,
             "device": "eth0",
             "ipv4": {
                 "address": "REDACTED",
+                "broadcast": "REDACTED",
                 "netmask": "255.255.255.0",
                 "network": "REDACTED"
             },
@@ -324,23 +399,52 @@ This will return a large amount of variable data, which may look like this, as t
                 }
             ],
             "macaddress": "REDACTED",
-            "module": "e1000",
+            "module": "xen_netfront",
             "mtu": 1500,
+            "pciid": "vif-0",
+            "promisc": false,
             "type": "ether"
         },
+        "ansible_eth1": {
+            "active": true,
+            "device": "eth1",
+            "ipv4": {
+                "address": "REDACTED",
+                "broadcast": "REDACTED",
+                "netmask": "255.255.224.0",
+                "network": "REDACTED"
+            },
+            "ipv6": [
+                {
+                    "address": "REDACTED",
+                    "prefix": "64",
+                    "scope": "link"
+                }
+            ],
+            "macaddress": "REDACTED",
+            "module": "xen_netfront",
+            "mtu": 1500,
+            "pciid": "vif-1",
+            "promisc": false,
+            "type": "ether"
+        },
+        "ansible_fips": false,
         "ansible_form_factor": "Other",
-        "ansible_fqdn": "ubuntu2.example.com",
-        "ansible_hostname": "ubuntu2",
+        "ansible_fqdn": "centos-7-rax-dfw-0003427354",
+        "ansible_hostname": "centos-7-rax-dfw-0003427354",
         "ansible_interfaces": [
             "lo",
+            "eth1",
             "eth0"
         ],
-        "ansible_kernel": "3.5.0-23-generic",
+        "ansible_is_chroot": false,
+        "ansible_kernel": "3.10.0-862.14.4.el7.x86_64",
         "ansible_lo": {
             "active": true,
             "device": "lo",
             "ipv4": {
                 "address": "127.0.0.1",
+                "broadcast": "host",
                 "netmask": "255.0.0.0",
                 "network": "127.0.0.0"
             },
@@ -351,79 +455,185 @@ This will return a large amount of variable data, which may look like this, as t
                     "scope": "host"
                 }
             ],
-            "mtu": 16436,
+            "mtu": 65536,
+            "promisc": false,
             "type": "loopback"
         },
+        "ansible_local": {},
         "ansible_lsb": {
-            "codename": "precise",
-            "description": "Ubuntu 12.04.2 LTS",
-            "id": "Ubuntu",
-            "major_release": "12",
-            "release": "12.04"
+            "codename": "Core",
+            "description": "CentOS Linux release 7.5.1804 (Core)",
+            "id": "CentOS",
+            "major_release": "7",
+            "release": "7.5.1804"
         },
         "ansible_machine": "x86_64",
-        "ansible_memfree_mb": 74,
-        "ansible_memtotal_mb": 991,
+        "ansible_machine_id": "2db133253c984c82aef2fafcce6f2bed",
+        "ansible_memfree_mb": 7709,
+        "ansible_memory_mb": {
+            "nocache": {
+                "free": 7804,
+                "used": 173
+            },
+            "real": {
+                "free": 7709,
+                "total": 7977,
+                "used": 268
+            },
+            "swap": {
+                "cached": 0,
+                "free": 0,
+                "total": 0,
+                "used": 0
+            }
+        },
+        "ansible_memtotal_mb": 7977,
         "ansible_mounts": [
             {
-                "device": "/dev/sda1",
+                "block_available": 7220998,
+                "block_size": 4096,
+                "block_total": 9817227,
+                "block_used": 2596229,
+                "device": "/dev/xvda1",
                 "fstype": "ext4",
+                "inode_available": 10052341,
+                "inode_total": 10419200,
+                "inode_used": 366859,
                 "mount": "/",
-                "options": "rw,errors=remount-ro",
-                "size_available": 15032406016,
-                "size_total": 20079898624
+                "options": "rw,seclabel,relatime,data=ordered",
+                "size_available": 29577207808,
+                "size_total": 40211361792,
+                "uuid": "cac81d61-d0f8-4b47-84aa-b48798239164"
+            },
+            {
+                "block_available": 0,
+                "block_size": 2048,
+                "block_total": 252,
+                "block_used": 252,
+                "device": "/dev/xvdd",
+                "fstype": "iso9660",
+                "inode_available": 0,
+                "inode_total": 0,
+                "inode_used": 0,
+                "mount": "/mnt/config",
+                "options": "ro,relatime,mode=0700",
+                "size_available": 0,
+                "size_total": 516096,
+                "uuid": "2018-10-25-12-05-57-00"
             }
         ],
-        "ansible_nodename": "ubuntu2.example.com",
-        "ansible_os_family": "Debian",
-        "ansible_pkg_mgr": "apt",
+        "ansible_nodename": "centos-7-rax-dfw-0003427354",
+        "ansible_os_family": "RedHat",
+        "ansible_pkg_mgr": "yum",
         "ansible_processor": [
-            "Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz"
+            "0",
+            "GenuineIntel",
+            "Intel(R) Xeon(R) CPU E5-2670 0 @ 2.60GHz",
+            "1",
+            "GenuineIntel",
+            "Intel(R) Xeon(R) CPU E5-2670 0 @ 2.60GHz",
+            "2",
+            "GenuineIntel",
+            "Intel(R) Xeon(R) CPU E5-2670 0 @ 2.60GHz",
+            "3",
+            "GenuineIntel",
+            "Intel(R) Xeon(R) CPU E5-2670 0 @ 2.60GHz",
+            "4",
+            "GenuineIntel",
+            "Intel(R) Xeon(R) CPU E5-2670 0 @ 2.60GHz",
+            "5",
+            "GenuineIntel",
+            "Intel(R) Xeon(R) CPU E5-2670 0 @ 2.60GHz",
+            "6",
+            "GenuineIntel",
+            "Intel(R) Xeon(R) CPU E5-2670 0 @ 2.60GHz",
+            "7",
+            "GenuineIntel",
+            "Intel(R) Xeon(R) CPU E5-2670 0 @ 2.60GHz"
         ],
-        "ansible_processor_cores": 1,
-        "ansible_processor_count": 1,
+        "ansible_processor_cores": 8,
+        "ansible_processor_count": 8,
         "ansible_processor_threads_per_core": 1,
-        "ansible_processor_vcpus": 1,
-        "ansible_product_name": "VMware Virtual Platform",
+        "ansible_processor_vcpus": 8,
+        "ansible_product_name": "HVM domU",
         "ansible_product_serial": "REDACTED",
         "ansible_product_uuid": "REDACTED",
-        "ansible_product_version": "None",
-        "ansible_python_version": "2.7.3",
-        "ansible_selinux": false,
-        "ansible_ssh_host_key_dsa_public": "REDACTED KEY VALUE",
+        "ansible_product_version": "4.1.5",
+        "ansible_python": {
+            "executable": "/usr/bin/python2",
+            "has_sslcontext": true,
+            "type": "CPython",
+            "version": {
+                "major": 2,
+                "micro": 5,
+                "minor": 7,
+                "releaselevel": "final",
+                "serial": 0
+            },
+            "version_info": [
+                2,
+                7,
+                5,
+                "final",
+                0
+            ]
+        },
+        "ansible_python_version": "2.7.5",
+        "ansible_real_group_id": 1000,
+        "ansible_real_user_id": 1000,
+        "ansible_selinux": {
+            "config_mode": "enforcing",
+            "mode": "enforcing",
+            "policyvers": 31,
+            "status": "enabled",
+            "type": "targeted"
+        },
+        "ansible_selinux_python_present": true,
+        "ansible_service_mgr": "systemd",
         "ansible_ssh_host_key_ecdsa_public": "REDACTED KEY VALUE",
+        "ansible_ssh_host_key_ed25519_public": "REDACTED KEY VALUE",
         "ansible_ssh_host_key_rsa_public": "REDACTED KEY VALUE",
-        "ansible_swapfree_mb": 665,
-        "ansible_swaptotal_mb": 1021,
+        "ansible_swapfree_mb": 0,
+        "ansible_swaptotal_mb": 0,
         "ansible_system": "Linux",
-        "ansible_system_vendor": "VMware, Inc.",
-        "ansible_user_id": "root",
+        "ansible_system_capabilities": [
+            ""
+        ],
+        "ansible_system_capabilities_enforced": "True",
+        "ansible_system_vendor": "Xen",
+        "ansible_uptime_seconds": 151,
+        "ansible_user_dir": "/home/zuul",
+        "ansible_user_gecos": "",
+        "ansible_user_gid": 1000,
+        "ansible_user_id": "zuul",
+        "ansible_user_shell": "/bin/bash",
+        "ansible_user_uid": 1000,
         "ansible_userspace_architecture": "x86_64",
         "ansible_userspace_bits": "64",
         "ansible_virtualization_role": "guest",
-        "ansible_virtualization_type": "VMware"
+        "ansible_virtualization_type": "xen",
+        "gather_subset": [
+            "all"
+        ],
+        "module_setup": true
     }
 
-In the above the model of the first harddrive may be referenced in a template or playbook as::
+In the above the model of the first disk may be referenced in a template or playbook as::
 
-    {{ ansible_devices.sda.model }}
+    {{ ansible_facts['devices']['xvda']['model'] }}
 
 Similarly, the hostname as the system reports it is::
 
-    {{ ansible_nodename }}
+    {{ ansible_facts['nodename'] }}
 
-and the unqualified hostname shows the string before the first period(.)::
+Facts are frequently used in conditionals (see :ref:`playbooks_conditionals`) and also in templates.
 
-    {{ ansible_hostname }}
-
-Facts are frequently used in conditionals (see :doc:`playbooks_conditionals`) and also in templates.
-
-Facts can be also used to create dynamic groups of hosts that match particular criteria, see the :doc:`modules` documentation on **group_by** for details, as well as in generalized conditional statements as discussed in the :doc:`playbooks_conditionals` chapter.
+Facts can be also used to create dynamic groups of hosts that match particular criteria, see the :ref:`modules` documentation on **group_by** for details, as well as in generalized conditional statements as discussed in the :ref:`playbooks_conditionals` chapter.
 
 .. _disabling_facts:
 
-Turning Off Facts
-`````````````````
+Disabling facts
+---------------
 
 If you know you don't need any fact data about your hosts, and know everything about your systems centrally, you
 can turn off fact gathering.  This has advantages in scaling Ansible in push mode with very large numbers of
@@ -434,8 +644,8 @@ systems, mainly, or if you are using Ansible on experimental platforms.   In any
 
 .. _local_facts:
 
-Local Facts (Facts.d)
-`````````````````````
+Local facts (facts.d)
+---------------------
 
 .. versionadded:: 1.3
 
@@ -475,11 +685,11 @@ And you will see the following fact added::
 
 And this data can be accessed in a ``template/playbook`` as::
 
-     {{ ansible_local.preferences.general.asdf }}
+     {{ ansible_local['preferences']['general']['asdf'] }}
 
 The local namespace prevents any user supplied fact from overriding system facts or variables defined elsewhere in the playbook.
 
-.. note:: The key part in the key=value pairs will be converted into lowercase inside the ansible_local variable. Using the example above, if the ini file contained ``XYZ=3`` in the ``[general]`` section, then you should expect to access it as: ``{{ ansible_local.preferences.general.xyz }}`` and not ``{{ ansible_local.preferences.general.XYZ }}``. This is because Ansible uses Python's `ConfigParser`_ which passes all option names through the `optionxform`_ method and this method's default implementation converts option names to lower case.
+.. note:: The key part in the key=value pairs will be converted into lowercase inside the ansible_local variable. Using the example above, if the ini file contained ``XYZ=3`` in the ``[general]`` section, then you should expect to access it as: ``{{ ansible_local['preferences']['general']['xyz'] }}`` and not ``{{ ansible_local['preferences']['general']['XYZ'] }}``. This is because Ansible uses Python's `ConfigParser`_ which passes all option names through the `optionxform`_ method and this method's default implementation converts option names to lower case.
 
 .. _ConfigParser: https://docs.python.org/2/library/configparser.html
 .. _optionxform: https://docs.python.org/2/library/configparser.html#ConfigParser.RawConfigParser.optionxform
@@ -502,7 +712,7 @@ In this pattern however, you could also write a fact module as well, and may wis
 .. _ansible_version:
 
 Ansible version
-```````````````
+---------------
 
 .. versionadded:: 1.8
 
@@ -519,14 +729,14 @@ structure::
 
 .. _fact_caching:
 
-Fact Caching
-````````````
+Caching Facts
+-------------
 
 .. versionadded:: 1.8
 
 As shown elsewhere in the docs, it is possible for one server to reference variables about another, like so::
 
-    {{ hostvars['asdf.example.com']['ansible_os_family'] }}
+    {{ hostvars['asdf.example.com']['ansible_facts']['os_family'] }}
 
 With "Fact Caching" disabled, in order to do this, Ansible must have already talked to 'asdf.example.com' in the
 current play, or another play up higher in the playbook.  This is the default configuration of ansible.
@@ -577,15 +787,13 @@ directory (ansible will attempt to create the directory if one does not exist).
 
 .. _registered_variables:
 
-Registered Variables
-````````````````````
+Registering variables
+=====================
 
-Another major use of variables is running a command and using the result of that command to save the result into a variable. Results will vary from module to module. Use of ``-v`` when executing playbooks will show possible values for the results.
+Another major use of variables is running a command and registering the result of that command as a variable. When you execute a task and save the return value in a variable for use in later tasks, you create a registered variable. There are more examples of this in the
+:ref:`playbooks_conditionals` chapter.
 
-The value of a task being executed in ansible can be saved in a variable and used later.  See some examples of this in the
-:doc:`playbooks_conditionals` chapter.
-
-While it's mentioned elsewhere in that document too, here's a quick syntax example::
+For example::
 
    - hosts: web_servers
 
@@ -598,28 +806,29 @@ While it's mentioned elsewhere in that document too, here's a quick syntax examp
         - shell: /usr/bin/bar
           when: foo_result.rc == 5
 
-Registered variables are valid on the host the remainder of the playbook run, which is the same as the lifetime of "facts"
-in Ansible.  Effectively registered variables are just like facts.
+Results will vary from module to module. Each module's documentation includes a ``RETURN`` section describing that module's return values. To see the values for a particular task, run your playbook with ``-v``.
 
-When using ``register`` with a loop, the data structure placed in the variable during the loop will contain a ``results`` attribute, that is a list of all responses from the module. For a more in-depth example of how this works, see the :doc:`playbooks_loops` section on using register with a loop.
+Registered variables are similar to facts, with a few key differences. Like facts, registered variables are host-level variables. However, registered variables are only stored in memory. (Ansible facts are backed by whatever cache plugin you have configured.) Registered variables are only valid on the host for the rest of the current playbook run. Finally, registered variables and facts have different :ref:`precedence levels <ansible_variable_precedence>`.
+
+When you register a variable in a task with a loop, the registered variable contains a value for each item in the loop. The data structure placed in the variable during the loop will contain a ``results`` attribute, that is a list of all responses from the module. For a more in-depth example of how this works, see the :ref:`playbooks_loops` section on using register with a loop.
 
 .. note:: If a task fails or is skipped, the variable still is registered with a failure or skipped status, the only way to avoid registering a variable is using tags.
 
 .. _accessing_complex_variable_data:
 
-Accessing Complex Variable Data
-````````````````````````````````
+Accessing complex variable data
+===============================
 
 We already described facts a little higher up in the documentation.
 
 Some provided facts, like networking information, are made available as nested data structures.  To access
 them a simple ``{{ foo }}`` is not sufficient, but it is still easy to do.   Here's how we get an IP address::
 
-    {{ ansible_eth0["ipv4"]["address"] }}
+    {{ ansible_facts["eth0"]["ipv4"]["address"] }}
 
 OR alternatively::
 
-    {{ ansible_eth0.ipv4.address }}
+    {{ ansible_facts.eth0.ipv4.address }}
 
 Similarly, this is how we access the first element of an array::
 
@@ -627,33 +836,21 @@ Similarly, this is how we access the first element of an array::
 
 .. _magic_variables_and_hostvars:
 
-Magic Variables, and How To Access Information About Other Hosts
-````````````````````````````````````````````````````````````````
+Accessing information about other hosts with magic variables
+============================================================
 
-Even if you didn't define them yourself, Ansible provides a few variables for you automatically.
-The most important of these are ``hostvars``, ``group_names``, and ``groups``.  Users should not use
-these names themselves as they are reserved.  ``environment`` is also reserved.
+Whether or not you define any variables, you can access information about your hosts with the :ref:`special_variables` Ansible provides, including "magic" variables, facts, and connection variables. Magic variable names are reserved - do not set variables with these names. The variable ``environment`` is also reserved.
 
-``hostvars`` lets you ask about the variables of another host, including facts that have been gathered
-about that host.  If, at this point, you haven't talked to that host yet in any play in the playbook
-or set of playbooks, you can still get the variables, but you will not be able to see the facts.
+The most commonly used magic variables are ``hostvars``, ``groups``, ``group_names``, and ``inventory_hostname``.
+
+``hostvars`` lets you access variables for another host, including facts that have been gathered about that host. You can access host variables at any point in a playbook. Even if you haven't connected to that host yet in any play in the playbook or set of playbooks, you can still get the variables, but you will not be able to see the facts.
 
 If your database server wants to use the value of a 'fact' from another node, or an inventory variable
 assigned to another node, it's easy to do so within a template or even an action line::
 
-    {{ hostvars['test.example.com']['ansible_distribution'] }}
+    {{ hostvars['test.example.com']['ansible_facts']['distribution'] }}
 
-Additionally, ``group_names`` is a list (array) of all the groups the current host is in.  This can be used in templates using Jinja2 syntax to make template source files that vary based on the group membership (or role) of the host
-
-.. code-block:: jinja
-
-   {% if 'webserver' in group_names %}
-      # some part of a configuration file that only applies to webservers
-   {% endif %}
-
-
-``groups`` is a list of all the groups (and hosts) in the inventory.  This can be used to enumerate all hosts within a group.
-For example:
+``groups`` is a list of all the groups (and hosts) in the inventory.  This can be used to enumerate all hosts within a group. For example:
 
 .. code-block:: jinja
 
@@ -661,23 +858,30 @@ For example:
       # something that applies to all app servers.
    {% endfor %}
 
-A frequently used idiom is walking a group to find all IP addresses in that group
+A frequently used idiom is walking a group to find all IP addresses in that group.
 
 .. code-block:: jinja
 
    {% for host in groups['app_servers'] %}
-      {{ hostvars[host]['ansible_eth0']['ipv4']['address'] }}
+      {{ hostvars[host]['ansible_facts']['eth0']['ipv4']['address'] }}
    {% endfor %}
 
-An example of this could include pointing a frontend proxy server to all of the app servers, setting up the correct firewall rules between servers, etc.
+You can use this idiom to point a frontend proxy server to all of the app servers, to set up the correct firewall rules between servers, etc.
 You need to make sure that the facts of those hosts have been populated before though, for example by running a play against them if the facts have not been cached recently (fact caching was added in Ansible 1.8).
 
-Additionally, ``inventory_hostname`` is the name of the hostname as configured in Ansible's inventory host file.  This can
-be useful for when you don't want to rely on the discovered hostname ``ansible_hostname`` or for other mysterious
-reasons.  If you have a long FQDN, ``inventory_hostname_short`` also contains the part up to the first
+``group_names`` is a list (array) of all the groups the current host is in.  This can be used in templates using Jinja2 syntax to make template source files that vary based on the group membership (or role) of the host:
+
+.. code-block:: jinja
+
+   {% if 'webserver' in group_names %}
+      # some part of a configuration file that only applies to webservers
+   {% endif %}
+
+``inventory_hostname`` is the name of the hostname as configured in Ansible's inventory host file.  This can
+be useful when you've disabled fact-gathering, or you don't want to rely on the discovered hostname ``ansible_hostname``.  If you have a long FQDN, you can use ``inventory_hostname_short``, which contains the part up to the first
 period, without the rest of the domain.
 
-``play_hosts`` has been deprecated in 2.2, it was the same as the new ``ansible_play_batch`` variable.
+Other useful magic variables refer to the current play or playbook, including:
 
 .. versionadded:: 2.2
 
@@ -693,8 +897,6 @@ period, without the rest of the domain.
 
 These vars may be useful for filling out templates with multiple hostnames or for injecting the list into the rules for a load balancer.
 
-Don't worry about any of this unless you think you need it.  You'll know when you do.
-
 Also available, ``inventory_dir`` is the pathname of the directory holding Ansible's inventory host file, ``inventory_file`` is the pathname and the filename pointing to the Ansible's inventory host file.
 
 ``playbook_dir`` contains the playbook base directory.
@@ -705,8 +907,8 @@ And finally, ``ansible_check_mode`` (added in version 2.1), a boolean magic vari
 
 .. _variable_file_separation_details:
 
-Variable File Separation
-````````````````````````
+Defining variables in files
+===========================
 
 It's a great idea to keep your playbooks under source control, but
 you may wish to make the playbook source public while keeping certain
@@ -746,8 +948,8 @@ The contents of each variables file is a simple YAML dictionary, like this::
 
 .. _passing_variables_on_the_command_line:
 
-Passing Variables On The Command Line
-`````````````````````````````````````
+Passing variables on the command line
+=====================================
 
 In addition to ``vars_prompt`` and ``vars_files``, it is possible to set variables at the
 command line using the ``--extra-vars`` (or ``-e``) argument.  Variables can be defined using
@@ -760,30 +962,10 @@ key=value format::
 .. note:: Values passed in using the ``key=value`` syntax are interpreted as strings.
           Use the JSON format if you need to pass in anything that shouldn't be a string (Booleans, integers, floats, lists etc).
 
-.. versionadded:: 1.2
-
 JSON string format::
 
     ansible-playbook release.yml --extra-vars '{"version":"1.23.45","other_variable":"foo"}'
     ansible-playbook arcade.yml --extra-vars '{"pacman":"mrs","ghosts":["inky","pinky","clyde","sue"]}'
-
-.. versionadded:: 1.3
-
-YAML string format::
-
-    ansible-playbook release.yml --extra-vars '
-    version: "1.23.45"
-    other_variable: foo'
-
-    ansible-playbook arcade.yml --extra-vars '
-    pacman: mrs
-    ghosts:
-    - inky
-    - pinky
-    - clyde
-    - sue'
-
-.. versionadded:: 1.3
 
 vars from a JSON or YAML file::
 
@@ -793,8 +975,6 @@ This is useful for, among other things, setting the hosts group or the user for 
 
 Escaping quotes and other special characters:
 
-.. versionadded:: 1.2
-
 Ensure you're escaping quotes appropriately for both your markup (e.g. JSON), and for
 the shell you're operating in.::
 
@@ -802,15 +982,13 @@ the shell you're operating in.::
     ansible-playbook arcade.yml --extra-vars '{"name":"Conan O'\\\''Brien"}'
     ansible-playbook script.yml --extra-vars "{\"dialog\":\"He said \\\"I just can\'t get enough of those single and double-quotes"\!"\\\"\"}"
 
-.. versionadded:: 1.3
-
 In these cases, it's probably best to use a JSON or YAML file containing the variable
 definitions.
 
 .. _ansible_variable_precedence:
 
-Variable Precedence: Where Should I Put A Variable?
-````````````````````````````````````````````````````
+Variable precedence: Where should I put a variable?
+===================================================
 
 A lot of folks may ask about how variables override another.  Ultimately it's Ansible's philosophy that it's better
 you know where to put a variable, and then you have to think about it a lot less.
@@ -828,30 +1006,28 @@ If multiple variables of the same name are defined in different places, they get
 
 Here is the order of precedence from least to greatest (the last listed variables winning prioritization):
 
-  * role defaults [1]_
-  * inventory file or script group vars [2]_
-  * inventory group_vars/all [3]_
-  * playbook group_vars/all [3]_
-  * inventory group_vars/* [3]_
-  * playbook group_vars/* [3]_
-  * inventory file or script host vars [2]_
-  * inventory host_vars/*
-  * playbook host_vars/*
-  * host facts / cached set_facts [4]_
-  * inventory host_vars/* [3]_
-  * playbook host_vars/* [3]_
-  * host facts
-  * play vars
-  * play vars_prompt
-  * play vars_files
-  * role vars (defined in role/vars/main.yml)
-  * block vars (only for tasks in block)
-  * task vars (only for the task)
-  * include_vars
-  * set_facts / registered vars
-  * role (and include_role) params
-  * include params
-  * extra vars (always win precedence)
+  #. command line values (eg "-u user")
+  #. role defaults [1]_
+  #. inventory file or script group vars [2]_
+  #. inventory group_vars/all [3]_
+  #. playbook group_vars/all [3]_
+  #. inventory group_vars/* [3]_
+  #. playbook group_vars/* [3]_
+  #. inventory file or script host vars [2]_
+  #. inventory host_vars/* [3]_
+  #. playbook host_vars/* [3]_
+  #. host facts / cached set_facts [4]_
+  #. play vars
+  #. play vars_prompt
+  #. play vars_files
+  #. role vars (defined in role/vars/main.yml)
+  #. block vars (only for tasks in block)
+  #. task vars (only for the task)
+  #. include_vars
+  #. set_facts / registered vars
+  #. role (and include_role) params
+  #. include params
+  #. extra vars (always win precedence)
 
 Basically, anything that goes into "role defaults" (the defaults folder inside the role) is the most malleable and easily overridden. Anything in the vars directory of the role overrides previous versions of that variable in namespace.  The idea here to follow is that the more explicit you get in scope, the more precedence it takes with command line ``-e`` extra vars always winning.  Host and/or inventory variables can win over role defaults, but not explicit includes like the vars directory or an ``include_vars`` task.
 
@@ -867,26 +1043,37 @@ Basically, anything that goes into "role defaults" (the defaults folder inside t
           If multiple groups have the same variable, the last one loaded wins.
           If you define a variable twice in a play's ``vars:`` section, the second one wins.
 .. note:: The previous describes the default config ``hash_behaviour=replace``, switch to ``merge`` to only partially overwrite.
-.. note:: Group loading follows parent/child relationships. Groups of the same 'patent/child' level are then merged following alphabetical order.
-          This last one can be superceeded by the user via ``ansible_group_priority``, which defaults to 0 for all groups.
+.. note:: Group loading follows parent/child relationships. Groups of the same 'parent/child' level are then merged following alphabetical order.
+          This last one can be superceeded by the user via ``ansible_group_priority``, which defaults to ``1`` for all groups.
+          This variable, ``ansible_group_priority``, can only be set in the inventory source and not in group_vars/ as the variable is used in the loading of group_vars/.
 
-
-Another important thing to consider (for all versions) is that connection variables override config, command line and play/role/task specific options and keywords.  For example::
+Another important thing to consider (for all versions) is that connection variables override config, command line and play/role/task specific options and keywords.  For example, if your inventory specifies ``ansible_user: ramon`` and you run::
 
     ansible -u lola myhost
 
-This will still connect as ``ramon`` because ``ansible_ssh_user`` is set to ``ramon`` in inventory for myhost.
-For plays/tasks this is also true for ``remote_user``::
+This will still connect as ``ramon`` because the value from the variable takes priority (in this case, the variable came from the inventory, but the same would be true no matter where the variable was defined).
+
+For plays/tasks this is also true for ``remote_user``. Assuming the same inventory config, the following play::
 
  - hosts: myhost
    tasks:
-    - command: i'll connect as ramon still
+    - command: I'll connect as ramon still
       remote_user: lola
 
-This is done so host-specific settings can override the general settings. These variables are normally defined per host or group in inventory,
-but they behave like other variables. If you want to override the remote user globally (even over inventory) you can use extra vars::
+will have the value of ``remote_user`` overwritten by ``ansible_user`` in the inventory.
 
-    ansible... -e "ansible_user=<user>"
+This is done so host-specific settings can override the general settings. These variables are normally defined per host or group in inventory,
+but they behave like other variables.
+
+If you want to override the remote user globally (even over inventory) you can use extra vars. For instance, if you run::
+
+    ansible... -e "ansible_user=maria" -u lola
+
+the ``lola`` value is still ignored, but ``ansible_user=maria`` takes precedence over all other places where ``ansible_user`` (or ``remote_user``) might be set.
+
+A connection-specific version of a variable takes precedence over more generic
+versions.  For example, ``ansible_ssh_user`` specified as a group_var would have
+a higher precedence than ``ansible_user`` specified as a host_var.
 
 You can also override as a normal variable in a play::
 
@@ -894,14 +1081,14 @@ You can also override as a normal variable in a play::
       vars:
         ansible_user: lola
       tasks:
-        - command: i'll connect as lola!
+        - command: I'll connect as lola!
 
 .. _variable_scopes:
 
-Variable Scopes
-````````````````
+Scoping variables
+-----------------
 
-Ansible has three main scopes:
+You can decide where to set a variable based on the scope you want that value to have. Ansible has three main scopes:
 
  * Global: this is set by config, environment variables and the command line
  * Play: each play and contained structures, vars entries (vars; vars_files; vars_prompt), role defaults and vars.
@@ -909,15 +1096,15 @@ Ansible has three main scopes:
 
 .. _variable_examples:
 
-Variable Examples
-`````````````````
+Examples of where to set a variable
+-----------------------------------
 
  Let's show some examples and where you would choose to put what based on the kind of control you might want over values.
 
 First off, group variables are powerful.
 
-Site wide defaults should be defined as a ``group_vars/all`` setting.  Group variables are generally placed alongside
-your inventory file.  They can also be returned by a dynamic inventory script (see :doc:`intro_dynamic_inventory`) or defined
+Site-wide defaults should be defined as a ``group_vars/all`` setting.  Group variables are generally placed alongside
+your inventory file.  They can also be returned by a dynamic inventory script (see :ref:`intro_dynamic_inventory`) or defined
 in things like :ref:`ansible_tower` from the UI or API::
 
     ---
@@ -948,7 +1135,7 @@ roles aren't you?  Hint hint.
 
 If you are writing a redistributable role with reasonable defaults, put those in the ``roles/x/defaults/main.yml`` file.  This means
 the role will bring along a default value but ANYTHING in Ansible will override it.
-See :doc:`playbooks_reuse_roles` for more info about this::
+See :ref:`playbooks_reuse_roles` for more info about this::
 
     ---
     # file: roles/x/defaults/main.yml
@@ -1019,34 +1206,30 @@ So, that's precedence, explained in a more direct way.  Don't worry about preced
 variable that is a default, or a "live" variable you definitely want to use.  Inventory lies in precedence right in the middle, and
 if you want to forcibly override something, use ``-e``.
 
-If you found that a little hard to understand, take a look at the `ansible-examples`_ repo on our github for a bit more about
-how all of these things can work together.
+If you found that a little hard to understand, take a look at the `ansible-examples <https://github.com/ansible/ansible-examples>`_ repo on GitHub for a bit more about how all of these things can work together.
 
-.. _ansible-examples: https://github.com/ansible/ansible-examples
-.. _builtin filters: http://jinja.pocoo.org/docs/templates/#builtin-filters
+Using advanced variable syntax
+==============================
 
-Advanced Syntax
-```````````````
-
-For information about advanced YAML syntax used to declare variables and have more control over the data placed in YAML files used by Ansible, see :doc:`playbooks_advanced_syntax`.
+For information about advanced YAML syntax used to declare variables and have more control over the data placed in YAML files used by Ansible, see :ref:`playbooks_advanced_syntax`.
 
 .. seealso::
 
-   :doc:`playbooks`
+   :ref:`about_playbooks`
        An introduction to playbooks
-   :doc:`playbooks_conditionals`
+   :ref:`playbooks_conditionals`
        Conditional statements in playbooks
-   :doc:`playbooks_filters`
+   :ref:`playbooks_filters`
        Jinja2 filters and their uses
-   :doc:`playbooks_loops`
+   :ref:`playbooks_loops`
        Looping in playbooks
-   :doc:`playbooks_reuse_roles`
+   :ref:`playbooks_reuse_roles`
        Playbook organization by roles
-   :doc:`playbooks_best_practices`
+   :ref:`playbooks_best_practices`
        Best practices in playbooks
+   :ref:`special_variables`
+       List of special variables
    `User Mailing List <http://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
-

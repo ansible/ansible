@@ -1,0 +1,2 @@
+minor_changes:
+  - azure_rm_appgateway - add redirect configurations and probes

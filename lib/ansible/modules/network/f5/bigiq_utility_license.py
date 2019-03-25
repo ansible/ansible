@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -26,6 +26,7 @@ options:
   license_key:
     description:
       - The license key to install and activate.
+    type: str
     required: True
   accept_eula:
     description:
@@ -38,10 +39,11 @@ options:
       - The state of the utility license on the system.
       - When C(present), guarantees that the license exists.
       - When C(absent), removes the license from the system.
-    default: present
+    type: str
     choices:
       - absent
       - present
+    default: present
 requirements:
   - BIG-IQ >= 5.3.0
 extends_documentation_fragment: f5
@@ -54,19 +56,21 @@ EXAMPLES = r'''
   bigiq_utility_license:
     license_key: XXXXX-XXXXX-XXXXX-XXXXX-XXXXX
     accept_eula: yes
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
 - name: Remove a utility license from the system
   bigiq_utility_license:
     license_key: XXXXX-XXXXX-XXXXX-XXXXX-XXXXX
-    password: secret
-    server: lb.mydomain.com
     state: absent
-    user: admin
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 '''
 
@@ -83,15 +87,11 @@ try:
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
 except ImportError:
     from ansible.module_utils.network.f5.bigiq import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
 
 
 class Parameters(AnsibleF5Parameters):
@@ -177,7 +177,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(client=self.client, params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -448,13 +448,14 @@ def main():
         required_if=spec.required_if
     )
 
+    client = F5RestClient(**module.params)
+
     try:
-        client = F5RestClient(module=module)
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

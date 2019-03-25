@@ -1,0 +1,27 @@
+---
+
+- nxos_command:
+    commands:
+      - show hostname
+  connection: httpapi
+  vars:
+    ansible_httpapi_use_ssl: yes
+    ansible_httpapi_validate_certs: no
+    ansible_httpapi_port: 443
+  register: result
+
+- name: Assert command over connection httpapi was successful
+  assert:
+     that:
+        - "result.failed == false"
+
+- nxos_command:
+    commands:
+      - show hostname
+    provider: "{{ nxapi_ssl }}"
+  register: result
+
+- name: Assert command over nxapi_ssl provider was successful
+  assert:
+     that:
+        - "result.failed == false"

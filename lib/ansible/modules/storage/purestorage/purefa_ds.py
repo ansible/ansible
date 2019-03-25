@@ -69,12 +69,14 @@ options:
       specify OU= for each OU and multiple OUs should be separated by commas.
       The order of OUs is important and should get larger in scope from left
       to right. Each OU should not exceed 64 characters in length.
+    - Not Supported from Purity 5.2.0 or higher. Use I(purefa_dsrole) module.
   ro_group:
     description:
     - Sets the common Name (CN) of the configured directory service group
       containing users with read-only privileges on the FlashArray. This
       name should be just the Common Name of the group without the CN=
       specifier. Common Names should not exceed 64 characters in length.
+    - Not Supported from Purity 5.2.0 or higher. Use I(purefa_dsrole) module.
   sa_group:
     description:
     - Sets the common Name (CN) of the configured directory service group
@@ -82,24 +84,26 @@ options:
       FlashArray. This name should be just the Common Name of the group
       without the CN= specifier. Common Names should not exceed 64
       characters in length.
+    - Not Supported from Purity 5.2.0 or higher. Use I(purefa_dsrole) module.
   aa_group:
     description:
     - Sets the common Name (CN) of the directory service group containing
       administrators with full privileges when managing the FlashArray.
       The name should be just the Common Name of the group without the
       CN= specifier. Common Names should not exceed 64 characters in length.
+    - Not Supported from Purity 5.2.0 or higher. Use I(purefa_dsrole) module.
 extends_documentation_fragment:
 - purestorage.fa
 '''
 
 EXAMPLES = r'''
-- name: Delete exisitng directory service
+- name: Delete existing directory service
   purefa_ds:
     state: absent
     fa_url: 10.10.10.2
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
 
-- name: Create directory service (disabled)
+- name: Create directory service (disabled) - Pre-5.2.0
   purefa_ds:
     uri: "ldap://lab.purestorage.com"
     base_dn: "DC=lab,DC=purestorage,DC=com"
@@ -112,19 +116,28 @@ EXAMPLES = r'''
     fa_url: 10.10.10.2
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
 
-- name: Enable exisitng directory service
+- name: Create directory service (disabled) - 5.2.0 or higher
+  purefa_ds:
+    uri: "ldap://lab.purestorage.com"
+    base_dn: "DC=lab,DC=purestorage,DC=com"
+    bind_user: Administrator
+    bind_password: password
+    fa_url: 10.10.10.2
+    api_token: e31060a7-21fc-e277-6240-25983c6c4592
+
+- name: Enable existing directory service
   purefa_ds:
     enable: true
     fa_url: 10.10.10.2
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
 
-- name: Disable exisitng directory service
+- name: Disable existing directory service
   purefa_ds:
     enable: false
     fa_url: 10.10.10.2
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
 
-- name: Create directory service (enabled)
+- name: Create directory service (enabled) - Pre-5.2.0
   purefa_ds:
     enable: true
     uri: "ldap://lab.purestorage.com"
@@ -135,6 +148,16 @@ EXAMPLES = r'''
     ro_group: PureReadOnly
     sa_group: PureStorage
     aa_group: PureAdmin
+    fa_url: 10.10.10.2
+    api_token: e31060a7-21fc-e277-6240-25983c6c4592
+
+- name: Create directory service (enabled) - 5.2.0 or higher
+  purefa_ds:
+    enable: true
+    uri: "ldap://lab.purestorage.com"
+    base_dn: "DC=lab,DC=purestorage,DC=com"
+    bind_user: Administrator
+    bind_password: password
     fa_url: 10.10.10.2
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
 '''
@@ -144,6 +167,9 @@ RETURN = r'''
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pure import get_system, purefa_argument_spec
+
+
+DS_ROLE_REQUIRED_API_VERSION = '1.16'
 
 
 def update_ds(module, array):
@@ -158,7 +184,7 @@ def enable_ds(module, array):
     try:
         array.enable_directory_service()
         changed = True
-    except:
+    except Exception:
         module.fail_json(msg='Enable Directory Service failed: Check Configuration')
     module.exit_json(changed=changed)
 
@@ -170,7 +196,7 @@ def disable_ds(module, array):
     try:
         array.disable_directory_service()
         changed = True
-    except:
+    except Exception:
         module.fail_json(msg='Disable Directory Service failed')
     module.exit_json(changed=changed)
 
@@ -179,18 +205,27 @@ def delete_ds(module, array):
     """Delete Directory Service"""
     changed = False
     try:
+        api_version = array._list_available_rest_versions()
         array.set_directory_service(enabled=False)
-        array.set_directory_service(uri=[''],
-                                    base_dn="",
-                                    group_base="",
-                                    bind_user="",
-                                    bind_password="",
-                                    readonly_group="",
-                                    storage_admin_group="",
-                                    array_admin_group="",
-                                    certificate="")
-        changed = True
-    except:
+        if DS_ROLE_REQUIRED_API_VERSION in api_version:
+            array.set_directory_service(uri=[''],
+                                        base_dn="",
+                                        bind_user="",
+                                        bind_password="",
+                                        certificate="")
+            changed = True
+        else:
+            array.set_directory_service(uri=[''],
+                                        base_dn="",
+                                        group_base="",
+                                        bind_user="",
+                                        bind_password="",
+                                        readonly_group="",
+                                        storage_admin_group="",
+                                        array_admin_group="",
+                                        certificate="")
+            changed = True
+    except Exception:
         module.fail_json(msg='Delete Directory Service failed')
     module.exit_json(changed=changed)
 
@@ -198,25 +233,39 @@ def delete_ds(module, array):
 def create_ds(module, array):
     """Create Directory Service"""
     changed = False
-    groups_rule = [not module.params['ro_group'],
-                   not module.params['sa_group'],
-                   not module.params['aa_group']]
+    api_version = array._list_available_rest_versions()
+    if DS_ROLE_REQUIRED_API_VERSION in api_version:
+        if not module.params['role']:
+            module.fail_json(msg='At least one role must be configured')
+        try:
+            array.set_directory_service(uri=module.params['uri'],
+                                        base_dn=module.params['base_dn'],
+                                        bind_user=module.params['bind_user'],
+                                        bind_password=module.params['bind_password'])
+            array.set_directory_service(enabled=module.params['enable'])
+            changed = True
+        except Exception:
+            module.fail_json(msg='Create Directory Service failed: Check configuration')
+    else:
+        groups_rule = [not module.params['ro_group'],
+                       not module.params['sa_group'],
+                       not module.params['aa_group']]
 
-    if all(groups_rule):
-        module.fail_json(msg='At least one group must be configured')
-    try:
-        array.set_directory_service(uri=module.params['uri'],
-                                    base_dn=module.params['base_dn'],
-                                    group_base=module.params['group_base'],
-                                    bind_user=module.params['bind_user'],
-                                    bind_password=module.params['bind_password'],
-                                    readonly_group=module.params['ro_group'],
-                                    storage_admin_group=module.params['sa_group'],
-                                    array_admin_group=module.params['aa_group'])
-        array.set_directory_service(enabled=module.params['enable'])
-        changed = True
-    except:
-        module.fail_json(msg='Create Directory Service failed: Check configuration')
+        if all(groups_rule):
+            module.fail_json(msg='At least one group must be configured')
+        try:
+            array.set_directory_service(uri=module.params['uri'],
+                                        base_dn=module.params['base_dn'],
+                                        group_base=module.params['group_base'],
+                                        bind_user=module.params['bind_user'],
+                                        bind_password=module.params['bind_password'],
+                                        readonly_group=module.params['ro_group'],
+                                        storage_admin_group=module.params['sa_group'],
+                                        array_admin_group=module.params['aa_group'])
+            array.set_directory_service(enabled=module.params['enable'])
+            changed = True
+        except Exception:
+            module.fail_json(msg='Create Directory Service failed: Check configuration')
     module.exit_json(changed=changed)
 
 
@@ -262,6 +311,7 @@ def main():
         create_ds(module, array)
     else:
         module.exit_json(changed=False)
+
 
 if __name__ == '__main__':
     main()

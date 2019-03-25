@@ -1,0 +1,9 @@
+---
+- name: run tests with cleanup
+  block:
+  - name: run tests
+    include_tasks: win_rds_rap_tests.yml
+
+  always:
+  - name: delete all RAPs
+    win_shell: Import-Module RemoteDesktopServices; Remove-Item -Path RDS:\GatewayServer\RAP\* -Recurse

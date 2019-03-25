@@ -27,18 +27,19 @@ from ansible.playbook.conditional import Conditional
 from ansible.playbook.helpers import load_list_of_tasks
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
+from ansible.utils.sentinel import Sentinel
 
 
 class Block(Base, Become, Conditional, Taggable):
 
     # main block fields containing the task lists
-    _block = FieldAttribute(isa='list', default=[], inherit=False)
-    _rescue = FieldAttribute(isa='list', default=[], inherit=False)
-    _always = FieldAttribute(isa='list', default=[], inherit=False)
+    _block = FieldAttribute(isa='list', default=list, inherit=False)
+    _rescue = FieldAttribute(isa='list', default=list, inherit=False)
+    _always = FieldAttribute(isa='list', default=list, inherit=False)
 
     # other fields
     _delegate_to = FieldAttribute(isa='string')
-    _delegate_facts = FieldAttribute(isa='bool', default=False)
+    _delegate_facts = FieldAttribute(isa='bool')
 
     # for future consideration? this would be functionally
     # similar to the 'else' clause for exceptions
@@ -160,6 +161,12 @@ class Block(Base, Become, Conditional, Taggable):
             )
         except AssertionError as e:
             raise AnsibleParserError("A malformed block was encountered while loading always", obj=self._ds, orig_exc=e)
+
+    def _validate_always(self, attr, name, value):
+        if value and not self.block:
+            raise AnsibleParserError("'%s' keyword cannot be used without 'block'" % name, obj=self._ds)
+
+    _validate_rescue = _validate_always
 
     def get_dep_chain(self):
         if self._dep_chain is None:
@@ -305,51 +312,45 @@ class Block(Base, Become, Conditional, Taggable):
             else:
                 _parent = self._parent._parent
 
-            if _parent and (value is None or extend):
+            if _parent and (value is Sentinel or extend):
                 try:
                     if getattr(_parent, 'statically_loaded', True):
                         if hasattr(_parent, '_get_parent_attribute'):
                             parent_value = _parent._get_parent_attribute(attr)
                         else:
-                            parent_value = _parent._attributes.get(attr, None)
+                            parent_value = _parent._attributes.get(attr, Sentinel)
                         if extend:
                             value = self._extend_value(value, parent_value, prepend)
                         else:
                             value = parent_value
                 except AttributeError:
                     pass
-            if self._role and (value is None or extend):
+            if self._role and (value is Sentinel or extend):
                 try:
-                    if hasattr(self._role, '_get_parent_attribute'):
-                        parent_value = self._role.get_parent_attribute(attr)
-                    else:
-                        parent_value = self._role._attributes.get(attr, None)
+                    parent_value = self._role._attributes.get(attr, Sentinel)
                     if extend:
                         value = self._extend_value(value, parent_value, prepend)
                     else:
                         value = parent_value
 
                     dep_chain = self.get_dep_chain()
-                    if dep_chain and (value is None or extend):
+                    if dep_chain and (value is Sentinel or extend):
                         dep_chain.reverse()
                         for dep in dep_chain:
-                            if hasattr(dep, '_get_parent_attribute'):
-                                dep_value = dep._get_parent_attribute(attr)
-                            else:
-                                dep_value = dep._attributes.get(attr, None)
+                            dep_value = dep._attributes.get(attr, Sentinel)
                             if extend:
                                 value = self._extend_value(value, dep_value, prepend)
                             else:
                                 value = dep_value
 
-                            if value is not None and not extend:
+                            if value is not Sentinel and not extend:
                                 break
                 except AttributeError:
                     pass
-            if self._play and (value is None or extend):
+            if self._play and (value is Sentinel or extend):
                 try:
-                    play_value = self._play._attributes.get(attr, None)
-                    if play_value is not None:
+                    play_value = self._play._attributes.get(attr, Sentinel)
+                    if play_value is not Sentinel:
                         if extend:
                             value = self._extend_value(value, play_value, prepend)
                         else:
@@ -361,10 +362,9 @@ class Block(Base, Become, Conditional, Taggable):
 
         return value
 
-    def filter_tagged_tasks(self, play_context, all_vars):
+    def filter_tagged_tasks(self, all_vars):
         '''
-        Creates a new block, with task lists filtered based on the tags contained
-        within the play_context object.
+        Creates a new block, with task lists filtered based on the tags.
         '''
 
         def evaluate_and_append_task(target):
@@ -373,8 +373,8 @@ class Block(Base, Become, Conditional, Taggable):
                 if isinstance(task, Block):
                     tmp_list.append(evaluate_block(task))
                 elif (task.action == 'meta' or
-                        (task.action == 'include' and task.evaluate_tags([], play_context.skip_tags, all_vars=all_vars)) or
-                        task.evaluate_tags(play_context.only_tags, play_context.skip_tags, all_vars=all_vars)):
+                        (task.action == 'include' and task.evaluate_tags([], self._play.skip_tags, all_vars=all_vars)) or
+                        task.evaluate_tags(self._play.only_tags, self._play.skip_tags, all_vars=all_vars)):
                     tmp_list.append(task)
             return tmp_list
 

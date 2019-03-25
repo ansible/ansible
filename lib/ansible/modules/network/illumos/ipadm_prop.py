@@ -61,22 +61,22 @@ RETURN = '''
 protocol:
     description: property's protocol
     returned: always
-    type: string
+    type: str
     sample: "TCP"
 property:
     description: name of the property
     returned: always
-    type: string
+    type: str
     sample: "recv_maxbuf"
 state:
     description: state of the target
     returned: always
-    type: string
+    type: str
     sample: "present"
 temporary:
     description: property's persistence
     returned: always
-    type: boolean
+    type: bool
     sample: "True"
 value:
     description: value of the property. May be int or string depending on property.

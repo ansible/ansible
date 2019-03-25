@@ -7,9 +7,12 @@ import sys
 def main():
     skip = set([
         # add legitimate uses of expanduser to the following list
+        'lib/ansible/modules/cloud/docker/docker_container.py',  # uses colon-separated paths, can't use type=path
         'lib/ansible/modules/cloud/lxc/lxc_container.py',
         'lib/ansible/modules/cloud/rackspace/rax_files_objects.py',
         'lib/ansible/modules/database/mongodb/mongodb_parameter.py',
+        'lib/ansible/modules/database/mongodb/mongodb_replicaset.py',
+        'lib/ansible/modules/database/mongodb/mongodb_shard.py',
         'lib/ansible/modules/database/mongodb/mongodb_user.py',
         'lib/ansible/modules/database/postgresql/postgresql_db.py',
         'lib/ansible/modules/files/synchronize.py',
@@ -20,6 +23,8 @@ def main():
         'lib/ansible/modules/web_infrastructure/ansible_tower/tower_host.py',
         'lib/ansible/modules/web_infrastructure/ansible_tower/tower_group.py',
         'lib/ansible/modules/web_infrastructure/jenkins_plugin.py',
+        'lib/ansible/modules/cloud/vmware/vmware_deploy_ovf.py',
+        'lib/ansible/modules/crypto/certificate_complete_chain.py',  # would need something like type=list(path)
         # fix uses of expanduser in the following modules and remove them from the following list
         'lib/ansible/modules/cloud/rackspace/rax.py',
         'lib/ansible/modules/cloud/rackspace/rax_scaling_group.py',

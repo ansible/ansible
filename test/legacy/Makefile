@@ -1,7 +1,7 @@
 # This Makefile is for legacy integration tests.
 # Most new tests should be implemented using ansible-test.
 # Existing tests are slowly being migrated to ansible-test.
-# See: https://docs.ansible.com/ansible/dev_guide/testing_integration.html
+# See: https://docs.ansible.com/ansible/devel/dev_guide/testing_integration.html
 
 TEST_DIR ?= ~/ansible_testing
 INVENTORY ?= inventory
@@ -43,6 +43,11 @@ amazon_cleanup:
 
 azure_cleanup:
 	python cleanup_azure.py -y --match="^$(CLOUD_RESOURCE_PREFIX)"
+
+digital_ocean: $(CREDENTIALS_FILE)
+	ansible-playbook digital_ocean.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) ; \
+	RC=$$? ; \
+	exit $$RC;
 
 gce_setup:
 	python setup_gce.py "$(CLOUD_RESOURCE_PREFIX)"

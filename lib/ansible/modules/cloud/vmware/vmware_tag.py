@@ -65,33 +65,34 @@ extends_documentation_fragment: vmware_rest_client.documentation
 EXAMPLES = r'''
 - name: Create a tag
   vmware_tag:
-    hostname: 10.65.223.91
-    username: administrator@vsphere.local
-    password: Esxi@123$
-    validate_certs: False
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    validate_certs: no
     category_id: 'urn:vmomi:InventoryServiceCategory:e785088d-6981-4b1c-9fb8-1100c3e1f742:GLOBAL'
     tag_name: Sample_Tag_0002
     tag_description: Sample Description
     state: present
+  delegate_to: localhost
 
 - name: Update tag description
   vmware_tag:
-    hostname: 10.65.223.91
-    username: administrator@vsphere.local
-    password: Esxi@123$
-    validate_certs: False
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
     tag_name: Sample_Tag_0002
     tag_description: Some fancy description
     state: present
+  delegate_to: localhost
 
 - name: Delete tag
   vmware_tag:
-    hostname: 10.65.223.91
-    username: administrator@vsphere.local
-    password: Esxi@123$
-    validate_certs: False
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
     tag_name: Sample_Tag_0002
     state: absent
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -108,7 +109,7 @@ results:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware_rest_client import VmwareRestClient
 try:
-    from com.vmware.cis.tagging_client import Tag
+    from com.vmware.cis.tagging_client import Tag, Category
 except ImportError:
     pass
 
@@ -120,10 +121,11 @@ class VmwareTag(VmwareRestClient):
         self.global_tags = dict()
         self.tag_name = self.params.get('tag_name')
         self.get_all_tags()
+        self.category_service = Category(self.connect)
 
     def ensure_state(self):
         """
-        Function to manage internal states of tags
+        Manage internal states of tags
 
         """
         desired_state = self.params.get('state')
@@ -141,7 +143,7 @@ class VmwareTag(VmwareRestClient):
 
     def state_create_tag(self):
         """
-        Function to create tag
+        Create tag
 
         """
         tag_spec = self.tag_service.CreateSpec()
@@ -150,6 +152,17 @@ class VmwareTag(VmwareRestClient):
         category_id = self.params.get('category_id', None)
         if category_id is None:
             self.module.fail_json(msg="'category_id' is required parameter while creating tag.")
+
+        category_found = False
+        for category in self.category_service.list():
+            category_obj = self.category_service.get(category)
+            if category_id == category_obj.id:
+                category_found = True
+                break
+
+        if not category_found:
+            self.module.fail_json(msg="Unable to find category specified using 'category_id' - %s" % category_id)
+
         tag_spec.category_id = category_id
         tag_id = self.tag_service.create(tag_spec)
         if tag_id:
@@ -161,14 +174,14 @@ class VmwareTag(VmwareRestClient):
 
     def state_unchanged(self):
         """
-        Function to return unchanged state
+        Return unchanged state
 
         """
         self.module.exit_json(changed=False)
 
     def state_update_tag(self):
         """
-        Function to update tag
+        Update tag
 
         """
         changed = False
@@ -186,7 +199,7 @@ class VmwareTag(VmwareRestClient):
 
     def state_delete_tag(self):
         """
-        Function to delete tag
+        Delete tag
 
         """
         tag_id = self.global_tags[self.tag_name]['tag_id']
@@ -197,18 +210,16 @@ class VmwareTag(VmwareRestClient):
 
     def check_tag_status(self):
         """
-        Function to check if tag exists or not
+        Check if tag exists or not
         Returns: 'present' if tag found, else 'absent'
 
         """
-        if self.tag_name in self.global_tags:
-            return 'present'
-        else:
-            return 'absent'
+        ret = 'present' if self.tag_name in self.global_tags else 'absent'
+        return ret
 
     def get_all_tags(self):
         """
-        Function to retrieve all tag information
+        Retrieve all tag information
 
         """
         for tag in self.tag_service.list():

@@ -4,37 +4,51 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+author: Ansible Networking Team
+httpapi: nxos
+short_description: Use NX-API to run command on nxos platform
+description:
+  - This eos plugin provides low level abstraction api's for
+    sending and receiving CLI commands with nxos network devices.
+version_added: "2.6"
+"""
+
 import json
+import re
+import collections
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.common.utils import to_list
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.plugins.httpapi import HttpApiBase
 
 
-class HttpApi:
-    def __init__(self, connection):
-        self.connection = connection
+OPTIONS = {
+    'format': ['text', 'json'],
+    'diff_match': ['line', 'strict', 'exact', 'none'],
+    'diff_replace': ['line', 'block', 'config'],
+    'output': ['text', 'json']
+}
 
-    def _run_queue(self, queue, output):
-        if self._become:
-            display.vvvv('firing event: on_become')
-            queue.insert(0, 'enable')
-        request = request_builder(queue, output)
-        headers = {'Content-Type': 'application/json'}
 
-        response = self.connection.send('/ins', request, headers=headers, method='POST')
-        response = json.loads(to_text(response.read()))
-        results = handle_response(response)
+class HttpApi(HttpApiBase):
+    def __init__(self, *args, **kwargs):
+        super(HttpApi, self).__init__(*args, **kwargs)
+        self._device_info = None
+        self._module_context = {}
 
-        if self._become:
-            results = results[1:]
-        return results
+    def read_module_context(self, module_key):
+        if self._module_context.get(module_key):
+            return self._module_context[module_key]
+
+        return None
+
+    def save_module_context(self, module_key, module_context):
+        self._module_context[module_key] = module_context
+
+        return None
 
     def send_request(self, data, **message_kwargs):
         output = None
@@ -69,30 +83,93 @@ class HttpApi:
             return responses[0]
         return responses
 
-    def set_become(self, play_context):
-        self._become = play_context.become
-        self._become_pass = getattr(play_context, 'become_pass') or ''
+    def _run_queue(self, queue, output):
+        if self._become:
+            self.connection.queue_message('vvvv', 'firing event: on_become')
+            queue.insert(0, 'enable')
 
-    # Migrated from module_utils
-    def edit_config(self, command):
-        responses = self.send_request(command, output='config')
-        return json.dumps(responses)
+        request = request_builder(queue, output)
+        headers = {'Content-Type': 'application/json'}
 
-    def run_commands(self, commands, check_rc=True):
-        """Runs list of commands on remote device and returns results
-        """
+        response, response_data = self.connection.send('/ins', request, headers=headers, method='POST')
+
         try:
-            out = self.send_request(commands)
-        except ConnectionError as exc:
-            if check_rc:
-                raise
-            out = to_text(exc)
+            response_data = json.loads(to_text(response_data.getvalue()))
+        except ValueError:
+            raise ConnectionError('Response was not valid JSON, got {0}'.format(
+                to_text(response_data.getvalue())
+            ))
 
-        out = to_list(out)
-        for index, response in enumerate(out):
-            if response[0] == '{':
-                out[index] = json.loads(response)
-        return out
+        results = handle_response(response_data)
+
+        if self._become:
+            results = results[1:]
+        return results
+
+    def get_device_info(self):
+        if self._device_info:
+            return self._device_info
+
+        device_info = {}
+
+        device_info['network_os'] = 'nxos'
+        reply = self.send_request('show version')
+        platform_reply = self.send_request('show inventory')
+
+        find_os_version = [r'\s+system:\s+version\s*(\S+)', r'\s+kickstart:\s+version\s*(\S+)', r'\s+NXOS:\s+version\s*(\S+)']
+        for regex in find_os_version:
+            match_ver = re.search(regex, reply, re.M)
+            if match_ver:
+                device_info['network_os_version'] = match_ver.group(1)
+                break
+
+        match_chassis_id = re.search(r'Hardware\n\s+cisco\s*(\S+\s+\S+)', reply, re.M)
+        if match_chassis_id:
+            device_info['network_os_model'] = match_chassis_id.group(1)
+
+        match_host_name = re.search(r'\s+Device name:\s*(\S+)', reply, re.M)
+        if match_host_name:
+            device_info['network_os_hostname'] = match_host_name.group(1)
+
+        find_os_image = [r'\s+system image file is:\s*(\S+)', r'\s+kickstart image file is:\s*(\S+)', r'\s+NXOS image file is:\s*(\S+)']
+        for regex in find_os_image:
+            match_file_name = re.search(regex, reply, re.M)
+            if match_file_name:
+                device_info['network_os_image'] = match_file_name.group(1)
+                break
+
+        match_os_platform = re.search(r'NAME: "Chassis",\s*DESCR:.*\nPID:\s*(\S+)', platform_reply, re.M)
+        if match_os_platform:
+            device_info['network_os_platform'] = match_os_platform.group(1)
+
+        self._device_info = device_info
+        return self._device_info
+
+    def get_device_operations(self):
+        platform = self.get_device_info().get('network_os_platform', '')
+        return {
+            'supports_diff_replace': True,
+            'supports_commit': False,
+            'supports_rollback': False,
+            'supports_defaults': True,
+            'supports_onbox_diff': False,
+            'supports_commit_comment': False,
+            'supports_multiline_delimiter': False,
+            'supports_diff_match': True,
+            'supports_diff_ignore_lines': True,
+            'supports_generate_diff': True,
+            'supports_replace': True if '9K' in platform else False,
+        }
+
+    def get_capabilities(self):
+        result = {}
+        result['rpc'] = []
+        result['device_info'] = self.get_device_info()
+        result['device_operations'] = self.get_device_operations()
+        result.update(OPTIONS)
+        result['network_api'] = 'nxapi'
+
+        return json.dumps(result)
 
 
 def handle_response(response):
@@ -101,7 +178,7 @@ def handle_response(response):
     if response['ins_api'].get('outputs'):
         for output in to_list(response['ins_api']['outputs']['output']):
             if output['code'] != '200':
-                raise ConnectionError('%s: %s' % (output['input'], output['msg']))
+                raise ConnectionError('%s: %s' % (output['input'], output['msg']), code=output['code'])
             elif 'body' in output:
                 result = output['body']
                 if isinstance(result, dict):
@@ -137,12 +214,15 @@ def request_builder(commands, output, version='1.0', chunk='0', sid=None):
     if isinstance(commands, (list, set, tuple)):
         commands = ' ;'.join(commands)
 
-    msg = {
-        'version': version,
-        'type': command_type,
-        'chunk': chunk,
-        'sid': sid,
-        'input': commands,
-        'output_format': 'json'
-    }
+    # Order should not matter but some versions of NX-OS software fail
+    # to process the payload properly if 'input' gets serialized before
+    # 'type' and the payload of 'input' contains the word 'type'.
+    msg = collections.OrderedDict()
+    msg['version'] = version
+    msg['type'] = command_type
+    msg['chunk'] = chunk
+    msg['sid'] = sid
+    msg['input'] = commands
+    msg['output_format'] = 'json'
+
     return json.dumps(dict(ins_api=msg))

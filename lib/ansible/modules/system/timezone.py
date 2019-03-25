@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: timezone
 short_description: Configure timezone setting
@@ -21,26 +21,28 @@ description:
   - Several different tools are used depending on the OS/Distribution involved.
     For Linux it can use C(timedatectl) or edit C(/etc/sysconfig/clock) or C(/etc/timezone) and C(hwclock).
     On SmartOS, C(sm-set-timezone), for macOS, C(systemsetup), for BSD, C(/etc/localtime) is modified.
-  - As of version 2.3 support was added for SmartOS and BSDs.
-  - As of version 2.4 support was added for macOS.
+  - As of Ansible 2.3 support was added for SmartOS and BSDs.
+  - As of Ansible 2.4 support was added for macOS.
   - Windows, AIX and HPUX are not supported, please let us know if you find any other OS/distro in which this fails.
 version_added: "2.2"
 options:
   name:
     description:
       - Name of the timezone for the system clock.
-        Default is to keep current setting. B(At least one of name and
-        hwclock are required.)
+      - Default is to keep current setting.
+      - B(At least one of name and hwclock are required.)
+    type: str
   hwclock:
     description:
       - Whether the hardware clock is in UTC or in local timezone.
-        Default is to keep current setting.
-        Note that this option is recommended not to change and may fail
+      - Default is to keep current setting.
+      - Note that this option is recommended not to change and may fail
         to configure, especially on virtual environments such as AWS.
-        B(At least one of name and hwclock are required.)
-        I(Only used on Linux.)
+      - B(At least one of name and hwclock are required.)
+      - I(Only used on Linux.)
+    type: str
     aliases: [ rtc ]
-    choices: [ "UTC", "local" ]
+    choices: [ local, UTC ]
 notes:
   - On SmartOS the C(sm-set-timezone) utility (part of the smtools package) is required to set the zone timezone
 author:
@@ -49,7 +51,7 @@ author:
   - Indrajit Raychaudhuri (@indrajitr)
 '''
 
-RETURN = '''
+RETURN = r'''
 diff:
   description: The differences about the given arguments.
   returned: success
@@ -63,14 +65,13 @@ diff:
       type: dict
 '''
 
-EXAMPLES = '''
-- name: set timezone to Asia/Tokyo
+EXAMPLES = r'''
+- name: Set timezone to Asia/Tokyo
   timezone:
     name: Asia/Tokyo
 '''
 
 import errno
-import filecmp
 import os
 import platform
 import random
@@ -547,7 +548,7 @@ class NosystemdTimezone(Timezone):
                     try:
                         if not filecmp.cmp('/etc/localtime', '/usr/share/zoneinfo/' + planned):
                             return 'n/a'
-                    except:
+                    except Exception:
                         return 'n/a'
         else:
             self.abort('unknown parameter "%s"' % key)
@@ -611,7 +612,7 @@ class SmartOSTimezone(Timezone):
                     m = re.match('^TZ=(.*)$', line.strip())
                     if m:
                         return m.groups()[0]
-            except:
+            except Exception:
                 self.module.fail_json(msg='Failed to read /etc/default/init')
         else:
             self.module.fail_json(msg='%s is not a supported option on target platform' % key)
@@ -706,20 +707,6 @@ class BSDTimezone(Timezone):
             return 'UTC'
 
         # Strategy 2:
-        #   Return planned timezone as current timezone if their content matches.
-        #   This is bad design to see `self.value` here,
-        #   but it's intended to avoid useless diff.
-        planned = self.value['name']['planned']
-        try:
-            already_planned_state = filecmp.cmp(os.path.join(zoneinfo_dir, planned), localtime_file)
-        except OSError:
-            # Even if reading planned zoneinfo file gives an OSError, don't abort here,
-            # because a bit more detailed check will be done in `set`.
-            already_planned_state = False
-        if already_planned_state:
-            return planned
-
-        # Strategy 3:
         #   Follow symlink of /etc/localtime
         zoneinfo_file = localtime_file
         while not zoneinfo_file.startswith(zoneinfo_dir):
@@ -731,15 +718,16 @@ class BSDTimezone(Timezone):
         else:
             return zoneinfo_file.replace(zoneinfo_dir, '')
 
-        # Strategy 4:
-        #   Check all files in /usr/share/zoneinfo and return first match.
-        for dname, _, fnames in os.walk(zoneinfo_dir):
-            for fname in fnames:
+        # Strategy 3:
+        #   (If /etc/localtime is not symlinked)
+        #   Check all files in /usr/share/zoneinfo and return first non-link match.
+        for dname, _, fnames in sorted(os.walk(zoneinfo_dir)):
+            for fname in sorted(fnames):
                 zoneinfo_file = os.path.join(dname, fname)
-                if filecmp.cmp(zoneinfo_file, localtime_file):
+                if not os.path.islink(zoneinfo_file) and filecmp.cmp(zoneinfo_file, localtime_file):
                     return zoneinfo_file.replace(zoneinfo_dir, '')
 
-        # Strategy 5:
+        # Strategy 4:
         #   As a fall-back, return 'UTC' as default assumption.
         self.module.warn('Could not identify timezone name from /etc/localtime. Assuming UTC.')
         return 'UTC'
@@ -759,7 +747,7 @@ class BSDTimezone(Timezone):
             try:
                 if not os.path.isfile(zonefile):
                     self.module.fail_json(msg='%s is not a recognized timezone' % value)
-            except:
+            except Exception:
                 self.module.fail_json(msg='Failed to stat %s' % zonefile)
 
             # Now (somewhat) atomically update the symlink by creating a new
@@ -773,7 +761,7 @@ class BSDTimezone(Timezone):
             try:
                 os.symlink(zonefile, new_localtime)
                 os.rename(new_localtime, '/etc/localtime')
-            except:
+            except Exception:
                 os.remove(new_localtime)
                 self.module.fail_json(msg='Could not update /etc/localtime')
         else:

@@ -35,6 +35,7 @@ import sys
 import traceback
 import shutil
 
+from ansible.release import __version__
 import ansible.utils.vars as utils_vars
 from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.utils.jsonify import jsonify
@@ -44,10 +45,7 @@ import ansible.constants as C
 from ansible.module_utils._text import to_native, to_text
 from ansible.template import Templar
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
 
 def parse():
@@ -125,8 +123,9 @@ def boilerplate_module(modfile, args, interpreters, check, destfile):
 
     # default selinux fs list is pass in as _ansible_selinux_special_fs arg
     complex_args['_ansible_selinux_special_fs'] = C.DEFAULT_SELINUX_SPECIAL_FS
-    complex_args['_ansible_tmp'] = C.DEFAULT_LOCAL_TMP
+    complex_args['_ansible_tmpdir'] = C.DEFAULT_LOCAL_TMP
     complex_args['_ansible_keep_remote_files'] = C.DEFAULT_KEEP_REMOTE_FILES
+    complex_args['_ansible_version'] = __version__
 
     if args.startswith("@"):
         # Argument is a YAML file (JSON is a subset of YAML)
@@ -156,7 +155,7 @@ def boilerplate_module(modfile, args, interpreters, check, destfile):
         task_vars=task_vars
     )
 
-    if module_style == 'new' and 'ANSIBALLZ_WRAPPER = True' in to_native(module_data):
+    if module_style == 'new' and '_ANSIBALLZ_WRAPPER = True' in to_native(module_data):
         module_style = 'ansiballz'
 
     modfile2_path = os.path.expanduser(destfile)
@@ -192,7 +191,7 @@ def ansiballz_setup(modfile, modname, interpreters):
     debug_dir = lines[1].strip()
 
     argsfile = os.path.join(debug_dir, 'args')
-    modfile = os.path.join(debug_dir, 'ansible_module_%s.py' % modname)
+    modfile = os.path.join(debug_dir, '__main__.py')
 
     print("* ansiballz module detected; extracted module source to: %s" % debug_dir)
     return modfile, argsfile
@@ -222,7 +221,7 @@ def runtest(modfile, argspath, modname, module_style, interpreters):
         print(out)
         print(err)
         results = json.loads(out)
-    except:
+    except Exception:
         print("*" * 35)
         print("INVALID OUTPUT FORMAT")
         print(out)

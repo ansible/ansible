@@ -21,7 +21,7 @@ description:
     - Create or delete log_group in CloudWatchLogs.
 version_added: "2.5"
 author:
-    - Willian Ricardo(@willricardo) <willricardo@gmail.com>
+    - Willian Ricardo (@willricardo) <willricardo@gmail.com>
 requirements: [ json, botocore, boto3 ]
 options:
     state:
@@ -52,6 +52,7 @@ options:
         - Whether an existing log group should be overwritten on create.
      default: false
      required: false
+     type: bool
 extends_documentation_fragment:
     - aws
     - ec2
@@ -89,31 +90,31 @@ log_groups:
         log_group_name:
             description: The name of the log group.
             returned: always
-            type: string
+            type: str
         creation_time:
             description: The creation time of the log group.
             returned: always
-            type: integer
+            type: int
         retention_in_days:
             description: The number of days to retain the log events in the specified log group.
             returned: always
-            type: integer
+            type: int
         metric_filter_count:
             description: The number of metric filters.
             returned: always
-            type: integer
+            type: int
         arn:
             description: The Amazon Resource Name (ARN) of the log group.
             returned: always
-            type: string
+            type: str
         stored_bytes:
             description: The number of bytes stored.
             returned: always
-            type: string
+            type: str
         kms_key_id:
             description: The Amazon Resource Name (ARN) of the CMK to use when encrypting log data.
             returned: always
-            type: string
+            type: str
 '''
 
 import traceback
@@ -241,14 +242,14 @@ def main():
 
     if state == 'present':
         if found_log_group and module.params['overwrite'] is True:
-                changed = True
-                delete_log_group(client=logs, log_group_name=module.params['log_group_name'], module=module)
-                found_log_group = create_log_group(client=logs,
-                                                   log_group_name=module.params['log_group_name'],
-                                                   kms_key_id=module.params['kms_key_id'],
-                                                   tags=module.params['tags'],
-                                                   retention=module.params['retention'],
-                                                   module=module)
+            changed = True
+            delete_log_group(client=logs, log_group_name=module.params['log_group_name'], module=module)
+            found_log_group = create_log_group(client=logs,
+                                               log_group_name=module.params['log_group_name'],
+                                               kms_key_id=module.params['kms_key_id'],
+                                               tags=module.params['tags'],
+                                               retention=module.params['retention'],
+                                               module=module)
         elif not found_log_group:
             changed = True
             found_log_group = create_log_group(client=logs,
@@ -257,6 +258,14 @@ def main():
                                                tags=module.params['tags'],
                                                retention=module.params['retention'],
                                                module=module)
+        elif found_log_group:
+            if module.params['retention'] != found_log_group['retentionInDays']:
+                changed = True
+                input_retention_policy(client=logs,
+                                       log_group_name=module.params['log_group_name'],
+                                       retention=module.params['retention'],
+                                       module=module)
+                found_log_group['retentionInDays'] = module.params['retention']
 
         module.exit_json(changed=changed, **camel_dict_to_snake_dict(found_log_group))
 

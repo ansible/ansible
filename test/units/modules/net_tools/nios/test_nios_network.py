@@ -20,7 +20,7 @@ __metaclass__ = type
 
 from ansible.module_utils.net_tools.nios import api
 from ansible.modules.net_tools.nios import nios_network
-from ansible.compat.tests.mock import patch, MagicMock, Mock
+from units.compat.mock import patch, MagicMock, Mock
 from units.modules.utils import set_module_args
 from .test_nios_module import TestNiosModule, load_fixture
 
@@ -100,20 +100,20 @@ class TestNiosNetworkModule(TestNiosModule):
         self.assertTrue(res['changed'])
 
     def test_nios_network_ipv6_dhcp_update(self):
-        self.module.params = {'provider': None, 'state': 'present', 'network': 'fe80::/64',
+        self.module.params = {'provider': None, 'state': 'present', 'ipv6network': 'fe80::/64',
                               'comment': 'updated comment', 'extattrs': None}
 
         test_object = [
             {
                 "comment": "test comment",
                 "_ref": "ipv6network/ZG5zLm5ldHdvcmtfdmlldyQw:default/true",
-                "network": "fe80::/64",
+                "ipv6network": "fe80::/64",
                 "extattrs": {'options': {'name': 'test', 'value': 'ansible.com'}}
             }
         ]
 
         test_spec = {
-            "network": {"ib_req": True},
+            "ipv6network": {"ib_req": True},
             "comment": {},
             "extattrs": {}
         }
@@ -148,26 +148,25 @@ class TestNiosNetworkModule(TestNiosModule):
         wapi.delete_object.assert_called_once_with(ref)
 
     def test_nios_network_ipv6_create(self):
-        self.module.params = {'provider': None, 'state': 'present', 'network': 'fe80::/64',
+        self.module.params = {'provider': None, 'state': 'present', 'ipv6network': 'fe80::/64',
                               'comment': None, 'extattrs': None}
 
         test_object = None
 
         test_spec = {
-            "network": {"ib_req": True},
+            "ipv6network": {"ib_req": True},
             "comment": {},
             "extattrs": {}
         }
 
         wapi = self._get_wapi(test_object)
-        print("WAPI: ", wapi)
         res = wapi.run('testobject', test_spec)
 
         self.assertTrue(res['changed'])
-        wapi.create_object.assert_called_once_with('testobject', {'network': 'fe80::/64'})
+        wapi.create_object.assert_called_once_with('testobject', {'ipv6network': 'fe80::/64'})
 
     def test_nios_network_ipv6_remove(self):
-        self.module.params = {'provider': None, 'state': 'absent', 'network': 'fe80::/64',
+        self.module.params = {'provider': None, 'state': 'absent', 'ipv6network': 'fe80::/64',
                               'comment': None, 'extattrs': None}
 
         ref = "ipv6network/ZG5zLm5ldHdvcmtfdmlldyQw:ansible/false"
@@ -175,12 +174,12 @@ class TestNiosNetworkModule(TestNiosModule):
         test_object = [{
             "comment": "test comment",
             "_ref": ref,
-            "network": "fe80::/64",
+            "ipv6network": "fe80::/64",
             "extattrs": {'Site': {'value': 'test'}}
         }]
 
         test_spec = {
-            "network": {"ib_req": True},
+            "ipv6network": {"ib_req": True},
             "comment": {},
             "extattrs": {}
         }
@@ -190,3 +189,61 @@ class TestNiosNetworkModule(TestNiosModule):
 
         self.assertTrue(res['changed'])
         wapi.delete_object.assert_called_once_with(ref)
+
+    def test_nios_networkcontainer_ipv4_create(self):
+        self.module.params = {'provider': None, 'state': 'present', 'networkcontainer': '192.168.10.0/24',
+                              'comment': None, 'extattrs': None}
+
+        test_object = None
+        test_spec = {
+            "networkcontainer": {"ib_req": True},
+            "comment": {},
+            "extattrs": {}
+        }
+
+        wapi = self._get_wapi(test_object)
+        res = wapi.run('testobject', test_spec)
+
+        self.assertTrue(res['changed'])
+        wapi.create_object.assert_called_once_with('testobject', {'networkcontainer': '192.168.10.0/24'})
+
+    def test_nios_networkcontainer_ipv4_remove(self):
+        self.module.params = {'provider': None, 'state': 'absent', 'networkcontainer': '192.168.10.0/24',
+                              'comment': None, 'extattrs': None}
+
+        ref = "networkcontainer/ZG5zLm5ldHdvcmtfdmlldyQw:ansible/false"
+
+        test_object = [{
+            "comment": "test comment",
+            "_ref": ref,
+            "networkcontainer": "192.168.10.0/24"
+        }]
+
+        test_spec = {
+            "networkcontainer": {"ib_req": True},
+            "comment": {},
+            "extattrs": {}
+        }
+
+        wapi = self._get_wapi(test_object)
+        res = wapi.run('testobject', test_spec)
+
+        self.assertTrue(res['changed'])
+        wapi.delete_object.assert_called_once_with(ref)
+
+    def test_nios_networkcontainer_ipv6_create(self):
+        self.module.params = {'provider': None, 'state': 'present', 'ipv6networkcontainer': 'fe80::/64',
+                              'comment': None, 'extattrs': None}
+
+        test_object = None
+        test_spec = {
+            "ipv6networkcontainer": {"ib_req": True},
+            "comment": {},
+            "extattrs": {}
+        }
+
+        wapi = self._get_wapi(test_object)
+        res = wapi.run('testobject', test_spec)
+
+        self.assertTrue(res['changed'])
+        wapi.create_object.assert_called_once_with('testobject', {'ipv6networkcontainer': 'fe80::/64'})

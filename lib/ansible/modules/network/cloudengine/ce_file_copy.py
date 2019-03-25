@@ -1,20 +1,7 @@
 #!/usr/bin/python
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# -*- coding: utf-8 -*-
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -28,7 +15,7 @@ short_description: Copy a file to a remote cloudengine device over SCP on HUAWEI
 description:
     - Copy a file to a remote cloudengine device over SCP on HUAWEI CloudEngine switches.
 author:
-    - Zhou Zhijin (@CloudEngine-Ansible)
+    - Zhou Zhijin (@QijunPan)
 notes:
     - The feature must be enabled with feature scp-server.
     - If the file is already present, no transfer will take place.
@@ -87,30 +74,31 @@ RETURN = '''
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 transfer_result:
     description: information about transfer result.
     returned: always
-    type: string
+    type: str
     sample: 'The local file has been successfully transferred to the device.'
 local_file:
     description: The path of the local file.
     returned: always
-    type: string
+    type: str
     sample: '/usr/work/vrpcfg.zip'
 remote_file:
     description: The path of the remote file.
     returned: always
-    type: string
+    type: str
     sample: '/vrpcfg.zip'
 '''
 
 import re
 import os
+import sys
 import time
 from xml.etree import ElementTree
-from ansible.module_utils.basic import get_exception, AnsibleModule
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.cloudengine.ce import ce_argument_spec, run_commands, get_nc_config
 
 try:
@@ -155,7 +143,7 @@ def get_cli_exception(exc=None):
 
     msg = list()
     if not exc:
-        exc = get_exception()
+        exc = sys.exc_info[1]
     if exc:
         errs = str(exc).split("\r\n")
         for err in errs:
@@ -280,11 +268,11 @@ class FileCopy(object):
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh.connect(hostname=hostname, username=username, password=password, port=port)
-        full_remote_path = '{}{}'.format(self.file_system, dest)
+        full_remote_path = '{0}{1}'.format(self.file_system, dest)
         scp = SCPClient(ssh.get_transport())
         try:
             scp.put(self.local_file, full_remote_path)
-        except:
+        except Exception:
             time.sleep(10)
             file_exists, temp_size = self.remote_file_exists(
                 dest, self.file_system)
@@ -350,7 +338,7 @@ class FileCopy(object):
 
         if not os.path.isfile(self.local_file):
             self.module.fail_json(
-                msg="Local file {} not found".format(self.local_file))
+                msg="Local file {0} not found".format(self.local_file))
 
         dest = self.remote_file or ('/' + os.path.basename(self.local_file))
         remote_exists, file_size = self.remote_file_exists(

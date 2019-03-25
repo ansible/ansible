@@ -1,19 +1,6 @@
-# (c) 2015, Ansible Inc,
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2015, Ansible Inc,
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -28,14 +15,11 @@ from ansible.plugins.action import ActionBase
 from ansible.plugins.action.nxos import ActionModule as _NxosActionModule
 from ansible.plugins.action.eos import ActionModule as _EosActionModule
 from ansible.module_utils.network.common.utils import load_provider
+from ansible.utils.display import Display
 
 from imp import find_module, load_module
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 _CLI_ONLY_MODULES = frozenset(['junos_netconf', 'iosxr_netconf', 'iosxr_config', 'iosxr_command'])
 _NETCONF_SUPPORTED_PLATFORMS = frozenset(['junos', 'iosxr'])
@@ -67,7 +51,7 @@ class ActionModule(ActionBase):
                 play_context.connection = 'netconf'
                 play_context.port = int(self.provider['port'] or self._play_context.port or 830)
             elif self.provider.get('transport') in ('nxapi', 'eapi') and play_context.network_os in ('nxos', 'eos'):
-                play_context.connection = play_context.connection
+                play_context.connection = 'local'
                 play_context.port = int(self.provider['port'] or self._play_context.port or 22)
             else:
                 play_context.connection = 'network_cli'
@@ -111,7 +95,7 @@ class ActionModule(ActionBase):
                 conn.send_command('exit')
 
         if 'fail_on_missing_module' not in self._task.args:
-            self._task.args['fail_on_missing_module'] = False
+            self._task.args['fail_on_missing_module'] = True
 
         result = super(ActionModule, self).run(task_vars=task_vars)
 
@@ -150,6 +134,8 @@ class ActionModule(ActionBase):
         display.vvv('using connection plugin %s (was local)' % play_context.connection, play_context.remote_addr)
         connection = self._shared_loader_obj.connection_loader.get('persistent',
                                                                    play_context, sys.stdin)
+
+        connection.set_options(direct={'persistent_command_timeout': play_context.timeout})
 
         socket_path = connection.run()
         display.vvvv('socket_path: %s' % socket_path, play_context.remote_addr)

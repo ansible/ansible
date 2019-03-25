@@ -5,7 +5,6 @@ from __future__ import absolute_import, print_function
 import atexit
 import contextlib
 import errno
-import filecmp
 import fcntl
 import inspect
 import json
@@ -32,9 +31,37 @@ except ImportError:
     from abc import ABCMeta
     ABC = ABCMeta('ABC', (), {})
 
-DOCKER_COMPLETION = {}
+try:
+    # noinspection PyCompatibility
+    from ConfigParser import SafeConfigParser as ConfigParser
+except ImportError:
+    # noinspection PyCompatibility
+    from configparser import ConfigParser
 
-coverage_path = ''  # pylint: disable=locally-disabled, invalid-name
+DOCKER_COMPLETION = {}
+PYTHON_PATHS = {}  # type: dict[str, str]
+
+try:
+    MAXFD = subprocess.MAXFD
+except AttributeError:
+    MAXFD = -1
+
+COVERAGE_CONFIG_PATH = '.coveragerc'
+COVERAGE_OUTPUT_PATH = 'coverage'
+
+# Modes are set to allow all users the same level of access.
+# This permits files to be used in tests that change users.
+# The only exception is write access to directories for the user creating them.
+# This avoids having to modify the directory permissions a second time.
+
+MODE_READ = stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH
+
+MODE_FILE = MODE_READ
+MODE_FILE_EXECUTE = MODE_FILE | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+MODE_FILE_WRITE = MODE_FILE | stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH
+
+MODE_DIRECTORY = MODE_READ | stat.S_IWUSR | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+MODE_DIRECTORY_WRITE = MODE_DIRECTORY | stat.S_IWGRP | stat.S_IWOTH
 
 
 def get_docker_completion():
@@ -42,12 +69,27 @@ def get_docker_completion():
     :rtype: dict[str, str]
     """
     if not DOCKER_COMPLETION:
-        with open('test/runner/completion/docker.txt', 'r') as completion_fd:
-            images = completion_fd.read().splitlines()
+        images = read_lines_without_comments('test/runner/completion/docker.txt', remove_blank_lines=True)
 
-        DOCKER_COMPLETION.update(dict((i.split('@')[0], i) for i in images))
+        DOCKER_COMPLETION.update(dict(kvp for kvp in [parse_docker_completion(i) for i in images] if kvp))
 
     return DOCKER_COMPLETION
+
+
+def parse_docker_completion(value):
+    """
+    :type value: str
+    :rtype: tuple[str, dict[str, str]]
+    """
+    values = value.split()
+
+    if not values:
+        return None
+
+    name = values[0]
+    data = dict((kvp[0], kvp[1] if len(kvp) > 1 else '') for kvp in [item.split('=', 1) for item in values[1:]])
+
+    return name, data
 
 
 def is_shippable():
@@ -63,6 +105,110 @@ def remove_file(path):
     """
     if os.path.isfile(path):
         os.remove(path)
+
+
+def read_lines_without_comments(path, remove_blank_lines=False):
+    """
+    :type path: str
+    :type remove_blank_lines: bool
+    :rtype: list[str]
+    """
+    with open(path, 'r') as path_fd:
+        lines = path_fd.read().splitlines()
+
+    lines = [re.sub(r' *#.*$', '', line) for line in lines]
+
+    if remove_blank_lines:
+        lines = [line for line in lines if line]
+
+    return lines
+
+
+def get_python_path(args, interpreter):
+    """
+    :type args: TestConfig
+    :type interpreter: str
+    :rtype: str
+    """
+    python_path = PYTHON_PATHS.get(interpreter)
+
+    if python_path:
+        return python_path
+
+    prefix = 'python-'
+    suffix = '-ansible'
+
+    root_temp_dir = '/tmp'
+
+    if args.explain:
+        return os.path.join(root_temp_dir, ''.join((prefix, 'temp', suffix)))
+
+    python_path = tempfile.mkdtemp(prefix=prefix, suffix=suffix, dir=root_temp_dir)
+
+    os.chmod(python_path, MODE_DIRECTORY)
+    os.symlink(interpreter, os.path.join(python_path, 'python'))
+
+    if not PYTHON_PATHS:
+        atexit.register(cleanup_python_paths)
+
+    PYTHON_PATHS[interpreter] = python_path
+
+    return python_path
+
+
+def cleanup_python_paths():
+    """Clean up all temporary python directories."""
+    for path in sorted(PYTHON_PATHS.values()):
+        display.info('Cleaning up temporary python directory: %s' % path, verbosity=2)
+        shutil.rmtree(path)
+
+
+def get_coverage_environment(args, target_name, version, temp_path, module_coverage):
+    """
+    :type args: TestConfig
+    :type target_name: str
+    :type version: str
+    :type temp_path: str
+    :type module_coverage: bool
+    :rtype: dict[str, str]
+    """
+    if temp_path:
+        # integration tests (both localhost and the optional testhost)
+        # config and results are in a temporary directory
+        coverage_config_base_path = temp_path
+        coverage_output_base_path = temp_path
+    else:
+        # unit tests, sanity tests and other special cases (localhost only)
+        # config and results are in the source tree
+        coverage_config_base_path = os.getcwd()
+        coverage_output_base_path = os.path.abspath(os.path.join('test/results'))
+
+    config_file = os.path.join(coverage_config_base_path, COVERAGE_CONFIG_PATH)
+    coverage_file = os.path.join(coverage_output_base_path, COVERAGE_OUTPUT_PATH, '%s=%s=%s=%s=coverage' % (
+        args.command, target_name, args.coverage_label or 'local-%s' % version, 'python-%s' % version))
+
+    if args.coverage_check:
+        # cause the 'coverage' module to be found, but not imported or enabled
+        coverage_file = ''
+
+    # Enable code coverage collection on local Python programs (this does not include Ansible modules).
+    # Used by the injectors in test/runner/injector/ to support code coverage.
+    # Used by unit tests in test/units/conftest.py to support code coverage.
+    # The COVERAGE_FILE variable is also used directly by the 'coverage' module.
+    env = dict(
+        COVERAGE_CONF=config_file,
+        COVERAGE_FILE=coverage_file,
+    )
+
+    if module_coverage:
+        # Enable code coverage collection on Ansible modules (both local and remote).
+        # Used by the AnsiballZ wrapper generator in lib/ansible/executor/module_common.py to support code coverage.
+        env.update(dict(
+            _ANSIBLE_COVERAGE_CONFIG=config_file,
+            _ANSIBLE_COVERAGE_OUTPUT=coverage_file,
+        ))
+
+    return env
 
 
 def find_executable(executable, cwd=None, path=None, required=True):
@@ -85,10 +231,10 @@ def find_executable(executable, cwd=None, path=None, required=True):
             match = executable
     else:
         if path is None:
-            path = os.environ.get('PATH', os.defpath)
+            path = os.environ.get('PATH', os.path.defpath)
 
         if path:
-            path_dirs = path.split(os.pathsep)
+            path_dirs = path.split(os.path.pathsep)
             seen_dirs = set()
 
             for path_dir in path_dirs:
@@ -141,102 +287,45 @@ def generate_pip_command(python):
     return [python, '-m', 'pip.__main__']
 
 
-def intercept_command(args, cmd, target_name, capture=False, env=None, data=None, cwd=None, python_version=None, path=None):
+def intercept_command(args, cmd, target_name, env, capture=False, data=None, cwd=None, python_version=None, temp_path=None, module_coverage=True,
+                      virtualenv=None):
     """
     :type args: TestConfig
     :type cmd: collections.Iterable[str]
     :type target_name: str
+    :type env: dict[str, str]
     :type capture: bool
-    :type env: dict[str, str] | None
     :type data: str | None
     :type cwd: str | None
     :type python_version: str | None
-    :type path: str | None
+    :type temp_path: str | None
+    :type module_coverage: bool
+    :type virtualenv: str | None
     :rtype: str | None, str | None
     """
     if not env:
         env = common_environment()
 
     cmd = list(cmd)
-    inject_path = get_coverage_path(args)
-    config_path = os.path.join(inject_path, 'injector.json')
     version = python_version or args.python_version
-    interpreter = find_python(version, path)
-    coverage_file = os.path.abspath(os.path.join(inject_path, '..', 'output', '%s=%s=%s=%s=coverage' % (
-        args.command, target_name, args.coverage_label or 'local-%s' % version, 'python-%s' % version)))
+    interpreter = virtualenv or find_python(version)
+    inject_path = os.path.abspath('test/runner/injector')
 
-    env['PATH'] = inject_path + os.pathsep + env['PATH']
+    if not virtualenv:
+        # injection of python into the path is required when not activating a virtualenv
+        # otherwise scripts may find the wrong interpreter or possibly no interpreter
+        python_path = get_python_path(args, interpreter)
+        inject_path = python_path + os.path.pathsep + inject_path
+
+    env['PATH'] = inject_path + os.path.pathsep + env['PATH']
     env['ANSIBLE_TEST_PYTHON_VERSION'] = version
     env['ANSIBLE_TEST_PYTHON_INTERPRETER'] = interpreter
 
-    config = dict(
-        python_interpreter=interpreter,
-        coverage_file=coverage_file if args.coverage else None,
-    )
-
-    if not args.explain:
-        with open(config_path, 'w') as config_fd:
-            json.dump(config, config_fd, indent=4, sort_keys=True)
+    if args.coverage:
+        # add the necessary environment variables to enable code coverage collection
+        env.update(get_coverage_environment(args, target_name, version, temp_path, module_coverage))
 
     return run_command(args, cmd, capture=capture, env=env, data=data, cwd=cwd)
-
-
-def get_coverage_path(args):
-    """
-    :type args: TestConfig
-    :rtype: str
-    """
-    global coverage_path  # pylint: disable=locally-disabled, global-statement, invalid-name
-
-    if coverage_path:
-        return os.path.join(coverage_path, 'coverage')
-
-    prefix = 'ansible-test-coverage-'
-    tmp_dir = '/tmp'
-
-    if args.explain:
-        return os.path.join(tmp_dir, '%stmp' % prefix, 'coverage')
-
-    src = os.path.abspath(os.path.join(os.getcwd(), 'test/runner/injector/'))
-
-    coverage_path = tempfile.mkdtemp('', prefix, dir=tmp_dir)
-    os.chmod(coverage_path, stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
-
-    shutil.copytree(src, os.path.join(coverage_path, 'coverage'))
-    shutil.copy('.coveragerc', os.path.join(coverage_path, 'coverage', '.coveragerc'))
-
-    for root, dir_names, file_names in os.walk(coverage_path):
-        for name in dir_names + file_names:
-            os.chmod(os.path.join(root, name), stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
-
-    for directory in 'output', 'logs':
-        os.mkdir(os.path.join(coverage_path, directory))
-        os.chmod(os.path.join(coverage_path, directory), stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
-
-    atexit.register(cleanup_coverage_dir)
-
-    return os.path.join(coverage_path, 'coverage')
-
-
-def cleanup_coverage_dir():
-    """Copy over coverage data from temporary directory and purge temporary directory."""
-    output_dir = os.path.join(coverage_path, 'output')
-
-    for filename in os.listdir(output_dir):
-        src = os.path.join(output_dir, filename)
-        dst = os.path.join(os.getcwd(), 'test', 'results', 'coverage')
-        shutil.copy(src, dst)
-
-    logs_dir = os.path.join(coverage_path, 'logs')
-
-    for filename in os.listdir(logs_dir):
-        random_suffix = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(8))
-        new_name = '%s.%s.log' % (os.path.splitext(os.path.basename(filename))[0], random_suffix)
-        src = os.path.join(logs_dir, filename)
-        dst = os.path.join(os.getcwd(), 'test', 'results', 'logs', new_name)
-        shutil.copy(src, dst)
-
-    shutil.rmtree(coverage_path)
 
 
 def run_command(args, cmd, capture=False, env=None, data=None, cwd=None, always=False, stdin=None, stdout=None,
@@ -319,23 +408,30 @@ def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False
         stderr = None
 
     start = time.time()
+    process = None
 
     try:
-        process = subprocess.Popen(cmd, env=env, stdin=stdin, stdout=stdout, stderr=stderr, cwd=cwd)
-    except OSError as ex:
-        if ex.errno == errno.ENOENT:
-            raise ApplicationError('Required program "%s" not found.' % cmd[0])
-        raise
+        try:
+            process = subprocess.Popen(cmd, env=env, stdin=stdin, stdout=stdout, stderr=stderr, cwd=cwd)
+        except OSError as ex:
+            if ex.errno == errno.ENOENT:
+                raise ApplicationError('Required program "%s" not found.' % cmd[0])
+            raise
 
-    if communicate:
-        encoding = 'utf-8'
-        data_bytes = data.encode(encoding, 'surrogateescape') if data else None
-        stdout_bytes, stderr_bytes = process.communicate(data_bytes)
-        stdout_text = stdout_bytes.decode(encoding, str_errors) if stdout_bytes else u''
-        stderr_text = stderr_bytes.decode(encoding, str_errors) if stderr_bytes else u''
-    else:
-        process.wait()
-        stdout_text, stderr_text = None, None
+        if communicate:
+            encoding = 'utf-8'
+            data_bytes = data.encode(encoding, 'surrogateescape') if data else None
+            stdout_bytes, stderr_bytes = process.communicate(data_bytes)
+            stdout_text = stdout_bytes.decode(encoding, str_errors) if stdout_bytes else u''
+            stderr_text = stderr_bytes.decode(encoding, str_errors) if stderr_bytes else u''
+        else:
+            process.wait()
+            stdout_text, stderr_text = None, None
+    finally:
+        if process and process.returncode is None:
+            process.kill()
+            display.info('')  # the process we're interrupting may have completed a partial line of output
+            display.notice('Killed command to avoid an orphaned child process during handling of an unexpected exception.')
 
     status = process.returncode
     runtime = time.time() - start
@@ -352,7 +448,7 @@ def common_environment():
     """Common environment used for executing all programs."""
     env = dict(
         LC_ALL='en_US.UTF-8',
-        PATH=os.environ.get('PATH', os.defpath),
+        PATH=os.environ.get('PATH', os.path.defpath),
     )
 
     required = (
@@ -447,6 +543,7 @@ def is_binary_file(path):
         '.cfg',
         '.conf',
         '.crt',
+        '.cs',
         '.css',
         '.html',
         '.ini',
@@ -680,10 +777,13 @@ class MissingEnvironmentVariable(ApplicationError):
 
 class CommonConfig(object):
     """Configuration common to all commands."""
-    def __init__(self, args):
+    def __init__(self, args, command):
         """
         :type args: any
+        :type command: str
         """
+        self.command = command
+
         self.color = args.color  # type: bool
         self.explain = args.explain  # type: bool
         self.verbosity = args.verbosity  # type: int
@@ -694,32 +794,63 @@ class CommonConfig(object):
         if is_shippable():
             self.redact = True
 
+        self.cache = {}
+
 
 def docker_qualify_image(name):
     """
     :type name: str
     :rtype: str
     """
-    if not name or any((c in name) for c in ('/', ':')):
-        return name
+    config = get_docker_completion().get(name, {})
 
-    name = get_docker_completion().get(name, name)
-
-    return 'ansible/ansible:%s' % name
+    return config.get('name', name)
 
 
-def parse_to_dict(pattern, value):
+@contextlib.contextmanager
+def named_temporary_file(args, prefix, suffix, directory, content):
+    """
+    :param args: CommonConfig
+    :param prefix: str
+    :param suffix: str
+    :param directory: str
+    :param content: str | bytes | unicode
+    :rtype: str
+    """
+    if not isinstance(content, bytes):
+        content = content.encode('utf-8')
+
+    if args.explain:
+        yield os.path.join(directory, '%stemp%s' % (prefix, suffix))
+    else:
+        with tempfile.NamedTemporaryFile(prefix=prefix, suffix=suffix, dir=directory) as tempfile_fd:
+            tempfile_fd.write(content)
+            tempfile_fd.flush()
+
+            yield tempfile_fd.name
+
+
+def parse_to_list_of_dict(pattern, value):
     """
     :type pattern: str
     :type value: str
-    :return: dict[str, str]
+    :return: list[dict[str, str]]
     """
-    match = re.search(pattern, value)
+    matched = []
+    unmatched = []
 
-    if match is None:
-        raise Exception('Pattern "%s" did not match value: %s' % (pattern, value))
+    for line in value.splitlines():
+        match = re.search(pattern, line)
 
-    return match.groupdict()
+        if match:
+            matched.append(match.groupdict())
+        else:
+            unmatched.append(line)
+
+    if unmatched:
+        raise Exception('Pattern "%s" did not match values:\n%s' % (pattern, '\n'.join(unmatched)))
+
+    return matched
 
 
 def get_available_port():

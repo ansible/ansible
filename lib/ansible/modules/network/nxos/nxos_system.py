@@ -51,6 +51,7 @@ options:
         lookup feature in Cisco NXOS.  This argument accepts boolean
         values.  When enabled, the system will try to resolve hostnames
         using DNS and when disabled, hostnames will not be resolved.
+    type: bool
   domain_search:
     description:
       - Configures a list of domain
@@ -279,10 +280,8 @@ def parse_name_servers(config, vrf_config, vrfs):
     objects = list()
 
     match = re.search('^ip name-server (.+)$', config, re.M)
-    if match:
+    if match and 'use-vrf' not in match.group(1):
         for addr in match.group(1).split(' '):
-            if addr == 'use-vrf' or addr in vrfs:
-                continue
             objects.append({'server': addr, 'vrf': None})
 
     for vrf, cfg in iteritems(vrf_config):
@@ -397,6 +396,7 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

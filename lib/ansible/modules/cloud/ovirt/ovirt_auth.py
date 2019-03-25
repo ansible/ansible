@@ -2,22 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2016 Red Hat, Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -75,6 +60,7 @@ options:
         required: False
         description:
             - "A boolean flag that indicates if the server TLS certificate and host name should be checked."
+        type: bool
     ca_file:
         required: False
         description:
@@ -97,12 +83,13 @@ options:
                the server to send compressed responses. The default is I(True).
                Note that this is a hint for the server, and that it may return
                uncompressed data even when this parameter is set to I(True)."
+        type: bool
     kerberos:
         required: False
         description:
             - "A boolean flag indicating if Kerberos authentication
                should be used instead of the default basic authentication."
-
+        type: bool
     headers:
         required: False
         description:
@@ -154,9 +141,9 @@ EXAMPLES = '''
 #   OVIRT_URL = https://fqdn/ovirt-engine/api
 #   OVIRT_USERNAME = admin@internal
 #   OVIRT_PASSWORD = the_password
-# He can login the oVirt using environment variable instead of variables
+# User can login the oVirt using environment variable instead of variables
 # in yaml file.
-# This is mainly usefull when using Ansible Tower or AWX, as it will work
+# This is mainly useful when using Ansible Tower or AWX, as it will work
 # for Red Hat Virtualization creadentials type.
   - name: Obtain SSO token
     ovirt_auth:
@@ -172,12 +159,12 @@ ovirt_auth:
         token:
             description: SSO token which is used for connection to oVirt/RHV engine.
             returned: success
-            type: string
+            type: str
             sample: "kdfVWp9ZgeewBXV-iq3Js1-xQJZPSEQ334FLb3eksoEPRaab07DhZ8ED8ghz9lJd-MQ2GqtRIeqhvhCkrUWQPw"
         url:
             description: URL of the oVirt/RHV engine API endpoint.
             returned: success
-            type: string
+            type: str
             sample: "https://ovirt.example.com/ovirt-engine/api"
         ca_file:
             description: CA file, which is used to verify SSL/TLS connection.
@@ -267,8 +254,8 @@ def main():
     if url is None and hostname is not None:
         url = 'https://{0}/ovirt-engine/api'.format(hostname)
 
-    username = get_required_parameter('username', 'OVIRT_USERNAME', required=True)
-    password = get_required_parameter('password', 'OVIRT_PASSWORD', required=True)
+    username = get_required_parameter('username', 'OVIRT_USERNAME')
+    password = get_required_parameter('password', 'OVIRT_PASSWORD')
     token = get_required_parameter('token', 'OVIRT_TOKEN')
     ca_file = get_required_parameter('ca_file', 'OVIRT_CAFILE')
     insecure = params.get('insecure') if params.get('insecure') is not None else not bool(ca_file)

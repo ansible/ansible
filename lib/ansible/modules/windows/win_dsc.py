@@ -25,6 +25,7 @@ options:
     description:
     - The name of the DSC Resource to use.
     - Must be accessible to PowerShell using any of the default paths.
+    type: str
     required: yes
   module_version:
     description:
@@ -34,6 +35,7 @@ options:
       containing the DSC resource.
     - If not specified, the module will follow standard PowerShell convention
       and use the highest version available.
+    type: str
     default: latest
   free_form:
     description:
@@ -52,6 +54,12 @@ options:
       provided but a comma separated string also work. Use a list where
       possible as no escaping is required and it works with more complex types
       list C(CimInstance[]).
+    - If the type of the DSC resource option is a C(DateTime), use a string in
+      the form of an ISO 8901 string.
+    - Since Ansible 2.8, Ansible will now validate the input fields against the
+      DSC resource definition automatically. Older versions will silently
+      ignore invalid fields.
+    type: str
     required: true
 notes:
 - By default there are a few builtin resources that come with PowerShell 5.0,
@@ -62,6 +70,9 @@ notes:
 - The DSC engine run's each task as the SYSTEM account, any resources that need
   to be accessed with a different account need to have C(PsDscRunAsCredential)
   set.
+- To see the valid options for a DSC resource, run the module with C(-vvv) to
+  show the possible module invocation. Default values are not shown in this
+  output but are applied within the DSC engine.
 author:
 - Trond Hindenes (@trondhindenes)
 '''
@@ -100,6 +111,11 @@ EXAMPLES = r'''
     Ensure: Present
     Type: Directory
 
+- name: Call DSC resource with DateTime option
+  win_dsc:
+    resource_name: DateTimeResource
+    DateTimeOption: '2019-02-22T13:57:31.2311892+00:00'
+
 # more complex example using custom DSC resource and dict values
 - name: Setup the xWebAdministration module
   win_psmodule:
@@ -134,18 +150,33 @@ EXAMPLES = r'''
 RETURN = r'''
 module_version:
     description: The version of the dsc resource/module used.
-    returned: success
-    type: string
+    returned: always
+    type: str
     sample: "1.0.1"
 reboot_required:
     description: Flag returned from the DSC engine indicating whether or not
       the machine requires a reboot for the invoked changes to take effect.
     returned: always
-    type: boolean
-    sample: True
-message:
-    description: any error message from invoking the DSC resource
-    returned: error
-    type: string
-    sample: Multiple DSC modules found with resource name xyz
+    type: bool
+    sample: true
+verbose_test:
+    description: The verbose output as a list from executing the DSC test
+      method.
+    returned: Ansible verbosity is -vvv or greater
+    type: list
+    sample: [
+      "Perform operation 'Invoke CimMethod' with the following parameters, ",
+      "[SERVER]: LCM: [Start Test ] [[File]DirectResourceAccess]",
+      "Operation 'Invoke CimMethod' complete."
+    ]
+verbose_set:
+    description: The verbose output as a list from executing the DSC Set
+      method.
+    returned: Ansible verbosity is -vvv or greater and a change occurred
+    type: list
+    sample: [
+      "Perform operation 'Invoke CimMethod' with the following parameters, ",
+      "[SERVER]: LCM: [Start Set ] [[File]DirectResourceAccess]",
+      "Operation 'Invoke CimMethod' complete."
+    ]
 '''

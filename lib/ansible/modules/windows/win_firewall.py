@@ -18,25 +18,24 @@ version_added: '2.4'
 short_description: Enable or disable the Windows Firewall
 description:
 - Enable or Disable Windows Firewall profiles.
+requirements:
+  - This module requires Windows Management Framework 5 or later.
 options:
   profiles:
     description:
     - Specify one or more profiles to change.
-    choices:
-    - Domain
-    - Private
-    - Public
-    default: [Domain, Private, Public]
+    type: list
+    choices: [ Domain, Private, Public ]
+    default: [ Domain, Private, Public ]
   state:
     description:
     - Set state of firewall for given profile.
-    choices:
-    - enabled
-    - disabled
-requirements:
-  - This module requires Windows Management Framework 5 or later.
+    type: str
+    choices: [ disabled, enabled ]
+seealso:
+- module: win_firewall_rule
 author:
-- Michael Eaton (@if-meaton)
+- Michael Eaton (@michaeldeaton)
 '''
 
 EXAMPLES = r'''
@@ -59,17 +58,17 @@ EXAMPLES = r'''
 
 RETURN = r'''
 enabled:
-    description: current firewall status for chosen profile (after any potential change)
+    description: Current firewall status for chosen profile (after any potential change).
     returned: always
     type: bool
     sample: true
 profiles:
-    description: chosen profile
+    description: Chosen profile.
     returned: always
-    type: string
+    type: str
     sample: Domain
 state:
-    description: desired state of the given firewall profile(s)
+    description: Desired state of the given firewall profile(s).
     returned: always
     type: list
     sample: enabled

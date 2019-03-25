@@ -12,17 +12,22 @@ Actual
 
 - 2018-05-17 Core Freeze (Engine and Core Modules/Plugins)
 - 2018-05-21 Alpha Release 1
-
-Expected
-========
-
-- 2018-05-24 Alpha Release 2
 - 2018-05-25 Community Freeze (Non-Core Modules/Plugins)
 - 2018-05-25 Branch stable-2.6
-- 2018-05-31 Release Candidate 1
-- 2018-06-07 Release Candidate 2
-- 2018-06-14 Release Candidate 3
+- 2018-05-30 Alpha Release 2
+- 2018-06-05 Release Candidate 1
+- 2018-06-08 Release Candidate 2
+- 2018-06-18 Release Candidate 3
+- 2018-06-25 Release Candidate 4
+- 2018-06-26 Release Candidate 5
 - 2018-06-28 Final Release
+
+
+Release Manager
+---------------
+* 2.6.0-2.6.12 Matt Clay (IRC/GitHub: @mattclay)
+* 2.6.13+ Toshio Kuratomi (IRC: abadger1999; GitHub: @abadger)
+
 
 Engine improvements
 -------------------

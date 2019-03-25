@@ -24,7 +24,7 @@ options:
   filters:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
-        See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeRouteTables.html) for possible filters.
+        See U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeDhcpOptions.html) for possible filters.
   dhcp_options_ids:
     description:
       - Get details of specific DHCP Option ID
@@ -108,10 +108,8 @@ def list_dhcp_options(client, module):
         module.fail_json(msg=str(e), exception=traceback.format_exc(),
                          **camel_dict_to_snake_dict(e.response))
 
-    results = [camel_dict_to_snake_dict(get_dhcp_options_info(option))
-               for option in all_dhcp_options['DhcpOptions']]
-
-    module.exit_json(dhcp_options=results)
+    return [camel_dict_to_snake_dict(get_dhcp_options_info(option))
+            for option in all_dhcp_options['DhcpOptions']]
 
 
 def main():
@@ -126,10 +124,6 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
-    if module._name == 'ec2_vpc_dhcp_options_facts':
-        module.deprecate("The 'ec2_vpc_dhcp_options_facts' module has been renamed "
-                         "'ec2_vpc_dhcp_option_facts' (option is no longer plural)",
-                         version=2.8)
 
     # Validate Requirements
     if not HAS_BOTO3:
@@ -144,7 +138,7 @@ def main():
     # call your function here
     results = list_dhcp_options(connection, module)
 
-    module.exit_json(result=results)
+    module.exit_json(dhcp_options=results)
 
 
 if __name__ == '__main__':

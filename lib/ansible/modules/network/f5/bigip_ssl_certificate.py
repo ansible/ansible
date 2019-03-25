@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -9,10 +9,11 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+                    'status': ['stableinterface'],
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
+---
 module: bigip_ssl_certificate
 short_description: Import/Delete certificates from BIG-IP
 description:
@@ -26,28 +27,33 @@ options:
       - Sets the contents of a certificate directly to the specified value.
         This is used with lookup plugins or for anything with formatting or
       - C(content) must be provided when C(state) is C(present).
+    type: str
     aliases: ['cert_content']
   state:
     description:
       - Certificate state. This determines if the provided certificate
         and key is to be made C(present) on the device or C(absent).
-    default: present
+    type: str
     choices:
       - present
       - absent
+    default: present
   name:
     description:
       - SSL Certificate Name. This is the cert name used when importing a certificate
         into the F5. It also determines the filenames of the objects on the LTM.
+    type: str
     required: True
   issuer_cert:
     description:
       - Issuer certificate used for OCSP monitoring.
       - This parameter is only valid on versions of BIG-IP 13.0.0 or above.
+    type: str
     version_added: 2.5
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
     version_added: 2.5
 notes:
@@ -61,36 +67,40 @@ requirements:
   - BIG-IP >= v12
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
 - name: Use a file lookup to import PEM Certificate
   bigip_ssl_certificate:
     name: certificate-name
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: present
     content: "{{ lookup('file', '/path/to/cert.crt') }}"
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Use a file lookup to import CA certificate chain
   bigip_ssl_certificate:
     name: ca-chain-name
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: present
     content: "{{ lookup('file', '/path/to/ca-chain.crt') }}"
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Delete Certificate
   bigip_ssl_certificate:
     name: certificate-name
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: absent
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 '''
 
@@ -98,26 +108,25 @@ RETURN = r'''
 cert_name:
   description: The name of the certificate that the user provided
   returned: created
-  type: string
+  type: str
   sample: cert1
 filename:
   description:
     - The name of the SSL certificate.
   returned: created
-  type: string
+  type: str
   sample: cert1.crt
 checksum:
   description: SHA1 checksum of the cert that was provided.
   returned: changed and created
-  type: string
+  type: str
   sample: f7ff9e8b7bb2e09b70935a5d785e0cc5d9d0abf0
 source_path:
   description: Path on BIG-IP where the source of the certificate is stored.
   returned: created
-  type: string
+  type: str
   sample: /var/config/rest/downloads/cert1.crt
 '''
-
 
 import hashlib
 import os
@@ -127,31 +136,21 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
 
 try:
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
-
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from library.module_utils.network.f5.common import fq_name
+    from library.module_utils.network.f5.common import transform_name
+    from library.module_utils.network.f5.icontrol import upload_file
 except ImportError:
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from ansible.module_utils.network.f5.common import fq_name
+    from ansible.module_utils.network.f5.common import transform_name
+    from ansible.module_utils.network.f5.icontrol import upload_file
 
 try:
     from StringIO import StringIO
@@ -160,28 +159,30 @@ except ImportError:
 
 
 class Parameters(AnsibleF5Parameters):
+    download_path = '/var/config/rest/downloads'
+
     api_map = {
         'sourcePath': 'source_path',
-        'issuerCert': 'issuer_cert'
+        'issuerCert': 'issuer_cert',
     }
 
-    updatables = ['content', 'issuer_cert']
-
-    returnables = [
-        'filename', 'checksum', 'source_path', 'issuer_cert'
+    updatables = [
+        'content',
+        'issuer_cert',
+        'source_path',
     ]
 
-    api_attributes = ['issuerCert']
+    returnables = [
+        'filename',
+        'checksum',
+        'source_path',
+        'issuer_cert',
+    ]
 
-    def _get_hash(self, content):
-        k = hashlib.sha1()
-        s = StringIO(content)
-        while True:
-            data = s.read(1024)
-            if not data:
-                break
-            k.update(data.encode('utf-8'))
-        return k.hexdigest()
+    api_attributes = [
+        'issuerCert',
+        'sourcePath',
+    ]
 
 
 class ApiParameters(Parameters):
@@ -202,6 +203,16 @@ class ApiParameters(Parameters):
 
 
 class ModuleParameters(Parameters):
+    def _get_hash(self, content):
+        k = hashlib.sha1()
+        s = StringIO(content)
+        while True:
+            data = s.read(1024)
+            if not data:
+                break
+            k.update(data.encode('utf-8'))
+        return k.hexdigest()
+
     @property
     def issuer_cert(self):
         if self._values['issuer_cert'] is None:
@@ -228,7 +239,7 @@ class ModuleParameters(Parameters):
     @property
     def source_path(self):
         result = 'file://' + os.path.join(
-            ModuleManager.download_path,
+            self.download_path,
             self.filename
         )
         return result
@@ -277,6 +288,16 @@ class Difference(object):
             return attr1
 
     @property
+    def source_path(self):
+        if self.want.source_path is None:
+            return None
+        if self.want.source_path == self.have.source_path:
+            if self.content:
+                return self.want.source_path
+        if self.want.source_path != self.have.source_path:
+            return self.want.source_path
+
+    @property
     def content(self):
         if self.want.checksum != self.have.checksum:
             result = dict(
@@ -287,11 +308,9 @@ class Difference(object):
 
 
 class ModuleManager(object):
-    download_path = '/var/config/rest/downloads'
-
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -301,13 +320,10 @@ class ModuleManager(object):
         result = dict()
         state = self.want.state
 
-        try:
-            if state == "present":
-                changed = self.present()
-            elif state == "absent":
-                changed = self.absent()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        if state == "present":
+            changed = self.present()
+        elif state == "absent":
+            changed = self.absent()
 
         reportable = ReportableChanges(params=self.changes.to_return())
         changes = reportable.to_return()
@@ -390,35 +406,77 @@ class ModuleManager(object):
         return False
 
     def exists(self):
-        result = self.client.api.tm.sys.file.ssl_certs.ssl_cert.exists(
-            name=self.want.filename,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/sys/file/ssl-cert/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.filename)
         )
-        return result
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
+
+    def upload_file_to_device(self, content, name):
+        url = 'https://{0}:{1}/mgmt/shared/file-transfer/uploads'.format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
+        )
+        try:
+            upload_file(self.client, url, content, name)
+        except F5ModuleError:
+            raise F5ModuleError(
+                "Failed to upload the file."
+            )
 
     def update_on_device(self):
-        params = self.changes.api_params()
         content = StringIO(self.want.content)
-        self.client.api.shared.file_transfer.uploads.upload_stringio(
-            content, self.want.filename
+        self.upload_file_to_device(content, self.want.filename)
+        params = self.changes.api_params()
+        uri = "https://{0}:{1}/mgmt/tm/sys/file/ssl-cert/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.filename)
         )
-        resource = self.client.api.tm.sys.file.ssl_certs.ssl_cert.load(
-            name=self.want.filename,
-            partition=self.want.partition
-        )
-        resource.update(**params)
+        resp = self.client.api.put(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def create_on_device(self):
         content = StringIO(self.want.content)
-        self.client.api.shared.file_transfer.uploads.upload_stringio(
-            content, self.want.filename
+        self.upload_file_to_device(content, self.want.filename)
+        uri = "https://{0}:{1}/mgmt/tm/sys/file/ssl-cert/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
         )
-
-        resource = self.client.api.tm.sys.file.ssl_certs.ssl_cert.create(
+        params = dict(
             sourcePath=self.want.source_path,
             name=self.want.filename,
             partition=self.want.partition
         )
+
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
         # This needs to be done because of the way that BIG-IP creates certificates.
         #
@@ -427,25 +485,55 @@ class ModuleManager(object):
         # a create so that *more* are available.
         params = self.want.api_params()
         if params:
-            resource.update(**params)
+            uri = "https://{0}:{1}/mgmt/tm/sys/file/ssl-cert/{2}".format(
+                self.client.provider['server'],
+                self.client.provider['server_port'],
+                transform_name(self.want.partition, self.want.filename)
+            )
+            resp = self.client.api.put(uri, json=params)
+            try:
+                response = resp.json()
+            except ValueError as ex:
+                raise F5ModuleError(str(ex))
+
+            if 'code' in response and response['code'] == 400:
+                if 'message' in response:
+                    raise F5ModuleError(response['message'])
+                else:
+                    raise F5ModuleError(resp.content)
 
     def read_current_from_device(self):
-        resource = self.client.api.tm.sys.file.ssl_certs.ssl_cert.load(
-            name=self.want.filename,
-            partition=self.want.partition,
-            requests_params=dict(
-                params='expandSubcollections=true'
-            )
+        uri = "https://{0}:{1}/mgmt/tm/sys/file/ssl-cert/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.filename)
         )
-        result = resource.attrs
-        return ApiParameters(params=result)
+
+        query = '?expandSubcollections=true'
+        resp = self.client.api.get(uri + query)
+
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return ApiParameters(params=response)
 
     def remove_from_device(self):
-        resource = self.client.api.tm.sys.file.ssl_certs.ssl_cert.load(
-            name=self.want.filename,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/sys/file/ssl-cert/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.filename)
         )
-        resource.delete()
+        response = self.client.api.delete(uri)
+        if response.status == 200:
+            return True
+        raise F5ModuleError(response.content)
 
 
 class ArgumentSpec(object):
@@ -478,17 +566,12 @@ def main():
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
 
     try:
-        client = F5Client(**module.params)
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
         module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
         module.fail_json(msg=str(ex))
 
 

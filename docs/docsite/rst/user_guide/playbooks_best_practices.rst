@@ -14,12 +14,12 @@ You can find some example playbooks illustrating these best practices in our `an
 Content Organization
 ++++++++++++++++++++++
 
-The following section shows one of many possible ways to organize playbook content. 
+The following section shows one of many possible ways to organize playbook content.
 
 Your usage of Ansible should fit your needs, however, not ours, so feel free to modify this approach and organize as you see fit.
 
 One crucial way to organize your playbook content is Ansible's "roles" organization feature, which is documented as part
-of the main playbooks page.  You should take the time to read and understand the roles documentation which is available here: :doc:`playbooks_reuse_roles`.  
+of the main playbooks page.  You should take the time to read and understand the roles documentation which is available here: :doc:`playbooks_reuse_roles`.
 
 .. _directory_layout:
 
@@ -50,7 +50,7 @@ The top level of the directory would contain files and directories like so::
         common/               # this hierarchy represents a "role"
             tasks/            #
                 main.yml      #  <-- tasks file can include smaller files if warranted
-            handlers/         # 
+            handlers/         #
                 main.yml      #  <-- handlers file
             templates/        #  <-- files for use with the template resource
                 ntp.conf.j2   #  <------- templates end in .j2
@@ -69,7 +69,7 @@ The top level of the directory would contain files and directories like so::
 
         webtier/              # same kind of structure as "common" was above, done for the webtier role
         monitoring/           # ""
-        fooapp/               # "" 
+        fooapp/               # ""
 
 .. note: If you find yourself having too many top level playbooks (for instance you have a playbook you wrote for a specific hotfix, etc), it may make sense to have a playbooks/ directory instead.  This can be a good idea as you get larger.  If you do this, configure your roles_path in ansible.cfg to find your roles location.
 
@@ -120,7 +120,7 @@ This layout gives you more flexibility for larger environments, as well as a tot
 Use Dynamic Inventory With Clouds
 `````````````````````````````````
 
-If you are using a cloud provider, you should not be managing your inventory in a static file.  See :doc:`intro_dynamic_inventory`. 
+If you are using a cloud provider, you should not be managing your inventory in a static file.  See :doc:`intro_dynamic_inventory`.
 
 This does not just apply to clouds -- If you have another system maintaining a canonical list of systems
 in your infrastructure, usage of dynamic inventory is a great idea in general.
@@ -134,46 +134,46 @@ If managing static inventory, it is frequently asked how to differentiate differ
 shows a good way to do this.  Similar methods of grouping could be adapted to dynamic inventory (for instance, consider applying the AWS
 tag "environment:production", and you'll get a group of systems automatically discovered named "ec2_tag_environment_production".
 
-Let's show a static inventory example though.  Below, the *production* file contains the inventory of all of your production hosts. 
+Let's show a static inventory example though.  Below, the *production* file contains the inventory of all of your production hosts.
 
 It is suggested that you define groups based on purpose of the host (roles) and also geography or datacenter location (if applicable)::
 
     # file: production
 
-    [atlanta-webservers]
+    [atlanta_webservers]
     www-atl-1.example.com
     www-atl-2.example.com
 
-    [boston-webservers]
+    [boston_webservers]
     www-bos-1.example.com
     www-bos-2.example.com
 
-    [atlanta-dbservers]
+    [atlanta_dbservers]
     db-atl-1.example.com
     db-atl-2.example.com
 
-    [boston-dbservers]
+    [boston_dbservers]
     db-bos-1.example.com
 
     # webservers in all geos
     [webservers:children]
-    atlanta-webservers
-    boston-webservers
+    atlanta_webservers
+    boston_webservers
 
     # dbservers in all geos
     [dbservers:children]
-    atlanta-dbservers
-    boston-dbservers
+    atlanta_dbservers
+    boston_dbservers
 
     # everything in the atlanta geo
     [atlanta:children]
-    atlanta-webservers
-    atlanta-dbservers
+    atlanta_webservers
+    atlanta_dbservers
 
     # everything in the boston geo
     [boston:children]
-    boston-webservers
-    boston-dbservers
+    boston_webservers
+    boston_dbservers
 
 .. _groups_and_hosts:
 
@@ -201,7 +201,7 @@ If we had any default values, or values that were universally true, we would put
     ---
     # file: group_vars/all
     ntp: ntp-boston.example.com
-    backup: backup-boston.example.com 
+    backup: backup-boston.example.com
 
 We can define specific hardware variance in systems in a host_vars file, but avoid doing this unless you need to::
 
@@ -210,8 +210,8 @@ We can define specific hardware variance in systems in a host_vars file, but avo
     foo_agent_port: 86
     bar_agent_port: 99
 
-Again, if we are using dynamic inventory sources, many dynamic groups are automatically created.  So a tag like "class:webserver" would load in 
-variables from the file "group_vars/ec2_tag_class_webserver" automatically. 
+Again, if we are using dynamic inventory sources, many dynamic groups are automatically created.  So a tag like "class:webserver" would load in
+variables from the file "group_vars/ec2_tag_class_webserver" automatically.
 
 .. _split_by_role:
 
@@ -254,7 +254,7 @@ Below is an example tasks file that explains how a role works.  Our common role 
     - name: be sure ntp is installed
       yum:
         name: ntp
-        state: installed
+        state: present
       tags: ntp
 
     - name: be sure ntp is configured
@@ -309,7 +309,7 @@ For just my webservers in Boston::
     ansible-playbook -i production webservers.yml --limit boston
 
 For just the first 10, and then the next 10::
-   
+
     ansible-playbook -i production webservers.yml --limit boston[0:9]
     ansible-playbook -i production webservers.yml --limit boston[10:19]
 
@@ -394,11 +394,12 @@ This makes a dynamic group of hosts matching certain criteria, even if that grou
 
    ---
 
-    # talk to all hosts just so we can learn about them 
-    - hosts: all
+    - name: talk to all hosts just so we can learn about them
+      hosts: all
       tasks:
-        - group_by: 
-            key: os_{{ ansible_distribution }}
+        - name: Classify hosts depending on their OS distribution
+          group_by:
+            key: os_{{ ansible_facts['distribution'] }}
 
     # now just on the CentOS hosts...
 
@@ -426,11 +427,12 @@ Alternatively, if only variables are needed::
 
     - hosts: all
       tasks:
-        - include_vars: "os_{{ ansible_distribution }}.yml"
+        - name: Set OS distribution dependant variables
+          include_vars: "os_{{ ansible_facts['distribution'] }}.yml"
         - debug:
             var: asdf
 
-This will pull in variables based on the OS name.  
+This will pull in variables based on the OS name.
 
 .. _ship_modules_with_playbooks:
 
@@ -453,7 +455,7 @@ Generous use of whitespace to break things up, and use of comments (which start 
 Always Name Tasks
 +++++++++++++++++
 
-It is possible to leave off the 'name' for a given task, though it is recommended to provide a description 
+It is possible to leave off the 'name' for a given task, though it is recommended to provide a description
 about why something is being done instead.  This name is shown when the playbook is run.
 
 .. _keep_it_simple:
@@ -505,6 +507,6 @@ This best practice has no limit on the amount of variable and vault files or the
        Learn about how to select hosts
    `GitHub examples directory <https://github.com/ansible/ansible-examples>`_
        Complete playbook files from the github project source
-   `Mailing List <http://groups.google.com/group/ansible-project>`_
+   `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
 

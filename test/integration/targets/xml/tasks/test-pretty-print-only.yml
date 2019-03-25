@@ -1,7 +1,11 @@
 ---
   - name: Setup test fixture
-    shell: cat {{ role_path }}/fixtures/ansible-xml-beers.xml | sed 's/^[ ]*//g' > /tmp/ansible-xml-beers.xml
+    copy:
+      src: fixtures/ansible-xml-beers.xml
+      dest: /tmp/ansible-xml-beers.xml.orig
 
+  - name: Remove spaces from test fixture
+    shell: sed 's/^[ ]*//g' < /tmp/ansible-xml-beers.xml.orig > /tmp/ansible-xml-beers.xml
 
   - name: Pretty print without modification
     xml:

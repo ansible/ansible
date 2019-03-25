@@ -1,31 +1,30 @@
-- name: Download PSTools
-  win_get_url:
-    url: https://download.sysinternals.com/files/PSTools.zip
-    dest: C:\Windows\Temp\PSTools.zip
-    force: no
+# Would use [] but this has troubles with PATH and trying to find the executable so just resort to keeping a space
+- name: record special path for tests
+  set_fact:
+    testing_dir: '{{ remote_tmp_dir }}\ansible win_psexec'
 
-- name: Create sysinternals directory
+- name: create special path testing dir
   win_file:
-    path: C:\Windows\Temp\sysinternals
+    path: '{{ testing_dir }}'
     state: directory
 
-- name: Unzip PSTools
-  win_unzip:
-    src: C:\Windows\Temp\PSTools.zip
-    dest: C:\Windows\Temp\sysinternals
+- name: Download PsExec
+  win_get_url:
+    url: https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/win_psexec/PsExec.exe
+    dest: '{{ testing_dir }}\PsExec.exe'
 
-- name: Add sysinternals to PATH
-  win_path:
-    name: PATH
-    elements: C:\Windows\Temp\sysinternals
-    scope: machine
-    state: present
+- name: Get the existing PATH env var
+  win_shell: '$env:PATH'
+  register: system_path
+  changed_when: False
 
 - name: Run whoami
   win_psexec:
     command: whoami.exe
     nobanner: true
   register: whoami
+  environment:
+    PATH: '{{ testing_dir }};{{ system_path.stdout | trim }}'
 
 - name: Test whoami
   assert:
@@ -40,13 +39,12 @@
     command: whoami.exe
     system: yes
     nobanner: true
+    executable: '{{ testing_dir }}\PsExec.exe'
   register: whoami_as_system
-
-- name: Test whoami as SYSTEM
-  assert:
-    that:
-    - whoami_as_system.rc == 0
-    - whoami_as_system.stdout == 'nt authority\system'
+  # Seems to be a bug with PsExec where the stdout can be empty, just retry the task to make this test a bit more stable
+  until: whoami_as_system.rc == 0 and whoami_as_system.stdout == 'nt authority\system'
+  retries: 3
+  delay: 2
 
 # FIXME: Behaviour is not consistent on all Windows systems
 #- name: Run whoami as ELEVATED
@@ -67,19 +65,16 @@
 #    - whoami_as_elevated.rc == 0
 #    - whoami_as_elevated.stdout|lower == '{{ ansible_hostname|lower }}\{{ ansible_user_id|lower }}'
 
-- name: Remove sysinternals from PATH
-  win_path:
-    name: PATH
-    elements: C:\Windows\Temp\sysinternals
-    scope: machine
-    state: absent
+- name: Run command with multiple arguments
+  win_psexec:
+    command: powershell.exe -NonInteractive "exit 1"
+  ignore_errors: yes
+  register: whoami_multiple_args
+  environment:
+    PATH: '{{ testing_dir }};{{ system_path.stdout | trim }}'
 
-- name: Remove sysinternals directory
-  win_file:
-    path: C:\Windows\Temp\sysinternals
-    state: absent
-
-- name: Remove sysinternals directory
-  win_file:
-    path: C:\Windows\Temp\PSTools.zip
-    state: absent
+- name: Test command with multiple argumetns
+  assert:
+    that:
+    - whoami_multiple_args.rc == 1
+    - whoami_multiple_args.psexec_command == "psexec.exe -accepteula powershell.exe -NonInteractive \"exit 1\""

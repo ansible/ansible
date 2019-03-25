@@ -4,12 +4,6 @@
 
 # TODO: vcsim does not support networkConfig related to operations
 
-- name: store the vcenter container ip
-  set_fact:
-    vcsim: "{{ lookup('env', 'vcenter_host') }}"
-
-- debug: var=vcsim
-
 - name: Wait for Flask controller to come up online
   wait_for:
     host: "{{ vcsim }}"
@@ -45,7 +39,7 @@
 
 - debug: var=host1
 
-- name: Gather facts about all hosts in given cluster
+- name: Gather vmnic facts about a host
   vmware_host_vmnics_facts:
     hostname: "{{ vcsim }}"
     username: "{{ user }}"
@@ -58,4 +52,22 @@
 
 - assert:
     that:
-      - host_vmnics.host_service_facts is defined
+      - host_vmnics.hosts_vmnics_facts is defined
+
+- name: Gather extended vmnic facts about a host
+  vmware_host_vmnics_facts:
+    hostname: "{{ vcsim }}"
+    username: "{{ user }}"
+    password: "{{ passwd }}"
+    esxi_hostname: "{{ host1 }}"
+    validate_certs: no
+    capabilities: true
+    directpath_io: true
+    sriov: true
+  register: host_vmnics_extended
+
+- debug: var=host_vmnics_extended
+
+- assert:
+    that:
+      - host_vmnics_extended.hosts_vmnics_facts is defined

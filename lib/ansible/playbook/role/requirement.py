@@ -28,12 +28,13 @@ from subprocess import Popen, PIPE
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native
+from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.six import string_types
 from ansible.playbook.role.definition import RoleDefinition
-
+from ansible.utils.display import Display
+from ansible.module_utils._text import to_text
 
 __all__ = ['RoleRequirement']
-
 
 VALID_SPEC_KEYS = [
     'name',
@@ -43,11 +44,7 @@ VALID_SPEC_KEYS = [
     'version',
 ]
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class RoleRequirement(RoleDefinition):
@@ -77,53 +74,6 @@ class RoleRequirement(RoleDefinition):
         return trailing_path
 
     @staticmethod
-    def role_spec_parse(role_spec):
-        # takes a repo and a version like
-        # git+http://git.example.com/repos/repo.git,v1.0
-        # and returns a list of properties such as:
-        # {
-        #   'scm': 'git',
-        #   'src': 'http://git.example.com/repos/repo.git',
-        #   'version': 'v1.0',
-        #   'name': 'repo'
-        # }
-        display.deprecated("The comma separated role spec format, use the yaml/explicit format instead. Line that trigger this: %s" % role_spec,
-                           version="2.7")
-
-        default_role_versions = dict(git='master', hg='tip')
-
-        role_spec = role_spec.strip()
-        role_version = ''
-        if role_spec == "" or role_spec.startswith("#"):
-            return (None, None, None, None)
-
-        tokens = [s.strip() for s in role_spec.split(',')]
-
-        # assume https://github.com URLs are git+https:// URLs and not
-        # tarballs unless they end in '.zip'
-        if 'github.com/' in tokens[0] and not tokens[0].startswith("git+") and not tokens[0].endswith('.tar.gz'):
-            tokens[0] = 'git+' + tokens[0]
-
-        if '+' in tokens[0]:
-            (scm, role_url) = tokens[0].split('+')
-        else:
-            scm = None
-            role_url = tokens[0]
-
-        if len(tokens) >= 2:
-            role_version = tokens[1]
-
-        if len(tokens) == 3:
-            role_name = tokens[2]
-        else:
-            role_name = RoleRequirement.repo_url_to_role_name(tokens[0])
-
-        if scm and not role_version:
-            role_version = default_role_versions.get(scm, '')
-
-        return dict(scm=scm, src=role_url, version=role_version, name=role_name)
-
-    @staticmethod
     def role_yaml_parse(role):
 
         if isinstance(role, string_types):
@@ -151,8 +101,7 @@ class RoleRequirement(RoleDefinition):
         if 'role' in role:
             name = role['role']
             if ',' in name:
-                # Old style: {role: "galaxy.role,version,name", other_vars: "here" }
-                role = RoleRequirement.role_spec_parse(role['role'])
+                raise AnsibleError("Invalid old style role requirement: %s" % name)
             else:
                 del role['role']
                 role['name'] = name
@@ -189,6 +138,8 @@ class RoleRequirement(RoleDefinition):
 
         def run_scm_cmd(cmd, tempdir):
             try:
+                stdout = ''
+                stderr = ''
                 popen = Popen(cmd, cwd=tempdir, stdout=PIPE, stderr=PIPE)
                 stdout, stderr = popen.communicate()
             except Exception as e:
@@ -203,12 +154,17 @@ class RoleRequirement(RoleDefinition):
         if scm not in ['hg', 'git']:
             raise AnsibleError("- scm %s is not currently supported" % scm)
 
+        try:
+            scm_path = get_bin_path(scm, required=True)
+        except (ValueError, OSError, IOError):
+            raise AnsibleError("could not find/use %s, it is required to continue with installing %s" % (scm, src))
+
         tempdir = tempfile.mkdtemp(dir=C.DEFAULT_LOCAL_TMP)
-        clone_cmd = [scm, 'clone', src, name]
+        clone_cmd = [scm_path, 'clone', src, name]
         run_scm_cmd(clone_cmd, tempdir)
 
         if scm == 'git' and version:
-            checkout_cmd = [scm, 'checkout', version]
+            checkout_cmd = [scm_path, 'checkout', to_text(version)]
             run_scm_cmd(checkout_cmd, os.path.join(tempdir, name))
 
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.tar', dir=C.DEFAULT_LOCAL_TMP)
@@ -218,12 +174,12 @@ class RoleRequirement(RoleDefinition):
             with tarfile.open(temp_file.name, "w") as tar:
                 tar.add(os.path.join(tempdir, name), arcname=name)
         elif scm == 'hg':
-            archive_cmd = ['hg', 'archive', '--prefix', "%s/" % name]
+            archive_cmd = [scm_path, 'archive', '--prefix', "%s/" % name]
             if version:
                 archive_cmd.extend(['-r', version])
             archive_cmd.append(temp_file.name)
         elif scm == 'git':
-            archive_cmd = ['git', 'archive', '--prefix=%s/' % name, '--output=%s' % temp_file.name]
+            archive_cmd = [scm_path, 'archive', '--prefix=%s/' % name, '--output=%s' % temp_file.name]
             if version:
                 archive_cmd.append(version)
             else:

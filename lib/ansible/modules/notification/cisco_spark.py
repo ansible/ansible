@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-#
+
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -100,7 +100,7 @@ RETURN = """
 status_code:
   description:
     - The Response Code returned by the Spark API.
-    - Full Responsde Code explanations can be found at U(https://developer.ciscospark.com/endpoint-messages-post.html).
+    - Full Response Code explanations can be found at U(https://developer.ciscospark.com/endpoint-messages-post.html).
   returned: always
   type: int
   sample: 200
@@ -108,9 +108,9 @@ status_code:
 message:
     description:
       - The Response Message returned by the Spark API.
-      - Full Responsde Code explanations can be found at U(https://developer.ciscospark.com/endpoint-messages-post.html.
+      - Full Response Code explanations can be found at U(https://developer.ciscospark.com/endpoint-messages-post.html).
     returned: always
-    type: string
+    type: str
     sample: OK (585 bytes)
 """
 from ansible.module_utils.basic import AnsibleModule
@@ -126,7 +126,7 @@ def spark_message(module):
     ansible = module.params
 
     headers = {
-        'Authorization': 'Bearer {}'.format(ansible['personal_token']),
+        'Authorization': 'Bearer {0}'.format(ansible['personal_token']),
         'content-type': 'application/json'
     }
 

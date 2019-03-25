@@ -28,7 +28,7 @@ from ansible.plugins.terminal import TerminalBase
 class TerminalModule(TerminalBase):
 
     terminal_stdout_re = [
-        re.compile(br"[\r\n][\w\+\-\.:\/\[\]]+(?:\([^\)]+\)){0,3} (?:[>#]) ?$")
+        re.compile(br"[\r\n](?:! )?(?:\* )?(?:\(.*\) )?(?:Slot-\d+ )?\S+\.\d+ (?:[>#]) ?$")
     ]
 
     terminal_stderr_re = [
@@ -43,7 +43,8 @@ class TerminalModule(TerminalBase):
         re.compile(br"Bad mask", re.I),
         re.compile(br"% ?(\S+) ?overlaps with ?(\S+)", re.I),
         re.compile(br"[%\S] ?Error: ?[\s]+", re.I),
-        re.compile(br"[%\S] ?Informational: ?[\s]+", re.I)
+        re.compile(br"[%\S] ?Informational: ?[\s]+", re.I),
+        re.compile(br"%% Invalid .* at '\^' marker.", re.I),
     ]
 
     def on_open_shell(self):

@@ -28,9 +28,8 @@ import datetime
 boto3 = pytest.importorskip('boto3')
 botocore = pytest.importorskip('botocore')
 
-from ansible.errors import AnsibleError, AnsibleParserError
-from ansible.plugins.inventory.aws_ec2 import InventoryModule
-from ansible.plugins.inventory.aws_ec2 import instance_data_filter_to_boto_attr
+from ansible.errors import AnsibleError
+from ansible.plugins.inventory.aws_ec2 import InventoryModule, instance_data_filter_to_boto_attr
 
 instances = {
     u'Instances': [
@@ -174,37 +173,6 @@ def test_insufficient_credentials(inventory):
     with pytest.raises(AnsibleError) as error_message:
         inventory._set_credentials()
         assert "Insufficient boto credentials found" in error_message
-
-
-def test_validate_option(inventory):
-    assert ['us-east-1'] == inventory._validate_option('regions', list, 'us-east-1')
-    assert ['us-east-1'] == inventory._validate_option('regions', list, ['us-east-1'])
-
-
-def test_illegal_option(inventory):
-    bad_filters = [{'tag:Environment': 'dev'}]
-    with pytest.raises(AnsibleParserError) as error_message:
-        inventory._validate_option('filters', dict, bad_filters)
-        assert "The option filters ([{'tag:Environment': 'dev'}]) must be a <class 'dict'>" == error_message
-
-
-def test_empty_config_query_options(inventory):
-    regions, filters, hostnames, strict_permissions = inventory._get_query_options({})
-    assert regions == filters == hostnames == []
-    assert strict_permissions is True
-
-
-def test_conig_query_options(inventory):
-    regions, filters, hostnames, strict_permissions = inventory._get_query_options(
-        {'regions': ['us-east-1', 'us-east-2'],
-         'filters': {'tag:Environment': ['dev', 'prod']},
-         'hostnames': 'ip-address',
-         'strict_permissions': False}
-    )
-    assert regions == ['us-east-1', 'us-east-2']
-    assert filters == [{'Name': 'tag:Environment', 'Values': ['dev', 'prod']}]
-    assert hostnames == ['ip-address']
-    assert strict_permissions is False
 
 
 def test_verify_file_bad_config(inventory):

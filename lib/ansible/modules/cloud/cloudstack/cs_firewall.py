@@ -17,123 +17,138 @@ short_description: Manages firewall rules on Apache CloudStack based clouds.
 description:
     - Creates and removes firewall rules.
 version_added: '2.0'
-author: "René Moser (@resmo)"
+author: René Moser (@resmo)
 options:
   ip_address:
     description:
       - Public IP address the ingress rule is assigned to.
-      - Required if C(type=ingress).
+      - Required if I(type=ingress).
+    type: str
   network:
     description:
       - Network the egress rule is related to.
-      - Required if C(type=egress).
+      - Required if I(type=egress).
+    type: str
   state:
     description:
       - State of the firewall rule.
+    type: str
     default: present
     choices: [ present, absent ]
   type:
     description:
       - Type of the firewall rule.
+    type: str
     default: ingress
     choices: [ ingress, egress ]
   protocol:
     description:
       - Protocol of the firewall rule.
-      - C(all) is only available if C(type=egress).
+      - C(all) is only available if I(type=egress).
+    type: str
     default: tcp
     choices: [ tcp, udp, icmp, all ]
   cidrs:
     description:
       - List of CIDRs (full notation) to be used for firewall rule.
       - Since version 2.5, it is a list of CIDR.
+    type: list
     default: 0.0.0.0/0
     aliases: [ cidr ]
   start_port:
     description:
       - Start port for this rule.
-      - Considered if C(protocol=tcp) or C(protocol=udp).
+      - Considered if I(protocol=tcp) or I(protocol=udp).
+    type: int
     aliases: [ port ]
   end_port:
     description:
-      - End port for this rule. Considered if C(protocol=tcp) or C(protocol=udp).
-      - If not specified, equal C(start_port).
+      - End port for this rule. Considered if I(protocol=tcp) or I(protocol=udp).
+      - If not specified, equal I(start_port).
+    type: int
   icmp_type:
     description:
       - Type of the icmp message being sent.
-      - Considered if C(protocol=icmp).
+      - Considered if I(protocol=icmp).
+    type: int
   icmp_code:
     description:
       - Error code for this icmp message.
-      - Considered if C(protocol=icmp).
+      - Considered if I(protocol=icmp).
+    type: int
   domain:
     description:
       - Domain the firewall rule is related to.
+    type: str
   account:
     description:
       - Account the firewall rule is related to.
+    type: str
   project:
     description:
       - Name of the project the firewall rule is related to.
+    type: str
   zone:
     description:
       - Name of the zone in which the virtual machine is in.
       - If not set, default zone is used.
+    type: str
   poll_async:
     description:
       - Poll async jobs until job has finished.
-    default: true
     type: bool
+    default: yes
   tags:
     description:
-      - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
-      - "To delete all tags, set a empty list e.g. C(tags: [])."
+      - List of tags. Tags are a list of dictionaries having keys I(key) and I(value).
+      - "To delete all tags, set an empty list e.g. I(tags: [])."
+    type: list
     aliases: [ tag ]
-    version_added: "2.4"
+    version_added: '2.4'
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
 - name: Allow inbound port 80/tcp from 1.2.3.4 to 4.3.2.1
-  local_action:
-    module: cs_firewall
+  cs_firewall:
     ip_address: 4.3.2.1
     port: 80
     cidr: 1.2.3.4/32
+  delegate_to: localhost
 
 - name: Allow inbound tcp/udp port 53 to 4.3.2.1
-  local_action:
-    module: cs_firewall
+  cs_firewall:
     ip_address: 4.3.2.1
     port: 53
     protocol: '{{ item }}'
   with_items:
   - tcp
   - udp
+  delegate_to: localhost
 
 - name: Ensure firewall rule is removed
-  local_action:
-    module: cs_firewall
+  cs_firewall:
     ip_address: 4.3.2.1
     start_port: 8000
     end_port: 8888
     cidr: 17.0.0.0/8
     state: absent
+  delegate_to: localhost
 
 - name: Allow all outbound traffic
-  local_action:
-    module: cs_firewall
+  cs_firewall:
     network: my_network
     type: egress
     protocol: all
+  delegate_to: localhost
 
 - name: Allow only HTTP outbound traffic for an IP
-  local_action:
-    module: cs_firewall
+  cs_firewall:
     network: my_network
     type: egress
     port: 80
     cidr: 10.101.1.20
+  delegate_to: localhost
 '''
 
 RETURN = '''
@@ -141,33 +156,33 @@ RETURN = '''
 id:
   description: UUID of the rule.
   returned: success
-  type: string
+  type: str
   sample: 04589590-ac63-4ffc-93f5-b698b8ac38b6
 ip_address:
   description: IP address of the rule if C(type=ingress)
   returned: success
-  type: string
+  type: str
   sample: 10.100.212.10
 type:
   description: Type of the rule.
   returned: success
-  type: string
+  type: str
   sample: ingress
 cidr:
   description: CIDR string of the rule.
   returned: success
-  type: string
+  type: str
   sample: 0.0.0.0/0
 cidrs:
   description: CIDR list of the rule.
   returned: success
   type: list
   sample: [ '0.0.0.0/0' ]
-  version_added: "2.5"
+  version_added: '2.5'
 protocol:
   description: Protocol of the rule.
   returned: success
-  type: string
+  type: str
   sample: tcp
 start_port:
   description: Start port of the rule.
@@ -192,7 +207,7 @@ icmp_type:
 network:
   description: Name of the network if C(type=egress)
   returned: success
-  type: string
+  type: str
   sample: my_network
 '''
 
@@ -249,16 +264,24 @@ class AnsibleCloudStackFirewall(AnsibleCloudStack):
                 args['networkid'] = self.get_network(key='id')
                 if not args['networkid']:
                     self.module.fail_json(msg="missing required argument for type egress: network")
+
+                # CloudStack 4.11 use the network cidr for 0.0.0.0/0 in egress
+                # That is why we need to replace it.
+                network_cidr = self.get_network(key='cidr')
+                egress_cidrs = [network_cidr if cidr == '0.0.0.0/0' else cidr for cidr in cidrs]
+
                 firewall_rules = self.query_api('listEgressFirewallRules', **args)
             else:
                 args['ipaddressid'] = self.get_ip_address('id')
                 if not args['ipaddressid']:
                     self.module.fail_json(msg="missing required argument for type ingress: ip_address")
+                egress_cidrs = None
+
                 firewall_rules = self.query_api('listFirewallRules', **args)
 
             if firewall_rules:
                 for rule in firewall_rules:
-                    type_match = self._type_cidrs_match(rule, cidrs)
+                    type_match = self._type_cidrs_match(rule, cidrs, egress_cidrs)
 
                     protocol_match = (
                         self._tcp_udp_match(rule, protocol, start_port, end_port) or
@@ -294,8 +317,11 @@ class AnsibleCloudStackFirewall(AnsibleCloudStack):
             icmp_type == rule['icmptype']
         )
 
-    def _type_cidrs_match(self, rule, cidrs):
-        return ",".join(cidrs) == rule['cidrlist']
+    def _type_cidrs_match(self, rule, cidrs, egress_cidrs):
+        if egress_cidrs is not None:
+            return ",".join(egress_cidrs) == rule['cidrlist'] or ",".join(cidrs) == rule['cidrlist']
+        else:
+            return ",".join(cidrs) == rule['cidrlist']
 
     def create_firewall_rule(self):
         firewall_rule = self.get_firewall_rule()

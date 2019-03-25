@@ -17,6 +17,7 @@ DOCUMENTATION = '''
 module: grafana_datasource
 author:
   - Thierry Sallé (@seuf)
+  - Martin Wang (@martinwangjian)
 version_added: "2.5"
 short_description: Manage Grafana datasources
 description:
@@ -34,24 +35,29 @@ options:
     description:
      - The type of the datasource.
     required: true
-    choices: [ graphite, prometheus, elasticsearch, influxdb, opentsdb, mysql, postgres, alexanderzobnin-zabbix-datasource]
+    choices: [ graphite, prometheus, elasticsearch, influxdb, opentsdb, mysql, postgres, cloudwatch, alexanderzobnin-zabbix-datasource]
   url:
     description:
       - The URL of the datasource.
     required: true
+    aliases: [ ds_url ]
   access:
     description:
       - The access mode for this datasource.
     choices: [ direct, proxy ]
     default: proxy
-  grafana_user:
+  url_username:
     description:
       - The Grafana API user.
     default: admin
-  grafana_password:
+    aliases: [ grafana_user ]
+    version_added: 2.7
+  url_password:
     description:
       - The Grafana API password.
     default: admin
+    aliases: [ grafana_password ]
+    version_added: 2.7
   grafana_api_key:
     description:
       - The Grafana API key.
@@ -157,11 +163,77 @@ options:
       - Use trends or not for zabbix datasource type
     type: bool
     version_added: 2.6
+  client_cert:
+    required: false
+    description:
+      - TLS certificate path used by ansible to query grafana api
+    version_added: 2.8
+  client_key:
+    required: false
+    description:
+      - TLS private key path used by ansible to query grafana api
+    version_added: 2.8
   validate_certs:
     description:
       - Whether to validate the Grafana certificate.
     type: bool
     default: 'yes'
+  use_proxy:
+    description:
+      - Boolean of whether or not to use proxy.
+    default: 'yes'
+    type: bool
+    version_added: 2.8
+  aws_auth_type:
+    description:
+      - Type for AWS authentication for CloudWatch datasource type (authType of grafana api)
+    default: 'keys'
+    choices: [ keys, credentials, arn ]
+    version_added: 2.8
+  aws_default_region:
+    description:
+      - AWS default region for CloudWatch datasource type
+    default: 'us-east-1'
+    choices: [
+      ap-northeast-1, ap-northeast-2, ap-southeast-1, ap-southeast-2, ap-south-1,
+      ca-central-1,
+      cn-north-1, cn-northwest-1,
+      eu-central-1, eu-west-1, eu-west-2, eu-west-3,
+      sa-east-1,
+      us-east-1, us-east-2, us-gov-west-1, us-west-1, us-west-2
+    ]
+    version_added: 2.8
+  aws_credentials_profile:
+    description:
+      - Profile for AWS credentials for CloudWatch datasource type when C(aws_auth_type) is C(credentials)
+    default: ''
+    required: false
+    version_added: 2.8
+  aws_access_key:
+    description:
+      - AWS access key for CloudWatch datasource type when C(aws_auth_type) is C(keys)
+    default: ''
+    required: false
+    version_added: 2.8
+  aws_secret_key:
+    description:
+      - AWS secret key for CloudWatch datasource type when C(aws_auth_type) is C(keys)
+    default: ''
+    required: false
+    version_added: 2.8
+  aws_assume_role_arn:
+    description:
+      - AWS IAM role arn to assume for CloudWatch datasource type when C(aws_auth_type) is C(arn)
+    default: ''
+    required: false
+    version_added: 2.8
+  aws_custom_metrics_namespaces:
+    description:
+      - Namespaces of Custom Metrics for CloudWatch datasource type
+    default: ''
+    required: false
+    version_added: 2.8
+
 '''
 
 EXAMPLES = '''
@@ -173,8 +245,8 @@ EXAMPLES = '''
     grafana_user: "admin"
     grafana_password: "xxxxxx"
     org_id: "1"
-    ds_type: "elasticisearch"
-    url: "https://elastic.company.com:9200"
+    ds_type: "elasticsearch"
+    ds_url: "https://elastic.company.com:9200"
     database: "[logstash_]YYYY.MM.DD"
     basic_auth_user: "grafana"
     basic_auth_password: "******"
@@ -193,10 +265,39 @@ EXAMPLES = '''
     grafana_password: "xxxxxx"
     org_id: "1"
     ds_type: "influxdb"
-    url: "https://influx.company.com:8086"
+    ds_url: "https://influx.company.com:8086"
     database: "telegraf"
     time_interval: ">10s"
     tls_ca_cert: "/etc/ssl/certs/ca.pem"
+
+- name: Create postgres datasource
+  grafana_datasource:
+    name: "datasource-postgres"
+    grafana_url: "https://grafana.company.com"
+    grafana_user: "admin"
+    grafana_password: "xxxxxx"
+    org_id: "1"
+    ds_type: "postgres"
+    ds_url: "postgres.company.com:5432"
+    database: "db"
+    user: "postgres"
+    password: "iampgroot"
+    sslmode: "verify-full"
+
+- name: Create cloudwatch datasource
+  grafana_datasource:
+    name: "datasource-cloudwatch"
+    grafana_url: "https://grafana.company.com"
+    grafana_user: "admin"
+    grafana_password: "xxxxxx"
+    org_id: "1"
+    ds_type: "cloudwatch"
+    url: "http://monitoring.us-west-1.amazonaws.com"
+    aws_auth_type: "keys"
+    aws_default_region: "us-west-1"
+    aws_access_key: "speakFriendAndEnter"
+    aws_secret_key: "mel10n"
+    aws_custom_metrics_namespaces: "n1,n2"
 '''
 
 RETURN = '''
@@ -204,7 +305,7 @@ RETURN = '''
 name:
   description: name of the datasource created.
   returned: success
-  type: string
+  type: str
   sample: test-ds
 id:
   description: Id of the datasource
@@ -259,8 +360,8 @@ import json
 import base64
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import fetch_url
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils.urls import fetch_url, url_argument_spec
+from ansible.module_utils._text import to_text
 
 __metaclass__ = type
 
@@ -275,13 +376,24 @@ def grafana_switch_organisation(module, grafana_url, org_id, headers):
         raise GrafanaAPIException('Unable to switch to organization %s : %s' % (org_id, info))
 
 
+def grafana_headers(module, data):
+    headers = {'content-type': 'application/json; charset=utf8'}
+    if 'grafana_api_key' in data and data['grafana_api_key']:
+        headers['Authorization'] = "Bearer %s" % data['grafana_api_key']
+    else:
+        module.params['force_basic_auth'] = True
+        grafana_switch_organisation(module, data['grafana_url'], data['org_id'], headers)
+
+    return headers
+
+
 def grafana_datasource_exists(module, grafana_url, name, headers):
     datasource_exists = False
     ds = {}
     r, info = fetch_url(module, '%s/api/datasources/name/%s' % (grafana_url, name), headers=headers, method='GET')
     if info['status'] == 200:
         datasource_exists = True
-        ds = json.loads(r.read())
+        ds = json.loads(to_text(r.read(), errors='surrogate_or_strict'))
     elif info['status'] == 404:
         datasource_exists = False
     else:
@@ -361,21 +473,31 @@ def grafana_create_datasource(module, data):
 
     if data['ds_type'] == 'postgres':
         json_data['sslmode'] = data['sslmode']
+        if data.get('password'):
+            payload['secureJsonData'] = {'password': data.get('password')}
 
     if data['ds_type'] == 'alexanderzobnin-zabbix-datasource':
         if data.get('trends'):
             json_data['trends'] = True
 
+    if data['ds_type'] == 'cloudwatch':
+        if data.get('aws_credentials_profle'):
+            payload['database'] = data.get('aws_credentials_profile')
+
+        json_data['authType'] = data['aws_auth_type']
+        json_data['defaultRegion'] = data['aws_default_region']
+
+        if data.get('aws_custom_metrics_namespaces'):
+            json_data['customMetricsNamespaces'] = data.get('aws_custom_metrics_namespaces')
+        if data.get('aws_assume_role_arn'):
+            json_data['assumeRoleArn'] = data.get('aws_assume_role_arn')
+        if data.get('aws_access_key') and data.get('aws_secret_key'):
+            payload['secureJsonData'] = {'accessKey': data.get('aws_access_key'), 'secretKey': data.get('aws_secret_key')}
+
     payload['jsonData'] = json_data
 
     # define http header
-    headers = {'content-type': 'application/json; charset=utf8'}
-    if 'grafana_api_key' in data and data['grafana_api_key'] is not None:
-        headers['Authorization'] = "Bearer %s" % data['grafana_api_key']
-    else:
-        auth = base64.b64encode(to_bytes('%s:%s' % (data['grafana_user'], data['grafana_password'])).replace('\n', ''))
-        headers['Authorization'] = 'Basic %s' % auth
-        grafana_switch_organisation(module, data['grafana_url'], data['org_id'], headers)
+    headers = grafana_headers(module, data)
 
     # test if datasource already exists
     datasource_exists, ds = grafana_datasource_exists(module, data['grafana_url'], data['name'], headers=headers)
@@ -383,6 +505,10 @@ def grafana_create_datasource(module, data):
     result = {}
     if datasource_exists is True:
         del ds['typeLogoUrl']
+        if ds.get('version'):
+            del ds['version']
+        if ds.get('readOnly'):
+            del ds['readOnly']
         if ds['basicAuth'] is False:
             del ds['basicAuthUser']
             del ds['basicAuthPassword']
@@ -402,7 +528,7 @@ def grafana_create_datasource(module, data):
             # update
             r, info = fetch_url(module, '%s/api/datasources/%d' % (data['grafana_url'], ds['id']), data=json.dumps(payload), headers=headers, method='PUT')
             if info['status'] == 200:
-                res = json.loads(r.read())
+                res = json.loads(to_text(r.read(), errors='surrogate_or_strict'))
                 result['name'] = data['name']
                 result['id'] = ds['id']
                 result['before'] = ds
@@ -415,7 +541,7 @@ def grafana_create_datasource(module, data):
         # create
         r, info = fetch_url(module, '%s/api/datasources' % data['grafana_url'], data=json.dumps(payload), headers=headers, method='POST')
         if info['status'] == 200:
-            res = json.loads(r.read())
+            res = json.loads(to_text(r.read(), errors='surrogate_or_strict'))
             result['msg'] = "Datasource %s created : %s" % (data['name'], res['message'])
             result['changed'] = True
             result['name'] = data['name']
@@ -428,14 +554,7 @@ def grafana_create_datasource(module, data):
 
 def grafana_delete_datasource(module, data):
 
-    # define http headers
-    headers = {'content-type': 'application/json'}
-    if 'grafana_api_key' in data and data['grafana_api_key']:
-        headers['Authorization'] = "Bearer %s" % data['grafana_api_key']
-    else:
-        auth = base64.b64encode(to_bytes('%s:%s' % (data['grafana_user'], data['grafana_password'])).replace('\n', ''))
-        headers['Authorization'] = 'Basic %s' % auth
-        grafana_switch_organisation(module, data['grafana_url'], data['org_id'], headers)
+    headers = grafana_headers(module, data)
 
     # test if datasource already exists
     datasource_exists, ds = grafana_datasource_exists(module, data['grafana_url'], data['name'], headers=headers)
@@ -445,7 +564,7 @@ def grafana_delete_datasource(module, data):
         # delete
         r, info = fetch_url(module, '%s/api/datasources/name/%s' % (data['grafana_url'], data['name']), headers=headers, method='DELETE')
         if info['status'] == 200:
-            res = json.loads(r.read())
+            res = json.loads(to_text(r.read(), errors='surrogate_or_strict'))
             result['msg'] = "Datasource %s deleted : %s" % (data['name'], res['message'])
             result['changed'] = True
             result['name'] = data['name']
@@ -463,57 +582,79 @@ def grafana_delete_datasource(module, data):
 
 
 def main():
+    # use the predefined argument spec for url
+    argument_spec = url_argument_spec()
+    # remove unnecessary arguments
+    del argument_spec['force']
+    del argument_spec['force_basic_auth']
+    del argument_spec['http_agent']
+
+    argument_spec.update(
+        name=dict(required=True, type='str'),
+        state=dict(choices=['present', 'absent'],
+                   default='present'),
+        grafana_url=dict(type='str', required=True),
+        url_username=dict(aliases=['grafana_user'], default='admin'),
+        url_password=dict(aliases=['grafana_password'], default='admin', no_log=True),
+        ds_type=dict(choices=['graphite',
+                              'prometheus',
+                              'elasticsearch',
+                              'influxdb',
+                              'opentsdb',
+                              'mysql',
+                              'postgres',
+                              'cloudwatch',
+                              'alexanderzobnin-zabbix-datasource']),
+        url=dict(required=True, type='str', aliases=['ds_url']),
+        access=dict(default='proxy', choices=['proxy', 'direct']),
+        grafana_api_key=dict(type='str', no_log=True),
+        database=dict(type='str'),
+        user=dict(default='', type='str'),
+        password=dict(default='', no_log=True, type='str'),
+        basic_auth_user=dict(type='str'),
+        basic_auth_password=dict(type='str', no_log=True),
+        with_credentials=dict(default=False, type='bool'),
+        tls_client_cert=dict(type='str', no_log=True),
+        tls_client_key=dict(type='str', no_log=True),
+        tls_ca_cert=dict(type='str', no_log=True),
+        tls_skip_verify=dict(type='bool', default=False),
+        is_default=dict(default=False, type='bool'),
+        org_id=dict(default=1, type='int'),
+        es_version=dict(type='int', default=5, choices=[2, 5, 56]),
+        max_concurrent_shard_requests=dict(type='int', default=256),
+        time_field=dict(default='@timestamp', type='str'),
+        time_interval=dict(type='str'),
+        interval=dict(type='str', choices=['', 'Hourly', 'Daily', 'Weekly', 'Monthly', 'Yearly'], default=''),
+        tsdb_version=dict(type='int', default=1, choices=[1, 2, 3]),
+        tsdb_resolution=dict(type='str', default='second', choices=['second', 'millisecond']),
+        sslmode=dict(default='disable', choices=['disable', 'require', 'verify-ca', 'verify-full']),
+        trends=dict(default=False, type='bool'),
+        aws_auth_type=dict(default='keys', choices=['keys', 'credentials', 'arn']),
+        aws_default_region=dict(default='us-east-1', choices=['ap-northeast-1', 'ap-northeast-2', 'ap-southeast-1', 'ap-southeast-2', 'ap-south-1',
+                                                              'ca-central-1',
+                                                              'cn-north-1', 'cn-northwest-1',
+                                                              'eu-central-1', 'eu-west-1', 'eu-west-2', 'eu-west-3',
+                                                              'sa-east-1',
+                                                              'us-east-1', 'us-east-2', 'us-gov-west-1', 'us-west-1', 'us-west-2']),
+        aws_access_key=dict(default='', no_log=True, type='str'),
+        aws_secret_key=dict(default='', no_log=True, type='str'),
+        aws_credentials_profile=dict(default='', type='str'),
+        aws_assume_role_arn=dict(default='', type='str'),
+        aws_custom_metrics_namespaces=dict(type='str'),
+    )
+
     module = AnsibleModule(
-        argument_spec=dict(
-            name=dict(required=True, type='str'),
-            state=dict(choices=['present', 'absent'],
-                       default='present'),
-            grafana_url=dict(required=True, type='str'),
-            ds_type=dict(choices=['graphite',
-                                  'prometheus',
-                                  'elasticsearch',
-                                  'influxdb',
-                                  'opentsdb',
-                                  'mysql',
-                                  'postgres',
-                                  'alexanderzobnin-zabbix-datasource']),
-            url=dict(required=True, type='str'),
-            access=dict(default='proxy', choices=['proxy', 'direct']),
-            grafana_user=dict(default='admin'),
-            grafana_password=dict(default='admin', no_log=True),
-            grafana_api_key=dict(type='str', no_log=True),
-            database=dict(type='str'),
-            user=dict(default='', type='str'),
-            password=dict(default='', no_log=True, type='str'),
-            basic_auth_user=dict(type='str'),
-            basic_auth_password=dict(type='str', no_log=True),
-            with_credentials=dict(default=False, type='bool'),
-            tls_client_cert=dict(type='str', no_log=True),
-            tls_client_key=dict(type='str', no_log=True),
-            tls_ca_cert=dict(type='str', no_log=True),
-            tls_skip_verify=dict(type='bool', default=False),
-            is_default=dict(default=False, type='bool'),
-            org_id=dict(default=1, type='int'),
-            es_version=dict(type='int', default=5, choices=[2, 5, 56]),
-            max_concurrent_shard_requests=dict(type='int', default=256),
-            time_field=dict(default='@timestamp', type='str'),
-            time_interval=dict(type='str'),
-            interval=dict(type='str', choices=['', 'Hourly', 'Daily', 'Weekly', 'Monthly', 'Yearly'], default=''),
-            tsdb_version=dict(type='int', default=1, choices=[1, 2, 3]),
-            tsdb_resolution=dict(type='str', default='second', choices=['second', 'millisecond']),
-            sslmode=dict(default='disable', choices=['disable', 'require', 'verify-ca', 'verify-full']),
-            trends=dict(default=False, type='bool'),
-            validate_certs=dict(type='bool', default=True)
-        ),
+        argument_spec=argument_spec,
         supports_check_mode=False,
-        required_together=[['grafana_user', 'grafana_password', 'org_id'], ['tls_client_cert', 'tls_client_key']],
-        mutually_exclusive=[['grafana_user', 'grafana_api_key'], ['tls_ca_cert', 'tls_skip_verify']],
+        required_together=[['url_username', 'url_password', 'org_id'], ['tls_client_cert', 'tls_client_key']],
+        mutually_exclusive=[['url_username', 'grafana_api_key'], ['tls_ca_cert', 'tls_skip_verify']],
         required_if=[
             ['ds_type', 'opentsdb', ['tsdb_version', 'tsdb_resolution']],
             ['ds_type', 'influxdb', ['database']],
             ['ds_type', 'elasticsearch', ['database', 'es_version', 'time_field', 'interval']],
             ['ds_type', 'mysql', ['database']],
             ['ds_type', 'postgres', ['database', 'sslmode']],
+            ['ds_type', 'cloudwatch', ['aws_auth_type', 'aws_default_region']],
             ['es_version', 56, ['max_concurrent_shard_requests']]
         ],
     )
@@ -535,6 +676,7 @@ def main():
         **result
     )
     return
+
 
 if __name__ == '__main__':
     main()

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Ansible by Red Hat, inc
+# Copyright: (c) 2017, Ansible by Red Hat, inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -54,6 +54,7 @@ options:
     description:
       - Purge VLANs not defined in the I(aggregate) parameter.
     default: no
+    type: bool
   state:
     description:
       - State of the VLAN configuration.
@@ -159,9 +160,9 @@ def map_obj_to_commands(updates, module):
                     for i in w['interfaces']:
                         cmd = 'set interfaces ethernet {0} vif {1}'.format(i, vlan_id)
                         if w['name']:
-                            commands.append(cmd + ' description {}'.format(name))
+                            commands.append(cmd + ' description {0}'.format(name))
                         elif w['address']:
-                            commands.append(cmd + ' address {}'.format(address))
+                            commands.append(cmd + ' address {0}'.format(address))
                         else:
                             commands.append(cmd)
 
@@ -185,6 +186,10 @@ def map_params_to_obj(module):
                     item[key] = module.params[key]
 
             d = item.copy()
+
+            if not d['vlan_id']:
+                module.fail_json(msg='vlan_id is required')
+
             d['vlan_id'] = str(d['vlan_id'])
             module._check_required_one_of(module.required_one_of, item)
 
@@ -269,7 +274,7 @@ def main():
     """ main entry point for module execution
     """
     element_spec = dict(
-        vlan_id=dict(type='int', required=True),
+        vlan_id=dict(type='int'),
         name=dict(),
         address=dict(),
         interfaces=dict(type='list'),
@@ -293,7 +298,7 @@ def main():
     argument_spec.update(vyos_argument_spec)
 
     required_one_of = [['vlan_id', 'aggregate'],
-                       ['interfaces', 'associated_interfaces']]
+                       ['aggregate', 'interfaces', 'associated_interfaces']]
 
     mutually_exclusive = [['vlan_id', 'aggregate']]
     module = AnsibleModule(argument_spec=argument_spec,

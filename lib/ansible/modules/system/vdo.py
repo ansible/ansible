@@ -1,14 +1,10 @@
 #!/usr/bin/python
 
-#
-# Copyright (c) 2018 Red Hat, Inc.
-#
+# Copyright: (c) 2018, Red Hat, Inc.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-#
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -16,10 +12,10 @@ ANSIBLE_METADATA = {
     'supported_by': 'community'
 }
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 author:
-    - "Bryan Gurney (@bgurney-rh)"
+    - Bryan Gurney (@bgurney-rh)
 
 module: vdo
 
@@ -29,7 +25,7 @@ version_added: "2.5"
 
 description:
     - This module controls the VDO dedupe and compression device.
-      VDO, or Virtual Data Optimizer, is a device-mapper target that
+    - VDO, or Virtual Data Optimizer, is a device-mapper target that
       provides inline block-level deduplication, compression, and
       thin provisioning capabilities to primary storage.
 
@@ -37,9 +33,9 @@ options:
     name:
         description:
             - The name of the VDO volume.
+        type: str
         required: true
     state:
-        choices: [ "present", "absent" ]
         description:
             - Whether this VDO volume should be "present" or "absent".
               If a "present" VDO volume does not exist, it will be
@@ -51,9 +47,11 @@ options:
               parameters that can be modified after creation. If an
               "absent" VDO volume does not exist, it will not be
               removed.
+        type: str
         required: true
+        choices: [ absent, present ]
+        default: present
     activated:
-        choices: [ "yes", "no" ]
         description:
             - The "activate" status for a VDO volume.  If this is set
               to "no", the VDO volume cannot be started, and it will
@@ -65,19 +63,17 @@ options:
               (filesystem, LVM headers, etc.) to the VDO volume prior
               to stopping the volume, and leaving it deactivated
               until ready to use.
-
-        required: false
+        type: bool
     running:
-        choices: [ "yes", "no" ]
         description:
-            - Whether this VDO volume is running.  A VDO volume must
-              be activated in order to be started.
-        required: false
+            - Whether this VDO volume is running.
+            - A VDO volume must be activated in order to be started.
+        type: bool
     device:
         description:
             - The full path of the device to use for VDO storage.
-              This is required if "state" is "present".
-        required: false
+            - This is required if "state" is "present".
+        type: str
     logicalsize:
         description:
             - The logical size of the VDO volume (in megabytes, or
@@ -89,24 +85,24 @@ options:
               than or identical to the current size.  If the specified
               size is larger than the current size, a growlogical
               operation will be performed.
-        required: false
+        type: str
     deduplication:
-        choices: [ "enabled", "disabled" ]
         description:
             - Configures whether deduplication is enabled.  The
               default for a created volume is 'enabled'.  Existing
               volumes will maintain their previously configured
               setting unless a different value is specified in the
               playbook.
-        required: false
+        type: str
+        choices: [ disabled, enabled ]
     compression:
-        choices: [ "enabled", "disabled" ]
         description:
             - Configures whether compression is enabled.  The default
               for a created volume is 'enabled'.  Existing volumes
               will maintain their previously configured setting unless
               a different value is specified in the playbook.
-        required: false
+        type: str
+        choices: [ disabled, enabled ]
     blockmapcachesize:
         description:
             - The amount of memory allocated for caching block map
@@ -120,9 +116,8 @@ options:
               volumes will maintain their previously configured
               setting unless a different value is specified in the
               playbook.
-        required: false
+        type: str
     readcache:
-        choices: [ "enabled", "disabled" ]
         description:
             - Enables or disables the read cache.  The default is
               'disabled'.  Choosing 'enabled' enables a read cache
@@ -132,7 +127,9 @@ options:
               volumes will maintain their previously configured
               setting unless a different value is specified in the
               playbook.
-        required: false
+            - The read cache feature is available in VDO 6.1 and older.
+        type: str
+        choices: [ disabled, enabled ]
     readcachesize:
         description:
             - Specifies the extra VDO device read cache size in
@@ -146,9 +143,9 @@ options:
               Existing volumes will maintain their previously
               configured setting unless a different value is specified
               in the playbook.
-        required: false
+            - The read cache feature is available in VDO 6.1 and older.
+        type: str
     emulate512:
-        type: bool
         description:
             - Enables 512-byte emulation mode, allowing drivers or
               filesystems to access the VDO volume at 512-byte
@@ -158,16 +155,15 @@ options:
               a device.  This option is only available when creating
               a new volume, and cannot be changed for an existing
               volume.
-        required: false
-    growphysical:
         type: bool
+    growphysical:
         description:
             - Specifies whether to attempt to execute a growphysical
               operation, if there is enough unused space on the
               device.  A growphysical operation will be executed if
               there is at least 64 GB of free space, relative to the
               previous physical size of the affected VDO volume.
-        required: false
+        type: bool
         default: false
     slabsize:
         description:
@@ -179,9 +175,8 @@ options:
               The maximum, 32G, supports a physical size of up to 256T.
               This option is only available when creating a new
               volume, and cannot be changed for an existing volume.
-        required: false
+        type: str
     writepolicy:
-        choices: [ "auto", "sync", "async" ]
         description:
             - Specifies the write policy of the VDO volume.  The
               'sync' mode acknowledges writes only after data is on
@@ -195,7 +190,8 @@ options:
               Existing volumes will maintain their previously
               configured setting unless a different value is
               specified in the playbook.
-        required: false
+        type: str
+        choices: [ async, auto, sync ]
     indexmem:
         description:
             - Specifies the amount of index memory in gigabytes.  The
@@ -203,7 +199,7 @@ options:
               and 0.75 can be used, as can any positive integer.
               This option is only available when creating a new
               volume, and cannot be changed for an existing volume.
-        required: false
+        type: str
     indexmode:
         description:
             - Specifies the index mode of the Albireo index.  The
@@ -215,7 +211,8 @@ options:
               100 GB of index data on persistent storage.  This option
               is only available when creating a new volume, and cannot
               be changed for an existing volume.
-        required: false
+        type: str
+        choices: [ dense, sparse ]
     ackthreads:
         description:
             - Specifies the number of threads to use for
@@ -225,7 +222,7 @@ options:
               1.  Existing volumes will maintain their previously
               configured setting unless a different value is specified
               in the playbook.
-        required: false
+        type: str
     biothreads:
         description:
             - Specifies the number of threads to use for submitting I/O
@@ -235,7 +232,7 @@ options:
               Existing volumes will maintain their previously
               configured setting unless a different value is specified
               in the playbook.
-        required: false
+        type: str
     cputhreads:
         description:
             - Specifies the number of threads to use for CPU-intensive
@@ -245,7 +242,7 @@ options:
               Existing volumes will maintain their previously
               configured setting unless a different value is specified
               in the playbook.
-        required: false
+        type: str
     logicalthreads:
         description:
             - Specifies the number of threads across which to
@@ -255,7 +252,7 @@ options:
               The default is 1.  Existing volumes will maintain their
               previously configured setting unless a different value
               is specified in the playbook.
-        required: false
+        type: str
     physicalthreads:
         description:
             - Specifies the number of threads across which to
@@ -267,7 +264,7 @@ options:
               is 1.  Existing volumes will maintain their previously
               configured setting unless a different value is specified
               in the playbook.
-        required: false
+        type: str
 notes:
   - In general, the default thread configuration should be used.
 requirements:
@@ -276,8 +273,7 @@ requirements:
   - vdo
 '''
 
-EXAMPLES = '''
-# Create a VDO volume
+EXAMPLES = r'''
 - name: Create 2 TB VDO volume vdo1 on device /dev/md0
   vdo:
     name: vdo1
@@ -285,22 +281,24 @@ EXAMPLES = '''
     device: /dev/md0
     logicalsize: 2T
 
-# Remove a VDO volume
 - name: Remove VDO volume vdo1
   vdo:
     name: vdo1
     state: absent
 '''
 
-RETURN = '''#  '''
+RETURN = r'''#  '''
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 import re
+import traceback
 
+YAML_IMP_ERR = None
 try:
     import yaml
     HAS_YAML = True
 except ImportError:
+    YAML_IMP_ERR = traceback.format_exc()
     HAS_YAML = False
 
 
@@ -453,35 +451,35 @@ def run_module():
     # Creation param defaults are determined by the creation section.
 
     module_args = dict(
-        name=dict(required=True),
-        state=dict(choices=['absent', 'present'], default='present'),
-        activated=dict(choices=['yes', 'no']),
-        running=dict(choices=['yes', 'no']),
+        name=dict(type='str', required=True),
+        state=dict(type='str', default='present', choices=['absent', 'present']),
+        activated=dict(type='bool'),
+        running=dict(type='bool'),
         growphysical=dict(type='bool', default=False),
-        device=dict(),
-        logicalsize=dict(),
-        deduplication=dict(choices=['enabled', 'disabled']),
-        compression=dict(choices=['enabled', 'disabled']),
+        device=dict(type='str'),
+        logicalsize=dict(type='str'),
+        deduplication=dict(type='str', choices=['disabled', 'enabled']),
+        compression=dict(type='str', choices=['disabled', 'enabled']),
         blockmapcachesize=dict(type='str'),
-        readcache=dict(choices=['enabled', 'disabled']),
-        readcachesize=dict(),
+        readcache=dict(type='str', choices=['disabled', 'enabled']),
+        readcachesize=dict(type='str'),
         emulate512=dict(type='bool', default=False),
-        slabsize=dict(),
-        writepolicy=dict(choices=['auto', 'sync', 'async']),
-        indexmem=dict(),
-        indexmode=dict(choices=['dense', 'sparse']),
-        ackthreads=dict(),
-        biothreads=dict(),
-        cputhreads=dict(),
-        logicalthreads=dict(),
-        physicalthreads=dict()
+        slabsize=dict(type='str'),
+        writepolicy=dict(type='str', choices=['async', 'auto', 'sync']),
+        indexmem=dict(type='str'),
+        indexmode=dict(type='str', choices=['dense', 'sparse']),
+        ackthreads=dict(type='str'),
+        biothreads=dict(type='str'),
+        cputhreads=dict(type='str'),
+        logicalthreads=dict(type='str'),
+        physicalthreads=dict(type='str')
     )
 
     # Seed the result dictionary in the object.  There will be an
     # 'invocation' dictionary added with 'module_args' (arguments
     # given).
     result = dict(
-        changed=False
+        changed=False,
     )
 
     # the AnsibleModule object will be our abstraction working with Ansible
@@ -490,11 +488,11 @@ def run_module():
     # supports check mode
     module = AnsibleModule(
         argument_spec=module_args,
-        supports_check_mode=False
+        supports_check_mode=False,
     )
 
     if not HAS_YAML:
-        module.fail_json(msg='PyYAML is required for this module.')
+        module.fail_json(msg=missing_required_lib('PyYAML'), exception=YAML_IMP_ERR)
 
     vdocmd = module.get_bin_path("vdo", required=True)
     if not vdocmd:
@@ -867,6 +865,7 @@ def run_module():
 
 def main():
     run_module()
+
 
 if __name__ == '__main__':
     main()

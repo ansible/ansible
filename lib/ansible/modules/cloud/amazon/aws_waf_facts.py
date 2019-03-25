@@ -44,7 +44,7 @@ wafs:
     name:
       description: A friendly name or description of the WebACL
       returned: always
-      type: string
+      type: str
       sample: test_waf
     default_action:
       description: The action to perform if none of the Rules contained in the WebACL match.
@@ -54,7 +54,7 @@ wafs:
     metric_name:
       description: A friendly name or description for the metrics for this WebACL
       returned: always
-      type: string
+      type: str
       sample: test_waf_metric
     rules:
       description: An array that contains the action for each Rule in a WebACL , the priority of the Rule
@@ -64,17 +64,17 @@ wafs:
         action:
           description: The action to perform if the Rule matches
           returned: always
-          type: string
+          type: str
           sample: BLOCK
         metric_name:
           description: A friendly name or description for the metrics for this Rule
           returned: always
-          type: string
+          type: str
           sample: ipblockrule
         name:
           description: A friendly name or description of the Rule
           returned: always
-          type: string
+          type: str
           sample: ip_block_rule
         predicates:
           description: The Predicates list contains a Predicate for each

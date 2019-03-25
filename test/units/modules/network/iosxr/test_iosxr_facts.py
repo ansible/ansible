@@ -21,7 +21,7 @@ __metaclass__ = type
 
 import json
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from units.modules.utils import set_module_args
 from .iosxr_module import TestIosxrModule, load_fixture
 from ansible.modules.network.iosxr import iosxr_facts
@@ -34,14 +34,27 @@ class TestIosxrFacts(TestIosxrModule):
     def setUp(self):
         super(TestIosxrFacts, self).setUp()
 
-        self.mock_run_command = patch(
-            'ansible.modules.network.iosxr.iosxr_facts.run_command')
-        self.run_command = self.mock_run_command.start()
+        self.mock_run_commands = patch(
+            'ansible.modules.network.iosxr.iosxr_facts.run_commands')
+        self.run_commands = self.mock_run_commands.start()
+
+        self.mock_get_capabilities = patch('ansible.modules.network.iosxr.iosxr_facts.get_capabilities')
+        self.get_capabilities = self.mock_get_capabilities.start()
+        self.get_capabilities.return_value = {
+            'device_info': {
+                'network_os': 'iosxr',
+                'network_os_hostname': 'iosxr01',
+                'network_os_image': 'bootflash:disk0/xrvr-os-mbi-6.1.3/mbixrvr-rp.vm',
+                'network_os_version': '6.1.3[Default]'
+            },
+            'network_api': 'cliconf'
+        }
 
     def tearDown(self):
         super(TestIosxrFacts, self).tearDown()
 
-        self.mock_run_command.stop()
+        self.mock_run_commands.stop()
+        self.mock_get_capabilities.stop()
 
     def load_fixtures(self, commands=None):
 
@@ -61,7 +74,7 @@ class TestIosxrFacts(TestIosxrModule):
                 output.append(load_fixture(filename))
             return output
 
-        self.run_command.side_effect = load_from_file
+        self.run_commands.side_effect = load_from_file
 
     def test_iosxr_facts_gather_subset_default(self):
         set_module_args(dict())

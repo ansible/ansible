@@ -5,6 +5,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+cliconf: edgeos
+short_description: Use edgeos cliconf to run command on EdgeOS platform
+description:
+  - This edgeos plugin provides low level abstraction apis for
+    sending and receiving CLI commands from Ubiquiti EdgeOS network devices.
+version_added: "2.5"
+"""
+
 import re
 import json
 
@@ -38,15 +48,15 @@ class Cliconf(CliconfBase):
 
         return device_info
 
-    def get_config(self, source='running', format='text'):
+    def get_config(self, source='running', format='text', flags=None):
         return self.send_command('show configuration commands')
 
-    def edit_config(self, command):
-        for cmd in chain(['configure'], to_list(command)):
+    def edit_config(self, candidate=None, commit=True, replace=False, comment=None):
+        for cmd in chain(['configure'], to_list(candidate)):
             self.send_command(cmd)
 
-    def get(self, command, prompt=None, answer=None, sendonly=False):
-        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly)
+    def get(self, command, prompt=None, answer=None, sendonly=False, check_all=False):
+        return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
 
     def commit(self, comment=None):
         if comment:
@@ -59,8 +69,6 @@ class Cliconf(CliconfBase):
         self.send_command('discard')
 
     def get_capabilities(self):
-        result = {}
-        result['rpc'] = self.get_base_rpc() + ['commit', 'discard_changes']
-        result['network_api'] = 'cliconf'
-        result['device_info'] = self.get_device_info()
+        result = super(Cliconf, self).get_capabilities()
+        result['rpc'] += ['commit', 'discard_changes']
         return json.dumps(result)

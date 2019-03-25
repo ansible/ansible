@@ -1,0 +1,9 @@
+---
+test_choco_path: '{{ win_output_dir }}\win_chocolatey'
+test_choco_source: '{{ test_choco_path }}\packages'
+test_choco_source2: '{{ test_choco_path }}\packages2'  # used to verify source works with the source name and not just the path
+test_choco_package1: ansible
+test_choco_package2: ansible-test
+test_choco_packages:
+- '{{ test_choco_package1 }}'
+- '{{ test_choco_package2 }}'

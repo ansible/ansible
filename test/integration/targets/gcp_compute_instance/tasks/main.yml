@@ -15,87 +15,77 @@
 # Pre-test setup
 - name: create a disk
   gcp_compute_disk:
-      name: 'disk-instance'
-      size_gb: 50
-      source_image: 'projects/ubuntu-os-cloud/global/images/family/ubuntu-1604-lts'
-      zone: us-central1-a
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
-      state: present
+    name: disk-instance
+    size_gb: 50
+    source_image: projects/ubuntu-os-cloud/global/images/family/ubuntu-1604-lts
+    zone: us-central1-a
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: disk
 - name: create a network
   gcp_compute_network:
-      name: 'network-instance'
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
-      state: present
+    name: network-instance
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: network
 - name: create a address
   gcp_compute_address:
-      name: 'address-instance'
-      region: 'us-central1'
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
-      state: present
+    name: address-instance
+    region: us-central1
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: address
 - name: delete a instance
   gcp_compute_instance:
-      name: "{{ resource_name }}"
-      machine_type: n1-standard-1
-      disks:
-        - auto_delete: true
-          boot: true
-          source: "{{ disk }}"
-      metadata:
-        startup-script-url: 'gs:://graphite-playground/bootstrap.sh'
-        cost-center: '12345'
-      network_interfaces:
-          - network: "{{ network }}"
-            access_configs:
-              - name: 'External NAT'
-                nat_ip: "{{ address }}"
-                type: 'ONE_TO_ONE_NAT'
-      zone: 'us-central1-a'
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
-      state: absent
+    name: "{{ resource_name }}"
+    machine_type: n1-standard-1
+    disks:
+    - auto_delete: 'true'
+      boot: 'true'
+      source: "{{ disk }}"
+    metadata:
+      startup-script-url: gs:://graphite-playground/bootstrap.sh
+      cost-center: '12345'
+    network_interfaces:
+    - network: "{{ network }}"
+      access_configs:
+      - name: External NAT
+        nat_ip: "{{ address }}"
+        type: ONE_TO_ONE_NAT
+    zone: us-central1-a
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
 #----------------------------------------------------------
 - name: create a instance
   gcp_compute_instance:
-      name: "{{ resource_name }}"
-      machine_type: n1-standard-1
-      disks:
-        - auto_delete: true
-          boot: true
-          source: "{{ disk }}"
-      metadata:
-        startup-script-url: 'gs:://graphite-playground/bootstrap.sh'
-        cost-center: '12345'
-      network_interfaces:
-          - network: "{{ network }}"
-            access_configs:
-              - name: 'External NAT'
-                nat_ip: "{{ address }}"
-                type: 'ONE_TO_ONE_NAT'
-      zone: 'us-central1-a'
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
-      state: present
+    name: "{{ resource_name }}"
+    machine_type: n1-standard-1
+    disks:
+    - auto_delete: 'true'
+      boot: 'true'
+      source: "{{ disk }}"
+    metadata:
+      startup-script-url: gs:://graphite-playground/bootstrap.sh
+      cost-center: '12345'
+    network_interfaces:
+    - network: "{{ network }}"
+      access_configs:
+      - name: External NAT
+        nat_ip: "{{ address }}"
+        type: ONE_TO_ONE_NAT
+    zone: us-central1-a
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: result
 - name: assert changed is true
   assert:
@@ -103,38 +93,43 @@
       - result.changed == true
       - "result.kind == 'compute#instance'"
 - name: verify that instance was created
-  shell: |
-    gcloud compute instances describe  --project="{{ gcp_project }}"  --zone="us-central1-a"  "{{ resource_name }}"
-  register: results
-- name: verify that command succeeded
-  assert:
-    that:
-      - results.rc == 0
-# ----------------------------------------------------------------------------
-- name: create a instance that already exists
-  gcp_compute_instance:
-      name: "{{ resource_name }}"
-      machine_type: n1-standard-1
-      disks:
-        - auto_delete: true
-          boot: true
-          source: "{{ disk }}"
-      metadata:
-        startup-script-url: 'gs:://graphite-playground/bootstrap.sh'
-        cost-center: '12345'
-      network_interfaces:
-          - network: "{{ network }}"
-            access_configs:
-              - name: 'External NAT'
-                nat_ip: "{{ address }}"
-                type: 'ONE_TO_ONE_NAT'
-      zone: 'us-central1-a'
+  gcp_compute_instance_facts:
+      filters:
+         - name = {{ resource_name }}
+      zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
       scopes:
         - https://www.googleapis.com/auth/compute
-      state: present
+  register: results
+- name: verify that command succeeded
+  assert:
+    that:
+      - results['items'] | length == 1
+# ----------------------------------------------------------------------------
+- name: create a instance that already exists
+  gcp_compute_instance:
+    name: "{{ resource_name }}"
+    machine_type: n1-standard-1
+    disks:
+    - auto_delete: 'true'
+      boot: 'true'
+      source: "{{ disk }}"
+    metadata:
+      startup-script-url: gs:://graphite-playground/bootstrap.sh
+      cost-center: '12345'
+    network_interfaces:
+    - network: "{{ network }}"
+      access_configs:
+      - name: External NAT
+        nat_ip: "{{ address }}"
+        type: ONE_TO_ONE_NAT
+    zone: us-central1-a
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: result
 - name: assert changed is false
   assert:
@@ -144,28 +139,26 @@
 #----------------------------------------------------------
 - name: delete a instance
   gcp_compute_instance:
-      name: "{{ resource_name }}"
-      machine_type: n1-standard-1
-      disks:
-        - auto_delete: true
-          boot: true
-          source: "{{ disk }}"
-      metadata:
-        startup-script-url: 'gs:://graphite-playground/bootstrap.sh'
-        cost-center: '12345'
-      network_interfaces:
-          - network: "{{ network }}"
-            access_configs:
-              - name: 'External NAT'
-                nat_ip: "{{ address }}"
-                type: 'ONE_TO_ONE_NAT'
-      zone: 'us-central1-a'
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
-      state: absent
+    name: "{{ resource_name }}"
+    machine_type: n1-standard-1
+    disks:
+    - auto_delete: 'true'
+      boot: 'true'
+      source: "{{ disk }}"
+    metadata:
+      startup-script-url: gs:://graphite-playground/bootstrap.sh
+      cost-center: '12345'
+    network_interfaces:
+    - network: "{{ network }}"
+      access_configs:
+      - name: External NAT
+        nat_ip: "{{ address }}"
+        type: ONE_TO_ONE_NAT
+    zone: us-central1-a
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
   register: result
 - name: assert changed is true
   assert:
@@ -173,40 +166,43 @@
       - result.changed == true
       - result.has_key('kind') == False
 - name: verify that instance was deleted
-  shell: |
-    gcloud compute instances describe  --project="{{ gcp_project }}"  --zone="us-central1-a"  "{{ resource_name }}"
-  register: results
-  failed_when: results.rc == 0
-- name: verify that command succeeded
-  assert:
-    that:
-      - results.rc == 1
-      - "\"'projects/{{ gcp_project }}/zones/us-central1-a/instances/{{ resource_name }}' was not found\" in results.stderr"
-# ----------------------------------------------------------------------------
-- name: delete a instance that does not exist
-  gcp_compute_instance:
-      name: "{{ resource_name }}"
-      machine_type: n1-standard-1
-      disks:
-        - auto_delete: true
-          boot: true
-          source: "{{ disk }}"
-      metadata:
-        startup-script-url: 'gs:://graphite-playground/bootstrap.sh'
-        cost-center: '12345'
-      network_interfaces:
-          - network: "{{ network }}"
-            access_configs:
-              - name: 'External NAT'
-                nat_ip: "{{ address }}"
-                type: 'ONE_TO_ONE_NAT'
-      zone: 'us-central1-a'
+  gcp_compute_instance_facts:
+      filters:
+         - name = {{ resource_name }}
+      zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
       scopes:
         - https://www.googleapis.com/auth/compute
-      state: absent
+  register: results
+- name: verify that command succeeded
+  assert:
+    that:
+      - results['items'] | length == 0
+# ----------------------------------------------------------------------------
+- name: delete a instance that does not exist
+  gcp_compute_instance:
+    name: "{{ resource_name }}"
+    machine_type: n1-standard-1
+    disks:
+    - auto_delete: 'true'
+      boot: 'true'
+      source: "{{ disk }}"
+    metadata:
+      startup-script-url: gs:://graphite-playground/bootstrap.sh
+      cost-center: '12345'
+    network_interfaces:
+    - network: "{{ network }}"
+      access_configs:
+      - name: External NAT
+        nat_ip: "{{ address }}"
+        type: ONE_TO_ONE_NAT
+    zone: us-central1-a
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
   register: result
 - name: assert changed is false
   assert:
@@ -215,37 +211,35 @@
       - result.has_key('kind') == False
 #---------------------------------------------------------
 # Post-test teardown
+# If errors happen, don't crash the playbook!
 - name: delete a address
   gcp_compute_address:
-      name: 'address-instance'
-      region: 'us-central1'
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
-      state: absent
+    name: address-instance
+    region: us-central1
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
   register: address
+  ignore_errors: true
 - name: delete a network
   gcp_compute_network:
-      name: 'network-instance'
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
-      state: absent
+    name: network-instance
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
   register: network
+  ignore_errors: true
 - name: delete a disk
   gcp_compute_disk:
-      name: 'disk-instance'
-      size_gb: 50
-      source_image: 'projects/ubuntu-os-cloud/global/images/family/ubuntu-1604-lts'
-      zone: us-central1-a
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      scopes:
-        - https://www.googleapis.com/auth/compute
-      state: absent
+    name: disk-instance
+    size_gb: 50
+    source_image: projects/ubuntu-os-cloud/global/images/family/ubuntu-1604-lts
+    zone: us-central1-a
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: absent
   register: disk
+  ignore_errors: true

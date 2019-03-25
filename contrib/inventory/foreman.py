@@ -46,6 +46,8 @@ if LooseVersion(requests.__version__) < LooseVersion('1.1.0'):
 
 from requests.auth import HTTPBasicAuth
 
+from ansible.module_utils._text import to_text
+
 
 def json_format_dict(data, pretty=False):
     """Converts a dict to a JSON object and dumps it as a formatted string"""
@@ -112,6 +114,11 @@ class ForemanInventory(object):
             self.want_hostcollections = config.getboolean('ansible', 'want_hostcollections')
         except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
             self.want_hostcollections = False
+
+        try:
+            self.want_ansible_ssh_host = config.getboolean('ansible', 'want_ansible_ssh_host')
+        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+            self.want_ansible_ssh_host = False
 
         # Do we want parameters to be interpreted if possible as JSON? (no by default)
         try:
@@ -229,10 +236,6 @@ class ForemanInventory(object):
 
         return params
 
-    def _get_facts_by_id(self, hid):
-        url = "%s/api/v2/hosts/%s/facts" % (self.foreman_url, hid)
-        return self._get_json(url)
-
     def _get_facts(self, host):
         """Fetch all host facts of the host"""
         if not self.want_facts:
@@ -289,20 +292,32 @@ class ForemanInventory(object):
             group = 'hostgroup'
             val = host.get('%s_title' % group) or host.get('%s_name' % group)
             if val:
-                safe_key = self.to_safe('%s%s_%s' % (self.group_prefix, group, val.lower()))
+                safe_key = self.to_safe('%s%s_%s' % (
+                    to_text(self.group_prefix),
+                    group,
+                    to_text(val).lower()
+                ))
                 self.inventory[safe_key].append(dns_name)
 
             # Create ansible groups for environment, location and organization
             for group in ['environment', 'location', 'organization']:
                 val = host.get('%s_name' % group)
                 if val:
-                    safe_key = self.to_safe('%s%s_%s' % (self.group_prefix, group, val.lower()))
+                    safe_key = self.to_safe('%s%s_%s' % (
+                        to_text(self.group_prefix),
+                        group,
+                        to_text(val).lower()
+                    ))
                     self.inventory[safe_key].append(dns_name)
 
             for group in ['lifecycle_environment', 'content_view']:
                 val = host.get('content_facet_attributes', {}).get('%s_name' % group)
                 if val:
-                    safe_key = self.to_safe('%s%s_%s' % (self.group_prefix, group, val.lower()))
+                    safe_key = self.to_safe('%s%s_%s' % (
+                        to_text(self.group_prefix),
+                        group,
+                        to_text(val).lower()
+                    ))
                     self.inventory[safe_key].append(dns_name)
 
             params = self._resolve_params(host_params)
@@ -311,7 +326,7 @@ class ForemanInventory(object):
             # attributes.
             groupby = dict()
             for k, v in params.items():
-                groupby[k] = self.to_safe(str(v))
+                groupby[k] = self.to_safe(to_text(v))
 
             # The name of the ansible groups is given by group_patterns:
             for pattern in self.group_patterns:
@@ -424,6 +439,8 @@ class ForemanInventory(object):
                     'foreman': self.cache[hostname],
                     'foreman_params': self.params[hostname],
                 }
+                if self.want_ansible_ssh_host and 'ip' in self.cache[hostname]:
+                    self.inventory['_meta']['hostvars'][hostname]['ansible_ssh_host'] = self.cache[hostname]['ip']
                 if self.want_facts:
                     self.inventory['_meta']['hostvars'][hostname]['foreman_facts'] = self.facts[hostname]
 
@@ -439,6 +456,7 @@ class ForemanInventory(object):
         self.get_inventory()
         self._print_data()
         return True
+
 
 if __name__ == '__main__':
     sys.exit(not ForemanInventory().run())

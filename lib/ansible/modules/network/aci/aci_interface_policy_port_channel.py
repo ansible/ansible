@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -16,37 +16,37 @@ module: aci_interface_policy_port_channel
 short_description: Manage port channel interface policies (lacp:LagPol)
 description:
 - Manage port channel interface policies on Cisco ACI fabrics.
-notes:
-- More information about the internal APIC class B(lacp:LagPol) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
-author:
-- Dag Wieers (@dagwieers)
 version_added: '2.4'
 options:
   port_channel:
     description:
     - Name of the port channel.
+    type: str
     required: yes
     aliases: [ name ]
   description:
     description:
     - The description for the port channel.
+    type: str
     aliases: [ descr ]
   max_links:
     description:
-    - Maximum links (range 1-16).
+    - Maximum links.
+    - Accepted values range between 1 and 16.
     - The APIC defaults to C(16) when unset during creation.
-    choices: [ Ranges from 1 to 16 ]
+    type: int
   min_links:
     description:
-    - Minimum links (range 1-16).
+    - Minimum links.
+    - Accepted values range between 1 and 16.
     - The APIC defaults to C(1) when unset during creation.
-    choices: [ Ranges from 1 to 16 ]
+    type: int
   mode:
     description:
     - Port channel interface policy mode.
     - Determines the LACP method to use for forming port-channels.
     - The APIC defaults to C(off) when unset during creation.
+    type: str
     choices: [ active, mac-pin, mac-pin-nicload, 'off', passive ]
   fast_select:
     description:
@@ -87,9 +87,16 @@ options:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
+seealso:
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(lacp:LagPol).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Dag Wieers (@dagwieers)
 '''
 
 EXAMPLES = r'''
@@ -102,6 +109,7 @@ EXAMPLES = r'''
     min_links: '{{ min_links }}'
     max_links: '{{ max_links }}'
     mode: '{{ mode }}'
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -136,7 +144,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -185,17 +193,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -205,22 +213,22 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        port_channel=dict(type='str', required=False, aliases=['name']),  # Not required for querying all objects
+        port_channel=dict(type='str', aliases=['name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
         min_links=dict(type='int'),
         max_links=dict(type='int'),
-        mode=dict(type='str', choices=['off', 'mac-pin', 'active', 'passive', 'mac-pin-nicload']),
+        mode=dict(type='str', choices=['active', 'mac-pin', 'mac-pin-nicload', 'off', 'passive']),
         fast_select=dict(type='bool'),
         graceful_convergence=dict(type='bool'),
         load_defer=dict(type='bool'),
@@ -271,8 +279,8 @@ def main():
         root_class=dict(
             aci_class='lacpLagPol',
             aci_rn='infra/lacplagp-{0}'.format(port_channel),
-            filter_target='eq(lacpLagPol.name, "{0}")'.format(port_channel),
             module_object=port_channel,
+            target_filter={'name': port_channel},
         ),
     )
 

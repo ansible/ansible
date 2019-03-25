@@ -1,6 +1,6 @@
 #!/usr/bin/python
-# Copyright (c) 2015 Hewlett-Packard Development Company, L.P.
-# Author: Davide Guerri <davide.guerri@hp.com>
+
+# Copyright: (c) 2015, Hewlett-Packard Development Company, L.P.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 ---
 module: os_floating_ip
 version_added: "2.0"
-author: "Davide Guerri <davide.guerri@hp.com>"
+author: Davide Guerri (@dguerri) <davide.guerri@hp.com>
 short_description: Add/Remove floating IP from an instance
 extends_documentation_fragment: openstack
 description:
@@ -185,7 +185,7 @@ def main():
                 if nat_destination:
                     nat_floating_addrs = [addr for addr in server.addresses.get(
                         cloud.get_network(nat_destination)['name'], [])
-                        if addr.addr == public_ip and
+                        if addr['addr'] == public_ip and
                         addr['OS-EXT-IPS:type'] == 'floating']
 
                     if len(nat_floating_addrs) == 0:

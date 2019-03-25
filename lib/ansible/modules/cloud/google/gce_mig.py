@@ -159,19 +159,19 @@ RETURN = '''
 zone:
     description: Zone in which to launch MIG.
     returned: always
-    type: string
+    type: str
     sample: "us-central1-b"
 
 template:
     description: Instance Template to use for VMs.  Must exist prior to using with MIG.
     returned: changed
-    type: string
+    type: str
     sample: "my-instance-template"
 
 name:
     description: Name of the Managed Instance Group.
     returned: changed
-    type: string
+    type: str
     sample: "my-managed-instance-group"
 
 named_ports:

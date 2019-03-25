@@ -1,20 +1,7 @@
 #!/usr/bin/python
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -26,7 +13,7 @@ version_added: "2.4"
 short_description: Manages static route configuration on HUAWEI CloudEngine switches.
 description:
     - Manages the static routes on HUAWEI CloudEngine switches.
-author: Yang yang (@CloudEngine-Ansible)
+author: Yang yang (@QijunPan)
 notes:
     - If no vrf is supplied, vrf is set to default.
       If I(state=absent), the route will be removed, regardless of the
@@ -158,7 +145,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 
@@ -406,7 +393,6 @@ class StaticRoute(object):
             if self.prefix.find('.') == -1:
                 return False
             if self.mask == '32':
-                self.prefix = self.prefix
                 return True
             if self.mask == '0':
                 self.prefix = '0.0.0.0'
@@ -427,7 +413,6 @@ class StaticRoute(object):
             if self.prefix.find(':') == -1:
                 return False
             if self.mask == '128':
-                self.prefix = self.prefix
                 return True
             if self.mask == '0':
                 self.prefix = '::'

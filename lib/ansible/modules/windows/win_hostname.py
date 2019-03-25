@@ -12,10 +12,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 DOCUMENTATION = r'''
----
 module: win_hostname
 version_added: "2.6"
-short_description: Manages local Windows computer name.
+short_description: Manages local Windows computer name
 description:
 - Manages local Windows computer name.
 - A reboot is required for the computer name to take effect.
@@ -23,25 +22,33 @@ options:
   name:
     description:
     - The hostname to set for the computer.
+    type: str
     required: true
+seealso:
+- module: win_dns_client
 author:
 - Ripon Banik (@riponbanik)
 '''
 
 EXAMPLES = r'''
-- name: Change the hostname to new_hostname
+- name: Change the hostname to sample-hostname
   win_hostname:
-    name: new_hostname
+    name: sample-hostname
+  register: res
+
+- name: Reboot
+  win_reboot:
+  when: res.reboot_required
 '''
 
 RETURN = r'''
 old_name:
-  description: The original hostname that was set before it was changed
+  description: The original hostname that was set before it was changed.
   returned: always
   type: str
   sample: old_hostname
 reboot_required:
-  description: Whether a reboot is required to complete the hostname change
+  description: Whether a reboot is required to complete the hostname change.
   returned: always
   type: bool
   sample: true

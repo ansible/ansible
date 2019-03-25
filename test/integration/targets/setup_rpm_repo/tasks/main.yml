@@ -4,12 +4,14 @@
       name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
     when:
       - ansible_distribution in ['RedHat']
+      - ansible_distribution_major_version is version('7', '==')
 
   - name: Install rpmfluff and deps
     package:
       name: "{{ item }}"
     with_items:
       - python{{ ansible_python_version.split(".")[0] }}-rpmfluff
+      - createrepo
     when:
       - ansible_distribution in ['Fedora']
 
@@ -22,6 +24,34 @@
       - createrepo  # used by el6 version of rpmfluff
     when:
       - ansible_distribution not in ['Fedora']
+      - ansible_python["version"]["major"] == 2
+
+  - name: Install rpmfluff and deps
+    package:
+      name: "{{ item }}"
+    with_items:
+      - python3-rpmfluff
+      - createrepo_c
+      - createrepo  # used by el6 version of rpmfluff
+    when:
+      - ansible_distribution not in ['Fedora']
+      - ansible_python["version"]["major"] == 3
+      - not (ansible_distribution == 'RedHat' and ansible_distribution_major_version is version('8', '>='))
+
+  - name: Install rpmfluff from pip on RHEL 8 and later
+    pip:
+      name: rpmfluff
+    when:
+      - ansible_distribution == 'RedHat' and ansible_distribution_major_version is version('8', '>=')
+
+  - name: Install packages needed on RHEL 8 and later
+    dnf:
+      name: "{{ item }}"
+    with_items:
+      - createrepo_c
+      - rpm-build
+    when:
+      - ansible_distribution == 'RedHat' and ansible_distribution_major_version is version('8', '>=')
 
   - name: Copy script for creating a repo
     copy:
@@ -30,7 +60,7 @@
       mode: 0755
 
   - name: Create RPMs and put them into a repo
-    shell: "python /tmp/create-repo.py {{ ansible_architecture }}"
+    shell: "{{ansible_python_interpreter}} /tmp/create-repo.py {{ ansible_architecture }}"
     register: repo
 
   - set_fact:
@@ -43,8 +73,17 @@
       baseurl: "file://{{ repodir }}"
       gpgcheck: no
 
+  - name: Copy comps.xml file
+    copy:
+      src: comps.xml
+      dest: "{{ repodir }}"
+    register: repodir_comps
+
+  - name: Register comps.xml on repo
+    command: createrepo -g {{ repodir_comps.dest | quote }} {{ repodir | quote }}
+
   - name: Create RPMs and put them into a repo (i686)
-    shell: "python /tmp/create-repo.py i686"
+    shell: "{{ansible_python_interpreter}} /tmp/create-repo.py i686"
     register: repo_i686
 
   - set_fact:
@@ -58,7 +97,7 @@
       gpgcheck: no
 
   - name: Create RPMs and put them into a repo (ppc64)
-    shell: "python /tmp/create-repo.py ppc64"
+    shell: "{{ansible_python_interpreter}} /tmp/create-repo.py ppc64"
     register: repo_ppc64
 
   - set_fact:

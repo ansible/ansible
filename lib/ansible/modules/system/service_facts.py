@@ -22,8 +22,15 @@ description:
 version_added: "2.5"
 requirements: ["Any of the following supported init systems: systemd, sysv, upstart"]
 
+notes:
+  - When accessing the C(ansible_facts.services) facts collected by this module,
+    it is recommended to not use "dot notation" because services can have a C(-)
+    character in their name which would result in invalid "dot notation", such as
+    C(ansible_facts.services.zuul-gateway). It is instead recommended to
+    using the string value of the service name as the key in order to obtain
+    the fact data value like C(ansible_facts.services['zuul-gateway'])
+
 author:
-  - Matthew Jones
   - Adam Miller (@maxamillion)
 '''
 
@@ -38,22 +45,35 @@ EXAMPLES = '''
 
 RETURN = '''
 ansible_facts:
-  description: facts to add to ansible_facts about the services on the system
+  description: Facts to add to ansible_facts about the services on the system
   returned: always
   type: complex
   contains:
-    "services": {
-      "network": {
-        "source": "sysv",
-        "state": "running",
-        "name": "network"
-      },
-      arp-ethers.service: {
-        "source": "systemd",
-        "state": "stopped",
-        "name": "arp-ethers.service"
-      }
-    }
+    services:
+      description: States of the services with service name as key.
+      returned: always
+      type: complex
+      contains:
+        source:
+          description: Init system of the service. One of C(systemd), C(sysv), C(upstart).
+          returned: always
+          type: str
+          sample: sysv
+        state:
+          description: State of the service. Either C(running), C(stopped), or C(unknown).
+          returned: always
+          type: str
+          sample: running
+        status:
+          description: State of the service. Either C(enabled), C(disabled), or C(unknown).
+          returned: systemd systems or RedHat/SUSE flavored sysvinit/upstart
+          type: string
+          sample: enabled
+        name:
+          description: Name of the service.
+          returned: always
+          type: str
+          sample: arp-ethers.service
 '''
 
 
@@ -140,19 +160,21 @@ class ServiceScanService(BaseService):
                 if m:
                     service_name = m.group('service')
                     service_state = 'stopped'
+                    service_status = "disabled"
                     if m.group('rl3') == 'on':
-                        rc, stdout, stderr = self.module.run_command('%s %s status' % (service_path, service_name), use_unsafe_shell=True)
-                        service_state = rc
-                        if rc in (0,):
-                            service_state = 'running'
-                        # elif rc in (1,3):
+                        service_status = "enabled"
+                    rc, stdout, stderr = self.module.run_command('%s %s status' % (service_path, service_name), use_unsafe_shell=True)
+                    service_state = rc
+                    if rc in (0,):
+                        service_state = 'running'
+                    # elif rc in (1,3):
+                    else:
+                        if 'root' in stderr or 'permission' in stderr.lower() or 'not in sudoers' in stderr.lower():
+                            self.incomplete_warning = True
+                            continue
                         else:
-                            if 'root' in stderr or 'permission' in stderr.lower() or 'not in sudoers' in stderr.lower():
-                                self.incomplete_warning = True
-                                continue
-                            else:
-                                service_state = 'stopped'
-                    service_data = {"name": service_name, "state": service_state, "source": "sysv"}
+                            service_state = 'stopped'
+                    service_data = {"name": service_name, "state": service_state, "status": service_status, "source": "sysv"}
                     services[service_name] = service_data
         return services
 
@@ -178,21 +200,32 @@ class SystemctlScanService(BaseService):
         systemctl_path = self.module.get_bin_path("systemctl", opt_dirs=["/usr/bin", "/usr/local/bin"])
         if systemctl_path is None:
             return None
-        rc, stdout, stderr = self.module.run_command("%s list-unit-files --type=service | tail -n +2 | head -n -2" % systemctl_path, use_unsafe_shell=True)
-        for line in stdout.split("\n"):
-            line_data = line.split()
-            if len(line_data) != 2:
-                continue
-            if line_data[1] == "enabled":
+        rc, stdout, stderr = self.module.run_command("%s list-units --no-pager --type service --all" % systemctl_path, use_unsafe_shell=True)
+        for line in [svc_line for svc_line in stdout.split('\n') if '.service' in svc_line and 'not-found' not in svc_line]:
+            service_name = line.split()[0]
+            if "running" in line:
                 state_val = "running"
             else:
+                if 'failed' in line:
+                    service_name = line.split()[1]
                 state_val = "stopped"
-            services[line_data[0]] = {"name": line_data[0], "state": state_val, "source": "systemd"}
+            services[service_name] = {"name": service_name, "state": state_val, "status": "unknown", "source": "systemd"}
+        rc, stdout, stderr = self.module.run_command("%s list-unit-files --no-pager --type service --all" % systemctl_path, use_unsafe_shell=True)
+        for line in [svc_line for svc_line in stdout.split('\n') if '.service' in svc_line and 'not-found' not in svc_line]:
+            try:
+                service_name, status_val = line.split()
+            except ValueError:
+                self.module.fail_json(msg="Malformed output discovered from systemd list-unit-files: {0}".format(line))
+            if service_name not in services:
+                services[service_name] = {"name": service_name, "state": "unknown", "status": status_val, "source": "systemd"}
+            else:
+                services[service_name]["status"] = status_val
         return services
 
 
 def main():
     module = AnsibleModule(argument_spec=dict(), supports_check_mode=True)
+    module.run_command_environ_update = dict(LANG="C", LC_ALL="C")
     service_modules = (ServiceScanService, SystemctlScanService)
     all_services = {}
     incomplete_warning = False

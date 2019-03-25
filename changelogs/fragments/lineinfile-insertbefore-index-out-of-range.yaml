@@ -1,0 +1,2 @@
+bugfixes:
+  - lineinfile - fix index out of range error when using insertbefore on a file with only one line (https://github.com/ansible/ansible/issues/46043)

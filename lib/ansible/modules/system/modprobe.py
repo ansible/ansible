@@ -18,8 +18,8 @@ short_description: Load or unload kernel modules
 version_added: 1.4
 author:
     - David Stygstra (@stygstra)
-    - Julien Dauphant
-    - Matt Jeffery
+    - Julien Dauphant (@jdauphant)
+    - Matt Jeffery (@mattjeffery)
 description:
     - Load or unload kernel modules.
 options:
@@ -52,6 +52,7 @@ EXAMPLES = '''
     params: 'numdummies=2'
 '''
 
+import os.path
 import shlex
 import traceback
 
@@ -83,14 +84,24 @@ def main():
 
     # Check if module is present
     try:
-        modules = open('/proc/modules')
         present = False
-        module_name = name.replace('-', '_') + ' '
-        for line in modules:
-            if line.startswith(module_name):
-                present = True
-                break
-        modules.close()
+        with open('/proc/modules') as modules:
+            module_name = name.replace('-', '_') + ' '
+            for line in modules:
+                if line.startswith(module_name):
+                    present = True
+                    break
+        if not present:
+            command = [module.get_bin_path('uname', True), '-r']
+            rc, uname_kernel_release, err = module.run_command(command)
+            module_file = '/' + name + '.ko'
+            builtin_path = os.path.join('/lib/modules/', uname_kernel_release.strip(),
+                                        'modules.builtin')
+            with open(builtin_path) as builtins:
+                for line in builtins:
+                    if line.endswith(module_file):
+                        present = True
+                        break
     except IOError as e:
         module.fail_json(msg=to_native(e), exception=traceback.format_exc(), **result)
 

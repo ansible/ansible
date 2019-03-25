@@ -2,18 +2,23 @@
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
+
 __metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = """
     lookup: consul_kv
     version_added: "1.9"
-    short_description: Fetch  metadata from a Consul key value store.
+    short_description: Fetch metadata from a Consul key value store.
     description:
       - Lookup metadata for a playbook from the key value store in a Consul cluster.
         Values can be easily set in the kv store with simple rest commands
       - C(curl -X PUT -d 'some-value' http://localhost:8500/v1/kv/ansible/somedata)
     requirements:
-      - 'python-consul python library U(http://python-consul.readthedocs.org/en/latest/#installation)'
+      - 'python-consul python library U(https://python-consul.readthedocs.io/en/latest/#installation)'
     options:
       _raw:
         description: List of key(s) to retrieve.
@@ -24,18 +29,51 @@ DOCUMENTATION = """
         description: If true, will retrieve all the values that have the given key as prefix.
         default: False
       index:
-        description: If the key has a value with the specified index then this is returned allowing access to historical values.
+        description:
+          - If the key has a value with the specified index then this is returned allowing access to historical values.
       token:
         description: The acl token to allow access to restricted values.
       host:
         default: localhost
         description:
-           - The target to connect to, must be a resolvable address.
+          - The target to connect to, must be a resolvable address.
+            Will be determined from C(ANSIBLE_CONSUL_URL) if that is set.
+          - "C(ANSIBLE_CONSUL_URL) should look like this: C(https://my.consul.server:8500)"
         env:
           - name: ANSIBLE_CONSUL_URL
+        ini:
+          - section: lookup_consul
+            key: host
+        version_added: "2.8"
       port:
-        description: The port of the target host to connect to.
+        description:
+          - The port of the target host to connect to.
+          - If you use C(ANSIBLE_CONSUL_URL) this value will be used from there.
         default: 8500
+      scheme:
+        default: http
+        description:
+          - Whether to use http or https.
+          - If you use C(ANSIBLE_CONSUL_URL) this value will be used from there.
+        version_added: "2.8"
+      validate_certs:
+        default: True
+        description: Whether to verify the ssl connection or not.
+        env:
+          - name: ANSIBLE_CONSUL_VALIDATE_CERTS
+        ini:
+          - section: lookup_consul
+            key: validate_certs
+        version_added: "2.8"
+      client_cert:
+        default: None
+        description: The client cert to verify the ssl connection.
+        env:
+          - name: ANSIBLE_CONSUL_CLIENT_CERT
+        ini:
+          - section: lookup_consul
+            key: client_cert
+        version_added: "2.8"
 """
 
 EXAMPLES = """
@@ -62,18 +100,14 @@ RETURN = """
 """
 
 import os
-import sys
 from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.plugins.lookup import LookupBase
-
-try:
-    import json
-except ImportError:
-    import simplejson as json
+from ansible.module_utils._text import to_text
 
 try:
     import consul
+
     HAS_CONSUL = True
 except ImportError as e:
     HAS_CONSUL = False
@@ -84,7 +118,8 @@ class LookupModule(LookupBase):
     def run(self, terms, variables=None, **kwargs):
 
         if not HAS_CONSUL:
-            raise AnsibleError('python-consul is required for consul_kv lookup. see http://python-consul.readthedocs.org/en/latest/#installation')
+            raise AnsibleError(
+                'python-consul is required for consul_kv lookup. see http://python-consul.readthedocs.org/en/latest/#installation')
 
         values = []
         try:
@@ -92,12 +127,19 @@ class LookupModule(LookupBase):
                 params = self.parse_params(term)
                 try:
                     url = os.environ['ANSIBLE_CONSUL_URL']
+                    validate_certs = os.environ['ANSIBLE_CONSUL_VALIDATE_CERTS'] or True
+                    client_cert = os.environ['ANSIBLE_CONSUL_CLIENT_CERT'] or None
                     u = urlparse(url)
-                    consul_api = consul.Consul(host=u.hostname, port=u.port, scheme=u.scheme)
+                    consul_api = consul.Consul(host=u.hostname, port=u.port, scheme=u.scheme, verify=validate_certs,
+                                               cert=client_cert)
                 except KeyError:
                     port = kwargs.get('port', '8500')
                     host = kwargs.get('host', 'localhost')
-                    consul_api = consul.Consul(host=host, port=port)
+                    scheme = kwargs.get('scheme', 'http')
+                    validate_certs = kwargs.get('validate_certs', True)
+                    client_cert = kwargs.get('client_cert', None)
+                    consul_api = consul.Consul(host=host, port=port, scheme=scheme, verify=validate_certs,
+                                               cert=client_cert)
 
                 results = consul_api.kv.get(params['key'],
                                             token=params['token'],
@@ -107,9 +149,9 @@ class LookupModule(LookupBase):
                     # responds with a single or list of result maps
                     if isinstance(results[1], list):
                         for r in results[1]:
-                            values.append(r['Value'])
+                            values.append(to_text(r['Value']))
                     else:
-                        values.append(results[1]['Value'])
+                        values.append(to_text(results[1]['Value']))
         except Exception as e:
             raise AnsibleError(
                 "Error locating '%s' in kv store. Error was %s" % (term, e))

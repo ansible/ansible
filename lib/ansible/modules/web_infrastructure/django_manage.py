@@ -54,6 +54,13 @@ options:
     description:
       - The name of the table used for database-backed caching. Used by the 'createcachetable' command.
     required: false
+  clear:
+    description:
+      - Clear the existing files before trying to copy or link the original file.
+      - Used only with the 'collectstatic' command. The C(--noinput) argument will be added automatically.
+    required: false
+    default: no
+    type: bool
   database:
     description:
       - The database to target. Used by the 'createcachetable', 'flush', 'loaddata', and 'syncdb' commands.
@@ -73,16 +80,19 @@ options:
      - Will skip over out-of-order missing migrations, you can only use this parameter with I(migrate)
     required: false
     version_added: "1.3"
+    type: bool
   merge:
     description:
      - Will run out-of-order or missing migrations as they are not rollback migrations, you can only use this parameter with 'migrate' command
     required: false
     version_added: "1.3"
+    type: bool
   link:
     description:
      - Will create links to the files instead of copying them, you can only use this parameter with 'collectstatic' command
     required: false
     version_added: "1.3"
+    type: bool
 notes:
   - I(virtualenv) (U(http://www.virtualenv.org)) must be installed on the remote host if the virtualenv parameter is specified.
   - This module will create a virtualenv if the virtualenv parameter is specified and a virtualenv does not already exist at the given location.
@@ -294,7 +304,7 @@ def main():
     if filt:
         filtered_output = list(filter(filt, lines))
         if len(filtered_output):
-            changed = filtered_output
+            changed = True
 
     module.exit_json(changed=changed, out=out, cmd=cmd, app_path=app_path, virtualenv=virtualenv,
                      settings=module.params['settings'], pythonpath=module.params['pythonpath'])

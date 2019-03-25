@@ -3,21 +3,7 @@
 #
 # (c) 2015, Jefferson Girão <jefferson@girao.net>
 # (c) 2015, René Moser <mail@renemoser.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -29,189 +15,252 @@ DOCUMENTATION = '''
 module: cs_volume
 short_description: Manages volumes on Apache CloudStack based clouds.
 description:
-    - Create, destroy, attach, detach volumes.
-version_added: "2.1"
+    - Create, destroy, attach, detach, extract or upload volumes.
+version_added: '2.1'
 author:
-    - "Jefferson Girão (@jeffersongirao)"
-    - "René Moser (@resmo)"
+    - Jefferson Girão (@jeffersongirao)
+    - René Moser (@resmo)
 options:
   name:
     description:
       - Name of the volume.
-      - C(name) can only contain ASCII letters.
+      - I(name) can only contain ASCII letters.
+    type: str
     required: true
   account:
     description:
       - Account the volume is related to.
+    type: str
   custom_id:
     description:
       - Custom id to the resource.
       - Allowed to Root Admins only.
+    type: str
   disk_offering:
     description:
       - Name of the disk offering to be used.
-      - Required one of C(disk_offering), C(snapshot) if volume is not already C(state=present).
+      - Required one of I(disk_offering), I(snapshot) if volume is not already I(state=present).
+    type: str
   display_volume:
     description:
       - Whether to display the volume to the end user or not.
       - Allowed to Root Admins only.
-    default: true
+    default: yes
+    type: bool
   domain:
     description:
       - Name of the domain the volume to be deployed in.
+    type: str
   max_iops:
     description:
       - Max iops
+    type: int
   min_iops:
     description:
       - Min iops
+    type: int
   project:
     description:
       - Name of the project the volume to be deployed in.
+    type: str
   size:
     description:
       - Size of disk in GB
+    type: int
   snapshot:
     description:
       - The snapshot name for the disk volume.
-      - Required one of C(disk_offering), C(snapshot) if volume is not already C(state=present).
+      - Required one of I(disk_offering), I(snapshot) if volume is not already I(state=present).
+    type: str
   force:
     description:
       - Force removal of volume even it is attached to a VM.
-      - Considered on C(state=absnet) only.
-    default: false
+      - Considered on I(state=absent) only.
+    default: no
+    type: bool
   shrink_ok:
     description:
       - Whether to allow to shrink the volume.
-    default: false
+    default: no
+    type: bool
   vm:
     description:
       - Name of the virtual machine to attach the volume to.
+    type: str
   zone:
     description:
       - Name of the zone in which the volume should be deployed.
       - If not set, default zone is used.
+    type: str
   state:
     description:
       - State of the volume.
+      - The choices C(extracted) and C(uploaded) were added in version 2.8.
+    type: str
     default: present
-    choices: [ present, absent, attached, detached ]
+    choices: [ present, absent, attached, detached, extracted, uploaded ]
   poll_async:
     description:
       - Poll async jobs until job has finished.
-    default: true
+    default: yes
+    type: bool
   tags:
     description:
-      - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
-      - "To delete all tags, set a empty list e.g. C(tags: [])."
-    aliases: [ 'tag' ]
-    version_added: "2.4"
+      - List of tags. Tags are a list of dictionaries having keys I(key) and I(value).
+      - "To delete all tags, set a empty list e.g. I(tags: [])."
+    type: list
+    aliases: [ tag ]
+    version_added: '2.4'
+  url:
+    description:
+      - URL to which the volume would be extracted on I(state=extracted)
+      - or the URL where to download the volume on I(state=uploaded).
+      - Only considered if I(state) is C(extracted) or C(uploaded).
+    type: str
+    version_added: '2.8'
+  mode:
+    description:
+      - Mode for the volume extraction.
+      - Only considered if I(state=extracted).
+    type: str
+    choices: [ http_download, ftp_upload ]
+    default: http_download
+    version_added: '2.8'
+  format:
+    description:
+      - The format for the volume.
+      - Only considered if I(state=uploaded).
+    type: str
+    choices: [ QCOW2, RAW, VHD, VHDX, OVA ]
+    version_added: '2.8'
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
 - name: create volume within project and zone with specified storage options
-  local_action:
-    module: cs_volume
+  cs_volume:
     name: web-vm-1-volume
     project: Integration
     zone: ch-zrh-ix-01
     disk_offering: PerfPlus Storage
     size: 20
+  delegate_to: localhost
 
 - name: create/attach volume to instance
-  local_action:
-    module: cs_volume
+  cs_volume:
     name: web-vm-1-volume
     disk_offering: PerfPlus Storage
     size: 20
     vm: web-vm-1
     state: attached
+  delegate_to: localhost
 
 - name: detach volume
-  local_action:
-    module: cs_volume
+  cs_volume:
     name: web-vm-1-volume
     state: detached
+  delegate_to: localhost
 
 - name: remove volume
-  local_action:
-    module: cs_volume
+  cs_volume:
     name: web-vm-1-volume
     state: absent
+  delegate_to: localhost
+
+# New in version 2.8
+- name: Extract DATA volume to make it downloadable
+  cs_volume:
+    state: extracted
+    name: web-vm-1-volume
+  register: data_vol_out
+  delegate_to: localhost
+
+- name: Create new volume by downloading source volume
+  cs_volume:
+    state: uploaded
+    name: web-vm-1-volume-2
+    format: VHD
+    url: "{{ data_vol_out.url }}"
+  delegate_to: localhost
 '''
 
 RETURN = '''
 id:
   description: ID of the volume.
   returned: success
-  type: string
+  type: str
   sample:
 name:
   description: Name of the volume.
   returned: success
-  type: string
+  type: str
   sample: web-volume-01
 display_name:
   description: Display name of the volume.
   returned: success
-  type: string
+  type: str
   sample: web-volume-01
 group:
   description: Group the volume belongs to
   returned: success
-  type: string
+  type: str
   sample: web
 domain:
   description: Domain the volume belongs to
   returned: success
-  type: string
+  type: str
   sample: example domain
 project:
   description: Project the volume belongs to
   returned: success
-  type: string
+  type: str
   sample: Production
 zone:
   description: Name of zone the volume is in.
   returned: success
-  type: string
+  type: str
   sample: ch-gva-2
 created:
   description: Date of the volume was created.
   returned: success
-  type: string
+  type: str
   sample: 2014-12-01T14:57:57+0100
 attached:
   description: Date of the volume was attached.
   returned: success
-  type: string
+  type: str
   sample: 2014-12-01T14:57:57+0100
 type:
   description: Disk volume type.
   returned: success
-  type: string
+  type: str
   sample: DATADISK
 size:
   description: Size of disk volume.
   returned: success
-  type: string
+  type: int
   sample: 20
 vm:
   description: Name of the vm the volume is attached to (not returned when detached)
   returned: success
-  type: string
+  type: str
   sample: web-01
 state:
   description: State of the volume
   returned: success
-  type: string
+  type: str
   sample: Attached
 device_id:
   description: Id of the device on user vm the volume is attached to (not returned when detached)
   returned: success
-  type: string
+  type: int
   sample: 1
+url:
+  description: The url of the uploaded volume or the download url depending extraction mode.
+  returned: success when I(state=extracted)
+  type: str
+  sample: http://1.12.3.4/userdata/387e2c7c-7c42-4ecc-b4ed-84e8367a1965.vhd
+  version_added: '2.8'
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -233,6 +282,7 @@ class AnsibleCloudStackVolume(AnsibleCloudStack):
             'deviceid': 'device_id',
             'type': 'type',
             'size': 'size',
+            'url': 'url',
         }
         self.volume = None
 
@@ -247,6 +297,10 @@ class AnsibleCloudStackVolume(AnsibleCloudStack):
                 'type': 'DATADISK',
                 'fetch_list': True,
             }
+            # Do not filter on DATADISK when state=extracted
+            if self.module.params.get('state') == 'extracted':
+                del args['type']
+
             volumes = self.query_api('listVolumes', **args)
             if volumes:
                 volume_name = self.module.params.get('name')
@@ -300,8 +354,6 @@ class AnsibleCloudStackVolume(AnsibleCloudStack):
             }
             if not self.module.check_mode:
                 res = self.query_api('createVolume', **args)
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
                     volume = self.poll_job(res, 'volume')
@@ -394,6 +446,56 @@ class AnsibleCloudStackVolume(AnsibleCloudStack):
 
         return volume
 
+    def extract_volume(self):
+        volume = self.get_volume()
+        if not volume:
+            self.module.fail_json(msg="Failed: volume not found")
+
+        args = {
+            'id': volume['id'],
+            'url': self.module.params.get('url'),
+            'mode': self.module.params.get('mode').upper(),
+            'zoneid': self.get_zone(key='id')
+        }
+        self.result['changed'] = True
+
+        if not self.module.check_mode:
+            res = self.query_api('extractVolume', **args)
+            poll_async = self.module.params.get('poll_async')
+            if poll_async:
+                volume = self.poll_job(res, 'volume')
+            self.volume = volume
+
+        return volume
+
+    def upload_volume(self):
+        volume = self.get_volume()
+        if not volume:
+            disk_offering_id = self.get_disk_offering(key='id')
+
+            self.result['changed'] = True
+
+            args = {
+                'name': self.module.params.get('name'),
+                'account': self.get_account(key='name'),
+                'domainid': self.get_domain(key='id'),
+                'projectid': self.get_project(key='id'),
+                'zoneid': self.get_zone(key='id'),
+                'format': self.module.params.get('format'),
+                'url': self.module.params.get('url'),
+                'diskofferingid': disk_offering_id,
+            }
+            if not self.module.check_mode:
+                res = self.query_api('uploadVolume', **args)
+                poll_async = self.module.params.get('poll_async')
+                if poll_async:
+                    volume = self.poll_job(res, 'volume')
+        if volume:
+            volume = self.ensure_tags(resource=volume, resource_type='Volume')
+            self.volume = volume
+
+        return volume
+
 
 def main():
     argument_spec = cs_argument_spec()
@@ -410,13 +512,23 @@ def main():
         custom_id=dict(),
         force=dict(type='bool', default=False),
         shrink_ok=dict(type='bool', default=False),
-        state=dict(choices=['present', 'absent', 'attached', 'detached'], default='present'),
+        state=dict(default='present', choices=[
+            'present',
+            'absent',
+            'attached',
+            'detached',
+            'extracted',
+            'uploaded',
+        ]),
         zone=dict(),
         domain=dict(),
         account=dict(),
         project=dict(),
         poll_async=dict(type='bool', default=True),
         tags=dict(type='list', aliases=['tag']),
+        url=dict(),
+        mode=dict(choices=['http_download', 'ftp_upload'], default='http_download'),
+        format=dict(choices=['QCOW2', 'RAW', 'VHD', 'VHDX', 'OVA']),
     ))
 
     module = AnsibleModule(
@@ -425,6 +537,9 @@ def main():
         mutually_exclusive=(
             ['snapshot', 'disk_offering'],
         ),
+        required_if=[
+            ('state', 'uploaded', ['url', 'format']),
+        ],
         supports_check_mode=True
     )
 
@@ -438,6 +553,10 @@ def main():
         volume = acs_vol.attached_volume()
     elif state in ['detached']:
         volume = acs_vol.detached_volume()
+    elif state == 'extracted':
+        volume = acs_vol.extract_volume()
+    elif state == 'uploaded':
+        volume = acs_vol.upload_volume()
     else:
         volume = acs_vol.present_volume()
 

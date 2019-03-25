@@ -25,7 +25,7 @@ __metaclass__ = type
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
-    'supported_by': 'community'
+    'supported_by': 'certified'
 }
 
 DOCUMENTATION = '''
@@ -34,7 +34,7 @@ module: nso_action
 extends_documentation_fragment: nso
 short_description: Executes Cisco NSO actions and verifies output.
 description:
-  - This module provices support for executing Cisco NSO actions and then
+  - This module provides support for executing Cisco NSO actions and then
     verifying that the output is as expected.
 requirements:
   - Cisco NSO version 3.4 or higher.
@@ -57,18 +57,18 @@ options:
      description: >
        If set to true, the task will fail if any output parameters not in
        output_required is present in the output.
+     type: bool
 version_added: "2.5"
 '''
 
 EXAMPLES = '''
 - name: Sync NSO device
-  nso_config:
+  nso_action:
     url: http://localhost:8080/jsonrpc
     username: username
     password: password
     path: /ncs:devices/device{ce0}/sync-from
-    output_required:
-      result: true
+    input: {}
 '''
 
 RETURN = '''

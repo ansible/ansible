@@ -18,7 +18,7 @@ module: manageiq_alert_profiles
 short_description: Configuration of alert profiles for ManageIQ
 extends_documentation_fragment: manageiq
 version_added: '2.5'
-author: Elad Alfassa (ealfassa@redhat.com)
+author: Elad Alfassa (@elad661) <ealfassa@redhat.com>
 description:
   - The manageiq_alert_profiles module supports adding, updating and deleting alert profiles in ManageIQ.
 

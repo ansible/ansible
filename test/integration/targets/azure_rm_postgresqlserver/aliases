@@ -1,4 +1,9 @@
 cloud/azure
 destructive
-posix/ci/cloud/group2/azure
-unstable
+shippable/azure/group8
+azure_rm_postgresqlserver_facts
+azure_rm_postgresqldatabase
+azure_rm_postgresqldatabase_facts
+azure_rm_postgresqlfirewallrule
+azure_rm_postgresqlfirewallrule_facts
+azure_rm_postgresqlserverconfiguration_facts
