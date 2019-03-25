@@ -81,7 +81,7 @@ For the GCE modules you can specify the credentials as arguments:
 * ``project``: id of the project
 * ``scopes``: The specific scopes that you want the actions to use.
 
-For example, to create a new IP address using the `gcp_compute_address` module,
+For example, to create a new IP address using the ``gcp_compute_address`` module,
 you can use the following configuration:
 
 .. code-block:: yaml
@@ -289,7 +289,7 @@ module (and more!). Below is a mapping of ``gce`` fields over to
  persistent_boot_disk         disks[].type = 'PERSISTENT'
  disks                        disks[]
  ip_forward                   can_ip_forward
- external_ip                  network_interfaces[].access_configs.nat_ip  This field takes multiple types of values. You can create an IP address with `gcp_compute_address` and place the name/output of the address here. You can also place the string value of the IP address's GCP name or the actual IP address.
+ external_ip                  network_interfaces[].access_configs.nat_ip  This field takes multiple types of values. You can create an IP address with ``gcp_compute_address`` and place the name/output of the address here. You can also place the string value of the IP address's GCP name or the actual IP address.
  disks_auto_delete            disks[].auto_delete
  preemptible                  scheduling.preemptible
  disk_size                    disks[].initialize_params.disk_size_gb
