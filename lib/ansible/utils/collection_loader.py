@@ -36,17 +36,17 @@ _collection_role_name_re = re.compile(r'^(\w+)\.(\w+)\.(\w+)$')
 # FIXME: exception handling/error logging
 class AnsibleCollectionLoader(object):
     def __init__(self):
-        self._configured_paths = C.config.get_config_value('COLLECTION_PATHS')
+        self._n_configured_paths = C.config.get_config_value('COLLECTION_PATHS')
 
-        if isinstance(self._configured_paths, string_types):
-            self._configured_paths = [self._configured_paths]
-        elif self._configured_paths is None:
-            self._configured_paths = []
+        if isinstance(self._n_configured_paths, string_types):
+            self._n_configured_paths = [self._n_configured_paths]
+        elif self._n_configured_paths is None:
+            self._n_configured_paths = []
 
         # expand any placeholders in configured paths
-        self._configured_paths = [os.path.expanduser(p) for p in self._configured_paths]
+        self._n_configured_paths = [to_native(os.path.expanduser(p), errors='surrogate_or_strict') for p in self._n_configured_paths]
 
-        self._playbook_paths = []
+        self._n_playbook_paths = []
         # pre-inject grafted package maps so we can force them to use the right loader instead of potentially delegating to a "normal" loader
         for p in (p for p in iteritems(_SYNTHETIC_PACKAGES) if p[1].get('graft')):
             pkg_name = p[0]
@@ -66,17 +66,17 @@ class AnsibleCollectionLoader(object):
             sys.modules[pkg_name] = newmod
 
     @property
-    def _collection_paths(self):
-        return self._playbook_paths + self._configured_paths
+    def _n_collection_paths(self):
+        return self._n_playbook_paths + self._n_configured_paths
 
-    def set_playbook_paths(self, playbook_paths):
-        if isinstance(playbook_paths, string_types):
-            playbook_paths = [playbook_paths]
+    def set_playbook_paths(self, b_playbook_paths):
+        if isinstance(b_playbook_paths, string_types):
+            b_playbook_paths = [b_playbook_paths]
 
         added_paths = set()
 
         # de-dupe and ensure the paths are native strings (Python seems to do this for package paths etc, so assume it's safe)
-        self._playbook_paths = [os.path.join(to_native(p), 'collections') for p in playbook_paths if not (p in added_paths or added_paths.add(p))]
+        self._n_playbook_paths = [os.path.join(to_native(p), 'collections') for p in b_playbook_paths if not (p in added_paths or added_paths.add(p))]
         # FIXME: only allow setting this once, or handle any necessary cache/package path invalidations internally?
 
     def find_module(self, fullname, path=None):
@@ -139,7 +139,7 @@ class AnsibleCollectionLoader(object):
                 return newmod
 
         if not parent_pkg:  # top-level package, look for NS subpackages on all collection paths
-            package_paths = [self._extend_path_with_ns(p, fullname) for p in self._collection_paths]
+            package_paths = [self._extend_path_with_ns(p, fullname) for p in self._n_collection_paths]
         else:  # subpackage; search in all subpaths (we'll limit later inside a collection)
             package_paths = [self._extend_path_with_ns(p, fullname) for p in parent_pkg.__path__]
 
@@ -167,14 +167,14 @@ class AnsibleCollectionLoader(object):
 
             newmod = ModuleType(fullname)
             newmod.__package__ = fullname
-            newmod.__file__ = to_native(location)
+            newmod.__file__ = location
             newmod.__loader__ = self
 
             if is_package:
                 if sub_collection:  # we never want to search multiple instances of the same collection; use first found
-                    newmod.__path__ = [to_native(candidate_child_path)]
+                    newmod.__path__ = [candidate_child_path]
                 else:
-                    newmod.__path__ = [to_native(p) for p in package_paths]
+                    newmod.__path__ = package_paths
 
             if source:
                 # FIXME: decide cases where we don't actually want to exec the code?
@@ -266,7 +266,7 @@ def is_collection_qualified_role_name(candidate_name):
 
 
 def get_collection_role_path(role_name, collection_list=None):
-    role_name = to_native(role_name)
+    role_name = to_native(role_name, errors='surrogate_or_strict')
     match = _collection_role_name_re.match(role_name)
 
     if match:
@@ -278,7 +278,7 @@ def get_collection_role_path(role_name, collection_list=None):
     else:
         role = role_name
 
-    for collection_name in collection_list:
+    for collection_name in (to_native(c, errors='surrogate_or_strict') for c in collection_list):
         try:
             role_package = 'ansible_collections.{0}.roles.{1}'.format(collection_name, role)
 
@@ -306,7 +306,7 @@ def get_collection_role_path(role_name, collection_list=None):
     return None
 
 
-def set_collection_playbook_paths(playbook_paths):
+def set_collection_playbook_paths(b_playbook_paths):
     # set for any/all AnsibleCollectionLoader instance(s) on meta_path
-    for l in (l for l in sys.meta_path if isinstance(l, AnsibleCollectionLoader)):
-        l.set_playbook_paths(playbook_paths)
+    for loader in (l for l in sys.meta_path if isinstance(l, AnsibleCollectionLoader)):
+        loader.set_playbook_paths(b_playbook_paths)

@@ -79,20 +79,20 @@ class PlaybookCLI(CLI):
         # initial error check, to make sure all specified playbooks are accessible
         # before we start running anything through the playbook executor
 
-        playbook_dirs = []
+        b_playbook_dirs = []
         for playbook in context.CLIARGS['args']:
             if not os.path.exists(playbook):
                 raise AnsibleError("the playbook: %s could not be found" % playbook)
             if not (os.path.isfile(playbook) or stat.S_ISFIFO(os.stat(playbook).st_mode)):
                 raise AnsibleError("the playbook: %s does not appear to be a file" % playbook)
 
-            playbook_dir = os.path.dirname(os.path.abspath(to_bytes(playbook, errors='surrogate_or_strict')))
+            b_playbook_dir = os.path.dirname(os.path.abspath(to_bytes(playbook, errors='surrogate_or_strict')))
             # load plugins from all playbooks in case they add callbacks/inventory/etc
-            add_all_plugin_dirs(playbook_dir)
+            add_all_plugin_dirs(b_playbook_dir)
 
-            playbook_dirs.append(playbook_dir)
+            b_playbook_dirs.append(b_playbook_dir)
 
-        set_collection_playbook_paths(playbook_dirs)
+        set_collection_playbook_paths(b_playbook_dirs)
 
         # don't deal with privilege escalation or passwords when we don't need to
         if not (context.CLIARGS['listhosts'] or context.CLIARGS['listtasks'] or
