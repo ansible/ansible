@@ -732,7 +732,7 @@ class ContainerManager(DockerBaseClass):
             def _findOrphans():
                 for container in containers:
                     # service_name = ctnr.labels.get(LABEL_SERVICE)
-                    service_name = container['Labels'][LABEL_SERVICE]
+                    service_name = container.get('Labels', {}).get(LABEL_SERVICE)
                     if service_name not in self.project.service_names:
                         yield container
 
