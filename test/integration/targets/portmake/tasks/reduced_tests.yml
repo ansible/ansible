@@ -14,9 +14,9 @@
   when: dir_www_p5_HTTP_Tiny.stat.exists == False
 
 - name: checkout ports tree if not yet done
-  command: svnlite co https://svn.FreeBSD.org/ports/head
+  command: svnlite co https://svn.FreeBSD.org/ports/head ports
   args:
-    chdir: /usr/ports
+    chdir: /usr
   when: dir_www_p5_HTTP_Tiny.stat.exists == False
 
 
