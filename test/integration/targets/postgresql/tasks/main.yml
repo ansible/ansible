@@ -817,7 +817,7 @@
 - include: postgresql_privs.yml
 
 # Test postgresql_facts module
-- include: postgresql_facts.yml
+- include: postgresql_info.yml
 
 # Test default_privs with target_role
 - include: test_target_role.yml
