@@ -35,7 +35,7 @@ options:
     description: iDRAC username.
     type: str
     required: True
-  idrac_pwd:
+  idrac_password:
     description: iDRAC user password.
     type: str
     required: True
@@ -61,7 +61,7 @@ options:
     description: Network share user in the format 'user@domain' or 'domain\\user' if user is
       part of a domain else 'user'. This option is mandatory for CIFS Network Share.
     type: str
-  share_pwd:
+  share_password:
     description: Network share user password. This option is mandatory for CIFS Network Share.
     type: str
   scp_file:
@@ -114,11 +114,11 @@ EXAMPLES = r'''
   dellemc_idrac_server_config_profile:
     idrac_ip: "192.168.0.1"
     idrac_user: "user_name"
-    idrac_pwd: "user_pwd"
+    idrac_password: "user_password"
     command: "import"
     share_name: "192.168.0.2:/share"
     share_user: "share_user_name"
-    share_pwd: "share_user_pwd"
+    share_password: "share_user_password"
     scp_file: "scp_filename.xml"
     scp_components: "ALL"
     job_wait: True
@@ -127,11 +127,11 @@ EXAMPLES = r'''
   dellemc_idrac_server_config_profile:
     idrac_ip: "192.168.0.1"
     idrac_user: "user_name"
-    idrac_pwd: "user_pwd"
+    idrac_password: "user_password"
     command: "import"
     share_name: "/scp_folder"
     share_user: "share_user_name"
-    share_pwd: "share_user_pwd"
+    share_password: "share_user_password"
     scp_file: "scp_filename.xml"
     scp_components: "ALL"
     job_wait: True
@@ -140,20 +140,20 @@ EXAMPLES = r'''
   dellemc_idrac_server_config_profile:
     idrac_ip: "192.168.0.1"
     idrac_user: "user_name"
-    idrac_pwd: "user_pwd"
+    idrac_password: "user_password"
     share_name: "192.168.0.2:/share"
     share_user: "share_user_name"
-    share_pwd: "share_user_pwd"
+    share_password: "share_user_password"
     job_wait: False
 
 - name: Export Server Configuration Profile to a local path
   dellemc_idrac_server_config_profile:
     idrac_ip: "192.168.0.1"
     idrac_user: "user_name"
-    idrac_pwd: "user_pwd"
+    idrac_password: "user_password"
     share_name: "/scp_folder"
     share_user: "share_user_name"
-    share_pwd: "share_user_pwd"
+    share_password: "share_user_password"
     job_wait: False
 '''
 
@@ -209,7 +209,7 @@ def run_import_server_config_profile(idrac, module):
         myshare = file_share_manager.create_share_obj(
             share_path="{0}{1}{2}".format(module.params['share_name'], os.sep, module.params['scp_file']),
             creds=UserCredentials(module.params['share_user'],
-                                  module.params['share_pwd']), isFolder=False)
+                                  module.params['share_password']), isFolder=False)
         import_status = idrac.config_mgr.scp_import(myshare,
                                                     target=target, shutdown_type=shutdown_type,
                                                     end_host_power_state=end_host_power_state,
@@ -232,7 +232,7 @@ def run_export_server_config_profile(idrac, module):
     try:
         myshare = file_share_manager.create_share_obj(share_path=module.params['share_name'],
                                                       creds=UserCredentials(module.params['share_user'],
-                                                                            module.params['share_pwd']),
+                                                                            module.params['share_password']),
                                                       isFolder=True)
         scp_file_name = myshare.new_file(scp_file_name_format)
         export_status = idrac.config_mgr.scp_export(scp_file_name,
@@ -252,7 +252,7 @@ def main():
         argument_spec={
             "idrac_ip": {"required": True, "type": 'str'},
             "idrac_user": {"required": True, "type": 'str'},
-            "idrac_pwd": {"required": True, "type": 'str', "no_log": True},
+            "idrac_password": {"required": True, "type": 'str', "no_log": True},
             "idrac_port": {"required": False, "default": 443, "type": 'int'},
 
             "command": {"required": False, "type": 'str',
@@ -261,7 +261,7 @@ def main():
 
             "share_name": {"required": True, "type": 'str'},
             "share_user": {"required": False, "type": 'str'},
-            "share_pwd": {"required": False, "type": 'str', "no_log": True},
+            "share_password": {"required": False, "type": 'str', "no_log": True},
             "scp_components": {"required": False,
                                "choices": ['ALL', 'IDRAC', 'BIOS', 'NIC', 'RAID'],
                                "default": 'ALL'},
