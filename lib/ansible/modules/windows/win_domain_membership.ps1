@@ -103,7 +103,7 @@ Function Join-Domain {
         [string] $domain_admin_user,
         [string] $domain_admin_password,
         [string] $domain_ou_path,
-        [bool]   $force_replace_host
+        [bool]   $allow_existing_computer_account
     )
 
     Write-DebugLog ("Creating credential for user {0}" -f $domain_admin_user)
@@ -132,10 +132,10 @@ Function Join-Domain {
     $argstr = $add_args | Out-String
     Write-DebugLog "calling Add-Computer with args: $argstr"
     try {
-        if($hostname_in_domain -eq $null -or ($hostname_in_domain -ne $null -and $force_replace_host)) {
+        if($hostname_in_domain -eq $null -or ($hostname_in_domain -ne $null -and $allow_existing_computer_account)) {
             $add_result = Add-Computer @add_args
         } else {
-            Fail-Json -obj $result -message "failed to join domain: hostname already exists in AD and `$force_replace_host isn't set to true"
+            Fail-Json -obj $result -message "failed to join domain: hostname already exists in AD and `$allow_existing_computer_account isn't set to true"
         }
     } catch {
         Fail-Json -obj $result -message "failed to join domain: $($_.Exception.Message)"
@@ -206,7 +206,7 @@ $workgroup_name = Get-AnsibleParam $params "workgroup_name"
 $domain_admin_user = Get-AnsibleParam $params "domain_admin_user" -failifempty $result
 $domain_admin_password = Get-AnsibleParam $params "domain_admin_password" -failifempty $result
 $domain_ou_path = Get-AnsibleParam $params "domain_ou_path"
-$force_replace_host = Get-AnsibleParam $params "force_replace_host" -type "bool" -default $false
+$allow_existing_computer_account = Get-AnsibleParam $params "allow_existing_computer_account" -type "bool" -default $false
 
 $log_path = Get-AnsibleParam $params "log_path"
 $_ansible_check_mode = Get-AnsibleParam $params "_ansible_check_mode" -default $false
@@ -248,7 +248,7 @@ Try {
                         dns_domain_name = $dns_domain_name
                         domain_admin_user = $domain_admin_user
                         domain_admin_password = $domain_admin_password
-                        force_replace_host = $force_replace_host
+                        allow_existing_computer_account = $allow_existing_computer_account
                     }
 
                     Write-DebugLog "not a domain member, joining..."

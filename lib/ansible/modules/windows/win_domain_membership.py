@@ -48,7 +48,7 @@ options:
     description:
       - When C(state) is C(workgroup), the name of the workgroup that the Windows host should be in.
     type: str
-  force_replace_host:
+  allow_existing_computer_account:
     description:
       - If a host with the same hostname is already in the AD, replace it.
     type: bool
