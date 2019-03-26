@@ -17,7 +17,7 @@ install_pip () {
 if [ "${platform}" = "freebsd" ]; then
     while true; do
         env ASSUME_ALWAYS_YES=YES pkg bootstrap && \
-        pkg install -y \
+        pkg install -q -y \
             bash \
             curl \
             gtar \
@@ -40,11 +40,11 @@ if [ "${platform}" = "freebsd" ]; then
 elif [ "${platform}" = "rhel" ]; then
     if grep '8\.' /etc/redhat-release; then
         while true; do
-            curl -o /etc/yum.repos.d/rhel-8-beta.repo http://downloads.redhat.com/redhat/rhel/rhel-8-beta/rhel-8-beta.repo && \
+            curl --silent --show-error -o /etc/yum.repos.d/rhel-8-beta.repo http://downloads.redhat.com/redhat/rhel/rhel-8-beta/rhel-8-beta.repo && \
             dnf config-manager --set-enabled rhel-8-for-x86_64-baseos-beta-rpms && \
             dnf config-manager --set-enabled rhel-8-for-x86_64-appstream-beta-rpms && \
-            yum -y module install python36 && \
-            yum install -y \
+            yum module install -q -y python36 && \
+            yum install -q -y \
                 gcc \
                 python3-devel \
                 python3-jinja2 \
@@ -69,7 +69,7 @@ elif [ "${platform}" = "rhel" ]; then
         fi
     else
         while true; do
-            yum install -y \
+            yum install -q -y \
                 gcc \
                 python-devel \
                 python-jinja2 \
