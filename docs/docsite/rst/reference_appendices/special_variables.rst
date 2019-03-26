@@ -29,7 +29,7 @@ ansible_loop
     A dictionary/map containing extended loop information when enabled via ``loop_control.extended``
 
 ansible_loop_var
-    The name of the value provided to ``loop_control.loop_var``
+    The name of the value provided to ``loop_control.loop_var``. Added in ``2.8``
 
 ansible_play_batch
     List of active hosts in the current play run limited by the serial, aka 'batch'. Failed/Unreachable hosts are not considered 'active'.
