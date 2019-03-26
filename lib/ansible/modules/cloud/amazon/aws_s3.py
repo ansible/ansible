@@ -405,9 +405,17 @@ def create_bucket(module, s3, bucket, location=None):
 
 
 def paginated_list(s3, **pagination_params):
-    pg = s3.get_paginator('list_objects_v2')
-    for page in pg.paginate(**pagination_params):
-        yield [data['Key'] for data in page.get('Contents', [])]
+    try:
+        versioned_pg = s3.get_paginator('list_object_versions')
+        for page in versioned_pg.paginate(**pagination_params):
+            delete_markers = [{'Key': data['Key'], 'VersionId': data['VersionId']} for data in page.get('DeleteMarkers', [])]
+            current_objects = [{'Key': data['Key'], 'VersionId': data['VersionId']} for data in page.get('Versions', [])]
+            yield delete_markers + current_objects
+    except botocore.exceptions.ClientError as e:
+        if to_text(e.response['Error']['Code']) in IGNORE_S3_DROP_IN_EXCEPTIONS + ['AccessDenied']:
+            fallback_pg = s3.get_paginator('list_objects_v2')
+            for page in fallback_pg.paginate(**pagination_params):
+                yield [{'Key': data['Key']} for data in page.get('Contents', [])]
 
 
 def list_keys(module, s3, bucket, prefix, marker, max_keys):
@@ -430,9 +438,8 @@ def delete_bucket(module, s3, bucket):
             return False
         # if there are contents then we need to delete them before we can delete the bucket
         for keys in paginated_list(s3, Bucket=bucket):
-            formatted_keys = [{'Key': key} for key in keys]
-            if formatted_keys:
-                s3.delete_objects(Bucket=bucket, Delete={'Objects': formatted_keys})
+            if keys:
+                s3.delete_objects(Bucket=bucket, Delete={'Objects': keys})
         s3.delete_bucket(Bucket=bucket)
         return True
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
