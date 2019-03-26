@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_roledefinition_info
+module: azure_rm_roledefinition_facts
 version_added: "2.8"
 short_description: Get Azure Role Definition facts.
 description:
@@ -47,11 +47,11 @@ author:
 
 EXAMPLES = '''
     - name: List Role Definitions in scope
-      azure_rm_roledefinition_info:
+      azure_rm_roledefinition_facts:
         scope: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup
 
     - name: Get Role Definition by name
-      azure_rm_roledefinition_info:
+      azure_rm_roledefinition_facts:
         scope: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup
         name: myRoleDefinition
 '''
