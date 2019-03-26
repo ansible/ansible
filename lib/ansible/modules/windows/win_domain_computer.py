@@ -63,6 +63,26 @@ options:
       - The LDAP display name for this property is dNSHostName.
       - Required when I(state=present).
     type: str
+  domain_username:
+    description:
+    - The username to use when interacting with AD.
+    - If this is not set then the user Ansible used to log in with will be
+      used instead when using CredSSP or Kerberos with credential delegation.
+    type: str
+    version_added: '2.8'
+  domain_password:
+    description:
+    - The password for I(username).
+    type: str
+    version_added: '2.8'
+  domain_server:
+    description:
+    - Specifies the Active Directory Domain Services instance to connect to.
+    - Can be in the form of an FQDN or NetBIOS name.
+    - If not specified then the value is based on the domain of the computer
+      running PowerShell.
+    type: str
+    version_added: '2.8'
   state:
     description:
       - Specified whether the computer should be C(present) or C(absent) in
@@ -70,7 +90,7 @@ options:
     type: str
     choices: [ absent, present ]
     default: present
-seealso:
+see also:
 - module: win_domain
 - module: win_domain_controller
 - module: win_domain_group
