@@ -34,7 +34,7 @@ try:
     import ovirtsdk4 as sdk
     import ovirtsdk4.version as sdk_version
     import ovirtsdk4.types as otypes
-    HAS_SDK = LooseVersion(sdk_version.VERSION) >= LooseVersion('4.2.4')
+    HAS_SDK = LooseVersion(sdk_version.VERSION) >= LooseVersion('4.3.0')
 except ImportError:
     HAS_SDK = False
 
@@ -51,7 +51,7 @@ BYTES_MAP = {
 def check_sdk(module):
     if not HAS_SDK:
         module.fail_json(
-            msg='ovirtsdk4 version 4.2.4 or higher is required for this module'
+            msg='ovirtsdk4 version 4.3.0 or higher is required for this module'
         )
 
 
