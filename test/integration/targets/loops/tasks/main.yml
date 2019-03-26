@@ -325,3 +325,12 @@
   loop_control:
     extended: true
   when: item == 'banana'
+
+- name: Validate the loop_var name
+  assert:
+    that:
+      - ansible_loop_var == 'alvin'
+  loop:
+    - 1
+  loop_control:
+    loop_var: alvin
