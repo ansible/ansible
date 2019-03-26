@@ -230,8 +230,7 @@ class ACIModule(object):
         if self.params['certificate_name'] is None:
             self.params['certificate_name'] = os.path.basename(os.path.splitext(self.params['private_key'])[0])
 
-        # Checks to verify if the private_key was entered as a string instead of a file.
-        # This allows the use of vaulting the private key.
+        # Check if we got a private key. This allows the use of vaulting the private key.
         if self.params['private_key'].startswith('-----BEGIN PRIVATE KEY-----'):
             try:
                 sig_key = load_privatekey(FILETYPE_PEM, self.params['private_key'])
@@ -240,6 +239,7 @@ class ACIModule(object):
         elif self.params['private_key'].startswith('-----BEGIN CERTIFICATE-----'):
             self.module.fail_json(msg="Provided 'private_key' parameter value appears to be a certificate. Please correct.")
         else:
+            # If we got a private key file, read from this file.
             # NOTE: Avoid exposing any other credential as a filename in output...
             if not os.path.exists(self.params['private_key']):
                 self.module.fail_json(msg="The provided private key file does not appear to exist. Is it a filename?")
@@ -248,12 +248,12 @@ class ACIModule(object):
                     private_key_content = fh.read()
             except Exception:
                 self.module.fail_json(msg="Cannot open private key file '%s'." % self.params['private_key'])
-            if private_key.startswith('-----BEGIN PRIVATE KEY-----'):
+            if private_key_content.startswith('-----BEGIN PRIVATE KEY-----'):
                 try:
                     sig_key = load_privatekey(FILETYPE_PEM, private_key_content)
                 except Exception:
                     self.module.fail_json(msg="Cannot load private key file '%s'." % self.params['private_key'])
-            elif private_key.startswith('-----BEGIN CERTIFICATE-----'):
+            elif private_key_content.startswith('-----BEGIN CERTIFICATE-----'):
                 self.module.fail_json(msg="Provided private key file %s appears to be a certificate. Please correct." % self.params['private_key'])
             else:
                 self.module.fail_json(msg="Provided private key file '%s' does not appear to be a private key. Please correct." % self.params['private_key'])
@@ -333,7 +333,7 @@ class ACIModule(object):
             self.url = '%(protocol)s://%(host)s/' % self.params + path.lstrip('/')
 
         # Sign and encode request as to APIC's wishes
-        if self.params['private_key'] is not None:
+        if not self.params['private_key']:
             self.cert_auth(path=path, payload=payload)
 
         # Perform request
@@ -370,7 +370,7 @@ class ACIModule(object):
             self.url = '%(protocol)s://%(host)s/' % self.params + path.lstrip('/')
 
         # Sign and encode request as to APIC's wishes
-        if self.params['private_key'] is not None:
+        if not self.params['private_key']:
             self.cert_auth(path=path, method='GET')
 
         # Perform request
@@ -657,7 +657,7 @@ class ACIModule(object):
 
         elif not self.module.check_mode:
             # Sign and encode request as to APIC's wishes
-            if self.params['private_key'] is not None:
+            if not self.params['private_key']:
                 self.cert_auth(method='DELETE')
 
             resp, info = fetch_url(self.module, self.url,
@@ -793,7 +793,7 @@ class ACIModule(object):
         uri = self.url + self.filter_string
 
         # Sign and encode request as to APIC's wishes
-        if self.params['private_key'] is not None:
+        if not self.params['private_key']:
             self.cert_auth(path=self.path + self.filter_string, method='GET')
 
         resp, info = fetch_url(self.module, uri,
@@ -894,7 +894,7 @@ class ACIModule(object):
             return
         elif not self.module.check_mode:
             # Sign and encode request as to APIC's wishes
-            if self.params['private_key'] is not None:
+            if not self.params['private_key']:
                 self.cert_auth(method='POST', payload=json.dumps(self.config))
 
             resp, info = fetch_url(self.module, self.url,
