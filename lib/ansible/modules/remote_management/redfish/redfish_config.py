@@ -56,10 +56,10 @@ options:
     default: 'null'
     version_added: "2.8"
   timeout:
-    required: false
     description:
       - Timeout in seconds for URL requests to OOB controller
     default: 10
+    type: int
     version_added: "2.8"
 
 author: "Jose Delarosa (@jose-delarosa)"
