@@ -69,7 +69,7 @@ def aci_argument_spec():
         port=dict(type='int', required=False),
         username=dict(type='str', default='admin', aliases=['user']),
         password=dict(type='str', no_log=True),
-        private_key=dict(type='path', aliases=['cert_key']),  # Beware, this is not the same as client_key !
+        private_key=dict(type='str', aliases=['cert_key'], no_log=True),  # Beware, this is not the same as client_key !
         certificate_name=dict(type='str', aliases=['cert_name']),  # Beware, this is not the same as client_cert !
         output_level=dict(type='str', default='normal', choices=['debug', 'info', 'normal']),
         timeout=dict(type='int', default=30),
@@ -226,16 +226,15 @@ class ACIModule(object):
         if payload is None:
             payload = ''
 
-        # Use the private key basename (without extension) as certificate_name
-        if self.params['certificate_name'] is None:
-            self.params['certificate_name'] = os.path.basename(os.path.splitext(self.params['private_key'])[0])
-
         # Check if we got a private key. This allows the use of vaulting the private key.
         if self.params['private_key'].startswith('-----BEGIN PRIVATE KEY-----'):
             try:
                 sig_key = load_privatekey(FILETYPE_PEM, self.params['private_key'])
             except Exception:
                 self.module.fail_json(msg="Cannot load provided 'private_key' parameter.")
+            # Use the username as the certificate_name value
+            if self.params['certificate_name'] is None:
+                self.params['certificate_name'] = self.params['username']
         elif self.params['private_key'].startswith('-----BEGIN CERTIFICATE-----'):
             self.module.fail_json(msg="Provided 'private_key' parameter value appears to be a certificate. Please correct.")
         else:
@@ -253,6 +252,9 @@ class ACIModule(object):
                     sig_key = load_privatekey(FILETYPE_PEM, private_key_content)
                 except Exception:
                     self.module.fail_json(msg="Cannot load private key file '%s'." % self.params['private_key'])
+                # Use the private key basename (without extension) as certificate_name
+                if self.params['certificate_name'] is None:
+                    self.params['certificate_name'] = os.path.basename(os.path.splitext(self.params['private_key'])[0])
             elif private_key_content.startswith('-----BEGIN CERTIFICATE-----'):
                 self.module.fail_json(msg="Provided private key file %s appears to be a certificate. Please correct." % self.params['private_key'])
             else:

@@ -34,8 +34,8 @@ options:
     required: yes
   private_key:
     description:
-    - PEM formatted file that contains your private key to be used for signature-based authentication.
-    - The name of the key (without extension) is used as the certificate name in ACI, unless C(certificate_name) is specified.
+    - Either a PEM-formatted private key file or the private key content used for signature-based authentication.
+    - This value also influences the default C(certificate_name) that is used.
     - This option is mutual exclusive with C(password). If C(password) is provided too, it will be ignored.
     type: path
     required: yes
@@ -43,7 +43,8 @@ options:
   certificate_name:
     description:
     - The X.509 certificate name attached to the APIC AAA user used for signature-based authentication.
-    - It defaults to the C(private_key) basename, without extension.
+    - If a C(private_key) filename was provided, this defaults to the C(private_key) basename, without extension.
+    - If PEM-formatted content was provided for C(private_key), this defaults to the C(username) value.
     type: str
     aliases: [ cert_name ]
   output_level:
