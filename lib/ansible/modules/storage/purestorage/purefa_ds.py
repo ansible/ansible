@@ -23,9 +23,10 @@ description:
 - To modify an existing directory service configuration you must first delete
   an exisitng configuration and then recreate with new settings.
 author:
-- Simon Dodsley (@sdodsley)
+- Pure Storage Ansible Team (@sdodsley) <pure-ansible-team@purestorage.com>
 options:
   state:
+    type: str
     description:
     - Create or delete directory service configuration
     default: present
@@ -36,6 +37,7 @@ options:
     default: false
     type: bool
   uri:
+    type: list
     description:
     - A list of up to 30 URIs of the directory servers. Each URI must include
       the scheme ldap:// or ldaps:// (for LDAP over SSL), a hostname, and a
@@ -43,6 +45,7 @@ options:
       the directory service with the hostname "ad" in the domain "company.com"
       while specifying the unencrypted LDAP protocol.
   base_dn:
+    type: str
     description:
     - Sets the base of the Distinguished Name (DN) of the directory service
       groups. The base should consist of only Domain Components (DCs). The
@@ -51,9 +54,11 @@ options:
       for each domain component and multiple DCs should be separated by commas.
     required: true
   bind_password:
+    type: str
     description:
     - Sets the password of the bind_user user name account.
   bind_user:
+    type: str
     description:
     - Sets the user name that can be used to bind to and query the directory.
     - For Active Directory, enter the username - often referred to as
@@ -61,6 +66,7 @@ options:
       perform directory lookups.
     - For OpenLDAP, enter the full DN of the user.
   group_base:
+    type: str
     description:
     - Specifies where the configured groups are located in the directory
       tree. This field consists of Organizational Units (OUs) that combine
@@ -71,6 +77,7 @@ options:
       to right. Each OU should not exceed 64 characters in length.
     - Not Supported from Purity 5.2.0 or higher. Use I(purefa_dsrole) module.
   ro_group:
+    type: str
     description:
     - Sets the common Name (CN) of the configured directory service group
       containing users with read-only privileges on the FlashArray. This
@@ -78,6 +85,7 @@ options:
       specifier. Common Names should not exceed 64 characters in length.
     - Not Supported from Purity 5.2.0 or higher. Use I(purefa_dsrole) module.
   sa_group:
+    type: str
     description:
     - Sets the common Name (CN) of the configured directory service group
       containing administrators with storage-related privileges on the
@@ -86,6 +94,7 @@ options:
       characters in length.
     - Not Supported from Purity 5.2.0 or higher. Use I(purefa_dsrole) module.
   aa_group:
+    type: str
     description:
     - Sets the common Name (CN) of the directory service group containing
       administrators with full privileges when managing the FlashArray.
