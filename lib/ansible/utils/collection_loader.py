@@ -36,7 +36,7 @@ _collection_role_name_re = re.compile(r'^(\w+)\.(\w+)\.(\w+)$')
 # FIXME: exception handling/error logging
 class AnsibleCollectionLoader(object):
     def __init__(self):
-        self._n_configured_paths = C.config.get_config_value('COLLECTION_PATHS')
+        self._n_configured_paths = C.config.get_config_value('COLLECTIONS_PATHS')
 
         if isinstance(self._n_configured_paths, string_types):
             self._n_configured_paths = [self._n_configured_paths]

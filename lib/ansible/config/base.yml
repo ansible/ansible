@@ -215,14 +215,14 @@ CACHE_PLUGIN_TIMEOUT:
   - {key: fact_caching_timeout, section: defaults}
   type: integer
   yaml: {key: facts.cache.timeout}
-COLLECTION_PATHS:
+COLLECTIONS_PATHS:
   name: ordered list of root paths for loading installed Ansible collections content
   default: ['~/.ansible/collections', '/usr/share/ansible/collections']
-  type: list
+  type: pathspec
   env:
-  - {name: ANSIBLE_COLLECTION_PATHS}
+  - {name: ANSIBLE_COLLECTIONS_PATHS}
   ini:
-  - {key: collection_paths, section: defaults}
+  - {key: collections_paths, section: defaults}
 COLOR_CHANGED:
   name: Color for 'changed' task status
   default: yellow
