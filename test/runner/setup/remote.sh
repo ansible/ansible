@@ -76,10 +76,14 @@ elif [ "${platform}" = "rhel" ]; then
 
         pip --version 2>/dev/null || curl --silent --show-error https://bootstrap.pypa.io/get-pip.py | python
     fi
-fi
-
-if [ "${platform}" = "freebsd" ] || [ "${platform}" = "osx" ]; then
-    pip install virtualenv
+elif [ "${platform}" = "osx" ]; then
+    while true; do
+        pip install --disable-pip-version-check --quiet \
+            virtualenv \
+        && break
+        echo "Failed to install packages. Sleeping before trying again..."
+        sleep 10
+    done
 fi
 
 # Generate our ssh key and add it to our authorized_keys file.
