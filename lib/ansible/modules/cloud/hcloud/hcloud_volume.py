@@ -209,7 +209,7 @@ class AnsibleHcloudVolume(Hcloud):
         elif self.module.params.get("location") is not None:
             params['location'] = self.client.locations.get_by_name(self.module.params.get("location"))
         else:
-            self.module.warn("server or location is required")
+            self.module.fail_json(msg="server or location is required")
 
         if not self.module.check_mode:
             resp = self.client.volumes.create(**params)
