@@ -10,12 +10,30 @@
     that:
     - uploaded_vol is successful
 
+- name: setup network
+  cs_network:
+    name: "cs_volume_network"
+    zone: "{{ cs_common_zone_adv }}"
+    network_offering: DefaultSharedNetworkOffering
+    vlan: 2435
+    start_ip: 10.100.129.11
+    end_ip: 10.100.129.250
+    gateway: 10.100.129.1
+    netmask: 255.255.255.0
+  register: net
+- name: verify setup network
+  assert:
+    that:
+    - net is successful
+    - net.name == "cs_volume_network"
+
 - name: setup instance
   cs_instance:
     zone: "{{ cs_common_zone_adv }}"
     name: "{{ test_cs_instance_3 }}"
     template: "{{ test_cs_instance_template }}"
     service_offering: "{{ test_cs_instance_offering_1 }}"
+    network: cs_volume_network
   register: instance
 - name: verify setup instance
   assert:
@@ -148,3 +166,25 @@
     that:
     - uploaded_vol is successful
     - uploaded_vol is changed
+
+- name: destroy instance
+  cs_instance:
+    zone: "{{ cs_common_zone_adv }}"
+    name: "{{ test_cs_instance_3 }}"
+    state: expunged
+  register: instance
+- name: verify destroy instance
+  assert:
+    that:
+    - instance is successful
+
+- name: delete network
+  cs_network:
+    name: "cs_volume_network"
+    zone: "{{ cs_common_zone_adv }}"
+    state: absent
+  register: net
+- name: verify delete network
+  assert:
+    that:
+    - net is successful
