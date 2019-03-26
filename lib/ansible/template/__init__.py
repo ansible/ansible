@@ -330,11 +330,11 @@ class JinjaPluginIntercept(MutableMapping):
 
     def __iter__(self):
         # not strictly accurate since we're not counting dynamically-loaded values
-        return self._delegatee.__iter__()
+        return iter(self._delegatee)
 
     def __len__(self):
         # not strictly accurate since we're not counting dynamically-loaded values
-        return self._delegatee.__len__()
+        return len(self._delegatee)
 
 
 class AnsibleEnvironment(Environment):
