@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# Copyright: (c) 2019, NAER William Leemans (@bushvin) <willie@elaba.net>
 # Copyright: (c) 2018, Ansible Project
 # Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -27,6 +28,7 @@ author:
 notes:
     - Tested on vSphere 6.0 and 6.5.
     - Disk UUID information is added in version 2.8.
+    - Additional information about guest disk backings added in version 2.8.
 requirements:
     - "python >= 2.6"
     - PyVmomi
@@ -105,7 +107,9 @@ guest_disk_facts:
             "backing_eagerlyscrub": false,
             "backing_filename": "[datastore2] VM_225/VM_225.vmdk",
             "backing_thinprovisioned": false,
+            "backing_type": "FlatVer2",
             "backing_writethrough": false,
+            "backing_uuid": "200C3A00-f82a-97af-02ff-62a595f0020a",
             "capacity_in_bytes": 10485760,
             "capacity_in_kb": 10240,
             "controller_key": 1000,
@@ -113,6 +117,22 @@ guest_disk_facts:
             "label": "Hard disk 1",
             "summary": "10,240 KB",
             "unit_number": 0
+        },
+        "1": {
+            "backing_datastore": "datastore3",
+            "backing_devicename": "vml.012345678901234567890123456789012345678901234567890123",
+            "backing_disk_mode": "independent_persistent",
+            "backing_filename": "[datastore3] VM_226/VM_226.vmdk",
+            "backing_lunuuid": "012345678901234567890123456789012345678901234567890123",
+            "backing_type": "RawDiskMappingVer1",
+            "backing_uuid": null,
+            "capacity_in_bytes": 15728640,
+            "capacity_in_kb": 15360,
+            "controller_key": 1000,
+            "key": 2001,
+            "label": "Hard disk 3",
+            "summary": "15,360 KB",
+            "unit_number": 1
         },
     }
 """
@@ -153,16 +173,64 @@ class PyVmomiHelper(PyVmomi):
                     summary=disk.deviceInfo.summary,
                     backing_filename=disk.backing.fileName,
                     backing_datastore=disk.backing.datastore.name,
-                    backing_disk_mode=disk.backing.diskMode,
-                    backing_writethrough=disk.backing.writeThrough,
-                    backing_thinprovisioned=disk.backing.thinProvisioned,
-                    backing_uuid=disk.backing.uuid,
-                    backing_eagerlyscrub=bool(disk.backing.eagerlyScrub),
                     controller_key=disk.controllerKey,
                     unit_number=disk.unitNumber,
                     capacity_in_kb=disk.capacityInKB,
                     capacity_in_bytes=disk.capacityInBytes,
                 )
+                if isinstance(disk.backing, vim.vm.device.VirtualDisk.FlatVer1BackingInfo):
+                    disks_facts[disk_index]['backing_type'] = 'FlatVer1'
+                    disks_facts[disk_index]['backing_writethrough'] = disk.backing.writeThrough
+
+                elif isinstance(disk.backing, vim.vm.device.VirtualDisk.FlatVer2BackingInfo):
+                    disks_facts[disk_index]['backing_type'] = 'FlatVer2'
+                    disks_facts[disk_index]['backing_writethrough'] = bool(disk.backing.writeThrough)
+                    disks_facts[disk_index]['backing_thinprovisioned'] = bool(disk.backing.thinProvisioned)
+                    disks_facts[disk_index]['backing_eagerlyscrub'] = bool(disk.backing.eagerlyScrub)
+                    disks_facts[disk_index]['backing_uuid'] = disk.backing.uuid
+
+                elif isinstance(disk.backing, vim.vm.device.VirtualDisk.LocalPMemBackingInfo):
+                    disks_facts[disk_index]['backing_type'] = 'LocalPMem'
+                    disks_facts[disk_index]['backing_volumeuuid'] = disk.backing.volumeUUID
+                    disks_facts[disk_index]['backing_uuid'] = disk.backing.uuid
+
+                elif isinstance(disk.backing, vim.vm.device.VirtualDisk.PartitionedRawDiskVer2BackingInfo):
+                    disks_facts[disk_index]['backing_type'] = 'PartitionedRawDiskVer2'
+                    disks_facts[disk_index]['backing_descriptorfilename'] = disk.backing.descriptorFileName
+                    disks_facts[disk_index]['backing_uuid'] = disk.backing.uuid
+
+                elif isinstance(disk.backing, vim.vm.device.VirtualDisk.RawDiskMappingVer1BackingInfo):
+                    disks_facts[disk_index]['backing_type'] = 'RawDiskMappingVer1'
+                    disks_facts[disk_index]['backing_devicename'] = disk.backing.deviceName
+                    disks_facts[disk_index]['backing_diskmode'] = disk.backing.diskMode
+                    disks_facts[disk_index]['backing_lunuuid'] = disk.backing.lunUuid
+                    disks_facts[disk_index]['backing_uuid'] = disk.backing.uuid
+
+                elif isinstance(disk.backing, vim.vm.device.VirtualDisk.RawDiskVer2BackingInfo):
+                    disks_facts[disk_index]['backing_type'] = 'RawDiskVer2'
+                    disks_facts[disk_index]['backing_descriptorfilename'] = disk.backing.descriptorFileName
+                    disks_facts[disk_index]['backing_uuid'] = disk.backing.uuid
+
+                elif isinstance(disk.backing, vim.vm.device.VirtualDisk.SeSparseBackingInfo):
+                    disks_facts[disk_index]['backing_type'] = 'SeSparse'
+                    disks_facts[disk_index]['backing_diskmode'] = disk.backing.diskMode
+                    disks_facts[disk_index]['backing_writethrough'] = bool(disk.backing.writeThrough)
+                    disks_facts[disk_index]['backing_uuid'] = disk.backing.uuid
+
+                elif isinstance(disk.backing, vim.vm.device.VirtualDisk.SparseVer1BackingInfo):
+                    disks_facts[disk_index]['backing_type'] = 'SparseVer1'
+                    disks_facts[disk_index]['backing_diskmode'] = disk.backing.diskMode
+                    disks_facts[disk_index]['backing_spaceusedinkb'] = disk.backing.spaceUsedInKB
+                    disks_facts[disk_index]['backing_split'] = bool(disk.backing.split)
+                    disks_facts[disk_index]['backing_writethrough'] = bool(disk.backing.writeThrough)
+
+                elif isinstance(disk.backing, vim.vm.device.VirtualDisk.SparseVer2BackingInfo):
+                    disks_facts[disk_index]['backing_type'] = 'SparseVer2'
+                    disks_facts[disk_index]['backing_diskmode'] = disk.backing.diskMode
+                    disks_facts[disk_index]['backing_spaceusedinkb'] = disk.backing.spaceUsedInKB
+                    disks_facts[disk_index]['backing_split'] = bool(disk.backing.split)
+                    disks_facts[disk_index]['backing_writethrough'] = bool(disk.backing.writeThrough)
+                    disks_facts[disk_index]['backing_uuid'] = disk.backing.uuid
                 disk_index += 1
         return disks_facts
 
