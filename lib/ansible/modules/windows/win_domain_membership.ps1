@@ -119,17 +119,20 @@ Function Join-Domain {
     Write-DebugLog "adding hostname set arg to Add-Computer args"
     If($new_hostname) {
         $add_args["NewName"] = $new_hostname
+        $hostname_in_domain = Get-ADObject -LDAPFilter "(&(CN=$new_hostname)(ObjectClass=Computer))"
+    } else {
+        $hostname_in_domain = Get-ADObject -LDAPFilter "(&(CN=$env:COMPUTERNAME)(ObjectClass=Computer))"
     }
-
 
     if($domain_ou_path){
         Write-DebugLog "adding OU destination arg to Add-Computer args"
         $add_args["OUPath"] = $domain_ou_path
     }
+
     $argstr = $add_args | Out-String
     Write-DebugLog "calling Add-Computer with args: $argstr"
     try {
-        if(Get-ADObject $new_hostname -eq $null -or (Get-ADObject $new_hostname -ne $null -and $force_replace_host)) {
+        if($hostname_in_domain -eq $null -or ($hostname_in_domain -ne $null -and $force_replace_host)) {
             $add_result = Add-Computer @add_args
         } else {
             Fail-Json -obj $result -message "failed to join domain: hostname already exists in AD and `$force_replace_host isn't set to true"
