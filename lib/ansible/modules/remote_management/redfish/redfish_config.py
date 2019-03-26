@@ -62,6 +62,12 @@ options:
     description:
       - value of Manager attribute to update
     default: 'null'
+  timeout:
+    description:
+      - Timeout in seconds for URL requests to OOB controller
+    default: 10
+    type: int
+    version_added: "2.7.11"
 
 author: "Jose Delarosa (github: jose-delarosa)"
 '''
@@ -97,7 +103,7 @@ EXAMPLES = '''
       user: "{{ user }}"
       password: "{{ password }}"
 
-  - name: Set BIOS default settings
+  - name: Set BIOS default settings with a timeout of 20 seconds
     redfish_config:
       category: Systems
       command: SetBiosDefaultSettings
@@ -134,6 +140,7 @@ EXAMPLES = '''
       baseuri: "{{ baseuri }}"
       user: "{{ user}}"
       password: "{{ password }}"
+      timeout: 20
 '''
 
 RETURN = '''
@@ -169,6 +176,7 @@ def main():
             mgr_attr_value=dict(default='null'),
             bios_attr_name=dict(default='null'),
             bios_attr_value=dict(default='null'),
+            timeout=dict(type='int', default=10)
         ),
         supports_check_mode=False
     )
@@ -183,6 +191,10 @@ def main():
     # Manager attributes to update
     mgr_attributes = {'mgr_attr_name': module.params['mgr_attr_name'],
                       'mgr_attr_value': module.params['mgr_attr_value']}
+
+    # timeout
+    timeout = module.params['timeout']
+
     # BIOS attributes to update
     bios_attributes = {'bios_attr_name': module.params['bios_attr_name'],
                        'bios_attr_value': module.params['bios_attr_value']}
@@ -190,7 +202,7 @@ def main():
     # Build root URI
     root_uri = "https://" + module.params['baseuri']
     rf_uri = "/redfish/v1/"
-    rf_utils = RedfishUtils(creds, root_uri)
+    rf_utils = RedfishUtils(creds, root_uri, timeout)
 
     # Check that Category is valid
     if category not in CATEGORY_COMMANDS_ALL:
