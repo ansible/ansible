@@ -73,6 +73,7 @@ class AnsibleCollectionLoader(object):
         if isinstance(b_playbook_paths, string_types):
             b_playbook_paths = [b_playbook_paths]
 
+        # track visited paths; we have to preserve the dir order as-passed in case there are duplicate collections (first one wins)
         added_paths = set()
 
         # de-dupe and ensure the paths are native strings (Python seems to do this for package paths etc, so assume it's safe)
