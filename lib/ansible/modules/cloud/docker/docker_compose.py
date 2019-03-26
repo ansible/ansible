@@ -718,20 +718,12 @@ class ContainerManager(DockerBaseClass):
             result['actions'] += build_output['actions']
 
         if self.remove_orphans:
-            # containers = list(filter(None, [
-            #     Container.from_ps(self.project.client, container)
-            #     for container in self.project.client.containers(
-            #         all=False,
-            #         filters={'label': ['{0}={1}'.format(LABEL_PROJECT, self.project.name), '{0}={1}'.format(LABEL_ONE_OFF, "False")]})])
-            # )
-
             containers = self.client.containers(
                 filters={'label': ['{0}={1}'.format(LABEL_PROJECT, self.project.name), '{0}={1}'.format(LABEL_ONE_OFF, "False")]}
             )
 
             def _findOrphans():
                 for container in containers:
-                    # service_name = ctnr.labels.get(LABEL_SERVICE)
                     service_name = container.get('Labels', {}).get(LABEL_SERVICE)
                     if service_name not in self.project.service_names:
                         yield container
