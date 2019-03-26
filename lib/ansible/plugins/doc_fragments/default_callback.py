@@ -15,6 +15,11 @@ class ModuleDocFragment(object):
         default: yes
         env:
           - name: DISPLAY_SKIPPED_HOSTS
+            deprecated:
+              why: environment variables without "ANSIBLE_" prefix are deprecated
+              version: "2.12"
+              alternatives: the "ANSIBLE_DISPLAY_SKIPPED_HOSTS" environment variable
+          - name: ANSIBLE_DISPLAY_SKIPPED_HOSTS
         ini:
           - key: display_skipped_hosts
             section: defaults
