@@ -307,15 +307,10 @@ def main():
         ['action', 'parse', ['src']],
     ]
 
-    required_together = [
-        ['privatekey_path', 'friendly_name'],
-    ]
-
     module = AnsibleModule(
         add_file_common_args=True,
         argument_spec=argument_spec,
         required_if=required_if,
-        required_together=required_together,
         supports_check_mode=True,
     )
 

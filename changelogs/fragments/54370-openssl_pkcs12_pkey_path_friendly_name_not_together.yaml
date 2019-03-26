@@ -1,0 +1,2 @@
+bugfixes:
+- "openssl_pkcs12 - No need to specify ``privatekey_path`` when ``friendly_name`` is specified."
