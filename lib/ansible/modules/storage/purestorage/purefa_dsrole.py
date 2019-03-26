@@ -20,11 +20,12 @@ description:
 - Set or erase directory services role configurations.
 - Only available for FlashArray running Purity 5.2.0 or higher
 author:
-- Simon Dodsley (@sdodsley)
+- Pure Storage Ansible Team (@sdodsley) <pure-ansible-team@purestorage.com>
 options:
   state:
     description:
     - Create or delete directory service role
+    type: str
     default: present
     choices: [ absent, present ]
   role:
@@ -32,6 +33,7 @@ options:
     - The directory service role to work on
     choices: [ array_admin, ops_admin, readonly, storage_admin ]
   group_base:
+    type: str
     description:
     - Specifies where the configured group is located in the directory
       tree. This field consists of Organizational Units (OUs) that combine
@@ -42,6 +44,7 @@ options:
       to right.
     - Each OU should not exceed 64 characters in length.
   group:
+    type: str
     description:
     - Sets the common Name (CN) of the configured directory service group
       containing users for the FlashBlade. This name should be just the
