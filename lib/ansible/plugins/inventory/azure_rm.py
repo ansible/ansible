@@ -74,6 +74,15 @@ DOCUMENTATION = r'''
           type: bool
           default: False
           version_added: '2.8'
+        plain_host_names:
+          description:
+            - By default this plugin will use globally unique host names.
+              This option allows you to override that, and use the name that matches the old inventory script naming.
+            - This is not the default, as these names are not truly unique, and can conflict with other hosts.
+              The default behavior will add extra hashing to the end of the hostname to prevent such conflicts.
+          type: bool
+          default: False
+          version_added: '2.8'
 '''
 
 EXAMPLES = '''
@@ -247,6 +256,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
         self._batch_fetch = self.get_option('batch_fetch')
 
+        self._legacy_hostnames = self.get_option('plain_host_names')
+
         self._filters = self.get_option('exclude_host_filters') + self.get_option('default_host_filters')
 
         try:
@@ -373,7 +384,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         if 'value' in response:
             for h in response['value']:
                 # FUTURE: add direct VM filtering by tag here (performance optimization)?
-                self._hosts.append(AzureHost(h, self, vmss=vmss))
+                self._hosts.append(AzureHost(h, self, vmss=vmss, legacy_name=self._legacy_hostnames))
 
     def _on_vmss_page_response(self, response):
         next_link = response.get('nextLink')
@@ -479,7 +490,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 class AzureHost(object):
     _powerstate_regex = re.compile('^PowerState/(?P<powerstate>.+)$')
 
-    def __init__(self, vm_model, inventory_client, vmss=None):
+    def __init__(self, vm_model, inventory_client, vmss=None, legacy_name=False):
         self._inventory_client = inventory_client
         self._vm_model = vm_model
         self._vmss = vmss
@@ -489,8 +500,11 @@ class AzureHost(object):
         self._powerstate = "unknown"
         self.nics = []
 
-        # Azure often doesn't provide a globally-unique filename, so use resource name + a chunk of ID hash
-        self.default_inventory_hostname = '{0}_{1}'.format(vm_model['name'], hashlib.sha1(to_bytes(vm_model['id'])).hexdigest()[0:4])
+        if legacy_name:
+            self.default_inventory_hostname = vm_model['name']
+        else:
+            # Azure often doesn't provide a globally-unique filename, so use resource name + a chunk of ID hash
+            self.default_inventory_hostname = '{0}_{1}'.format(vm_model['name'], hashlib.sha1(to_bytes(vm_model['id'])).hexdigest()[0:4])
 
         self._hostvars = {}
 
