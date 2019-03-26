@@ -940,7 +940,7 @@ class RedfishUtils(object):
                                inventory['entries']))
         return dict(ret=ret, entries=entries)
 
-    def get_psu_inventory(self, systems_uri):
+    def get_psu_inventory(self):
         result = {}
         psu_list = []
         psu_results = []
