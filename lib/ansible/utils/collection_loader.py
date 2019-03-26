@@ -248,9 +248,7 @@ class AnsibleFlatMapLoader(object):
         found_file = self.find_file(filename)
 
         with open(found_file, 'rb') as fd:
-            data = fd.read()
-
-        return data
+            return fd.read()
 
 
 # TODO: implement these for easier inline debugging?
