@@ -17,7 +17,7 @@ from ansible.modules.storage.netapp.na_ontap_nvme \
     import NetAppONTAPNVMe as my_module
 
 if not netapp_utils.has_netapp_lib():
-    pytestmark = pytest.skip('skipping as missing required netapp_lib')
+    pytestmark = pytest.mark.skip('skipping as missing required netapp_lib')
 
 
 def set_module_args(args):
