@@ -356,7 +356,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
         update_cache = False
         if cache:
             try:
-                source_data = self.cache.get(cache_key)
+                source_data = self._cache[cache_key]
             except KeyError:
                 update_cache = True
 
@@ -364,7 +364,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
         cacheable_results = self._populate_from_source(source_data, using_current_cache)
 
         if update_cache:
-            self.cache.set(cache_key, cacheable_results)
+            self._cache[cache_key] = cacheable_results
 
     def _populate_from_cache(self, source_data):
         """ Populate cache using source data """

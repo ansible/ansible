@@ -370,7 +370,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         cache_needs_update = False
         if cache:
             try:
-                results = self.cache.get(cache_key)
+                results = self._cache[cache_key]
                 for project in results:
                     for zone in results[project]:
                         self._add_hosts(results[project][zone], config_data, False)
@@ -392,7 +392,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                     cached_data[project][zone] = resp.get('items')
 
         if cache_needs_update:
-            self.cache.set(cache_key, cached_data)
+            self._cache[cache_key] = cached_data
 
     @staticmethod
     def _legacy_script_compatible_group_sanitization(name):
