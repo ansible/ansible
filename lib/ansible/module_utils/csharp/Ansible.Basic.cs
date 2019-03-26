@@ -777,6 +777,8 @@ namespace Ansible.Basic
                                                        k, choiceMsg, String.Join(", ", choices), String.Join(", ", diffList));
                             FailJson(FormatOptionsContext(msg));
                         }
+                        /*
+                        For now we will just silently accept case insensitive choices, uncomment this if we want to add it back in
                         else if (caseDiffList.Count > 0)
                         {
                             // For backwards compatibility with Legacy.psm1 we need to be matching choices that are not case sensitive.
@@ -786,7 +788,7 @@ namespace Ansible.Basic
                                 k, choiceMsg, String.Join(", ", choices), String.Join(", ", caseDiffList.Select(x => RemoveNoLogValues(x, noLogValues)))
                             );
                             Warn(FormatOptionsContext(msg));
-                        }
+                        }*/
                     }
                 }
             }
@@ -861,6 +863,8 @@ namespace Ansible.Basic
                 FailJson(msg);
             }
 
+            /*
+            // Uncomment when we want to start warning users around options that are not a case sensitive match to the spec
             if (caseUnsupportedParameters.Count > 0)
             {
                 legalInputs.RemoveAll(x => passVars.Keys.Contains(x.Replace("_ansible_", "")));
@@ -868,7 +872,7 @@ namespace Ansible.Basic
                 msg = String.Format("{0}. Module options will become case sensitive in a future Ansible release. Supported parameters include: {1}",
                     FormatOptionsContext(msg), String.Join(", ", legalInputs));
                 Warn(msg);
-            }
+            }*/
 
             // Make sure we convert all the incorrect case params to the ones set by the module spec
             foreach (string key in caseUnsupportedParameters)
