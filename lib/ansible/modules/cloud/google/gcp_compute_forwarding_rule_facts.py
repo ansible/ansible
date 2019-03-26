@@ -202,6 +202,13 @@ items:
       - This field is not used for internal load balancing.
       returned: success
       type: str
+    allPorts:
+      description:
+      - When the load balancing scheme is INTERNAL and protocol is TCP/UDP, omit `port`/`port_range`
+        and specify this field as `true` to allow packets addressed to any ports to
+        be forwarded to the backends configured with this forwarding rule.
+      returned: success
+      type: bool
     networkTier:
       description:
       - 'The networking tier used for configuring this address. This field can take
