@@ -244,6 +244,7 @@ class Connection(ConnectionBase):
             self.module_implementation_preferences = ('.ps1', '.exe', '')
             self.protocol = None
             self.shell_id = None
+            self._shell_type = 'powershell'
 
     def _connect(self):
         ''' connect to the host via ssm '''
