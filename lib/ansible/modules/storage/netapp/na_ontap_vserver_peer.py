@@ -224,6 +224,12 @@ class NetAppONTAPVserverPeer(object):
                                       % (self.parameters['vserver'], to_native(error)),
                                   exception=traceback.format_exc())
 
+    def is_remote_peer(self):
+        if self.parameters.get('dest_hostname') is None or \
+                (self.parameters['dest_hostname'] == self.parameters['hostname']):
+            return False
+        return True
+
     def vserver_peer_accept(self):
         """
         Accept a vserver peer at destination
@@ -234,9 +240,7 @@ class NetAppONTAPVserverPeer(object):
             'vserver-peer-accept', **{'peer-vserver': self.parameters['vserver'],
                                       'vserver': self.parameters['peer_vserver']})
         try:
-            # accept only if the peer relationship is on a remote cluster
-            if self.parameters.get('dest_hostname') is not None:
-                self.dest_server.invoke_successfully(vserver_peer_accept, enable_tunneling=True)
+            self.dest_server.invoke_successfully(vserver_peer_accept, enable_tunneling=True)
         except netapp_utils.zapi.NaApiError as error:
             self.module.fail_json(msg='Error accepting vserver peer %s: %s'
                                       % (self.parameters['peer_vserver'], to_native(error)),
@@ -253,7 +257,9 @@ class NetAppONTAPVserverPeer(object):
         cd_action = self.na_helper.get_cd_action(current, self.parameters)
         if cd_action == 'create':
             self.vserver_peer_create()
-            self.vserver_peer_accept()
+            # accept only if the peer relationship is on a remote cluster
+            if self.is_remote_peer():
+                self.vserver_peer_accept()
         elif cd_action == 'delete':
             self.vserver_peer_delete()
 
