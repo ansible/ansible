@@ -96,7 +96,7 @@ options:
       - If the first match is required, use C(firstmatch=yes).
       - A value is available; C(BOF) for inserting the line at the beginning of the file.
       - If specified regular expression has no matches, the line will be inserted at the end of the file.
-      - Cannot set with C(insertafter).      
+      - Cannot set with C(insertafter).
       - If regular expressions are passed to both C(regexp) and C(insertbefore), C(insertbefore) is only honored if no match for C(regexp) is found.
       - May not be used with C(backrefs).
     type: str
