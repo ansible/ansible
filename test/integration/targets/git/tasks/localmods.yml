@@ -51,7 +51,7 @@
       - git_fetch_force is changed
 
 - name: LOCALMODS | clear checkout_dir
-  file: state=absent path={{ checkout_dir }}
+  file: state=absent path={{ checkout_dir }} recurse=yes
 
 # localmods and shallow clone
 - name: LOCALMODS | prepare old git repo
@@ -109,4 +109,4 @@
       - git_fetch_force is changed
 
 - name: LOCALMODS | clear checkout_dir
-  file: state=absent path={{ checkout_dir }}
+  file: state=absent path={{ checkout_dir }} recurse=yes

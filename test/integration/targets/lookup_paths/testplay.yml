@@ -4,7 +4,7 @@
   gather_facts: false
   pre_tasks:
     - name: remove {{ remove }}
-      file: path={{ playbook_dir }}/{{ remove }} state=absent
+      file: path={{ playbook_dir }}/{{ remove }} state=absent recurse=yes
   roles:
     - showfile
   post_tasks:

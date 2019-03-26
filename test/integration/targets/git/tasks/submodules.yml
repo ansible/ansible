@@ -18,6 +18,7 @@
   file:
     state: absent
     path: "{{ checkout_dir }}"
+    recurse: yes
 
 - name: SUBMODULES | Test that clone without recursive does not retrieve submodules
   git:
@@ -35,6 +36,7 @@
   file:
     state: absent
     path: "{{ checkout_dir }}"
+    recurse: yes
 
 
 - name: SUBMODULES | Test that clone with recursive retrieves submodules
@@ -87,6 +89,7 @@
   file:
     state: absent
     path: "{{ checkout_dir }}"
+    recurse: yes
 - command: 'cp -pr {{ checkout_dir }}.bak {{ checkout_dir }}'
 
 - name: SUBMODULES | Test that update with recursive updated existing submodules

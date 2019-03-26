@@ -2,6 +2,7 @@
   file:
     path: '{{ remote_dir }}/node_modules'
     state: absent
+    recurse: yes
 
 - vars:
     # sample: node-v8.2.0-linux-x64.tar.xz
@@ -51,6 +52,7 @@
       file:
         path: '{{ remote_dir }}/node_modules/{{ package }}'
         state: absent
+        recurse: yes
 
     - name: 'reinstall simple package'
       npm:

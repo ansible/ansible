@@ -14,6 +14,7 @@
   file:
     path: "{{ output_dir }}"
     state: absent
+    recurse: yes
 
 - name: Re-create output directory
   file:

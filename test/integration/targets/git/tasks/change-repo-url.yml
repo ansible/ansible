@@ -5,6 +5,7 @@
   file:
     state: absent
     path: "{{ checkout_dir }}"
+    recurse: yes
 
 - name: CHANGE-REPO-URL | Clone example git repo
   git:
@@ -48,6 +49,7 @@
   file:
     state: absent
     path: "{{ checkout_dir }}"
+    recurse: yes
 
 - name: CHANGE-REPO-URL | clone repo
   git:
@@ -109,6 +111,7 @@
   file:
     state: absent
     path: "{{ checkout_dir }}"
+    recurse: yes
 
 - name: CHANGE-REPO-URL | "Clone example git repo that we're going to modify"
   git:

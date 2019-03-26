@@ -4,6 +4,7 @@
   file:
     path: '{{ remote_dir }}/{{ item.dest.split("/")[0] }}'
     state: absent
+    recurse: yes
 
 - name: Copy file, dest is a nonexistent target directory
   copy:

@@ -33,6 +33,7 @@
       - file:
           name: "{{ repodir }}"
           state: absent
+          recurse: yes
 
   when:
     - ansible_distribution in ('Ubuntu', 'Debian')

@@ -31,6 +31,7 @@
   file:
     path: "{{ pg_dir }}"
     state: absent
+    recurse: yes
   when: ansible_os_family == "FreeBSD"
 
 # Theoretically, pg_dropcluster should work but it doesn't so rm files

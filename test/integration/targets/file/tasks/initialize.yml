@@ -5,6 +5,7 @@
   file:
     dest: '{{ output_dir }}'
     state: 'absent'
+    recurse: true
 
 - name: Recreate the toplevel output dir
   file:

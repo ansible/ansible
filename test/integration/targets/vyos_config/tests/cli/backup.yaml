@@ -12,6 +12,7 @@
   file:
     path: "{{ item.path }}"
     state: absent
+    recurse: yes
   with_items: "{{backup_files.files|default([])}}"
 
 - name: take configure backup
@@ -38,6 +39,7 @@
   file:
     path: "{{ item }}"
     state: absent
+    recurse: yes
   with_items:
     - "{{ role_path }}/backup_test_dir/"
     - "{{ role_path }}/backup/backup.cfg"

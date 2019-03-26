@@ -59,3 +59,4 @@
   file:
     path: "{{ yumroot.stdout }}/"
     state: absent
+    recurse: yes

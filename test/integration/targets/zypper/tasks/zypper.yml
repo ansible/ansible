@@ -183,6 +183,7 @@
   file: 
     name: /var/cache/zypper/RPMS
     state: absent
+    recurse: yes
 
 - name: create directory
   file:

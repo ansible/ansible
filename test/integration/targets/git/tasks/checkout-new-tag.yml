@@ -6,6 +6,7 @@
   file:
     state: absent
     path: "{{ checkout_dir }}"
+    recurse: yes
 
 - name: checkout example repo
   git:
@@ -52,3 +53,4 @@
   file:
     state: absent
     path: "{{ checkout_dir }}"
+    recurse: yes

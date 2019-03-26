@@ -35,9 +35,9 @@
   ### remove local and remote temp files
 
   - name: remove local temp file
-    local_action: file path={{ local_tmp }}-汉语 state=absent
+    local_action: file path={{ local_tmp }}-汉语 state=absent recurse=yes
   - name: remove remote temp file
-    action: "{{ action_prefix }}file path={{ remote_tmp }}-汉语 state=absent"
+    action: "{{ action_prefix }}file path={{ remote_tmp }}-汉语 state=absent recurse=yes"
 
   ### test wait_for_connection plugin
   - wait_for_connection:

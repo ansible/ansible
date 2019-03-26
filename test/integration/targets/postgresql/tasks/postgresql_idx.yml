@@ -21,6 +21,7 @@
   file:
     path: /mnt/ssd
     state: absent
+    recurse: yes
   ignore_errors: yes
 
 - name: postgresql_idx - create dir for test tablespace

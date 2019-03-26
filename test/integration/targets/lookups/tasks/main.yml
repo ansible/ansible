@@ -22,7 +22,7 @@
 # PASSWORD LOOKUP
 
 - name: remove previous password files and directory
-  file: dest={{item}} state=absent
+  file: dest={{item}} state=absent recurse=yes
   with_items:
   - "{{output_dir}}/lookup/password"
   - "{{output_dir}}/lookup/password_with_salt"

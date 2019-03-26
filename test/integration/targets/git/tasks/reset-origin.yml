@@ -2,6 +2,7 @@
   file:
     state: absent
     path: "{{ item }}"
+    recurse: yes
   with_items:
     - "{{ repo_dir }}/origin"
     - "{{ checkout_dir }}"

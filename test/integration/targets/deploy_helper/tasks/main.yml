@@ -46,7 +46,7 @@
     - "'UNFINISHED_DEPLOY' == deploy_helper.unfinished_filename"
 
 # Remove the root folder just in case it exists
-- file: path={{ deploy_helper_test_root }} state=absent
+- file: path={{ deploy_helper_test_root }} state=absent recurse=yes
 
 - name: State=present with default parameters
   deploy_helper: path={{ deploy_helper_test_root }} state=present
@@ -146,4 +146,4 @@
     - "releases_count.stdout|trim == '3'"
 
 # Remove the root folder
-- file: path={{ deploy_helper_test_root }} state=absent
+- file: path={{ deploy_helper_test_root }} state=absent recurse=yes

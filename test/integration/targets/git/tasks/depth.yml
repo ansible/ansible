@@ -4,6 +4,7 @@
   file:
     state: absent
     path: "{{ checkout_dir }}"
+    recurse: yes
 
 - name: DEPTH | Clone example git repo with depth 1
   git:
@@ -68,6 +69,7 @@
   file:
     state: absent
     path: "{{ checkout_dir }}"
+    recurse: yes
 
 # Test for https://github.com/ansible/ansible/issues/21316
 - name: DEPTH | Shallow clone with tag
@@ -85,7 +87,7 @@
   file:
     state: absent
     path: "{{ checkout_dir }}"
-
+    recurse: yes
 
   # Test for https://github.com/ansible/ansible-modules-core/issues/3456
   # clone a repo with depth and version specified
@@ -114,6 +116,7 @@
   file:
     state: absent
     path: "{{ checkout_dir }}"
+    recurse: yes
 
 - name: DEPTH | clone repo with both version and depth specified
   git:
@@ -138,6 +141,7 @@
   file:
     state: absent
     path: "{{ checkout_dir }}"
+    recurse: yes
 
 # test for https://github.com/ansible/ansible-modules-core/issues/3782
 # make sure shallow fetch works when no version is specified
@@ -176,6 +180,7 @@
   file:
     state: absent
     path: "{{ checkout_dir }}"
+    recurse: yes
 
 #
 # Make sure shallow fetch works when switching to (fetching) a new a branch
@@ -227,3 +232,4 @@
   file:
     state: absent
     path: "{{ checkout_dir }}"
+    recurse: yes

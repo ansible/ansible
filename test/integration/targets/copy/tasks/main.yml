@@ -63,6 +63,7 @@
       file:
         path: '{{ local_temp_dir }}'
         state: absent
+        recurse: yes
       connection: local
 
     - name: Remove symbolic link

@@ -46,3 +46,4 @@
   file:
     path: "/{{dnfroot.stdout}}/"
     state: absent
+    recurse: yes

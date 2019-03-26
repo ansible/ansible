@@ -1,0 +1,7 @@
+---
+bugfixes:
+  - file - when previous state=directory and current state=absent
+    the module does not respect recurse=no and will always attempt
+    recursive delete with potential for data loss rather than fail. 
+    Old behavior will require recurse=yes on tasks.
+    (https://github.com/ansible/ansible/issues/52653) 

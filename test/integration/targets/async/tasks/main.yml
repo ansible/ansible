@@ -186,6 +186,7 @@
   file:
     path: '{{ custom_async_tmp }}'
     state: absent
+    recurse: yes
 
 - block:
   - name: run async task with custom dir
@@ -212,6 +213,7 @@
     file:
       path: '{{ custom_async_tmp }}'
       state: absent
+      recurse: yes
 
   - name: run async task with custom dir - deprecated format
     command: sleep 1
@@ -237,6 +239,7 @@
     file:
       path: '{{ custom_async_tmp }}'
       state: absent
+      recurse: yes
 
   - name: run fire and forget async task with custom dir
     command: echo moo
@@ -280,6 +283,7 @@
     file:
       path: '{{ custom_async_tmp }}'
       state: absent
+      recurse: yes
 
 - name: Test that async has stdin
   command: >

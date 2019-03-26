@@ -186,6 +186,7 @@
   file:
     dest: '{{output_dir}}/sub1'
     state: 'absent'
+    recurse: true
 
 - name: Re-create the test sub-directory
   file:
@@ -339,3 +340,44 @@
       - 'file10_result is not changed'
       - 'file10_dir_stat["stat"].isdir'
       - 'file10_dir_stat["stat"]["mtime"] == file9_initial_dir_stat["stat"]["mtime"]'
+
+#
+# previous state=directory state=absent with recurse=no and recurse=yes to make sure
+# we only run a tree delete when recurse=yes
+#
+
+- name: Clear out test directory
+  file:
+    path: '{{ output_dir }}'
+    state: absent
+    recurse: yes
+
+- name: create directory with
+  file: 
+    path: '{{ output_dir }}'
+    state: directory
+
+- name: create one file in directory
+  file:
+    path: '{{ output_dir }}/data'
+    state: touch
+
+- name: Delete directory with files and recurse=no, should fail
+  file:
+    path: '{{ output_dir }}'
+    state: absent
+    recurse: no
+  ignore_errors: yes
+  register: osrmdir
+
+- name: verify failure of deletion when directory=absent when files present and recurse=no
+  assert:
+    that: 'osrmdir is failed'
+
+- name: Delete directory with files and recurse=yes, should succeed
+  file:
+    path: '{{ output_dir }}'
+    state: absent
+    recurse: yes
+
+  

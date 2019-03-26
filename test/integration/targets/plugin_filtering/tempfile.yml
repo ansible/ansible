@@ -7,3 +7,4 @@
   - file:
       state: absent
       path: '{{ temp_result["path"] }}'
+      recurse: yes

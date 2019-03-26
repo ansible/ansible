@@ -2,6 +2,7 @@
   file:
     path: "{{ remote_tmp_dir }}"
     state: absent
+    recurse: yes
 
 - name: delete temporary directory (windows)
   win_file:

@@ -3,6 +3,7 @@
   file:
     path: '{{ subversion_test_dir }}'
     state: '{{ item }}'
+    recurse: yes
   loop:
   - absent
   - directory
@@ -25,3 +26,4 @@
     file:
       path: '{{ subversion_server_dir }}'
       state: absent
+      recurse: yes
