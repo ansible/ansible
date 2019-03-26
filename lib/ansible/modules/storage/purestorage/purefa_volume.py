@@ -19,20 +19,23 @@ short_description:  Manage volumes on Pure Storage FlashArrays
 description:
 - Create, delete or extend the capacity of a volume on Pure Storage FlashArray.
 author:
-- Simon Dodsley (@sdodsley)
+- Pure Storage Ansible Team (@sdodsley) <pure-ansible-team@purestorage.com>
 options:
   name:
     description:
     - The name of the volume.
+    type: str
     required: true
   target:
     description:
     - The name of the target volume, if copying.
+    type: str
   state:
     description:
     - Define whether the volume should exist or not.
     default: present
     choices: [ absent, present ]
+    type: str
   eradicate:
     description:
     - Define whether to eradicate the volume on delete or leave in trash.
@@ -46,6 +49,7 @@ options:
   size:
     description:
     - Volume size in M, G, T or P units.
+    type: str
   qos:
     description:
     - Bandwidth limit for volume in M or G units.
@@ -53,6 +57,7 @@ options:
       G will set GB/s
       To clear an existing Qos setting using 0 (zero)
     version_added: '2.8'
+    type: str
 extends_documentation_fragment:
 - purestorage.fa
 '''

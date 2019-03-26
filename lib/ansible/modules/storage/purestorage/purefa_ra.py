@@ -19,13 +19,14 @@ short_description: Enable or Disable Pure Storage FlashArray Remote Assist
 description:
 - Enablke or Disable Remote Assist for a Pure Storage FlashArray.
 author:
-- Simon Dodsley (@sdodsley)
+- Pure Storage Ansible Team (@sdodsley) <pure-ansible-team@purestorage.com>
 options:
   state:
     description:
     - Define state of remote assist
     - When set to I(enable) the RA port can be exposed using the
       I(debug) module.
+    type: str
     default: enable
     choices: [ enable, disable ]
 extends_documentation_fragment:

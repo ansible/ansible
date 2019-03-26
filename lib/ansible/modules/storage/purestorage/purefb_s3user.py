@@ -19,19 +19,22 @@ short_description: Create or delete FlashBlade Object Store account users
 description:
 - Create or delete object store account users on a Pure Stoage FlashBlade.
 author:
-- Simon Dodsley (@sdodsley)
+- Pure Storage Ansible Team (@sdodsley) <pure-ansible-team@purestorage.com>
 options:
   state:
     description:
     - Create or delete object store account user
     default: present
     choices: [ absent, present ]
+    type: str
   name:
     description:
     - The name of object store user
+    type: str
   account:
     description:
     - The name of object store account associated with user
+    type: str
   access_key:
     description:
     - Create secret access key.
