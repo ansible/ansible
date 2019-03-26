@@ -157,12 +157,15 @@ class AnsibleCollectionLoader(object):
             else:
                 for source_path in [os.path.join(candidate_child_path, '__init__.py'),
                                     candidate_child_path + '.py']:
-                    if os.path.isfile(source_path):
-                        with open(source_path, 'rb') as fd:
-                            source = fd.read()
-                        location = source_path
-                        is_package = source_path.endswith('__init__.py')
-                        break
+                    if not os.path.isfile(source_path):
+                        continue
+
+                    with open(source_path, 'rb') as fd:
+                        source = fd.read()
+                    location = source_path
+                    is_package = source_path.endswith('__init__.py')
+                    break
+
                 if not location:
                     continue
 
