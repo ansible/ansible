@@ -44,6 +44,7 @@ DOCUMENTATION = '''
                 - If True, it adds dcim interface information in host vars.
             default: False
             type: boolean
+            version_added: "2.8"
         token:
             required: True
             description: NetBox token.
