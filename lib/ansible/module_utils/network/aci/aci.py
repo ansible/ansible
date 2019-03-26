@@ -230,21 +230,33 @@ class ACIModule(object):
         if self.params['certificate_name'] is None:
             self.params['certificate_name'] = os.path.basename(os.path.splitext(self.params['private_key'])[0])
 
-        # Checks to verify if the private_key was entered as a string instead of a file. This allows the use of vaulting the private key.
-        str_private_key = self.params['private_key'].startswith('-----BEGIN PRIVATE KEY-----')
-
-        if str_private_key is True:
+        # Checks to verify if the private_key was entered as a string instead of a file.
+        # This allows the use of vaulting the private key.
+        if self.params['private_key'].startswith('-----BEGIN PRIVATE KEY-----'):
             try:
                 sig_key = load_privatekey(FILETYPE_PEM, self.params['private_key'])
             except Exception:
-                self.module.fail_json(msg='Cannot load private key %s' % self.params['private_key'])
+                self.module.fail_json(msg="Cannot load provided 'private_key' parameter.")
+        elif self.params['private_key'].startswith('-----BEGIN CERTIFICATE-----'):
+            self.module.fail_json(msg="Provided 'private_key' parameter value appears to be a certificate. Please correct.")
         else:
+            # NOTE: Avoid exposing any other credential as a filename in output...
+            if not os.path.exists(self.params['private_key']):
+                self.module.fail_json(msg="The provided private key file does not appear to exist. Is it a filename?")
             try:
-                with open(self.params['private_key'], 'r') as priv_key_fh:
-                    private_key_content = priv_key_fh.read()
-                sig_key = load_privatekey(FILETYPE_PEM, private_key_content)
+                with open(self.params['private_key'], 'r') as fh:
+                    private_key = fh.read()
             except Exception:
-                self.module.fail_json(msg='Cannot load private key %s' % self.params['private_key'])
+                self.module.fail_json(msg="Cannot open private key file '%s'." % self.params['private_key'])
+            if private_key.startswith('-----BEGIN PRIVATE KEY-----'):
+                try:
+                    sig_key = load_privatekey(FILETYPE_PEM, private_key)
+                except Exception:
+                    self.module.fail_json(msg="Cannot load private key file '%s'." % self.params['private_key'])
+            elif private_key.startswith('-----BEGIN CERTIFICATE-----'):
+                self.module.fail_json(msg="Provided private key file %s appears to be a certificate. Please correct." % self.params['private_key'])
+            else:
+                self.module.fail_json(msg="Provided private key file '%s' does not appear to be a private key. Please correct." % self.params['private_key'])
 
         # NOTE: ACI documentation incorrectly adds a space between method and path
         sig_request = method + path + payload
