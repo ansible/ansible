@@ -1,0 +1,2 @@
+bugfixes:
+  - replace - fix behavior when ``before`` and ``after`` are used together (https://github.com/ansible/ansible/issues/31354)
