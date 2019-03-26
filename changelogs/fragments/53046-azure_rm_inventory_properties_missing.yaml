@@ -1,0 +1,2 @@
+bugfixes:
+- azure_rm inventory plugin - fix missing hostvars properties (https://github.com/ansible/ansible/pull/53046)
