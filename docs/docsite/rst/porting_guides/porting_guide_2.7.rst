@@ -224,6 +224,8 @@ Noteworthy module changes
 * The ``pip`` module has added a dependency on ``setuptools`` to support version requirements, this requirement is for
   the Python interpreter that executes the module and not the Python interpreter that the module is managing.
 
+* Prior to Ansible 2.7.10, the ``replace`` module did the opposite of what was intended when using the ``before`` and ``after`` options together. This now works properly but may require changes to tasks.
+
 
 Plugins
 =======

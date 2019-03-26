@@ -57,21 +57,24 @@ options:
       - The string to replace regexp matches.
       - May contain backreferences that will get expanded with the regexp capture groups if the regexp matches.
       - If not set, matches are removed entirely.
+      - Backreferences can be used ambiguously like C(\1), or explicitly like C(\g<1>).
     type: str
   after:
     description:
-      - If specified, the line after the replace/remove will start.
+      - If specified, only content after this match will be replaced/removed.
       - Can be used in combination with C(before).
       - Uses Python regular expressions; see
         U(http://docs.python.org/2/library/re.html).
+      - Uses DOTALL, which means the C(.) special character I(can match newlines).
     type: str
     version_added: "2.4"
   before:
     description:
-      - If specified, the line before the replace/remove will occur.
+      - If specified, only content before this match will be replaced/removed.
       - Can be used in combination with C(after).
       - Uses Python regular expressions; see
         U(http://docs.python.org/2/library/re.html).
+      - Uses DOTALL, which means the C(.) special character I(can match newlines).
     type: str
     version_added: "2.4"
   backup:
@@ -92,63 +95,78 @@ options:
     version_added: "2.4"
 notes:
   - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
+  - As of Ansible 2.7.10, the combined use of I(before) and I(after) works properly. If you were relying on the
+    previous incorrect behavior, you may be need to adjust your tasks.
+    See U(https://github.com/ansible/ansible/issues/31354) for details.
   - Option I(follow) has been removed in Ansible 2.5, because this module modifies the contents of the file so I(follow=no) doesn't make sense.
 '''
 
 EXAMPLES = r'''
-# Before Ansible 2.3, option 'dest', 'destfile' or 'name' was used instead of 'path'
-- replace:
+- name: Before Ansible 2.3, option 'dest', 'destfile' or 'name' was used instead of 'path'
+  replace:
     path: /etc/hosts
     regexp: '(\s+)old\.host\.name(\s+.*)?$'
     replace: '\1new.host.name\2'
-    backup: yes
 
 - name: Replace after the expression till the end of the file (requires Ansible >= 2.4)
   replace:
-    path: /etc/hosts
-    regexp: '(\s+)old\.host\.name(\s+.*)?$'
-    replace: '\1new.host.name\2'
-    after: Start after line.*
-    backup: yes
+    path: /etc/apache2/sites-available/default.conf
+    after: 'NameVirtualHost [*]'
+    regexp: '^(.+)$'
+    replace: '# \1'
 
 - name: Replace before the expression till the begin of the file (requires Ansible >= 2.4)
   replace:
-    path: /etc/hosts
-    regexp: '(\s+)old\.host\.name(\s+.*)?$'
-    replace: '\1new.host.name\2'
-    before: 'Start before line.*'
-    backup: yes
+    path: /etc/apache2/sites-available/default.conf
+    before: '# live site config'
+    regexp: '^(.+)$'
+    replace: '# \1'
 
+# Prior to Ansible 2.7.10, using before and after in combination did the opposite of what was intended.
+# see https://github.com/ansible/ansible/issues/31354 for details.
 - name: Replace between the expressions (requires Ansible >= 2.4)
   replace:
     path: /etc/hosts
-    regexp: '(\s+)old\.host\.name(\s+.*)?$'
-    replace: '\1new.host.name\2'
-    after: 'Start after line.*'
-    before: 'Start before line.*'
-    backup: yes
+    after: '<VirtualHost [*]>'
+    before: '</VirtualHost>'
+    regexp: '^(.+)$'
+    replace: '# \1'
 
-- replace:
+- name: Supports common file attributes
+  replace:
     path: /home/jdoe/.ssh/known_hosts
     regexp: '^old\.host\.name[^\n]*\n'
     owner: jdoe
     group: jdoe
     mode: '0644'
 
-- replace:
+- name: Supports a validate command
+  replace:
     path: /etc/apache/ports
     regexp: '^(NameVirtualHost|Listen)\s+80\s*$'
     replace: '\1 127.0.0.1:8080'
     validate: '/usr/sbin/apache2ctl -f %s -t'
 
 - name: Short form task (in ansible 2+) necessitates backslash-escaped sequences
-  replace: dest=/etc/hosts regexp='\\b(localhost)(\\d*)\\b' replace='\\1\\2.localdomain\\2 \\1\\2'
+  replace: path=/etc/hosts regexp='\\b(localhost)(\\d*)\\b' replace='\\1\\2.localdomain\\2 \\1\\2'
 
 - name: Long form task does not
   replace:
-    dest: /etc/hosts
+    path: /etc/hosts
     regexp: '\b(localhost)(\d*)\b'
     replace: '\1\2.localdomain\2 \1\2'
+
+- name: Explicitly specifying positional matched groups in replacement
+  replace:
+    path: /etc/ssh/sshd_config
+    regexp: '^(ListenAddress[ ]+)[^\n]+$'
+    replace: '\g<1>0.0.0.0'
+
+- name: Explicitly specifying named matched groups
+  replace:
+    path: /etc/ssh/sshd_config
+    regexp: '^(?P<dctv>ListenAddress[ ]+)(?P<host>[^\n]+)$'
+    replace: '#\g<dctv>\g<host>\n\g<dctv>0.0.0.0'
 '''
 
 import os
@@ -231,7 +249,7 @@ def main():
 
     pattern = u''
     if params['after'] and params['before']:
-        pattern = u'%s(?P<subsection>.*?)%s' % (params['before'], params['after'])
+        pattern = u'%s(?P<subsection>.*?)%s' % (params['after'], params['before'])
     elif params['after']:
         pattern = u'%s(?P<subsection>.*)' % params['after']
     elif params['before']:
@@ -242,6 +260,7 @@ def main():
         match = re.search(section_re, contents)
         if match:
             section = match.group('subsection')
+            indices = [match.start('subsection'), match.end('subsection')]
         else:
             res_args['msg'] = 'Pattern for before/after params did not match the given file: %s' % pattern
             res_args['changed'] = False
@@ -254,7 +273,7 @@ def main():
 
     if result[1] > 0 and section != result[0]:
         if pattern:
-            result = (contents.replace(section, result[0]), result[1])
+            result = (contents[:indices[0]] + result[0] + contents[indices[1]:], result[1])
         msg = '%s replacements made' % result[1]
         changed = True
         if module._diff:
