@@ -4,6 +4,22 @@
 # Copyright (c) 2016 Red Hat, Inc.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from ansible.module_utils.ovirt import (
+    BaseModule,
+    check_sdk,
+    convert_to_bytes,
+    create_connection,
+    equal,
+    get_dict_of_struct,
+    get_link_name,
+    get_id_by_name,
+    ovirt_full_argument_spec,
+    search_by_attributes,
+    search_by_name,
+)
+from ansible.module_utils.basic import AnsibleModule
+import traceback
+import time
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -52,79 +68,47 @@ RETURN = '''
 
 '''
 
-import time
-import traceback
 
 try:
     import ovirtsdk4.types as otypes
 except ImportError:
     pass
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ovirt import (
-    BaseModule,
-    check_sdk,
-    convert_to_bytes,
-    create_connection,
-    equal,
-    get_dict_of_struct,
-    get_link_name,
-    get_id_by_name,
-    ovirt_full_argument_spec,
-    search_by_attributes,
-    search_by_name,
-)
-
 
 class RoleModule(BaseModule):
     def build_entity(self):
+        all_permits = self._connection.system_service(
+        ).cluster_levels_service().level_service('4.3').get().permits
         return otypes.Role(
             id=self.param('id'),
             name=self.param('name'),
             mutable=self.param('mutable') if self.param('mutable') else None,
-            administrative=self.param('administrative') if self.param('administrative') else None,
-            #user=otypes.User(
-            #    name=self.param('user')
-            #) if self.param('user') else None,
+            administrative=self.param('administrative') if self.param(
+                'administrative') else None,
+            permits=[
+                otypes.Permit(id=self._get_permit_id(new_permit, all_permits))
+                    for new_permit in self.param('permits')
+                ]
         )
 
     def update_check(self, entity):
+        def check_permits():
+            if self.param('permits'):
+                current = [er.name for er in self._service.service(entity.id).permits_service().list()]
+                passed = [pr.get('name') for pr in self.param('permits')]
+                return sorted(current) == sorted(passed)
+            return True
+
         return (
+            check_permits() and
             equal(self.param('mutable'), entity.mutable) and
             equal(self.param('administrative'), entity.administrative)
-            #equal(self.param('user'), entity.user.name)
         )
 
-
-    def post_present(self, entity_id):
-        self.changed = self.__set_permits(entity_id)
-
-
-    def _find_permit_id(self, permit, all_permits):
+    def _get_permit_id(self, permit, all_permits):
         for el in all_permits:
             if el.name == permit.get('name'):
                 return el.id
-
-    def __set_permits(self, entity_id):
-        permits_service = self._service.service(entity_id).permits_service()
-        current_permits = permits_service.list()
-        all_permits = self._connection.system_service().cluster_levels_service().level_service('4.3').get().permits
-        #clear all permits
-        for permit in current_permits:
-            permits_service.permit_service(permit.id).remove()
-        #add new permits 
-        for new_permit in self.param('permits'):
-            permits_service.add(
-                otypes.Permit(
-                    administrative=True,
-                    id=self._find_permit_id(new_permit, all_permits)
-                ) 
-            )
-        #compare 
-        if current_permits == self._service.service(entity_id).permits_service().list():
-            return False
-        return True
-        
 
 def main():
     argument_spec = ovirt_full_argument_spec(
@@ -135,7 +119,7 @@ def main():
         id=dict(default=None),
         name=dict(default=None),
         user=dict(default=None),
-        mutable=dict(default=True,type='bool'),
+        mutable=dict(default=True, type='bool'),
         administrative=dict(default=False, type='bool'),
         permits=dict(type='list', default=[]),
     )
@@ -160,7 +144,7 @@ def main():
         state = module.params['state']
         if state == 'present':
             ret = roles_module.create()
-            roles_module.post_present(ret['id'])
+            # roles_module.post_present(ret['id'])
             ret['changed'] = roles_module.changed
         elif state == 'absent':
             ret = roles_module.remove()
