@@ -22,26 +22,31 @@ description:
   to a volume protection group the module will ignore the invalid types.
 - Protection Groups on Offload targets are supported.
 author:
-- Simon Dodsley (@sdodsley)
+- Pure Storage Ansible Team (@sdodsley) <pure-ansible-team@purestorage.com>
 options:
   pgroup:
     description:
     - The name of the protection group.
+    type: str
     required: true
   state:
     description:
     - Define whether the protection group should exist or not.
+    type: str
     default: present
     choices: [ absent, present ]
   volume:
     description:
     - List of existing volumes to add to protection group.
+    type: list
   host:
     description:
     - List of existing hosts to add to protection group.
+    type: list
   hostgroup:
     description:
     - List of existing hostgroups to add to protection group.
+    type: list
   eradicate:
     description:
     - Define whether to eradicate the protection group on delete and leave in trash.
@@ -60,6 +65,7 @@ options:
     - Target arrays or offload targets must already be connected to the source array.
     - Maximum number of targets per Portection Group is 4, assuming your
       configuration suppors this.
+    type: list
     version_added: '2.8'
 extends_documentation_fragment:
 - purestorage.fa

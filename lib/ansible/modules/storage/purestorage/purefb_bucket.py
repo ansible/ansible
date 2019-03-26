@@ -20,21 +20,24 @@ version_added: "2.8"
 short_description:  Manage Object Store Buckets on a  Pure Storage FlashBlade.
 description:
     - This module managess object store (s3) buckets on Pure Storage FlashBlade.
-author: Simon Dodsley (@sdodsley)
+author: Pure Storage Ansible Team (@sdodsley) <pure-ansible-team@purestorage.com>
 options:
   name:
     description:
       - Bucket Name.
     required: true
+    type: str
   account:
     description:
       - Object Store Account for Bucket.
     required: true
+    type: str
   state:
     description:
       - Create, delete or modifies a bucket.
     required: false
     default: present
+    type: str
     choices: [ "present", "absent" ]
   eradicate:
     description:
