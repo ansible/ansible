@@ -190,8 +190,9 @@ class IntersightModule():
         except Exception as e:
             self.module.fail_json(msg="API error: %s " % str(e))
 
-        if response.length > 0:
-            return json.loads(response.read())
+        response_data = response.read()
+        if len(response_data) > 0:
+            return json.loads(response_data)
         return {}
 
     def intersight_call(self, http_method="", resource_path="", query_params=None, body=None, moid=None, name=None):
