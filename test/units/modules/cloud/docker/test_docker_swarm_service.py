@@ -226,7 +226,7 @@ def test_has_list_of_dicts_changed(docker_swarm_service):
             {"src": 1, "dst": 2, "protocol": "udp"},
         ],
         [
-            {"src": 1, "dst": 2,  "protocol": "tcp"},
+            {"src": 1, "dst": 2, "protocol": "tcp"},
             {"src": 1, "dst": 2, "protocol": "udp"},
         ]
     )
@@ -237,7 +237,7 @@ def test_has_list_of_dicts_changed(docker_swarm_service):
         ],
         [
             {"src": 1, "dst": 2, "protocol": "udp"},
-            {"src": 1, "dst": 3,  "protocol": "tcp"},
+            {"src": 1, "dst": 3, "protocol": "tcp"},
         ]
     )
     assert docker_swarm_service.has_list_of_dicts_changed(
@@ -269,6 +269,6 @@ def test_has_list_of_dicts_changed(docker_swarm_service):
         ],
         [
             {"src": 1, "dst": 2, "protocol": "udp"},
-            {"src": 1, "dst": 2,  "protocol": "tcp"},
+            {"src": 1, "dst": 2, "protocol": "tcp"},
         ]
     )
