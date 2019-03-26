@@ -16,6 +16,7 @@ DOCUMENTATION = '''
 author:
     - Jeroen Hoekx (@jhoekx)
     - Alexander Bulimov (@abulimov)
+    - Raoul Baudach (@unkaputtbar112)
 module: lvol
 short_description: Configure LVM logical volumes
 description:
@@ -138,6 +139,12 @@ EXAMPLES = '''
     lv: test
     size: +100%FREE
 
+- name: Extend the logical volume by given space
+  lvol:
+    vg: firefly
+    lv: test
+    size: +512M
+
 - name: Extend the logical volume to take all remaining space of the PVs and resize the underlying filesystem
   lvol:
     vg: firefly
@@ -211,14 +218,7 @@ import re
 
 from ansible.module_utils.basic import AnsibleModule
 
-
-LVOL_ENV_VARS = dict(
-    # make sure we use the C locale when running lvol-related commands
-    LANG='C',
-    LC_ALL='C',
-    LC_MESSAGES='C',
-    LC_CTYPE='C',
-)
+decimal_point = re.compile(r"(\d+)")
 
 
 def mkversion(major, minor, patch):
@@ -231,7 +231,7 @@ def parse_lvs(data):
         parts = line.strip().split(';')
         lvs.append({
             'name': parts[0].replace('[', '').replace(']', ''),
-            'size': float(parts[1]),
+            'size': int(decimal_point.match(parts[1]).group(1)),
             'active': (parts[2][4] == 'a'),
             'thinpool': (parts[2][0] == 't'),
             'thinvol': (parts[2][0] == 'V'),
@@ -245,9 +245,9 @@ def parse_vgs(data):
         parts = line.strip().split(';')
         vgs.append({
             'name': parts[0],
-            'size': float(parts[1]),
-            'free': float(parts[2]),
-            'ext_size': float(parts[3])
+            'size': int(decimal_point.match(parts[1]).group(1)),
+            'free': int(decimal_point.match(parts[2]).group(1)),
+            'ext_size': int(decimal_point.match(parts[3]).group(1))
         })
     return vgs
 
@@ -285,8 +285,6 @@ def main():
         ),
     )
 
-    module.run_command_environ_update = LVOL_ENV_VARS
-
     # Determine if the "--yes" option should be used
     version_found = get_lvm_version(module)
     if version_found is None:
@@ -309,6 +307,7 @@ def main():
     thinpool = module.params['thinpool']
     size_opt = 'L'
     size_unit = 'm'
+    size_operator = None
     snapshot = module.params['snapshot']
     pvs = module.params['pvs']
 
@@ -343,14 +342,23 @@ def main():
 
         if '%' not in size:
             # LVCREATE(8) -L --size option unit
-            if size[-1].lower() in 'bskmgtpe':
-                size_unit = size[-1].lower()
+	    if size[-1] in 'BSKMGTPE':
+		size_unit = size[-1].lower()
+		size = size[0:-1]
+		size_divisor = { 'B': 1.000, 'S': 1.000, 'K': 1.024, 'M': 1.048, 'G': 1.047, 'T': 1.099, 'P': 1.126, 'E': 1.153 }.get(size_unit.upper(), '1.000')
+		if '+' in size:
+		    size_operator = '+'
+                    size = str(float(size[1:]) / float(size_divisor))
+		else:
+		    size = str(float(size) / float(size_divisor))
+            elif size[-1] in 'bskmgtpe':
+                size_unit = size[-1]
                 size = size[0:-1]
 
             try:
                 float(size)
-                if not size[0].isdigit():
-                    raise ValueError()
+		if not size[0].isdigit():
+		    raise ValueError()
             except ValueError:
                 module.fail_json(msg="Bad size specification of '%s'" % size)
 
@@ -363,7 +371,7 @@ def main():
     # Get information on volume group requested
     vgs_cmd = module.get_bin_path("vgs", required=True)
     rc, current_vgs, err = module.run_command(
-        "%s --noheadings --nosuffix -o vg_name,size,free,vg_extent_size --units %s --separator ';' %s" % (vgs_cmd, unit, vg))
+        "%s --noheadings -o vg_name,size,free,vg_extent_size --units %s --separator ';' %s" % (vgs_cmd, unit, vg))
 
     if rc != 0:
         if state == 'absent':
@@ -516,10 +524,10 @@ def main():
         else:
             # resize LV based on absolute values
             tool = None
-            if float(size) > this_lv['size']:
+            if int(size) > this_lv['size'] or '+' in size_operator:
                 tool = module.get_bin_path("lvextend", required=True)
-            elif shrink and float(size) < this_lv['size']:
-                if float(size) == 0:
+            elif shrink and int(size) < this_lv['size']:
+                if int(size) == 0:
                     module.fail_json(msg="Sorry, no shrinking of %s to 0 permitted." % (this_lv['name']))
                 if not force:
                     module.fail_json(msg="Sorry, no shrinking of %s without force=yes." % (this_lv['name']))
@@ -530,7 +538,10 @@ def main():
             if tool:
                 if resizefs:
                     tool = '%s %s' % (tool, '--resizefs')
-                cmd = "%s %s -%s %s%s %s/%s %s" % (tool, test_opt, size_opt, size, size_unit, vg, this_lv['name'], pvs)
+		if size_operator:
+		    cmd = "%s %s -%s %s%s%s %s/%s %s" % (tool, test_opt, size_opt, size_operator, size, size_unit, vg, this_lv['name'], pvs)
+		else:
+		    cmd = "%s %s -%s %s%s %s/%s %s" % (tool, test_opt, size_opt, size, size_unit, vg, this_lv['name'], pvs)
                 rc, out, err = module.run_command(cmd)
                 if "Reached maximum COW size" in out:
                     module.fail_json(msg="Unable to resize %s to %s%s" % (lv, size, size_unit), rc=rc, err=err, out=out)
@@ -564,3 +575,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
