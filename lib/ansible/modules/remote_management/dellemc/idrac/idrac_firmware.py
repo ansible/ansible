@@ -21,7 +21,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: dellemc_idrac_firmware
+module: idrac_firmware
 short_description: Firmware update from a repository on a network share (CIFS, NFS).
 version_added: "2.8"
 description:
@@ -86,7 +86,7 @@ author: "Rajeev Arakkal (@rajeevarakkal)"
 EXAMPLES = """
 ---
 - name: Update firmware from repository on a Network Share
-  dellemc_idrac_firmware:
+  idrac_firmware:
        idrac_ip: "192.168.0.1"
        idrac_user: "user_name"
        idrac_pwd: "user_pwd"
