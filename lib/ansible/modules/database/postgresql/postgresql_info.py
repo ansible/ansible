@@ -15,21 +15,21 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = r'''
 ---
-module: postgresql_facts
-short_description: Gather facts about PostgreSQL servers
+module: postgresql_info
+short_description: Gather information about PostgreSQL servers
 description:
-- Gathers facts about PostgreSQL servers.
+- Gathers information about PostgreSQL servers.
 version_added: "2.8"
 options:
   filter:
     description:
-    - Limit collected facts by comma separated string or YAML list.
+    - Limit the collected information by comma separated string or YAML list.
     - Allowable values are C(version),
       C(databases), C(settings), C(tablespaces), C(roles),
       C(replications), C(repl_slots).
     - By default, collects all subsets.
     - You can use shell-style (fnmatch) wildcard to pass groups of values (see Examples).
-    - You can use '!' before value (for example, C(!settings)) to exclude it from facts.
+    - You can use '!' before value (for example, C(!settings)) to exclude it from the information.
     - If you pass including and excluding values to the filter, for example, I(filter=!settings,ver),
       the excluding values will be ignored.
     type: list
@@ -105,45 +105,45 @@ author:
 '''
 
 EXAMPLES = r'''
-# Display facts from postgres hosts.
-# ansible postgres -m postgresql_facts
+# Display info from postgres hosts.
+# ansible postgres -m postgresql_info
 
-# Display only databases and roles facts from all hosts using shell-style wildcards:
-# ansible all -m postgresql_facts -a 'filter=dat*,rol*'
+# Display only databases and roles info from all hosts using shell-style wildcards:
+# ansible all -m postgresql_info -a 'filter=dat*,rol*'
 
-# Display only replications and repl_slots facts from standby hosts using shell-style wildcards:
-# ansible standby -m postgresql_facts -a 'filter=repl*'
+# Display only replications and repl_slots info from standby hosts using shell-style wildcards:
+# ansible standby -m postgresql_info -a 'filter=repl*'
 
-# Display all facts from databases hosts except settings:
-# ansible databases -m postgresql_facts -a 'filter=!settings'
+# Display all info from databases hosts except settings:
+# ansible databases -m postgresql_info -a 'filter=!settings'
 
 - name: Collect PostgreSQL version and extensions
   become: yes
   become_user: postgres
-  postgresql_facts:
+  postgresql_info:
     filter: ver*,ext*
 
-- name: Collect all facts except settings and roles
+- name: Collect all info except settings and roles
   become: yes
   become_user: postgres
-  postgresql_facts:
+  postgresql_info:
     filter: "!settings,!roles"
 
 # On FreeBSD with PostgreSQL 9.5 version and lower use pgsql user to become
 # and pass "postgres" as a database to connect to
-- name: Collect tablespaces and repl_slots facts
+- name: Collect tablespaces and repl_slots info
   become: yes
   become_user: pgsql
-  postgresql_facts:
+  postgresql_info:
     db: postgres
     filter:
     - tablesp*
     - repl_sl*
 
-- name: Collect all facts except databases
+- name: Collect all info except databases
   become: yes
   become_user: postgres
-  postgresql_facts:
+  postgresql_info:
     filter:
     - "!databases"
 '''
@@ -562,12 +562,12 @@ class PgDbConn(object):
         return self.connect()
 
 
-class PgClusterFacts(object):
+class PgClusterInfo(object):
     def __init__(self, module, db_conn_obj):
         self.module = module
         self.db_obj = db_conn_obj
         self.cursor = db_conn_obj.connect()
-        self.pg_facts = {
+        self.pg_info = {
             "version": {},
             "tablespaces": {},
             "databases": {},
@@ -627,7 +627,7 @@ class PgClusterFacts(object):
             for s in subset_map:
                 subset_map[s]()
 
-        return self.pg_facts
+        return self.pg_info
 
     def get_tablespaces(self):
         """
@@ -661,7 +661,7 @@ class PgClusterFacts(object):
 
             ts_dict[ts_name] = ts_info
 
-        self.pg_facts["tablespaces"] = ts_dict
+        self.pg_info["tablespaces"] = ts_dict
 
     def get_ext_info(self):
         """
@@ -720,7 +720,7 @@ class PgClusterFacts(object):
                 member_of=i[4] if i[4] else [],
             )
 
-        self.pg_facts["roles"] = rol_dict
+        self.pg_info["roles"] = rol_dict
 
     def get_rslot_info(self):
         """
@@ -750,7 +750,7 @@ class PgClusterFacts(object):
                 active=i[4],
             )
 
-        self.pg_facts["repl_slots"] = rslot_dict
+        self.pg_info["repl_slots"] = rslot_dict
 
     def get_settings(self):
         """
@@ -816,9 +816,9 @@ class PgClusterFacts(object):
             if pending_restart is not None:
                 set_dict[setting_name]['pending_restart'] = pending_restart
                 if pending_restart:
-                    self.pg_facts["pending_restart_settings"].append(setting_name)
+                    self.pg_info["pending_restart_settings"].append(setting_name)
 
-        self.pg_facts["settings"] = set_dict
+        self.pg_info["settings"] = set_dict
 
     def get_repl_info(self):
         """
@@ -852,7 +852,7 @@ class PgClusterFacts(object):
                 state=i[6],
             )
 
-        self.pg_facts["replications"] = repl_dict
+        self.pg_info["replications"] = repl_dict
 
     def get_lang_info(self):
         """
@@ -893,7 +893,7 @@ class PgClusterFacts(object):
         query = "SELECT version()"
         raw = self.__exec_sql(query)[0][0]
         raw = raw.split()[1].split('.')
-        self.pg_facts["version"] = dict(
+        self.pg_info["version"] = dict(
             major=int(raw[0]),
             minor=int(raw[1]),
         )
@@ -934,7 +934,7 @@ class PgClusterFacts(object):
             db_dict[datname]['extensions'] = self.get_ext_info()
             db_dict[datname]['languages'] = self.get_lang_info()
 
-        self.pg_facts["databases"] = db_dict
+        self.pg_info["databases"] = db_dict
 
     def __get_pretty_val(self, setting):
         return self.__exec_sql("SHOW %s" % setting)[0][0]
@@ -1007,9 +1007,9 @@ def main():
     db_conn_obj = PgDbConn(module, kw, session_role)
 
     # Do job:
-    pg_facts = PgClusterFacts(module, db_conn_obj)
+    pg_info = PgClusterInfo(module, db_conn_obj)
 
-    module.exit_json(**pg_facts.collect(filter_))
+    module.exit_json(**pg_info.collect(filter_))
 
 
 if __name__ == '__main__':
