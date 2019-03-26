@@ -1145,6 +1145,12 @@ def main():
         else:
             revoke_egress = []
 
+        # named_tuple_ingress_list and named_tuple_egress_list got updated by
+        # method update_rule_descriptions, deep copy these two lists to new
+        # variables for the record of the 'desired' ingress and egress sg permissions
+        desired_ingress = deepcopy(named_tuple_ingress_list)
+        desired_egress = deepcopy(named_tuple_egress_list)
+
         changed |= update_rule_descriptions(module, group['GroupId'], present_ingress, named_tuple_ingress_list, present_egress, named_tuple_egress_list)
 
         # Revoke old rules
@@ -1162,7 +1168,8 @@ def main():
             # When it is created we wait for the default egress rule to be added by AWS
             security_group = get_security_groups_with_backoff(client, GroupIds=[group['GroupId']])['SecurityGroups'][0]
         elif changed and not module.check_mode:
-            security_group = wait_for_rule_propagation(module, group, named_tuple_ingress_list, named_tuple_egress_list, purge_rules, purge_rules_egress)
+            # keep pulling until current security group rules match the desired ingress and egress rules
+            security_group = wait_for_rule_propagation(module, group, desired_ingress, desired_egress, purge_rules, purge_rules_egress)
         else:
             security_group = get_security_groups_with_backoff(client, GroupIds=[group['GroupId']])['SecurityGroups'][0]
         security_group = camel_dict_to_snake_dict(security_group, ignore_list=['Tags'])
