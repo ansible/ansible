@@ -48,9 +48,9 @@ class AnsibleCollectionLoader(object):
 
         self._n_playbook_paths = []
         # pre-inject grafted package maps so we can force them to use the right loader instead of potentially delegating to a "normal" loader
-        for p in (p for p in iteritems(_SYNTHETIC_PACKAGES) if p[1].get('graft')):
-            pkg_name = p[0]
-            pkg_def = p[1]
+        for syn_pkg_def in (p for p in iteritems(_SYNTHETIC_PACKAGES) if p[1].get('graft')):
+            pkg_name = syn_pkg_def[0]
+            pkg_def = syn_pkg_def[1]
 
             newmod = ModuleType(pkg_name)
             newmod.__package__ = pkg_name
