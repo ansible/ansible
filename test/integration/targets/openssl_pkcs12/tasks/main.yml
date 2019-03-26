@@ -1,6 +1,4 @@
 ---
-- name: Run tests with pyopenssl
+- name: Run tests
   include_tasks: impl.yml
-  vars:
-    select_crypto_backend: pyopenssl
   when: pyopenssl_version.stdout is version('17.1.0', '>=')
