@@ -267,10 +267,10 @@ class JinjaPluginIntercept(MutableMapping):
         self._pluginloader = pluginloader
 
         if self._pluginloader.class_name == 'FilterModule':
-            self._method_map_name = "filters"
+            self._method_map_name = 'filters'
             self._dirname = 'filter'
         elif self._pluginloader.class_name == 'TestModule':
-            self._method_map_name = "tests"
+            self._method_map_name = 'tests'
             self._dirname = 'test'
 
         self._collection_jinja_func_cache = {}
