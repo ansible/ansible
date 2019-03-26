@@ -162,7 +162,7 @@ CATEGORY_COMMANDS_ALL = {
                 "GetMemoryInventory", "GetNicInventory",
                 "GetStorageControllerInventory", "GetDiskInventory",
                 "GetBiosAttributes", "GetBootOrder"],
-    "Chassis": ["GetFanInventory", "GetPsuInventory"],
+    "Chassis": ["GetFanInventory", "GetPsuInventory", "GetChassisThermals"],
     "Accounts": ["ListUsers"],
     "Update": ["GetFirmwareInventory"],
     "Manager": ["GetManagerNicInventory", "GetLogs"],
