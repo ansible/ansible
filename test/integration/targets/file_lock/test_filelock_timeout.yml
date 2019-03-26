@@ -17,7 +17,7 @@
       state: present
       create: yes
 
-  - name: Lock lockfile with lockf and sleep 20s
+  - name: Lock lockfile and sleep 20s
     command: python
     args:
       stdin: |
