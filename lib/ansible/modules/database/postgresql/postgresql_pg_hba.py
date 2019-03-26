@@ -40,6 +40,10 @@ options:
         The location of the backup is returned in the (backup) variable by this module.
     default: false
     type: bool
+  backup_file:
+    description:
+      - Write backup to a specific backupfile rather than a temp file.
+    type: str
   create:
     description:
       - Create an C(pg_hba) file if none exists.
@@ -290,7 +294,7 @@ class PgHba(object):
         except IOError:
             pass
 
-    def write(self):
+    def write(self, backup_file=''):
         '''
         This method writes the PgHba rules (back) to a file.
         '''
@@ -302,7 +306,10 @@ class PgHba(object):
                 raise PgHbaError("pg_hba file '{0}' doesn't exist. "
                                  "Use create option to autocreate.".format(self.pg_hba_file))
             if self.backup and os.path.isfile(self.pg_hba_file):
-                __backup_file_h, self.last_backup = tempfile.mkstemp(prefix='pg_hba')
+                if backup_file:
+                    self.last_backup = backup_file
+                else:
+                    __backup_file_h, self.last_backup = tempfile.mkstemp(prefix='pg_hba')
                 shutil.copy(self.pg_hba_file, self.last_backup)
             fileh = open(self.pg_hba_file, 'w')
         else:
@@ -620,6 +627,7 @@ def main():
     argument_spec = dict()
     argument_spec.update(
         address=dict(type='str', default='samehost', aliases=['source', 'src']),
+        backup_file=dict(type='str'),
         contype=dict(type='str', default=None, choices=PG_HBA_TYPES),
         create=dict(type='bool', default=False),
         databases=dict(type='str', default='all'),
@@ -645,6 +653,7 @@ def main():
         backup = False
     else:
         backup = module.params['backup']
+        backup_file = module.params['backup_file']
     databases = module.params["databases"]
     dest = module.params["dest"]
 
@@ -684,7 +693,7 @@ def main():
             if not module.check_mode:
                 ret['msgs'].append('Writing')
                 try:
-                    if pg_hba.write():
+                    if pg_hba.write(backup_file):
                         module.set_fs_attributes_if_different(file_args, True, pg_hba.diff,
                                                               expand=False)
                 except PgHbaError as error:
