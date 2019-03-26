@@ -57,7 +57,6 @@ options:
 
 extends_documentation_fragment:
   - k8s_auth_options
-  - k8s_resource_options
   - kubevirt_vm_options
   - kubevirt_common_options
 
@@ -112,7 +111,7 @@ import copy
 import traceback
 
 
-from ansible.module_utils.k8s.common import AUTH_ARG_SPEC, COMMON_ARG_SPEC
+from ansible.module_utils.k8s.common import AUTH_ARG_SPEC
 
 try:
     from openshift.dynamic.client import ResourceInstance
@@ -139,8 +138,7 @@ class KubeVirtVMIRS(KubeVirtRawModule):
     @property
     def argspec(self):
         """ argspec property builder """
-        argument_spec = copy.deepcopy(COMMON_ARG_SPEC)
-        argument_spec.update(copy.deepcopy(AUTH_ARG_SPEC))
+        argument_spec = copy.deepcopy(AUTH_ARG_SPEC)
         argument_spec.update(copy.deepcopy(VM_COMMON_ARG_SPEC))
         argument_spec.update(copy.deepcopy(VMIR_ARG_SPEC))
         return argument_spec

@@ -5,21 +5,23 @@
 
 
 class ModuleDocFragment(object):
-
-    # Standard oVirt documentation fragment
     DOCUMENTATION = r'''
 options:
+    resource_definition:
+      description:
+      - "A partial YAML definition of the object being created/updated. Here you can define Kubernetes
+        resource parameters not covered by this module's parameters."
+      - "NOTE: I(resource_definition) has lower priority than module parameters. If you try to define e.g.
+        I(metadata.namespace) here, that value will be ignored and I(namespace) used instead."
+      aliases:
+      - definition
+      - inline
+      type: dict
     wait:
         description:
             - "I(True) if the module should wait for the resource to get into desired state."
         type: bool
         default: yes
-    kind:
-        description:
-            - Use to specify an object model. Use to create, delete, or discover an object without providing a full
-              resource definition. Use in conjunction with I(api_version), I(name), and I(namespace) to identify a
-              specific object. If I(resource definition) is provided, the I(kind) from the I(resource_definition)
-              will override this option.
     force:
        description:
             - If set to C(no), and I(state) is C(present), an existing object will be replaced.
@@ -30,14 +32,6 @@ options:
             - The amount of time in seconds the module should wait for the resource to get into desired state.
         type: int
         default: 120
-    api_version:
-        description:
-            - "Specify the API version to be used."
-        type: str
-        default: kubevirt.io/v1alpha3
-        aliases:
-            - api
-            - version
     memory:
         description:
             - The amount of memory to be requested by virtual machine.
@@ -54,16 +48,12 @@ options:
         type: str
     merge_type:
         description:
-            - Whether to override the default patch merge approach with a specific type. By default, the strategic
-              merge will typically be used.
-            - For example, Custom Resource Definitions typically aren't updatable by the usual strategic merge. You may
-              want to use C(merge) if you see "strategic merge patch format is not supported"
-            - See U(https://kubernetes.io/docs/tasks/run-application/update-api-object-kubectl-patch/#use-a-json-merge-patch-to-update-a-deployment)
-            - Requires openshift >= 0.6.2
-            - If more than one merge_type is given, the merge_types will be tried in order
-            - If openshift >= 0.6.2, this defaults to C(['strategic-merge', 'merge']), which is ideal for using the same parameters
-              on resource kinds that combine Custom Resources and built-in resources. For openshift < 0.6.2, the default
-              is simply C(strategic-merge).
+            - Whether to override the default patch merge approach with a specific type.
+            - If more than one merge type is given, the merge types will be tried in order.
+            - "Defaults to C(['strategic-merge', 'merge']), which is ideal for using the same parameters
+              on resource kinds that combine Custom Resources and built-in resources, as
+              Custom Resource Definitions typically aren't updatable by the usual strategic merge."
+            - "See U(https://kubernetes.io/docs/tasks/run-application/update-api-object-kubectl-patch/#use-a-json-merge-patch-to-update-a-deployment)"
         type: list
         choices: [ json, merge, strategic-merge ]
     cpu_shares:
@@ -122,5 +112,5 @@ requirements:
 notes:
   - "In order to use this module you have to install Openshift Python SDK.
      To ensure it's installed with correct version you can create the following task:
-     I(pip: name=openshift version=0.8.2)"
+     I(pip: name=openshift>=0.8.2)"
 '''

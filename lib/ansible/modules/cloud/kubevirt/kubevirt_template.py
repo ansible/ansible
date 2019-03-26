@@ -26,6 +26,16 @@ version_added: "2.8"
 author: KubeVirt Team (@kubevirt)
 
 options:
+    name:
+        description:
+            - Name of the Template object.
+        required: true
+        type: str
+    namespace:
+        description:
+            - Namespace where the Template object exists.
+        required: true
+        type: str
     objects:
         description:
             - List of any valid API objects, such as a I(DeploymentConfig), I(Service), etc. The object
@@ -129,9 +139,7 @@ options:
 
 extends_documentation_fragment:
   - k8s_auth_options
-  - k8s_resource_options
   - k8s_state_options
-  - k8s_name_options
 
 requirements:
   - python >= 2.7
@@ -197,7 +205,7 @@ kubevirt_template:
 import copy
 import traceback
 
-from ansible.module_utils.k8s.common import AUTH_ARG_SPEC, COMMON_ARG_SPEC
+from ansible.module_utils.k8s.common import AUTH_ARG_SPEC
 
 from ansible.module_utils.kubevirt import (
     virtdict,
@@ -207,12 +215,15 @@ from ansible.module_utils.kubevirt import (
 
 
 TEMPLATE_ARG_SPEC = {
+    'name': {'required': True},
+    'namespace': {'required': True},
     'state': {
-        'type': 'str',
-        'choices': [
-            'present', 'absent'
-        ],
-        'default': 'present'
+        'default': 'present',
+        'choices': ['present', 'absent'],
+    },
+    'force': {
+        'type': 'bool',
+        'default': False,
     },
     'merge_type': {
         'type': 'list',
@@ -271,8 +282,7 @@ class KubeVirtVMTemplate(KubeVirtRawModule):
     @property
     def argspec(self):
         """ argspec property builder """
-        argument_spec = copy.deepcopy(COMMON_ARG_SPEC)
-        argument_spec.update(copy.deepcopy(AUTH_ARG_SPEC))
+        argument_spec = copy.deepcopy(AUTH_ARG_SPEC)
         argument_spec.update(TEMPLATE_ARG_SPEC)
         return argument_spec
 
