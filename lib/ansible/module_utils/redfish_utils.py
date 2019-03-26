@@ -15,9 +15,10 @@ HEADERS = {'content-type': 'application/json'}
 
 class RedfishUtils(object):
 
-    def __init__(self, creds, root_uri):
+    def __init__(self, creds, root_uri, timeout):
         self.root_uri = root_uri
         self.creds = creds
+        self.timeout = timeout
         self._init_session()
         return
 
@@ -29,7 +30,7 @@ class RedfishUtils(object):
                             url_password=self.creds['pswd'],
                             force_basic_auth=True, validate_certs=False,
                             follow_redirects='all',
-                            use_proxy=False)
+                            use_proxy=False, timeout=self.timeout)
             data = json.loads(resp.read())
         except HTTPError as e:
             return {'ret': False, 'msg': "HTTP Error: %s" % e.code}
@@ -49,7 +50,7 @@ class RedfishUtils(object):
                             url_password=self.creds['pswd'],
                             force_basic_auth=True, validate_certs=False,
                             follow_redirects='all',
-                            use_proxy=False)
+                            use_proxy=False, timeout=self.timeout)
         except HTTPError as e:
             return {'ret': False, 'msg': "HTTP Error: %s" % e.code}
         except URLError as e:
@@ -68,7 +69,7 @@ class RedfishUtils(object):
                             url_password=self.creds['pswd'],
                             force_basic_auth=True, validate_certs=False,
                             follow_redirects='all',
-                            use_proxy=False)
+                            use_proxy=False, timeout=self.timeout)
         except HTTPError as e:
             return {'ret': False, 'msg': "HTTP Error: %s" % e.code}
         except URLError as e:
@@ -87,7 +88,7 @@ class RedfishUtils(object):
                             url_password=self.creds['pswd'],
                             force_basic_auth=True, validate_certs=False,
                             follow_redirects='all',
-                            use_proxy=False)
+                            use_proxy=False, timeout=self.timeout)
         except HTTPError as e:
             return {'ret': False, 'msg': "HTTP Error: %s" % e.code}
         except URLError as e:
