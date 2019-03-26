@@ -1062,7 +1062,7 @@
     command: '/bin/sh -v -c "sleep 10m"'
     healthcheck:
       test:
-      - NONE
+        - NONE
   register: healthcheck_5
   ignore_errors: yes
 
