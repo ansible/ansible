@@ -245,7 +245,7 @@ class BotoInstance(InstanceBase):
         self.dns_name = 'ec2-12-3-456-78.compute-1.amazonaws.com'
         self.eventsSet = None
         self.group_name = None
-        self.groups = [SecurityGroup(k, v) for k, v in self._ignore_security_groups.items()]
+        self.groups = [SecurityGroup(k, self._ignore_security_groups[k]) for k in sorted(self._ignore_security_groups.keys())]
         self.id = instance_id
         self.instance_profile = {
             'arn': 'arn:aws:iam::{0}:instance-profile/developer'.format(owner_id),
