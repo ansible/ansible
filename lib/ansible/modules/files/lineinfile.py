@@ -82,6 +82,8 @@ options:
       - If the first match is required, use(firstmatch=yes).
       - A special value is available; C(EOF) for inserting the line at the end of the file.
       - If specified regular expression has no matches, EOF will be used instead.
+      - Cannot set with C(insertbefore).
+      - If C(insertbefore) is set, default value C(EOF) will be ignored.
       - If regular expressions are passed to both C(regexp) and C(insertafter), C(insertafter) is only honored if no match for C(regexp) is found.
       - May not be used with C(backrefs).
     type: str
@@ -94,6 +96,7 @@ options:
       - If the first match is required, use C(firstmatch=yes).
       - A value is available; C(BOF) for inserting the line at the beginning of the file.
       - If specified regular expression has no matches, the line will be inserted at the end of the file.
+      - Cannot set with C(insertafter).      
       - If regular expressions are passed to both C(regexp) and C(insertbefore), C(insertbefore) is only honored if no match for C(regexp) is found.
       - May not be used with C(backrefs).
     type: str
