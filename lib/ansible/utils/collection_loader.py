@@ -257,16 +257,6 @@ class AnsibleFlatMapLoader(object):
 #    def is_package(self, fullname):
 
 
-def is_collection_qualified_role_name(candidate_name):
-    """
-    Returns true if a name looks like a collection-qualified name (eg, ns.collection.rolename)
-    """
-    if _collection_role_name_re.match(candidate_name):
-        return True
-
-    return False
-
-
 def get_collection_role_path(role_name, collection_list=None):
     role_name = to_native(role_name, errors='surrogate_or_strict')
     match = _collection_role_name_re.match(role_name)
