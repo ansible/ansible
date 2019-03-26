@@ -26,6 +26,11 @@ if [ "${platform}" = "freebsd" ]; then
     done
 
     pip --version 2>/dev/null || curl --silent --show-error https://bootstrap.pypa.io/get-pip.py | python
+
+    if ! grep '^PermitRootLogin yes$' /etc/ssh/sshd_config > /dev/null; then
+        sed -i '' 's/^# *PermitRootLogin.*$/PermitRootLogin yes/;' /etc/ssh/sshd_config
+        service sshd restart
+    fi
 elif [ "${platform}" = "rhel" ]; then
     if grep '8\.' /etc/redhat-release; then
         while true; do
@@ -75,14 +80,6 @@ fi
 
 if [ "${platform}" = "freebsd" ] || [ "${platform}" = "osx" ]; then
     pip install virtualenv
-fi
-
-# Since tests run as root, we also need to be able to ssh to localhost as root.
-sed -i= 's/^# *PermitRootLogin.*$/PermitRootLogin yes/;' /etc/ssh/sshd_config
-
-if [ "${platform}" = "freebsd" ]; then
-    # Restart sshd for configuration changes and loopback aliases to work.
-    service sshd restart
 fi
 
 # Generate our ssh key and add it to our authorized_keys file.
