@@ -72,17 +72,6 @@
       that:
         - "result.changed == false"
 
-  - name: passive from true to default
-    nxos_interface_ospf:
-      interface: "{{ nxos_int1|upper }}"
-      ospf: 1
-      area: 12345678
-      passive_interface: default
-      state: present
-    register: result
-
-  - assert: *true
-
   - name: Modify properties
     nxos_interface_ospf: &modify
       interface: "{{ testint }}"
@@ -111,7 +100,6 @@
       ospf: 1
       area: 12345678
       cost: default
-      passive_interface: default
       hello_interval: 10
       dead_interval: default
       provider: "{{ connection }}"
