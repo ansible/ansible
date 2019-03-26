@@ -183,10 +183,11 @@ class TestMyModule(unittest.TestCase):
     def test_modify_error_on_disabled_sp(self):
         ''' a more interesting test '''
         data = self.mock_args(enable=False)
+        data['ip_address'] = self.mock_sp['ip_address']
         set_module_args(data)
         with pytest.raises(AnsibleFailJson) as exc:
             self.get_sp_mock_object('sp-disabled').apply()
-        assert 'Error: Cannot modify any other parameter for a disabled service processor network' in \
+        assert 'Error: Cannot modify a service processor network if it is disabled.' in \
                exc.value.args[0]['msg']
 
     def test_modify_sp(self):
