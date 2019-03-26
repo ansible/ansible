@@ -6,6 +6,7 @@ ok: [localhost] => (item=item_A)
 
 TASK [assert] ******************************************************************
 ok: [localhost] => (item=item_A) => {
+    "ansible_loop_var": "item",
     "changed": false,
     "item": "item_A",
     "msg": "All assertions passed"
