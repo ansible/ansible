@@ -379,12 +379,12 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         if not cache or cache_needs_update:
             cached_data = {}
-            if not params['zones']:
-                params['zones'] = self._get_zones(project, params)
             for project in params['projects']:
                 cached_data[project] = {}
                 params['project'] = project
-                for zone in params['zones']:
+                if not params['zones']:
+                    zones = self._get_zones(project, params)
+                for zone in zones:
                     link = self.self_link(project, zone)
                     params['zone'] = zone
                     resp = self.fetch_list(params, link, query)
