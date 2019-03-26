@@ -17,6 +17,10 @@
 
 - hosts: all
   connection: local  # otherwise Ansible will complain that it cannot connect via ssh to 127.0.0.1:22
+  vars:
+    # for some reason, Ansible can't find the Python interpreter when connecting to the nodes,
+    # which is in fact just localhost in disguise. That's why we use ansible_playbook_python.
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
   tasks:
     - name: Check for groups
       assert:
