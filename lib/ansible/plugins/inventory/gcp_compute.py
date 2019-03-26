@@ -24,26 +24,35 @@ DOCUMENTATION = '''
             choices: ['gcp_compute']
         zones:
           description: A list of regions in which to describe GCE instances.
-          default: all zones available to a given project
+                       If none provided, it defaults to all zones available to a given project.
+          type: list
         projects:
           description: A list of projects in which to describe GCE instances.
+          type: list
+          required: True
         filters:
           description: >
             A list of filter value pairs. Available filters are listed here
             U(https://cloud.google.com/compute/docs/reference/rest/v1/instances/list).
             Each additional filter in the list will act be added as an AND condition
             (filter1 and filter2)
+          type: list
         hostnames:
           description: A list of options that describe the ordering for which
               hostnames should be assigned. Currently supported hostnames are
               'public_ip', 'private_ip', or 'name'.
           default: ['public_ip', 'private_ip', 'name']
+          type: list
         auth_kind:
             description:
                 - The type of credential used.
-        service_account_file:
+            required: True
+            choices: ['application', 'serviceaccount', 'machineaccount']
+        service_account_file
             description:
                 - The path of a Service Account JSON file if serviceaccount is selected as type.
+            required: True
+            type: path
         service_account_email:
             description:
                 - An optional service account email address if machineaccount is selected
@@ -338,27 +347,17 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         if self.get_option('use_contrib_script_compatible_sanitization'):
             self._sanitize_group_name = self._legacy_script_compatible_group_sanitization
 
-        # get user specifications
-        if 'zones' in config_data:
-            if not isinstance(config_data['zones'], list):
-                raise AnsibleParserError("Zones must be a list in GCP inventory YAML files")
+        params = {
+            'filters': self.get_option('filters'),
+            'projects': self.get_option('projects'),
+            'scopes': 'https://www.googleapis.com/auth/compute',
+            'zones': self.get_option('zones'),
+            'auth_kind': self.get_option('auth_kind'),
+            'service_account_file': self.get_option('service_account_file'),
+            'service_account_email': self.get_option('service_account_email'),
+        }
 
-        # get user specifications
-        if 'projects' not in config_data:
-            raise AnsibleParserError("Projects must be included in inventory YAML file")
-
-        if not isinstance(config_data['projects'], list):
-            raise AnsibleParserError("Projects must be a list in GCP inventory YAML files")
-
-        # add in documented defaults
-        if 'filters' not in config_data:
-            config_data['filters'] = None
-
-        projects = config_data['projects']
-        zones = config_data.get('zones')
-        config_data['scopes'] = ['https://www.googleapis.com/auth/compute']
-
-        query = self._get_query_options(config_data['filters'])
+        query = self._get_query_options(params['filters'])
 
         # Cache logic
         if cache:
@@ -379,15 +378,13 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         if not cache or cache_needs_update:
             cached_data = {}
-            for project in projects:
+            for project in params['projects']:
                 cached_data[project] = {}
-                config_data['project'] = project
-                if not zones:
-                    zones = self._get_zones(config_data)
-                for zone in zones:
-                    config_data['zone'] = zone
-                    link = self.self_link(config_data)
-                    resp = self.fetch_list(config_data, link, query)
+                if not params['zones']:
+                    params['zones'] = self._get_zones(params)
+                for zone in params['zones']:
+                    link = self.self_link(params)
+                    resp = self.fetch_list(params, link, query)
                     self._add_hosts(resp.get('items'), config_data)
                     cached_data[project][zone] = resp.get('items')
 
