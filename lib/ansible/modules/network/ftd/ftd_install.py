@@ -37,7 +37,12 @@ description:
     the `local` connection should be used only when the device cannot be accessed via
     REST API.
 version_added: "2.8"
-requirements: [ "python >= 3.5", "kick" ]
+requirements: [ "python >= 3.5", "firepower-kick" ]
+notes:
+  - Requires `firepower-kick` library that should be installed separately and requires Python >= 3.5.
+  - On localhost, Ansible can be still run with Python >= 2.7, but the interpreter for this particular module must be
+    Python >= 3.5.
+  - Python interpreter for the module can overwritten in `ansible_python_interpreter` variable.
 author: "Cisco Systems, Inc. (@annikulin)"
 options:
   device_hostname:
