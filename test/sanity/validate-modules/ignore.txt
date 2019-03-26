@@ -1,5 +1,7 @@
 lib/ansible/modules/cloud/amazon/_ec2_ami_find.py E322
 lib/ansible/modules/cloud/amazon/_ec2_ami_find.py E323
+lib/ansible/modules/cloud/amazon/_ec2_facts.py E505
+lib/ansible/modules/cloud/amazon/_ec2_remote_facts.py E505
 lib/ansible/modules/cloud/amazon/aws_api_gateway.py E322
 lib/ansible/modules/cloud/amazon/aws_application_scaling_policy.py E322
 lib/ansible/modules/cloud/amazon/aws_application_scaling_policy.py E326
@@ -816,6 +818,8 @@ lib/ansible/modules/storage/zfs/zfs.py E322
 lib/ansible/modules/storage/zfs/zfs.py E323
 lib/ansible/modules/storage/zfs/zfs_facts.py E323
 lib/ansible/modules/storage/zfs/zpool_facts.py E323
+lib/ansible/modules/system/gather_facts.py E505
+lib/ansible/modules/system/hostname.py E505
 lib/ansible/modules/system/known_hosts.py E324
 lib/ansible/modules/system/puppet.py E322
 lib/ansible/modules/system/puppet.py E336
@@ -823,10 +827,14 @@ lib/ansible/modules/system/runit.py E322
 lib/ansible/modules/system/runit.py E324
 lib/ansible/modules/system/service.py E210
 lib/ansible/modules/system/service.py E323
+lib/ansible/modules/system/setup.py E504
 lib/ansible/modules/system/systemd.py E336
 lib/ansible/modules/system/user.py E210
 lib/ansible/modules/system/user.py E324
 lib/ansible/modules/system/user.py E327
+lib/ansible/modules/utilities/logic/include_vars.py E504
+lib/ansible/modules/utilities/logic/set_fact.py E504
+lib/ansible/modules/utilities/logic/set_stats.py E504
 lib/ansible/modules/web_infrastructure/ansible_tower/tower_credential.py E326
 lib/ansible/modules/web_infrastructure/ansible_tower/tower_group.py E324
 lib/ansible/modules/web_infrastructure/ansible_tower/tower_job_launch.py E323
@@ -842,3 +850,4 @@ lib/ansible/modules/web_infrastructure/htpasswd.py E326
 lib/ansible/modules/web_infrastructure/jenkins_plugin.py E322
 lib/ansible/modules/web_infrastructure/jenkins_plugin.py E324
 lib/ansible/modules/web_infrastructure/jira.py E322
+lib/ansible/modules/windows/setup.ps1 E504
