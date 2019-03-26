@@ -363,7 +363,8 @@ def find_asgs(conn, module, name=None, tags=None):
         if matched_name and matched_tags:
             asg = camel_dict_to_snake_dict(asg)
             # compatibility with ec2_asg module
-            asg['launch_config_name'] = asg['launch_configuration_name']
+            if 'launch_configuration_name' in asg:
+                asg['launch_config_name'] = asg['launch_configuration_name']
             # workaround for https://github.com/ansible/ansible/pull/25015
             if 'target_group_ar_ns' in asg:
                 asg['target_group_arns'] = asg['target_group_ar_ns']
