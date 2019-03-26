@@ -4,19 +4,3 @@
   vars:
     select_crypto_backend: pyopenssl
   when: pyopenssl_version.stdout is version('17.1.0', '>=')
-
-- name: Remove output directory
-  file:
-    path: "{{ output_dir }}"
-    state: absent
-
-- name: Re-create output directory
-  file:
-    path: "{{ output_dir }}"
-    state: directory
-
-- name: Run tests with cryptography
-  include_tasks: impl.yml
-  vars:
-    select_crypto_backend: cryptography
-  when: cryptography_version.stdout is version('1.6.0', '>=')
