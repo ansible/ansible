@@ -218,8 +218,13 @@ import re
 
 from ansible.module_utils.basic import AnsibleModule
 
-decimal_point = re.compile(r"(\d+)")
-
+LVOL_ENV_VARS = dict(
+    # make sure we use the C locale when running lvol-related commands
+    LANG='C',
+    LC_ALL='C',
+    LC_MESSAGES='C',
+    LC_CTYPE='C',
+)
 
 def mkversion(major, minor, patch):
     return (1000 * 1000 * int(major)) + (1000 * int(minor)) + int(patch)
@@ -231,7 +236,7 @@ def parse_lvs(data):
         parts = line.strip().split(';')
         lvs.append({
             'name': parts[0].replace('[', '').replace(']', ''),
-            'size': int(decimal_point.match(parts[1]).group(1)),
+            'size': float(parts[1]),
             'active': (parts[2][4] == 'a'),
             'thinpool': (parts[2][0] == 't'),
             'thinvol': (parts[2][0] == 'V'),
@@ -284,6 +289,8 @@ def main():
             ['lv', 'thinpool'],
         ),
     )
+
+    module.run_command_environ_update = LVOL_ENV_VARS
 
     # Determine if the "--yes" option should be used
     version_found = get_lvm_version(module)
@@ -371,7 +378,7 @@ def main():
     # Get information on volume group requested
     vgs_cmd = module.get_bin_path("vgs", required=True)
     rc, current_vgs, err = module.run_command(
-        "%s --noheadings -o vg_name,size,free,vg_extent_size --units %s --separator ';' %s" % (vgs_cmd, unit, vg))
+        "%s --noheadings --nosuffix -o vg_name,size,free,vg_extent_size --units %s --separator ';' %s" % (vgs_cmd, unit, vg))
 
     if rc != 0:
         if state == 'absent':
@@ -524,10 +531,10 @@ def main():
         else:
             # resize LV based on absolute values
             tool = None
-            if int(size) > this_lv['size'] or '+' in size_operator:
+            if float(size) > this_lv['size'] or '+' in size_operator:
                 tool = module.get_bin_path("lvextend", required=True)
-            elif shrink and int(size) < this_lv['size']:
-                if int(size) == 0:
+            elif shrink and float(size) < this_lv['size']:
+                if float(size) == 0:
                     module.fail_json(msg="Sorry, no shrinking of %s to 0 permitted." % (this_lv['name']))
                 if not force:
                     module.fail_json(msg="Sorry, no shrinking of %s without force=yes." % (this_lv['name']))
