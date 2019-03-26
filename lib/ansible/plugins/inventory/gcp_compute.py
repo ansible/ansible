@@ -151,12 +151,12 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 return True
         return False
 
-    def self_link(self, params):
+    def self_link(self, project, zone):
         '''
             :param params: a dict containing all of the fields relevant to build URL
             :return the formatted URL as a string.
         '''
-        return "https://www.googleapis.com/compute/v1/projects/{project}/zones/{zone}/instances".format(**params)
+        return "https://www.googleapis.com/compute/v1/projects/%s/zones/%s/instances" % (project, zone)
 
     def fetch_list(self, params, link, query):
         '''
@@ -170,12 +170,12 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         response = auth.get(link, params={'filter': query})
         return self._return_if_object(module, response)
 
-    def _get_zones(self, config_data):
+    def _get_zones(self, project, config_data):
         '''
             :param config_data: dict of info from inventory file
             :return an array of zones that this project has access to
         '''
-        link = "https://www.googleapis.com/compute/v1/projects/{project}/zones".format(**config_data)
+        link = "https://www.googleapis.com/compute/v1/projects/%s/zones" % project
         zones = []
         zones_response = self.fetch_list(config_data, link, '')
         for item in zones_response['items']:
@@ -380,13 +380,13 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         if not cache or cache_needs_update:
             cached_data = {}
             if not params['zones']:
-                params['zones'] = self._get_zones(params)
+                params['zones'] = self._get_zones(project, params)
             for project in params['projects']:
                 cached_data[project] = {}
                 params['project'] = project
                 for zone in params['zones']:
+                    link = self.self_link(project, zone)
                     params['zone'] = zone
-                    link = self.self_link(params)
                     resp = self.fetch_list(params, link, query)
                     self._add_hosts(resp.get('items'), config_data)
                     cached_data[project][zone] = resp.get('items')
