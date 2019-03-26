@@ -442,7 +442,7 @@ $registry_hive = switch(Split-Path -Path $path -Qualifier) {
     "HKCC:" { [Microsoft.Win32.Registry]::CurrentConfig }
     "HKCU:" { [Microsoft.Win32.Registry]::CurrentUser }
     "HKLM:" { [Microsoft.Win32.Registry]::LocalMachine }
-    "HKU" { [Microsoft.Win32.Registry]::Users }
+    "HKU:" { [Microsoft.Win32.Registry]::Users }
 }
 $loaded_hive = $null
 try {
