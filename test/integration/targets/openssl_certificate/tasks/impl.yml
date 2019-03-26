@@ -5,3 +5,4 @@
 - import_tasks: expired.yml
 - import_tasks: selfsigned.yml
 - import_tasks: ownca.yml
+- import_tasks: removal.yml
