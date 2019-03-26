@@ -85,6 +85,7 @@ def get_servers(module, intersight):
         'resource_path': '/compute/PhysicalSummaries',
         'query_params': {
             '$filter': query_str,
+            '$top': 5000
         }
     }
     response_dict = intersight.call_api(**options)
