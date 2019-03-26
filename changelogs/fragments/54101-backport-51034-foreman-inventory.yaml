@@ -1,0 +1,2 @@
+bugfixes:
+  - foreman - fix Foreman returning host parameters
