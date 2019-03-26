@@ -18,7 +18,7 @@ short_description: Manages UCS Organizations for UCS Manager
 
 description:
   - Manages UCS Organizations for UCS Manager.
-  - Examples can be used with the L(UCS Platform Emulator,https://communities.cisco.com/ucspe).
+  - Examples can be used with the L(UCS Platform Emulator, http://cs.co/ucspe).
 
 extends_documentation_fragment: ucs
 
@@ -142,12 +142,12 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.remote_management.ucs import UCSModule, ucs_argument_spec
 
 
-def run_module():
+def main():
     argument_spec = ucs_argument_spec
     argument_spec.update(
         org_name=dict(type='str', aliases=['name']),
         parent_org_path=dict(type='str', default='root'),
-        description=dict(type='str', aliases=['descr'], default=''),
+        description=dict(type='str', aliases=['descr']),
         state=dict(type='str', default='present', choices=['present', 'absent']),
         delegate_to=dict(type='str', default='localhost'),
     )
@@ -167,40 +167,49 @@ def run_module():
 
     err = False
     changed = False
+    requested_state = module.params['state']
+
+    kwargs = dict()
+
+    if module.params['description'] != None:
+        kwargs['descr'] = module.params['description']
 
     try:
-        mo_exists = False
-        props_match = False
-
         parent_org_dn = 'org-' + module.params['parent_org_path'].replace('/', '/org-')
         dn = parent_org_dn + '/org-' + module.params['org_name']
 
         mo = ucs.login_handle.query_dn(dn)
+        
+        # Determine state change
         if mo:
-            mo_exists = True
+            # Object exists, if it should exist has anything changed?
+            if requested_state == 'present':
+                # Do some or all Object properties not match, that is a change
+                if not mo.check_prop_match(**kwargs):
+                    changed = True
 
-        if module.params['state'] == 'absent':
-            if mo_exists:
-                if not module.check_mode:
-                    ucs.login_handle.remove_mo(mo)
-                    ucs.login_handle.commit()
-                changed = True
+        # Object does not exist but should, that is a change
         else:
-            if mo_exists:
-                # check top-level mo props
-                kwargs = dict(descr=module.params['description'])
-                if mo.check_prop_match(**kwargs):
-                    props_match = True
-
-            if not props_match:
-                if not module.check_mode:
-                    # update/add mo
-                    mo = OrgOrg(parent_mo_or_dn=parent_org_dn,
-                                name=module.params['org_name'],
-                                descr=module.params['description'])
-                    ucs.login_handle.add_mo(mo, modify_present=True)
-                    ucs.login_handle.commit()
+            if requested_state == 'present':
                 changed = True
+
+        # Object exists but should not, that is a change
+        if mo and requested_state == 'absent':
+                changed = True
+
+        # Apply state if not check_mode
+        if changed and not module.check_mode:
+            if requested_state == 'absent':
+                ucs.login_handle.remove_mo(mo)
+            else:
+                kwargs['parent_mo_or_dn'] = parent_org_dn
+                kwargs['name'] = module.params['org_name']
+                if module.params['description'] != None:
+                    kwargs['descr'] = module.params['description']
+
+                mo = OrgOrg(**kwargs)
+                ucs.login_handle.add_mo(mo, modify_present=True)
+            ucs.login_handle.commit()
 
     except Exception as e:
         err = True
@@ -209,11 +218,8 @@ def run_module():
     ucs.result['changed'] = changed
     if err:
         module.fail_json(**ucs.result)
+
     module.exit_json(**ucs.result)
-
-
-def main():
-    run_module()
 
 
 if __name__ == '__main__':
