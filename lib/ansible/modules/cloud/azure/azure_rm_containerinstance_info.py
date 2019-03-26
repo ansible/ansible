@@ -270,7 +270,7 @@ class AzureRMContainerInstanceFacts(AzureRMModuleBase):
     def format_item(self, item):
         d = item.as_dict()
         containers = d['containers']
-        ports = d['ip_address']['ports']
+        ports = d['ip_address']['ports'] if 'ip_address' in d else []
         resource_group = d['id'].split('resourceGroups/')[1].split('/')[0]
 
         for port_index in range(len(ports)):
@@ -296,8 +296,8 @@ class AzureRMContainerInstanceFacts(AzureRMModuleBase):
             'resource_group': resource_group,
             'name': d['name'],
             'os_type': d['os_type'],
-            'ip_address': 'public' if d['ip_address']['type'] == 'Public' else 'none',
             'dns_name_label': d['ip_address'].get('dns_name_label'),
+            'ip_address': d['ip_address']['ip'] if 'ip_address' in d else '',
             'ports': ports,
             'location': d['location'],
             'containers': containers,
