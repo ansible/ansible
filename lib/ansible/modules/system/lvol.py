@@ -250,9 +250,9 @@ def parse_vgs(data):
         parts = line.strip().split(';')
         vgs.append({
             'name': parts[0],
-            'size': int(decimal_point.match(parts[1]).group(1)),
-            'free': int(decimal_point.match(parts[2]).group(1)),
-            'ext_size': int(decimal_point.match(parts[3]).group(1))
+            'size': float(parts[1]),
+            'free': float(parts[2]),
+            'ext_size': float(parts[3])
         })
     return vgs
 
