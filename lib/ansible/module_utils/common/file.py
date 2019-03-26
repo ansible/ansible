@@ -129,6 +129,7 @@ def open_locked(path, lock_timeout=15):
     '''
     fd = lock(path, lock_timeout)
     yield fd
+    fd.close()
 
 
 def lock(path, lock_timeout=15):
