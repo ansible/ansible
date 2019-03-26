@@ -191,6 +191,7 @@ EXAMPLES = r'''
   ufw:
     rule: allow
     port: 60000:61000
+    proto: tcp
 
 - name: Allow all access to tcp port 80
   ufw:
