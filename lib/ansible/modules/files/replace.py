@@ -57,8 +57,7 @@ options:
       - The string to replace regexp matches.
       - May contain backreferences that will get expanded with the regexp capture groups if the regexp matches.
       - If not set, matches are removed entirely.
-      - Backreferences can be used ambiguously like C(\\1), or explicitly
-        like C(\\g<1>).
+      - Backreferences can be used ambiguously like C(\1), or explicitly like C(\g<1>).
     type: str
   after:
     description:
@@ -96,8 +95,9 @@ options:
     version_added: "2.4"
 notes:
   - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
-  - As of Ansible 2.x, the combined use of I(before) and I(after) options was changed significantly. See
-    U(https://github.com/ansible/ansible/issues/31354) for details.
+  - As of Ansible 2.7.10, the combined use of I(before) and I(after) works properly. If you were relying on the
+    previous incorrect behavior, you may be need to adjust your tasks.
+    See U(https://github.com/ansible/ansible/issues/31354) for details.
   - Option I(follow) has been removed in Ansible 2.5, because this module modifies the contents of the file so I(follow=no) doesn't make sense.
 '''
 
@@ -122,7 +122,8 @@ EXAMPLES = r'''
     regexp: '^(.+)$'
     replace: '# \1'
 
-# Previous to Ansible 2.x, using before and after in combination switches their logic (see ansible/ansible #31354)
+# Prior to Ansible 2.7.10, using before and after in combination did the opposite of what was intended.
+# see https://github.com/ansible/ansible/issues/31354 for details.
 - name: Replace between the expressions (requires Ansible >= 2.4)
   replace:
     path: /etc/hosts
