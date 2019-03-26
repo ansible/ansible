@@ -226,6 +226,7 @@ LVOL_ENV_VARS = dict(
     LC_CTYPE='C',
 )
 
+
 def mkversion(major, minor, patch):
     return (1000 * 1000 * int(major)) + (1000 * int(minor)) + int(patch)
 
@@ -348,24 +349,24 @@ def main():
             size_unit = ''
 
         if '%' not in size:
-            # LVCREATE(8) -L --size option unit
-	    if size[-1] in 'BSKMGTPE':
-		size_unit = size[-1].lower()
-		size = size[0:-1]
-		size_divisor = { 'B': 1.000, 'S': 1.000, 'K': 1.024, 'M': 1.048, 'G': 1.047, 'T': 1.099, 'P': 1.126, 'E': 1.153 }.get(size_unit.upper(), '1.000')
-		if '+' in size:
-		    size_operator = '+'
+        # LVCREATE(8) -L --size option unit
+            if size[-1] in 'BSKMGTPE':
+                size_unit = size[-1].lower()
+                size = size[0:-1]
+                size_divisor = { 'B': 1.000, 'S': 1.000, 'K': 1.024, 'M': 1.048, 'G': 1.047, 'T': 1.099, 'P': 1.126, 'E': 1.153 }.get(size_unit.upper(), '1.000')
+                if '+' in size:
+                    size_operator = '+'
                     size = str(float(size[1:]) / float(size_divisor))
-		else:
-		    size = str(float(size) / float(size_divisor))
+                else:
+                    size = str(float(size) / float(size_divisor))
             elif size[-1] in 'bskmgtpe':
                 size_unit = size[-1]
                 size = size[0:-1]
 
             try:
                 float(size)
-		if not size[0].isdigit():
-		    raise ValueError()
+                if not size[0].isdigit():
+                    raise ValueError()
             except ValueError:
                 module.fail_json(msg="Bad size specification of '%s'" % size)
 
@@ -545,10 +546,10 @@ def main():
             if tool:
                 if resizefs:
                     tool = '%s %s' % (tool, '--resizefs')
-		if size_operator:
-		    cmd = "%s %s -%s %s%s%s %s/%s %s" % (tool, test_opt, size_opt, size_operator, size, size_unit, vg, this_lv['name'], pvs)
-		else:
-		    cmd = "%s %s -%s %s%s %s/%s %s" % (tool, test_opt, size_opt, size, size_unit, vg, this_lv['name'], pvs)
+                if size_operator:
+                    cmd = "%s %s -%s %s%s%s %s/%s %s" % (tool, test_opt, size_opt, size_operator, size, size_unit, vg, this_lv['name'], pvs)
+                else:
+                    cmd = "%s %s -%s %s%s %s/%s %s" % (tool, test_opt, size_opt, size, size_unit, vg, this_lv['name'], pvs)
                 rc, out, err = module.run_command(cmd)
                 if "Reached maximum COW size" in out:
                     module.fail_json(msg="Unable to resize %s to %s%s" % (lv, size, size_unit), rc=rc, err=err, out=out)
