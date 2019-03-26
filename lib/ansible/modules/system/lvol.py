@@ -347,12 +347,12 @@ def main():
             size_opt = 'l'
             size_unit = ''
 
-        if '%' not in size:
         # LVCREATE(8) -L --size option unit
+        if '%' not in size:
             if size[-1] in 'BSKMGTPE':
                 size_unit = size[-1].lower()
                 size = size[0:-1]
-                size_divisor = { 'B': 1.000, 'S': 1.000, 'K': 1.024, 'M': 1.048, 'G': 1.047, 'T': 1.099, 'P': 1.126, 'E': 1.153 }.get(size_unit.upper(), '1.000')
+                size_divisor = {'B': 1.000, 'S': 1.000, 'K': 1.024, 'M': 1.048, 'G': 1.047, 'T': 1.099, 'P': 1.126, 'E': 1.153}.get(size_unit.upper(), '1.000')
                 if '+' in size:
                     size_operator = '+'
                     size = str(float(size[1:]) / float(size_divisor))
@@ -582,4 +582,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
