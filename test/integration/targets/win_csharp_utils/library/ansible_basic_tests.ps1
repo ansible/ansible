@@ -584,7 +584,8 @@ $tests = @{
                     option1 = 1
                 }
             }
-            warnings = @($expected_warnings)
+            # We have disabled the warning for now
+            #warnings = @($expected_warnings)
         }
         $actual | Assert-DictionaryEquals -Expected $expected
     }
@@ -1779,8 +1780,9 @@ test_no_log - Invoked with:
         $expected_warning += "Case insensitive matches were: ABC"
 
         $output.invocation | Assert-DictionaryEquals -Expected @{module_args = @{option_key = "ABC"}}
-        $output.warnings.Count | Assert-Equals -Expected 1
-        $output.warnings[0] | Assert-Equals -Expected $expected_warning
+        # We have disabled the warnings for now
+        #$output.warnings.Count | Assert-Equals -Expected 1
+        #$output.warnings[0] | Assert-Equals -Expected $expected_warning
     }
 
     "Case insensitive choice no_log" = {
@@ -1807,8 +1809,9 @@ test_no_log - Invoked with:
         $expected_warning += "Case insensitive matches were: VALUE_SPECIFIED_IN_NO_LOG_PARAMETER"
 
         $output.invocation | Assert-DictionaryEquals -Expected @{module_args = @{option_key = "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER"}}
-        $output.warnings.Count | Assert-Equals -Expected 1
-        $output.warnings[0] | Assert-Equals -Expected $expected_warning
+        # We have disabled the warnings for now
+        #$output.warnings.Count | Assert-Equals -Expected 1
+        #$output.warnings[0] | Assert-Equals -Expected $expected_warning
     }
 
     "Case insentitive choice as list" = {
@@ -1836,8 +1839,9 @@ test_no_log - Invoked with:
         $expected_warning += "Case insensitive matches were: AbC, jkl"
 
         $output.invocation | Assert-DictionaryEquals -Expected @{module_args = $complex_args}
-        $output.warnings.Count | Assert-Equals -Expected 1
-        $output.warnings[0] | Assert-Equals -Expected $expected_warning
+        # We have disabled the warnings for now
+        #$output.warnings.Count | Assert-Equals -Expected 1
+        #$output.warnings[0] | Assert-Equals -Expected $expected_warning
     }
 
     "Invalid choice" = {
