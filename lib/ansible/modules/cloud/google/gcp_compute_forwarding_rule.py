@@ -188,6 +188,14 @@ options:
       task and then set this target field to "{{ name-of-resource }}"'
     required: false
     version_added: 2.7
+  all_ports:
+    description:
+    - When the load balancing scheme is INTERNAL and protocol is TCP/UDP, omit `port`/`port_range`
+      and specify this field as `true` to allow packets addressed to any ports to
+      be forwarded to the backends configured with this forwarding rule.
+    required: false
+    type: bool
+    version_added: 2.8
   network_tier:
     description:
     - 'The networking tier used for configuring this address. This field can take
@@ -374,6 +382,13 @@ target:
   - This field is not used for internal load balancing.
   returned: success
   type: str
+allPorts:
+  description:
+  - When the load balancing scheme is INTERNAL and protocol is TCP/UDP, omit `port`/`port_range`
+    and specify this field as `true` to allow packets addressed to any ports to be
+    forwarded to the backends configured with this forwarding rule.
+  returned: success
+  type: bool
 networkTier:
   description:
   - 'The networking tier used for configuring this address. This field can take the
@@ -420,6 +435,7 @@ def main():
             ports=dict(type='list', elements='str'),
             subnetwork=dict(),
             target=dict(),
+            all_ports=dict(type='bool'),
             network_tier=dict(type='str', choices=['PREMIUM', 'STANDARD']),
             region=dict(required=True, type='str'),
         )
@@ -499,6 +515,7 @@ def resource_to_request(module):
         u'ports': module.params.get('ports'),
         u'subnetwork': replace_resource_dict(module.params.get(u'subnetwork', {}), 'selfLink'),
         u'target': replace_resource_dict(module.params.get(u'target', {}), 'selfLink'),
+        u'allPorts': module.params.get('all_ports'),
         u'networkTier': module.params.get('network_tier'),
     }
     return_vals = {}
@@ -579,6 +596,7 @@ def response_to_hash(module, response):
         u'ports': response.get(u'ports'),
         u'subnetwork': response.get(u'subnetwork'),
         u'target': response.get(u'target'),
+        u'allPorts': response.get(u'allPorts'),
         u'networkTier': module.params.get('network_tier'),
     }
 
