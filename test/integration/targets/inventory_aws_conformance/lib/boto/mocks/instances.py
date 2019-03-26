@@ -179,7 +179,7 @@ class InstanceBase(object):
     def __init__(self, stopped=False):
         # set common ignored attribute to make sure instances have identical tags and security groups
         self._ignore_security_groups = {
-            'sg-0e1d2bd02b45b712e': 'sgname-with-hyphens',
+            'sg-0e1d2bd02b45b712e': 'a-sgname-with-hyphens',
             'sg-ae5c262eb5c4d712e': 'name@with?invalid!chars'
         }
         self._ignore_tags = {

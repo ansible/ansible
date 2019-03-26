@@ -87,8 +87,8 @@ compose:
   ec2_placement: placement['availability_zone']
   ec2_ramdisk: ramdisk_id | default("")
   ec2_reason: state_transition_reason
-  ec2_security_group_ids: security_groups | map(attribute='group_id') | list |  join(',')
-  ec2_security_group_names: security_groups | map(attribute='group_name') | list |  join(',')
+  ec2_security_group_ids: security_groups | map(attribute='group_id') | list | sort | join(',')
+  ec2_security_group_names: security_groups | map(attribute='group_name') | list | sort | join(',')
   ec2_state: state['name']
   ec2_state_code: state['code']
   ec2_state_reason: state_reason['message'] if state_reason is defined else ""
