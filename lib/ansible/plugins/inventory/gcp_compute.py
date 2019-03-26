@@ -48,7 +48,7 @@ DOCUMENTATION = '''
                 - The type of credential used.
             required: True
             choices: ['application', 'serviceaccount', 'machineaccount']
-        service_account_file
+        service_account_file:
             description:
                 - The path of a Service Account JSON file if serviceaccount is selected as type.
             required: True
@@ -347,6 +347,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         if self.get_option('use_contrib_script_compatible_sanitization'):
             self._sanitize_group_name = self._legacy_script_compatible_group_sanitization
 
+        # setup parameters as expected by 'fake module class' to reuse module_utils w/o changing the API
         params = {
             'filters': self.get_option('filters'),
             'projects': self.get_option('projects'),
@@ -378,10 +379,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         if not cache or cache_needs_update:
             cached_data = {}
+            if not params['zones']:
+                params['zones'] = self._get_zones(params)
             for project in params['projects']:
                 cached_data[project] = {}
-                if not params['zones']:
-                    params['zones'] = self._get_zones(params)
                 for zone in params['zones']:
                     link = self.self_link(params)
                     resp = self.fetch_list(params, link, query)
