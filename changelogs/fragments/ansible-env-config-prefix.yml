@@ -1,0 +1,20 @@
+---
+minor_changes:
+- |
+  All environment variables defined by ansible now start with the `ANSIBLE_`
+  prefix.  The old environment vars still work for now.
+
+  The new environment vars added are:
+  - ANSIBLE_LIBVIRT_LXC_NOSECLABEL
+  - ANSIBLE_DISPLAY_SKIPPED_HOSTS
+  - ANSIBLE_NETWORK_GROUP_MODULES
+
+deprecated_features:
+- |
+  Ansible-defined environment variables not starting with `ANSIBLE_` have been
+  deprecated.  New names match the old name plus the `ANSIBLE_` prefix.
+
+  These environment variables have been deprecated:
+  - LIBVIRT_LXC_NOSECLABEL
+  - DISPLAY_SKIPPED_HOSTS
+  - NETWORK_GROUP_MODULES
