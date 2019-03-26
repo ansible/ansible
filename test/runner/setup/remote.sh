@@ -72,7 +72,6 @@ elif [ "${platform}" = "rhel" ]; then
             yum install -q -y \
                 gcc \
                 python-devel \
-                python-jinja2 \
                 python-virtualenv \
                 python2-cryptography \
             && break
