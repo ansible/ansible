@@ -1,38 +1,46 @@
+---
 ###
-# setup portstree if needed
-- name: silent install of subversion and ca root certs with pkgng
+# setup
+
+- name: check for existence of port directory
+  stat:
+    path: /usr/ports/www/p5-HTTP-Tiny
+  register: dir_www_p5_HTTP_Tiny
+
+- name: silent install of ca root certs with pkgng
   pkgng:
-    name: subversion,ca_root_nss
+    name: ca_root_nss
     state: present
-  
-- name: checkout a tested revision of the ports tree to make the tests less dependent on externals
-  subversion:
-    repo: https://svn.FreeBSD.org/ports/head
-    dest: /usr/ports
-    revision: 493256
-    force: yes
+  when: dir_www_p5_HTTP_Tiny.stat.exists == False
+
+- name: checkout ports tree if not yet done
+  command: svnlite co https://svn.FreeBSD.org/ports/head
+  args:
+    chdir: /usr/ports
+  when: dir_www_p5_HTTP_Tiny.stat.exists == False
+
 
 ###
 # test portmake absent
 
-- name: test removal of package tmux  not installed
+- name: test removal of package p5-HTTP-Tiny not installed
   portmake:
-    name: "sysutils/tmux"
+    name: "www/p5-HTTP-Tiny"
     state: "absent"
 
-- name: check absence of package tmux
-  command: pkg info tmux
+- name: check absence of package p5-HTTP-Tiny
+  command: pkg info p5-HTTP-Tiny
   register: pkg_info_out
   failed_when: pkg_info_out.rc == 0
 
-- name: test removal of package tmux not installed with unneded options
+- name: test removal of package p5-HTTP-Tiny not installed with unneded options
   portmake:
-    name: "sysutils/tmux"
+    name: "www/p5-HTTP-Tiny"
     state: "absent"
-    options_set: "BACKSPACE"
+    options_set: "COOKIE"
 
-- name: check absence of package tmux
-  command: pkg info tmux
+- name: check absence of package p5-HTTP-Tiny
+  command: pkg info p5-HTTP-Tiny
   register: pkg_info_out
   failed_when: pkg_info_out.rc == 0
 
@@ -45,26 +53,20 @@
     path: /etc/make.conf
     state: absent
 
-- name: set default python version for build to work...
-  lineinfile:
-    path: /etc/make.conf
-    line: 'DEFAULT_VERSIONS += python=3.6'
-    create: yes
-
-- name: install a port with options - tmux
+- name: install a port with options - p5-HTTP-Tiny
   portmake:
-    name: sysutils/tmux
-    options_set: "BACKSPACE"
-    options_unset: "EXAMPLES"
+    name: www/p5-HTTP-Tiny
+    options_set: "COOKIE"
+    options_unset: "HTTPS"
     state: "present"
 
-- name: check for added compile paramter of package tmux
-  shell: "pkg info tmux | grep BACKSPACE"
+- name: check for added compile paramter of package p5-HTTP-Tiny
+  shell: "pkg info p5-HTTP-Tiny | grep COOKIE"
   register: pkg_info_out
   failed_when: pkg_info_out.stdout.find("on") == -1
 
-- name: check compile option EXAMPLES is absent
-  shell: "pkg info tmux | grep 'EXAMPLES'"
+- name: check compile option HTTPS is absent
+  shell: "pkg info p5-HTTP-Tiny | grep 'HTTPS'"
   register: pkg_info_out
   failed_when: pkg_info_out.stdout.find("off") == -1
 
@@ -76,23 +78,23 @@
 
 - name: test installation of same package with an aditional option  and previous option saved in /etc/make.conf
   portmake:
-    name: sysutils/tmux
+    name: www/p5-HTTP-Tiny
     state: "present"
-    options_set: "LIBEVENT_STATIC"
+    options_set: "IO_SOCKET_IP"
     disable_vulnerabilities: true
     
 - name: check old compile paramter of package
-  shell: "pkg info tmux | grep 'BACKSPACE'"
+  shell: "pkg info p5-HTTP-Tiny | grep 'COOKIE'"
   register: pkg_info_out
   failed_when: pkg_info_out.stdout.find("on") == -1
 
-- name: check compile option EXAMPLES is absent
-  shell: "pkg info tmux | grep 'EXAMPLES'"
+- name: check compile option HTTPS is absent
+  shell: "pkg info p5-HTTP-Tiny | grep 'HTTPS'"
   register: pkg_info_out
   failed_when: pkg_info_out.stdout.find("off") == -1
 
 - name: check new compile paramter of package
-  shell: "pkg info tmux | grep 'LIBEVENT_STATIC'"
+  shell: "pkg info p5-HTTP-Tiny | grep 'IO_SOCKET_IP'"
   register: pkg_info_out
   failed_when: pkg_info_out.stdout.find("on") == -1
 
@@ -104,15 +106,15 @@
 ###
 # tests portmake absent removing pkg and make.conf lines
 
-- name: uninstall tmux with unecessary options
+- name: uninstall p5-HTTP-Tiny with unecessary options
   portmake:
-    name: sysutils/tmux
-    options_set: "BACKSPACE"
-    options_unset: "EXAMPLES DOCS"
+    name: www/p5-HTTP-Tiny
+    options_set: "COOKIE"
+    options_unset: "HTTPS IO_SOCKET_IP"
     state: "absent"
     disable_vulnerabilities: true
     
-- name: check all options in make.conf are removed for tmux
-  command: "grep 'sysutils_tmux_' /etc/make.conf"
+- name: check all options in make.conf are removed for p5-HTTP-Tiny
+  command: "grep 'sysutils_p5-HTTP-Tiny_' /etc/make.conf"
   register: grep_makeconf_out
   failed_when: grep_makeconf_out.rc == 0
