@@ -448,8 +448,7 @@ class ModuleDepFinder(ast.NodeVisitor):
                 py_mod = tuple(py_mod.split('.'))
                 self.submodules.add(py_mod)
             elif alias.name.startswith('ansible_collections.'):
-                # keep 'a' as a sentinel prefix to trigger collection-loaded MU path
-                # FIXME: maybe make this a fancier type or use a reserved explicit sentinel instead?
+                # keep 'ansible_collections.' as a sentinel prefix to trigger collection-loaded MU path
                 self.submodules.add(tuple(alias.name.split('.')))
         self.generic_visit(node)
 
@@ -616,7 +615,7 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
             # HACK: maybe surface collection dirs in here and use existing find_module code?
             normalized_name = py_module_name
             normalized_data = module_info
-            normalized_path = '/'.join(py_module_name)
+            normalized_path = os.path.join(*py_module_name)
             py_module_cache[normalized_name] = (normalized_data, normalized_path)
             normalized_modules.add(normalized_name)
 
@@ -627,7 +626,7 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
                 accumulated_pkg_name = accumulated_pkg_name + (pkg,)
                 normalized_name = accumulated_pkg_name + ('__init__',)
                 if normalized_name not in py_module_cache:
-                    normalized_path = '/'.join(accumulated_pkg_name)
+                    normalized_path = os.path.join(*accumulated_pkg_name)
                     # HACK: possibly preserve some of the actual package file contents; problematic for extend_paths and others though?
                     normalized_data = ''
                     py_module_cache[normalized_name] = (normalized_data, normalized_path)
@@ -662,7 +661,7 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
                     # a python package
                     normalized_name = py_module_name + ('__init__',)
                     if normalized_name not in py_module_names:
-                        normalized_path = os.path.join(os.path.join(module_info[1], '__init__.py'))
+                        normalized_path = os.path.join(module_info[1], '__init__.py')
                         normalized_data = _slurp(normalized_path)
                         py_module_cache[normalized_name] = (normalized_data, normalized_path)
                         normalized_modules.add(normalized_name)
