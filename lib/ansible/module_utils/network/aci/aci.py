@@ -245,12 +245,12 @@ class ACIModule(object):
                 self.module.fail_json(msg="The provided private key file does not appear to exist. Is it a filename?")
             try:
                 with open(self.params['private_key'], 'r') as fh:
-                    private_key = fh.read()
+                    private_key_content = fh.read()
             except Exception:
                 self.module.fail_json(msg="Cannot open private key file '%s'." % self.params['private_key'])
             if private_key.startswith('-----BEGIN PRIVATE KEY-----'):
                 try:
-                    sig_key = load_privatekey(FILETYPE_PEM, private_key)
+                    sig_key = load_privatekey(FILETYPE_PEM, private_key_content)
                 except Exception:
                     self.module.fail_json(msg="Cannot load private key file '%s'." % self.params['private_key'])
             elif private_key.startswith('-----BEGIN CERTIFICATE-----'):
