@@ -211,7 +211,7 @@ class NetconfBase(AnsiblePlugin):
             raise ValueError('rpc_command value must be provided')
         req = fromstring(rpc_command)
         resp = self.m.dispatch(req, source=source, filter=filter)
-        return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
+        return resp.data_xml if resp.data_ele else resp.xml
 
     @ensure_connected
     def lock(self, target="candidate"):
