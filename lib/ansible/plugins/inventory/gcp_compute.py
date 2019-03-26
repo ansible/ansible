@@ -383,7 +383,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 params['zones'] = self._get_zones(params)
             for project in params['projects']:
                 cached_data[project] = {}
+                params['project'] = project
                 for zone in params['zones']:
+                    params['zone'] = zone
                     link = self.self_link(params)
                     resp = self.fetch_list(params, link, query)
                     self._add_hosts(resp.get('items'), config_data)
