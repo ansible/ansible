@@ -221,6 +221,9 @@ Noteworthy module changes
 
     #> ansible -m include_role -a 'name=myrole' all
 
+* Prior to Ansible 2.7.10, the ``replace`` module did the opposite of what was intended when using the ``before`` and ``after`` options together. This now works properly but may require changes to tasks.
+
+
 Plugins
 =======
 
