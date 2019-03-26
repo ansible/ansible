@@ -4,8 +4,6 @@ set -eu
 
 platform="$1"
 
-env
-
 cd ~/
 
 if [ "${platform}" = "freebsd" ]; then
