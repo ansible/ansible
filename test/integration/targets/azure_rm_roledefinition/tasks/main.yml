@@ -51,7 +51,7 @@
       - output.changed
 
 - name: Get facts by name
-  azure_rm_roledefinition_info:
+  azure_rm_roledefinition_facts:
     scope: "/subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group }}"
     type: custom
   register: facts
@@ -61,7 +61,7 @@
     - facts['roledefinitions'] | length > 1
 
 - name: Get facts
-  azure_rm_roledefinition_info:
+  azure_rm_roledefinition_facts:
     scope: "/subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group }}"
     role_name: "{{ role_name }}"
   register: facts
@@ -119,7 +119,7 @@
       - output.changed
 
 - name: Get role definition facts
-  azure_rm_roledefinition_info:
+  azure_rm_roledefinition_facts:
     role_name: "{{ role_name }}"
     scope: "/subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group }}"
     type: custom
@@ -157,7 +157,7 @@
       - output.changed
 
 - name: Get facts
-  azure_rm_roleassignment_info:
+  azure_rm_roleassignment_facts:
     scope: "/subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group }}"
     assignee: "{{ principal_id }}"
   register: facts

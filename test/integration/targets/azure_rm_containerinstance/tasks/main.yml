@@ -100,7 +100,7 @@
   register: output
 
 - name: Gather facts for single Container Instance
-  azure_rm_containerinstance_info:
+  azure_rm_containerinstance_facts:
     resource_group: "{{ resource_group }}"
     name: "aci{{ resource_group | hash('md5') | truncate(7, True, '') }}sec"
   register: output 
@@ -124,7 +124,7 @@
       - output.containerinstances[0]['restart_policy'] == 'on_failure'
 
 - name: Gather facts for all Container Instances in the resource group
-  azure_rm_containerinstance_info:
+  azure_rm_containerinstance_facts:
     resource_group: "{{ resource_group }}"
   register: output
 
