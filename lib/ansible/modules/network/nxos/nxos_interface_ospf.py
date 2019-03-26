@@ -71,8 +71,7 @@ options:
         true - (enable) Prevent OSPF from establishing an adjacency or
                        sending routing updates on this interface.
         false - (disable) Override global 'passive-interface default' for this interface.
-        default - Remove existing (enabled or disabled) passive-interface setting.
-    choices: ['true', 'false', 'default']
+    type: bool
   network:
     description:
       - Specifies interface ospf network type. Valid values are 'point-to-point' or 'broadcast'.
@@ -316,7 +315,7 @@ def state_present(module, existing, proposed, candidate):
         elif value is False:
             commands.append('no {0}'.format(key))
         elif value == 'default':
-            if existing_commands.get(key) or 'ip ospf passive-interface' in key and existing_commands.get(key) is not None:
+            if existing_commands.get(key):
                 commands.extend(get_default_commands(existing, proposed,
                                                      existing_commands, key,
                                                      module))
@@ -392,7 +391,7 @@ def main():
         cost=dict(required=False, type='str'),
         hello_interval=dict(required=False, type='str'),
         dead_interval=dict(required=False, type='str'),
-        passive_interface=dict(required=False, type='str', choices=['true', 'false', 'default']),
+        passive_interface=dict(required=False, type='bool'),
         network=dict(required=False, type='str', choices=['broadcast', 'point-to-point']),
         message_digest=dict(required=False, type='bool'),
         message_digest_key_id=dict(required=False, type='str'),

@@ -60,25 +60,29 @@ class TestNxosInterfaceOspfModule(TestNxosModule):
     def test_nxos_interface_ospf_passive(self):
         # default -> True
         set_module_args(dict(interface='ethernet1/33', ospf=1, area=1, passive_interface=True))
-        self.execute_module(changed=True, commands=['interface Ethernet1/33', 'ip router ospf 1 area 0.0.0.1',
+        self.execute_module(changed=True, commands=['interface Ethernet1/33',
+                                                    'ip router ospf 1 area 0.0.0.1',
                                                     'ip ospf passive-interface'])
         # default -> False
         set_module_args(dict(interface='ethernet1/33', ospf=1, area=1, passive_interface=False))
-        self.execute_module(changed=True, commands=['interface Ethernet1/33', 'ip router ospf 1 area 0.0.0.1',
+        self.execute_module(changed=True, commands=['interface Ethernet1/33',
+                                                    'ip router ospf 1 area 0.0.0.1',
                                                     'no ip ospf passive-interface'])
         # True -> False
         set_module_args(dict(interface='ethernet1/34', ospf=1, area=1, passive_interface=False))
         self.execute_module(changed=True, commands=['interface Ethernet1/34',
                                                     'no ip ospf passive-interface'])
-        # True -> default
-        set_module_args(dict(interface='ethernet1/34', ospf=1, area=1, passive_interface='default'))
+        # True -> default (absent)
+        set_module_args(dict(interface='ethernet1/34', ospf=1, area=1, state='absent'))
         self.execute_module(changed=True, commands=['interface Ethernet1/34',
+                                                    'no ip router ospf 1 area 0.0.0.1',
                                                     'default ip ospf passive-interface'])
         # False -> True
         set_module_args(dict(interface='ethernet1/35', ospf=1, area=1, passive_interface=True))
         self.execute_module(changed=True, commands=['interface Ethernet1/35',
                                                     'ip ospf passive-interface'])
-        # False -> default
-        set_module_args(dict(interface='ethernet1/35', ospf=1, area=1, passive_interface='default'))
+        # False -> default (absent)
+        set_module_args(dict(interface='ethernet1/35', ospf=1, area=1, state='absent'))
         self.execute_module(changed=True, commands=['interface Ethernet1/35',
+                                                    'no ip router ospf 1 area 0.0.0.1',
                                                     'default ip ospf passive-interface'])
