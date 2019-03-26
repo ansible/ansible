@@ -47,6 +47,10 @@ options:
         be present or absent on remote device.
     default: present
     choices: ['present', 'absent']
+  updown:
+    description:
+      - The administrative state of the Layer-3 interface. It sets the state to be either Up
+        or Down.
 extends_documentation_fragment: ios
 """
 
@@ -177,7 +181,8 @@ def map_obj_to_commands(updates, module):
         ipv4 = w['ipv4']
         ipv6 = w['ipv6']
         state = w['state']
-
+        updown = w['updown']
+        
         interface = 'interface ' + name
         commands.append(interface)
 
@@ -200,6 +205,11 @@ def map_obj_to_commands(updates, module):
                         commands.append('no ipv6 address dhcp')
 
         elif state == 'present':
+            if updown == 'up':
+                commands.append('no shutdown')
+            elif updown == 'down':
+                commands.append('shutdown')
+                
             if ipv4:
                 if obj_in_have is None or obj_in_have.get('ipv4') is None or ipv4 != obj_in_have['ipv4']:
                     address = ipv4.split('/')
@@ -239,7 +249,8 @@ def map_config_to_obj(module):
             'name': item,
             'ipv4': ipv4,
             'ipv6': parse_config_argument(configobj, item, 'ipv6 address'),
-            'state': 'present'
+            'state': 'present',
+            'updown': updown
         }
         instances.append(obj)
 
@@ -263,7 +274,8 @@ def map_params_to_obj(module):
             'name': module.params['name'],
             'ipv4': module.params['ipv4'],
             'ipv6': module.params['ipv6'],
-            'state': module.params['state']
+            'state': module.params['state'],
+            'updown': module.params['updown']
         })
 
         validate_param_values(module, obj)
@@ -279,7 +291,9 @@ def main():
         ipv4=dict(),
         ipv6=dict(),
         state=dict(default='present',
-                   choices=['present', 'absent'])
+                   choices=['present', 'absent']),
+        updown=dict(default='up',
+                   choices=['up', 'down'])
     )
 
     aggregate_spec = deepcopy(element_spec)
