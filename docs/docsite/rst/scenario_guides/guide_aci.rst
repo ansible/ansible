@@ -204,10 +204,14 @@ Every Ansible ACI module accepts the following parameters that influence the mod
         Password for ``username`` to log on to the APIC, using password-based authentication.
 
     private_key
-        Private key for ``username`` to log on to APIC, using signature-based authentication. *New in version 2.5*
+        Private key for ``username`` to log on to APIC, using signature-based authentication.
+        This could either be the raw private key content (include header/footer) or a file that stores the key content.
+        *New in version 2.5*
 
     certificate_name
-        Name of the certificate in the ACI Web GUI. (Defaults to ``private_key`` file base name) *New in version 2.5*
+        Name of the certificate in the ACI Web GUI.
+        This defaults to either the ``username`` value or the ``private_key`` file base name).
+        *New in version 2.5*
 
     timeout
         Timeout value for socket-level communication.
@@ -366,6 +370,19 @@ You need the following parameters with your ACI module(s) for it to work:
     username: admin
     private_key: pki/admin.key
     certificate_name: admin  # This could be left out !
+
+or you can use the private key content (e.g. when using Vault to store the private key):
+
+.. code-block:: yaml
+   :emphasize-lines: 2,3
+
+    username: admin
+    private_key: |
+        -----BEGIN PRIVATE KEY-----
+        <<your private key content>>
+        -----END PRIVATE KEY-----
+    certificate_name: admin  # This could be left out !
+
 
 .. hint:: If you use a certificate name in ACI that matches the private key's basename, you can leave out the ``certificate_name`` parameter like the example above.
 
