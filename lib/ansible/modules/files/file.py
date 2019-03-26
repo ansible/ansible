@@ -187,6 +187,14 @@ EXAMPLES = r'''
     path: /etc/another_file
     state: file
     access_time: '{{ "%Y%m%d%H%M.%S" | strftime(stat_var.stat.atime) }}'
+    
+- name: Recursively change ownership of a directory
+  file:
+    path: /etc/foo
+    recurse: yes
+    owner: foo
+    group: foo
+
 '''
 RETURN = r'''
 
