@@ -1,3 +1,5 @@
+.. _playbooks_blocks:
+
 Blocks
 ======
 
@@ -30,17 +32,18 @@ Blocks allow for logical grouping of tasks and in play error handling. Most of w
       when: ansible_facts['distribution'] == 'CentOS'
       become: true
       become_user: root
+      ignore_errors: yes
 
 In the example above, each of the 3 tasks will be executed after appending the `when` condition from the block
 and evaluating it in the task's context. Also they inherit the privilege escalation directives enabling "become to root"
-for all the enclosed tasks.
+for all the enclosed tasks. Finally, ``ignore_errors: yes`` will continue executing the playbook even if some of the tasks fails. 
 
 Names for tasks within blocks have been available since Ansible 2.3. We recommend using names in all tasks, within blocks or elsewhere, for better visibility into the tasks being executed when you run the playbook.
 
 .. _block_error_handling:
 
-Error Handling
-``````````````
+Blocks error handling
+`````````````````````
 
 Blocks also introduce the ability to handle errors in a way similar to exceptions in most programming languages.
 Blocks only deal with 'failed' status of a task. A bad task definition, an undefined variable or an unreachable host are not `rescuable`  errors.
