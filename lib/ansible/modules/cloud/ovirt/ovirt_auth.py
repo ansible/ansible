@@ -98,14 +98,14 @@ options:
 
 requirements:
   - python >= 2.7
-  - ovirt-engine-sdk-python >= 4.2.4
+  - ovirt-engine-sdk-python >= 4.3.0
 notes:
   - "Everytime you use ovirt_auth module to obtain ticket, you need to also revoke the ticket,
      when you no longer need it, otherwise the ticket would be revoked by engine when it expires.
      For an example of how to achieve that, please take a look at I(examples) section."
   - "In order to use this module you have to install oVirt/RHV Python SDK.
      To ensure it's installed with correct version you can create the following task:
-     I(pip: name=ovirt-engine-sdk-python version=4.2.4)"
+     I(pip: name=ovirt-engine-sdk-python version=4.3.0)"
   - "Note that in oVirt/RHV 4.1 if you want to use a user which is not administrator
      you must enable the I(ENGINE_API_FILTER_BY_DEFAULT) variable in engine. In
      oVirt/RHV 4.2 and later it's enabled by default."
