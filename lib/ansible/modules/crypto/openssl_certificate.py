@@ -691,6 +691,14 @@ class Certificate(crypto_utils.OpenSSLObject):
 
         return True
 
+
+class CertificateAbsent(Certificate):
+    def __init__(self, module):
+        super(CertificateAbsent, self).__init__(module, 'cryptography')  # backend doesn't matter
+
+    def generate(self, module):
+        pass
+
     def dump(self, check_mode=False):
         # Use only for absent
 
@@ -1684,8 +1692,7 @@ def main():
     )
 
     if module.params['state'] == 'absent':
-        # backend doesn't matter
-        certificate = Certificate(module, 'cryptography')
+        certificate = CertificateAbsent(module)
 
     else:
         if module.params['provider'] != 'assertonly' and module.params['csr_path'] is None:
