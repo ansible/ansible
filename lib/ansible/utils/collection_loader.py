@@ -263,7 +263,7 @@ def get_collection_role_path(role_name, collection_list=None):
 
     if match:
         grps = match.groups()
-        collection_list = ['.'.join([grps[0], grps[1]])]
+        collection_list = ['.'.join(grps[:2])]
         role = grps[2]
     elif not collection_list:
         return None  # not a FQ role and no collection search list spec'd, nothing to do
