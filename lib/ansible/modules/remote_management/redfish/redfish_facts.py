@@ -42,6 +42,12 @@ options:
     required: true
     description:
       - Password for authentication with OOB controller
+  timeout:
+    description:
+      - Timeout in seconds for URL requests to OOB controller
+    default: 10
+    type: int
+    version_added: '2.7.11'
 
 author: "Jose Delarosa (github: jose-delarosa)"
 '''
@@ -55,13 +61,14 @@ EXAMPLES = '''
       user: "{{ user }}"
       password: "{{ password }}"
 
-  - name: Get fan inventory
+  - name: Get fan inventory with a timeout of 20 seconds
     redfish_facts:
       category: Chassis
       command: GetFanInventory
       baseuri: "{{ baseuri }}"
       user: "{{ user }}"
       password: "{{ password }}"
+      timeout: 20
 
   - name: Get default inventory information
     redfish_facts:
@@ -149,6 +156,7 @@ def main():
             baseuri=dict(required=True),
             user=dict(required=True),
             password=dict(required=True, no_log=True),
+            timeout=dict(type='int', default=10)
         ),
         supports_check_mode=False
     )
@@ -157,10 +165,13 @@ def main():
     creds = {'user': module.params['user'],
              'pswd': module.params['password']}
 
+    # timeout
+    timeout = module.params['timeout']
+
     # Build root URI
     root_uri = "https://" + module.params['baseuri']
     rf_uri = "/redfish/v1"
-    rf_utils = RedfishUtils(creds, root_uri)
+    rf_utils = RedfishUtils(creds, root_uri, timeout)
 
     # Build Category list
     if "all" in module.params['category']:

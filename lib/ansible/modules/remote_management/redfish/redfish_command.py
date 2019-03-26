@@ -63,6 +63,12 @@ options:
     required: false
     description:
       - bootdevice when setting boot configuration
+  timeout:
+    description:
+      - Timeout in seconds for URL requests to OOB controller
+    default: 10
+    type: int
+    version_added: '2.7.11'
 
 author: "Jose Delarosa (github: jose-delarosa)"
 '''
@@ -116,13 +122,14 @@ EXAMPLES = '''
       userid: "{{ userid }}"
       userpswd: "{{ userpswd }}"
 
-  - name: Clear Manager Logs
+  - name: Clear Manager Logs with a timeout of 20 seconds
     redfish_command:
       category: Manager
       command: ClearLogs
       baseuri: "{{ baseuri }}"
       user: "{{ user }}"
       password: "{{ password }}"
+      timeout: 20
 '''
 
 RETURN = '''
@@ -163,6 +170,7 @@ def main():
             userpswd=dict(no_log=True),
             userrole=dict(),
             bootdevice=dict(),
+            timeout=dict(type='int', default=10)
         ),
         supports_check_mode=False
     )
@@ -180,10 +188,13 @@ def main():
             'userpswd': module.params['userpswd'],
             'userrole': module.params['userrole']}
 
+    # timeout
+    timeout = module.params['timeout']
+
     # Build root URI
     root_uri = "https://" + module.params['baseuri']
     rf_uri = "/redfish/v1/"
-    rf_utils = RedfishUtils(creds, root_uri)
+    rf_utils = RedfishUtils(creds, root_uri, timeout)
 
     # Check that Category is valid
     if category not in CATEGORY_COMMANDS_ALL:
