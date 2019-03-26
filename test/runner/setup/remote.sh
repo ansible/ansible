@@ -75,15 +75,6 @@ fi
 
 if [ "${platform}" = "freebsd" ] || [ "${platform}" = "osx" ]; then
     pip install virtualenv
-
-    # Tests assume loopback addresses other than 127.0.0.1 will work.
-    # Add aliases for loopback addresses used by tests.
-
-    for i in 3 4 254; do
-        ifconfig lo0 alias "127.0.0.${i}" up
-    done
-
-    ifconfig lo0
 fi
 
 # Since tests run as root, we also need to be able to ssh to localhost as root.
