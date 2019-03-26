@@ -616,3 +616,109 @@ groupings:
   - k8s
   kubevirt_vm:
   - k8s
+  os_auth:
+  - os
+  os_client_config:
+  - os
+  os_coe_cluster:
+  - os
+  os_coe_cluster_template:
+  - os
+  os_flavor_facts:
+  - os
+  os_floating_ip:
+  - os
+  os_group:
+  - os
+  os_image:
+  - os
+  os_image_facts:
+  - os
+  os_ironic:
+  - os
+  os_ironic_inspect:
+  - os
+  os_ironic_node:
+  - os
+  os_keypair:
+  - os
+  os_keystone_domain:
+  - os
+  os_keystone_domain_facts:
+  - os
+  os_keystone_endpoint:
+  - os
+  os_keystone_role:
+  - os
+  os_keystone_service:
+  - os
+  os_listener:
+  - os
+  os_loadbalancer:
+  - os
+  os_member:
+  - os
+  os_network:
+  - os
+  os_networks_facts:
+  - os
+  os_nova_flavor:
+  - os
+  os_nova_host_aggregate:
+  - os
+  os_object:
+  - os
+  os_pool:
+  - os
+  os_port:
+  - os
+  os_port_facts:
+  - os
+  os_project:
+  - os
+  os_project_access:
+  - os
+  os_project_facts:
+  - os
+  os_quota:
+  - os
+  os_recordset:
+  - os
+  os_router:
+  - os
+  os_security_group:
+  - os
+  os_security_group_rule:
+  - os
+  os_server:
+  - os
+  os_server_action:
+  - os
+  os_server_facts:
+  - os
+  os_server_group:
+  - os
+  os_server_metadata:
+  - os
+  os_server_volume:
+  - os
+  os_stack:
+  - os
+  os_subnet:
+  - os
+  os_subnets_facts:
+  - os
+  os_user:
+  - os
+  os_user_facts:
+  - os
+  os_user_group:
+  - os
+  os_user_role:
+  - os
+  os_volume:
+  - os
+  os_volume_snapshot:
+  - os
+  os_zone:
+  - os
