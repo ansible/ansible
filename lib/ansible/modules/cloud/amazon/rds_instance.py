@@ -875,6 +875,8 @@ def get_changing_options_with_inconsistent_keys(modify_params, instance, purge_c
         if option == 'ProcessorFeatures' and desired_option == []:
             changing_params['UseDefaultProcessorFeatures'] = True
         elif option == 'CloudwatchLogsExportConfiguration':
+            current_option = set(current_option.get('LogTypesToEnable', []))
+            desired_option = set(desired_option)
             format_option = {'EnableLogTypes': [], 'DisableLogTypes': []}
             format_option['EnableLogTypes'] = list(desired_option.difference(current_option))
             if purge_cloudwatch_logs:
