@@ -6,6 +6,14 @@ platform="$1"
 
 cd ~/
 
+install_pip () {
+    if ! pip --version --disable-pip-version-check 2>/dev/null; then
+        curl --silent --show-error https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py
+        python /tmp/get-pip.py --disable-pip-version-check --quiet
+        rm /tmp/get-pip.py
+    fi
+}
+
 if [ "${platform}" = "freebsd" ]; then
     while true; do
         env ASSUME_ALWAYS_YES=YES pkg bootstrap && \
@@ -23,7 +31,7 @@ if [ "${platform}" = "freebsd" ]; then
         sleep 10
     done
 
-    pip --version 2>/dev/null || curl --silent --show-error https://bootstrap.pypa.io/get-pip.py | python
+    install_pip
 
     if ! grep '^PermitRootLogin yes$' /etc/ssh/sshd_config > /dev/null; then
         sed -i '' 's/^# *PermitRootLogin.*$/PermitRootLogin yes/;' /etc/ssh/sshd_config
@@ -72,7 +80,7 @@ elif [ "${platform}" = "rhel" ]; then
             sleep 10
         done
 
-        pip --version 2>/dev/null || curl --silent --show-error https://bootstrap.pypa.io/get-pip.py | python
+        install_pip
     fi
 elif [ "${platform}" = "osx" ]; then
     while true; do
