@@ -319,6 +319,8 @@ class TaskExecutor:
         no_log = False
         items_len = len(items)
         for item_index, item in enumerate(items):
+            task_vars['ansible_loop_var'] = loop_var
+
             task_vars[loop_var] = item
             if index_var:
                 task_vars[index_var] = item_index
@@ -376,6 +378,7 @@ class TaskExecutor:
             # now update the result with the item info, and append the result
             # to the list of results
             res[loop_var] = item
+            res['ansible_loop_var'] = loop_var
             if index_var:
                 res[index_var] = item_index
             if extended:
