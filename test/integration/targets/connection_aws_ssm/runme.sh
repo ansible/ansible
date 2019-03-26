@@ -2,18 +2,14 @@
 
 set -eux
 
-CMD_ARGS=$*
+CMD_ARGS=("$@")
 
 # Destroy Environment
 cleanup() {
 
     cd ../connection_aws_ssm
 
-    # As mentioned at last exception on link
-    # https://github.com/koalaman/shellcheck/wiki/Sc2086
-    # disabling shellcheck
-    # shellcheck disable=SC2086
-    ansible-playbook -c local aws_ssm_integration_test_teardown.yml $CMD_ARGS
+    ansible-playbook -c local aws_ssm_integration_test_teardown.yml "${CMD_ARGS[@]}"
 
 }
 
