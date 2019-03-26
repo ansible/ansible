@@ -18,7 +18,7 @@ short_description: Manages UCS Organizations for UCS Manager
 
 description:
   - Manages UCS Organizations for UCS Manager.
-  - Examples can be used with the L(UCS Platform Emulator, http://cs.co/ucspe).
+  - Examples can be used with the L(UCS Platform Emulator, https://community.cisco.com/t5/unified-computing-system/ucs-platform-emulator-downloads-ucspe-3-2-3epe1-ucspe-3-0-2cpe1/ta-p/3648177).
 
 extends_documentation_fragment: ucs
 
@@ -171,7 +171,7 @@ def main():
 
     kwargs = dict()
 
-    if module.params['description'] != None:
+    if module.params['description'] is not None:
         kwargs['descr'] = module.params['description']
 
     try:
@@ -179,7 +179,7 @@ def main():
         dn = parent_org_dn + '/org-' + module.params['org_name']
 
         mo = ucs.login_handle.query_dn(dn)
-        
+
         # Determine state change
         if mo:
             # Object exists, if it should exist has anything changed?
@@ -195,7 +195,7 @@ def main():
 
         # Object exists but should not, that is a change
         if mo and requested_state == 'absent':
-                changed = True
+            changed = True
 
         # Apply state if not check_mode
         if changed and not module.check_mode:
@@ -204,7 +204,7 @@ def main():
             else:
                 kwargs['parent_mo_or_dn'] = parent_org_dn
                 kwargs['name'] = module.params['org_name']
-                if module.params['description'] != None:
+                if module.params['description'] is not None:
                     kwargs['descr'] = module.params['description']
 
                 mo = OrgOrg(**kwargs)
