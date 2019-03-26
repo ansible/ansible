@@ -100,15 +100,15 @@ compose:
   ansible_host: networkInterfaces[0].accessConfigs[0].natIP
 '''
 
+import json
+
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils._text import to_native
 from ansible.module_utils.gcp_utils import GcpSession, navigate_hash, GcpRequestException
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
-import json
 
 
-# The mappings give an array of keys to get from the filter name to the value
-# returned by boto3's GCE describe_instances method.
+# Mocking a module to reuse module_utils
 class GcpMockModule(object):
     def __init__(self, params):
         self.params = params
