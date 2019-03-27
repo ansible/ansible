@@ -724,8 +724,10 @@ class ContainerManager(DockerBaseClass):
                 for container in self.project.client.containers(
                     all=False,
                     filters={
-                        'label': ['{0}={1}'.format(LABEL_PROJECT, self.project.name),
-                        '{0}={1}'.format(LABEL_ONE_OFF, "False")],
+                        'label': [
+                            '{0}={1}'.format(LABEL_PROJECT, self.project.name),
+                            '{0}={1}'.format(LABEL_ONE_OFF, "False")
+                        ],
                     }
                 )
             ]))
