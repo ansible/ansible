@@ -57,8 +57,12 @@ PERMS_RE = re.compile(r'[^rwxXstugo]')
 _PERM_BITS = 0o7777          # file mode permission bits
 _EXEC_PERM_BITS = 0o0111     # execute permission bits
 _DEFAULT_PERM = 0o0666       # default file permission bits
-filelock = fcntl.flock
 
+# Ensure we use flock on e.g. FreeBSD, MacOSX and Solaris
+if sys.platform.startswith('linux'):
+    filelock = fcntl.lockf
+else:
+    filelock = fcntl.flock
 
 def is_executable(path):
     # This function's signature needs to be repeated
@@ -117,7 +121,7 @@ class LockTimeout(Exception):
 @contextmanager
 def open_locked(path, lock_timeout=15):
     '''
-    Context managed for opening files with lock acquisition
+    Context manager for opening files with lock acquisition
 
     :kw path: Path (file) to lock
     :kw lock_timeout:
@@ -134,11 +138,9 @@ def open_locked(path, lock_timeout=15):
 
 def lock(path, lock_timeout=15):
     '''
-    Set lock on given path via fcntl.flock(), note that using
-    locks does not guarantee exclusiveness unless all accessing
-    processes honor locks. Currently locking is implemented using
-    fcntl.flock, which may have issues on NFS with older Linux kernels
-    (< 2.6.5). Currently only tested for Linux.
+    Set lock on given path via fcntl.lockf() (on linux) and fcntl.flock() on bsd's,
+    note that using locks does not guarantee exclusiveness unless all accessing
+    processes honor locks.
 
     :kw path: Path (file) to lock
     :kw lock_timeout:
@@ -175,16 +177,3 @@ def lock(path, lock_timeout=15):
                 continue
 
         raise LockTimeout('Waited {0} seconds for lock on {1}'.format(total_wait, path))
-
-
-def unlock(fd):
-    '''
-    Make sure lock file is available for everyone and Unlock the file descriptor
-    locked by set_lock
-
-    :kw fd: File descriptor of file to unlock
-    '''
-    try:
-        filelock(fd, fcntl.LOCK_UN)
-    except ValueError:  # File was not opened, let context manager fail gracefully
-        pass
