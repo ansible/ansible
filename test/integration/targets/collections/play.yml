@@ -169,10 +169,16 @@
     systestmodule:
     register: systestmodule_out
 
+  # ensure we're looking up actions properly
+  - name: unqualified action test
+    plugin_lookup:
+    register: pluginlookup_out
+
   - assert:
       that:
       - testmodule_out.source == 'user'
       - systestmodule_out.source == 'sys'
+      - pluginlookup_out.collection_list == ['testns.testcoll', 'testns.coll_in_sys', 'testns.contentadj', 'ansible.legacy']
 
 # FIXME: this won't work until collections list gets passed through task templar
 #  - name: exercise unqualified filters/tests/lookups
