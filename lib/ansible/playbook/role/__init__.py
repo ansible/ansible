@@ -27,7 +27,7 @@ from ansible.module_utils.common._collections_compat import Container, Mapping, 
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.become import Become
-from ansible.playbook.collection import Collection
+from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.role.metadata import RoleMetadata
@@ -92,7 +92,7 @@ def hash_params(params):
     return frozenset((params,))
 
 
-class Role(Base, Become, Conditional, Taggable, Collection):
+class Role(Base, Become, Conditional, Taggable, CollectionSearch):
 
     _delegate_to = FieldAttribute(isa='string')
     _delegate_facts = FieldAttribute(isa='bool')

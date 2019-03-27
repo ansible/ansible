@@ -8,7 +8,7 @@ from ansible.module_utils.six import string_types
 from ansible.playbook.attribute import FieldAttribute
 
 
-class Collection:
+class CollectionSearch:
     # this needs to be populated before we can resolve tasks/roles/etc
     _collections = FieldAttribute(isa='list', listof=string_types, priority=100)
 
