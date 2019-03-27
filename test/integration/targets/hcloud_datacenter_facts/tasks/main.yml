@@ -1,0 +1,36 @@
+# Copyright: (c) 2019, Hetzner Cloud GmbH <info@hetzner-cloud.de>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: test gather hcloud datacenter facts
+  hcloud_datacenter_facts:
+
+- name: verify test gather hcloud datacenter facts
+  assert:
+    that:
+      - ansible_facts.hcloud_datacenter_facts| list | count == 3
+
+- name: test gather hcloud datacenter facts in check mode
+  hcloud_datacenter_facts:
+  check_mode: yes
+
+- name: verify test gather hcloud datacenter facts in check mode
+  assert:
+    that:
+      - ansible_facts.hcloud_datacenter_facts| list | count == 3
+
+
+- name: test gather hcloud datacenter facts with correct name
+  hcloud_datacenter_facts:
+    name: "{{hcloud_datacenter_name}}"
+- name: verify test gather hcloud datacenter with correct name
+  assert:
+    that:
+      - ansible_facts.hcloud_datacenter_facts|selectattr('name','equalto','{{ hcloud_datacenter_name }}') |selectattr('location','equalto','{{ hcloud_location_name }}') | list | count == 1
+
+- name: test gather hcloud datacenter facts with correct id
+  hcloud_datacenter_facts:
+    id: "{{hcloud_datacenter_id}}"
+- name: verify test gather hcloud datacenter with correct id
+  assert:
+    that:
+      - ansible_facts.hcloud_datacenter_facts|selectattr('name','equalto','{{ hcloud_datacenter_name }}') | list | count == 1
