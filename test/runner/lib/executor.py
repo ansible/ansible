@@ -58,6 +58,7 @@ from lib.util import (
     generate_pip_command,
     find_python,
     get_docker_completion,
+    get_remote_completion,
     named_temporary_file,
     COVERAGE_OUTPUT_PATH,
 )
@@ -1623,17 +1624,7 @@ def get_integration_local_filter(args, targets):
             display.warning('Excluding tests marked "%s" which require --allow-destructive or prefixing with "destructive/" to run locally: %s'
                             % (skip.rstrip('/'), ', '.join(skipped)))
 
-    if args.python_version.startswith('3'):
-        python_version = 3
-    else:
-        python_version = 2
-
-    skip = 'skip/python%d/' % python_version
-    skipped = [target.name for target in targets if skip in target.aliases]
-    if skipped:
-        exclude.append(skip)
-        display.warning('Excluding tests marked "%s" which are not supported on python %d: %s'
-                        % (skip.rstrip('/'), python_version, ', '.join(skipped)))
+    exclude_targets_by_python_version(targets, args.python_version, exclude)
 
     return exclude
 
@@ -1663,22 +1654,9 @@ def get_integration_docker_filter(args, targets):
             display.warning('Excluding tests marked "%s" which require --docker-privileged to run under docker: %s'
                             % (skip.rstrip('/'), ', '.join(skipped)))
 
-    python_version = 2  # images are expected to default to python 2 unless otherwise specified
+    python_version = get_python_version(args, get_docker_completion(), args.docker_raw)
 
-    python_version = int(get_docker_completion().get(args.docker_raw, {}).get('python', str(python_version)))
-
-    if args.python:  # specifying a numeric --python option overrides the default python
-        if args.python.startswith('3'):
-            python_version = 3
-        elif args.python.startswith('2'):
-            python_version = 2
-
-    skip = 'skip/python%d/' % python_version
-    skipped = [target.name for target in targets if skip in target.aliases]
-    if skipped:
-        exclude.append(skip)
-        display.warning('Excluding tests marked "%s" which are not supported on python %d: %s'
-                        % (skip.rstrip('/'), python_version, ', '.join(skipped)))
+    exclude_targets_by_python_version(targets, python_version, exclude)
 
     return exclude
 
@@ -1711,16 +1689,99 @@ def get_integration_remote_filter(args, targets):
         display.warning('Excluding tests marked "%s" which are not supported on %s: %s'
                         % (skip.rstrip('/'), args.remote.replace('/', ' '), ', '.join(skipped)))
 
-    python_version = 2  # remotes are expected to default to python 2
+    python_version = get_python_version(args, get_remote_completion(), args.remote)
 
-    skip = 'skip/python%d/' % python_version
+    exclude_targets_by_python_version(targets, python_version, exclude)
+
+    return exclude
+
+
+def exclude_targets_by_python_version(targets, python_version, exclude):
+    """
+    :type targets: tuple[IntegrationTarget]
+    :type python_version: str
+    :type exclude: list[str]
+    """
+    if not python_version:
+        display.warning('Python version unknown. Unable to skip tests based on Python version.')
+        return
+
+    python_major_version = python_version.split('.')[0]
+
+    skip = 'skip/python%s/' % python_version
     skipped = [target.name for target in targets if skip in target.aliases]
     if skipped:
         exclude.append(skip)
-        display.warning('Excluding tests marked "%s" which are not supported on python %d: %s'
+        display.warning('Excluding tests marked "%s" which are not supported on python %s: %s'
                         % (skip.rstrip('/'), python_version, ', '.join(skipped)))
 
-    return exclude
+    skip = 'skip/python%s/' % python_major_version
+    skipped = [target.name for target in targets if skip in target.aliases]
+    if skipped:
+        exclude.append(skip)
+        display.warning('Excluding tests marked "%s" which are not supported on python %s: %s'
+                        % (skip.rstrip('/'), python_version, ', '.join(skipped)))
+
+
+def get_python_version(args, configs, name):
+    """
+    :type args: EnvironmentConfig
+    :type configs: dict[str, dict[str, str]]
+    :type name: str
+    """
+    config = configs.get(name, {})
+    config_python = config.get('python')
+
+    if not config or not config_python:
+        if args.python:
+            return args.python
+
+        display.warning('No Python version specified. '
+                        'Use completion config or the --python option to specify one.', unique=True)
+
+        return ''  # failure to provide a version may result in failures or reduced functionality later
+
+    supported_python_versions = config_python.split(',')
+    default_python_version = supported_python_versions[0]
+
+    if args.python and args.python not in supported_python_versions:
+        raise ApplicationError('Python %s is not supported by %s. Supported Python version(s) are: %s' % (
+            args.python, name, ', '.join(sorted(supported_python_versions))))
+
+    python_version = args.python or default_python_version
+
+    return python_version
+
+
+def get_python_interpreter(args, configs, name):
+    """
+    :type args: EnvironmentConfig
+    :type configs: dict[str, dict[str, str]]
+    :type name: str
+    """
+    if args.python_interpreter:
+        return args.python_interpreter
+
+    config = configs.get(name, {})
+
+    if not config:
+        if args.python:
+            guess = 'python%s' % args.python
+        else:
+            guess = 'python'
+
+        display.warning('Using "%s" as the Python interpreter. '
+                        'Use completion config or the --python-interpreter option to specify the path.' % guess, unique=True)
+
+        return guess
+
+    python_version = get_python_version(args, configs, name)
+
+    python_dir = config.get('python_dir', '/usr/bin')
+    python_interpreter = os.path.join(python_dir, 'python%s' % python_version)
+    python_interpreter = config.get('python%s' % python_version, python_interpreter)
+
+    return python_interpreter
 
 
 class EnvironmentDescription(object):
