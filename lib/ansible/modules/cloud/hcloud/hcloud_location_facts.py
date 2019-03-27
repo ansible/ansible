@@ -56,7 +56,7 @@ hcloud_location_facts:
     returned: always
     type: complex
     contains:
-        id: 
+        id:
             description: Numeric identifier of the location
             returned: always
             type: int
