@@ -7,7 +7,7 @@
 - name: rewrite shebang in the test daemon script
   lineinfile:
     path: /usr/sbin/ansible_test_service
-    line: "#!{{ ansible_python_interpreter }}"
+    line: "#!{{ ansible_python_interpreter | realpath }}"
     insertbefore: BOF
     firstmatch: yes
 
