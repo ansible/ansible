@@ -1,0 +1,2 @@
+bugfixes:
+    - disallow non dict results from module and allow user to continue using with a warning.
