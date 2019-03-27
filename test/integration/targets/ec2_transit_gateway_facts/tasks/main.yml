@@ -1,0 +1,89 @@
+---
+# tasks file for test_ec2_transit_gateway
+
+- name: set up aws connection info
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token }}"
+      region: "{{ aws_region }}"
+  no_log: yes
+
+- block:
+  # ============================================================
+  - name: create a transit gateway
+    ec2_transit_gateway:
+      description: integration-testing
+      tags:
+        Name: Ansible Test TGW
+      <<: *aws_connection_info
+    register: tgw_result
+
+  # ============================================================
+  - name: test success with no parameters
+    ec2_transit_gateway_facts:
+      <<: *aws_connection_info
+    register: result
+  - name: assert success with no parameters
+    assert:
+      that:
+        - 'result.changed == false'
+        - 'result.transit_gateways != []'
+
+  - name: test success with single filter
+    ec2_transit_gateway_facts:
+      filters:
+        transit-gateway-id: "{{ tgw_result.transit_gateway.transit_gateway_id }}"
+      <<: *aws_connection_info
+    register: result
+  - name: assert success with transit_gateway_id filter
+    assert:
+      that:
+        - 'result.changed == false'
+        - 'result.transit_gateways != []'
+
+  - name: test empty result set for non-existent tgw id via filter
+    ec2_transit_gateway_facts:
+      filters:
+        transit-gateway-id: tgw-00000011111111122
+      <<: *aws_connection_info
+    register: result
+  - name: assert success with transit_gateway_id filter
+    assert:
+      that:
+        - 'result.changed == false'
+        - 'result.transit_gateways == []'
+
+  - name: test NotFound exception caught and returned empty result set
+    ec2_transit_gateway_facts:
+      transit_gateway_id: tgw-00000011111111122
+      <<: *aws_connection_info
+    register: result
+  - name: assert success with transit_gateway_id filter
+    assert:
+      that:
+        - 'result.changed == false'
+        - 'result.transit_gateways == []'
+
+  - name: test success with multiple filters
+    ec2_transit_gateway_facts:
+      filters:
+        options.dns-support: enable
+        options.vpn-ecmp-support: enable
+      <<: *aws_connection_info
+    register: result
+  - name: assert success with transit_gateway_id filter
+    assert:
+      that:
+        - 'result.changed == false'
+        - 'result.transit_gateways != []'
+
+  always:
+    ###### TEARDOWN STARTS HERE ######
+    - name: delete transit gateway 
+      ec2_transit_gateway:
+        description: integration-testing
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: yes
