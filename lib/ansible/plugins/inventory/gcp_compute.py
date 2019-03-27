@@ -71,6 +71,15 @@ DOCUMENTATION = '''
           type: bool
           default: False
           version_added: '2.8'
+        retrieve_image_info:
+          description:
+            - Populate the C(image) host fact for the instances returned with the GCP image name
+            - By default this plugin does not attempt to resolve the boot image of an instance to the image name cataloged in GCP
+              because of the performance overhead of the task.
+            - Unless this option is enabled, the C(image) host variable will be C(null)
+          type: bool
+          default: False
+          version_added: '2.8'
 '''
 
 EXAMPLES = '''
@@ -163,10 +172,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             :param query: a formatted query string
             :return the JSON response containing a list of instances.
         '''
-        module = GcpMockModule(params)
-        auth = GcpSession(module, 'compute')
-        response = auth.get(link, params={'filter': query})
-        return self._return_if_object(module, response)
+        response = self.auth_session.get(link, params={'filter': query})
+        return self._return_if_object(self.fake_module, response)
 
     def _get_zones(self, project, config_data):
         '''
@@ -333,7 +340,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             :return the image of this instance or None
         '''
         image = None
-        if 'disks' in instance:
+        if project_disks and 'disks' in instance:
             for disk in instance['disks']:
                 if disk.get('boot'):
                     image = project_disks[disk["source"]]
@@ -348,15 +355,13 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             self._project_disks
         except AttributeError:
             self._project_disks = {}
-            fake_module = GcpMockModule(config_data)
-            auth_session = GcpSession(fake_module, 'compute')
             request_params = {'maxResults': 500, 'filter': query}
 
             for project in config_data['projects']:
                 session_responses = []
                 page_token = True
                 while page_token:
-                    response = auth_session.get(
+                    response = self.auth_session.get(
                         'https://www.googleapis.com/compute/v1/projects/{0}/aggregated/disks'.format(project),
                         params=request_params
                     )
@@ -424,9 +429,15 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             'service_account_email': self.get_option('service_account_email'),
         }
 
+        self.fake_module = GcpMockModule(params)
+        self.auth_session = GcpSession(self.fake_module, 'compute')
+
         query = self._get_query_options(params['filters'])
 
-        project_disks = self._get_project_disks(config_data, query)
+        if self.get_option('retrieve_image_info'):
+            project_disks = self._get_project_disks(config_data, query)
+        else:
+            project_disks = None
 
         # Cache logic
         if cache:
