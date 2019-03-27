@@ -27,11 +27,11 @@ from units.modules.utils import set_module_args
 from .ios_module import TestIosModule, load_fixture
 
 
-class TestIosUserModule(TestIosModule):
+class TestIosL2Module(TestIosModule):
     module = ios_l2_interface
 
     def setUp(self):
-        super(TestIosUserModule, self).setUp()
+        super(TestIosL2Module, self).setUp()
         self.mock_run_commands = patch('ansible.modules.network.ios.ios_l2_interface.run_commands')
         self.run_commands = self.mock_run_commands.start()
         self.mock_get_config = patch('ansible.modules.network.ios.ios_l2_interface.get_config')
