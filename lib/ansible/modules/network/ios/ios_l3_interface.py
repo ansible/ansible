@@ -252,8 +252,7 @@ def map_config_to_obj(module):
             'name': item,
             'ipv4': ipv4,
             'ipv6': parse_config_argument(configobj, item, 'ipv6 address'),
-            'state': 'present',
-            'updown': updown
+            'state': 'present'
         }
         instances.append(obj)
 
