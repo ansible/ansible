@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_mariadbserver_facts
+module: azure_rm_mariadbserver_info
 version_added: "2.8"
 short_description: Get Azure MariaDB Server facts.
 description:
@@ -45,12 +45,12 @@ author:
 
 EXAMPLES = '''
   - name: Get instance of MariaDB Server
-    azure_rm_mariadbserver_facts:
+    azure_rm_mariadbserver_info:
       resource_group: myResourceGroup
       name: server_name
 
   - name: List instances of MariaDB Server
-    azure_rm_mariadbserver_facts:
+    azure_rm_mariadbserver_info:
       resource_group: myResourceGroup
 '''
 

@@ -1,7 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2017 Zim Kalinowski, <zikalino@microsoft.com>
-# Copyright (c) 2019 Matti Ranta, (@techknowlogick)
+# Copyright (c) 2019 Zim Kalinowski, (@zikalino)
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -16,11 +15,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_mariadbdatabase_facts
+module: azure_rm_mysqlconfiguration_info
 version_added: "2.8"
-short_description: Get Azure MariaDB Database facts.
+short_description: Get Azure MySQL Configuration facts.
 description:
-    - Get facts of MariaDB Database.
+    - Get facts of Azure MySQL Configuration.
 
 options:
     resource_group:
@@ -33,87 +32,81 @@ options:
         required: True
     name:
         description:
-            - The name of the database.
+            - Setting name.
 
 extends_documentation_fragment:
     - azure
 
 author:
     - "Zim Kalinowski (@zikalino)"
-    - "Matti Ranta (@techknowlogick)"
 
 '''
 
 EXAMPLES = '''
-  - name: Get instance of MariaDB Database
-    azure_rm_mariadbdatabase_facts:
+  - name: Get specific setting of MySQL Server
+    azure_rm_mysqlconfiguration_info:
       resource_group: myResourceGroup
-      server_name: server_name
-      name: database_name
+      server_name: testmysqlserver
+      name: deadlock_timeout
 
-  - name: List instances of MariaDB Database
-    azure_rm_mariadbdatabase_facts:
+  - name: Get all settings of MySQL Server
+    azure_rm_mysqlconfiguration_info:
       resource_group: myResourceGroup
       server_name: server_name
 '''
 
 RETURN = '''
-databases:
-    description: A list of dictionaries containing facts for MariaDB Databases.
+settings:
+    description: A list of dictionaries containing MySQL Server settings.
     returned: always
     type: complex
     contains:
         id:
             description:
-                - Resource ID
+                - Setting resource ID
             returned: always
             type: str
-            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforMariaDB/servers/testser
-                    ver/databases/db1"
-        resource_group:
-            description:
-                - Resource group name.
-            returned: always
-            type: str
-            sample: testrg
-        server_name:
-            description:
-                - Server name.
-            returned: always
-            type: str
-            sample: testserver
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforMySQL/servers/testmysqlser
+                     ver/configurations/deadlock_timeout"
         name:
             description:
-                - Resource name.
+                - Setting name.
             returned: always
             type: str
-            sample: db1
-        charset:
+            sample: deadlock_timeout
+        value:
             description:
-                - The charset of the database.
+                - Setting value.
             returned: always
-            type: str
-            sample: UTF8
-        collation:
+            type: raw
+            sample: 1000
+        description:
             description:
-                - The collation of the database.
+                - Description of the configuration.
             returned: always
             type: str
-            sample: English_United States.1252
+            sample: Deadlock timeout.
+        source:
+            description:
+                - Source of the configuration.
+            returned: always
+            type: str
+            sample: system-default
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.rdbms.mariadb import MariaDBManagementClient
+    from msrestazure.azure_operation import AzureOperationPoller
+    from azure.mgmt.rdbms.mysql import MySQLManagementClient
     from msrest.serialization import Model
 except ImportError:
     # This is handled in azure_rm_common
     pass
 
 
-class AzureRMMariaDbDatabaseFacts(AzureRMModuleBase):
+class AzureRMMySqlConfigurationFacts(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -130,37 +123,40 @@ class AzureRMMariaDbDatabaseFacts(AzureRMModuleBase):
             )
         )
         # store the results of the module operation
-        self.results = dict(
-            changed=False
-        )
+        self.results = dict(changed=False)
+        self.mgmt_client = None
         self.resource_group = None
         self.server_name = None
         self.name = None
-        super(AzureRMMariaDbDatabaseFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMMySqlConfigurationFacts, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
+        self.mgmt_client = self.get_mgmt_svc_client(MySQLManagementClient,
+                                                    base_url=self._cloud_environment.endpoints.resource_manager)
 
-        if (self.resource_group is not None and
-                self.server_name is not None and
-                self.name is not None):
-            self.results['databases'] = self.get()
-        elif (self.resource_group is not None and
-              self.server_name is not None):
-            self.results['databases'] = self.list_by_server()
+        if self.name is not None:
+            self.results['settings'] = self.get()
+        else:
+            self.results['settings'] = self.list_by_server()
         return self.results
 
     def get(self):
+        '''
+        Gets facts of the specified MySQL Configuration.
+
+        :return: deserialized MySQL Configurationinstance state dictionary
+        '''
         response = None
         results = []
         try:
-            response = self.mariadb_client.databases.get(resource_group_name=self.resource_group,
-                                                         server_name=self.server_name,
-                                                         database_name=self.name)
+            response = self.mgmt_client.configurations.get(resource_group_name=self.resource_group,
+                                                           server_name=self.server_name,
+                                                           configuration_name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get facts for Databases.')
+            self.log('Could not get facts for Configurations.')
 
         if response is not None:
             results.append(self.format_item(response))
@@ -168,14 +164,19 @@ class AzureRMMariaDbDatabaseFacts(AzureRMModuleBase):
         return results
 
     def list_by_server(self):
+        '''
+        Gets facts of the specified MySQL Configuration.
+
+        :return: deserialized MySQL Configurationinstance state dictionary
+        '''
         response = None
         results = []
         try:
-            response = self.mariadb_client.databases.list_by_server(resource_group_name=self.resource_group,
-                                                                    server_name=self.server_name)
+            response = self.mgmt_client.configurations.list_by_server(resource_group_name=self.resource_group,
+                                                                      server_name=self.server_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.fail("Error listing for server {0} - {1}".format(self.server_name, str(e)))
+            self.log('Could not get facts for Configurations.')
 
         if response is not None:
             for item in response:
@@ -188,15 +189,17 @@ class AzureRMMariaDbDatabaseFacts(AzureRMModuleBase):
         d = {
             'resource_group': self.resource_group,
             'server_name': self.server_name,
+            'id': d['id'],
             'name': d['name'],
-            'charset': d['charset'],
-            'collation': d['collation']
+            'value': d['value'],
+            'description': d['description'],
+            'source': d['source']
         }
         return d
 
 
 def main():
-    AzureRMMariaDbDatabaseFacts()
+    AzureRMMySqlConfigurationFacts()
 
 
 if __name__ == '__main__':
