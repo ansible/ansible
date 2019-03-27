@@ -16,6 +16,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+- name: fail with invalid feature name
+  win_optional_feature:
+    name:
+    - TelnetClient
+    - FakeFeature
+    state: present
+  register: invalid_name
+  failed_when: invalid_name.msg != "Failed to find feature 'FakeFeature'"
+
 - name: run with check_mode
   win_optional_feature:
     name: TelnetClient
@@ -36,7 +45,7 @@
     include_parent: true
   register: real_feature_check
 
-- name: assert feature installed 
+- name: assert feature installed
   assert:
     that:
       - real_feature_check.changed
@@ -52,6 +61,34 @@
   assert:
     that:
       - not real_feature_check.changed
+
+- name: install feature with list
+  win_optional_feature:
+    name:
+    - SimpleTCP
+    - TelnetClient
+    state: present
+    include_parent: true
+  register: install_list
+
+- name: assert install feature with list
+  assert:
+    that:
+    - install_list is changed
+
+- name: install feature with list (idempotent)
+  win_optional_feature:
+    name:
+    - SimpleTCP
+    - TelnetClient
+    state: present
+    include_parent: true
+  register: install_list_again
+
+- name: assert install feature with list (idempotent)
+  assert:
+    that:
+    - not install_list_again is changed
 
 - name: removal run with check_mode
   win_optional_feature:
@@ -76,7 +113,7 @@
     that:
       - real_feature_check.changed
 
-- name: test idempotence for removal 
+- name: test idempotence for removal
   win_optional_feature:
     name: TelnetClient
     state: absent
@@ -86,3 +123,29 @@
   assert:
     that:
       - not real_feature_check.changed
+
+- name: remove feature with list
+  win_optional_feature:
+    name:
+    - SimpleTCP
+    - TelnetClient
+    state: absent
+  register: remove_feature_list
+
+- name: assert remove feature with list
+  assert:
+    that:
+    - remove_feature_list is changed
+
+- name: remove feature with list (idempotent)
+  win_optional_feature:
+    name:
+    - SimpleTCP
+    - TelnetClient
+    state: absent
+  register: remove_feature_list_again
+
+- name: assert remove feature with list (idempotent)
+  assert:
+    that:
+    - not remove_feature_list_again is changed
