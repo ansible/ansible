@@ -68,6 +68,7 @@ class EnvironmentConfig(CommonConfig):
             self.python = None
 
         self.python_version = self.python or '.'.join(str(i) for i in sys.version_info[:2])
+        self.python_interpreter = args.python_interpreter
 
         self.delegate = self.tox or self.docker or self.remote
         self.delegate_args = []  # type: list[str]

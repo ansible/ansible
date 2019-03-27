@@ -5,17 +5,6 @@ set -eu
 # Required for newer mysql-server packages to install/upgrade on Ubuntu 16.04.
 rm -f /usr/sbin/policy-rc.d
 
-# Support images with only python3 installed.
-if [ ! -f /usr/bin/python ] && [ -f /usr/bin/python3 ]; then
-    ln -s /usr/bin/python3 /usr/bin/python
-fi
-if [ ! -f /usr/bin/pip ] && [ -f /usr/bin/pip3 ]; then
-    ln -s /usr/bin/pip3 /usr/bin/pip
-fi
-if [ ! -f /usr/bin/virtualenv ] && [ -f /usr/bin/virtualenv-3 ]; then
-    ln -s /usr/bin/virtualenv-3 /usr/bin/virtualenv
-fi
-
 # Improve prompts on remote host for interactive use.
 # shellcheck disable=SC1117
 cat << EOF > ~/.bashrc

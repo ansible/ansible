@@ -3,28 +3,32 @@
 set -eu
 
 platform="$1"
+python_version="$2"
+python_interpreter="python${python_version}"
 
 cd ~/
 
 install_pip () {
-    if ! pip --version --disable-pip-version-check 2>/dev/null; then
+    if ! "${python_interpreter}" -m pip.__main__ --version --disable-pip-version-check 2>/dev/null; then
         curl --silent --show-error https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py
-        python /tmp/get-pip.py --disable-pip-version-check --quiet
+        "${python_interpreter}" /tmp/get-pip.py --disable-pip-version-check --quiet
         rm /tmp/get-pip.py
     fi
 }
 
 if [ "${platform}" = "freebsd" ]; then
+    py_version="$(echo "${python_version}" | tr -d '.')"
+
     while true; do
         env ASSUME_ALWAYS_YES=YES pkg bootstrap && \
         pkg install -q -y \
             bash \
             curl \
             gtar \
-            python \
-            py27-Jinja2 \
-            py27-virtualenv \
-            py27-cryptography \
+            "python${py_version}" \
+            "py${py_version}-Jinja2" \
+            "py${py_version}-virtualenv" \
+            "py${py_version}-cryptography" \
             sudo \
         && break
         echo "Failed to install packages. Sleeping before trying again..."
@@ -55,18 +59,6 @@ elif [ "${platform}" = "rhel" ]; then
             echo "Failed to install packages. Sleeping before trying again..."
             sleep 10
         done
-
-        # When running from source our python shebang is: #!/usr/bin/env python
-        # To avoid modifying all of our scripts while running tests we make sure `python` is in our PATH.
-        if [ ! -f /usr/bin/python ]; then
-            ln -s /usr/bin/python3 /usr/bin/python
-        fi
-        if [ ! -f /usr/bin/pip ]; then
-            ln -s /usr/bin/pip3 /usr/bin/pip
-        fi
-        if [ ! -f /usr/bin/virtualenv ]; then
-            ln -s /usr/bin/virtualenv-3 /usr/bin/virtualenv
-        fi
     else
         while true; do
             yum install -q -y \
