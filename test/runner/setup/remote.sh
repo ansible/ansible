@@ -4,14 +4,20 @@ set -eu
 
 platform="$1"
 
-env
-
 cd ~/
+
+install_pip () {
+    if ! pip --version --disable-pip-version-check 2>/dev/null; then
+        curl --silent --show-error https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py
+        python /tmp/get-pip.py --disable-pip-version-check --quiet
+        rm /tmp/get-pip.py
+    fi
+}
 
 if [ "${platform}" = "freebsd" ]; then
     while true; do
         env ASSUME_ALWAYS_YES=YES pkg bootstrap && \
-        pkg install -y \
+        pkg install -q -y \
             bash \
             curl \
             gtar \
@@ -20,29 +26,34 @@ if [ "${platform}" = "freebsd" ]; then
             py27-virtualenv \
             py27-cryptography \
             sudo \
-         && break
-         echo "Failed to install packages. Sleeping before trying again..."
-         sleep 10
+        && break
+        echo "Failed to install packages. Sleeping before trying again..."
+        sleep 10
     done
 
-    pip --version 2>/dev/null || curl --silent --show-error https://bootstrap.pypa.io/get-pip.py | python
+    install_pip
+
+    if ! grep '^PermitRootLogin yes$' /etc/ssh/sshd_config > /dev/null; then
+        sed -i '' 's/^# *PermitRootLogin.*$/PermitRootLogin yes/;' /etc/ssh/sshd_config
+        service sshd restart
+    fi
 elif [ "${platform}" = "rhel" ]; then
     if grep '8\.' /etc/redhat-release; then
         while true; do
-            curl -o /etc/yum.repos.d/rhel-8-beta.repo http://downloads.redhat.com/redhat/rhel/rhel-8-beta/rhel-8-beta.repo && \
+            curl --silent --show-error -o /etc/yum.repos.d/rhel-8-beta.repo http://downloads.redhat.com/redhat/rhel/rhel-8-beta/rhel-8-beta.repo && \
             dnf config-manager --set-enabled rhel-8-for-x86_64-baseos-beta-rpms && \
             dnf config-manager --set-enabled rhel-8-for-x86_64-appstream-beta-rpms && \
-            yum -y module install python36 && \
-            yum install -y \
+            yum module install -q -y python36 && \
+            yum install -q -y \
                 gcc \
                 python3-devel \
                 python3-jinja2 \
                 python3-virtualenv \
                 python3-cryptography \
                 iptables \
-             && break
-             echo "Failed to install packages. Sleeping before trying again..."
-             sleep 10
+            && break
+            echo "Failed to install packages. Sleeping before trying again..."
+            sleep 10
         done
 
         # When running from source our python shebang is: #!/usr/bin/env python
@@ -58,31 +69,26 @@ elif [ "${platform}" = "rhel" ]; then
         fi
     else
         while true; do
-            yum install -y \
+            yum install -q -y \
                 gcc \
                 python-devel \
-                python-jinja2 \
                 python-virtualenv \
                 python2-cryptography \
-             && break
-             echo "Failed to install packages. Sleeping before trying again..."
-             sleep 10
+            && break
+            echo "Failed to install packages. Sleeping before trying again..."
+            sleep 10
         done
 
-        pip --version 2>/dev/null || curl --silent --show-error https://bootstrap.pypa.io/get-pip.py | python
+        install_pip
     fi
-fi
-
-if [ "${platform}" = "freebsd" ] || [ "${platform}" = "osx" ]; then
-    pip install virtualenv
-fi
-
-# Since tests run as root, we also need to be able to ssh to localhost as root.
-sed -i= 's/^# *PermitRootLogin.*$/PermitRootLogin yes/;' /etc/ssh/sshd_config
-
-if [ "${platform}" = "freebsd" ]; then
-    # Restart sshd for configuration changes and loopback aliases to work.
-    service sshd restart
+elif [ "${platform}" = "osx" ]; then
+    while true; do
+        pip install --disable-pip-version-check --quiet \
+            virtualenv \
+        && break
+        echo "Failed to install packages. Sleeping before trying again..."
+        sleep 10
+    done
 fi
 
 # Generate our ssh key and add it to our authorized_keys file.
