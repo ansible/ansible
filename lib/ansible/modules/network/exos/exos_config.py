@@ -126,6 +126,7 @@ options:
       - When this option is configured as I(running), the module will
         return the before and after diff of the running-config with respect
         to any changes made to the device configuration.
+    default: running
     choices: ['running', 'startup', 'intended']
   diff_ignore_lines:
     description:
@@ -222,39 +223,38 @@ backup_path:
 """
 import re
 
-from ansible.module_utils.network.exos.exos import run_commands, get_config, load_config
+from ansible.module_utils.network.exos.exos import run_commands, get_config, load_config, get_diff
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils._text import to_text
+from ansible.module_utils.network.common.utils import to_list
 
 __metaclass__ = type
 
 
-def get_running_config(module, current_config=None):
+def get_running_config(module, current_config=None, flags=None):
     contents = module.params['running_config']
     if not contents:
         if current_config:
             contents = current_config.config_text
         else:
-            contents = get_config(module)
-    return NetworkConfig(indent=1, contents=contents)
+            contents = get_config(module, flags=flags)
+    return contents
 
 
-def get_startup_config_text(module):
-    reply = run_commands(module, ['show switch | include "Config Selected"'])
-    match = re.search(r': +(\S+)\.cfg', to_text(reply, errors='surrogate_or_strict').strip())
+def get_startup_config(module, flags=None):
+    reply = run_commands(module, {'command': 'show switch', 'output': 'text'})
+    match = re.search(r'Config Selected: +(\S+)\.cfg', to_text(reply, errors='surrogate_or_strict').strip(), re.MULTILINE)
     if match:
         cfgname = match.group(1).strip()
-        reply = run_commands(module, ['debug cfgmgr show configuration file ' + cfgname])
+        command = ' '.join(['debug cfgmgr show configuration file', cfgname])
+        if flags:
+            command += ' '.join(to_list(flags)).strip()
+        reply = run_commands(module, {'command': command, 'output': 'text'})
         data = reply[0]
     else:
         data = ''
     return data
-
-
-def get_startup_config(module):
-    data = get_startup_config_text(module)
-    return NetworkConfig(indent=1, contents=data)
 
 
 def get_candidate(module):
@@ -262,10 +262,9 @@ def get_candidate(module):
 
     if module.params['src']:
         candidate.load(module.params['src'])
-
     elif module.params['lines']:
         candidate.add(module.params['lines'])
-
+    candidate = dumps(candidate, 'raw')
     return candidate
 
 
@@ -308,7 +307,7 @@ def main():
 
         save_when=dict(choices=['always', 'never', 'modified', 'changed'], default='never'),
 
-        diff_against=dict(choices=['startup', 'intended', 'running']),
+        diff_against=dict(choices=['startup', 'intended', 'running'], default='running'),
         diff_ignore_lines=dict(type='list'),
     )
 
@@ -327,12 +326,15 @@ def main():
     result = {'changed': False}
 
     warnings = list()
-    result['warnings'] = warnings
+    if warnings:
+        result['warnings'] = warnings
 
     config = None
+    flags = ['detail'] if module.params['defaults'] else []
+    diff_ignore_lines = module.params['diff_ignore_lines']
 
     if module.params['backup'] or (module._diff and module.params['diff_against'] == 'running'):
-        contents = get_config(module)
+        contents = get_config(module, flags=flags)
         config = NetworkConfig(indent=1, contents=contents)
         if module.params['backup']:
             result['__backup__'] = contents
@@ -342,15 +344,17 @@ def main():
         replace = module.params['replace']
 
         candidate = get_candidate(module)
+        running = get_running_config(module, config)
 
-        if match != 'none':
-            config = get_running_config(module, config)
-            configobjs = candidate.difference(config, match=match, replace=replace)
-        else:
-            configobjs = candidate.items
+        try:
+            response = get_diff(module, candidate=candidate, running=running, diff_match=match, diff_ignore_lines=diff_ignore_lines, diff_replace=replace)
+        except ConnectionError as exc:
+            module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
 
-        if configobjs:
-            commands = dumps(configobjs, 'commands').split('\n')
+        config_diff = response.get('config_diff')
+
+        if config_diff:
+            commands = config_diff.split('\n')
 
             if module.params['before']:
                 commands[:0] = module.params['before']
@@ -372,13 +376,11 @@ def main():
     running_config = None
     startup_config = None
 
-    diff_ignore_lines = module.params['diff_ignore_lines']
-
     if module.params['save_when'] == 'always':
         save_config(module, result)
     elif module.params['save_when'] == 'modified':
-        running = get_running_config(module).config_text
-        startup = get_startup_config(module).config_text
+        running = get_running_config(module)
+        startup = get_startup_config(module)
 
         running_config = NetworkConfig(indent=1, contents=running, ignore_lines=diff_ignore_lines)
         startup_config = NetworkConfig(indent=1, contents=startup, ignore_lines=diff_ignore_lines)
@@ -390,7 +392,7 @@ def main():
 
     if module._diff:
         if not running_config:
-            contents = get_running_config(module).config_text
+            contents = get_running_config(module)
         else:
             contents = running_config.config_text
 
@@ -406,7 +408,7 @@ def main():
 
         elif module.params['diff_against'] == 'startup':
             if not startup_config:
-                contents = get_startup_config(module).config_text
+                contents = get_startup_config(module)
             else:
                 contents = startup_config.config_text
 
