@@ -1461,8 +1461,7 @@ class AnsibleModule(object):
                     del self.params[param_key]
             else:
                 # use defaults if not already set
-                existing = getattr(self, PASS_VARS[k][0], None)
-                if existing is None and PASS_VARS[k][1] is not None:
+                if not hasattr(self, PASS_VARS[k][0]):
                     setattr(self, PASS_VARS[k][0], PASS_VARS[k][1])
 
         if unsupported_parameters:
