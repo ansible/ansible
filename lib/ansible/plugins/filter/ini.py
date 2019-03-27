@@ -8,8 +8,10 @@ __metaclass__ = type
 import copy
 
 from collections import MutableMapping
+from functools import partial
 
 from ansible.errors import AnsibleFilterError
+from ansible.module_utils._text import to_text
 from ansible.module_utils.six import string_types
 from ansible.module_utils.six.moves import configparser, StringIO
 
@@ -18,6 +20,7 @@ def from_ini(o):
     if not isinstance(o, string_types):
         raise AnsibleFilterError('from_ini requires a string, got %s' % type(o))
     parser = configparser.RawConfigParser()
+    parser.optionxform = partial(to_text, errors='surrogate_or_replace')
     parser.readfp(StringIO(o))
     d = dict(parser._sections)
     for k in d:
@@ -33,6 +36,7 @@ def to_ini(o):
     data = copy.deepcopy(o)
     defaults = configparser.RawConfigParser(data.pop('DEFAULT', {}))
     parser = configparser.RawConfigParser()
+    parser.optionxform = partial(to_text, errors='surrogate_or_replace')
     for section, items in data.items():
         parser.add_section(section)
         for k, v in items.items():
