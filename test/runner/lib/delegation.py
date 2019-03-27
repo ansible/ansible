@@ -16,6 +16,10 @@ from lib.executor import (
     create_shell_command,
     run_httptester,
     start_httptester,
+    get_python_interpreter,
+    get_python_version,
+    get_docker_completion,
+    get_remote_completion,
 )
 
 from lib.config import (
@@ -63,6 +67,19 @@ from lib.cloud import (
 from lib.target import (
     IntegrationTarget,
 )
+
+
+def check_delegation_args(args):
+    """
+    :type args: CommonConfig
+    """
+    if not isinstance(args, EnvironmentConfig):
+        return
+
+    if args.docker:
+        get_python_version(args, get_docker_completion(), args.docker_raw)
+    elif args.remote:
+        get_python_version(args, get_remote_completion(), args.remote)
 
 
 def delegate(args, exclude, require, integration_targets):
@@ -143,7 +160,7 @@ def delegate_tox(args, exclude, require, integration_targets):
 
         tox.append('--')
 
-        cmd = generate_command(args, os.path.abspath('bin/ansible-test'), options, exclude, require)
+        cmd = generate_command(args, None, os.path.abspath('bin/ansible-test'), options, exclude, require)
 
         if not args.python:
             cmd += ['--python', version]
@@ -195,7 +212,8 @@ def delegate_docker(args, exclude, require, integration_targets):
         '--docker-util': 1,
     }
 
-    cmd = generate_command(args, '/root/ansible/bin/ansible-test', options, exclude, require)
+    python_interpreter = get_python_interpreter(args, get_docker_completion(), args.docker_raw)
+    cmd = generate_command(args, python_interpreter, '/root/ansible/bin/ansible-test', options, exclude, require)
 
     if isinstance(args, TestConfig):
         if args.coverage and not args.coverage_label:
@@ -369,7 +387,8 @@ def delegate_remote(args, exclude, require, integration_targets):
                 '--remote': 1,
             }
 
-            cmd = generate_command(args, 'ansible/bin/ansible-test', options, exclude, require)
+            python_interpreter = get_python_interpreter(args, get_remote_completion(), args.remote)
+            cmd = generate_command(args, python_interpreter, 'ansible/bin/ansible-test', options, exclude, require)
 
             if httptester_id:
                 cmd += ['--inject-httptester']
@@ -388,7 +407,8 @@ def delegate_remote(args, exclude, require, integration_targets):
 
             manage = ManagePosixCI(core_ci)
 
-        manage.setup()
+        python_version = get_python_version(args, get_remote_completion(), args.remote)
+        manage.setup(python_version)
 
         if isinstance(args, IntegrationConfig):
             cloud_platforms = get_cloud_providers(args)
@@ -420,9 +440,10 @@ def delegate_remote(args, exclude, require, integration_targets):
             docker_rm(args, httptester_id)
 
 
-def generate_command(args, path, options, exclude, require):
+def generate_command(args, python_interpreter, path, options, exclude, require):
     """
     :type args: EnvironmentConfig
+    :type python_interpreter: str | None
     :type path: str
     :type options: dict[str, int]
     :type exclude: list[str]
@@ -432,6 +453,9 @@ def generate_command(args, path, options, exclude, require):
     options['--color'] = 1
 
     cmd = [path]
+
+    if python_interpreter:
+        cmd = [python_interpreter] + cmd
 
     # Force the encoding used during delegation.
     # This is only needed because ansible-test relies on Python's file system encoding.
