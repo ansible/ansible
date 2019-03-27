@@ -37,7 +37,7 @@ options:
     - Either a PEM-formatted private key file or the private key content used for signature-based authentication.
     - This value also influences the default C(certificate_name) that is used.
     - This option is mutual exclusive with C(password). If C(password) is provided too, it will be ignored.
-    type: path
+    type: str
     required: yes
     aliases: [ cert_key ]
   certificate_name:
