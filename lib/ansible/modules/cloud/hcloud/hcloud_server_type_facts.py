@@ -51,23 +51,51 @@ EXAMPLES = """
 """
 
 RETURN = """
-ansible_facts:
-    description: The server_type instances
-    returned: Always
+hcloud_server_type_facts:
+    description: The server type facts as list
+    returned: always
     type: complex
     contains:
-        "hcloud_server_type_facts": [
-             {
-                "id": 1,
-                "name": "cx11",
-                "description": "CX11",
-                "cores": 1,
-                "memory": 1,
-                "disk": 25,
-                "storage_type": "local",
-                "cpu_type": "shared"
-            }
-        ]
+        id: 
+            description: Numeric identifier of the server type
+            returned: always
+            type: int
+            sample: 1937415
+        name:
+            description: Name of the server type
+            returned: always
+            type: str
+            sample: fsn1
+        description:
+            description: Detail description of the server type
+            returned: always
+            type: str
+            sample: Falkenstein DC Park 1
+        cores:
+            description: Number of cpu cores a server of this type will have
+            returned: always
+            type: int
+            sample: 1
+        memory:
+            description: Memory a server of this type will have in GB
+            returned: always
+            type: int
+            sample: 1
+        disk:
+            description: Disk size a server of this type will have in GB
+            returned: always
+            type: int
+            sample: 25
+        storage_type:
+            description: Type of server boot drive
+            returned: always
+            type: str
+            sample: local
+        cpu_type:
+            description: Type of cpu
+            returned: always
+            type: str
+            sample: shared
 """
 
 from ansible.module_utils.basic import AnsibleModule
