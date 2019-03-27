@@ -45,7 +45,7 @@ class TestIosL2Module(TestIosModule):
         self.mock_run_commands.stop()
 
     def load_fixtures(self, commands=None, transport='cli'):
-        self.get_config.return_value = load_fixture('ios_l2_interface_config.cfg')
+        self.run_commands.return_value = load_fixture('ios_l2_interface_config.cfg')
         self.load_config.return_value = dict(diff=None, session='session')
 
     def test_ios_l2_interface_with_voice_vlan(self):
