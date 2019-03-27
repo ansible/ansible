@@ -24,26 +24,35 @@ DOCUMENTATION = '''
             choices: ['gcp_compute']
         zones:
           description: A list of regions in which to describe GCE instances.
-          default: all zones available to a given project
+                       If none provided, it defaults to all zones available to a given project.
+          type: list
         projects:
           description: A list of projects in which to describe GCE instances.
+          type: list
+          required: True
         filters:
           description: >
             A list of filter value pairs. Available filters are listed here
             U(https://cloud.google.com/compute/docs/reference/rest/v1/instances/list).
             Each additional filter in the list will act be added as an AND condition
             (filter1 and filter2)
+          type: list
         hostnames:
           description: A list of options that describe the ordering for which
               hostnames should be assigned. Currently supported hostnames are
               'public_ip', 'private_ip', or 'name'.
           default: ['public_ip', 'private_ip', 'name']
+          type: list
         auth_kind:
             description:
                 - The type of credential used.
+            required: True
+            choices: ['application', 'serviceaccount', 'machineaccount']
         service_account_file:
             description:
                 - The path of a Service Account JSON file if serviceaccount is selected as type.
+            required: True
+            type: path
         service_account_email:
             description:
                 - An optional service account email address if machineaccount is selected
@@ -74,8 +83,6 @@ projects:
 filters:
   - machineType = n1-standard-1
   - scheduling.automaticRestart = true AND machineType = n1-standard-1
-scopes:
-  - https://www.googleapis.com/auth/compute
 service_account_file: /tmp/service_account.json
 auth_kind: serviceaccount
 keyed_groups:
@@ -91,15 +98,15 @@ compose:
   ansible_host: networkInterfaces[0].accessConfigs[0].natIP
 '''
 
+import json
+
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils._text import to_native
 from ansible.module_utils.gcp_utils import GcpSession, navigate_hash, GcpRequestException
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
-import json
 
 
-# The mappings give an array of keys to get from the filter name to the value
-# returned by boto3's GCE describe_instances method.
+# Mocking a module to reuse module_utils
 class GcpMockModule(object):
     def __init__(self, params):
         self.params = params
@@ -142,12 +149,12 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 return True
         return False
 
-    def self_link(self, params):
+    def self_link(self, project, zone):
         '''
             :param params: a dict containing all of the fields relevant to build URL
             :return the formatted URL as a string.
         '''
-        return "https://www.googleapis.com/compute/v1/projects/{project}/zones/{zone}/instances".format(**params)
+        return "https://www.googleapis.com/compute/v1/projects/%s/zones/%s/instances" % (project, zone)
 
     def fetch_list(self, params, link, query):
         '''
@@ -161,12 +168,12 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         response = auth.get(link, params={'filter': query})
         return self._return_if_object(module, response)
 
-    def _get_zones(self, config_data):
+    def _get_zones(self, project, config_data):
         '''
             :param config_data: dict of info from inventory file
             :return an array of zones that this project has access to
         '''
-        link = "https://www.googleapis.com/compute/v1/projects/{project}/zones".format(**config_data)
+        link = "https://www.googleapis.com/compute/v1/projects/%s/zones" % project
         zones = []
         zones_response = self.fetch_list(config_data, link, '')
         for item in zones_response['items']:
@@ -338,27 +345,18 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         if self.get_option('use_contrib_script_compatible_sanitization'):
             self._sanitize_group_name = self._legacy_script_compatible_group_sanitization
 
-        # get user specifications
-        if 'zones' in config_data:
-            if not isinstance(config_data['zones'], list):
-                raise AnsibleParserError("Zones must be a list in GCP inventory YAML files")
+        # setup parameters as expected by 'fake module class' to reuse module_utils w/o changing the API
+        params = {
+            'filters': self.get_option('filters'),
+            'projects': self.get_option('projects'),
+            'scopes': ['https://www.googleapis.com/auth/compute'],
+            'zones': self.get_option('zones'),
+            'auth_kind': self.get_option('auth_kind'),
+            'service_account_file': self.get_option('service_account_file'),
+            'service_account_email': self.get_option('service_account_email'),
+        }
 
-        # get user specifications
-        if 'projects' not in config_data:
-            raise AnsibleParserError("Projects must be included in inventory YAML file")
-
-        if not isinstance(config_data['projects'], list):
-            raise AnsibleParserError("Projects must be a list in GCP inventory YAML files")
-
-        # add in documented defaults
-        if 'filters' not in config_data:
-            config_data['filters'] = None
-
-        projects = config_data['projects']
-        zones = config_data.get('zones')
-        config_data['scopes'] = ['https://www.googleapis.com/auth/compute']
-
-        query = self._get_query_options(config_data['filters'])
+        query = self._get_query_options(params['filters'])
 
         # Cache logic
         if cache:
@@ -379,15 +377,17 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         if not cache or cache_needs_update:
             cached_data = {}
-            for project in projects:
+            for project in params['projects']:
                 cached_data[project] = {}
-                config_data['project'] = project
-                if not zones:
-                    zones = self._get_zones(config_data)
+                params['project'] = project
+                if not params['zones']:
+                    zones = self._get_zones(project, params)
+                else:
+                    zones = params['zones']
                 for zone in zones:
-                    config_data['zone'] = zone
-                    link = self.self_link(config_data)
-                    resp = self.fetch_list(config_data, link, query)
+                    link = self.self_link(project, zone)
+                    params['zone'] = zone
+                    resp = self.fetch_list(params, link, query)
                     self._add_hosts(resp.get('items'), config_data)
                     cached_data[project][zone] = resp.get('items')
 
