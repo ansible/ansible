@@ -20,7 +20,7 @@ requirements: [ hostname ]
 description:
     - Set system's hostname, supports most OSs/Distributions, including those using systemd.
     - Note, this module does *NOT* modify C(/etc/hosts). You need to modify it yourself using other modules like template or replace.
-    - Windows, macOS, HP-UX and AIX are not currently supported.
+    - Windows, HP-UX, and AIX are not currently supported.
 options:
     name:
         description:
@@ -54,7 +54,8 @@ from ansible.module_utils.basic import (
 )
 from ansible.module_utils.common.sys_info import get_platform_subclass
 from ansible.module_utils.facts.system.service_mgr import ServiceMgrFactCollector
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.six import PY3, text_type
 
 STRATS = {'generic': 'Generic', 'debian': 'Debian', 'sles': 'SLES', 'redhat': 'RedHat', 'alpine': 'Alpine',
           'systemd': 'Systemd', 'openrc': 'OpenRC', 'openbsd': 'OpenBSD', 'solaris': 'Solaris', 'freebsd': 'FreeBSD'}
@@ -580,6 +581,104 @@ class FreeBSDStrategy(GenericStrategy):
             f.close()
 
 
+class DarwinStrategy(GenericStrategy):
+    """
+    This is a macOS hostname manipulation strategy class - it uses
+    /usr/sbin/scutil to set ComputerName, HostName, and LocalHostName.
+
+    HostName corresponds to what most platforms consider to be hostname;
+    it controls the name used on the commandline and SSH.
+
+    However, macOS also has LocalHostName and ComputerName settings.
+    LocalHostName controls the Bonjour/ZeroConf name, used by services
+    like AirDrop. ComputerName is the name used for user-facing GUI
+    services, like the System Preferences/Sharing pane and when users
+    connect to the Mac over the network.
+    """
+
+    def __init__(self, module):
+        super(DarwinStrategy, self).__init__(module)
+        self.scutil = self.module.get_bin_path('scutil', True)
+        self.name_types = ('HostName', 'ComputerName', 'LocalHostName')
+        self.scrubbed_name = self._scrub_hostname(self.module.params['name'])
+
+    def _maketrans(self, replace_chars, replacement_chars, delete_chars):
+        if PY3:
+            return str.maketrans(replace_chars, replacement_chars, delete_chars)
+
+        if not isinstance(replace_chars, text_type) or not isinstance(replacement_chars, text_type):
+            raise ValueError('replace_chars and replacement_chars must both be strings')
+        if len(replace_chars) != len(replacement_chars):
+            raise ValueError('replacement_chars must be the same length as replace_chars')
+
+        table = dict(zip((ord(c) for c in replace_chars), replacement_chars))
+        for char in delete_chars:
+            table[ord(char)] = None
+
+        return table
+
+    def _scrub_hostname(self, name):
+        """LocalHostName only accepts valid DNS characters while HostName and ComputerName
+        accept a much wider range of characters. This functions aims to mimic how macOS
+        translates a friendly name to the LocalHostName.
+        """
+
+        # Replace all these characters with a single dash
+        name = to_text(name)
+        replace_chars = u'\'"~`!@#$%^&*(){}[]/=?+\\|-_ '
+        delete_chars = u".'"
+        table = self._maketrans(replace_chars, u'-' * len(replace_chars), delete_chars)
+        name = name.translate(table)
+
+        # Replace multiple dashes with a single dash
+        while '-' * 2 in name:
+            name = name.replace('-' * 2, '')
+
+        name = name.rstrip('-')
+        return name
+
+    def get_current_hostname(self):
+        cmd = [self.scutil, '--get', 'HostName']
+        rc, out, err = self.module.run_command(cmd)
+        if rc != 0 and 'HostName: not set' not in err:
+
+            self.module.fail_json(msg="Failed to get current hostname rc=%d, out=%s, err=%s" % (rc, out, err))
+        return to_native(out).strip()
+
+    def get_permanent_hostname(self):
+        cmd = [self.scutil, '--get', 'ComputerName']
+        rc, out, err = self.module.run_command(cmd)
+        if rc != 0:
+            self.module.fail_json(msg="Failed to get permanent hostname rc=%d, out=%s, err=%s" % (rc, out, err))
+        return to_native(out).strip()
+
+    def set_permanent_hostname(self, name):
+        for hostname_type in self.name_types:
+            if hostname_type == 'LocalHostName':
+                name = self.scrubbed_name
+            cmd = [self.scutil, '--set', hostname_type, to_native(name)]
+            rc, out, err = self.module.run_command(cmd)
+            if rc != 0:
+                self.module.fail_json(msg="Failed to set {3} to '{2}': {0} {1}".format(to_native(out), to_native(err), to_native(name), hostname_type))
+
+    def set_current_hostname(self, name):
+        pass
+
+    def update_current_hostname(self):
+        pass
+
+    def update_permanent_hostname(self):
+        name = self.module.params['name']
+
+        # Ensure all three names were updated
+        all_names = tuple((self.module.run_command([self.scutil, '--get', name_type])[1].strip() for name_type in self.name_types))
+
+        if all_names != (name, name, self.scrubbed_name):
+            if not self.module.check_mode:
+                self.set_permanent_hostname(name)
+            self.changed = True
+
+
 class FedoraHostname(Hostname):
     platform = 'Linux'
     distribution = 'Fedora'
@@ -822,6 +921,12 @@ class NeonHostname(Hostname):
     strategy_class = DebianStrategy
 
 
+class DarwinHostname(Hostname):
+    platform = 'Darwin'
+    distribution = None
+    strategy_class = DarwinStrategy
+
+
 class OsmcHostname(Hostname):
     platform = 'Linux'
     distribution = 'Osmc'
@@ -866,6 +971,8 @@ def main():
     if name != current_hostname:
         name_before = current_hostname
     elif name != permanent_hostname:
+        name_before = permanent_hostname
+    else:
         name_before = permanent_hostname
 
     kw = dict(changed=changed, name=name,

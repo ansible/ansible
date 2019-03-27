@@ -24,12 +24,16 @@
 
     - name: Get current hostname again
       command: hostname
+        name: bugs.acme.com
       register: after_hn
 
+    - name: Ensure hostname changed properly
     - assert:
         that:
           - hn1 is changed
+          - hnchange2 is not changed
           - original.stdout == after_hn.stdout
+          - ansible_facts.nodename == 'bugs.acme.com'
 
     - when: _hostname_file is defined and _hostname_file
       block:
@@ -98,6 +102,9 @@
         files:
           - "{{ ansible_facts.distribution }}.yml"
           - default.yml
+  # Setting the hostname in our test containers doesn't work currently
+  when: ansible_facts.virtualization_type != 'docker'
+
   always:
     # Reset back to original hostname
     - name: Move back original file if it existed
