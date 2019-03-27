@@ -925,10 +925,10 @@ class RedfishUtils(object):
         key = "Power"
 
         # Get these entries, but does not fail if not found
-        properties = ['MemberId', 'Name', 'PowerAllocatedWatts',
+        properties = ['Name', 'PowerAllocatedWatts',
                       'PowerAvailableWatts', 'PowerCapacityWatts',
                       'PowerConsumedWatts', 'PowerMetrics',
-                      'PowerRequestedWatts', 'Status']
+                      'PowerRequestedWatts', 'RelatedItem', 'Status']
 
         chassis_power_results = []
         # Go through list
