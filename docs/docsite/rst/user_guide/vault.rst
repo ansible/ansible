@@ -1,3 +1,5 @@
+.. _vault:
+
 Ansible Vault
 =============
 
