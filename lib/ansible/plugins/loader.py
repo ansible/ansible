@@ -24,7 +24,7 @@ from ansible.module_utils.six import string_types
 from ansible.parsing.utils.yaml import from_yaml
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.plugins import get_plugin_class, MODULE_CACHE, PATH_CACHE, PLUGIN_PATH_CACHE
-from ansible.utils.collection_loader import AnsibleCollectionLoader, AnsibleFlatMapLoader
+from ansible.utils.collection_loader import AnsibleCollectionLoader, AnsibleFlatMapLoader, is_collection_ref
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import add_fragments
 
@@ -384,8 +384,7 @@ class PluginLoader:
             # they can have any suffix
             suffix = ''
 
-        # TODO: we should still probably require a well-known prefix on FQNS so we don't paint ourselves into a corner with future stuff
-        if ('.' in name or collection_list) and not name.startswith('Ansible'):  # HACK: need this right now so we can still load shipped PS module_utils
+        if (is_collection_ref(name) or collection_list) and not name.startswith('Ansible'):  # HACK: need this right now so we can still load shipped PS module_utils
             if '.' in name or not collection_list:
                 candidates = [name]
             else:
