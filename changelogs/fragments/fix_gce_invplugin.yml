@@ -1,0 +1,2 @@
+bugfixes:
+    - gce inventory plugin was misusing the API and needlessly doing late validation.
