@@ -56,7 +56,7 @@ hcloud_server_type_facts:
     returned: always
     type: complex
     contains:
-        id: 
+        id:
             description: Numeric identifier of the server type
             returned: always
             type: int
