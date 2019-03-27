@@ -1,0 +1,20 @@
+:source: @{ source }@
+
+{# avoids rST "isn't included in any toctree" errors for module docs #}
+:orphan:
+
+.. _@{ module }@_@{ plugin_type }@_alias_@{ alias }@:
+
+{% if short_description %}
+{%   set title = alias + ' -- ' + short_description | rst_ify %}
+{% else %}
+{%   set title = alias %}
+{% endif %}
+
+@{ title }@
+@{ '+' * title|length }@
+
+This is an alias for `@{ module }@ <_@{ module }@_@{ plugin_type }@>`_.
+{% if alias_deprecated %}
+This name has been **deprecated**. Please use the new name ``@{ module }@`` instead.
+{% endif %}
