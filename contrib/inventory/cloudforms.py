@@ -22,7 +22,7 @@
 
 from __future__ import print_function
 import argparse
-import ConfigParser
+import configparser
 import os
 import re
 from time import time
@@ -101,7 +101,7 @@ class CloudFormsInventory(object):
         """
         Reads the settings from the cloudforms.ini file
         """
-        config = ConfigParser.SafeConfigParser()
+        config = configparser.SafeConfigParser()
         config_paths = [
             os.path.dirname(os.path.realpath(__file__)) + '/cloudforms.ini',
             "/etc/ansible/cloudforms.ini",
@@ -187,7 +187,7 @@ class CloudFormsInventory(object):
         # Ansible related
         try:
             group_patterns = config.get('ansible', 'group_patterns')
-        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+        except (configparser.NoOptionError, configparser.NoSectionError):
             group_patterns = "[]"
 
         self.group_patterns = eval(group_patterns)
@@ -195,7 +195,7 @@ class CloudFormsInventory(object):
         # Cache related
         try:
             cache_path = os.path.expanduser(config.get('cache', 'path'))
-        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+        except (configparser.NoOptionError, configparser.NoSectionError):
             cache_path = '.'
         (script, ext) = os.path.splitext(os.path.basename(__file__))
         self.cache_path_hosts = cache_path + "/%s.hosts" % script
