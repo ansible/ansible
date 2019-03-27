@@ -384,6 +384,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 params['project'] = project
                 if not params['zones']:
                     zones = self._get_zones(project, params)
+                else:
+                    zones = params['zones']
                 for zone in zones:
                     link = self.self_link(project, zone)
                     params['zone'] = zone
