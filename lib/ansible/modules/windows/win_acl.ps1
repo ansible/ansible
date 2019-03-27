@@ -214,8 +214,6 @@ Try {
     }
 }
 Catch {
-    $result.exception = ($_ | Out-String)
-    $result.test = ($pwd.Path)
     Fail-Json -obj $result -message "an error occurred when attempting to $state $rights permission(s) on $path for $user - $($_.Exception.Message)"
 }
 Finally {
