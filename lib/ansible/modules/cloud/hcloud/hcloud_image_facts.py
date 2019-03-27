@@ -65,7 +65,7 @@ hcloud_image_facts:
     returned: always
     type: complex
     contains:
-        id: 
+        id:
             description: Numeric identifier of the image
             returned: always
             type: int
