@@ -2,7 +2,7 @@
 # We can re-enable if pip switches to a different hash or allows us to not check md5.
 
 - name: find virtualenv command
-  command: "command -v virtualenv virtualenv-{{ ansible_python.version.major }}.{{ ansible_python.version.minor }}"
+  shell: "command -v virtualenv virtualenv-{{ ansible_python.version.major }}.{{ ansible_python.version.minor }}"
   register: command
 
 - name: remember selected virtualenv command
