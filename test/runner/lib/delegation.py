@@ -71,8 +71,11 @@ from lib.target import (
 
 def check_delegation_args(args):
     """
-    :type args: EnvironmentConfig
+    :type args: CommonConfig
     """
+    if not isinstance(args, EnvironmentConfig):
+        return
+
     if args.docker:
         get_python_version(args, get_docker_completion(), args.docker_raw)
     elif args.remote:
