@@ -18,7 +18,7 @@ short_description: Manages UCS Organizations for UCS Manager
 
 description:
   - Manages UCS Organizations for UCS Manager.
-  - Examples can be used with the L(UCS Platform Emulator, https://community.cisco.com/t5/unified-computing-system/ucs-platform-emulator-downloads-ucspe-3-2-3epe1-ucspe-3-0-2cpe1/ta-p/3648177).
+  - Examples can be used with the L(UCS Platform Emulator, https://cs.co/ucspe).
 
 extends_documentation_fragment: ucs
 
