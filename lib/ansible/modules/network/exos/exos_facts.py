@@ -240,10 +240,10 @@ class Interfaces(FactsBase):
 
     COMMANDS = [
         'show switch',
-        'run script cli2json.py show port config',
-        'run script cli2json.py show port description',
-        'run script cli2json.py show vlan detail',
-        'run script cli2json.py show lldp neighbors'
+        {'command': 'show port config', 'output': 'json'},
+        {'command': 'show port description', 'output': 'json'},
+        {'command': 'show vlan detail', 'output': 'json'},
+        {'command': 'show lldp neighbors', 'output': 'json'}
     ]
 
     def populate(self):
@@ -256,19 +256,19 @@ class Interfaces(FactsBase):
         if data:
             sysmac = self.parse_sysmac(data)
 
-        data = json.loads(self.responses[1])
+        data = self.responses[1]
         if data:
             self.facts['interfaces'] = self.populate_interfaces(data, sysmac)
 
-        data = json.loads(self.responses[2])
+        data = self.responses[2]
         if data:
             self.populate_interface_descriptions(data)
 
-        data = json.loads(self.responses[3])
+        data = self.responses[3]
         if data:
             self.populate_vlan_interfaces(data, sysmac)
 
-        data = json.loads(self.responses[4])
+        data = self.responses[4]
         if data:
             self.facts['neighbors'] = self.parse_neighbors(data)
 
