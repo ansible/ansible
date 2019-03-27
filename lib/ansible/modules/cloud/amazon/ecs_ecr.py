@@ -126,6 +126,7 @@ repository:
 
 import json
 import traceback
+from typing import Tuple
 
 try:
     from botocore.exceptions import ClientError
