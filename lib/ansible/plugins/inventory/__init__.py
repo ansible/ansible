@@ -23,12 +23,12 @@ import hashlib
 import os
 import string
 
-from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.errors import AnsibleError, AnsibleParserError, AnsibleOptionsError
 from ansible.inventory.group import to_safe_group_name as original_safe
 from ansible.parsing.utils.addresses import parse_address
 from ansible.plugins import AnsiblePlugin
 from ansible.plugins.cache import CachePluginAdjudicator as CacheObject
-from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import string_types
@@ -177,6 +177,16 @@ class BaseInventoryPlugin(AnsiblePlugin):
         self.loader = loader
         self.inventory = inventory
         self.templar = Templar(loader=loader)
+
+    def verify_yaml_header(self, path):
+        with open(to_bytes(path), 'rb') as f:
+            try:
+                cfg_text = to_text(f.readline(), errors='surrogate_or_strict')
+            except UnicodeError as e:
+                raise AnsibleOptionsError("Error reading config file(%s) because the config file was not utf8 encoded: %s" % (path, to_native(e)))
+            if cfg_text == "---\n":
+                return True
+            return False
 
     def verify_file(self, path):
         ''' Verify if file is usable by this plugin, base does minimal accessibility check

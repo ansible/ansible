@@ -32,7 +32,7 @@ class InventoryModule(BaseInventoryPlugin):
     NAME = 'auto'
 
     def verify_file(self, path):
-        if not path.endswith('.yml') and not path.endswith('.yaml'):
+        if not path.endswith('.yml') and not path.endswith('.yaml') and not self.verify_yaml_header(path):
             return False
         return super(InventoryModule, self).verify_file(path)
 
