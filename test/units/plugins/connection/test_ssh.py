@@ -612,9 +612,12 @@ class TestSSHConnectionRetries(object):
         self.conn.get_option = MagicMock()
         self.conn.get_option.return_value = True
 
-        self.mock_popen.side_effect = [Exception('bad')] * 10
+        self.mock_popen.side_effect = (
+            [MagicMock()] +  # First Popen is for spawning ssh-agent
+            [Exception('bad')] * 10  # The rest are cmd retries
+        )
         pytest.raises(Exception, self.conn.exec_command, 'ssh', 'some data')
-        assert self.mock_popen.call_count == 10
+        assert self.mock_popen.call_count == 11
 
     def test_put_file_retries(self, monkeypatch):
         monkeypatch.setattr(C, 'HOST_KEY_CHECKING', False)
