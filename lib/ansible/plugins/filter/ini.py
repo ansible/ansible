@@ -20,7 +20,7 @@ def from_ini(o):
     if not isinstance(o, string_types):
         raise AnsibleFilterError('from_ini requires a string, got %s' % type(o))
     parser = configparser.RawConfigParser()
-    parser.optionxform = partial(to_text, errors='surrogate_or_replace')
+    parser.optionxform = partial(to_text, errors='surrogate_or_strict')
     parser.readfp(StringIO(o))
     d = dict(parser._sections)
     for k in d:
@@ -36,7 +36,7 @@ def to_ini(o):
     data = copy.deepcopy(o)
     defaults = configparser.RawConfigParser(data.pop('DEFAULT', {}))
     parser = configparser.RawConfigParser()
-    parser.optionxform = partial(to_text, errors='surrogate_or_replace')
+    parser.optionxform = partial(to_text, errors='surrogate_or_strict')
     for section, items in data.items():
         parser.add_section(section)
         for k, v in items.items():
