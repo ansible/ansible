@@ -928,7 +928,7 @@ class RedfishUtils(object):
 
         if sensors is None:
             return {'ret': False, 'msg': 'Key Temperatures was not found.'}
-            
+
         result['entries'] = sensors
         return result
 
