@@ -384,7 +384,8 @@ class PluginLoader:
             # they can have any suffix
             suffix = ''
 
-        if (is_collection_ref(name) or collection_list) and not name.startswith('Ansible'):  # HACK: need this right now so we can still load shipped PS module_utils
+        # HACK: need this right now so we can still load shipped PS module_utils
+        if (is_collection_ref(name) or collection_list) and not name.startswith('Ansible'):
             if '.' in name or not collection_list:
                 candidates = [name]
             else:
