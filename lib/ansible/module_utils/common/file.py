@@ -57,12 +57,7 @@ PERMS_RE = re.compile(r'[^rwxXstugo]')
 _PERM_BITS = 0o7777          # file mode permission bits
 _EXEC_PERM_BITS = 0o0111     # execute permission bits
 _DEFAULT_PERM = 0o0666       # default file permission bits
-
-# Ensure we use flock on e.g. FreeBSD, MacOSX and Solaris
-if sys.platform.startswith('linux'):
-    filelock = fcntl.lockf
-else:
-    filelock = fcntl.flock
+filelock = fcntl.lockf
 
 
 def is_executable(path):
@@ -139,8 +134,8 @@ def open_locked(path, lock_timeout=15):
 
 def lock(path, lock_timeout=15):
     '''
-    Set lock on given path via fcntl.lockf() (on linux) and fcntl.flock() on bsd's,
-    note that using locks does not guarantee exclusiveness unless all accessing
+    Set lock on given path via fcntl.lockf() (on linux), note that using 
+    locks does not guarantee exclusiveness unless all accessing
     processes honor locks.
 
     :kw path: Path (file) to lock
