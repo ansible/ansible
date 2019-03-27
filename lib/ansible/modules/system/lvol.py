@@ -16,6 +16,7 @@ DOCUMENTATION = '''
 author:
     - Jeroen Hoekx (@jhoekx)
     - Alexander Bulimov (@abulimov)
+    - Raoul Baudach (@unkaputtbar112)
 module: lvol
 short_description: Configure LVM logical volumes
 description:
