@@ -1,0 +1,5 @@
+---
+minor_changes:
+- |
+  Custom inventory plugins can now be auto-loaded as long as they are yaml-based
+  and the inventory file starts with the "---" yaml header.
