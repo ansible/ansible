@@ -1,2 +1,2 @@
-bugfixe:
+bugfixes:
     - handle xmlrpc errors in the correct fashion for rhn_channel
