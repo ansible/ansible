@@ -21,7 +21,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: dellemc_ome_device_facts
+module: ome_device_facts
 short_description: Retrieves the facts about Device.
 version_added: "2.8"
 description:
@@ -90,13 +90,13 @@ author: "Sajna Shetty(@Sajna-Shetty)"
 EXAMPLES = """
 ---
 - name: Retrieve basic inventory of all devices.
-  dellemc_ome_device_facts:
+  ome_device_facts:
     hostname: "192.168.0.1"
     username: "username"
     password: "password"
 
 - name: Retrieve basic inventory for devices identified by IDs 33333 or 11111 using filtering.
-  dellemc_ome_device_facts:
+  ome_device_facts:
     hostname: "192.168.0.1"
     username: "username"
     password: "password"
@@ -105,7 +105,7 @@ EXAMPLES = """
       filter: "Id eq 33333 or Id eq 11111"
 
 - name: Retrieve inventory details of specified devices identified by IDs 11111 and 22222.
-  dellemc_ome_device_facts:
+  ome_device_facts:
     hostname: "192.168.0.1"
     username: "username"
     password: "password"
@@ -116,7 +116,7 @@ EXAMPLES = """
         - 22222
 
 - name: Retrieve inventory details of specified devices identified by service tags MXL1234 and MXL4567.
-  dellemc_ome_device_facts:
+  ome_device_facts:
     hostname: "192.168.0.1"
     username: "username"
     password: "password"
@@ -127,7 +127,7 @@ EXAMPLES = """
         - MXL4567
 
 - name: Retrieve details of specified inventory type of specified devices identified by ID and service tags.
-  dellemc_ome_device_facts:
+  ome_device_facts:
     hostname: "192.168.0.1"
     username: "username"
     password: "password"
@@ -141,7 +141,7 @@ EXAMPLES = """
       inventory_type: "serverDeviceCards"
 
 - name: Retrieve subsystem health of specified devices identified by service tags.
-  dellemc_ome_device_facts:
+  ome_device_facts:
     hostname: "192.168.0.1"
     username: "username"
     password: "password"
@@ -209,7 +209,7 @@ ansible_facts:
 """
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.remote_management.dellemc.dellemc_ome import RestOME
+from ansible.module_utils.remote_management.dellemc.ome import RestOME
 from ansible.module_utils.six.moves.urllib.error import URLError, HTTPError
 from ansible.module_utils.urls import ConnectionError, SSLValidationError
 
