@@ -924,7 +924,7 @@ class RedfishUtils(object):
 
         memory_uri = data[key]["@odata.id"]
 
-        # Get a list of all CPUs and build respective URIs
+        # Get a list of all DIMMs and build respective URIs
         response = self.get_request(self.root_uri + memory_uri)
         if response['ret'] is False:
             return response
