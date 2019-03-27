@@ -93,6 +93,12 @@ options:
             - A list of DNS search domains.
         type: list
         version_added: '2.5'
+    route4:
+        description:
+            - A list of routes.
+            - Use the format C(192.168.20.0/24 192.168.1.10)
+        type: list
+        version_added: '2.8'
     ip6:
         description:
             - The IPv6 address to this interface.
@@ -640,6 +646,7 @@ class Nmcli(object):
         self.gw4 = module.params['gw4']
         self.dns4 = ' '.join(module.params['dns4']) if module.params.get('dns4') else None
         self.dns4_search = ' '.join(module.params['dns4_search']) if module.params.get('dns4_search') else None
+        self.route4 = ', '.join(module.params['route4']) if module.params.get('route4') else None
         self.ip6 = module.params['ip6']
         self.gw6 = module.params['gw6']
         self.dns6 = ' '.join(module.params['dns6']) if module.params.get('dns6') else None
@@ -807,6 +814,7 @@ class Nmcli(object):
             'ipv4.dns-search': self.dns4_search,
             'ipv6.dns-search': self.dns6_search,
             'ipv4.dhcp-client-id': self.dhcp_client_id,
+            'ipv4.routes': self.route4,
         }
 
         for key, value in options.items():
@@ -828,6 +836,7 @@ class Nmcli(object):
             'ipv4.dns-search': self.dns4_search,
             'ipv6.dns-search': self.dns6_search,
             'ipv4.dhcp-client-id': self.dhcp_client_id,
+            'ipv4.routes': self.route4,
         }
 
         for key, value in options.items():
@@ -889,6 +898,7 @@ class Nmcli(object):
             'arp-ip-target': self.arp_ip_target,
             'primary': self.primary,
             'ipv4.dhcp-client-id': self.dhcp_client_id,
+            'ipv4.routes': self.route4,
         }
 
         for key, value in options.items():
@@ -916,6 +926,7 @@ class Nmcli(object):
             'arp-interval': self.arp_interval,
             'arp-ip-target': self.arp_ip_target,
             'ipv4.dhcp-client-id': self.dhcp_client_id,
+            'ipv4.routes': self.route4,
         }
 
         for key, value in options.items():
@@ -976,6 +987,7 @@ class Nmcli(object):
             'ipv4.dns-search': self.dns4_search,
             'ipv6.dns-search': self.dns6_search,
             'ipv4.dhcp-client-id': self.dhcp_client_id,
+            'ipv4.routes': self.route4,
         }
 
         for key, value in options.items():
@@ -1002,6 +1014,7 @@ class Nmcli(object):
             'ipv6.dns-search': self.dns6_search,
             '802-3-ethernet.mtu': self.mtu,
             'ipv4.dhcp-client-id': self.dhcp_client_id,
+            'ipv4.routes': self.route4,
         }
 
         for key, value in options.items():
@@ -1441,6 +1454,7 @@ def main():
             gw4=dict(type='str'),
             dns4=dict(type='list'),
             dns4_search=dict(type='list'),
+            route4=dict(type='list'),
             dhcp_client_id=dict(type='str'),
             ip6=dict(type='str'),
             gw6=dict(type='str'),
