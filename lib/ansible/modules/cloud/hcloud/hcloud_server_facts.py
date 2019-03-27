@@ -60,7 +60,7 @@ hcloud_server_facts:
     returned: always
     type: complex
     contains:
-        id: 
+        id:
             description: Numeric identifier of the server
             returned: always
             type: int
@@ -101,7 +101,7 @@ hcloud_server_facts:
             type: str
             sample: fsn1-dc14
         rescue_enabled:
-            description: True if rescue mode is enabled: Server will then boot into rescue system on next reboot
+            description: True if rescue mode is enabled, Server will then boot into rescue system on next reboot
             returned: always
             type: bool
             sample: false
