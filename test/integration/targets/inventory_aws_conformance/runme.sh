@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-set -ex
+set -eux
 
-virtualenv --system-site-packages --python "${ANSIBLE_TEST_PYTHON_INTERPRETER:-python}" "${OUTPUT_DIR}/aws-ec2-inventory"
-source "${OUTPUT_DIR}/aws-ec2-inventory/bin/activate"
+source virtualenv.sh
+
 pip install "python-dateutil>=2.1,<2.7.0" jmespath "Jinja2>=2.10" PyYaml cryptography paramiko
 
 # create boto3 symlinks
