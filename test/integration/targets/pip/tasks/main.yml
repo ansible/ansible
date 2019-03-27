@@ -4,6 +4,7 @@
 - name: find virtualenv command
   command: "which virtualenv virtualenv-{{ ansible_python.version.major }}.{{ ansible_python.version.minor }}"
   register: command
+  failed_when: not command.stdout_lines
 
 - name: remember selected virtualenv command
   set_fact:
