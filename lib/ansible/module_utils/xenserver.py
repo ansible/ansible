@@ -712,7 +712,7 @@ def wait_for_vm_ip_address(module, vm_ref, timeout=300):
         vm_power_state = xapi_to_module_vm_power_state(xapi_session.xenapi.VM.get_power_state(vm_ref).lower())
 
         if vm_power_state != 'poweredon':
-            module.fail_json(msg="Cannot wait for VM IP address when VM is in state '%s'." % vm_power_state)
+            module.fail_json(msg="Cannot wait for VM IP address when VM is in state '%s'!" % vm_power_state)
 
         interval = 2
 
