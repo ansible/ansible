@@ -9,3 +9,16 @@ db_default: 'postgres'
 tmp_dir: '/tmp'
 db_session_role1: 'session_role1'
 db_session_role2: 'session_role2'
+
+pg_hba_test_ips:
+- contype: local
+  users: 'all,postgres'
+- source: '0000:ffff::'
+  netmask: 'ffff:fff0::'
+- source: '192.168.0.0/24'
+  netmask: ''
+  databases: 'all,replication'
+- source: '0000:ff00::'
+  netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ff00'
+- source: '172.16.0.0'
+  netmask: '255.255.0.0'
