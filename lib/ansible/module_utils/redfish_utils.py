@@ -900,9 +900,9 @@ class RedfishUtils(object):
 
         # Get these entries, but does not fail if not found
         properties = ['Name', 'PhysicalContext', 'UpperThresholdCritical',
-                      'UpperThresholdFatal', 'UpperThresholdNonCritical', 
-                      'LowerThresholdCritical', 'LowerThresholdFatal', 
-                      'LowerThresholdNonCritical', 'MaxReadingRangeTemp', 
+                      'UpperThresholdFatal', 'UpperThresholdNonCritical',
+                      'LowerThresholdCritical', 'LowerThresholdFatal',
+                      'LowerThresholdNonCritical', 'MaxReadingRangeTemp',
                       'MinReadingRangeTemp', 'ReadingCelsius', 'RelatedItem',
                       'SensorNumber']
 
