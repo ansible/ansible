@@ -117,9 +117,9 @@ EXAMPLES = '''
     broadcast_domain_range: ZONE
     state: enabled
     nsps_enabled:
-      - VirtualRouter
-      - InternalLbVm
-      - VpcVirtualRouter
+      - virtualrouter
+      - internallbvm
+      - vpcvirtualrouter
   delegate_to: localhost
 
 - name: Ensure a network is disabled
@@ -196,13 +196,13 @@ nsps:
       returned: on Network Service Provider enabling
       type: list
       sample:
-       - VirtualRouter
+       - virtualrouter
     disabled:
       description: list of Network Service Providers that were disabled
       returned: on Network Service Provider disabling
       type: list
       sample:
-       - InternalLbVm
+       - internallbvm
 
 '''
 
@@ -274,7 +274,7 @@ class AnsibleCloudStackPhysicalNetwork(AnsibleCloudStack):
         names = []
         for nsp in self.nsps:
             names.append(nsp['name'])
-            if nsp['name'] == name:
+            if nsp['name'].lower() == name.lower():
                 return nsp
 
         self.module.fail_json(msg="Failed: '{0}' not in network service providers list '[{1}]'".format(name, names))
@@ -289,16 +289,17 @@ class AnsibleCloudStackPhysicalNetwork(AnsibleCloudStack):
             'servicelist': service_list,
             'state': state
         }
-        res = self.query_api('updateNetworkServiceProvider', **args)
+        if not self.module.check_mode:
+            res = self.query_api('updateNetworkServiceProvider', **args)
 
-        poll_async = self.module.params.get('poll_async')
-        if poll_async:
-            nsp = self.poll_job(res, 'networkserviceprovider')
+            poll_async = self.module.params.get('poll_async')
+            if poll_async:
+                nsp = self.poll_job(res, 'networkserviceprovider')
 
         self.result['changed'] = True
         return nsp
 
-    def get_vrouter_element(self, nsp_name='VirtualRouter'):
+    def get_vrouter_element(self, nsp_name='virtualrouter'):
         nsp = self.get_nsp(nsp_name)
         nspid = nsp['id']
         if self.vrouters is None:
@@ -312,7 +313,7 @@ class AnsibleCloudStackPhysicalNetwork(AnsibleCloudStack):
 
         return self.vrouters[nspid]
 
-    def get_loadbalancer_element(self, nsp_name='InternalLbVm'):
+    def get_loadbalancer_element(self, nsp_name='internallbvm'):
         nsp = self.get_nsp(nsp_name)
         nspid = nsp['id']
         if self.loadbalancers is None:
@@ -326,7 +327,7 @@ class AnsibleCloudStackPhysicalNetwork(AnsibleCloudStack):
 
         return self.loadbalancers[nspid]
 
-    def set_vrouter_element_state(self, enabled, nsp_name='VirtualRouter'):
+    def set_vrouter_element_state(self, enabled, nsp_name='virtualrouter'):
         vrouter = self.get_vrouter_element(nsp_name)
         if vrouter['enabled'] == enabled:
             return vrouter
@@ -335,16 +336,16 @@ class AnsibleCloudStackPhysicalNetwork(AnsibleCloudStack):
             'id': vrouter['id'],
             'enabled': enabled
         }
-        res = self.query_api('configureVirtualRouterElement', **args)
-
-        poll_async = self.module.params.get('poll_async')
-        if poll_async:
-            vrouter = self.poll_job(res, 'virtualrouterelement')
+        if not self.module.check_mode:
+            res = self.query_api('configureVirtualRouterElement', **args)
+            poll_async = self.module.params.get('poll_async')
+            if poll_async:
+                vrouter = self.poll_job(res, 'virtualrouterelement')
 
         self.result['changed'] = True
         return vrouter
 
-    def set_loadbalancer_element_state(self, enabled, nsp_name='InternalLbVm'):
+    def set_loadbalancer_element_state(self, enabled, nsp_name='internallbvm'):
         loadbalancer = self.get_loadbalancer_element(nsp_name=nsp_name)
         if loadbalancer['enabled'] == enabled:
             return loadbalancer
@@ -353,11 +354,11 @@ class AnsibleCloudStackPhysicalNetwork(AnsibleCloudStack):
             'id': loadbalancer['id'],
             'enabled': enabled
         }
-        res = self.query_api('configureInternalLoadBalancerElement', **args)
-
-        poll_async = self.module.params.get('poll_async')
-        if poll_async:
-            loadbalancer = self.poll_job(res, 'internalloadbalancerelement')
+        if not self.module.check_mode:
+            res = self.query_api('configureInternalLoadBalancerElement', **args)
+            poll_async = self.module.params.get('poll_async')
+            if poll_async:
+                loadbalancer = self.poll_job(res, 'internalloadbalancerelement')
 
         self.result['changed'] = True
         return loadbalancer
@@ -457,9 +458,9 @@ def main():
 
     if nsps_enabled is not None:
         for nsp_name in nsps_enabled:
-            if nsp_name in ['VirtualRouter', 'VpcVirtualRouter']:
+            if nsp_name.lower() in ['virtualrouter', 'vpcvirtualrouter']:
                 acs_network.set_vrouter_element_state(enabled=True, nsp_name=nsp_name)
-            elif nsp_name == 'InternalLbVm':
+            elif nsp_name == 'internallbvm':
                 acs_network.set_loadbalancer_element_state(enabled=True, nsp_name=nsp_name)
 
             acs_network.update_nsp(name=nsp_name, state='Enabled')

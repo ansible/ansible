@@ -102,6 +102,31 @@
       - pn.tags is undefined
       - pn.state == 'Disabled'
 
+- name: ensure a network is enabled with specific nsps enabled in check mode
+  cs_physical_network:
+    name: net01
+    zone: "{{ cszone.name }}"
+    isolation_method: VLAN
+    vlan: 100-200,300-400
+    broadcast_domain_range: ZONE
+    state: enabled
+    nsps_enabled:
+      - virtualrouter
+      - internallbvm
+      - vpcvirtualrouter
+  check_mode: yes
+  register: pn
+- name: validate ensure a network is enabled with specific nsps enabled
+  assert:
+    that:
+      - pn is successful
+      - pn is changed
+      - pn.name == 'net01'
+      - pn.zone == cszone.name
+      - "'internallbvm' in pn.nsps_enabled"
+      - "'virtualrouter' in pn.nsps_enabled"
+      - "'vpcvirtualrouter' in pn.nsps_enabled"
+
 - name: ensure a network is enabled with specific nsps enabled
   cs_physical_network:
     name: net01
@@ -111,9 +136,9 @@
     broadcast_domain_range: ZONE
     state: enabled
     nsps_enabled:
-      - VirtualRouter
-      - InternalLbVm
-      - VpcVirtualRouter
+      - virtualrouter
+      - internallbvm
+      - vpcvirtualrouter
   register: pn
 - name: validate ensure a network is enabled with specific nsps enabled
   assert:
@@ -126,7 +151,9 @@
       - pn.zone == cszone.name
       - pn.vlan == '100-200,300-400'
       - pn.state == 'Enabled'
-      - "'InternalLbVm' in pn.nsps_enabled"
+      - "'internallbvm' in pn.nsps_enabled"
+      - "'virtualrouter' in pn.nsps_enabled"
+      - "'vpcvirtualrouter' in pn.nsps_enabled"
 
 - name: ensure a network is disabled
   cs_physical_network:
