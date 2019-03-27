@@ -134,7 +134,7 @@ def open_locked(path, lock_timeout=15):
 
 def lock(path, lock_timeout=15):
     '''
-    Set lock on given path via fcntl.lockf() (on linux), note that using 
+    Set lock on given path via fcntl.lockf() (on linux), note that using
     locks does not guarantee exclusiveness unless all accessing
     processes honor locks.
 
