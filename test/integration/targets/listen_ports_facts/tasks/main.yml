@@ -31,22 +31,40 @@
   when: ansible_os_family == "RedHat" and ansible_distribution_major_version|int >= 7
 
 - name: start UDP server on port 5555
-  command: nc -u -l 5555
-  async: 45
+  command: nc -u -l -p 5555
+  async: 1000
   poll: 0
-  when: ansible_os_family == "RedHat" or ansible_os_family == "Debian"
+  when: (ansible_os_family == "RedHat" and ansible_distribution_major_version|int >= 7) or ansible_os_family == "Debian"
+
+- name: start UDP server on port 5555
+  command: nc -u -l 5555
+  async: 1000
+  poll: 0
+  when: ansible_os_family == "RedHat" and ansible_distribution_major_version|int < 7
 
 - name: start UDP server on port 5556
-  command: nc -u -l 5556
-  async: 45
+  command: "nc -u -l -p 5556"
+  async: 1000
   poll: 0
-  when: ansible_os_family == "RedHat" or ansible_os_family == "Debian"
+  when: (ansible_os_family == "RedHat" and ansible_distribution_major_version|int >= 7) or ansible_os_family == "Debian"
+
+- name: start UDP server on port 5556
+  command: "nc -u -l 5556"
+  async: 1000
+  poll: 0
+  when: ansible_os_family == "RedHat" and ansible_distribution_major_version|int < 7
 
 - name: start TCP server on port 5557
-  command: nc -l 5557
-  async: 45
+  command: "nc -l -p 5557"
+  async: 1000
   poll: 0
-  when: ansible_os_family == "RedHat" or ansible_os_family == "Debian"
+  when: (ansible_os_family == "RedHat" and ansible_distribution_major_version|int >= 7) or ansible_os_family == "Debian"
+
+- name: start TCP server on port 5557
+  command: "nc -l 5557"
+  async: 1000
+  poll: 0
+  when: ansible_os_family == "RedHat" and ansible_distribution_major_version|int < 7
 
 - name: Gather listening ports facts with whitelists
   listen_ports_facts:
