@@ -576,18 +576,19 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
             module_info = imp.find_module('_six', [os.path.join(p, 'six') for p in module_utils_paths])
             py_module_name = ('six', '_six')
             idx = 0
-        elif py_module_name[0] == 'ansible_collections':  # FIXME: use a better sentinel or fancier data structure here?
+        elif py_module_name[0] == 'ansible_collections':
             # FIXME: replicate module name resolution like below for granular imports
             # this is a collection-hosted MU; look it up with get_data
             package_name = '.'.join(py_module_name[:-1])
             resource_name = py_module_name[-1] + '.py'
             try:
-                # FIXME: need this in py2 for some reason TBD
+                # FIXME: need this in py2 for some reason TBD, but we shouldn't (get_data delegates to wrong loader without it)
                 pkg = import_module(package_name)
                 module_info = pkgutil.get_data(package_name, resource_name)
             except FileNotFoundError:
                 # FIXME: implement package fallback code
-                raise AnsibleError('unable to load collection-hosted module_util {0}.{1}'.format(package_name, resource_name))
+                raise AnsibleError('unable to load collection-hosted module_util {0}.{1}'.format(to_native(package_name),
+                                                                                                 to_native(resource_name)))
             idx = 0
         else:
             # Check whether either the last or the second to last identifier is
@@ -621,10 +622,10 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
 
             # HACK: walk back up the package hierarchy to pick up package inits; this won't do the right thing
             # for actual packages yet...
-            accumulated_pkg_name = ()
+            accumulated_pkg_name = []
             for pkg in py_module_name[:-1]:
-                accumulated_pkg_name = accumulated_pkg_name + (pkg,)
-                normalized_name = accumulated_pkg_name + ('__init__',)
+                accumulated_pkg_name.append(pkg)  # we're accumulating this across iterations
+                normalized_name = tuple(accumulated_pkg_name[:] + ['__init__'])  # extra machinations to get a hashable type (list is not)
                 if normalized_name not in py_module_cache:
                     normalized_path = os.path.join(*accumulated_pkg_name)
                     # HACK: possibly preserve some of the actual package file contents; problematic for extend_paths and others though?
