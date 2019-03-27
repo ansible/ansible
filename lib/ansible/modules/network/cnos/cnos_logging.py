@@ -289,7 +289,7 @@ def map_config_to_obj(module):
             obj.append({'dest': logs[1], 'level': logs[2]})
         elif logs[1] == 'logfile':
             level = '5'
-            if logs[3] is not None:
+            if index > 3 and logs[3].isdigit():
                 level = logs[3]
             size = '10485760'
             if len(logs) > 4:
@@ -299,7 +299,7 @@ def map_config_to_obj(module):
             level = '5'
             facility = None
 
-            if logs[3].isdigit():
+            if index > 3 and logs[3].isdigit():
                 level = logs[3]
             if index > 3 and logs[3] == 'facility':
                 facility = logs[4]
