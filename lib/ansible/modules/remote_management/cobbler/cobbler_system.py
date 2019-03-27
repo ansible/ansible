@@ -107,6 +107,7 @@ EXAMPLES = r'''
     host: cobbler01
     username: cobbler
     password: MySuperSecureP4sswOrd
+    state: query
   register: cobbler_systems
   delegate_to: localhost
 
@@ -125,6 +126,7 @@ EXAMPLES = r'''
     username: cobbler
     password: MySuperSecureP4sswOrd
     name: myhost
+    state: absent
   delegate_to: localhost
 '''
 
