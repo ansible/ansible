@@ -32,18 +32,17 @@ class TestIosL2Module(TestIosModule):
 
     def setUp(self):
         super(TestIosL2Module, self).setUp()
+
         self.mock_run_commands = patch('ansible.modules.network.ios.ios_l2_interface.run_commands')
         self.run_commands = self.mock_run_commands.start()
-        self.mock_get_config = patch('ansible.modules.network.ios.ios_l2_interface.get_config')
-        self.get_config = self.mock_get_config.start()
 
         self.mock_load_config = patch('ansible.modules.network.ios.ios_l2_interface.load_config')
         self.load_config = self.mock_load_config.start()
 
     def tearDown(self):
         super(TestIosL2Module, self).tearDown()
-        self.mock_get_config.stop()
         self.mock_load_config.stop()
+        self.mock_run_commands.stop()
 
     def load_fixtures(self, commands=None, transport='cli'):
         self.get_config.return_value = load_fixture('ios_l2_interface_config.cfg')
