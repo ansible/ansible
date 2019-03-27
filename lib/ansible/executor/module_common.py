@@ -710,7 +710,7 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
     unprocessed_py_module_names = normalized_modules.difference(py_module_names)
 
     for py_module_name in unprocessed_py_module_names:
-        # HACK: this probably works, but is not guaranteed to; need a more explicit flag?
+        # HACK: this seems to work as a way to identify a collections-based import, but a stronger identifier would be better
         if not py_module_cache[py_module_name][1].startswith('/'):
             dir_prefix = ''
         else:
