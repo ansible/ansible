@@ -442,7 +442,7 @@ def main():
         if state == 'present':
             # Require size argument except for snapshot of thin volumes
             if size_operator is not None:
-                module.fail_json(msg="Bad size specification of '%s%s' for creating LV" % size_operator, size)
+                module.fail_json(msg="Bad size specification of '%s%s' for creating LV" % (size_operator, size))
             if (lv or thinpool) and not size:
                 for test_lv in lvs:
                     if test_lv['name'] == lv and test_lv['thinvol'] and snapshot:
