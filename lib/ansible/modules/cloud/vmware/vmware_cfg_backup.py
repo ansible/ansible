@@ -114,7 +114,7 @@ class VMwareConfigurationBackup(PyVmomi):
                 self.module.fail_json(msg="Failed to find ESXi %s" % self.esxi_hostname)
 
         host_system = get_all_objs(self.content, [vim.HostSystem])
-        return host_system.keys()[0]
+        return list(host_system)[0]
 
     def process_state(self):
         if self.state == 'saved':
