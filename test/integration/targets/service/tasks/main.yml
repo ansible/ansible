@@ -1,15 +1,17 @@
 - name: install the test daemon script
-  copy: src=ansible_test_service dest=/usr/sbin/ansible_test_service mode=755
-  register: install_result
+  copy:
+    src: ansible_test_service.py
+    dest: /usr/sbin/ansible_test_service
+    mode: '755'
+
+- name: rewrite shebang in the test daemon script
+  lineinfile:
+    path: /usr/sbin/ansible_test_service
+    line: "#!{{ ansible_python_interpreter | realpath }}"
+    insertbefore: BOF
+    firstmatch: yes
 
 - block:
-    - name: assert that the daemon script was installed
-      assert:
-        that:
-          - "install_result.dest == '/usr/sbin/ansible_test_service'"
-          - "install_result.state == 'file'"
-          - "install_result.mode == '0755'"
-
     # determine init system is in use
     - name: detect sysv init system
       set_fact:
