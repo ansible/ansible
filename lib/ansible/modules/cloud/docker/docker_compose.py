@@ -727,13 +727,12 @@ class ContainerManager(DockerBaseClass):
                 }
             )
 
-            def _findOrphans():
-                for container in containers:
-                    service_name = container.get('Labels', {}).get(LABEL_SERVICE)
-                    if service_name not in self.project.service_names:
-                        yield container
+            orphans = []
+            for container in containers:
+                service_name = container.get('Labels', {}).get(LABEL_SERVICE)
+                if service_name not in self.project.service_names:
+                    orphans.append(service_name)
 
-            orphans = list(_findOrphans())
             if orphans:
                 result['changed'] = True
 
