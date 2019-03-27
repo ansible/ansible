@@ -1,6 +1,6 @@
 - name: Install requests and pika
   pip:
-    name: requests,pika
+    name: requests,pika<1.0.0
     state: present
 
 - name: RabbitMQ basic publish test
