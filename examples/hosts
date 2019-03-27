@@ -42,3 +42,17 @@
 
 ## db-[99:101]-node.example.com
 
+## Ansible modules expects python to be in /usr/bin/python or a
+## location set with the ansible_python_interpreter variable
+
+# Setting the python path for a single host.
+
+# red.example.com ansible_python_interpreter=/usr/local/bin/python
+
+# Setting the python path for all hosts in the group 'bsdsys'
+
+# [bsdsys]
+# red.example.com
+
+# [bsdsys:vars]
+# ansible_python_interpreter=/usr/local/bin/python
