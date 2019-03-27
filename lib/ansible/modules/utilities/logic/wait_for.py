@@ -84,7 +84,8 @@ options:
     version_added: "1.4"
   send_string:
     description:
-      - String to send to socket
+      - String to send to socket. Can be used for any service which expect some handshake message.
+      - For example: You can send a string with the ssh version and have clear auth.log.
       - Defaults to None.
     type: str
     version_added: "2.8"
