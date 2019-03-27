@@ -230,6 +230,12 @@ swarm_facts:
                   returned: success
                   type: str
                   example: SWMTKN-1--xxxxx
+      UnlockKey:
+          description: The swarm unlock-key if I(autolock_managers) is C(true).
+          returned: success
+          type: str
+          example: SWMKEY-1-xxx
+
 actions:
   description: Provides the actions done on the swarm.
   returned: when action failed.
@@ -249,6 +255,7 @@ except ImportError:
 from ansible.module_utils.docker.common import (
     DockerBaseClass,
     DifferenceTracker,
+    LooseVersion,
 )
 
 from ansible.module_utils.docker.swarm import AnsibleDockerSwarmClient
@@ -427,10 +434,23 @@ class SwarmManager(DockerBaseClass):
             data = self.client.inspect_swarm()
             json_str = json.dumps(data, ensure_ascii=False)
             self.swarm_info = json.loads(json_str)
+            unlock_key = self.get_unlock_key()
+            self.swarm_info.update(unlock_key)
             self.results['changed'] = False
             self.results['swarm_facts'] = self.swarm_info
         except APIError:
             return
+
+    def get_unlock_key(self):
+        default = {'UnlockKey': None}
+        if self.client.docker_py_version < LooseVersion('2.7.0'):
+            return default
+        if not self.parameters.autolock_managers:
+            return default
+        try:
+            return self.client.get_unlock_key()
+        except APIError:
+            return default
 
     def init_swarm(self):
         if not self.force and self.client.check_if_swarm_manager():
@@ -452,7 +472,10 @@ class SwarmManager(DockerBaseClass):
         self.results['actions'].append("New Swarm cluster created: %s" % (self.swarm_info.get('ID')))
         self.differences.add('state', parameter='present', active='absent')
         self.results['changed'] = True
-        self.results['swarm_facts'] = {u'JoinTokens': self.swarm_info.get('JoinTokens')}
+        self.results['swarm_facts'] = {
+            'JoinTokens': self.swarm_info.get('JoinTokens'),
+            'UnlockKey': self.swarm_info.get('UnlockKey')
+        }
 
     def __update_swarm(self):
         try:

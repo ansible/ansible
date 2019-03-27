@@ -89,6 +89,15 @@
        - 'output_6.diff.before is defined'
        - 'output_6.diff.after is defined'
   when: docker_py_version is version('2.6.0', '>=')
+
+- name: assert UnlockKey in swarm_facts
+  assert:
+    that:
+      - 'output_2.swarm_facts.UnlockKey'
+      - 'output_3.swarm_facts.UnlockKey'
+      - 'output_6.swarm_facts.UnlockKey is none'
+  when: docker_py_version is version('2.7.0', '>=')
+
 - assert:
     that:
     - output_1 is failed
