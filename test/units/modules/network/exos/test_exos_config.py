@@ -19,8 +19,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from units.compat.mock import patch
+from units.compat.mock import patch, MagicMock
 from units.modules.utils import set_module_args
+from ansible.plugins.cliconf.exos import Cliconf
 from ansible.modules.network.exos import exos_config
 from .exos_module import TestExosModule, load_fixture
 
@@ -41,11 +42,22 @@ class TestExosConfigModule(TestExosModule):
         self.mock_run_commands = patch('ansible.modules.network.exos.exos_config.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
+        self.mock_get_startup_config = patch('ansible.modules.network.exos.exos_config.get_startup_config')
+        self.get_startup_config = self.mock_get_startup_config.start()
+
+        self.cliconf_obj = Cliconf(MagicMock())
+
+        self.mock_get_diff = patch('ansible.modules.network.exos.exos_config.get_diff')
+        self.get_diff = self.mock_get_diff.start()
+
+        self.running_config = load_fixture('exos_config_config.cfg')
+
     def tearDown(self):
         super(TestExosConfigModule, self).tearDown()
         self.mock_get_config.stop()
         self.mock_load_config.stop()
         self.mock_run_commands.stop()
+        self.mock_get_startup_config.stop()
 
     def load_fixtures(self, commands=None):
         config_file = 'exos_config_config.cfg'
@@ -55,6 +67,7 @@ class TestExosConfigModule(TestExosModule):
     def test_exos_config_unchanged(self):
         src = load_fixture('exos_config_config.cfg')
         set_module_args(dict(src=src))
+        self.get_diff.return_value = self.cliconf_obj.get_diff(src, src)
         self.execute_module()
 
     def test_exos_config_src(self):
@@ -62,6 +75,7 @@ class TestExosConfigModule(TestExosModule):
         set_module_args(dict(src=src))
         commands = ['configure ports 1 description-string "IDS"',
                     'configure snmp sysName "marble"']
+        self.get_diff.return_value = self.cliconf_obj.get_diff(src, self.running_config)
         self.execute_module(changed=True, commands=commands)
 
     def test_exos_config_backup(self):
@@ -84,6 +98,7 @@ class TestExosConfigModule(TestExosModule):
         set_module_args(dict(src=src, save_when='changed'))
         commands = ['configure ports 1 description-string "IDS"',
                     'configure snmp sysName "marble"']
+        self.get_diff.return_value = self.cliconf_obj.get_diff(src, self.running_config)
         self.execute_module(changed=True, commands=commands)
         self.assertEqual(self.run_commands.call_count, 1)
         self.assertEqual(self.get_config.call_count, 1)
@@ -96,6 +111,7 @@ class TestExosConfigModule(TestExosModule):
         set_module_args(dict(src=src, save_when='changed', _ansible_check_mode=True))
         commands = ['configure ports 1 description-string "IDS"',
                     'configure snmp sysName "marble"']
+        self.get_diff.return_value = self.cliconf_obj.get_diff(src, self.running_config)
         self.execute_module(changed=True, commands=commands)
         self.assertEqual(self.run_commands.call_count, 0)
         self.assertEqual(self.get_config.call_count, 1)
@@ -109,65 +125,64 @@ class TestExosConfigModule(TestExosModule):
         self.assertEqual(self.load_config.call_count, 0)
 
     def test_exos_config_save_modified_false(self):
-        mock_get_startup_config_text = patch('ansible.modules.network.exos.exos_config.get_startup_config_text')
-        get_startup_config_text = mock_get_startup_config_text.start()
-        get_startup_config_text.return_value = load_fixture('exos_config_config.cfg')
-
+        self.get_startup_config.return_value = load_fixture('exos_config_config.cfg')
         set_module_args(dict(save_when='modified'))
         self.execute_module(changed=False)
         self.assertEqual(self.run_commands.call_count, 0)
         self.assertEqual(self.get_config.call_count, 1)
-        self.assertEqual(get_startup_config_text.call_count, 1)
+        self.assertEqual(self.get_startup_config.call_count, 1)
         self.assertEqual(self.load_config.call_count, 0)
 
-        mock_get_startup_config_text.stop()
-
     def test_exos_config_save_modified_true(self):
-        mock_get_startup_config_text = patch('ansible.modules.network.exos.exos_config.get_startup_config_text')
-        get_startup_config_text = mock_get_startup_config_text.start()
-        get_startup_config_text.return_value = load_fixture('exos_config_modified.cfg')
-
+        self.get_startup_config.return_value = load_fixture('exos_config_modified.cfg')
         set_module_args(dict(save_when='modified'))
         self.execute_module(changed=True)
         self.assertEqual(self.run_commands.call_count, 1)
         self.assertTrue(self.get_config.call_count > 0)
-        self.assertEqual(get_startup_config_text.call_count, 1)
+        self.assertEqual(self.get_startup_config.call_count, 1)
         self.assertEqual(self.load_config.call_count, 0)
 
-        mock_get_startup_config_text.stop()
-
     def test_exos_config_lines(self):
-        set_module_args(dict(lines=['configure snmp sysName "marble"']))
+        lines = ['configure snmp sysName "marble"']
+        set_module_args(dict(lines=lines))
         commands = ['configure snmp sysName "marble"']
+        self.get_diff.return_value = self.cliconf_obj.get_diff('\n'.join(lines), self.running_config)
         self.execute_module(changed=True, commands=commands)
 
     def test_exos_config_before(self):
-        set_module_args(dict(lines=['configure snmp sysName "marble"'], before=['test1', 'test2']))
+        lines = ['configure snmp sysName "marble"']
+        set_module_args(dict(lines=lines, before=['test1', 'test2']))
         commands = ['test1', 'test2', 'configure snmp sysName "marble"']
+        self.get_diff.return_value = self.cliconf_obj.get_diff('\n'.join(lines), self.running_config)
         self.execute_module(changed=True, commands=commands, sort=False)
 
     def test_exos_config_after(self):
-        set_module_args(dict(lines=['hostname foo'], after=['test1', 'test2']))
-        commands = ['hostname foo', 'test1', 'test2']
-        set_module_args(dict(lines=['configure snmp sysName "marble"'], after=['test1', 'test2']))
+        lines = ['configure snmp sysName "marble"']
+        set_module_args(dict(lines=lines, after=['test1', 'test2']))
         commands = ['configure snmp sysName "marble"', 'test1', 'test2']
+        self.get_diff.return_value = self.cliconf_obj.get_diff('\n'.join(lines), self.running_config)
         self.execute_module(changed=True, commands=commands, sort=False)
 
     def test_exos_config_before_after_no_change(self):
-        set_module_args(dict(lines=['configure snmp sysName "x870"'],
+        lines = ['configure snmp sysName "x870"']
+        set_module_args(dict(lines=lines,
                              before=['test1', 'test2'],
                              after=['test3', 'test4']))
+        self.get_diff.return_value = self.cliconf_obj.get_diff('\n'.join(lines), self.running_config)
         self.execute_module()
 
     def test_exos_config_config(self):
         config = 'hostname localhost'
-        set_module_args(dict(lines=['configure snmp sysName "x870"'], config=config))
+        lines = ['configure snmp sysName "x870"']
+        set_module_args(dict(lines=lines, config=config))
         commands = ['configure snmp sysName "x870"']
+        self.get_diff.return_value = self.cliconf_obj.get_diff('\n'.join(lines), config)
         self.execute_module(changed=True, commands=commands)
 
     def test_exos_config_match_none(self):
         lines = ['configure snmp sysName "x870"']
         set_module_args(dict(lines=lines, match='none'))
+        self.get_diff.return_value = self.cliconf_obj.get_diff('\n'.join(lines), self.running_config, diff_match='none')
         self.execute_module(changed=True, commands=lines)
 
     def test_exos_config_src_and_lines_fails(self):
@@ -208,39 +223,43 @@ class TestExosConfigModule(TestExosModule):
         self.execute_module(changed=False)
 
     def test_exos_diff_startup_unchanged(self):
-        mock_get_startup_config_text = patch('ansible.modules.network.exos.exos_config.get_startup_config_text')
-        get_startup_config_text = mock_get_startup_config_text.start()
-        get_startup_config_text.return_value = load_fixture('exos_config_config.cfg')
+        mock_get_startup_config = patch('ansible.modules.network.exos.exos_config.get_startup_config')
+        get_startup_config = mock_get_startup_config.start()
+        get_startup_config.return_value = load_fixture('exos_config_config.cfg')
 
         args = dict(diff_against='startup', _ansible_diff=True)
         set_module_args(args)
         self.execute_module(changed=False)
-        self.assertEqual(get_startup_config_text.call_count, 1)
+        self.assertEqual(get_startup_config.call_count, 1)
 
-        mock_get_startup_config_text.stop()
+        mock_get_startup_config.stop()
 
     def test_exos_diff_startup_changed(self):
-        mock_get_startup_config_text = patch('ansible.modules.network.exos.exos_config.get_startup_config_text')
-        get_startup_config_text = mock_get_startup_config_text.start()
-        get_startup_config_text.return_value = load_fixture('exos_config_modified.cfg')
+        mock_get_startup_config = patch('ansible.modules.network.exos.exos_config.get_startup_config')
+        get_startup_config = mock_get_startup_config.start()
+        get_startup_config.return_value = load_fixture('exos_config_modified.cfg')
 
         args = dict(diff_against='startup', _ansible_diff=True)
         set_module_args(args)
         self.execute_module(changed=True)
-        self.assertEqual(get_startup_config_text.call_count, 1)
+        self.assertEqual(get_startup_config.call_count, 1)
 
-        mock_get_startup_config_text.stop()
+        mock_get_startup_config.stop()
 
     def test_exos_diff_intended_unchanged(self):
+        intended_config = load_fixture('exos_config_config.cfg')
         args = dict(diff_against='intended',
-                    intended_config=load_fixture('exos_config_config.cfg'),
+                    intended_config=intended_config,
                     _ansible_diff=True)
         set_module_args(args)
+        self.get_diff = self.cliconf_obj.get_diff(intended_config, self.running_config)
         self.execute_module(changed=False)
 
     def test_exos_diff_intended_modified(self):
+        intended_config = load_fixture('exos_config_modified.cfg')
         args = dict(diff_against='intended',
-                    intended_config=load_fixture('exos_config_modified.cfg'),
+                    intended_config=intended_config,
                     _ansible_diff=True)
         set_module_args(args)
+        self.get_diff = self.cliconf_obj.get_diff(intended_config, self.running_config)
         self.execute_module(changed=True)
