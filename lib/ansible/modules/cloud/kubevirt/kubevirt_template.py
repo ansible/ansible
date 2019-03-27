@@ -297,6 +297,10 @@ class KubeVirtVMTemplate(KubeVirtRawModule):
         # Fill in template parameters:
         definition['parameters'] = self.params.get('parameters')
 
+        # Fill in the default Label
+        labels = definition['metadata']['labels']
+        labels['template.cnv.io/type'] = 'vm'
+
         # Fill in Openshift/Kubevirt template annotations:
         annotations = definition['metadata']['annotations']
         if self.params.get('display_name'):
