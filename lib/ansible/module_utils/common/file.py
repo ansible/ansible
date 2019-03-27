@@ -64,6 +64,7 @@ if sys.platform.startswith('linux'):
 else:
     filelock = fcntl.flock
 
+
 def is_executable(path):
     # This function's signature needs to be repeated
     # as the first line of its docstring.
