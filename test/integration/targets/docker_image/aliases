@@ -2,3 +2,4 @@ shippable/posix/group3
 skip/osx
 skip/freebsd
 destructive
+skip/rhel7.6
