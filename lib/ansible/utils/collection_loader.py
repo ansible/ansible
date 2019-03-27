@@ -12,7 +12,7 @@ import sys
 from types import ModuleType
 
 from ansible import constants as C
-from ansible.module_utils._text import to_text, to_native
+from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.six import iteritems, string_types
 
 # HACK: keep Python 2.6 controller tests happy in CI until they're properly split
@@ -29,8 +29,8 @@ _SYNTHETIC_PACKAGES = {
     'ansible_collections.ansible.builtin.plugins.modules': dict(type='flatmap', flatmap='ansible.modules', graft=True),
 }
 
-# TODO: tighten this up to subset Python identifier requirements
-_collection_role_name_re = re.compile(r'^(\w+)\.(\w+)\.(\w+)$')
+# TODO: tighten this up to subset Python identifier requirements (and however we want to restrict ns/collection names)
+_collection_qualified_re = re.compile(u'^(\w+)\.(\w+)\.(\w+)$')
 
 
 # FIXME: exception handling/error logging
@@ -258,8 +258,7 @@ class AnsibleFlatMapLoader(object):
 
 
 def get_collection_role_path(role_name, collection_list=None):
-    role_name = to_native(role_name, errors='surrogate_or_strict')
-    match = _collection_role_name_re.match(role_name)
+    match = _collection_qualified_re.match(role_name)
 
     if match:
         grps = match.groups()
@@ -270,24 +269,21 @@ def get_collection_role_path(role_name, collection_list=None):
     else:
         role = role_name
 
-    for collection_name in (to_native(c, errors='surrogate_or_strict') for c in collection_list):
+    for collection_name in collection_list:
         try:
-            role_package = 'ansible_collections.{0}.roles.{1}'.format(collection_name, role)
-
-            # FIXME: we need to be able to enumerate/query collections here without the risk of loading arbitrary module init code along the way
-            # should we just ask the collections loader directly now?
-            # FIXME: roles don't have to have tasks/main.y?ml anymore, just load the package itself?
-            # FIXME: error handling; need to catch any import failures and move along
+            role_package = u'ansible_collections.{0}.roles.{1}'.format(collection_name, role)
+            # FIXME: error handling/logging; need to catch any import failures and move along
 
             # FIXME: this line shouldn't be necessary, but py2 pkgutil.get_data is delegating back to built-in loader when it shouldn't
-            pkg = import_module(role_package + '.tasks')
+            pkg = import_module(role_package + u'.tasks')
 
-            tasks_file = pkgutil.get_data(role_package + '.tasks', 'main.yml')
+            # get_data input must be a native string
+            tasks_file = pkgutil.get_data(to_native(role_package) + '.tasks', 'main.yml')
 
             if tasks_file is not None:
                 # the package is now loaded, get the collection's package and ask where it lives
-                path = os.path.dirname(sys.modules[role_package].__file__)
-                return to_text(role), to_text(path), to_text(collection_name)
+                path = os.path.dirname(to_bytes(sys.modules[role_package].__file__, errors='surrogate_or_strict'))
+                return role, to_text(path, errors='surrogate_or_strict'), collection_name
 
         except IOError:
             continue
@@ -296,6 +292,10 @@ def get_collection_role_path(role_name, collection_list=None):
             continue
 
     return None
+
+
+def is_collection_ref(candidate_name):
+    return bool(_collection_qualified_re.match(candidate_name))
 
 
 def set_collection_playbook_paths(b_playbook_paths):

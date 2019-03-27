@@ -12,4 +12,8 @@ if ansible-playbook -i ../../inventory pythoncheck.yml | grep UNSUPPORTEDPYTHON;
   exit 0
 fi
 
+# test callback
+ANSIBLE_CALLBACK_WHITELIST=testns.testcoll.usercallback ansible localhost -m ping | grep "usercallback says ok"
+
+# run test playbook
 ansible-playbook -i ../../inventory -i ./a.statichost.yml -v play.yml
