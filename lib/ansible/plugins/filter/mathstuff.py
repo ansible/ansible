@@ -136,7 +136,7 @@ def min(environment, a, **kwargs):
     else:
         if kwargs:
             raise AnsibleFilterError("Ansible's min filter does not support any keyword arguments. "
-                                     "You need a newer version of Jinja2 that provides their version of the filter.")
+                                     "You need Jinja2 2.10 or later that provides their version of the filter.")
         _min = __builtins__.get('min')
         return _min(a)
 
@@ -148,7 +148,7 @@ def max(environment, a, **kwargs):
     else:
         if kwargs:
             raise AnsibleFilterError("Ansible's max filter does not support any keyword arguments. "
-                                     "You need a newer version of Jinja2 that provides their version of the filter.")
+                                     "You need Jinja2 2.10 or later that provides their version of the filter.")
         _max = __builtins__.get('max')
         return _max(a)
 
