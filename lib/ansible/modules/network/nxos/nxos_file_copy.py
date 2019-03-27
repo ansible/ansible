@@ -165,11 +165,14 @@ from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_arg
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native, to_text, to_bytes
 
+HAS_PARAMIKO = True
 try:
     import paramiko
-    HAS_PARAMIKO = True
 except ImportError:
-    HAS_PARAMIKO = False
+    try:
+        import ansible_paramiko as paramiko
+    except ImportError:
+        HAS_PARAMIKO = False
 
 try:
     from scp import SCPClient
