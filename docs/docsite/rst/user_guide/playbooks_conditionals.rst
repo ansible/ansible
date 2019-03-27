@@ -29,7 +29,7 @@ It's actually pretty simple::
       - name: "shut down Debian flavored systems"
         command: /sbin/shutdown -t now
         when: ansible_facts['os_family'] == "Debian"
-        # note that all variables can be directly in conditionals without double curly braces
+        # note that all variables can be used directly in conditionals without double curly braces
 
 You can also use parentheses to group conditions::
 
