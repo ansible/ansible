@@ -1,5 +1,5 @@
 - name: install the test daemon script
-  template: src=ansible_test_service dest=/usr/sbin/ansible_test_service mode=755
+  template: src=ansible_test_service.py dest=/usr/sbin/ansible_test_service mode=755
   register: install_result
 
 - block:
