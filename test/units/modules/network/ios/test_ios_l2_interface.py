@@ -32,10 +32,8 @@ class TestIosUserModule(TestIosModule):
 
     def setUp(self):
         super(TestIosUserModule, self).setUp()
-        
         self.mock_run_commands = patch('ansible.modules.network.ios.ios_l2_interface.run_commands')
         self.run_commands = self.mock_run_commands.start()
-        
         self.mock_get_config = patch('ansible.modules.network.ios.ios_l2_interface.get_config')
         self.get_config = self.mock_get_config.start()
 
