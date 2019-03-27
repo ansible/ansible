@@ -83,8 +83,6 @@ projects:
 filters:
   - machineType = n1-standard-1
   - scheduling.automaticRestart = true AND machineType = n1-standard-1
-scopes:
-  - https://www.googleapis.com/auth/compute
 service_account_file: /tmp/service_account.json
 auth_kind: serviceaccount
 keyed_groups:
@@ -351,7 +349,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         params = {
             'filters': self.get_option('filters'),
             'projects': self.get_option('projects'),
-            'scopes': 'https://www.googleapis.com/auth/compute',
+            'scopes': ['https://www.googleapis.com/auth/compute'],
             'zones': self.get_option('zones'),
             'auth_kind': self.get_option('auth_kind'),
             'service_account_file': self.get_option('service_account_file'),
