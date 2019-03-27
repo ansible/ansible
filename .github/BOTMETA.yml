@@ -1207,6 +1207,8 @@ files:
   $plugins/lookup/onepassword:
     maintainers: samdoran
     ignored: azenk
+  $plugins/lookup/manifold:
+    maintainers: galanoff
 ###############################
 # plugins/netconf
   $plugins/netconf/:
