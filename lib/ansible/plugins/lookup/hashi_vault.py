@@ -219,14 +219,14 @@ class HashiVault:
         if mount_point is None:
             mount_point = 'userpass'
 
-        self.client.auth_userpass(username, password, mount_point)
+        self.client.auth_userpass(username, password, mount_point=mount_point)
 
     def auth_ldap(self, **kwargs):
         username, password, mount_point = self.check_params(**kwargs)
         if mount_point is None:
             mount_point = 'ldap'
 
-        self.client.auth_ldap(username, password, mount_point)
+        self.client.auth_ldap(username, password, mount_point=mount_point)
 
     def boolean_or_cacert(self, validate_certs, cacert):
         validate_certs = boolean(validate_certs, strict=False)
