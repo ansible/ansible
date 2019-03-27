@@ -1,0 +1,97 @@
+# Copyright: (c) 2019, Hetzner Cloud GmbH <info@hetzner-cloud.de>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: setup ensure server is absent
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    state: absent
+  register: result
+
+- name: test gather hcloud server facts - empty resources
+  hcloud_server_facts:
+- name: verify test gather hcloud server facts - empty resources
+  assert:
+    that:
+      - ansible_facts.hcloud_server_facts | count == 0
+
+- name: create server
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    server_type: cx11
+    image: ubuntu-18.04
+    state: started
+    labels:
+      key: value
+  register: main_server
+- name: verify create server
+  assert:
+    that:
+      - main_server is changed
+      - main_server.hcloud_server.name == "{{ hcloud_server_name }}"
+      - main_server.hcloud_server.server_type == "cx11"
+      - main_server.hcloud_server.status == "running"
+      - main_server.root_password != ""
+
+
+- name: test gather hcloud server facts in check mode
+  hcloud_server_facts:
+  check_mode: yes
+
+- name: verify test gather hcloud server facts in check mode
+  assert:
+    that:
+      - ansible_facts.hcloud_server_facts|selectattr('name','equalto','{{ hcloud_server_name }}') | list | count == 1
+
+
+- name: test gather hcloud server facts with correct label selector
+  hcloud_server_facts:
+    label_selector: "key=value"
+- name: verify test gather hcloud server with correct label selector
+  assert:
+    that:
+      - ansible_facts.hcloud_server_facts|selectattr('name','equalto','{{ hcloud_server_name }}') | list | count == 1
+
+- name: test gather hcloud server facts with wrong label selector
+  hcloud_server_facts:
+    label_selector: "key!=value"
+- name: verify test gather hcloud server with wrong label selector
+  assert:
+    that:
+      - ansible_facts.hcloud_server_facts | list | count == 0
+
+- name: test gather hcloud server facts with correct name
+  hcloud_server_facts:
+    name: "{{hcloud_server_name}}"
+- name: verify test gather hcloud server with correct name
+  assert:
+    that:
+      - ansible_facts.hcloud_server_facts|selectattr('name','equalto','{{ hcloud_server_name }}') | list | count == 1
+
+- name: test gather hcloud server facts with wrong name
+  hcloud_server_facts:
+      name: "{{hcloud_server_name}}1"
+- name: verify test gather hcloud server with wrong name
+  assert:
+    that:
+      - ansible_facts.hcloud_server_facts | list | count == 0
+
+- name: test gather hcloud server facts with correct id
+  hcloud_server_facts:
+    id: "{{main_server.hcloud_server.id}}"
+- name: verify test gather hcloud server with correct id
+  assert:
+    that:
+      - ansible_facts.hcloud_server_facts|selectattr('name','equalto','{{ hcloud_server_name }}') | list | count == 1
+
+- name: test gather hcloud server facts with wrong id
+  hcloud_server_facts:
+      name: "4711"
+- name: verify test gather hcloud server with wrong id
+  assert:
+    that:
+      - ansible_facts.hcloud_server_facts | list | count == 0
+
+- name: cleanup
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    state: absent
