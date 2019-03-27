@@ -723,8 +723,12 @@ class ContainerManager(DockerBaseClass):
                 Container.from_ps(self.project.client, container)
                 for container in self.project.client.containers(
                     all=False,
-                    filters={'label': ['{0}={1}'.format(LABEL_PROJECT, self.project.name), '{0}={1}'.format(LABEL_ONE_OFF, "False")]})])
-            )
+                    filters={
+                        'label': ['{0}={1}'.format(LABEL_PROJECT, self.project.name),
+                        '{0}={1}'.format(LABEL_ONE_OFF, "False")],
+                    }
+                )
+            ]))
 
             def _findOrphans():
                 for container in containers:
