@@ -51,6 +51,8 @@ options:
     description:
       - The administrative state of the Layer-3 interface. It sets the state to be either Up
         or Down.
+    default: up
+    choices: ['up', 'down']
 extends_documentation_fragment: ios
 """
 
@@ -182,7 +184,7 @@ def map_obj_to_commands(updates, module):
         ipv6 = w['ipv6']
         state = w['state']
         updown = w['updown']
-        
+
         interface = 'interface ' + name
         commands.append(interface)
 
@@ -209,7 +211,7 @@ def map_obj_to_commands(updates, module):
                 commands.append('no shutdown')
             elif updown == 'down':
                 commands.append('shutdown')
-                
+
             if ipv4:
                 if obj_in_have is None or obj_in_have.get('ipv4') is None or ipv4 != obj_in_have['ipv4']:
                     address = ipv4.split('/')
@@ -292,8 +294,7 @@ def main():
         ipv6=dict(),
         state=dict(default='present',
                    choices=['present', 'absent']),
-        updown=dict(default='up',
-                   choices=['up', 'down'])
+        updown=dict(default='up', choices=['up', 'down'])
     )
 
     aggregate_spec = deepcopy(element_spec)
