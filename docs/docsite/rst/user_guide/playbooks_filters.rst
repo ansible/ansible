@@ -886,7 +886,7 @@ To get the minimum value from list of numbers::
 
 To get the minimum value in a list of objects::
 
-    {{ [{'val': 1}, {'val': 2}] | min(attribute='value') }}
+    {{ [{'val': 1}, {'val': 2}] | min(attribute='val') }}
 
 To get the maximum value from a list of numbers::
 
@@ -896,7 +896,7 @@ To get the maximum value from a list of numbers::
 
 To get the maximum value in a list of objects::
 
-    {{ [{'val': 1}, {'val': 2}] | max(attribute='value') }}
+    {{ [{'val': 1}, {'val': 2}] | max(attribute='val') }}
 
 .. versionadded:: 2.5
 
