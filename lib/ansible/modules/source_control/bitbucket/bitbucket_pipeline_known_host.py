@@ -106,6 +106,10 @@ except ImportError:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.source_control.bitbucket import BitbucketHelper
 
+error_messages = {
+    'invalid_params': 'Account or repository was not found',
+}
+
 BITBUCKET_API_ENDPOINTS = {
     'known-host-list': '%s/2.0/repositories/{username}/{repo_slug}/pipelines_config/ssh/known_hosts/' % BitbucketHelper.BITBUCKET_API_URL,
     'known-host-detail': '%s/2.0/repositories/{username}/{repo_slug}/pipelines_config/ssh/known_hosts/{known_host_uuid}' % BitbucketHelper.BITBUCKET_API_URL,
@@ -225,6 +229,9 @@ def create_known_host(module, bitbucket):
         },
     )
 
+    if info['status'] == 404:
+        module.fail_json(msg=error_messages['invalid_params'])
+
     if info['status'] != 201:
         module.fail_json(msg='Failed to create known host `{hostname}`: {info}'.format(
             hostname=module.params['hostname'],
@@ -241,6 +248,9 @@ def delete_known_host(module, bitbucket, known_host_uuid):
         ),
         method='DELETE',
     )
+
+    if info['status'] == 404:
+        module.fail_json(msg=error_messages['invalid_params'])
 
     if info['status'] != 204:
         module.fail_json(msg='Failed to delete known host `{hostname}`: {info}'.format(
