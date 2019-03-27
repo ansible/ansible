@@ -53,6 +53,7 @@ options:
         or Down.
     default: up
     choices: ['up', 'down']
+    version_added: "2.8"
 extends_documentation_fragment: ios
 """
 
