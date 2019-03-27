@@ -60,23 +60,50 @@ EXAMPLES = """
 """
 
 RETURN = """
-ansible_facts:
-    description: The image instances
-    returned: Always
+hcloud_image_facts:
+    description: The image facts as list
+    returned: always
     type: complex
     contains:
-        "hcloud_image_facts": [
-             {
-                "id": 1937415,
-                "type": "system",
-                "status": "available",
-                "name": "ubuntu-18.04",
-                "description": "Ubuntu 18.04 Standard 64 bit",
-                "os_flavor": "ubuntu",
-                "os_version": "18.04",
-                "labels": {},
-            }
-        ]
+        id: 
+            description: Numeric identifier of the image
+            returned: always
+            type: int
+            sample: 1937415
+        type:
+            description: Type of the image
+            returned: always
+            type: str
+            sample: system
+        status:
+            description: Status of the image
+            returned: always
+            type: str
+            sample: available
+        name:
+            description: Name of the image
+            returned: always
+            type: str
+            sample: ubuntu-18.04
+        description:
+            description: Detail description of the image
+            returned: always
+            type: str
+            sample: Ubuntu 18.04 Standard 64 bit
+        os_flavor:
+            description: OS flavor of the image
+            returned: always
+            type: str
+            sample: ubuntu
+        os_version:
+            description: OS version of the image
+            returned: always
+            type: str
+            sample: 18.04
+        labels:
+            description: User-defined labels (key-value pairs)
+            returned: always
+            type: dict
 """
 
 from ansible.module_utils.basic import AnsibleModule
