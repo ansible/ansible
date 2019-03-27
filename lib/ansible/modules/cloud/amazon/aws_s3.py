@@ -405,6 +405,12 @@ def create_bucket(module, s3, bucket, location=None):
 
 
 def paginated_list(s3, **pagination_params):
+    pg = s3.get_paginator('list_objects_v2')
+    for page in pg.paginate(**pagination_params):
+        yield [data['Key'] for data in page.get('Contents', [])]
+
+
+def paginated_versioned_list_with_fallback(s3, **pagination_params):
     try:
         versioned_pg = s3.get_paginator('list_object_versions')
         for page in versioned_pg.paginate(**pagination_params):
@@ -413,9 +419,8 @@ def paginated_list(s3, **pagination_params):
             yield delete_markers + current_objects
     except botocore.exceptions.ClientError as e:
         if to_text(e.response['Error']['Code']) in IGNORE_S3_DROP_IN_EXCEPTIONS + ['AccessDenied']:
-            fallback_pg = s3.get_paginator('list_objects_v2')
-            for page in fallback_pg.paginate(**pagination_params):
-                yield [{'Key': data['Key']} for data in page.get('Contents', [])]
+            for page in paginated_list(s3, **pagination_params):
+                yield [{'Key': data['Key']} for data in page]
 
 
 def list_keys(module, s3, bucket, prefix, marker, max_keys):
@@ -437,7 +442,7 @@ def delete_bucket(module, s3, bucket):
         if exists is False:
             return False
         # if there are contents then we need to delete them before we can delete the bucket
-        for keys in paginated_list(s3, Bucket=bucket):
+        for keys in paginated_versioned_list_with_fallback(s3, Bucket=bucket):
             if keys:
                 s3.delete_objects(Bucket=bucket, Delete={'Objects': keys})
         s3.delete_bucket(Bucket=bucket)
