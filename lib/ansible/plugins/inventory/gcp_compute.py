@@ -48,6 +48,10 @@ DOCUMENTATION = '''
                 - The type of credential used.
             required: True
             choices: ['application', 'serviceaccount', 'machineaccount']
+        scopes:
+            description: list of authentication scopes
+            type: list
+            default: ['https://www.googleapis.com/auth/compute']
         service_account_file:
             description:
                 - The path of a Service Account JSON file if serviceaccount is selected as type.
@@ -85,6 +89,9 @@ filters:
   - scheduling.automaticRestart = true AND machineType = n1-standard-1
 service_account_file: /tmp/service_account.json
 auth_kind: serviceaccount
+scopes:
+ - 'https://www.googleapis.com/auth/cloud-platform'
+ - 'https://www.googleapis.com/auth/compute.readonly'
 keyed_groups:
   # Create groups from GCE labels
   - prefix: gcp
@@ -119,6 +126,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     NAME = 'gcp_compute'
 
+    _instances = r"https://www.googleapis.com/compute/v1/projects/%s/zones/%s/instances"
+
     def __init__(self):
         super(InventoryModule, self).__init__()
 
@@ -148,13 +157,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             elif path.endswith(('gcp_compute.yml', 'gcp_compute.yaml')):
                 return True
         return False
-
-    def self_link(self, project, zone):
-        '''
-            :param params: a dict containing all of the fields relevant to build URL
-            :return the formatted URL as a string.
-        '''
-        return "https://www.googleapis.com/compute/v1/projects/%s/zones/%s/instances" % (project, zone)
 
     def fetch_list(self, params, link, query):
         '''
@@ -349,7 +351,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         params = {
             'filters': self.get_option('filters'),
             'projects': self.get_option('projects'),
-            'scopes': ['https://www.googleapis.com/auth/compute'],
+            'scopes': self.get_option('scopes'),
             'zones': self.get_option('zones'),
             'auth_kind': self.get_option('auth_kind'),
             'service_account_file': self.get_option('service_account_file'),
@@ -385,7 +387,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 else:
                     zones = params['zones']
                 for zone in zones:
-                    link = self.self_link(project, zone)
+                    link = self._instances % (project, zone)
                     params['zone'] = zone
                     resp = self.fetch_list(params, link, query)
                     self._add_hosts(resp.get('items'), config_data)
