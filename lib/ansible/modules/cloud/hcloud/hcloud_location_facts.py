@@ -51,20 +51,36 @@ EXAMPLES = """
 """
 
 RETURN = """
-ansible_facts:
-    description: The location instances
-    returned: Always
+hcloud_location_facts:
+    description: The location facts as list
+    returned: always
     type: complex
     contains:
-        "hcloud_location_facts": [
-             {
-                "id": 1937415,
-                "name": "fsn1",
-                "description": "Falkenstein DC Park 1",
-                "country": "DE",
-                "city": "Falkenstein"
-            }
-        ]
+        id: 
+            description: Numeric identifier of the location
+            returned: always
+            type: int
+            sample: 1937415
+        name:
+            description: Name of the location
+            returned: always
+            type: str
+            sample: fsn1
+        description:
+            description: Detail description of the location
+            returned: always
+            type: str
+            sample: Falkenstein DC Park 1
+        country:
+            description: Country code of the location
+            returned: always
+            type: str
+            sample: DE
+        city:
+            description: City of the location
+            returned: always
+            type: str
+            sample: Falkenstein
 """
 
 from ansible.module_utils.basic import AnsibleModule
