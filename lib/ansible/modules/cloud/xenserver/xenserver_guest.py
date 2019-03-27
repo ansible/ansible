@@ -1149,13 +1149,13 @@ class XenServerVM(XenServerObject):
                     try:
                         num_cpu_cores_per_socket = int(num_cpu_cores_per_socket)
                     except ValueError as e:
-                        self.module.fail_json(msg="VM check hardware.num_cpu_cores_per_socket: parameter should be an integer value.")
+                        self.module.fail_json(msg="VM check hardware.num_cpu_cores_per_socket: parameter should be an integer value!")
 
                     if num_cpu_cores_per_socket < 1:
                         self.module.fail_json(msg="VM check hardware.num_cpu_cores_per_socket: parameter should be greater than zero!")
 
                     if num_cpus and num_cpus % num_cpu_cores_per_socket != 0:
-                        self.module.fail_json(msg="VM check hardware.num_cpus: parameter should be a multiple of hardware.num_cpu_cores_per_socket.")
+                        self.module.fail_json(msg="VM check hardware.num_cpus: parameter should be a multiple of hardware.num_cpu_cores_per_socket!")
 
                     vm_platform = self.vm_params['platform']
                     vm_cores_per_socket = int(vm_platform.get('cores-per-socket', 1))
@@ -1174,7 +1174,7 @@ class XenServerVM(XenServerObject):
                     try:
                         memory_mb = int(memory_mb)
                     except ValueError as e:
-                        self.module.fail_json(msg="VM check hardware.memory_mb: parameter should be an integer value.")
+                        self.module.fail_json(msg="VM check hardware.memory_mb: parameter should be an integer value!")
 
                     if memory_mb < 1:
                         self.module.fail_json(msg="VM check hardware.memory_mb: parameter should be greater than zero!")
@@ -1726,14 +1726,14 @@ class XenServerVM(XenServerObject):
 
             except (TypeError, ValueError, NameError):
                 # Common failure
-                self.module.fail_json(msg="%sfailed to parse disk size. Please review value provided using documentation." % msg_prefix)
+                self.module.fail_json(msg="%sfailed to parse disk size! Please review value provided using documentation." % msg_prefix)
 
             disk_units = dict(tb=4, gb=3, mb=2, kb=1, b=0)
 
             if unit in disk_units:
                 return int(size * (1024 ** disk_units[unit]))
             else:
-                self.module.fail_json(msg="%s'%s' is not a supported unit for disk size. Supported units are ['%s']." %
+                self.module.fail_json(msg="%s'%s' is not a supported unit for disk size! Supported units are ['%s']." %
                                       (msg_prefix, unit, "', '".join(sorted(disk_units.keys(), key=lambda key: disk_units[key]))))
         else:
             return None
