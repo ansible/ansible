@@ -316,7 +316,7 @@ class KubeVirtVM(KubeVirtRawModule):
             definition['spec']['running'] = state == 'running'
 
         # Execute the CURD of VM:
-        template = definition['spec']['template']
+        template = definition if ephemeral else definition['spec']['template']
         kind = 'VirtualMachineInstance' if ephemeral else 'VirtualMachine'
         dummy, definition = self.construct_vm_definition(kind, definition, template)
         result = self.execute_crud(kind, definition)
