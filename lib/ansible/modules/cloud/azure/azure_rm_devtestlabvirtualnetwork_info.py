@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_devtestlabvirtualnetwork_facts
+module: azure_rm_devtestlabvirtualnetwork_info
 version_added: "2.8"
 short_description: Get Azure DevTest Lab Virtual Network facts.
 description:
@@ -44,13 +44,13 @@ author:
 
 EXAMPLES = '''
   - name: Get instance of DevTest Lab Virtual Network
-    azure_rm_devtestlabvirtualnetwork_facts:
+    azure_rm_devtestlabvirtualnetwork_info:
       resource_group: myResourceGroup
       lab_name: myLab
       name: myVirtualNetwork
 
   - name: List all Virtual Networks in DevTest Lab
-    azure_rm_devtestlabvirtualnetwork_facts:
+    azure_rm_devtestlabvirtualnetwork_info:
       resource_group: myResourceGroup
       lab_name: myLab
       name: myVirtualNetwork

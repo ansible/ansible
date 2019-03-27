@@ -150,7 +150,7 @@
     location: eastus
 
 - name: Gather facts SQL Database
-  azure_rm_sqldatabase_facts:
+  azure_rm_sqldatabase_info:
     resource_group: "{{ resource_group }}"
     server_name: sqlsrv{{ random_postfix }}
     name: database{{ random_postfix }}
@@ -169,7 +169,7 @@
       - output.databases[0].status != None
 
 - name: Gather facts SQL Database
-  azure_rm_sqldatabase_facts:
+  azure_rm_sqldatabase_info:
     resource_group: "{{ resource_group }}"
     server_name: sqlsrv{{ random_postfix }}
   register: output
@@ -241,7 +241,7 @@
 
 # test database facts without databases
 - name: Gather facts SQL Database
-  azure_rm_sqldatabase_facts:
+  azure_rm_sqldatabase_info:
     resource_group: "{{ resource_group }}"
     server_name: sqlsrv{{ random_postfix }}
     name: database{{ random_postfix }}
@@ -253,7 +253,7 @@
       - output.databases | length == 0
 
 - name: Gather facts SQL Database
-  azure_rm_sqldatabase_facts:
+  azure_rm_sqldatabase_info:
     resource_group: "{{ resource_group }}"
     server_name: sqlsrv{{ random_postfix }}
   register: output
@@ -318,7 +318,7 @@
     end_ip_address: 172.28.10.138
 
 - name: Gather facts SQL Firewall Rule
-  azure_rm_sqlfirewallrule_facts:
+  azure_rm_sqlfirewallrule_info:
     resource_group: "{{ resource_group }}"
     server_name: sqlsrv{{ random_postfix }}
     name: firewallrule{{ random_postfix }}
@@ -335,7 +335,7 @@
       - output.rules[0].end_ip_address != None
 
 - name: Gather facts SQL Firewall Rule
-  azure_rm_sqlfirewallrule_facts:
+  azure_rm_sqlfirewallrule_info:
     resource_group: "{{ resource_group }}"
     server_name: sqlsrv{{ random_postfix }}
   register: output
@@ -371,7 +371,7 @@
     state: absent
 
 - name: Gather facts SQL Firewall Rule
-  azure_rm_sqlfirewallrule_facts:
+  azure_rm_sqlfirewallrule_info:
     resource_group: "{{ resource_group }}"
     server_name: sqlsrv{{ random_postfix }}
     name: firewallrule{{ random_postfix }}

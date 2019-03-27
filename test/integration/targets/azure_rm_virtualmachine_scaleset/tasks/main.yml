@@ -214,7 +214,7 @@
         - output_scaleset.vmss[0].load_balancer == "testLB1"
 
 - name: Retrieve scaleset VMs facts
-  azure_rm_virtualmachinescalesetinstance_facts:
+  azure_rm_virtualmachinescalesetinstance_info:
     resource_group: "{{ resource_group }}"
     vmss_name: testVMSS{{ rpfx }}
   register: instances
@@ -293,7 +293,7 @@
     that: not results.changed
 
 - name: Query extension
-  azure_rm_virtualmachinescalesetextension_facts:
+  azure_rm_virtualmachinescalesetextension_info:
     resource_group: "{{ resource_group }}"
     vmss_name: testVMSS{{ rpfx }}
     name: testExtension
@@ -313,7 +313,7 @@
       - results.extensions[0]['provisioning_state'] != None
 
 - name: List extensions
-  azure_rm_virtualmachinescalesetextension_facts:
+  azure_rm_virtualmachinescalesetextension_info:
     resource_group: "{{ resource_group }}"
     vmss_name: testVMSS{{ rpfx }}
   register: results
