@@ -75,6 +75,15 @@ DOCUMENTATION = '''
           type: bool
           default: False
           version_added: '2.8'
+        retrieve_image_info:
+          description:
+            - Populate the C(image) host fact for the instances returned with the GCP image name
+            - By default this plugin does not attempt to resolve the boot image of an instance to the image name cataloged in GCP
+              because of the performance overhead of the task.
+            - Unless this option is enabled, the C(image) host variable will be C(null)
+          type: bool
+          default: False
+          version_added: '2.8'
 '''
 
 EXAMPLES = '''
@@ -165,10 +174,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             :param query: a formatted query string
             :return the JSON response containing a list of instances.
         '''
-        module = GcpMockModule(params)
-        auth = GcpSession(module, 'compute')
-        response = auth.get(link, params={'filter': query})
-        return self._return_if_object(module, response)
+        response = self.auth_session.get(link, params={'filter': query})
+        return self._return_if_object(self.fake_module, response)
 
     def _get_zones(self, project, config_data):
         '''
@@ -232,7 +239,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         return result
 
-    def _format_items(self, items):
+    def _format_items(self, items, project_disks):
         '''
             :param items: A list of hosts
         '''
@@ -252,9 +259,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                         network['subnetwork'] = self._format_network_info(network['subnetwork'])
 
             host['project'] = host['selfLink'].split('/')[6]
+            host['image'] = self._get_image(host, project_disks)
         return items
 
-    def _add_hosts(self, items, config_data, format_items=True):
+    def _add_hosts(self, items, config_data, format_items=True, project_disks=None):
         '''
             :param items: A list of hosts
             :param config_data: configuration data
@@ -263,7 +271,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         if not items:
             return
         if format_items:
-            items = self._format_items(items)
+            items = self._format_items(items, project_disks)
 
         for host in items:
             self._populate_host(host)
@@ -328,6 +336,71 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                         return accessConfig[u'natIP']
         return None
 
+    def _get_image(self, instance, project_disks):
+        '''
+            :param instance: A instance response from GCP
+            :return the image of this instance or None
+        '''
+        image = None
+        if project_disks and 'disks' in instance:
+            for disk in instance['disks']:
+                if disk.get('boot'):
+                    image = project_disks[disk["source"]]
+        return image
+
+    def _get_project_disks(self, config_data, query):
+        '''
+            project space disk images
+        '''
+
+        try:
+            self._project_disks
+        except AttributeError:
+            self._project_disks = {}
+            request_params = {'maxResults': 500, 'filter': query}
+
+            for project in config_data['projects']:
+                session_responses = []
+                page_token = True
+                while page_token:
+                    response = self.auth_session.get(
+                        'https://www.googleapis.com/compute/v1/projects/{0}/aggregated/disks'.format(project),
+                        params=request_params
+                    )
+                    response_json = response.json()
+                    if 'nextPageToken' in response_json:
+                        request_params['pageToken'] = response_json['nextPageToken']
+                    elif 'pageToken' in request_params:
+                        del request_params['pageToken']
+
+                    if 'items' in response_json:
+                        session_responses.append(response_json)
+                    page_token = 'pageToken' in request_params
+
+            for response in session_responses:
+                if 'items' in response:
+                    # example k would be a zone or region name
+                    # example v would be { "disks" : [], "otherkey" : "..." }
+                    for zone_or_region, aggregate in response['items'].items():
+                        if 'zones' in zone_or_region:
+                            if 'disks' in aggregate:
+                                zone = zone_or_region.replace('zones/', '')
+                                for disk in aggregate['disks']:
+                                    if 'zones' in config_data and zone in config_data['zones']:
+                                        # If zones specified, only store those zones' data
+                                        if 'sourceImage' in disk:
+                                            self._project_disks[disk['selfLink']] = disk['sourceImage'].split('/')[-1]
+                                        else:
+                                            self._project_disks[disk['selfLink']] = disk['selfLink'].split('/')[-1]
+
+                                    else:
+                                        if 'sourceImage' in disk:
+                                            self._project_disks[disk['selfLink']] = disk['sourceImage'].split('/')[-1]
+                                        else:
+                                            self._project_disks[disk['selfLink']] = disk['selfLink'].split('/')[-1]
+
+        return self._project_disks
+
     def _get_privateip(self, item):
         '''
             :param item: A host response from GCP
@@ -358,7 +431,15 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             'service_account_email': self.get_option('service_account_email'),
         }
 
+        self.fake_module = GcpMockModule(params)
+        self.auth_session = GcpSession(self.fake_module, 'compute')
+
         query = self._get_query_options(params['filters'])
+
+        if self.get_option('retrieve_image_info'):
+            project_disks = self._get_project_disks(config_data, query)
+        else:
+            project_disks = None
 
         # Cache logic
         if cache:
@@ -373,7 +454,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 results = self._cache[cache_key]
                 for project in results:
                     for zone in results[project]:
-                        self._add_hosts(results[project][zone], config_data, False)
+                        self._add_hosts(results[project][zone], config_data, False, project_disks=project_disks)
             except KeyError:
                 cache_needs_update = True
 
@@ -390,7 +471,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                     link = self._instances % (project, zone)
                     params['zone'] = zone
                     resp = self.fetch_list(params, link, query)
-                    self._add_hosts(resp.get('items'), config_data)
+                    self._add_hosts(resp.get('items'), config_data, project_disks=project_disks)
                     cached_data[project][zone] = resp.get('items')
 
         if cache_needs_update:
