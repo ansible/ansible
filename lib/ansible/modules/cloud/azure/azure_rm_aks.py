@@ -539,9 +539,9 @@ class AzureRMManagedCluster(AzureRMModuleBase):
             if agentpoolcount > 1:
                 self.fail('You cannot specify more than one agent_pool_profiles currently')
 
+            available_versions = self.get_all_versions()
             if not response:
                 to_be_updated = True
-                available_versions = self.get_all_versions()
                 if self.kubernetes_version not in available_versions.keys():
                     self.fail("Unsupported kubernetes version. Expected one of {0} but got {1}".format(available_versions.keys(), self.kubernetes_version))
             else:
