@@ -719,7 +719,10 @@ class ContainerManager(DockerBaseClass):
 
         if self.remove_orphans:
             containers = self.client.containers(
-                filters={'label': ['{0}={1}'.format(LABEL_PROJECT, self.project.name), '{0}={1}'.format(LABEL_ONE_OFF, "False")]}
+                filters={
+                    'label': ['{0}={1}'.format(LABEL_PROJECT, self.project.name),
+                    '{0}={1}'.format(LABEL_ONE_OFF, "False")],
+                }
             )
 
             def _findOrphans():
