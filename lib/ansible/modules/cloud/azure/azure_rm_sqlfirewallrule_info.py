@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2019 Zim Kalinowski, (@zikalino)
+# Copyright (c) 2017 Zim Kalinowski, <zikalino@microsoft.com>
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -15,16 +15,16 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_mysqlconfiguration_facts
+module: azure_rm_sqlfirewallrule_info
 version_added: "2.8"
-short_description: Get Azure MySQL Configuration facts.
+short_description: Get Azure SQL Firewall Rule facts.
 description:
-    - Get facts of Azure MySQL Configuration.
+    - Get facts of SQL Firewall Rule.
 
 options:
     resource_group:
         description:
-            - The name of the resource group that contains the resource. You can obtain this value from the Azure Resource Manager API or the portal.
+            - The name of the resource group that contains the server.
         required: True
     server_name:
         description:
@@ -32,7 +32,7 @@ options:
         required: True
     name:
         description:
-            - Setting name.
+            - The name of the firewall rule.
 
 extends_documentation_fragment:
     - azure
@@ -43,70 +43,76 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Get specific setting of MySQL Server
-    azure_rm_mysqlconfiguration_facts:
+  - name: Get instance of SQL Firewall Rule
+    azure_rm_sqlfirewallrule_info:
       resource_group: myResourceGroup
-      server_name: testmysqlserver
-      name: deadlock_timeout
+      server_name: testserver
+      name: testrule
 
-  - name: Get all settings of MySQL Server
-    azure_rm_mysqlconfiguration_facts:
+  - name: List instances of SQL Firewall Rule
+    azure_rm_sqlfirewallrule_info:
       resource_group: myResourceGroup
-      server_name: server_name
+      server_name: testserver
 '''
 
 RETURN = '''
-settings:
-    description: A list of dictionaries containing MySQL Server settings.
+rules:
+    description: A list of dict results containing the facts for matching SQL firewall rules.
     returned: always
     type: complex
     contains:
         id:
             description:
-                - Setting resource ID
+                - Resource ID
             returned: always
             type: str
-            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforMySQL/servers/testmysqlser
-                     ver/configurations/deadlock_timeout"
+            sample: "/subscriptions/xxxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Sql/servers/testser
+                    ver/firewallRules/testrule"
+        resource_group:
+            description:
+                - Resource group name.
+            returned: always
+            type: str
+            sample: testgroup
+        server_name:
+            description:
+                - SQL server name.
+            returned: always
+            type: str
+            sample: testserver
         name:
             description:
-                - Setting name.
+                - Firewall rule name.
             returned: always
             type: str
-            sample: deadlock_timeout
-        value:
+            sample: testrule
+        start_ip_address:
             description:
-                - Setting value.
-            returned: always
-            type: raw
-            sample: 1000
-        description:
-            description:
-                - Description of the configuration.
+                - The start IP address of the firewall rule.
             returned: always
             type: str
-            sample: Deadlock timeout.
-        source:
+            sample: 10.0.0.1
+        end_ip_address:
             description:
-                - Source of the configuration.
+                - The start IP address of the firewall rule.
             returned: always
             type: str
-            sample: system-default
+            sample: 10.0.0.5
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from msrestazure.azure_operation import AzureOperationPoller
-    from azure.mgmt.rdbms.mysql import MySQLManagementClient
+    from msrest.polling import LROPoller
+    from azure.mgmt.sql import SqlManagementClient
     from msrest.serialization import Model
 except ImportError:
     # This is handled in azure_rm_common
     pass
 
 
-class AzureRMMySqlConfigurationFacts(AzureRMModuleBase):
+class AzureRMSqlFirewallRuleFacts(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -123,40 +129,39 @@ class AzureRMMySqlConfigurationFacts(AzureRMModuleBase):
             )
         )
         # store the results of the module operation
-        self.results = dict(changed=False)
-        self.mgmt_client = None
+        self.results = dict(
+            changed=False
+        )
         self.resource_group = None
         self.server_name = None
         self.name = None
-        super(AzureRMMySqlConfigurationFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMSqlFirewallRuleFacts, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
-        self.mgmt_client = self.get_mgmt_svc_client(MySQLManagementClient,
-                                                    base_url=self._cloud_environment.endpoints.resource_manager)
 
-        if self.name is not None:
-            self.results['settings'] = self.get()
+        if (self.name is not None):
+            self.results['rules'] = self.get()
         else:
-            self.results['settings'] = self.list_by_server()
+            self.results['rules'] = self.list_by_server()
         return self.results
 
     def get(self):
         '''
-        Gets facts of the specified MySQL Configuration.
+        Gets facts of the specified SQL Firewall Rule.
 
-        :return: deserialized MySQL Configurationinstance state dictionary
+        :return: deserialized SQL Firewall Ruleinstance state dictionary
         '''
         response = None
         results = []
         try:
-            response = self.mgmt_client.configurations.get(resource_group_name=self.resource_group,
-                                                           server_name=self.server_name,
-                                                           configuration_name=self.name)
+            response = self.sql_client.firewall_rules.get(resource_group_name=self.resource_group,
+                                                          server_name=self.server_name,
+                                                          firewall_rule_name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get facts for Configurations.')
+            self.log('Could not get facts for FirewallRules.')
 
         if response is not None:
             results.append(self.format_item(response))
@@ -165,18 +170,18 @@ class AzureRMMySqlConfigurationFacts(AzureRMModuleBase):
 
     def list_by_server(self):
         '''
-        Gets facts of the specified MySQL Configuration.
+        Gets facts of the specified SQL Firewall Rule.
 
-        :return: deserialized MySQL Configurationinstance state dictionary
+        :return: deserialized SQL Firewall Ruleinstance state dictionary
         '''
         response = None
         results = []
         try:
-            response = self.mgmt_client.configurations.list_by_server(resource_group_name=self.resource_group,
-                                                                      server_name=self.server_name)
+            response = self.sql_client.firewall_rules.list_by_server(resource_group_name=self.resource_group,
+                                                                     server_name=self.server_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get facts for Configurations.')
+            self.log('Could not get facts for FirewallRules.')
 
         if response is not None:
             for item in response:
@@ -187,19 +192,18 @@ class AzureRMMySqlConfigurationFacts(AzureRMModuleBase):
     def format_item(self, item):
         d = item.as_dict()
         d = {
+            'id': d['id'],
             'resource_group': self.resource_group,
             'server_name': self.server_name,
-            'id': d['id'],
             'name': d['name'],
-            'value': d['value'],
-            'description': d['description'],
-            'source': d['source']
+            'start_ip_address': d['start_ip_address'],
+            'end_ip_address': d['end_ip_address']
         }
         return d
 
 
 def main():
-    AzureRMMySqlConfigurationFacts()
+    AzureRMSqlFirewallRuleFacts()
 
 
 if __name__ == '__main__':

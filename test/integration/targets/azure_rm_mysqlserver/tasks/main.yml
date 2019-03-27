@@ -395,7 +395,7 @@
       - output.changed
 
 - name: Gather facts MySQL Firewall Rule
-  azure_rm_mysqlfirewallrule_facts:
+  azure_rm_mysqlfirewallrule_info:
     resource_group: "{{ resource_group }}"
     server_name: mysqlsrv{{ rpfx }}
     name: firewallrule{{ rpfx }}
@@ -412,7 +412,7 @@
       - "output.rules | length == 1"
 
 - name: Gather facts MySQL Firewall Rule
-  azure_rm_mysqlfirewallrule_facts:
+  azure_rm_mysqlfirewallrule_info:
     resource_group: "{{ resource_group }}"
     server_name: mysqlsrv{{ rpfx }}
   register: output
@@ -463,7 +463,7 @@
     state: absent
 
 - name: Gather facts MySQL Firewall Rule
-  azure_rm_mysqlfirewallrule_facts:
+  azure_rm_mysqlfirewallrule_info:
     resource_group: "{{ resource_group }}"
     server_name: mysqlsrv{{ rpfx }}
     name: firewallrule{{ rpfx }}
@@ -491,7 +491,7 @@
       - output.changed
 
 - name: Try to delete default configuraion
-  azure_rm_mysqlconfiguration_facts:
+  azure_rm_mysqlconfiguration_info:
     resource_group: "{{ resource_group }}"
     server_name: mysqlsrv{{ rpfx }}
     name: event_scheduler
@@ -561,7 +561,7 @@
       - not output.changed
 
 - name: Gather facts MySQL Configuration
-  azure_rm_mysqlconfiguration_facts:
+  azure_rm_mysqlconfiguration_info:
     resource_group: "{{ resource_group }}"
     server_name: mysqlsrv{{ rpfx }}
     name: event_scheduler
@@ -578,7 +578,7 @@
       - output.settings | length == 1
 
 - name: Gather facts MySQL Configuration
-  azure_rm_mysqlconfiguration_facts:
+  azure_rm_mysqlconfiguration_info:
     resource_group: "{{ resource_group }}"
     server_name: mysqlsrv{{ rpfx }}
   register: output

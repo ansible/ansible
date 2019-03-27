@@ -1,8 +1,8 @@
 cloud/azure
 destructive
 shippable/azure/group8
-azure_rm_mariadbserver_facts
+azure_rm_mariadbserver_info
 azure_rm_mariadbdatabase
-azure_rm_mariadbdatabase_facts
+azure_rm_mariadbdatabase_info
 azure_rm_mariadbfirewallrule
-azure_rm_mariadbfirewallrule_facts
+azure_rm_mariadbfirewallrule_info

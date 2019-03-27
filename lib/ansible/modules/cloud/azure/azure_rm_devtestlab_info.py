@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_devtestlab_facts
+module: azure_rm_devtestlab_info
 version_added: "2.8"
 short_description: Get Azure DevTest Lab facts.
 description:
@@ -41,14 +41,14 @@ author:
 
 EXAMPLES = '''
   - name: List instances of DevTest Lab by resource group
-    azure_rm_devtestlab_facts:
+    azure_rm_devtestlab_info:
       resource_group: testrg
 
   - name: List instances of DevTest Lab in subscription
-    azure_rm_devtestlab_facts:
+    azure_rm_devtestlab_info:
 
   - name: Get instance of DevTest Lab
-    azure_rm_devtestlab_facts:
+    azure_rm_devtestlab_info:
       resource_group: testrg
       name: testlab
 '''
