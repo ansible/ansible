@@ -900,8 +900,11 @@ class RedfishUtils(object):
 
         # Get these entries, but does not fail if not found
         properties = ['Name', 'PhysicalContext', 'UpperThresholdCritical',
-                      'UpperThresholdFatal', 'LowerThresholdCritical',
-                      'ReadingCelsius']
+                      'UpperThresholdFatal', 'UpperThresholdNonCritical', 
+                      'LowerThresholdCritical', 'LowerThresholdFatal', 
+                      'LowerThresholdNonCritical', 'MaxReadingRangeTemp', 
+                      'MinReadingRangeTemp', 'ReadingCelsius', 'RelatedItem',
+                      'SensorNumber']
 
         # Go through list
         for chassis_uri in self.chassis_uri_list:
