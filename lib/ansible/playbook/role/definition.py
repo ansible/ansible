@@ -32,7 +32,7 @@ from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.taggable import Taggable
 from ansible.template import Templar
-from ansible.utils.collection_loader import get_collection_role_path
+from ansible.utils.collection_loader import get_collection_role_path, is_collection_ref
 from ansible.utils.path import unfrackpath
 from ansible.utils.display import Display
 
@@ -153,18 +153,18 @@ class RoleDefinition(Base, Become, Conditional, Taggable, CollectionSearch):
         templar = Templar(loader=self._loader, variables=all_vars)
         role_name = templar.template(role_name)
 
-        # FIXME: sanity check the name first; don't try this with path-ish role names, etc
+        role_tuple = None
+
         # try to load as a collection-based role first
-        role_tuple = get_collection_role_path(role_name, self._collection_list)
+        if self._collection_list or is_collection_ref(role_name):
+            role_tuple = get_collection_role_path(role_name, self._collection_list)
 
         if role_tuple:
             # we found it, stash collection data and return the name/path tuple
-            # FIXME: move the state mutation up a level?
             self._role_collection = role_tuple[2]
             return role_tuple[0:2]
 
-        # FIXME: refactor this to be callable from internal so we can properly order ansible.legacy searches with the
-        # collections keyword
+        # FUTURE: refactor this to be callable from internal so we can properly order ansible.legacy searches with the collections keyword
         if self._collection_list and 'ansible.legacy' not in self._collection_list:
             raise AnsibleError("the role '%s' was not found in %s" % (role_name, ":".join(self._collection_list)), obj=self._ds)
 

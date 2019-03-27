@@ -179,7 +179,7 @@ class Role(Base, Become, Conditional, Taggable, CollectionSearch):
     def _load_role_data(self, role_include, parent_role=None):
         self._role_name = role_include.role
         self._role_path = role_include.get_role_path()
-        self._role_collection = role_include._role_collection  # FIXME: property accessor or ?
+        self._role_collection = role_include._role_collection
         self._role_params = role_include.get_role_params()
         self._variable_manager = role_include.get_variable_manager()
         self._loader = role_include.get_loader()
@@ -220,11 +220,11 @@ class Role(Base, Become, Conditional, Taggable, CollectionSearch):
             self._metadata = RoleMetadata()
 
         # reset collections list; roles do not inherit collections from parents, just use the defaults
-        # FIXME: use a private config default for this so we can allow it to be overridden later
+        # FUTURE: use a private config default for this so we can allow it to be overridden later
         self.collections = []
 
         # configure plugin/collection loading; either prepend the current role's collection or configure legacy plugin loading
-        # FIXME: need exception for ansible.legacy?
+        # FIXME: need exception for explicit ansible.legacy?
         if self._role_collection:
             self.collections.insert(0, self._role_collection)
         else:
@@ -241,7 +241,6 @@ class Role(Base, Become, Conditional, Taggable, CollectionSearch):
             default_append_collection = 'ansible.builtin' if self.collections else 'ansible.legacy'
             if 'ansible.builtin' not in self.collections and 'ansible.legacy' not in self.collections:
                 self.collections.append(default_append_collection)
-            # FIXME: add test for legacy role + collections meta keyword
 
         task_data = self._load_role_yaml('tasks', main=self._from_files.get('tasks'))
         if task_data:

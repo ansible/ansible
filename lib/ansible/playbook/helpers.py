@@ -117,8 +117,6 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
             )
             task_list.append(t)
         else:
-            # HACK: figure out how to get this more cleanly/centrally for task action resolution, since the structure isn't built yet
-            # FIXME: add recursive parent block resolution here too
             collection_list = task_ds.get('collections')
             if collection_list is None and block is not None and block.collections:
                 collection_list = block.collections
