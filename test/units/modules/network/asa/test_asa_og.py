@@ -50,35 +50,64 @@ class TestAsaOgModule(TestAsaModule):
 
     def test_asa_og_idempotent(self):
         set_module_args(dict(
-            name='test_tenant1_nets',
+            name='test_nets',
             group_type='network-object',
-            lines=['10.255.0.0 255.255.0.0', '192.168.0.0 255.255.0.0']
+            lines=['10.255.0.0 255.255.0.0', '192.168.0.0 255.255.0.0'],
+            state='replace'
         ))
         commands = []
         self.execute_module(changed=False, commands=commands)
 
     def test_asa_og_update(self):
         set_module_args(dict(
-            name='test_tenant1_nets',
+            name='test_nets',
             group_type='network-object',
-            lines=['10.255.0.0 255.255.0.0', '192.168.0.0 255.255.0.0', 'host 8.8.8.8']
+            lines=['10.255.0.0 255.255.0.0', '192.168.0.0 255.255.0.0', 'host 8.8.8.8'],
+            state='replace'
         ))
         commands = [
-            'object-group network test_tenant1_nets',
+            'object-group network test_nets',
             'network-object host 8.8.8.8'
         ]
         self.execute_module(changed=True, commands=commands)
 
     def test_asa_og_replace(self):
         set_module_args(dict(
-            name='test_tenant1_nets',
+            name='test_nets',
             group_type='network-object',
-            lines=['host 8.8.4.4']
+            lines=['host 8.8.4.4'],
+            state='replace'
         ))
         commands = [
-            'object-group network test_tenant1_nets',
+            'object-group network test_nets',
             'no network-object 10.255.0.0 255.255.0.0',
             'no network-object 192.168.0.0 255.255.0.0',
             'network-object host 8.8.4.4'
+        ]
+        self.execute_module(changed=True, commands=commands)
+
+    def test_asa_og_remove(self):
+        set_module_args(dict(
+            name='test_nets',
+            group_type='network-object',
+            lines=['10.255.0.0 255.255.0.0'],
+            state='absent'
+        ))
+        commands = [
+            'object-group network test_nets',
+            'no network-object 10.255.0.0 255.255.0.0'
+        ]
+        self.execute_module(changed=True, commands=commands)
+
+    def test_asa_og_add(self):
+        set_module_args(dict(
+            name='test_nets',
+            group_type='network-object',
+            lines=['host 8.8.8.'],
+            state='present'
+        ))
+        commands = [
+            'object-group network test_nets',
+            'network-object host 8.8.8.8'
         ]
         self.execute_module(changed=True, commands=commands)
