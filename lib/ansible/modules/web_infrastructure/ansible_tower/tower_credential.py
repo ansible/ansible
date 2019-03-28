@@ -55,7 +55,11 @@ options:
         - The ssh choice refers to a Tower Machine credential.
       required: True
       type: str
-      choices: ["ssh", "vault", "net", "scm", "aws", "vmware", "satellite6", "cloudforms", "gce", "azure_rm", "openstack", "rhv", "insights", "tower"]
+      choices: ["ssh", "vault", "net", "scm", "aws", "vmware", "satellite6", "cloudforms", "gce", "azure_rm", "openstack", "rhv", "insights", "tower", "cloud"]
+    credential_type:
+      description:
+        - Non built-in custom credential type name.
+      type: str
     host:
       description:
         - Host for this credential.
@@ -176,6 +180,17 @@ EXAMPLES = '''
     tower_host: https://localhost
   run_once: true
   delegate_to: localhost
+
+- name: Add Credential of Custom type
+  tower_credential:
+    name: ACME Credential
+    organization: test-org
+    kind: cloud
+    credential_type: "ACME Custom"
+    state: present
+    tower_username: admin
+    tower_password: ansible
+    tower_host: https://localhost
 '''
 
 import os
@@ -221,11 +236,21 @@ def credential_type_for_v1_kind(params, module):
             arguments['kind'] = 'ssh'
     elif kind in ('net', 'scm', 'insights', 'vault'):
         arguments['kind'] = kind
-    elif kind in KIND_CHOICES:
+    else:
         arguments.update(dict(
             kind='cloud',
             name=KIND_CHOICES[kind]
         ))
+    return credential_type_res.get(**arguments)
+
+
+def credential_type_custom(params, module):
+    credential_type_res = tower_cli.get_resource('credential_type')
+    arguments = {
+        'managed_by_tower': False,
+        'kind': params.pop('kind', 'cloud'),
+        'name': params.pop('credential_type')
+    }
     return credential_type_res.get(**arguments)
 
 
@@ -236,7 +261,8 @@ def main():
         user=dict(),
         team=dict(),
         kind=dict(required=True,
-                  choices=KIND_CHOICES.keys()),
+                  choices=list(KIND_CHOICES.keys()) + ['cloud']),
+        credential_type=dict(),
         host=dict(),
         username=dict(),
         password=dict(no_log=True),
@@ -291,7 +317,14 @@ def main():
                 # resource
                 params['kind'] = module.params['kind']
             else:
-                credential_type = credential_type_for_v1_kind(module.params, module)
+                if module.params['kind'] in KIND_CHOICES:
+                    # built-in credential type
+                    credential_type = credential_type_for_v1_kind(module.params, module)
+                else:
+                    # custom 'cloud' kind credential type
+                    if not module.params.get('credential_type'):
+                        module.fail_json(msg="Parameter 'credential_type' required for non built-in type")
+                    credential_type = credential_type_custom(module.params, module)
                 params['credential_type'] = credential_type['id']
 
             if module.params.get('description'):
