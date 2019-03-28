@@ -1,23 +1,25 @@
 .. _playbooks_advanced_syntax:
 
+***************
 Advanced Syntax
-===============
+***************
 
-.. contents:: Topics
+The advanced YAML syntax examples on this page give you more control over the data placed in YAML files used by Ansible.
 
-This page describes advanced YAML syntax that enables you to have more control over the data placed in YAML files used by Ansible.
+.. contents::
+   :local:
 
 .. _yaml_tags_and_python_types:
 
 YAML tags and Python types
-``````````````````````````
+==========================
 
 The documentation covered here is an extension of the documentation that can be found in the `PyYAML Documentation <https://pyyaml.org/wiki/PyYAMLDocumentation#YAMLtagsandPythontypes>`_
 
 .. _unsafe_strings:
 
 Unsafe or Raw Strings
-~~~~~~~~~~~~~~~~~~~~~
+---------------------
 
 Ansible provides an internal data type for declaring variable values as "unsafe". This means that the data held within the variables value should be treated as unsafe preventing unsafe character substitution and information disclosure.
 
@@ -49,11 +51,12 @@ For complex variables such as hashes or arrays, ``!unsafe`` should be used on th
     my_unsafe_hash:
         unsafe_key: !unsafe 'unsafe value'
 
+.. _anchors_and_aliases:
 
 Sharing variable values with YAML anchors and aliases
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=====================================================
 
-If you want to share variable values across tasks, `YAML anchors and aliases <https://yaml.org/spec/1.2/spec.html#id2765878>`_ help you define, maintain, and use those values in a flexible way.
+`YAML anchors and aliases <https://yaml.org/spec/1.2/spec.html#id2765878>`_ help you define, maintain, and use shared variable values in a flexible way.
 You define an anchor with ``&``, then refer to it using an alias, denoted with ``*``.
 
 Here's an example that sets three values with an anchor, uses two of those values with an alias, and overrides the third value::
@@ -75,34 +78,40 @@ Here's an example that sets three values with an anchor, uses two of those value
 Here, ``app1`` and ``app2`` share the values for ``opts`` and ``port`` using the anchor ``&jvm_opts`` and the alias ``*jvm_opts``.
 The value for ``path`` is merged by ``<<`` or `merge operator <https://yaml.org/type/merge.html>`_.
 
-Anchors and aliases let you share complex sets of variable values, including nested variables.
+Anchors and aliases also let you share complex sets of variable values, including nested variables.
 
-Let us assume you have playbook::
+If you have one variable value that includes another variable value, you can define them separately::
+
+      vars:
+        webapp_version: 1.0
+        webapp_custom_name: ToDo_App-1.0
+
+This is inefficient and, at scale, means more maintenance. To incorporate the version value in the name, you can use an anchor in ``app_version`` and an alias in ``custom_name``::
 
       vars:
         webapp:
-            app: 1.0
-            custom: ToDo_App-1.0
+            version: &my_version 1.0
+            custom_name:
+                - "ToDo_App"
+                - *my_version
 
-Now, you want to re-use existing value of ``app`` value in ``custom`` value::
+Now, you can re-use the value of ``app_version`` within the value of  ``custom_name`` and use the output in a template::
 
     ---
     - name: Using values nested inside dictionary
       hosts: localhost
       vars:
         webapp:
-            app_version: &my_version 1.0
-            custom_version:
+            version: &my_version 1.0
+            custom_name:
                 - "ToDo_App"
                 - *my_version
       tasks:
       - name: Using Anchor value
         debug:
-            msg: "{{ webapp.custom_version | join('-') }}"
+            msg: My app is called "{{ webapp.custom_name | join('-') }}".
 
-Here, you can anchor 'app_version' value using ``&my_version`` and re-use later as ``*my_version``.
-This way you can access nested values inside dictionaries.
-
+You've anchored the value of ``version`` with the ``&my_version`` anchor, and re-used it with the ``*my_version`` alias. Anchors and aliases let you access nested values inside dictionaries.
 
 .. seealso::
 
