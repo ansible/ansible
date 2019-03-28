@@ -337,9 +337,11 @@ def create_admin(meraki, org_id, name, email):
     if meraki.params['networks'] is not None:
         nets = meraki.get_nets(org_id=org_id)
         networks = network_factory(meraki, meraki.params['networks'], nets)
-        # meraki.fail_json(msg=str(type(networks)), data=networks)
         payload['networks'] = networks
     if is_admin_existing is None:  # Create new admin
+        if meraki.module.check_mode is True:
+            meraki.result['data'] = payload
+            meraki.exit_json(**meraki.result)
         path = meraki.construct_path('create', function='admin', org_id=org_id)
         r = meraki.request(path,
                            method='POST',
@@ -354,6 +356,10 @@ def create_admin(meraki, org_id, name, email):
         if not meraki.params['networks']:
             payload['networks'] = []
         if meraki.is_update_required(is_admin_existing, payload) is True:
+            if meraki.module.check_mode is True:
+                is_admin_existing.update(payload)
+                meraki.result['data'] = payload
+                meraki.exit_json(**meraki.result)
             path = meraki.construct_path('update', function='admin', org_id=org_id) + is_admin_existing['id']
             r = meraki.request(path,
                                method='PUT',
@@ -364,6 +370,9 @@ def create_admin(meraki, org_id, name, email):
                 return r
         else:
             meraki.result['data'] = is_admin_existing
+            if meraki.module.check_mode is True:
+                meraki.result['data'] = payload
+                meraki.exit_json(**meraki.result)
             return -1
 
 
@@ -395,7 +404,7 @@ def main():
     # args/params passed to the execution, as well as if the module
     # supports check mode
     module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=False,
+                           supports_check_mode=True,
                            )
     meraki = MerakiModule(module, function='admin')
 
@@ -429,8 +438,6 @@ def main():
     # if the user is working with this module in only check mode we do not
     # want to make any changes to the environment, just return the current
     # state with no modifications
-    if module.check_mode:
-        return result
 
     # execute checks for argument completeness
     if meraki.params['state'] == 'query':
@@ -468,6 +475,9 @@ def main():
         if r != -1:
             meraki.result['data'] = r
     elif meraki.params['state'] == 'absent':
+        if meraki.module.check_mode is True:
+            meraki.result['data'] = {}
+            meraki.exit_json(**meraki.result)
         admin_id = get_admin_id(meraki,
                                 get_admins(meraki, org_id),
                                 email=meraki.params['email']

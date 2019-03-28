@@ -4,6 +4,24 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 ---
 - block:
+  - name: Create new administrator in check mode
+    meraki_admin:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      name: Jane Doe
+      email: '{{email_prefix}}+janedoe@{{email_domain}}'
+      org_access: read-only
+    delegate_to: localhost
+    check_mode: yes
+    register: create_org_check
+
+  - name: Create new admin check mode assertion
+    assert:
+      that:
+        - create_org_check is not changed
+        - 'create_org_check.data.name == "Jane Doe"'
+
   - name: Create new administrator
     meraki_admin:
       auth_key: '{{auth_key}}'
@@ -20,6 +38,20 @@
       that:
         - create_orgaccess.changed == true
         - 'create_orgaccess.data.name == "Jane Doe"'
+
+  - name: Delete recently created administrator with check mode
+    meraki_admin:
+      auth_key: '{{auth_key}}'
+      state: absent
+      org_name: '{{test_org_name}}'
+      email: '{{email_prefix}}+janedoe@{{email_domain}}'
+    delegate_to: localhost
+    register: delete_one_check
+    check_mode: yes
+
+  - assert:
+      that:
+        - delete_one_check is not changed
 
   - name: Delete recently created administrator
     meraki_admin:
@@ -46,6 +78,31 @@
       that:
         - create_orgaccess_id.changed == true
         - 'create_orgaccess_id.data.name == "Jane Doe"'
+
+  - name: Create administrator with tags with check mode
+    meraki_admin:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      name: John Doe
+      email: '{{email_prefix}}+johndoe@{{email_domain}}'
+      orgAccess: none
+      tags:
+        - { "tag": "production", "access": "read-only" }
+        - tag: beta
+          access: full
+    delegate_to: localhost
+    register: create_tags_check
+    check_mode: yes
+
+  - debug:
+      var: create_tags_check
+
+  - assert:
+      that:
+        - create_tags_check is not changed
+        - create_tags_check.data.name == "John Doe"
+        - create_tags_check.data.tags | length == 2
 
   - name: Create administrator with tags
     meraki_admin:
@@ -119,6 +176,27 @@
       - TestNet
       - TestNet2
 
+  - name: Create administrator with networks with check mode
+    meraki_admin:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      name: Jim Doe
+      email: '{{email_prefix}}+jimdoe@{{email_domain}}'
+      orgAccess: none
+      networks:
+        - { "network": "TestNet", "access": "read-only" }
+        - { "network": "TestNet2", "access": "full" }
+    delegate_to: localhost
+    register: create_network_check
+    check_mode: yes
+
+  - assert:
+      that:
+        - create_network_check is not changed
+        - create_network_check.data.name == "Jim Doe"
+        - create_network_check.data.networks | length == 2
+
   - name: Create administrator with networks
     meraki_admin:
       auth_key: '{{auth_key}}'
@@ -139,6 +217,29 @@
         - create_network.data.name == "Jim Doe"
         - create_network.data.networks | length == 2
 
+  - name: Update administrator with check mode
+    meraki_admin:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      name: Jim Doe
+      email: '{{email_prefix}}+jimdoe@{{email_domain}}'
+      orgAccess: none
+      networks:
+        - { "network": "TestNet", "access": "full" }
+    delegate_to: localhost
+    register: update_network_check
+    check_mode: yes
+
+  - debug:
+      var: update_network_check
+
+  - assert:
+      that:
+        - update_network_check is not changed
+        - update_network_check.data.networks.0.access == "full"
+        - update_network_check.data.networks | length == 1
+
   - name: Update administrator
     meraki_admin:
       auth_key: '{{auth_key}}'
@@ -157,6 +258,27 @@
         - update_network.changed == true
         - update_network.data.networks.0.access == "full"
         - update_network.data.networks | length == 1
+
+  - name: Update administrator for idempotency check with check mode
+    meraki_admin:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      name: Jim Doe
+      email: '{{email_prefix}}+jimdoe@{{email_domain}}'
+      orgAccess: none
+      networks:
+        - { "network": "TestNet", "access": "full" }
+    delegate_to: localhost
+    register: update_network_idempotent_check
+    check_mode: yes
+
+  - debug:
+      var: update_network_idempotent_check
+
+  - assert:
+      that:
+        - update_network_idempotent_check is not changed
 
   - name: Update administrator for idempotency check
     meraki_admin:
