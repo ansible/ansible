@@ -1,0 +1,2 @@
+minor_changes:
+- meraki_organization - Implement check mode.

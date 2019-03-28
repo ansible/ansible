@@ -104,6 +104,7 @@ import os
 from ansible.module_utils.basic import AnsibleModule, json, env_fallback
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_native
+from ansible.module_utils.common.dict_transformations import recursive_diff
 from ansible.module_utils.network.meraki.meraki import MerakiModule, meraki_argument_spec
 
 
@@ -163,8 +164,6 @@ def main():
     # want to make any changes to the environment, just return the current
     # state with no modifications
     # FIXME: Work with Meraki so they can implement a check mode
-    if module.check_mode:
-        meraki.exit_json(**meraki.result)
 
     # execute checks for argument completeness
 
@@ -186,6 +185,9 @@ def main():
     elif meraki.params['state'] == 'present':
         if meraki.params['clone']:  # Cloning
             payload = {'name': meraki.params['org_name']}
+            if meraki.module.check_mode is True:
+                meraki.result['data'] = payload
+                meraki.exit_json(**meraki.result)
             response = meraki.request(meraki.construct_path('clone',
                                                             org_name=meraki.params['clone']
                                                             ),
@@ -197,6 +199,9 @@ def main():
             meraki.result['changed'] = True
         elif not meraki.params['org_id'] and meraki.params['org_name']:  # Create new organization
             payload = {'name': meraki.params['org_name']}
+            if meraki.module.check_mode is True:
+                meraki.result['data'] = payload
+                meraki.exit_json(**meraki.result)
             response = meraki.request(meraki.construct_path('create'),
                                       method='POST',
                                       payload=json.dumps(payload))
@@ -207,8 +212,15 @@ def main():
             payload = {'name': meraki.params['org_name'],
                        'id': meraki.params['org_id'],
                        }
-            original = get_org(meraki, meraki.params['org_id'], orgs)
-            if meraki.is_update_required(original, payload):
+            org = get_org(meraki, meraki.params['org_id'], orgs)
+            if meraki.is_update_required(org, payload):
+                if meraki.module.check_mode is True:
+                    diff = recursive_diff(org, payload)
+                    meraki.result['diff'] = {'before': diff[0],
+                                             'after': diff[1],
+                                             }
+                    meraki.result['data'] = org.update(payload)
+                    meraki.exit_json(**meraki.result)
                 response = meraki.request(meraki.construct_path('update',
                                                                 org_id=meraki.params['org_id']
                                                                 ),
@@ -216,11 +228,17 @@ def main():
                                           payload=json.dumps(payload))
                 if meraki.status != 200:
                     meraki.fail_json(msg='Organization update failed')
+                diff = recursive_diff(org, payload)
+                meraki.result['diff'] = {'before': diff[0],
+                                         'after': diff[1],
+                                         }
                 meraki.result['data'] = response
                 meraki.result['changed'] = True
             else:
                 meraki.result['data'] = original
-
+                if meraki.module.check_mode is True:
+                    meraki.result['data'] = org
+                    meraki.exit_json(**meraki.result)
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results
     meraki.exit_json(**meraki.result)

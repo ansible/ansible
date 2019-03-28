@@ -35,6 +35,23 @@
       - '"Failed to connect to" in invalid_domain.msg'
       - '"http" in http.url'
 
+- name: Create a new organization named IntTestOrg with check mode
+  meraki_organization:
+    auth_key: '{{ auth_key }}'
+    org_name: IntTestOrg
+    state: present
+    output_level: debug
+  delegate_to: localhost
+  register: new_org_check
+  check_mode: yes
+
+- debug:
+    msg: '{{new_org_check}}'
+
+- assert:
+    that:
+      - new_org_check is not changed
+
 - name: Create a new organization named IntTestOrg
   meraki_organization:
     auth_key: '{{ auth_key }}'
@@ -47,6 +64,23 @@
 - debug:
     msg: '{{new_org}}'
 
+- name: Clone IntTestOrg with check mode
+  meraki_organization:
+    auth_key: '{{ auth_key }}'
+    clone: IntTestOrg
+    org_name: IntTestOrgCloned
+    state: present
+  delegate_to: localhost
+  register: cloned_org_check
+  check_mode: yes
+
+- debug:
+    msg: '{{cloned_org_check}}'
+
+- assert:
+    that:
+      - cloned_org_check is not changed
+
 - name: Clone IntTestOrg
   meraki_organization:
     auth_key: '{{ auth_key }}'
@@ -58,6 +92,37 @@
 
 - debug:
     msg: '{{cloned_org}}'
+
+- name: Rename IntTestOrg with check_mode
+  meraki_organization:
+    auth_key: '{{ auth_key }}'
+    org_name: IntTestOrgRenamed
+    org_id: '{{ new_org.data.id }}'
+    state: present
+  delegate_to: localhost
+  register: modify_org_check
+  check_mode: yes
+
+- debug:
+    msg: '{{ modify_org_check }}'
+
+- assert:
+    that:
+      - modify_org_check is not changed
+
+- name: Rename IntTestOrg idempotent with check mode
+  meraki_organization:
+    auth_key: '{{ auth_key }}'
+    org_name: IntTestOrgRenamed
+    org_id: '{{ new_org.data.id }}'
+    state: present
+  delegate_to: localhost
+  register: modify_org_idempotent_check
+  check_mode: yes
+
+- assert:
+    that:
+      - modify_org_idempotent_check is not changed 
 
 - name: Rename IntTestOrg
   meraki_organization:
