@@ -2069,9 +2069,11 @@ class AnsibleModule(object):
 
     def digest_from_file(self, filename, algorithm):
         ''' Return hex digest of local file for a digest_method specified by name, or None if file is not present. '''
-        if not os.path.exists(filename):
+        b_filename = to_bytes(filename, errors='surrogate_or_strict')
+
+        if not os.path.exists(b_filename):
             return None
-        if os.path.isdir(filename):
+        if os.path.isdir(b_filename):
             self.fail_json(msg="attempted to take checksum of directory: %s" % filename)
 
         # preserve old behaviour where the third parameter was a hash algorithm object
@@ -2085,7 +2087,7 @@ class AnsibleModule(object):
                                    (filename, algorithm, ', '.join(AVAILABLE_HASH_ALGORITHMS)))
 
         blocksize = 64 * 1024
-        infile = open(os.path.realpath(filename), 'rb')
+        infile = open(os.path.realpath(b_filename), 'rb')
         block = infile.read(blocksize)
         while block:
             digest_method.update(block)
