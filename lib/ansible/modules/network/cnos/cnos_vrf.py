@@ -75,7 +75,6 @@ options:
       - State of the VRF configuration.
     default: present
     choices: ['present', 'absent']
-extends_documentation_fragment: cnos
 """
 
 EXAMPLES = """
@@ -333,4 +332,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
