@@ -1,0 +1,3 @@
+bugfixes:
+- change file locking implementation from a class to context manager to allow easy and safe concurrent file access by modules
+- lineinfile - lock on concurrent file access (https://github.com/ansible/ansible/issues/30413)
