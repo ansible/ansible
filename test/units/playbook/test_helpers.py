@@ -43,6 +43,8 @@ class MixinForMocks(object):
         self.mock_tqm = MagicMock(name='MockTaskQueueManager')
 
         self.mock_play = MagicMock(name='MockPlay')
+        self.mock_play._attributes = []
+        self.mock_play.collections = None
 
         self.mock_iterator = MagicMock(name='MockIterator')
         self.mock_iterator._play = self.mock_play
