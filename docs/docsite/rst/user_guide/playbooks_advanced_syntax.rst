@@ -50,9 +50,7 @@ YAML anchors and aliases: sharing variable values
 =================================================
 
 `YAML anchors and aliases <https://yaml.org/spec/1.2/spec.html#id2765878>`_ help you define, maintain, and use shared variable values in a flexible way.
-You define an anchor with ``&``, then refer to it using an alias, denoted with ``*``.
-
-Here's an example that sets three values with an anchor, uses two of those values with an alias, and overrides the third value::
+You define an anchor with ``&``, then refer to it using an alias, denoted with ``*``. Here's an example that sets three values with an anchor, uses two of those values with an alias, and overrides the third value::
 
     ---
     ...
@@ -71,9 +69,7 @@ Here's an example that sets three values with an anchor, uses two of those value
 Here, ``app1`` and ``app2`` share the values for ``opts`` and ``port`` using the anchor ``&jvm_opts`` and the alias ``*jvm_opts``.
 The value for ``path`` is merged by ``<<`` or `merge operator <https://yaml.org/type/merge.html>`_.
 
-Anchors and aliases also let you share complex sets of variable values, including nested variables.
-
-If you have one variable value that includes another variable value, you can define them separately::
+Anchors and aliases also let you share complex sets of variable values, including nested variables. If you have one variable value that includes another variable value, you can define them separately::
 
       vars:
         webapp_version: 1.0
