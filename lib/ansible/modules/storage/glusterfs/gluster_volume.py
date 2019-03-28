@@ -180,6 +180,7 @@ import re
 import socket
 import time
 import traceback
+import socket
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
@@ -301,10 +302,15 @@ def get_quotas(name, nofail):
 
 
 def wait_for_peer(host):
+    def get_canon_name(h):
+        return socket.getaddrinfo(h, None, 0, 0, 0, socket.AI_CANONNAME)[0][3]
+
     for x in range(0, 4):
-        peers = get_peers()
-        if host in peers and peers[host][1].lower().find('peer in cluster') != -1:
-            return True
+        cn = get_canon_name(host)
+        for peer_name, peer_opts in get_peers().items():
+            peer_cn = get_canon_name(peer_name)
+            if cn == peer_cn and peer_opts[1].lower().find('peer in cluster') != -1:
+                return True
         time.sleep(1)
     return False
 
