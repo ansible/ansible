@@ -130,9 +130,12 @@ def main():
         for line in out.splitlines():
             record = line.split(split)
             if record[0] in results[dbtree]:
-                results[dbtree][record[0]].update(record[1:])
+                current = results[dbtree][record[0]]
+                for r in record[1:]:
+                    if r not in current:
+                        current.append(r)
             else:
-                results[dbtree][record[0]] = set(record[1:])
+                results[dbtree][record[0]] = record[1:]
 
         for k, v in results[dbtree].items():
             results[dbtree][k] = list(v)
