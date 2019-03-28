@@ -93,14 +93,13 @@ options:
   is_system:
     description:
       - Whether it is a system VM offering or not.
-      - Every reboot of VM the root disk is detached then destroyed and a fresh root disk is created and attached to VM.
     type: bool
     default: no
   is_volatile:
     description:
       - Whether the virtual machine needs to be volatile or not.
       - Every reboot of VM the root disk is detached then destroyed and a fresh root disk is created and attached to VM.
-     type: bool
+    type: bool
   memory:
     description:
       - The total memory of the service offering in MB.
