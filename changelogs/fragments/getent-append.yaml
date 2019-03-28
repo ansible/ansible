@@ -1,0 +1,2 @@
+bugfixes:
+- getent - append values if duplicates are returned by getent (https://github.com/ansible/ansible/issues/54488)
