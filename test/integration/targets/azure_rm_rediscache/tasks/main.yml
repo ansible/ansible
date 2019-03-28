@@ -3,6 +3,7 @@
     redis_name: "redis-{{ resource_group | hash('md5') | truncate(7, True, '') }}-{{ 1000 | random }}"
     vnet_name: "vnet-{{ resource_group | hash('md5') | truncate(7, True, '') }}-{{ 1000 | random }}"
     subnet_name: "subnet-{{ resource_group | hash('md5') | truncate(7, True, '') }}-{{ 1000 | random }}"
+    rule_name: "rule1"
   run_once: yes
 
 - name: Create a redis cache (Check Mode)
@@ -190,9 +191,115 @@
       - facts.rediscaches[0].subnet != None
       - facts.rediscaches[0].access_keys.primary != None
 
-# - name: Delete the redis cache
-#   azure_rm_rediscache:
-#     resource_group: "{{ resource_group }}"
-#     name: "{{ redis_name }}2"
-#     state: absent
-#   register: output
+- name: Wait for Redis provisioning to complete
+  azure_rm_rediscache_info:
+      resource_group: "{{ resource_group }}"
+      name: "{{ redis_name }}2"
+  register: facts
+  until: "{{ facts.rediscaches[0]['provisioning_state'] == 'Succeeded' }}"
+  retries: 30
+  delay: 60
+  tags:
+    - long_run
+
+- name: Create firewall rule (Check mode)
+  azure_rm_rediscachefirewallrule:
+    resource_group: "{{ resource_group }}"
+    cache_name: "{{ redis_name }}2"
+    name: "{{ rule_name }}"
+    start_ip_address: 192.168.1.1
+    end_ip_address: 192.168.1.4
+  check_mode: yes
+  register: output
+
+- name: Assert check mode creation
+  assert:
+    that:
+      - output.changed
+
+# Creating firewall rule need Redis status is running, while creating redis Cache costs about 20 mins async operation,
+# need to poll status from Creating to Running, then able to perform firewall rule creating,
+# otherwise, will met error:
+# "Error creating/updating Firewall rule of Azure Cache for Redis: Azure Error: Conflict\nMessage: The resource
+# '/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Cache/Redis/myRedis' is busy processing
+# a previous update request or is undergoing system maintenance.  As such, it is currently unable to accept the update request.  Please try again later."
+# comment out firewall rule tests for test efficiency.
+- name: Create firewall rule
+  azure_rm_rediscachefirewallrule:
+    resource_group: "{{ resource_group }}"
+    cache_name: "{{ redis_name }}2"
+    name: "{{ rule_name }}"
+    start_ip_address: 192.168.1.1
+    end_ip_address: 192.168.1.4
+  register: output
+  tags:
+    - long_run
+
+- name: Assert creation
+  assert:
+    that:
+      - output.changed
+      - output.id
+  tags:
+    - long_run
+
+- name: Update firewall rule idempotence
+  azure_rm_rediscachefirewallrule:
+    resource_group: "{{ resource_group }}"
+    cache_name: "{{ redis_name }}2"
+    name: "{{ rule_name }}"
+    start_ip_address: 192.168.1.1
+    end_ip_address: 192.168.1.4
+  register: output
+  tags:
+    - long_run
+
+- name: Assert idempotence
+  assert:
+    that:
+      - output.changed == False
+  tags:
+    - long_run
+
+- name: Update firewall rule
+  azure_rm_rediscachefirewallrule:
+    resource_group: "{{ resource_group }}"
+    cache_name: "{{ redis_name }}2"
+    name: "{{ rule_name }}"
+    end_ip_address: 192.168.1.5
+  register: output
+  tags:
+    - long_run
+
+- name: Assert updating
+  assert:
+    that:
+      - output.changed
+  tags:
+    - long_run
+
+- name: Delete firewall rule
+  azure_rm_rediscachefirewallrule:
+    resource_group: "{{ resource_group }}"
+    cache_name: "{{ redis_name }}2"
+    name: "{{ rule_name }}"
+    state: absent
+  register: output
+  tags:
+    - long_run
+
+- name: Assert deletion
+  assert:
+    that:
+      - output.changed
+  tags:
+    - long_run
+
+- name: Delete the redis cache
+  azure_rm_rediscache:
+    resource_group: "{{ resource_group }}"
+    name: "{{ redis_name }}2"
+    state: absent
+  register: output
+  tags:
+    - long_run
