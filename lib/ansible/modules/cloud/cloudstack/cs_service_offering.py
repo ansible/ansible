@@ -18,21 +18,27 @@ description:
   - Create and delete service offerings for guest and system VMs.
   - Update display_text of existing service offering.
 short_description: Manages service offerings on Apache CloudStack based clouds.
-version_added: "2.5"
-author: "René Moser (@resmo)"
+version_added: '2.5'
+author: René Moser (@resmo)
 options:
-  bytes_read_rate:
+  disk_bytes_read_rate:
     description:
       - Bytes read rate of the disk offering.
-  bytes_write_rate:
+    type: int
+    aliases: [ bytes_read_rate ]
+  disk_bytes_write_rate:
     description:
       - Bytes write rate of the disk offering.
+    type: int
+    aliases: [ bytes_write_rate ]
   cpu_number:
     description:
       - The number of CPUs of the service offering.
+    type: int
   cpu_speed:
     description:
       - The CPU speed of the service offering in MHz.
+    type: int
   limit_cpu_usage:
     description:
       - Restrict the CPU usage to committed service offering.
@@ -40,40 +46,50 @@ options:
   deployment_planner:
     description:
       - The deployment planner heuristics used to deploy a VM of this offering.
-      - If not set, the value of global config C(vm.deployment.planner) is used.
+      - If not set, the value of global config I(vm.deployment.planner) is used.
+    type: str
   display_text:
     description:
       - Display text of the service offering.
-      - If not set, C(name) will be used as C(display_text) while creating.
+      - If not set, I(name) will be used as I(display_text) while creating.
+    type: str
   domain:
     description:
       - Domain the service offering is related to.
       - Public for all domains and subdomains if not set.
+    type: str
   host_tags:
     description:
-      - The host tagsfor this service offering.
+      - The host tags for this service offering.
+    type: list
     aliases:
       - host_tag
   hypervisor_snapshot_reserve:
     description:
       - Hypervisor snapshot reserve space as a percent of a volume.
       - Only for managed storage using Xen or VMware.
-  disk_iops_customized:
+    type: int
+  is_iops_customized:
     description:
       - Whether compute offering iops is custom or not.
-    default: false
+    type: bool
+    aliases: [ disk_iops_customized ]
   disk_iops_read_rate:
     description:
       - IO requests read rate of the disk offering.
+    type: int
   disk_iops_write_rate:
     description:
       - IO requests write rate of the disk offering.
+    type: int
   disk_iops_max:
     description:
       - Max. iops of the compute offering.
+    type: int
   disk_iops_min:
     description:
       - Min. iops of the compute offering.
+    type: int
   is_system:
     description:
       - Whether it is a system VM offering or not.
@@ -84,18 +100,20 @@ options:
       - Whether the virtual machine needs to be volatile or not.
       - Every reboot of VM the root disk is detached then destroyed and a fresh root disk is created and attached to VM.
     type: bool
-    default: no
   memory:
     description:
       - The total memory of the service offering in MB.
+    type: int
   name:
     description:
       - Name of the service offering.
+    type: str
     required: true
   network_rate:
     description:
       - Data transfer rate in Mb/s allowed.
-      - Supported only for non-system offering and system offerings having C(system_vm_type=domainrouter).
+      - Supported only for non-system offering and system offerings having I(system_vm_type=domainrouter).
+    type: int
   offer_ha:
     description:
       - Whether HA is set for the service offering.
@@ -104,6 +122,7 @@ options:
   provisioning_type:
     description:
       - Provisioning type used to create volumes.
+    type: str
     choices:
       - thin
       - sparse
@@ -111,9 +130,12 @@ options:
   service_offering_details:
     description:
       - Details for planner, used to store specific parameters.
+      - A list of dictionaries having keys C(key) and C(value).
+    type: list
   state:
     description:
       - State of the service offering.
+    type: str
     choices:
       - present
       - absent
@@ -121,13 +143,15 @@ options:
   storage_type:
     description:
       - The storage type of the service offering.
+    type: str
     choices:
       - local
       - shared
   system_vm_type:
     description:
       - The system VM type.
-      - Required if C(is_system=true).
+      - Required if I(is_system=yes).
+    type: str
     choices:
       - domainrouter
       - consoleproxy
@@ -135,6 +159,7 @@ options:
   storage_tags:
     description:
       - The storage tags for this service offering.
+    type: list
     aliases:
       - storage_tag
 extends_documentation_fragment: cloudstack
@@ -142,8 +167,7 @@ extends_documentation_fragment: cloudstack
 
 EXAMPLES = '''
 - name: Create a non-volatile compute service offering with local storage
-  local_action:
-    module: cs_service_offering
+  cs_service_offering:
     name: Micro
     display_text: Micro 512mb 1cpu
     cpu_number: 1
@@ -151,23 +175,10 @@ EXAMPLES = '''
     memory: 512
     host_tags: eco
     storage_type: local
+  delegate_to: localhost
 
 - name: Create a volatile compute service offering with shared storage
-  local_action:
-    module: cs_service_offering
-    name: Tiny
-    display_text: Tiny 1gb 1cpu
-    cpu_number: 1
-    cpu_speed: 2198
-    memory: 1024
-    storage_type: shared
-    is_volatile: true
-    host_tags: eco
-    storage_tags: eco
-
-- name: Create or update a volatile compute service offering with shared storage
-  local_action:
-    module: cs_service_offering
+  cs_service_offering:
     name: Tiny
     display_text: Tiny 1gb 1cpu
     cpu_number: 1
@@ -177,16 +188,29 @@ EXAMPLES = '''
     is_volatile: yes
     host_tags: eco
     storage_tags: eco
+  delegate_to: localhost
+
+- name: Create or update a volatile compute service offering with shared storage
+  cs_service_offering:
+    name: Tiny
+    display_text: Tiny 1gb 1cpu
+    cpu_number: 1
+    cpu_speed: 2198
+    memory: 1024
+    storage_type: shared
+    is_volatile: yes
+    host_tags: eco
+    storage_tags: eco
+  delegate_to: localhost
 
 - name: Remove a compute service offering
-  local_action:
-    module: cs_service_offering
+  cs_service_offering:
     name: Tiny
     state: absent
+  delegate_to: localhost
 
 - name: Create or update a system offering for the console proxy
-  local_action:
-    module: cs_service_offering
+  cs_service_offering:
     name: System Offering for Console Proxy 2GB
     display_text: System Offering for Console Proxy 2GB RAM
     is_system: yes
@@ -196,13 +220,14 @@ EXAMPLES = '''
     memory: 2048
     storage_type: shared
     storage_tags: perf
+  delegate_to: localhost
 
 - name: Remove a system offering
-  local_action:
-    module: cs_service_offering
+  cs_service_offering:
     name: System Offering for Console Proxy 2GB
     is_system: yes
     state: absent
+  delegate_to: localhost
 '''
 
 RETURN = '''
@@ -493,23 +518,22 @@ def main():
         domain=dict(),
         host_tags=dict(type='list', aliases=['host_tag']),
         hypervisor_snapshot_reserve=dict(type='int'),
-        disk_bytes_read_rate=dict(type='int'),
-        disk_bytes_write_rate=dict(type='int'),
-        disk_iops_customized=dict(type='bool'),
+        disk_bytes_read_rate=dict(type='int', aliases=['bytes_read_rate']),
+        disk_bytes_write_rate=dict(type='int', aliases=['bytes_write_rate']),
         disk_iops_read_rate=dict(type='int'),
         disk_iops_write_rate=dict(type='int'),
         disk_iops_max=dict(type='int'),
         disk_iops_min=dict(type='int'),
         is_system=dict(type='bool', default=False),
         is_volatile=dict(type='bool'),
-        is_iops_customized=dict(type='bool'),
+        is_iops_customized=dict(type='bool', aliases=['disk_iops_customized']),
         memory=dict(type='int'),
         network_rate=dict(type='int'),
         offer_ha=dict(type='bool'),
         provisioning_type=dict(choices=['thin', 'sparse', 'fat']),
-        service_offering_details=dict(type='bool'),
-        storage_type=dict(choice=['local', 'shared']),
-        system_vm_type=dict(choice=['domainrouter', 'consoleproxy', 'secondarystoragevm']),
+        service_offering_details=dict(type='list'),
+        storage_type=dict(choices=['local', 'shared']),
+        system_vm_type=dict(choices=['domainrouter', 'consoleproxy', 'secondarystoragevm']),
         storage_tags=dict(type='list', aliases=['storage_tag']),
         state=dict(choices=['present', 'absent'], default='present'),
     ))
