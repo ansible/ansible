@@ -1400,7 +1400,7 @@ class VmsModule(BaseModule):
                         vm_service.migrate(host=otypes.Host(name=vm_host), force=self.param('force_migrate'))
                         self._wait_for_UP(vm_service)
                     self.changed = True
-            if self.param('migrate'):
+            elif self.param('migrate'):
                 vm_service.migrate(force=self.param('force_migrate'))
                 self.changed = True
         return entity
