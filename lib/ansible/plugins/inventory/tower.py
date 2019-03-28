@@ -52,13 +52,14 @@ DOCUMENTATION = '''
             env:
                 - name: TOWER_INVENTORY
             required: True
-        verify_ssl:
+        validate_certs:
             description: Specify whether Ansible should verify the SSL certificate of Ansible Tower host.
             type: bool
             default: True
             env:
                 - name: TOWER_VERIFY_SSL
             required: False
+            aliases: [ verify_ssl ]
         include_metadata:
             description: Make extra requests to provide all group vars with metadata about the source Ansible Tower host.
             type: bool
@@ -156,7 +157,7 @@ class InventoryModule(BaseInventoryPlugin):
         request_handler = Request(url_username=self.get_option('username'),
                                   url_password=self.get_option('password'),
                                   force_basic_auth=True,
-                                  validate_certs=self.get_option('verify_ssl'))
+                                  validate_certs=self.get_option('validate_certs'))
 
         inventory_id = self.get_option('inventory_id').replace('/', '')
         inventory_url = '/api/v2/inventories/{inv_id}/script/?hostvars=1&towervars=1&all=1'.format(inv_id=inventory_id)

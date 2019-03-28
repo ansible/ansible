@@ -32,9 +32,9 @@ def rabbitmq_argument_spec():
         login_host=dict(type='str', default='localhost'),
         login_port=dict(type='str', default='15672'),
         login_protocol=dict(type='str', default='http', choices=['http', 'https']),
-        cacert=dict(type='path'),
-        cert=dict(type='path'),
-        key=dict(type='path'),
+        ca_cert=dict(type='path', aliases=['cacert']),
+        client_cert=dict(type='path', aliases=['cert']),
+        client_key=dict(type='path', aliases=['key']),
         vhost=dict(type='str', default='/'),
     )
 

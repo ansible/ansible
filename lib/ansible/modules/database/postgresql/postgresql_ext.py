@@ -65,13 +65,14 @@ options:
     choices: [allow, disable, prefer, require, verify-ca, verify-full]
     type: str
     version_added: '2.8'
-  ssl_rootcert:
+  ca_cert:
     description:
     - Specifies the name of a file containing SSL certificate authority (CA)
       certificate(s). If the file exists, the server's certificate will be
       verified to be signed by one of these authorities.
     type: path
     version_added: '2.8'
+    aliases: [ ssl_rootcert ]
   port:
     description:
     - Database port to connect to.
@@ -225,7 +226,7 @@ def main():
         cascade=dict(type='bool', default=False),
         ssl_mode=dict(type='str', default='prefer', choices=[
                       'disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
-        ssl_rootcert=dict(type="path", default=None),
+        ca_cert=dict(type="path", default=None, aliases=['ssl_rootcert']),
         session_role=dict(type="str"),
     )
 
@@ -242,7 +243,7 @@ def main():
     schema = module.params["schema"]
     state = module.params["state"]
     cascade = module.params["cascade"]
-    sslrootcert = module.params["ssl_rootcert"]
+    sslrootcert = module.params["ca_cert"]
     session_role = module.params["session_role"]
     changed = False
 
@@ -256,7 +257,7 @@ def main():
         "port": "port",
         "db": "database",
         "ssl_mode": "sslmode",
-        "ssl_rootcert": "sslrootcert"
+        "ca_cert": "sslrootcert"
     }
     kw = dict((params_map[k], v) for (k, v) in iteritems(module.params)
               if k in params_map and v != "" and v is not None)
@@ -267,7 +268,7 @@ def main():
         kw["host"] = module.params["login_unix_socket"]
 
     if psycopg2.__version__ < '2.4.3' and sslrootcert is not None:
-        module.fail_json(msg='psycopg2 must be at least 2.4.3 in order to user the ssl_rootcert parameter')
+        module.fail_json(msg='psycopg2 must be at least 2.4.3 in order to user the ca_cert parameter')
 
     try:
         db_connection = psycopg2.connect(**kw)

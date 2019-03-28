@@ -34,21 +34,24 @@ options:
         choices: [ http , https ]
         default: http
         version_added: "2.3"
-    cacert:
+    ca_cert:
         description:
             - CA certificate to verify SSL connection to management API.
         type: path
         version_added: "2.3"
-    cert:
+        aliases: [ cacert ]
+    client_cert:
         description:
             - Client certificate to send on SSL connections to management API.
         type: path
         version_added: "2.3"
-    key:
+        aliases: [ cert ]
+    client_key:
         description:
             - Private key matching the client certificate.
         type: path
         version_added: "2.3"
+        aliases: [ key ]
     vhost:
         description:
             - RabbitMQ virtual host.

@@ -106,38 +106,46 @@ DOCUMENTATION = """
         env:
           - name: K8S_AUTH_TOKEN
           - name: K8S_AUTH_API_KEY
-      oc_cert_file:
+      client_cert:
         description:
           - Path to a certificate used to authenticate with the API.
         default: ''
         vars:
           - name: ansible_oc_cert_file
+          - name: ansible_oc_client_cert
         env:
           - name: K8S_AUTH_CERT_FILE
-      oc_key_file:
+        aliases: [ oc_cert_file ]
+      client_key:
         description:
           - Path to a key file used to authenticate with the API.
         default: ''
         vars:
           - name: ansible_oc_key_file
+          - name: ansible_oc_client_key
         env:
           - name: K8S_AUTH_KEY_FILE
-      oc_ssl_ca_cert:
+        aliases: [ oc_key_file ]
+      ca_cert:
         description:
           - Path to a CA certificate used to authenticate with the API.
         default: ''
         vars:
           - name: ansible_oc_ssl_ca_cert
+          - name: ansible_oc_ca_cert
         env:
           - name: K8S_AUTH_SSL_CA_CERT
-      oc_verify_ssl:
+        aliases: [ oc_ssl_ca_cert ]
+      validate_certs:
         description:
           - Whether or not to verify the API server's SSL certificate. Defaults to I(true).
         default: ''
         vars:
           - name: ansible_oc_verify_ssl
+          - name: ansible_oc_validate_certs
         env:
           - name: K8S_AUTH_VERIFY_SSL
+        aliases: [ oc_verify_ssl ]
 """
 
 from ansible.plugins.connection.kubectl import Connection as KubectlConnection
@@ -151,10 +159,10 @@ CONNECTION_OPTIONS = {
     'oc_kubeconfig': '--config',
     'oc_context': '--context',
     'oc_host': '--server',
-    'oc_cert_file': '--client-certificate',
-    'oc_key_file': '--client-key',
-    'oc_ssl_ca_cert': '--certificate-authority',
-    'oc_verify_ssl': '--insecure-skip-tls-verify',
+    'client_cert': '--client-certificate',
+    'client_key': '--client-key',
+    'ca_cert': '--certificate-authority',
+    'validate_certs': '--insecure-skip-tls-verify',
     'oc_token': '--token'
 }
 

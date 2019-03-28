@@ -43,7 +43,7 @@ def ensure_libs(sslrootcert=None):
     if not HAS_PSYCOPG2:
         raise LibraryError('psycopg2 is not installed. we need psycopg2.')
     if sslrootcert and psycopg2.__version__ < '2.4.3':
-        raise LibraryError('psycopg2 must be at least 2.4.3 in order to use the ssl_rootcert parameter')
+        raise LibraryError('psycopg2 must be at least 2.4.3 in order to use the ca_cert parameter')
 
     # no problems
     return None
@@ -57,5 +57,5 @@ def postgres_common_argument_spec():
         login_unix_socket=dict(default=''),
         port=dict(type='int', default=5432),
         ssl_mode=dict(default='prefer', choices=['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
-        ssl_rootcert=dict(),
+        ca_cert=dict(aliases=['ssl_rootcert']),
     )

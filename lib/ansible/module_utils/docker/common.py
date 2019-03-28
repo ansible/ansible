@@ -84,19 +84,19 @@ DOCKER_COMMON_ARGS = dict(
     tls_hostname=dict(type='str', default=DEFAULT_TLS_HOSTNAME, fallback=(env_fallback, ['DOCKER_TLS_HOSTNAME'])),
     api_version=dict(type='str', default='auto', fallback=(env_fallback, ['DOCKER_API_VERSION']), aliases=['docker_api_version']),
     timeout=dict(type='int', default=DEFAULT_TIMEOUT_SECONDS, fallback=(env_fallback, ['DOCKER_TIMEOUT'])),
-    cacert_path=dict(type='path', aliases=['tls_ca_cert']),
-    cert_path=dict(type='path', aliases=['tls_client_cert']),
-    key_path=dict(type='path', aliases=['tls_client_key']),
+    ca_cert=dict(type='path', aliases=['tls_ca_cert', 'cacert_path']),
+    client_cert=dict(type='path', aliases=['tls_client_cert', 'cert_path']),
+    client_key=dict(type='path', aliases=['tls_client_key', 'key_path']),
     ssl_version=dict(type='str', fallback=(env_fallback, ['DOCKER_SSL_VERSION'])),
     tls=dict(type='bool', default=DEFAULT_TLS, fallback=(env_fallback, ['DOCKER_TLS'])),
-    tls_verify=dict(type='bool', default=DEFAULT_TLS_VERIFY, fallback=(env_fallback, ['DOCKER_TLS_VERIFY'])),
+    validate_certs=dict(type='bool', default=DEFAULT_TLS_VERIFY, fallback=(env_fallback, ['DOCKER_TLS_VERIFY']), aliases=['tls_verify']),
     debug=dict(type='bool', default=False)
 )
 
 DOCKER_MUTUALLY_EXCLUSIVE = []
 
 DOCKER_REQUIRED_TOGETHER = [
-    ['cert_path', 'key_path']
+    ['client_cert', 'client_key']
 ]
 
 DEFAULT_DOCKER_REGISTRY = 'https://index.docker.io/v1/'
@@ -406,7 +406,7 @@ class AnsibleDockerClient(Client):
             if use_tls == 'encrypt':
                 params['tls'] = True
             if use_tls == 'verify':
-                params['tls_verify'] = True
+                params['validate_certs'] = True
 
         result = dict(
             docker_host=self._get_value('docker_host', params['docker_host'], 'DOCKER_HOST',
@@ -415,12 +415,12 @@ class AnsibleDockerClient(Client):
                                          'DOCKER_TLS_HOSTNAME', DEFAULT_TLS_HOSTNAME),
             api_version=self._get_value('api_version', params['api_version'], 'DOCKER_API_VERSION',
                                         'auto'),
-            cacert_path=self._get_value('cacert_path', params['cacert_path'], 'DOCKER_CERT_PATH', None),
-            cert_path=self._get_value('cert_path', params['cert_path'], 'DOCKER_CERT_PATH', None),
-            key_path=self._get_value('key_path', params['key_path'], 'DOCKER_CERT_PATH', None),
+            cacert_path=self._get_value('cacert_path', params['ca_cert'], 'DOCKER_CERT_PATH', None),
+            cert_path=self._get_value('cert_path', params['client_cert'], 'DOCKER_CERT_PATH', None),
+            key_path=self._get_value('key_path', params['client_key'], 'DOCKER_CERT_PATH', None),
             ssl_version=self._get_value('ssl_version', params['ssl_version'], 'DOCKER_SSL_VERSION', None),
             tls=self._get_value('tls', params['tls'], 'DOCKER_TLS', DEFAULT_TLS),
-            tls_verify=self._get_value('tls_verfy', params['tls_verify'], 'DOCKER_TLS_VERIFY',
+            tls_verify=self._get_value('tls_verfy', params['validate_certs'], 'DOCKER_TLS_VERIFY',
                                        DEFAULT_TLS_VERIFY),
             timeout=self._get_value('timeout', params['timeout'], 'DOCKER_TIMEOUT',
                                     DEFAULT_TIMEOUT_SECONDS),

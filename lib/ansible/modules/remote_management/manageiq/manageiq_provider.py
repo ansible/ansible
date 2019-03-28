@@ -82,7 +82,7 @@ options:
         description: Provider's api endpoint authentication password. defaults to None.
       auth_key:
         description: Provider's api endpoint authentication bearer token. defaults to None.
-      verify_ssl:
+      validate_certs:
         description: Whether SSL certificates should be verified for HTTPS requests (deprecated). defaults to True.
         type: bool
         default: 'yes'
@@ -106,7 +106,7 @@ options:
         description: Provider's api endpoint authentication password. defaults to None.
       auth_key:
         description: Provider's api endpoint authentication bearer token. defaults to None.
-      verify_ssl:
+      validate_certs:
         description: Whether SSL certificates should be verified for HTTPS requests (deprecated). defaults to True.
         type: bool
         default: 'yes'
@@ -133,7 +133,7 @@ options:
         description: Provider's api endpoint authentication password. defaults to None.
       auth_key:
         description: Provider's api endpoint authentication bearer token. defaults to None.
-      verify_ssl:
+      validate_certs:
         description: Whether SSL certificates should be verified for HTTPS requests (deprecated). defaults to True.
         default: true
       security_protocol:
@@ -165,7 +165,7 @@ EXAMPLES = '''
       auth_key: 'topSecret'
       hostname: 'example.com'
       port: 8443
-      verify_ssl: true
+      validate_certs: true
       security_protocol: 'ssl-with-validation-custom-ca'
       certificate_authority: |
         -----BEGIN CERTIFICATE-----
@@ -191,7 +191,7 @@ EXAMPLES = '''
       role: 'hawkular'
       hostname: 'example.com'
       port: 443
-      verify_ssl: true
+      validate_certs: true
       security_protocol: 'ssl-with-validation-custom-ca'
       certificate_authority: |
         -----BEGIN CERTIFICATE-----
@@ -216,7 +216,7 @@ EXAMPLES = '''
       url: 'https://127.0.0.1:80'
       username: 'admin'
       password: 'password'
-      verify_ssl: true
+      validate_certs: true
 
 
 - name: Update an existing provider named 'EngLab' (defaults to 'Prometheus' metrics)
@@ -228,7 +228,7 @@ EXAMPLES = '''
       auth_key: 'topSecret'
       hostname: 'next.example.com'
       port: 8443
-      verify_ssl: true
+      validate_certs: true
       security_protocol: 'ssl-with-validation-custom-ca'
       certificate_authority: |
         -----BEGIN CERTIFICATE-----
@@ -253,7 +253,7 @@ EXAMPLES = '''
       auth_key: 'topSecret'
       hostname: 'next.example.com'
       port: 443
-      verify_ssl: true
+      validate_certs: true
       security_protocol: 'ssl-with-validation-custom-ca'
       certificate_authority: |
         -----BEGIN CERTIFICATE-----
@@ -278,7 +278,7 @@ EXAMPLES = '''
       url: 'https://127.0.0.1'
       username: 'admin'
       password: 'password'
-      verify_ssl: true
+      validate_certs: true
 
 
 - name: Delete a provider in ManageIQ
@@ -290,7 +290,7 @@ EXAMPLES = '''
       url: 'https://127.0.0.1'
       username: 'admin'
       password: 'password'
-      verify_ssl: true
+      validate_certs: true
 
 
 - name: Create a new Amazon provider in ManageIQ using token authentication
@@ -305,7 +305,7 @@ EXAMPLES = '''
     manageiq_connection:
       url: 'https://127.0.0.1'
       token: 'VeryLongToken'
-      verify_ssl: true
+      validate_certs: true
 
 
 - name: Create a new oVirt provider in ManageIQ
@@ -317,7 +317,7 @@ EXAMPLES = '''
       hostname: 'rhev01.example.com'
       userid: 'admin@internal'
       password: 'password'
-      verify_ssl: true
+      validate_certs: true
       certificate_authority: |
         -----BEGIN CERTIFICATE-----
         FAKECERTsdKgAwIBAgIBATANBgkqhkiG9w0BAQsFADAmMSQwIgYDVQQDDBtvcGVu
@@ -342,7 +342,7 @@ EXAMPLES = '''
       path: 'ovirt_engine_history'
       userid: 'user_id_metrics'
       password: 'password_metrics'
-      verify_ssl: true
+      validate_certs: true
       certificate_authority: |
         -----BEGIN CERTIFICATE-----
         FAKECERTsdKgAwIBAgIBATANBgkqhkiG9w0BAQsFADAmMSQwIgYDVQQDDBtvcGVu
@@ -366,7 +366,7 @@ EXAMPLES = '''
       url: 'https://127.0.0.1'
       username: 'admin'
       password: 'password'
-      verify_ssl: true
+      validate_certs: true
 
 - name: Create a new VMware provider in ManageIQ
   manageiq_provider:
@@ -382,7 +382,7 @@ EXAMPLES = '''
     manageiq_connection:
       url: 'https://127.0.0.1'
       token: 'VeryLongToken'
-      verify_ssl: true
+      validate_certs: true
 
 - name: Create a new Azure provider in ManageIQ
   manageiq_provider:
@@ -400,7 +400,7 @@ EXAMPLES = '''
       url: 'https://cf-6af0.rhpds.opentlc.com'
       username: 'admin'
       password: 'password'
-      verify_ssl: false
+      validate_certs: false
 
 - name: Create a new OpenStack Director provider in ManageIQ with rsa keypair
   manageiq_provider:
@@ -413,7 +413,7 @@ EXAMPLES = '''
       userid: 'admin'
       password: 'password'
       security_protocol: 'ssl-with-validation'
-      verify_ssl: 'true'
+      validate_certs: 'true'
       certificate_authority: |
         -----BEGIN CERTIFICATE-----
         FAKECERTsdKgAwIBAgIBATANBgkqhkiG9w0BAQsFADAmMSQwIgYDVQQDDBtvcGVu
@@ -452,7 +452,7 @@ EXAMPLES = '''
       userid: 'admin'
       password: 'password'
       security_protocol: 'ssl-with-validation'
-      verify_ssl: 'true'
+      validate_certs: 'true'
       certificate_authority: |
         -----BEGIN CERTIFICATE-----
         FAKECERTsdKgAwIBAgIBATANBgkqhkiG9w0BAQsFADAmMSQwIgYDVQQDDBtvcGVu
@@ -491,7 +491,7 @@ EXAMPLES = '''
     provider:
       hostname: 'gce.example.com'
       auth_key: 'google_json_key'
-      verify_ssl: 'false'
+      validate_certs: 'false'
 '''
 
 RETURN = '''
@@ -551,7 +551,7 @@ def endpoint_argument_spec():
         role=dict(),
         hostname=dict(required=True),
         port=dict(type='int'),
-        verify_ssl=dict(default=True, type='bool'),
+        validate_certs=dict(default=True, type='bool', aliases=['verify_ssl']),
         certificate_authority=dict(),
         security_protocol=dict(
             choices=[
@@ -662,7 +662,7 @@ class ManageIQProvider(object):
                         'role': role,
                         'hostname': endpoint.get('hostname'),
                         'port': endpoint.get('port'),
-                        'verify_ssl': [0, 1][endpoint.get('verify_ssl', True)],
+                        'verify_ssl': [0, 1][endpoint.get('validate_certs', True)],
                         'security_protocol': endpoint.get('security_protocol'),
                         'certificate_authority': endpoint.get('certificate_authority'),
                         'path': endpoint.get('path'),

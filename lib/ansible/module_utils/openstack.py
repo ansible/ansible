@@ -81,10 +81,10 @@ def openstack_full_argument_spec(**kwargs):
         auth=dict(default=None, type='dict', no_log=True),
         region_name=dict(default=None),
         availability_zone=dict(default=None),
-        verify=dict(default=None, type='bool', aliases=['validate_certs']),
-        cacert=dict(default=None),
-        cert=dict(default=None),
-        key=dict(default=None, no_log=True),
+        validate_certs=dict(default=None, type='bool', aliases=['verify']),
+        ca_cert=dict(default=None, aliases=['cacert']),
+        client_cert=dict(default=None, aliases=['cert']),
+        client_key=dict(default=None, no_log=True, aliases=['key']),
         wait=dict(default=True, type='bool'),
         timeout=dict(default=180, type='int'),
         api_timeout=dict(default=None, type='int'),
@@ -133,8 +133,8 @@ def openstack_cloud_from_module(module, min_version='0.12.0'):
                 " config dict is provided, {param} should be"
                 " excluded.")
             for param in (
-                    'auth', 'region_name', 'verify',
-                    'cacert', 'key', 'api_timeout', 'auth_type'):
+                    'auth', 'region_name', 'validate_certs',
+                    'ca_cert', 'client_key', 'api_timeout', 'auth_type'):
                 if module.params[param] is not None:
                     module.fail_json(msg=fail_message.format(param=param))
             # For 'interface' parameter, fail if we receive a non-default value
@@ -147,9 +147,9 @@ def openstack_cloud_from_module(module, min_version='0.12.0'):
                 auth_type=module.params['auth_type'],
                 auth=module.params['auth'],
                 region_name=module.params['region_name'],
-                verify=module.params['verify'],
-                cacert=module.params['cacert'],
-                key=module.params['key'],
+                verify=module.params['validate_certs'],
+                cacert=module.params['ca_cert'],
+                key=module.params['client_key'],
                 api_timeout=module.params['api_timeout'],
                 interface=module.params['interface'],
             )

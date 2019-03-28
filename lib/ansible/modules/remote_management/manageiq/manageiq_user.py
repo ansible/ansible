@@ -79,7 +79,7 @@ EXAMPLES = '''
       url: 'http://127.0.0.1:3000'
       username: 'admin'
       password: 'smartvm'
-      verify_ssl: False
+      validate_certs: False
 
 - name: Create a new user in ManageIQ using a token
   manageiq_user:
@@ -91,7 +91,7 @@ EXAMPLES = '''
     manageiq_connection:
       url: 'http://127.0.0.1:3000'
       token: 'sometoken'
-      verify_ssl: False
+      validate_certs: False
 
 - name: Delete a user in ManageIQ
   manageiq_user:
@@ -101,7 +101,7 @@ EXAMPLES = '''
       url: 'http://127.0.0.1:3000'
       username: 'admin'
       password: 'smartvm'
-      verify_ssl: False
+      validate_certs: False
 
 - name: Delete a user in ManageIQ using a token
   manageiq_user:
@@ -110,7 +110,7 @@ EXAMPLES = '''
     manageiq_connection:
       url: 'http://127.0.0.1:3000'
       token: 'sometoken'
-      verify_ssl: False
+      validate_certs: False
 
 - name: Update email of user in ManageIQ
   manageiq_user:
@@ -120,7 +120,7 @@ EXAMPLES = '''
       url: 'http://127.0.0.1:3000'
       username: 'admin'
       password: 'smartvm'
-      verify_ssl: False
+      validate_certs: False
 
 - name: Update email of user in ManageIQ using a token
   manageiq_user:
@@ -129,7 +129,7 @@ EXAMPLES = '''
     manageiq_connection:
       url: 'http://127.0.0.1:3000'
       token: 'sometoken'
-      verify_ssl: False
+      validate_certs: False
 '''
 
 RETURN = '''
