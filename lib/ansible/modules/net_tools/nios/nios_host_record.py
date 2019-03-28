@@ -80,26 +80,26 @@ options:
         required: false
         aliases:
           - mac
-        add:
-          version_added: "2.8"
-          description:
-            - If user wants to add the ipv4 address to an existing host record.
-              Note that with I(add) user will have to keep the I(state) as I(present),
-              as new IP address is allocated to existing host record. See examples.
-          type: bool
-          required: false
-          aliases:
-            - add
-        remove:
-          version_added: "2.8"
-          description:
-            - If user wants to remove the ipv4 address from an existing host record.
-              Note that with I(remove) user will have to change the I(state) to I(absent),
-              as IP address is de-allocated from an existing host record. See examples.
-          type: bool
-          required: false
-          aliases:
-            - remove
+      add:
+        version_added: "2.8"
+        description:
+          - If user wants to add the ipv4 address to an existing host record.
+            Note that with I(add) user will have to keep the I(state) as I(present),
+            as new IP address is allocated to existing host record. See examples.
+        type: bool
+        required: false
+        aliases:
+          - add
+      remove:
+        version_added: "2.8"
+        description:
+          - If user wants to remove the ipv4 address from an existing host record.
+            Note that with I(remove) user will have to change the I(state) to I(absent),
+            as IP address is de-allocated from an existing host record. See examples.
+        type: bool
+        required: false
+        aliases:
+          - remove
   ipv6addrs:
     description:
       - Configures the IPv6 addresses for the host record.  This argument
