@@ -108,7 +108,7 @@ from ansible.module_utils.source_control.bitbucket import BitbucketHelper
 
 error_messages = {
     'invalid_params': 'Account or repository was not found',
-    'undefined_key_type': 'Public key type is undefined',
+    'unknown_key_type': 'Public key type is unknown',
 }
 
 BITBUCKET_API_ENDPOINTS = {
@@ -217,7 +217,7 @@ def create_known_host(module, bitbucket):
     elif ' ' in key_param:
         key_type, key = key_param.split(' ', 1)
     else:
-        module.fail_json(msg=error_messages['undefined_key_type'])
+        module.fail_json(msg=error_messages['unknown_key_type'])
 
     info, content = bitbucket.request(
         api_url=BITBUCKET_API_ENDPOINTS['known-host-list'].format(
