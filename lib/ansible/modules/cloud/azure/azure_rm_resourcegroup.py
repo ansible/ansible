@@ -205,7 +205,8 @@ class AzureRMResourceGroup(AzureRMModuleBase):
             elif self.state == 'absent':
                 if contains_resources and not self.force_delete_nonempty:
                     self.fail("Error removing resource group {0}. Resources exist within the group. "
-                              "Use `force_delete_nonempty` to force delete.".format(self.name))
+                              "Use `force_delete_nonempty` to force delete. "
+                              "To list resources under {0}, use `azure_rm_resourcegroup_facts` module with `list_resources` option.".format(self.name))
                 self.delete_resource_group()
 
         return self.results
