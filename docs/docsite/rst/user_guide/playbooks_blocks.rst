@@ -46,7 +46,7 @@ Blocks error handling
 `````````````````````
 
 Blocks also introduce the ability to handle errors in a way similar to exceptions in most programming languages.
-Blocks only deal with 'failed' status of a task. A bad task definition, an undefined variable or an unreachable host are not `rescuable`  errors.
+Blocks only deal with 'failed' status of a task. A bad task definition or an unreachable host are not 'rescuable' errors.
 
 .. _block_rescue:
 .. code-block:: YAML
