@@ -111,6 +111,11 @@ options:
     description:
       - Whether the network offering supports vlans or not.
     type: bool
+  for_vpc:
+    description:
+      - Whether the offering is meant to be used for VPC or not.
+    type: bool
+    version_added: '2.8'
 extends_documentation_fragment: cloudstack
 '''
 
@@ -202,6 +207,12 @@ is_default:
   returned: success
   type: bool
   sample: false
+for_vpc:
+  description: Whether the offering is meant to be used for VPC or not.
+  returned: success
+  type: bool
+  sample: false
+  version_added: '2.8'
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -225,6 +236,7 @@ class AnsibleCloudStackNetworkOffering(AnsibleCloudStack):
             'traffictype': 'traffic_type',
             'isdefault': 'is_default',
             'ispersistent': 'is_persistent',
+            'forvpc': 'for_vpc'
         }
         self.network_offering = None
 
@@ -290,6 +302,7 @@ class AnsibleCloudStackNetworkOffering(AnsibleCloudStack):
             'serviceproviderlist': self.module.params.get('service_providers'),
             'specifyipranges': self.module.params.get('specify_ip_ranges'),
             'specifyvlan': self.module.params.get('specify_vlan'),
+            'forvpc': self.module.params.get('for_vpc'),
         }
 
         required_params = [
@@ -383,6 +396,7 @@ def main():
         service_providers=dict(type='list', aliases=['service_provider']),
         specify_ip_ranges=dict(type='bool'),
         specify_vlan=dict(type='bool'),
+        for_vpc=dict(type='bool'),
     ))
 
     module = AnsibleModule(
