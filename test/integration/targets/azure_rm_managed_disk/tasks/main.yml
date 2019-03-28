@@ -63,24 +63,23 @@
        - output.state.id is defined
        - output.state.os_type == None
 
- - name: Create new managed disk with zones
+ - name: Create new managed disk with zone
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}3"
        storage_account_type: "Standard_LRS"
        disk_size_gb: 1
-       zones:
-           - 1
+       zone: 1
        tags:
            testing: testing
            delete: never
    register: output
 
- - name: Assert status succeeded and results include an zones value
+ - name: Assert status succeeded and results include an zone value
    assert:
      that:
        - output.changed
-       - output.state.zones == ["1"] 
+       - output.state.zone == ["1"] 
 
  - name: Change the operating system type of the managed disk to linux
    azure_rm_managed_disk:
