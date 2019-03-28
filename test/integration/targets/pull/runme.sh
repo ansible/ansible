@@ -13,7 +13,9 @@ temp_log="${temp_dir}/pull.log"
 
 ansible-playbook setup.yml
 
-trap "ansible-playbook '$(pwd)/cleanup.yml'" EXIT
+cleanup="$(pwd)/cleanup.yml"
+
+trap 'ansible-playbook "${cleanup}"' EXIT
 
 cp -av "pull-integration-test" "${repo_dir}"
 cd "${repo_dir}"
