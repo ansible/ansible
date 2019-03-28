@@ -4,22 +4,15 @@
 Advanced Syntax
 ***************
 
-The advanced YAML syntax examples on this page give you more control over the data placed in YAML files used by Ansible.
+The advanced YAML syntax examples on this page give you more control over the data placed in YAML files used by Ansible. You can find additional information about Python-specific YAML in the official `PyYAML Documentation <https://pyyaml.org/wiki/PyYAMLDocumentation#YAMLtagsandPythontypes>`_.
 
 .. contents::
    :local:
 
-.. _yaml_tags_and_python_types:
-
-YAML tags and Python types
-==========================
-
-The documentation covered here is an extension of the documentation that can be found in the `PyYAML Documentation <https://pyyaml.org/wiki/PyYAMLDocumentation#YAMLtagsandPythontypes>`_
-
 .. _unsafe_strings:
 
 Unsafe or Raw Strings
----------------------
+=====================
 
 Ansible provides an internal data type for declaring variable values as "unsafe". This means that the data held within the variables value should be treated as unsafe preventing unsafe character substitution and information disclosure.
 
@@ -53,8 +46,8 @@ For complex variables such as hashes or arrays, ``!unsafe`` should be used on th
 
 .. _anchors_and_aliases:
 
-Sharing variable values with YAML anchors and aliases
-=====================================================
+YAML anchors and aliases: sharing variable values
+=================================================
 
 `YAML anchors and aliases <https://yaml.org/spec/1.2/spec.html#id2765878>`_ help you define, maintain, and use shared variable values in a flexible way.
 You define an anchor with ``&``, then refer to it using an alias, denoted with ``*``.
