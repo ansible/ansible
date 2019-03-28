@@ -672,8 +672,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         '''
         Removes the BECOME-SUCCESS message from the data.
         '''
-        if data.strip().startswith('BECOME-SUCCESS-'):
-            data = re.sub(r'^((\r)?\n)?BECOME-SUCCESS.*(\r)?\n', '', data)
+        pattern = re.compile(r'^(.*(\r)?\n)?BECOME-SUCCESS.*(\r)?\n')
+        if re.search(pattern, data[0:100].lstrip()):
+            data = re.sub(pattern, '', data.lstrip())
         return data
 
     def _update_module_args(self, module_name, module_args, task_vars):
