@@ -204,7 +204,7 @@ def map_config_to_obj(module):
     vrfText = output[0].strip()
     vrfList = vrfText.split('VRF')
     for vrfItem in vrfList:
-        if 'FIB ID' in  vrfItem:
+        if 'FIB ID' in vrfItem:
             obj = dict()
             list_of_words = vrfItem.split()
             vrfName = list_of_words[0]
