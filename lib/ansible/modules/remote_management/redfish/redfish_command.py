@@ -96,6 +96,14 @@ EXAMPLES = '''
       username: "{{ username }}"
       password: "{{ password }}"
 
+  - name: Set chassis indicator LED to blink
+    redfish_command:
+      category: Chassis
+      command: IndicatorLedBlink
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+
   - name: Add and enable user
     redfish_command:
       category: Accounts
@@ -154,6 +162,7 @@ from ansible.module_utils._text import to_native
 CATEGORY_COMMANDS_ALL = {
     "Systems": ["PowerOn", "PowerForceOff", "PowerGracefulRestart",
                 "PowerGracefulShutdown", "PowerReboot", "SetOneTimeBoot"],
+    "Chassis": ["IndicatorLedOn", "IndicatorLedOff", "IndicatorLedBlink"],
     "Accounts": ["AddUser", "EnableUser", "DeleteUser", "DisableUser",
                  "UpdateUserRole", "UpdateUserPassword"],
     "Manager": ["GracefulRestart", "ClearLogs"],
@@ -240,6 +249,22 @@ def main():
                 result = rf_utils.manage_system_power(command)
             elif command == "SetOneTimeBoot":
                 result = rf_utils.set_one_time_boot_device(module.params['bootdevice'])
+
+    elif category == "Chassis":
+        result = rf_utils._find_chassis_resource(rf_uri)
+        if result['ret'] is False:
+            module.fail_json(msg=to_native(result['msg']))
+
+        led_commands = ["IndicatorLedOn", "IndicatorLedOff", "IndicatorLedBlink"]
+
+        # Check if more than one led_command is present
+        num_led_commands = sum([command in led_commands for command in command_list])
+        if num_led_commands > 1:
+            result = {'ret': False, 'msg': "Only one IndicatorLed command should be sent at a time."}
+        else:
+            for command in command_list:
+                if command in led_commands:
+                    result = rf_utils.manage_indicator_led(command)
 
     elif category == "Manager":
         MANAGER_COMMANDS = {
