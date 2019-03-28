@@ -574,7 +574,7 @@ class AnsibleFallbackNotFound(Exception):
     pass
 
 
-class AnsibleModule(object):
+class AnsibleModule(object)
     def __init__(self, argument_spec, bypass_checks=False, no_log=False,
                  check_invalid_arguments=None, mutually_exclusive=None, required_together=None,
                  required_one_of=None, add_file_common_args=False, supports_check_mode=False,
@@ -1875,6 +1875,10 @@ class AnsibleModule(object):
             else:
                 # TODO: surrogateescape is a danger here on Py3
                 journal_msg = remove_values(msg, self.no_log_values)
+
+            uuid = getattr(self, '_uuid', None)
+            if uuid is not None:
+                journal_msg = ' uuid=%s ' % uuid + journal_msg
 
             if PY3:
                 syslog_msg = journal_msg

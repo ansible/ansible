@@ -34,6 +34,7 @@ PASS_VARS = {
     'string_conversion_action': ('_string_conversion_action', 'warn'),
     'syslog_facility': ('_syslog_facility', 'INFO'),
     'tmpdir': ('_tmpdir', None),
+    'uuid': ('_uuid', None),
     'verbosity': ('_verbosity', 0),
     'version': ('ansible_version', '0.0'),
 }

@@ -747,6 +747,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # make sure the remote_tmp value is sent through in case modules needs to create their own
         module_args['_ansible_remote_tmp'] = self.get_shell_option('remote_tmp', default='~/.ansible/tmp')
 
+        # give task uuid for logging
+        module_args['_ansible_uuid'] = self._task.uuid
+
     def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=None, wrap_async=False):
         '''
         Transfer and run a module along with its arguments.
