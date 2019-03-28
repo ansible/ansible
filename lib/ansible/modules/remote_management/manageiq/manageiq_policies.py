@@ -62,7 +62,7 @@ EXAMPLES = '''
       url: 'http://127.0.0.1:3000'
       username: 'admin'
       password: 'smartvm'
-      verify_ssl: False
+      validate_certs: False
 
 - name: Unassign a policy_profile for a provider in ManageIQ
   manageiq_policies:
@@ -75,7 +75,7 @@ EXAMPLES = '''
       url: 'http://127.0.0.1:3000'
       username: 'admin'
       password: 'smartvm'
-      verify_ssl: False
+      validate_certs: False
 
 - name: List current policy_profile and policies for a provider in ManageIQ
   manageiq_policies:
@@ -86,7 +86,7 @@ EXAMPLES = '''
       url: 'http://127.0.0.1:3000'
       username: 'admin'
       password: 'smartvm'
-      verify_ssl: False
+      validate_certs: False
 '''
 
 RETURN = '''

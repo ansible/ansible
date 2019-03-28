@@ -72,7 +72,7 @@ options:
     description:
     - Whether to validate the remote server's certificate or not.
     - Set to C(ignore) to not validate any certificates.
-    - I(cert_trust_path) can be set to the path of a PEM certificate chain to
+    - I(ca_cert) can be set to the path of a PEM certificate chain to
       use in the validation.
     choices:
     - validate
@@ -80,13 +80,15 @@ options:
     default: validate
     vars:
     - name: ansible_psrp_cert_validation
-  cert_trust_path:
+  ca_cert:
     description:
     - The path to a PEM certificate chain to use when validating the server's
       certificate.
     - This value is ignored if I(cert_validation) is set to C(ignore).
     vars:
     - name: ansible_psrp_cert_trust_path
+    - name: ansible_psrp_ca_cert
+    aliases: [ cert_trust_path ]
   connection_timeout:
     description:
     - The connection timeout for making the request to the remote host.
@@ -516,7 +518,7 @@ if ($bytes_read -gt 0) {
         self._psrp_auth = self.get_option('auth')
         # cert validation can either be a bool or a path to the cert
         cert_validation = self.get_option('cert_validation')
-        cert_trust_path = self.get_option('cert_trust_path')
+        cert_trust_path = self.get_option('ca_cert')
         if cert_validation == 'ignore':
             self._psrp_cert_validation = False
         elif cert_trust_path is not None:

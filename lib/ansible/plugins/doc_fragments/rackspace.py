@@ -35,11 +35,12 @@ options:
     description:
       - Rackspace username, overrides I(credentials).
     type: str
-  verify_ssl:
+  validate_certs:
     description:
       - Whether or not to require SSL validation of API endpoints.
     type: bool
     version_added: '1.5'
+    aliases: [ verify_ssl ]
 requirements:
   - python >= 2.6
   - pyrax
@@ -95,11 +96,12 @@ options:
   username:
     description:
       - Rackspace username, overrides I(credentials).
-  verify_ssl:
+  validate_certs:
     description:
       - Whether or not to require SSL validation of API endpoints.
     version_added: '1.5'
     type: bool
+    aliases: [ verify_ssl ]
 requirements:
   - python >= 2.6
   - pyrax

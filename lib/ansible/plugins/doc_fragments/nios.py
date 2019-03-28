@@ -36,13 +36,14 @@ options:
           - Value can also be specified using C(INFOBLOX_PASSWORD) environment
             variable.
         type: str
-      ssl_verify:
+      validate_certs:
         description:
           - Boolean value to enable or disable verifying SSL certificates
           - Value can also be specified using C(INFOBLOX_SSL_VERIFY) environment
             variable.
         type: bool
         default: no
+        aliases: [ ssl_verify ]
       http_request_timeout:
         description:
           - The amount of time before to wait before receiving a response

@@ -258,9 +258,9 @@ def main():
             collation=dict(type='str', default=''),
             target=dict(type='path'),
             state=dict(type='str', default='present', choices=['absent', 'dump', 'import', 'present']),
-            ssl_cert=dict(type='path'),
-            ssl_key=dict(type='path'),
-            ssl_ca=dict(type='path'),
+            client_cert=dict(type='path', aliases=['ssl_cert']),
+            client_key=dict(type='path', aliases=['ssl_key']),
+            ca_cert=dict(type='path', aliases=['ssl_ca']),
             connect_timeout=dict(type='int', default=30),
             config_file=dict(type='path', default='~/.my.cnf'),
             single_transaction=dict(type='bool', default=False),
@@ -282,9 +282,9 @@ def main():
     login_port = module.params["login_port"]
     if login_port < 0 or login_port > 65535:
         module.fail_json(msg="login_port must be a valid unix port number (0-65535)")
-    ssl_cert = module.params["ssl_cert"]
-    ssl_key = module.params["ssl_key"]
-    ssl_ca = module.params["ssl_ca"]
+    ssl_cert = module.params["client_cert"]
+    ssl_key = module.params["client_key"]
+    ssl_ca = module.params["ca_cert"]
     connect_timeout = module.params['connect_timeout']
     config_file = module.params['config_file']
     login_password = module.params["login_password"]

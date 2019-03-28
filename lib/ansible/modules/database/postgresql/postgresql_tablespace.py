@@ -112,13 +112,14 @@ options:
     type: str
     default: prefer
     choices: [ allow, disable, prefer, require, verify-ca, verify-full ]
-  ssl_rootcert:
+  ca_cert:
     description:
     - Specifies the name of a file containing SSL certificate authority (CA)
       certificate(s).
     - If the file exists, the server's certificate will be
       verified to be signed by one of these authorities.
     type: str
+    aliases: [ ssl_rootcert ]
 notes:
 - I(state=absent) and I(state=present) (the second one if the tablespace doesn't exist) do not
   support check mode because the corresponding PostgreSQL DROP and CREATE TABLESPACE commands
@@ -389,7 +390,7 @@ def main():
         db=dict(type='str', aliases=['login_db']),
         port=dict(type='int', default=5432, aliases=['login_port']),
         ssl_mode=dict(type='str', default='prefer', choices=['allow', 'disable', 'prefer', 'require', 'verify-ca', 'verify-full']),
-        ssl_rootcert=dict(type='str'),
+        ca_cert=dict(type='str', aliases=['ssl_rootcert']),
         session_role=dict(type='str'),
     )
 
@@ -408,7 +409,7 @@ def main():
     owner = module.params["owner"]
     rename_to = module.params["rename_to"]
     settings = module.params["set"]
-    sslrootcert = module.params["ssl_rootcert"]
+    sslrootcert = module.params["ca_cert"]
     session_role = module.params["session_role"]
 
     if state == 'absent' and (location or owner or rename_to or settings):
@@ -425,7 +426,7 @@ def main():
         "port": "port",
         "db": "database",
         "ssl_mode": "sslmode",
-        "ssl_rootcert": "sslrootcert"
+        "ca_cert": "sslrootcert"
     }
     kw = dict((params_map[k], v) for (k, v) in iteritems(module.params)
               if k in params_map and v != '' and v is not None)
@@ -437,7 +438,7 @@ def main():
 
     if psycopg2.__version__ < '2.4.3' and sslrootcert:
         module.fail_json(msg='psycopg2 must be at least 2.4.3 '
-                             'in order to user the ssl_rootcert parameter')
+                             'in order to user the ca_cert parameter')
 
     db_connection = connect_to_db(module, kw, autocommit=True)
     cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)

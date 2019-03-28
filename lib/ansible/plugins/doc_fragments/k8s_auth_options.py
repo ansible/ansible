@@ -43,31 +43,35 @@ options:
       variable.
     - Please read the description of the C(username) option for a discussion of when this option is applicable.
     type: str
-  cert_file:
+  client_cert:
     description:
     - Path to a certificate used to authenticate with the API. Can also be specified via K8S_AUTH_CERT_FILE environment
       variable.
     type: path
-  key_file:
+    aliases: [ cert_file ]
+  client_key:
     description:
     - Path to a key file used to authenticate with the API. Can also be specified via K8S_AUTH_KEY_FILE environment
       variable.
     type: path
-  ssl_ca_cert:
+    aliases: [ key_file ]
+  ca_cert:
     description:
     - Path to a CA certificate used to authenticate with the API. The full certificate chain must be provided to
       avoid certificate validation errors. Can also be specified via K8S_AUTH_SSL_CA_CERT environment variable.
     type: path
-  verify_ssl:
+    aliases: [ ssl_ca_cert ]
+  validate_certs:
     description:
     - Whether or not to verify the API server's SSL certificates. Can also be specified via K8S_AUTH_VERIFY_SSL
       environment variable.
     type: bool
+    aliases: [ verify_ssl ]
 notes:
   - "The OpenShift Python client wraps the K8s Python client, providing full access to
     all of the APIS and models available on both platforms. For API version details and
     additional information visit https://github.com/openshift/openshift-restclient-python"
-  - "To avoid SSL certificate validation errors when C(verify_ssl) is I(True), the full
-    certificate chain for the API server must be provided via C(ssl_ca_cert) or in the
+  - "To avoid SSL certificate validation errors when C(validate_certs) is I(True), the full
+    certificate chain for the API server must be provided via C(ca_cert) or in the
     kubeconfig file."
 '''

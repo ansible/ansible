@@ -21,12 +21,13 @@ options:
     description:
     - Password for your Tower instance.
     type: str
-  tower_verify_ssl:
+  validate_certs:
     description:
     - Whether to allow insecure connections to Tower.
     - If C(no), SSL certificates will not be validated.
     - This should only be used on personally controlled sites using self-signed certificates.
     type: bool
+    aliases: [ tower_verify_ssl ]
   tower_config_file:
     description:
     - Path to the Tower config file.

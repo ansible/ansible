@@ -220,9 +220,9 @@ def main():
             master_ssl_cipher=dict(type='str'),
             connect_timeout=dict(type='int', default=30),
             config_file=dict(type='path', default='~/.my.cnf'),
-            ssl_cert=dict(type='path'),
-            ssl_key=dict(type='path'),
-            ssl_ca=dict(type='path'),
+            client_cert=dict(type='path', aliases=['ssl_cert']),
+            client_key=dict(type='path', aliases=['ssl_key']),
+            ca_cert=dict(type='path', aliases=['ssl_ca']),
         )
     )
     mode = module.params["mode"]
@@ -242,9 +242,9 @@ def main():
     master_ssl_key = module.params["master_ssl_key"]
     master_ssl_cipher = module.params["master_ssl_cipher"]
     master_auto_position = module.params["master_auto_position"]
-    ssl_cert = module.params["ssl_cert"]
-    ssl_key = module.params["ssl_key"]
-    ssl_ca = module.params["ssl_ca"]
+    ssl_cert = module.params["client_cert"]
+    ssl_key = module.params["client_key"]
+    ssl_ca = module.params["ca_cert"]
     connect_timeout = module.params['connect_timeout']
     config_file = module.params['config_file']
 

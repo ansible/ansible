@@ -86,13 +86,14 @@ options:
     type: str
     default: prefer
     choices: [ allow, disable, prefer, require, verify-ca, verify-full ]
-  ssl_rootcert:
+  ca_cert:
     description:
     - Specifies the name of a file containing SSL certificate authority (CA)
       certificate(s).
     - If the file exists, the server's certificate will be
       verified to be signed by one of these authorities.
     type: str
+    aliases: [ ssl_rootcert ]
 notes:
 - The default authentication assumes that you are either logging in as or
   sudo'ing to the postgres account on the host.
@@ -220,7 +221,7 @@ def main():
         query=dict(type='str'),
         db=dict(type='str'),
         ssl_mode=dict(type='str', default='prefer', choices=['allow', 'disable', 'prefer', 'require', 'verify-ca', 'verify-full']),
-        ssl_rootcert=dict(type='str'),
+        ca_cert=dict(type='str', aliases=['ssl_rootcert']),
         positional_args=dict(type='list'),
         named_args=dict(type='dict'),
         session_role=dict(type='str'),
@@ -239,7 +240,7 @@ def main():
     query = module.params["query"]
     positional_args = module.params["positional_args"]
     named_args = module.params["named_args"]
-    sslrootcert = module.params["ssl_rootcert"]
+    sslrootcert = module.params["ca_cert"]
     session_role = module.params["session_role"]
     path_to_script = module.params["path_to_script"]
 
@@ -265,7 +266,7 @@ def main():
         "port": "port",
         "db": "database",
         "ssl_mode": "sslmode",
-        "ssl_rootcert": "sslrootcert"
+        "ca_cert": "sslrootcert"
     }
     kw = dict((params_map[k], v) for (k, v) in iteritems(module.params)
               if k in params_map and v != '' and v is not None)
@@ -277,7 +278,7 @@ def main():
 
     if psycopg2.__version__ < '2.4.3' and sslrootcert:
         module.fail_json(msg='psycopg2 must be at least 2.4.3 '
-                             'in order to user the ssl_rootcert parameter')
+                             'in order to user the ca_cert parameter')
 
     db_connection = connect_to_db(module, kw)
     cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)

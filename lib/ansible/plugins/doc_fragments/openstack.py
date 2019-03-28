@@ -54,26 +54,29 @@ options:
       - How long should the socket layer wait before timing out for API calls.
         If this is omitted, nothing will be passed to the requests library.
     type: int
-  verify:
+  validate_certs:
     description:
       - Whether or not SSL API requests should be verified.
       - Before Ansible 2.3 this defaulted to C(yes).
     type: bool
     default: no
-    aliases: [ validate_certs ]
-  cacert:
+    aliases: [ verify ]
+  ca_cert:
     description:
       - A path to a CA Cert bundle that can be used as part of verifying
         SSL API requests.
     type: str
-  cert:
+    aliases: [ cacert ]
+  client_cert:
     description:
       - A path to a client certificate to use as part of the SSL transaction.
     type: str
-  key:
+    aliases: [ cert ]
+  client_key:
     description:
       - A path to a client key to use as part of the SSL transaction.
     type: str
+    aliases: [ key ]
   interface:
     description:
         - Endpoint URL type to fetch from the service catalog.

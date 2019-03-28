@@ -58,11 +58,12 @@ options:
       required: False
       default: "present"
       choices: ["present", "absent"]
-    tower_verify_ssl:
+    validate_certs:
       description:
         - Tower option to avoid certificates check.
       required: False
       type: bool
+      aliases: [ tower_verify_ssl ]
 extends_documentation_fragment: tower
 '''
 
@@ -75,7 +76,7 @@ EXAMPLES = '''
     inputs: "{{ lookup('file', 'tower_credential_inputs_nexus.json') }}"
     injectors: {'extra_vars': {'nexus_credential': 'test' }}
     state: present
-    tower_verify_ssl: false
+    validate_certs: false
 
 - tower_credential_type:
     name: Nexus
