@@ -160,7 +160,7 @@ def main():
     visible = module.params['visible']
     thumbprint = module.params['ssl_thumbprint']
 
-    content = connect_to_api(module, False)
+    content = connect_to_api(module, False).RetrieveContent()
     em = content.extensionManager
     key_check = em.FindExtension(extension_key)
     results = dict(changed=False, installed=dict())

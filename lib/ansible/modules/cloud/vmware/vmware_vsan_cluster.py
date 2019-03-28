@@ -104,7 +104,7 @@ def main():
     new_cluster_uuid = module.params['cluster_uuid']
 
     try:
-        content = connect_to_api(module, False)
+        content = connect_to_api(module, False).RetrieveContent()
         host = get_all_objs(content, [vim.HostSystem])
         if not host:
             module.fail_json(msg="Unable to locate Physical Host.")

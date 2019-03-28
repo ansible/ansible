@@ -34,7 +34,7 @@ options:
    name:
      description:
      - Name of the VM to work with
-     - This is required if UUID is not supplied.
+     - This is required if UUID or moid is not supplied.
    name_match:
      description:
      - If multiple VMs matching the name, use the first or last found
@@ -43,7 +43,12 @@ options:
    uuid:
      description:
      - UUID of the instance to manage if known, this is VMware's unique identifier.
-     - This is required if name is not supplied.
+     - This is required if name or moid is not supplied.
+   moid:
+     description:
+     - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
+     - This is required if name or UUID is not supplied.
+     version_added: '2.9'
    use_instance_uuid:
      description:
      - Whether to use the VMware instance UUID rather than the BIOS UUID.
@@ -236,6 +241,7 @@ def main():
         name=dict(type='str'),
         name_match=dict(type='str', choices=['first', 'last'], default='first'),
         uuid=dict(type='str'),
+        moid=dict(type='str'),
         use_instance_uuid=dict(type='bool', default=False),
         folder=dict(type='str'),
         datacenter=dict(type='str', required=True),
@@ -244,7 +250,7 @@ def main():
         properties=dict(type='list')
     )
     module = AnsibleModule(argument_spec=argument_spec,
-                           required_one_of=[['name', 'uuid']],
+                           required_one_of=[['name', 'uuid', 'moid']],
                            supports_check_mode=True)
 
     if module.params.get('folder'):
@@ -283,7 +289,8 @@ def main():
             module.fail_json(msg="Fact gather failed with exception %s" % to_text(exc))
     else:
         module.fail_json(msg="Unable to gather facts for non-existing VM %s" % (module.params.get('uuid') or
-                                                                                module.params.get('name')))
+                                                                                module.params.get('name') or
+                                                                                module.params.get('moid')))
 
 
 if __name__ == '__main__':

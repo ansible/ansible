@@ -159,7 +159,7 @@ class VMwareResourcePool(object):
         self.cluster_obj = None
         self.host_obj = None
         self.resource_pool_obj = None
-        self.content = connect_to_api(module)
+        self.content = connect_to_api(module).RetrieveContent()
 
     def select_resource_pool(self, host):
         pool_obj = None

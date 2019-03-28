@@ -104,7 +104,7 @@ def main():
     domainname = module.params['domainname']
     dns_servers = module.params['dns_servers']
     try:
-        content = connect_to_api(module)
+        content = connect_to_api(module).RetrieveContent()
         host = get_all_objs(content, [vim.HostSystem])
         if not host:
             module.fail_json(msg="Unable to locate Physical Host.")

@@ -292,7 +292,7 @@ class VMDKUploader(Thread):
 
 class VMwareDeployOvf:
     def __init__(self, module):
-        self.si = connect_to_api(module)
+        self.content = connect_to_api(module).RetrieveContent()
         self.module = module
         self.params = module.params
 
@@ -309,27 +309,27 @@ class VMwareDeployOvf:
         self.entity = None
 
     def get_objects(self):
-        self.datastore = find_datastore_by_name(self.si, self.params['datastore'])
+        self.datastore = find_datastore_by_name(self.content, self.params['datastore'])
         if not self.datastore:
             self.module.fail_json(msg='%(datastore)s could not be located' % self.params)
 
-        self.datacenter = find_datacenter_by_name(self.si, self.params['datacenter'])
+        self.datacenter = find_datacenter_by_name(self.content, self.params['datacenter'])
         if not self.datacenter:
             self.module.fail_json(msg='%(datacenter)s could not be located' % self.params)
 
         if self.params['cluster']:
-            cluster = find_cluster_by_name(self.si, self.params['cluster'])
+            cluster = find_cluster_by_name(self.content, self.params['cluster'])
             if cluster is None:
                 self.module.fail_json(msg="Unable to find cluster '%(cluster)s'" % self.params)
             else:
                 self.resource_pool = cluster.resourcePool
         else:
-            self.resource_pool = find_resource_pool_by_name(self.si, self.params['resource_pool'])
+            self.resource_pool = find_resource_pool_by_name(self.content, self.params['resource_pool'])
             if not self.resource_pool:
                 self.module.fail_json(msg='%(resource_pool)s could not be located' % self.params)
 
         for key, value in self.params['networks'].items():
-            network = find_network_by_name(self.si, value)
+            network = find_network_by_name(self.content, value)
             if not network:
                 self.module.fail_json(msg='%(network)s could not be located' % self.params)
             network_mapping = vim.OvfManager.NetworkMapping()
@@ -379,7 +379,7 @@ class VMwareDeployOvf:
                 params['propertyMapping'].append(property_mapping)
 
         if self.params['folder']:
-            folder = self.si.searchIndex.FindByInventoryPath(self.params['folder'])
+            folder = self.content.searchIndex.FindByInventoryPath(self.params['folder'])
             if not folder:
                 self.module.fail_json(msg="Unable to find the specified folder %(folder)s" % self.params)
         else:
@@ -389,7 +389,7 @@ class VMwareDeployOvf:
 
         ovf_descriptor = self.get_ovf_descriptor()
 
-        self.import_spec = self.si.ovfManager.CreateImportSpec(
+        self.import_spec = self.content.ovfManager.CreateImportSpec(
             ovf_descriptor,
             resource_pool,
             datastore,
@@ -411,9 +411,9 @@ class VMwareDeployOvf:
 
         if not self.params['allow_duplicates']:
             name = self.import_spec.importSpec.configSpec.name
-            match = find_vm_by_name(self.si, name, folder=folder)
+            match = find_vm_by_name(self.content, name, folder=folder)
             if match:
-                self.module.exit_json(instance=gather_vm_facts(self.si, match), changed=False)
+                self.module.exit_json(instance=gather_vm_facts(self.content, match), changed=False)
 
         if self.module.check_mode:
             self.module.exit_json(changed=True, instance={'hw_name': name})
@@ -540,9 +540,9 @@ class VMwareDeployOvf:
         env = ET.Element('Environment', **attrib)
 
         platform = ET.SubElement(env, 'PlatformSection')
-        ET.SubElement(platform, 'Kind').text = self.si.about.name
-        ET.SubElement(platform, 'Version').text = self.si.about.version
-        ET.SubElement(platform, 'Vendor').text = self.si.about.vendor
+        ET.SubElement(platform, 'Kind').text = self.content.about.name
+        ET.SubElement(platform, 'Version').text = self.content.about.version
+        ET.SubElement(platform, 'Vendor').text = self.content.about.vendor
         ET.SubElement(platform, 'Locale').text = 'US'
 
         prop_section = ET.SubElement(env, 'PropertySection')
@@ -574,13 +574,13 @@ class VMwareDeployOvf:
             if self.params['wait']:
                 wait_for_task(task)
                 if self.params['wait_for_ip_address']:
-                    _facts = wait_for_vm_ip(self.si, self.entity)
+                    _facts = wait_for_vm_ip(self.content, self.entity)
                     if not _facts:
                         self.module.fail_json(msg='Waiting for IP address timed out')
                     facts.update(_facts)
 
         if not facts:
-            facts.update(gather_vm_facts(self.si, self.entity))
+            facts.update(gather_vm_facts(self.content, self.entity))
 
         return facts
 

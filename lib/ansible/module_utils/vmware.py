@@ -555,7 +555,7 @@ def connect_to_api(module, disconnect_atexit=True):
     # Also removal significantly speeds up the return of the module
     if disconnect_atexit:
         atexit.register(connect.Disconnect, service_instance)
-    return service_instance.RetrieveContent()
+    return service_instance
 
 
 def get_all_objs(content, vimtype, folder=None, recurse=True):
@@ -804,9 +804,10 @@ class PyVmomi(object):
 
         self.module = module
         self.params = module.params
-        self.si = None
+        self.si = connect_to_api(self.module)
         self.current_vm_obj = None
-        self.content = connect_to_api(self.module)
+        # Uses if statement since connect_to_api could return None
+        self.content = self.si.RetrieveContent() if self.si else None
         self.custom_field_mgr = []
         if self.content.customFieldsManager:  # not an ESXi
             self.custom_field_mgr = self.content.customFieldsManager.field
@@ -879,7 +880,7 @@ class PyVmomi(object):
     # Virtual Machine related functions
     def get_vm(self):
         """
-        Function to find unique virtual machine either by UUID or Name.
+        Function to find unique virtual machine either by UUID, MoID or Name.
         Returns: virtual machine object if found, else None.
 
         """
@@ -958,6 +959,8 @@ class PyVmomi(object):
             elif vms:
                 # Unique virtual machine found.
                 vm_obj = vms[0]
+        elif self.params['moid']:
+            vm_obj = VmomiSupport.templateOf('VirtualMachine')(self.params['moid'], self.si._stub)
 
         if vm_obj:
             self.current_vm_obj = vm_obj

@@ -90,7 +90,7 @@ class VMwareMigrateVmk(object):
         self.esxi_hostname = self.module.params['esxi_hostname']
         self.current_portgroup_name = self.module.params['current_portgroup_name']
         self.current_switch_name = self.module.params['current_switch_name']
-        self.content = connect_to_api(module)
+        self.content = connect_to_api(module).RetrieveContent()
 
     def process_state(self):
         try:

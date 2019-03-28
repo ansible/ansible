@@ -62,7 +62,7 @@ from ansible.module_utils.vmware import (HAS_PYVMOMI, connect_to_api, get_all_ob
 class VMwareVmVssDvsMigrate(object):
     def __init__(self, module):
         self.module = module
-        self.content = connect_to_api(module)
+        self.content = connect_to_api(module).RetrieveContent()
         self.vm = None
         self.vm_name = module.params['vm_name']
         self.dvportgroup_name = module.params['dvportgroup_name']
