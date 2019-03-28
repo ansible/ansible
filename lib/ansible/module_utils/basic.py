@@ -1880,6 +1880,12 @@ class AnsibleModule(object):
             if uuid is not None:
                 journal_msg = ' uuid=%s ' % uuid + journal_msg
 
+            try:
+                tty = os.ttyname(1)
+                journal_msg = ' tty=%s ' % tty + journal_msg
+            except (OSError, IOError):
+                pass
+
             if PY3:
                 syslog_msg = journal_msg
             else:
