@@ -748,7 +748,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         module_args['_ansible_remote_tmp'] = self.get_shell_option('remote_tmp', default='~/.ansible/tmp')
 
         # give task uuid for logging
-        module_args['_ansible_uuid'] = self._task.uuid
+        module_args['_ansible_uuid'] = self._task._uuid
 
     def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=None, wrap_async=False):
         '''
