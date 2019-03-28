@@ -258,33 +258,30 @@
     - nonascii_output.stdout_lines[0] == 'über den Fußgängerübergang gehen'
     - nonascii_output.stderr == ''
 
-- name: Add echo to powershell profile
-  win_shell: 'mkdir $(Split-Path $profile); echo "echo PROFILE_LOADED" > $profile'
+- name: execute powershell without no_profile
+  win_shell: '[System.Environment]::CommandLine'
+  register: no_profile
 
-- name: Validate that profile is loaded by default
-  win_shell: exit 0
-  args:
-      profile: True
-  register: shellout
-
-- name: Check that profile was loaded
+- name: assert execute powershell with no_profile
   assert:
     that:
-      - shellout is successful
-      - shellout is changed
-      - shellout.rc == 0
-      - shellout.stdout == 'PROFILE_LOADED\r\n'
+    - no_profile is successful
+    - no_profile is changed
+    - no_profile.cmd == "[System.Environment]::CommandLine"
+    - no_profile.rc == 0
+    - no_profile.stdout is match ('^powershell.exe -noninteractive -encodedcommand')
 
-- name: Validate that profile is not loaded
-  win_shell: exit 0
+- name: execute powershell with no_profile
+  win_shell: '[System.Environment]::CommandLine'
   args:
-    profile: False
-  register: shellout
+    no_profile: yes
+  register: no_profile
 
-- name: Check that profile was not loaded
+- name: assert execute powershell with no_profile
   assert:
     that:
-      - shellout is successful
-      - shellout is changed
-      - shellout.rc == 0
-      - shellout.stdout == ''
+    - no_profile is successful
+    - no_profile is changed
+    - no_profile.cmd == "[System.Environment]::CommandLine"
+    - no_profile.rc == 0
+    - no_profile.stdout is match ('^powershell.exe -noprofile -noninteractive -encodedcommand')

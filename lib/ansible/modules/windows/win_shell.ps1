@@ -47,7 +47,7 @@ $executable = Get-AnsibleParam -obj $params -name "executable" -type "path"
 $creates = Get-AnsibleParam -obj $params -name "creates" -type "path"
 $removes = Get-AnsibleParam -obj $params -name "removes" -type "path"
 $stdin = Get-AnsibleParam -obj $params -name "stdin" -type "str"
-$profile = Get-AnsibleParam -obj $params -name "profile" -type "bool" -default $true
+$no_profile = Get-AnsibleParam -obj $params -name "no_profile" -type "bool" -default $false
 
 $raw_command_line = $raw_command_line.Trim()
 
@@ -80,8 +80,8 @@ If(-not $executable -or $executable -eq "powershell") {
         $exec_args = "-noninteractive -encodedcommand $encoded_command"
     }
 
-    if (!$profile) {
-      $exec_args = "-noprofile $exec_args"
+    if ($no_profile) {
+        $exec_args = "-noprofile $exec_args"
     }
 }
 Else {

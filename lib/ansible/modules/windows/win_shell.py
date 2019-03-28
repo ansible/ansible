@@ -47,10 +47,12 @@ options:
     - Set the stdin of the command directly to the specified value.
     type: str
     version_added: '2.5'
-  profile:
+  no_profile:
     description:
-    - Load the user profile before running a command. (powershell only)
+    - Do not load the user profile before running a command. This is only valid
+      when using PowerShell as the executable.
     type: bool
+    default: no
     version_added: '2.8'
 notes:
    -  If you want to run an executable securely and predictably, it may be
