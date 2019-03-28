@@ -68,7 +68,7 @@
       version: latest
 
 - name: Create VM Extension
-  azure_rm_virtualmachine_extension:
+  azure_rm_virtualmachineextension:
     resource_group: "{{ resource_group }}"
     name: testVMExtension
     virtual_machine_name: testVM
@@ -125,7 +125,7 @@
       - results.extensions[0]['provisioning_state'] != None
 
 - name: Delete VM Extension
-  azure_rm_virtualmachine_extension:
+  azure_rm_virtualmachineextension:
     resource_group: "{{ resource_group }}"
     name: testVMExtension
     virtual_machine_name: testVM
