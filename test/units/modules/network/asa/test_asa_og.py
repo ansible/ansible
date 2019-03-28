@@ -103,7 +103,7 @@ class TestAsaOgModule(TestAsaModule):
         set_module_args(dict(
             name='test_nets',
             group_type='network-object',
-            lines=['host 8.8.8.'],
+            lines=['host 8.8.8.8'],
             state='present'
         ))
         commands = [
