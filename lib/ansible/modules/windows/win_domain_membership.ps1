@@ -47,7 +47,7 @@ Function Get-DomainMembershipMatch {
     }
     catch [System.Security.Authentication.AuthenticationException] {
         Write-DebugLog "Failed to get computer domain.  Attempting a different method."
-        Add-Type -AssemblyName System.DirectoryServices.AccountManagement            
+        Add-Type -AssemblyName System.DirectoryServices.AccountManagement
         $user_principal = [System.DirectoryServices.AccountManagement.UserPrincipal]::Current
         If ($user_principal.ContextType -eq "Machine") {
             $current_dns_domain = (Get-CimInstance -ClassName Win32_ComputerSystem -Property Domain).Domain
@@ -132,10 +132,10 @@ Function Join-Domain {
     $argstr = $add_args | Out-String
     Write-DebugLog "calling Add-Computer with args: $argstr"
     try {
-        if($hostname_in_domain -eq $null -or ($hostname_in_domain -ne $null -and $allow_existing_computer_account)) {
+        if($null -eq $hostname_in_domain -or ($null -ne $hostname_in_domain -and $allow_existing_computer_account)) {
             $add_result = Add-Computer @add_args
         } else {
-            Fail-Json -obj $result -message "failed to join domain: hostname already exists in AD and `$allow_existing_computer_account isn't set to true"
+            Fail-Json -obj $result -message "failed to join domain: hostname already exists in AD and allow_existing_computer_account=no"
         }
     } catch {
         Fail-Json -obj $result -message "failed to join domain: $($_.Exception.Message)"
