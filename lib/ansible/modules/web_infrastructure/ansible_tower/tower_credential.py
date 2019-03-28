@@ -59,6 +59,7 @@ options:
     credential_type:
       description:
         - Non built-in custom credential type name.
+      version_added: "2.8"
       type: str
     host:
       description:
