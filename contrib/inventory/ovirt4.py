@@ -176,7 +176,7 @@ def get_dict_of_struct(connection, vm):
             if vm.name in [vm.name for vm in connection.follow_link(group.vms)]
         ],
         'statistics': dict(
-            (stat.name, stat.values[0].datum) for stat in stats
+            (stat.name, stat.values[0].datum) for stat in stats if stat.values
         ),
         'devices': dict(
             (device.name, [ip.address for ip in device.ips]) for device in devices if device.ips
