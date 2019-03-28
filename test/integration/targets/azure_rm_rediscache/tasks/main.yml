@@ -192,7 +192,7 @@
       - facts.rediscaches[0].access_keys.primary != None
 
 - name: Wait for Redis provisioning to complete
-  azure_rm_rediscache_facts:
+  azure_rm_rediscache_info:
       resource_group: "{{ resource_group }}"
       name: "{{ redis_name }}2"
   register: facts
