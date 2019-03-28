@@ -92,6 +92,7 @@ options:
             - 1
             - 2
             - 3
+            - None
         version_added: "2.8"
 
 extends_documentation_fragment:
@@ -347,7 +348,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         # TODO: Add support for EncryptionSettings, DiskIOPSReadWrite, DiskMBpsReadWrite
         disk_params = {}
         creation_data = {}
-        disk_params['zones'] = [] 
+        disk_params['zones'] = []
         disk_params['location'] = self.location
         disk_params['tags'] = self.tags
         if self.zones in ['1', '2', '3']:
