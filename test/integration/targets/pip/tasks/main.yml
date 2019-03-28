@@ -10,7 +10,28 @@
   set_fact:
     virtualenv: "{{ command.stdout_lines[0] }}"
 
-- include: 'pip.yml'
+- block:
+    - name: install git, needed for repo installs
+      package:
+        name: git
+        state: present
+      when: ansible_distribution != "MacOSX"
+      register: git_install
+
+    - include_tasks: pip.yml
+  always:
+    - name: remove unwanted packages
+      package:
+        name: git
+        state: absent
+      when: git_install.changed
+
+    - name: remove auto-installed packages from FreeBSD
+      pkgng:
+        name: git
+        state: absent
+        autoremove: yes
+      when: git_install.changed and ansible_distribution == "FreeBSD"
   when: ansible_fips|bool != True
   module_defaults:
     pip:
