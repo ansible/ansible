@@ -129,7 +129,13 @@ def main():
     if rc == 0:
         for line in out.splitlines():
             record = line.split(split)
-            results[dbtree][record[0]] = record[1:]
+            if record[0] in results[dbtree]:
+                results[dbtree][record[0]].update(record[1:])
+            else:
+                results[dbtree][record[0]] = set(record[1:])
+
+        for k, v in results[dbtree].items():
+            results[dbtree][k] = list(v)
 
         module.exit_json(ansible_facts=results)
 
