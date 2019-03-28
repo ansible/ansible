@@ -561,7 +561,7 @@ def main():
         entity = None
         if module.params['version'] is not None and module.params['version'].get('number') is not None:
             entity = find_subversion_template(module, templates_service)
-            #when user puts version number which does not exist
+            # when user puts version number which does not exist
             if entity is None:
                 raise ValueError(
                     "Template with name '%s' and version '%s' in cluster '%s' was not found'" % (
@@ -573,7 +573,7 @@ def main():
 
         state = module.params['state']
         if state == 'present':
-            #when user put version name, but not version number it will create template with version
+            # when user put version name, but not version number it will create template with version
             force_create = False
             if entity is None and module.params['version'] is not None:
                 force_create = True
