@@ -80,7 +80,7 @@ EXAMPLES = r'''
     datacenter: datacenter
     validate_certs: no
     name: testvm-1
-    dest_folder: /"{{ datacenter }}"/vm
+    dest_folder: "/{{ datacenter }}/vm"
   delegate_to: localhost
 
 - name: Get VM UUID
@@ -90,7 +90,7 @@ EXAMPLES = r'''
     password: "{{ vcenter_password }}"
     validate_certs: no
     datacenter: "{{ datacenter }}"
-    folder: /"{{datacenter}}"/vm
+    folder: "/{{datacenter}}/vm"
     name: "{{ vm_name }}"
   delegate_to: localhost
   register: vm_facts

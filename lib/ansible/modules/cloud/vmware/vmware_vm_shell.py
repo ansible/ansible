@@ -109,7 +109,7 @@ EXAMPLES = r'''
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     datacenter: "{{ datacenter }}"
-    folder: /"{{datacenter}}"/vm
+    folder: "/{{datacenter}}/vm"
     vm_id: "{{ vm_name }}"
     vm_username: root
     vm_password: superSecret
@@ -128,7 +128,7 @@ EXAMPLES = r'''
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     datacenter: "{{ datacenter }}"
-    folder: /"{{datacenter}}"/vm
+    folder: "/{{datacenter}}/vm"
     vm_id: NameOfVM
     vm_username: root
     vm_password: superSecret
@@ -145,7 +145,7 @@ EXAMPLES = r'''
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     datacenter: "{{ datacenter }}"
-    folder: /"{{datacenter}}"/vm
+    folder: "/{{datacenter}}/vm"
     vm_id: "{{ vm_name }}"
     vm_username: sample
     vm_password: old_password
@@ -160,7 +160,7 @@ EXAMPLES = r'''
     password: "{{ vcenter_password }}"
     validate_certs: no
     datacenter: "{{ datacenter }}"
-    folder: /"{{datacenter}}"/vm
+    folder: "/{{datacenter}}/vm"
     vm_id: "{{ vm_name }}"
     vm_username: testUser
     vm_password: SuperSecretPassword
