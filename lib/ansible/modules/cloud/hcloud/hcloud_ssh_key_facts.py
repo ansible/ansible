@@ -72,7 +72,7 @@ hcloud_ssh_key_facts:
             description: Fingerprint of the ssh key
             returned: always
             type: str
-            sample: running
+            sample: 0e:e0:bd:c7:2d:1f:69:49:94:44:91:f1:19:fd:35:f3
         public_key:
             description: The acctual public key
             returned: always
