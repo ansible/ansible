@@ -77,8 +77,7 @@ except ImportError:
 
 class RoleModule(BaseModule):
     def build_entity(self):
-        all_permits = self._connection.system_service(
-        ).cluster_levels_service().level_service('4.3').get().permits
+        all_permits = self.get_all_permits()
         return otypes.Role(
             id=self.param('id'),
             name=self.param('name'),
@@ -86,17 +85,31 @@ class RoleModule(BaseModule):
             administrative=self.param('administrative') if self.param(
                 'administrative') else None,
             permits=[
-                otypes.Permit(id=self._get_permit_id(new_permit, all_permits))
+                otypes.Permit(id=all_permits.get(new_permit.get('name')))
                     for new_permit in self.param('permits')
                 ]
         )
 
+    def get_all_permits(self):
+        return {
+            permit.name:permit.id for permit in self._connection.system_service(
+        ).cluster_levels_service().level_service('4.3').get().permits}
+
     def update_check(self, entity):
         def check_permits():
             if self.param('permits'):
-                current = [er.name for er in self._service.service(entity.id).permits_service().list()]
+                permits_service = self._service.service(entity.id).permits_service()
+                current = [er.name for er in permits_service.list()]
                 passed = [pr.get('name') for pr in self.param('permits')]
-                return sorted(current) == sorted(passed)
+                if not sorted(current) == sorted(passed):
+                    #remove all
+                    for permit in permits_service.list():
+                        permits_service.permit_service(permit.id).remove()
+                    #add passed permits
+                    all_permits = self.get_all_permits()
+                    for new_permit in passed:
+                        permits_service.add(otypes.Permit(id=all_permits.get(new_permit)))
+                    return False
             return True
 
         return (
@@ -104,11 +117,6 @@ class RoleModule(BaseModule):
             equal(self.param('mutable'), entity.mutable) and
             equal(self.param('administrative'), entity.administrative)
         )
-
-    def _get_permit_id(self, permit, all_permits):
-        for el in all_permits:
-            if el.name == permit.get('name'):
-                return el.id
 
 def main():
     argument_spec = ovirt_full_argument_spec(
@@ -140,12 +148,10 @@ def main():
             module=module,
             service=roles_service,
         )
-
         state = module.params['state']
         if state == 'present':
+            module.params.get('permits').append({'name':'login'})
             ret = roles_module.create()
-            # roles_module.post_present(ret['id'])
-            ret['changed'] = roles_module.changed
         elif state == 'absent':
             ret = roles_module.remove()
         module.exit_json(**ret)
