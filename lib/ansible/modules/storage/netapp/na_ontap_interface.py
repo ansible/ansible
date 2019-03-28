@@ -170,7 +170,7 @@ class NetAppOntapInterface(object):
             failover_policy=dict(required=False, type='str', default=None),
             admin_status=dict(required=False, choices=['up', 'down']),
             subnet_name=dict(required=False, type='str'),
-            is_auto_revert=dict(required=False, type=bool, default=None),
+            is_auto_revert=dict(required=False, type='bool', default=None),
             protocols=dict(required=False, type='list')
         ))
 
