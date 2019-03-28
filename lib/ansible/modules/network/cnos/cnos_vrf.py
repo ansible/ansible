@@ -200,7 +200,7 @@ def map_config_to_obj(module):
     objs = []
     output = run_commands(module, {'command': 'show vrf'})
     if output is None:
-        return objs
+        module.fail_json(msg='Could not fetch VRF details from device')
     vrfText = output[0].strip()
     vrfList = vrfText.split('VRF')
     for vrfItem in vrfList:
