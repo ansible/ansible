@@ -576,7 +576,7 @@ def main():
             dest = to_native(b_dest, errors='surrogate_or_strict')
         if not force:
             module.exit_json(msg="file already exists", src=src, dest=dest, changed=False)
-        if os.access(b_dest, os.R_OK) and os.path.isfile(dest):
+        if os.access(b_dest, os.R_OK) and os.path.isfile(b_dest):
             checksum_dest = module.sha1(dest)
     else:
         if not os.path.exists(os.path.dirname(b_dest)):
