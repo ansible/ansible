@@ -58,7 +58,6 @@ options:
         given vrf C(name) for associated interfaces. If the value in the
         C(associated_interfaces) does not match with the operational state of
         vrf interfaces on device it will result in failure.
-    version_added: "2.5"
   aggregate:
     description: List of VRFs contexts
   purge:
@@ -85,7 +84,7 @@ EXAMPLES = """
     name: test
     rd: 1:200
     interfaces:
-      - Ethernet2
+      - Ethernet1/33
     state: present
 
 - name: Delete VRFs
@@ -119,7 +118,7 @@ commands:
   sample:
     - vrf context test
     - rd 1:100
-    - interface Ethernet1
+    - interface Ethernet1/44
     - vrf member test
 """
 import re
