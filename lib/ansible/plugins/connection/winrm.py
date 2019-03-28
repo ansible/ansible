@@ -489,7 +489,7 @@ class Connection(ConnectionBase):
                                        % (to_native(response.std_out), to_native(stderr)))
 
             return response
-        except requests.exceptions.ConnectionError as exc:
+        except requests.exceptions.Timeout as exc:
             raise AnsibleConnectionFailure('winrm connection error: %s' % to_native(exc))
         finally:
             if command_id:
