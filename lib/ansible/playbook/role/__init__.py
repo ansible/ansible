@@ -269,6 +269,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
                                          obj=handler_data, orig_exc=e)
 
     def _load_role_yaml(self, subdir, main=None, allow_dir=False):
+        data = {}
         file_path = os.path.join(self._role_path, subdir)
         if self._loader.path_exists(file_path) and self._loader.is_directory(file_path):
             # Valid extensions and ordering for roles is hard-coded to maintain
@@ -284,17 +285,13 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
                 extensions.insert(0, '')
             found_files = self._loader.find_vars_files(file_path, _main, extensions, allow_dir)
             if found_files:
-                data = {}
                 for found in found_files:
                     new_data = self._loader.load_from_file(found)
-                    if new_data and allow_dir:
+                    if new_data:
                         data = combine_vars(data, new_data)
-                    else:
-                        data = new_data
-                return data
             elif main is not None:
                 raise AnsibleParserError("Could not find specified file in role: %s/%s" % (subdir, main))
-        return None
+        return data
 
     def _load_dependencies(self):
         '''
