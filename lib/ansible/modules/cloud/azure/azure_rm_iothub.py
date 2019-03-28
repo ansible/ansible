@@ -179,28 +179,29 @@ class AzureRMIoTHub(AzureRMModuleBase):
     def get_hub(self):
         try:
             return self.IoThub_client.iot_hub_resource.get(self.resource_group, self.name)
-        except CloudError as exc:
-            self.fail('Error getting IoT Hub {0}: {1}'.format(self.name, str(exc.inner_exception) or exc.message or str(exc)))
+        except Exception:
+            pass
+            return None
 
     def create_or_update_hub(self, hub):
         try:
             poller = self.IoThub_client.iot_hub_resource.create_or_update(self.resource_group, self.name, hub, if_match=hub.etag)
             return self.get_poller_result(poller)
-        except CloudError as exc:
+        except Exception as exc:
             self.fail('Error creating or updating IoT Hub {0}: {1}'.format(self.name, str(exc.inner_exception) or exc.message or str(exc)))
 
     def update_tags(self, tags):
         try:
             poller = self.IoThub_client.iot_hub_resource.update(self.resource_group, self.name, tags=tags)
             return self.get_poller_result(poller)
-        except CloudError as exc:
+        except Exception as exc:
             self.fail('Error updating IoT Hub {0}\'s tag: {1}'.format(self.name, str(exc.inner_exception) or exc.message or str(exc)))
 
     def delete_hub(self):
         try:
             self.IoThub_client.iot_hub_resource.create_or_update(self.resource_group, self.name)
             return True
-        except CloudError as exc:
+        except Exception as exc:
             self.fail('Error deleting IoT Hub {0}: {1}'.format(self.name, str(exc.inner_exception) or exc.message or str(exc)))
             return False
 
