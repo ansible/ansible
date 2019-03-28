@@ -53,6 +53,12 @@ options:
       - value of iDRAC attribute to update
     default: 'null'
     version_added: "2.8"
+  timeout:
+    description:
+      - Timeout in seconds for URL requests to iDRAC controller
+    default: 10
+    type: int
+    version_added: '2.8'
 
 author: "Jose Delarosa (@jose-delarosa)"
 '''
@@ -158,7 +164,8 @@ def main():
             username=dict(required=True),
             password=dict(required=True, no_log=True),
             manager_attribute_name=dict(default='null'),
-            manager_attribute_value=dict(default='null')
+            manager_attribute_value=dict(default='null'),
+            timeout=dict(type='int', default=10)
         ),
         supports_check_mode=False
     )
@@ -170,6 +177,9 @@ def main():
     creds = {'user': module.params['username'],
              'pswd': module.params['password']}
 
+    # timeout
+    timeout = module.params['timeout']
+
     # iDRAC attributes to update
     mgr_attributes = {'mgr_attr_name': module.params['manager_attribute_name'],
                       'mgr_attr_value': module.params['manager_attribute_value']}
@@ -177,7 +187,7 @@ def main():
     # Build root URI
     root_uri = "https://" + module.params['baseuri']
     rf_uri = "/redfish/v1/"
-    rf_utils = IdracRedfishUtils(creds, root_uri)
+    rf_utils = IdracRedfishUtils(creds, root_uri, timeout)
 
     # Check that Category is valid
     if category not in CATEGORY_COMMANDS_ALL:
