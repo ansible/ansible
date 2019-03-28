@@ -315,6 +315,10 @@ Noteworthy module changes
 * The ``win_dsc`` module will now validate the input options for a DSC resource. In previous versions invalid options
   would be ignored but are now not.
 
+* The ``win_domain_membership`` module will no longer automatically join a host in a domain that already has an account
+  with the same name. Set ``allow_existing_computer_account=yes`` to override this check and go back to the original
+  behaviour.
+
 Plugins
 =======
 
