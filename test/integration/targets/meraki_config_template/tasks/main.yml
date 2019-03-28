@@ -54,6 +54,7 @@
       type: appliance
     delegate_to: localhost
 
+# TODO: Get the network ID from the previous task
   - name: Get network id
     meraki_network:
       auth_key: '{{auth_key}}'
@@ -77,6 +78,19 @@
   - assert:
       that:
         bind.changed == True
+
+  - name: Bind a template to a network with check mode
+    meraki_config_template:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{ test_org_name }}'
+      net_name: '{{ test_net_name }}'
+      config_template: '{{test_template_name}}'
+    register: bind_check
+
+  - assert:
+      that:
+        bind_check is not changed
 
   - name: Bind a template to a network when it's already bound
     meraki_config_template:
@@ -157,6 +171,19 @@
   - assert:
       that:
         unbind_id.changed == True
+
+  - name: Unbind a template to a network via id with check mode
+    meraki_config_template:
+      auth_key: '{{auth_key}}'
+      state: absent
+      org_name: '{{test_org_name}}'
+      net_id: '{{net_id}}'
+      config_template: '{{test_template_name}}'
+    register: unbind_id_check
+
+  - assert:
+      that:
+        unbind_id_check is not changed
 
   always:
   - name: Delete network

@@ -217,9 +217,6 @@ def main():
     # if the user is working with this module in only check mode we do not
     # want to make any changes to the environment, just return the current
     # state with no modifications
-    # FIXME: Work with Meraki so they can implement a check mode
-    if module.check_mode:
-        meraki.exit_json(**meraki.result)
 
     # execute checks for argument completeness
 
@@ -245,7 +242,10 @@ def main():
                                       get_config_templates(meraki, org_id))
         if nets is None:
             nets = meraki.get_nets(org_id=org_id)
-        if is_network_bound(meraki, nets, net_id, template_id) is False:
+        if is_network_bound(meraki, nets, net_id, template_id) is False:  # Bind template
+            if meraki.check_mode is True:
+                meraki.result['data'] = {}
+                meraki.exit_json(**meraki.result)
             template_bind = bind(meraki,
                                  net_id,
                                  template_id)
@@ -256,14 +256,20 @@ def main():
         else:
             meraki.result['data'] = {}
     elif meraki.params['state'] == 'absent':
-        if not meraki.params['net_name'] and not meraki.params['net_id']:
+        if not meraki.params['net_name'] and not meraki.params['net_id']:  # Delete template
+            if meraki.check_mode is True:
+                meraki.result['data'] = {}
+                meraki.exit_json(**meraki.result)
             meraki.result['data'] = delete_template(meraki,
                                                     org_id,
                                                     meraki.params['config_template'],
                                                     get_config_templates(meraki, org_id))
             if meraki.status == 200:
                 meraki.result['changed'] = True
-        else:
+        else:  # Unbind template
+            if meraki.check_mode is True:
+                meraki.result['data'] = {}
+                meraki.exit_json(**meraki.result)
             template_id = get_template_id(meraki,
                                           meraki.params['config_template'],
                                           get_config_templates(meraki, org_id))
