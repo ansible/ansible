@@ -158,113 +158,262 @@ def map_config_to_obj(module):
     return obj
 
 
-def map_obj_to_commands(want, have, module):
+def replace(want_dict):
 
     commands = list()
     add_lines = list()
     remove_lines = list()
 
-    have_name = have[0].get('have_name')
-    have_group_type = have[0].get('have_group_type')
-    have_protocol = have[0].get('protocol')
-    have_lines = have[0].get('have_lines')
+    name = want_dict['name']
+    group_type = want_dict['group_type']
+    protocol = want_dict['protocol']
+    lines = want_dict['lines']
 
-    for w in want:
-        name = w['name']
-        group_type = w['group_type']
-        protocol = w['protocol']
-        lines = sorted(set(w['lines']))
+    if have_config:
+        if lines != sorted(have_config):
+            if have_group_type:
 
-        if have_lines:
-            if lines != sorted(have_lines):
-                if have_group_type:
+                if 'network-object' in group_type and 'network' in have_group_type:
+                    commands.append('object-group network {0}'.format(name))
+                    for i in lines:
+                        if i not in have_config:
+                            if 'object' not in i:
+                                add_lines.append('network-object ' + i)
+                            else:
+                                add_lines.append(i)
 
-                    if 'network-object' in group_type and 'network' in have_group_type:
-                        commands.append('object-group network {0}'.format(name))
-                        for i in lines:
-                            if i not in have_lines:
-                                if 'object' not in i:
-                                    add_lines.append('network-object ' + i)
-                                else:
-                                    add_lines.append(i)
+                    for i in have_config:
+                        if i not in lines:
+                            if 'group-object' not in i:
+                                remove_lines.append('no network-object ' + i)
+                            else:
+                                remove_lines.append('no ' + i)
 
-                        for i in have_lines:
-                            if i not in lines:
-                                if 'group-object' not in i:
-                                    remove_lines.append('no network-object ' + i)
-                                else:
-                                    remove_lines.append('no ' + i)
+                elif 'service-object' in group_type and 'service' in have_group_type:
+                    commands.append('object-group service {0}'.format(name))
+                    for i in lines:
+                        if i not in have_config:
+                            if 'group-object' not in i:
+                                add_lines.append('service-object ' + i)
+                            else:
+                                add_lines.append(i)
 
-                    elif 'service-object' in group_type and 'service' in have_group_type:
-                        commands.append('object-group service {0}'.format(name))
-                        for i in lines:
-                            if i not in have_lines:
-                                if 'group-object' not in i:
-                                    add_lines.append('service-object ' + i)
-                                else:
-                                    add_lines.append(i)
+                    for i in have_config:
+                        if i not in lines:
+                            if 'group-object' not in i:
+                                remove_lines.append('no service-object ' + i)
+                            else:
+                                remove_lines.append('no ' + i)
 
-                        for i in have_lines:
-                            if i not in lines:
-                                if 'group-object' not in i:
-                                    remove_lines.append('no service-object ' + i)
-                                else:
-                                    remove_lines.append('no ' + i)
+                elif 'port-object' in group_type and 'port' in have_group_type:
+                    commands.append('object-group service {0} {1}'.format(name, protocol))
+                    for i in lines:
+                        if i not in have_config:
+                            if 'group-object' not in i:
+                                add_lines.append('port-object ' + i)
+                            else:
+                                add_lines.append(i)
 
-                    elif 'port-object' in group_type and 'port' in have_group_type:
-                        commands.append('object-group service {0} {1}'.format(name, protocol))
-                        for i in lines:
-                            if i not in have_lines:
-                                if 'group-object' not in i:
-                                    add_lines.append('port-object ' + i)
-                                else:
-                                    add_lines.append(i)
+                    for i in have_config:
+                        if i not in lines:
+                            if 'group-object' not in i:
+                                remove_lines.append('no port-object ' + i)
+                            else:
+                                add_lines.append(i)
 
-                        for i in have_lines:
-                            if i not in lines:
-                                if 'group-object' not in i:
-                                    remove_lines.append('no port-object ' + i)
-                                else:
-                                    add_lines.append(i)
+                set_add_lines = set(add_lines)
+                set_remove_lines = set(remove_lines)
 
-                    set_add_lines = set(add_lines)
-                    set_remove_lines = set(remove_lines)
-
-                    for i in list(set_add_lines) + list(set_remove_lines):
-                        commands.append(i)
-
-        elif have_lines is None and have_group_type is None:
-
-            if 'network-object' in group_type:
-                commands.append('object-group network {0}'.format(name))
-
-                for i in lines:
-                    if 'object' not in i:
-                        add_lines.append('network-object ' + i)
-                    else:
-                        add_lines.append(i)
-
-                for i in set(add_lines):
+                for i in list(set_add_lines) + list(set_remove_lines):
                     commands.append(i)
 
-            elif 'service-object' in group_type:
-                commands.append('object-group service {0}'.format(name))
+    elif have_config is None and have_group_type is None:
 
-                for i in lines:
-                    add_lines.append('service-object ' + i)
+        if 'network-object' in group_type:
+            commands.append('object-group network {0}'.format(name))
 
-                for i in set(add_lines):
-                    commands.append(i)
+            for i in lines:
+                if 'object' not in i:
+                    add_lines.append('network-object ' + i)
+                else:
+                    add_lines.append(i)
 
-            elif 'port-object' in group_type:
-                commands.append('object-group service {0} {1}'.format(name, protocol))
-                for i in lines:
-                    add_lines.append('port-object ' + i)
+            for i in set(add_lines):
+                commands.append(i)
 
-                for i in set(add_lines):
-                    commands.append(i)
+        elif 'service-object' in group_type:
+            commands.append('object-group service {0}'.format(name))
+
+            for i in lines:
+                add_lines.append('service-object ' + i)
+
+            for i in set(add_lines):
+                commands.append(i)
+
+        elif 'port-object' in group_type:
+            commands.append('object-group service {0} {1}'.format(name, protocol))
+            for i in lines:
+                add_lines.append('port-object ' + i)
+
+            for i in set(add_lines):
+                commands.append(i)
 
     return commands
+
+
+def present(want_dict):
+
+    commands = list()
+    add_lines = list()
+    remove_lines = list()
+
+    name = want_dict['name']
+    group_type = want_dict['group_type']
+    protocol = want_dict['protocol']
+    lines = want_dict['lines']
+
+    if have_config:
+        if have_group_type:
+            if 'network-object' in group_type and 'network' in have_group_type:
+                for i in lines:
+                    if i not in have_config:
+                        commands.append('object-group network {0}'.format(name))
+                        if 'object' not in i:
+                            add_lines.append('network-object ' + i)
+                        else:
+                            add_lines.append(i)
+
+            elif 'service-object' in group_type and 'service' in have_group_type:
+                for i in lines:
+                    if i not in have_config:
+                        commands.append('object-group service {0}'.format(name))
+                        if 'group-object' not in i:
+                            add_lines.append('service-object ' + i)
+                        else:
+                            add_lines.append(i)
+
+            elif 'port-object' in group_type and 'port' in have_group_type:
+                for i in lines:
+                    if i not in have_config:
+                        commands.append('object-group service {0} {1}'.format(name, protocol))
+                        if 'group-object' not in i:
+                            add_lines.append('port-object ' + i)
+                        else:
+                            add_lines.append(i)
+
+            set_add_lines = set(add_lines)
+
+            for i in list(set_add_lines):
+                commands.append(i)
+
+    elif have_config is None and have_group_type is None:
+
+        if 'network-object' in group_type:
+            commands.append('object-group network {0}'.format(name))
+
+            for i in lines:
+                if 'object' not in i:
+                    add_lines.append('network-object ' + i)
+                else:
+                    add_lines.append(i)
+
+            for i in set(add_lines):
+                commands.append(i)
+
+        elif 'service-object' in group_type:
+            commands.append('object-group service {0}'.format(name))
+
+            for i in lines:
+                add_lines.append('service-object ' + i)
+
+            for i in set(add_lines):
+                commands.append(i)
+
+        elif 'port-object' in group_type:
+            commands.append('object-group service {0} {1}'.format(name, protocol))
+            for i in lines:
+                add_lines.append('port-object ' + i)
+
+            for i in set(add_lines):
+                commands.append(i)
+
+    return commands
+
+
+def absent(want_dict):
+
+    commands = list()
+    add_lines = list()
+    remove_lines = list()
+
+    name = want_dict['name']
+    group_type = want_dict['group_type']
+    protocol = want_dict['protocol']
+    lines = want_dict['lines']
+
+    if have_config:
+        if have_group_type:
+            if 'network-object' in group_type and 'network' in have_group_type:
+                for i in lines:
+                    if i in have_config:
+                        commands.append('object-group network {0}'.format(name))
+                        if 'object' not in i:
+                            add_lines.append('no network-object ' + i)
+                        else:
+                            add_lines.append('no' + i)
+
+            elif 'service-object' in group_type and 'service' in have_group_type:
+                for i in lines:
+                    if i in have_config:
+                        commands.append('object-group service {0}'.format(name))
+                        if 'group-object' not in i:
+                            add_lines.append('no service-object ' + i)
+                        else:
+                            add_lines.append('no' + i)
+
+            elif 'port-object' in group_type and 'port' in have_group_type:
+                for i in lines:
+                    if i in have_config:
+                        commands.append('object-group service {0} {1}'.format(name, protocol))
+                        if 'group-object' not in i:
+                            add_lines.append('no port-object ' + i)
+                        else:
+                            add_lines.append('no' + i)
+
+            set_add_lines = set(add_lines)
+
+            for i in list(set_add_lines):
+                commands.append(i)
+
+    return commands
+
+
+def map_obj_to_commands(want, have, module):
+
+    global have_name
+    have_name = have[0].get('have_name')
+    global have_group_type
+    have_group_type = have[0].get('have_group_type')
+    global have_config
+    have_config = have[0].get('have_lines')
+
+
+    for w in want:
+
+        want_dict = dict()
+
+        want_dict['name'] = w['name']
+        want_dict['group_type'] = w['group_type']
+        want_dict['protocol'] = w['protocol']
+        want_dict['lines'] = sorted(set(w['lines']))
+        state = w['state']
+
+        if state == 'replace':
+            return replace(want_dict)
+        elif state == 'present':
+            return present(want_dict)
+        elif state == 'absent':
+            return absent(want_dict)
 
 
 def map_params_to_obj(module):
@@ -275,7 +424,8 @@ def map_params_to_obj(module):
         'name': module.params['name'],
         'group_type': module.params['group_type'],
         'protocol': module.params['protocol'],
-        'lines': module.params['lines']
+        'lines': module.params['lines'],
+        'state': module.params['state'],
     })
 
     return obj
@@ -287,7 +437,8 @@ def main():
         name=dict(required=True),
         group_type=dict(choices=['network-object', 'service-object', 'port-object'], required=True),
         protocol=dict(choices=['udp', 'tcp', 'tcp-udp']),
-        lines=dict(type='list', required=True)
+        lines=dict(type='list', required=True),
+        state=dict(choices=['present', 'absent', 'replace'])
     )
 
     argument_spec.update(asa_argument_spec)
@@ -301,13 +452,13 @@ def main():
 
     want = map_params_to_obj(module)
     have = map_config_to_obj(module)
-    commands = map_obj_to_commands(want, have, module)
+    config_commans = map_obj_to_commands(want, have, module)
 
-    result['commands'] = commands
+    result['commands'] = config_commans
 
-    if commands:
+    if config_commans:
         if not module.check_mode:
-            load_config(module, commands)
+            load_config(module, config_commans)
         result['changed'] = True
 
     module.exit_json(**result)
