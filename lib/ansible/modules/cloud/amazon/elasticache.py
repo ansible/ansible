@@ -59,7 +59,7 @@ options:
     version_added: "2.0"
   security_group_ids:
     description:
-      - A list of vpc security group names to associate with this cache cluster. Only use if inside a vpc
+      - A list of vpc security group IDs to associate with this cache cluster. Only use if inside a vpc
     version_added: "1.6"
   cache_security_groups:
     description:
