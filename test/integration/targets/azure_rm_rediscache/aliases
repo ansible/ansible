@@ -2,3 +2,4 @@ cloud/azure
 shippable/azure/group2
 destructive
 azure_rm_rediscache_facts
+azure_rm_rediscachefirewallrule
