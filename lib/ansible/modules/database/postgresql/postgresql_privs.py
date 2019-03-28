@@ -128,11 +128,12 @@ options:
     default: prefer
     choices: [disable, allow, prefer, require, verify-ca, verify-full]
     version_added: '2.3'
-  ssl_rootcert:
+  ca_cert:
     description:
       - Specifies the name of a file containing SSL certificate authority (CA) certificate(s). If the file exists, the server's certificate will be
         verified to be signed by one of these authorities.
     version_added: '2.3'
+    aliases: [ ssl_rootcert ]
 notes:
   - Default authentication assumes that postgresql_privs is run by the
     C(postgres) user on the remote host. (Ansible's C(user) or C(sudo-user)).
@@ -152,7 +153,7 @@ notes:
     specified via I(login). If R has been granted the same privileges by
     another user also, R can still access database objects via these privileges.
   - When revoking privileges, C(RESTRICT) is assumed (see PostgreSQL docs).
-  - The ssl_rootcert parameter requires at least Postgres version 8.4 and I(psycopg2) version 2.4.3.
+  - The ca_cert parameter requires at least Postgres version 8.4 and I(psycopg2) version 2.4.3.
 requirements: [psycopg2]
 extends_documentation_fragment:
   - postgres
@@ -412,7 +413,7 @@ class Connection(object):
             "port": "port",
             "database": "database",
             "ssl_mode": "sslmode",
-            "ssl_rootcert": "sslrootcert"
+            "ca_cert": "sslrootcert"
         }
 
         kw = dict((params_map[k], getattr(params, k)) for k in params_map
@@ -423,9 +424,9 @@ class Connection(object):
         if is_localhost and params.unix_socket != "":
             kw["host"] = params.unix_socket
 
-        sslrootcert = params.ssl_rootcert
+        sslrootcert = params.ca_cert
         if psycopg2.__version__ < '2.4.3' and sslrootcert is not None:
-            raise ValueError('psycopg2 must be at least 2.4.3 in order to user the ssl_rootcert parameter')
+            raise ValueError('psycopg2 must be at least 2.4.3 in order to user the ca_cert parameter')
 
         self.connection = psycopg2.connect(**kw)
         self.cursor = self.connection.cursor()
@@ -856,7 +857,7 @@ def main():
             password=dict(default='', aliases=['login_password'], no_log=True),
             ssl_mode=dict(default="prefer",
                           choices=['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
-            ssl_rootcert=dict(default=None),
+            ca_cert=dict(default=None, aliases=['ssl_rootcert']),
             fail_on_role=dict(type='bool', default=True),
         ),
         supports_check_mode=True
