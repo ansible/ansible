@@ -87,7 +87,11 @@ options:
             - Tags to assign to the managed disk.
     zones:
         description:
-            - A list of avaliablity Zones for you managed disk.
+            - Allowed values: 1, 2, 3.
+        choices:
+            - 1
+            - 2
+            - 3
         version_added: "2.8"
 
 extends_documentation_fragment:
@@ -227,8 +231,8 @@ class AzureRMManagedDisk(AzureRMModuleBase):
                 type='str'
             ),
             zones=dict(
-                type='list',
-                elements='int'
+                type='str',
+                choices=['None', '1', '2', '3']
             )
         )
         required_if = [
@@ -343,9 +347,13 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         # TODO: Add support for EncryptionSettings, DiskIOPSReadWrite, DiskMBpsReadWrite
         disk_params = {}
         creation_data = {}
+        disk_params['zones'] = [] 
         disk_params['location'] = self.location
         disk_params['tags'] = self.tags
-        disk_params['zones'] = self.zones
+        if self.zones in ['1', '2', '3']:
+            disk_params['zones'].append(self.zones)
+        else:
+            disk_params['zones'] = self.zones
         if self.storage_account_type:
             storage_account_type = self.compute_models.DiskSku(name=self.storage_account_type)
             disk_params['sku'] = storage_account_type
