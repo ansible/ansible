@@ -153,7 +153,7 @@ Using blocks
 
 Most of what you can apply to a single task (with the exception of loops) can be applied at the :ref:`playbooks_blocks` level, which also makes it much easier to set data or directives common to the tasks.
 Blocks also introduce the ability to handle errors in a way similar to exceptions in most programming languages.
-Blocks only deal with 'failed' status of a task. A bad task definition, an undefined variable or an unreachable host are not `rescuable` errors::
+Blocks only deal with 'failed' status of a task. A bad task definition or an unreachable host are not 'rescuable' errors::
 
     tasks:
     - name: Handle the error
