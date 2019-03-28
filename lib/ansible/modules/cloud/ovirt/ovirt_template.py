@@ -488,37 +488,12 @@ def _get_vnic_profile_mappings(module):
     return vnicProfileMappings
 
 
-def _template_subversion(module, templates_service, templates_module, connection):
-    changed = False
-    resp = None
+def find_subversion_template(module, templates_service):
     version = module.params.get('version')
-    if version.get('number') is not None:
-        templates = templates_service.list()
-        for template in templates:
-            if version.get('number') == template.version.version_number and module.params.get('name') == template.name:
-                # Select template with correct subversion number and name
-                if version.get('name') is not None and version.get('name') != template.version.version_name or not templates_module.update_check(template):
-                    # Update template with version number
-                    template_service = templates_service.template_service(template.id)
-                    resp = template_service.update(
-                        template=templates_module.build_entity()
-                    )
-                    changed = True
-                else:
-                    # Return selected template
-                    resp = template
-    else:
-        # If there was not definded version number it will craete
-        resp = templates_service.add(templates_module.build_entity())
-        changed = True
-    return {
-        'changed': changed,
-        'id': getattr(resp, 'id', None),
-        type(resp).__name__.lower(): get_dict_of_struct(
-            struct=resp,
-            connection=templates_module._connection
-        )
-    }
+    templates = templates_service.list()
+    for template in templates:
+        if version.get('number') == template.version.version_number and module.params.get('name') == template.name:
+            return template
 
 
 def searchable_attributes(module):
@@ -583,21 +558,40 @@ def main():
             service=templates_service,
         )
 
+        entity = None
+        if module.params['version'] is not None and module.params['version'].get('number') is not None:
+            entity = find_subversion_template(module, templates_service)
+            #when user puts version number which does not exist
+            if entity is None:
+                raise ValueError(
+                    "Template with name '%s' and version '%s' in cluster '%s' was not found'" % (
+                        module.params['name'],
+                        module.params['version']['number'],
+                        module.params['cluster'],
+                    )
+                )
+
         state = module.params['state']
         if state == 'present':
-            if module.params['version'] is not None:
-                ret = _template_subversion(module, templates_service, templates_module, connection)
-            else:
-                ret = templates_module.create(
-                    result_state=otypes.TemplateStatus.OK,
-                    search_params=searchable_attributes(module),
-                    clone_permissions=module.params['clone_permissions'],
-                    seal=module.params['seal'],
-                )
+            #when user put version name, but not version number it will create template with version
+            force_create = False
+            if entity is None and module.params['version'] is not None:
+                force_create = True
+
+            ret = templates_module.create(
+                entity=entity,
+                force_create=force_create,
+                result_state=otypes.TemplateStatus.OK,
+                search_params=searchable_attributes(module),
+                clone_permissions=module.params['clone_permissions'],
+                seal=module.params['seal'],
+            )
         elif state == 'absent':
-            ret = templates_module.remove()
+            ret = templates_module.remove(entity=entity)
         elif state == 'exported':
             template = templates_module.search_entity()
+            if entity is not None:
+                template = entity
             export_service = templates_module._get_export_domain_service()
             export_template = search_by_attributes(export_service.templates_service(), id=template.id)
 
@@ -612,6 +606,8 @@ def main():
             )
         elif state == 'imported':
             template = templates_module.search_entity()
+            if entity is not None:
+                template = entity
             if template and module.params['clone_name'] is None:
                 ret = templates_module.create(
                     result_state=otypes.TemplateStatus.OK,
