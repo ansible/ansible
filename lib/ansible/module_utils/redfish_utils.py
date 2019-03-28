@@ -932,7 +932,7 @@ class RedfishUtils(object):
             resource_uris = self.systems_uris
         elif resource_type == 'Manager':
             # put in a list to match what we're doing with systems_uris
-            resource_uris = self.manager_uri.split()
+            resource_uris = [self.manager_uri]
 
         for resource_uri in resource_uris:
             inventory = self.get_nic_inventory(resource_uri)
