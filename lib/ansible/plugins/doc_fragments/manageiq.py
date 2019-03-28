@@ -32,15 +32,17 @@ options:
         description:
           - ManageIQ token. C(MIQ_TOKEN) env var if set. otherwise, required if no username or password is passed in.
         type: str
-      verify_ssl:
+      validate_certs:
         description:
           - Whether SSL certificates should be verified for HTTPS requests. defaults to True.
         type: bool
         default: yes
-      ca_bundle_path:
+        aliases: [ verify_ssl ]
+      ca_cert:
         description:
           - The path to a CA bundle file or directory with certificates. defaults to None.
         type: path
+        aliases: [ ca_bundle_path ]
 
 requirements:
   - 'manageiq-client U(https://github.com/ManageIQ/manageiq-api-client-python/)'

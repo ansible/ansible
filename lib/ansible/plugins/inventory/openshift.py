@@ -57,23 +57,27 @@ DOCUMENTATION = '''
               description:
               - Provide a password for authenticating with the API. Can also be specified via K8S_AUTH_PASSWORD
                 environment variable.
-          cert_file:
+          client_cert:
               description:
               - Path to a certificate used to authenticate with the API. Can also be specified via K8S_AUTH_CERT_FILE
                 environment variable.
-          key_file:
+              aliases: [ cert_file ]
+          client_key:
               description:
               - Path to a key file used to authenticate with the API. Can also be specified via K8S_AUTH_KEY_FILE
                 environment variable.
-          ssl_ca_cert:
+              aliases: [ key_file ]
+          ca_cert:
               description:
               - Path to a CA certificate used to authenticate with the API. Can also be specified via
                 K8S_AUTH_SSL_CA_CERT environment variable.
-          verify_ssl:
+              aliases: [ ssl_ca_cert ]
+          validate_certs:
               description:
               - "Whether or not to verify the API server's SSL certificates. Can also be specified via
                 K8S_AUTH_VERIFY_SSL environment variable."
               type: bool
+              aliases: [ verify_ssl ]
           namespaces:
               description:
               - List of namespaces. If not specified, will fetch all containers for all namespaces user is authorized

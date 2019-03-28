@@ -43,22 +43,25 @@ options:
     type: path
     default: '~/.my.cnf'
     version_added: "2.0"
-  ssl_ca:
+  ca_cert:
     description:
       - The path to a Certificate Authority (CA) certificate. This option, if used, must specify the same certificate
         as used by the server.
     type: path
     version_added: "2.0"
-  ssl_cert:
+    aliases: [ ssl_ca ]
+  client_cert:
     description:
       - The path to a client public key certificate.
     type: path
     version_added: "2.0"
-  ssl_key:
+    aliases: [ ssl_cert ]
+  client_key:
     description:
       - The path to the client private key.
     type: path
     version_added: "2.0"
+    aliases: [ ssl_key ]
 requirements:
    - PyMySQL (Python 2.7 and Python 3.X), or
    - MySQLdb (Python 2.x)

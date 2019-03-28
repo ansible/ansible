@@ -104,7 +104,7 @@ EXAMPLES = '''
       url: 'https://manageiq_server'
       username: 'admin'
       password: 'smartvm'
-      verify_ssl: False
+      validate_certs: False
 
 - name: Create a group in ManageIQ with the role EvmRole-user and tenant with tenant_id 4
   manageiq_group:
@@ -115,7 +115,7 @@ EXAMPLES = '''
       url: 'https://manageiq_server'
       username: 'admin'
       password: 'smartvm'
-      verify_ssl: False
+      validate_certs: False
 
 - name:
   - Create or update a group in ManageIQ with the role EvmRole-user and tenant my_tenant.
@@ -141,7 +141,7 @@ EXAMPLES = '''
       url: 'https://manageiq_server'
       username: 'admin'
       password: 'smartvm'
-      verify_ssl: False
+      validate_certs: False
 
 - name: Delete a group in ManageIQ
   manageiq_group:

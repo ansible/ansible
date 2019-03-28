@@ -29,7 +29,7 @@ DOCUMENTATION = '''
         ini:
           - section: callback_foreman
             key: url
-      ssl_cert:
+      client_cert:
         description: X509 certificate to authenticate to Foreman if https is used
         env:
             - name: FOREMAN_SSL_CERT
@@ -37,7 +37,10 @@ DOCUMENTATION = '''
         ini:
           - section: callback_foreman
             key: ssl_cert
-      ssl_key:
+          - section: callback_foreman
+            key: client_cert
+        aliases: [ ssl_cert ]
+      client_key:
         description: the corresponding private key
         env:
           - name: FOREMAN_SSL_KEY
@@ -45,6 +48,9 @@ DOCUMENTATION = '''
         ini:
           - section: callback_foreman
             key: ssl_key
+          - section: callback_foreman
+            key: client_key
+        aliases: [ ssl_key ]
       verify_certs:
         description:
           - Toggle to decide whether to verify the Foreman certificate.
@@ -96,7 +102,7 @@ class CallbackModule(CallbackBase):
         super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
 
         self.FOREMAN_URL = self.get_option('url')
-        self.FOREMAN_SSL_CERT = (self.get_option('ssl_cert'), self.get_option('ssl_key'))
+        self.FOREMAN_SSL_CERT = (self.get_option('client_cert'), self.get_option('client_key'))
         self.FOREMAN_SSL_VERIFY = str(self.get_option('verify_certs'))
 
         self.ssl_verify = self._ssl_verify()

@@ -86,7 +86,7 @@ EXAMPLES = '''
       url: 'http://127.0.0.1:3000'
       username: 'admin'
       password: 'smartvm'
-      verify_ssl: False
+      validate_certs: False
 
 - name: Create a tenant in ManageIQ
   manageiq_tenant:
@@ -97,7 +97,7 @@ EXAMPLES = '''
       url: 'http://127.0.0.1:3000'
       username: 'admin'
       password: 'smartvm'
-      verify_ssl: False
+      validate_certs: False
 
 - name: Delete a tenant in ManageIQ
   manageiq_tenant:
@@ -108,7 +108,7 @@ EXAMPLES = '''
       url: 'http://127.0.0.1:3000'
       username: 'admin'
       password: 'smartvm'
-      verify_ssl: False
+      validate_certs: False
 
 - name: Set tenant quota for cpu_allocated, mem_allocated, remove quota for vms_allocated
   manageiq_tenant:
@@ -122,7 +122,7 @@ EXAMPLES = '''
       url: 'http://127.0.0.1:3000'
       username: 'admin'
       password: 'smartvm'
-      verify_ssl: False
+      validate_certs: False
 
 
 - name: Delete a tenant in ManageIQ using a token
@@ -133,7 +133,7 @@ EXAMPLES = '''
     manageiq_connection:
       url: 'http://127.0.0.1:3000'
       token: 'sometoken'
-      verify_ssl: False
+      validate_certs: False
 '''
 
 RETURN = '''

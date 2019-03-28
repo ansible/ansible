@@ -138,12 +138,13 @@ options:
     default: prefer
     choices: ["disable", "allow", "prefer", "require", "verify-ca", "verify-full"]
     version_added: '2.3'
-  ssl_rootcert:
+  ca_cert:
     description:
       - Specifies the name of a file containing SSL certificate authority (CA)
         certificate(s). If the file exists, the server's certificate will be
         verified to be signed by one of these authorities.
     version_added: '2.3'
+    aliases: [ ssl_rootcert ]
   conn_limit:
     description:
       - Specifies the user (role) connection limit.
@@ -163,7 +164,7 @@ notes:
    - If you specify PUBLIC as the user (role), then the privilege changes will apply
      to all users (roles). You may not specify password or role_attr_flags when the
      PUBLIC user is specified.
-   - The ssl_rootcert parameter requires at least Postgres version 8.4 and
+   - The ca_cert parameter requires at least Postgres version 8.4 and
      I(psycopg2) version 2.4.3.
 requirements: [ psycopg2 ]
 author: "Ansible Core Team"
@@ -759,7 +760,7 @@ def main():
         expires=dict(default=None),
         ssl_mode=dict(default='prefer', choices=[
             'disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
-        ssl_rootcert=dict(default=None),
+        ca_cert=dict(default=None, aliases=['ssl_rootcert']),
         conn_limit=dict(type='int', default=None),
         session_role=dict(),
     ))
@@ -783,7 +784,7 @@ def main():
     else:
         encrypted = "UNENCRYPTED"
     expires = module.params["expires"]
-    sslrootcert = module.params["ssl_rootcert"]
+    sslrootcert = module.params["ca_cert"]
     conn_limit = module.params["conn_limit"]
 
     if not postgresqldb_found:
@@ -799,7 +800,7 @@ def main():
         "port": "port",
         "db": "database",
         "ssl_mode": "sslmode",
-        "ssl_rootcert": "sslrootcert"
+        "ca_cert": "sslrootcert"
     }
     kw = dict((params_map[k], v) for (k, v) in iteritems(module.params)
               if k in params_map and v != "" and v is not None)
@@ -811,7 +812,7 @@ def main():
 
     if psycopg2.__version__ < '2.4.3' and sslrootcert is not None:
         module.fail_json(
-            msg='psycopg2 must be at least 2.4.3 in order to user the ssl_rootcert parameter')
+            msg='psycopg2 must be at least 2.4.3 in order to user the ca_cert parameter')
 
     try:
         db_connection = psycopg2.connect(**kw)
