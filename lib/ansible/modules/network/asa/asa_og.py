@@ -23,6 +23,11 @@ options:
         description:
             - object-group name
         required: true
+    state:
+        description:
+            - Manage the state of the resource.
+        default: replace
+        choices: ['present', 'absent', 'replace']
     group_type:
         description:
             - object-group type
@@ -48,6 +53,7 @@ EXAMPLES = """
     name: service_object_test
     group_type: port-object
     protocol: udp
+    state: replace
     lines: ['range 56832 56959', 'range 61363 65185']
     provider: "{{ fws }}"
   register: result
@@ -438,7 +444,7 @@ def main():
         group_type=dict(choices=['network-object', 'service-object', 'port-object'], required=True),
         protocol=dict(choices=['udp', 'tcp', 'tcp-udp']),
         lines=dict(type='list', required=True),
-        state=dict(choices=['present', 'absent', 'replace'])
+        state=dict(choices=['present', 'absent', 'replace'], default='replace')
     )
 
     argument_spec.update(asa_argument_spec)
