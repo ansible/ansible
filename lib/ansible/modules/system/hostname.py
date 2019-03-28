@@ -557,6 +557,43 @@ class FreeBSDStrategy(GenericStrategy):
             f.close()
 
 
+class GNUCoreutilsStrategy(GenericStrategy):
+    """
+    This is a GNU coreutils Hostname manipulation strategy class - it
+    edits the /etc/hostname file, then runs hostname.
+    """
+
+    HOSTNAME_FILE = '/etc/hostname'
+
+    def get_permanent_hostname(self):
+        if not os.path.isfile(self.HOSTNAME_FILE):
+            try:
+                open(self.HOSTNAME_FILE, "a").write("")
+            except IOError as e:
+                self.module.fail_json(msg="failed to write file: %s" %
+                                          to_native(e), exception=traceback.format_exc())
+        try:
+            f = open(self.HOSTNAME_FILE)
+            try:
+                return f.read().strip()
+            finally:
+                f.close()
+        except Exception as e:
+            self.module.fail_json(msg="failed to read hostname: %s" %
+                                      to_native(e), exception=traceback.format_exc())
+
+    def set_permanent_hostname(self, name):
+        try:
+            f = open(self.HOSTNAME_FILE, 'w+')
+            try:
+                f.write("%s\n" % name)
+            finally:
+                f.close()
+        except Exception as e:
+            self.module.fail_json(msg="failed to update hostname: %s" %
+                                      to_native(e), exception=traceback.format_exc())
+
+
 class FedoraHostname(Hostname):
     platform = 'Linux'
     distribution = 'Fedora'
@@ -719,6 +756,12 @@ class NeonHostname(Hostname):
     platform = 'Linux'
     distribution = 'Neon'
     strategy_class = DebianStrategy
+
+
+class VoidHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Void'
+    strategy_class = GNUCoreutilsStrategy
 
 
 def main():
