@@ -403,9 +403,7 @@ def map_obj_to_commands(want, have, module):
     global have_config
     have_config = have[0].get('have_lines')
 
-
     for w in want:
-
         want_dict = dict()
 
         want_dict['name'] = w['name']
