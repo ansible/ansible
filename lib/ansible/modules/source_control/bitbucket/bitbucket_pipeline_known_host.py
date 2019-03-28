@@ -215,7 +215,7 @@ def create_known_host(module, bitbucket):
     if key_param is None:
         key_type, key = get_host_key(module, hostname)
     elif ' ' in key_param:
-        key_type, key = key_param.split(' ', maxsplit=1)
+        key_type, key = key_param.split(' ', 1)
     else:
         module.fail_json(msg=error_messages['undefined_key_type'])
 
