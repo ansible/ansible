@@ -371,6 +371,110 @@
     login_user: "{{ db_user3 }}"
     login_password: password
 
+#################################################
+# Test ALL_IN_SCHEMA for 'partioned tables type #
+#################################################
+
+# Function ALL_IN_SCHEMA Setup
+- name: Create partioned table for test
+  postgresql_query:
+    query: CREATE TABLE public.testpt (id int not null, logdate date not null) PARTITION BY RANGE (logdate);
+    db: "{{ db_name }}"
+    login_user: "{{ db_user3 }}"
+    login_password: password
+
+# Test
+- name: Grant execute to all tables
+  postgresql_privs:
+    type: table
+    state: present
+    privs: SELECT
+    roles: "{{ db_user2 }}"
+    objs: ALL_IN_SCHEMA
+    schema: public
+    db: "{{ db_name }}"
+    login_user: "{{ db_user3 }}"
+    login_password: password
+  register: result
+  ignore_errors: yes
+
+# Checks
+- assert:
+    that: result.changed == true
+
+- name: Check that all partitioned tables have execute privileges
+  become: yes
+  become_user: "{{ pg_user }}"
+  shell: psql {{ db_name }} -c "SELECT grantee, privilege_type FROM information_schema.role_table_grants WHERE table_name='testpt' and privilege_type='SELECT' and grantee = '{{ db_user2 }}'" -t
+  register: result
+
+- assert:
+    that: "'{{ db_user2 }}' in '{{ result.stdout_lines[0] }}'"
+
+# Test
+- name: Grant execute to all tables again
+  postgresql_privs:
+    type: table
+    state: present
+    privs: SELECT
+    roles: "{{ db_user2 }}"
+    objs: ALL_IN_SCHEMA
+    schema: public
+    db: "{{ db_name }}"
+    login_user: "{{ db_user3 }}"
+    login_password: password
+  register: result
+  ignore_errors: yes
+
+# Checks
+- assert:
+    that: result.changed == false
+
+# Test
+- name: Revoke SELECT to all tables
+  postgresql_privs:
+    type: table
+    state: absent
+    privs: SELECT
+    roles: "{{ db_user2 }}"
+    objs: ALL_IN_SCHEMA
+    schema: public
+    db: "{{ db_name }}"
+    login_user: "{{ db_user3 }}"
+    login_password: password
+  register: result
+  ignore_errors: yes
+
+# Checks
+- assert:
+    that: result.changed == true
+
+# Test
+- name: Revoke SELECT to all tables
+  postgresql_privs:
+    type: table
+    state: absent
+    privs: SELECT
+    roles: "{{ db_user2 }}"
+    objs: ALL_IN_SCHEMA
+    schema: public
+    db: "{{ db_name }}"
+    login_user: "{{ db_user3 }}"
+    login_password: password
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that: result.changed == false
+
+# Table ALL_IN_SCHEMA cleanup
+- name: Remove table for test
+  postgresql_query:
+    query: DROP TABLE public.testpt;
+    db: "{{ db_name }}"
+    login_user: "{{ db_user3 }}"
+    login_password: password
+
 # Cleanup
 - name: Remove user given permissions
   postgresql_user:
