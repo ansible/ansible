@@ -1,0 +1,4 @@
+---
+minor_changes:
+  - Catch all connection timeout related exceptions and raise
+    AnsibleConnectionError instead
