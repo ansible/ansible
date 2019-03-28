@@ -69,4 +69,3 @@ class TestCnosVrfModule(TestCnosModule):
         set_module_args(dict(name='default', state='present'))
         result = self.execute_module(failed=True)
         self.assertEqual(result['msg'], 'VRF context default is reserved')
-
