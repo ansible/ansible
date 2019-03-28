@@ -25,7 +25,7 @@
       - not namespace.changed
 
 - name: Create a queue
-  azure_rm_servicebus_queue:
+  azure_rm_servicebusqueue:
       name: "queue{{ rpfx }}"
       namespace: "ns{{ rpfx }}"
       resource_group: "{{ resource_group }}"
@@ -37,7 +37,7 @@
           - queue.changed
 
 - name: Create a topic (check mode)
-  azure_rm_servicebus_topic:
+  azure_rm_servicebustopic:
       name: "topic{{ rpfx }}"
       resource_group: "{{ resource_group }}"
       namespace: "ns{{ rpfx }}"
@@ -50,7 +50,7 @@
           - output.changed
 
 - name: Create a topic
-  azure_rm_servicebus_topic:
+  azure_rm_servicebustopic:
       name: "topic{{ rpfx }}"
       resource_group: "{{ resource_group }}"
       namespace: "ns{{ rpfx }}"
@@ -64,7 +64,7 @@
           - "'subscription_count' not in output"
 
 - name: Create a topic (idempontent)
-  azure_rm_servicebus_topic:
+  azure_rm_servicebustopic:
       name: "topic{{ rpfx }}"
       resource_group: "{{ resource_group }}"
       namespace: "ns{{ rpfx }}"
@@ -76,7 +76,7 @@
           - not output.changed
 
 - name: Create test policy
-  azure_rm_servicebus_sas_policy:
+  azure_rm_servicebussaspolicy:
       name: testpolicy
       resource_group: "{{ resource_group }}"
       namespace: "ns{{ rpfx }}"
@@ -84,7 +84,7 @@
       rights: manage
 
 - name: Create a subscription
-  azure_rm_servicebus_topic_subscription:
+  azure_rm_servicebustopicsubscription:
       name: "subs{{ rpfx }}"
       resource_group: "{{ resource_group }}"
       namespace: "ns{{ rpfx }}"
@@ -114,7 +114,7 @@
          - facts.servicebuses[0].sas_policies.testpolicy.rights == 'manage'
 
 - name: Delete subscription
-  azure_rm_servicebus_topic_subscription:
+  azure_rm_servicebustopicsubscription:
       name: "subs{{ rpfx }}"
       resource_group: "{{ resource_group }}"
       namespace: "ns{{ rpfx }}"
@@ -136,7 +136,7 @@
          - "facts.servicebuses | length == 1"
 
 - name: Delete topic
-  azure_rm_servicebus_topic:
+  azure_rm_servicebustopic:
       name: "topic{{ rpfx }}"
       resource_group: "{{ resource_group }}"
       namespace: "ns{{ rpfx }}"
@@ -156,7 +156,7 @@
          - "facts.servicebuses | length == 0"
 
 - name: Delete queue
-  azure_rm_servicebus_queue:
+  azure_rm_servicebusqueue:
       name: "queue{{ rpfx }}"
       resource_group: "{{ resource_group }}"
       namespace: "ns{{ rpfx }}"

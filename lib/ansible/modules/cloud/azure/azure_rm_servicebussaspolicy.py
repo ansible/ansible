@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_servicebus_sas_policy
+module: azure_rm_servicebussaspolicy
 version_added: "2.8"
 short_description: Manage Azure Service Bus SAS policy.
 description:
@@ -81,7 +81,7 @@ author:
 
 EXAMPLES = '''
 - name: Create a namespace
-  azure_rm_servicebus_sas_policy:
+  azure_rm_servicebussaspolicy:
       name: deadbeef
       queue: qux
       namespace: bar

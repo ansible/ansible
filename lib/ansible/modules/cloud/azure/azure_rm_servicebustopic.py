@@ -15,11 +15,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_servicebus_queue
+module: azure_rm_servicebustopic
 version_added: "2.8"
-short_description: Manage Azure Service Bus queue.
+short_description: Manage Azure Service Bus.
 description:
-    - Create, update or delete an Azure Service Bus queue.
+    - Create, update or delete an Azure Service Bus topics.
 options:
     resource_group:
         description:
@@ -27,17 +27,17 @@ options:
         required: true
     name:
         description:
-            - name of the queue.
+            - name of the topic.
         required: true
     namespace:
         description:
             - Servicebus namespace name.
             - A namespace is a scoping container for all messaging components.
-            - Multiple queues and topics can reside within a single namespace, and namespaces often serve as application containers.
+            - Multipletopics can reside within a single namespace.
         required: true
     state:
         description:
-            - Assert the state of the queue. Use 'present' to create or update and
+            - Assert the state of the topic. Use 'present' to create or update and
               'absent' to delete.
         default: present
         choices:
@@ -45,13 +45,9 @@ options:
             - present
     auto_delete_on_idle_in_seconds:
         description:
-            - Time idle interval after which a queue is automatically deleted.
+            - Time idle interval after which a topic is automatically deleted.
             - The minimum duration is 5 minutes.
         type: int
-    dead_lettering_on_message_expiration:
-        description:
-            - A value that indicates whether a queue has dead letter support when a message expires.
-        type: bool
     default_message_time_to_live_seconds:
         description:
             - Default message timespan to live value.
@@ -65,44 +61,27 @@ options:
     enable_express:
         description:
             - Value that indicates whether Express Entities are enabled.
-            - An express topic or queue holds a message in memory temporarily before writing it to persistent storage.
+            - An express topic holds a message in memory temporarily before writing it to persistent storage.
         type: bool
     enable_partitioning:
         description:
-            - A value that indicates whether the topic or queue is to be partitioned across multiple message brokers.
+            - A value that indicates whether the topic is to be partitioned across multiple message brokers.
         type: bool
-    forward_dead_lettered_messages_to:
-        description:
-            - Queue or topic name to forward the Dead Letter message for a queue.
-    forward_to:
-        description:
-            - Queue or topic name to forward the messages for a queue.
-    lock_duration_in_seconds:
-        description:
-            - Timespan duration of a peek-lock.
-            - The amount of time that the message is locked for other receivers.
-            - The maximum value for LockDuration is 5 minutes.
-        type: int
-    max_delivery_count:
-        description:
-            - he maximum delivery count.
-            - A message is automatically deadlettered after this number of deliveries.
-        type: int
     max_size_in_mb:
         description:
-            - The maximum size of the queue in megabytes, which is the size of memory allocated for the queue.
+            - The maximum size of the topic in megabytes, which is the size of memory allocated for the topic.
         type: int
     requires_duplicate_detection:
         description:
-            -  A value indicating if this queue or topic  requires duplicate detection.
+            -  A value indicating if this topic requires duplicate detection.
         type: bool
     duplicate_detection_time_in_seconds:
         description:
             - TimeSpan structure that defines the duration of the duplicate detection history.
         type: int
-    requires_session:
+    support_ordering:
         description:
-            - A value that indicates whether the queue supports the concept of sessions.
+            - Value that indicates whether the topic supports ordering.
         type: bool
     status:
         description:
@@ -123,16 +102,16 @@ author:
 '''
 
 EXAMPLES = '''
-- name: Create a queue
-  azure_rm_servicebus_queue:
-      name: subqueue
+- name: Create a topic
+  azure_rm_servicebustopic:
+      name: subtopic
       resource_group: foo
       namespace: bar
       duplicate_detection_time_in_seconds: 600
 '''
 RETURN = '''
 id:
-    description: Current state of the queue.
+    description: Current state of the topic.
     returned: success
     type: str
 '''
@@ -152,8 +131,7 @@ from datetime import datetime, timedelta
 duration_spec_map = dict(
     default_message_time_to_live='default_message_time_to_live_seconds',
     duplicate_detection_history_time_window='duplicate_detection_time_in_seconds',
-    auto_delete_on_idle='auto_delete_on_idle_in_seconds',
-    lock_duration='lock_duration_in_seconds'
+    auto_delete_on_idle='auto_delete_on_idle_in_seconds'
 )
 
 
@@ -165,60 +143,48 @@ sas_policy_spec = dict(
 )
 
 
-class AzureRMServiceBusQueue(AzureRMModuleBase):
+class AzureRMServiceBusTopic(AzureRMModuleBase):
 
     def __init__(self):
 
         self.module_arg_spec = dict(
-            resource_group=dict(type='str', required=True),
-            name=dict(type='str', required=True),
-            state=dict(type='str', default='present', choices=['present', 'absent']),
-            namespace=dict(type='str', required=True),
             auto_delete_on_idle_in_seconds=dict(type='int'),
-            dead_lettering_on_message_expiration=dict(type='bool'),
             default_message_time_to_live_seconds=dict(type='int'),
             duplicate_detection_time_in_seconds=dict(type='int'),
             enable_batched_operations=dict(type='bool'),
             enable_express=dict(type='bool'),
             enable_partitioning=dict(type='bool'),
-            forward_dead_lettered_messages_to=dict(type='str'),
-            forward_to=dict(type='str'),
-            lock_duration_in_seconds=dict(type='int'),
-            max_delivery_count=dict(type='int'),
             max_size_in_mb=dict(type='int'),
+            name=dict(type='str', required=True),
+            namespace=dict(type='str'),
             requires_duplicate_detection=dict(type='bool'),
-            requires_session=dict(type='bool'),
+            resource_group=dict(type='str', required=True),
+            state=dict(type='str', default='present', choices=['present', 'absent']),
             status=dict(type='str',
-                        choices=['active', 'disabled', 'send_disabled', 'receive_disabled'])
+                        choices=['active', 'disabled', 'send_disabled', 'receive_disabled']),
+            support_ordering=dict(type='bool')
         )
 
         self.resource_group = None
         self.name = None
         self.state = None
         self.namespace = None
-        self.location = None
-        self.type = None
-        self.subscription_topic_name = None
         self.auto_delete_on_idle_in_seconds = None
-        self.dead_lettering_on_message_expiration = None
         self.default_message_time_to_live_seconds = None
         self.enable_batched_operations = None
         self.enable_express = None
         self.enable_partitioning = None
-        self.forward_dead_lettered_messages_to = None
-        self.forward_to = None
-        self.lock_duration_in_seconds = None
-        self.max_delivery_count = None
         self.max_size_in_mb = None
         self.requires_duplicate_detection = None
         self.status = None
+        self.support_ordering = None
 
         self.results = dict(
             changed=False,
             id=None
         )
 
-        super(AzureRMServiceBusQueue, self).__init__(self.module_arg_spec,
+        super(AzureRMServiceBusTopic, self).__init__(self.module_arg_spec,
                                                      supports_check_mode=True)
 
     def exec_module(self, **kwargs):
@@ -227,19 +193,15 @@ class AzureRMServiceBusQueue(AzureRMModuleBase):
             setattr(self, key, kwargs[key])
 
         changed = False
-
         original = self.get()
         if self.state == 'present':
             # Create the resource instance
             params = dict(
-                dead_lettering_on_message_expiration=self.dead_lettering_on_message_expiration,
                 enable_batched_operations=self.enable_batched_operations,
                 enable_express=self.enable_express,
                 enable_partitioning=self.enable_partitioning,
-                forward_dead_lettered_messages_to=self.forward_dead_lettered_messages_to,
-                forward_to=self.forward_to,
-                max_delivery_count=self.max_delivery_count,
-                max_size_in_megabytes=self.max_size_in_mb
+                max_size_in_megabytes=self.max_size_in_mb,
+                support_ordering=self.support_ordering
             )
             if self.status:
                 params['status'] = self.servicebus_models.EntityStatus(str.capitalize(_snake_to_camel(self.status)))
@@ -248,14 +210,14 @@ class AzureRMServiceBusQueue(AzureRMModuleBase):
                 if seconds:
                     params[k] = timedelta(seconds=seconds)
 
-            instance = self.servicebus_models.SBQueue(**params)
+            instance = self.servicebus_models.SBTopic(**params)
             result = original
             if not original:
                 changed = True
                 result = instance
             else:
                 result = original
-                attribute_map = set(self.servicebus_models.SBQueue._attribute_map.keys()) - set(self.servicebus_models.SBQueue._validation.keys())
+                attribute_map = set(self.servicebus_models.SBTopic._attribute_map.keys()) - set(self.servicebus_models.SBTopic._validation.keys())
                 for attribute in attribute_map:
                     value = getattr(instance, attribute)
                     if value and value != getattr(original, attribute):
@@ -277,7 +239,7 @@ class AzureRMServiceBusQueue(AzureRMModuleBase):
             client = self._get_client()
             return client.create_or_update(self.resource_group, self.namespace, self.name, param)
         except Exception as exc:
-            self.fail('Error creating or updating queue {0} - {1}'.format(self.name, str(exc.inner_exception) or str(exc)))
+            self.fail('Error creating or updating topic {0} - {1}'.format(self.name, str(exc.inner_exception) or str(exc)))
 
     def delete(self):
         try:
@@ -285,10 +247,10 @@ class AzureRMServiceBusQueue(AzureRMModuleBase):
             client.delete(self.resource_group, self.namespace, self.name)
             return True
         except Exception as exc:
-            self.fail("Error deleting queue {0} - {1}".format(self.name, str(exc)))
+            self.fail("Error deleting topic {0} - {1}".format(self.name, str(exc)))
 
     def _get_client(self):
-        return self.servicebus_client.queues
+        return self.servicebus_client.topics
 
     def get(self):
         try:
@@ -299,7 +261,7 @@ class AzureRMServiceBusQueue(AzureRMModuleBase):
 
     def to_dict(self, instance):
         result = dict()
-        attribute_map = self.servicebus_models.SBQueue._attribute_map
+        attribute_map = self.servicebus_models.SBTopic._attribute_map
         for attribute in attribute_map.keys():
             value = getattr(instance, attribute)
             if not value:
@@ -332,7 +294,7 @@ def is_valid_timedelta(value):
 
 
 def main():
-    AzureRMServiceBusQueue()
+    AzureRMServiceBusTopic()
 
 
 if __name__ == '__main__':
