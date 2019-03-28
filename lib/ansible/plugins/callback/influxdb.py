@@ -245,7 +245,7 @@ class CallbackModule(CallbackBase):
     def _create_data_point(self, result, state="ok"):
         """
         This will create a measurement point for the duration of a task.
-        If digest_write is true, the measurmenet point will be stored into a list which will be
+        If digest_write is true, the measurement point will be stored into a list which will be
         used to send all results at once on the end of the playbook (playbook_on_stats)
         The default is, that every data_point will be sent immediately to the influxdb. This has
         the advantage that you'll see the progress of long running plays.
