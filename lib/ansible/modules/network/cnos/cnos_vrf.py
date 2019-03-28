@@ -200,6 +200,8 @@ def map_obj_to_commands(updates, module):
 def map_config_to_obj(module):
     objs = []
     output = run_commands(module, {'command': 'show vrf'})
+    if output is None:
+        return objs
     vrfText = output[0].strip()
     vrfList = vrfText.split('VRF')
     for vrfItem in vrfList:
