@@ -1,5 +1,4 @@
 ---
-
 - name: setup - remove vrf
   cnos_vrf:
     name: "{{ item }}"
@@ -249,4 +248,3 @@
 - assert:
     that:
       - "result.changed == true"
-
