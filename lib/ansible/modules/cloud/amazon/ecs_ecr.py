@@ -126,7 +126,7 @@ repository:
 
 import json
 import traceback
-from typing import Tuple
+from typing import Tuple  # pylint: disable=unused-import
 
 try:
     from botocore.exceptions import ClientError
