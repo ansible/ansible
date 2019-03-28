@@ -208,6 +208,8 @@ options:
       - Specifies the number of seconds that the IP address, once found, is valid.
     type: int
     version_added: 2.8
+notes:
+  - Support for TMOS versions below v12.x has been deprecated for this module, and will be removed in Ansible 2.12.
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -889,11 +891,28 @@ class BaseManager(object):
 
     def _announce_deprecations(self, result):
         warnings = result.pop('__warnings', [])
+        if self.version_is_less_than_12():
+            self._deprecate_v11(warnings)
         for warning in warnings:
             self.module.deprecate(
                 msg=warning['msg'],
                 version=warning['version']
             )
+
+    def version_is_less_than_12(self):
+        version = tmos_version(self.client)
+        if LooseVersion(version) < LooseVersion('12.0.0'):
+            return True
+        else:
+            return False
+
+    def _deprecate_v11(self, result):
+        result.append(
+            dict(
+                msg='The support for this TMOS version is deprecated.',
+                version='2.8'
+            )
+        )
 
     def present(self):
         if self.exists():
