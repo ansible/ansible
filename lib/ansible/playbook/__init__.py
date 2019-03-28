@@ -23,7 +23,7 @@ import os
 
 from ansible import constants as C
 from ansible.errors import AnsibleParserError
-from ansible.module_utils._text import to_bytes, to_text, to_native
+from ansible.module_utils._text import to_text, to_native
 from ansible.playbook.play import Play
 from ansible.playbook.playbook_include import PlaybookInclude
 from ansible.utils.display import Display

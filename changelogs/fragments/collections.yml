@@ -1,0 +1,4 @@
+major_changes:
+- Experimental support for Ansible Collections and content namespacing - Ansible content can now be packaged in a
+  collection and addressed via namespaces. This allows for easier sharing, distribution, and installation of bundled
+  modules/roles/plugins, and consistent rules for accessing specific content via namespaces.
