@@ -145,7 +145,7 @@ class AzureRMServiceBus(AzureRMModuleBase):
             if not check_name or not check_name.name_available:
                 self.fail("Error creating namespace {0} - {1}".format(self.name, check_name.message or str(check_name)))
         except Exception as exc:
-            self.fail("Error creating namespace {0} - {1}".format(self.name, check_name.message or str(check_name)))
+            self.fail("Error creating namespace {0} - {1}".format(self.name, exc.message or str(exc)))
 
     def create(self):
         self.log('Cannot find namespace, creating a one')
