@@ -114,7 +114,19 @@ DOCUMENTATION = '''
         ini:
           - section: callback_influxdb
             key: influx_measurement_name
-
+      influx_digest_write:
+        description:
+          - Whether to collect all data points before sending them to the influxDB.
+          - Setting this to true will collect all data and send them only on playbook_stats. Leaving this on False will
+            send data after every task. This could affect your overall performance.
+        required: False
+        type: bool
+        default: False
+        env:
+          - name: INFLUX_DIGEST_WRITE
+        ini:
+          - section: callback_influxdb
+            key: influx_digest_write
 '''
 
 import time
@@ -140,7 +152,6 @@ class CallbackModule(CallbackBase):
 
     def __init__(self, display=None, options=None):
         super(CallbackModule, self).__init__(display=display, options=options)
-        # self.influxdb = None
         if not HAS_INFLUXDB:
             self._display.warning("The required python influxdb library (influxdb) is not installed. "
                                   "pip install influxdb")
@@ -148,6 +159,66 @@ class CallbackModule(CallbackBase):
 
         self.influx = {}
         self.task_start_times = {}
+        self.data_points = []
+
+    def set_options(self, task_keys=None, var_options=None, direct=None):
+        super(CallbackModule, self).set_options(task_keys, var_options, direct)
+        self.influx["host"] = self.get_option('influx_host')
+        self.influx["port"] = self.get_option('influx_port') or 8086
+        self.influx["database"] = self.get_option('influx_database')
+        self.influx["username"] = self.get_option('influx_username')
+        self.influx["password"] = self.get_option('influx_password')
+        self.influx["ssl"] = self.get_option('influx_use_ssl') or False
+        self.influx["verify_ssl"] = self.get_option('influx_verify_ssl') or True
+        self.influx["timeout"] = self.get_option('influx_timeout') or 5
+        self.influx["retries"] = self.get_option('influx_retries') or 3
+        self.influx["measurement"] = self.get_option('influx_measurement_name') or "ansible_plays"
+        self.influx["digest_write"] = self.get_option('influx_digest_write') or False
+
+        if self.influx["host"] is None:
+            self._display.warning(
+                "No Influx Host provided. Can be provided with the `INFLUX_HOST` environment variable or in the ini")
+            self.disabled = True
+
+        if self.influx["database"] is None:
+            self._display.warning(
+                "No Influx database provided. Can be provided with the `INFLUX_DATABASE` environment variable"
+                " or in the ini")
+            self.disabled = True
+
+        self._display.info("Influx Host: %s", self.influx["host"])
+
+    def v2_playbook_on_stats(self, stats):
+        if self.influx["digest_write"]:
+            influxdb = self._connect_to_influxdb()
+            influxdb.write_points(self.data_points)
+            influxdb.close()
+
+    def v2_runner_on_async_failed(self, result):
+        self._create_data_point(result, "failed")
+
+    def v2_runner_on_failed(self, result, ignore_errors=False):
+        self._create_data_point(result, "failed")
+
+    def v2_runner_on_skipped(self, result):
+        self._create_data_point(result, "skipped")
+
+    def v2_runner_on_unreachable(self, result):
+        self._create_data_point(result, "unreachable")
+
+    def v2_runner_on_async_ok(self, result):
+        self._create_data_point(result, "ok")
+
+    def v2_playbook_on_task_start(self, task, is_conditional):
+        """
+        Will create a start point in milliseconds for the task.
+        :param task:
+        :param is_conditional:
+        """
+        self.task_start_times[task._uuid] = self._time_in_milliseconds()
+
+    def v2_runner_on_ok(self, result):
+        self._create_data_point(result, "ok")
 
     def _connect_to_influxdb(self):
         """
@@ -171,37 +242,16 @@ class CallbackModule(CallbackBase):
 
         return InfluxDBClient(**args)
 
-    def set_options(self, task_keys=None, var_options=None, direct=None):
-        super(CallbackModule, self).set_options(task_keys, var_options, direct)
-        self.influx["host"] = self.get_option('influx_host')
-        self.influx["port"] = self.get_option('influx_port') or 8086
-        self.influx["database"] = self.get_option('influx_database')
-        self.influx["username"] = self.get_option('influx_username')
-        self.influx["password"] = self.get_option('influx_password')
-        self.influx["ssl"] = self.get_option('influx_use_ssl') or False
-        self.influx["verify_ssl"] = self.get_option('influx_verify_ssl') or True
-        self.influx["timeout"] = self.get_option('influx_timeout') or 5
-        self.influx["retries"] = self.get_option('influx_retries') or 3
-        self.influx["measurement"] = self.get_option('influx_measurement_name') or "ansible_plays"
-
-        if self.influx["host"] is None:
-            self._display.warning(
-                "No Influx Host provided. Can be provided with the `INFLUX_HOST` environment variable or in the ini")
-            self.disabled = True
-
-        if self.influx["database"] is None:
-            self._display.warning(
-                "No Influx database provided. Can be provided with the `INFLUX_DATABASE` environment variable"
-                " or in the ini")
-            self.disabled = True
-
-        self._display.info("Influx Host: %s", self.influx["host"])
-
-    @staticmethod
-    def time_in_milliseconds():
-        return int(round(time.time() * 1000))
-
     def _create_data_point(self, result, state="ok"):
+        """
+        This will create a measurement point for the duration of a task.
+        If digest_write is true, the measurmenet point will be stored into a list which will be
+        used to send all results at once on the end of the playbook (playbook_on_stats)
+        The default is, that every data_point will be sent immediately to the influxdb. This has
+        the advantage that you'll see the progress of long running plays.
+        :param result:
+        :param state:
+        """
         if result._task._role is None:
             play = "None"
             play_uuid = "None"
@@ -224,31 +274,17 @@ class CallbackModule(CallbackBase):
             ),
             time=str(datetime.utcnow()),
             fields=dict(
-                duration=self.time_in_milliseconds() - self.task_start_times[result._task._uuid],
+                duration=self._time_in_milliseconds() - self.task_start_times[result._task._uuid],
                 state=state
             )
         )
-        influxdb = self._connect_to_influxdb()
-        influxdb.write_points([data_point])
-        influxdb.close()
+        if self.influx["digest_write"]:
+            self.data_points.append(data_point)
+        else:
+            influxdb = self._connect_to_influxdb()
+            influxdb.write_points([data_point])
+            influxdb.close()
 
-    def v2_runner_on_async_failed(self, result):
-        self._create_data_point(result, "failed")
-
-    def v2_runner_on_failed(self, result, ignore_errors=False):
-        self._create_data_point(result, "failed")
-
-    def v2_runner_on_skipped(self, result):
-        self._create_data_point(result, "ok")
-
-    def v2_runner_on_unreachable(self, result):
-        self._create_data_point(result, "unreachable")
-
-    def v2_runner_on_async_ok(self, result):
-        self._create_data_point(result, "ok")
-
-    def v2_playbook_on_task_start(self, task, is_conditional):
-        self.task_start_times[task._uuid] = self.time_in_milliseconds()
-
-    def v2_runner_on_ok(self, result):
-        self._create_data_point(result, "ok")
+    @staticmethod
+    def _time_in_milliseconds():
+        return int(round(time.time() * 1000))
