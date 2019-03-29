@@ -493,7 +493,7 @@ def find_subversion_template(module, templates_service):
     templates = templates_service.list()
     for template in templates:
         if version.get('number') == template.version.version_number and module.params.get('name') == template.name:
-            return  template
+            return template
 
     # when user puts version number which does not exist
     raise ValueError(
