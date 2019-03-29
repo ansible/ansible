@@ -3,4 +3,4 @@
 set -eux
 
 # test running module directly
-library/test.py args.json
+python.py library/test.py args.json
