@@ -158,7 +158,6 @@ EXAMPLES = '''
           name: basic
           size: C1
 
-
   - name: Scale up the Azure Cache for Redis
     azure_rm_rediscache:
         resource_group: myResourceGroup
@@ -283,6 +282,7 @@ def underline_to_hyphen(input):
         return input.replace("_", "-")
     return input
 
+
 def get_reboot_type(type):
     if type == "primary":
         return "PrimaryNode"
@@ -291,6 +291,7 @@ def get_reboot_type(type):
     if type == "all":
         return "AllNodes"
     return type
+
 
 class Actions:
     NoAction, Create, Update, Delete = range(4)
