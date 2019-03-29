@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_virtualmachine_extension
+module: azure_rm_virtualmachineextension
 
 version_added: "2.4"
 
@@ -23,6 +23,9 @@ short_description: Managed Azure Virtual Machine extension
 
 description:
     - Create, update and delete Azure Virtual Machine Extension
+
+notes:
+    - This module was called C(azure_rm_virtualmachine_extension) before Ansible 2.8. The usage did not change.
 
 options:
     resource_group:
@@ -77,7 +80,7 @@ author:
 
 EXAMPLES = '''
     - name: Create VM Extension
-      azure_rm_virtualmachine_extension:
+      azure_rm_virtualmachineextension:
         name: myvmextension
         location: eastus
         resource_group: myResourceGroup
@@ -89,7 +92,7 @@ EXAMPLES = '''
         auto_upgrade_minor_version: true
 
     - name: Delete VM Extension
-      azure_rm_virtualmachine_extension:
+      azure_rm_virtualmachineextension:
         name: myvmextension
         location: eastus
         resource_group: myResourceGroup
@@ -207,6 +210,9 @@ class AzureRMVMExtension(AzureRMModuleBase):
 
         for key in list(self.module_arg_spec.keys()):
             setattr(self, key, kwargs[key])
+
+        if self.module._name == 'azure_rm_virtualmachine_extension':
+            self.module.deprecate("The 'azure_rm_virtualmachine_extension' module has been renamed to 'azure_rm_virtualmachineextension'", version='2.12')
 
         resource_group = None
         response = None
