@@ -284,6 +284,15 @@ class Difference(object):
         if set(self.want.allow) != set(self.have.allow):
             return self.want.allow
 
+    @property
+    def banner_text(self):
+        if self.want.banner_text is None:
+            return None
+        if self.want.banner_text == '' and self.have.banner_text is None:
+            return None
+        if self.want.banner_text != self.have.banner_text:
+            return self.want.banner_text
+
 
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
