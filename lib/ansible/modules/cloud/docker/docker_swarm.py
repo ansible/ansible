@@ -449,7 +449,10 @@ class SwarmManager(DockerBaseClass):
         default = {'UnlockKey': None}
         if not self.has_swarm_lock_changed():
             return default
-        return self.client.get_unlock_key() or default
+        try:
+            return self.client.get_unlock_key() or default
+        except APIError:
+            return default
 
     def has_swarm_lock_changed(self):
         return self.parameters.autolock_managers and (
