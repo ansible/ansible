@@ -79,8 +79,6 @@ options:
 """
 
 EXAMPLES = """
-# Note: examples below use the following provider dict to handle
-#       transport and authentication to the node.
 ---
 - name: test contains operator
   cnos_command:
