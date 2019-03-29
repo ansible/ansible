@@ -15,7 +15,7 @@
 #  when: ansible_os_family == "Darwin"
 
 - name: Get lxml version
-  command: python -c 'from lxml import etree; print(".".join(str(v) for v in etree.LXML_VERSION))'
+  command: "{{ ansible_python_interpreter }} -c 'from lxml import etree; print(\".\".join(str(v) for v in etree.LXML_VERSION))'"
   register: lxml_version
 
 - name: Set lxml capabilities as variables
