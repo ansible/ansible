@@ -164,13 +164,13 @@ sns_topic:
     subscriptions_confirmed:
       description: Count of confirmed subscriptions
       returned: when topic is owned by this AWS account
-      type: list
-      sample: []
+      type: str
+      sample: '0'
     subscriptions_deleted:
       description: Count of deleted subscriptions
       returned: when topic is owned by this AWS account
-      type: list
-      sample: []
+      type: str
+      sample: '0'
     subscriptions_existing:
       description: List of existing subscriptions
       returned: always
