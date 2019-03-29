@@ -148,7 +148,7 @@ def map_config_to_obj(module):
         obj_dict['have_lines'] = have_lines
 
     elif group_type == 'service-object' or group_type == 'port-object':
-        sh_run_group_type = run_commands(module, 'show object-group id {0}'.format(group_name))
+        sh_run_group_type = get_config(module, flags=['object-group id {0}'.format(group_name)])
         have_lines_raw = Parser(sh_run_group_type[0], protocol).parse_obj_grp()
 
         if have_lines_raw:
