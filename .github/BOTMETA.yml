@@ -426,6 +426,7 @@ files:
     labels: [ cisco, remote_management, ucs ]
     maintainers: $team_ucs
   $modules/remote_management/dellemc/: rajeevarakkal
+  $modules/source_control/bitbucket/: $team_bitbucket
   $modules/source_control/git.py: $team_ansible
   $modules/source_control/github_key.py:
     ignored: erydo
@@ -810,12 +811,13 @@ files:
     maintainers: $team_scaleway
     labels:
       - cloud
+  $module_utils/source_control/bitbucket.py: $team_bitbucket
   $module_utils/utm_utils.py:
     maintainers: $team_e_spirit
   $module_utils/vmware: *vmware
   $module_utils/vultr.py: *vultr
   $module_utils/xenserver.py:
-      maintainers: bvitnik
+    maintainers: bvitnik
   $module_utils/storage/hpe3par/hpe3par.py: &hpe3par
     maintainers: farhan7500 gautamphegde
     support: community
@@ -1391,6 +1393,7 @@ files:
   test/units/modules/network/iosxr: *iosxr
   test/units/modules/network/nso: *nso
   test/units/modules/network/nxos: *nxos
+  test/units/modules/source_control/bitbucket: $team_bitbucket
   test/units/modules/storage/hpe3par: *hpe3par
   test/utils/shippable/:
     notified: mattclay
@@ -1411,6 +1414,7 @@ macros:
   team_ansible: []
   team_avi: ericsysmin grastogi23 khaltore
   team_azure: haroldwongms nitzmahone trstringer yuwzho xscript zikalino
+  team_bitbucket: catcombo marns93 zyv
   team_bsd: bcoca dagwieers jasperla JoergFiedler MacLemon mekanix opoplawski overhacked tuxillo
   team_cloudscale: gaudenz resmo
   team_cloudstack: resmo dpassante rhtyd
