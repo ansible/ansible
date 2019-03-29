@@ -130,7 +130,7 @@ options:
                 description: The Redis key to regenerate.
                 choices:
                     - primary
-                    - Secondary
+                    - secondary
     state:
       description:
         - Assert the state of the Azure Cache for Redis.
