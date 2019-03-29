@@ -293,7 +293,8 @@ class AzureRMVirtualMachineScaleSetFacts(AzureRMModuleBase):
             setattr(self, key, kwargs[key])
 
         if self.module._name == 'azure_rm_virtualmachine_scaleset_facts':
-            self.module.deprecate("The 'azure_rm_virtualmachine_scaleset_facts' module has been renamed to 'azure_rm_virtualmachinescaleset_facts'", version='2.12')
+            self.module.deprecate("The 'azure_rm_virtualmachine_scaleset_facts' module has been renamed to 'azure_rm_virtualmachinescaleset_facts'",
+                                  version='2.12')
 
         if self.name and not self.resource_group:
             self.fail("Parameter error: resource group required when filtering by name.")
