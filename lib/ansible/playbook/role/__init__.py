@@ -293,7 +293,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
                         if isinstance(new_data, Mapping):
                             data = combine_vars(data, new_data)
                         else:
-                            display.warning("Skipping '%s' vars file as it didn't produce a dictionary but a '%s'" % (found, type(new_data)))
+                            display.warning("Skipping '%s' vars file as it didn't produce a dictionary but a '%s'" % (to_text(found), type(new_data)))
             elif main is not None:
                 raise AnsibleParserError("Could not find specified file in role: %s/%s" % (subdir, main))
         return data
