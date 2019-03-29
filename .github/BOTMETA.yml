@@ -431,8 +431,8 @@ files:
   $modules/source_control/github_key.py:
     ignored: erydo
   $modules/source_control/gitlab_: &gitlab
-    keywords: [ gitlab, source_control ]
-    labels: gitlab
+    keywords: [ gitlab ]
+    labels: [ gitlab, source_control ]
     maintainers: $team_gitlab
     notified: jlozadad
   $modules/storage/hpe3par/: farhan7500 gautamphegde
@@ -1394,6 +1394,7 @@ files:
   test/units/modules/network/nso: *nso
   test/units/modules/network/nxos: *nxos
   test/units/modules/source_control/bitbucket: $team_bitbucket
+  test/units/modules/source_control/gitlab: $team_gitlab
   test/units/modules/storage/hpe3par: *hpe3par
   test/utils/shippable/:
     notified: mattclay
