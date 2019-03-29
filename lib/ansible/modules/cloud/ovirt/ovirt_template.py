@@ -157,6 +157,10 @@ options:
             - Upper bound of template memory up to which memory hot-plug can be performed.
               Prefix uses IEC 60027-2 standard (for example 1GiB, 1024MiB).
         version_added: "2.6"
+    clone_name:
+        description:
+            - Name for importing Template from storage domain.
+        version_added: "2.8"
 extends_documentation_fragment: ovirt
 '''
 
@@ -454,6 +458,7 @@ def main():
         export_domain=dict(default=None),
         storage_domain=dict(default=None),
         exclusive=dict(type='bool'),
+        clone_name=dict(default=None),
         image_provider=dict(default=None),
         image_disk=dict(default=None, aliases=['glance_image_disk_name']),
         io_threads=dict(type='int', default=None),
@@ -512,7 +517,7 @@ def main():
             )
         elif state == 'imported':
             template = templates_module.search_entity()
-            if template:
+            if template and module.params['clone_name'] is None:
                 ret = templates_module.create(
                     result_state=otypes.TemplateStatus.OK,
                 )
@@ -524,8 +529,9 @@ def main():
                             name=module.params['template_image_disk_name'] or module.params['image_disk']
                         ),
                         template=otypes.Template(
-                            name=module.params['name'],
+                            name=module.params['name'] if module.params['clone_name'] is None else module.params['clone_name'],
                         ),
+                        clone=True if module.params['clone_name'] is not None else False,
                         import_as_template=True,
                     )
 
