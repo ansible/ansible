@@ -993,6 +993,7 @@ class AzureRMModuleBase(object):
         self.log('Getting log analytics models')
         return LogAnalyticsModels
 
+    @property
     def servicebus_client(self):
         self.log('Getting servicebus client')
         if not self._servicebus_client:
