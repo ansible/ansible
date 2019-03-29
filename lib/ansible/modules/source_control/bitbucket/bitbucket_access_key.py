@@ -16,9 +16,9 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = r'''
 ---
 module: bitbucket_access_key
-short_description: Manages Bitbucket repository deploy keys
+short_description: Manages Bitbucket repository access keys
 description:
-  - Manages Bitbucket repository deploy keys.
+  - Manages Bitbucket repository access keys (also called deploy keys).
 version_added: "2.8"
 author:
   - Evgeniy Krysanov (@catcombo)
@@ -45,27 +45,27 @@ options:
     required: true
   key:
     description:
-      - SSH public key.
+      - The SSH public key.
     type: str
   label:
     description:
-      - Key label.
+      - The key label.
     type: str
     required: true
   state:
     description:
-      - Indicates desired state of the deploy key.
+      - Indicates desired state of the access key.
     type: str
     required: true
     choices: [ absent, present ]
 notes:
   - Bitbucket OAuth consumer key and secret can be obtained from Bitbucket profile -> Settings -> Access Management -> OAuth.
-  - Bitbucket OAuth consumer should have permissions to read and admin the account repositories.
+  - Bitbucket OAuth consumer should have permissions to read and administrate account repositories.
   - Check mode is supported.
 '''
 
 EXAMPLES = r'''
-- name: Create deploy key
+- name: Create access key
   bitbucket_access_key:
     repository: 'bitbucket-repo'
     username: bitbucket_username
@@ -73,7 +73,7 @@ EXAMPLES = r'''
     label: 'Bitbucket'
     state: present
 
-- name: Delete deploy key
+- name: Delete access key
   bitbucket_access_key:
     repository: bitbucket-repo
     username: bitbucket_username
@@ -88,7 +88,7 @@ from ansible.module_utils.source_control.bitbucket import BitbucketHelper
 
 error_messages = {
     'required_key': '`key` is required when the `state` is `present`',
-    'required_permission': 'OAuth consumer `client_id` should have permissions to read and admin the repository',
+    'required_permission': 'OAuth consumer `client_id` should have permissions to read and administrate the repository',
     'invalid_username_or_repo': 'Invalid `repository` or `username`',
     'invalid_key': 'Invalid SSH key or key is already in use',
 }
