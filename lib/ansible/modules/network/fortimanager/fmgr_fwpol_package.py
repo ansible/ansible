@@ -110,6 +110,19 @@ options:
       - if policy-based ngfw-mode, refer to firewall ssl-ssh-profile.
     required: false
 
+  append_scope_members:
+    description:
+      - if enabled, ansible will check for existing scope members and add those to the list before setting
+      - if disabled, ansible will simply replace the existing scope members with the list provided.
+    required: false
+    choices: ['enable', 'disable']
+    default: 'enable'
+
+  scope_groups:
+    description:
+      - List of groups to add to the scope of the fw pol package
+    required: false
+
   scope_members:
     description:
       - The devices or scope that you want to assign this policy package to.
@@ -125,7 +138,6 @@ options:
     description:
       - The parent folder name you want to add this object under.
     required: false
-
 '''
 
 
@@ -240,24 +252,13 @@ def fmgr_fwpol_package(fmgr, paramgram):
     """
     if paramgram["mode"] in ['set', 'add']:
         url = '/pm/pkg/adom/{adom}'.format(adom=paramgram["adom"])
-        members_list = []
-
-        # CHECK FOR SCOPE MEMBERS AND CREATE THAT DICT
-        if paramgram["scope_members"] is not None:
-            members = FMGRCommon.split_comma_strings_into_lists(paramgram["scope_members"])
-            for member in members:
-                scope_dict = {
-                    "name": member,
-                    "vdom": paramgram["scope_members_vdom"],
-                }
-                members_list.append(scope_dict)
 
         # IF PARENT FOLDER IS NOT DEFINED
         if paramgram["parent_folder"] is None:
             datagram = {
                 "type": paramgram["object_type"],
                 "name": paramgram["name"],
-                "scope member": members_list,
+                "scope member": paramgram["assign_to_list"],
                 "package settings": {
                     "central-nat": paramgram["central-nat"],
                     "fwpolicy-implicit-log": paramgram["fwpolicy-implicit-log"],
@@ -277,7 +278,7 @@ def fmgr_fwpol_package(fmgr, paramgram):
                 "name": paramgram["parent_folder"],
                 "subobj": [{
                     "name": paramgram["name"],
-                    "scope member": members_list,
+                    "scope member": paramgram["assign_to_list"],
                     "type": "pkg",
                     "package settings": {
                         "central-nat": paramgram["central-nat"],
@@ -379,22 +380,10 @@ def fmgr_fwpol_package_install(fmgr, paramgram):
     :return: The response from the FortiManager
     :rtype: dict
     """
-    # INIT BLANK MEMBERS LIST
-    members_list = []
-    # USE THE PARSE CSV FUNCTION TO GET A LIST FORMAT OF THE MEMBERS
-    members = FMGRCommon.split_comma_strings_into_lists(paramgram["scope_members"])
-    # USE THAT LIST TO BUILD THE DICTIONARIES NEEDED, AND ADD TO THE BLANK MEMBERS LIST
-    for member in members:
-        scope_dict = {
-            "name": member,
-            "vdom": paramgram["scope_members_vdom"],
-        }
-        members_list.append(scope_dict)
-    # THEN FOR THE DATAGRAM, USING THE MEMBERS LIST CREATED ABOVE
     datagram = {
         "adom": paramgram["adom"],
         "pkg": paramgram["name"],
-        "scope": members_list
+        "scope": paramgram["assign_to_list"]
     }
     # EXECUTE THE INSTALL REQUEST
     url = '/securityconsole/install/package'
@@ -416,13 +405,14 @@ def main():
         inspection_mode=dict(required=False, type="str", default="flow", choices=['flow', 'proxy']),
         ngfw_mode=dict(required=False, type="str", default="profile-based", choices=['profile-based', 'policy-based']),
         ssl_ssh_profile=dict(required=False, type="str"),
+        scope_groups=dict(required=False, type="str"),
         scope_members=dict(required=False, type="str"),
         scope_members_vdom=dict(required=False, type="str", default="root"),
+        append_scope_members=dict(required=False, type="str", default="enable", choices=['enable', 'disable']),
         parent_folder=dict(required=False, type="str"),
 
     )
-
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False, )
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False,)
     # MODULE DATAGRAM
     paramgram = {
         "adom": module.params["adom"],
@@ -436,9 +426,12 @@ def main():
         "inspection-mode": module.params["inspection_mode"],
         "ngfw-mode": module.params["ngfw_mode"],
         "ssl-ssh-profile": module.params["ssl_ssh_profile"],
+        "scope_groups": module.params["scope_groups"],
         "scope_members": module.params["scope_members"],
         "scope_members_vdom": module.params["scope_members_vdom"],
+        "append_scope_members": module.params["append_scope_members"],
         "parent_folder": module.params["parent_folder"],
+        "assign_to_list": list()
     }
     module.paramgram = paramgram
     fmgr = None
@@ -451,6 +444,57 @@ def main():
 
     # BEGIN MODULE-SPECIFIC LOGIC -- THINGS NEED TO HAPPEN DEPENDING ON THE ENDPOINT AND OPERATION
     results = DEFAULT_RESULT_OBJ
+
+    # CHECK FOR SCOPE MEMBERS AND CREATE THAT MEMBERS LIST
+    members_list = list()
+    if paramgram["scope_members"] is not None and paramgram["mode"] in ['add', 'set']:
+        if isinstance(paramgram["scope_members"], list):
+            members = paramgram["scope_members"]
+        if isinstance(paramgram["scope_members"], str):
+            members = FMGRCommon.split_comma_strings_into_lists(paramgram["scope_members"])
+        for member in members:
+            scope_dict = {
+                "name": member,
+                "vdom": paramgram["scope_members_vdom"],
+            }
+            members_list.append(scope_dict)
+
+    # CHECK FOR SCOPE GROUPS AND ADD THAT TO THE MEMBERS LIST
+    if paramgram["scope_groups"] is not None and paramgram["mode"] in ['add', 'set']:
+        if isinstance(paramgram["scope_groups"], list):
+            members = paramgram["scope_groups"]
+        if isinstance(paramgram["scope_groups"], str):
+            members = FMGRCommon.split_comma_strings_into_lists(paramgram["scope_groups"])
+        for member in members:
+            scope_dict = {
+                "name": member
+            }
+            members_list.append(scope_dict)
+
+    # CHECK FOR EXISTING SCOPE MEMBERS IF THAT OPTION IS ENABLED
+    try:
+        if paramgram["append_scope_members"] == "enable":
+            pol_datagram = {"type": paramgram["object_type"], "name": paramgram["name"]}
+            pol_package_url = '/pm/pkg/adom/{adom}/{pkg_name}'.format(adom=paramgram["adom"],
+                                                                      pkg_name=paramgram["name"])
+            pol_package = fmgr.process_request(pol_package_url, pol_datagram, FMGRMethods.GET)
+
+            if len(pol_package) > 2:
+                raise FMGBaseException("Policy Package Name returned multiple results.")
+            if len(pol_package) == 1:
+                raise FMGBaseException("Policy Package couldn't be found, to append existing scope members")
+            if len(pol_package) == 2:
+                try:
+                    existing_members = pol_package[1]["scope member"]
+                    for member in existing_members:
+                        if member not in members_list:
+                            members_list.append(member)
+                except Exception as err:
+                    pass
+    except Exception as err:
+        raise FMGBaseException(err)
+
+    paramgram["assign_to_list"] = members_list
 
     try:
         if paramgram["object_type"] == "pkg":
