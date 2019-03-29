@@ -1,0 +1,71 @@
+- name: Create a User
+  tower_user:
+    first_name: Joe
+    last_name: User
+    username: joe
+    password: "{{ 65535 | random | to_uuid }}"
+    email: joe@example.org
+    state: present
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Get all user with first name as Joe
+  tower_user_info:
+    first_name: Joe
+  register: user_result
+
+- assert:
+    that:
+      - user_result.result.results[0]['id'] is defined
+      - user_result.result.results[0]['first_name'] == 'Joe'
+      
+- name: Delete a User
+  tower_user:
+    username: joe
+    email: joe@example.org
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Create a Superuser
+  tower_user:
+    first_name: Joe
+    last_name: Super
+    username: joe
+    password: "{{ 65535 | random | to_uuid }}"
+    email: joe@example.org
+    state: present
+    superuser: true
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Get all superuser with name Joe
+  tower_user_info:
+    first_name: Joe
+    superuser: True
+  register: superuser_result
+
+- assert:
+    that:
+      - superuser_result.result.results[0]['id'] is defined
+      - superuser_result.result.results[0]['first_name'] == 'Joe'
+
+- name: Delete a Superuser
+  tower_user:
+    username: joe
+    email: joe@example.org
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
