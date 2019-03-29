@@ -193,6 +193,7 @@ def get_fmris_to_install(module, all_fmri_patterns):
         package_count = len(package_state_lines)
         package_parsed_count = 0
 
+        # FIXME: Where do I put these constants?
         REGEX_FMRI_NAME_PART = "pkg://.+(?=@)"
         REGEX_FMRI_VERSION_PART = "(?<=@)[^\s]*"
         REGEX_FMRI = REGEX_FMRI_NAME_PART + "@" + REGEX_FMRI_VERSION_PART
