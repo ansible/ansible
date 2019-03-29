@@ -198,7 +198,7 @@ def get_fmris_to_install(module, all_fmri_patterns):
         REGEX_FMRI_VERSION_PART = "(?<=@)[^\s]*"
         REGEX_FMRI = REGEX_FMRI_NAME_PART + "@" + REGEX_FMRI_VERSION_PART
         REGEX_FMRI_INSTALLED = "i--"
-        REGEX_FMRI_NOT_INSTALLED = "\-\-\-"
+        REGEX_FMRI_NOT_INSTALLED = "---"
         REGEX_FMRI_STATE = "(" + REGEX_FMRI_INSTALLED + "|" + REGEX_FMRI_NOT_INSTALLED + ")"
         REGEX_FMRI_STATE_LINE = "^" + REGEX_FMRI + "\s+" + REGEX_FMRI_STATE + "$"
 
