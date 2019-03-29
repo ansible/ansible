@@ -60,7 +60,7 @@ author:
 EXAMPLES = '''
     - name: Create a resource group
       azure_rm_resourcegroup:
-        name: Testing
+        name: myResourceGroup
         location: westus
         tags:
             testing: testing
@@ -68,7 +68,13 @@ EXAMPLES = '''
 
     - name: Delete a resource group
       azure_rm_resourcegroup:
-        name: Testing
+        name: myResourceGroup
+        state: absent
+
+    - name: Delete a resource group including resources it contains
+      azure_rm_resourcegroup:
+        name: myResourceGroup
+        force_delete_nonempty: yes
         state: absent
 '''
 RETURN = '''

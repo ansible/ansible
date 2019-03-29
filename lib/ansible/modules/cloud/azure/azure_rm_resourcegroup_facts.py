@@ -50,7 +50,7 @@ author:
 EXAMPLES = '''
     - name: Get facts for one resource group
       azure_rm_resourcegroup_facts:
-        name: Testing
+        name: myResourceGroup
 
     - name: Get facts for all resource groups
       azure_rm_resourcegroup_facts:
@@ -61,9 +61,9 @@ EXAMPLES = '''
           - testing
           - foo:bar
 
-    - name: List resources under resource group
+    - name: Get facts for one resource group including resources it contains
       azure_rm_resourcegroup_facts:
-          name: foo
+          name: myResourceGroup
           list_resources: yes
 '''
 RETURN = '''
@@ -76,7 +76,7 @@ azure_resourcegroups:
             description:
                 - Resource id.
             type: str
-            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/foo"
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup"
         name:
             description:
                 - Resource group name.
@@ -84,7 +84,7 @@ azure_resourcegroups:
             sample: foo
         tags:
             description:
-                - Tags to assign to the managed disk.
+                - Tags assigned to resource group.
             type: dict
             sample: { "tag": "value" }
         resources:
@@ -97,12 +97,13 @@ azure_resourcegroups:
                     description:
                         - Resource id.
                     type: str
-                    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/foo/providers/Microsoft.XX/XXX/bar"
+                    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMa
+                             chines/myVirtualMachine"
                 name:
                     description:
                         - Resource name.
                     type: str
-                    sample: bar
+                    sample: myVirtualMachine
                 location:
                     description:
                         - Resource region.
