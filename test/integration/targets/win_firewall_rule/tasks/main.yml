@@ -113,7 +113,6 @@
       - "firewall_rule_actual.stdout_lines[3] == '1'" # Direction = in
       - "firewall_rule_actual.stdout_lines[4] == '6'" # Protocol = tcp
 
-
 - name: Add firewall rule when remoteip is range
   win_firewall_rule:
     name: http
