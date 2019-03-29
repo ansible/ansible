@@ -22,7 +22,11 @@ options:
   network:
     description:
       - The network name or id.
-    required: true
+      - Required if I(for_virtual_network) and I(physical_network) are not set.
+  physical_network:
+    description:
+      - The physical network name or id.
+    type: str
   start_ip:
     description:
       - The beginning IPv4 address in the VLAN IP range.
@@ -84,6 +88,8 @@ options:
   for_virtual_network:
     description:
       - true if VLAN is of Virtual type, false if Direct.
+      - If set to C(true) but neither I(physical_network) or I(network) is set CloudStack will try to add the
+        VLAN range to the Physical Network with a Public traffic type.
     type: bool
     default: false
 extends_documentation_fragment: cloudstack
@@ -269,6 +275,8 @@ class AnsibleCloudStackVlanIpRange(AnsibleCloudStack):
             'networkid': self.get_network(key='id'),
             'forvirtualnetwork': self.module.params.get('for_virtual_network'),
         }
+        if self.module.params.get('physical_network'):
+            args['physicalnetworkid'] = self.get_physical_network(key='id')
 
         if not self.module.check_mode:
             res = self.query_api('createVlanIpRange', **args)
@@ -296,7 +304,8 @@ class AnsibleCloudStackVlanIpRange(AnsibleCloudStack):
 def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
-        network=dict(type='str', required=True),
+        network=dict(type='str'),
+        physical_network=dict(type='str'),
         zone=dict(type='str'),
         start_ip=dict(type='str', required=True),
         end_ip=dict(type='str'),
