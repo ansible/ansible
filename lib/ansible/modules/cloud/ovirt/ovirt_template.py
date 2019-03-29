@@ -491,22 +491,18 @@ def _get_vnic_profile_mappings(module):
 def find_subversion_template(module, templates_service):
     version = module.params.get('version')
     templates = templates_service.list()
-    resp = None
     for template in templates:
         if version.get('number') == template.version.version_number and module.params.get('name') == template.name:
-            resp = template
-            break
+            return  template
 
     # when user puts version number which does not exist
-    if resp is None:
-        raise ValueError(
-            "Template with name '%s' and version '%s' in cluster '%s' was not found'" % (
-                module.params['name'],
-                module.params['version']['number'],
-                module.params['cluster'],
-            )
+    raise ValueError(
+        "Template with name '%s' and version '%s' in cluster '%s' was not found'" % (
+            module.params['name'],
+            module.params['version']['number'],
+            module.params['cluster'],
         )
-    return resp
+    )
 
 
 def searchable_attributes(module):
