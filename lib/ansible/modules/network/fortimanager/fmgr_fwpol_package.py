@@ -162,7 +162,10 @@ options:
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> Added Append_scope_members list. Defaults to enable, but if you disable it, it will still allow the overwriting of members.
   append_scope_members:
     description:
       - if enabled, ansible will check for existing scope members and add those to the list before setting
@@ -171,13 +174,17 @@ options:
     choices: ['enable', 'disable']
     default: 'enable'
 
+<<<<<<< HEAD
 >>>>>>> Added Append_scope_members list. Defaults to enable, but if you disable it, it will still allow the overwriting of members.
 =======
 >>>>>>> Fixed issues:
+=======
+>>>>>>> Added Append_scope_members list. Defaults to enable, but if you disable it, it will still allow the overwriting of members.
   scope_groups:
     description:
       - List of groups to add to the scope of the fw pol package
     required: false
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
     version_added: 2.9
@@ -186,6 +193,8 @@ options:
 =======
     version_added: 2.9
 >>>>>>> Quick fix to version_added for a parameter
+=======
+>>>>>>> Added Append_scope_members list. Defaults to enable, but if you disable it, it will still allow the overwriting of members.
 
   scope_members:
     description:
@@ -206,6 +215,7 @@ options:
 <<<<<<< HEAD
       - Do not include leading or trailing forwardslashes.
     required: false
+<<<<<<< HEAD
 <<<<<<< HEAD
 
   target_folder:
@@ -252,6 +262,8 @@ options:
 =======
     version_added: 2.9
 >>>>>>> Version_added fields missing
+=======
+>>>>>>> Added Append_scope_members list. Defaults to enable, but if you disable it, it will still allow the overwriting of members.
 '''
 
 
@@ -367,6 +379,7 @@ def fmgr_fwpol_package(fmgr, paramgram):
         url = '/pm/pkg/adom/{adom}'.format(adom=paramgram["adom"])
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> Fixed issues:
         datagram = {
@@ -380,6 +393,8 @@ def fmgr_fwpol_package(fmgr, paramgram):
                 "ngfw-mode": paramgram["ngfw-mode"],
 <<<<<<< HEAD
 =======
+=======
+>>>>>>> Added Append_scope_members list. Defaults to enable, but if you disable it, it will still allow the overwriting of members.
 
         # IF PARENT FOLDER IS NOT DEFINED
         if paramgram["parent_folder"] is None:
@@ -679,11 +694,15 @@ def fmgr_fwpol_package_install(fmgr, paramgram):
         "pkg": paramgram["name"],
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
         "scope": paramgram["assign_to_list"]
 >>>>>>> Added Append_scope_members list. Defaults to enable, but if you disable it, it will still allow the overwriting of members.
 =======
 >>>>>>> Fixed issues:
+=======
+        "scope": paramgram["assign_to_list"]
+>>>>>>> Added Append_scope_members list. Defaults to enable, but if you disable it, it will still allow the overwriting of members.
     }
     if paramgram["parent_folder"]:
         new_path = str(paramgram["parent_folder"]) + "/" + str(paramgram["name"])
@@ -840,6 +859,7 @@ def main():
         scope_groups=dict(required=False, type="str"),
         scope_members=dict(required=False, type="str"),
         scope_members_vdom=dict(required=False, type="str", default="root"),
+        append_scope_members=dict(required=False, type="str", default="enable", choices=['enable', 'disable']),
         parent_folder=dict(required=False, type="str"),
         target_folder=dict(required=False, type="str"),
         target_name=dict(required=False, type="str"),
@@ -861,7 +881,9 @@ def main():
         "scope_groups": module.params["scope_groups"],
         "scope_members": module.params["scope_members"],
         "scope_members_vdom": module.params["scope_members_vdom"],
+        "append_scope_members": module.params["append_scope_members"],
         "parent_folder": module.params["parent_folder"],
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -882,6 +904,9 @@ def main():
         "existing_members_list": list(),
         "package_exists": None,
 >>>>>>> Fixed issues:
+=======
+        "assign_to_list": list()
+>>>>>>> Added Append_scope_members list. Defaults to enable, but if you disable it, it will still allow the overwriting of members.
     }
     module.paramgram = paramgram
     fmgr = None
@@ -897,9 +922,12 @@ def main():
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     # QUERY FORTIMANAGER FOR EXISTING PACKAGE DETAILS AND UPDATE PARAMGRAM
     paramgram = fmgr_fwpol_package_get_details(fmgr, paramgram)
 =======
+=======
+>>>>>>> Added Append_scope_members list. Defaults to enable, but if you disable it, it will still allow the overwriting of members.
     # CHECK FOR SCOPE MEMBERS AND CREATE THAT MEMBERS LIST
     members_list = list()
     if paramgram["scope_members"] is not None and paramgram["mode"] in ['add', 'set']:
@@ -925,6 +953,7 @@ def main():
                 "name": member
             }
             members_list.append(scope_dict)
+<<<<<<< HEAD
 =======
     # QUERY FORTIMANAGER FOR EXISTING PACKAGE DETAILS AND UPDATE PARAMGRAM
     paramgram = fmgr_fwpol_package_get_details(fmgr, paramgram)
@@ -939,6 +968,33 @@ def main():
         raise FMGBaseException(err)
 
 <<<<<<< HEAD
+    paramgram["assign_to_list"] = members_list
+>>>>>>> Added Append_scope_members list. Defaults to enable, but if you disable it, it will still allow the overwriting of members.
+=======
+
+    # CHECK FOR EXISTING SCOPE MEMBERS IF THAT OPTION IS ENABLED
+    try:
+        if paramgram["append_scope_members"] == "enable":
+            pol_datagram = {"type": paramgram["object_type"], "name": paramgram["name"]}
+            pol_package_url = '/pm/pkg/adom/{adom}/{pkg_name}'.format(adom=paramgram["adom"],
+                                                                      pkg_name=paramgram["name"])
+            pol_package = fmgr.process_request(pol_package_url, pol_datagram, FMGRMethods.GET)
+
+            if len(pol_package) > 2:
+                raise FMGBaseException("Policy Package Name returned multiple results.")
+            if len(pol_package) == 1:
+                raise FMGBaseException("Policy Package couldn't be found, to append existing scope members")
+            if len(pol_package) == 2:
+                try:
+                    existing_members = pol_package[1]["scope member"]
+                    for member in existing_members:
+                        if member not in members_list:
+                            members_list.append(member)
+                except Exception as err:
+                    pass
+    except Exception as err:
+        raise FMGBaseException(err)
+
     paramgram["assign_to_list"] = members_list
 >>>>>>> Added Append_scope_members list. Defaults to enable, but if you disable it, it will still allow the overwriting of members.
 
