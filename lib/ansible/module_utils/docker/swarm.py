@@ -248,7 +248,4 @@ class AnsibleDockerSwarmClient(AnsibleDockerClient):
     def get_unlock_key(self):
         if self.docker_py_version < LooseVersion('2.7.0'):
             return None
-        try:
-            return super(AnsibleDockerSwarmClient, self).get_unlock_key()
-        except APIError:
-            return None
+        return super(AnsibleDockerSwarmClient, self).get_unlock_key()
