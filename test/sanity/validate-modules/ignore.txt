@@ -96,10 +96,7 @@ lib/ansible/modules/cloud/centurylink/clc_firewall_policy.py E335
 lib/ansible/modules/cloud/centurylink/clc_server_snapshot.py E335
 lib/ansible/modules/cloud/cloudstack/cs_cluster.py E326
 lib/ansible/modules/cloud/cloudstack/cs_host.py E326
-lib/ansible/modules/cloud/cloudstack/cs_storage_pool.py E322
 lib/ansible/modules/cloud/cloudstack/cs_storage_pool.py E326
-lib/ansible/modules/cloud/cloudstack/cs_volume.py E322
-lib/ansible/modules/cloud/cloudstack/cs_volume.py E324
 lib/ansible/modules/cloud/cloudstack/cs_vpn_connection.py E322
 lib/ansible/modules/cloud/cloudstack/cs_zone.py E322
 lib/ansible/modules/cloud/cloudstack/cs_zone.py E326

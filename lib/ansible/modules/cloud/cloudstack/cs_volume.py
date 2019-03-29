@@ -31,6 +31,11 @@ options:
     description:
       - Account the volume is related to.
     type: str
+  device_id:
+    description:
+      - ID of the device on a VM the volume is attached to.
+      - Only considered if I(state) is C(attached).
+    type: int
   custom_id:
     description:
       - Custom id to the resource.
@@ -45,7 +50,6 @@ options:
     description:
       - Whether to display the volume to the end user or not.
       - Allowed to Root Admins only.
-    default: yes
     type: bool
   domain:
     description:
