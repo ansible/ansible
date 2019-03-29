@@ -4,26 +4,9 @@
 # Copyright (c) 2016 Red Hat, Inc.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from ansible.module_utils.ovirt import (
-    BaseModule,
-    check_sdk,
-    convert_to_bytes,
-    create_connection,
-    equal,
-    get_dict_of_struct,
-    get_link_name,
-    get_id_by_name,
-    ovirt_full_argument_spec,
-    search_by_attributes,
-    search_by_name,
-)
-from ansible.module_utils.basic import AnsibleModule
-import traceback
-import time
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -50,6 +33,7 @@ options:
             - "Defines the ability to update or delete the role."
             - "Roles with mutable set to `false` are predefined roles."
         type: bool
+        default: true
     administrative:
         description:
             - "Defines the role as administrative-only or not."
@@ -58,9 +42,8 @@ options:
         description:
             - "List of permits which role will have"
             - "Permit 'login' is default and all roles will have it."
-        suboption:
-            name:
-                description: Name of permit
+            - Dictionary can contain following value.
+            - C(name) - Name of permit.
 extends_documentation_fragment: ovirt
 '''
 
@@ -86,6 +69,21 @@ ovirt_role:
     type: list
 '''
 
+from ansible.module_utils.ovirt import (
+    BaseModule,
+    check_sdk,
+    convert_to_bytes,
+    create_connection,
+    equal,
+    get_dict_of_struct,
+    get_link_name,
+    get_id_by_name,
+    ovirt_full_argument_spec,
+    search_by_attributes,
+    search_by_name,
+)
+from ansible.module_utils.basic import AnsibleModule
+import traceback
 
 try:
     import ovirtsdk4.types as otypes
@@ -103,15 +101,14 @@ class RoleModule(BaseModule):
             administrative=self.param('administrative') if self.param(
                 'administrative') else None,
             permits=[
-                otypes.Permit(id=all_permits.get(new_permit.get('name')))
-                    for new_permit in self.param('permits')
-                ]
+                otypes.Permit(id=all_permits.get(new_permit.get('name'))) for new_permit in self.param('permits')
+            ]
         )
 
     def get_all_permits(self):
         return {
-            permit.name:permit.id for permit in self._connection.system_service(
-        ).cluster_levels_service().level_service('4.3').get().permits}
+            permit.name: permit.id for permit in self._connection.system_service().cluster_levels_service().level_service('4.3').get().permits
+        }
 
     def update_check(self, entity):
         def check_permits():
@@ -120,10 +117,10 @@ class RoleModule(BaseModule):
                 current = [er.name for er in permits_service.list()]
                 passed = [pr.get('name') for pr in self.param('permits')]
                 if not sorted(current) == sorted(passed):
-                    #remove all
+                    # remove all
                     for permit in permits_service.list():
                         permits_service.permit_service(permit.id).remove()
-                    #add passed permits
+                    # add passed permits
                     all_permits = self.get_all_permits()
                     for new_permit in passed:
                         permits_service.add(otypes.Permit(id=all_permits.get(new_permit)))
@@ -136,6 +133,7 @@ class RoleModule(BaseModule):
             equal(self.param('administrative'), entity.administrative)
         )
 
+
 def main():
     argument_spec = ovirt_full_argument_spec(
         state=dict(
@@ -144,7 +142,6 @@ def main():
         ),
         id=dict(default=None),
         name=dict(default=None),
-        user=dict(default=None),
         mutable=dict(default=True, type='bool'),
         administrative=dict(default=False, type='bool'),
         permits=dict(type='list', default=[]),
@@ -156,6 +153,7 @@ def main():
     )
 
     check_sdk(module)
+    check_params(module)
 
     try:
         auth = module.params.pop('auth')
@@ -168,7 +166,7 @@ def main():
         )
         state = module.params['state']
         if state == 'present':
-            module.params.get('permits').append({'name':'login'})
+            module.params.get('permits').append({'name': 'login'})
             ret = roles_module.create()
         elif state == 'absent':
             ret = roles_module.remove()
