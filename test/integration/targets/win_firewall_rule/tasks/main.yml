@@ -95,6 +95,25 @@
     that:
     - change_firewall_rule.changed == true
 
+- name: Disable firewall rule
+  win_firewall_rule:
+    name: http
+    enabled: no
+
+- name: Get the actual values from the changed firewall rule
+  win_shell: '(New-Object -ComObject HNetCfg.FwPolicy2).Rules | Where-Object { $_.Name -eq "http" } | Foreach-Object { $_.LocalPorts; $_.Enabled; $_.Action; $_.Direction; $_.Protocol }'
+  register: firewall_rule_actual
+
+- name: Ensure that disabling the rule did not change the previous values
+  assert:
+    that:
+      - "firewall_rule_actual.stdout_lines[0] == '80'" # LocalPorts = 80
+      - "firewall_rule_actual.stdout_lines[1] == 'False'" # Enabled = False
+      - "firewall_rule_actual.stdout_lines[2] == '0'" # Action = block
+      - "firewall_rule_actual.stdout_lines[3] == '1'" # Direction = in
+      - "firewall_rule_actual.stdout_lines[4] == '6'" # Protocol = tcp
+
+
 - name: Add firewall rule when remoteip is range
   win_firewall_rule:
     name: http
@@ -393,21 +412,3 @@
   assert:
     that:
     - add_firewall_rule_with_list_profiles.changed == true
-
-- name: Enable a built-in rule
-  win_firewall_rule:
-    name: 'World Wide Web Services (HTTP Traffic-In)'
-    action: allow
-    direction: in
-    enabled: yes
-    state: present
-  register: change_built_in_rule
-
-- name: Disable a built-in rule if previous changed (reset)
-  win_firewall_rule:
-    name: 'World Wide Web Services (HTTP Traffic-In)'
-    action: allow
-    direction: in
-    enabled: no
-    state: present
-  when: change_built_in_rule.changed

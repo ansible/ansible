@@ -114,8 +114,8 @@ $diff_support = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool"
 
 $name = Get-AnsibleParam -obj $params -name "name" -failifempty $true
 $description = Get-AnsibleParam -obj $params -name "description" -type "str"
-$direction = Get-AnsibleParam -obj $params -name "direction" -type "str" -failifempty $true -validateset "in","out"
-$action = Get-AnsibleParam -obj $params -name "action" -type "str" -failifempty $true -validateset "allow","block"
+$direction = Get-AnsibleParam -obj $params -name "direction" -type "str" -validateset "in","out"
+$action = Get-AnsibleParam -obj $params -name "action" -type "str" -validateset "allow","block"
 $program = Get-AnsibleParam -obj $params -name "program" -type "str"
 $service = Get-AnsibleParam -obj $params -name "service" -type "str"
 $enabled = Get-AnsibleParam -obj $params -name "enabled" -type "bool" -aliases "enable"
@@ -156,8 +156,8 @@ try {
     # the default for enabled in module description is "true", but the actual COM object defaults to "false" when created
     if ($null -ne $enabled) { $new_rule.Enabled = $enabled } else { $new_rule.Enabled = $true }
     if ($null -ne $description) { $new_rule.Description = $description }
-    if ($null -ne $program) { $new_rule.ApplicationName = $program }
-    if ($null -ne $service) { $new_rule.ServiceName = $service }
+    if ($null -ne $program -and $program -ne "any") { $new_rule.ApplicationName = $program }
+    if ($null -ne $service -and $program -ne "any") { $new_rule.ServiceName = $service }
     if ($null -ne $protocol -and $protocol -ne "any") { $new_rule.Protocol = Parse-ProtocolType -protocol $protocol }
     if ($null -ne $localport -and $localport -ne "any") { $new_rule.LocalPorts = $localport }
     if ($null -ne $remoteport -and $remoteport -ne "any") { $new_rule.RemotePorts = $remoteport }
@@ -216,7 +216,7 @@ try {
         } else {
             for($i = 0; $i -lt $fwPropertiesToCompare.Length; $i++) {
                 $prop = $fwPropertiesToCompare[$i]
-                if($null -ne $userPassedArguments[$i]) { # the value was specified
+                if($null -ne $userPassedArguments[$i]) { # only change values the user passes in task definition
                     if ($existingRule.$prop -ne $new_rule.$prop) {
                         if ($diff_support) {
                             $result.diff.prepared += "-[$($prop)='$($existingRule.$prop)']`n"

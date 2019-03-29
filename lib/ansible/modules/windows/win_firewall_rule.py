@@ -19,9 +19,8 @@ description:
 options:
   enabled:
     description:
-      - Whether this firewall rule is enabled or disabled.
+      - Whether this firewall rule is enabled or disabled. Defaults to C(true) when creating a new rule.
     type: bool
-    default: yes
     aliases: [ enable ]
   state:
     description:
@@ -31,20 +30,18 @@ options:
     default: present
   name:
     description:
-      - The rules name.
+      - The rule's display name.
     type: str
     required: yes
   direction:
     description:
-      - Whether this rule is for inbound or outbound traffic.
+      - Whether this rule is for inbound or outbound traffic. Defaults to C(in) when creating a new rule.
     type: str
-    required: yes
     choices: [ in, out ]
   action:
     description:
-      - What to do with the items this rule is for.
+      - What to do with the items this rule is for. Defaults to C(allow) when creating a new rule.
     type: str
-    required: yes
     choices: [ allow, block ]
   description:
     description:
@@ -52,40 +49,36 @@ options:
     type: str
   localip:
     description:
-      - The local ip address this rule applies to.
+      - The local ip address this rule applies to. Set to C(any) to apply to all local ip addresses. Defaults to C(any) when creating a new rule.
     type: str
-    default: any
   remoteip:
     description:
-      - The remote ip address/range this rule applies to.
+      - The remote ip address/range this rule applies to. Set to C(any) to apply to all remote ip addresses. Defaults to C(any) when creating a new rule.
     type: str
-    default: any
   localport:
     description:
-      - The local port this rule applies to.
+      - The local port this rule applies to. Set to C(any) to apply to all local ports. Defaults to C(any) when creating a new rule.
     type: str
   remoteport:
     description:
-      - The remote port this rule applies to.
+      - The remote port this rule applies to. Set to C(any) to apply to all remote ports. Defaults to C(any) when creating a new rule.
     type: str
   program:
     description:
-      - The program this rule applies to.
+      - The program this rule applies to. Set to C(any) to apply to all programs. Defaults to C(any) when creating a new rule.
     type: str
   service:
     description:
-      - The service this rule applies to.
+      - The service this rule applies to. Set to C(any) to apply to all services. Defaults to C(any) when creating a new rule.
     type: str
   protocol:
     description:
-      - The protocol this rule applies to.
+      - The protocol this rule applies to. Set to C(any) to apply to all services. Defaults to C(any) when creating a new rule.
     type: str
-    default: any
   profiles:
     description:
-      - The profile this rule applies to.
+      - The profile this rule applies to. Defaults to C(domain,private,public) when creating a new rule.
     type: list
-    default: domain,private,public
     aliases: [ profile ]
   force:
     description:
