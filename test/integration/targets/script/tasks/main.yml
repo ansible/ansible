@@ -226,7 +226,7 @@
 - name: Run script with shebang omitted
   script: no_shebang.py
   args:
-    executable: python
+    executable: "{{ ansible_python_interpreter }}"
   register: _shebang_omitted_test
   tags:
     - noshebang
