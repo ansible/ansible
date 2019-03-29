@@ -1838,16 +1838,24 @@ class DockerService(DockerBaseClass):
         if self.secrets is not None:
             secrets = []
             for secret_config in self.secrets:
-                secrets.append(
-                    types.SecretReference(
-                        secret_id=secret_config['secret_id'],
-                        secret_name=secret_config['secret_name'],
-                        filename=secret_config.get('filename'),
-                        uid=secret_config.get('uid'),
-                        gid=secret_config.get('gid'),
-                        mode=secret_config.get('mode')
-                    )
-                )
+                secret_args = {
+                    'secret_id': secret_config['secret_id'],
+                    'secret_name': secret_config['secret_name']
+                }
+                filename = secret_config.get('filename')
+                if filename:
+                    secret_args['filename'] = filename
+                uid = secret_config.get('uid')
+                if uid:
+                    secret_args['uid'] = uid
+                gid = secret_config.get('gid')
+                if gid:
+                    secret_args['gid'] = gid
+                mode = secret_config.get('mode')
+                if mode:
+                    secret_args['mode'] = mode
+
+                secrets.append(types.SecretReference(**secret_args))
 
         dns_config_args = {}
         if self.dns is not None:
