@@ -667,7 +667,7 @@ class BaseManager(object):
         result.append(
             dict(
                 msg='The support for this TMOS version is deprecated.',
-                version='2.8'
+                version='2.12'
             )
         )
 
