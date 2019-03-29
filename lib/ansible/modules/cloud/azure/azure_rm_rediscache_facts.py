@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_rediscache_info
+module: azure_rm_rediscache_facts
 
 version_added: "2.8"
 
@@ -49,18 +49,18 @@ author:
 
 EXAMPLES = '''
     - name: Get Azure Cache for Redis by name
-      azure_rm_rediscache_info:
+      azure_rm_rediscache_facts:
         resource_group: myResourceGroup
         name: myRedis
 
     - name: Get Azure Cache for Redis with access keys by name
-      azure_rm_rediscache_info:
+      azure_rm_rediscache_facts:
         resource_group: myResourceGroup
         name: myRedis
         return_access_keys: true
 
     - name: Get Azure Cache for Redis in specific resource group
-      azure_rm_rediscache_info:
+      azure_rm_rediscache_facts:
         resource_group: myResourceGroup
 '''
 
