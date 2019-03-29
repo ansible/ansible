@@ -12,7 +12,7 @@ DOCUMENTATION = '''
 ---
 module: ovirt_role
 short_description: Module to manage roles in oVirt/RHV
-version_added: "2.9"
+version_added: "2.8"
 author: "Martin Necas (@mnecas)"
 description:
     - "Module to manage roles in oVirt/RHV."
@@ -42,8 +42,8 @@ options:
         description:
             - "List of permits which role will have"
             - "Permit 'login' is default and all roles will have it."
-            - Dictionary can contain following value.
-            - C(name) - Name of permit.
+            - "Dictionary can contain following value."
+            - "C(name) - Name of permit."
 extends_documentation_fragment: ovirt
 '''
 
@@ -57,8 +57,8 @@ EXAMPLES = '''
     name: role
     administrative: true
     permits:
-        - name: manipulate_permissions
-        - name: create_instance
+        - manipulate_permissions
+        - create_instance
 '''
 
 RETURN = '''
@@ -101,7 +101,7 @@ class RoleModule(BaseModule):
             administrative=self.param('administrative') if self.param(
                 'administrative') else None,
             permits=[
-                otypes.Permit(id=all_permits.get(new_permit.get('name'))) for new_permit in self.param('permits')
+                otypes.Permit(id=all_permits.get(new_permit)) for new_permit in self.param('permits')
             ]
         )
 
@@ -115,7 +115,7 @@ class RoleModule(BaseModule):
             if self.param('permits'):
                 permits_service = self._service.service(entity.id).permits_service()
                 current = [er.name for er in permits_service.list()]
-                passed = [pr.get('name') for pr in self.param('permits')]
+                passed = [pr for pr in self.param('permits')]
                 if not sorted(current) == sorted(passed):
                     # remove all
                     for permit in permits_service.list():
@@ -148,12 +148,10 @@ def main():
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
-        supports_check_mode=True,
         required_one_of=[['id', 'name']],
     )
 
     check_sdk(module)
-    check_params(module)
 
     try:
         auth = module.params.pop('auth')
@@ -166,7 +164,7 @@ def main():
         )
         state = module.params['state']
         if state == 'present':
-            module.params.get('permits').append({'name': 'login'})
+            module.params.get('permits').append('login')
             ret = roles_module.create()
         elif state == 'absent':
             ret = roles_module.remove()
