@@ -454,7 +454,7 @@ options:
             - This option is used, when user needs to setup more network interfaces via cloud init.
             - If one network interface is enough, user should use C(cloud_init) I(nic_*) parameters. C(cloud_init) I(nic_*) parameters
               are merged with C(cloud_init_nics) parameters.
-         suboptions:
+        suboptions:
             nic_boot_protocol:
                 description:
                     - Set boot protocol of the network interface of Virtual Machine. Can be one of C(none), C(dhcp) or C(static).
@@ -539,51 +539,79 @@ options:
         description:
             - Dictionary of values to be used to connect to VMware and import
               a virtual machine to oVirt.
-            - Dictionary can contain following values.
-            - C(username) - The username to authenticate against the VMware.
-            - C(password) - The password to authenticate against the VMware.
-            - C(url) - The URL to be passed to the I(virt-v2v) tool for conversion.
-              For example I(vpx://wmware_user@vcenter-host/DataCenter/Cluster/esxi-host?no_verify=1)
-            - C(drivers_iso) - The name of the ISO containing drivers that can
-              be used during the I(virt-v2v) conversion process.
-            - C(sparse) - Specifies the disk allocation policy of the resulting
-              virtual machine. I(true) for sparse, I(false) for preallocated.
-              Default value is I(true).
-            - C(storage_domain) - Specifies the target storage domain for
-              converted disks. This is required parameter.
+        suboptions:
+            username:
+                description:
+                    - The username to authenticate against the VMware.
+            password:
+                description:
+                    - The password to authenticate against the VMware.
+            url:
+                description:
+                    - The URL to be passed to the I(virt-v2v) tool for conversion.
+                    - For example I(vpx://wmware_user@vcenter-host/DataCenter/Cluster/esxi-host?no_verify=1)
+            drivers_iso:
+                description:
+                    - The name of the ISO containing drivers that can be used during the I(virt-v2v) conversion process.
+            sparse:
+                description:
+                    - Specifies the disk allocation policy of the resulting virtual machine. I(true) for sparse, I(false) for preallocated.
+                type: bool
+                default: true
+            storage_domain:
+                description:
+                    - Specifies the target storage domain for converted disks. This is required parameter.
         version_added: "2.3"
     xen:
         description:
             - Dictionary of values to be used to connect to XEN and import
               a virtual machine to oVirt.
-            - Dictionary can contain following values.
-            - C(url) - The URL to be passed to the I(virt-v2v) tool for conversion.
-              For example I(xen+ssh://root@zen.server). This is required parameter.
-            - C(drivers_iso) - The name of the ISO containing drivers that can
-              be used during the I(virt-v2v) conversion process.
-            - C(sparse) - Specifies the disk allocation policy of the resulting
-              virtual machine. I(true) for sparse, I(false) for preallocated.
-              Default value is I(true).
-            - C(storage_domain) - Specifies the target storage domain for
-              converted disks. This is required parameter.
+        suboptions:
+            url:
+                description:
+                    - The URL to be passed to the I(virt-v2v) tool for conversion.
+                    - For example I(xen+ssh://root@zen.server). This is required parameter.
+            drivers_iso:
+                description:
+                    - The name of the ISO containing drivers that can be used during the I(virt-v2v) conversion process.
+            sparse:
+                description:
+                    - Specifies the disk allocation policy of the resulting virtual machine. I(true) for sparse, I(false) for preallocated.
+                type: bool
+                default: true
+            storage_domain:
+                description:
+                    - Specifies the target storage domain for converted disks. This is required parameter.
         version_added: "2.3"
     kvm:
         description:
             - Dictionary of values to be used to connect to kvm and import
               a virtual machine to oVirt.
-            - Dictionary can contain following values.
-            - C(name) - The name of the KVM virtual machine.
-            - C(username) - The username to authenticate against the KVM.
-            - C(password) - The password to authenticate against the KVM.
-            - C(url) - The URL to be passed to the I(virt-v2v) tool for conversion.
-              For example I(qemu:///system). This is required parameter.
-            - C(drivers_iso) - The name of the ISO containing drivers that can
-              be used during the I(virt-v2v) conversion process.
-            - C(sparse) - Specifies the disk allocation policy of the resulting
-              virtual machine. I(true) for sparse, I(false) for preallocated.
-              Default value is I(true).
-            - C(storage_domain) - Specifies the target storage domain for
-              converted disks. This is required parameter.
+        suboptions:
+            name:
+                description:
+                    - The name of the KVM virtual machine.
+            username:
+                description:
+                    - The username to authenticate against the KVM.
+            password:
+                description:
+                    - The password to authenticate against the KVM.
+            url:
+                description:
+                    - The URL to be passed to the I(virt-v2v) tool for conversion.
+                    - For example I(qemu:///system). This is required parameter.
+            drivers_iso:
+                description:
+                    - The name of the ISO containing drivers that can be used during the I(virt-v2v) conversion process.
+            sparse:
+                description:
+                    - Specifies the disk allocation policy of the resulting virtual machine. I(true) for sparse, I(false) for preallocated.
+                type: bool
+                default: true
+            storage_domain:
+                description:
+                    - Specifies the target storage domain for converted disks. This is required parameter.
         version_added: "2.3"
     cpu_mode:
         description:
@@ -645,10 +673,22 @@ options:
         description:
             - "List of vNUMA Nodes to set for this VM and pin them to assigned host's physical NUMA node."
             - "Each vNUMA node is described by following dictionary:"
-            - "C(index) -  The index of this NUMA node (mandatory)."
-            - "C(memory) - Memory size of the NUMA node in MiB (mandatory)."
-            - "C(cores) -  list of VM CPU cores indexes to be included in this NUMA node (mandatory)."
-            - "C(numa_node_pins) - list of physical NUMA node indexes to pin this virtual NUMA node to."
+        suboptions:
+            index:
+                description:
+                    - The index of this NUMA node.
+                required: true
+            memory:
+                description:
+                    - Memory size of the NUMA node in MiB.
+                required: true
+            cores:
+                description:
+                    - list of VM CPU cores indexes to be included in this NUMA node.
+                required: true
+            numa_node_pins:
+                description:
+                    - list of physical NUMA node indexes to pin this virtual NUMA node to.
         version_added: "2.6"
     rng_device:
         description:
@@ -660,23 +700,39 @@ options:
         description:
             - "Properties sent to VDSM to configure various hooks."
             - "Custom properties is a list of dictionary which can have following values:"
-            - "C(name) - Name of the custom property. For example: I(hugepages), I(vhost), I(sap_agent), etc."
-            - "C(regexp) - Regular expression to set for custom property."
-            - "C(value) - Value to set for custom property."
+        suboptions:
+            name:
+                description:
+                    - Name of the custom property. For example: I(hugepages), I(vhost), I(sap_agent), etc.
+            regexp:
+                description:
+                    - Regular expression to set for custom property.
+            value:
+                description:
+                    - Value to set for custom property.
         version_added: "2.5"
     watchdog:
         description:
             - "Assign watchdog device for the virtual machine."
-            - "Watchdogs is a dictionary which can have following values:"
-            - "C(model) - Model of the watchdog device. For example: I(i6300esb), I(diag288) or I(null)."
-            - "C(action) - Watchdog action to be performed when watchdog is triggered. For example: I(none), I(reset), I(poweroff), I(pause) or I(dump)."
+        suboptions:
+            model:
+                description:
+                    - Model of the watchdog device. For example: I(i6300esb), I(diag288) or I(null).
+            action:
+                description:
+                    - Watchdog action to be performed when watchdog is triggered. For example: I(none), I(reset), I(poweroff), I(pause) or I(dump).
         version_added: "2.5"
     graphical_console:
         description:
             - "Assign graphical console to the virtual machine."
-            - "Graphical console is a dictionary which can have following values:"
-            - "C(headless_mode) - If I(true) disable the graphics console for this virtual machine."
-            - "C(protocol) - Graphical protocol, a list of I(spice), I(vnc), or both."
+        suboptions:
+            headless_mode:
+                description:
+                    - If I(true) disable the graphics console for this virtual machine.
+                type: bool
+            protocol:
+                description:
+                    - Graphical protocol, a list of I(spice), I(vnc), or both.
         version_added: "2.5"
     exclusive:
         description:
@@ -691,9 +747,16 @@ options:
     export_ova:
         description:
             - Dictionary of values to be used to export VM as OVA.
-            - C(host) - The name of the destination host where the OVA has to be exported.
-            - C(directory) - The name of the directory where the OVA has to be exported.
-            - C(filename) - The name of the exported OVA file.
+        suboptions:
+            host:
+                description:
+                    - The name of the destination host where the OVA has to be exported.
+            directory:
+                description:
+                    - The name of the directory where the OVA has to be exported.
+            filename:
+                description:
+                    - The name of the exported OVA file.
         version_added: "2.8"
     force_migrate:
         description:
