@@ -491,9 +491,22 @@ def _get_vnic_profile_mappings(module):
 def find_subversion_template(module, templates_service):
     version = module.params.get('version')
     templates = templates_service.list()
+    resp = None
     for template in templates:
         if version.get('number') == template.version.version_number and module.params.get('name') == template.name:
-            return template
+            resp = template
+            break
+
+    # when user puts version number which does not exist
+    if resp is None:
+        raise ValueError(
+            "Template with name '%s' and version '%s' in cluster '%s' was not found'" % (
+                module.params['name'],
+                module.params['version']['number'],
+                module.params['cluster'],
+            )
+        )
+    return resp
 
 
 def searchable_attributes(module):
@@ -561,25 +574,16 @@ def main():
         entity = None
         if module.params['version'] is not None and module.params['version'].get('number') is not None:
             entity = find_subversion_template(module, templates_service)
-            # when user puts version number which does not exist
-            if entity is None:
-                raise ValueError(
-                    "Template with name '%s' and version '%s' in cluster '%s' was not found'" % (
-                        module.params['name'],
-                        module.params['version']['number'],
-                        module.params['cluster'],
-                    )
-                )
 
         state = module.params['state']
         if state == 'present':
-            # when user put version name, but not version number it will create template with version
             force_create = False
             if entity is None and module.params['version'] is not None:
                 force_create = True
 
             ret = templates_module.create(
                 entity=entity,
+                # When user want to create new template subversion, we must make sure template is force created as it already exists, but new version should be created.
                 force_create=force_create,
                 result_state=otypes.TemplateStatus.OK,
                 search_params=searchable_attributes(module),
