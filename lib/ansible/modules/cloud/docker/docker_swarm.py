@@ -457,7 +457,7 @@ class SwarmManager(DockerBaseClass):
 
     def has_swarm_lock_changed(self):
         return self.parameters.autolock_managers and (
-                self.created or self.differences.has_difference_for('autolock_managers')
+            self.created or self.differences.has_difference_for('autolock_managers')
         )
 
     def init_swarm(self):
