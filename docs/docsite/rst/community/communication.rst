@@ -47,27 +47,27 @@ General channels
 Working groups
 --------------
 
-Many of our community Working Groups meet on Freenode IRC channels. If you want to get involved in a working group, join the channel where it meets or comment on the agenda.
+Many of our community `Working Groups <https://github.com/ansible/community/wiki#working-groups>`_ meet on Freenode IRC channels. If you want to get involved in a working group, join the channel where it meets or comment on the agenda.
 
-- `Amazon (AWS) Working Group <https://github.com/ansible/community/tree/master/group-aws>`_ - ``#ansible-aws``
-- `Ansible Lockdown Working Group <https://ansiblelockdown.io>`_ `gh/ansible/ansible-lockdown <https://github.com/ansible/ansible-lockdown>`_ - ``#ansible-lockdown``- Security playbooks/roles
+- `Amazon (AWS) Working Group <https://github.com/ansible/community/wiki/AWS>`_ - ``#ansible-aws``
+- `Ansible Lockdown Working Group <https://github.com/ansible/community/wiki/Lockdown>`_ | `gh/ansible/ansible-lockdown <https://github.com/ansible/ansible-lockdown>`_ - ``#ansible-lockdown``- Security playbooks/roles
 - `AWX Working Group <https://github.com/ansible/awx>`_ - ``#ansible-awx`` - Upstream Ansible Tower
-- `Azure Working Group <https://github.com/ansible/community/tree/master/group-azure>`_ - ``#ansible-azure``
-- `Community Working Group <https://github.com/ansible/community/tree/master/group-community>`_ - ``#ansible-community`` - Including Meetups
-- `Container Working Group <https://github.com/ansible/community/tree/master/group-container>`_ - ``#ansible-container``
-- `Contributor Experience Working Group <https://github.com/ansible/community/tree/master/group-contributor-experience>`_ - ``#ansible-community``
-- `Docker Working Group <https://github.com/ansible/community/issues/408>`_ - ``#ansible-devel``
-- `Documentation Working Group <https://github.com/ansible/community/tree/master/group-docs>`_- ``#ansible-docs``
-- `Galaxy Working Group <https://github.com/ansible/community/tree/master/group-galaxy>`_ - ``#ansible-galaxy``
-- `JBoss Working Group <https://github.com/ansible/community/tree/master/group-jboss>`_ - ``#ansible-jboss``
+- `Azure Working Group <https://github.com/ansible/community/wiki/Azure>`_ - ``#ansible-azure``
+- `Community Working Group <https://github.com/ansible/community/wiki/Community>`_ - ``#ansible-community`` - Including Meetups
+- `Container Working Group <https://github.com/ansible/community/wiki/Container>`_ - ``#ansible-container``
+- `Contributor Experience Working Group <https://github.com/ansible/community/wiki/Contributor-Experience>`_ - ``#ansible-community``
+- `Docker Working Group <https://github.com/ansible/community/wiki/Docker>`_ - ``#ansible-devel``
+- `Documentation Working Group <https://github.com/ansible/community/wiki/Docs>`_- ``#ansible-docs``
+- `Galaxy Working Group <https://github.com/ansible/community/wiki/Galaxy>`_ - ``#ansible-galaxy``
+- `JBoss Working Group <https://github.com/ansible/community/wiki/JBoss>`_ - ``#ansible-jboss``
 - `Lightbulb Training <https://github.com/ansible/lightbulb>`_ - ``#ansible-lightbulb`` - Ansible training
-- `Linode Working Group <https://github.com/ansible/community/tree/master/group-linode>`_ - ``#ansible-linode``
-- `Molecule <https://molecule.readthedocs.io>`_ - ``#ansible-molecule`` - testing platform for Ansible playbooks and roles
-- `Network Working Group <https://github.com/ansible/community/tree/master/group-network>`_ - ``#ansible-network``
+- `Linode Working Group <https://github.com/ansible/community/wiki/Linode>`_ - ``#ansible-linode``
+- `Molecule Working Group <https://github.com/ansible/community/wiki/Molecule>`_ | `molecule.io <https://molecule.readthedocs.io>`_ - ``#ansible-molecule`` - testing platform for Ansible playbooks and roles
+- `Network Working Group <https://github.com/ansible/community/wiki/Network>`_ - ``#ansible-network``
 - `Remote Management Working Group <https://github.com/ansible/community/issues/409>`_ - ``#ansible-devel``
-- `Testing Working Group <https://github.com/ansible/community/tree/master/group-testing>`_  - ``#ansible-devel``
-- `VMware Working Group <https://github.com/ansible/community/tree/master/group-vmware>`_ - ``#ansible-vmware``
-- `Windows Working Group <https://github.com/ansible/community/tree/master/group-windows>`_ - ``#ansible-windows``
+- `Testing Working Group <https://github.com/ansible/community/wiki/Testing>`_  - ``#ansible-devel``
+- `VMware Working Group <https://github.com/ansible/community/wiki/VMware>`_ - ``#ansible-vmware``
+- `Windows Working Group <https://github.com/ansible/community/wiki/Windows>`_ - ``#ansible-windows``
 
 Want to `form a new Working Group <https://github.com/ansible/community/blob/master/WORKING-GROUPS.md>`_?
 
