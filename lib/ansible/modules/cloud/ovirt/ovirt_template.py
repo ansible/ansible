@@ -583,7 +583,8 @@ def main():
 
             ret = templates_module.create(
                 entity=entity,
-                # When user want to create new template subversion, we must make sure template is force created as it already exists, but new version should be created.
+                # When user want to create new template subversion, we must make sure
+                # template is force created as it already exists, but new version should be created.
                 force_create=force_create,
                 result_state=otypes.TemplateStatus.OK,
                 search_params=searchable_attributes(module),
