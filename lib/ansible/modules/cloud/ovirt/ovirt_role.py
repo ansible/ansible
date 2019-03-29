@@ -42,9 +42,25 @@ options:
             - "ID of the role to manage."
     state:
         description:
-            - "Should the template be present/absent.
+            - "Should the role be present/absent."
         choices: ['present', 'absent']
         default: present
+    mutable:
+        description:
+            - "Defines the ability to update or delete the role."
+            - "Roles with mutable set to `false` are predefined roles."
+        type: bool
+    administrative:
+        description:
+            - "Defines the role as administrative-only or not."
+        type: bool
+    permits:
+        description:
+            - "List of permits which role will have"
+            - "Permit 'login' is default and all roles will have it."
+        suboption:
+            name:
+                description: Name of permit
 extends_documentation_fragment: ovirt
 '''
 
@@ -52,20 +68,22 @@ EXAMPLES = '''
 # Examples don't contain auth parameter for simplicity,
 # look at ovirt_auth module to see how to reuse authentication:
 
+# Create administrative role with two permits
 - ovirt_role:
     mutable: true
-    name: "test2"
+    name: role
     administrative: true
     permits:
-        - name: "manipulate_permissions"
-        - name: "create_instance"
-
-
+        - name: manipulate_permissions
+        - name: create_instance
 '''
 
 RETURN = '''
-
-
+ovirt_role:
+    description: "List of dictionaries describing the Roles. Role attributes are mapped to dictionary keys,
+                  all Roles attributes can be found at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/role."
+    returned: On success.
+    type: list
 '''
 
 
