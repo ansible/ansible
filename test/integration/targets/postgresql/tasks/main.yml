@@ -836,6 +836,9 @@
 # Test postgresql_schema module:
 - include: postgresql_schema.yml
 
+# Test postgresql_membership module
+- include: postgresql_membership.yml
+
 # dump/restore tests per format
 # ============================================================
 - include: state_dump_restore.yml test_fixture=user file=dbdata.sql
