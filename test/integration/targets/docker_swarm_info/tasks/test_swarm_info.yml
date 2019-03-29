@@ -139,7 +139,7 @@
   - name: assert reading swarm facts and swarm unlock key
     assert:
       that:
-        - 'output.swarm_unlock_key'
+        - 'output.swarm_unlock_key is string'
         - 'output.swarm_unlock_key == autolock_managers_update_output.swarm_facts.UnlockKey'
         - 'output.can_talk_to_docker == true'
         - 'output.docker_swarm_active == true'
