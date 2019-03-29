@@ -740,6 +740,11 @@ options:
             - "If I(true), the VM will migrate even if it is defined as non-migratable."
         version_added: "2.8"
         type: bool
+    migrate:
+        description:
+            - "If I(true), the VM will migrate to any available host."
+        version_added: "2.8"
+        type: bool
     next_run:
         description:
             - "If I(true), the update will not be applied to the VM immediately and will be only applied when virtual machine is restarted."
@@ -939,6 +944,12 @@ EXAMPLES = '''
     state: running
     name: myvm
     host: host1
+
+- name: Migrate VM to any available host
+  ovirt_vm:
+    state: running
+    name: myvm
+    migrate: true
 
 - name: Change VMs CD
   ovirt_vm:
@@ -1537,9 +1548,9 @@ class VmsModule(BaseModule):
     def _migrate_vm(self, entity):
         vm_host = self.param('host')
         vm_service = self._service.vm_service(entity.id)
-        if vm_host is not None:
-            # In case VM is preparing to be UP, wait to be up, to migrate it:
-            if entity.status == otypes.VmStatus.UP:
+        # In case VM is preparing to be UP, wait to be up, to migrate it:
+        if entity.status == otypes.VmStatus.UP:
+            if vm_host is not None:
                 hosts_service = self._connection.system_service().hosts_service()
                 current_vm_host = hosts_service.host_service(entity.host.id).get().name
                 if vm_host != current_vm_host:
@@ -1547,7 +1558,11 @@ class VmsModule(BaseModule):
                         vm_service.migrate(host=otypes.Host(name=vm_host), force=self.param('force_migrate'))
                         self._wait_for_UP(vm_service)
                     self.changed = True
-
+            elif self.param('migrate'):
+                if not self._module.check_mode:
+                    vm_service.migrate(force=self.param('force_migrate'))
+                    self._wait_for_UP(vm_service)
+                self.changed = True
         return entity
 
     def _wait_for_UP(self, vm_service):
@@ -2214,6 +2229,7 @@ def main():
         export_domain=dict(default=None),
         export_ova=dict(type='dict'),
         force_migrate=dict(type='bool'),
+        migrate=dict(type='bool', default=None),
         next_run=dict(type='bool'),
     )
     module = AnsibleModule(
