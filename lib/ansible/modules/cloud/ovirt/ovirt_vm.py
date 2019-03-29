@@ -53,33 +53,55 @@ options:
         description:
             - "Mapper which maps an external virtual NIC profile to one that exists in the engine when C(state) is registered.
                vnic_profile is described by the following dictionary:"
-            - "C(source_network_name): The network name of the source network."
-            - "C(source_profile_name): The profile name related to the source network."
-            - "C(target_profile_id): The id of the target profile id to be mapped to in the engine."
+        suboptions:
+            source_network_name:
+                description:
+                    - The network name of the source network.
+            source_profile_name:
+                description:
+                    - The profile name related to the source network.
+            target_profile_id:
+                description:
+                    - The id of the target profile id to be mapped to in the engine.
         version_added: "2.5"
     cluster_mappings:
         description:
             - "Mapper which maps cluster name between VM's OVF and the destination cluster this VM should be registered to,
                relevant when C(state) is registered.
                Cluster mapping is described by the following dictionary:"
-            - "C(source_name): The name of the source cluster."
-            - "C(dest_name): The name of the destination cluster."
+        suboptions:
+            source_name:
+                description:
+                    - The name of the source cluster.
+            dest_name:
+                description:
+                    - The name of the destination cluster.
         version_added: "2.5"
     role_mappings:
         description:
             - "Mapper which maps role name between VM's OVF and the destination role this VM should be registered to,
                relevant when C(state) is registered.
                Role mapping is described by the following dictionary:"
-            - "C(source_name): The name of the source role."
-            - "C(dest_name): The name of the destination role."
+        suboptions:
+            source_name:
+                description:
+                    - The name of the source role.
+            dest_name:
+                description:
+                    - The name of the destination role.
         version_added: "2.5"
     domain_mappings:
         description:
             - "Mapper which maps aaa domain name between VM's OVF and the destination aaa domain this VM should be registered to,
                relevant when C(state) is registered.
                The aaa domain mapping is described by the following dictionary:"
-            - "C(source_name): The name of the source aaa domain."
-            - "C(dest_name): The name of the destination aaa domain."
+        suboptions:
+            source_name:
+                description:
+                    - The name of the source aaa domain.
+            dest_name:
+                description:
+                    - The name of the destination aaa domain.
         version_added: "2.5"
     affinity_group_mappings:
         description:
@@ -294,68 +316,164 @@ options:
     nics:
         description:
             - List of NICs, which should be attached to Virtual Machine. NIC is described by following dictionary.
-            - C(name) - Name of the NIC.
-            - C(profile_name) - Profile name where NIC should be attached.
-            - C(interface) -  Type of the network interface. One of following I(virtio), I(e1000), I(rtl8139), default is I(virtio).
-            - C(mac_address) - Custom MAC address of the network interface, by default it's obtained from MAC pool.
-            - NOTE - This parameter is used only when C(state) is I(running) or I(present) and is able to only create NICs.
-              To manage NICs of the VM in more depth please use M(ovirt_nics) module instead.
+        suboptions:
+            name:
+                description:
+                    - Name of the NIC.
+            profile_name:
+                description:
+                    - Profile name where NIC should be attached.
+            interface:
+                description:
+                    - Type of the network interface.
+                choices: ['virtio', 'e1000', 'rtl8139']
+                default: 'virtio'
+            mac_address:
+                description:
+                    - Custom MAC address of the network interface, by default it's obtained from MAC pool.
+                    - "NOTE - This parameter is used only when C(state) is I(running) or I(present) and is able to only create NICs.
+                    To manage NICs of the VM in more depth please use M(ovirt_nics) module instead."
     disks:
         description:
             - List of disks, which should be attached to Virtual Machine. Disk is described by following dictionary.
-            - C(name) - Name of the disk. Either C(name) or C(id) is required.
-            - C(id) - ID of the disk. Either C(name) or C(id) is required.
-            - C(interface) - Interface of the disk, either I(virtio) or I(IDE), default is I(virtio).
-            - C(bootable) - I(True) if the disk should be bootable, default is non bootable.
-            - C(activate) - I(True) if the disk should be activated, default is activated.
-            - NOTE - This parameter is used only when C(state) is I(running) or I(present) and is able to only attach disks.
-              To manage disks of the VM in more depth please use M(ovirt_disks) module instead.
+        suboptions:
+            name:
+                description:
+                    - Name of the disk. Either C(name) or C(id) is required.
+            id:
+                description:
+                    - ID of the disk. Either C(name) or C(id) is required.
+            interface:
+                description:
+                    - Interface of the disk.
+                choices: ['virtio', 'IDE']
+                default: 'virtio'
+            bootable:
+                description:
+                    - I(True) if the disk should be bootable, default is non bootable.
+                type: bool
+            activate:
+                description:
+                    - I(True) if the disk should be activated, default is activated.
+                    - "NOTE - This parameter is used only when C(state) is I(running) or I(present) and is able to only attach disks.
+                    To manage disks of the VM in more depth please use M(ovirt_disks) module instead."
+                type: bool
     sysprep:
         description:
             - Dictionary with values for Windows Virtual Machine initialization using sysprep.
-            - C(host_name) - Hostname to be set to Virtual Machine when deployed.
-            - C(active_directory_ou) - Active Directory Organizational Unit, to be used for login of user.
-            - C(org_name) - Organization name to be set to Windows Virtual Machine.
-            - C(domain) - Domain to be set to Windows Virtual Machine.
-            - C(timezone) - Timezone to be set to Windows Virtual Machine.
-            - C(ui_language) - UI language of the Windows Virtual Machine.
-            - C(system_locale) - System localization of the Windows Virtual Machine.
-            - C(input_locale) - Input localization of the Windows Virtual Machine.
-            - C(windows_license_key) - License key to be set to Windows Virtual Machine.
-            - C(user_name) - Username to be used for set password to Windows Virtual Machine.
-            - C(root_password) - Password to be set for username to Windows Virtual Machine.
+        suboptions:
+            host_name:
+                description:
+                    - Hostname to be set to Virtual Machine when deployed.
+            active_directory_ou:
+                description:
+                    - Active Directory Organizational Unit, to be used for login of user.
+            org_name:
+                description:
+                    - Organization name to be set to Windows Virtual Machine.
+            domain:
+                description:
+                    - Domain to be set to Windows Virtual Machine.
+            timezone:
+                description:
+                    - Timezone to be set to Windows Virtual Machine.
+            ui_language:
+                description:
+                    - UI language of the Windows Virtual Machine.
+            system_locale:
+                description:
+                    - System localization of the Windows Virtual Machine.
+            input_locale:
+                description:
+                    - Input localization of the Windows Virtual Machine.
+            windows_license_key:
+                description:
+                    - License key to be set to Windows Virtual Machine.
+            user_name:
+                description:
+                    - Username to be used for set password to Windows Virtual Machine.
+            root_password:
+                description:
+                    - Password to be set for username to Windows Virtual Machine.
     cloud_init:
         description:
             - Dictionary with values for Unix-like Virtual Machine initialization using cloud init.
-            - C(host_name) - Hostname to be set to Virtual Machine when deployed.
-            - C(timezone) - Timezone to be set to Virtual Machine when deployed.
-            - C(user_name) - Username to be used to set password to Virtual Machine when deployed.
-            - C(root_password) - Password to be set for user specified by C(user_name) parameter.
-            - C(authorized_ssh_keys) - Use this SSH keys to login to Virtual Machine.
-            - C(regenerate_ssh_keys) - If I(True) SSH keys will be regenerated on Virtual Machine.
-            - C(custom_script) - Cloud-init script which will be executed on Virtual Machine when deployed.  This is appended to the end of the
-              cloud-init script generated by any other options.
-            - C(dns_servers) - DNS servers to be configured on Virtual Machine.
-            - C(dns_search) - DNS search domains to be configured on Virtual Machine.
-            - C(nic_boot_protocol) - Set boot protocol of the network interface of Virtual Machine. Can be one of C(none), C(dhcp) or C(static).
-            - C(nic_ip_address) - If boot protocol is static, set this IP address to network interface of Virtual Machine.
-            - C(nic_netmask) - If boot protocol is static, set this netmask to network interface of Virtual Machine.
-            - C(nic_gateway) - If boot protocol is static, set this gateway to network interface of Virtual Machine.
-            - C(nic_name) - Set name to network interface of Virtual Machine.
-            - C(nic_on_boot) - If I(True) network interface will be set to start on boot.
+        suboptions:
+            host_name:
+                description:
+                    - Hostname to be set to Virtual Machine when deployed.
+            timezone:
+                description:
+                    - Timezone to be set to Virtual Machine when deployed.
+            user_name:
+                description:
+                    - Username to be used to set password to Virtual Machine when deployed.
+            root_password:
+                description:
+                    - Password to be set for user specified by C(user_name) parameter.
+            authorized_ssh_keys:
+                description:
+                    - Use this SSH keys to login to Virtual Machine.
+            regenerate_ssh_keys:
+                description:
+                    - If I(True) SSH keys will be regenerated on Virtual Machine.
+                type: bool
+            custom_script:
+                description:
+                    - Cloud-init script which will be executed on Virtual Machine when deployed.
+                    - This is appended to the end of the cloud-init script generated by any other options.
+            dns_servers:
+                description:
+                    - DNS servers to be configured on Virtual Machine.
+            dns_search:
+                description:
+                    - DNS search domains to be configured on Virtual Machine.
+            nic_boot_protocol:
+                description:
+                    - Set boot protocol of the network interface of Virtual Machine.
+                choices: ['none', 'dhcp', 'static']
+            nic_ip_address:
+                description:
+                    - If boot protocol is static, set this IP address to network interface of Virtual Machine.
+            nic_netmask:
+                description:
+                    - If boot protocol is static, set this netmask to network interface of Virtual Machine.
+            nic_gateway:
+                description:
+                    - If boot protocol is static, set this gateway to network interface of Virtual Machine.
+            nic_name:
+                description:
+                    - Set name to network interface of Virtual Machine.
+            nic_on_boot:
+                description:
+                    - If I(True) network interface will be set to start on boot.
+                type: bool
     cloud_init_nics:
         description:
             - List of dictionaries representing network interfaces to be setup by cloud init.
             - This option is used, when user needs to setup more network interfaces via cloud init.
             - If one network interface is enough, user should use C(cloud_init) I(nic_*) parameters. C(cloud_init) I(nic_*) parameters
               are merged with C(cloud_init_nics) parameters.
-            - Dictionary can contain following values.
-            - C(nic_boot_protocol) - Set boot protocol of the network interface of Virtual Machine. Can be one of C(none), C(dhcp) or C(static).
-            - C(nic_ip_address) - If boot protocol is static, set this IP address to network interface of Virtual Machine.
-            - C(nic_netmask) - If boot protocol is static, set this netmask to network interface of Virtual Machine.
-            - C(nic_gateway) - If boot protocol is static, set this gateway to network interface of Virtual Machine.
-            - C(nic_name) - Set name to network interface of Virtual Machine.
-            - C(nic_on_boot) - If I(True) network interface will be set to start on boot.
+         suboptions:
+            nic_boot_protocol:
+                description:
+                    - Set boot protocol of the network interface of Virtual Machine. Can be one of C(none), C(dhcp) or C(static).
+            nic_ip_address:
+                description:
+                    - If boot protocol is static, set this IP address to network interface of Virtual Machine.
+            nic_netmask:
+                description:
+                    - If boot protocol is static, set this netmask to network interface of Virtual Machine.
+            nic_gateway:
+                description:
+                    - If boot protocol is static, set this gateway to network interface of Virtual Machine.
+            nic_name:
+                description:
+                    - Set name to network interface of Virtual Machine.
+            nic_on_boot:
+                description:
+                    - If I(True) network interface will be set to start on boot.
+                type: bool
         version_added: "2.3"
     cloud_init_persist:
         description:
