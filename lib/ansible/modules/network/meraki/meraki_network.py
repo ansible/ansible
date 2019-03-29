@@ -104,7 +104,6 @@ EXAMPLES = r'''
     timezone: America/Chicago
     tags: production, chicago
   delegate_to: localhost
-<<<<<<< HEAD
 - name: Create combined network named MyNet in the YourOrg organization
   meraki_network:
     auth_key: abc12345
@@ -116,7 +115,6 @@ EXAMPLES = r'''
       - appliance
     timezone: America/Chicago
     tags: production, chicago
-=======
 - name: Enable VLANs on a network
   meraki_network:
     auth_key: abc12345
@@ -124,7 +122,6 @@ EXAMPLES = r'''
     org_name: YourOrg
     net_name: MyNet
     enable_vlans: yes
->>>>>>> Redo branch to fix merge commit
   delegate_to: localhost
 '''
 
