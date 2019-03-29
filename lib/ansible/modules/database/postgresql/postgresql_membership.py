@@ -115,6 +115,12 @@ options:
     - If the file exists, the server's certificate will be
       verified to be signed by one of these authorities.
     type: str
+  ca_cert:
+    description:
+      - Specifies the name of a file containing SSL certificate authority (CA)
+        certificate(s). If the file exists, the server's certificate will be
+        verified to be signed by one of these authorities.
+    aliases: [ ssl_rootcert ]
 notes:
 - The default authentication assumes that you are either logging in as or
   sudo'ing to the postgres account on the host.
