@@ -16,11 +16,11 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = r'''
 ---
 module: postgresql_table
-short_description: Allow to create, drop, rename, or truncate a table and to change some table attributes
+short_description: Create, drop, or modify a PostgreSQL table
 description:
 - Allows to create, drop, rename, truncate a table, or change some table attributes
   U(https://www.postgresql.org/docs/current/sql-createtable.html).
-version_added: "2.8"
+version_added: '2.8'
 options:
   table:
     description:
@@ -99,7 +99,6 @@ options:
     type: str
     default: postgres
   session_role:
-    version_added: "2.8"
     description:
     - Switch to session_role after connecting.
       The specified session_role must be a role that the current login_user is a member of.
@@ -249,15 +248,13 @@ storage_params:
 '''
 
 
-import traceback
-
 try:
     import psycopg2
     HAS_PSYCOPG2 = True
 except ImportError:
     HAS_PSYCOPG2 = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.database import SQLParseError, pg_quote_identifier
 from ansible.module_utils.postgres import postgres_common_argument_spec
 from ansible.module_utils._text import to_native
@@ -559,7 +556,7 @@ def main():
               if k in params_map and v != "" and v is not None)
 
     if not HAS_PSYCOPG2:
-        module.fail_json(msg="the python psycopg2 module is required")
+        module.fail_json(msg=missing_required_lib("psycopg2"))
 
     # If a login_unix_socket is specified, incorporate it here.
     is_localhost = "host" not in kw or kw["host"] is None or kw["host"] == "localhost"
