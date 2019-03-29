@@ -673,22 +673,10 @@ options:
         description:
             - "List of vNUMA Nodes to set for this VM and pin them to assigned host's physical NUMA node."
             - "Each vNUMA node is described by following dictionary:"
-        suboptions:
-            index:
-                description:
-                    - The index of this NUMA node.
-                required: true
-            memory:
-                description:
-                    - Memory size of the NUMA node in MiB.
-                required: true
-            cores:
-                description:
-                    - list of VM CPU cores indexes to be included in this NUMA node.
-                required: true
-            numa_node_pins:
-                description:
-                    - list of physical NUMA node indexes to pin this virtual NUMA node to.
+            - "C(index) -  The index of this NUMA node (mandatory)."
+            - "C(memory) - Memory size of the NUMA node in MiB (mandatory)."
+            - "C(cores) -  list of VM CPU cores indexes to be included in this NUMA node (mandatory)."
+            - "C(numa_node_pins) - list of physical NUMA node indexes to pin this virtual NUMA node to."
         version_added: "2.6"
     rng_device:
         description:
@@ -700,27 +688,16 @@ options:
         description:
             - "Properties sent to VDSM to configure various hooks."
             - "Custom properties is a list of dictionary which can have following values:"
-        suboptions:
-            name:
-                description:
-                    - Name of the custom property. For example: I(hugepages), I(vhost), I(sap_agent), etc.
-            regexp:
-                description:
-                    - Regular expression to set for custom property.
-            value:
-                description:
-                    - Value to set for custom property.
+            - "C(name) - Name of the custom property. For example: I(hugepages), I(vhost), I(sap_agent), etc."
+            - "C(regexp) - Regular expression to set for custom property."
+            - "C(value) - Value to set for custom property."
         version_added: "2.5"
     watchdog:
         description:
             - "Assign watchdog device for the virtual machine."
-        suboptions:
-            model:
-                description:
-                    - Model of the watchdog device. For example: I(i6300esb), I(diag288) or I(null).
-            action:
-                description:
-                    - Watchdog action to be performed when watchdog is triggered. For example: I(none), I(reset), I(poweroff), I(pause) or I(dump).
+            - "Watchdogs is a dictionary which can have following values:"
+            - "C(model) - Model of the watchdog device. For example: I(i6300esb), I(diag288) or I(null)."
+            - "C(action) - Watchdog action to be performed when watchdog is triggered. For example: I(none), I(reset), I(poweroff), I(pause) or I(dump)."
         version_added: "2.5"
     graphical_console:
         description:
