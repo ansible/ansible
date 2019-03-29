@@ -38,14 +38,16 @@ description:
     before returning or timing out if the condition is not met.
 options:
   commands:
+    version_added: "2.6"
     description:
       - List of commands to send to the remote device.
         The resulting output from the command is returned.
-        If the I(wait_for) argument is provided, the module is not 
+        If the I(wait_for) argument is provided, the module is not
         returned until the condition is satisfied or the number of
         retires is expired.
     required: true
   wait_for:
+    version_added: "2.6"
     description:
       - List of conditions to evaluate against the output of the
         command. The task will wait for each condition to be true
@@ -53,6 +55,7 @@ options:
         within the configured number of retries, the task fails.
         See examples.
   match:
+    version_added: "2.6"
     description:
       - The I(match) argument is used in conjunction with the
         I(wait_for) argument to specify the match policy.  Valid
@@ -63,6 +66,7 @@ options:
     default: all
     choices: ['any', 'all']
   retries:
+    version_added: "2.6"
     description:
       - Specifies the number of retries a command should by tried
         before it is considered failed. The command is run on the
@@ -70,6 +74,7 @@ options:
         I(wait_for) conditions.
     default: 10
   interval:
+    version_added: "2.6"
     description:
       - Configures the interval in seconds to wait between retries
         of the command. If the command does not pass the specified
