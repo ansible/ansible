@@ -1993,39 +1993,6 @@ class PyVmomiHelper(PyVmomi):
                     self.module.fail_json(msg="hardware.scsi attribute should be 'paravirtual' or 'lsilogic'")
         return disk_controller_type
 
-    def find_folder(self, searchpath):
-        """ Walk inventory objects one position of the searchpath at a time """
-
-        # split the searchpath so we can iterate through it
-        paths = [x.replace('/', '') for x in searchpath.split('/')]
-        paths_total = len(paths) - 1
-        position = 0
-
-        # recursive walk while looking for next element in searchpath
-        root = self.content.rootFolder
-        while root and position <= paths_total:
-            change = False
-            if hasattr(root, 'childEntity'):
-                for child in root.childEntity:
-                    if child.name == paths[position]:
-                        root = child
-                        position += 1
-                        change = True
-                        break
-            elif isinstance(root, vim.Datacenter):
-                if hasattr(root, 'vmFolder'):
-                    if root.vmFolder.name == paths[position]:
-                        root = root.vmFolder
-                        position += 1
-                        change = True
-            else:
-                root = None
-
-            if not change:
-                root = None
-
-        return root
-
     def get_resource_pool(self, cluster=None, host=None, resource_pool=None):
         """ Get a resource pool, filter on cluster, esxi_hostname or resource_pool if given """
 

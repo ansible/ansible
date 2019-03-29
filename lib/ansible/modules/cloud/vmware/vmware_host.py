@@ -319,17 +319,6 @@ class VMwareHost(PyVmomi):
             state = 'absent'
         return state
 
-    def search_folder(self, folder_name):
-        """
-            Search folder in vCenter
-            Returns: folder object
-        """
-        search_index = self.content.searchIndex
-        folder_obj = search_index.FindByInventoryPath(folder_name)
-        if not (folder_obj and isinstance(folder_obj, vim.Folder)):
-            self.module.fail_json(msg="Folder '%s' not found" % folder_name)
-        return folder_obj
-
     def search_cluster(self, datacenter_name, cluster_name, esxi_hostname):
         """
             Search cluster in vCenter
@@ -363,8 +352,9 @@ class VMwareHost(PyVmomi):
             esxi_license = None
             resource_pool = None
             task = None
+            self.datacenter_obj = self.find_datacenter_by_name(self.datacenter_name)
             if self.folder_name:
-                self.folder = self.search_folder(self.folder_name)
+                self.folder = self.get_folder(self.datacenter_name, self.folder_name, folder_type='host')
                 try:
                     task = self.folder.AddStandaloneHost(
                         spec=host_connect_spec, compResSpec=resource_pool,

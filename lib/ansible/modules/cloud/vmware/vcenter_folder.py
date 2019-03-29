@@ -280,25 +280,6 @@ class VmwareFolderManager(PyVmomi):
                                               " exception %s " % to_native(gen_exec))
             self.module.exit_json(**results)
 
-    def get_folder(self, datacenter_name, folder_name, folder_type, parent_folder=None):
-        """
-        Get managed object of folder by name
-        Returns: Managed object of folder by name
-
-        """
-        folder_objs = get_all_objs(self.content, [vim.Folder], parent_folder)
-        for folder in folder_objs:
-            if parent_folder:
-                if folder.name == folder_name and \
-                   self.datacenter_folder_type[folder_type].childType == folder.childType:
-                    return folder
-            else:
-                if folder.name == folder_name and \
-                   self.datacenter_folder_type[folder_type].childType == folder.childType and \
-                   folder.parent.parent.name == datacenter_name:    # e.g. folder.parent.parent.name == /DC01/host/folder
-                    return folder
-
-        return None
 
 
 def main():
