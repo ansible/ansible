@@ -348,13 +348,10 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         # TODO: Add support for EncryptionSettings, DiskIOPSReadWrite, DiskMBpsReadWrite
         disk_params = {}
         creation_data = {}
-        disk_params['zones'] = []
         disk_params['location'] = self.location
         disk_params['tags'] = self.tags
-        if self.zones in ['1', '2', '3']:
-            disk_params['zones'].append(self.zones)
-        else:
-            disk_params['zones'] = self.zones
+        if self.zones and self.zones != "None":
+            disk_params['zones'] = [self.zones] 
         if self.storage_account_type:
             storage_account_type = self.compute_models.DiskSku(name=self.storage_account_type)
             disk_params['sku'] = storage_account_type
