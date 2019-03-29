@@ -97,7 +97,8 @@ azure_resourcegroups:
                     description:
                         - Resource id.
                     type: str
-                    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVirtualMachine"
+                    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMa
+                             chines/myVirtualMachine"
                 name:
                     description:
                         - Resource name.
