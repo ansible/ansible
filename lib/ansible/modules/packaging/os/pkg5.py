@@ -177,7 +177,13 @@ def get_fmris_to_install(module, all_fmri_patterns):
     # and any not matched patterns (err)
     # TODO: Unsure if using an unsafe shell would be wise if remaining_patterns contains unsanitized user input
     # TODO: Check what happen in case of a timeout (rc code, stderr) and stop appropriately
-    rc, out, err = module.run_command(args=" ".join(['pkg', 'list', '-H', '-a', '-v', '--'] + remaining_patterns + ['|', "grep", "[-i]\-\-\$"]), use_unsafe_shell=True)
+    rc, out, err = module.run_command(
+        args=" ".join(
+            ['pkg', 'list', '-H', '-a', '-v', '--']
+            + remaining_patterns
+            + ['|', "grep", "[-i]--$"]
+        ), use_unsafe_shell=True
+    )
     # Let any not found patterns always be installed to expose playbook errors
     if err:
         not_matched_fmri_patterns = extract_not_found_patterns(err)
@@ -217,7 +223,12 @@ def get_fmris_to_install(module, all_fmri_patterns):
                 parsed_package_version = version_match.group()
 
             if current_package_name != "" and current_package_name != parsed_package_name:
-                concrete_package_versions_to_install += get_concrete_version_to_install(current_package_name, installed_package_version, most_specific_requested_version)
+                concrete_package_versions_to_install += \
+                    get_concrete_version_to_install(
+                        current_package_name,
+                        installed_package_version,
+                        most_specific_requested_version
+                    )
 
             # No current package yet (first package) or changing the current package
             if current_package_name == "" or current_package_name != parsed_package_name:
@@ -231,7 +242,12 @@ def get_fmris_to_install(module, all_fmri_patterns):
 
             # At the end of the package list add the last one
             if package_parsed_count == package_count:
-                concrete_package_versions_to_install += get_concrete_version_to_install(current_package_name, installed_package_version, most_specific_requested_version)
+                concrete_package_versions_to_install += \
+                    get_concrete_version_to_install(
+                        current_package_name,
+                        installed_package_version,
+                        most_specific_requested_version
+                    )
 
         fmri_patterns_to_install += concrete_package_versions_to_install
     return fmri_patterns_to_install
@@ -248,6 +264,7 @@ def get_concrete_version_to_install(current_package_name, installed_package_vers
         else:
             package_to_install = [current_package_name]
     return package_to_install
+
 
 def extract_not_found_patterns(pkg_list_stderr):
     # FIXME: Look what stderr brings when a timeout is reached (or other errors)
@@ -282,7 +299,7 @@ def get_most_specific_version(module, requested_package, fmri_patterns):
             fail_conflicting_patterns(module, [most_specific_pattern, fmri_pattern])
         less_specific_version = min(requested_version, most_specific_version)
         more_specific_version = max(requested_version, most_specific_version)
-        if not less_specific_version in more_specific_version:
+        if less_specific_version not in more_specific_version:
             fail_conflicting_patterns(module, [most_specific_pattern, fmri_pattern])
         if more_specific_version != most_specific_version:
             most_specific_version = more_specific_version
