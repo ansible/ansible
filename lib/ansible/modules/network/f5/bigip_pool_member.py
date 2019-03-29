@@ -154,6 +154,8 @@ options:
       - Specifies, if you activate more than one health monitor, the number of health
         monitors that must receive successful responses in order for the link to be
         considered available.
+      - Specifying an empty string will remove the monitors and revert to inheriting from pool (default).
+      - Specifying C(none) value will remove any health monitoring from the member completely.
     suboptions:
       type:
         description:
@@ -601,8 +603,10 @@ class ModuleParameters(Parameters):
     def monitors(self):
         if self._values['monitors'] is None:
             return None
-        if len(self._values['monitors']) == 1 and self._values['monitors'][0] in ['', 'none']:
+        if len(self._values['monitors']) == 1 and self._values['monitors'][0] == '':
             return 'default'
+        if len(self._values['monitors']) == 1 and self._values['monitors'][0] == 'none':
+            return '/Common/none'
         monitors = [fq_name(self.partition, x) for x in self.monitors_list]
         if self.availability_requirement_type == 'at_least':
             if self.at_least > len(self.monitors_list):
@@ -968,6 +972,9 @@ class Difference(object):
             return None
         if self.want.monitors == 'default' and len(self.have.monitors) > 0:
             return 'default'
+        # this is necessary as in v12 there is a bug where returned value has a space at the end
+        if self.want.monitors == '/Common/none' and self.have.monitors in ['/Common/none', '/Common/none ']:
+            return None
         if self.have.monitors is None:
             return self.want.monitors
         if self.have.monitors != self.want.monitors:
@@ -1147,7 +1154,7 @@ class ModuleManager(object):
         result = dict()
         state = params['state']
 
-        if state in ['present', 'present', 'enabled', 'disabled', 'forced_offline']:
+        if state in ['present', 'enabled', 'disabled', 'forced_offline']:
             changed = self.present()
         elif state == "absent":
             changed = self.absent()
