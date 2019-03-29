@@ -29,7 +29,7 @@ description:
 version_added: "2.8"
 
 author:
-    - Piotr Wojciechowski (@wojciechowskipiotr)
+    - Piotr Wojciechowski (@WojciechowskiPiotr)
 
 options:
   nodes:
