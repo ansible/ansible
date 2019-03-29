@@ -24,8 +24,8 @@ short_description: Manage Azure virtual machine scale sets.
 description:
     - Create and update a virtual machine scale set.
 
-notes: 
-    - This module was called C(azure_rm_virtualmachine_scaleset) before Ansible 2.8. The usage did not change. 
+notes:
+    - This module was called C(azure_rm_virtualmachine_scaleset) before Ansible 2.8. The usage did not change.
 
 options:
     resource_group:
@@ -484,7 +484,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
 
-        if self.module._name == 'azure_rm_virtualmachine_scaleset': 
+        if self.module._name == 'azure_rm_virtualmachine_scaleset':
             self.module.deprecate("The 'azure_rm_virtualmachine_scaleset' module has been renamed to 'azure_rm_virtualmachinescaleset'", version='2.12')
 
         # make sure options are lower case

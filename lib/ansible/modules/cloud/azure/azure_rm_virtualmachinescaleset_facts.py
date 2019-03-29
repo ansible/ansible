@@ -22,8 +22,8 @@ short_description: Get Virtual Machine Scale Set facts
 description:
     - Get facts for a virtual machine scale set
 
-notes: 
-    - This module was called C(azure_rm_virtualmachine_scaleset_facts) before Ansible 2.8. The usage did not change. 
+notes:
+    - This module was called C(azure_rm_virtualmachine_scaleset_facts) before Ansible 2.8. The usage did not change.
 
 options:
     name:
@@ -292,7 +292,7 @@ class AzureRMVirtualMachineScaleSetFacts(AzureRMModuleBase):
         for key in self.module_args:
             setattr(self, key, kwargs[key])
 
-        if self.module._name == 'azure_rm_virtualmachine_scaleset_facts': 
+        if self.module._name == 'azure_rm_virtualmachine_scaleset_facts':
             self.module.deprecate("The 'azure_rm_virtualmachine_scaleset_facts' module has been renamed to 'azure_rm_virtualmachinescaleset_facts'", version='2.12')
 
         if self.name and not self.resource_group:
