@@ -846,7 +846,7 @@ class DifferenceTracker(object):
             after[item['name']] = item['parameter']
         return before, after
 
-    def exists(self, name):
+    def has_difference_for(self, name):
         '''
         Returns a boolean if a difference exists for name
         '''

@@ -452,9 +452,9 @@ class SwarmManager(DockerBaseClass):
         return self.client.get_unlock_key() or default
 
     def has_swarm_lock_changed(self):
-        return self.parameters.autolock_managers and (self.created or self.differences.exists(
-            'autolock_managers'
-        ))
+        return self.parameters.autolock_managers and (
+                self.created or self.differences.has_difference_for('autolock_managers')
+        )
 
     def init_swarm(self):
         if not self.force and self.client.check_if_swarm_manager():
