@@ -211,6 +211,9 @@ class AzureRMVMExtension(AzureRMModuleBase):
         for key in list(self.module_arg_spec.keys()):
             setattr(self, key, kwargs[key])
 
+        if self.module._name == 'azure_rm_virtualmachine_extension':
+            self.module.deprecate("The 'azure_rm_virtualmachine_extension' module has been renamed to 'azure_rm_virtualmachineextension'", version='2.12')
+
         resource_group = None
         response = None
         to_be_updated = False
