@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_aks_version
+module: azure_rm_aksversion_facts
 
 version_added: "2.8"
 
@@ -41,10 +41,10 @@ author:
 
 EXAMPLES = '''
     - name: Get available versions for AKS in location eastus
-      azure_rm_aks_version:
+      azure_rm_aksversion_facts:
         location: eastus
     - name: Get  available versions an AKS can be upgrade to
-      azure_rm_aks_version:
+      azure_rm_aksversion_facts:
         location: eastis
         version: 1.11.6
 '''
