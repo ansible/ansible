@@ -49,31 +49,31 @@ def test_build_ssl_validation_error(mocker):
 def test_maybe_add_ssl_handler(mocker):
     mocker.patch.object(urls, 'HAS_SSL', new=False)
     with pytest.raises(urls.NoSSLError):
-        urls.maybe_add_ssl_handler('https://ansible.com/', True)
+        urls.maybe_add_ssl_handler('https://ansible.com/', True, None, None)
 
     mocker.patch.object(urls, 'HAS_SSL', new=True)
     url = 'https://user:passwd@ansible.com/'
-    handler = urls.maybe_add_ssl_handler(url, True)
+    handler = urls.maybe_add_ssl_handler(url, True, None, None)
     assert handler.hostname == 'ansible.com'
     assert handler.port == 443
 
     url = 'https://ansible.com:4433/'
-    handler = urls.maybe_add_ssl_handler(url, True)
+    handler = urls.maybe_add_ssl_handler(url, True, None, None)
     assert handler.hostname == 'ansible.com'
     assert handler.port == 4433
 
     url = 'https://user:passwd@ansible.com:4433/'
-    handler = urls.maybe_add_ssl_handler(url, True)
+    handler = urls.maybe_add_ssl_handler(url, True, None, None)
     assert handler.hostname == 'ansible.com'
     assert handler.port == 4433
 
     url = 'https://ansible.com/'
-    handler = urls.maybe_add_ssl_handler(url, True)
+    handler = urls.maybe_add_ssl_handler(url, True, None, None)
     assert handler.hostname == 'ansible.com'
     assert handler.port == 443
 
     url = 'http://ansible.com/'
-    handler = urls.maybe_add_ssl_handler(url, True)
+    handler = urls.maybe_add_ssl_handler(url, True, None, None)
     assert handler is None
 
 
