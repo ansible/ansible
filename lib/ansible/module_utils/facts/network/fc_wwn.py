@@ -76,7 +76,7 @@ class FcWwnInitiatorFactCollector(BaseFactCollector):
                         # lscfg -vpl fcs3 | grep "Network Address"
                         #        Network Address.............10000090FA551509
                         for line in lscfg_out.splitlines():
-                            if line.find('Network Address') != -1:
+                            if 'Network Address' in line:
                                 data = line.split('.')
                                 fc_facts['fibre_channel_wwn'].append(data[-1].rstrip())
         return fc_facts
