@@ -1092,9 +1092,9 @@ class Nmcli(object):
 
         options = {
             'master': self.master,
-            'bridge-port.path-cost': self.path_cost,
-            'bridge-port.hairpin': self.bool_to_string(self.hairpin),
-            'bridge-port.priority': self.slavepriority,
+            #'bridge-port.path-cost': self.path_cost,
+            #'bridge-port.hairpin': self.bool_to_string(self.hairpin),
+            #'bridge-port.priority': self.slavepriority,
         }
 
         for key, value in options.items():
@@ -1108,9 +1108,9 @@ class Nmcli(object):
         cmd = [self.nmcli_bin, 'con', 'mod', self.conn_name]
         options = {
             'master': self.master,
-            'bridge-port.path-cost': self.path_cost,
-            'bridge-port.hairpin': self.bool_to_string(self.hairpin),
-            'bridge-port.priority': self.slavepriority,
+            #'bridge-port.path-cost': self.path_cost,
+            #'bridge-port.hairpin': self.bool_to_string(self.hairpin),
+            #'bridge-port.priority': self.slavepriority,
         }
 
         for key, value in options.items():
