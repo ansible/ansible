@@ -583,7 +583,7 @@ options:
         version_added: "2.8"
         type: bool
     migrate:
-            description:
+        description:
             - "If I(true), the VM will migrate to any available host."
         version_added: "2.8"
         type: bool
@@ -1401,7 +1401,9 @@ class VmsModule(BaseModule):
                         self._wait_for_UP(vm_service)
                     self.changed = True
             elif self.param('migrate'):
-                vm_service.migrate(force=self.param('force_migrate'))
+                if not self._module.check_mode:
+                    vm_service.migrate(force=self.param('force_migrate'))
+                    self._wait_for_UP(vm_service)
                 self.changed = True
         return entity
 
