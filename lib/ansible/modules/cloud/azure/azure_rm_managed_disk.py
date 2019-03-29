@@ -87,7 +87,7 @@ options:
             - Tags to assign to the managed disk.
     zones:
         description:
-            - Allowed values: 1, 2, 3.
+            - Allowed values: 1, 2, 3, None.
         choices:
             - 1
             - 2
