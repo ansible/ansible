@@ -33,8 +33,10 @@ from ansible.playbook.role.metadata import RoleMetadata
 from ansible.playbook.taggable import Taggable
 from ansible.plugins.loader import add_all_plugin_dirs
 from ansible.utils.collection_loader import AnsibleCollectionConfig
+from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars
 
+display = Display()
 
 __all__ = ['Role', 'hash_params']
 
@@ -288,7 +290,10 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
                 for found in found_files:
                     new_data = self._loader.load_from_file(found)
                     if new_data:
-                        data = combine_vars(data, new_data)
+                        if isinstance(new_data, Mapping):
+                            data = combine_vars(data, new_data)
+                        else:
+                            display.warning("Skipping '%s' vars file as it didn't produce a dictionary but a '%s'" % (found, type(new_data)))
             elif main is not None:
                 raise AnsibleParserError("Could not find specified file in role: %s/%s" % (subdir, main))
         return data
