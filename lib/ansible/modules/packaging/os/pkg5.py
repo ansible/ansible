@@ -201,12 +201,12 @@ def get_fmris_to_install(module, all_fmri_patterns):
 
         # FIXME: Where do I put these constants?
         REGEX_FMRI_NAME_PART = "pkg://.+(?=@)"
-        REGEX_FMRI_VERSION_PART = "(?<=@)[^\s]*"
+        REGEX_FMRI_VERSION_PART = "(?<=@)[^\\s]*"
         REGEX_FMRI = REGEX_FMRI_NAME_PART + "@" + REGEX_FMRI_VERSION_PART
         REGEX_FMRI_INSTALLED = "i--"
         REGEX_FMRI_NOT_INSTALLED = "---"
         REGEX_FMRI_STATE = "(" + REGEX_FMRI_INSTALLED + "|" + REGEX_FMRI_NOT_INSTALLED + ")"
-        REGEX_FMRI_STATE_LINE = "^" + REGEX_FMRI + "\s+" + REGEX_FMRI_STATE + "$"
+        REGEX_FMRI_STATE_LINE = "^" + REGEX_FMRI + "\\s+" + REGEX_FMRI_STATE + "$"
 
         for package_state in package_state_lines:
             package_parsed_count += 1
@@ -280,12 +280,12 @@ def get_most_specific_version(module, requested_package, fmri_patterns):
     most_specific_version = ""
     most_specific_pattern = ""
     for fmri_pattern in fmri_patterns:
-        package_name = re.sub("\*", "", fmri_pattern)
+        package_name = re.sub("\\*", "", fmri_pattern)
         if "@" in package_name:
             package_name = package_name.split("@")[0]
         if package_name not in requested_package:
             continue
-        matches = re.search("(?<=@)[^\s]*", fmri_pattern)
+        matches = re.search("(?<=@)[^\\s]*", fmri_pattern)
         requested_version = ""
         if matches:
             requested_version = matches.group()
