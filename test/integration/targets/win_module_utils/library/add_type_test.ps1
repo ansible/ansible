@@ -204,5 +204,28 @@ Add-CSharpType -References $ignored_warning
 $actual = [Namespace7.Class7]::GetString()
 Assert-Equals -actual $actual -expected "abc"
 
+$defined_symbol = @'
+using System;
+
+namespace Namespace8
+{
+    public class Class8
+    {
+        public static string GetString()
+        {
+#if SYMBOL1
+            string a = "symbol";
+#else
+            string a = "no symbol";
+#endif
+            return a;
+        }
+    }
+}
+'@
+Add-CSharpType -References $defined_symbol -CompileSymbols "SYMBOL1"
+$actual = [Namespace8.Class8]::GetString()
+Assert-Equals -actual $actual -expected "symbol"
+
 $result.res = "success"
 Exit-Json -obj $result
