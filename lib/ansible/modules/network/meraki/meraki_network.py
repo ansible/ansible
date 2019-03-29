@@ -233,10 +233,12 @@ def main():
     update_urls = {'network': '/networks/{net_id}'}
     delete_urls = {'network': '/networks/{net_id}'}
     enable_vlans_urls = {'network': '/networks/{net_id}/vlansEnabledState'}
+    get_vlan_status_urls = {'network': '/networks/{net_id}/vlansEnabledState'}
     meraki.url_catalog['create'] = create_urls
     meraki.url_catalog['update'] = update_urls
     meraki.url_catalog['delete'] = delete_urls
     meraki.url_catalog['enable_vlans'] = enable_vlans_urls
+    meraki.url_catalog['status_vlans'] = get_vlan_status_urls
 
     if not meraki.params['org_name'] and not meraki.params['org_id']:
         meraki.fail_json(msg='org_name or org_id parameters are required')
@@ -321,15 +323,20 @@ def main():
             else:  # Update existing network
                 net = meraki.get_net(meraki.params['org_name'], meraki.params['net_name'], data=nets)
                 if meraki.params['enable_vlans'] is not None:
+                    status_path = meraki.construct_path('status_vlans', net_id=meraki.get_net_id(net_name=meraki.params['net_name'], data=nets))
+                    status = meraki.request(status_path, method='GET')
                     payload = {'enabled': meraki.params['enable_vlans']}
-                    path = meraki.construct_path('enable_vlans',
-                                                 net_id=meraki.get_net_id(net_name=meraki.params['net_name'], data=nets))
-                    r = meraki.request(path,
-                                       method='PUT',
-                                       payload=json.dumps(payload))
-                    if meraki.status == 200:
-                        meraki.result['data'] = r
-                        meraki.result['changed'] = True
+                    if meraki.is_update_required(status, payload):
+                        path = meraki.construct_path('enable_vlans',
+                                                     net_id=meraki.get_net_id(net_name=meraki.params['net_name'], data=nets))
+                        r = meraki.request(path,
+                                           method='PUT',
+                                           payload=json.dumps(payload))
+                        if meraki.status == 200:
+                            meraki.result['data'] = r
+                            meraki.result['changed'] = True
+                    else:
+                        meraki.result['data'] = status
                 elif meraki.is_update_required(net, payload):
                     path = meraki.construct_path('update',
                                                  net_id=meraki.get_net_id(net_name=meraki.params['net_name'], data=nets)

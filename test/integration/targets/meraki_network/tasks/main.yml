@@ -73,6 +73,20 @@
   - assert:
       that:
         - enable_vlan.data.enabled == True
+
+  - name: Enable VLAN support on appliance network with idempotency
+    meraki_network:
+      auth_key: '{{ auth_key }}'
+      state: present
+      org_name: '{{ test_org_name }}'
+      net_name: IntTestNetworkAppliance
+      enable_vlans: yes
+    delegate_to: localhost
+    register: enable_vlan_idempotent
+
+  - assert:
+      that:
+        - enable_vlan_idempotent is not changed
   
   - name: Disable VLAN support on appliance network
     meraki_network:
@@ -90,6 +104,20 @@
   - assert:
       that:
         - disable_vlan.data.enabled == False
+
+  - name: Disable VLAN support on appliance network with idempotency
+    meraki_network:
+      auth_key: '{{ auth_key }}'
+      state: present
+      org_name: '{{ test_org_name }}'
+      net_name: IntTestNetworkAppliance
+      enable_vlans: no
+    delegate_to: localhost
+    register: disable_vlan_idempotent
+
+  - assert:
+      that:
+        - disable_vlan_idempotent is not changed
 
   - name: Create network with type wireless
     meraki_network:
