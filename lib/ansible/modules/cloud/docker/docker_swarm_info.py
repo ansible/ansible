@@ -124,13 +124,17 @@ EXAMPLES = '''
       name: mynode
   register: result
 
+- debug:
+    var: result.swarm_facts
+
 - name: Get the swarm unlock key
   docker_swarm_info:
     unlock_key: yes
   register: result
 
 - debug:
-    var: result.swarm_facts
+    var: result.swarm_unlock_key
+
 '''
 
 RETURN = '''
