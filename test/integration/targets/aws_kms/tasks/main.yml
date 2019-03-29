@@ -108,7 +108,7 @@
       no_log: True
 
     - name: get ARN of calling user
-      command: python -c 'import boto3,json; sts = boto3.client("sts"); print json.dumps(sts.get_caller_identity())'
+      command: "{{ ansible_python_interpreter }} -c 'import boto3, json; sts = boto3.client(\"sts\"); print json.dumps(sts.get_caller_identity())'"
       changed_when: False
       environment: "{{ aws_environment }}"
       register: sts_get_caller_results

@@ -22,13 +22,15 @@
     mode: 0755
 
 - name: get yum releasever
-  shell: python -c 'import yum; yb = yum.YumBase(); print(yb.conf.yumvar["releasever"])' | tail -n 1
+  command: "{{ ansible_python_interpreter }} -c 'import yum; yb = yum.YumBase(); print(yb.conf.yumvar[\"releasever\"])'"
   register: releasever
+  ignore_errors: yes
 
 - name: Populate directory
   copy:
-    content: "{{ releasever.stdout }}\n"
+    content: "{{ releasever.stdout_lines[-1] }}\n"
     dest: "/{{ yumroot.stdout }}/etc/yum/vars/releasever"
+  when: releasever is successful
 
 # This will drag in > 200 MB.
 - name: attempt installroot
