@@ -89,6 +89,8 @@ DOCUMENTATION = '''
                 /etc/ansible/openstack.yml to the regular locations documented
                 at https://docs.openstack.org/os-client-config/latest/user/configuration.html#config-files
             type: string
+            env:
+                - name: OS_CLIENT_CONFIG_FILE
         compose:
             description: Create vars from jinja2 expressions.
             type: dictionary
