@@ -203,6 +203,9 @@ def set_snmp(meraki, org_id):
     snmp = get_snmp(meraki, org_id)
     ignored_parameters = ['v3AuthPass', 'v3PrivPass', 'hostname', 'port', 'v2CommunityString', 'v3User']
     if meraki.is_update_required(snmp, full_compare, optional_ignore=ignored_parameters):
+        if meraki.module.check_mode is True:
+            meraki.result['data'] = snmp.update(payload)
+            meraki.exit_json(**meraki.result)
         r = meraki.request(path,
                            method='PUT',
                            payload=json.dumps(payload))
@@ -210,6 +213,9 @@ def set_snmp(meraki, org_id):
             meraki.result['changed'] = True
             return r
     else:
+        if meraki.module.check_mode is True:
+            meraki.result['data'] = snmp.update(payload)
+            meraki.exit_json(**meraki.result)
         return snmp
 
 
@@ -262,9 +268,6 @@ def main():
     # if the user is working with this module in only check mode we do not
     # want to make any changes to the environment, just return the current
     # state with no modifications
-    # FIXME: Work with Meraki so they can implement a check mode
-    if module.check_mode:
-        meraki.exit_json(**meraki.result)
 
     # execute checks for argument completeness
 
@@ -277,7 +280,6 @@ def main():
     org_id = meraki.params['org_id']
     if org_id is None:
         org_id = meraki.get_org_id(meraki.params['org_name'])
-
     if meraki.params['state'] == 'query':
         meraki.result['data'] = get_snmp(meraki, org_id)
     elif meraki.params['state'] == 'present':
