@@ -46,27 +46,32 @@ options:
             - On C(absent), the group will be removed if it exists.
         required: true
         default: 'present'
+        type: str
         choices:
             - present
             - absent
 
     name:
+        type: str
         description:
             - Name of the group.
             - This parameter is required only when creating or updating the group.
 
     realm:
+        type: str
         description:
             - They Keycloak realm under which this group resides.
         default: 'master'
 
     id:
+        type: str
         description:
             - The unique identifier for this group.
             - This parameter is not required for updating or deleting a group but
               providing it will reduce the number of API calls required.
 
     attributes:
+        type: dict
         description:
             - A dict of key/value pairs to set as custom attributes for the group.
             - Values may be single values (e.g. a string) or a list of strings.
@@ -84,8 +89,7 @@ author:
 
 EXAMPLES = '''
 - name: Create a Keycloak group
-  local_action:
-    module: keycloak_group
+  keycloak_group:
     name: my-new-kc-group
     realm: MyCustomRealm
     state: present
@@ -96,8 +100,7 @@ EXAMPLES = '''
     auth_password: PASSWORD
 
 - name: Delete a keycloak group
-  local_action:
-    module: keycloak_group
+  keycloak_group:
     id: '9d59aa76-2755-48c6-b1af-beb70a82c3cd'
     state: absent
     realm: MyCustomRealm
@@ -108,8 +111,7 @@ EXAMPLES = '''
     auth_password: PASSWORD
 
 - name: Delete a Keycloak group based on name
-  local_action:
-    module: keycloak_group
+  keycloak_group:
     name: my-group-for-deletion
     state: absent
     auth_client_id: admin-cli
@@ -119,8 +121,7 @@ EXAMPLES = '''
     auth_password: PASSWORD
 
 - name: Update the name of a Keycloak group
-  local_action:
-    module: keycloak_group
+  keycloak_group:
     id: '9d59aa76-2755-48c6-b1af-beb70a82c3cd'
     name: an-updated-kc-group-name
     state: present
@@ -131,8 +132,7 @@ EXAMPLES = '''
     auth_password: PASSWORD
 
 - name: Create a keycloak group with some custom attributes
-  local_action:
-    module: keycloak_group
+  keycloak_group:
     auth_client_id: admin-cli
     auth_keycloak_url: https://auth.example.com/auth
     auth_realm: master
@@ -151,24 +151,55 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-msg:
-  description: Message as to what action was taken
-  returned: always
-  type: str
-  sample: "Group my-new-sso-group has been created with ID '9d59aa76-2755-48c6-b1af-beb70a82c3cd'"
-
 group:
   description: Group representation of the group after module execution (sample is truncated).
   returned: always
-  type: dict
-  sample: {
-    "name": "my-new-group",
-    "attributes": {
-       "weather": [ "sunny" ],
-       "cnames": [ "foo.bar.com", "bar.bar.com", "baz.bar.com" ]
-    },
-    "id": "1aedffb3-7501-4863-8dfc-f42951649aa9"
-  }
+  type: complex
+  contains:
+    id:
+      description: GUID that identifies the group
+      type: str
+      returned: always
+      sample: 23f38145-3195-462c-97e7-97041ccea73e
+    name:
+      description: Name of the group
+      type: str
+      returned: always
+      sample: grp-test-123
+    attributes:
+      description: Attributes applied to this group
+      type: dict
+      returned: always
+      sample:
+        attr1: ["val1", "val2", "val3"]
+    path:
+      description: URI path to the group
+      type: str
+      returned: always
+      sample: /grp-test-123
+    realmRoles:
+      description: An array of the realm-level roles granted to this group
+      type: list
+      returned: always
+      sample: []
+    subGroups:
+      description: A list of groups that are children of this group. These groups will have the same parameters as
+                   documented here.
+      type: list
+      returned: always
+    clientRoles:
+      description: A list of client-level roles granted to this group
+      type: list
+      returned: always
+      sample: []
+    access:
+      description: A dict describing the accesses you have to this group based on the credentials used.
+      type: dict
+      returned: always
+      sample:
+        manage: true
+        manageMembership: true
+        view: true
 '''
 
 from ansible.module_utils.keycloak import KeycloakAPI, camel, keycloak_argument_spec
@@ -185,7 +216,6 @@ def main():
     meta_args = dict(
         state=dict(default='present', choices=['present', 'absent']),
         realm=dict(default='master'),
-
         id=dict(type='str'),
         name=dict(type='str'),
         attributes=dict(type='dict')
@@ -197,7 +227,7 @@ def main():
                            supports_check_mode=True,
                            required_one_of=([['id', 'name']]))
 
-    result = dict(changed=False, msg='', diff={}, group_id='')
+    result = dict(changed=False, msg='', diff={}, group='')
 
     # Obtain access token, initialize API
     kc = KeycloakAPI(module)
