@@ -98,6 +98,7 @@ EXAMPLES = '''
     auth_realm: master
     auth_username: USERNAME
     auth_password: PASSWORD
+  delegate_to: localhost
 
 - name: Delete a keycloak group
   keycloak_group:
@@ -109,6 +110,7 @@ EXAMPLES = '''
     auth_realm: master
     auth_username: USERNAME
     auth_password: PASSWORD
+  delegate_to: localhost
 
 - name: Delete a Keycloak group based on name
   keycloak_group:
@@ -119,6 +121,7 @@ EXAMPLES = '''
     auth_realm: master
     auth_username: USERNAME
     auth_password: PASSWORD
+  delegate_to: localhost
 
 - name: Update the name of a Keycloak group
   keycloak_group:
@@ -130,6 +133,7 @@ EXAMPLES = '''
     auth_realm: master
     auth_username: USERNAME
     auth_password: PASSWORD
+  delegate_to: localhost
 
 - name: Create a keycloak group with some custom attributes
   keycloak_group:
@@ -148,6 +152,7 @@ EXAMPLES = '''
             - individual
             - list
             - items
+  delegate_to: localhost
 '''
 
 RETURN = '''
