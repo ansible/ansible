@@ -21,6 +21,9 @@ description:
     - It uses the pyOpenSSL python library to interact with openssl. This module supports
       the subjectAltName, keyUsage, extendedKeyUsage, basicConstraints and OCSP Must Staple
       extensions.
+    - "Please note that the module regenerates existing CSR if it doesn't match the module's
+      options, or if it seems to be corrupt. If you are concerned that this could overwrite
+      your existing CSR, consider using the I(backup) option."
 requirements:
     - Either cryptography >= 1.3
     - Or pyOpenSSL >= 0.15
@@ -190,6 +193,13 @@ options:
         default: auto
         choices: [ auto, cryptography, pyopenssl ]
         version_added: '2.8'
+    backup:
+        description:
+            - Create a backup file including a timestamp so you can get the original
+              CSR back if you overwrote it with a new one by accident.
+        type: bool
+        default: no
+        version_added: "2.8"
 extends_documentation_fragment:
 - files
 notes:
@@ -311,6 +321,11 @@ ocsp_must_staple:
     returned: changed or success
     type: bool
     sample: false
+backup_file:
+    description: Name of backup file created.
+    returned: changed and if I(backup) is C(yes)
+    type: str
+    sample: /path/to/www.ansible.com.csr.2019-03-09@11:22~
 '''
 
 import abc
@@ -394,6 +409,9 @@ class CertificateSigningRequestBase(crypto_utils.OpenSSLObject):
         self.request = None
         self.privatekey = None
 
+        self.backup = module.params['backup']
+        self.backup_file = None
+
         self.subject = [
             ('C', module.params['country_name']),
             ('ST', module.params['state_or_province_name']),
@@ -422,6 +440,8 @@ class CertificateSigningRequestBase(crypto_utils.OpenSSLObject):
         '''Generate the certificate signing request.'''
         if not self.check(module, perms_required=False) or self.force:
             result = self._generate_csr()
+            if self.backup:
+                self.backup_file = module.backup_local(self.path)
             crypto_utils.write_file(module, result)
             self.changed = True
 
@@ -448,6 +468,11 @@ class CertificateSigningRequestBase(crypto_utils.OpenSSLObject):
 
         return self._check_csr()
 
+    def remove(self, module):
+        if self.backup:
+            self.backup_file = module.backup_local(self.path)
+        super(CertificateSigningRequestBase, self).remove(module)
+
     def dump(self):
         '''Serialize the object into a dictionary.'''
 
@@ -462,6 +487,8 @@ class CertificateSigningRequestBase(crypto_utils.OpenSSLObject):
             'ocspMustStaple': self.ocspMustStaple,
             'changed': self.changed
         }
+        if self.backup_file:
+            result['backup_file'] = self.backup_file
 
         return result
 
@@ -829,6 +856,7 @@ def main():
             basic_constraints_critical=dict(type='bool', default=False, aliases=['basicConstraints_critical']),
             ocsp_must_staple=dict(type='bool', default=False, aliases=['ocspMustStaple']),
             ocsp_must_staple_critical=dict(type='bool', default=False, aliases=['ocspMustStaple_critical']),
+            backup=dict(type='bool', default=False),
             select_crypto_backend=dict(type='str', default='auto', choices=['auto', 'cryptography', 'pyopenssl']),
         ),
         add_file_common_args=True,

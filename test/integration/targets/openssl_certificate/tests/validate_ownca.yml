@@ -106,3 +106,17 @@
   assert:
     that:
       - ownca_broken is changed
+
+- name: Check backup
+  assert:
+    that:
+      - ownca_backup_1 is changed
+      - ownca_backup_1.backup_file is undefined
+      - ownca_backup_2 is not changed
+      - ownca_backup_2.backup_file is undefined
+      - ownca_backup_3 is changed
+      - ownca_backup_3.backup_file is string
+      - ownca_backup_4 is changed
+      - ownca_backup_4.backup_file is string
+      - ownca_backup_5 is not changed
+      - ownca_backup_5.backup_file is undefined
