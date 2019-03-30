@@ -70,7 +70,7 @@ options:
     description:
       - Enable IPv6 networking.
     type: bool
-    version_added: 2.8
+    version_added: "2.8"
 
   ipam_driver:
     description:
@@ -84,6 +84,23 @@ options:
         options were introduced (see L(here,https://github.com/moby/moby/pull/17316)). This module parameter addresses
         the IPAM config not the newly introduced IPAM options.
     type: dict
+    suboptions:
+      subnet:
+        description:
+          - IP subset in CIDR notation.
+        type: str
+      iprange:
+        description:
+          - IP address range in CIDR notation.
+        type: str
+      gateway:
+        description:
+          - IP gateway address.
+        type: str
+      aux_addresses:
+        description:
+          - Auxiliary IP addresses used by Network driver, as a mapping from hostname to IP.
+        type: dict
 
   ipam_config:
     description:
@@ -108,7 +125,7 @@ options:
         description:
           - Auxiliary IP addresses used by Network driver, as a mapping from hostname to IP.
         type: dict
-    version_added: 2.8
+    version_added: "2.8"
 
   state:
     description:
@@ -131,13 +148,13 @@ options:
     description:
       - Restrict external access to the network.
     type: bool
-    version_added: 2.8
+    version_added: "2.8"
 
   labels:
     description:
       - Dictionary of labels.
     type: dict
-    version_added: 2.8
+    version_added: "2.8"
 
   scope:
     description:
@@ -147,13 +164,13 @@ options:
       - local
       - global
       - swarm
-    version_added: 2.8
+    version_added: "2.8"
 
   attachable:
     description:
       - If enabled, and the network is in the global scope, non-service containers on worker nodes will be able to connect to the network.
     type: bool
-    version_added: 2.8
+    version_added: "2.8"
 
 extends_documentation_fragment:
   - docker
