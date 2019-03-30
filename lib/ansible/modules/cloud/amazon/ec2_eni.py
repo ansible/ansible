@@ -343,6 +343,7 @@ def create_eni(connection, vpc_id, module):
         if secondary_private_ip_address_count is not None:
             try:
                 connection.assign_private_ip_addresses(network_interface_id=eni.id, secondary_private_ip_address_count=secondary_private_ip_address_count)
+                eni.update()
             except BotoServerError:
                 eni.delete()
                 raise
@@ -350,6 +351,7 @@ def create_eni(connection, vpc_id, module):
         if secondary_private_ip_addresses is not None:
             try:
                 connection.assign_private_ip_addresses(network_interface_id=eni.id, private_ip_addresses=secondary_private_ip_addresses)
+                eni.update()
             except BotoServerError:
                 eni.delete()
                 raise

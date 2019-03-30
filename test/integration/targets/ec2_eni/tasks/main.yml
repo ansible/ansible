@@ -1,0 +1,84 @@
+---
+- block:
+  - name: set up aws connection info
+    set_fact:
+      aws_connection_info: &aws_connection_info
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+        region: "{{ aws_region }}"
+    no_log: yes
+
+  # ============================================================
+  - name: create a VPC
+    ec2_vpc_net:
+      name: "{{ resource_prefix }}-vpc"
+      state: present
+      cidr_block: "10.232.232.128/26"
+      <<: *aws_connection_info
+      tags:
+        Name: "{{ resource_prefix }}-vpc"
+        Description: "Created by ansible-test"
+    register: vpc_result
+
+  # ============================================================
+  - name: create a subnet
+    ec2_vpc_subnet:
+      cidr: "10.232.232.128/28"
+      az: "{{ aws_region }}a"
+      vpc_id: "{{ vpc_result.vpc.id }}"
+      <<: *aws_connection_info
+      tags:
+        Name: "{{ resource_prefix }}-vpc"
+        Description: "Created by ansible-test"
+      state: present
+    register: vpc_subnet_result
+
+  # ============================================================
+  - name: create an ENI with 1 primary and 3 secondary IP addresses
+    ec2_eni:
+      region: "{{ aws_region }}"
+      secondary_private_ip_address_count: 3
+      subnet_id: "{{ vpc_subnet_result.subnet.id }}"
+      <<: *aws_connection_info
+      state: present
+    register: eni_result
+
+  - debug:
+      var: eni_result
+      verbosity: 2
+
+  - name: ensure we can retrieve all of the IP addresses
+    assert:
+      that:
+        - eni_result.interface.private_ip_addresses | length == 4
+        - eni_result.interface.private_ip_addresses[0].primary_address
+        - not eni_result.interface.private_ip_addresses[1].primary_address
+        - not eni_result.interface.private_ip_addresses[2].primary_address
+        - not eni_result.interface.private_ip_addresses[3].primary_address
+
+  always:
+    # ============================================================
+    - name: tidy up ENI
+      ec2_eni:
+        eni_id: "{{ eni_result.interface.id }}"
+        <<: *aws_connection_info
+        state: absent
+      ignore_errors: true
+
+    - name: tidy up subnet
+      ec2_vpc_subnet:
+        cidr: "10.232.232.128/28"
+        az: "{{ aws_region }}a"
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        <<: *aws_connection_info
+        state: absent
+      ignore_errors: true
+
+    - name: tidy up VPC
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}-vpc"
+        cidr_block: "10.232.232.128/26"
+        <<: *aws_connection_info
+        state: absent
+      ignore_errors: true
