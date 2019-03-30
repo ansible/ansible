@@ -106,9 +106,7 @@ class RoleModule(BaseModule):
         )
 
     def get_all_permits(self):
-        return {
-            permit.name: permit.id for permit in self._connection.system_service().cluster_levels_service().level_service('4.3').get().permits
-        }
+        return dict((permit.name, permit.id) for permit in self._connection.system_service().cluster_levels_service().level_service('4.3').get().permits)
 
     def update_check(self, entity):
         def check_permits():
