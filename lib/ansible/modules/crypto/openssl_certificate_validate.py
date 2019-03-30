@@ -546,7 +546,7 @@ class Certificate(object):
         result = dict()
         self.cert = crypto_utils.load_certificate(self.path, backend=self.backend)
 
-        if self.privatekey_path:
+        if self.privatekey_path is not None:
             try:
                 self.privatekey = crypto_utils.load_privatekey(
                     self.privatekey_path,
@@ -563,7 +563,7 @@ class Certificate(object):
                 )
                 result['private_key_matches'] = False
 
-        if self.csr_path:
+        if self.csr_path is not None:
             self.csr = crypto_utils.load_certificate_request(self.csr_path, backend=self.backend)
             result['csr_signature_matches'] = True
             result['csr_subject_match'] = True
@@ -587,7 +587,7 @@ class Certificate(object):
                 )
                 result['csr_extensions_match'] = False
 
-        if self.signature_algorithms:
+        if self.signature_algorithms is not None:
             result['signature_algorithm_matches'] = True
             wrong_alg = self._validate_signature_algorithms()
             if wrong_alg:
@@ -597,7 +597,7 @@ class Certificate(object):
                 )
                 result['signature_algorithm_matches'] = False
 
-        if self.subject:
+        if self.subject is not None:
             result['subject_matches'] = True
             failure = self._validate_subject()
             if failure:
@@ -608,7 +608,7 @@ class Certificate(object):
                 )
                 result['subject_matches'] = False
 
-        if self.issuer:
+        if self.issuer is not None:
             result['issuer_matches'] = True
             failure = self._validate_issuer()
             if failure:
@@ -628,7 +628,7 @@ class Certificate(object):
                 )
                 result['has_expired_matches'] = False
 
-        if self.version:
+        if self.version is not None:
             result['version_matches'] = True
             cert_version = self._validate_version()
             if cert_version != self.version:
@@ -679,7 +679,7 @@ class Certificate(object):
                 )
                 result['subject_alt_name_matches'] = False
 
-        if self.not_before:
+        if self.not_before is not None:
             result['not_before_matches'] = True
             cert_not_valid_before = self._validate_not_before()
             if cert_not_valid_before != self.get_relative_time_option(self.not_before, 'not_before'):
@@ -689,7 +689,7 @@ class Certificate(object):
                 )
                 result['not_before_matches'] = False
 
-        if self.not_after:
+        if self.not_after is not None:
             result['not_after_matches'] = True
             cert_not_valid_after = self._validate_not_after()
             if cert_not_valid_after != self.get_relative_time_option(self.not_after, 'not_after'):
@@ -699,7 +699,7 @@ class Certificate(object):
                 )
                 result['not_after_matches'] = True
 
-        if self.valid_at:
+        if self.valid_at is not None:
             result['valid_at'] = True
             not_before, valid_at, not_after = self._validate_valid_at()
             if not (not_before <= valid_at <= not_after):
@@ -709,7 +709,7 @@ class Certificate(object):
                 )
                 result['valid_at'] = False
 
-        if self.invalid_at:
+        if self.invalid_at is not None:
             result['invalid_at'] = True
             not_before, invalid_at, not_after = self._validate_invalid_at()
             if (invalid_at <= not_before) or (invalid_at >= not_after):
@@ -719,7 +719,7 @@ class Certificate(object):
                 )
                 result['invalid_at'] = False
 
-        if self.valid_in:
+        if self.valid_in is not None:
             result['invalid_in'] = True
             not_before, valid_in, not_after = self._validate_valid_in()
             if not not_before <= valid_in <= not_after:
