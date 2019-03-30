@@ -124,3 +124,17 @@
   assert:
     that:
       - output_broken is changed
+
+- name: Check backup
+  assert:
+    that:
+      - csr_backup_1 is changed
+      - csr_backup_1.backup_file is undefined
+      - csr_backup_2 is not changed
+      - csr_backup_2.backup_file is undefined
+      - csr_backup_3 is changed
+      - csr_backup_3.backup_file is string
+      - csr_backup_4 is changed
+      - csr_backup_4.backup_file is string
+      - csr_backup_5 is not changed
+      - csr_backup_5.backup_file is undefined
