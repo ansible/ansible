@@ -1225,7 +1225,7 @@ class AssertOnlyCertificateCryptography(Certificate):
                     current_ext_keyusage = self.cert.extensions.get_extension_for_class(x509.ExtendedKeyUsage).value
                     usages = [crypto_utils.cryptography_get_ext_keyusage(usage) for usage in self.extendedKeyUsage]
                     expected_ext_keyusage = x509.ExtendedKeyUsage(usages)
-                    if (not self.extendedKeyUsage_strict and not all(x in expected_ext_keyusage for x in current_ext_keyusage)) or \
+                    if (not self.extendedKeyUsage_strict and not all(x in current_ext_keyusage for x in expected_ext_keyusage)) or \
                        (self.extendedKeyUsage_strict and not current_ext_keyusage == expected_ext_keyusage):
                         self.message.append(
                             'Invalid extendedKeyUsage component (got %s, expected all of %s to be present)' % ([xku.value for xku in current_ext_keyusage],
