@@ -34,7 +34,7 @@ options:
         please use the M(win_service) module instead to start, stop or restart the service.
     type: str
     choices: [ absent, present, started, stopped, restarted ]
-    default: started
+    default: present
   application:
     description:
       - The application binary to run as a service
@@ -125,37 +125,38 @@ author:
 '''
 
 EXAMPLES = r'''
-# Install and start the foo service
-- win_nssm:
+- name: Install the foo service
+  win_nssm:
     name: foo
     application: C:\windows\foo.exe
 
-# Install and start the consul service with a list of parameters
 # This will yield the following command: C:\windows\foo.exe bar "true"
-- win_nssm:
-    name: Install the Consul service
+- name: Install the Consul service with a list of parameters
+  win_nssm:
+    name: Consul
     application: C:\consul\consul.exe
     arguments:
       - agent
       - -config-dir=C:\consul\config
 
-# Install and start the consul service with an arbitrary string of parameters
 # This is strictly equivalent to the previous example
-- name: Install the Consul service (alternative)
+- name: Install the Consul service with an arbitrary string of parameters
   win_nssm:
-    name: consul
+    name: Consul
     application: C:\consul\consul.exe
     arguments: agent -config-dir=C:\consul\config
 
-# Install and start the foo service, redirecting stdout and stderr to the same file
-- win_nssm:
+
+# Install the foo service, an then configure and start it with win_service
+- name: Install the foo service, redirecting stdout and stderr to the same file
+  win_nssm:
     name: foo
     application: C:\windows\foo.exe
     stdout_file: C:\windows\foo.log
     stderr_file: C:\windows\foo.log
 
-# Configure the foo service and start it with win_service
-- win_service:
+- name: Configure and start the foo service using win_service
+  win_service:
     name: foo
     dependencies: [ adf, tcpip ]
     user: foouser
@@ -163,8 +164,8 @@ EXAMPLES = r'''
     start_mode: manual
     state: started
 
-# Remove the foo service
-- win_nssm:
+- name: Remove the foo service
+  win_nssm:
     name: foo
     state: absent
 '''
