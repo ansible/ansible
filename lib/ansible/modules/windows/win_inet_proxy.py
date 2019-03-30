@@ -52,6 +52,13 @@ options:
     - Omit, set to null or an empty string/list to remove the bypass list.
     - If this is set then I(proxy) must also be set.
     type: list
+  connection:
+    description:
+    - The name of the IE connection to set the proxy settings for.
+    - These are the connections under the I(Dial-up and Virtual Private Network)
+      header in the IE settings.
+    - When ommited, the default LAN connection is used.
+    type: str
   proxy:
     description:
     - A string or dict that specifies the proxy to be set.
@@ -116,6 +123,7 @@ EXAMPLES = r'''
     proxy: ansible.proxy
 
 - name: Configure IE to use explicit proxy host with port and without auto detection
+  win_inet_proxy:
     auto_detect: no
     proxy: ansible.proxy:8080
 
