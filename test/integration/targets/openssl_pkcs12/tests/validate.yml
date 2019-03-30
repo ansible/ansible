@@ -45,7 +45,7 @@
       - p12_backup_2 is not changed
       - p12_backup_2.backup_file is undefined
       - p12_backup_3 is changed
-      #- p12_backup_3.backup_file is string    FIXME: this will work once https://github.com/ansible/ansible/pull/54085 is merged
+      - p12_backup_3.backup_file is string
       - p12_backup_4 is changed
       - p12_backup_4.backup_file is string
       - p12_backup_5 is not changed
