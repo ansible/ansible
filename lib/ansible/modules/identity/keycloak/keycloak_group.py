@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2018, Adam Goossens <adam.goossens@gmail.com>
+# Copyright (c) 2019, Adam Goossens <adam.goossens@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -29,14 +29,14 @@ description:
     - The names of module options are snake_cased versions of the camelCase ones found in the
       Keycloak API and its documentation at U(http://www.keycloak.org/docs-api/3.3/rest-api/).
 
-    - The Keycloak API returns and expects group attribute values to be provided as lists. This
-      module will transparently convert any non-list attribute values into a list before providing it to the API.
-      When retrieving a group, expect the attribute values to be returned in a list.
+    - Attributes are multi-valued in the Keycloak API. All attributes are lists of individual values and will
+      be returned that way by this module. You may pass single values for attributes when calling the module,
+      and this will be translated into a list suitable for the API.
 
     - When updating a group, where possible provide the group ID to the module. This removes a lookup
       to the API to translate the name into the group ID.
 
-version_added: "2.5"
+version_added: "2.8"
 
 options:
     state:
@@ -65,7 +65,7 @@ options:
 
     attributes:
         description:
-            - A list of key/value pairs to set as custom attributes for the group.
+            - A dict of key/value pairs to set as custom attributes for the group.
             - Values may be single values (e.g. a string) or a list of strings.
 
 notes:
@@ -154,34 +154,7 @@ msg:
   type: string
   sample: "Group my-new-sso-group has been created with ID '9d59aa76-2755-48c6-b1af-beb70a82c3cd'"
 
-proposed:
-  description: Group representation of proposed changes to group (sample is truncated)
-  returned: always
-  type: dict
-  sample: {
-    "attributes": {
-        "day_of_week": [
-            "friday"
-        ],
-        "expiry_date": [
-            "2018-01-01"
-        ]
-    },
-    "name": "new-name"
-  }
-
-existing:
-  description: Group representation of the existing group, before modification or deletion. Sample is truncated.
-  returned: always
-  type: dict
-  sample: {
-    "name": "group-name",
-    "id": "2ac24fe7-cec6-4fc4-8c32-a17f79e3365e",
-    "path": "/group-name",
-    "realmRoles": []
-  }
-
-end_state:
+group:
   description: Group representation of the group after module execution (sample is truncated).
   returned: always
   type: dict
@@ -265,9 +238,6 @@ def main():
     updated_group = before_group.copy()
     updated_group.update(changeset)
 
-    result['proposed'] = changeset if state != 'absent' else {}
-    result['existing'] = before_group
-
     # if before_group is none, the group doesn't exist.
     if before_group == {}:
         if state == 'absent':
@@ -275,7 +245,7 @@ def main():
             if module._diff:
                 result['diff'] = dict(before='', after='')
             result['msg'] = 'Group does not exist; doing nothing.'
-            result['end_state'] = dict()
+            result['group'] = dict()
             module.exit_json(**result)
 
         # for 'present', create a new group.
@@ -293,7 +263,7 @@ def main():
         kc.create_group(updated_group, realm=realm)
         after_group = kc.get_group_by_name(name, realm)
 
-        result['end_state'] = after_group
+        result['group'] = after_group
         result['msg'] = 'Group {name} has been created with ID {id}'.format(name=after_group['name'],
                                                                             id=after_group['id'])
 
@@ -302,7 +272,7 @@ def main():
             # no changes
             if updated_group == before_group:
                 result['changed'] = False
-                result['end_state'] = updated_group
+                result['group'] = updated_group
                 result['msg'] = "No changes required to group {name}.".format(name=before_group['name'])
                 module.exit_json(**result)
 
@@ -320,14 +290,13 @@ def main():
 
             after_group = kc.get_group_by_groupid(updated_group['id'], realm=realm)
 
-            result['end_state'] = after_group
+            result['group'] = after_group
             result['msg'] = "Group {id} has been updated".format(id=after_group['id'])
 
             module.exit_json(**result)
 
         elif state == 'absent':
-            result['proposed'] = dict()
-            result['end_state'] = dict()
+            result['group'] = dict()
 
             if module._diff:
                 result['diff'] = dict(before=before_group, after='')
