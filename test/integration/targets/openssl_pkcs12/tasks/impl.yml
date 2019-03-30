@@ -1,3 +1,4 @@
+---
 - block:
   - name: 'Generate privatekey with'
     openssl_privatekey:
@@ -114,6 +115,47 @@
       force: True
       mode: 0644
     register: output_broken
+
+  - name: 'Generate PKCS#12 file'
+    openssl_pkcs12:
+      path: "{{ output_dir }}/ansible_backup.p12"
+      friendly_name: 'abracadabra'
+      privatekey_path: "{{ output_dir }}/ansible_pkey.pem"
+      certificate_path: "{{ output_dir }}/ansible.crt"
+      state: present
+      backup: yes
+    register: p12_backup_1
+  - name: 'Generate PKCS#12 file (idempotent)'
+    openssl_pkcs12:
+      path: "{{ output_dir }}/ansible_backup.p12"
+      friendly_name: 'abracadabra'
+      privatekey_path: "{{ output_dir }}/ansible_pkey.pem"
+      certificate_path: "{{ output_dir }}/ansible.crt"
+      state: present
+      backup: yes
+    register: p12_backup_2
+  - name: 'Generate PKCS#12 file (change)'
+    openssl_pkcs12:
+      path: "{{ output_dir }}/ansible_backup.p12"
+      friendly_name: 'abra'
+      privatekey_path: "{{ output_dir }}/ansible_pkey.pem"
+      certificate_path: "{{ output_dir }}/ansible.crt"
+      state: present
+      force: yes  # FIXME: idempotency does not work, so we have to force! (https://github.com/ansible/ansible/issues/53221)
+      backup: yes
+    register: p12_backup_3
+  - name: 'Generate PKCS#12 file (remove)'
+    openssl_pkcs12:
+      path: "{{ output_dir }}/ansible_backup.p12"
+      state: absent
+      backup: yes
+    register: p12_backup_4
+  - name: 'Generate PKCS#12 file (remove, idempotent)'
+    openssl_pkcs12:
+      path: "{{ output_dir }}/ansible_backup.p12"
+      state: absent
+      backup: yes
+    register: p12_backup_5
 
   - import_tasks: ../tests/validate.yml
 

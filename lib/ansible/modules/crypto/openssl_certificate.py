@@ -28,6 +28,9 @@ description:
     - Many properties that can be specified in this module are for validation of an
       existing or newly generated certificate. The proper place to specify them, if you
       want to receive a certificate with these properties is a CSR (Certificate Signing Request).
+    - "Please note that the module regenerates existing certificate if it doesn't match the module's
+      options, or if it seems to be corrupt. If you are concerned that this could overwrite
+      your existing certificate, consider using the I(backup) option."
     - It uses the pyOpenSSL or cryptography python library to interact with OpenSSL.
     - If both the cryptography and PyOpenSSL libraries are available (and meet the minimum version requirements)
       cryptography will be preferred as a backend over PyOpenSSL (unless the backend is forced with C(select_crypto_backend))
@@ -359,6 +362,15 @@ options:
         choices: [ auto, cryptography, pyopenssl ]
         version_added: "2.8"
 
+    backup:
+        description:
+            - Create a backup file including a timestamp so you can get the original
+              certificate back if you overwrote it with a new one by accident.
+            - This is not used by the C(assertonly) provider.
+        type: bool
+        default: no
+        version_added: "2.8"
+
 extends_documentation_fragment: files
 notes:
     - All ASN.1 TIME values should be specified following the YYYYMMDDHHMMSSZ pattern.
@@ -510,6 +522,11 @@ filename:
     returned: changed or success
     type: str
     sample: /etc/ssl/crt/www.ansible.com.crt
+backup_file:
+    description: Name of backup file created.
+    returned: changed and if I(backup) is C(yes)
+    type: str
+    sample: /path/to/www.ansible.com.crt.2019-03-09@11:22~
 '''
 
 
@@ -575,6 +592,9 @@ class Certificate(crypto_utils.OpenSSLObject):
         self.csr = None
         self.backend = backend
         self.module = module
+
+        self.backup = module.params['backup']
+        self.backup_file = None
 
     def get_relative_time_option(self, input_string, input_name):
         """Return an ASN1 formatted string if a relative timespec
@@ -663,6 +683,11 @@ class Certificate(crypto_utils.OpenSSLObject):
                     return False
             return True
 
+    def remove(self, module):
+        if self.backup:
+            self.backup_file = module.backup_local(self.path)
+        super(Certificate, self).remove(module)
+
     def check(self, module, perms_required=True):
         """Ensure the resource is in its desired state."""
 
@@ -711,6 +736,8 @@ class CertificateAbsent(Certificate):
             'privatekey': self.privatekey_path,
             'csr': self.csr_path
         }
+        if self.backup_file:
+            result['backup_file'] = self.backup_file
 
         return result
 
@@ -769,6 +796,8 @@ class SelfSignedCertificateCryptography(Certificate):
 
             self.cert = certificate
 
+            if self.backup:
+                self.backup_file = module.backup_local(self.path)
             crypto_utils.write_file(module, certificate.public_bytes(Encoding.PEM))
             self.changed = True
         else:
@@ -786,6 +815,8 @@ class SelfSignedCertificateCryptography(Certificate):
             'privatekey': self.privatekey_path,
             'csr': self.csr_path
         }
+        if self.backup_file:
+            result['backup_file'] = self.backup_file
 
         if check_mode:
             result.update({
@@ -847,6 +878,8 @@ class SelfSignedCertificate(Certificate):
             cert.sign(self.privatekey, self.digest)
             self.cert = cert
 
+            if self.backup:
+                self.backup_file = module.backup_local(self.path)
             crypto_utils.write_file(module, crypto.dump_certificate(crypto.FILETYPE_PEM, self.cert))
             self.changed = True
 
@@ -862,6 +895,8 @@ class SelfSignedCertificate(Certificate):
             'privatekey': self.privatekey_path,
             'csr': self.csr_path
         }
+        if self.backup_file:
+            result['backup_file'] = self.backup_file
 
         if check_mode:
             result.update({
@@ -935,6 +970,8 @@ class OwnCACertificateCryptography(Certificate):
 
             self.cert = certificate
 
+            if self.backup:
+                self.backup_file = module.backup_local(self.path)
             crypto_utils.write_file(module, certificate.public_bytes(Encoding.PEM))
             self.changed = True
         else:
@@ -954,6 +991,8 @@ class OwnCACertificateCryptography(Certificate):
             'ca_cert': self.ca_cert_path,
             'ca_privatekey': self.ca_privatekey_path
         }
+        if self.backup_file:
+            result['backup_file'] = self.backup_file
 
         if check_mode:
             result.update({
@@ -1024,6 +1063,8 @@ class OwnCACertificate(Certificate):
             cert.sign(self.ca_privatekey, self.digest)
             self.cert = cert
 
+            if self.backup:
+                self.backup_file = module.backup_local(self.path)
             crypto_utils.write_file(module, crypto.dump_certificate(crypto.FILETYPE_PEM, self.cert))
             self.changed = True
 
@@ -1041,6 +1082,8 @@ class OwnCACertificate(Certificate):
             'ca_cert': self.ca_cert_path,
             'ca_privatekey': self.ca_privatekey_path
         }
+        if self.backup_file:
+            result['backup_file'] = self.backup_file
 
         if check_mode:
             result.update({
@@ -1614,6 +1657,8 @@ class AcmeCertificate(Certificate):
                                                             self.csr_path,
                                                             self.challenge_path),
                                          check_rc=True)[1]
+                if self.backup:
+                    self.backup_file = module.backup_local(self.path)
                 crypto_utils.write_file(module, to_bytes(crt))
                 self.changed = True
             except OSError as exc:
@@ -1632,6 +1677,8 @@ class AcmeCertificate(Certificate):
             'accountkey': self.accountkey_path,
             'csr': self.csr_path,
         }
+        if self.backup_file:
+            result['backup_file'] = self.backup_file
 
         return result
 
@@ -1644,6 +1691,7 @@ def main():
             provider=dict(type='str', choices=['acme', 'assertonly', 'ownca', 'selfsigned']),
             force=dict(type='bool', default=False,),
             csr_path=dict(type='path'),
+            backup=dict(type='bool', default=False),
             select_crypto_backend=dict(type='str', default='auto', choices=['auto', 'cryptography', 'pyopenssl']),
 
             # General properties of a certificate
