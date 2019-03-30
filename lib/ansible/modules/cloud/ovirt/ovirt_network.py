@@ -80,18 +80,23 @@ options:
             assigned:
                 description:
                     - I(true) if the network should be assigned to cluster. Default is I(true).
+                type: bool
             required:
                 description:
                     - I(true) if the network must remain operational for all hosts associated with this network.
+                type: bool
             display:
                 description:
                     - I(true) if the network should marked as display network.
+                type: bool
             migration:
                 description:
                     - I(true) if the network should marked as migration network.
+                type: bool
             gluster:
                 description:
                     - I(true) if the network should marked as gluster network.
+                type: bool
     label:
         description:
             - "Name of the label to assign to the network."
