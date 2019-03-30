@@ -822,7 +822,9 @@ class AssertOnlyCertificateCryptography(Certificate):
                 return self.key_usage, [x for x in test_key_usage if x is True]
 
         except cryptography.x509.ExtensionNotFound:
-            return NO_EXTENSION
+            # This is only bad if the user specified a non-empty list
+            if self.key_usage:
+                return NO_EXTENSION
 
     def _validate_extended_key_usage(self):
         try:
@@ -833,7 +835,9 @@ class AssertOnlyCertificateCryptography(Certificate):
                 return [eku.value for eku in expected_ext_keyusage], [eku.value for eku in current_ext_keyusage]
 
         except cryptography.x509.ExtensionNotFound:
-            self.message.append('Found no extended_key_usage extension')
+            # This is only bad if the user specified a non-empty list
+            if self.extended_key_usage:
+                return NO_EXTENSION
 
     def _validate_subject_alt_name(self):
         try:
@@ -842,7 +846,9 @@ class AssertOnlyCertificateCryptography(Certificate):
             if not compare_sets(expected_san, current_san, self.subject_alt_name_strict):
                 return self.subject_alt_name, current_san
         except cryptography.x509.ExtensionNotFound:
-            self.message.append('Found no subject_alt_name extension')
+            # This is only bad if the user specified a non-empty list
+            if self.subject_alt_name:
+                return NO_EXTENSION
 
     def _validate_not_before(self):
         return self.cert.not_valid_before
@@ -963,7 +969,9 @@ class AssertOnlyCertificate(Certificate):
                 if not compare_sets(key_usage, current_ku, self.key_usage_strict):
                     return self.key_usage, str(extension).split(', ')
         if not found:
-            return NO_EXTENSION
+            # This is only bad if the user specified a non-empty list
+            if self.key_usage:
+                return NO_EXTENSION
 
     def _validate_extended_key_usage(self):
         found = False
@@ -977,7 +985,9 @@ class AssertOnlyCertificate(Certificate):
                 if not compare_sets(extKeyUsage, current_xku, self.extended_key_usage_strict):
                     return self.extended_key_usage, str(extension).split(', ')
         if not found:
-            return NO_EXTENSION
+            # This is only bad if the user specified a non-empty list
+            if self.extended_key_usage:
+                return NO_EXTENSION
 
     def _validate_subject_alt_name(self):
         found = False
@@ -990,7 +1000,9 @@ class AssertOnlyCertificate(Certificate):
                 if not compare_sets(self.subject_alt_name, l_altnames, self.subject_alt_name_strict):
                     return self.subject_alt_name, l_altnames
         if not found:
-            return NO_EXTENSION
+            # This is only bad if the user specified a non-empty list
+            if self.subject_alt_name:
+                return NO_EXTENSION
 
     def _validate_not_before(self):
         return self.cert.get_notBefore()
