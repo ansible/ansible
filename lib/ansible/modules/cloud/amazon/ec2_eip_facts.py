@@ -18,8 +18,9 @@ author: "Brad Macpherson (@iiibrad)"
 options:
   filters:
     description:
-      - A set of filters to use. Each filter is a name:value pair. The value
-        may be a list or a single element.
+      - A dict of filters to apply. Each dict item consists of a filter key and filter
+        value.  See U(https://docs.aws.amazon.com/cli/latest/reference/ec2/describe-addresses.html#options)
+        for possible filters. Filter names and values are case sensitive.
     required: false
     default: {}
 extends_documentation_fragment:
