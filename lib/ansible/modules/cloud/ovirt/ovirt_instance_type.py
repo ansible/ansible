@@ -4,6 +4,189 @@
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from ansible.module_utils.basic import AnsibleModule
+import traceback
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
+DOCUMENTATION = '''
+---
+module: ovirt_instance_type
+short_description: Module to manage Instance Types in oVirt/RHV
+version_added: "2.8"
+author:
+- Martin Necas (@mnecas)
+- Ondra Machacek (@machacekondra)
+description:
+    - This module manages whole lifecycle of the Instance Type in oVirt/RHV.
+options:
+    name:
+        description:
+            - Name of the Instance Type to manage.
+            - If VM don't exists C(name) is required. Otherwise C(id) or C(name) can be used.
+    id:
+        description:
+            - ID of the Instance Type to manage.
+    state:
+        description:
+            - Should the Instance Type be present/absent.
+            - I(present) state will create/update VM and don't change its state if it already exists.
+        choices: [ absent, present ]
+        default: present
+    memory:
+        description:
+            - Amount of memory of the Instance Type. Prefix uses IEC 60027-2 standard (for example 1GiB, 1024MiB).
+            - Default value is set by engine.
+    memory_guaranteed:
+        description:
+            - Amount of minimal guaranteed memory of the Instance Type.
+              Prefix uses IEC 60027-2 standard (for example 1GiB, 1024MiB).
+            - C(memory_guaranteed) parameter can't be lower than C(memory) parameter.
+            - Default value is set by engine.
+    memory_max:
+        description:
+            - Upper bound of instance type memory up to which memory hot-plug can be performed.
+              Prefix uses IEC 60027-2 standard (for example 1GiB, 1024MiB).
+            - Default value is set by engine.
+    cpu_cores:
+        description:
+            - Number of virtual CPUs cores of the Instance Type.
+            - Default value is set by oVirt/RHV engine.
+    cpu_sockets:
+        description:
+            - Number of virtual CPUs sockets of the Instance Type.
+            - Default value is set by oVirt/RHV engine.
+    cpu_threads:
+        description:
+            - Number of virtual CPUs sockets of the Instance Type.
+            - Default value is set by oVirt/RHV engine.
+    operating_system:
+        description:
+            - Operating system of the Instance Type.
+            - Default value is set by oVirt/RHV engine.
+            - "Possible values: debian_7, freebsd, freebsdx64, other, other_linux,
+               other_linux_ppc64, other_ppc64, rhel_3, rhel_4, rhel_4x64, rhel_5, rhel_5x64,
+               rhel_6, rhel_6x64, rhel_6_ppc64, rhel_7x64, rhel_7_ppc64, sles_11, sles_11_ppc64,
+               ubuntu_12_04, ubuntu_12_10, ubuntu_13_04, ubuntu_13_10, ubuntu_14_04, ubuntu_14_04_ppc64,
+               windows_10, windows_10x64, windows_2003, windows_2003x64, windows_2008, windows_2008x64,
+               windows_2008r2x64, windows_2008R2x64, windows_2012x64, windows_2012R2x64, windows_7,
+               windows_7x64, windows_8, windows_8x64, windows_xp"
+    boot_devices:
+        description:
+            - List of boot devices which should be used to boot. For example C([ cdrom, hd ]).
+            - Default value is set by oVirt/RHV engine.
+        choices: [ cdrom, hd, network ]
+    serial_console:
+        description:
+            - "I(True) enable VirtIO serial console, I(False) to disable it. By default is chosen by oVirt/RHV engine."
+        type: bool
+    usb_support:
+        description:
+            - "I(True) enable USB support, I(False) to disable it. By default is chosen by oVirt/RHV engine."
+        type: bool
+    high_availability:
+        description:
+            - If I(yes) Instance Type will be set as highly available.
+            - If I(no) Instance Type won't be set as highly available.
+            - If no value is passed, default value is set by oVirt/RHV engine.
+        type: bool
+    high_availability_priority:
+        description:
+            - Indicates the priority of the instance type inside the run and migration queues.
+              Instance Type with higher priorities will be started and migrated before instance types with lower
+              priorities. The value is an integer between 0 and 100. The higher the value, the higher the priority.
+            - If no value is passed, default value is set by oVirt/RHV engine.
+    watchdog:
+        description:
+            - "Assign watchdog device for the instance type."
+            - "Watchdogs is a dictionary which can have following values:"
+            - "C(model) - Model of the watchdog device. For example: I(i6300esb), I(diag288) or I(null)."
+            - "C(action) - Watchdog action to be performed when watchdog is triggered. For example: I(none), I(reset), I(poweroff), I(pause) or I(dump)."
+    host:
+        description:
+            - Specify host where Instance Type should be running. By default the host is chosen by engine scheduler.
+            - This parameter is used only when C(state) is I(running) or I(present).
+    graphical_console:
+        description:
+            - "Assign graphical console to the instance type."
+            - "Graphical console is a dictionary which can have following values:"
+            - "C(headless_mode) - If I(true) disable the graphics console for this instance type."
+            - "C(protocol) - Graphical protocol, a list of I(spice), I(vnc), or both."
+    description:
+        description:
+            - "Description of the instance type."
+    cpu_mode:
+        description:
+            - "CPU mode of the instance type. It can be some of the following: I(host_passthrough), I(host_model) or I(custom)."
+            - "For I(host_passthrough) CPU type you need to set C(placement_policy) to I(pinned)."
+            - "If no value is passed, default value is set by oVirt/RHV engine."
+    rng_device:
+        description:
+            - "Random number generator (RNG). You can choose of one the following devices I(urandom), I(random) or I(hwrng)."
+            - "In order to select I(hwrng), you must have it enabled on cluster first."
+            - "/dev/urandom is used for cluster version >= 4.1, and /dev/random for cluster version <= 4.0"
+    rng_bytes:
+        description:
+            - "Number of bytes allowed to consume per period."
+    rng_period:
+        description:
+            - "Duration of one period in milliseconds."
+    placement_policy:
+        description:
+            - "The configuration of the instance type's placement policy."
+            - "Placement policy can be one of the following values:"
+            - "C(migratable) - Allow manual and automatic migration."
+            - "C(pinned) - Do not allow migration."
+            - "C(user_migratable) - Allow manual migration only."
+            - "If no value is passed, default value is set by oVirt/RHV engine."
+    cpu_pinning:
+        description:
+            - "CPU Pinning topology to map instance type CPU to host CPU."
+            - "CPU Pinning topology is a list of dictionary which can have following values:"
+            - "C(cpu) - Number of the host CPU."
+            - "C(vcpu) - Number of the instance type CPU."
+    soundcard_enabled:
+        description:
+            - "If I(true), the sound card is added to the instance type."
+        type: bool
+    smartcard_enabled:
+        description:
+            - "If I(true), use smart card authentication."
+        type: bool
+    virtio_scsi:
+        description:
+            - "If I(true), virtio scsi will be enabled."
+        type: bool
+    io_threads:
+        description:
+            - "Number of IO threads used by instance type. I(0) means IO threading disabled."
+    ballooning_enabled:
+        description:
+            - "If I(true), use memory ballooning."
+            - "Memory balloon is a guest device, which may be used to re-distribute / reclaim the host memory
+               based on VM needs in a dynamic way. In this way it's possible to create memory over commitment states."
+        type: bool
+extends_documentation_fragment: ovirt
+'''
+
+EXAMPLES = '''
+# Examples don't contain auth parameter for simplicity,
+# look at ovirt_auth module to see how to reuse authentication:
+
+- name: Creates
+  ovirt_instance_type:
+    state: present
+    name: myvm
+
+
+
+'''
+
+
+RETURN = '''
+'''
+
 from ansible.module_utils.ovirt import (
     BaseModule,
     check_params,
@@ -20,78 +203,6 @@ from ansible.module_utils.ovirt import (
     search_by_name,
     wait,
 )
-from ansible.module_utils.basic import AnsibleModule
-import traceback
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
-
-DOCUMENTATION = '''
----
-module: ovirt_vm
-short_description: Module to manage Virtual Machines in oVirt/RHV
-version_added: "2.2"
-author:
-- Ondra Machacek (@machacekondra)
-description:
-    - This module manages whole lifecycle of the Virtual Machine(VM) in oVirt/RHV.
-    - Since VM can hold many states in oVirt/RHV, this see notes to see how the states of the VM are handled.
-options:
-    name:
-        description:
-            - Name of the Virtual Machine to manage.
-            - If VM don't exists C(name) is required. Otherwise C(id) or C(name) can be used.
-    id:
-        description:
-            - ID of the Virtual Machine to manage.
-    graphical_console:
-        description:
-            - "Assign graphical console to the virtual machine."
-            - "Graphical console is a dictionary which can have following values:"
-            - "C(headless_mode) - If I(true) disable the graphics console for this virtual machine."
-            - "C(protocol) - Graphical protocol, a list of I(spice), I(vnc), or both."
-        version_added: "2.5"
-    state:
-        description:
-            - Should the Virtual Machine be running/stopped/present/absent/suspended/next_run/registered/exported.
-              When C(state) is I(registered) and the unregistered VM's name
-              belongs to an already registered in engine VM in the same DC
-              then we fail to register the unregistered template.
-            - I(present) state will create/update VM and don't change its state if it already exists.
-            - I(running) state will create/update VM and start it.
-            - I(next_run) state updates the VM and if the VM has next run configuration it will be rebooted.
-            - Please check I(notes) to more detailed description of states.
-            - I(exported) state will export the VM to export domain or as OVA.
-            - I(registered) is supported since 2.4.
-        choices: [ absent, next_run, present, registered, running, stopped, suspended, exported ]
-        default: present
-    placement_policy:
-        description:
-            - "The configuration of the virtual machine's placement policy."
-            - "Placement policy can be one of the following values:"
-            - "C(migratable) - Allow manual and automatic migration."
-            - "C(pinned) - Do not allow migration."
-            - "C(user_migratable) - Allow manual migration only."
-            - "If no value is passed, default value is set by oVirt/RHV engine."
-        version_added: "2.5"
-extends_documentation_fragment: ovirt
-'''
-
-EXAMPLES = '''
-# Examples don't contain auth parameter for simplicity,
-# look at ovirt_auth module to see how to reuse authentication:
-
-- name: Creates a new Virtual Machine from template named 'rhel7_template'
-  ovirt_vm:
-    state: present
-    name: myvm
-    template: rhel7_template
-
-'''
-
-
-RETURN = '''
-'''
 
 try:
     import ovirtsdk4.types as otypes
@@ -344,8 +455,7 @@ class InstanceTypeModule(BaseModule):
             equal(self.param('rng_device'), str(entity.rng_device.source) if entity.rng_device else None) and
             equal(self.param('rng_bytes'), entity.rng_device.rate.bytes if entity.rng_device else None) and
             equal(self.param('rng_period'), entity.rng_device.rate.period if entity.rng_device else None) and
-            equal(self.param('placement_policy'), str(
-                entity.placement_policy.affinity) if entity.placement_policy else None)
+            equal(self.param('placement_policy'), str(entity.placement_policy.affinity) if entity.placement_policy else None)
         )
 
 
@@ -405,11 +515,9 @@ def main():
         it = its_module.search_entity()
 
         if state == 'present':
-
             ret = its_module.create(
                 entity=it
             )
-
             its_module.post_present(ret['id'])
             ret['changed'] = its_module.changed
         elif state == 'absent':
