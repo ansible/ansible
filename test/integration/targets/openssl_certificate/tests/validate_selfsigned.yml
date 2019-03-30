@@ -107,3 +107,17 @@
   assert:
     that:
       - selfsigned_broken is changed
+
+- name: Check backup
+  assert:
+    that:
+      - selfsigned_backup_1 is changed
+      - selfsigned_backup_1.backup_file is undefined
+      - selfsigned_backup_2 is not changed
+      - selfsigned_backup_2.backup_file is undefined
+      - selfsigned_backup_3 is changed
+      - selfsigned_backup_3.backup_file is string
+      - selfsigned_backup_4 is changed
+      - selfsigned_backup_4.backup_file is string
+      - selfsigned_backup_5 is not changed
+      - selfsigned_backup_5.backup_file is undefined

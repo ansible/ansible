@@ -86,6 +86,13 @@ options:
         description:
             - PKCS#12 file path to parse.
         type: path
+    backup:
+        description:
+            - Create a backup file including a timestamp so you can get the original
+              output file back if you overwrote it with a new one by accident.
+        type: bool
+        default: no
+        version_added: "2.8"
 extends_documentation_fragment:
     - files
 seealso:
@@ -155,6 +162,11 @@ privatekey:
     returned: changed or success
     type: str
     sample: /etc/ssl/private/ansible.com.pem
+backup_file:
+    description: Name of backup file created.
+    returned: changed and if I(backup) is C(yes)
+    type: str
+    sample: /path/to/ansible.com.pem.2019-03-09@11:22~
 '''
 
 import stat
@@ -203,6 +215,9 @@ class Pkcs(crypto_utils.OpenSSLObject):
         if module.params['mode'] is None:
             module.params['mode'] = '0400'
 
+        self.backup = module.params['backup']
+        self.backup_file = None
+
     def check(self, module, perms_required=True):
         """Ensure the resource is in its desired state."""
 
@@ -232,6 +247,8 @@ class Pkcs(crypto_utils.OpenSSLObject):
         }
         if self.privatekey_path:
             result['privatekey_path'] = self.privatekey_path
+        if self.backup_file:
+            result['backup_file'] = self.backup_file
 
         return result
 
@@ -261,11 +278,18 @@ class Pkcs(crypto_utils.OpenSSLObject):
             except crypto_utils.OpenSSLBadPassphraseError as exc:
                 raise PkcsError(exc)
 
+        if self.backup:
+            self.backup_file = module.backup_local(self.path)
         crypto_utils.write_file(
             module,
             self.pkcs12.export(self.passphrase, self.iter_size, self.maciter_size),
             0o600
         )
+
+    def remove(self, module):
+        if self.backup:
+            self.backup_file = module.backup_local(self.path)
+        super(Pkcs, self).remove(module)
 
     def parse(self, module):
         """Read PKCS#12 file."""
@@ -301,6 +325,7 @@ def main():
         privatekey_path=dict(type='path'),
         state=dict(type='str', default='present', choices=['absent', 'present']),
         src=dict(type='path'),
+        backup=dict(type='bool', default=False),
     )
 
     required_if = [
