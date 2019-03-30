@@ -219,7 +219,8 @@ def main():
                     meraki.result['diff'] = {'before': diff[0],
                                              'after': diff[1],
                                              }
-                    meraki.result['data'] = org.update(payload)
+                    org.update(payload)
+                    meraki.result['data'] = org
                     meraki.exit_json(**meraki.result)
                 response = meraki.request(meraki.construct_path('update',
                                                                 org_id=meraki.params['org_id']
