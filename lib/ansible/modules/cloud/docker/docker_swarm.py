@@ -151,6 +151,7 @@ options:
     description:
       - If set, generate a key and use it to lock data stored on the managers.
       - Docker default value is C(no).
+      - M(docker_swarm_info) can be used to retrieve the unlock key.
     type: bool
   rotate_worker_token:
     description: Rotate the worker join token.
