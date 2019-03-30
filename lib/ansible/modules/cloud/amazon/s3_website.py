@@ -207,61 +207,56 @@ def enable_or_update_bucket_as_website(client_connection, resource_connection, m
         else:
             module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
 
-    if website_config is None:
-        try:
-            bucket_website.put(WebsiteConfiguration=_create_website_configuration(suffix, error_key, redirect_all_requests))
-            changed = True
-        except (ClientError, ParamValidationError) as e:
-            module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
-        except ValueError as e:
-            module.fail_json(msg=str(e))
-    else:
-        try:
-            if (suffix is not None and website_config['IndexDocument']['Suffix'] != suffix) or \
-                    (error_key is not None and website_config['ErrorDocument']['Key'] != error_key) or \
-                    (redirect_all_requests is not None and website_config['RedirectAllRequestsTo'] != _create_redirect_dict(redirect_all_requests)):
+    need_change = False
 
-                try:
-                    bucket_website.put(WebsiteConfiguration=_create_website_configuration(suffix, error_key, redirect_all_requests))
-                    changed = True
-                except (ClientError, ParamValidationError) as e:
-                    module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
-        except KeyError as e:
+    if website_config is None:
+        need_change = True
+    else:
+        if ((suffix is not None) and (website_config.get('IndexDocument', {}).get('Suffix', None) != suffix)) or \
+            ((error_key is not None) and (website_config.get('ErrorDocument', {}).get('Key', None) != error_key)) or \
+            ((redirect_all_requests is not None) and (website_config.get('RedirectAllRequestsTo', None) !=
+                                                      _create_redirect_dict(redirect_all_requests))):
+            need_change = True
+
+    if need_change:
+        changed = True
+
+        if not module.check_mode:
             try:
                 bucket_website.put(WebsiteConfiguration=_create_website_configuration(suffix, error_key, redirect_all_requests))
-                changed = True
             except (ClientError, ParamValidationError) as e:
                 module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
-        except ValueError as e:
-            module.fail_json(msg=str(e))
+            except ValueError as e:
+                module.fail_json(msg=str(e))
 
-        # Wait 5 secs before getting the website_config again to give it time to update
-        time.sleep(5)
+            # Wait 5 secs before getting the website_config again to give it time to update
+            time.sleep(5)
 
-    website_config = client_connection.get_bucket_website(Bucket=bucket_name)
-    module.exit_json(changed=changed, **camel_dict_to_snake_dict(website_config))
+    if not module.check_mode:
+        website_config = client_connection.get_bucket_website(Bucket=bucket_name)
+
+    module.exit_json(changed=changed, **camel_dict_to_snake_dict(website_config or {}))
 
 
 def disable_bucket_as_website(client_connection, module):
 
-    changed = False
     bucket_name = module.params.get("name")
 
     try:
         client_connection.get_bucket_website(Bucket=bucket_name)
     except ClientError as e:
         if e.response['Error']['Code'] == 'NoSuchWebsiteConfiguration':
-            module.exit_json(changed=changed)
+            module.exit_json(changed=False)
         else:
             module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
 
-    try:
-        client_connection.delete_bucket_website(Bucket=bucket_name)
-        changed = True
-    except ClientError as e:
-        module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+    if not module.check_mode:
+        try:
+            client_connection.delete_bucket_website(Bucket=bucket_name)
+        except ClientError as e:
+            module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
 
-    module.exit_json(changed=changed)
+    module.exit_json(changed=True)
 
 
 def main():
@@ -279,6 +274,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
+        supports_check_mode=True,
         mutually_exclusive=[
             ['redirect_all_requests', 'suffix'],
             ['redirect_all_requests', 'error_key']
