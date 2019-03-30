@@ -46,6 +46,9 @@ options:
             - On C(absent), the group will be removed if it exists.
         required: true
         default: 'present'
+        choices:
+            - present
+            - absent
 
     name:
         description:
@@ -151,7 +154,7 @@ RETURN = '''
 msg:
   description: Message as to what action was taken
   returned: always
-  type: string
+  type: str
   sample: "Group my-new-sso-group has been created with ID '9d59aa76-2755-48c6-b1af-beb70a82c3cd'"
 
 group:
@@ -314,6 +317,7 @@ def main():
             module.exit_json(**result)
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
