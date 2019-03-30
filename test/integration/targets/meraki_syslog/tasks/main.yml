@@ -61,6 +61,29 @@
   - debug:
       msg: '{{query_all}}'
 
+  - name: Set syslog server with check mode
+    meraki_syslog:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{syslog_test_net_name}}'
+      state: present
+      servers:
+        - host: 192.0.1.2
+          port: 514
+          roles:
+            - Appliance event log
+    delegate_to: localhost
+    register: create_server_check
+    check_mode: yes
+
+  - debug:
+      var: create_server_check
+
+  - assert:
+      that:
+        - create_server_check is not changed
+        - create_server_check.data.servers is defined
+
   - name: Set syslog server
     meraki_syslog:
       auth_key: '{{auth_key}}'
@@ -81,6 +104,25 @@
   - assert:
       that:
         - create_server['data'][0]['host'] == "192.0.1.2"
+
+  - name: Set syslog server with idempotency with check mode
+    meraki_syslog:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{syslog_test_net_name}}'
+      state: present
+      servers:
+        - host: 192.0.1.2
+          port: 514
+          roles:
+            - Appliance event log
+    delegate_to: localhost
+    register: create_server_idempotency_check
+    check_mode: yes
+
+  - assert:
+      that:
+        - create_server_idempotency_check is not changed
 
   - name: Set syslog server with idempotency
     meraki_syslog:
@@ -152,9 +194,6 @@
     register: invalid_role
     ignore_errors: yes
 
-  # - debug:
-  #     msg: '{{invalid_role.body.errors.0}}'
-
   - assert:
       that:
         - '"Please select at least one valid role" in invalid_role.body.errors.0'
@@ -182,6 +221,21 @@
         # - add_role.data.0.roles | length == 2
 
   always:
+    - name: Delete syslog test network with check mode
+      meraki_network:
+        auth_key: '{{ auth_key }}'
+        state: absent
+        org_name: '{{test_org_name}}'
+        net_name: '{{syslog_test_net_name}}'
+      delegate_to: localhost
+      register: delete_all_check
+      check_mode: yes
+      ignore_errors: yes
+
+    - assert:
+        that:
+          - delete_all_check is not changed
+
     - name: Delete syslog test network
       meraki_network:
         auth_key: '{{ auth_key }}'
