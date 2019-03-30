@@ -37,12 +37,14 @@ options:
 
     csr_path:
         description:
-            - Path to the Certificate Signing Request (CSR) used to generate this certificate.
+            - Path to a Certificate Signing Request (CSR).
+            - Will check whether the CSR data corresponds to this certificate.
         type: path
 
     privatekey_path:
         description:
-            - Path to the private key to use when signing the certificate.
+            - Path to a private key file.
+            - Will check whether the certificate's public key is the public key to this private key.
         type: path
 
     privatekey_passphrase:
@@ -157,6 +159,16 @@ options:
         type: bool
         default: no
 
+    fail_when_validation_failed:
+        description:
+            - By default, the module fails when at least one of the conditions is not satisfied.
+            - If set to C(no), the module will not fail in this case. The user is responsible to
+              check the return values herself.
+            - Note that the module will still fail if it cannot read the certificate, or the
+              private key or the CSR when provided.
+        type: bool
+        default: yes
+
     select_crypto_backend:
         description:
             - Determines which crypto backend to use.
@@ -260,6 +272,74 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
+private_key_matches:
+    description: Whether private key matches.
+    returned: data could be loaded and I(privatekey_path) is set
+    type: bool
+csr_signature_matches:
+    description: Whether the CSR's signature is valid and the public key equals the certificate's public key.
+    returned: data could be loaded and I(csr_path) is set
+    type: bool
+csr_subject_match:
+    description: Whether the CSR's subject equals the certificate's subject matches.
+    returned: data could be loaded and I(csr_path) is set
+    type: bool
+csr_extensions_match:
+    description: Whether the CSR's extensions equal the certificate's extensions matches.
+    returned: data could be loaded and I(csr_path) is set
+    type: bool
+signature_algorithm_matches:
+    description: Whether the signature algorithm used for the certificate is contained in the provided list.
+    returned: data could be loaded and I(signature_algorithms) is set
+    type: bool
+subject_matches:
+    description: Whether the subject of the certificate matches I(subject).
+    returned: data could be loaded and I(subject) is set
+    type: bool
+issuer_matches:
+    description: Whether the issuer of the certificate matches I(issuer).
+    returned: data could be loaded and I(issuer) is set
+    type: bool
+has_expired_matches:
+    description: Whether the certificate's expiration corresponds to I(has_expired).
+    returned: data could be loaded and I(has_expired) is set
+    type: bool
+version_matches:
+    description: Whether the version of the certificate matches I(version).
+    returned: data could be loaded and I(version) is set
+    type: bool
+key_usage_matches:
+    description: Whether the key usages of the certificate match I(key_usage).
+    returned: data could be loaded and I(key_usage) is set
+    type: bool
+extended_key_usage_matches:
+    description: Whether the extended key usages of the certificate match I(extended_key_usage).
+    returned: data could be loaded and I(extended_key_usage) is set
+    type: bool
+subject_alt_name_matches:
+    description: Whether subject alternative names of the certificate match I(subject_alt_name).
+    returned: data could be loaded and I(subject_alt_name) is set
+    type: bool
+not_before_matches:
+    description: Whether the not before date of the certificate matches I(not_before).
+    returned: data could be loaded and I(not_before) is set
+    type: bool
+not_after_matches:
+    description: Whether the not after date of the certificate matches I(not_after).
+    returned: data could be loaded and I(not_after) is set
+    type: bool
+valid_at:
+    description: Whether the certificate is valid at I(valid_at).
+    returned: data could be loaded and I(valid_at) is set
+    type: bool
+invalid_at:
+    description: Whether the certificate is invalid at I(invalid_at).
+    returned: data could be loaded and I(invalid_at) is set
+    type: bool
+invalid_in:
+    description: Whether the certificate is invalid in I(invalid_in).
+    returned: data could be loaded and I(invalid_in) is set
+    type: bool
 '''
 
 import abc
@@ -361,6 +441,7 @@ class Certificate(object):
             except ValueError:
                 module.fail_json(msg='The supplied value for "valid_in" (%s) is not an integer or a valid timespec' % self.valid_in)
             self.valid_in = "+" + self.valid_in + "s"
+        self.fail_when_validation_failed = module.params['fail_when_validation_failed']
         self.message = []
 
     def get_relative_time_option(self, input_string, input_name):
@@ -474,39 +555,50 @@ class Certificate(object):
                 )
             except crypto_utils.OpenSSLBadPassphraseError as exc:
                 raise CertificateError(exc)
+            result['private_key_matches'] = True
             if not self._validate_privatekey():
                 self.message.append(
                     'Certificate %s and private key %s do not match' %
                     (self.path, self.privatekey_path)
                 )
+                result['private_key_matches'] = False
 
         if self.csr_path:
             self.csr = crypto_utils.load_certificate_request(self.csr_path, backend=self.backend)
+            result['csr_signature_matches'] = True
+            result['csr_subject_match'] = True
+            result['csr_extensions_match'] = True
             if not self._validate_csr_signature():
                 self.message.append(
                     'Certificate %s and CSR %s do not match: private key mismatch' %
                     (self.path, self.csr_path)
                 )
+                result['csr_signature_matches'] = False
             if not self._validate_csr_subject():
                 self.message.append(
                     'Certificate %s and CSR %s do not match: subject mismatch' %
                     (self.path, self.csr_path)
                 )
+                result['csr_subject_match'] = False
             if not self._validate_csr_extensions():
                 self.message.append(
                     'Certificate %s and CSR %s do not match: extensions mismatch' %
                     (self.path, self.csr_path)
                 )
+                result['csr_extensions_match'] = False
 
         if self.signature_algorithms:
+            result['signature_algorithm_matches'] = True
             wrong_alg = self._validate_signature_algorithms()
             if wrong_alg:
                 self.message.append(
                     'Invalid signature algorithm (got %s, expected one of %s)' %
                     (wrong_alg, self.signature_algorithms)
                 )
+                result['signature_algorithm_matches'] = False
 
         if self.subject:
+            result['subject_matches'] = True
             failure = self._validate_subject()
             if failure:
                 dummy, cert_subject = failure
@@ -514,104 +606,131 @@ class Certificate(object):
                     'Invalid subject component (got %s, expected all of %s to be present)' %
                     (cert_subject, self.subject)
                 )
+                result['subject_matches'] = False
 
         if self.issuer:
+            result['issuer_matches'] = True
             failure = self._validate_issuer()
             if failure:
                 dummy, cert_issuer = failure
                 self.message.append(
                     'Invalid issuer component (got %s, expected all of %s to be present)' % (cert_issuer, self.issuer)
                 )
+                result['issuer_matches'] = False
 
         if self.has_expired is not None:
+            result['has_expired_matches'] = True
             cert_expired = self._validate_has_expired()
             if cert_expired != self.has_expired:
                 self.message.append(
                     'Certificate expiration check failed (certificate expiration is %s, expected %s)' %
                     (cert_expired, self.has_expired)
                 )
+                result['has_expired_matches'] = False
 
         if self.version:
+            result['version_matches'] = True
             cert_version = self._validate_version()
             if cert_version != self.version:
                 self.message.append(
                     'Invalid certificate version number (got %s, expected %s)' %
                     (cert_version, self.version)
                 )
+                result['version_matches'] = False
 
         if self.key_usage is not None:
+            result['key_usage_matches'] = True
             failure = self._validate_key_usage()
             if failure == NO_EXTENSION:
                 self.message.append('Found no key_usage extension')
+                result['key_usage_matches'] = False
             elif failure:
                 dummy, cert_key_usage = failure
                 self.message.append(
                     'Invalid key_usage components (got %s, expected all of %s to be present)' %
                     (cert_key_usage, self.key_usage)
                 )
+                result['key_usage_matches'] = False
 
         if self.extended_key_usage is not None:
+            result['extended_key_usage_matches'] = True
             failure = self._validate_extended_key_usage()
             if failure == NO_EXTENSION:
                 self.message.append('Found no extended_key_usage extension')
+                result['extended_key_usage_matches'] = False
             elif failure:
                 dummy, ext_cert_key_usage = failure
                 self.message.append(
                     'Invalid extended_key_usage component (got %s, expected all of %s to be present)' % (ext_cert_key_usage, self.extended_key_usage)
                 )
+                result['extended_key_usage_matches'] = False
 
         if self.subject_alt_name is not None:
+            result['subject_alt_name_matches'] = True
             failure = self._validate_subject_alt_name()
             if failure == NO_EXTENSION:
                 self.message.append('Found no subject_alt_name extension')
+                result['subject_alt_name_matches'] = False
             elif failure:
                 dummy, cert_san = failure
                 self.message.append(
                     'Invalid subject_alt_name component (got %s, expected all of %s to be present)' %
                     (cert_san, self.subject_alt_name)
                 )
+                result['subject_alt_name_matches'] = False
 
         if self.not_before:
+            result['not_before_matches'] = True
             cert_not_valid_before = self._validate_not_before()
             if cert_not_valid_before != self.get_relative_time_option(self.not_before, 'not_before'):
                 self.message.append(
                     'Invalid not_before component (got %s, expected %s to be present)' %
                     (cert_not_valid_before, self.not_before)
                 )
+                result['not_before_matches'] = False
 
         if self.not_after:
+            result['not_after_matches'] = True
             cert_not_valid_after = self._validate_not_after()
             if cert_not_valid_after != self.get_relative_time_option(self.not_after, 'not_after'):
                 self.message.append(
                     'Invalid not_after component (got %s, expected %s to be present)' %
                     (cert_not_valid_after, self.not_after)
                 )
+                result['not_after_matches'] = True
 
         if self.valid_at:
+            result['valid_at'] = True
             not_before, valid_at, not_after = self._validate_valid_at()
             if not (not_before <= valid_at <= not_after):
                 self.message.append(
                     'Certificate is not valid for the specified date (%s) - not_before: %s - not_after: %s' %
                     (self.valid_at, not_before, not_after)
                 )
+                result['valid_at'] = False
 
         if self.invalid_at:
+            result['invalid_at'] = True
             not_before, invalid_at, not_after = self._validate_invalid_at()
             if (invalid_at <= not_before) or (invalid_at >= not_after):
                 self.message.append(
                     'Certificate is not invalid for the specified date (%s) - not_before: %s - not_after: %s' %
                     (self.invalid_at, not_before, not_after)
                 )
+                result['invalid_at'] = False
 
         if self.valid_in:
+            result['invalid_in'] = True
             not_before, valid_in, not_after = self._validate_valid_in()
             if not not_before <= valid_in <= not_after:
                 self.message.append(
-                    'Certificate is not valid in %s from now (that would be %s) - not_before: %s - not_after: %s'
-                    % (self.valid_in, valid_in, not_before, not_after))
+                    'Certificate is not valid in %s from now (that would be %s) - not_before: %s - not_after: %s' %
+                    (self.valid_in, valid_in, not_before, not_after)
+                )
+                result['invalid_in'] = False
 
-        if len(self.message):
-            module.fail_json(msg=' | '.join(self.message))
+        if self.fail_when_validation_failed and len(self.message):
+            module.fail_json(msg=' | '.join(self.message), **result)
 
         return result
 
@@ -917,6 +1036,7 @@ def main():
             valid_at=dict(type='str'),
             invalid_at=dict(type='str'),
             valid_in=dict(type='str'),
+            fail_when_validation_failed=dict(type='bool', default=True),
         ),
         supports_check_mode=True,
     )
