@@ -1,0 +1,10 @@
+# This is the configuration template for ansible-test HWC integration tests.
+# Please fill in the @VAR placeholders below and save this file without the
+# .template extension.
+
+identity_endpoint: @identity_endpoint
+user: @user
+password: @password
+domain: @domain
+project: @project
+region: @region
