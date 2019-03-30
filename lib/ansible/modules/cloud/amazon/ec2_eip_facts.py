@@ -19,7 +19,7 @@ options:
   filters:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and filter
-        value.  See https://docs.aws.amazon.com/cli/latest/reference/ec2/describe-addresses.html#options
+        value.  See U(https://docs.aws.amazon.com/cli/latest/reference/ec2/describe-addresses.html#options)
         for possible filters. Filter names and values are case sensitive.
     required: false
     default: {}
