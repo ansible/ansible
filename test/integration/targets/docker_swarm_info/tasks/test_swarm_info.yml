@@ -133,7 +133,7 @@
   - name: assert reading swarm facts and non existing swarm unlock key
     assert:
       that:
-        - 'not output.swarm_unlock_key'
+        - 'output.swarm_unlock_key is none'
         - 'output.can_talk_to_docker == true'
         - 'output.docker_swarm_active == true'
         - 'output.docker_swarm_manager == true'

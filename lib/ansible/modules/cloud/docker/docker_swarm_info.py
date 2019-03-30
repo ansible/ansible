@@ -327,7 +327,7 @@ class DockerSwarmManager(DockerBaseClass):
 
     def get_docker_swarm_unlock_key(self):
         unlock_key = self.client.get_unlock_key() or {}
-        return unlock_key.get('UnlockKey')
+        return unlock_key.get('UnlockKey') or None
 
 
 def main():
