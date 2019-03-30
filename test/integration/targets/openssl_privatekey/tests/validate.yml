@@ -119,6 +119,11 @@
       - passphrase_4.backup_file is undefined
       - passphrase_5.backup_file is string
 
+- name: Verify that broken key will be regenerated
+  assert:
+    that:
+      - output_broken is changed
+
 - name: Validate remove
   assert:
     that:
