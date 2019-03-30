@@ -264,9 +264,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             if self.config_context:
                 # User 'device_role' vs. 'role' to differ between devices and virtual-machines
                 if 'device_role' in host:
-                    url = self.api_endpoint + "/api/dcim/devices/" + str(host["id"])
+                    url = self.api_endpoint + "/api/dcim/devices/" + to_text(host["id"])
                 elif 'role' in host:
-                    url = self.api_endpoint + "/api/virtualization/virtual-machines/" + str(host["id"])
+                    url = self.api_endpoint + "/api/virtualization/virtual-machines/" + to_text(host["id"])
                 device_lookup = self._fetch_information(url)
                 return [device_lookup["config_context"]]
         except Exception:
@@ -281,21 +281,21 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
     def extract_primary_ip(self, host):
         try:
             address = host["primary_ip"]["address"]
-            return str(ip_interface(address).ip)
+            return to_text(ip_interface(address).ip)
         except Exception:
             return
 
     def extract_primary_ip4(self, host):
         try:
             address = host["primary_ip4"]["address"]
-            return str(ip_interface(address).ip)
+            return to_text(ip_interface(address).ip)
         except Exception:
             return
 
     def extract_primary_ip6(self, host):
         try:
             address = host["primary_ip6"]["address"]
-            return str(ip_interface(address).ip)
+            return to_text(ip_interface(address).ip)
         except Exception:
             return
 
@@ -394,7 +394,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         # An host in an Ansible inventory requires an hostname.
         # name is an unique but not required attribute for a device in NetBox
         # We default to an UUID for hostname in case the name is not set in NetBox
-        return host["name"] or str(uuid.uuid4())
+        return host["name"] or to_text(uuid.uuid4())
 
     def add_host_to_groups(self, host, hostname):
         for group in self.group_by:
