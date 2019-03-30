@@ -242,7 +242,7 @@ class Pkcs(crypto_utils.OpenSSLObject):
             self.src = self.path
             try:
                 pkcs12_privatekey, pkcs12_certificate, pkcs12_other_certificates, pkcs12_friendly_name = self.parse()
-            except crypto.Error as ex:
+            except crypto.Error:
                 return False
             if (pkcs12_privatekey is not None) and (self.privatekey_path is not None):
                 expected_pkey = crypto.dump_privatekey(crypto.FILETYPE_PEM,
