@@ -373,6 +373,9 @@ def main():
                    'applianceIp': meraki.params['appliance_ip'],
                    }
         if is_vlan_valid(meraki, net_id, meraki.params['vlan_id']) is False:
+            if meraki.module.check_mode is True:
+                meraki.result['data'] = payload
+                meraki.exit_json(**meraki.result)
             path = meraki.construct_path('create', net_id=net_id)
             response = meraki.request(path, method='POST', payload=json.dumps(payload))
             meraki.result['changed'] = True
@@ -393,6 +396,10 @@ def main():
                 payload['vpnNatSubnet'] = meraki.params['vpn_nat_subnet']
             ignored = ['networkId']
             if meraki.is_update_required(original, payload, optional_ignore=ignored):
+                if meraki.module.check_mode is True:
+                    original.update(payload)
+                    meraki.result['data'] = original
+                    meraki.exit_json(**meraki.result)                
                 path = meraki.construct_path('update', net_id=net_id) + str(meraki.params['vlan_id'])
                 response = meraki.request(path, method='PUT', payload=json.dumps(payload))
                 meraki.result['changed'] = True
@@ -401,22 +408,13 @@ def main():
                 meraki.result['data'] = original
     elif meraki.params['state'] == 'absent':
         if is_vlan_valid(meraki, net_id, meraki.params['vlan_id']):
+            if meraki.module.check_mode is True:
+                meraki.result['data'] = {}
+                meraki.exit_json(**meraki.result)                
             path = meraki.construct_path('delete', net_id=net_id) + str(meraki.params['vlan_id'])
             response = meraki.request(path, 'DELETE')
             meraki.result['changed'] = True
             meraki.result['data'] = response
-
-    # if the user is working with this module in only check mode we do not
-    # want to make any changes to the environment, just return the current
-    # state with no modifications
-    # FIXME: Work with Meraki so they can implement a check mode
-    if module.check_mode:
-        meraki.exit_json(**meraki.result)
-
-    # execute checks for argument completeness
-
-    # manipulate or modify the state as needed (this is going to be the
-    # part where your module will do what it needs to do)
 
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results
