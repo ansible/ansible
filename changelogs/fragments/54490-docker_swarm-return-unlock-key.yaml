@@ -1,2 +1,3 @@
 minor_changes:
   - "docker_swarm - ``UnlockKey`` will now be returned when ``autolock_managers`` is ``true``."
+  - "docker_swarm_info - Add option ``unlock_key`` to retrieve the swarm unlock key."
