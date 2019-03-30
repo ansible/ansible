@@ -324,16 +324,16 @@ def main():
             msg="The directory '%s' does not exist or the path is not a directory" % base_dir
         )
 
-    pkcs12 = Pkcs(module)
-    changed = False
+    try:
+        pkcs12 = Pkcs(module)
+        changed = False
 
-    if module.params['state'] == 'present':
-        if module.check_mode:
-            result = pkcs12.dump()
-            result['changed'] = module.params['force'] or not pkcs12.check(module)
-            module.exit_json(**result)
+        if module.params['state'] == 'present':
+            if module.check_mode:
+                result = pkcs12.dump()
+                result['changed'] = module.params['force'] or not pkcs12.check(module)
+                module.exit_json(**result)
 
-        try:
             if not pkcs12.check(module, perms_required=False) or module.params['force']:
                 if module.params['action'] == 'export':
                     if not module.params['friendly_name']:
@@ -346,29 +346,25 @@ def main():
             file_args = module.load_file_common_arguments(module.params)
             if module.set_fs_attributes_if_different(file_args, changed):
                 changed = True
+        else:
+            if module.check_mode:
+                result = pkcs12.dump()
+                result['changed'] = os.path.exists(module.params['path'])
+                module.exit_json(**result)
 
-        except PkcsError as exc:
-            module.fail_json(msg=to_native(exc))
-    else:
-        if module.check_mode:
-            result = pkcs12.dump()
-            result['changed'] = os.path.exists(module.params['path'])
-            module.exit_json(**result)
-
-        if os.path.exists(module.params['path']):
-            try:
+            if os.path.exists(module.params['path']):
                 pkcs12.remove(module)
                 changed = True
-            except PkcsError as exc:
-                module.fail_json(msg=to_native(exc))
 
-    result = pkcs12.dump()
-    result['changed'] = changed
-    if os.path.exists(module.params['path']):
-        file_mode = "%04o" % stat.S_IMODE(os.stat(module.params['path']).st_mode)
-        result['mode'] = file_mode
+        result = pkcs12.dump()
+        result['changed'] = changed
+        if os.path.exists(module.params['path']):
+            file_mode = "%04o" % stat.S_IMODE(os.stat(module.params['path']).st_mode)
+            result['mode'] = file_mode
 
-    module.exit_json(**result)
+        module.exit_json(**result)
+    except crypto_utils.OpenSSLObjectError as exc:
+        module.fail_json(msg=to_native(exc))
 
 
 if __name__ == '__main__':
