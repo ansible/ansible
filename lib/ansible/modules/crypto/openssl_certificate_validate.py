@@ -302,6 +302,23 @@ class CertificateError(crypto_utils.OpenSSLObjectError):
     pass
 
 
+def compare_sets(subset, superset, equality=False):
+    if equality:
+        return set(subset) == set(superset)
+    else:
+        return all(x in superset for x in subset)
+
+
+def compare_dicts(subset, superset, equality=False):
+    if equality:
+        return subset == superset
+    else:
+        return all(superset.get(x) == v for x, v in subset.items())
+
+
+NO_EXTENSION = 'no extension'
+
+
 class Certificate(object):
 
     def __init__(self, module, backend):
@@ -338,6 +355,12 @@ class Certificate(object):
         self.valid_at = module.params['valid_at']
         self.invalid_at = module.params['invalid_at']
         self.valid_in = module.params['valid_in']
+        if self.valid_in and not self.valid_in.startswith("+") and not self.valid_in.startswith("-"):
+            try:
+                int(self.valid_in)
+            except ValueError:
+                module.fail_json(msg='The supplied value for "valid_in" (%s) is not an integer or a valid timespec' % self.valid_in)
+            self.valid_in = "+" + self.valid_in + "s"
         self.message = []
 
     def get_relative_time_option(self, input_string, input_name):
@@ -484,10 +507,21 @@ class Certificate(object):
                 )
 
         if self.subject:
-            self._validate_subject()
+            failure = self._validate_subject()
+            if failure:
+                dummy, cert_subject = failure
+                self.message.append(
+                    'Invalid subject component (got %s, expected all of %s to be present)' %
+                    (cert_subject, self.subject)
+                )
 
         if self.issuer:
-            self._validate_issuer()
+            failure = self._validate_issuer()
+            if failure:
+                dummy, cert_issuer = failure
+                self.message.append(
+                    'Invalid issuer component (got %s, expected all of %s to be present)' % (cert_issuer, self.issuer)
+                )
 
         if self.has_expired is not None:
             cert_expired = self._validate_has_expired()
@@ -506,13 +540,36 @@ class Certificate(object):
                 )
 
         if self.key_usage is not None:
-            self._validate_key_usage()
+            failure = self._validate_key_usage()
+            if failure == NO_EXTENSION:
+                self.message.append('Found no key_usage extension')
+            elif failure:
+                dummy, cert_key_usage = failure
+                self.message.append(
+                    'Invalid key_usage components (got %s, expected all of %s to be present)' %
+                    (cert_key_usage, self.key_usage)
+                )
 
         if self.extended_key_usage is not None:
-            self._validate_extended_key_usage()
+            failure = self._validate_extended_key_usage()
+            if failure == NO_EXTENSION:
+                self.message.append('Found no extended_key_usage extension')
+            elif failure:
+                dummy, ext_cert_key_usage = failure
+                self.message.append(
+                    'Invalid extended_key_usage component (got %s, expected all of %s to be present)' % (ext_cert_key_usage, self.extended_key_usage)
+                )
 
         if self.subject_alt_name is not None:
-            self._validate_subject_alt_name()
+            failure = self._validate_subject_alt_name()
+            if failure == NO_EXTENSION:
+                self.message.append('Found no subject_alt_name extension')
+            elif failure:
+                dummy, cert_san = failure
+                self.message.append(
+                    'Invalid subject_alt_name component (got %s, expected all of %s to be present)' %
+                    (cert_san, self.subject_alt_name)
+                )
 
         if self.not_before:
             cert_not_valid_before = self._validate_not_before()
@@ -599,22 +656,15 @@ class AssertOnlyCertificateCryptography(Certificate):
         expected_subject = Name([NameAttribute(oid=crypto_utils.cryptography_get_name_oid(sub[0]), value=to_text(sub[1]))
                                  for sub in self.subject])
         cert_subject = self.cert.subject
-        if (not self.subject_strict and not all(x in cert_subject for x in expected_subject)) or \
-           (self.subject_strict and not set(expected_subject) == set(cert_subject)):
-            self.message.append(
-                'Invalid subject component (got %s, expected all of %s to be present)' %
-                (cert_subject, expected_subject)
-            )
+        if not compare_sets(expected_subject, cert_subject, self.subject_strict):
+            return expected_subject, cert_subject
 
     def _validate_issuer(self):
         expected_issuer = Name([NameAttribute(oid=crypto_utils.cryptography_get_name_oid(iss[0]), value=to_text(iss[1]))
                                 for iss in self.issuer])
         cert_issuer = self.cert.issuer
-        if (not self.issuer_strict and not all(x in cert_issuer for x in expected_issuer)) or \
-           (self.issuer_strict and not set(expected_issuer) == set(cert_issuer)):
-            self.message.append(
-                'Invalid issuer component (got %s, expected all of %s to be present)' % (cert_issuer, self.issuer)
-            )
+        if not compare_sets(expected_issuer, cert_issuer, self.issuer_strict):
+            return self.issuer, cert_issuer
 
     def _validate_has_expired(self):
         cert_not_after = self.cert.not_valid_after
@@ -631,7 +681,6 @@ class AssertOnlyCertificateCryptography(Certificate):
     def _validate_key_usage(self):
         try:
             current_key_usage = self.cert.extensions.get_extension_for_class(x509.KeyUsage).value
-            expected_key_usage = x509.KeyUsage(**crypto_utils.cryptography_parse_key_usage_params(self.key_usage))
             test_key_usage = dict(
                 digital_signature=current_key_usage.digital_signature,
                 content_commitment=current_key_usage.content_commitment,
@@ -640,40 +689,29 @@ class AssertOnlyCertificateCryptography(Certificate):
                 key_agreement=current_key_usage.key_agreement,
                 key_cert_sign=current_key_usage.key_cert_sign,
                 crl_sign=current_key_usage.crl_sign,
+                encipher_only=False,
+                decipher_only=False
             )
             if test_key_usage['key_agreement']:
                 test_key_usage.update(dict(
                     encipher_only=current_key_usage.encipher_only,
                     decipher_only=current_key_usage.decipher_only
                 ))
-            else:
-                test_key_usage.update(dict(
-                    encipher_only=False,
-                    decipher_only=False
-                ))
 
             key_usages = crypto_utils.cryptography_parse_key_usage_params(self.key_usage)
-            if (not self.key_usage_strict and not all(key_usages[x] == test_key_usage[x] for x in key_usages)) or \
-                    (self.key_usage_strict and current_key_usage != expected_key_usage):
-                self.message.append(
-                    'Invalid key_usage components (got %s, expected all of %s to be present)' %
-                    ([x for x in test_key_usage if x is True], [x for x in self.key_usage if x is True])
-                )
+            if not compare_dicts(key_usages, test_key_usage, self.key_usage_strict):
+                return self.key_usage, [x for x in test_key_usage if x is True]
 
         except cryptography.x509.ExtensionNotFound:
-            self.message.append('Found no key_usage extension')
+            return NO_EXTENSION
 
     def _validate_extended_key_usage(self):
         try:
             current_ext_keyusage = self.cert.extensions.get_extension_for_class(x509.ExtendedKeyUsage).value
             usages = [crypto_utils.cryptography_get_ext_keyusage(usage) for usage in self.extended_key_usage]
             expected_ext_keyusage = x509.ExtendedKeyUsage(usages)
-            if (not self.extended_key_usage_strict and not all(x in expected_ext_keyusage for x in current_ext_keyusage)) or \
-               (self.extended_key_usage_strict and not current_ext_keyusage == expected_ext_keyusage):
-                self.message.append(
-                    'Invalid extended_key_usage component (got %s, expected all of %s to be present)' % ([xku.value for xku in current_ext_keyusage],
-                                                                                                         [exku.value for exku in expected_ext_keyusage])
-                )
+            if not compare_sets(expected_ext_keyusage, current_ext_keyusage, self.extended_key_usage_strict):
+                return [eku.value for eku in expected_ext_keyusage], [eku.value for eku in current_ext_keyusage]
 
         except cryptography.x509.ExtensionNotFound:
             self.message.append('Found no extended_key_usage extension')
@@ -682,12 +720,8 @@ class AssertOnlyCertificateCryptography(Certificate):
         try:
             current_san = self.cert.extensions.get_extension_for_class(x509.SubjectAlternativeName).value
             expected_san = [crypto_utils.cryptography_get_name(san) for san in self.subject_alt_name]
-            if (not self.subject_alt_name_strict and not all(x in current_san for x in expected_san)) or \
-               (self.subject_alt_name_strict and not set(current_san) == set(expected_san)):
-                self.message.append(
-                    'Invalid subject_alt_name component (got %s, expected all of %s to be present)' %
-                    (current_san, self.subject_alt_name)
-                )
+            if not compare_sets(expected_san, current_san, self.subject_alt_name_strict):
+                return self.subject_alt_name, current_san
         except cryptography.x509.ExtensionNotFound:
             self.message.append('Found no subject_alt_name extension')
 
@@ -706,13 +740,6 @@ class AssertOnlyCertificateCryptography(Certificate):
         return self.cert.not_valid_before, rt, self.cert.not_valid_after
 
     def _validate_valid_in(self):
-        if not self.valid_in.startswith("+") and not self.valid_in.startswith("-"):
-            try:
-                int(self.valid_in)
-            except ValueError:
-                raise CertificateError(
-                    'The supplied value for "valid_in" (%s) is not an integer or a valid timespec' % self.valid_in)
-            self.valid_in = "+" + self.valid_in + "s"
         valid_in_date = self.get_relative_time_option(self.valid_in, "valid_in")
         return self.cert.not_valid_before, valid_in_date, self.cert.not_valid_after
 
@@ -722,15 +749,11 @@ class AssertOnlyCertificate(Certificate):
 
     def __init__(self, module):
         super(AssertOnlyCertificate, self).__init__(module, 'pyopenssl')
-        self._sanitize_inputs()
 
-    def _sanitize_inputs(self):
-        """Ensure inputs are properly sanitized before comparison."""
-
+        # Ensure inputs are properly sanitized before comparison.
         for param in ['signature_algorithms', 'key_usage', 'extended_key_usage',
                       'subject_alt_name', 'subject', 'issuer', 'not_before',
                       'not_after', 'valid_at', 'invalid_at']:
-
             attr = getattr(self, param)
             if isinstance(attr, list) and attr:
                 if isinstance(attr[0], str):
@@ -784,21 +807,15 @@ class AssertOnlyCertificate(Certificate):
         expected_subject = [(OpenSSL._util.lib.OBJ_txt2nid(sub[0]), sub[1]) for sub in self.subject]
         cert_subject = self.cert.get_subject().get_components()
         current_subject = [(OpenSSL._util.lib.OBJ_txt2nid(sub[0]), sub[1]) for sub in cert_subject]
-        if (not self.subject_strict and not all(x in current_subject for x in expected_subject)) or \
-           (self.subject_strict and not set(expected_subject) == set(current_subject)):
-            self.message.append(
-                'Invalid subject component (got %s, expected all of %s to be present)' % (cert_subject, self.subject)
-            )
+        if not compare_sets(expected_subject, current_subject, self.subject_strict):
+            return expected_subject, current_subject
 
     def _validate_issuer(self):
         expected_issuer = [(OpenSSL._util.lib.OBJ_txt2nid(iss[0]), iss[1]) for iss in self.issuer]
         cert_issuer = self.cert.get_issuer().get_components()
         current_issuer = [(OpenSSL._util.lib.OBJ_txt2nid(iss[0]), iss[1]) for iss in cert_issuer]
-        if (not self.issuer_strict and not all(x in current_issuer for x in expected_issuer)) or \
-           (self.issuer_strict and not set(expected_issuer) == set(current_issuer)):
-            self.message.append(
-                'Invalid issuer component (got %s, expected all of %s to be present)' % (cert_issuer, self.issuer)
-            )
+        if not compare_sets(expected_issuer, current_issuer, self.issuer_strict):
+            return self.issuer, cert_issuer
 
     def _validate_has_expired(self):
         # The following 3 lines are the same as the current PyOpenSSL code for cert.has_expired().
@@ -824,13 +841,10 @@ class AssertOnlyCertificate(Certificate):
                 key_usage = [OpenSSL._util.lib.OBJ_txt2nid(key_usage) for key_usage in self.key_usage]
                 current_ku = [OpenSSL._util.lib.OBJ_txt2nid(usage.strip()) for usage in
                               to_bytes(extension, errors='surrogate_or_strict').split(b',')]
-                if (not self.key_usage_strict and not all(x in current_ku for x in key_usage)) or \
-                   (self.key_usage_strict and not set(key_usage) == set(current_ku)):
-                    self.message.append(
-                        'Invalid key_usage component (got %s, expected all of %s to be present)' % (str(extension).split(', '), self.key_usage)
-                    )
+                if not compare_sets(key_usage, current_ku, self.key_usage_strict):
+                    return self.key_usage, str(extension).split(', ')
         if not found:
-            self.message.append('Found no key_usage extension')
+            return NO_EXTENSION
 
     def _validate_extended_key_usage(self):
         found = False
@@ -841,14 +855,10 @@ class AssertOnlyCertificate(Certificate):
                 extKeyUsage = [OpenSSL._util.lib.OBJ_txt2nid(keyUsage) for keyUsage in self.extended_key_usage]
                 current_xku = [OpenSSL._util.lib.OBJ_txt2nid(usage.strip()) for usage in
                                to_bytes(extension, errors='surrogate_or_strict').split(b',')]
-                if (not self.extended_key_usage_strict and not all(x in current_xku for x in extKeyUsage)) or \
-                   (self.extended_key_usage_strict and not set(extKeyUsage) == set(current_xku)):
-                    self.message.append(
-                        'Invalid extended_key_usage component (got %s, expected all of %s to be present)' % (str(extension).split(', '),
-                                                                                                             self.extended_key_usage)
-                    )
+                if not compare_sets(extKeyUsage, current_xku, self.extended_key_usage_strict):
+                    return self.extended_key_usage, str(extension).split(', ')
         if not found:
-            self.message.append('Found no extended_key_usage extension')
+            return NO_EXTENSION
 
     def _validate_subject_alt_name(self):
         found = False
@@ -858,13 +868,10 @@ class AssertOnlyCertificate(Certificate):
                 found = True
                 l_altnames = [altname.replace(b'IP Address', b'IP') for altname in
                               to_bytes(extension, errors='surrogate_or_strict').split(b', ')]
-                if (not self.subject_alt_name_strict and not all(x in l_altnames for x in self.subject_alt_name)) or \
-                   (self.subject_alt_name_strict and not set(self.subject_alt_name) == set(l_altnames)):
-                    self.message.append(
-                        'Invalid subject_alt_name component (got %s, expected all of %s to be present)' % (l_altnames, self.subject_alt_name)
-                    )
+                if not compare_sets(self.subject_alt_name, l_altnames, self.subject_alt_name_strict):
+                    return self.subject_alt_name, l_altnames
         if not found:
-            self.message.append('Found no subject_alt_name extension')
+            return NO_EXTENSION
 
     def _validate_not_before(self):
         return self.cert.get_notBefore()
@@ -879,13 +886,6 @@ class AssertOnlyCertificate(Certificate):
         return self.cert.get_notBefore(), self.valid_at, self.cert.get_notAfter()
 
     def _validate_valid_in(self):
-        if not self.valid_in.startswith("+") and not self.valid_in.startswith("-"):
-            try:
-                int(self.valid_in)
-            except ValueError:
-                raise CertificateError(
-                    'The supplied value for "valid_in" (%s) is not an integer or a valid timespec' % self.valid_in)
-            self.valid_in = "+" + self.valid_in + "s"
         valid_in_asn1 = self.get_relative_time_option(self.valid_in, "valid_in")
         valid_in_date = to_bytes(valid_in_asn1, errors='surrogate_or_strict')
         return self.cert.get_notBefore(), valid_in_date, self.cert.get_notAfter()
