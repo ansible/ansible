@@ -1,2 +1,2 @@
 bugfixes:
-  - docker_compose - fixed an issue where remove_orphans doesn't work reliably
+  - docker_compose - fixed an issue where ``remove_orphans`` doesn't work reliably.
