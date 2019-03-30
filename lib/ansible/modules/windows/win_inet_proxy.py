@@ -68,9 +68,6 @@ options:
       hostname and/or port for the protocol specified.
     - Valid protocols are C(http), C(https), C(ftp), and C(socks).
     - Omit, set to null or an empty string to remove the proxy settings.
-  connection:
-    description:
-    type: str
 notes:
 - This is not the same as the proxy settings set in WinHTTP through the
   C(netsh) command. Use the M(win_http_proxy) module ot manage that instead.
