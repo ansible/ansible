@@ -267,6 +267,8 @@ class SunOSHardware(Hardware):
 
     def get_uptime_facts(self):
         uptime_facts = {}
+        # sample kstat output:
+        # unix:0:system_misc:boot_time    1548249689
         rc, out, err = self.module.run_command('/usr/bin/kstat -p unix:0:system_misc:boot_time')
 
         if rc != 0:
