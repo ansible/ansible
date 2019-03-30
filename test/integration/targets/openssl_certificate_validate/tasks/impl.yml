@@ -60,11 +60,11 @@
 - assert:
     that:
       - extension_missing_san is failed
-      - "'Found no subjectAltName extension' in extension_missing_san.msg"
+      - "'Found no subject_alt_name extension' in extension_missing_san.msg"
       - extension_missing_ku is failed
-      - "'Found no keyUsage extension' in extension_missing_ku.msg"
+      - "'Found no key_usage extension' in extension_missing_ku.msg"
       - extension_missing_eku is failed
-      - "'Found no extendedKeyUsage extension' in extension_missing_eku.msg"
+      - "'Found no extended_key_usage extension' in extension_missing_eku.msg"
 
 - name: (Validate, {{select_crypto_backend}}) - Check private key passphrase fail 1
   openssl_certificate_validate:
