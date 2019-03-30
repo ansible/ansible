@@ -276,7 +276,7 @@ class Pkcs(crypto_utils.OpenSSLObject):
             elif bool(pkcs12_other_certificates) != bool(self.ca_certificates):
                 return False
 
-            if pkcs12_other_certificates is None:
+            if not pkcs12_other_certificates:
                 if ((self.pkcs12.get_friendlyname() is not None) and (pkcs12_friendly_name is not None)):
                     return self.pkcs12.get_friendlyname() == pkcs12_friendly_name
                 elif bool(self.pkcs12.get_friendlyname()) != bool(pkcs12_friendly_name):
