@@ -233,7 +233,7 @@ swarm_facts:
       UnlockKey:
           description: The swarm unlock-key if I(autolock_managers) is C(true).
           returned: on success if I(autolock_managers) is C(true)
-            and swarm is initialised or autolock_managers is changed.
+            and swarm is initialised, or if I(autolock_managers) has changed.
           type: str
           example: SWMKEY-1-xxx
 
