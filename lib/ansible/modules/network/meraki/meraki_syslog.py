@@ -263,6 +263,9 @@ def main():
                 meraki.result['data'] = r
                 meraki.result['changed'] = True
         else:
+            if meraki.module.check_mode is True:
+                meraki.result['data'] = original
+                meraki.exit_json(**meraki.result)
             meraki.result['data'] = original
 
     # in the event of a successful module execution, you will want to
