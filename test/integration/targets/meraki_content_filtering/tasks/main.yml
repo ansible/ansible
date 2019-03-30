@@ -36,6 +36,22 @@
     delegate_to: localhost
     register: create_net_appliance
 
+  - name: Set single allowed URL pattern with check mode
+    meraki_content_filtering:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      state: present
+      allowed_urls:
+        - "http://www.ansible.com/*"
+    register: single_allowed_check
+    check_mode: yes
+
+  - assert:
+      that:
+        - single_allowed_check.data.allowedUrlPatterns | length == 1
+        - single_allowed_check is not changed
+
   - name: Set single allowed URL pattern
     meraki_content_filtering:
       auth_key: '{{auth_key}}'
@@ -46,12 +62,27 @@
         - "http://www.ansible.com/*"
     register: single_allowed
 
-  - debug:
-      var: single_allowed.data.allowedUrlPatterns
-
   - assert:
       that:
         - single_allowed.data.allowedUrlPatterns | length == 1
+
+  - name: Set single allowed URL pattern for idempotency with check mode
+    meraki_content_filtering:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      state: present
+      allowed_urls:
+        - "http://www.ansible.com/*"
+    register: single_allowed_idempotent_check
+    check_mode: yes
+
+  - debug:
+      var: single_allowed_idempotent_check
+
+  - assert:
+      that:
+        - single_allowed_idempotent_check is not changed
 
   - name: Set single allowed URL pattern for idempotency
     meraki_content_filtering:
@@ -139,5 +170,3 @@
           -
         blocked_urls:
           -
-        # blocked_categories:
-        #   -

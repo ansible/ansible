@@ -203,15 +203,21 @@ def main():
         current = meraki.request(path, method='GET')
         proposed = current.copy()
         proposed.update(payload)
-        if module.check_mode:
-            meraki.result['data'] = payload
-            meraki.exit_json(**meraki.result)
-        if meraki.is_update_required(current, payload):
+        if meraki.is_update_required(current, payload) is True:
+            if module.check_mode:
+                current.update(payload)
+                meraki.result['data'] = current
+                meraki.exit_json(**meraki.result)
             response = meraki.request(path, method='PUT', payload=json.dumps(payload))
             meraki.result['data'] = response
             meraki.result['changed'] = True
         else:
             meraki.result['data'] = current
+            if module.check_mode:
+                meraki.result['data'] = current
+                meraki.exit_json(**meraki.result)
+            meraki.result['data'] = current
+            meraki.exit_json(**meraki.result)
 
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results
