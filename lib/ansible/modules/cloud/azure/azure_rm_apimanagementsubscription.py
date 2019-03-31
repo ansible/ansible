@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_apimanagementsubscription
-version_added: '2.9'
+version_added: '2.8'
 short_description: Manage Azure Subscription instance.
 description:
   - 'Create, update and delete instance of Azure Subscription.'
@@ -75,11 +75,6 @@ options:
             subscription has been cancelled by the developer or administrator, *
             expired – the subscription reached its expiration date and was
             deactivated.
-  _if-_match:
-    description:
-      - >-
-        ETag of the Entity. Not required when creating an entity, but required
-        when updating an entity.
   state:
     description:
       - Assert the state of the Subscription.
@@ -150,9 +145,6 @@ class AzureRMSubscription(AzureRMModuleBase):
             properties=dict(
                 type='dict'
             ),
-            _if-_match=dict(
-                type='str'
-            ),
             state=dict(
                 type='str',
                 default='present',
@@ -163,7 +155,6 @@ class AzureRMSubscription(AzureRMModuleBase):
         self.resource_group_name = None
         self.service_name = None
         self.sid = None
-        self._if-_match = None
 
         self.results = dict(changed=False)
         self.mgmt_client = None
@@ -191,8 +182,6 @@ class AzureRMSubscription(AzureRMModuleBase):
             elif kwargs[key] is not None:
                 if key == "properties":
                     self.body["properties"] = kwargs[key]
-
-        self.adjust_parameters()
 
         old_response = None
         response = None
@@ -267,9 +256,6 @@ class AzureRMSubscription(AzureRMModuleBase):
 
 
         return self.results
-
-    def adjust_parameters(self):
-if self.parameters.get('properties', None) is not None:
 
     def rename_key(self, d, old_name, new_name):
         old_value = d.get(old_name, None)

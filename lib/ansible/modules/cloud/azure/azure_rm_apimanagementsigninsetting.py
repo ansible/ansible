@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_apimanagementsigninsetting
-version_added: '2.9'
+version_added: '2.8'
 short_description: Manage Azure SignInSetting instance.
 description:
   - 'Create, update and delete instance of Azure SignInSetting.'
@@ -57,7 +57,6 @@ EXAMPLES = '''
     serviceName: apimService1
     resourceGroupName: myResourceGroup
     uid: 5931a75ae4bbd512288c680b
-    If-Match: '*'
     properties:
       enabled: true
 

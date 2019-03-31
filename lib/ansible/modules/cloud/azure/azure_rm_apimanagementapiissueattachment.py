@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_apimanagementapiissueattachment
-version_added: '2.9'
+version_added: '2.8'
 short_description: Manage Azure ApiIssueAttachment instance.
 description:
   - 'Create, update and delete instance of Azure ApiIssueAttachment.'
@@ -61,12 +61,6 @@ options:
         description:
           - An HTTP link or Base64-encoded binary data.
         required: true
-  _if-_match:
-    description:
-      - >-
-        ETag of the Issue Entity. ETag should match the current entity state
-        from the header response of the GET request or it should be * for
-        unconditional update.
   state:
     description:
       - Assert the state of the ApiIssueAttachment.
@@ -139,9 +133,6 @@ class AzureRMApiIssueAttachment(AzureRMModuleBase):
             properties=dict(
                 type='dict'
             ),
-            _if-_match=dict(
-                type='str'
-            ),
             state=dict(
                 type='str',
                 default='present',
@@ -154,7 +145,6 @@ class AzureRMApiIssueAttachment(AzureRMModuleBase):
         self.api_id = None
         self.issue_id = None
         self.attachment_id = None
-        self._if-_match = None
 
         self.results = dict(changed=False)
         self.mgmt_client = None
@@ -182,8 +172,6 @@ class AzureRMApiIssueAttachment(AzureRMModuleBase):
             elif kwargs[key] is not None:
                 if key == "properties":
                     self.body["properties"] = kwargs[key]
-
-        self.adjust_parameters()
 
         old_response = None
         response = None
@@ -264,9 +252,6 @@ class AzureRMApiIssueAttachment(AzureRMModuleBase):
 
 
         return self.results
-
-    def adjust_parameters(self):
-if self.parameters.get('properties', None) is not None:
 
     def rename_key(self, d, old_name, new_name):
         old_value = d.get(old_name, None)

@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_apimanagementapioperationpolicy
-version_added: '2.9'
+version_added: '2.8'
 short_description: Manage Azure ApiOperationPolicy instance.
 description:
   - 'Create, update and delete instance of Azure ApiOperationPolicy.'
@@ -52,11 +52,6 @@ options:
       content_format:
         description:
           - Format of the policyContent.
-  _if-_match:
-    description:
-      - >-
-        ETag of the Entity. Not required when creating an entity, but required
-        when updating an entity.
   state:
     description:
       - Assert the state of the ApiOperationPolicy.
@@ -82,7 +77,6 @@ EXAMPLES = '''
     apiId: 5600b57e7e8880006a040001
     operationId: 5600b57e7e8880006a080001
     policyId: policy
-    If-Match: '*'
     properties:
       contentFormat: xml
       policyContent: >-
@@ -131,9 +125,6 @@ class AzureRMApiOperationPolicy(AzureRMModuleBase):
             properties=dict(
                 type='dict'
             ),
-            _if-_match=dict(
-                type='str'
-            ),
             state=dict(
                 type='str',
                 default='present',
@@ -146,7 +137,6 @@ class AzureRMApiOperationPolicy(AzureRMModuleBase):
         self.api_id = None
         self.operation_id = None
         self.policy_id = None
-        self._if-_match = None
 
         self.results = dict(changed=False)
         self.mgmt_client = None
@@ -174,8 +164,6 @@ class AzureRMApiOperationPolicy(AzureRMModuleBase):
             elif kwargs[key] is not None:
                 if key == "properties":
                     self.body["properties"] = kwargs[key]
-
-        self.adjust_parameters()
 
         old_response = None
         response = None
@@ -256,9 +244,6 @@ class AzureRMApiOperationPolicy(AzureRMModuleBase):
 
 
         return self.results
-
-    def adjust_parameters(self):
-if self.parameters.get('properties', None) is not None:
 
     def rename_key(self, d, old_name, new_name):
         old_value = d.get(old_name, None)

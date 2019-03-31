@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_apimanagementpolicy
-version_added: '2.9'
+version_added: '2.8'
 short_description: Manage Azure Policy instance.
 description:
   - 'Create, update and delete instance of Azure Policy.'
@@ -140,8 +140,6 @@ class AzureRMPolicy(AzureRMModuleBase):
                 if key == "properties":
                     self.body["properties"] = kwargs[key]
 
-        self.adjust_parameters()
-
         old_response = None
         response = None
 
@@ -215,9 +213,6 @@ class AzureRMPolicy(AzureRMModuleBase):
 
 
         return self.results
-
-    def adjust_parameters(self):
-if self.parameters.get('properties', None) is not None:
 
     def rename_key(self, d, old_name, new_name):
         old_value = d.get(old_name, None)

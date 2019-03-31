@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_apimanagementtagdescription
-version_added: '2.9'
+version_added: '2.8'
 short_description: Manage Azure TagDescription instance.
 description:
   - 'Create, update and delete instance of Azure TagDescription.'
@@ -41,11 +41,6 @@ options:
   properties:
     description:
       - Properties supplied to Create TagDescription operation.
-  _if-_match:
-    description:
-      - >-
-        ETag of the Entity. Not required when creating an entity, but required
-        when updating an entity.
   state:
     description:
       - Assert the state of the TagDescription.
@@ -116,9 +111,6 @@ class AzureRMTagDescription(AzureRMModuleBase):
             properties=dict(
                 type='dict'
             ),
-            _if-_match=dict(
-                type='str'
-            ),
             state=dict(
                 type='str',
                 default='present',
@@ -130,7 +122,6 @@ class AzureRMTagDescription(AzureRMModuleBase):
         self.service_name = None
         self.api_id = None
         self.tag_id = None
-        self._if-_match = None
 
         self.results = dict(changed=False)
         self.mgmt_client = None

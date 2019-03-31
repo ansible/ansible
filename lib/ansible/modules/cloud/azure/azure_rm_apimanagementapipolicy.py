@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_apimanagementapipolicy
-version_added: '2.9'
+version_added: '2.8'
 short_description: Manage Azure ApiPolicy instance.
 description:
   - 'Create, update and delete instance of Azure ApiPolicy.'
@@ -47,11 +47,6 @@ options:
       content_format:
         description:
           - Format of the policyContent.
-  _if-_match:
-    description:
-      - >-
-        ETag of the Entity. Not required when creating an entity, but required
-        when updating an entity.
   state:
     description:
       - Assert the state of the ApiPolicy.
@@ -76,7 +71,6 @@ EXAMPLES = '''
     resourceGroupName: myResourceGroup
     apiId: 5600b57e7e8880006a040001
     policyId: policy
-    If-Match: '*'
     properties:
       contentFormat: xml
       policyContent: >-
@@ -88,7 +82,6 @@ EXAMPLES = '''
     resourceGroupName: myResourceGroup
     apiId: 5600b57e7e8880006a040001
     policyId: policy
-    If-Match: '*'
     properties:
       policyContent: "<policies>\r\n     <inbound>\r\n     <base />\r\n  <set-header name=\"newvalue\" exists-action=\"override\">\r\n   <value>\"@(context.Request.Headers.FirstOrDefault(h => h.Ke==\"Via\"))\" </value>\r\n    </set-header>\r\n  </inbound>\r\n      </policies>"
       contentFormat: rawxml
@@ -132,9 +125,6 @@ class AzureRMApiPolicy(AzureRMModuleBase):
             properties=dict(
                 type='dict'
             ),
-            _if-_match=dict(
-                type='str'
-            ),
             state=dict(
                 type='str',
                 default='present',
@@ -146,7 +136,6 @@ class AzureRMApiPolicy(AzureRMModuleBase):
         self.service_name = None
         self.api_id = None
         self.policy_id = None
-        self._if-_match = None
 
         self.results = dict(changed=False)
         self.mgmt_client = None
@@ -174,8 +163,6 @@ class AzureRMApiPolicy(AzureRMModuleBase):
             elif kwargs[key] is not None:
                 if key == "properties":
                     self.body["properties"] = kwargs[key]
-
-        self.adjust_parameters()
 
         old_response = None
         response = None
@@ -253,9 +240,6 @@ class AzureRMApiPolicy(AzureRMModuleBase):
 
 
         return self.results
-
-    def adjust_parameters(self):
-if self.parameters.get('properties', None) is not None:
 
     def rename_key(self, d, old_name, new_name):
         old_value = d.get(old_name, None)

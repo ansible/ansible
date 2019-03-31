@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_apimanagementapiissue
-version_added: '2.9'
+version_added: '2.8'
 short_description: Manage Azure ApiIssue instance.
 description:
   - 'Create, update and delete instance of Azure ApiIssue.'
@@ -53,12 +53,6 @@ options:
         description:
           - A resource identifier for the user created the issue.
         required: true
-  _if-_match:
-    description:
-      - >-
-        ETag of the Issue Entity. ETag should match the current entity state
-        from the header response of the GET request or it should be * for
-        unconditional update.
   state:
     description:
       - Assert the state of the ApiIssue.
@@ -132,9 +126,6 @@ class AzureRMApiIssue(AzureRMModuleBase):
             properties=dict(
                 type='dict'
             ),
-            _if-_match=dict(
-                type='str'
-            ),
             state=dict(
                 type='str',
                 default='present',
@@ -146,7 +137,6 @@ class AzureRMApiIssue(AzureRMModuleBase):
         self.service_name = None
         self.api_id = None
         self.issue_id = None
-        self._if-_match = None
 
         self.results = dict(changed=False)
         self.mgmt_client = None
@@ -174,8 +164,6 @@ class AzureRMApiIssue(AzureRMModuleBase):
             elif kwargs[key] is not None:
                 if key == "properties":
                     self.body["properties"] = kwargs[key]
-
-        self.adjust_parameters()
 
         old_response = None
         response = None
@@ -253,9 +241,6 @@ class AzureRMApiIssue(AzureRMModuleBase):
 
 
         return self.results
-
-    def adjust_parameters(self):
-if self.parameters.get('properties', None) is not None:
 
     def rename_key(self, d, old_name, new_name):
         old_value = d.get(old_name, None)

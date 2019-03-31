@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_apimanagementbackend
-version_added: '2.9'
+version_added: '2.8'
 short_description: Manage Azure Backend instance.
 description:
   - 'Create, update and delete instance of Azure Backend.'
@@ -44,11 +44,6 @@ options:
         description:
           - Backend communication protocol.
         required: true
-  _if-_match:
-    description:
-      - >-
-        ETag of the Entity. Not required when creating an entity, but required
-        when updating an entity.
   state:
     description:
       - Assert the state of the Backend.
@@ -151,9 +146,6 @@ class AzureRMBackend(AzureRMModuleBase):
             properties=dict(
                 type='dict'
             ),
-            _if-_match=dict(
-                type='str'
-            ),
             state=dict(
                 type='str',
                 default='present',
@@ -164,7 +156,6 @@ class AzureRMBackend(AzureRMModuleBase):
         self.resource_group_name = None
         self.service_name = None
         self.backendid = None
-        self._if-_match = None
 
         self.results = dict(changed=False)
         self.mgmt_client = None

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2017 Zim Kalinowski, <zikalino@microsoft.com>
+# Copyright (c) 2019 Zim Kalinowski, (@zikalino)
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_apimanagementquotabyperiodkey_info
-version_added: '2.5'
+version_added: '2.8'
 short_description: Get QuotaByPeriodKey facts.
 description:
     - Get facts of QuotaByPeriodKey.

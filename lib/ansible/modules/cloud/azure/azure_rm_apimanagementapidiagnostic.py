@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_apimanagementapidiagnostic
-version_added: '2.9'
+version_added: '2.8'
 short_description: Manage Azure ApiDiagnostic instance.
 description:
   - 'Create, update and delete instance of Azure ApiDiagnostic.'
@@ -45,11 +45,6 @@ options:
         description:
           - Indicates whether a diagnostic should receive data or not.
         required: true
-  _if-_match:
-    description:
-      - >-
-        ETag of the Entity. Not required when creating an entity, but required
-        when updating an entity.
   state:
     description:
       - Assert the state of the ApiDiagnostic.
@@ -116,9 +111,6 @@ class AzureRMApiDiagnostic(AzureRMModuleBase):
             properties=dict(
                 type='dict'
             ),
-            _if-_match=dict(
-                type='str'
-            ),
             state=dict(
                 type='str',
                 default='present',
@@ -130,7 +122,6 @@ class AzureRMApiDiagnostic(AzureRMModuleBase):
         self.service_name = None
         self.api_id = None
         self.diagnostic_id = None
-        self._if-_match = None
 
         self.results = dict(changed=False)
         self.mgmt_client = None

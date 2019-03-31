@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_apimanagementproductpolicy
-version_added: '2.9'
+version_added: '2.8'
 short_description: Manage Azure ProductPolicy instance.
 description:
   - 'Create, update and delete instance of Azure ProductPolicy.'
@@ -35,11 +35,6 @@ options:
   policy_id:
     description:
       - The identifier of the Policy.
-  _if-_match:
-    description:
-      - >-
-        ETag of the Entity. Not required when creating an entity, but required
-        when updating an entity.
   properties:
     description:
       - Properties of the Policy.
@@ -115,9 +110,6 @@ class AzureRMProductPolicy(AzureRMModuleBase):
             policy_id=dict(
                 type='str'
             ),
-            _if-_match=dict(
-                type='str'
-            ),
             properties=dict(
                 type='dict'
             ),
@@ -132,7 +124,6 @@ class AzureRMProductPolicy(AzureRMModuleBase):
         self.service_name = None
         self.product_id = None
         self.policy_id = None
-        self._if-_match = None
 
         self.results = dict(changed=False)
         self.mgmt_client = None
@@ -160,8 +151,6 @@ class AzureRMProductPolicy(AzureRMModuleBase):
             elif kwargs[key] is not None:
                 if key == "properties":
                     self.body["properties"] = kwargs[key]
-
-        self.adjust_parameters()
 
         old_response = None
         response = None
@@ -239,9 +228,6 @@ class AzureRMProductPolicy(AzureRMModuleBase):
 
 
         return self.results
-
-    def adjust_parameters(self):
-if self.parameters.get('properties', None) is not None:
 
     def rename_key(self, d, old_name, new_name):
         old_value = d.get(old_name, None)
