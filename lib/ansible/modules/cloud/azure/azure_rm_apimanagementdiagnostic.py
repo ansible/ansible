@@ -66,13 +66,10 @@ EXAMPLES = '''
 - name: ApiManagementCreateDiagnostic
   azure_rm_apimanagementdiagnostic:
     serviceName: apimService1
-    resourceGroupName: rg1
-    api-version: '2018-01-01'
-    subscriptionId: subid
+    resourceGroupName: myResourceGroup
     diagnosticId: default
-    parameters:
-      properties:
-        enabled: true
+    properties:
+      enabled: true
 
 '''
 
@@ -129,7 +126,7 @@ class AzureRMDiagnostic(AzureRMModuleBase):
         self.mgmt_client = None
         self.state = None
         self.url = None
-        self.status_code = [ 200, 202 ]
+        self.status_code = [200, 202]
         self.to_do = Actions.NoAction
 
         self.body = {}
@@ -139,7 +136,7 @@ class AzureRMDiagnostic(AzureRMModuleBase):
         self.header_parameters['Content-Type'] = 'application/json; charset=utf-8'
 
         super(AzureRMDiagnostic, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                               supports_check_mode=True,
+                                                supports_check_mode=True,
                                                 supports_tags=False)
 
     def exec_module(self, **kwargs):
@@ -158,8 +155,16 @@ class AzureRMDiagnostic(AzureRMModuleBase):
         self.mgmt_client = self.get_mgmt_svc_client(GenericRestClient,
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
-        # prepare url
-        self.url = '/subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.ApiManagement/service/{{ service_name }}/diagnostics/{{ diagnostic_name }}'
+        self.url = ('/subscriptions' +
+                    '/{{ subscription_id }}' +
+                    '/resourceGroups' +
+                    '/{{ resource_group }}' +
+                    '/providers' +
+                    '/Microsoft.ApiManagement' +
+                    '/service' +
+                    '/{{ service_name }}' +
+                    '/diagnostics' +
+                    '/{{ diagnostic_name }}')
         self.url = self.url.replace('{{ subscription_id }}', self.subscription_id)
         self.url = self.url.replace('{{ resource_group }}', self.resource_group)
         self.url = self.url.replace('{{ service_name }}', self.service_name)
@@ -191,11 +196,11 @@ class AzureRMDiagnostic(AzureRMModuleBase):
 
             response = self.create_update_diagnostic()
 
-            #if not old_response:
+            # if not old_response:
             self.results['changed'] = True
             self.results['response'] = response
-            #else:
-            #    self.results['changed'] = old_response.__ne__(response)
+            # else:
+            #     self.results['changed'] = old_response.__ne__(response)
             self.log('Creation / Update done')
         elif self.to_do == Actions.Delete:
             self.log('Diagnostic instance deleted')
@@ -230,7 +235,7 @@ class AzureRMDiagnostic(AzureRMModuleBase):
 
         :return: deserialized Diagnostic instance state dictionary
         '''
-        #self.log('Creating / Updating the Diagnostic instance {0}'.format(self.))
+        # self.log('Creating / Updating the Diagnostic instance {0}'.format(self.))
 
         try:
             if self.to_do == Actions.Create:
@@ -238,7 +243,7 @@ class AzureRMDiagnostic(AzureRMModuleBase):
                                                   'PUT',
                                                   self.query_parameters,
                                                   self.header_parameters,
-                                                  self.body, # { 'location': 'eastus'},
+                                                  self.body,
                                                   self.status_code)
             else:
                 response = self.mgmt_client.query(self.url,
@@ -248,7 +253,7 @@ class AzureRMDiagnostic(AzureRMModuleBase):
                                                   self.body,
                                                   self.status_code)
             # implement poller in another way
-            #if isinstance(response, AzureOperationPoller):
+            # if isinstance(response, AzureOperationPoller):
             #    response = self.get_poller_result(response)
 
         except CloudError as exc:
@@ -257,9 +262,9 @@ class AzureRMDiagnostic(AzureRMModuleBase):
 
         try:
             response = json.loads(response.text)
-        except:
-           response = { 'text': response.text }
-           pass
+        except Exception:
+            response = {'text': response.text}
+            pass
 
         return response
 
@@ -269,7 +274,7 @@ class AzureRMDiagnostic(AzureRMModuleBase):
 
         :return: True
         '''
-        #self.log('Deleting the Diagnostic instance {0}'.format(self.))
+        # self.log('Deleting the Diagnostic instance {0}'.format(self.))
         try:
             response = self.mgmt_client.query(self.url,
                                               'DELETE',
@@ -289,7 +294,7 @@ class AzureRMDiagnostic(AzureRMModuleBase):
 
         :return: deserialized Diagnostic instance state dictionary
         '''
-        #self.log('Checking if the Diagnostic instance {0} is present'.format(self.))
+        # self.log('Checking if the Diagnostic instance {0} is present'.format(self.))
         found = False
         try:
             response = self.mgmt_client.query(self.url,
@@ -300,7 +305,7 @@ class AzureRMDiagnostic(AzureRMModuleBase):
                                               self.status_code)
             found = True
             self.log("Response : {0}".format(response))
-            #self.log("Diagnostic instance : {0} found".format(response.name))
+            # self.log("Diagnostic instance : {0} found".format(response.name))
         except CloudError as e:
             self.log('Did not find the Diagnostic instance.')
         if found is True:
@@ -312,6 +317,7 @@ class AzureRMDiagnostic(AzureRMModuleBase):
 def main():
     """Main execution"""
     AzureRMDiagnostic()
+
 
 if __name__ == '__main__':
     main()

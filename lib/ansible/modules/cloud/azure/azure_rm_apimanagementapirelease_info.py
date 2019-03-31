@@ -93,7 +93,7 @@ class AzureRMApiReleaseFacts(AzureRMModuleBase):
         self.mgmt_client = None
         self.state = None
         self.url = None
-        self.status_code = [ 200 ]
+        self.status_code = [200]
 
         self.query_parameters = {}
         self.query_parameters['api-version'] = '2018-01-01'
@@ -112,7 +112,18 @@ class AzureRMApiReleaseFacts(AzureRMModuleBase):
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
         # prepare url
-        self.url = '/subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.ApiManagement/service/{{ service_name }}/apis/{{ apis_name }}/releases/{{ release_name }}'
+        self.url = ('/subscriptions' +
+                    '/{{ subscription_id }}' +
+                    '/resourceGroups' +
+                    '/{{ resource_group }}' +
+                    '/providers' +
+                    '/Microsoft.ApiManagement' +
+                    '/service' +
+                    '/{{ service_name }}' +
+                    '/apis' +
+                    '/{{ apis_name }}' +
+                    '/releases' +
+                    '/{{ release_name }}')
         self.url = self.url.replace('{{ subscription_id }}', self.subscription_id)
         self.url = self.url.replace('{{ resource_group }}', self.resource_group)
         self.url = self.url.replace('{{ service_name }}', self.service_name)
@@ -137,11 +148,10 @@ class AzureRMApiReleaseFacts(AzureRMModuleBase):
                                               self.header_parameters,
                                               None,
                                               self.status_code)
-            results['temp_item'] =  json.loads(response.text)
-            #self.log('Response : {0}'.format(response))
+            results['temp_item'] = json.loads(response.text)
+            # self.log('Response : {0}'.format(response))
         except CloudError as e:
             self.log('Could not get facts for @(Model.ModuleOperationNameUpper).')
-
 
         return results
 
@@ -149,6 +159,7 @@ class AzureRMApiReleaseFacts(AzureRMModuleBase):
 def main():
     """Main execution"""
     AzureRMApiReleaseFacts()
+
 
 if __name__ == '__main__':
     main()

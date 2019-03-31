@@ -55,14 +55,11 @@ EXAMPLES = '''
 - name: ApiManagementPortalSettingsUpdateSignIn
   azure_rm_apimanagementsigninsetting:
     serviceName: apimService1
-    resourceGroupName: rg1
-    api-version: '2018-01-01'
-    subscriptionId: subid
+    resourceGroupName: myResourceGroup
     uid: 5931a75ae4bbd512288c680b
     If-Match: '*'
-    parameters:
-      properties:
-        enabled: true
+    properties:
+      enabled: true
 
 '''
 
@@ -111,7 +108,7 @@ class AzureRMSignInSettings(AzureRMModuleBase):
         self.mgmt_client = None
         self.state = None
         self.url = None
-        self.status_code = [ 200, 202 ]
+        self.status_code = [200, 202]
         self.to_do = Actions.NoAction
 
         self.body = {}
@@ -121,7 +118,7 @@ class AzureRMSignInSettings(AzureRMModuleBase):
         self.header_parameters['Content-Type'] = 'application/json; charset=utf-8'
 
         super(AzureRMSignInSettings, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                                   supports_check_mode=True,
+                                                    supports_check_mode=True,
                                                     supports_tags=False)
 
     def exec_module(self, **kwargs):
@@ -140,8 +137,16 @@ class AzureRMSignInSettings(AzureRMModuleBase):
         self.mgmt_client = self.get_mgmt_svc_client(GenericRestClient,
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
-        # prepare url
-        self.url = '/subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.ApiManagement/service/{{ service_name }}/portalsettings/{{ portalsetting_name }}'
+        self.url = ('/subscriptions' +
+                    '/{{ subscription_id }}' +
+                    '/resourceGroups' +
+                    '/{{ resource_group }}' +
+                    '/providers' +
+                    '/Microsoft.ApiManagement' +
+                    '/service' +
+                    '/{{ service_name }}' +
+                    '/portalsettings' +
+                    '/{{ portalsetting_name }}')
         self.url = self.url.replace('{{ subscription_id }}', self.subscription_id)
         self.url = self.url.replace('{{ resource_group }}', self.resource_group)
         self.url = self.url.replace('{{ service_name }}', self.service_name)
@@ -173,11 +178,11 @@ class AzureRMSignInSettings(AzureRMModuleBase):
 
             response = self.create_update_signinsetting()
 
-            #if not old_response:
+            # if not old_response:
             self.results['changed'] = True
             self.results['response'] = response
-            #else:
-            #    self.results['changed'] = old_response.__ne__(response)
+            # else:
+            #     self.results['changed'] = old_response.__ne__(response)
             self.log('Creation / Update done')
         elif self.to_do == Actions.Delete:
             self.log('SignInSetting instance deleted')
@@ -212,7 +217,7 @@ class AzureRMSignInSettings(AzureRMModuleBase):
 
         :return: deserialized SignInSetting instance state dictionary
         '''
-        #self.log('Creating / Updating the SignInSetting instance {0}'.format(self.))
+        # self.log('Creating / Updating the SignInSetting instance {0}'.format(self.))
 
         try:
             if self.to_do == Actions.Create:
@@ -220,7 +225,7 @@ class AzureRMSignInSettings(AzureRMModuleBase):
                                                   'PUT',
                                                   self.query_parameters,
                                                   self.header_parameters,
-                                                  self.body, # { 'location': 'eastus'},
+                                                  self.body,
                                                   self.status_code)
             else:
                 response = self.mgmt_client.query(self.url,
@@ -230,7 +235,7 @@ class AzureRMSignInSettings(AzureRMModuleBase):
                                                   self.body,
                                                   self.status_code)
             # implement poller in another way
-            #if isinstance(response, AzureOperationPoller):
+            # if isinstance(response, AzureOperationPoller):
             #    response = self.get_poller_result(response)
 
         except CloudError as exc:
@@ -239,9 +244,9 @@ class AzureRMSignInSettings(AzureRMModuleBase):
 
         try:
             response = json.loads(response.text)
-        except:
-           response = { 'text': response.text }
-           pass
+        except Exception:
+            response = {'text': response.text}
+            pass
 
         return response
 
@@ -251,7 +256,7 @@ class AzureRMSignInSettings(AzureRMModuleBase):
 
         :return: True
         '''
-        #self.log('Deleting the SignInSetting instance {0}'.format(self.))
+        # self.log('Deleting the SignInSetting instance {0}'.format(self.))
         try:
             response = self.mgmt_client.query(self.url,
                                               'DELETE',
@@ -271,7 +276,7 @@ class AzureRMSignInSettings(AzureRMModuleBase):
 
         :return: deserialized SignInSetting instance state dictionary
         '''
-        #self.log('Checking if the SignInSetting instance {0} is present'.format(self.))
+        # self.log('Checking if the SignInSetting instance {0} is present'.format(self.))
         found = False
         try:
             response = self.mgmt_client.query(self.url,
@@ -282,7 +287,7 @@ class AzureRMSignInSettings(AzureRMModuleBase):
                                               self.status_code)
             found = True
             self.log("Response : {0}".format(response))
-            #self.log("SignInSetting instance : {0} found".format(response.name))
+            # self.log("SignInSetting instance : {0} found".format(response.name))
         except CloudError as e:
             self.log('Did not find the SignInSetting instance.')
         if found is True:
@@ -294,6 +299,7 @@ class AzureRMSignInSettings(AzureRMModuleBase):
 def main():
     """Main execution"""
     AzureRMSignInSettings()
+
 
 if __name__ == '__main__':
     main()

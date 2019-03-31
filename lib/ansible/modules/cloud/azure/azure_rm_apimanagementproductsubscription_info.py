@@ -88,7 +88,7 @@ class AzureRMProductSubscriptionsFacts(AzureRMModuleBase):
         self.mgmt_client = None
         self.state = None
         self.url = None
-        self.status_code = [ 200 ]
+        self.status_code = [200]
 
         self.query_parameters = {}
         self.query_parameters['api-version'] = '2018-01-01'
@@ -107,7 +107,7 @@ class AzureRMProductSubscriptionsFacts(AzureRMModuleBase):
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
         # prepare url
-        self.url = ''
+        self.url = ('/undefined')
         self.url = self.url.replace('{{}}', self.)
 
         self.results['@(Model.ModuleOperationName)'] = self.Getproductsubscription()
@@ -128,11 +128,10 @@ class AzureRMProductSubscriptionsFacts(AzureRMModuleBase):
                                               self.header_parameters,
                                               None,
                                               self.status_code)
-            results['temp_item'] =  json.loads(response.text)
-            #self.log('Response : {0}'.format(response))
+            results['temp_item'] = json.loads(response.text)
+            # self.log('Response : {0}'.format(response))
         except CloudError as e:
             self.log('Could not get facts for @(Model.ModuleOperationNameUpper).')
-
 
         return results
 
@@ -140,6 +139,7 @@ class AzureRMProductSubscriptionsFacts(AzureRMModuleBase):
 def main():
     """Main execution"""
     AzureRMProductSubscriptionsFacts()
+
 
 if __name__ == '__main__':
     main()

@@ -89,114 +89,94 @@ EXAMPLES = '''
 - name: ApiManagementCreateService
   azure_rm_apimanagementservice:
     serviceName: apimService1
-    resourceGroupName: rg1
-    api-version: '2018-01-01'
-    subscriptionId: subid
-    parameters:
-      location: West US
-      sku:
-        name: Premium
-        capacity: '1'
-      properties:
-        publisherEmail: admin@live.com
-        publisherName: contoso
+    resourceGroupName: myResourceGroup
+    location: West US
+    sku:
+      name: Premium
+      capacity: '1'
+    properties:
+      publisherEmail: admin@live.com
+      publisherName: contoso
 - name: ApiManagementCreateMultiRegionServiceWithCustomHostname
   azure_rm_apimanagementservice:
     serviceName: apimService1
-    resourceGroupName: rg1
-    api-version: '2018-01-01'
-    subscriptionId: subid
-    parameters:
-      location: Central US
-      sku:
-        name: Premium
-        capacity: '1'
-      properties:
-        publisherEmail: admin@live.com
-        publisherName: contoso
-        additionalLocations:
-          - location: West US
-            sku:
-              name: Premium
-              capacity: '1'
-            virtualNetworkConfiguration:
-              subnetResourceId: >-
-                /subscriptions/{{ subscription_id }}/resourceGroups/{{
-                resource_group }}/providers/Microsoft.Network/virtualNetworks/{{
-                virtual_network_name }}/subnets/{{ subnet_name }}
-        hostnameConfigurations:
-          - type: Proxy
-            hostName: proxyhostname1.contoso.com
-            encodedCertificate: >-
-              ************Base 64 Encoded Pfx
-              Certificate************************
-            certificatePassword: >-
-              **************Password of the
-              Certificate************************************************
-          - type: Proxy
-            hostName: proxyhostname2.contoso.com
-            encodedCertificate: >-
-              ************Base 64 Encoded Pfx
-              Certificate************************
-            certificatePassword: >-
-              **************Password of the
-              Certificate************************************************
-            negotiateClientCertificate: true
-          - type: Portal
-            hostName: portalhostname1.contoso.com
-            encodedCertificate: >-
-              ************Base 64 Encoded Pfx
-              Certificate************************
-            certificatePassword: >-
-              **************Password of the
-              Certificate************************************************
-        virtualNetworkConfiguration:
-          subnetResourceId: >-
-            /subscriptions/{{ subscription_id }}/resourceGroups/{{
-            resource_group }}/providers/Microsoft.Network/virtualNetworks/{{
-            virtual_network_name }}/subnets/{{ subnet_name }}
-        virtualNetworkType: External
+    resourceGroupName: myResourceGroup
+    location: Central US
+    sku:
+      name: Premium
+      capacity: '1'
+    properties:
+      publisherEmail: admin@live.com
+      publisherName: contoso
+      additionalLocations:
+        - location: West US
+          sku:
+            name: Premium
+            capacity: '1'
+          virtualNetworkConfiguration:
+            subnetResourceId: >-
+              /subscriptions/{{ subscription_id }}/resourceGroups/{{
+              resource_group }}/providers/Microsoft.Network/virtualNetworks/{{
+              virtual_network_name }}/subnets/{{ subnet_name }}
+      hostnameConfigurations:
+        - type: Proxy
+          hostName: proxyhostname1.contoso.com
+          encodedCertificate: '************Base 64 Encoded Pfx Certificate************************'
+          certificatePassword: >-
+            **************Password of the
+            Certificate************************************************
+        - type: Proxy
+          hostName: proxyhostname2.contoso.com
+          encodedCertificate: '************Base 64 Encoded Pfx Certificate************************'
+          certificatePassword: >-
+            **************Password of the
+            Certificate************************************************
+          negotiateClientCertificate: true
+        - type: Portal
+          hostName: portalhostname1.contoso.com
+          encodedCertificate: '************Base 64 Encoded Pfx Certificate************************'
+          certificatePassword: >-
+            **************Password of the
+            Certificate************************************************
+      virtualNetworkConfiguration:
+        subnetResourceId: >-
+          /subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group
+          }}/providers/Microsoft.Network/virtualNetworks/{{ virtual_network_name
+          }}/subnets/{{ subnet_name }}
+      virtualNetworkType: External
 - name: ApiManagementCreateServiceHavingMsi
   azure_rm_apimanagementservice:
     serviceName: apimService1
-    resourceGroupName: rg1
-    api-version: '2018-01-01'
-    subscriptionId: subid
-    parameters:
-      location: Japan East
-      properties:
-        publisherEmail: admin@contoso.com
-        publisherName: Contoso
-      sku:
-        name: Developer
-      identity:
-        type: SystemAssigned
+    resourceGroupName: myResourceGroup
+    location: Japan East
+    properties:
+      publisherEmail: admin@contoso.com
+      publisherName: Contoso
+    sku:
+      name: Developer
+    identity:
+      type: SystemAssigned
 - name: ApiManagementCreateServiceWithSystemCertificates
   azure_rm_apimanagementservice:
     serviceName: apimService1
-    resourceGroupName: rg1
-    api-version: '2018-01-01'
-    subscriptionId: subid
-    parameters:
-      location: Central US
-      tags:
-        tag1: value1
-        tag2: value2
-        tag3: value3
-      sku:
-        name: Basic
-        capacity: '1'
-      properties:
-        publisherEmail: apim@autorestsdk.com
-        publisherName: autorestsdk
-        certificates:
-          - encodedCertificate: >-
-              ************Base 64 Encoded Pfx
-              Certificate************************
-            certificatePassword: >-
-              **************Password of the
-              Certificate************************************************
-            storeName: CertificateAuthority
+    resourceGroupName: myResourceGroup
+    location: Central US
+    tags:
+      tag1: value1
+      tag2: value2
+      tag3: value3
+    sku:
+      name: Basic
+      capacity: '1'
+    properties:
+      publisherEmail: apim@autorestsdk.com
+      publisherName: autorestsdk
+      certificates:
+        - encodedCertificate: '************Base 64 Encoded Pfx Certificate************************'
+          certificatePassword: >-
+            **************Password of the
+            Certificate************************************************
+          storeName: CertificateAuthority
 
 '''
 
@@ -257,7 +237,7 @@ class AzureRMApiManagementService(AzureRMModuleBase):
         self.mgmt_client = None
         self.state = None
         self.url = None
-        self.status_code = [ 200, 202 ]
+        self.status_code = [200, 202]
         self.to_do = Actions.NoAction
 
         self.body = {}
@@ -267,7 +247,7 @@ class AzureRMApiManagementService(AzureRMModuleBase):
         self.header_parameters['Content-Type'] = 'application/json; charset=utf-8'
 
         super(AzureRMApiManagementService, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                                         supports_check_mode=True,
+                                                          supports_check_mode=True,
                                                           supports_tags=False)
 
     def exec_module(self, **kwargs):
@@ -294,8 +274,14 @@ class AzureRMApiManagementService(AzureRMModuleBase):
         self.mgmt_client = self.get_mgmt_svc_client(GenericRestClient,
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
-        # prepare url
-        self.url = '/subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.ApiManagement/service/{{ service_name }}'
+        self.url = ('/subscriptions' +
+                    '/{{ subscription_id }}' +
+                    '/resourceGroups' +
+                    '/{{ resource_group }}' +
+                    '/providers' +
+                    '/Microsoft.ApiManagement' +
+                    '/service' +
+                    '/{{ service_name }}')
         self.url = self.url.replace('{{ subscription_id }}', self.subscription_id)
         self.url = self.url.replace('{{ resource_group }}', self.resource_group)
         self.url = self.url.replace('{{ service_name }}', self.service_name)
@@ -326,11 +312,11 @@ class AzureRMApiManagementService(AzureRMModuleBase):
 
             response = self.create_update_apimanagementservice()
 
-            #if not old_response:
+            # if not old_response:
             self.results['changed'] = True
             self.results['response'] = response
-            #else:
-            #    self.results['changed'] = old_response.__ne__(response)
+            # else:
+            #     self.results['changed'] = old_response.__ne__(response)
             self.log('Creation / Update done')
         elif self.to_do == Actions.Delete:
             self.log('ApiManagementService instance deleted')
@@ -368,7 +354,7 @@ if self.parameters.get('properties', None) is not None:
 
         :return: deserialized ApiManagementService instance state dictionary
         '''
-        #self.log('Creating / Updating the ApiManagementService instance {0}'.format(self.))
+        # self.log('Creating / Updating the ApiManagementService instance {0}'.format(self.))
 
         try:
             if self.to_do == Actions.Create:
@@ -376,7 +362,7 @@ if self.parameters.get('properties', None) is not None:
                                                   'PUT',
                                                   self.query_parameters,
                                                   self.header_parameters,
-                                                  self.body, # { 'location': 'eastus'},
+                                                  self.body,
                                                   self.status_code)
             else:
                 response = self.mgmt_client.query(self.url,
@@ -386,7 +372,7 @@ if self.parameters.get('properties', None) is not None:
                                                   self.body,
                                                   self.status_code)
             # implement poller in another way
-            #if isinstance(response, AzureOperationPoller):
+            # if isinstance(response, AzureOperationPoller):
             #    response = self.get_poller_result(response)
 
         except CloudError as exc:
@@ -395,9 +381,9 @@ if self.parameters.get('properties', None) is not None:
 
         try:
             response = json.loads(response.text)
-        except:
-           response = { 'text': response.text }
-           pass
+        except Exception:
+            response = {'text': response.text}
+            pass
 
         return response
 
@@ -407,7 +393,7 @@ if self.parameters.get('properties', None) is not None:
 
         :return: True
         '''
-        #self.log('Deleting the ApiManagementService instance {0}'.format(self.))
+        # self.log('Deleting the ApiManagementService instance {0}'.format(self.))
         try:
             response = self.mgmt_client.query(self.url,
                                               'DELETE',
@@ -427,7 +413,7 @@ if self.parameters.get('properties', None) is not None:
 
         :return: deserialized ApiManagementService instance state dictionary
         '''
-        #self.log('Checking if the ApiManagementService instance {0} is present'.format(self.))
+        # self.log('Checking if the ApiManagementService instance {0} is present'.format(self.))
         found = False
         try:
             response = self.mgmt_client.query(self.url,
@@ -438,7 +424,7 @@ if self.parameters.get('properties', None) is not None:
                                               self.status_code)
             found = True
             self.log("Response : {0}".format(response))
-            #self.log("ApiManagementService instance : {0} found".format(response.name))
+            # self.log("ApiManagementService instance : {0} found".format(response.name))
         except CloudError as e:
             self.log('Did not find the ApiManagementService instance.')
         if found is True:
@@ -450,6 +436,7 @@ if self.parameters.get('properties', None) is not None:
 def main():
     """Main execution"""
     AzureRMApiManagementService()
+
 
 if __name__ == '__main__':
     main()

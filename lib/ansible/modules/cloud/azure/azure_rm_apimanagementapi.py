@@ -82,135 +82,112 @@ EXAMPLES = '''
 - name: ApiManagementCreateApiUsingSwaggerImport
   azure_rm_apimanagementapi:
     serviceName: apimService1
-    resourceGroupName: rg1
-    api-version: '2018-01-01'
-    subscriptionId: subid
+    resourceGroupName: myResourceGroup
     apiId: petstore
-    parameters:
-      properties:
-        contentFormat: swagger-link-json
-        contentValue: 'http://petstore.swagger.io/v2/swagger.json'
-        path: petstore
+    properties:
+      contentFormat: swagger-link-json
+      contentValue: 'http://petstore.swagger.io/v2/swagger.json'
+      path: petstore
 - name: ApiManagementCreateApiUsingWadlImport
   azure_rm_apimanagementapi:
     serviceName: apimService1
-    resourceGroupName: rg1
-    api-version: '2018-01-01'
-    subscriptionId: subid
+    resourceGroupName: myResourceGroup
     apiId: petstore
-    parameters:
-      properties:
-        contentFormat: wadl-link-json
-        contentValue: >-
-          https://developer.cisco.com/media/wae-release-6-2-api-reference/wae-collector-rest-api/application.wadl
-        path: collector
+    properties:
+      contentFormat: wadl-link-json
+      contentValue: >-
+        https://developer.cisco.com/media/wae-release-6-2-api-reference/wae-collector-rest-api/application.wadl
+      path: collector
 - name: ApiManagementCreateSoapToRestApiUsingWsdlImport
   azure_rm_apimanagementapi:
     serviceName: apimService1
-    resourceGroupName: rg1
-    api-version: '2018-01-01'
-    subscriptionId: subid
+    resourceGroupName: myResourceGroup
     apiId: soapApi
-    parameters:
-      properties:
-        contentFormat: wsdl-link
-        contentValue: 'http://www.webservicex.net/CurrencyConvertor.asmx?WSDL'
-        path: currency
-        wsdlSelector:
-          wsdlServiceName: CurrencyConvertor
-          wsdlEndpointName: CurrencyConvertorSoap
+    properties:
+      contentFormat: wsdl-link
+      contentValue: 'http://www.webservicex.net/CurrencyConvertor.asmx?WSDL'
+      path: currency
+      wsdlSelector:
+        wsdlServiceName: CurrencyConvertor
+        wsdlEndpointName: CurrencyConvertorSoap
 - name: ApiManagementCreateSoapPassThroughApiUsingWsdlImport
   azure_rm_apimanagementapi:
     serviceName: apimService1
-    resourceGroupName: rg1
-    api-version: '2018-01-01'
-    subscriptionId: subid
+    resourceGroupName: myResourceGroup
     apiId: soapApi
-    parameters:
-      properties:
-        contentFormat: wsdl-link
-        contentValue: 'http://www.webservicex.net/CurrencyConvertor.asmx?WSDL'
-        path: currency
-        apiType: soap
-        wsdlSelector:
-          wsdlServiceName: CurrencyConvertor
-          wsdlEndpointName: CurrencyConvertorSoap
+    properties:
+      contentFormat: wsdl-link
+      contentValue: 'http://www.webservicex.net/CurrencyConvertor.asmx?WSDL'
+      path: currency
+      apiType: soap
+      wsdlSelector:
+        wsdlServiceName: CurrencyConvertor
+        wsdlEndpointName: CurrencyConvertorSoap
 - name: ApiManagementCreateApi
   azure_rm_apimanagementapi:
     serviceName: apimService1
-    resourceGroupName: rg1
-    api-version: '2018-01-01'
-    subscriptionId: subid
+    resourceGroupName: myResourceGroup
     apiId: tempgroup
-    parameters:
-      properties:
-        description: apidescription5200
-        authenticationSettings:
-          oAuth2:
-            authorizationServerId: authorizationServerId2283
-            scope: oauth2scope2580
-        subscriptionKeyParameterNames:
-          header: header4520
-          query: query3037
-        displayName: apiname1463
-        serviceUrl: 'http://newechoapi.cloudapp.net/api'
-        path: newapiPath
-        protocols:
-          - https
-          - http
+    properties:
+      description: apidescription5200
+      authenticationSettings:
+        oAuth2:
+          authorizationServerId: authorizationServerId2283
+          scope: oauth2scope2580
+      subscriptionKeyParameterNames:
+        header: header4520
+        query: query3037
+      displayName: apiname1463
+      serviceUrl: 'http://newechoapi.cloudapp.net/api'
+      path: newapiPath
+      protocols:
+        - https
+        - http
 - name: ApiManagementCreateApiRevision
   azure_rm_apimanagementapi:
     serviceName: apimService1
-    resourceGroupName: rg1
-    api-version: '2018-01-01'
-    subscriptionId: subid
+    resourceGroupName: myResourceGroup
     apiId: echo-api;rev=4
-    parameters:
-      properties:
-        displayName: Echo API
-        description: >-
-          This is a sample server Petstore server.  You can find out more about
-          Swagger at [http://swagger.io](http://swagger.io) or on
-          [irc.freenode.net, #swagger](http://swagger.io/irc/).  For this
-          sample, you can use the api key `special-key` to test the
-          authorization filters.
-        serviceUrl: 'http://petstore.swagger.io/v5'
-        path: petstore2
-        protocols:
-          - https
-        subscriptionKeyParameterNames:
-          header: Ocp-Apim-Subscription-Key
-          query: subscription-key
-        isCurrent: false
-        apiRevisionDescription: moved to swagger petstore backend
+    properties:
+      displayName: Echo API
+      description: >-
+        This is a sample server Petstore server.  You can find out more about
+        Swagger at [http://swagger.io](http://swagger.io) or on
+        [irc.freenode.net, #swagger](http://swagger.io/irc/).  For this sample,
+        you can use the api key `special-key` to test the authorization filters.
+      serviceUrl: 'http://petstore.swagger.io/v5'
+      path: petstore2
+      protocols:
+        - https
+      subscriptionKeyParameterNames:
+        header: Ocp-Apim-Subscription-Key
+        query: subscription-key
+      isCurrent: false
+      apiRevisionDescription: moved to swagger petstore backend
 - name: ApiManagementCreateApiWithOpenIdConnect
   azure_rm_apimanagementapi:
     serviceName: apimService1
-    resourceGroupName: rg1
-    api-version: '2018-01-01'
-    subscriptionId: subid
+    resourceGroupName: myResourceGroup
     apiId: tempgroup
-    parameters:
-      properties:
-        displayName: Swagger Petstore
-        description: >-
-          This is a sample server Petstore server.  You can find out more about
-          Swagger at [http://swagger.io](http://swagger.io) or on
-          [irc.freenode.net, #swagger](http://swagger.io/irc/).  For this
-          sample, you can use the api key `special-key` to test the
-          authorization filters.
-        serviceUrl: 'http://petstore.swagger.io/v2'
-        path: petstore
-        protocols:
-          - https
-        authenticationSettings:
-          openid:
-            openidProviderId: testopenid
-            bearerTokenSendingMethods:
-              - authorizationHeader
-        subscriptionKeyParameterNames:
-          header: Ocp-Apim-Subscription-Key
-          query: subscription-key
+    properties:
+      displayName: Swagger Petstore
+      description: >-
+        This is a sample server Petstore server.  You can find out more about
+        Swagger at [http://swagger.io](http://swagger.io) or on
+        [irc.freenode.net, #swagger](http://swagger.io/irc/).  For this sample,
+        you can use the api key `special-key` to test the authorization filters.
+      serviceUrl: 'http://petstore.swagger.io/v2'
+      path: petstore
+      protocols:
+        - https
+      authenticationSettings:
+        openid:
+          openidProviderId: testopenid
+          bearerTokenSendingMethods:
+            - authorizationHeader
+      subscriptionKeyParameterNames:
+        header: Ocp-Apim-Subscription-Key
+        query: subscription-key
 
 '''
 
@@ -267,7 +244,7 @@ class AzureRMApi(AzureRMModuleBase):
         self.mgmt_client = None
         self.state = None
         self.url = None
-        self.status_code = [ 200, 202 ]
+        self.status_code = [200, 202]
         self.to_do = Actions.NoAction
 
         self.body = {}
@@ -277,7 +254,7 @@ class AzureRMApi(AzureRMModuleBase):
         self.header_parameters['Content-Type'] = 'application/json; charset=utf-8'
 
         super(AzureRMApi, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                        supports_check_mode=True,
+                                         supports_check_mode=True,
                                          supports_tags=False)
 
     def exec_module(self, **kwargs):
@@ -298,8 +275,16 @@ class AzureRMApi(AzureRMModuleBase):
         self.mgmt_client = self.get_mgmt_svc_client(GenericRestClient,
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
-        # prepare url
-        self.url = '/subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group }}/providers/Microsoft.ApiManagement/service/{{ service_name }}/apis/{{ apis_name }}'
+        self.url = ('/subscriptions' +
+                    '/{{ subscription_id }}' +
+                    '/resourceGroups' +
+                    '/{{ resource_group }}' +
+                    '/providers' +
+                    '/Microsoft.ApiManagement' +
+                    '/service' +
+                    '/{{ service_name }}' +
+                    '/apis' +
+                    '/{{ apis_name }}')
         self.url = self.url.replace('{{ subscription_id }}', self.subscription_id)
         self.url = self.url.replace('{{ resource_group }}', self.resource_group)
         self.url = self.url.replace('{{ service_name }}', self.service_name)
@@ -331,11 +316,11 @@ class AzureRMApi(AzureRMModuleBase):
 
             response = self.create_update_api()
 
-            #if not old_response:
+            # if not old_response:
             self.results['changed'] = True
             self.results['response'] = response
-            #else:
-            #    self.results['changed'] = old_response.__ne__(response)
+            # else:
+            #     self.results['changed'] = old_response.__ne__(response)
             self.log('Creation / Update done')
         elif self.to_do == Actions.Delete:
             self.log('Api instance deleted')
@@ -373,7 +358,7 @@ if self.parameters.get('properties', None) is not None:
 
         :return: deserialized Api instance state dictionary
         '''
-        #self.log('Creating / Updating the Api instance {0}'.format(self.))
+        # self.log('Creating / Updating the Api instance {0}'.format(self.))
 
         try:
             if self.to_do == Actions.Create:
@@ -381,7 +366,7 @@ if self.parameters.get('properties', None) is not None:
                                                   'PUT',
                                                   self.query_parameters,
                                                   self.header_parameters,
-                                                  self.body, # { 'location': 'eastus'},
+                                                  self.body,
                                                   self.status_code)
             else:
                 response = self.mgmt_client.query(self.url,
@@ -391,7 +376,7 @@ if self.parameters.get('properties', None) is not None:
                                                   self.body,
                                                   self.status_code)
             # implement poller in another way
-            #if isinstance(response, AzureOperationPoller):
+            # if isinstance(response, AzureOperationPoller):
             #    response = self.get_poller_result(response)
 
         except CloudError as exc:
@@ -400,9 +385,9 @@ if self.parameters.get('properties', None) is not None:
 
         try:
             response = json.loads(response.text)
-        except:
-           response = { 'text': response.text }
-           pass
+        except Exception:
+            response = {'text': response.text}
+            pass
 
         return response
 
@@ -412,7 +397,7 @@ if self.parameters.get('properties', None) is not None:
 
         :return: True
         '''
-        #self.log('Deleting the Api instance {0}'.format(self.))
+        # self.log('Deleting the Api instance {0}'.format(self.))
         try:
             response = self.mgmt_client.query(self.url,
                                               'DELETE',
@@ -432,7 +417,7 @@ if self.parameters.get('properties', None) is not None:
 
         :return: deserialized Api instance state dictionary
         '''
-        #self.log('Checking if the Api instance {0} is present'.format(self.))
+        # self.log('Checking if the Api instance {0} is present'.format(self.))
         found = False
         try:
             response = self.mgmt_client.query(self.url,
@@ -443,7 +428,7 @@ if self.parameters.get('properties', None) is not None:
                                               self.status_code)
             found = True
             self.log("Response : {0}".format(response))
-            #self.log("Api instance : {0} found".format(response.name))
+            # self.log("Api instance : {0} found".format(response.name))
         except CloudError as e:
             self.log('Did not find the Api instance.')
         if found is True:
@@ -455,6 +440,7 @@ if self.parameters.get('properties', None) is not None:
 def main():
     """Main execution"""
     AzureRMApi()
+
 
 if __name__ == '__main__':
     main()
