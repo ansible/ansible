@@ -110,7 +110,8 @@ options:
         type: str
     serial_number:
         description:
-            - "Specify the certificate serial number when signing a public key. The serial number that is logged by the server when the certificate is used for authentication.
+            - "Specify the certificate serial number when signing a public key.
+               The serial number that is logged by the server when the certificate is used for authentication.
                The certificate serial number may be used in a KeyRevocationList."
         type: int
         default: 0
