@@ -58,8 +58,8 @@ options:
   hypervisor:
     description:
       - Required when creating a zone scoped pool.
+      - Possible values are C(KVM), C(VMware), C(BareMetal), C(XenServer), C(LXC), C(HyperV), C(UCS), C(OVM), C(Simulator).
     type: str
-    choices: [ KVM, VMware, BareMetal, XenServer, LXC, HyperV, UCS, OVM, Simulator ]
   storage_tags:
     description:
       - Tags associated with this storage pool.
@@ -234,7 +234,6 @@ from ansible.module_utils.cloudstack import (
     AnsibleCloudStack,
     cs_argument_spec,
     cs_required_together,
-    CS_HYPERVISORS,
 )
 
 
@@ -468,7 +467,7 @@ def main():
         pod=dict(),
         cluster=dict(),
         scope=dict(choices=['zone', 'cluster']),
-        hypervisor=dict(choices=CS_HYPERVISORS),
+        hypervisor=dict(),
         provider=dict(default='DefaultPrimary'),
         capacity_bytes=dict(type='int'),
         capacity_iops=dict(type='int'),

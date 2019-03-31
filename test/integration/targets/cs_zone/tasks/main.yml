@@ -25,7 +25,7 @@
     name: "{{ cs_resource_prefix }}-zone"
     dns1: 8.8.8.8
     dns2: 8.8.4.4
-    network_type: basic
+    network_type: Basic
   register: zone
   check_mode: true
 - name: verify test create zone in check mode
@@ -39,7 +39,7 @@
     name: "{{ cs_resource_prefix }}-zone"
     dns1: 8.8.8.8
     dns2: 8.8.4.4
-    network_type: basic
+    network_type: Basic
   register: zone
 - name: verify test create zone
   assert:
@@ -61,7 +61,7 @@
     name: "{{ cs_resource_prefix }}-zone"
     dns1: 8.8.8.8
     dns2: 8.8.4.4
-    network_type: basic
+    network_type: Basic
   register: zone
 - name: verify test create zone idempotency
   assert:
@@ -86,7 +86,7 @@
     internal_dns1: 10.10.1.100
     internal_dns2: 10.10.1.101
     local_storage_enabled: true
-    network_type: basic
+    network_type: Basic
   register: zone
   check_mode: true
 - name: verify test update zone in check mode
@@ -112,7 +112,7 @@
     internal_dns1: 10.10.1.100
     internal_dns2: 10.10.1.101
     local_storage_enabled: true
-    network_type: basic
+    network_type: Basic
   register: zone
 - name: verify test update zone
   assert:
@@ -137,7 +137,7 @@
     internal_dns1: 10.10.1.100
     internal_dns2: 10.10.1.101
     local_storage_enabled: true
-    network_type: basic
+    network_type: Basic
   register: zone
 - name: verify test update zone idempotency
   assert:

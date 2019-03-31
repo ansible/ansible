@@ -53,8 +53,8 @@ options:
     description:
       - Name of the cluster.
       - Required if I(state=present) and host does not yet exist.
+      - Possible values are C(KVM), C(VMware), C(BareMetal), C(XenServer), C(LXC), C(HyperV), C(UCS), C(OVM), C(Simulator).
     type: str
-    choices: [ KVM, VMware, BareMetal, XenServer, LXC, HyperV, UCS, OVM, Simulator ]
   allocation_state:
     description:
       - Allocation state of the host.
@@ -330,7 +330,6 @@ from ansible.module_utils.cloudstack import (
     AnsibleCloudStack,
     cs_argument_spec,
     cs_required_together,
-    CS_HYPERVISORS
 )
 import time
 
@@ -592,7 +591,7 @@ def main():
         url=dict(),
         password=dict(no_log=True),
         username=dict(),
-        hypervisor=dict(choices=CS_HYPERVISORS),
+        hypervisor=dict(),
         allocation_state=dict(choices=['enabled', 'disabled', 'maintenance']),
         pod=dict(),
         cluster=dict(),

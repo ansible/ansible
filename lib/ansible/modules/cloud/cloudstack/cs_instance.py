@@ -88,8 +88,8 @@ options:
       - Name the hypervisor to be used for creating the new instance.
       - Relevant when using I(state=present), but only considered if not set on ISO/template.
       - If not set or found on ISO/template, first found hypervisor will be used.
+      - Possible values are C(KVM), C(VMware), C(BareMetal), C(XenServer), C(LXC), C(HyperV), C(UCS), C(OVM), C(Simulator).
     type: str
-    choices: [ KVM, kvm, VMware, vmware, BareMetal, baremetal, XenServer, xenserver, LXC, lxc, HyperV, hyperv, UCS, ucs, OVM, ovm, Simulator, simulator ]
   keyboard:
     description:
       - Keyboard device type for the instance.
@@ -424,7 +424,6 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.cloudstack import (
     AnsibleCloudStack,
-    CS_HYPERVISORS,
     cs_argument_spec,
     cs_required_together
 )
@@ -1041,7 +1040,7 @@ def main():
         disk_size=dict(type='int'),
         root_disk_size=dict(type='int'),
         keyboard=dict(type='str', choices=['de', 'de-ch', 'es', 'fi', 'fr', 'fr-be', 'fr-ch', 'is', 'it', 'jp', 'nl-be', 'no', 'pt', 'uk', 'us']),
-        hypervisor=dict(choices=CS_HYPERVISORS),
+        hypervisor=dict(),
         host=dict(),
         security_groups=dict(type='list', aliases=['security_group']),
         affinity_groups=dict(type='list', aliases=['affinity_group']),
