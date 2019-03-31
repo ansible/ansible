@@ -159,11 +159,11 @@ class CallbackModule(CallbackBase):
         if result_was_changed:
             msg = "done"
             display_color = C.COLOR_CHANGED
-        elif not self.display_ok_hosts:
-            return
-
-        task_result = self._process_result_output(result, msg)
-        self._display.display("  " + task_result, display_color)
+            task_result = self._process_result_output(result, msg)
+            self._display.display("  " + task_result, display_color)
+        elif self.display_ok_hosts:
+            task_result = self._process_result_output(result, msg)
+            self._display.display("  " + task_result, display_color)
 
     def v2_runner_item_on_skipped(self, result):
         self.v2_runner_on_skipped(result)
