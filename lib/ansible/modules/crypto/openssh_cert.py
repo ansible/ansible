@@ -456,9 +456,12 @@ class Certificate(object):
             for word in arr:
                 if word in keywords:
                     concated.append(string)
-                    string = ""
-                string += " " + word
+                    string = word
+                else:
+                    string += " " + word
             concated.append(string)
+            # drop the certificate path
+            concated.pop(0)
             return concated
 
         def format_cert_info():
