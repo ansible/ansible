@@ -41,7 +41,7 @@ DOCUMENTATION = '''
             type: boolean
         interfaces:
             description:
-                - If True, it adds dcim interface information in host vars.
+                - If True, it adds the device or virtual machine interface information in host vars.
             default: False
             type: boolean
             version_added: "2.8"
@@ -311,7 +311,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
     def extract_interfaces(self, host):
         try:
             if self.interfaces:
-                url = urljoin(self.api_endpoint, "/api/dcim/interfaces/?limit=0&device_id=%s" % (to_text(host["id"])))
+                if 'device_role' in host:
+                    url = urljoin(self.api_endpoint, "/api/dcim/interfaces/?limit=0&device_id=%s" % (to_text(host["id"])))
+                elif 'role' in host:
+                    url = urljoin(self.api_endpoint, "/api/virtualization/interfaces/?limit=0&virtual_machine_id=%s" %(to_text(host["id"])))
                 interface_lookup = self.get_resource_list(api_url=url)
                 return interface_lookup
         except Exception:
