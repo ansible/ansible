@@ -34,7 +34,6 @@ options:
   server_url:
     description:
       - The URL of the Gitlab server, with protocol (i.e. http or https).
-    required: true
     type: str
   login_user:
     description:
@@ -50,6 +49,12 @@ options:
     type: str
     aliases:
       - login_token
+  config_files:
+    description:
+      - Configuration file with Gitlab API connection details
+      - See python-gitlab documentation for syntax specification
+    type: list
+    default: ["/etc/python-gitlab.cfg", "~/.python-gitlab.cfg"]
   name:
     description:
       - Name of the user you want to create
@@ -417,10 +422,11 @@ def deprecation_warning(module):
 def main():
     argument_spec = basic_auth_argument_spec()
     argument_spec.update(dict(
-        server_url=dict(type='str', required=True, removed_in_version=2.10),
+        server_url=dict(type='str', removed_in_version=2.10),
         login_user=dict(type='str', no_log=True, removed_in_version=2.10),
         login_password=dict(type='str', no_log=True, removed_in_version=2.10),
         api_token=dict(type='str', no_log=True, aliases=["login_token"]),
+        config_files=dict(type='list', no_log=True, default=['/etc/python-gitlab.cfg', '~/.python-gitlab.cfg']),
         name=dict(type='str', required=True),
         state=dict(type='str', default="present", choices=["absent", "present"]),
         username=dict(type='str', required=True),
@@ -451,7 +457,7 @@ def main():
             ['login_user', 'login_password'],
         ],
         required_one_of=[
-            ['api_username', 'api_token', 'login_user', 'login_token']
+            ['api_username', 'api_token', 'login_user', 'login_token', 'config_files']
         ],
         supports_check_mode=True,
     )
@@ -471,6 +477,7 @@ def main():
     gitlab_user = login_user if api_user is None else api_user
     gitlab_password = login_password if api_password is None else api_password
     gitlab_token = module.params['api_token']
+    config_files = map(os.path.expanduser, module.params['config_files'])
 
     user_name = module.params['name']
     state = module.params['state']
@@ -489,8 +496,13 @@ def main():
         module.fail_json(msg=missing_required_lib("python-gitlab"), exception=GITLAB_IMP_ERR)
 
     try:
-        gitlab_instance = gitlab.Gitlab(url=gitlab_url, ssl_verify=validate_certs, email=gitlab_user, password=gitlab_password,
-                                        private_token=gitlab_token, api_version=4)
+        # if none of the connection details were provided, try using
+        # configuration file on the host
+        if {gitlab_user, gitlab_password, gitlab_token} == {None}:
+            gitlab_instance = gitlab.Gitlab.from_config(gitlab_url, config_files)
+        else:
+            gitlab_instance = gitlab.Gitlab(url=gitlab_url, ssl_verify=validate_certs, email=gitlab_user, password=gitlab_password,
+                                            private_token=gitlab_token, api_version=4)
         gitlab_instance.auth()
     except (gitlab.exceptions.GitlabAuthenticationError, gitlab.exceptions.GitlabGetError) as e:
         module.fail_json(msg="Failed to connect to Gitlab server: %s" % to_native(e))
