@@ -20,7 +20,7 @@
   - name: Restart docker daemon
     service:
       name: docker
-      state: started
+      state: restarted
     become: yes
 
   - name: Wait for docker daemon to be fully restarted
