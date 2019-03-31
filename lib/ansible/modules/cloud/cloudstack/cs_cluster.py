@@ -206,7 +206,7 @@ from ansible.module_utils.cloudstack import (
     AnsibleCloudStack,
     cs_argument_spec,
     cs_required_together,
-  )
+)
 
 
 class AnsibleCloudStackCluster(AnsibleCloudStack):
