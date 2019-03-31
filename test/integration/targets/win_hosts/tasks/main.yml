@@ -1,0 +1,17 @@
+---
+- name: take a copy of the original hosts file
+  win_copy:
+    src: C:\Windows\System32\drivers\etc\hosts
+    dest: '{{ remote_tmp_dir }}\hosts'
+    remote_src: yes
+
+- block:
+  - name: run tests
+    include_tasks: tests.yml
+
+  always:
+  - name: restore hosts file
+    win_copy:
+      src: '{{ remote_tmp_dir }}\hosts'
+      dest: C:\Windows\System32\drivers\etc\hosts
+      remote_src: yes
