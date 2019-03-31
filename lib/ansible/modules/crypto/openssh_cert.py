@@ -111,10 +111,10 @@ options:
     serial_number:
         description:
             - "Specify the certificate serial number when signing a public key.
-               The serial number that is logged by the server when the certificate is used for authentication.
-               The certificate serial number may be used in a KeyRevocationList."
+               The serial number is logged by the server when the certificate is used for authentication.
+               The certificate serial number may be used in a KeyRevocationList.
+               Note: The default value set by ssh-keygen is 0."
         type: int
-        default: 0
 
 extends_documentation_fragment: files
 '''
@@ -298,7 +298,7 @@ class Certificate(object):
             else:
                 args.extend(['-I', ""])
 
-            if self.serial_number:
+            if self.serial_number is not None:
                 args.extend(['-z', str(self.serial_number)])
 
             if self.principals:
@@ -526,7 +526,7 @@ def main():
             public_key=dict(type='path'),
             path=dict(type='path', required=True),
             identifier=dict(type='str'),
-            serial_number=dict(type='int', default=0),
+            serial_number=dict(type='int'),
             valid_from=dict(type='str'),
             valid_to=dict(type='str'),
             valid_at=dict(type='str'),
