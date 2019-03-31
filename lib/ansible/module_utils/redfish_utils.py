@@ -15,9 +15,10 @@ HEADERS = {'content-type': 'application/json'}
 
 class RedfishUtils(object):
 
-    def __init__(self, creds, root_uri):
+    def __init__(self, creds, root_uri, timeout):
         self.root_uri = root_uri
         self.creds = creds
+        self.timeout = timeout
         self._init_session()
         return
 
@@ -29,7 +30,7 @@ class RedfishUtils(object):
                             url_password=self.creds['pswd'],
                             force_basic_auth=True, validate_certs=False,
                             follow_redirects='all',
-                            use_proxy=False)
+                            use_proxy=False, timeout=self.timeout)
             data = json.loads(resp.read())
         except HTTPError as e:
             return {'ret': False, 'msg': "HTTP Error: %s" % e.code}
@@ -49,7 +50,7 @@ class RedfishUtils(object):
                             url_password=self.creds['pswd'],
                             force_basic_auth=True, validate_certs=False,
                             follow_redirects='all',
-                            use_proxy=False)
+                            use_proxy=False, timeout=self.timeout)
         except HTTPError as e:
             return {'ret': False, 'msg': "HTTP Error: %s" % e.code}
         except URLError as e:
@@ -68,7 +69,7 @@ class RedfishUtils(object):
                             url_password=self.creds['pswd'],
                             force_basic_auth=True, validate_certs=False,
                             follow_redirects='all',
-                            use_proxy=False)
+                            use_proxy=False, timeout=self.timeout)
         except HTTPError as e:
             return {'ret': False, 'msg': "HTTP Error: %s" % e.code}
         except URLError as e:
@@ -87,7 +88,7 @@ class RedfishUtils(object):
                             url_password=self.creds['pswd'],
                             force_basic_auth=True, validate_certs=False,
                             follow_redirects='all',
-                            use_proxy=False)
+                            use_proxy=False, timeout=self.timeout)
         except HTTPError as e:
             return {'ret': False, 'msg': "HTTP Error: %s" % e.code}
         except URLError as e:
@@ -436,6 +437,32 @@ class RedfishUtils(object):
         if response['ret'] is False:
             return response
         return {'ret': True}
+
+    def manage_indicator_led(self, command):
+        result = {}
+        key = 'IndicatorLED'
+
+        payloads = {'IndicatorLedOn': 'Lit', 'IndicatorLedOff': 'Off', "IndicatorLedBlink": 'Blinking'}
+
+        result = {}
+        for chassis_uri in self.chassis_uri_list:
+            response = self.get_request(self.root_uri + chassis_uri)
+            if response['ret'] is False:
+                return response
+            result['ret'] = True
+            data = response['data']
+            if key not in data:
+                return {'ret': False, 'msg': "Key %s not found" % key}
+
+            if command in payloads.keys():
+                payload = {'IndicatorLED': payloads[command]}
+                response = self.patch_request(self.root_uri + chassis_uri, payload, HEADERS)
+                if response['ret'] is False:
+                    return response
+            else:
+                return {'ret': False, 'msg': 'Invalid command'}
+
+        return result
 
     def manage_system_power(self, command):
         result = {}
@@ -940,7 +967,7 @@ class RedfishUtils(object):
                                inventory['entries']))
         return dict(ret=ret, entries=entries)
 
-    def get_psu_inventory(self, systems_uri):
+    def get_psu_inventory(self):
         result = {}
         psu_list = []
         psu_results = []

@@ -1,0 +1,2 @@
+bugfixes:
+  - random_mac - generate a proper MAC address when the provided vendor prefix is two or four characters (https://github.com/ansible/ansible/issues/50838)

@@ -19,26 +19,31 @@ short_description: Create, modify or delete FlashArray local user account
 description:
 - Create, modify or delete local users on a Pure Stoage FlashArray.
 author:
-- Simon Dodsley (@sdodsley)
+- Pure Storage Ansible Team (@sdodsley) <pure-ansible-team@purestorage.com>
 options:
   state:
     description:
     - Create, delete or update local user account
     default: present
+    type: str
     choices: [ absent, present ]
   name:
     description:
     - The name of the local user account
+    type: str
   role:
     description:
     - Sets the local user's access level to the array
+    type: str
     choices: [ readonly, storage_admin, array_admin ]
   password:
     description:
     - Password for the local user.
+    type: str
   old_password:
     description:
     - If changing an existing password, you must provide the old password for security
+    type: str
   api_token:
     description:
     - Define whether to create an API token for this user

@@ -86,6 +86,13 @@ options:
         description:
             - PKCS#12 file path to parse.
         type: path
+    backup:
+        description:
+            - Create a backup file including a timestamp so you can get the original
+              output file back if you overwrote it with a new one by accident.
+        type: bool
+        default: no
+        version_added: "2.8"
 extends_documentation_fragment:
     - files
 seealso:
@@ -155,6 +162,11 @@ privatekey:
     returned: changed or success
     type: str
     sample: /etc/ssl/private/ansible.com.pem
+backup_file:
+    description: Name of backup file created.
+    returned: changed and if I(backup) is C(yes)
+    type: str
+    sample: /path/to/ansible.com.pem.2019-03-09@11:22~
 '''
 
 import stat
@@ -199,9 +211,12 @@ class Pkcs(crypto_utils.OpenSSLObject):
         self.privatekey_passphrase = module.params['privatekey_passphrase']
         self.privatekey_path = module.params['privatekey_path']
         self.src = module.params['src']
-        self.mode = module.params['mode']
-        if not self.mode:
-            self.mode = 0o400
+
+        if module.params['mode'] is None:
+            module.params['mode'] = '0400'
+
+        self.backup = module.params['backup']
+        self.backup_file = None
 
     def check(self, module, perms_required=True):
         """Ensure the resource is in its desired state."""
@@ -232,6 +247,8 @@ class Pkcs(crypto_utils.OpenSSLObject):
         }
         if self.privatekey_path:
             result['privatekey_path'] = self.privatekey_path
+        if self.backup_file:
+            result['backup_file'] = self.backup_file
 
         return result
 
@@ -239,11 +256,6 @@ class Pkcs(crypto_utils.OpenSSLObject):
         """Generate PKCS#12 file archive."""
 
         self.pkcs12 = crypto.PKCS12()
-
-        try:
-            self.remove(module)
-        except PkcsError as exc:
-            module.fail_json(msg=to_native(exc))
 
         if self.ca_certificates:
             ca_certs = [crypto_utils.load_certificate(ca_cert) for ca_cert
@@ -266,22 +278,23 @@ class Pkcs(crypto_utils.OpenSSLObject):
             except crypto_utils.OpenSSLBadPassphraseError as exc:
                 raise PkcsError(exc)
 
-        try:
-            pkcs12_file = os.open(self.path,
-                                  os.O_WRONLY | os.O_CREAT | os.O_TRUNC,
-                                  self.mode)
-            os.write(pkcs12_file, self.pkcs12.export(self.passphrase,
-                                                     self.iter_size, self.maciter_size))
-            os.close(pkcs12_file)
-        except (IOError, OSError) as exc:
-            self.remove(module)
-            raise PkcsError(exc)
+        if self.backup:
+            self.backup_file = module.backup_local(self.path)
+        crypto_utils.write_file(
+            module,
+            self.pkcs12.export(self.passphrase, self.iter_size, self.maciter_size),
+            0o600
+        )
+
+    def remove(self, module):
+        if self.backup:
+            self.backup_file = module.backup_local(self.path)
+        super(Pkcs, self).remove(module)
 
     def parse(self, module):
         """Read PKCS#12 file."""
 
         try:
-            self.remove(module)
             with open(self.src, 'rb') as pkcs12_fh:
                 pkcs12_content = pkcs12_fh.read()
             p12 = crypto.load_pkcs12(pkcs12_content,
@@ -291,14 +304,9 @@ class Pkcs(crypto_utils.OpenSSLObject):
             crt = crypto.dump_certificate(crypto.FILETYPE_PEM,
                                           p12.get_certificate())
 
-            pkcs12_file = os.open(self.path,
-                                  os.O_WRONLY | os.O_CREAT | os.O_TRUNC,
-                                  self.mode)
-            os.write(pkcs12_file, b'%s%s' % (pkey, crt))
-            os.close(pkcs12_file)
+            crypto_utils.write_file(module, b'%s%s' % (pkey, crt))
 
         except IOError as exc:
-            self.remove(module)
             raise PkcsError(exc)
 
 
@@ -317,21 +325,17 @@ def main():
         privatekey_path=dict(type='path'),
         state=dict(type='str', default='present', choices=['absent', 'present']),
         src=dict(type='path'),
+        backup=dict(type='bool', default=False),
     )
 
     required_if = [
         ['action', 'parse', ['src']],
     ]
 
-    required_together = [
-        ['privatekey_path', 'friendly_name'],
-    ]
-
     module = AnsibleModule(
         add_file_common_args=True,
         argument_spec=argument_spec,
         required_if=required_if,
-        required_together=required_together,
         supports_check_mode=True,
     )
 
@@ -345,16 +349,16 @@ def main():
             msg="The directory '%s' does not exist or the path is not a directory" % base_dir
         )
 
-    pkcs12 = Pkcs(module)
-    changed = False
+    try:
+        pkcs12 = Pkcs(module)
+        changed = False
 
-    if module.params['state'] == 'present':
-        if module.check_mode:
-            result = pkcs12.dump()
-            result['changed'] = module.params['force'] or not pkcs12.check(module)
-            module.exit_json(**result)
+        if module.params['state'] == 'present':
+            if module.check_mode:
+                result = pkcs12.dump()
+                result['changed'] = module.params['force'] or not pkcs12.check(module)
+                module.exit_json(**result)
 
-        try:
             if not pkcs12.check(module, perms_required=False) or module.params['force']:
                 if module.params['action'] == 'export':
                     if not module.params['friendly_name']:
@@ -367,29 +371,25 @@ def main():
             file_args = module.load_file_common_arguments(module.params)
             if module.set_fs_attributes_if_different(file_args, changed):
                 changed = True
+        else:
+            if module.check_mode:
+                result = pkcs12.dump()
+                result['changed'] = os.path.exists(module.params['path'])
+                module.exit_json(**result)
 
-        except PkcsError as exc:
-            module.fail_json(msg=to_native(exc))
-    else:
-        if module.check_mode:
-            result = pkcs12.dump()
-            result['changed'] = os.path.exists(module.params['path'])
-            module.exit_json(**result)
-
-        if os.path.exists(module.params['path']):
-            try:
+            if os.path.exists(module.params['path']):
                 pkcs12.remove(module)
                 changed = True
-            except PkcsError as exc:
-                module.fail_json(msg=to_native(exc))
 
-    result = pkcs12.dump()
-    result['changed'] = changed
-    if os.path.exists(module.params['path']):
-        file_mode = "%04o" % stat.S_IMODE(os.stat(module.params['path']).st_mode)
-        result['mode'] = file_mode
+        result = pkcs12.dump()
+        result['changed'] = changed
+        if os.path.exists(module.params['path']):
+            file_mode = "%04o" % stat.S_IMODE(os.stat(module.params['path']).st_mode)
+            result['mode'] = file_mode
 
-    module.exit_json(**result)
+        module.exit_json(**result)
+    except crypto_utils.OpenSSLObjectError as exc:
+        module.fail_json(msg=to_native(exc))
 
 
 if __name__ == '__main__':

@@ -21,5 +21,20 @@
   register: run_tests
 
 - name: run tests
-  include_tasks: tests.yml
   when: run_tests.stdout | trim | bool
+  block:
+  - name: ensure we start test with removed features
+    win_optional_feature:
+      name:
+      - SimpleTCP
+      - TelnetClient
+      state: absent
+  - include_tasks: tests.yml
+
+  always:
+  - name: make sure test features have been removed after test
+    win_optional_feature:
+      name:
+      - SimpleTCP
+      - TelnetClient
+      state: absent

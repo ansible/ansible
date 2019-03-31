@@ -68,6 +68,12 @@ options:
     required: false
     description:
       - bootdevice when setting boot configuration
+  timeout:
+    description:
+      - Timeout in seconds for URL requests to OOB controller
+    default: 10
+    type: int
+    version_added: '2.8'
 
 author: "Jose Delarosa (@jose-delarosa)"
 '''
@@ -86,6 +92,14 @@ EXAMPLES = '''
       category: Systems
       command: SetOneTimeBoot
       bootdevice: "{{ bootdevice }}"
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+
+  - name: Set chassis indicator LED to blink
+    redfish_command:
+      category: Chassis
+      command: IndicatorLedBlink
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
@@ -121,13 +135,14 @@ EXAMPLES = '''
       id: "{{ id }}"
       new_password: "{{ new_password }}"
 
-  - name: Clear Manager Logs
+  - name: Clear Manager Logs with a timeout of 20 seconds
     redfish_command:
       category: Manager
       command: ClearLogs
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
+      timeout: 20
 '''
 
 RETURN = '''
@@ -147,6 +162,7 @@ from ansible.module_utils._text import to_native
 CATEGORY_COMMANDS_ALL = {
     "Systems": ["PowerOn", "PowerForceOff", "PowerGracefulRestart",
                 "PowerGracefulShutdown", "PowerReboot", "SetOneTimeBoot"],
+    "Chassis": ["IndicatorLedOn", "IndicatorLedOff", "IndicatorLedBlink"],
     "Accounts": ["AddUser", "EnableUser", "DeleteUser", "DisableUser",
                  "UpdateUserRole", "UpdateUserPassword"],
     "Manager": ["GracefulRestart", "ClearLogs"],
@@ -167,6 +183,7 @@ def main():
             new_password=dict(no_log=True),
             roleid=dict(),
             bootdevice=dict(),
+            timeout=dict(type='int', default=10)
         ),
         supports_check_mode=False
     )
@@ -184,10 +201,13 @@ def main():
             'userpswd': module.params['new_password'],
             'userrole': module.params['roleid']}
 
+    # timeout
+    timeout = module.params['timeout']
+
     # Build root URI
     root_uri = "https://" + module.params['baseuri']
     rf_uri = "/redfish/v1/"
-    rf_utils = RedfishUtils(creds, root_uri)
+    rf_utils = RedfishUtils(creds, root_uri, timeout)
 
     # Check that Category is valid
     if category not in CATEGORY_COMMANDS_ALL:
@@ -229,6 +249,22 @@ def main():
                 result = rf_utils.manage_system_power(command)
             elif command == "SetOneTimeBoot":
                 result = rf_utils.set_one_time_boot_device(module.params['bootdevice'])
+
+    elif category == "Chassis":
+        result = rf_utils._find_chassis_resource(rf_uri)
+        if result['ret'] is False:
+            module.fail_json(msg=to_native(result['msg']))
+
+        led_commands = ["IndicatorLedOn", "IndicatorLedOff", "IndicatorLedBlink"]
+
+        # Check if more than one led_command is present
+        num_led_commands = sum([command in led_commands for command in command_list])
+        if num_led_commands > 1:
+            result = {'ret': False, 'msg': "Only one IndicatorLed command should be sent at a time."}
+        else:
+            for command in command_list:
+                if command in led_commands:
+                    result = rf_utils.manage_indicator_led(command)
 
     elif category == "Manager":
         MANAGER_COMMANDS = {

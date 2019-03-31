@@ -19,6 +19,9 @@ short_description: Generate OpenSSL Diffie-Hellman Parameters
 description:
     - This module allows one to (re)generate OpenSSL DH-params.
     - This module uses file common arguments to specify generated file permissions.
+    - "Please note that the module regenerates existing DH params if they don't
+      match the module's options. If you are concerned that this could overwrite
+      your existing DH params, consider using the I(backup) option."
 requirements:
     - OpenSSL
 author:
@@ -46,6 +49,13 @@ options:
             - Name of the file in which the generated parameters will be saved.
         type: path
         required: true
+    backup:
+        description:
+            - Create a backup file including a timestamp so you can get the original
+              DH params back if you overwrote them with new ones by accident.
+        type: bool
+        default: no
+        version_added: "2.8"
 extends_documentation_fragment:
 - files
 seealso:
@@ -83,6 +93,11 @@ filename:
     returned: changed or success
     type: str
     sample: /etc/ssl/dhparams.pem
+backup_file:
+    description: Name of backup file created.
+    returned: changed and if I(backup) is C(yes)
+    type: str
+    sample: /path/to/dhparams.pem.2019-03-09@11:22~
 '''
 
 import os
@@ -107,6 +122,9 @@ class DHParameter(object):
         self.changed = False
         self.openssl_bin = module.get_bin_path('openssl', True)
 
+        self.backup = module.params['backup']
+        self.backup_file = None
+
     def generate(self, module):
         """Generate a keypair."""
         changed = False
@@ -122,6 +140,8 @@ class DHParameter(object):
             rc, dummy, err = module.run_command(command, check_rc=False)
             if rc != 0:
                 raise DHParameterError(to_native(err))
+            if self.backup:
+                self.backup_file = module.backup_local(self.path)
             try:
                 module.atomic_move(tmpsrc, self.path)
             except Exception as e:
@@ -135,6 +155,15 @@ class DHParameter(object):
             changed = True
 
         self.changed = changed
+
+    def remove(self, module):
+        if self.backup:
+            self.backup_file = module.backup_local(self.path)
+        try:
+            os.remove(self.path)
+            self.changed = True
+        except OSError as exc:
+            module.fail_json(msg=to_native(exc))
 
     def check(self, module):
         """Ensure the resource is in its desired state."""
@@ -179,6 +208,9 @@ class DHParameter(object):
             'filename': self.path,
             'changed': self.changed,
         }
+        if self.backup_file:
+            result['backup_file'] = self.backup_file
+
         return result
 
 
@@ -191,6 +223,7 @@ def main():
             size=dict(type='int', default=4096),
             force=dict(type='bool', default=False),
             path=dict(type='path', required=True),
+            backup=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
         add_file_common_args=True,
@@ -223,10 +256,11 @@ def main():
             result['changed'] = os.path.exists(module.params['path'])
             module.exit_json(**result)
 
-        try:
-            os.remove(module.params['path'])
-        except OSError as exc:
-            module.fail_json(msg=to_native(exc))
+        if os.path.exists(module.params['path']):
+            try:
+                dhparam.remove(module)
+            except Exception as exc:
+                module.fail_json(msg=to_native(exc))
 
     result = dhparam.dump()
 

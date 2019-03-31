@@ -816,8 +816,8 @@
 # Test postgresql_privs
 - include: postgresql_privs.yml
 
-# Test postgresql_facts module
-- include: postgresql_facts.yml
+# Test postgresql_info module
+- include: postgresql_info.yml
 
 # Test default_privs with target_role
 - include: test_target_role.yml
@@ -832,6 +832,15 @@
 # not specific distributions.
 - include: postgresql_ext.yml
   when: postgres_version_resp.stdout is version('9.1', '>=') and ansible_distribution == 'Fedora'
+
+# Test postgresql_schema module:
+- include: postgresql_schema.yml
+
+# Test postgresql_membership module
+- include: postgresql_membership.yml
+
+# postgresql_table module tests
+- include: postgresql_table.yml
 
 # dump/restore tests per format
 # ============================================================
@@ -848,6 +857,9 @@
 # ============================================================
 - include: state_dump_restore.yml file=dbdata.tar test_fixture=admin
 
+# postgres_pg_hba module checks
+# ============================================================
+- include: postgresql_pg_hba.yml
 #
 # Cleanup
 #

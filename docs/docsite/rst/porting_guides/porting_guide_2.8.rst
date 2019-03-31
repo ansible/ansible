@@ -217,12 +217,6 @@ add ``$ErrorActionPreference = "Continue"`` to the top of the module. This chang
 of the EAP that was accidentally removed in a previous release and ensure that modules are more resiliant to errors
 that may occur in execution.
 
-PowerShell module options and option choices are currently case insensitive to what is defined in the module
-specification. This behaviour is deprecated and a warning displayed to the user if a case insensitive match was found.
-A future release of Ansible will make these checks case sensitive.
-
-The ``win_dsc`` module will now validate the input options for a DSC resource. In previous versions invalid options would be ignored but are now not.
-
 Modules removed
 ---------------
 
@@ -299,7 +293,7 @@ Noteworthy module changes
 
 * The ``docker_service`` module was renamed to :ref:`docker_compose <docker_compose_module>`.
 * The renamed ``docker_compose`` module used to return one fact per service, named same as the service. A dictionary
-  of these facts is returned as the regular return value ``service_facts``. The returned facts will be removed in
+  of these facts is returned as the regular return value ``services``. The returned facts will be removed in
   Ansible 2.12.
 
 * The ``docker_swarm_service`` module no longer sets a defaults for the following options:
@@ -317,6 +311,13 @@ Noteworthy module changes
 * The ``ipa_user`` module originally always sent ``password`` to FreeIPA regardless of whether the password changed. Now the module only sends ``password`` if ``update_password`` is set to ``always``, which is the default.
 
 * The ``win_psexec`` has deprecated the undocumented ``extra_opts`` module option. This will be removed in Ansible 2.10.
+
+* The ``win_dsc`` module will now validate the input options for a DSC resource. In previous versions invalid options
+  would be ignored but are now not.
+
+* The ``win_domain_membership`` module will no longer automatically join a host in a domain that already has an account
+  with the same name. Set ``allow_existing_computer_account=yes`` to override this check and go back to the original
+  behaviour.
 
 Plugins
 =======

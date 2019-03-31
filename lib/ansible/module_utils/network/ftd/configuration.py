@@ -35,6 +35,8 @@ MULTIPLE_DUPLICATES_FOUND_ERROR = (
     "Multiple objects returned according to filters being specified. "
     "Please specify more specific filters which can find exact object that caused duplication error")
 
+PATH_PARAMS_FOR_DEFAULT_OBJ = {'objId': 'default'}
+
 
 class OperationNamePrefix:
     ADD = 'add'

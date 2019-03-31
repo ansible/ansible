@@ -26,7 +26,7 @@ description:
     - "Please note that the module regenerates private keys if they don't match
       the module's options. In particular, if you provide another passphrase
       (or specify none), change the keysize, etc., the private key will be
-      regenerated. If you are concerned that this could overwrite your private key,
+      regenerated. If you are concerned that this could **overwrite your private key**,
       consider using the I(backup) option."
     - The module can use the cryptography Python library, or the pyOpenSSL Python
       library. By default, it tries to detect which one is available. This can be
@@ -273,11 +273,10 @@ class PrivateKeyBase(crypto_utils.OpenSSLObject):
         self.fingerprint = {}
 
         self.backup = module.params['backup']
-        self.backup_path = None
+        self.backup_file = None
 
-        self.mode = module.params.get('mode', None)
-        if self.mode is None:
-            self.mode = 0o600
+        if module.params['mode'] is None:
+            module.params['mode'] = '0600'
 
     @abc.abstractmethod
     def _generate_private_key_data(self):
@@ -294,26 +293,8 @@ class PrivateKeyBase(crypto_utils.OpenSSLObject):
             if self.backup:
                 self.backup_file = module.backup_local(self.path)
             privatekey_data = self._generate_private_key_data()
-            try:
-                privatekey_file = os.open(self.path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC)
-                os.close(privatekey_file)
-                if isinstance(self.mode, string_types):
-                    try:
-                        self.mode = int(self.mode, 8)
-                    except ValueError as e:
-                        try:
-                            st = os.lstat(self.path)
-                            self.mode = AnsibleModule._symbolic_mode_to_octal(st, self.mode)
-                        except ValueError as e:
-                            module.fail_json(msg="%s" % to_native(e), exception=traceback.format_exc())
-                os.chmod(self.path, self.mode)
-                privatekey_file = os.open(self.path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, self.mode)
-                os.write(privatekey_file, privatekey_data)
-                os.close(privatekey_file)
-                self.changed = True
-            except IOError as exc:
-                self.remove()
-                raise PrivateKeyError(exc)
+            crypto_utils.write_file(module, privatekey_data, 0o600)
+            self.changed = True
 
         self.fingerprint = self._get_fingerprint()
         file_args = module.load_file_common_arguments(module.params)
@@ -352,8 +333,8 @@ class PrivateKeyBase(crypto_utils.OpenSSLObject):
             'changed': self.changed,
             'fingerprint': self.fingerprint,
         }
-        if self.backup_path:
-            result['backup_path'] = self.backup_path
+        if self.backup_file:
+            result['backup_file'] = self.backup_file
 
         return result
 
@@ -392,9 +373,7 @@ class PrivateKeyPyOpenSSL(PrivateKeyBase):
         try:
             crypto_utils.load_privatekey(self.path, self.passphrase)
             return True
-        except crypto.Error:
-            return False
-        except crypto_utils.OpenSSLBadPassphraseError as exc:
+        except Exception as dummy:
             return False
 
     def _check_size_and_type(self):
@@ -554,12 +533,8 @@ class PrivateKeyCryptography(PrivateKeyBase):
                     backend=self.cryptography_backend
                 )
             return True
-        except TypeError as e:
-            if 'Password' in str(e) and 'encrypted' in str(e):
-                return False
-            raise PrivateKeyError(e)
-        except Exception as e:
-            raise PrivateKeyError(e)
+        except Exception as dummy:
+            return False
 
     def _check_size_and_type(self):
         privatekey = self._load_privatekey()
@@ -658,41 +633,35 @@ def main():
                                   'cryptography (>= {0}) and pyOpenSSL (>= {1})').format(
                                       MINIMAL_CRYPTOGRAPHY_VERSION,
                                       MINIMAL_PYOPENSSL_VERSION))
-    if backend == 'pyopenssl':
-        if not PYOPENSSL_FOUND:
-            module.fail_json(msg=missing_required_lib('pyOpenSSL'), exception=PYOPENSSL_IMP_ERR)
-        private_key = PrivateKeyPyOpenSSL(module)
-    elif backend == 'cryptography':
-        if not CRYPTOGRAPHY_FOUND:
-            module.fail_json(msg=missing_required_lib('cryptography'), exception=CRYPTOGRAPHY_IMP_ERR)
-        private_key = PrivateKeyCryptography(module)
+    try:
+        if backend == 'pyopenssl':
+            if not PYOPENSSL_FOUND:
+                module.fail_json(msg=missing_required_lib('pyOpenSSL'), exception=PYOPENSSL_IMP_ERR)
+            private_key = PrivateKeyPyOpenSSL(module)
+        elif backend == 'cryptography':
+            if not CRYPTOGRAPHY_FOUND:
+                module.fail_json(msg=missing_required_lib('cryptography'), exception=CRYPTOGRAPHY_IMP_ERR)
+            private_key = PrivateKeyCryptography(module)
 
-    if private_key.state == 'present':
+        if private_key.state == 'present':
+            if module.check_mode:
+                result = private_key.dump()
+                result['changed'] = module.params['force'] or not private_key.check(module)
+                module.exit_json(**result)
 
-        if module.check_mode:
-            result = private_key.dump()
-            result['changed'] = module.params['force'] or not private_key.check(module)
-            module.exit_json(**result)
-
-        try:
             private_key.generate(module)
-        except PrivateKeyError as exc:
-            module.fail_json(msg=to_native(exc))
-    else:
+        else:
+            if module.check_mode:
+                result = private_key.dump()
+                result['changed'] = os.path.exists(module.params['path'])
+                module.exit_json(**result)
 
-        if module.check_mode:
-            result = private_key.dump()
-            result['changed'] = os.path.exists(module.params['path'])
-            module.exit_json(**result)
-
-        try:
             private_key.remove(module)
-        except PrivateKeyError as exc:
-            module.fail_json(msg=to_native(exc))
 
-    result = private_key.dump()
-
-    module.exit_json(**result)
+        result = private_key.dump()
+        module.exit_json(**result)
+    except crypto_utils.OpenSSLObjectError as exc:
+        module.fail_json(msg=to_native(exc))
 
 
 if __name__ == '__main__':
