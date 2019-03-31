@@ -164,7 +164,6 @@ class Cli:
         responses = list()
 
         for item in to_list(commands):
-            # cmd = item['command']
 
             rc, out, err = self.exec_command(item)
 
@@ -342,9 +341,7 @@ def set_nc_config(module, xml_str):
         # conn.unlock(target = 'candidate')
         pass
     return to_string(to_xml(out))
-def log(sinfo):
-    with open('/usr/huawei/1234.yml', 'a+') as f:
-        f.write(str(sinfo) + '\n==23232==\n')
+
 
 def get_nc_config(module, xml_str):
     """ get_config """
@@ -352,7 +349,6 @@ def get_nc_config(module, xml_str):
     conn = get_nc_connection(module)
     if xml_str is not None:
         response = conn.get(xml_str)
-        log(response)
     else:
         return None
 
