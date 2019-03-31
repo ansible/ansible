@@ -5,7 +5,7 @@
     name: cs-test-zone
     state: present
     dns1: 8.8.8.8
-    network_type: advanced
+    network_type: Advanced
   register: cszone
 
 - name: ensure the zone is disabled
