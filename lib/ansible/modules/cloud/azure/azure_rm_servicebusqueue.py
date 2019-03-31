@@ -126,7 +126,7 @@ EXAMPLES = '''
 - name: Create a queue
   azure_rm_servicebusqueue:
       name: subqueue
-      resource_group: foo
+      resource_group: myResourceGroup
       namespace: bar
       duplicate_detection_time_in_seconds: 600
 '''
