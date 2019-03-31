@@ -314,7 +314,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
                 if 'device_role' in host:
                     url = urljoin(self.api_endpoint, "/api/dcim/interfaces/?limit=0&device_id=%s" % (to_text(host["id"])))
                 elif 'role' in host:
-                    url = urljoin(self.api_endpoint, "/api/virtualization/interfaces/?limit=0&virtual_machine_id=%s" %(to_text(host["id"])))
+                    url = urljoin(self.api_endpoint, "/api/virtualization/interfaces/?limit=0&virtual_machine_id=%s" % (to_text(host["id"])))
                 interface_lookup = self.get_resource_list(api_url=url)
                 return interface_lookup
         except Exception:
