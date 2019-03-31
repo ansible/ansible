@@ -211,8 +211,10 @@ options:
         description:
             - Include the intermediate certificate to the generated certificate
             - This is only used by the C(acme) provider.
+            - Note that this is only available for older versions of C(acme-tiny).
+              New versions include the chain automatically, and setting I(acme_chain) to C(yes) results in an error.
         type: bool
-        default: yes
+        default: no
         version_added: "2.5"
 
     signature_algorithms:
@@ -1736,7 +1738,7 @@ def main():
             # provider: acme
             acme_accountkey_path=dict(type='path'),
             acme_challenge_path=dict(type='path'),
-            acme_chain=dict(type='bool', default=True),
+            acme_chain=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
         add_file_common_args=True,
