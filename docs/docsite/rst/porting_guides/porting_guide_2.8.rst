@@ -312,6 +312,24 @@ Noteworthy module changes
 
 * The ``win_psexec`` has deprecated the undocumented ``extra_opts`` module option. This will be removed in Ansible 2.10.
 
+* The ``win_nssm`` module has deprecated the following options in favor of using the ``win_service`` module to configure the service after installing it with ``win_nssm``:
+  * ``dependencies``, use ``dependencies`` of ``win_service`` instead
+  * ``start_mode``, use ``start_mode`` of ``win_service`` instead
+  * ``user``, use ``username`` of ``win_service`` instead
+  * ``password``, use ``password`` of ``win_service`` instead
+  These options will be removed in Ansible 2.12.
+
+* The ``win_nssm`` module has also deprecated the ``start``, ``stop``, and ``restart`` values of the ``status`` option.
+  You should use the ``win_service`` module to control the running state of the service. This will be removed in Ansible 2.12.
+
+* The ``status`` module option for ``win_nssm`` has changed its default value to ``present``. Before, the default was ``start``.
+  Consequently, the service is no longer started by default after creation with ``win_nssm``, and you should use 
+  the ``win_service`` module to start it if needed.
+
+* The ``app_parameters`` module option for ``win_nssm`` has been deprecated; use ``argument`` instead. This will be removed in Ansible 2.12.
+
+* The ``app_parameters_free_form`` module option for ``win_nssm`` has been aliased to the new ``arguments`` option.
+
 * The ``win_dsc`` module will now validate the input options for a DSC resource. In previous versions invalid options
   would be ignored but are now not.
 
