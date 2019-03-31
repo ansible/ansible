@@ -108,6 +108,12 @@ options:
         description:
             - Specify the key identity when signing a public key. The identifier that is logged by the server when the certificate is used for authentication.
         type: str
+    serial_number:
+        description:
+            - "Specify the certificate serial number when signing a public key. The serial number that is logged by the server when the certificate is used for authentication.
+               The certificate serial number may be used in a KeyRevocationList."
+        type: int
+        default: 0
 
 extends_documentation_fragment: files
 '''
@@ -216,6 +222,7 @@ class Certificate(object):
         self.public_key = module.params['public_key']
         self.path = module.params['path']
         self.identifier = module.params['identifier']
+        self.serial_number = module.params['serial_number']
         self.valid_from = module.params['valid_from']
         self.valid_to = module.params['valid_to']
         self.valid_at = module.params['valid_at']
@@ -289,6 +296,9 @@ class Certificate(object):
                 args.extend(['-I', self.identifier])
             else:
                 args.extend(['-I', ""])
+
+            if self.serial_number:
+                args.extend(['-z', str(self.serial_number)])
 
             if self.principals:
                 args.extend(['-n', ','.join(self.principals)])
@@ -515,6 +525,7 @@ def main():
             public_key=dict(type='path'),
             path=dict(type='path', required=True),
             identifier=dict(type='str'),
+            serial_number=dict(type='int', default=0),
             valid_from=dict(type='str'),
             valid_to=dict(type='str'),
             valid_at=dict(type='str'),

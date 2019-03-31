@@ -239,6 +239,35 @@
           - "clear"
       valid_from: "2001-01-21"
       valid_to: "2019-01-21"
+  - name: Generate cert without serial
+    openssh_cert:
+      type: user
+      signing_key: '{{ output_dir }}/id_key'
+      public_key: '{{ output_dir }}/id_key.pub'
+      path: '{{ output_dir }}/id_cert_no_serial'
+      valid_from: always
+      valid_to: forever
+    register: rc_no_serial_number
+  - name: check default serial
+    assert:
+      that:
+        - "'Serial: 0' in rc_no_serial_number.info"
+      msg: OpenSSH user certificate contains the default serial number.
+  - name: Generate cert with serial 42
+    openssh_cert:
+      type: user
+      signing_key: '{{ output_dir }}/id_key'
+      public_key: '{{ output_dir }}/id_key.pub'
+      path: '{{ output_dir }}/id_cert_serial_42'
+      valid_from: always
+      valid_to: forever
+      serial_number: 42
+    register: rc_serial_number
+  - name: check serial 42
+    assert:
+      that:
+        - "'Serial: 42' in rc_serial_number.info"
+      msg: OpenSSH user certificate contains the serial number from the params.
   - name: Remove certificate (check mode)
     openssh_cert:
       state: absent
