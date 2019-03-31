@@ -1648,17 +1648,15 @@ class AcmeCertificate(Certificate):
 
         if not self.check(module, perms_required=False) or self.force:
             acme_tiny_path = self.module.get_bin_path('acme-tiny', required=True)
-            chain = ''
+            command = [acme_tiny_path]
             if self.use_chain:
-                chain = '--chain'
+                command.append('--chain')
+            command.extend(['--account-key', self.accountkey_path])
+            command.extend(['--csr', self.csr_path])
+            command.extend(['--acme-dir', self.challenge_path])
 
             try:
-                crt = module.run_command("%s %s --account-key %s --csr %s "
-                                         "--acme-dir %s" % (acme_tiny_path, chain,
-                                                            self.accountkey_path,
-                                                            self.csr_path,
-                                                            self.challenge_path),
-                                         check_rc=True)[1]
+                crt = module.run_command(command, check_rc=True)[1]
                 if self.backup:
                     self.backup_file = module.backup_local(self.path)
                 crypto_utils.write_file(module, to_bytes(crt))
