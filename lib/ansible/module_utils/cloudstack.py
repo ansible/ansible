@@ -22,17 +22,6 @@ except ImportError:
     CS_IMP_ERR = traceback.format_exc()
     HAS_LIB_CS = False
 
-CS_HYPERVISORS = [
-    'KVM', 'kvm',
-    'VMware', 'vmware',
-    'BareMetal', 'baremetal',
-    'XenServer', 'xenserver',
-    'LXC', 'lxc',
-    'HyperV', 'hyperv',
-    'UCS', 'ucs',
-    'OVM', 'ovm',
-    'Simulator', 'simulator',
-]
 
 if sys.version_info > (3,):
     long = int
