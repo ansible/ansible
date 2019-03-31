@@ -110,7 +110,7 @@ options:
         type: str
     serial_number:
         description:
-            - "Specify the certificate serial number when signing a public key.
+            - "Specify the certificate serial number.
                The serial number is logged by the server when the certificate is used for authentication.
                The certificate serial number may be used in a KeyRevocationList.
                Note: The default value set by ssh-keygen is 0."
@@ -388,6 +388,7 @@ class Certificate(object):
             if principals == ["(none)"]:
                 principals = None
             cert_type = re.findall("( user | host )", proc[1])[0].strip()
+            serial_number = re.search(r"Serial: (\d+)", proc[1]).group(1)
             validity = re.findall("(from (\\d{4}-\\d{2}-\\d{2}T\\d{2}(:\\d{2}){2}) to (\\d{4}-\\d{2}-\\d{2}T\\d{2}(:\\d{2}){2}))", proc[1])
             if validity:
                 if validity[0][1]:
@@ -412,6 +413,12 @@ class Certificate(object):
         def _check_perms(module):
             file_args = module.load_file_common_arguments(module.params)
             return not module.set_fs_attributes_if_different(file_args, False)
+
+        def _check_serial_number():
+            if self.serial_number is None:
+                # the default serial number set by ssh-keygen is 0
+                return serial_number == '0'
+            return self.serial_number == int(serial_number)
 
         def _check_type():
             return self.type == cert_type
@@ -452,10 +459,10 @@ class Certificate(object):
 
             return False
 
-        if not perms_required:
-            return _check_type() and _check_principals() and _check_validity(module)
+        if perms_required and not _check_perms(module):
+            return False
 
-        return _check_perms(module) and _check_type() and _check_principals() and _check_validity(module)
+        return _check_type() and _check_principals() and _check_validity(module) and _check_serial_number()
 
     def dump(self):
 
