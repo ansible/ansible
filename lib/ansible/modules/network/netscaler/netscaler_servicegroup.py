@@ -98,6 +98,8 @@ options:
                 of 0.
             - "Minimum value = 0"
             - "Maximum value = 4094"
+        version_added: "2.8"
+
 
     maxreq:
         description:
