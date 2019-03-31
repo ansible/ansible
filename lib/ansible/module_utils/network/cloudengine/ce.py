@@ -80,7 +80,7 @@ ce_argument_spec.update(ce_top_spec)
 
 
 def to_string(data):
-    return re.sub(r'<data.+?(/>|>)', r'<data\1', data)
+    return re.sub(r'<data\s+.+?(/>|>)', r'<data\1', data)
 
 
 def check_args(module, warnings):
@@ -164,12 +164,12 @@ class Cli:
         responses = list()
 
         for item in to_list(commands):
-            cmd = item['command']
+            # cmd = item['command']
 
-            rc, out, err = self.exec_command(cmd)
+            rc, out, err = self.exec_command(item)
 
             if check_rc and rc != 0:
-                self._module.fail_json(msg=cli_err_msg(cmd.strip(), err))
+                self._module.fail_json(msg=cli_err_msg(item['command'].strip(), err))
 
             try:
                 out = self._module.from_json(out)
@@ -234,7 +234,7 @@ def to_command(module, commands):
         command=dict(key=True),
         output=dict(default=default_output),
         prompt=dict(),
-        response=dict()
+        answer=dict()
     ), module)
 
     commands = transform(to_list(commands))
@@ -342,7 +342,9 @@ def set_nc_config(module, xml_str):
         # conn.unlock(target = 'candidate')
         pass
     return to_string(to_xml(out))
-
+def log(sinfo):
+    with open('/usr/huawei/1234.yml', 'a+') as f:
+        f.write(str(sinfo) + '\n==23232==\n')
 
 def get_nc_config(module, xml_str):
     """ get_config """
@@ -350,6 +352,7 @@ def get_nc_config(module, xml_str):
     conn = get_nc_connection(module)
     if xml_str is not None:
         response = conn.get(xml_str)
+        log(response)
     else:
         return None
 
