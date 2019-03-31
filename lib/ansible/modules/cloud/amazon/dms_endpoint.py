@@ -174,6 +174,11 @@ def dms_modify_endpoint(client, **params):
     return client.modify_endpoint(**params)
 
 
+@AWSRetry.backoff(**backoff_params)
+def get_endpoint_deleted_waiter(client):
+    return client.get_waiter('endpoint_deleted')
+
+
 def endpoint_exists(endpoint):
     """ Returns boolean based on the existance of the endpoint
     :param endpoint: dict containing the described endpoint
@@ -203,7 +208,24 @@ def delete_dms_endpoint(connection):
         delete_arn = dict(
             EndpointArn=endpoint_arn
         )
-        return connection.delete_endpoint(**delete_arn)
+        if module.params.get('wait'):
+
+            delete_output = connection.delete_endpoint(**delete_arn)
+            delete_waiter = get_endpoint_deleted_waiter(connection)
+            delete_waiter.wait(
+                Filters=[{
+                    'Name': 'endpoint-arn',
+                    'Values': [endpoint_arn]
+
+                }],
+                WaiterConfig={
+                    'Delay': module.params.get('timeout'),
+                    'MaxAttempts': module.params.get('retries')
+                }
+            )
+            return delete_output
+        else:
+            return connection.delete_endpoint(**delete_arn)
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg="Failed to delete the  DMS endpoint.",
                          exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
@@ -351,13 +373,17 @@ def main():
         mongodbsettings=dict(type='dict'),
         kinesissettings=dict(type='dict'),
         elasticsearchsettings=dict(type='dict'),
-        wait=dict(type='bool')
+        wait=dict(type='bool'),
+        timeout=dict(type='int'),
+        retries=dict(type='int')
     )
     global module
     module = AnsibleAWSModule(
         argument_spec=argument_spec,
         required_if=[
             ["state", "absent", ["wait"]],
+            ["wait", "True", ["timeout"]],
+            ["wait", "True", ["retries"]],
         ],
         supports_check_mode=True
     )
