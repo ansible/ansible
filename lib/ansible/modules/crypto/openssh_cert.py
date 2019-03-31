@@ -113,6 +113,7 @@ options:
             - "Specify the certificate serial number.
                The serial number is logged by the server when the certificate is used for authentication.
                The certificate serial number may be used in a KeyRevocationList.
+               The serial number may be omitted for checks, but must be specified again for a new certificate.
                Note: The default value set by ssh-keygen is 0."
         type: int
 
@@ -416,8 +417,7 @@ class Certificate(object):
 
         def _check_serial_number():
             if self.serial_number is None:
-                # the default serial number set by ssh-keygen is 0
-                return serial_number == '0'
+                return True
             return self.serial_number == int(serial_number)
 
         def _check_type():
