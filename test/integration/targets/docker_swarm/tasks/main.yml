@@ -14,7 +14,7 @@
     ignore_errors: yes
 
   - name: Kill docker daemon
-    command: systemctl stop -s 9 docker
+    command: systemctl kill -s 9 docker
     become: yes
 
   - name: Restart docker daemon
