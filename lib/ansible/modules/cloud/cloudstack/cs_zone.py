@@ -46,8 +46,8 @@ options:
     description:
       - Network type of the zone.
     type: str
-    default: basic
-    choices: [ basic, advanced ]
+    default: Basic
+    choices: [ Basic, Advanced ]
   dns1:
     description:
       - First DNS for the zone.
@@ -348,7 +348,7 @@ def main():
         internal_dns2=dict(),
         dns1_ipv6=dict(),
         dns2_ipv6=dict(),
-        network_type=dict(default='basic', choices=['Basic', 'basic', 'Advanced', 'advanced']),
+        network_type=dict(default='Basic', choices=['Basic', 'Advanced']),
         network_domain=dict(),
         guest_cidr_address=dict(),
         dhcp_provider=dict(),
