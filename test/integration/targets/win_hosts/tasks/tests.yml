@@ -1,0 +1,189 @@
+---
+
+- name: add a simple host with address
+  win_hosts:
+    state: present
+    ip_address: "{{ test_win_hosts_ip }}"
+    canonical_name: "{{ test_win_hosts_cname }}"
+  register: add_ip
+
+- assert:
+    that:
+      - "add_ip.changed == true"
+
+- name: get actual dns result
+  win_shell: "try{ [array]$t = [Net.DNS]::GetHostEntry('{{ test_win_hosts_cname }}') } catch { return 'false' } if ($t[0].HostName -eq '{{ test_win_hosts_cname }}' -and $t[0].AddressList[0].toString() -eq '{{ test_win_hosts_ip }}'){ return 'true' } else { return 'false' }"
+  register: add_ip_actual
+
+- assert:
+    that:
+      - "add_ip_actual.stdout_lines[0]|lower == 'true'"
+
+- name: add a simple host with ipv4 address (idempotent)
+  win_hosts:
+    state: present
+    ip_address: "{{ test_win_hosts_ip }}"
+    canonical_name: "{{ test_win_hosts_cname }}"
+  register: add_ip
+
+- assert:
+    that:
+      - "add_ip.changed == false"
+
+- name: remove simple host
+  win_hosts:
+    state: absent
+    ip_address: "{{ test_win_hosts_ip }}"
+    canonical_name: "{{ test_win_hosts_cname }}"
+  register: remove_ip
+
+- assert:
+    that:
+      - "remove_ip.changed == true"
+
+- name: get actual dns result
+  win_shell: "try{ [array]$t = [Net.DNS]::GetHostEntry('{{ test_win_hosts_cname}}') } catch { return 'false' } if ($t[0].HostName -eq '{{ test_win_hosts_cname }}' -and $t[0].AddressList[0].toString() -eq '{{ test_win_hosts_ip }}'){ return 'true' } else { return 'false' }"
+  register: remove_ip_actual
+  failed_when: "remove_ip_actual.rc == 0"
+
+- assert:
+    that:
+      - "remove_ip_actual.stdout_lines[0]|lower == 'false'"
+
+- name: remove simple host (idempotent)
+  win_hosts:
+    state: absent
+    ip_address: "{{ test_win_hosts_ip }}"
+    canonical_name: "{{ test_win_hosts_cname }}"
+  register: remove_ip
+
+- assert:
+    that:
+      - "remove_ip.changed == false"
+
+- name: add host and set aliases
+  win_hosts:
+    state: present
+    ip_address: "{{ test_win_hosts_ip }}"
+    canonical_name: "{{ test_win_hosts_cname }}"
+    aliases: "{{ test_win_hosts_aliases_set | union(test_win_hosts_aliases_remove) }}"
+    action: set
+  register: set_aliases
+
+- assert:
+    that:
+      - "set_aliases.changed == true"
+
+- name: get actual dns result for host
+  win_shell: "try{ [array]$t = [Net.DNS]::GetHostEntry('{{ test_win_hosts_cname }}') } catch { return 'false' } if ($t[0].HostName -eq '{{ test_win_hosts_cname }}' -and $t[0].AddressList[0].toString() -eq '{{ test_win_hosts_ip }}'){ return 'true' } else { return 'false' }"
+  register: set_aliases_actual_host
+
+- assert:
+    that:
+      - "set_aliases_actual_host.stdout_lines[0]|lower == 'true'"
+
+- name: get actual dns results for aliases
+  win_shell: "try{ [array]$t = [Net.DNS]::GetHostEntry('{{ item }}') } catch { return 'false' } if ($t[0].HostName -eq '{{ test_win_hosts_cname }}' -and $t[0].AddressList[0].toString() -eq '{{ test_win_hosts_ip }}'){ return 'true' } else { return 'false' }"
+  register: set_aliases_actual
+  with_items: "{{ test_win_hosts_aliases_set | union(test_win_hosts_aliases_remove) }}"
+
+- assert:
+    that:
+      - "item.stdout_lines[0]|lower == 'true'"
+  with_items: "{{ set_aliases_actual.results }}"
+
+- name: add host and set aliases (idempotent)
+  win_hosts:
+    state: present
+    ip_address: "{{ test_win_hosts_ip }}"
+    canonical_name: "{{ test_win_hosts_cname }}"
+    aliases: "{{ test_win_hosts_aliases_set | union(test_win_hosts_aliases_remove) }}"
+    action: set
+  register: set_aliases
+
+- assert:
+    that:
+      - "set_aliases.changed == false"
+
+- name: remove aliases from the list
+  win_hosts:
+    state: present
+    ip_address: "{{ test_win_hosts_ip }}"
+    canonical_name: "{{ test_win_hosts_cname }}"
+    aliases: "{{ test_win_hosts_aliases_remove }}"
+    action: remove
+  register: remove_aliases
+
+- assert:
+    that:
+      - "remove_aliases.changed == true"
+
+- name: get actual dns result for removed aliases
+  win_shell: "try{ [array]$t = [Net.DNS]::GetHostEntry('{{ item }}') } catch { return 'false' } if ($t[0].HostName -eq '{{ test_win_hosts_cname }}' -and $t[0].AddressList[0].toString() -eq '{{ test_win_hosts_ip }}'){ return 'true' } else { return 'false' }"
+  register: remove_aliases_removed_actual
+  failed_when: "remove_aliases_removed_actual.rc == 0"
+  with_items: "{{ test_win_hosts_aliases_remove }}"
+
+- assert:
+    that:
+      - "item.stdout_lines[0]|lower == 'false'"
+  with_items: "{{ remove_aliases_removed_actual.results }}"
+
+- name: get actual dns result for remaining aliases
+  win_shell: "try{ [array]$t = [Net.DNS]::GetHostEntry('{{ item }}') } catch { return 'false' } if ($t[0].HostName -eq '{{ test_win_hosts_cname }}' -and $t[0].AddressList[0].toString() -eq '{{ test_win_hosts_ip }}'){ return 'true' } else { return 'false' }"
+  register: remove_aliases_remain_actual
+  with_items: "{{ test_win_hosts_aliases_set | difference(test_win_hosts_aliases_remove) }}"
+
+- assert:
+    that:
+      - "item.stdout_lines[0]|lower == 'true'"
+  with_items: "{{ remove_aliases_remain_actual.results }}"
+
+- name: remove aliases from the list (idempotent)
+  win_hosts:
+    state: present
+    ip_address: "{{ test_win_hosts_ip }}"
+    canonical_name: "{{ test_win_hosts_cname }}"
+    aliases: "{{ test_win_hosts_aliases_remove }}"
+    action: remove
+  register: remove_aliases
+
+- assert:
+    that:
+      - "remove_aliases.changed == false"
+
+- name: add aliases back
+  win_hosts:
+    state: present
+    ip_address: "{{ test_win_hosts_ip }}"
+    canonical_name: "{{ test_win_hosts_cname }}"
+    aliases: "{{ test_win_hosts_aliases_remove }}"
+    action: add
+  register: add_aliases
+
+- assert:
+    that:
+      - "add_aliases.changed == true"
+
+- name: get actual dns results for aliases
+  win_shell: "try{ [array]$t = [Net.DNS]::GetHostEntry('{{ item }}') } catch { return 'false' } if ($t[0].HostName -eq '{{ test_win_hosts_cname }}' -and $t[0].AddressList[0].toString() -eq '{{ test_win_hosts_ip }}'){ return 'true' } else { return 'false' }"
+  register: add_aliases_actual
+  with_items: "{{ test_win_hosts_aliases_set | union(test_win_hosts_aliases_remove) }}"
+
+- assert:
+    that:
+      - "item.stdout_lines[0]|lower == 'true'"
+  with_items: "{{ add_aliases_actual.results }}"
+
+- name: add aliases back (idempotent)
+  win_hosts:
+    state: present
+    ip_address: "{{ test_win_hosts_ip }}"
+    canonical_name: "{{ test_win_hosts_cname }}"
+    aliases: "{{ test_win_hosts_aliases_remove }}"
+    action: add
+  register: add_aliases
+
+- assert:
+    that:
+      - "add_aliases.changed == false"
