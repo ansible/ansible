@@ -186,7 +186,6 @@ class AzureRMNotification(AzureRMModuleBase):
             self.results['changed'] = False
             response = old_response
 
-
         return self.results
 
     def rename_key(self, d, old_name, new_name):

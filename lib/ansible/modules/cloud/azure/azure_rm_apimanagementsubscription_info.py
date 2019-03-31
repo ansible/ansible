@@ -57,15 +57,6 @@ class AzureRMSubscriptionFacts(AzureRMModuleBase):
                 type='str',
                 required=True
             ),
-            $filter=dict(
-                type='str'
-            ),
-            $top=dict(
-                type='dict'
-            ),
-            $skip=dict(
-                type='dict'
-            ),
             sid=dict(
                 type='str',
                 required=True
@@ -79,9 +70,6 @@ class AzureRMSubscriptionFacts(AzureRMModuleBase):
 
         self.resource_group_name = None
         self.service_name = None
-        self.$filter = None
-        self.$top = None
-        self.$skip = None
         self.sid = None
 
         self.results = dict(changed=False)

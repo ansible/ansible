@@ -61,15 +61,6 @@ class AzureRMUserSubscriptionFacts(AzureRMModuleBase):
                 type='str',
                 required=True
             ),
-            $filter=dict(
-                type='str'
-            ),
-            $top=dict(
-                type='dict'
-            ),
-            $skip=dict(
-                type='dict'
-            ),
             state=dict(
                 type='str',
                 default='present',
@@ -80,9 +71,6 @@ class AzureRMUserSubscriptionFacts(AzureRMModuleBase):
         self.resource_group_name = None
         self.service_name = None
         self.uid = None
-        self.$filter = None
-        self.$top = None
-        self.$skip = None
 
         self.results = dict(changed=False)
         self.mgmt_client = None

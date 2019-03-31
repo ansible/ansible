@@ -61,15 +61,6 @@ class AzureRMApiReleaseFacts(AzureRMModuleBase):
                 type='str',
                 required=True
             ),
-            $filter=dict(
-                type='str'
-            ),
-            $top=dict(
-                type='dict'
-            ),
-            $skip=dict(
-                type='dict'
-            ),
             release_id=dict(
                 type='str',
                 required=True
@@ -84,9 +75,6 @@ class AzureRMApiReleaseFacts(AzureRMModuleBase):
         self.resource_group_name = None
         self.service_name = None
         self.api_id = None
-        self.$filter = None
-        self.$top = None
-        self.$skip = None
         self.release_id = None
 
         self.results = dict(changed=False)
