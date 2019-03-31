@@ -17,51 +17,60 @@ short_description: Manages users on Apache CloudStack based clouds.
 description:
     - Create, update, disable, lock, enable and remove users.
 version_added: '2.0'
-author: "René Moser (@resmo)"
+author: René Moser (@resmo)
 options:
   username:
     description:
       - Username of the user.
+    type: str
     required: true
   account:
     description:
       - Account the user will be created under.
-      - Required on C(state=present).
+      - Required on I(state=present).
+    type: str
   password:
     description:
       - Password of the user to be created.
-      - Required on C(state=present).
+      - Required on I(state=present).
       - Only considered on creation and will not be updated if user exists.
+    type: str
   first_name:
     description:
       - First name of the user.
-      - Required on C(state=present).
+      - Required on I(state=present).
+    type: str
   last_name:
     description:
       - Last name of the user.
-      - Required on C(state=present).
+      - Required on I(state=present).
+    type: str
   email:
     description:
       - Email of the user.
-      - Required on C(state=present).
+      - Required on I(state=present).
+    type: str
   timezone:
     description:
       - Timezone of the user.
+    type: str
   keys_registered:
     description:
       - If API keys of the user should be generated.
       - "Note: Keys can not be removed by the API again."
-    version_added: "2.4"
+    version_added: '2.4'
     type: bool
     default: no
   domain:
     description:
       - Domain the user is related to.
+    type: str
     default: ROOT
   state:
     description:
       - State of the user.
       - C(unlocked) is an alias for C(enabled).
+    type: str
     default: present
     choices: [ present, absent, enabled, disabled, locked, unlocked ]
   poll_async:
@@ -74,8 +83,7 @@ extends_documentation_fragment: cloudstack
 
 EXAMPLES = '''
 - name: Create an user in domain 'CUSTOMERS'
-  local_action:
-    module: cs_user
+  cs_user:
     account: developers
     username: johndoe
     password: S3Cur3
@@ -83,34 +91,35 @@ EXAMPLES = '''
     first_name: John
     email: john.doe@example.com
     domain: CUSTOMERS
+  delegate_to: localhost
 
 - name: Lock an existing user in domain 'CUSTOMERS'
-  local_action:
-    module: cs_user
+  cs_user:
     username: johndoe
     domain: CUSTOMERS
     state: locked
+  delegate_to: localhost
 
 - name: Disable an existing user in domain 'CUSTOMERS'
-  local_action:
-    module: cs_user
+  cs_user:
     username: johndoe
     domain: CUSTOMERS
     state: disabled
+  delegate_to: localhost
 
 - name: Enable/unlock an existing user in domain 'CUSTOMERS'
-  local_action:
-    module: cs_user
+  cs_user:
     username: johndoe
     domain: CUSTOMERS
     state: enabled
+  delegate_to: localhost
 
 - name: Remove an user in domain 'CUSTOMERS'
-  local_action:
-    module: cs_user
+  cs_user:
     name: customer_xy
     domain: CUSTOMERS
     state: absent
+  delegate_to: localhost
 '''
 
 RETURN = '''
