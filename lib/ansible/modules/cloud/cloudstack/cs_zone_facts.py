@@ -16,12 +16,13 @@ short_description: Gathering facts of zones from Apache CloudStack based clouds.
 description:
   - Gathering facts from the API of a zone.
   - Sets Ansible facts accessable by the key C(cloudstack_zone) and since version 2.6 also returns results.
-version_added: "2.1"
-author: "René Moser (@resmo)"
+version_added: '2.1'
+author: René Moser (@resmo)
 options:
   name:
     description:
       - Name of the zone.
+    type: str
     required: true
     aliases: [ zone ]
 extends_documentation_fragment: cloudstack
@@ -29,10 +30,10 @@ extends_documentation_fragment: cloudstack
 
 EXAMPLES = '''
 - name: Gather facts from a zone
-  local_action:
-    module: cs_zone_facts
+  cs_zone_facts:
     name: ch-gva-1
   register: zone
+  delegate_to: localhost
 
 - name: Show the returned results of the registered variable
   debug:
