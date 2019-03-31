@@ -49,7 +49,7 @@ options:
         suboptions:
             name:
                 description:
-                    - Name of the custom property. For example: I(hugepages), I(vhost), I(sap_agent), etc.
+                    - "Name of the custom property. For example: I(hugepages), I(vhost), I(sap_agent), etc."
             regexp:
                 description:
                     - Regular expression to set for custom property.

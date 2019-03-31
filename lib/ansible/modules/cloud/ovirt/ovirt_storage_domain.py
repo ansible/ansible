@@ -70,8 +70,11 @@ options:
     localfs:
         description:
             - "Dictionary with values for localfs storage type:"
-            - "C(path) - Path of the mount point. E.g.: /path/to/my/data"
             - "Note that these parameters are not idempotent."
+        suboptions:
+            path:
+                description:
+                    - "Path of the mount point. E.g.: /path/to/my/data"
         version_added: "2.4"
     nfs:
         description:
@@ -80,22 +83,22 @@ options:
         suboptions:
             address:
                 description:
-                    - Address of the NFS server. E.g.: myserver.mydomain.com
+                    - "Address of the NFS server. E.g.: myserver.mydomain.com"
             path:
                 description:
-                    - Path of the mount point. E.g.: /path/to/my/data
+                    - "Path of the mount point. E.g.: /path/to/my/data"
             version:
                 description:
-                    - NFS version. One of: I(auto), I(v3), I(v4) or I(v4_1).
+                    - "NFS version. One of: I(auto), I(v3), I(v4) or I(v4_1)."
             timeout:
                 description:
-                    - The time in tenths of a second to wait for a response before retrying NFS requests. Range 0 to 65535.
+                    - "The time in tenths of a second to wait for a response before retrying NFS requests. Range 0 to 65535."
             retrans:
                 description:
-                    - The number of times to retry a request before attempting further recovery actions. Range 0 to 65535.
+                    - "The number of times to retry a request before attempting further recovery actions. Range 0 to 65535."
             mount_options:
                 description:
-                    - Option which will be passed when mounting storage.
+                    - "Option which will be passed when mounting storage."
     iscsi:
         description:
             - "Dictionary with values for iSCSI storage type:"
@@ -134,7 +137,7 @@ options:
         suboptions:
             path:
                 description:
-                    - Path of the mount point. E.g.: /path/to/my/data
+                    - "Path of the mount point. E.g.: /path/to/my/data"
             vfs_type:
                 description:
                     - Virtual File System type.
@@ -148,10 +151,10 @@ options:
         suboptions:
             address:
                 description:
-                    - Address of the Gluster server. E.g.: myserver.mydomain.com
+                    - "Address of the Gluster server. E.g.: myserver.mydomain.com"
             path:
                 description:
-                    - Path of the mount point. E.g.: /path/to/my/data
+                    - "Path of the mount point. E.g.: /path/to/my/data"
             mount_options:
                 description:
                     - Option which will be passed when mounting storage.
