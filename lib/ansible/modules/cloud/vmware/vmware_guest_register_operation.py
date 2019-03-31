@@ -136,6 +136,9 @@ EXAMPLES = '''
     state: absent
 '''
 
+RETURN = r'''
+'''
+
 try:
     from pyVmomi import vim, vmodl
     HAS_PYVMOMI = True
