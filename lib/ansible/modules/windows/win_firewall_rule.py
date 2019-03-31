@@ -34,11 +34,15 @@ options:
       - The rules name.
     type: str
     required: yes
+  group:
+    description:
+      - The group name for the rule.
+    type: str
+    required: yes
   direction:
     description:
       - Whether this rule is for inbound or outbound traffic.
     type: str
-    required: yes
     choices: [ in, out ]
   action:
     description:
@@ -105,6 +109,17 @@ EXAMPLES = r'''
 - name: Firewall rule to allow SMTP on TCP port 25
   win_firewall_rule:
     name: SMTP
+    localport: 25
+    action: allow
+    direction: in
+    protocol: tcp
+    state: present
+    enabled: yes
+
+- name: Firewall rule to be created for application group
+  win_firewall_rule:
+    name: SMTP
+    group: application
     localport: 25
     action: allow
     direction: in
