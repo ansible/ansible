@@ -18,19 +18,116 @@ DOCUMENTATION = """
 module: dms_endpoint
 short_description: creates or destroys a data migration services endpoint
 description:
-    - creates or destroys a data migration services endpoint
+    - creates or destroys a data migration services endpoint, that can be used to replicate data.
 version_added: "2.8"
 options:
+    state: 
+      description:
+        - State of the endpoint 
+      default: present  
+    endpointidentifier:
+      description:
+        - An identifier name for the endpoint 
+    endpointtype:
+      description:
+        - Type of endpoint we want to manage
+       choices: ['source', 'target'] 
+    enginetype:
+      description:
+        - Ddatabase engine that we want to use, please refer to the AWS DMS for more information on the supported engines and their limitation
+      choices: ['mysql', 'oracle', 'postgres', 'mariadb', 'aurora',
+                         'redshift', 's3', 'db2', 'azuredb', 'sybase',
+                         'dynamodb', 'mongodb', 'sqlserver']  
+    username:
+      description:
+        - Username our endpoint will use to connect to the database
+    password
+      description:
+        - Password used to connect to the database. Note: this attribute can only be written, the AWS API does not return this parameter.
+    servername:
+      description:
+        - Servername that the endpoint will connect to
+    port:                    
+      description:
+        - TCP port for access to the database
+    databasename:
+      description:
+        - Name for the database on the origin or target side    
+    extraconnectionattributes:
+      description: 
+        - Extra attributes for the database connection, the AWS documentation states " For more information about extra connection attributes, see the documentation section for your data store."
+    kmskeyid:
+      description:
+        - Encryption key to use to encrypt replication storage and connection information
+    tags: 
+      description:
+        - A list of tags to add to the endpoint
+       key:
+         description:
+           - Key is the required name of the tag
+       value:
+          description:
+           - Value for the tag
+     certificatearn:
+       description:
+         -  Amazon Resource Name (ARN) for the certificate
+     sslmode:
+       description:
+         - Mode used for the ssl connection
+       choices: ['none', 'require', 'verify-ca', 'verify-full']
+       default: 'none'
+     serviceaccessrolearn:
+       description:
+         -  Amazon Resource Name (ARN) for the service access role that you want to use to create the endpoint.
+     externaltabledefinition:
+       description:
+         - The external table definition
+     dynamodbsettings:
+       description:
+         - Settings in JSON format for the target Amazon DynamoDB endpoint if source or target is dynamodb
+     s3settings:
+       description
+         - S3 buckets settings for the target Amazon S3 endpoint.
+     dmstransfersettings:
+       description:
+         - The settings in JSON format for the DMS transfer type of source endpoint    
+     mongodbsettings:
+       description:
+         - Settings in JSON format for the source MongoDB endpoint
+     kinesissettings:
+       description:
+         - Settings in JSON format for the target Amazon Kinesis Data Streams endpoin
+     elasticsearchsettings:
+       description:
+         - Settings in JSON format for the target Elasticsearch endpoint
+     wait: 
+       description:
+         - Boolean stating if we should wait for the object to be deleted when state = absent                                                           
 author:
    - Rui Moreira (@ruimoreira)
 extends_documentation_fragment: aws
 """
 
-EXAMPLES = '''
-'''
+EXAMPLES = """
 
-RETURN = '''
-'''
+# Note: These examples do not set authentication details, see the AWS Guide for details.
+
+# Endpoint Creation
+- name: create endpoints
+  dms_endpoint:
+    state: absent
+    endpointidentifier: 'testsource'
+    endpointtype: source
+    enginename: aurora
+    username: testing1
+    password: testint1234
+    servername: testing.domain.com
+    port: 3306
+    databasename: 'testdb'
+    sslmode: none
+    wait: false
+"""
+
 
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
@@ -119,6 +216,10 @@ def delete_dms_endpoint(connection):
 
 
 def create_module_params():
+    """
+    Reads the module parameters and returns a dict
+    :return: dict
+    """
     endpoint_parameters = dict(
         EndpointIdentifier=module.params.get('endpointidentifier'),
         EndpointType=module.params.get('endpointtype'),
@@ -285,7 +386,7 @@ def main():
             delete_results = delete_dms_endpoint(dmsclient)
             module.exit_json(changed=True, **delete_results)
         else:
-            module.exit_json(changed=False, msg='DMS Endpoint does not exists')
+            module.exit_json(changed=False, msg='DMS Endpoint does not exist')
 
 
 
