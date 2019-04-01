@@ -396,6 +396,7 @@ def validate_rule(self, rule, rule_type=None):
     if rule.get('destination_application_security_groups') and rule.get('destination_address_prefix') == '*':
         rule['destination_address_prefix'] = None
 
+
 def compare_rules_change(old_list, new_list, purge_list):
     old_list = old_list or []
     new_list = new_list or []
@@ -472,9 +473,9 @@ def create_rule_instance(self, rule):
         destination_address_prefixes=rule.get('destination_address_prefixes', None),
         source_port_ranges=rule.get('source_port_ranges', None),
         destination_port_ranges=rule.get('destination_port_ranges', None),
-        source_application_security_groups=[self.nsg_models.ApplicationSecurityGroup(id=p) for p in rule.get('source_application_security_groups')] \
+        source_application_security_groups=[self.nsg_models.ApplicationSecurityGroup(id=p) for p in rule.get('source_application_security_groups')]
             if rule.get('source_application_security_groups') else None,
-        destination_application_security_groups=[self.nsg_models.ApplicationSecurityGroup(id=p) for p in rule.get('destination_application_security_groups')] \
+        destination_application_security_groups=[self.nsg_models.ApplicationSecurityGroup(id=p) for p in rule.get('destination_application_security_groups')]
             if rule.get('destination_application_security_groups') else None,
         access=rule.get('access', None),
         priority=rule.get('priority', None),
@@ -594,10 +595,10 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
             state=dict()
         )
 
-        mutually_exclusive = [{ "source_application_security_group", "source_address_prefix" },
-                              { "source_application_security_group", "source_address_prefixes" },
-                              { "destination_application_security_group", "destination_address_prefix" },
-                              { "destination_application_security_group", "destination_address_prefixes" }]
+        mutually_exclusive = [["source_application_security_group", "source_address_prefix"],
+                              ["source_application_security_group", "source_address_prefixes"],
+                              ["destination_application_security_group", "destination_address_prefix"],
+                              ["destination_application_security_group", "destination_address_prefixes"]]
 
         super(AzureRMSecurityGroup, self).__init__(self.module_arg_spec,
                                                    supports_check_mode=True,
