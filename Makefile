@@ -234,7 +234,7 @@ install_manpages:
 	cp $(wildcard ./docs/man/man1/ansible*.1.gz) $(PREFIX)/man/man1/
 
 install_bash_completion:
-	cp $(wildcard ./usr/share/bash-completion/completions/ansible* $(PREFIX)./usr/share/bash-completion/completions/
+	cp $(wildcard ./usr/share/bash-completion/completions/ansible* $(PREFIX)/share/bash-completion/completions/
 
 .PHONY: sdist_check
 sdist_check:
