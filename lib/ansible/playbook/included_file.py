@@ -82,19 +82,20 @@ class IncludedFile:
                         task_vars = task_vars_cache[cache_key] = variable_manager.get_vars(play=iterator._play, host=original_host, task=original_task)
 
                     include_variables = include_result.get('include_variables', dict())
+                    args = include_variables.copy()
                     loop_var = 'item'
                     index_var = None
                     if original_task.loop_control:
                         loop_var = original_task.loop_control.loop_var
                         index_var = original_task.loop_control.index_var
                     if loop_var in include_result:
-                        task_vars[loop_var] = include_variables[loop_var] = include_result[loop_var]
+                        task_vars[loop_var] = args[loop_var] = include_result[loop_var]
                     if index_var and index_var in include_result:
-                        task_vars[index_var] = include_variables[index_var] = include_result[index_var]
+                        task_vars[index_var] = args[index_var] = include_result[index_var]
                     if '_ansible_item_label' in include_result:
-                        task_vars['_ansible_item_label'] = include_variables['_ansible_item_label'] = include_result['_ansible_item_label']
+                        task_vars['_ansible_item_label'] = args['_ansible_item_label'] = include_result['_ansible_item_label']
                     if original_task.no_log and '_ansible_no_log' not in include_variables:
-                        task_vars['_ansible_no_log'] = include_variables['_ansible_no_log'] = original_task.no_log
+                        task_vars['_ansible_no_log'] = args['_ansible_no_log'] = original_task.no_log
 
                     # get search path for this task to pass to lookup plugins that may be used in pathing to
                     # the included file
@@ -166,7 +167,7 @@ class IncludedFile:
                                 include_file = loader.path_dwim(include_result['include'])
 
                         include_file = templar.template(include_file)
-                        inc_file = IncludedFile(include_file, include_variables, original_task)
+                        inc_file = IncludedFile(include_file, args, original_task)
                     else:
                         # template the included role's name here
                         role_name = include_variables.pop('name', include_variables.pop('role', None))
@@ -180,7 +181,7 @@ class IncludedFile:
                                 from_key = from_arg.replace('_from', '')
                                 new_task._from_files[from_key] = templar.template(include_variables.pop(from_arg))
 
-                        inc_file = IncludedFile(role_name, include_variables, new_task, is_role=True)
+                        inc_file = IncludedFile(role_name, args, new_task, is_role=True)
 
                     idx = 0
                     orig_inc_file = inc_file
