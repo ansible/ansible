@@ -845,11 +845,11 @@
 # Test postgresql_lang module.
 # To implement tests, it needs to install some additional packages
 # that may cause problems on different distributions,
-# so I restricted tests using RedHat family because the results
+# so I restricted tests using CentOS because the results
 # depends only on Postgres version
 # (CentOS 6 repo contains the oldest PG version in these tests - 9.0):
 - include: postgresql_lang.yml
-  when: ansible_os_family == 'RedHat'
+  when: ansible_distribution == 'CentOS'
 
 # dump/restore tests per format
 # ============================================================
