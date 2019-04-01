@@ -62,15 +62,27 @@ options:
         description:
             - "List of dictionary of cluster limits, which is valid to specific cluster."
             - "If cluster isn't specified it's valid to all clusters in system:"
-            - "C(cluster) - Name of the cluster."
-            - "C(memory) - Memory limit (in GiB)."
-            - "C(cpu) - CPU limit."
+        suboptions:
+            cluster:
+                description:
+                    - Name of the cluster.
+            memory:
+                description:
+                    - Memory limit (in GiB).
+            cpu:
+                description:
+                    - CPU limit.
     storages:
         description:
             - "List of dictionary of storage limits, which is valid to specific storage."
             - "If storage isn't specified it's valid to all storages in system:"
-            - "C(storage) - Name of the storage."
-            - "C(size) - Size limit (in GiB)."
+        suboptions:
+            storage:
+                description:
+                    - Name of the storage.
+            size:
+                description:
+                    - Size limit (in GiB).
 extends_documentation_fragment: ovirt
 '''
 

@@ -70,53 +70,106 @@ options:
     localfs:
         description:
             - "Dictionary with values for localfs storage type:"
-            - "C(path) - Path of the mount point. E.g.: /path/to/my/data"
             - "Note that these parameters are not idempotent."
+        suboptions:
+            path:
+                description:
+                    - "Path of the mount point. E.g.: /path/to/my/data"
         version_added: "2.4"
     nfs:
         description:
             - "Dictionary with values for NFS storage type:"
-            - "C(address) - Address of the NFS server. E.g.: myserver.mydomain.com"
-            - "C(path) - Path of the mount point. E.g.: /path/to/my/data"
-            - "C(version) - NFS version. One of: I(auto), I(v3), I(v4) or I(v4_1)."
-            - "C(timeout) - The time in tenths of a second to wait for a response before retrying NFS requests. Range 0 to 65535."
-            - "C(retrans) - The number of times to retry a request before attempting further recovery actions. Range 0 to 65535."
-            - "C(mount_options) - Option which will be passed when mounting storage."
             - "Note that these parameters are not idempotent."
+        suboptions:
+            address:
+                description:
+                    - "Address of the NFS server. E.g.: myserver.mydomain.com"
+            path:
+                description:
+                    - "Path of the mount point. E.g.: /path/to/my/data"
+            version:
+                description:
+                    - "NFS version. One of: I(auto), I(v3), I(v4) or I(v4_1)."
+            timeout:
+                description:
+                    - "The time in tenths of a second to wait for a response before retrying NFS requests. Range 0 to 65535."
+            retrans:
+                description:
+                    - "The number of times to retry a request before attempting further recovery actions. Range 0 to 65535."
+            mount_options:
+                description:
+                    - "Option which will be passed when mounting storage."
     iscsi:
         description:
             - "Dictionary with values for iSCSI storage type:"
-            - "C(address) - Address of the iSCSI storage server."
-            - "C(port) - Port of the iSCSI storage server."
-            - "C(target) - The target IQN for the storage device."
-            - "C(lun_id) - LUN id(s)."
-            - "C(username) - A CHAP user name for logging into a target."
-            - "C(password) - A CHAP password for logging into a target."
-            - "C(override_luns) - If I(True) ISCSI storage domain luns will be overridden before adding."
-            - C(target_lun_map) - List of dictionary containing targets and LUNs."
             - "Note that these parameters are not idempotent."
-            - "Parameter C(target_lun_map) is supported since Ansible 2.5."
-
+        suboptions:
+            address:
+                description:
+                    - Address of the iSCSI storage server.
+            port:
+                description:
+                    - Port of the iSCSI storage server.
+            target:
+                description:
+                    - The target IQN for the storage device.
+            lun_id:
+                description:
+                    - LUN id(s).
+            username:
+                description:
+                    - A CHAP user name for logging into a target.
+            password:
+                description:
+                    - A CHAP password for logging into a target.
+            override_luns:
+                description:
+                    - If I(True) ISCSI storage domain luns will be overridden before adding.
+                type: bool
+            target_lun_map:
+                description:
+                    - List of dictionary containing targets and LUNs.
+                version_added: 2.5
     posixfs:
         description:
             - "Dictionary with values for PosixFS storage type:"
-            - "C(path) - Path of the mount point. E.g.: /path/to/my/data"
-            - "C(vfs_type) - Virtual File System type."
-            - "C(mount_options) - Option which will be passed when mounting storage."
             - "Note that these parameters are not idempotent."
+        suboptions:
+            path:
+                description:
+                    - "Path of the mount point. E.g.: /path/to/my/data"
+            vfs_type:
+                description:
+                    - Virtual File System type.
+            mount_options:
+                description:
+                    - Option which will be passed when mounting storage.
     glusterfs:
         description:
             - "Dictionary with values for GlusterFS storage type:"
-            - "C(address) - Address of the Gluster server. E.g.: myserver.mydomain.com"
-            - "C(path) - Path of the mount point. E.g.: /path/to/my/data"
-            - "C(mount_options) - Option which will be passed when mounting storage."
             - "Note that these parameters are not idempotent."
+        suboptions:
+            address:
+                description:
+                    - "Address of the Gluster server. E.g.: myserver.mydomain.com"
+            path:
+                description:
+                    - "Path of the mount point. E.g.: /path/to/my/data"
+            mount_options:
+                description:
+                    - Option which will be passed when mounting storage.
     fcp:
         description:
             - "Dictionary with values for fibre channel storage type:"
-            - "C(lun_id) - LUN id."
-            - "C(override_luns) - If I(True) FCP storage domain LUNs will be overridden before adding."
             - "Note that these parameters are not idempotent."
+        suboptions:
+            lun_id:
+                description:
+                    - LUN id.
+            override_luns:
+                description:
+                    - If I(True) FCP storage domain LUNs will be overridden before adding.
+                type: bool
     wipe_after_delete:
         description:
             - "Boolean flag which indicates whether the storage domain should wipe the data after delete."
