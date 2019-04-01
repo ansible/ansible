@@ -839,8 +839,17 @@
 # Test postgresql_membership module
 - include: postgresql_membership.yml
 
-# postgresql_table module tests
+# Test postgresql_table module
 - include: postgresql_table.yml
+
+# Test postgresql_lang module.
+# To implement tests, it needs to install some additional packages
+# that may cause problems on different distributions,
+# so I restricted the tests using CentOS because the results
+# depend only on Postgres version
+# (CentOS 6 repo contains the oldest PG version in these tests - 9.0):
+- include: postgresql_lang.yml
+  when: ansible_distribution == 'CentOS'
 
 # dump/restore tests per format
 # ============================================================
