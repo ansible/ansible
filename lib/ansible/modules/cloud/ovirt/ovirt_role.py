@@ -23,17 +23,14 @@ options:
     id:
         description:
             - "ID of the role to manage."
+    description:
+        description:
+            - "Description of the role."
     state:
         description:
             - "Should the role be present/absent."
         choices: ['present', 'absent']
         default: present
-    mutable:
-        description:
-            - "Defines the ability to update or delete the role."
-            - "Roles with mutable set to `false` are predefined roles."
-        type: bool
-        default: true
     administrative:
         description:
             - "Defines the role as administrative-only or not."
@@ -59,6 +56,12 @@ EXAMPLES = '''
     permits:
         - manipulate_permissions
         - create_instance
+
+# Remove role
+- ovirt_role:
+    mutable: true
+    name: role
+    state: absent
 '''
 
 RETURN = '''
@@ -93,16 +96,18 @@ except ImportError:
 
 class RoleModule(BaseModule):
     def build_entity(self):
+        if not 'login' in self.param('permits'):
+            self.param('permits').append('login')
         all_permits = self.get_all_permits()
         return otypes.Role(
             id=self.param('id'),
             name=self.param('name'),
-            mutable=self.param('mutable') if self.param('mutable') else None,
             administrative=self.param('administrative') if self.param(
                 'administrative') else None,
             permits=[
                 otypes.Permit(id=all_permits.get(new_permit)) for new_permit in self.param('permits')
-            ]
+            ] if self.param('permits') else None,
+            description=self.param('description') if self.param('administrative') else None,
         )
 
     def get_all_permits(self):
@@ -111,6 +116,8 @@ class RoleModule(BaseModule):
     def update_check(self, entity):
         def check_permits():
             if self.param('permits'):
+                if not 'login' in self.param('permits'):
+                    self.param('permits').append('login')
                 permits_service = self._service.service(entity.id).permits_service()
                 current = [er.name for er in permits_service.list()]
                 passed = [pr for pr in self.param('permits')]
@@ -127,8 +134,8 @@ class RoleModule(BaseModule):
 
         return (
             check_permits() and
-            equal(self.param('mutable'), entity.mutable) and
-            equal(self.param('administrative'), entity.administrative)
+            equal(self.param('administrative'), entity.administrative) and
+            equal(self.param('description'), entity.description)
         )
 
 
@@ -140,8 +147,8 @@ def main():
         ),
         id=dict(default=None),
         name=dict(default=None),
-        mutable=dict(default=True, type='bool'),
-        administrative=dict(default=False, type='bool'),
+        description=dict(default=None),
+        administrative=dict(type='bool',default=False),
         permits=dict(type='list', default=[]),
     )
     module = AnsibleModule(
@@ -162,7 +169,6 @@ def main():
         )
         state = module.params['state']
         if state == 'present':
-            module.params.get('permits').append('login')
             ret = roles_module.create()
         elif state == 'absent':
             ret = roles_module.remove()
