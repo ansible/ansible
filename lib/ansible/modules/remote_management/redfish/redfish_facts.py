@@ -289,7 +289,7 @@ def main():
 
             for command in command_list:
                 if command == "GetManagerNicInventory":
-                    result["manager_nics"] = rf_utils.get_multi_nic_inventory(resource_type=category)
+                    result["manager_nics"] = rf_utils.get_multi_nic_inventory(category)
                 elif command == "GetLogs":
                     result["log"] = rf_utils.get_logs()
 
