@@ -1,0 +1,2 @@
+bugfixes:
+- azure_rm inventory plugin - fix no nic type in vmss nic. (https://github.com/ansible/ansible/pull/53496)

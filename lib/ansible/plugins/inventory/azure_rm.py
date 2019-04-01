@@ -567,9 +567,8 @@ class AzureHost(object):
                                  for s in vm_instanceview_model.get('statuses', []) if self._powerstate_regex.match(s.get('code', ''))), 'unknown')
 
     def _on_nic_response(self, nic_model, is_primary=False):
-        if nic_model.get('type') == 'Microsoft.Network/networkInterfaces':
-            nic = AzureNic(nic_model=nic_model, inventory_client=self._inventory_client, is_primary=is_primary)
-            self.nics.append(nic)
+        nic = AzureNic(nic_model=nic_model, inventory_client=self._inventory_client, is_primary=is_primary)
+        self.nics.append(nic)
 
 
 class AzureNic(object):
@@ -580,10 +579,11 @@ class AzureNic(object):
 
         self.public_ips = {}
 
-        for ipc in nic_model['properties']['ipConfigurations']:
-            pip = ipc['properties'].get('publicIPAddress')
-            if pip:
-                self._inventory_client._enqueue_get(url=pip['id'], api_version=self._inventory_client._network_api_version, handler=self._on_pip_response)
+        if nic_model.get('properties', {}).get('ipConfigurations'):
+            for ipc in nic_model['properties']['ipConfigurations']:
+                pip = ipc['properties'].get('publicIPAddress')
+                if pip:
+                    self._inventory_client._enqueue_get(url=pip['id'], api_version=self._inventory_client._network_api_version, handler=self._on_pip_response)
 
     def _on_pip_response(self, pip_model):
         self.public_ips[pip_model['id']] = AzurePip(pip_model)
