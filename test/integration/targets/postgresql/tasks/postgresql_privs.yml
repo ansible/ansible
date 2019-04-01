@@ -382,7 +382,7 @@
     db: "{{ db_name }}"
     login_user: "{{ db_user3 }}"
     login_password: password
-  ignore_errors: yes
+  when: postgres_version_resp.stdout is version('10', '>=')
 
 # Test
 - name: Grant execute to all tables
@@ -398,12 +398,12 @@
     login_password: password
   register: result
   ignore_errors: yes
-  when: result.failed == false
+  when: postgres_version_resp.stdout is version('10', '>=')
 
 # Checks
 - assert:
     that: result.changed == true
-  when: result.failed == false
+  when: postgres_version_resp.stdout is version('10', '>=')
 
 - name: Check that all partitioned tables have execute privileges
   postgresql_query:
@@ -416,11 +416,11 @@
   become: yes
   become_user: "{{ pg_user }}"
   register: result
-  when: result.failed == false
+  when: postgres_version_resp.stdout is version('10', '>=')
 
 - assert:
     that: "'1' in '{{ result.rowcount }}'"
-  when: result.failed == false
+  when: postgres_version_resp.stdout is version('10', '>=')
 
 # Test
 - name: Grant execute to all tables again
@@ -436,11 +436,12 @@
     login_password: password
   register: result
   ignore_errors: yes
-  when: result.failed == false
+  when: postgres_version_resp.stdout is version('10', '>=')
 
 # Checks
 - assert:
     that: result.changed == false
+  when: postgres_version_resp.stdout is version('10', '>=')
 
 # Test
 - name: Revoke SELECT to all tables
@@ -456,10 +457,12 @@
     login_password: password
   register: result
   ignore_errors: yes
+  when: postgres_version_resp.stdout is version('10', '>=')
 
 # Checks
 - assert:
     that: result.changed == true
+  when: postgres_version_resp.stdout is version('10', '>=')
 
 # Test
 - name: Revoke SELECT to all tables
@@ -475,9 +478,11 @@
     login_password: password
   register: result
   ignore_errors: yes
+  when: postgres_version_resp.stdout is version('10', '>=')
 
 - assert:
     that: result.changed == false
+  when: postgres_version_resp.stdout is version('10', '>=')
 
 # Table ALL_IN_SCHEMA cleanup
 - name: Remove table for test
@@ -487,6 +492,8 @@
     login_user: "{{ db_user3 }}"
     login_password: password
   ignore_errors: yes
+  when: postgres_version_resp.stdout is version('10', '>=')
+  
 # Cleanup
 - name: Remove user given permissions
   postgresql_user:
