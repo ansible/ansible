@@ -51,7 +51,7 @@ def mock_variable_manager():
 def test_included_file_instantiation():
     filename = 'somefile.yml'
 
-    inc_file = IncludedFile(filename=filename, args={}, vars={} task=None)
+    inc_file = IncludedFile(filename=filename, args={}, vars={}, task=None)
 
     assert isinstance(inc_file, IncludedFile)
     assert inc_file._filename == filename
