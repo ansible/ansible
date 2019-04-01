@@ -54,33 +54,55 @@ options:
         description:
             - "Mapper which maps an external virtual NIC profile to one that exists in the engine when C(state) is registered.
                vnic_profile is described by the following dictionary:"
-            - "C(source_network_name): The network name of the source network."
-            - "C(source_profile_name): The profile name related to the source network."
-            - "C(target_profile_id): The id of the target profile id to be mapped to in the engine."
+        suboptions:
+            source_network_name:
+                description:
+                    - The network name of the source network.
+            source_profile_name:
+                description:
+                    - The profile name related to the source network.
+            target_profile_id:
+                description:
+                    - The id of the target profile id to be mapped to in the engine.
         version_added: "2.5"
     cluster_mappings:
         description:
             - "Mapper which maps cluster name between Template's OVF and the destination cluster this Template should be registered to,
                relevant when C(state) is registered.
                Cluster mapping is described by the following dictionary:"
-            - "C(source_name): The name of the source cluster."
-            - "C(dest_name): The name of the destination cluster."
+        suboptions:
+            source_name:
+                description:
+                    - The name of the source cluster.
+            dest_name:
+                description:
+                    - The name of the destination cluster.
         version_added: "2.5"
     role_mappings:
         description:
             - "Mapper which maps role name between Template's OVF and the destination role this Template should be registered to,
                relevant when C(state) is registered.
                Role mapping is described by the following dictionary:"
-            - "C(source_name): The name of the source role."
-            - "C(dest_name): The name of the destination role."
+        suboptions:
+            source_name:
+                description:
+                    - The name of the source role.
+            dest_name:
+                description:
+                    - The name of the destination role.
         version_added: "2.5"
     domain_mappings:
         description:
             - "Mapper which maps aaa domain name between Template's OVF and the destination aaa domain this Template should be registered to,
                relevant when C(state) is registered.
                The aaa domain mapping is described by the following dictionary:"
-            - "C(source_name): The name of the source aaa domain."
-            - "C(dest_name): The name of the destination aaa domain."
+        suboptions:
+            source_name:
+                description:
+                    - The name of the source aaa domain.
+            dest_name:
+                description:
+                    - The name of the destination aaa domain.
         version_added: "2.5"
     exclusive:
         description:
