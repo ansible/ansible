@@ -74,6 +74,11 @@ hcloud_floating_ip_facts:
             returned: always
             type: str
             sample: ipv4
+        server:
+            description: Name of the server where the Floating IP is assigned to.
+            returned: always
+            type: str
+            sample: my-server
         home_location:
             description: Location the Floating IP was created in
             returned: always
@@ -105,11 +110,15 @@ class AnsibleHcloudFloatingIPFacts(Hcloud):
 
         for floating_ip in self.hcloud_floating_ip_facts:
             if floating_ip is not None:
+                server_name = None
+                if floating_ip.server is not None:
+                    server_name = floating_ip.server.name
                 tmp.append({
                     "id": to_native(floating_ip.id),
                     "description": to_native(floating_ip.description),
                     "ip": to_native(floating_ip.ip),
                     "type": to_native(floating_ip.type),
+                    "server": to_native(server_name),
                     "home_location": to_native(floating_ip.home_location.name),
                     "labels": floating_ip.labels,
                 })
