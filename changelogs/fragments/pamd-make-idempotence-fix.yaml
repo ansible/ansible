@@ -1,0 +1,2 @@
+bugfixes:
+  - Backport of https://github.com/ansible/ansible/pull/54105, pamd - fix idempotence issue when removing rules
