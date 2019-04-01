@@ -45,10 +45,18 @@ options:
             - Valid Azure location. Defaults to location of the resource group.
     storage_account_type:
         description:
-            - "Type of storage for the managed disk: C(Standard_LRS)  or C(Premium_LRS). If not specified the disk is created C(Standard_LRS)."
+            - "Type of storage for the managed disk."
+            - "If not specified, the disk is created as C(Standard_LRS)."
+            - "C(Standard_LRS) is for Standard HDD."
+            - "C(StandardSSD_LRS) (added in 2.8) is for Standard SSD."
+            - "C(Premium_LRS) is for Premium SSD."
+            - "C(UltraSSD_LRS) (added in 2.8) is for Ultra SSD, which is in preview mode, and only available on select instance types."
+            - "See https://docs.microsoft.com/en-us/azure/virtual-machines/windows/disks-types for more information about disk types."
         choices:
             - Standard_LRS
+            - StandardSSD_LRS
             - Premium_LRS
+            - UltraSSD_LRS
     create_option:
         description:
             - "Allowed values: empty, import, copy.
@@ -201,7 +209,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
             ),
             storage_account_type=dict(
                 type='str',
-                choices=['Standard_LRS', 'Premium_LRS']
+                choices=['Standard_LRS', 'StandardSSD_LRS', 'Premium_LRS', 'UltraSSD_LRS']
             ),
             create_option=dict(
                 type='str',

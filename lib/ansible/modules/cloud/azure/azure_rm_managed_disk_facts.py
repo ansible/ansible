@@ -81,7 +81,8 @@ azure_managed_disk:
             type: str
         storage_account_type:
             description:
-                - Type of storage for the managed disk
+                - Type of storage for the managed disk.
+                - See https://docs.microsoft.com/en-us/azure/virtual-machines/windows/disks-types for more information about this type.
             type: str
             sample: Standard_LRS
         create_option:
