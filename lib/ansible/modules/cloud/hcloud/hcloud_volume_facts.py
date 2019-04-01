@@ -110,8 +110,8 @@ class AnsibleHcloudVolumeFacts(Hcloud):
         for volume in self.hcloud_volume_facts:
             if volume is not None:
                 server_name = None
-                if self.hcloud_volume.server is not None:
-                    server_name = self.hcloud_volume.server.name
+                if volume.server is not None:
+                    server_name = volume.server.name
                 tmp.append({
                     "id": to_native(volume.id),
                     "name": to_native(volume.name),
