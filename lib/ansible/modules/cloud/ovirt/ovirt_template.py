@@ -179,6 +179,11 @@ options:
             - Upper bound of template memory up to which memory hot-plug can be performed.
               Prefix uses IEC 60027-2 standard (for example 1GiB, 1024MiB).
         version_added: "2.6"
+    version:
+        description:
+            - "C(name) - The name of this version."
+            - "C(number) - The index of this version in the versions hierarchy of the template. Used for editing of sub template."
+        version_added: "2.8"
     clone_name:
         description:
             - Name for importing Template from storage domain.
@@ -278,6 +283,23 @@ EXAMPLES = '''
     image_provider: "glance_domain"
     storage_domain: mystorage
     cluster: mycluster
+
+# Edit template subeversion
+- ovirt_template:
+    cluster: mycluster
+    name: mytemplate
+    vm: rhel7
+    version:
+        number: 2
+        name: subversion
+
+# Create new template subeversion
+- ovirt_template:
+    cluster: mycluster
+    name: mytemplate
+    vm: rhel7
+    version:
+        name: subversion
 '''
 
 RETURN = '''
@@ -342,6 +364,10 @@ class TemplatesModule(BaseModule):
             memory=convert_to_bytes(
                 self.param('memory')
             ) if self.param('memory') else None,
+            version=otypes.TemplateVersion(
+                base_template=self._get_base_template(),
+                version_name=self.param('version').get('name'),
+            ) if self.param('version') else None,
             memory_policy=otypes.MemoryPolicy(
                 guaranteed=convert_to_bytes(self.param('memory_guaranteed')),
                 max=convert_to_bytes(self.param('memory_max')),
@@ -353,6 +379,14 @@ class TemplatesModule(BaseModule):
                 threads=self.param('io_threads'),
             ) if self.param('io_threads') is not None else None,
         )
+
+    def _get_base_template(self):
+        templates = self._connection.system_service().templates_service().list()
+        for template in templates:
+            if template.version.version_number == 1 and template.name == self.param('name'):
+                return otypes.Template(
+                    id=template.id
+                )
 
     def update_check(self, entity):
         return (
@@ -453,6 +487,23 @@ def _get_vnic_profile_mappings(module):
     return vnicProfileMappings
 
 
+def find_subversion_template(module, templates_service):
+    version = module.params.get('version')
+    templates = templates_service.list()
+    for template in templates:
+        if version.get('number') == template.version.version_number and module.params.get('name') == template.name:
+            return template
+
+    # when user puts version number which does not exist
+    raise ValueError(
+        "Template with name '%s' and version '%s' in cluster '%s' was not found'" % (
+            module.params['name'],
+            module.params['version']['number'],
+            module.params['cluster'],
+        )
+    )
+
+
 def searchable_attributes(module):
     """
     Return all searchable template attributes passed to module.
@@ -486,6 +537,7 @@ def main():
         image_disk=dict(default=None, aliases=['glance_image_disk_name']),
         io_threads=dict(type='int', default=None),
         template_image_disk_name=dict(default=None),
+        version=dict(default=None, type='dict'),
         seal=dict(type='bool'),
         vnic_profile_mappings=dict(default=[], type='list'),
         cluster_mappings=dict(default=[], type='list'),
@@ -514,18 +566,32 @@ def main():
             service=templates_service,
         )
 
+        entity = None
+        if module.params['version'] is not None and module.params['version'].get('number') is not None:
+            entity = find_subversion_template(module, templates_service)
+
         state = module.params['state']
         if state == 'present':
+            force_create = False
+            if entity is None and module.params['version'] is not None:
+                force_create = True
+
             ret = templates_module.create(
+                entity=entity,
+                # When user want to create new template subversion, we must make sure
+                # template is force created as it already exists, but new version should be created.
+                force_create=force_create,
                 result_state=otypes.TemplateStatus.OK,
                 search_params=searchable_attributes(module),
                 clone_permissions=module.params['clone_permissions'],
                 seal=module.params['seal'],
             )
         elif state == 'absent':
-            ret = templates_module.remove()
+            ret = templates_module.remove(entity=entity)
         elif state == 'exported':
             template = templates_module.search_entity()
+            if entity is not None:
+                template = entity
             export_service = templates_module._get_export_domain_service()
             export_template = search_by_attributes(export_service.templates_service(), id=template.id)
 
@@ -540,6 +606,8 @@ def main():
             )
         elif state == 'imported':
             template = templates_module.search_entity()
+            if entity is not None:
+                template = entity
             if template and module.params['clone_name'] is None:
                 ret = templates_module.create(
                     result_state=otypes.TemplateStatus.OK,
