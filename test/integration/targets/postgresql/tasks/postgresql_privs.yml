@@ -382,6 +382,7 @@
     db: "{{ db_name }}"
     login_user: "{{ db_user3 }}"
     login_password: password
+  ignore_errors: yes
 
 # Test
 - name: Grant execute to all tables
@@ -397,10 +398,12 @@
     login_password: password
   register: result
   ignore_errors: yes
+  when: result.failed == false
 
 # Checks
 - assert:
     that: result.changed == true
+  when: result.failed == false
 
 - name: Check that all partitioned tables have execute privileges
   postgresql_query:
@@ -413,9 +416,11 @@
   become: yes
   become_user: "{{ pg_user }}"
   register: result
+  when: result.failed == false
 
 - assert:
     that: "'1' in '{{ result.rowcount }}'"
+  when: result.failed == false
 
 # Test
 - name: Grant execute to all tables again
@@ -431,6 +436,7 @@
     login_password: password
   register: result
   ignore_errors: yes
+  when: result.failed == false
 
 # Checks
 - assert:
@@ -480,7 +486,7 @@
     db: "{{ db_name }}"
     login_user: "{{ db_user3 }}"
     login_password: password
-
+  ignore_errors: yes
 # Cleanup
 - name: Remove user given permissions
   postgresql_user:
