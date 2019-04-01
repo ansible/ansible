@@ -76,6 +76,7 @@ EXAMPLES = '''
 
 import grp
 
+from ansible.module_utils._text import to_bytes
 from ansible.module_utils.basic import AnsibleModule, load_platform_subclass
 
 
@@ -466,7 +467,8 @@ class NetBsdGroup(Group):
 
 
 class BusyBoxGroup(Group):
-    """BusyBox group manipulation class for systems that have addgroup and delgroup.
+    """
+    BusyBox group manipulation class for systems that have addgroup and delgroup.
 
     It overrides the following methods:
         - group_add()
@@ -494,20 +496,21 @@ class BusyBoxGroup(Group):
         # Since there is no groupmod command, modify /etc/group directly
         info = self.group_info()
         if self.gid is not None and self.gid != info[2]:
-            with open('/etc/group', 'r') as f:
-                groups = f.read()
+            with open('/etc/group', 'rb') as f:
+                b_groups = f.read()
 
-            current_group_string = '{name}:x:{gid}:'.format(name=self.name, gid=info[2])
-            new_group_string = '{name}:x:{gid}:'.format(name=self.name, gid=self.gid)
+            b_name = to_bytes(self.name)
+            b_current_group_string = b'%s:x:%d:' % (b_name, info[2])
+            b_new_group_string = b'%s:x:%d:' % (b_name, self.gid)
 
-            if ':{gid}:'.format(gid=self.gid) in groups:
+            if b':%d:' % self.gid in b_groups:
                 self.module.fail_json(msg="gid '{gid}' in use".format(gid=self.gid))
 
             if self.module.check_mode:
                 return 0, '', ''
-            new_groups = groups.replace(current_group_string, new_group_string)
-            with open('/etc/group', 'w') as f:
-                f.write(new_groups)
+            b_new_groups = b_groups.replace(b_current_group_string, b_new_group_string)
+            with open('/etc/group', 'wb') as f:
+                f.write(b_new_groups)
             return 0, '', ''
 
         return None, '', ''
