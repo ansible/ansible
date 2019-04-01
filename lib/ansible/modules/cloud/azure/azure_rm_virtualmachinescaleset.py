@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_virtualmachine_scaleset
+module: azure_rm_virtualmachinescaleset
 
 version_added: "2.4"
 
@@ -23,6 +23,9 @@ short_description: Manage Azure virtual machine scale sets.
 
 description:
     - Create and update a virtual machine scale set.
+
+notes:
+    - This module was called C(azure_rm_virtualmachine_scaleset) before Ansible 2.8. The usage did not change.
 
 options:
     resource_group:
@@ -226,7 +229,7 @@ author:
 EXAMPLES = '''
 
 - name: Create VMSS
-  azure_rm_virtualmachine_scaleset:
+  azure_rm_virtualmachinescaleset:
     resource_group: myResourceGroup
     name: testvmss
     vm_size: Standard_DS1_v2
@@ -251,7 +254,7 @@ EXAMPLES = '''
         managed_disk_type: Standard_LRS
 
 - name: Create a VMSS with a custom image
-  azure_rm_virtualmachine_scaleset:
+  azure_rm_virtualmachinescaleset:
     resource_group: myResourceGroup
     name: testvmss
     vm_size: Standard_DS1_v2
@@ -264,7 +267,7 @@ EXAMPLES = '''
     image: customimage001
 
 - name: Create a VMSS with a custom image from a particular resource group
-  azure_rm_virtualmachine_scaleset:
+  azure_rm_virtualmachinescaleset:
     resource_group: myResourceGroup
     name: testvmss
     vm_size: Standard_DS1_v2
@@ -480,6 +483,9 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
 
         for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
+
+        if self.module._name == 'azure_rm_virtualmachine_scaleset':
+            self.module.deprecate("The 'azure_rm_virtualmachine_scaleset' module has been renamed to 'azure_rm_virtualmachinescaleset'", version='2.12')
 
         # make sure options are lower case
         self.remove_on_absent = set([resource.lower() for resource in self.remove_on_absent])
