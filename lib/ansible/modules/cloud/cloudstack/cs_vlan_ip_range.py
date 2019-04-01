@@ -141,7 +141,7 @@ id:
   sample: 04589590-ac63-4ffc-93f5-b698b8ac38b6
 network:
   description: The network of vlan range
-  returned: success
+  returned: if available
   type: str
   sample: test
 vlan:
@@ -161,12 +161,12 @@ netmask:
   sample: 255.255.255.0
 gateway_ipv6:
   description: IPv6 gateway.
-  returned: success
+  returned: if available
   type: str
   sample: 2001:db8::1
 cidr_ipv6:
   description: The CIDR of IPv6 network.
-  returned: success
+  returned: if available
   type: str
   sample: 2001:db8::/64
 zone:
@@ -181,12 +181,12 @@ domain:
   sample: ROOT
 account:
   description: Account who owns the network.
-  returned: success
+  returned: if available
   type: str
   sample: example account
 project:
   description: Project who owns the network.
-  returned: success
+  returned: if available
   type: str
   sample: example project
 for_systemvms:
@@ -200,10 +200,30 @@ for_virtual_network:
   type: bool
   sample: false
 physical_network:
-  description:  The physical network VLAN IP range belongs to.
+  description: The physical network VLAN IP range belongs to.
   returned: success
   type: str
   sample: 04589590-ac63-4ffc-93f5-b698b8ac38b6
+start_ip:
+  description: The start ip of the VLAN IP range.
+  returned: success
+  type: str
+  sample: 10.2.4.10
+end_ip:
+  description: The end ip of the VLAN IP range.
+  returned: success
+  type: str
+  sample: 10.2.4.100
+start_ipv6:
+  description: The start ipv6 of the VLAN IP range.
+  returned: if available
+  type: str
+  sample: 2001:db8::10
+end_ipv6:
+  description: The end ipv6 of the VLAN IP range.
+  returned: if available
+  type: str
+  sample: 2001:db8::50
 '''
 
 from ansible.module_utils.basic import AnsibleModule
