@@ -56,6 +56,7 @@ options:
     non_unique:
         description:
             - This option allows to change the group ID to a non-unique value. Requires C(gid).
+            - Not supported on macOS or BusyBox distributions.
         type: bool
         default: no
         version_added: "2.8"
@@ -462,6 +463,61 @@ class NetBsdGroup(Group):
 
 
 # ===========================================
+
+
+class BusyBoxGroup(Group):
+    """BusyBox group manipulation class for systems that have addgroup and delgroup.
+
+    It overrides the following methods:
+        - group_add()
+        - group_del()
+        - group_mod()
+    """
+
+    def group_add(self, **kwargs):
+        cmd = [self.module.get_bin_path('addgroup', True)]
+        if self.gid is not None:
+            cmd.extend(['-g', str(self.gid)])
+
+        if self.system:
+            cmd.append('-S')
+
+        cmd.append(self.name)
+
+        return self.execute_command(cmd)
+
+    def group_del(self):
+        cmd = [self.module.get_bin_path('delgroup', True), self.name]
+        return self.execute_command(cmd)
+
+    def group_mod(self, **kwargs):
+        # Since there is no groupmod command, modify /etc/group directly
+        info = self.group_info()
+        if self.gid is not None and self.gid != info[2]:
+            with open('/etc/group', 'r') as f:
+                groups = f.read()
+
+            current_group_string = '{name}:x:{gid}:'.format(name=self.name, gid=info[2])
+            new_group_string = '{name}:x:{gid}:'.format(name=self.name, gid=self.gid)
+
+            if ':{gid}:'.format(gid=self.gid) in groups:
+                self.module.fail_json(msg="gid '{gid}' in use".format(gid=self.gid))
+
+            if self.module.check_mode:
+                return 0, '', ''
+            new_groups = groups.replace(current_group_string, new_group_string)
+            with open('/etc/group', 'w') as f:
+                f.write(new_groups)
+            return 0, '', ''
+
+        return None, '', ''
+
+
+class AlpineGroup(BusyBoxGroup):
+
+    platform = 'Linux'
+    distribution = 'Alpine'
+
 
 def main():
     module = AnsibleModule(
