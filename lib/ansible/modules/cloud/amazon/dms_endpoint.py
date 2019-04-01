@@ -31,7 +31,7 @@ options:
     state:
       description:
         - State of the endpoint
-      default: "present"
+      default: 'present'
       choices: ['present', 'absent']
     endpointidentifier:
       description:
@@ -78,19 +78,13 @@ options:
     tags:
       description:
         - A list of tags to add to the endpoint
-       key:
-         description:
-           - Key is the required name of the tag
-       value:
-          description:
-           - Value for the tag
     certificatearn:
        description:
          -  Amazon Resource Name (ARN) for the certificate
     sslmode:
        description:
          - Mode used for the ssl connection
-       default: "none"
+       default: 'none'
        choices: ['none', 'require', 'verify-ca', 'verify-full']
     serviceaccessrolearn:
        description:
