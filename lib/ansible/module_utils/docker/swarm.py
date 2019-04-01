@@ -13,7 +13,10 @@ except ImportError:
     pass
 
 from ansible.module_utils._text import to_native
-from ansible.module_utils.docker.common import AnsibleDockerClient
+from ansible.module_utils.docker.common import (
+    AnsibleDockerClient,
+    LooseVersion,
+)
 
 
 class AnsibleDockerSwarmClient(AnsibleDockerClient):
@@ -241,3 +244,8 @@ class AnsibleDockerSwarmClient(AnsibleDockerClient):
 
     def get_node_name_by_id(self, nodeid):
         return self.get_node_inspect(nodeid)['Description']['Hostname']
+
+    def get_unlock_key(self):
+        if self.docker_py_version < LooseVersion('2.7.0'):
+            return None
+        return super(AnsibleDockerSwarmClient, self).get_unlock_key()

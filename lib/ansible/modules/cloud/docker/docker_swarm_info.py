@@ -29,7 +29,7 @@ description:
 version_added: "2.8"
 
 author:
-    - Piotr Wojciechowski (@wojciechowskipiotr)
+    - Piotr Wojciechowski (@WojciechowskiPiotr)
 
 options:
   nodes:
@@ -68,6 +68,11 @@ options:
       - See L(the docker documentation,https://docs.docker.com/engine/reference/commandline/service_ps/#filtering)
         for more information on possible filters.
     type: dict
+  unlock_key:
+    description:
+      - Whether to retrieve the swarm unlock key.
+    type: bool
+    default: no
   verbose_output:
     description:
       - When set to C(yes) and I(nodes), I(services) or I(tasks) is set to C(yes)
@@ -121,6 +126,15 @@ EXAMPLES = '''
 
 - debug:
     var: result.swarm_facts
+
+- name: Get the swarm unlock key
+  docker_swarm_info:
+    unlock_key: yes
+  register: result
+
+- debug:
+    var: result.swarm_unlock_key
+
 '''
 
 RETURN = '''
@@ -143,13 +157,17 @@ docker_swarm_manager:
       - Only if this one is C(true), the module will not fail.
     returned: both on success and on error
     type: bool
-
 swarm_facts:
     description:
       - Facts representing the basic state of the docker Swarm cluster.
       - Contains tokens to connect to the Swarm
     returned: always
     type: dict
+swarm_unlock_key:
+    description:
+      - Contains the key needed to unlock the swarm.
+    returned: When I(unlock_key) is C(true).
+    type: str
 nodes:
     description:
       - List of dict objects containing the basic information about each volume.
@@ -208,6 +226,8 @@ class DockerSwarmManager(DockerBaseClass):
                 filter_name = docker_object + "_filters"
                 filters = clean_dict_booleans_for_docker_api(client.module.params.get(filter_name))
                 self.results[returned_name] = self.get_docker_items_list(docker_object, filters)
+        if self.client.module.params['unlock_key']:
+            self.results['swarm_unlock_key'] = self.get_docker_swarm_unlock_key()
 
     def get_docker_swarm_facts(self):
         try:
@@ -305,6 +325,10 @@ class DockerSwarmManager(DockerBaseClass):
 
         return object_essentials
 
+    def get_docker_swarm_unlock_key(self):
+        unlock_key = self.client.get_unlock_key() or {}
+        return unlock_key.get('UnlockKey') or None
+
 
 def main():
     argument_spec = dict(
@@ -314,7 +338,11 @@ def main():
         tasks_filters=dict(type='dict'),
         services=dict(type='bool', default=False),
         services_filters=dict(type='dict'),
+        unlock_key=dict(type='bool', default=False),
         verbose_output=dict(type='bool', default=False),
+    )
+    option_minimal_versions = dict(
+        unlock_key=dict(docker_py_version='2.7.0', docker_api_version='1.25'),
     )
 
     client = AnsibleDockerSwarmClient(
@@ -322,6 +350,7 @@ def main():
         supports_check_mode=True,
         min_docker_version='1.10.0',
         min_docker_api_version='1.24',
+        option_minimal_versions=option_minimal_versions,
         fail_results=dict(
             can_talk_to_docker=False,
             docker_swarm_active=False,
