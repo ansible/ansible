@@ -419,7 +419,7 @@
     - generic_password_actual.comment == None
     - generic_password_actual.name == test_hostname
     - generic_password_actual.persistence == "Enterprise"
-    - generic_password_actual.secret == "genericpass"|b64encode
+    - generic_password_actual.secret == "genericpass"|b64encode(encoding='utf-16-le')
     - generic_password_actual.type == "Generic"
     - generic_password_actual.username == "genericuser"
 
