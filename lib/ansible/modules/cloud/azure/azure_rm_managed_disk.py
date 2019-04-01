@@ -85,14 +85,14 @@ options:
     tags:
         description:
             - Tags to assign to the managed disk.
-    zones:
+    zone:
         description:
-            - "Allowed values: 1, 2, 3, None."
+            - "Allowed values: 1, 2, 3, ''."
         choices:
             - 1
             - 2
             - 3
-            - None
+            - ''
         version_added: "2.8"
 
 extends_documentation_fragment:
@@ -184,7 +184,7 @@ def managed_disk_to_dict(managed_disk):
         os_type=managed_disk.os_type.lower() if managed_disk.os_type else None,
         storage_account_type=managed_disk.sku.name if managed_disk.sku else None,
         managed_by=managed_disk.managed_by,
-        zones=managed_disk.zones if managed_disk.zones else None
+        zone=managed_disk.zones[0] if managed_disk.zones and len(managed_disk.zones) > 0 else ''
     )
 
 
@@ -231,9 +231,9 @@ class AzureRMManagedDisk(AzureRMModuleBase):
             managed_by=dict(
                 type='str'
             ),
-            zones=dict(
+            zone=dict(
                 type='str',
-                choices=['None', '1', '2', '3']
+                choices=['', '1', '2', '3']
             )
         )
         required_if = [
@@ -254,7 +254,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         self.os_type = None
         self.disk_size_gb = None
         self.tags = None
-        self.zones = None
+        self.zone = None
         self.managed_by = None
         super(AzureRMManagedDisk, self).__init__(
             derived_arg_spec=self.module_arg_spec,
@@ -350,8 +350,8 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         creation_data = {}
         disk_params['location'] = self.location
         disk_params['tags'] = self.tags
-        if self.zones and self.zones != "None":
-            disk_params['zones'] = [self.zones]
+        if self.zone:
+            disk_params['zones'] = [self.zone]
         if self.storage_account_type:
             storage_account_type = self.compute_models.DiskSku(name=self.storage_account_type)
             disk_params['sku'] = storage_account_type
@@ -402,8 +402,8 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         if new_disk.get('tags') is not None:
             if not found_disk['tags'] == new_disk['tags']:
                 resp = True
-        if new_disk.get('zones') is not None:
-            if not found_disk['zones'] == new_disk['zones']:
+        if self.zone is not None:
+            if not found_disk['zone'] == self.zone:
                 resp = True
         return resp
 
