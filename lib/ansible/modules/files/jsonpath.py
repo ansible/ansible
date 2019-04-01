@@ -198,7 +198,7 @@ def main():
     try:
         rst = jsonpath_expr.find(data)[0].value
     except Exception as e:
-        module.fail_json(msg="Error while parsing json: %s" % (json_file, e))
+        module.fail_json(msg="Error while parsing json: %s (%s)" % (json_file, e))
 
     # Ensure we have the original copy to compare
     global orig_value
