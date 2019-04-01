@@ -174,13 +174,49 @@ EXAMPLES = '''
 # Examples don't contain auth parameter for simplicity,
 # look at ovirt_auth module to see how to reuse authentication:
 
-- name: Creates
+- name: Create instence type
   ovirt_instance_type:
     state: present
     name: myvm
 
+- name: ovirt_instance_type
+  ovirt_instance_type:
+    name: test2
+    rng_device: hwrng
+    rng_bytes: 200
+    rng_period: 200
+    soundcard_enabled: true
+    virtio_scsi: true
 
+# and attach bootable disk with name rhel7_disk and attach virtio NIC
+- ovirt_instance_type:
+    state: present
+    name: myvm
+    memory: 2GiB
+    cpu_cores: 2
+    cpu_sockets: 2
+    nics:
+      - name: nic1
 
+# If present state would be used, VM won't be restarted.
+- ovirt_instance_type:
+    state: next_run
+    name: myvm
+    boot_devices:
+      - network
+
+- ovirt_instance_type:
+    name: myvm
+    usb_support: True
+    serial_console: True
+
+- name: Create a VM that has the console configured for both Spice and VNC
+  ovirt_instance_type:
+    name: myvm
+    graphical_console:
+      protocol:
+        - spice
+        - vnc
 '''
 
 
@@ -491,6 +527,7 @@ def main():
         virtio_scsi=dict(type='bool', default=None),
         smartcard_enabled=dict(type='bool', default=None),
         io_threads=dict(type='int', default=None),
+        nics=dict(type='list', default=None),
         ballooning_enabled=dict(type='bool', default=None),
     )
     module = AnsibleModule(
