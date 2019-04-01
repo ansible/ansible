@@ -64,6 +64,7 @@ REPLACER = b"#<<INCLUDE_ANSIBLE_MODULE_COMMON>>"
 REPLACER_VERSION = b"\"<<ANSIBLE_VERSION>>\""
 REPLACER_COMPLEX = b"\"<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>\""
 REPLACER_WINDOWS = b"# POWERSHELL_COMMON"
+REPLACER_VMS = b"\$! DCL_COMMON"
 REPLACER_JSONARGS = b"<<INCLUDE_ANSIBLE_MODULE_JSON_ARGS>>"
 REPLACER_SELINUX = b"<<SELINUX_SPECIAL_FILESYSTEMS>>"
 
@@ -765,6 +766,9 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
     elif b'from ansible.module_utils.' in b_module_data:
         module_style = 'new'
         module_substyle = 'python'
+    elif REPLACER_VMS in b_module_data:
+        module_style = 'new'
+        module_substyle = 'dcl'
     elif REPLACER_WINDOWS in b_module_data:
         module_style = 'new'
         module_substyle = 'powershell'
@@ -940,6 +944,16 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         )))
         b_module_data = output.getvalue()
 
+ elif module_substyle == 'dcl':
+        # Start of DCL support
+        # shebang needs to start with $!....
+        shebang = u'$!'
+        # not sure... what is needed
+        b_module_data = ""
+        if become:
+            display.vvv('DCL: Become unsupported')
+            become = False
+
     elif module_substyle == 'powershell':
         # Powershell/winrm don't actually make use of shebang so we can
         # safely set this here.  If we let the fallback code handle this
@@ -1033,6 +1047,13 @@ def modify_module(module_name, module_path, module_args, templar, task_vars=None
                 b_lines.insert(1, b_ENCODING_STRING)
 
             shebang = to_text(b_shebang, nonstring='passthru', errors='surrogate_or_strict')
+
+        # DCL lines start with in regex:  $[ \t]*(!|@?[A-Z0-9_]+[: \t]?).*$
+        # line continuation: lines ending in - except for comments.
+        # comment ! ... until en of line
+        elif b_lines[0].startswith(b"$")
+            interpreter = "dcl"
+
         else:
             # No shebang, assume a binary module?
             pass
