@@ -1,0 +1,2 @@
+minor_changes:
+    - In the unixy callback plugin, do not display plays that do not match the host limit or that will not execute any tasks
