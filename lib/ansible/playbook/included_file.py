@@ -48,7 +48,10 @@ class IncludedFile:
         raise ValueError()
 
     def __eq__(self, other):
-        return other._filename == self._filename and other._args == self._args and other._vars == self._vars and other._task._parent._uuid == self._task._parent._uuid
+        return (other._filename == self._filename and
+                other._args == self._args and
+                other._vars == self._vars and
+                other._task._parent._uuid == self._task._parent._uuid)
 
     def __repr__(self):
         return "%s (args=%s vars=%s): %s" % (self._filename, self._args, self._vars, self._hosts)
