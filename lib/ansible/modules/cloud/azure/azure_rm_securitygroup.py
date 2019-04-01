@@ -474,7 +474,7 @@ def create_rule_instance(self, rule):
         source_port_ranges=rule.get('source_port_ranges', None),
         destination_port_ranges=rule.get('destination_port_ranges', None),
         source_application_security_groups=[
-            self.nsg_models.ApplicationSecurityGroup(id=p) 
+            self.nsg_models.ApplicationSecurityGroup(id=p)
             for p in rule.get('source_application_security_groups')] if rule.get('source_application_security_groups') else None,
         destination_application_security_groups=[
             self.nsg_models.ApplicationSecurityGroup(id=p)
