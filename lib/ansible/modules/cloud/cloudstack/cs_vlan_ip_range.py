@@ -214,6 +214,16 @@ end_ip:
   returned: success
   type: str
   sample: 10.2.4.100
+start_ipv6:
+  description: The start ipv6 of the VLAN IP range.
+  returned: if available
+  type: str
+  sample: 2001:db8::10
+end_ipv6:
+  description: The end ipv6 of the VLAN IP range.
+  returned: if available
+  type: str
+  sample: 2001:db8::50
 '''
 
 from ansible.module_utils.basic import AnsibleModule
