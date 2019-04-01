@@ -53,7 +53,7 @@ options:
     username:
       description:
         - Username our endpoint will use to connect to the database
-    password
+    password:
       description:
         - Password used to connect to the database
           Note: this attribute can only be written,
