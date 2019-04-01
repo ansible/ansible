@@ -35,6 +35,7 @@ except ImportError:
 
 
 import abc
+import binascii
 import datetime
 import errno
 import hashlib
@@ -332,6 +333,92 @@ class OpenSSLObject(object):
                 pass
 
 
+_OID_MAP = {
+    # First entry is 'canonical' name
+    "1.3.6.1.5.5.7.1.3": ('qcStatements', ),
+    "1.3.6.1.5.5.7.3.10": ('DVCS', ),
+    "1.3.6.1.5.5.7.3.7": ('IPSec User', 'ipsecUser'),
+    "1.3.6.1.5.5.7.1.2": ('Biometric Info', 'biometricInfo'),
+}
+
+
+def crpytography_name_to_oid(name):
+    if name in ('CN', 'commonName'):
+        return x509.oid.NameOID.COMMON_NAME
+    if name in ('C', 'countryName'):
+        return x509.oid.NameOID.COUNTRY_NAME
+    if name in ('L', 'localityName'):
+        return x509.oid.NameOID.LOCALITY_NAME
+    if name in ('ST', 'stateOrProvinceName'):
+        return x509.oid.NameOID.STATE_OR_PROVINCE_NAME
+    if name in ('street', 'streetAddress'):
+        return x509.oid.NameOID.STREET_ADDRESS
+    if name in ('O', 'organizationName'):
+        return x509.oid.NameOID.ORGANIZATION_NAME
+    if name in ('OU', 'organizationalUnitName'):
+        return x509.oid.NameOID.ORGANIZATIONAL_UNIT_NAME
+    if name in ('serialNumber', ):
+        return x509.oid.NameOID.SERIAL_NUMBER
+    if name in ('SN', 'surname'):
+        return x509.oid.NameOID.SURNAME
+    if name in ('GN', 'givenName'):
+        return x509.oid.NameOID.GIVEN_NAME
+    if name in ('title', ):
+        return x509.oid.NameOID.TITLE
+    if name in ('generationQualifier', ):
+        return x509.oid.NameOID.GENERATION_QUALIFIER
+    if name in ('x500UniqueIdentifier', ):
+        return x509.oid.NameOID.X500_UNIQUE_IDENTIFIER
+    if name in ('dnQualifier', ):
+        return x509.oid.NameOID.DN_QUALIFIER
+    if name in ('pseudonym', ):
+        return x509.oid.NameOID.PSEUDONYM
+    if name in ('UID', 'userId'):
+        return x509.oid.NameOID.USER_ID
+    if name in ('DC', 'domainComponent'):
+        return x509.oid.NameOID.DOMAIN_COMPONENT
+    if name in ('emailAddress', ):
+        return x509.oid.NameOID.EMAIL_ADDRESS
+    if name in ('jurisdictionC', 'jurisdictionCountryName'):
+        return x509.oid.NameOID.JURISDICTION_COUNTRY_NAME
+    if name in ('jurisdictionL', 'jurisdictionLocalityName'):
+        return x509.oid.NameOID.JURISDICTION_LOCALITY_NAME
+    if name in ('jurisdictionST', 'jurisdictionStateOrProvinceName'):
+        return x509.oid.NameOID.JURISDICTION_STATE_OR_PROVINCE_NAME
+    if name in ('businessCategory', ):
+        return x509.oid.NameOID.BUSINESS_CATEGORY
+    if name in ('postalAddress', ):
+        return x509.oid.NameOID.POSTAL_ADDRESS
+    if name in ('postalCode', ):
+        return x509.oid.NameOID.POSTAL_CODE
+    if name in ('serverAuth', 'TLS Web Server Authentication'):
+        return x509.oid.ExtendedKeyUsageOID.SERVER_AUTH
+    if name in ('clientAuth', 'TLS Web Client Authentication'):
+        return x509.oid.ExtendedKeyUsageOID.CLIENT_AUTH
+    if name in ('codeSigning', 'Code Signing'):
+        return x509.oid.ExtendedKeyUsageOID.CODE_SIGNING
+    if name in ('emailProtection', 'E-mail Protection'):
+        return x509.oid.ExtendedKeyUsageOID.EMAIL_PROTECTION
+    if name in ('timeStamping', 'Time Stamping'):
+        return x509.oid.ExtendedKeyUsageOID.TIME_STAMPING
+    if name in ('OCSPSigning', 'OCSP Signing'):
+        return x509.oid.ExtendedKeyUsageOID.OCSP_SIGNING
+    if name in ('anyExtendedKeyUsage', 'Any Extended Key Usage'):
+        return x509.oid.ExtendedKeyUsageOID.ANY_EXTENDED_KEY_USAGE
+    for dotted, names in _OID_MAP.items():
+        if name in names:
+            return x509.oid.ObjectIdentifier(dotted)
+    raise OpenSSLObjectError('Cannot find OID for "{0}"'.format(name))
+
+
+def crpytography_oid_to_name(oid):
+    dotted_string = oid.dotted_string
+    names = _OID_MAP.get(dotted_string)
+    if names:
+        return names[0]
+    return oid._name
+
+
 def cryptography_get_name_oid(id):
     '''
     Given a symbolic ID, finds the appropriate OID for use with cryptography.
@@ -407,6 +494,39 @@ def cryptography_get_name(name):
     if ':' not in name:
         raise OpenSSLObjectError('Cannot parse Subject Alternative Name "{0}" (forgot "DNS:" prefix?)'.format(name))
     raise OpenSSLObjectError('Cannot parse Subject Alternative Name "{0}" (potentially unsupported by cryptography backend)'.format(name))
+
+
+def _get_hex(bytes):
+    if bytes is None:
+        return bytes
+    data = binascii.hexlify(bytes)
+    data = to_text(b':'.join(data[i:i + 2] for i in range(0, len(data), 2)))
+    return data
+
+
+def cryptography_decode_name(name):
+    '''
+    Given a cryptography x509.Name object, returns a string.
+    Raises an OpenSSLObjectError if the name is not supported.
+    '''
+    if isinstance(name, x509.DNSName):
+        return 'DNS:{0}'.format(name.value)
+    if isinstance(name, x509.IPAddress):
+        return 'IP:{0}'.format(name.value.compressed)
+    if isinstance(name, x509.RFC822Name):
+        return 'email:{0}'.format(name.value)
+    if isinstance(name, x509.UniformResourceIdentifier):
+        return 'URI:{0}'.format(name.value)
+    if isinstance(name, x509.DirectoryName):
+        # FIXME: test
+        return 'DirName:' + ''.join(['/{0}:{1}'.format(attribute.oid._name, attribute.value) for attribute in name.value])
+    if isinstance(name, x509.RegisteredID):
+        # FIXME: test
+        return 'RegisteredID:{0}'.format(name.value)
+    if isinstance(name, x509.OtherName):
+        # FIXME: test
+        return '{0}:{1}'.format(name.type_id.dotted_string, _get_hex(name.value))
+    raise OpenSSLObjectError('Cannot decode name "{0}"'.format(name))
 
 
 def _cryptography_get_keyusage(usage):
