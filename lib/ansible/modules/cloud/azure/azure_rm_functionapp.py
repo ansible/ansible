@@ -280,10 +280,18 @@ class AzureRMFunctionApp(AzureRMModuleBase):
 
         function_app_settings = self.necessary_functionapp_settings()
         for app_setting_key in self.app_settings:
-            function_app_settings.append(NameValuePair(
-                name=app_setting_key,
-                value=self.app_settings[app_setting_key]
-            ))
+            found_setting = None
+            for i in function_app_settings:
+                if function_app_settings[i].name == app_setting_key:
+                    found_setting = function_app_settings[i]
+                    break
+            if found_setting:
+                found_setting.value = self.app_settings[app_setting_key]
+            else:
+                function_app_settings.append(NameValuePair(
+                    name=app_setting_key,
+                    value=self.app_settings[app_setting_key]
+                ))
         return function_app_settings
 
     @property
