@@ -182,6 +182,14 @@ EXAMPLES = r'''
     fail_on_drop: no
 '''
 
+RETURN = r'''
+queries:
+  description: List of executed queries.
+  returned: always
+  type: list
+  sample: ['CREATE LANGUAGE "acme"']
+'''
+
 import traceback
 
 PSYCOPG2_IMP_ERR = None
@@ -193,6 +201,7 @@ except ImportError:
     postgresqldb_found = False
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.postgres import postgres_common_argument_spec
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
 from ansible.module_utils.database import pg_quote_identifier
@@ -246,26 +255,25 @@ def lang_drop(cursor, lang, cascade):
 
 
 def main():
+    argument_spec = postgres_common_argument_spec()
+    argument_spec.update(
+        db=dict(type="str", required=True, aliases=["login_db"]),
+        port=dict(type="int", default=5432, aliases=["login_port"]),
+        lang=dict(type="str", required=True),
+        state=dict(type="str", default="present", choices=["absent", "present"]),
+        trust=dict(type="bool", default="no"),
+        force_trust=dict(type="bool", default="no"),
+        cascade=dict(type="bool", default="no"),
+        fail_on_drop=dict(type="boo", default="yes"),
+        ssl_mode=dict(default='prefer', choices=[
+                      'allow', 'disable', 'prefer', 'require', 'verify-ca', 'verify-full']),
+        ca_cert=dict(default=None, aliases=["ssl_rootcert"]),
+        session_role=dict(type="str"),
+    )
+
     module = AnsibleModule(
-        argument_spec=dict(
-            login_user=dict(default="postgres"),
-            login_password=dict(default="", no_log=True),
-            login_host=dict(default=""),
-            login_unix_socket=dict(default=""),
-            db=dict(required=True),
-            port=dict(type="int", default=5432),
-            lang=dict(required=True),
-            state=dict(default="present", choices=["absent", "present"]),
-            trust=dict(type='bool', default='no'),
-            force_trust=dict(type='bool', default='no'),
-            cascade=dict(type='bool', default='no'),
-            fail_on_drop=dict(type='bool', default='yes'),
-            ssl_mode=dict(default='prefer', choices=[
-                          'allow', 'disable', 'prefer', 'require', 'verify-ca', 'verify-full']),
-            ca_cert=dict(default=None, aliases=['ssl_rootcert']),
-            session_role=dict(),
-        ),
-        supports_check_mode=True
+        argument_spec=argument_spec,
+        supports_check_mode=True,
     )
 
     db = module.params["db"]
