@@ -1,0 +1,72 @@
+# Copyright: (c) 2019, Hetzner Cloud GmbH <info@hetzner-cloud.de>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+
+- name: setup ensure ssh key is absent
+  hcloud_ssh_key:
+    name: "{{ hcloud_ssh_key_name }}"
+    state: absent
+  register: result
+
+- name: test gather hcloud ssh key facts - empty resources
+  hcloud_ssh_key_facts:
+- name: verify test gather hcloud ssh key facts - empty resources
+  assert:
+    that:
+      - ansible_facts.hcloud_ssh_key_facts | count == 0
+
+- name: setup test ssh_key
+  hcloud_ssh_key:
+    name: "{{hcloud_ssh_key_name}}"
+    public_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGpl/tnk74nnQJxxLAtutUApUZMRJxryKh7VXkNbd4g9 john@example.com"
+    labels:
+      key: value
+  register: result
+- name: verify create test ssh_key
+  assert:
+    that:
+      - result is changed
+      - result.hcloud_ssh_key.public_key == "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGpl/tnk74nnQJxxLAtutUApUZMRJxryKh7VXkNbd4g9 john@example.com"
+
+- name: test gather hcloud ssh key facts in check mode
+  hcloud_ssh_key_facts:
+  check_mode: yes
+- name: verify test gather hcloud ssh key facts in check mode
+  assert:
+    that:
+     - ansible_facts.hcloud_ssh_key_facts| list | count == 1
+
+- name: test gather hcloud ssh key facts
+  hcloud_ssh_key_facts:
+  check_mode: yes
+- name: verify test gather hcloud ssh key facts
+  assert:
+    that:
+     - ansible_facts.hcloud_ssh_key_facts| list | count == 1
+
+- name: test gather hcloud ssh key facts with correct label selector
+  hcloud_ssh_key_facts:
+    label_selector: "key=value"
+- name: verify test gather hcloud ssh key with correct label selector
+  assert:
+    that:
+      - ansible_facts.hcloud_ssh_key_facts|selectattr('name','equalto','{{ hcloud_ssh_key_name }}') | list | count == 1
+
+- name: test gather hcloud ssh key facts with wrong label selector
+  hcloud_ssh_key_facts:
+    label_selector: "key!=value"
+- name: verify test gather hcloud ssh key with wrong label selector
+  assert:
+    that:
+      - ansible_facts.hcloud_ssh_key_facts | list | count == 0
+
+
+- name: cleanup
+  hcloud_ssh_key:
+    name: "{{hcloud_ssh_key_name}}"
+    state: absent
+  register: result
+- name: verify cleanup
+  assert:
+    that:
+    - result is success
