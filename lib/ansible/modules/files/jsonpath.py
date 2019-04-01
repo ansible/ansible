@@ -44,6 +44,7 @@ options:
 requirements:
 - jsonpath-ng >= 1.4.3
 notes:
+- Use the C(--check) and C(--diff) options when testing your expressions.
 - This module does not handle complicated jsonpath expressions, so limit jsonpath selectors to simple expressions.
 
 author:
@@ -141,11 +142,17 @@ def finish(module, data, changed=False, msg=''):
         result['msg'] = msg
 
     if result['changed']:
-        with open(module.params['path'], 'w') as f:
-            try:
-                json.dump(data, f, ensure_ascii=False, indent=2, sort_keys=True)
-            except Exception as e:
-                module.fail_json(msg="Write error in json file: %s (%s)" % (module.params['path'], e))
+        if module._diff:
+            result['diff'] = dict(
+                before=orig_value,
+                after=module.params['value'],
+            )
+        if module.params['path'] and not module.check_mode:
+            with open(module.params['path'], 'w') as f:
+                try:
+                    json.dump(data, f, ensure_ascii=False, indent=2, sort_keys=True)
+                except Exception as e:
+                    module.fail_json(msg="Write error in json file: %s (%s)" % (module.params['path'], e))
 
     module.exit_json(**result)
 
@@ -157,7 +164,7 @@ def main():
             jsonpath=dict(type='str', required=True),
             value=dict(type='raw', required=True),
         ),
-        supports_check_mode=False,
+        supports_check_mode=True,
     )
 
     json_file = module.params['path']
@@ -191,7 +198,7 @@ def main():
     try:
         rst = jsonpath_expr.find(data)[0].value
     except Exception as e:
-        module.fail_json(msg="Error while parsing json: %s (%s)" % (json_file or 'xml_string', e))
+        module.fail_json(msg="Error while parsing json: %s" % (json_file, e))
 
     # Ensure we have the original copy to compare
     global orig_value
