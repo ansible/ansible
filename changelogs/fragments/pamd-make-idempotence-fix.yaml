@@ -1,0 +1,2 @@
+bugfixes:
+  - pamd - fix idempotence issue when removing rules
