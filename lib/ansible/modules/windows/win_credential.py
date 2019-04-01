@@ -45,7 +45,8 @@ options:
       data_format:
         description:
         - Controls the input type for I(data).
-        - If C(text), I(data) is a text string that is UTF-8 encoded to bytes.
+        - If C(text), I(data) is a text string that is UTF-16LE encoded to
+          bytes.
         - If C(base64), I(data) is a base64 string that is base64 decoded to
           bytes.
         type: str
@@ -88,7 +89,7 @@ options:
   secret_format:
     description:
     - Controls the input type for I(secret).
-    - If C(text), I(secret) is a text string that is UTF-8 encoded to bytes.
+    - If C(text), I(secret) is a text string that is UTF-16LE encoded to bytes.
     - If C(base64), I(secret) is a base64 string that is base64 decoded to
       bytes.
     type: str
