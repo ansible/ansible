@@ -81,8 +81,8 @@ class IncludedFile:
                     except KeyError:
                         task_vars = task_vars_cache[cache_key] = variable_manager.get_vars(play=iterator._play, host=original_host, task=original_task)
 
-                    include_variables = include_result.get('include_variables', dict())
-                    args = include_variables.copy()
+                    include_args = include_result.get('include_args', dict())
+                    args = include_args.copy()
                     loop_var = 'item'
                     index_var = None
                     if original_task.loop_control:
@@ -94,7 +94,7 @@ class IncludedFile:
                         task_vars[index_var] = args[index_var] = include_result[index_var]
                     if '_ansible_item_label' in include_result:
                         task_vars['_ansible_item_label'] = args['_ansible_item_label'] = include_result['_ansible_item_label']
-                    if original_task.no_log and '_ansible_no_log' not in include_variables:
+                    if original_task.no_log and '_ansible_no_log' not in include_args:
                         task_vars['_ansible_no_log'] = args['_ansible_no_log'] = original_task.no_log
 
                     # get search path for this task to pass to lookup plugins that may be used in pathing to
@@ -170,16 +170,16 @@ class IncludedFile:
                         inc_file = IncludedFile(include_file, args, original_task)
                     else:
                         # template the included role's name here
-                        role_name = include_variables.pop('name', include_variables.pop('role', None))
+                        role_name = include_args.pop('name', include_args.pop('role', None))
                         if role_name is not None:
                             role_name = templar.template(role_name)
 
                         new_task = original_task.copy()
                         new_task._role_name = role_name
                         for from_arg in new_task.FROM_ARGS:
-                            if from_arg in include_variables:
+                            if from_arg in include_args:
                                 from_key = from_arg.replace('_from', '')
-                                new_task._from_files[from_key] = templar.template(include_variables.pop(from_arg))
+                                new_task._from_files[from_key] = templar.template(include_args.pop(from_arg))
 
                         inc_file = IncludedFile(role_name, args, new_task, is_role=True)
 
