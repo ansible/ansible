@@ -284,10 +284,6 @@ class AzureRMFunctionApp(AzureRMModuleBase):
             for s in function_app_settings:
                 if s.name == app_setting_key:
                     found_setting = s
-            for i in function_app_settings:
-                if function_app_settings[i].name == app_setting_key:
-                    found_setting = function_app_settings[i]
-                    break
             if found_setting:
                 found_setting.value = self.app_settings[app_setting_key]
             else:
