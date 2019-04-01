@@ -1,0 +1,42 @@
+# ansible-_ansible-inventory(1) completion                                      -*- shell-script -*-
+
+. /usr/share/bash-completion/completions/ansible
+
+_ansible-vault()
+{
+  local cur prev words cword split
+  _init_completion -n = || return
+
+  case "$prev" in
+    --new-vault-password-file|--vault-password-file)
+      _filedir
+      return
+    ;;
+  esac
+
+  case "$cur" in
+    --new-vault-password-file=*|--vault-password-file=*)
+      cur=${cur#*=}
+      _filedir
+      return
+    ;;
+    -*)
+      shortopts='-h -v'
+      longopts='--ask-vault-pass --help --verbose --version'
+      longoptsequal='--new-vault-id --new-vault-password-file --vault-id --vault-password-file'
+      COMPREPLY=( $( compgen -W '$shortopts $longopts' -- "$cur" ) $( compgen -S = -W '$longoptsequal' -- "$cur" ) )
+    ;;
+    *)
+      local args
+      _count_args =
+      if [[ $args -eq 1 ]]; then
+        COMPREPLY=( $( compgen -W "create decrypt edit encrypt encrypt_string rekey view" -- "$cur") )
+      else
+        _filedir
+      fi
+    ;;
+  esac
+  [[ $COMPREPLY == *= ]] && compopt -o nospace
+}
+complete -F _ansible-vault ansible-vault
+# ex: filetype=sh

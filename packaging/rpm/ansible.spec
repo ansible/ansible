@@ -115,6 +115,8 @@ mkdir -p %{buildroot}/etc/ansible/
 mkdir -p %{buildroot}/etc/ansible/roles/
 cp examples/hosts %{buildroot}/etc/ansible/
 cp examples/ansible.cfg %{buildroot}/etc/ansible/
+mkdir -p %{buildroot}%{_datadir}/bash-completion/completions/
+cp -v usr/share/bash-completion/completions/ansible* %{buildroot}%{_datadir}/bash-completion/completions/
 mkdir -p %{buildroot}/%{_mandir}/man1/
 cp -v docs/man/man1/*.1 %{buildroot}/%{_mandir}/man1/
 mkdir -p %{buildroot}/%{_datadir}/ansible

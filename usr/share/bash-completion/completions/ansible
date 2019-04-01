@@ -1,0 +1,198 @@
+# ansible(1) completion                                      -*- shell-script -*-
+
+__ansible_args()
+{
+  for (( i=0; i < ${#words[@]}-1; i++ )); do
+    if [[ ${words[i]} == @(-m|--module) ]]; then
+      module=${words[$((i+1))]}
+    fi
+  done
+  COMPREPLY=( $( compgen -S = -W "$(/usr/bin/ansible-doc ${module:-command} | grep -P '^- [^(name)]' | tr -d -- - )"  -- "$cur") )
+  return
+}
+
+__ansible_inventory()
+{
+  COMPREPLY=( $(compgen -W "$(/usr/bin/ansible-inventory ${inventory:+-i} ${inventory} --graph | tail -n +2 | sed -e 's/:$//' | tr -cd '[:alnum:].:, ' | sort -n)" -- "$cur") )
+}
+
+__ansible_limit()
+{
+  for (( i=0; i < ${#words[@]}-1; i++ )); do
+    if [[ ${words[i]} == @(-i|--inventory) ]]; then
+      inventory=${words[$((i+1))]}
+    elif [[ ${words[i]} == --inventory=* ]]; then
+      inventory=${words[$i]#*=}
+    fi
+  done
+  __ansible_inventory
+}
+
+__ansible_become_method()
+{
+  COMPREPLY=( $( compgen -W 'sudo su pbrun pfexec doas dzdo ksu runas pmrun enable machinectl' -- ${cur}) )
+}
+
+__ansible_module_name()
+{
+  COMPREPLY=( $( compgen -W "$(/usr/bin/ansible-doc -t ${1:-module} -l | /bin/awk '{print $1}')" -- "$cur") )
+}
+
+_ansible()
+{
+  local cur prev words cword split
+  _init_completion -n = || return
+  case "$prev" in
+    -a|--args)
+      __ansible_args
+      return
+    ;;
+    --become-method)
+      __ansible_become_method
+    ;;
+    -c|--connection)
+      __ansible_module_name connection
+      return
+    ;;
+    -i|--inventory)
+      curold=${cur}
+      while [[ $cur == *,* ]] ; do
+        cur=${cur#*,}
+      done
+      __ansible_inventory 
+      _known_hosts_real -- "${cur}"
+      for (( i=0; i < ${#COMPREPLY[@]}; i++ )); do
+        COMPREPLY[i]=${curold%%$cur}${COMPREPLY[i]},
+      done
+      cur="$curold"
+      [[ $cur == *,* ]] || _filedir
+    ;;
+    -l|--limit)
+        __ansible_limit
+	return
+    ;;
+    -m|--module-name)
+      COMPREPLY=( $( compgen -W "$(/usr/bin/ansible-doc -l | /bin/awk '{print $1}')" -- "$cur") )
+      return
+    ;;
+    -M|--module-path)
+      _filedir
+      return
+    ;;
+    -u|--user|--become-user)
+      _allowed_users
+      return
+    ;;
+  esac
+
+  case "$cur" in
+    --args=*)
+      cur=${cur#*=}
+      __ansible_args
+      return
+    ;;
+    --become-method*)
+      cur=${cur#*=}
+      __ansible_become_method
+    ;;
+    --connection=*)
+      cur=${cur#*=}
+      __ansible_module_name connection
+    ;;
+    --inventory=*)
+      curold=${cur#*=}
+      cur=${cur#*=}
+      while [[ $cur == *,* ]] ; do
+        cur=${cur#*,}
+      done
+      __ansible_inventory
+      _known_hosts_real -- "${cur}"
+      for (( i=0; i < ${#COMPREPLY[@]}; i++ )); do
+        COMPREPLY[i]=${curold%%$cur}${COMPREPLY[i]},
+      done
+      cur="$curold"
+      [[ $cur == *,* ]] || _filedir
+    ;;
+    --limit=*)
+      cur=${cur#*=}
+      __ansible_limit
+    ;;
+    --module-name=*)
+      COMPREPLY=( $( compgen -W "$(/usr/bin/ansible-doc -l | /bin/awk '{print $1}')" -- "${cur#*=}") ) 
+    ;;
+    --module-path=*|--playbook-dir=*|--key-file=*|--private-key=*|--tree=*|--vault-password-file=*)
+      cur=${cur#*=}
+      _filedir
+    ;;
+    --user=*|--become-user=*)
+      cur=${cur#*=}
+      _allowed_users
+    ;;
+    -*)
+      shortopts='-a -B -C -D -e -f -h -i -l -m -M -o -P -t -v  -vv -vvv -k -u -c -T -b -K'
+      longopts='--ask-vault-pass --check --diff --help --list-hosts --one-line
+      --syntax-check --verbose --version --ask-pass --ask-become-pass'
+      longoptsequal='--args --background --extra-vars --forks --inventory --limit
+      --module-name --module-path --playbook-dir --poll --tree --vault-id --vault-password-file
+      --private-key --key-file --user --connection --timeout --ssh-common-args --sftp-extra-args 
+      --scp-extra-args --ssh-extra-args --become-method --become-user'
+      COMPREPLY=( $( compgen -W '$shortopts $longopts' -- "$cur" ) $( compgen -S = -W '$longoptsequal' -- "$cur" ) )
+    ;;
+    *)
+      local args
+      _count_args :
+      if [[ $args -eq 1 ]]; then
+        __ansible_inventory
+        _known_hosts_real -- "$cur"
+      else
+        _filedir
+      fi
+    ;;
+    esac
+  [[ $COMPREPLY == *= || $COMPREPLY == *, ]] && compopt -o nospace
+} &&
+complete -F _ansible ansible
+
+_ansible-playbook()
+{
+    local cur prev words cword split
+    _init_completion -n = || return
+
+    case "$cur" in
+	    --inventory=*)
+		curold=${cur#*=}
+		cur=${cur#*=}
+		while [[ $cur == *,* ]] ; do
+                  cur=${cur#*,}
+                done
+		_known_hosts_real -P, -- "$cur"
+		if [[ $curold == *,* ]] ; then
+		    for (( i=0; i < ${#COMPREPLY[@]}; i++ )); do
+                        COMPREPLY[i]=${curold%%$cur}${COMPREPLY[i]}
+                    done
+		    compopt -o nospace
+		    return
+		fi
+	    ;;
+            --module-path=*|--vault-password-file=*)
+                cur=${cur#*=}
+                _filedir
+                return
+            ;;
+    esac
+
+    local shortopts longopts longoptsequal
+    shortopts='-C -D -e -f -h -i -l -M -t -v -vv -vvv'
+    longopts='--ask-playbook-pass --check --diff --help --flush-cache --force-handlers --help --list-hosts --list-tags --list-tasks --step --syntax-check --verbose --version'
+    longoptsequal='--extra-vars --forks --inventory --limit --module-path --skip-tags --start-at-task --tags --vault-id --vault-password-file '
+    if [[ "$cur" == -* ]]; then
+        COMPREPLY=( $( compgen -W '$shortopts $longopts' -- "$cur" ) $( compgen -S = -W '$longoptsequal' -- "$cur" ) )
+    else
+        _filedir
+    fi
+    [[ $COMPREPLY == *= ]] && compopt -o nospace
+    $split && return
+}
+complete -F _ansible-playbook ansible-playbook
+
+# ex: filetype=sh

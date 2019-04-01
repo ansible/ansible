@@ -1,0 +1,28 @@
+# ansible-config(1) completion                                      -*- shell-script -*-
+
+_ansible-config()
+{
+  local cur prev cword words args
+  _init_completion -n = || return
+
+  _count_args :
+
+  if [[ $args -eq 1 ]]; then
+    COMPREPLY=( $( compgen -W 'view dump list' -- "$cur" ) )
+  elif [[ "$cur" == --config=* ]] ; then
+    cur=${cur#*=}
+    _filedir
+  elif [[ "$cur" == -* ]]; then
+    if [[ ${words[1]} == dump ]] ; then
+      COMPREPLY=( $( compgen -W '-c -h --help --only-changed -v --verbose --version' -- "$cur" ) $( compgen -S = -W '--config' -- "$cur" ) )
+    else
+      COMPREPLY=( $( compgen -W '-c -h --help -v --verbose --version' -- "$cur" ) $( compgen -S = -W '--config' -- "$cur" ) )
+    fi
+  else
+    _filedir
+  fi
+  [[ $COMPREPLY == *= ]] && compopt -o nospace
+} &&
+complete -F _ansible-config ansible-config
+
+# ex: filetype=sh

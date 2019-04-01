@@ -1,0 +1,52 @@
+# ansible-doc(1) completion                                      -*- shell-script -*-
+
+. /usr/share/bash-completion/completions/ansible
+
+_ansible-doc()
+{
+  local cur prev words cword split
+  _init_completion -n = || return
+
+  case "$prev" in
+    -M|--module-path)
+      _filedir
+      return
+    ;;
+    -t|--type)
+      COMPREPLY=( $( compgen -W "cache callback connection inventory lookup shell module strategy vars" -- "$cur" ) )
+      return
+    ;;
+  esac
+
+  case "$cur" in
+    --module-path=*)
+      cur=${cur#*=}
+      _filedir
+    ;;
+    --type=*)
+      cur=${cur#*=}
+      COMPREPLY=( $( compgen -W "cache callback connection inventory lookup shell module strategy vars" -- "$cur" ) )
+      return
+    ;;
+    -*)
+      shortopts='-h -l -F -M -s -t -v'
+      longopts='--help --list --list_files --snippet --verbose --version'
+      longoptsequal='--module-path --type'
+      COMPREPLY=( $( compgen -W '$shortopts $longopts' -- "$cur" ) $( compgen -S = -W '$longoptsequal' -- "$cur" ) )
+    ;;
+    *)
+      local args type i
+      for (( i=0; i < ${#words[@]}-1; i++ )); do
+        if [[ ${words[i]} == @(-t|--type) ]]; then
+          type=${words[$((i+1))]}
+        elif [[ ${words[i]} == --type=* ]]; then
+          type=${words[$i]#*=}
+        fi
+      done
+      COMPREPLY=( $( compgen -W "$(/usr/bin/ansible-doc -t ${type:-module} -l | /bin/awk '{print $1}')" -- "$cur") )
+    ;;
+  esac
+  [[ $COMPREPLY == *= ]] && compopt -o nospace
+}
+complete -F _ansible-doc ansible-doc
+# ex: filetype=sh
