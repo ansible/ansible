@@ -160,6 +160,7 @@ options:
     clone_name:
         description:
             - Name for importing Template from storage domain.
+            - If not defined, C(name) will be used.
         version_added: "2.8"
 extends_documentation_fragment: ovirt
 '''
