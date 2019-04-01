@@ -66,7 +66,7 @@ options:
         description:
             - "Template to used to create a virtual machine."
         type: str
-    parameters:
+    template_parameters:
         description:
             - "Value of parameters to be replaced in template parameters."
         type: dict
@@ -243,7 +243,7 @@ VM_ARG_SPEC = {
     },
     'datavolumes': {'type': 'list'},
     'template': {'type': 'str'},
-    'parameters': {'type': 'dict'},
+    'template_parameters': {'type': 'dict'},
 }
 
 
@@ -335,7 +335,7 @@ class KubeVirtVM(KubeVirtRawModule):
             proccess_template = template_resource.get(name=vm_template, namespace=self.params.get('namespace'))
 
             # Set proper template values set by Ansible parameter 'parameters':
-            for k, v in self.params.get('parameters', {}).items():
+            for k, v in self.params.get('template_parameters', {}).items():
                 for parameter in proccess_template.parameters:
                     if parameter.name == k:
                         parameter.value = v
