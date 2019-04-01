@@ -164,9 +164,8 @@ class NetAppOntapUser(object):
         Checks if the user exists.
         :param: application: application to grant access to
         :return:
-            True if user found
-            False if user is not found
-        :rtype: bool
+            Dictionary if user found
+            None if user is not found
         """
         security_login_get_iter = netapp_utils.zapi.NaElement('security-login-get-iter')
         query_details = netapp_utils.zapi.NaElement.create_node_with_children(
@@ -186,17 +185,18 @@ class NetAppOntapUser(object):
                 interface_attributes = result.get_child_by_name('attributes-list').\
                     get_child_by_name('security-login-account-info')
                 return_value = {
-                    'lock_user': interface_attributes.get_child_content('is-locked')
+                    'lock_user': interface_attributes.get_child_content('is-locked'),
+                    'role_name': interface_attributes.get_child_content('role-name')
                 }
                 return return_value
             return None
         except netapp_utils.zapi.NaApiError as error:
             # Error 16034 denotes a user not being found.
             if to_native(error.code) == "16034":
-                return False
+                return None
             # Error 16043 denotes the user existing, but the application missing
             elif to_native(error.code) == "16043":
-                return False
+                return None
             else:
                 self.module.fail_json(msg='Error getting user %s: %s' % (self.parameters['name'], to_native(error)),
                                       exception=traceback.format_exc())
@@ -305,7 +305,9 @@ class NetAppOntapUser(object):
             if to_native(error.code) == '13114':
                 return False
             # if the user give the same password, instead of returning an error, return ok
-            if to_native(error.code) == '13214' and error.message.startswith('New password must be different than the old password.'):
+            if to_native(error.code) == '13214' and \
+                    (error.message.startswith('New password must be different than last 6 passwords.')
+                     or error.message.startswith('New password must be different than the old password.')):
                 return False
             self.module.fail_json(msg='Error setting password for user %s: %s' % (self.parameters['name'], to_native(error)),
                                       exception=traceback.format_exc())
@@ -313,39 +315,68 @@ class NetAppOntapUser(object):
         self.server.set_vserver(None)
         return True
 
+    def modify_user(self, application):
+        """
+        Modify user
+        """
+        user_modify = netapp_utils.zapi.NaElement.create_node_with_children(
+            'security-login-modify', **{'vserver': self.parameters['vserver'],
+                                        'user-name': self.parameters['name'],
+                                        'application': application,
+                                        'authentication-method': self.parameters['authentication_method'],
+                                        'role-name': self.parameters.get('role_name')})
+
+        try:
+            self.server.invoke_successfully(user_modify,
+                                            enable_tunneling=False)
+        except netapp_utils.zapi.NaApiError as error:
+            self.module.fail_json(msg='Error modifying user %s: %s' % (self.parameters['name'], to_native(error)),
+                                  exception=traceback.format_exc())
+
     def apply(self):
         create_delete_decision = {}
-        modify = {}
+        modify_decision = {}
+
         netapp_utils.ems_log_event("na_ontap_user", self.server)
         for application in self.parameters['applications']:
             current = self.get_user(application)
+            if current is not None:
+                current['lock_user'] = self.na_helper.get_value_for_bool(True, current['lock_user'])
+
             cd_action = self.na_helper.get_cd_action(current, self.parameters)
+
             if cd_action is not None:
                 create_delete_decision[application] = cd_action
+            else:
+                modify_decision[application] = self.na_helper.get_modified_attributes(current, self.parameters)
+
         if not create_delete_decision and self.parameters.get('state') == 'present':
             if self.parameters.get('set_password') is not None:
                 self.na_helper.changed = True
-            current = self.get_user()
-            if current is not None:
-                current['lock_user'] = self.na_helper.get_value_for_bool(True, current['lock_user'])
-            modify = self.na_helper.get_modified_attributes(current, self.parameters)
 
         if self.na_helper.changed:
+
             if self.module.check_mode:
                 pass
             else:
-                if create_delete_decision:
-                    for cd_action in create_delete_decision:
-                        if create_delete_decision[cd_action] == 'create':
-                            self.create_user(cd_action)
-                        elif create_delete_decision[cd_action] == 'delete':
-                            self.delete_user(cd_action)
-                elif modify:
+                for application in create_delete_decision:
+                    if create_delete_decision[application] == 'create':
+                        self.create_user(application)
+                    elif create_delete_decision[application] == 'delete':
+                        self.delete_user(application)
+                lock_user = False
+                for application in modify_decision:
+                    if 'role_name' in modify_decision[application]:
+                        self.modify_user(application)
+                    if 'lock_user' in modify_decision[application]:
+                        lock_user = True
+
+                if lock_user:
                     if self.parameters.get('lock_user'):
                         self.lock_given_user()
                     else:
                         self.unlock_given_user()
-                elif not create_delete_decision and self.parameters.get('set_password') is not None:
+                if not create_delete_decision and self.parameters.get('set_password') is not None:
                     # if change password return false nothing has changed so we need to set changed to False
                     self.na_helper.changed = self.change_password()
         self.module.exit_json(changed=self.na_helper.changed)
