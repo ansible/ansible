@@ -14,8 +14,8 @@ module: win_inet_proxy
 version_added: '2.8'
 short_description: Manages proxy settings for WinINet and Internet Explorer
 description:
-- Used to set, remote, or import proxy settings for Windows INet which includes
-  Internet Explorer.
+- Used to set or remove proxy settings for Windows INet which includes Internet
+  Explorer.
 - WinINet is a framework used by interactive applications to submit web
   requests through.
 - The proxy settings can also be used by other applications like Firefox,
@@ -64,6 +64,8 @@ options:
     - A string or dict that specifies the proxy to be set.
     - If setting a string, should be in the form C(hostname), C(hostname:port),
       or C(protocol=hostname:port).
+    - If the port is undefined, the default port for the protocol in use is
+      used.
     - If setting a dict, the keys relate are the protocol and the value is the
       hostname and/or port for the protocol specified.
     - Valid protocols are C(http), C(https), C(ftp), and C(socks).
@@ -152,6 +154,18 @@ EXAMPLES = r'''
 - name: Import IE proxy configuration to WinHTTP
   win_http_proxy:
     source: ie
+
+# Explicit credentials can only be set per user and required become to work
+- name: Set credential to use for proxy auth
+  win_credential:
+    name: ansible.proxy  # The name should eb the FQDN of the proxy host
+    type: generic_password
+    username: proxyuser
+    secret: proxypass
+    state: present
+  become: yes
+  become_user: '{{ ansible_user }}'
+  become_method: runas
 '''
 
 RETURN = r'''

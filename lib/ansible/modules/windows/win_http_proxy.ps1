@@ -57,6 +57,9 @@ if ($proxy -is [System.Collections.IDictionary]) {
 }
 
 if ($bypass) {
+    if ([System.String]::IsNullOrEmpty($proxy)) {
+        $module.FailJson("missing parameter(s) required by ''bypass'': proxy")
+    }
     $bypass = $bypass -join ';'
 }
 
