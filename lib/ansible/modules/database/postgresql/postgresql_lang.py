@@ -206,6 +206,8 @@ from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
 from ansible.module_utils.database import pg_quote_identifier
 
+executed_queries = []
+
 
 def lang_exists(cursor, lang):
     """Checks if language exists for db"""
@@ -223,8 +225,9 @@ def lang_istrusted(cursor, lang):
 
 def lang_altertrust(cursor, lang, trust):
     """Changes if language is trusted for db"""
-    query = "UPDATE pg_language SET lanpltrusted = %s WHERE lanname=%s"
-    cursor.execute(query, (trust, lang))
+    query = "UPDATE pg_language SET lanpltrusted = '%s' WHERE lanname='%s'" % (trust, lang)
+    executed_queries.append(query)
+    cursor.execute(query)
     return True
 
 
@@ -234,6 +237,7 @@ def lang_add(cursor, lang, trust):
         query = 'CREATE TRUSTED LANGUAGE "%s"' % lang
     else:
         query = 'CREATE LANGUAGE "%s"' % lang
+    executed_queries.append(query)
     cursor.execute(query)
     return True
 
@@ -243,9 +247,11 @@ def lang_drop(cursor, lang, cascade):
     cursor.execute("SAVEPOINT ansible_pgsql_lang_drop")
     try:
         if cascade:
-            cursor.execute("DROP LANGUAGE \"%s\" CASCADE" % lang)
+            query = "DROP LANGUAGE \"%s\" CASCADE" % lang
         else:
-            cursor.execute("DROP LANGUAGE \"%s\"" % lang)
+            query = "DROP LANGUAGE \"%s\"" % lang
+        executed_queries.append(query)
+        cursor.execute(query)
     except Exception:
         cursor.execute("ROLLBACK TO SAVEPOINT ansible_pgsql_lang_drop")
         cursor.execute("RELEASE SAVEPOINT ansible_pgsql_lang_drop")
@@ -368,6 +374,7 @@ def main():
             db_connection.commit()
 
     kw['changed'] = changed
+    kw['queries'] = executed_queries
     module.exit_json(**kw)
 
 
