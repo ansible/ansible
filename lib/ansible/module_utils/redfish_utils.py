@@ -903,7 +903,7 @@ class RedfishUtils(object):
     def get_multi_cpu_inventory(self):
         return self.aggregate(self.get_cpu_inventory)
 
-    def get_nic_inventory(self, resource_type, systems_uri):
+    def get_nic_inventory(self, resource_uri):
         result = {}
         nic_list = []
         nic_results = []
@@ -912,12 +912,6 @@ class RedfishUtils(object):
         properties = ['Description', 'FQDN', 'IPv4Addresses', 'IPv6Addresses',
                       'NameServers', 'PermanentMACAddress', 'SpeedMbps', 'MTUSize',
                       'AutoNeg', 'Status']
-
-        #  Given resource_type, use the proper URI
-        if resource_type == 'Systems':
-            resource_uri = systems_uri
-        elif resource_type == 'Manager':
-            resource_uri = self.manager_uri
 
         response = self.get_request(self.root_uri + resource_uri)
         if response['ret'] is False:
@@ -959,11 +953,19 @@ class RedfishUtils(object):
     def get_multi_nic_inventory(self, resource_type):
         ret = True
         entries = []
-        for systems_uri in self.systems_uris:
-            inventory = self.get_nic_inventory(resource_type, systems_uri)
+
+        #  Given resource_type, use the proper URI
+        if resource_type == 'Systems':
+            resource_uris = self.systems_uris
+        elif resource_type == 'Manager':
+            # put in a list to match what we're doing with systems_uris
+            resource_uris = [self.manager_uri]
+
+        for resource_uri in resource_uris:
+            inventory = self.get_nic_inventory(resource_uri)
             ret = inventory.pop('ret') and ret
             if 'entries' in inventory:
-                entries.append(({'systems_uri': systems_uri},
+                entries.append(({'resource_uri': resource_uri},
                                inventory['entries']))
         return dict(ret=ret, entries=entries)
 
