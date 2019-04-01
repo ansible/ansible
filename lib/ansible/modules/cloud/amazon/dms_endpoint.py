@@ -118,6 +118,7 @@ options:
        description:
          - Boolean stating if we should wait for the object to
            be deleted when state = absent
+       default: False    
 author:
    - Rui Moreira (@ruimoreira)
 extends_documentation_fragment: aws
@@ -140,7 +141,6 @@ EXAMPLES = '''
     databasename: 'testdb'
     sslmode: none
     wait: false
-    
 '''
 
 import traceback
