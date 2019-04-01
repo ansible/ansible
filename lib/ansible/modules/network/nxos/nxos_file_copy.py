@@ -251,9 +251,9 @@ def transfer_file_to_device(module, dest):
     if not enough_space(module):
         module.fail_json(msg='Could not transfer file. Not enough space on device.')
 
-    hostname = module.params['host']
-    username = module.params['username']
-    password = module.params['password']
+    hostname = module.params['nxos_host']
+    username = module.params['nxos_username']
+    password = module.params['nxos_password']
     port = module.params['connect_ssh_port']
 
     ssh = paramiko.SSHClient()
@@ -285,9 +285,9 @@ def transfer_file_to_device(module, dest):
 
 
 def copy_file_from_remote(module, local, local_file_directory, file_system='bootflash:'):
-    hostname = module.params['host']
-    username = module.params['username']
-    password = module.params['password']
+    hostname = module.params['nxos_host']
+    username = module.params['nxos_username']
+    password = module.params['nxos_password']
     port = module.params['connect_ssh_port']
 
     try:
@@ -368,7 +368,14 @@ def main():
         remote_scp_server_password=dict(no_log=True),
     )
 
+    nxos_file_copy_spec = {
+        'nxos_host': dict(type='str'),
+        'nxos_username': dict(type='str'),
+        'nxos_password': dict(no_log=True),
+    }
+
     argument_spec.update(nxos_argument_spec)
+    argument_spec.update(nxos_file_copy_spec)
 
     required_if = [("file_pull", True, ["remote_file", "remote_scp_server"]),
                    ("file_pull", False, ["local_file"])]
@@ -383,6 +390,7 @@ def main():
                            supports_check_mode=True)
 
     file_pull = module.params['file_pull']
+
 
     if file_pull:
         if not HAS_PEXPECT:
