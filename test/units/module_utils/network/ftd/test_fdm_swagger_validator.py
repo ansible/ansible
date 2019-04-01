@@ -413,6 +413,29 @@ class TestFdmSwaggerValidator(unittest.TestCase):
             ]
         }) == sort_validator_rez(rez)
 
+        data = {
+            'objId': "123",
+            'parentId': "1",
+            'someParam': None,
+            'p_integer': None
+        }
+        valid, rez = getattr(validator, method)('getNetwork', data)
+        assert not valid
+        assert sort_validator_rez({
+            'invalid_type': [
+                {
+                    'path': 'someParam',
+                    'expected_type': 'string',
+                    'actually_value': None
+                },
+                {
+                    'path': 'p_integer',
+                    'expected_type': 'integer',
+                    'actually_value': None
+                }
+            ]
+        }) == sort_validator_rez(rez)
+
     def test_validate_path_params_method_with_empty_data(self):
         self.validate_url_data_with_empty_data(method='validate_path_params', parameters_type='path')
 
@@ -593,6 +616,16 @@ class TestFdmSwaggerValidator(unittest.TestCase):
         assert valid
         assert rez is None
 
+    def test_pass_only_required_fields_with_none_values(self):
+        data = {
+            'subType': 'NETWORK',
+            'type': 'networkobject',
+            'value': None
+        }
+        valid, rez = FdmSwaggerValidator(mock_data).validate_data('getNetworkObjectList', data)
+        assert not valid
+        assert {'required': ['value']} == rez
+
     def test_pass_no_data_with_no_required_fields(self):
         spec = copy.deepcopy(mock_data)
         del spec['models']['NetworkObject']['required']
@@ -719,6 +752,17 @@ class TestFdmSwaggerValidator(unittest.TestCase):
             "f_number": 100,
             "f_boolean": True,
             "f_integer": 2
+        }
+
+        valid, rez = FdmSwaggerValidator(local_mock_data).validate_data('getdata', valid_data)
+        assert valid
+        assert rez is None
+
+        valid_data = {
+            "f_string": None,
+            "f_number": None,
+            "f_boolean": None,
+            "f_integer": None
         }
 
         valid, rez = FdmSwaggerValidator(local_mock_data).validate_data('getdata', valid_data)
