@@ -56,7 +56,7 @@ def test_included_file_instantiation():
     assert isinstance(inc_file, IncludedFile)
     assert inc_file._filename == filename
     assert inc_file._args == {}
-    assert inc_file._vars ={}
+    assert inc_file._vars == {}
     assert inc_file._task is None
 
 
