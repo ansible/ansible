@@ -1368,6 +1368,7 @@ files:
   test/integration/targets/nxos_: *nxos
   test/integration/targets/openssl: *crypto
   test/integration/targets/postgresql: *postgresql
+  test/integration/targets/scaleway_: *scaleway
   test/integration/targets/setup_acme: *crypto
   test/integration/targets/setup_docker: *docker
   test/integration/targets/setup_openssl: *crypto
@@ -1378,9 +1379,6 @@ files:
   test/integration/targets/vultr: *vultr
   test/legacy/:
     notified: mattclay
-  test/legacy/scaleway:
-    <<: *scaleway
-    support: community
   test/runner/:
     notified: mattclay
   test/runner/lib/cloud/acme.py: *crypto
