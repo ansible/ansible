@@ -315,7 +315,11 @@ namespace Ansible.Basic
             using (EventLog eventLog = new EventLog("Application"))
             {
                 eventLog.Source = logSource;
-                eventLog.WriteEntry(message, logEntryType, 0);
+                try
+                {
+                    eventLog.WriteEntry(message, logEntryType, 0);
+                }
+                catch (System.InvalidOperationException) { }  // Ignore permission errors on the Application event log
             }
         }
 
@@ -1249,7 +1253,7 @@ namespace Ansible.Basic
                     return "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER";
                 foreach (string omitMe in noLogStrings)
                     if (stringValue.Contains(omitMe))
-                        return (stringValue).Replace(omitMe, new String('*', omitMe.Length));
+                        return (stringValue).Replace(omitMe, "********");
                 value = stringValue;
             }
             return value;
