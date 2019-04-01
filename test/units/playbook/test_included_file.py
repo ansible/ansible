@@ -51,11 +51,10 @@ def mock_variable_manager():
 def test_included_file_instantiation():
     filename = 'somefile.yml'
 
-    inc_file = IncludedFile(filename=filename, args=[], task=None)
+    inc_file = IncludedFile(filename=filename, task=None)
 
     assert isinstance(inc_file, IncludedFile)
     assert inc_file._filename == filename
-    assert inc_file._args == []
     assert inc_file._task is None
 
 
@@ -83,7 +82,6 @@ def test_process_include_results(mock_iterator, mock_variable_manager):
     assert len(res) == 1
     assert res[0]._filename == os.path.join(os.getcwd(), 'include_test.yml')
     assert res[0]._hosts == ['testhost1', 'testhost2']
-    assert res[0]._args == {}
 
 
 def test_process_include_diff_files(mock_iterator, mock_variable_manager):
@@ -121,9 +119,6 @@ def test_process_include_diff_files(mock_iterator, mock_variable_manager):
     assert res[0]._hosts == ['testhost1']
     assert res[1]._hosts == ['testhost2']
 
-    assert res[0]._args == {}
-    assert res[1]._args == {}
-
 
 def test_process_include_simulate_free(mock_iterator, mock_variable_manager):
     hostname = "testhost1"
@@ -156,6 +151,3 @@ def test_process_include_simulate_free(mock_iterator, mock_variable_manager):
 
     assert res[0]._hosts == ['testhost1']
     assert res[1]._hosts == ['testhost2']
-
-    assert res[0]._args == {}
-    assert res[1]._args == {}
