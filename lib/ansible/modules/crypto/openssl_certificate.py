@@ -211,8 +211,10 @@ options:
         description:
             - Include the intermediate certificate to the generated certificate
             - This is only used by the C(acme) provider.
+            - Note that this is only available for older versions of C(acme-tiny).
+              New versions include the chain automatically, and setting I(acme_chain) to C(yes) results in an error.
         type: bool
-        default: yes
+        default: no
         version_added: "2.5"
 
     signature_algorithms:
@@ -1646,17 +1648,15 @@ class AcmeCertificate(Certificate):
 
         if not self.check(module, perms_required=False) or self.force:
             acme_tiny_path = self.module.get_bin_path('acme-tiny', required=True)
-            chain = ''
+            command = [acme_tiny_path]
             if self.use_chain:
-                chain = '--chain'
+                command.append('--chain')
+            command.extend(['--account-key', self.accountkey_path])
+            command.extend(['--csr', self.csr_path])
+            command.extend(['--acme-dir', self.challenge_path])
 
             try:
-                crt = module.run_command("%s %s --account-key %s --csr %s "
-                                         "--acme-dir %s" % (acme_tiny_path, chain,
-                                                            self.accountkey_path,
-                                                            self.csr_path,
-                                                            self.challenge_path),
-                                         check_rc=True)[1]
+                crt = module.run_command(command, check_rc=True)[1]
                 if self.backup:
                     self.backup_file = module.backup_local(self.path)
                 crypto_utils.write_file(module, to_bytes(crt))
@@ -1736,7 +1736,7 @@ def main():
             # provider: acme
             acme_accountkey_path=dict(type='path'),
             acme_challenge_path=dict(type='path'),
-            acme_chain=dict(type='bool', default=True),
+            acme_chain=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
         add_file_common_args=True,
