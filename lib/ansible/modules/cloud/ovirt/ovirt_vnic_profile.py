@@ -46,9 +46,16 @@ options:
         description:
             - "Custom properties applied to the vNIC profile."
             - "Custom properties is a list of dictionary which can have following values:"
-            - "C(name) - Name of the custom property. For example: I(hugepages), I(vhost), I(sap_agent), etc."
-            - "C(regexp) - Regular expression to set for custom property."
-            - "C(value) - Value to set for custom property."
+        suboptions:
+            name:
+                description:
+                    - "Name of the custom property. For example: I(hugepages), I(vhost), I(sap_agent), etc."
+            regexp:
+                description:
+                    - Regular expression to set for custom property.
+            value:
+                description:
+                    - Value to set for custom property.
     qos:
         description:
             - "Quality of Service attributes regulate inbound and outbound network traffic of the NIC."

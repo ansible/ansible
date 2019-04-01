@@ -126,13 +126,28 @@ options:
     logical_unit:
         description:
             - "Dictionary which describes LUN to be directly attached to VM:"
-            - "C(address) - Address of the storage server. Used by iSCSI."
-            - "C(port) - Port of the storage server. Used by iSCSI."
-            - "C(target) - iSCSI target."
-            - "C(lun_id) - LUN id."
-            - "C(username) - CHAP Username to be used to access storage server. Used by iSCSI."
-            - "C(password) - CHAP Password of the user to be used to access storage server. Used by iSCSI."
-            - "C(storage_type) - Storage type either I(fcp) or I(iscsi)."
+        suboptions:
+            address:
+                description:
+                    - Address of the storage server. Used by iSCSI.
+            port:
+                description:
+                    - Port of the storage server. Used by iSCSI.
+            target:
+                description:
+                    - iSCSI target.
+            lun_id:
+                description:
+                    - LUN id.
+            username:
+                description:
+                    - CHAP Username to be used to access storage server. Used by iSCSI.
+            password:
+                description:
+                    - CHAP Password of the user to be used to access storage server. Used by iSCSI.
+            storage_type:
+                description:
+                    - Storage type either I(fcp) or I(iscsi).
     sparsify:
         description:
             - "I(True) if the disk should be sparsified."
