@@ -1,0 +1,6 @@
+# Copyright: (c) 2019, Hetzner Cloud GmbH <info@hetzner-cloud.de>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+hcloud_test_floating_ip_name: "always-there-floating-ip"
+hcloud_test_floating_ip_label_selector: "key=value"
+hcloud_test_floating_ip_id: 62227
