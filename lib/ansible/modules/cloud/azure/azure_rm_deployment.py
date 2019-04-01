@@ -499,7 +499,7 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
         Deploy the targeted template and parameters
         :param module: Ansible module containing the validated configuration for the deployment template
         :param client: resource management client for azure
-        :param conn_facts: connection info needed
+        :param conn_info: connection info needed
         :return:
         """
 
