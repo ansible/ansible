@@ -123,6 +123,18 @@
 #     that:
 #       - output.changed
 
+# - name: Force reboot redis cache
+#   azure_rm_rediscache:
+#     resource_group: "{{ resource_group }}"
+#     name: "{{ redis_name }}"
+#     reboot:
+#       reboot_type: all
+#   register: output
+
+# - assert:
+#     that:
+#       - output.changed
+
 # - name: Delete the redis cache (Check Mode)
 #   azure_rm_rediscache:
 #     resource_group: "{{ resource_group }}"

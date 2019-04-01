@@ -109,6 +109,28 @@ options:
     tenant_settings:
         description:
             - Dict of tenant settings.
+    reboot:
+        description: Reboot specified Redis node(s). There can be potential data loss.
+        suboptions:
+            shard_id:
+                description: If clustering is enabled, the id of the shard to be rebooted.
+                type: int
+            reboot_type:
+                description: Which Redis node(s) to reboot.
+                choices:
+                    - primary
+                    - secondary
+                    - all
+                default: all
+    regenerate_key:
+        description:
+            - Regenerate Redis cache's access keys.
+        suboptions:
+            key_type:
+                description: The Redis key to regenerate.
+                choices:
+                    - primary
+                    - secondary
     state:
       description:
         - Assert the state of the Azure Cache for Redis.
@@ -136,7 +158,6 @@ EXAMPLES = '''
           name: basic
           size: C1
 
-
   - name: Scale up the Azure Cache for Redis
     azure_rm_rediscache:
         resource_group: myResourceGroup
@@ -146,6 +167,13 @@ EXAMPLES = '''
           size: C1
         tags:
           testing: foo
+
+  - name: Force reboot the redis cache
+    azure_rm_rediscache:
+        resource_group: myResourceGroup
+        name: myRedisCache
+        reboot:
+          reboot_type: all
 
   - name: Create Azure Cache for Redis with subnet
     azure_rm_rediscache:
@@ -201,6 +229,25 @@ sku_spec = dict(
 )
 
 
+reboot_spec = dict(
+    shard_id=dict(
+        type='str'
+    ),
+    reboot_type=dict(
+        type='str',
+        choices=['primary', 'secondary', 'all']
+    )
+)
+
+
+regenerate_key_spec = dict(
+    key_type=dict(
+        type='str',
+        choices=['primary', 'secondary']
+    )
+)
+
+
 def rediscache_to_dict(redis):
     result = dict(
         id=redis.id,
@@ -234,6 +281,16 @@ def underline_to_hyphen(input):
     if input and isinstance(input, str):
         return input.replace("_", "-")
     return input
+
+
+def get_reboot_type(type):
+    if type == "primary":
+        return "PrimaryNode"
+    if type == "secondary":
+        return "SecondaryNode"
+    if type == "all":
+        return "AllNodes"
+    return type
 
 
 class Actions:
@@ -300,6 +357,14 @@ class AzureRMRedisCaches(AzureRMModuleBase):
                 type='str',
                 default='present',
                 choices=['present', 'absent']
+            ),
+            reboot=dict(
+                type='dict',
+                options=reboot_spec
+            ),
+            regenerate_key=dict(
+                type='dict',
+                options=regenerate_key_spec
             )
         )
 
@@ -317,6 +382,8 @@ class AzureRMRedisCaches(AzureRMModuleBase):
         self.static_ip = None
         self.subnet = None
         self.tenant_settings = None
+        self.reboot = None
+        self.regenerate_key = None
 
         self.tags = None
 
@@ -424,6 +491,14 @@ class AzureRMRedisCaches(AzureRMModuleBase):
             if self.to_do == Actions.Delete:
                 self.delete_rediscache()
                 self.log('Azure Cache for Redis instance deleted')
+
+        if self.reboot:
+            self.reboot['reboot_type'] = get_reboot_type(self.reboot['reboot_type'])
+            self.force_reboot_rediscache()
+
+        if self.regenerate_key:
+            response = self.rergenerate_rediscache_key()
+            self.results['keys'] = response
 
         return self.results
 
@@ -570,6 +645,41 @@ class AzureRMRedisCaches(AzureRMModuleBase):
                 self.name, self.resource_group))
 
         return False
+
+    def force_reboot_rediscache(self):
+        '''
+        Force reboot specified redis cache instance in the specified subscription and resource group.
+
+        :return: True
+        '''
+        self.log("Force reboot the redis cache instance {0}".format(self.name))
+        try:
+            response = self._client.redis.force_reboot(resource_group_name=self.resource_group,
+                                                       name=self.name,
+                                                       reboot_type=self.reboot['reboot_type'],
+                                                       shard_id=self.reboot.get('shard_id'))
+        except CloudError as e:
+            self.log('Error attempting to force reboot the redis cache instance.')
+            self.fail(
+                "Error force rebooting the redis cache instance: {0}".format(str(e)))
+        return True
+
+    def rergenerate_rediscache_key(self):
+        '''
+        Regenerate key of redis cache instance in the specified subscription and resource group.
+
+        :return: True
+        '''
+        self.log("Regenerate key of redis cache instance {0}".format(self.name))
+        try:
+            response = self._client.redis.regenerate_key(resource_group_name=self.resource_group,
+                                                         name=self.name,
+                                                         key_type=self.regenerate_key['key_type'].title())
+            return response.to_dict()
+        except CloudError as e:
+            self.log('Error attempting to regenerate key of redis cache instance.')
+            self.fail(
+                "Error regenerate key of redis cache instance: {0}".format(str(e)))
 
     def get_subnet(self):
         '''
