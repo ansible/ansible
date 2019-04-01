@@ -473,10 +473,10 @@ def create_rule_instance(self, rule):
         destination_address_prefixes=rule.get('destination_address_prefixes', None),
         source_port_ranges=rule.get('source_port_ranges', None),
         destination_port_ranges=rule.get('destination_port_ranges', None),
-        source_application_security_groups=[self.nsg_models.ApplicationSecurityGroup(id=p) for p in rule.get('source_application_security_groups')]
-                                            if rule.get('source_application_security_groups') else None,
-        destination_application_security_groups=[self.nsg_models.ApplicationSecurityGroup(id=p) for p in rule.get('destination_application_security_groups')]
-                                                 if rule.get('destination_application_security_groups') else None,
+        source_application_security_groups=[self.nsg_models.ApplicationSecurityGroup(id=p) \
+            for p in rule.get('source_application_security_groups')] if rule.get('source_application_security_groups') else None,
+        destination_application_security_groups=[self.nsg_models.ApplicationSecurityGroup(id=p) \
+            for p in rule.get('destination_application_security_groups')] if rule.get('destination_application_security_groups') else None,
         access=rule.get('access', None),
         priority=rule.get('priority', None),
         direction=rule.get('direction', None),
@@ -507,8 +507,8 @@ def create_rule_dict_from_obj(rule):
         source_address_prefixes=rule.source_address_prefixes,
         destination_address_prefixes=rule.destination_address_prefixes,
         source_application_security_groups=[p.id for p in rule.source_application_security_groups] if rule.source_application_security_groups else None,
-        destination_application_security_groups=[p.id for p in rule.destination_application_security_groups] \
-            if rule.destination_application_security_groups else None,
+        destination_application_security_groups=[
+            p.id for p in rule.destination_application_security_groups] if rule.destination_application_security_groups else None,
         access=rule.access,
         priority=rule.priority,
         direction=rule.direction,
