@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: idrac_redfish_config
-version_added: "2.8"
+version_added: '2.8'
 short_description: Manages servers through iDRAC using Dell Redfish APIs
 description:
   - For use with Dell iDRAC operations that require Redfish OEM extensions
@@ -23,6 +23,7 @@ description:
 options:
   category:
     required: true
+    type: str
     description:
       - Category to execute on iDRAC
   command:
@@ -46,19 +47,16 @@ options:
     description:
       - name of iDRAC attribute to update
     default: 'null'
-    version_added: "2.8"
   manager_attribute_value:
     required: false
     description:
       - value of iDRAC attribute to update
     default: 'null'
-    version_added: "2.8"
   timeout:
     description:
       - Timeout in seconds for URL requests to iDRAC controller
     default: 10
     type: int
-    version_added: '2.8'
 
 author: "Jose Delarosa (@jose-delarosa)"
 '''
