@@ -96,7 +96,7 @@ except ImportError:
 
 class RoleModule(BaseModule):
     def build_entity(self):
-        if not 'login' in self.param('permits'):
+        if 'login' not in self.param('permits'):
             self.param('permits').append('login')
         all_permits = self.get_all_permits()
         return otypes.Role(
@@ -116,7 +116,7 @@ class RoleModule(BaseModule):
     def update_check(self, entity):
         def check_permits():
             if self.param('permits'):
-                if not 'login' in self.param('permits'):
+                if 'login' not in self.param('permits'):
                     self.param('permits').append('login')
                 permits_service = self._service.service(entity.id).permits_service()
                 current = [er.name for er in permits_service.list()]
