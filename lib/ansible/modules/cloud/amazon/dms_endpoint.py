@@ -55,7 +55,7 @@ options:
     password:
       description:
         - Password used to connect to the database
-          Note: this attribute can only be written
+          this attribute can only be written
           the AWS API does not return this parameter
     servername:
       description:
