@@ -210,6 +210,7 @@ from ansible.module_utils.k8s.common import AUTH_ARG_SPEC
 from ansible.module_utils.kubevirt import (
     virtdict,
     KubeVirtRawModule,
+    API_GROUP,
     MAX_SUPPORTED_API_VERSION
 )
 
@@ -355,7 +356,7 @@ class KubeVirtVMTemplate(KubeVirtRawModule):
                     vm_definition['spec']['template']['spec']['networks'] = [self.params.get('default_network')]
 
                 # Set kubevirt API version:
-                vm_definition['apiVersion'] = MAX_SUPPORTED_API_VERSION
+                vm_definition['apiVersion'] = '%s/%s' % (API_GROUP, MAX_SUPPORTED_API_VERSION)
 
                 # Contruct k8s vm API object:
                 vm_template = vm_definition['spec']['template']
