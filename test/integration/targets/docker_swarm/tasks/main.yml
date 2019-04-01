@@ -13,11 +13,16 @@
     diff: no
     ignore_errors: yes
 
+  - name: Kill docker daemon
+    command: systemctl kill -s 9 docker
+    become: yes
+
   - name: Restart docker daemon
     service:
       name: docker
       state: restarted
     become: yes
+
   - name: Wait for docker daemon to be fully restarted
     command: docker ps
 

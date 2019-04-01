@@ -846,6 +846,12 @@ class DifferenceTracker(object):
             after[item['name']] = item['parameter']
         return before, after
 
+    def has_difference_for(self, name):
+        '''
+        Returns a boolean if a difference exists for name
+        '''
+        return any(diff for diff in self._diff if diff['name'] == name)
+
     def get_legacy_docker_container_diffs(self):
         '''
         Return differences in the docker_container legacy format.

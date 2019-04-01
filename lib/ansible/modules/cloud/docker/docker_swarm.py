@@ -171,6 +171,7 @@ options:
     description:
       - If set, generate a key and use it to lock data stored on the managers.
       - Docker default value is C(no).
+      - M(docker_swarm_info) can be used to retrieve the unlock key.
     type: bool
   rotate_worker_token:
     description: Rotate the worker join token.
@@ -250,6 +251,13 @@ swarm_facts:
                   returned: success
                   type: str
                   example: SWMTKN-1--xxxxx
+      UnlockKey:
+          description: The swarm unlock-key if I(autolock_managers) is C(true).
+          returned: on success if I(autolock_managers) is C(true)
+            and swarm is initialised, or if I(autolock_managers) has changed.
+          type: str
+          example: SWMKEY-1-xxx
+
 actions:
   description: Provides the actions done on the swarm.
   returned: when action failed.
@@ -269,6 +277,7 @@ except ImportError:
 from ansible.module_utils.docker.common import (
     DockerBaseClass,
     DifferenceTracker,
+    LooseVersion,
 )
 
 from ansible.module_utils.docker.swarm import AnsibleDockerSwarmClient
@@ -424,6 +433,8 @@ class SwarmManager(DockerBaseClass):
         self.differences = DifferenceTracker()
         self.parameters = TaskParameters.from_ansible_params(client)
 
+        self.created = False
+
     def __call__(self):
         choice_map = {
             "present": self.init_swarm,
@@ -450,10 +461,28 @@ class SwarmManager(DockerBaseClass):
             data = self.client.inspect_swarm()
             json_str = json.dumps(data, ensure_ascii=False)
             self.swarm_info = json.loads(json_str)
+
             self.results['changed'] = False
             self.results['swarm_facts'] = self.swarm_info
+
+            unlock_key = self.get_unlock_key()
+            self.swarm_info.update(unlock_key)
         except APIError:
             return
+
+    def get_unlock_key(self):
+        default = {'UnlockKey': None}
+        if not self.has_swarm_lock_changed():
+            return default
+        try:
+            return self.client.get_unlock_key() or default
+        except APIError:
+            return default
+
+    def has_swarm_lock_changed(self):
+        return self.parameters.autolock_managers and (
+            self.created or self.differences.has_difference_for('autolock_managers')
+        )
 
     def init_swarm(self):
         if not self.force and self.client.check_if_swarm_manager():
@@ -479,11 +508,16 @@ class SwarmManager(DockerBaseClass):
         if not self.client.check_if_swarm_manager():
             if not self.check_mode:
                 self.client.fail("Swarm not created or other error!")
+
+        self.created = True
         self.inspect_swarm()
         self.results['actions'].append("New Swarm cluster created: %s" % (self.swarm_info.get('ID')))
         self.differences.add('state', parameter='present', active='absent')
         self.results['changed'] = True
-        self.results['swarm_facts'] = {u'JoinTokens': self.swarm_info.get('JoinTokens')}
+        self.results['swarm_facts'] = {
+            'JoinTokens': self.swarm_info.get('JoinTokens'),
+            'UnlockKey': self.swarm_info.get('UnlockKey')
+        }
 
     def __update_swarm(self):
         try:
