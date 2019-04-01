@@ -14,18 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import traceback
-from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, HAS_BOTO3, \
-    camel_dict_to_snake_dict, get_aws_connection_info, AWSRetry
-
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
     'supported_by': 'community'
 }
 
-DOCUMENTATION = """
+DOCUMENTATION = '''
 ---
 module: dms_endpoint
 short_description: creates or destroys a data migration services endpoint
@@ -37,15 +32,17 @@ options:
     state:
       description:
         - State of the endpoint
-      default: present
+      default: 'present'
+      choices: ['present', 'absent']
     endpointidentifier:
       description:
         - An identifier name for the endpoint
     endpointtype:
       description:
         - Type of endpoint we want to manage
+      default: 'source'  
       choices: ['source', 'target']
-    enginetype:
+    enginename:
       description:
         - Database engine that we want to use, please refer to
           the AWS DMS for more information on the supported
@@ -88,52 +85,52 @@ options:
        value:
           description:
            - Value for the tag
-     certificatearn:
+    certificatearn:
        description:
          -  Amazon Resource Name (ARN) for the certificate
-     sslmode:
+    sslmode:
        description:
          - Mode used for the ssl connection
+       default: 'none'        
        choices: ['none', 'require', 'verify-ca', 'verify-full']
-       default: 'none'
-     serviceaccessrolearn:
+    serviceaccessrolearn:
        description:
          -  Amazon Resource Name (ARN) for the service access role that you
             want to use to create the endpoint.
-     externaltabledefinition:
+    externaltabledefinition:
        description:
          - The external table definition
-     dynamodbsettings:
+    dynamodbsettings:
        description:
          - Settings in JSON format for the target Amazon DynamoDB endpoint
            if source or target is dynamodb
-     s3settings:
+    s3settings:
        description
          - S3 buckets settings for the target Amazon S3 endpoint.
-     dmstransfersettings:
+    dmstransfersettings:
        description:
          - The settings in JSON format for the DMS transfer type of
            source endpoint
-     mongodbsettings:
+    mongodbsettings:
        description:
          - Settings in JSON format for the source MongoDB endpoint
-     kinesissettings:
+    kinesissettings:
        description:
          - Settings in JSON format for the target Amazon Kinesis
            Data Streams endpoint
-     elasticsearchsettings:
+    elasticsearchsettings:
        description:
          - Settings in JSON format for the target Elasticsearch endpoint
-     wait:
+    wait:
        description:
          - Boolean stating if we should wait for the object to
            be deleted when state = absent
 author:
    - Rui Moreira (@ruimoreira)
 extends_documentation_fragment: aws
-"""
+'''
 
-EXAMPLES = """
+EXAMPLES = '''
 
 # Note: These examples do not set authentication details,
 see the AWS Guide for details.
@@ -152,7 +149,12 @@ see the AWS Guide for details.
     databasename: 'testdb'
     sslmode: none
     wait: false
-"""
+'''
+
+import traceback
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import boto3_conn, HAS_BOTO3, \
+    camel_dict_to_snake_dict, get_aws_connection_info, AWSRetry
 
 try:
     import botocore
