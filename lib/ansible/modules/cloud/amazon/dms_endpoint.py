@@ -31,7 +31,7 @@ options:
     state:
       description:
         - State of the endpoint
-      default: 'present'
+      default: "present"
       choices: ['present', 'absent']
     endpointidentifier:
       description:
@@ -90,7 +90,7 @@ options:
     sslmode:
        description:
          - Mode used for the ssl connection
-       default: 'none'
+       default: "none"
        choices: ['none', 'require', 'verify-ca', 'verify-full']
     serviceaccessrolearn:
        description:
