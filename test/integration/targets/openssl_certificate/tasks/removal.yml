@@ -1,0 +1,47 @@
+---
+- name: (Removal) Generate privatekey
+  openssl_privatekey:
+    path: '{{ output_dir }}/removal_privatekey.pem'
+
+- name: (Removal) Generate CSR
+  openssl_csr:
+    path: '{{ output_dir }}/removal_csr.csr'
+    privatekey_path: '{{ output_dir }}/removal_privatekey.pem'
+
+- name: (Removal) Generate selfsigned certificate
+  openssl_certificate:
+    path: '{{ output_dir }}/removal_cert.pem'
+    csr_path: '{{ output_dir }}/removal_csr.csr'
+    privatekey_path: '{{ output_dir }}/removal_privatekey.pem'
+    provider: selfsigned
+    selfsigned_digest: sha256
+
+- name: "(Removal) Check that file is not gone"
+  stat:
+    path: "{{ output_dir }}/removal_cert.pem"
+  register: removal_1_prestat
+
+- name: "(Removal) Remove certificate"
+  openssl_certificate:
+    path: "{{ output_dir }}/removal_cert.pem"
+    state: absent
+  register: removal_1
+
+- name: "(Removal) Check that file is gone"
+  stat:
+    path: "{{ output_dir }}/removal_cert.pem"
+  register: removal_1_poststat
+
+- name: "(Removal) Remove certificate (idempotent)"
+  openssl_certificate:
+    path: "{{ output_dir }}/removal_cert.pem"
+    state: absent
+  register: removal_2
+
+- name: (Removal) Ensure removal worked
+  assert:
+    that:
+    - removal_1_prestat.stat.exists
+    - removal_1 is changed
+    - not removal_1_poststat.stat.exists
+    - removal_2 is not changed

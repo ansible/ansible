@@ -8,4 +8,6 @@
 
     - import_tasks: ownca.yml
 
+    - import_tasks: removal.yml
+
   when: pyopenssl_version.stdout is version('0.15', '>=')

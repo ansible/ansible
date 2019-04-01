@@ -530,6 +530,26 @@ class Certificate(crypto_utils.OpenSSLObject):
         return True
 
 
+class CertificateAbsent(Certificate):
+    def __init__(self, module):
+        super(CertificateAbsent, self).__init__(module)
+
+    def generate(self, module):
+        pass
+
+    def dump(self, check_mode=False):
+        # Use only for absent
+
+        result = {
+            'changed': self.changed,
+            'filename': self.path,
+            'privatekey': self.privatekey_path,
+            'csr': self.csr_path
+        }
+
+        return result
+
+
 class SelfSignedCertificate(Certificate):
     """Generate the self-signed certificate."""
 
@@ -1088,9 +1108,6 @@ def main():
         except AttributeError:
             module.fail_json(msg='You need to have PyOpenSSL>=0.15')
 
-    if module.params['provider'] != 'assertonly' and module.params['csr_path'] is None:
-        module.fail_json(msg='csr_path is required when provider is not assertonly')
-
     base_dir = os.path.dirname(module.params['path']) or '.'
     if not os.path.isdir(base_dir):
         module.fail_json(
@@ -1098,16 +1115,23 @@ def main():
             msg='The directory %s does not exist or the file is not a directory' % base_dir
         )
 
-    provider = module.params['provider']
+    if module.params['state'] == 'absent':
+        certificate = CertificateAbsent(module)
 
-    if provider == 'selfsigned':
-        certificate = SelfSignedCertificate(module)
-    elif provider == 'acme':
-        certificate = AcmeCertificate(module)
-    elif provider == 'ownca':
-        certificate = OwnCACertificate(module)
     else:
-        certificate = AssertOnlyCertificate(module)
+        if module.params['provider'] != 'assertonly' and module.params['csr_path'] is None:
+            module.fail_json(msg='csr_path is required when provider is not assertonly')
+
+        provider = module.params['provider']
+
+        if provider == 'selfsigned':
+            certificate = SelfSignedCertificate(module)
+        elif provider == 'acme':
+            certificate = AcmeCertificate(module)
+        elif provider == 'ownca':
+            certificate = OwnCACertificate(module)
+        else:
+            certificate = AssertOnlyCertificate(module)
 
     if module.params['state'] == 'present':
 
