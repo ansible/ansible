@@ -40,7 +40,7 @@ options:
     endpointtype:
       description:
         - Type of endpoint we want to manage
-      default: 'source'  
+      default: 'source'
       choices: ['source', 'target']
     enginename:
       description:
@@ -91,7 +91,7 @@ options:
     sslmode:
        description:
          - Mode used for the ssl connection
-       default: 'none'        
+       default: 'none'
        choices: ['none', 'require', 'verify-ca', 'verify-full']
     serviceaccessrolearn:
        description:
