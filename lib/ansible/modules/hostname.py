@@ -18,9 +18,12 @@ version_added: "1.4"
 short_description: Manage hostname
 requirements: [ hostname ]
 description:
-    - Set system's hostname, supports most OSs/Distributions, including those using systemd.
+    - Set system's hostname. Supports most OSs/Distributions including those using C(systemd).
     - Note, this module does *NOT* modify C(/etc/hosts). You need to modify it yourself using other modules like template or replace.
     - Windows, HP-UX, and AIX are not currently supported.
+notes:
+    - On macOS, this module uses C(scutil) to set C(HostName), C(ComputerName), and C(LocalHostName). Since C(LocalHostName)
+      cannot contain spaces or most special characters, this module will replace characters when setting C(LocalHostName).
 options:
     name:
         description:
@@ -583,17 +586,21 @@ class FreeBSDStrategy(GenericStrategy):
 
 class DarwinStrategy(GenericStrategy):
     """
-    This is a macOS hostname manipulation strategy class - it uses
+    This is a macOS hostname manipulation strategy class. It uses
     /usr/sbin/scutil to set ComputerName, HostName, and LocalHostName.
 
-    HostName corresponds to what most platforms consider to be hostname;
-    it controls the name used on the commandline and SSH.
+    HostName corresponds to what most platforms consider to be hostname.
+    It controls the name used on the commandline and SSH.
 
     However, macOS also has LocalHostName and ComputerName settings.
     LocalHostName controls the Bonjour/ZeroConf name, used by services
-    like AirDrop. ComputerName is the name used for user-facing GUI
-    services, like the System Preferences/Sharing pane and when users
-    connect to the Mac over the network.
+    like AirDrop. This class implements a method, _scrub_hostname(), that mimics
+    the transformations macOS makes on hostnames when enterened in the Sharing
+    preference pane. It replaces spaces with dashes and removes all special
+    characters.
+
+    ComputerName is the name used for user-facing GUI services, like the
+    System Preferences/Sharing pane and when users connect to the Mac over the network.
     """
 
     def __init__(self, module):
