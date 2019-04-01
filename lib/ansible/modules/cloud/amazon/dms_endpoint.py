@@ -17,8 +17,7 @@
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
-    'supported_by': 'community'
-}
+    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -56,8 +55,8 @@ options:
     password:
       description:
         - Password used to connect to the database
-          Note: this attribute can only be written,
-          the AWS API does not return this parameter.
+          Note: this attribute can only be written
+          the AWS API does not return this parameter
     servername:
       description:
         - Servername that the endpoint will connect to
@@ -132,12 +131,10 @@ extends_documentation_fragment: aws
 
 EXAMPLES = '''
 
-# Note: These examples do not set authentication details,
-see the AWS Guide for details.
+# Note: These examples do not set authentication details
 
 # Endpoint Creation
-- name: create endpoints
-  dms_endpoint:
+- dms_endpoint:
     state: absent
     endpointidentifier: 'testsource'
     endpointtype: source
@@ -149,6 +146,7 @@ see the AWS Guide for details.
     databasename: 'testdb'
     sslmode: none
     wait: false
+    
 '''
 
 import traceback
@@ -418,7 +416,8 @@ def main():
         ],
         supports_check_mode=True
     )
-
+    exit_message = None
+    changed = False
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')
 
@@ -432,21 +431,27 @@ def main():
         if endpoint_exists(endpoint):
             module.params['EndpointArn'] = \
                 endpoint['Endpoints'][0].get('EndpointArn')
-            changed = compare_params(endpoint["Endpoints"][0])
-            if changed:
+            params_changed = compare_params(endpoint["Endpoints"][0])
+            if params_changed:
                 updated_dms = modify_dms_endpoint(dmsclient)
-                module.exit_json(changed=True, msg=updated_dms)
+                exit_message = updated_dms
+                changed = True
             else:
                 module.exit_json(changed=False, msg="Endpoint Already Exists")
         else:
             dms_properties = create_dms_endpoint(dmsclient)
-            module.exit_json(changed=True, **dms_properties)
+            exit_message = dms_properties
+            changed = True
     elif state == 'absent':
         if endpoint_exists(endpoint):
             delete_results = delete_dms_endpoint(dmsclient)
-            module.exit_json(changed=True, **delete_results)
+            exit_message = delete_results
+            changed = True
         else:
-            module.exit_json(changed=False, msg='DMS Endpoint does not exist')
+            changed = False
+            exit_message = 'DMS Endpoint does not exist'
+
+    module.exit_json(changed=changed, msg=exit_message)
 
 
 if __name__ == '__main__':
