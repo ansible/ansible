@@ -316,8 +316,8 @@ class CallbackModule(CallbackBase):
 
     def v2_playbook_on_include(self, included_file):
         msg = 'included: %s for %s' % (included_file._filename, ", ".join([h.name for h in included_file._hosts]))
-        if 'item' in included_file._args:
-            msg += " => (item=%s)" % (self._get_item_label(included_file._args),)
+        if 'item' in included_file._task.vars:
+            msg += " => (item=%s)" % (self._get_item_label(included_file._task.vars),)
         self._display.display(msg, color=C.COLOR_SKIP)
 
     def v2_playbook_on_stats(self, stats):
