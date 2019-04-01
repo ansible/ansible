@@ -34,13 +34,15 @@ description:
   U(https://www.postgresql.org/docs/current/sql-createlanguage.html),
   U(https://www.postgresql.org/docs/current/sql-alterlanguage.html),
   U(https://www.postgresql.org/docs/current/sql-droplanguage.html).
-version_added: "1.7"
+version_added: '1.7'
 options:
   lang:
     description:
     - Name of the procedural language to add, remove or change.
     required: true
     type: str
+    aliases:
+    - name
   trust:
     description:
     - Make this language trusted for the selected db.
@@ -93,7 +95,7 @@ options:
     type: str
     default: localhost
   session_role:
-    version_added: "2.8"
+    version_added: '2.8'
     description:
     - Switch to session_role after connecting.
     - The specified session_role must be a role that the current login_user is a member of.
@@ -188,6 +190,7 @@ queries:
   returned: always
   type: list
   sample: ['CREATE LANGUAGE "acme"']
+  version_added: '2.8'
 '''
 
 import traceback
@@ -211,21 +214,21 @@ executed_queries = []
 
 def lang_exists(cursor, lang):
     """Checks if language exists for db"""
-    query = "SELECT lanname FROM pg_language WHERE lanname='%s'" % lang
+    query = "SELECT lanname FROM pg_language WHERE lanname = '%s'" % lang
     cursor.execute(query)
     return cursor.rowcount > 0
 
 
 def lang_istrusted(cursor, lang):
     """Checks if language is trusted for db"""
-    query = "SELECT lanpltrusted FROM pg_language WHERE lanname='%s'" % lang
+    query = "SELECT lanpltrusted FROM pg_language WHERE lanname = '%s'" % lang
     cursor.execute(query)
     return cursor.fetchone()[0]
 
 
 def lang_altertrust(cursor, lang, trust):
     """Changes if language is trusted for db"""
-    query = "UPDATE pg_language SET lanpltrusted = '%s' WHERE lanname='%s'" % (trust, lang)
+    query = "UPDATE pg_language SET lanpltrusted = '%s' WHERE lanname = '%s'" % (trust, lang)
     executed_queries.append(query)
     cursor.execute(query)
     return True
@@ -265,12 +268,12 @@ def main():
     argument_spec.update(
         db=dict(type="str", required=True, aliases=["login_db"]),
         port=dict(type="int", default=5432, aliases=["login_port"]),
-        lang=dict(type="str", required=True),
+        lang=dict(type="str", required=True, aliases=["name"]),
         state=dict(type="str", default="present", choices=["absent", "present"]),
         trust=dict(type="bool", default="no"),
         force_trust=dict(type="bool", default="no"),
         cascade=dict(type="bool", default="no"),
-        fail_on_drop=dict(type="boo", default="yes"),
+        fail_on_drop=dict(type="bool", default="yes"),
         ssl_mode=dict(default='prefer', choices=[
                       'allow', 'disable', 'prefer', 'require', 'verify-ca', 'verify-full']),
         ca_cert=dict(default=None, aliases=["ssl_rootcert"]),
