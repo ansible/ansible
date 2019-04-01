@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_virtualmachine_scaleset_facts
+module: azure_rm_virtualmachinescaleset_facts
 
 version_added: "2.4"
 
@@ -21,6 +21,9 @@ short_description: Get Virtual Machine Scale Set facts
 
 description:
     - Get facts for a virtual machine scale set
+
+notes:
+    - This module was called C(azure_rm_virtualmachine_scaleset_facts) before Ansible 2.8. The usage did not change.
 
 options:
     name:
@@ -36,7 +39,7 @@ options:
         description:
             - Format of the data returned.
             - If C(raw) is selected information will be returned in raw format from Azure Python SDK.
-            - If C(curated) is selected the structure will be identical to input parameters of azure_rm_virtualmachine_scaleset module.
+            - If C(curated) is selected the structure will be identical to input parameters of azure_rm_virtualmachinescaleset module.
             - In Ansible 2.5 and lower facts are always returned in raw format.
             - Please note that this option will be deprecated in 2.10 when curated format will become the only supported format.
         default: 'raw'
@@ -54,17 +57,17 @@ author:
 
 EXAMPLES = '''
     - name: Get facts for a virtual machine scale set
-      azure_rm_virtualmachine_scaleset_facts:
+      azure_rm_virtualmachinescaleset_facts:
         resource_group: myResourceGroup
         name: testvmss001
         format: curated
 
     - name: Get facts for all virtual networks
-      azure_rm_virtualmachine_scaleset_facts:
+      azure_rm_virtualmachinescaleset_facts:
         resource_group: myResourceGroup
 
     - name: Get facts by tags
-      azure_rm_virtualmachine_scaleset_facts:
+      azure_rm_virtualmachinescaleset_facts:
         resource_group: myResourceGroup
         tags:
           - testing
@@ -288,6 +291,10 @@ class AzureRMVirtualMachineScaleSetFacts(AzureRMModuleBase):
 
         for key in self.module_args:
             setattr(self, key, kwargs[key])
+
+        if self.module._name == 'azure_rm_virtualmachine_scaleset_facts':
+            self.module.deprecate("The 'azure_rm_virtualmachine_scaleset_facts' module has been renamed to 'azure_rm_virtualmachinescaleset_facts'",
+                                  version='2.12')
 
         if self.name and not self.resource_group:
             self.fail("Parameter error: resource group required when filtering by name.")
