@@ -1,6 +1,9 @@
 - name: Prepare random number
   set_fact:
     secgroupname: "sg{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    asg_name1: "asg1{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    asg_name2: "asg2{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+    sg_name1: "sgasg{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
   run_once: yes
 
 
@@ -212,6 +215,75 @@
      that: 
       - output.changed
       - "{{ output.state.rules | length }} == 2"
+
+- name: Create Application security group 1
+  azure_rm_applicationsecuritygroup:
+    resource_group: "{{ resource_group }}"
+    name: "{{ asg_name1 }}"
+    tags:
+        testing: testing
+  register: asg1
+
+- name: Create Application security group 2
+  azure_rm_applicationsecuritygroup:
+    resource_group: "{{ resource_group_secondary }}"
+    name: "{{ asg_name2 }}"
+    tags:
+        testing: testing
+  register: asg2
+
+- name: Create security group with application security group
+  azure_rm_securitygroup:
+      resource_group: "{{ resource_group }}"
+      name: "{{ sg_name1 }}"
+      purge_rules: yes
+      rules:
+          - name: AsgToAsg
+            protocol: Tcp
+            source_application_security_groups:
+                - "{{ asg1.id }}"
+            destination_application_security_groups:
+                - resource_group: "{{ resource_group_secondary }}"
+                  name: "{{ asg_name2 }}"
+            destination_port_range: 22
+            access: Allow
+            priority: 101
+            direction: Inbound
+  register: output
+
+- assert:
+    that:
+      - output.changed
+
+- name: Create security group with application security group - Idempotent
+  azure_rm_securitygroup:
+      resource_group: "{{ resource_group }}"
+      name: "{{ sg_name1 }}"
+      purge_rules: yes
+      rules:
+          - name: AsgToAsg
+            protocol: Tcp
+            source_application_security_groups:
+                - "{{ asg_name1 }}"
+            destination_application_security_groups:
+                - resource_group: "{{ resource_group_secondary }}"
+                  name: "{{ asg_name2 }}"
+            destination_port_range: 22
+            access: Allow
+            priority: 101
+            direction: Inbound
+  register: output
+
+- assert:
+    that:
+      - not output.changed
+
+
+- name: Delete security group
+  azure_rm_securitygroup:
+      resource_group: "{{ resource_group }}"
+      name: "{{ sg_name1 }}"
+      state: absent
 
 - name: Delete all security groups
   azure_rm_securitygroup:
