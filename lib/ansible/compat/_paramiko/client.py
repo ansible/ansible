@@ -33,7 +33,6 @@ from paramiko.common import DEBUG
 from paramiko.config import SSH_PORT
 from paramiko.dsskey import DSSKey
 from paramiko.ecdsakey import ECDSAKey
-from paramiko.ed25519key import Ed25519Key
 from paramiko.hostkeys import HostKeys
 from paramiko.py3compat import string_types
 from paramiko.rsakey import RSAKey
@@ -656,7 +655,7 @@ class SSHClient(ClosingContextManager):
 
         if not two_factor:
             for key_filename in key_filenames:
-                for pkey_class in (RSAKey, DSSKey, ECDSAKey, Ed25519Key):
+                for pkey_class in (RSAKey, DSSKey, ECDSAKey):
                     try:
                         key = self._key_from_filepath(
                             key_filename, pkey_class, passphrase
@@ -698,7 +697,6 @@ class SSHClient(ClosingContextManager):
                 (RSAKey, "rsa"),
                 (DSSKey, "dsa"),
                 (ECDSAKey, "ecdsa"),
-                (Ed25519Key, "ed25519"),
             ]:
                 # ~/ssh/ is for windows
                 for directory in [".ssh", "ssh"]:

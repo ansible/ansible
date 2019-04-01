@@ -43,7 +43,6 @@ from paramiko.server import ServerInterface, SubsystemHandler, InteractiveQuery
 from paramiko.rsakey import RSAKey
 from paramiko.dsskey import DSSKey
 from paramiko.ecdsakey import ECDSAKey
-from paramiko.ed25519key import Ed25519Key
 from paramiko.sftp import SFTPError, BaseSFTP
 from paramiko.sftp_client import SFTP, SFTPClient
 from paramiko.sftp_server import SFTPServer
@@ -85,6 +84,13 @@ from paramiko.sftp import (
 
 from paramiko.common import io_sleep
 
+
+# The following makes it easier for us to script updates of the bundled code and is not part of
+# upstream
+# Note that we carry one patch which removes ed25519 and openssh private key support (so that we
+# don't need to build the deps for that):
+# https://toshoi.fedorapeople.org/ansible/remove-paramiko-ed35518-and-openssh-key-support.patch
+_BUNDLED_METADATA = {"pypi_name": "paramiko", "version": "2.4.2"}
 
 __author__ = "Jeff Forcier <jeff@bitprophet.org>"
 __license__ = "GNU Lesser General Public License (LGPL)"
