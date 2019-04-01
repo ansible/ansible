@@ -349,5 +349,7 @@ session    required pam_unix.so"""
 
     def test_remove_rule(self):
         self.assertTrue(self.pamd.remove('account', 'required', 'pam_unix.so'))
+        # Second run should not change anything
+        self.assertFalse(self.pamd.remove('account', 'required', 'pam_unix.so'))
         test_rule = PamdRule('account', 'required', 'pam_unix.so')
         self.assertNotIn(str(test_rule), str(self.pamd))
