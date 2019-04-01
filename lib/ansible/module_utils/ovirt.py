@@ -542,6 +542,7 @@ class BaseModule(object):
         search_params=None,
         update_params=None,
         _wait=None,
+        force_create=False,
         **kwargs
     ):
         """
@@ -563,7 +564,7 @@ class BaseModule(object):
         :param kwargs: Additional parameters passed when creating entity.
         :return: Dictionary with values returned by Ansible module.
         """
-        if entity is None:
+        if entity is None and not force_create:
             entity = self.search_entity(search_params)
 
         self.pre_create(entity)
