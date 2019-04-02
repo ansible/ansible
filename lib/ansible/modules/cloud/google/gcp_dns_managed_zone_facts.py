@@ -108,6 +108,33 @@ items:
       - A set of key/value label pairs to assign to this ManagedZone.
       returned: success
       type: dict
+    visibility:
+      description:
+      - 'The zone''s visibility: public zones are exposed to the Internet, while private
+        zones are visible only to Virtual Private Cloud resources.'
+      - 'Must be one of: `public`, `private`.'
+      returned: success
+      type: str
+    privateVisibilityConfig:
+      description:
+      - For privately visible zones, the set of Virtual Private Cloud resources that
+        the zone is visible from.
+      returned: success
+      type: complex
+      contains:
+        networks:
+          description:
+          - The list of VPC networks that can see this zone.
+          returned: success
+          type: complex
+          contains:
+            networkUrl:
+              description:
+              - The fully qualified URL of the VPC network to bind to.
+              - This should be formatted like `U(https://www.googleapis.com/compute/v1/projects/{project}/global/networks/{network}`)
+                .
+              returned: success
+              type: str
 '''
 
 ################################################################################
