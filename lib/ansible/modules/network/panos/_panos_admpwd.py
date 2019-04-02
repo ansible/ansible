@@ -86,11 +86,14 @@ from ansible.module_utils.basic import AnsibleModule
 import time
 import sys
 
+HAS_LIB = True
 try:
     import paramiko
-    HAS_LIB = True
 except ImportError:
-    HAS_LIB = False
+    try:
+        import ansible_paramiko as paramiko
+    except ImportError:
+        HAS_LIB = False
 
 _PROMPTBUFF = 4096
 

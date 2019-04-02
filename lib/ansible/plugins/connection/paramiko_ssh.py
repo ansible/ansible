@@ -176,7 +176,13 @@ with warnings.catch_warnings():
     try:
         import paramiko
         HAVE_PARAMIKO = True
-    except (ImportError, AttributeError) as err:  # paramiko and gssapi are incompatible and raise AttributeError not ImportError
+    except ImportError:
+        try:
+            import ansible_paramiko as paramiko
+            HAVE_PARAMIKO = True
+        except (ImportError, AttributeError) as err:  # paramiko and gssapi are incompatible and raise AttributeError not ImportError
+            PARAMIKO_IMP_ERR = err
+    except AttributeError as err:  # paramiko and gssapi are incompatible and raise AttributeError not ImportError
         PARAMIKO_IMP_ERR = err
 
 
