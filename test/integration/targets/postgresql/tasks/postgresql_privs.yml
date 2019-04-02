@@ -423,7 +423,8 @@
   when: postgres_version_resp.stdout is version('10', '>=')
 
 - assert:
-    that: "'1' in '{{ result.rowcount }}'"
+    that:
+    - result.rowcount == 1
   when: postgres_version_resp.stdout is version('10', '>=')
 
 # Test
