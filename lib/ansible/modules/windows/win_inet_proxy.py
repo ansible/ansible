@@ -155,10 +155,10 @@ EXAMPLES = r'''
   win_http_proxy:
     source: ie
 
-# Explicit credentials can only be set per user and required become to work
+# Explicit credentials can only be set per user and require become to work
 - name: Set credential to use for proxy auth
   win_credential:
-    name: ansible.proxy  # The name should eb the FQDN of the proxy host
+    name: ansible.proxy  # The name should be the FQDN of the proxy host
     type: generic_password
     username: proxyuser
     secret: proxypass

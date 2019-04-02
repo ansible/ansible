@@ -25,9 +25,6 @@ options:
     - Use C(<local>) to match hostnames that are not fully qualified domain
       names. This is useful when needing to connect to intranet sites using
       just the hostname.
-    - Use C(<-loopback>) to stop automatically bypassing the proxy when
-      connecting through any loopback address like C(127.0.0.1), C(localhost),
-      or the local hostname.
     - Omit, set to null or an empty string/list to remove the bypass list.
     - If this is set then I(proxy) must also be set.
     type: list
@@ -93,7 +90,7 @@ EXAMPLES = r'''
 - name: Set a proxy for specific protocols using a string
   win_http_proxy:
     proxy: http=hostname:8080;https=hostname:8443
-    bypass: server1,server2,<-loopback>
+    bypass: server1,server2,<local>
 
 - name: Remove any proxy settings
   win_http_proxy:
