@@ -172,9 +172,6 @@ options:
   force_tag:
     description:
       - Use with state C(present) to force tagging an image.
-      - Please stop using this option, and use the more specialized force options
-        I(force_source), I(force_absent) and I(force_tag) instead.
-      - This option will be removed in Ansible 2.12.
     type: bool
     default: false
     version_added: "2.8"
@@ -831,13 +828,13 @@ def main():
     ]
 
     def detect_build_cache_from(client):
-        return client.params['build'] and client.params['build']['cache_from'] is not None
+        return client.module.params['build'] and client.module.params['build'].get('cache_from') is not None
 
     def detect_build_network(client):
-        return client.params['build'] and client.params['build']['network'] is not None
+        return client.module.params['build'] and client.module.params['build'].get('network') is not None
 
     def detect_use_config_proxy(client):
-        return client.params['build'] and client.params['build']['use_config_proxy'] is not None
+        return client.module.params['build'] and client.module.params['build'].get('use_config_proxy') is not None
 
     option_minimal_versions = dict()
     option_minimal_versions["build.cache_from"] = dict(docker_py_version='2.1.0', docker_api_version='1.25', detect_usage=detect_build_cache_from)
@@ -890,7 +887,7 @@ def main():
     if client.module.params['source'] == 'build':
         if (not client.module.params['build'] or not client.module.params['build'].get('path')):
             client.module.fail('If "source" is set to "build", the "build.path" option must be specified.')
-        if client.module.params['build']['pull'] is None:
+        if client.module.params['build'].get('pull') is None:
             client.module.warn("The default for build.pull is currently 'yes', but will be changed to 'no' in Ansible 2.12. "
                                "Please set build.pull explicitly to the value you need.")
             client.module.params['build']['pull'] = True  # TODO: change to False in Ansible 2.12
