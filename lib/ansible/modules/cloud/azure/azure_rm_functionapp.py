@@ -192,7 +192,8 @@ class AzureRMFunctionApp(AzureRMModuleBase):
                 resource_group_name=self.resource_group,
                 name=self.name
             )
-            exists = True
+            # Newer SDK versions (0.40.0+) seem to return None if it doesn't exist instead of raising CloudError
+            exists = function_app is not None
         except CloudError as exc:
             exists = False
 

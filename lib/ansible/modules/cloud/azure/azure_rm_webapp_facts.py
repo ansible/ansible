@@ -149,7 +149,7 @@ webapps:
 '''
 try:
     from msrestazure.azure_exceptions import CloudError
-    from msrestazure.azure_operation import AzureOperationPoller
+    from msrest.polling import LROPoller
     from azure.common import AzureMissingResourceHttpError, AzureHttpError
 except Exception:
     # This is handled in azure_rm_common
@@ -277,7 +277,7 @@ class AzureRMWebAppFacts(AzureRMModuleBase):
         self.log('Get web app {0} publish credentials'.format(name))
         try:
             poller = self.web_client.web_apps.list_publishing_credentials(resource_group, name)
-            if isinstance(poller, AzureOperationPoller):
+            if isinstance(poller, LROPoller):
                 response = self.get_poller_result(poller)
         except CloudError as ex:
             request_id = ex.request_id if ex.request_id else ''
