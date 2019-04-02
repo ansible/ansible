@@ -77,8 +77,9 @@ options:
         choices: ['raw', 'cow']
     content_type:
         description:
-            - Specify if the disk is a data disk or ISO image
-        choices: ['data', 'iso']
+            - Specify if the disk is a data disk or ISO image or a one of a the Hosted Engine disk types
+            - The Hosted Engine disk content types are available with Engine 4.3+ and Ansible 2.8
+        choices: ['data', 'iso', 'hosted_engine', 'hosted_engine_sanlock', 'hosted_engine_metadata', 'hosted_engine_configuration']
         default: 'data'
         version_added: "2.8"
     sparse:
