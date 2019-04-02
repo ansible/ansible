@@ -21,10 +21,17 @@ version_added: "0.6"
 options:
   name:
     description:
-      - name of the database to add or remove
+      - Name of the database to add or remove
     type: str
     required: true
     aliases: [ db ]
+  port:
+    description:
+      - Database port to connect (if needed)
+    type: int
+    default: 5432
+    aliases:
+      - login_port
   owner:
     description:
       - Name of the role to set as owner of the database

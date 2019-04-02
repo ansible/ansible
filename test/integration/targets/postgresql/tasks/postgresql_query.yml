@@ -23,11 +23,21 @@
 
 # Prepare SQL script:
 - name: postgresql_query - remove SQL script if exists
-  become_user: "{{ pg_user }}"
   become: yes
   file:
     path: '~{{ pg_user}}/test.sql'
     state: absent
+  ignore_errors: yes
+
+- name: postgresql_query - create an empty file to check permission
+  become: yes
+  file:
+    path: '~{{ pg_user}}/test.sql'
+    state: touch
+    owner: '{{ pg_user }}'
+    group: '{{ pg_user }}'
+    mode: 0644
+  register: sql_file_created
   ignore_errors: yes
 
 - name: postgresql_query - prepare SQL script
@@ -39,6 +49,7 @@
   - SELECT version();
   - SELECT story FROM test_table
   - WHERE id = %s;
+  when: sql_file_created
 
 ##############
 # Start tests:
@@ -75,6 +86,7 @@
     - 1
   register: result
   ignore_errors: yes
+  when: sql_file_created
 
 - assert:
     that:
@@ -83,6 +95,7 @@
     - result.rowcount == 1
     - result.statusmessage == 'SELECT 1' or result.statusmessage == 'SELECT'
     - result.query_result[0].story == 'first'
+  when: sql_file_created
 
 # Simple select query:
 - name: postgresql_query - simple select query to test_table
