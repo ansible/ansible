@@ -654,6 +654,15 @@ def main():
                             module.warn("Unable to copy stats {0}".format(to_native(b_src)))
                         else:
                             raise
+
+                # might be needed below
+                if PY3 and hasattr(os, 'listxattr'):
+                    try:
+                        src_has_acls = 'system.posix_acl_access' in os.listxattr(src)
+                    except Exception as e:
+                        # assume unwanted ACLs by default
+                        src_has_acls = True
+
                 module.atomic_move(b_mysrc, dest, unsafe_writes=module.params['unsafe_writes'])
 
                 if PY3 and hasattr(os, 'listxattr') and platform.system() == 'Linux' and not remote_src:
@@ -671,11 +680,6 @@ def main():
                     # If not remote_src, then the file was copied from the controller. In that
                     # case, any filesystem ACLs are artifacts of the copy rather than preservation
                     # of existing attributes. Get rid of them:
-
-                    try:
-                        src_has_acls = 'system.posix_acl_access' in os.listxattr(src)
-                    except OSError as e:
-                        src_has_acls = True
 
                     if src_has_acls:
                         try:
