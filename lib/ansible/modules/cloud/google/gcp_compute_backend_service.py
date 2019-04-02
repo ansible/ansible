@@ -182,6 +182,18 @@ options:
               or query_string_blacklist, not both.
             - "'&' and '=' will be percent encoded and not treated as delimiters."
             required: false
+      signed_url_cache_max_age_sec:
+        description:
+        - Maximum number of seconds the response to a signed URL request will be considered
+          fresh, defaults to 1hr (3600s). After this time period, the response will
+          be revalidated before being served.
+        - 'When serving responses to signed URL requests, Cloud CDN will internally
+          behave as though all responses from this backend had a "Cache-Control: public,
+          max-age=[TTL]" header, regardless of any existing Cache-Control header.
+          The actual headers served in responses will not be altered.'
+        required: false
+        default: '3600'
+        version_added: 2.8
   connection_draining:
     description:
     - Settings for connection draining.
@@ -473,6 +485,17 @@ cdnPolicy:
           - "'&' and '=' will be percent encoded and not treated as delimiters."
           returned: success
           type: list
+    signedUrlCacheMaxAgeSec:
+      description:
+      - Maximum number of seconds the response to a signed URL request will be considered
+        fresh, defaults to 1hr (3600s). After this time period, the response will
+        be revalidated before being served.
+      - 'When serving responses to signed URL requests, Cloud CDN will internally
+        behave as though all responses from this backend had a "Cache-Control: public,
+        max-age=[TTL]" header, regardless of any existing Cache-Control header. The
+        actual headers served in responses will not be altered.'
+      returned: success
+      type: int
 connectionDraining:
   description:
   - Settings for connection draining.
@@ -644,7 +667,8 @@ def main():
                             query_string_blacklist=dict(type='list', elements='str'),
                             query_string_whitelist=dict(type='list', elements='str'),
                         ),
-                    )
+                    ),
+                    signed_url_cache_max_age_sec=dict(default=3600, type='int'),
                 ),
             ),
             connection_draining=dict(type='dict', options=dict(draining_timeout_sec=dict(type='int'))),
@@ -915,10 +939,20 @@ class BackendServiceCdnpolicy(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({u'cacheKeyPolicy': BackendServiceCachekeypolicy(self.request.get('cache_key_policy', {}), self.module).to_request()})
+        return remove_nones_from_dict(
+            {
+                u'cacheKeyPolicy': BackendServiceCachekeypolicy(self.request.get('cache_key_policy', {}), self.module).to_request(),
+                u'signedUrlCacheMaxAgeSec': self.request.get('signed_url_cache_max_age_sec'),
+            }
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({u'cacheKeyPolicy': BackendServiceCachekeypolicy(self.request.get(u'cacheKeyPolicy', {}), self.module).from_response()})
+        return remove_nones_from_dict(
+            {
+                u'cacheKeyPolicy': BackendServiceCachekeypolicy(self.request.get(u'cacheKeyPolicy', {}), self.module).from_response(),
+                u'signedUrlCacheMaxAgeSec': self.request.get(u'signedUrlCacheMaxAgeSec'),
+            }
+        )
 
 
 class BackendServiceCachekeypolicy(object):
