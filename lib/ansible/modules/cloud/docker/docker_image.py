@@ -828,13 +828,13 @@ def main():
     ]
 
     def detect_build_cache_from(client):
-        return client.params['build'] and client.params['build'].get('cache_from') is not None
+        return client.module.params['build'] and client.module.params['build'].get('cache_from') is not None
 
     def detect_build_network(client):
-        return client.params['build'] and client.params['build'].get('network') is not None
+        return client.module.params['build'] and client.module.params['build'].get('network') is not None
 
     def detect_use_config_proxy(client):
-        return client.params['build'] and client.params['build'].get('use_config_proxy') is not None
+        return client.module.params['build'] and client.module.params['build'].get('use_config_proxy') is not None
 
     option_minimal_versions = dict()
     option_minimal_versions["build.cache_from"] = dict(docker_py_version='2.1.0', docker_api_version='1.25', detect_usage=detect_build_cache_from)
