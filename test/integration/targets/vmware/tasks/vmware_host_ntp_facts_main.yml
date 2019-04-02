@@ -4,41 +4,6 @@
 
 # TODO: vcsim does not support NTP Manager related to operations
 
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 5000
-    state: started
-
-- name: kill vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/killall
-
-- name: start vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/spawn?cluster=2
-  register: vcsim_instance
-
-- debug:
-    var: vcsim_instance
-
-- name: Wait for vcsim server to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 443
-    state: started
-
-- name: get a list of hosts from vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/govc_find?filter=H
-  register: hosts
-
-- name: get a host
-  set_fact:
-    host1: "{{ hosts.json[0] | basename }}"
-
-- debug: var=host1
-
 - name: Gather NTP facts about all hosts in given host
   vmware_host_ntp_facts:
     hostname: "{{ vcsim }}"

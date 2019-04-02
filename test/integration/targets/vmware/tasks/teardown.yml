@@ -1,0 +1,4 @@
+---
+- name: kill vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/killall

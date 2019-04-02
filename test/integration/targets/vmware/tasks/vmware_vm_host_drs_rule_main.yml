@@ -4,31 +4,6 @@
 
 # TODO: vcsim does not support manage DRS rule
 
-- name: Wait for flask server
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 5000
-    state: started
-
-- name: Kill vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/killall
-
-- name: Start vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/spawn?datacenter=2&cluster=1&folder=0&ds=2&pool=2
-  register: vcsim_instance
-
-- name: Wait for vcsim server
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 443
-    state: started
-
-- debug: var=vcsim_instance
-
-# TODO: create host/vm group when vcsim supports this
-
 - name: Create mandatory DRS Affinity rule for VM/Host
   vmware_vm_host_drs_rule:
     validate_certs: False

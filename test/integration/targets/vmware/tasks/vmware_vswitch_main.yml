@@ -4,30 +4,6 @@
 
 # TODO: akasurde: VCSIM does not suport network manager system
 
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: '{{ vcsim }}'
-    port: 5000
-    state: started
-
-- name: Kill vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/killall
-
-- name: Start vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/spawn?cluster=2
-  register: vcsim_instance
-
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: '{{ vcsim }}'
-    port: 443
-    state: started
-
-- debug:
-    var: vcsim_instance
-
 # FIXME: Implement check-mode support
 - name: Add a nic to a switch (check-mode)
   vmware_vswitch: &add_nic

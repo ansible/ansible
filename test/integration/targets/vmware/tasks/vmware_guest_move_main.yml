@@ -2,35 +2,25 @@
 # Copyright: (c) 2018, Jose Angel Munoz <josea.munoz@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 5000
-    state: started
 
-- name: kill vcsim
+- name: Create a sub folder under VM folder on given datacenter
+  vcenter_folder:
+    validate_certs: false
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    datacenter: "{{ dc1 }}"
+    folder_name: vm2
+    folder_type: vm
+    state: present
+  register: bob
+- debug: var=bob
+
+- name: test
   uri:
-    url: http://{{ vcsim }}:5000/killall
-
-- name: start vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/spawn?folder=2&dc=2
-  register: vcsim_instance
-
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 443
-    state: started
-
-- debug: var=vcsim_instance
-
-- name: get a list of virtual machines from vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/govc_find?filter=VM
-  register: vms
-
-- set_fact: vm1="{{ vms['json'][0] }}"
+    url: http://{{ vcsim }}:5000/govc_find?filter=F
+  register: boby
+- debug: var=boby
 
 # Testcase 0001: Move vm and get changed status
 - name: Move VM (Changed)
@@ -39,9 +29,9 @@
     hostname: "{{ vcsim }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
-    datacenter: "{{ (vm1|basename).split('_')[0] }}"
-    name: "{{ vm1|basename }}"
-    dest_folder: F1/DC1/vm/F1
+    datacenter: "{{ dc1 }}"
+    name: "{{ guest1 }}"
+    dest_folder: /F0/DC0/vm/F0
   register: vm_facts_0001
 
 
@@ -52,9 +42,9 @@
     hostname: "{{ vcsim }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
-    datacenter: "{{ (vm1|basename).split('_')[0] }}"
-    name: "{{ vm1|basename }}"
-    dest_folder: F1/DC1/vm/F1
+    datacenter: "{{ dc1 }}"
+    name: "{{ guest1 }}"
+    dest_folder: /F0/DC0/vm/vm2
   register: vm_facts_0002
 
 - debug:

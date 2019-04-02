@@ -2,32 +2,6 @@
 # Copyright: (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 5000
-    state: started
-
-- name: kill vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/killall
-
-- name: start vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/spawn?datacenter=1&cluster=1&folder=0
-  register: vcsim_instance
-
-- name: Wait for vcsim server to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 443
-    state: started
-
-- name: Get a list of host systems from vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/govc_find?filter=H
-  register: hostsystems
-
 - name: Enter maintenance mode
   vmware_maintenancemode:
     hostname: "{{ vcsim }}"
@@ -36,7 +10,7 @@
     state: present
     esxi_hostname: "{{ item | basename }}"
     validate_certs: no
-  with_items: "{{ hostsystems['json'] }}"
+  with_items: "{{ hosts['json'] }}"
   register: test_result_0001
 
 - debug: var=test_result_0001
@@ -54,7 +28,7 @@
     state: present
     esxi_hostname: "{{ item | basename }}"
     validate_certs: no
-  with_items: "{{ hostsystems['json'] }}"
+  with_items: "{{ hosts['json'] }}"
   register: test_result_0002
 
 - debug: var=test_result_0002
@@ -72,7 +46,7 @@
     state: absent
     esxi_hostname: "{{ item | basename }}"
     validate_certs: no
-  with_items: "{{ hostsystems['json'] }}"
+  with_items: "{{ hosts['json'] }}"
   register: test_result_0003
 
 - debug: var=test_result_0003
@@ -90,7 +64,7 @@
     state: absent
     esxi_hostname: "{{ item | basename }}"
     validate_certs: no
-  with_items: "{{ hostsystems['json'] }}"
+  with_items: "{{ hosts['json'] }}"
   register: test_result_0004
 
 - debug: var=test_result_0004

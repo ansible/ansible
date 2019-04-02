@@ -3,41 +3,6 @@
 # Copyright: (c) 2018, James E. King III (@jeking3) <jking@apache.org>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 ---
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 5000
-    state: started
-
-- name: kill vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/killall
-
-- name: start vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/spawn?datacenter=1&cluster=1&folder=0
-  register: vcsim_instance
-
-- name: Wait for vcsim server to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 443
-    state: started
-
-- name: get a list of Datacenter from vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/govc_find?filter=DC
-  register: datacenters
-
-- set_fact: dc1="{{ datacenters['json'][0] }}"
-
-- name: get a list of hosts from vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/govc_find?filter=H
-  register: hosts
-
-- set_fact: h1="{{ hosts['json'][0] }}"
-
 - name: get a list of virtual machines from vcsim
   uri:
     url: http://{{ vcsim }}:5000/govc_find?filter=VM
@@ -65,7 +30,7 @@
       - "guest_facts_0001['instance']['hw_product_uuid'] is defined"
       - "guest_facts_0001['instance']['hw_cores_per_socket'] is defined"
       - "guest_facts_0001['instance']['hw_datastores'] is defined"
-      - "guest_facts_0001['instance']['hw_esxi_host'] == h1 | basename"
+      - "guest_facts_0001['instance']['hw_esxi_host'] == host1"
       - "guest_facts_0001['instance']['hw_files'] is defined"
       - "guest_facts_0001['instance']['hw_guest_ha_state'] is defined"
       - "guest_facts_0001['instance']['hw_is_template'] is defined"
@@ -209,7 +174,7 @@
       - "guest_facts_0005['instance']['hw_product_uuid'] == vm1_uuid"
       - "guest_facts_0005['instance']['hw_cores_per_socket'] is defined"
       - "guest_facts_0005['instance']['hw_datastores'] is defined"
-      - "guest_facts_0005['instance']['hw_esxi_host'] == h1 | basename"
+      - "guest_facts_0005['instance']['hw_esxi_host'] == host1"
       - "guest_facts_0005['instance']['hw_files'] is defined"
       - "guest_facts_0005['instance']['hw_guest_ha_state'] is defined"
       - "guest_facts_0005['instance']['hw_is_template'] is defined"

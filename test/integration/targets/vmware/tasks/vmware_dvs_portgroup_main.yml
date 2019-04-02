@@ -17,38 +17,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 5000
-    state: started
-
-- name: kill vcsim
-  uri:
-    url: "{{ 'http://' + vcsim + ':5000/killall' }}"
-
-- name: start vcsim
-  uri:
-    url: "{{ 'http://' + vcsim + ':5000/spawn?cluster=2' }}"
-  register: vcsim_instance
-
-- name: Wait for vcsim server to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 443
-    state: started
-
-- debug: var=vcsim_instance
-
-- name: get a list of distributed vswitch from vcsim after adding
-  uri:
-    url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=DVS' }}"
-  register: new_dvs_0001
-
-- debug:
-    msg: "{{ item | basename }}"
-  with_items: "{{ new_dvs_0001['json'] }}"
-
 # Testcase 0001: Add basic portgroup
 - name: create basic portgroup
   vmware_dvs_portgroup:
@@ -56,7 +24,7 @@
     hostname: "{{ vcsim }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
-    switch_name: "{{ new_dvs_0001['json'][0] | basename }}"
+    switch_name: "{{ switch1 }}"
     portgroup_name: "basic"
     vlan_id: 0
     num_ports: 32
@@ -76,7 +44,7 @@
     hostname: "{{ vcsim }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
-    switch_name: "{{ new_dvs_0001['json'][0] | basename }}"
+    switch_name: "{{ switch1 }}"
     portgroup_name: "basic-vlan10"
     vlan_id: 10
     num_ports: 32
@@ -96,7 +64,7 @@
     hostname: "{{ vcsim }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
-    switch_name: "{{ new_dvs_0001['json'][0] | basename }}"
+    switch_name: "{{ switch1 }}"
     portgroup_name: "basic-trunk"
     vlan_id: 1-4096
     vlan_trunk: True
@@ -117,7 +85,7 @@
     hostname: "{{ vcsim }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
-    switch_name: "{{ new_dvs_0001['json'][0] | basename }}"
+    switch_name: "{{ switch1 }}"
     portgroup_name: "basic"
     vlan_id: 0
     num_ports: 32
@@ -137,7 +105,7 @@
     hostname: "{{ vcsim }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
-    switch_name: "{{ new_dvs_0001['json'][0] | basename }}"
+    switch_name: "{{ switch1 }}"
     portgroup_name: "basic-all-enabled"
     vlan_id: 0
     num_ports: 32
@@ -173,7 +141,7 @@
     hostname: "{{ vcsim }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
-    switch_name: "{{ new_dvs_0001['json'][0] | basename }}"
+    switch_name: "{{ switch1 }}"
     portgroup_name: "basic-some-enabled"
     vlan_id: 0
     num_ports: 32
@@ -199,7 +167,7 @@
     hostname: "{{ vcsim }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
-    switch_name: "{{ new_dvs_0001['json'][0] | basename }}"
+    switch_name: "{{ switch1 }}"
     portgroup_name: "basic"
     vlan_id: 0
     num_ports: 32

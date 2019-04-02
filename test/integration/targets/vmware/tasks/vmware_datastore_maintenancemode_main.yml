@@ -4,32 +4,6 @@
 
 # TODO: vcsim does not support datastore maintenance mode properties
 
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 5000
-    state: started
-
-- name: kill vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/killall
-
-- name: start vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/spawn?datacenter=1&cluster=1&folder=0
-  register: vcsim_instance
-
-- name: Wait for vcsim server to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 443
-    state: started
-
-- name: Get a list of datastores from vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/govc_find?filter=D
-  register: datastores
-
 - name: Enter datastore in maintenance mode
   vmware_datastore_maintenancemode:
     hostname: "{{ vcsim }}"

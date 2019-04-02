@@ -1,0 +1,4 @@
+---
+- include_tasks: teardown.yml
+- include_tasks: setup.yaml
+- include_tasks: '{{ current_task_file }}'

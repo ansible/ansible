@@ -5,40 +5,7 @@
 # TODO: Current pinned version of vcsim does not support custom fields
 # commenting testcase below
 
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 5000
-    state: started
-
-- name: kill vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/killall
-
-- name: start vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/spawn?datacenter=1&cluster=1&folder=0
-  register: vcsim_instance
-
-- name: Wait for vcsim server to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 443
-    state: started
-
-- name: get a list of Datacenter from vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/govc_find?filter=DC
-  register: datacenters
-
-- set_fact: dc1="{{ datacenters['json'][0] }}"
-
-- name: get a list of virtual machines from vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/govc_find?filter=VM
-  register: vms
-
-- set_fact: vm1="{{ vms['json'][0] }}"
+- set_fact: vm1="{{ vmlist['json'][0] }}"
 
 - name: Add custom attribute to the given virtual machine
   vmware_guest_custom_attributes:
