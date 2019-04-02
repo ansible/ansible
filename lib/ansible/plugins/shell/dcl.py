@@ -41,22 +41,30 @@ class ShellModule(ShModule):
     _SHELL_GROUP_RIGHT = ''
 
     # can only be done by adding assignment before the command...
-    # NOT AFTER IF ... THEN
+    # NOT AFTER IF ... THEN... Quoting will be an issue....
+    # strings: "......"
+    # variable expansion: 'var' (early, before CLI parsing) &var (late, during CLI parsing)
+    #                     ''var'    when variables are inside a string.
+    # escaping a "  double up..  "what""ever"""   will show as: what"ever" when printed...
     def env_prefix(self, **kwargs):
         env = self.env.copy()
         env.update(kwargs)
         return ' '.join(['$ %s=%s\n' % (k, shlex_quote(text_type(v))) for k, v in env.items()])
 
+    # This does what/when
     def build_module_command(self, env_string, shebang, cmd, arg_path=None):
         # don't quote the cmd if it's an empty string, because this will break pipelining mode
-        if cmd.strip() != '':
-            cmd = shlex_quote(cmd)
-        cmd_parts = [env_string.strip(), shebang.replace("#!", "").strip(), cmd]
-        if arg_path is not None:
-            cmd_parts.append(arg_path)
-        new_cmd = " ".join(cmd_parts)
+        #if cmd.strip() != '':
+        #    cmd = shlex_quote(cmd)
+        #cmd_parts = [env_string.strip(), shebang.replace("#!", "").strip(), cmd]
+        #if arg_path is not None:
+        #    cmd_parts.append(arg_path)
+        #new_cmd = " ".join(cmd_parts)
+        new_cmd = cmd
         return new_cmd
 
+    # needed for? if checksums need to be crateds then until now: CRC/MD5 is possible with native tooling
+    # I know HPE left something (Maintenance..) out the last few years.
     def checksum(self, path, python_interp):
         # The following test is fish-compliant.
         #

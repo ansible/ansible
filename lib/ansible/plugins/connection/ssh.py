@@ -260,7 +260,7 @@ DOCUMENTATION = '''
             version_added: '2.7'
       use_tty:
         version_added: '2.5'
-        default: 'yes'
+        default: 'yes'  forced to no for OpenVMS
         description: add -tt to ssh commands to force tty allocation
         env: [{name: ANSIBLE_SSH_USETTY}]
         ini:
@@ -462,6 +462,12 @@ class Connection(ConnectionBase):
             self.has_native_async = True
             self.always_pipeline_modules = True
             self.module_implementation_preferences = ('.ps1', '.exe', '')
+            self.allow_executable = False
+        if getattr(self._shell,"_IS_OPENVMS", False):
+            self._shell_type = 'dcl'
+            self.has_pipelining = False
+            self.always_pipeline_modules = False
+            self.module_implementation_preferences = ('.dcl', '.com', '.exe', '')
             self.allow_executable = False
 
     # The connection is created by running ssh/scp/sftp from the exec_command,
@@ -1055,6 +1061,9 @@ class Connection(ConnectionBase):
         # Windows does not support dd so we cannot use the piped method
         if getattr(self._shell, "_IS_WINDOWS", False):
             smart_methods.remove('piped')
+        # OpenVMS does not support dd so we cannot use the piped method
+        if getattr(self._shell, "_IS_OPENVMS", False):
+            smart_methods.remove('piped')
 
         # Transfer methods to try
         methods = []
@@ -1174,6 +1183,12 @@ class Connection(ConnectionBase):
         # -tt can cause various issues in some environments so allow the user
         # to disable it as a troubleshooting method.
         use_tty = self.get_option('use_tty')
+        if getattr(self._shell, "_IS_OPENVMS", False):
+            # Become method 'runas' is done in the wrapper that is executed,
+            # need to disable sudoable so the bare_run is not waiting for a
+            # prompt that will not occur
+            sudoable = False
+            use_tty = 'no'
 
         if not in_data and sudoable and use_tty:
             args = (ssh_executable, '-tt', self.host, cmd)
