@@ -409,7 +409,7 @@
     that: result.changed == true
   when: postgres_version_resp.stdout is version('10', '>=')
 
-- name: Check that all partitioned tables have execute privileges
+- name: Check that all partitioned tables have select privileges
   postgresql_query:
     query: SELECT grantee, privilege_type FROM information_schema.role_table_grants WHERE table_name='testpt' and privilege_type='SELECT' and grantee = %(grantuser)s
     db: "{{ db_name }}"
@@ -487,6 +487,24 @@
 
 - assert:
     that: result.changed == false
+  when: postgres_version_resp.stdout is version('10', '>=')
+
+- name: Check that all partitioned tables don't have select privileges
+  postgresql_query:
+    query: SELECT grantee, privilege_type FROM information_schema.role_table_grants WHERE table_name='testpt' and privilege_type='SELECT' and grantee = %(grantuser)s
+    db: "{{ db_name }}"
+    login_user: '{{ db_user2 }}'
+    login_password: password
+    named_args:
+        grantuser: '{{ db_user2 }}'
+  become: yes
+  become_user: "{{ pg_user }}"
+  register: result
+  when: postgres_version_resp.stdout is version('10', '>=')
+
+- assert:
+    that:
+    - result.rowcount == 0
   when: postgres_version_resp.stdout is version('10', '>=')
 
 # Table ALL_IN_SCHEMA cleanup
