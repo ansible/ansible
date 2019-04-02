@@ -124,6 +124,9 @@ files:
     labels: [ cloud, docker ]
     maintainers: $team_docker
     supershipit: felixfontein
+  $modules/cloud/docker/docker_compose.py:
+    <<: *docker
+    maintainers: $team_docker sluther
   $modules/cloud/docker/docker_network.py:
     <<: *docker
     maintainers: $team_docker olsaki
