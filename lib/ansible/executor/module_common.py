@@ -1051,7 +1051,7 @@ def modify_module(module_name, module_path, module_args, templar, task_vars=None
         # DCL lines start with in regex:  $[ \t]*(!|@?[A-Z0-9_]+[: \t]?).*$
         # line continuation: lines ending in - except for comments.
         # comment ! ... until en of line
-        elif b_lines[0].startswith(b"$")
+        elif b_lines[0].startswith(b"$"):
             interpreter = "dcl"
 
         else:
