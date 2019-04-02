@@ -396,7 +396,7 @@ def main():
         mongodbsettings=dict(type='dict'),
         kinesissettings=dict(type='dict'),
         elasticsearchsettings=dict(type='dict'),
-        wait=dict(type='bool'),
+        wait=dict(type='bool', default=False),
         timeout=dict(type='int'),
         retries=dict(type='int')
     )
