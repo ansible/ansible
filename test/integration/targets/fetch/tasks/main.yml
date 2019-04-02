@@ -171,6 +171,9 @@
     state: directory
   remote_user: '{{ remote_unprivileged_user }}'
 
+# Pulling a root-only file as a non-root user should fail, but it succeeds.
+# This appears to be related to the closed issue #13388.
+#
 # Based on https://github.com/ansible/ansible/pull/13424 it appears that overriding
 # remote_user on a per-task basis with Docker doesn't work. That matches the observed
 #   <testhost> ESTABLISH LOCAL CONNECTION FOR USER: root
@@ -178,6 +181,20 @@
 #
 # https://github.com/ansible/ansible/pull/15556 had a good conversation about the
 # Docker-specific challenges of the "become" process.
+- name: attempt to fetch the only-root-readable test file using a non-root user, should fail
+  fetch: src={{ remote_tmp_dir }}/orig.root dest={{ output_dir }}/fetched
+  remote_user: '{{ remote_unprivileged_user }}'
+  register: failed_fetch_root_owned_file
+  ignore_errors: true
+
+- debug: var=failed_fetch_root_owned_file
+
+- name: check that fetching a root-owned non-readable file indeed failed
+  assert:
+    that:
+      - "failed_fetch_root_owned_file is failed"
+      - "failed_fetch_root_owned_file.msg"
+
 - name: fetch the root-readable test file using 'become'
   fetch: src={{ remote_tmp_dir }}/orig.root dest={{ output_dir }}/fetched
   remote_user: '{{ remote_unprivileged_user }}'
