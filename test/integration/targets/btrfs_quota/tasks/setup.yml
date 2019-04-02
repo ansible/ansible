@@ -1,0 +1,52 @@
+- name: set 'packages' variable (Ubuntu <= 16.04)
+  set_fact:
+    packages:
+      - btrfs-tools
+  when: ansible_distribution == 'Ubuntu' and ansible_distribution_version is version('16.04', '<=')
+
+- name: set 'packages' variable (Suse)
+  set_fact:
+    packages:
+      - btrfsprogs
+      - python-xml
+  when: ansible_os_family == 'Suse'
+
+- name: set 'packages' variable (Others)
+  set_fact:
+    packages:
+      - btrfs-progs
+  when:
+    - ansible_os_family != 'Suse'
+    - not (ansible_distribution == 'Ubuntu' and ansible_distribution_version is version('16.04', '<='))
+
+- name: install btrfs progs
+  package:
+    name: '{{ item }}'
+    state: present
+  loop: '{{ packages }}'
+
+- name: create image file
+  command: 'dd if=/dev/zero of={{ image_file }} bs=1 count=0 seek={{ fs_size }}'
+
+- name: create filesystem
+  filesystem:
+    dev: '{{ image_file }}'
+    fstype: btrfs
+
+- name: mount filesystem
+  mount:
+    path: '{{ mount_point }}'
+    src: '{{ image_file }}'
+    fstype: btrfs
+    state: mounted
+
+- name: create subvolume
+  command: 'btrfs subvolume create {{ mount_point }}/{{ subvol_path }}'
+
+- name: get subvolume id
+  shell: "btrfs subvolume list {{ mount_point }} | grep {{ subvol_path }} | awk '{print $2}'"
+  register: subvol_id_result
+
+- name: set 'subvol_id' variable
+  set_fact:
+    subvol_id: '{{ subvol_id_result.stdout }}'

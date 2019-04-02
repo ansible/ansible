@@ -1,0 +1,110 @@
+- name: test1 - enable quota
+  btrfs_quota:
+    state: enabled
+    filesystem: '{{ mount_point }}/'
+  register: test1_result
+
+- name: assert test1
+  assert:
+    that:
+      - 'test1_result is changed'
+      - 'test1_result is success'
+
+- name: test2 - disable quota
+  btrfs_quota:
+    state: disabled
+    filesystem: '{{ mount_point }}'
+  register: test2_result
+
+- name: assert test2
+  assert:
+    that:
+      - 'test2_result is changed'
+      - 'test2_result is success'
+
+- name: test3 - enable quota and set limits on qgroup by ID
+  btrfs_quota:
+    state: enabled
+    filesystem: '{{ mount_point }}'
+    qgroup: '0/{{ subvol_id }}'
+    max_rfer: 1M
+    max_excl: 1k
+  register: test3_result
+
+- name: set 'test3_max_rfer_result' variable
+  shell: "btrfs qgroup show --raw -re {{ mount_point }} | grep {{ subvol_id }} | awk '{print $4}'"
+  register: test3_max_rfer_result
+
+- name: set 'test3_max_excl_result' variable
+  shell: "btrfs qgroup show --raw -re {{ mount_point }} | grep {{ subvol_id }} | awk '{print $5}'"
+  register: test3_max_excl_result
+
+- name: assert test3
+  assert:
+    that:
+      - 'test3_result is changed'
+      - 'test3_result is success'
+      - 'test3_max_rfer_result.stdout | int == 1048576'
+      - 'test3_max_excl_result.stdout | int == 1024'
+
+- name: test4 - disable quota
+  btrfs_quota:
+    state: disabled
+    filesystem: '{{ mount_point }}'
+  register: test4_result
+
+- name:
+  assert:
+    that:
+      - 'test4_result is changed'
+      - 'test4_result is success'
+
+- name: test5 - enable quota and set limits on qgroup by path
+  btrfs_quota:
+    state: enabled
+    filesystem: '{{ mount_point }}'
+    qgroup: '{{ subvol_path }}'
+    max_rfer: 1g
+    max_excl: none
+  register: test5_result
+
+- name: set 'test5_max_rfer_result' variable
+  shell: "btrfs qgroup show --raw -re {{ mount_point }} | grep {{ subvol_id }} | awk '{print $4}'"
+  register: test5_max_rfer_result
+
+- name: set 'test5_max_excl_result' variable
+  shell: "btrfs qgroup show --raw -re {{ mount_point }} | grep {{ subvol_id }} | awk '{print $5}'"
+  register: test5_max_excl_result
+
+- name: assert test5
+  assert:
+    that:
+      - 'test5_result is changed'
+      - 'test5_result is success'
+      - 'test5_max_rfer_result.stdout | int == 1073741824'
+      - "test5_max_excl_result.stdout == 'none'"
+
+- name: test6 - change limits on qgroup by id
+  btrfs_quota:
+    state: enabled
+    filesystem: '{{ mount_point }}'
+    qgroup: '0/{{ subvol_id }}'
+    max_rfer: 1t
+    max_excl: 1G
+  register: test6_result
+
+- name: set 'test6_max_rfer_result' variable
+  shell: "btrfs qgroup show --raw -re {{ mount_point }} | grep {{ subvol_id }} | awk '{print $4}'"
+  register: test6_max_rfer_result
+
+- name: set 'test6_max_excl_result' variable
+  shell: "btrfs qgroup show --raw -re {{ mount_point }} | grep {{ subvol_id }} | awk '{print $5}'"
+  register: test6_max_excl_result
+
+- name: assert test6
+  assert:
+    that:
+      - 'test6_result is changed'
+      - 'test6_result is success'
+      - 'test6_max_rfer_result.stdout | int == 1099511627776'
+      - "test6_max_excl_result.stdout | int == 1073741824"

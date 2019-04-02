@@ -1,0 +1,4 @@
+fs_size: 1G
+image_file: /tmp/btrfs.img
+mount_point: /mnt
+subvol_path: test
