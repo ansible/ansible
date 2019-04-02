@@ -67,7 +67,7 @@ AZURE_API_PROFILES = {
         'NetworkManagementClient': '2018-08-01',
         'ResourceManagementClient': '2017-05-10',
         'StorageManagementClient': '2017-10-01',
-        'WebsiteManagementClient': '2016-08-01',
+        'WebSiteManagementClient': '2018-02-01',
         'PostgreSQLManagementClient': '2017-12-01',
         'MySQLManagementClient': '2017-12-01',
         'MariaDBManagementClient': '2019-03-01'
@@ -235,7 +235,7 @@ AZURE_PKG_VERSIONS = {
     },
     'WebSiteManagementClient': {
         'package_name': 'web',
-        'expected_version': '0.32.0'
+        'expected_version': '0.41.0'
     },
     'TrafficManagerManagementClient': {
         'package_name': 'trafficmanager',
@@ -870,7 +870,7 @@ class AzureRMModuleBase(object):
         if not self._web_client:
             self._web_client = self.get_mgmt_svc_client(WebSiteManagementClient,
                                                         base_url=self._cloud_environment.endpoints.resource_manager,
-                                                        api_version='2016-08-01')
+                                                        api_version='2018-02-01')
         return self._web_client
 
     @property
