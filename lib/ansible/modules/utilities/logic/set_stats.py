@@ -46,6 +46,7 @@ EXAMPLES = r'''
 - set_stats:
     data:
       packages_installed: 31
+    per_host: yes
 
 # Aggregating random stats for all hosts using complex arguments
 - set_stats:
