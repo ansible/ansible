@@ -22,6 +22,7 @@ __metaclass__ = type
 import os
 
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleAssertionError
+from ansible.module_utils._text import to_text
 from ansible.module_utils.six import iteritems, binary_type, text_type
 from ansible.module_utils.common._collections_compat import Container, Mapping, Set, Sequence
 from ansible.playbook.attribute import FieldAttribute
