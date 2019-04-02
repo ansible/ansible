@@ -64,7 +64,7 @@ REPLACER = b"#<<INCLUDE_ANSIBLE_MODULE_COMMON>>"
 REPLACER_VERSION = b"\"<<ANSIBLE_VERSION>>\""
 REPLACER_COMPLEX = b"\"<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>\""
 REPLACER_WINDOWS = b"# POWERSHELL_COMMON"
-REPLACER_VMS = b"\$! DCL_COMMON"
+REPLACER_OPENVMS = b"$! DCL_COMMON"
 REPLACER_JSONARGS = b"<<INCLUDE_ANSIBLE_MODULE_JSON_ARGS>>"
 REPLACER_SELINUX = b"<<SELINUX_SPECIAL_FILESYSTEMS>>"
 
@@ -766,7 +766,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
     elif b'from ansible.module_utils.' in b_module_data:
         module_style = 'new'
         module_substyle = 'python'
-    elif REPLACER_VMS in b_module_data:
+    elif REPLACER_OPENVMS in b_module_data:
         module_style = 'new'
         module_substyle = 'dcl'
     elif REPLACER_WINDOWS in b_module_data:
