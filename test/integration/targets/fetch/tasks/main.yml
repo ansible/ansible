@@ -145,6 +145,7 @@
 # ssh key as our regular user allowed for login.
 - name: create a file that we can use to fetch using become
   copy: content="test" owner=root mode=0600 dest={{ remote_tmp_dir }}/orig.root
+  become: true
 
 - name: Create remote unprivileged remote user
   user:
