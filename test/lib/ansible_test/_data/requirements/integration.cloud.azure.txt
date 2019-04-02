@@ -37,4 +37,4 @@ azure-mgmt-devtestlabs==3.0.0
 azure-mgmt-loganalytics==0.2.0
 azure-mgmt-automation==0.1.1
 azure-mgmt-iothub==0.7.0
-azure-cli-iot==0.7.0
+azure-cli-iot==0.3.7

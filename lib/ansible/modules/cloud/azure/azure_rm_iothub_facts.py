@@ -153,15 +153,14 @@ class AzureRMIoTHubFacts(AzureRMModuleBase):
             self.fail('Failed to list IoT Hub in resource group {0} - {1}'.format(self.resource_group, exc.message or str(exc)))
 
     def to_dict(self, hub):
-        result = dict(
-            id=hub.id,
-            name=hub.name,
-            resource_group=parse_resource_id(hub.id).get('resourceGroups'),
-            location=hub.location,
-            tags=hub.tags,
-            unit=hub.sku.capacity,
-            sku=hub.sku.name.lower()
-        )
+        result = hub.properties.as_dict()
+        result['id'] = hub.id
+        result['name'] = hub.name
+        result['resource_group'] = parse_resource_id(hub.id).get('resourceGroups')
+        result['location'] = hub.location
+        result['tags'] = hub.tags
+        result['unit'] = hub.sku.capacity
+        result['sku'] = hub.sku.name.lower()
         return result
 
 
