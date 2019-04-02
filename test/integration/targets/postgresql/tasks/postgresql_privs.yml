@@ -411,7 +411,7 @@
 
 - name: Check that all partitioned tables have execute privileges
   postgresql_query:
-    query: SELECT grantee, privilege_type FROM information_schema.role_table_grants WHERE   table_name='testpt' and privilege_type='SELECT' and grantee = %(grantuser)s
+    query: SELECT grantee, privilege_type FROM information_schema.role_table_grants WHERE table_name='testpt' and privilege_type='SELECT' and grantee = %(grantuser)s
     db: "{{ db_name }}"
     login_user: '{{ db_user2 }}'
     login_password: password
