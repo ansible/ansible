@@ -105,7 +105,7 @@ EXAMPLES = '''
 - name: Create a topic
   azure_rm_servicebustopic:
       name: subtopic
-      resource_group: foo
+      resource_group: myResourceGroup
       namespace: bar
       duplicate_detection_time_in_seconds: 600
 '''
