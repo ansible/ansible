@@ -5,7 +5,5 @@ fedora28 name=quay.io/ansible/fedora28-test-container:1.5.0 python=2.7
 fedora29 name=quay.io/ansible/fedora29-test-container:1.5.0 python=3.7
 opensuse15py2 name=quay.io/ansible/opensuse15py2-test-container:1.7.0 python=2.7
 opensuse15 name=quay.io/ansible/opensuse15-test-container:1.7.0 python=3.6
-ubuntu1404 name=quay.io/ansible/ubuntu1404-test-container:1.4.0 python=2.7 seccomp=unconfined
 ubuntu1604 name=quay.io/ansible/ubuntu1604-test-container:1.4.0 python=2.7 seccomp=unconfined
-ubuntu1604py3 name=quay.io/ansible/ubuntu1604py3-test-container:1.4.0 python=3.5 seccomp=unconfined
 ubuntu1804 name=quay.io/ansible/ubuntu1804-test-container:1.6.0 python=3.6 seccomp=unconfined
