@@ -93,6 +93,14 @@ options:
             - To detach a disk from a vm, explicitly set to ''.
             - If this option is unset, the value will not be changed.
         version_added: 2.5
+    caching:
+        description:
+            - "Disk caching policy."
+            - "Allowed values: None, ReadOnly, ReadWrite."
+        choices:
+            - None
+            - ReadOnly
+            - ReadWrite
     tags:
         description:
             - Tags to assign to the managed disk.
@@ -138,6 +146,7 @@ EXAMPLES = '''
         resource_group: myResourceGroup
         disk_size_gb: 4
         managed_by: testvm001
+        caching: ReadOnly
 
     - name: Unmount the managed disk to VM
       azure_rm_manageddisk:
@@ -245,6 +254,10 @@ class AzureRMManagedDisk(AzureRMModuleBase):
             zone=dict(
                 type='str',
                 choices=['', '1', '2', '3']
+            ),
+            caching=dict(
+                type='str',
+                choices=['None', 'ReadOnly','ReadWrite']
             )
         )
         required_if = [
@@ -267,6 +280,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         self.tags = None
         self.zone = None
         self.managed_by = None
+        self.caching = None
         super(AzureRMManagedDisk, self).__init__(
             derived_arg_spec=self.module_arg_spec,
             required_if=required_if,
@@ -330,7 +344,8 @@ class AzureRMManagedDisk(AzureRMModuleBase):
 
         # prepare the data disk
         params = self.compute_models.ManagedDiskParameters(id=disk.get('id'), storage_account_type=disk.get('storage_account_type'))
-        data_disk = self.compute_models.DataDisk(lun=lun, create_option=self.compute_models.DiskCreateOptionTypes.attach, managed_disk=params)
+        caching_options = self.caching if self.caching else None
+        data_disk = self.compute_models.DataDisk(lun=lun, create_option=self.compute_models.DiskCreateOptionTypes.attach, managed_disk=params, caching=caching_options)
         vm.storage_profile.data_disks.append(data_disk)
         self._update_vm(vm_name, vm)
 
