@@ -54,11 +54,15 @@ options:
     description:
     - Name of database to connect to and run queries against.
     type: str
+    aliases:
+    - login_db
   port:
     description:
     - Database port to connect.
     type: int
     default: 5432
+    aliases:
+    - login_port
   login_user:
     description:
     - User (role) used to authenticate with PostgreSQL.
@@ -219,9 +223,7 @@ def main():
     argument_spec = postgres_common_argument_spec()
     argument_spec.update(
         query=dict(type='str'),
-        db=dict(type='str'),
-        ssl_mode=dict(type='str', default='prefer', choices=['allow', 'disable', 'prefer', 'require', 'verify-ca', 'verify-full']),
-        ca_cert=dict(type='str', aliases=['ssl_rootcert']),
+        db=dict(type='str', aliases=['login_db']),
         positional_args=dict(type='list'),
         named_args=dict(type='dict'),
         session_role=dict(type='str'),

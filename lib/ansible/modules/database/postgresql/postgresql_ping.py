@@ -25,11 +25,15 @@ options:
     description:
     - Name of database to connect.
     type: str
+    aliases:
+    - login_db
   port:
     description:
     - Database port to connect.
     type: int
     default: 5432
+    aliases:
+    - login_port
   login_user:
     description:
     - User (role) used to authenticate with PostgreSQL.
@@ -171,9 +175,7 @@ class PgPing(object):
 def main():
     argument_spec = postgres_common_argument_spec()
     argument_spec.update(
-        db=dict(type='str'),
-        ssl_mode=dict(type='str', default='prefer', choices=['allow', 'disable', 'prefer', 'require', 'verify-ca', 'verify-full']),
-        ca_cert=dict(type='str', aliases=['ssl_rootcert']),
+        db=dict(type='str', aliases=['login_db']),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
