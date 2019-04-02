@@ -340,6 +340,8 @@ Noteworthy module changes
 Plugins
 =======
 
+* macOS no longer defaults to using the ``paramiko`` connection plugin as it has since Ansible 1.8. It will now use the ``ssh`` connection plugin by default.
+
 * Connection plugins have been standardized to allow use of ``ansible_<conn-type>_user``
   and ``ansible_<conn-type>_password`` variables.  Variables such as
   ``ansible_<conn-type>_pass`` and ``ansible_<conn-type>_username`` are treated
