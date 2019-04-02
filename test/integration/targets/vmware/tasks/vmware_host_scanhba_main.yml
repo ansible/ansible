@@ -4,22 +4,22 @@
 
 - name: add host
   vmware_host:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: no
     esxi_hostname: test_host_system_0001
-    esxi_username: "{{ vcsim_instance.json.username }}"
-    esxi_password: "{{ vcsim_instance.json.password }}"
+    esxi_username: "{{ vcenter_username }}"
+    esxi_password: "{{ vcenter_password }}"
     datacenter_name: "{{ dc1 }}"
     cluster_name: "{{ ccr1 }}"
     state: present
 
 - name: Recan HBA's for an entire cluster (there should be at least one host as above)
   vmware_host_scanhba:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: no
     cluster_name: '{{ ccr1 }}'
     refresh_storage: false

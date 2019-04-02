@@ -5,9 +5,9 @@
 # SNMP works only with standalone ESXi server
 - name: Enable and configure SNMP community in check mode
   vmware_host_snmp:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     community: [ test ]
     state: enabled
     validate_certs: no
@@ -23,9 +23,9 @@
 
 - name: Enable and configure SNMP community
   vmware_host_snmp:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     community: [ test ]
     state: enabled
     validate_certs: no

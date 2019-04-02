@@ -6,7 +6,7 @@
 - name: add distributed vSwitch
   vmware_dvswitch:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     datacenter_name: "{{ item | basename }}"
@@ -27,7 +27,7 @@
 
 - name: get a list of distributed vswitch from vcsim after adding
   uri:
-    url: http://{{ vcsim }}:5000/govc_find?filter=DVS
+    url: http://{{ vcenter_hostname }}:5000/govc_find?filter=DVS
   register: new_dvs_0001
 
 - debug:
@@ -47,7 +47,7 @@
 # - name: add distributed vSwitch again
 #   vmware_dvswitch:
 #     validate_certs: False
-#     hostname: "{{ vcsim }}"
+#     hostname: "{{ vcenter_hostname }}"
 #     username: "{{ vcsim_instance['json']['username'] }}"
 #     password: "{{ vcsim_instance['json']['password'] }}"
 #     datacenter_name: "{{ item | basename }}"
@@ -75,7 +75,7 @@
 #- name: add distributed vSwitch
 #  vmware_dvswitch:
 #    validate_certs: False
-#    hostname: "{{ vcsim }}"
+#    hostname: "{{ vcenter_hostname }}"
 #    username: root
 #    password: esxi@123
 #    datacenter_name: "{{ item | basename }}"
@@ -96,7 +96,7 @@
 
 #- name: get a list of Datacenter from vcsim after adding datacenter
 #  uri:
-#    url: http://{{ vcsim }}:5000/govc_find?filter=DVS
+#    url: http://{{ vcenter_hostname }}:5000/govc_find?filter=DVS
 #  register: del_dvs
 
 #- debug:

@@ -1,7 +1,7 @@
 - name: Create Windows 10 VM with VBS enabled
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     folder: "/{{ (clusters['json'][0]|basename).split('_')[0] }}/vm"
@@ -36,7 +36,7 @@
 - name: Create Windows Server 2016 VM without VBS enabled
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     folder: "/{{ (clusters['json'][0]|basename).split('_')[0] }}/vm"
@@ -70,7 +70,7 @@
 - name: Enable VBS for Windows Server 2016 VM
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     folder: "/{{ (clusters['json'][0]|basename).split('_')[0] }}/vm"

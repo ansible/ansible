@@ -6,7 +6,7 @@
 
 - name: Gather facts about all hosts in given cluster
   vmware_host_package_facts:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ user }}"
     password: "{{ passwd }}"
     esxi_hostname: "{{ host1 }}"

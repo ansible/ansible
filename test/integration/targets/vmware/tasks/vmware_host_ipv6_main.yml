@@ -4,9 +4,9 @@
 
 - name: Enable IPv6 support for a given host
   vmware_host_ipv6:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     esxi_hostname: "{{ host1 }}"
     validate_certs: no
     state: enabled
@@ -21,9 +21,9 @@
 
 - name: Enable IPv6 support for a given host in check mode
   vmware_host_ipv6:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     esxi_hostname: "{{ host1 }}"
     validate_certs: no
     state: enabled
@@ -39,9 +39,9 @@
 
 - name: Enable IPv6 support for all hosts in given cluster
   vmware_host_ipv6:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     cluster_name: "{{ ccr1 }}"
     validate_certs: no
     state: enabled
@@ -56,9 +56,9 @@
 
 - name: Enable IPv6 support for all hosts in given cluster in check mode
   vmware_host_ipv6:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     cluster_name: "{{ ccr1 }}"
     validate_certs: no
     state: enabled

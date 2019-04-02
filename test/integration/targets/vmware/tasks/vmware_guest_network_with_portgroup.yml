@@ -5,7 +5,7 @@
 - name: Create dvswitch
   vmware_dvswitch:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     datacenter_name: "{{ (vm1 | basename).split('_')[0] }}"
@@ -20,7 +20,7 @@
 - name: Add portgroup
   vmware_dvs_portgroup:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     portgroup_name: "portgroup_network"
@@ -34,7 +34,7 @@
 - name: create new VMs with portgroup
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     name: new_vm_pg

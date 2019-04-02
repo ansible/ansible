@@ -5,7 +5,7 @@
 - name: set state to poweroff on all VMs
   vmware_guest_powerstate:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     name: "{{ item|basename }}"

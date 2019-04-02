@@ -4,9 +4,9 @@
 
 - name: gather facts about all hosts in given cluster
   vmware_host_config_facts:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: no
     cluster_name: "{{ ccr1 }}"
   register: all_hosts_result
@@ -18,9 +18,9 @@
 
 - name: gather facts about a given host
   vmware_host_config_facts:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: no
     esxi_hostname: "{{ host1 }}"
   register: single_hosts_result
@@ -32,9 +32,9 @@
 
 - name: gather facts about all hosts in given cluster in check mode
   vmware_host_config_facts:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: no
     cluster_name: "{{ ccr1 }}"
   register: all_hosts_result_check_mode
@@ -47,9 +47,9 @@
 
 - name: gather facts about a given host in check mode
   vmware_host_config_facts:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: no
     esxi_hostname: "{{ host1 }}"
   register: single_hosts_result_check_mode

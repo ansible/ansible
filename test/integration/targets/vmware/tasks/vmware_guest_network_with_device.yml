@@ -8,7 +8,7 @@
 
 - name: Deploy VM {{ vm1 | basename }}
   vmware_guest:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     validate_certs: False
@@ -36,7 +36,7 @@
 
 - name: Deploy VM {{ vm1 | basename }} again
   vmware_guest:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     validate_certs: False

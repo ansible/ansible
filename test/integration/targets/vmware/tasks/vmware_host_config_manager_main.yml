@@ -6,9 +6,9 @@
 
 - name: Change facts about all hosts in given cluster
   vmware_host_config_manager:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     cluster_name: "{{ ccr1 }}"
     options:
       'Config.HostAgent.log.level': 'verbose'
@@ -22,9 +22,9 @@
 
 - name: Change facts about a given host
   vmware_host_config_manager:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     esxi_hostname: "{{ host1 }}"
     options:
       'Config.HostAgent.log.level': 'info'
@@ -38,9 +38,9 @@
 
 - name: Change facts about all hosts in given cluster in check mode
   vmware_host_config_manager:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     cluster_name: "{{ ccr1 }}"
     options:
       'Config.HostAgent.log.level': 'verbose'
@@ -55,9 +55,9 @@
 
 - name: Change facts about a given host in check mode
   vmware_host_config_manager:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     esxi_hostname: "{{ host1 }}"
     options:
       'Config.HostAgent.log.level': 'info'

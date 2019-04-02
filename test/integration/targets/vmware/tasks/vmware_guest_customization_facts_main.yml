@@ -7,7 +7,7 @@
 - name: Gather facts about given customization spec
   vmware_guest_customization_facts:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     spec_name: sample_spec

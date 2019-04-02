@@ -5,7 +5,7 @@
 - name: clone vm from template and convert to thin 
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     name: "{{ 'thin_' + item|basename }}"
@@ -27,7 +27,7 @@
 - name: clone vm from template and convert to thick 
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     name: "{{ 'thick_' + item|basename }}"
@@ -49,7 +49,7 @@
 - name: clone vm from template and convert to eagerzeroedthick
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     name: "{{ 'eagerzeroedthick_' + item|basename }}"

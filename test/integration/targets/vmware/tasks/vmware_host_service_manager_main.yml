@@ -7,9 +7,9 @@
 
 - name: Start ntpd service on all hosts in given cluster
   vmware_host_service_manager:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: no
     cluster_name: "{{ ccr1 }}"
     service_name: ntpd
@@ -23,9 +23,9 @@
 
 - name: Stop ntpd service on a given host
   vmware_host_service_manager:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: no
     esxi_hostname: "{{ host1 }}"
     service_name: ntpd
@@ -39,9 +39,9 @@
 
 - name: Start ntpd service on all hosts in given cluster in check mode
   vmware_host_service_manager:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: no
     cluster_name: "{{ ccr1 }}"
     service_name: ntpd
@@ -56,9 +56,9 @@
 
 - name: Stop ntpd service on a given host in check mode
   vmware_host_service_manager:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: no
     esxi_hostname: "{{ host1 }}"
     service_name: ntpd

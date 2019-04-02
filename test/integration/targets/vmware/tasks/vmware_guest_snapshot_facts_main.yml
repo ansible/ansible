@@ -7,7 +7,7 @@
  - name: Gather snapshot facts about given virtual machine
    vmware_guest_snapshot_facts:
      validate_certs: False
-     hostname: "{{ vcsim }}"
+     hostname: "{{ vcenter_hostname }}"
      username: "{{ vcsim_instance['json']['username'] }}"
      password: "{{ vcsim_instance['json']['password'] }}"
      datacenter: "{{ dc1 | basename }}"

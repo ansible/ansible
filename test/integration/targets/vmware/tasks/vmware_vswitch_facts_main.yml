@@ -6,7 +6,7 @@
 
 - name: Gather vswitch facts about all hosts in given cluster
   vmware_vswitch_facts:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ user }}"
     password: "{{ passwd }}"
     esxi_hostname: "{{ host1 }}"
@@ -21,7 +21,7 @@
 
 - name: Gather vswitch facts about all hosts in given cluster in check mode
   vmware_vswitch_facts:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ user }}"
     password: "{{ passwd }}"
     esxi_hostname: "{{ host1 }}"

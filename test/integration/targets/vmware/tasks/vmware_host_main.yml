@@ -5,13 +5,13 @@
 # Testcase: Add Host
 - name: add host
   vmware_host:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: no
     esxi_hostname: test_host_system_0001
-    esxi_username: "{{ vcsim_instance.json.username }}"
-    esxi_password: "{{ vcsim_instance.json.password }}"
+    esxi_username: "{{ vcenter_username }}"
+    esxi_password: "{{ vcenter_password }}"
     datacenter_name: "{{ dc1 }}"
     cluster_name: "{{ ccr1 }}"
     fetch_ssl_thumbprint: False
@@ -20,7 +20,7 @@
 
 - name: get a list of host system from vcsim after adding host system
   uri:
-    url: http://{{ vcsim }}:5000/govc_find?filter=H
+    url: http://{{ vcenter_hostname }}:5000/govc_find?filter=H
   register: host_list
 
 - name: ensure host system is present
@@ -32,13 +32,13 @@
 # Testcase: Add Host again
 - name: add host again
   vmware_host:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: no
     esxi_hostname: test_host_system_0001
-    esxi_username: "{{ vcsim_instance.json.username }}"
-    esxi_password: "{{ vcsim_instance.json.password }}"
+    esxi_username: "{{ vcenter_username }}"
+    esxi_password: "{{ vcenter_password }}"
     datacenter_name: "{{ dc1 }}"
     cluster_name: "{{ ccr1 }}"
     fetch_ssl_thumbprint: False
@@ -53,13 +53,13 @@
 # Testcase: Add Host via add_or_reconnect state
 - name: add host via add_or_reconnect
   vmware_host:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: no
     esxi_hostname: test_host_system_0002
-    esxi_username: "{{ vcsim_instance.json.username }}"
-    esxi_password: "{{ vcsim_instance.json.password }}"
+    esxi_username: "{{ vcenter_username }}"
+    esxi_password: "{{ vcenter_password }}"
     datacenter_name: "{{ dc1 }}"
     cluster_name: "{{ ccr1 }}"
     fetch_ssl_thumbprint: False
@@ -68,7 +68,7 @@
 
 - name: get a list of host system from vcsim after adding host system
   uri:
-    url: http://{{ vcsim }}:5000/govc_find?filter=H
+    url: http://{{ vcenter_hostname }}:5000/govc_find?filter=H
   register: host_list
 
 - name: ensure host system is present
@@ -83,9 +83,9 @@
 #
 # - name: Create host folder
 #   vcenter_folder:
-#     hostname: "{{ vcsim }}"
-#     username: "{{ vcsim_instance.json.username }}"
-#     password: "{{ vcsim_instance.json.password }}"
+#     hostname: "{{ vcenter_hostname }}"
+#     username: "{{ vcenter_username }}"
+#     password: "{{ vcenter_password }}"
 #     validate_certs: no
 #     datacenter: "{{ dc1 }}"
 #     folder_name: "Staging"
@@ -102,9 +102,9 @@
 #
 # - name: Create host folder again
 #   vcenter_folder:
-#     hostname: "{{ vcsim }}"
-#     username: "{{ vcsim_instance.json.username }}"
-#     password: "{{ vcsim_instance.json.password }}"
+#     hostname: "{{ vcenter_hostname }}"
+#     username: "{{ vcenter_username }}"
+#     password: "{{ vcenter_password }}"
 #     validate_certs: no
 #     datacenter: "{{ dc1 }}"
 #     folder_name: "Staging"
@@ -121,13 +121,13 @@
 #
 # - name: Add host to folder in check mode
 #   vmware_host:
-#     hostname: "{{ vcsim }}"
-#     username: "{{ vcsim_instance.json.username }}"
-#     password: "{{ vcsim_instance.json.password }}"
+#     hostname: "{{ vcenter_hostname }}"
+#     username: "{{ vcenter_username }}"
+#     password: "{{ vcenter_password }}"
 #     validate_certs: no
 #     esxi_hostname: test_host_system_0003
-#     esxi_username: "{{ vcsim_instance.json.username }}"
-#     esxi_password: "{{ vcsim_instance.json.password }}"
+#     esxi_username: "{{ vcenter_username }}"
+#     esxi_password: "{{ vcenter_password }}"
 #     datacenter_name: "{{ dc1 }}"
 #     folder_name: "Staging"
 #     state: present
@@ -136,7 +136,7 @@
 #
 # - name: get a list of host system from vcsim after adding host system
 #   uri:
-#     url: http://{{ vcsim }}:5000/govc_find?filter=H
+#     url: http://{{ vcenter_hostname }}:5000/govc_find?filter=H
 #   register: host_list
 #
 # - name: ensure host system is not present
@@ -147,13 +147,13 @@
 #
 # - name: Add host to folder
 #   vmware_host:
-#     hostname: "{{ vcsim }}"
-#     username: "{{ vcsim_instance.json.username }}"
-#     password: "{{ vcsim_instance.json.password }}"
+#     hostname: "{{ vcenter_hostname }}"
+#     username: "{{ vcenter_username }}"
+#     password: "{{ vcenter_password }}"
 #     validate_certs: no
 #     esxi_hostname: test_host_system_0003
-#     esxi_username: "{{ vcsim_instance.json.username }}"
-#     esxi_password: "{{ vcsim_instance.json.password }}"
+#     esxi_username: "{{ vcenter_username }}"
+#     esxi_password: "{{ vcenter_password }}"
 #     datacenter_name: "{{ dc1 }}"
 #     folder_name: "Staging"
 #     state: present
@@ -161,7 +161,7 @@
 #
 # - name: get a list of host system from vcsim after adding host system
 #   uri:
-#     url: http://{{ vcsim }}:5000/govc_find?filter=H
+#     url: http://{{ vcenter_hostname }}:5000/govc_find?filter=H
 #   register: host_list
 #
 # - name: ensure host system is present
@@ -177,9 +177,9 @@
 #
 #- name: reconnect host
 #  vmware_host:
-#    hostname: "{{ vcsim }}"
-#    username: "{{ vcsim_instance.json.username }}"
-#    password: "{{ vcsim_instance.json.password }}"
+#    hostname: "{{ vcenter_hostname }}"
+#    username: "{{ vcenter_username }}"
+#    password: "{{ vcenter_password }}"
 #    validate_certs: no
 #    esxi_hostname: test_host_system_0001
 #    datacenter_name: "{{ dc1 }}"
@@ -203,9 +203,9 @@
 #
 #- name: remove host
 #  vmware_host:
-#    hostname: "{{ vcsim }}"
-#    username: "{{ vcsim_instance.json.username }}"
-#    password: "{{ vcsim_instance.json.password }}"
+#    hostname: "{{ vcenter_hostname }}"
+#    username: "{{ vcenter_username }}"
+#    password: "{{ vcenter_password }}"
 #    validate_certs: no
 #    esxi_hostname: test_host_system_0001
 #    datacenter_name: "{{ dc1 }}"
@@ -215,7 +215,7 @@
 #
 #- name: get a list of host system from vcsim after removing host system
 #  uri:
-#    url: http://{{ vcsim }}:5000/govc_find?filter=H
+#    url: http://{{ vcenter_hostname }}:5000/govc_find?filter=H
 #  register: host_list
 #
 #- name: ensure host system is absent
@@ -231,9 +231,9 @@
 #
 #- name: remove host again
 #  vmware_host:
-#    hostname: "{{ vcsim }}"
-#    username: "{{ vcsim_instance.json.username }}"
-#    password: "{{ vcsim_instance.json.password }}"
+#    hostname: "{{ vcenter_hostname }}"
+#    username: "{{ vcenter_username }}"
+#    password: "{{ vcenter_password }}"
 #    validate_certs: no
 #    esxi_hostname: test_host_system_0001
 #    datacenter_name: "{{ dc1 }}"

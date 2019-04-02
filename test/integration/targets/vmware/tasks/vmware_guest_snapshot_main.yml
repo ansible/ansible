@@ -2,7 +2,7 @@
  - name: 0001 - Delete non-existent snapshot
    vmware_guest_snapshot:
      validate_certs: False
-     hostname: "{{ vcsim }}"
+     hostname: "{{ vcenter_hostname }}"
      username: "{{ vcsim_instance['json']['username'] }}"
      password: "{{ vcsim_instance['json']['password'] }}"
      datacenter: "{{ dc1 | basename }}"
@@ -15,7 +15,7 @@
  - name: 0002 - Create snapshot
    vmware_guest_snapshot:
      validate_certs: False
-     hostname: "{{ vcsim }}"
+     hostname: "{{ vcenter_hostname }}"
      username: "{{ vcsim_instance['json']['username'] }}"
      password: "{{ vcsim_instance['json']['password'] }}"
      datacenter: "{{ dc1 | basename }}"
@@ -32,7 +32,7 @@
  - name: 0003 - Rename snapshot
    vmware_guest_snapshot:
      validate_certs: False
-     hostname: "{{ vcsim }}"
+     hostname: "{{ vcenter_hostname }}"
      username: "{{ vcsim_instance['json']['username'] }}"
      password: "{{ vcsim_instance['json']['password'] }}"
      datacenter: "{{ dc1 | basename }}"
@@ -46,7 +46,7 @@
  - name: 0004 - Re-create snapshot a
    vmware_guest_snapshot:
      validate_certs: False
-     hostname: "{{ vcsim }}"
+     hostname: "{{ vcenter_hostname }}"
      username: "{{ vcsim_instance['json']['username'] }}"
      password: "{{ vcsim_instance['json']['password'] }}"
      datacenter: "{{ dc1 | basename }}"
@@ -60,7 +60,7 @@
  - name: 0005 - Change description of snap_c
    vmware_guest_snapshot:
      validate_certs: False
-     hostname: "{{ vcsim }}"
+     hostname: "{{ vcenter_hostname }}"
      username: "{{ vcsim_instance['json']['username'] }}"
      password: "{{ vcsim_instance['json']['password'] }}"
      datacenter: "{{ dc1 | basename }}"
@@ -74,7 +74,7 @@
  - name: 0006 - Delete snap_b with child remove
    vmware_guest_snapshot:
      validate_certs: False
-     hostname: "{{ vcsim }}"
+     hostname: "{{ vcenter_hostname }}"
      username: "{{ vcsim_instance['json']['username'] }}"
      password: "{{ vcsim_instance['json']['password'] }}"
      datacenter: "{{ dc1 | basename }}"
@@ -88,7 +88,7 @@
  - name: 0007 - Delete all snapshots
    vmware_guest_snapshot:
      validate_certs: False
-     hostname: "{{ vcsim }}"
+     hostname: "{{ vcenter_hostname }}"
      username: "{{ vcsim_instance['json']['username'] }}"
      password: "{{ vcsim_instance['json']['password'] }}"
      datacenter: "{{ dc1 | basename }}"
@@ -100,7 +100,7 @@
  - name: 0008 - Re-create snapshot a
    vmware_guest_snapshot:
      validate_certs: False
-     hostname: "{{ vcsim }}"
+     hostname: "{{ vcenter_hostname }}"
      username: "{{ vcsim_instance['json']['username'] }}"
      password: "{{ vcsim_instance['json']['password'] }}"
      datacenter: "{{ dc1 | basename }}"
@@ -113,7 +113,7 @@
  - name: 0008 - Revert to snap_a
    vmware_guest_snapshot:
      validate_certs: False
-     hostname: "{{ vcsim }}"
+     hostname: "{{ vcenter_hostname }}"
      username: "{{ vcsim_instance['json']['username'] }}"
      password: "{{ vcsim_instance['json']['password'] }}"
      datacenter: "{{ dc1 | basename }}"
@@ -126,7 +126,7 @@
  - name: 0009 - create snapshot a
    vmware_guest_snapshot:
      validate_certs: False
-     hostname: "{{ vcsim }}"
+     hostname: "{{ vcenter_hostname }}"
      username: "{{ vcsim_instance['json']['username'] }}"
      password: "{{ vcsim_instance['json']['password'] }}"
      datacenter: "{{ dc1 | basename }}"
@@ -146,7 +146,7 @@
  - name: 0010 - Folder is missing
    vmware_guest_snapshot:
      validate_certs: False
-     hostname: "{{ vcsim }}"
+     hostname: "{{ vcenter_hostname }}"
      username: "{{ vcsim_instance['json']['username'] }}"
      password: "{{ vcsim_instance['json']['password'] }}"
      datacenter: "{{ dc1 | basename }}"
@@ -167,7 +167,7 @@
  - name: 0011 - name and UUID is missing
    vmware_guest_snapshot:
      validate_certs: False
-     hostname: "{{ vcsim }}"
+     hostname: "{{ vcenter_hostname }}"
      username: "{{ vcsim_instance['json']['username'] }}"
      password: "{{ vcsim_instance['json']['password'] }}"
      datacenter: "{{ dc1 | basename }}"

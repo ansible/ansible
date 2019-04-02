@@ -2,7 +2,7 @@
 - name: create new VM with default resource pool
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     name: "{{ 'newvm_' + item|basename }}"
@@ -31,7 +31,7 @@
 - name: delete the new VMs
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     name: "{{ 'newvm_' + item|basename }}"
@@ -54,7 +54,7 @@
 - name: create new VM with default resource pool in cluster
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     name: "{{ 'newvm_' + item|basename }}"
@@ -84,7 +84,7 @@
 - name: delete the new VMs
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     name: "{{ 'newvm_' + item|basename }}"
@@ -108,7 +108,7 @@
 - name: create new VM with specific resource pool in cluster
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     name: "{{ 'newvm_' + item|basename }}"
@@ -139,7 +139,7 @@
 - name: delete the new VMs
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     name: "{{ 'newvm_' + item|basename }}"
@@ -163,7 +163,7 @@
 - name: create new VM with specific host
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     name: "{{ 'newvm_' + item|basename }}"
@@ -193,7 +193,7 @@
 - name: delete the new VMs
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     name: "{{ 'newvm_' + item|basename }}"

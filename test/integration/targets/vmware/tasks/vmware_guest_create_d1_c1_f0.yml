@@ -5,7 +5,7 @@
 - name: create new VMs
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     name: "{{ 'newvm_' + item|basename }}"
@@ -48,7 +48,7 @@
 - name: create new VMs again
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     name: "{{ 'newvm_' + item|basename }}"
@@ -84,7 +84,7 @@
 - name: modify the new VMs
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     name: "{{ 'newvm_' + item|basename }}"
@@ -109,7 +109,7 @@
 - name: re-modify the new VMs
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     name: "{{ 'newvm_' + item|basename }}"
@@ -134,7 +134,7 @@
 - name: delete the new VMs
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     name: "{{ 'newvm_' + item|basename }}"
@@ -156,7 +156,7 @@
 - name: re-delete the new VMs
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     name: "{{ 'newvm_' + item|basename }}"

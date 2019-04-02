@@ -5,7 +5,7 @@
 ---
 - name: get a list of virtual machines from vcsim
   uri:
-    url: http://{{ vcsim }}:5000/govc_find?filter=VM
+    url: http://{{ vcenter_hostname }}:5000/govc_find?filter=VM
   register: vms
 
 - set_fact: vm1="{{ vms['json'][0] }}"
@@ -14,7 +14,7 @@
 - name: get list of facts about virtual machines
   vmware_guest_facts:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     datacenter: "{{ dc1 | basename }}"
@@ -51,7 +51,7 @@
 - name: get list of facts about virtual machines using UUID
   vmware_guest_facts:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     datacenter: "{{ dc1 | basename }}"
@@ -63,7 +63,7 @@
 - name: "Get specific details about virtual machines using the vsphere output schema"
   vmware_guest_facts:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     datacenter: "{{ dc1 | basename }}"
@@ -93,7 +93,7 @@
 - name: get empty list of snapshots from virtual machine using UUID
   vmware_guest_facts:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     datacenter: "{{ dc1 | basename }}"
@@ -112,7 +112,7 @@
 #- name: Create first snapshot
 #  vmware_guest_snapshot:
 #    validate_certs: False
-#    hostname: "{{ vcsim }}"
+#    hostname: "{{ vcenter_hostname }}"
 #    username: "{{ vcsim_instance['json']['username'] }}"
 #    password: "{{ vcsim_instance['json']['password'] }}"
 #    datacenter: "{{ dc1 | basename }}"
@@ -124,7 +124,7 @@
 #- name: Create second snapshot
 #  vmware_guest_snapshot:
 #    validate_certs: False
-#    hostname: "{{ vcsim }}"
+#    hostname: "{{ vcenter_hostname }}"
 #    username: "{{ vcsim_instance['json']['username'] }}"
 #    password: "{{ vcsim_instance['json']['password'] }}"
 #    datacenter: "{{ dc1 | basename }}"
@@ -136,7 +136,7 @@
 #- name: get list of snapshots from virtual machine using UUID
 #  vmware_guest_facts:
 #    validate_certs: False
-#    hostname: "{{ vcsim }}"
+#    hostname: "{{ vcenter_hostname }}"
 #    username: "{{ vcsim_instance['json']['username'] }}"
 #    password: "{{ vcsim_instance['json']['password'] }}"
 #    datacenter: "{{ dc1 | basename }}"
@@ -157,7 +157,7 @@
 - name: get list of facts about virtual machines using instance UUID
   vmware_guest_facts:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     datacenter: "{{ dc1 | basename }}"

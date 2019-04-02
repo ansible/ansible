@@ -6,9 +6,9 @@
 
 - name: Gather feature capability facts for all ESXi host from given cluster
   vmware_host_feature_facts:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: no
     cluster_name: "{{ ccr1 }}"
   register: capability_0001_results
@@ -20,9 +20,9 @@
 
 - name: Gather feature capability facts for all ESXi host from given cluster in check mode
   vmware_host_feature_facts:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: no
     cluster_name: "{{ ccr1 }}"
   register: capability_0001_results
@@ -35,9 +35,9 @@
 
 - name: Gather feature capability facts for ESXi host
   vmware_host_feature_facts:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: no
     esxi_hostname: "{{ host1 }}"
   register: capability_0002_results
@@ -50,9 +50,9 @@
 
 - name: Gather feature capability facts for ESXi host in check mode
   vmware_host_feature_facts:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: no
     esxi_hostname: "{{ host1 }}"
   register: capability_0002_results

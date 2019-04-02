@@ -5,7 +5,7 @@
 - name: Gather facts about VM boot order
   vmware_guest_boot_facts:
     validate_certs: no
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     name: "{{ item|basename }}"
@@ -27,7 +27,7 @@
 - name: Gather facts about VM boot order in check mode
   vmware_guest_boot_facts:
     validate_certs: no
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     name: "{{ item|basename }}"

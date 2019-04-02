@@ -5,7 +5,7 @@
 - name: create new VMs with boot_firmware as 'bios'
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     name: "{{ 'newvm_' + item|basename }}"
@@ -35,7 +35,7 @@
 #- name: create new VMs again with boot_firmware as 'bios'
 #  vmware_guest:
 #    validate_certs: False
-#    hostname: "{{ vcsim }}"
+#    hostname: "{{ vcenter_hostname }}"
 #    username: "{{ vcsim_instance['json']['username'] }}"
 #    password: "{{ vcsim_instance['json']['password'] }}"
 #    name: "{{ 'newvm_' + item|basename }}"
@@ -64,7 +64,7 @@
 - name: create new VMs with boot_firmware as 'efi'
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     name: "{{ 'newvm_efi_' + item|basename }}"
@@ -94,7 +94,7 @@
 #- name: create new VMs again with boot_firmware as 'efi'
 #  vmware_guest:
 #    validate_certs: False
-#    hostname: "{{ vcsim }}"
+#    hostname: "{{ vcenter_hostname }}"
 #    username: "{{ vcsim_instance['json']['username'] }}"
 #    password: "{{ vcsim_instance['json']['password'] }}"
 #    name: "{{ 'newvm_efi_' + item|basename }}"

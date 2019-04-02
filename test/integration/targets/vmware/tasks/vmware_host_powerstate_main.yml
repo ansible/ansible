@@ -6,9 +6,9 @@
 
 - name: Restart Host
   vmware_host_powerstate:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: False
     state: power-down-to-standby
     esxi_hostname: "{{ host1 }}"

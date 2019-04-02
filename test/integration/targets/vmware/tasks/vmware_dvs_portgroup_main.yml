@@ -21,7 +21,7 @@
 - name: create basic portgroup
   vmware_dvs_portgroup:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     switch_name: "{{ switch1 }}"
@@ -41,7 +41,7 @@
 - name: create basic VLAN portgroup
   vmware_dvs_portgroup:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     switch_name: "{{ switch1 }}"
@@ -61,7 +61,7 @@
 - name: create basic trunk portgroup
   vmware_dvs_portgroup:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     switch_name: "{{ switch1 }}"
@@ -82,7 +82,7 @@
 - name: create basic portgroup again
   vmware_dvs_portgroup:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     switch_name: "{{ switch1 }}"
@@ -102,7 +102,7 @@
 - name: create basic portgroup with all security and policy settings enabled
   vmware_dvs_portgroup:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     switch_name: "{{ switch1 }}"
@@ -138,7 +138,7 @@
 - name: create basic portgroup with all security and policy settings enabled
   vmware_dvs_portgroup:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     switch_name: "{{ switch1 }}"
@@ -164,7 +164,7 @@
 - name: delete basic portgroup
   vmware_dvs_portgroup:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     switch_name: "{{ switch1 }}"
@@ -184,7 +184,7 @@
 - name: delete basic portgroup again
   vmware_dvs_portgroup:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     switch_name: "{{ new_dvs_0001['json'][0] | basename }}"

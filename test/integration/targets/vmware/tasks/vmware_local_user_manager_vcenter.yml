@@ -1,9 +1,9 @@
 # Testcase 0003: Add Local user in vCenter server
 - name: add local user
   vmware_local_user_manager:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: no
     local_user_name: testuser_0003
     local_user_password: "SamplePassword!"
@@ -20,9 +20,9 @@
 # Testcase 0003: Delete Local user in vCenter server
 - name: Delete local user
   vmware_local_user_manager:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: no
     local_user_name: testuser_0003
     state: absent

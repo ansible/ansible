@@ -1,7 +1,7 @@
 - name: ensure that VMs are not flagged as templates
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     datacenter: "{{ (item|basename).split('_')[0] }}"
@@ -22,7 +22,7 @@
 - name: convert all VMs to templates
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     datacenter: "{{ (item|basename).split('_')[0] }}"
@@ -43,7 +43,7 @@
 - name: make double sure that all VMs are templates
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     datacenter: "{{ (item|basename).split('_')[0] }}"
@@ -64,7 +64,7 @@
 - name: convert all templates back to VMs
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     datacenter: "{{ (item|basename).split('_')[0] }}"

@@ -5,7 +5,7 @@
 - name: Gather facts about resource pool
   vmware_resource_pool_facts:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
   register: resource_result_0001

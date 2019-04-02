@@ -5,7 +5,7 @@
 - name: Power on VM1
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     name: "{{ vm1|basename }}"
@@ -18,7 +18,7 @@
 #- name: Waiting until VMware tools becomes available
 #  vmware_guest_tools_wait:
 #    validate_certs: False
-#    hostname: "{{ vcsim }}"
+#    hostname: "{{ vcenter_hostname }}"
 #    username: "{{ vcsim_instance['json']['username'] }}"
 #    password: "{{ vcsim_instance['json']['password'] }}"
 #    name: "{{ vm1 | basename }}"
@@ -41,7 +41,7 @@
 #- name: Waiting until VMware tools becomes available
 #  vmware_guest_tools_wait:
 #    validate_certs: False
-#    hostname: "{{ vcsim }}"
+#    hostname: "{{ vcenter_hostname }}"
 #    username: "{{ vcsim_instance['json']['username'] }}"
 #    password: "{{ vcsim_instance['json']['password'] }}"
 #    uuid: "{{ vm1_uuid }}"

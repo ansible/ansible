@@ -5,9 +5,9 @@
 # The following test cases aren't supported by vcsim
 - name: Set the Power Management Policy for {{ host1 }}
   vmware_host_powermgmt_policy:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     esxi_hostname: "{{ host1 }}"
     policy: high-performance
     validate_certs: no
@@ -23,9 +23,9 @@
 
 - name: Set the Power Management Policy on all hosts of {{ ccr1 }}
   vmware_host_powermgmt_policy:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     esxi_hostname: "{{ host1 }}"
     policy: balanced
     validate_certs: no
@@ -41,9 +41,9 @@
 
 - name: Set the Power Management Policy for {{ host1 }} in check mode
   vmware_host_powermgmt_policy:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     esxi_hostname: "{{ host1 }}"
     policy: high-performance
     validate_certs: no
@@ -60,9 +60,9 @@
 
 - name: Set the Power Management Policy on all hosts of {{ ccr1 }} in check mode
   vmware_host_powermgmt_policy:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     esxi_hostname: "{{ host1 }}"
     policy: balanced
     validate_certs: no

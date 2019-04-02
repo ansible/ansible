@@ -4,9 +4,9 @@
 
 - name: Enable vvold rule set on all hosts of {{ ccr1 }}
   vmware_host_firewall_manager:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: no
     cluster_name: "{{ ccr1 }}"
     rules:
@@ -35,9 +35,9 @@
 
 - name: Disable vvold for {{ host1 }}
   vmware_host_firewall_manager:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: no
     esxi_hostname: "{{ host1 }}"
     rules:
@@ -64,9 +64,9 @@
 
 - name: Enable vvold rule set on all hosts of {{ ccr1 }} in check mode
   vmware_host_firewall_manager:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: no
     cluster_name: "{{ ccr1 }}"
     rules:
@@ -96,9 +96,9 @@
 
 - name: Disable vvold for {{ host1 }} in check mode
   vmware_host_firewall_manager:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: no
     esxi_hostname: "{{ host1 }}"
     rules:

@@ -4,7 +4,7 @@
 
 - name: list custom attributes
   vmware_guest_custom_attribute_defs:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     validate_certs: False
@@ -20,7 +20,7 @@
 - name: add custom attribute definition
   vmware_guest_custom_attribute_defs:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     state: present
@@ -37,7 +37,7 @@
 - name: list custom attributes
   vmware_guest_custom_attribute_defs:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     state: list
@@ -52,7 +52,7 @@
 - name: add attribute definition again
   vmware_guest_custom_attribute_defs:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     state: present
@@ -68,7 +68,7 @@
 - name: list attribute definition
   vmware_guest_custom_attribute_defs:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     state: list
@@ -83,7 +83,7 @@
 - name: remove attribute definition
   vmware_guest_custom_attribute_defs:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     state: absent
@@ -100,7 +100,7 @@
 - name: remove attribute definition
   vmware_guest_custom_attribute_defs:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     state: absent
@@ -117,7 +117,7 @@
 - name: list attribute definition
   vmware_guest_custom_attribute_defs:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     state: list

@@ -8,9 +8,9 @@
 # Local user manager works only with standalone ESXi server
 - name: Gather facts about users
   vmware_local_user_facts:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: False
   register: all_user_facts
 

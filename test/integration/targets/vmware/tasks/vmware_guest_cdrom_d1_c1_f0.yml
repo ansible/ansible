@@ -1,7 +1,7 @@
 - name: Create VM with CDROM
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     folder: "vm"
@@ -34,7 +34,7 @@
 - name: Update CDROM to iso for the new VM
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     folder: "vm"
@@ -57,7 +57,7 @@
 - name: Update CDROM to client for the new VM
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     folder: vm
@@ -79,7 +79,7 @@
 - name: Update CDROM to none for the new VM
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     folder: vm
@@ -101,7 +101,7 @@
 - name: Create VM with multiple disks and a CDROM - GitHub issue 38679
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     folder: vm
@@ -142,7 +142,7 @@
 #- name: Again create VM with multiple disks and a CDROM - GitHub issue 38679
 #  vmware_guest:
 #    validate_certs: False
-#    hostname: "{{ vcsim }}"
+#    hostname: "{{ vcenter_hostname }}"
 #    username: "{{ vcsim_instance['json']['username'] }}"
 #    password: "{{ vcsim_instance['json']['password'] }}"
 #    folder: "/{{ (clusters['json'][0]|basename).split('_')[0] }}/vm"

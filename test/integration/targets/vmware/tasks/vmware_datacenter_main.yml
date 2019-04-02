@@ -6,7 +6,7 @@
 - name: add datacenter
   vmware_datacenter:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     datacenter_name: datacenter_0001
@@ -15,7 +15,7 @@
 
 - name: get a list of Datacenter from vcsim after adding datacenter
   uri:
-    url: http://{{ vcsim }}:5000/govc_find?filter=DC
+    url: http://{{ vcenter_hostname }}:5000/govc_find?filter=DC
   register: new_datacenters
 
 - name: ensure datacenter is present
@@ -28,7 +28,7 @@
 - name: add datacenter again to check idempotent behavior
   vmware_datacenter:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     datacenter_name: datacenter_0001
@@ -48,7 +48,7 @@
 #- name: add datacenter
 #  vmware_datacenter:
 #    validate_certs: False
-#    hostname: "{{ vcsim }}"
+#    hostname: "{{ vcenter_hostname }}"
 #    username: "{{ vcsim_instance['json']['username'] }}"
 #    password: "{{ vcsim_instance['json']['password'] }}"
 #    datacenter_name: datacenter_0001
@@ -57,7 +57,7 @@
 
 #- name: get a list of Datacenter from vcsim after adding datacenter
 #  uri:
-#    url: http://{{ vcsim }}:5000/govc_find?filter=DC
+#    url: http://{{ vcenter_hostname }}:5000/govc_find?filter=DC
 #  register: new_datacenters_delete
 
 #- name: ensure datacenter is absent

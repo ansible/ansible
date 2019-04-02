@@ -5,7 +5,7 @@
 - name: add distributed vSwitch
   vmware_dvswitch:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     datacenter_name: "{{ item | basename }}"
@@ -26,7 +26,7 @@
 
 - name: get a list of distributed vswitch from vcsim after adding
   uri:
-    url: http://{{ vcsim }}:5000/govc_find?filter=DVS
+    url: http://{{ vcenter_hostname }}:5000/govc_find?filter=DVS
   register: new_dvs_0001
 
 - debug:
@@ -42,7 +42,7 @@
 
 - name: Create vlan portgroup with all security and port policies
   vmware_dvs_portgroup:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     validate_certs: False
@@ -78,7 +78,7 @@
 
 - name: create a session.
   vmware_vspan_session:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     validate_certs: False
@@ -100,7 +100,7 @@
 
 - name: delete a session.
   vmware_vspan_session:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     validate_certs: False

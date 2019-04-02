@@ -44,7 +44,7 @@
   register: clone_d1_c1_f0_env
   ignore_errors: True
   environment:
-    VMWARE_HOST: "{{ vcsim }}"
+    VMWARE_HOST: "{{ vcenter_hostname }}"
 - debug: var=clone_d1_c1_f0_env
 
 - name: assert that changes were made
@@ -70,7 +70,7 @@
   register: clone_d1_c1_f0_env
   ignore_errors: True
   environment:
-    VMWARE_HOST: "{{ vcsim }}"
+    VMWARE_HOST: "{{ vcenter_hostname }}"
     VMWARE_USER: "{{ vcsim_instance['json']['username'] }}"
 - debug: var=clone_d1_c1_f0_env
 
@@ -96,7 +96,7 @@
   with_items: "{{ vmlist['json'] }}"
   register: clone_d1_c1_f0_env
   environment:
-    VMWARE_HOST: "{{ vcsim }}"
+    VMWARE_HOST: "{{ vcenter_hostname }}"
     VMWARE_USER: "{{ vcsim_instance['json']['username'] }}"
     VMWARE_PASSWORD: "{{ vcsim_instance['json']['password'] }}"
     VMWARE_VALIDATE_CERTS: False

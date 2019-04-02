@@ -6,7 +6,7 @@
 
 - name: Add NTP server to a host
   vmware_host_ntp:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     esxi_hostname: "{{ host1 }}"
@@ -20,7 +20,7 @@
 
 - name: Add another NTP server to a host
   vmware_host_ntp:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     esxi_hostname: "{{ host1 }}"
@@ -34,7 +34,7 @@
 
 - name: Remove NTP server from a host
   vmware_host_ntp:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     esxi_hostname: "{{ host1 }}"
@@ -48,7 +48,7 @@
 
 - name: Remove NTP server from a host
   vmware_host_ntp:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     esxi_hostname: "{{ host1 }}"
@@ -62,7 +62,7 @@
 
 - name: Add more NTP servers to a host
   vmware_host_ntp:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     esxi_hostname: "{{ host1 }}"
@@ -78,7 +78,7 @@
 
 - name: Remove all NTP servers from a host
   vmware_host_ntp:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     esxi_hostname: "{{ host1 }}"
@@ -97,7 +97,7 @@
 
 - name: Configure NTP servers for a host
   vmware_host_ntp:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     esxi_hostname: "{{ host1 }}"
@@ -112,7 +112,7 @@
 
 - name: Configure NTP servers for a host
   vmware_host_ntp:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     esxi_hostname: "{{ host1 }}"
@@ -128,7 +128,7 @@
 
 - name: Add NTP server to a host in check mode
   vmware_host_ntp:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     esxi_hostname: "{{ host1 }}"
@@ -143,7 +143,7 @@
 
 - name: Remove NTP server to a host in check mode
   vmware_host_ntp:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     esxi_hostname: "{{ host1 }}"
@@ -158,7 +158,7 @@
 
 - name: Configure NTP servers for a host in check mode
   vmware_host_ntp:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     esxi_hostname: "{{ host1 }}"

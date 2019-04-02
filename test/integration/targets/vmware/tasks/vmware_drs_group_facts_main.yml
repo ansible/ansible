@@ -4,7 +4,7 @@
 
 - name: Gather DRS group facts from given cluster
   vmware_drs_group_facts:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     cluster_name: DC0_C0
@@ -21,7 +21,7 @@
 
 - name: Gather DRS group facts from given datacenter
   vmware_drs_group_facts:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     datacenter: DC0

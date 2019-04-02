@@ -6,9 +6,9 @@
 
 - name: Enter datastore in maintenance mode
   vmware_datastore_maintenancemode:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     state: present
     datastore: "{{ item | basename }}"
     validate_certs: False
@@ -24,9 +24,9 @@
 
 - name: Enter datastore in maintenance mode again
   vmware_datastore_maintenancemode:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     state: present
     datastore: "{{ item | basename }}"
     validate_certs: no
@@ -42,9 +42,9 @@
 
 - name: Exit datastores from maintenance mode
   vmware_datastore_maintenancemode:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     state: absent
     esxi_hostname: "{{ item | basename }}"
     validate_certs: no
@@ -60,9 +60,9 @@
 
 - name: Exit datastores from maintenance mode again
   vmware_datastore_maintenancemode:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     state: absent
     esxi_hostname: "{{ item | basename }}"
     validate_certs: no

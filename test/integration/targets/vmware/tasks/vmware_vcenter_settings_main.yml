@@ -4,9 +4,9 @@
 
 - name: Configure general settings in check mode
   vmware_vcenter_settings:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     database:
       max_connections: 50
       task_cleanup: true
@@ -48,9 +48,9 @@
 
 - name: Configure general settings
   vmware_vcenter_settings:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     database:
       max_connections: 50
       task_cleanup: true

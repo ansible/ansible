@@ -1,8 +1,14 @@
 ---
+
 - name: start vcsim
   uri:
     url: http://{{ vcsim }}:5000/spawn?cluster=2
   register: vcsim_instance
+
+- set_fact:
+    vcenter_hostname: "{{ vcsim }}"
+    vcenter_username: "{{ vcsim_instance.json.username }}"
+    vcenter_password: "{{ vcsim_instance.json.password }}"
 
 - debug:
     var: vcsim_instance

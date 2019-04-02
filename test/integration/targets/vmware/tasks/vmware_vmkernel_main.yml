@@ -6,7 +6,7 @@
 
 - name: Create VMkernel adapter
   vmware_vmkernel:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ user }}"
     password: "{{ passwd }}"
     esxi_hostname: "{{ host1 }}"
@@ -22,7 +22,7 @@
 
 - name: Create VMkernel adapter in check mode
   vmware_vmkernel:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ user }}"
     password: "{{ passwd }}"
     esxi_hostname: "{{ host1 }}"
@@ -39,7 +39,7 @@
 
 - name: Delete VMkernel adapter
   vmware_vmkernel:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ user }}"
     password: "{{ passwd }}"
     esxi_hostname: "{{ host1 }}"
@@ -53,7 +53,7 @@
 
 - name: Create VMkernel adapter with vMotion TCP/IP stack
   vmware_vmkernel:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ user }}"
     password: "{{ passwd }}"
     esxi_hostname: "{{ host1 }}"
@@ -73,7 +73,7 @@
 
 - name: Delete VMkernel adapter
   vmware_vmkernel:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ user }}"
     password: "{{ passwd }}"
     esxi_hostname: "{{ host1 }}"
@@ -87,7 +87,7 @@
 
 - name: Create VMkernel adapter with DHCP
   vmware_vmkernel:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ user }}"
     password: "{{ passwd }}"
     esxi_hostname: "{{ host1 }}"

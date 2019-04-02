@@ -5,7 +5,7 @@
 - name: Gather facts about DVS portgroup
   vmware_dvs_portgroup_facts:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     datacenter: DC0
@@ -20,7 +20,7 @@
 - name: Gather facts about DVS portgroup in check mode
   vmware_dvs_portgroup_facts:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     datacenter: DC0

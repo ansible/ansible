@@ -4,9 +4,9 @@
 
 - name: gather DNS facts about all hosts in given cluster
   vmware_host_dns_facts:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     cluster_name: "{{ ccr1 }}"
     validate_certs: no
   register: all_hosts_dns_result
@@ -19,9 +19,9 @@
 
 - name: gather DNS facts about host system
   vmware_host_dns_facts:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     esxi_hostname: "{{ host1 }}"
     validate_certs: no
   register: all_hosts_dns_result
@@ -34,9 +34,9 @@
 
 - name: gather DNS facts about all hosts in given cluster in check mode
   vmware_host_dns_facts:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     cluster_name: "{{ ccr1 }}"
     validate_certs: no
   register: all_hosts_dns_result_check_mode
@@ -50,9 +50,9 @@
 
 - name: gather DNS facts about host system in check mode
   vmware_host_dns_facts:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     esxi_hostname: "{{ host1 }}"
     validate_certs: no
   register: all_hosts_dns_result_check_mode

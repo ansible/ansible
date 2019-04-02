@@ -6,7 +6,7 @@
 - name: add resource pool
   vmware_resource_pool:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     datacenter: "{{ dc1 }}"
@@ -25,7 +25,7 @@
 
 - name: get a list of resources from vcsim after adding a resource pool
   uri:
-    url: http://{{ vcsim }}:5000/govc_find?filter=RP
+    url: http://{{ vcenter_hostname }}:5000/govc_find?filter=RP
   register: new_rp_list
 
 - set_fact: new_resource="{% for rp in new_rp_list['json'] %} {{ True if (rp | basename) == 'test_resource_0001' else False }} {% endfor %}"
@@ -41,7 +41,7 @@
 - name: add resource pool again
   vmware_resource_pool:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     datacenter: "{{ dc1 }}"
@@ -68,7 +68,7 @@
 - name: add resource pool again
   vmware_resource_pool:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     datacenter: "{{ dc1 }}"
@@ -86,7 +86,7 @@
 - name: add resource pool again
   vmware_resource_pool:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     datacenter: "{{ dc1 }}"

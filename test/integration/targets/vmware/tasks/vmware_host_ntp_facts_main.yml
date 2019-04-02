@@ -6,7 +6,7 @@
 
 - name: Gather NTP facts about all hosts in given host
   vmware_host_ntp_facts:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     esxi_hostname: "{{ host1 }}"

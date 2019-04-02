@@ -6,9 +6,9 @@
 
 - name: Join an AD domain in check mode
   vmware_host_active_directory:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     esxi_hostname: "{{ host1 }}"
     ad_domain: example.local
     ad_user: adjoin
@@ -27,9 +27,9 @@
 
 - name: Join an AD domain
   vmware_host_active_directory:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     esxi_hostname: "{{ host1 }}"
     ad_domain: example.local
     ad_user: adjoin
@@ -47,9 +47,9 @@
 
 - name: Leave AD domain in check mode
   vmware_host_active_directory:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     esxi_hostname: "{{ host1 }}"
     ad_state: absent
     validate_certs: no
@@ -65,9 +65,9 @@
 
 - name: Leave AD domain
   vmware_host_active_directory:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     esxi_hostname: "{{ host1 }}"
     ad_state: absent
     validate_certs: no

@@ -5,7 +5,7 @@
 - name: Gather facts about DRS rule from given cluster
   vmware_drs_rule_facts:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     cluster_name: DC0_C0
@@ -21,7 +21,7 @@
 - name: Gather facts about DRS rule from given datacenter
   vmware_drs_rule_facts:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     datacenter: DC0

@@ -4,9 +4,9 @@
 
 - name: host connected, module exists, options exist, arguments different
   vmware_host_kernel_manager:
-    hostname: '{{ vcsim }}'
-    username: '{{ vcsim_instance.json.username }}'
-    password: '{{ vcsim_instance.json.password }}'
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
     validate_certs: False
     esxi_hostname: '{{ host1 }}'
     kernel_module_name: "tcpip4"
@@ -20,9 +20,9 @@
 
 - name: host connected, module exists, same options for idempotence test
   vmware_host_kernel_manager:
-    hostname: '{{ vcsim }}'
-    username: '{{ vcsim_instance.json.username }}'
-    password: '{{ vcsim_instance.json.password }}'
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
     validate_certs: False
     esxi_hostname: '{{ host1 }}'
     kernel_module_name: "tcpip4"

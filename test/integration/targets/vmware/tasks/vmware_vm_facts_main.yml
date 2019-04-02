@@ -6,7 +6,7 @@
 - name: Get facts about available vms
   vmware_vm_facts:
     validate_certs: false
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
   register: vm_facts_0001
@@ -30,7 +30,7 @@
 - name: Get facts about available vms in check mode
   vmware_vm_facts:
     validate_certs: false
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
   register: vm_facts_0001

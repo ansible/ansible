@@ -4,7 +4,7 @@
 
 - name: Create a role without privileges in check mode
   vmware_local_role_manager:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     local_role_name: SampleRole_0001
@@ -20,7 +20,7 @@
 
 - name: Create a role without privileges
   vmware_local_role_manager:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     local_role_name: SampleRole_0001
@@ -35,7 +35,7 @@
 
 - name: Again create a role without privileges
   vmware_local_role_manager:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     local_role_name: SampleRole_0001
@@ -50,7 +50,7 @@
 
 - name: Delete a role
   vmware_local_role_manager:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     local_role_name: SampleRole_0001
@@ -65,7 +65,7 @@
 
 - name: Delete role again
   vmware_local_role_manager:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     local_role_name: SampleRole_0001
@@ -80,7 +80,7 @@
 
 - name: Create a role with privileges
   vmware_local_role_manager:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     local_role_name: SampleRole_0001
@@ -96,7 +96,7 @@
 
 - name: Add a privilege to existing privileges
   vmware_local_role_manager:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     local_role_name: SampleRole_0001
@@ -113,7 +113,7 @@
 
 - name: Again add a privilege to existing privileges
   vmware_local_role_manager:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     local_role_name: SampleRole_0001
@@ -130,7 +130,7 @@
 
 - name: Remove a privilege from existing privileges
   vmware_local_role_manager:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     local_role_name: SampleRole_0001
@@ -146,7 +146,7 @@
 
 - name: Again remove a privilege from existing privileges
   vmware_local_role_manager:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     local_role_name: SampleRole_0001
@@ -162,7 +162,7 @@
 
 - name: Set a privilege to an existing role
   vmware_local_role_manager:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     local_role_name: SampleRole_0001
@@ -178,7 +178,7 @@
 
 - name: Again set a privilege to an existing role
   vmware_local_role_manager:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     local_role_name: SampleRole_0001

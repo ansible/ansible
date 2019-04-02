@@ -7,7 +7,7 @@
     guest1: "{{ vmlist.json[0] | basename }}"
 
 - vmware_vm_facts:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     validate_certs: no
@@ -24,7 +24,7 @@
 - debug: var=vm_powerstate
 
 - vmware_guest:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     validate_certs: no
@@ -38,7 +38,7 @@
 - name: Delete VM
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     name: "{{ guest1 }}"

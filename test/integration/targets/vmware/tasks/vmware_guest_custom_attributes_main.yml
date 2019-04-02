@@ -10,7 +10,7 @@
 - name: Add custom attribute to the given virtual machine
   vmware_guest_custom_attributes:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     datacenter: "{{ dc1 | basename }}"
@@ -35,7 +35,7 @@
 - name: Add custom attribute to the given virtual machine again
   vmware_guest_custom_attributes:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     datacenter: "{{ dc1 | basename }}"
@@ -60,7 +60,7 @@
 - name: Remove custom attribute to the given virtual machine
   vmware_guest_custom_attributes:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     datacenter: "{{ dc1 | basename }}"
@@ -85,7 +85,7 @@
 #- name: Remove custom attribute to the given virtual machine again
 #  vmware_guest_custom_attributes:
 #    validate_certs: False
-#    hostname: "{{ vcsim }}"
+#    hostname: "{{ vcenter_hostname }}"
 #    username: "{{ vcsim_instance['json']['username'] }}"
 #    password: "{{ vcsim_instance['json']['password'] }}"
 #    datacenter: "{{ dc1 | basename }}"

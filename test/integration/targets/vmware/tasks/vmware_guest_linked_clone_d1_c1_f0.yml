@@ -5,7 +5,7 @@
 - name: create new linked clone without specifying snapshot_src
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     name: "{{ 'new_vm_' + item|basename }}"
@@ -28,7 +28,7 @@
 - name: create new linked clone without specifying linked_clone
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     name: "{{ 'new_vm_' + item|basename }}"
@@ -53,7 +53,7 @@
 #- name: create new linked clone with linked_clone and snapshot_src
 #  vmware_guest:
 #    validate_certs: False
-#    hostname: "{{ vcsim }}"
+#    hostname: "{{ vcenter_hostname }}"
 #    username: "{{ vcsim_instance['json']['username'] }}"
 #    password: "{{ vcsim_instance['json']['password'] }}"
 #    name: "{{ 'new_vm_' + item|basename }}"
@@ -79,7 +79,7 @@
 #- name: create new linked clone with linked_clone and snapshot_src again
 #  vmware_guest:
 #    validate_certs: False
-#    hostname: "{{ vcsim }}"
+#    hostname: "{{ vcenter_hostname }}"
 #    username: "{{ vcsim_instance['json']['username'] }}"
 #    password: "{{ vcsim_instance['json']['password'] }}"
 #    name: "{{ 'new_vm_' + item|basename }}"

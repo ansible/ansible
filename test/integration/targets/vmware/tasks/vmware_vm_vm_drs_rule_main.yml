@@ -7,7 +7,7 @@
 - name: Create a DRS Affinity rule for vms
   vmware_vm_vm_drs_rule:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     drs_rule_name: drs_rule_0001
@@ -29,7 +29,7 @@
 - name: Create a DRS Anti-Affinity rule for vms
   vmware_vm_vm_drs_rule:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     drs_rule_name: drs_rule_0001

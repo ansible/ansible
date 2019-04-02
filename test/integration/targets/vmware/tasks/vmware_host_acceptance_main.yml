@@ -6,7 +6,7 @@
 
 - name: Change acceptance level of given hosts
   vmware_host_acceptance:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ user }}"
     password: "{{ passwd }}"
     esxi_hostname: "{{ host1 }}"
@@ -23,7 +23,7 @@
 
 - name: Change acceptance level of given hosts in check mode
   vmware_host_acceptance:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ user }}"
     password: "{{ passwd }}"
     esxi_hostname: "{{ host1 }}"

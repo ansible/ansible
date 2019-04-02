@@ -6,7 +6,7 @@
 - name: Gather facts about virtual machine disks
   vmware_guest_disk_facts:
     validate_certs: no
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     name: "{{ guest1 }}"
@@ -24,7 +24,7 @@
 - name: Gather facts about virtual machine disks in check mode
   vmware_guest_disk_facts:
     validate_certs: no
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     name: "{{ guest1 }}"

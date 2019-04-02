@@ -6,9 +6,9 @@
 
 - name: Gather target facts for all ESXi host from given cluster
   vmware_target_canonical_facts:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: False
     cluster_name: "{{ ccr1 }}"
   register: target_0001_results
@@ -20,9 +20,9 @@
 
 - name: Gather target facts for ESXi host
   vmware_target_canonical_facts:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: False
     esxi_hostname: "{{ host1 }}"
   register: target_0002_results

@@ -6,7 +6,7 @@
 - name: Create a sub folder under VM folder on given datacenter
   vcenter_folder:
     validate_certs: false
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     datacenter: "{{ dc1 }}"
@@ -18,7 +18,7 @@
 
 - name: test
   uri:
-    url: http://{{ vcsim }}:5000/govc_find?filter=F
+    url: http://{{ vcenter_hostname }}:5000/govc_find?filter=F
   register: boby
 - debug: var=boby
 
@@ -26,7 +26,7 @@
 - name: Move VM (Changed)
   vmware_guest_move:
     validate_certs: false
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     datacenter: "{{ dc1 }}"
@@ -39,7 +39,7 @@
 - name: Move VM (OK)
   vmware_guest_move:
     validate_certs: false
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     datacenter: "{{ dc1 }}"
@@ -55,7 +55,7 @@
 
 - name: get all VMs
   uri:
-    url: http://{{ vcsim }}:5000/govc_find?filter=VM
+    url: http://{{ vcenter_hostname }}:5000/govc_find?filter=VM
   register: vms_diff
 
 - name: Difference

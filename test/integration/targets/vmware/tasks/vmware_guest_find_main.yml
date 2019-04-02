@@ -13,7 +13,7 @@
 - name: find folders for each vm
   vmware_guest_find:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     name: "{{ item|basename }}"
@@ -36,13 +36,13 @@
 # Testcase 2: Find VMS using UUID
 - name: get details about VMS from vcsim
   uri:
-    url: http://{{ vcsim }}:5000/govc_vm_info
+    url: http://{{ vcenter_hostname }}:5000/govc_vm_info
   register: vms_detail_list
 
 - name: find folders for each vm using UUID
   vmware_guest_find:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     uuid: "{{ vms_detail_list['json'][item|basename]['UUID'] }}"

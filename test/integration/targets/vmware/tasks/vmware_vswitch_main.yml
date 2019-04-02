@@ -7,9 +7,9 @@
 # FIXME: Implement check-mode support
 - name: Add a nic to a switch (check-mode)
   vmware_vswitch: &add_nic
-    hostname: '{{ vcsim }}'
-    username: '{{ vcsim_instance.json.username }}'
-    password: '{{ vcsim_instance.json.password }}'
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
     validate_certs: no
     switch: vmswitch_0001
     nics: vnic_1
@@ -50,9 +50,9 @@
 
 - name: Remove a switch (check-mode)
   vmware_vswitch: &remove_nic
-    hostname: '{{ vcsim }}'
-    username: '{{ vcsim_instance.json.username }}'
-    password: '{{ vcsim_instance.json.password }}'
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
     validate_certs: no
     switch: vmswitch_0001
     state: absent
@@ -105,7 +105,7 @@
 - name: Add vswitch to a specific host system
   vmware_vswitch:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     switch: vmswitch_0002

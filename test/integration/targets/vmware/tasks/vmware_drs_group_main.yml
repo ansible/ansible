@@ -5,7 +5,7 @@
 - name: "Create DRS VM group"
   vmware_drs_group:
     # Login creds
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     validate_certs: False
@@ -28,7 +28,7 @@
 - name: "Create DRS Host group"
   vmware_drs_group:
     # Login creds
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     validate_certs: False
@@ -52,7 +52,7 @@
 - name: "Delete DRS Host group"
   vmware_drs_group:
     # Login creds
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     validate_certs: False

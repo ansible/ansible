@@ -9,9 +9,9 @@
 
 - name: Add a datastore cluster to datacenter (check-mode)
   vmware_datastore_cluster: &add_datastore_cluster
-    hostname: '{{ vcsim }}'
-    username: '{{ vcsim_instance.json.username }}'
-    password: '{{ vcsim_instance.json.password }}'
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
     validate_certs: no
     datacenter_name: "{{ dc1 }}"
     datastore_cluster_name: DSC1
@@ -41,9 +41,9 @@
 
 - name: Delete a datastore cluster to datacenter (check-mode)
   vmware_datastore_cluster: &delete_datastore_cluster
-    hostname: '{{ vcsim }}'
-    username: '{{ vcsim_instance.json.username }}'
-    password: '{{ vcsim_instance.json.password }}'
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
     validate_certs: no
     datacenter_name: "{{ dc1 }}"
     datastore_cluster_name: DSC1

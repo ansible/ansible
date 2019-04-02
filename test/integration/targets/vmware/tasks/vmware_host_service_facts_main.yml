@@ -6,7 +6,7 @@
 
 - name: Change facts about all hosts in given cluster
   vmware_host_service_facts:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ user }}"
     password: "{{ passwd }}"
     esxi_hostname: "{{ host1 }}"

@@ -8,7 +8,7 @@
 #- name: create new virtual machine with invalid guest id
 #  vmware_guest:
 #    validate_certs: False
-#    hostname: "{{ vcsim }}"
+#    hostname: "{{ vcenter_hostname }}"
 #    username: "{{ vcsim_instance['json']['username'] }}"
 #    password: "{{ vcsim_instance['json']['password'] }}"
 #    name: "{{ 'invalid_vm_' + vm1 | basename }}"

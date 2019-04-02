@@ -4,9 +4,9 @@
 
 - name: gather facts about all clusters in given datacenter
   vmware_cluster_facts:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     datacenter: "{{ dc1 }}"
     validate_certs: False
   register: all_cluster_result
@@ -19,9 +19,9 @@
 
 - name: gather facts about given cluster
   vmware_cluster_facts:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     cluster_name: "{{ ccr1 }}"
     validate_certs: False
   register: cluster_result

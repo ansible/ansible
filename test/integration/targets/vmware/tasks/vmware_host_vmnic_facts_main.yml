@@ -6,7 +6,7 @@
 
 - name: Gather vmnic facts about a host
   vmware_host_vmnics_facts:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ user }}"
     password: "{{ passwd }}"
     esxi_hostname: "{{ host1 }}"
@@ -21,7 +21,7 @@
 
 - name: Gather extended vmnic facts about a host
   vmware_host_vmnics_facts:
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ user }}"
     password: "{{ passwd }}"
     esxi_hostname: "{{ host1 }}"

@@ -4,9 +4,9 @@
 
 - name: Gather portgroup facts for all ESXi host from given cluster
   vmware_portgroup_facts:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: no
     cluster_name: "{{ ccr1 }}"
   register: portgroup_0001_results
@@ -18,9 +18,9 @@
 
 - name: Gather portgroup facts for an ESXi host
   vmware_portgroup_facts:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: no
     esxi_hostname: "{{ host1 }}"
   register: portgroup_0002_results
@@ -32,9 +32,9 @@
 
 - name: Gather all portgroup facts for an ESXi host
   vmware_portgroup_facts:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: no
     esxi_hostname: "{{ host1 }}"
     policies: true
@@ -47,9 +47,9 @@
 
 - name: Gather all portgroup facts for an ESXi host in check mode
   vmware_portgroup_facts:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: no
     esxi_hostname: "{{ host1 }}"
     policies: true

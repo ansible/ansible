@@ -7,7 +7,7 @@
 - name: get list of facts about datastores
   vmware_datastore_facts:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     datacenter: "{{ dc1 }}"
@@ -24,7 +24,7 @@
 - name: get list of facts about datastores - no dc
   vmware_datastore_facts:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     cluster: "{{ ccr1 }}"
@@ -41,7 +41,7 @@
 - name: get list of facts about one datastore
   vmware_datastore_facts:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     datacenter: "{{ dc1 }}"
@@ -59,7 +59,7 @@
 - name: get list of extended facts about one datastore
   vmware_datastore_facts:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     datacenter: "{{ dc1 }}"
@@ -79,7 +79,7 @@
 - name: get list of facts about one datastore in check mode
   vmware_datastore_facts:
     validate_certs: False
-    hostname: "{{ vcsim }}"
+    hostname: "{{ vcenter_hostname }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     datacenter: "{{ dc1 }}"
