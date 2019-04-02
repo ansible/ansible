@@ -171,6 +171,13 @@
     state: directory
   remote_user: '{{ remote_unprivileged_user }}'
 
+# Based on https://github.com/ansible/ansible/pull/13424 it appears that overriding
+# remote_user on a per-task basis with Docker doesn't work. That matches the observed
+#   <testhost> ESTABLISH LOCAL CONNECTION FOR USER: root
+# entries in -vvv output.
+#
+# https://github.com/ansible/ansible/pull/15556 had a good conversation about the
+# Docker-specific challenges of the "become" process.
 - name: fetch the root-readable test file using 'become'
   fetch: src={{ remote_tmp_dir }}/orig.root dest={{ output_dir }}/fetched
   remote_user: '{{ remote_unprivileged_user }}'
