@@ -121,6 +121,8 @@ class RoleModule(BaseModule):
                 current = [er.name for er in permits_service.list()]
                 passed = [pr for pr in self.param('permits')]
                 if not sorted(current) == sorted(passed):
+                    if self._module.check_mode:
+                        return False
                     # remove all
                     for permit in permits_service.list():
                         permits_service.permit_service(permit.id).remove()
@@ -152,6 +154,7 @@ def main():
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
+        supports_check_mode=True,
         required_one_of=[['id', 'name']],
     )
 
