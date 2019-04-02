@@ -260,7 +260,7 @@ DOCUMENTATION = '''
             version_added: '2.7'
       use_tty:
         version_added: '2.5'
-        default: 'yes'  forced to no for OpenVMS
+        default: 'yes'
         description: add -tt to ssh commands to force tty allocation
         env: [{name: ANSIBLE_SSH_USETTY}]
         ini:
