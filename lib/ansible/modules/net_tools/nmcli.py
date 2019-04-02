@@ -31,6 +31,8 @@ description:
       libnm-qt-devel.x86_64, nm-connection-editor.x86_64, libsemanage-python, policycoreutils-python.'
     - 'On Ubuntu and Debian like systems, the requirements can be met by installing the following packages: network-manager,
       python-dbus (or python3-dbus, depending on the Python version in use), libnm-glib-dev.'
+    - 'On openSUSE, the requirements can be met by installing the following packages: NetworkManager, python2-dbus-python (or
+      python3-dbus-python), typelib-1_0-NMClient-1_0 and typelib-1_0-NetworkManager-1_0.'
 options:
     state:
         description:
