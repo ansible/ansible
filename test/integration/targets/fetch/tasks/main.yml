@@ -165,12 +165,6 @@
     mode: 0600
     remote_src: yes
 
-- file:
-    # output_dir is hardcoded in test/runner/lib/executor.py and created there
-    path: "{{ output_dir }}"
-    state: directory
-  remote_user: '{{ remote_unprivileged_user }}'
-
 # Pulling a root-only file as a non-root user should fail, but it succeeds.
 # This appears to be related to the closed issue #13388.
 #
