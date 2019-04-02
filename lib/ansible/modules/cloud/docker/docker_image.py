@@ -172,9 +172,6 @@ options:
   force_tag:
     description:
       - Use with state C(present) to force tagging an image.
-      - Please stop using this option, and use the more specialized force options
-        I(force_source), I(force_absent) and I(force_tag) instead.
-      - This option will be removed in Ansible 2.12.
     type: bool
     default: false
     version_added: "2.8"
