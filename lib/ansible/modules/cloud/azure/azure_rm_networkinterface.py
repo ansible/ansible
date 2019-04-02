@@ -172,7 +172,8 @@ options:
         default: False
     create_with_security_group:
         description:
-            - Specifies whether a default security group should be be created with the NIC. Only applies when creating a new NIC.
+            - Specifies whether a security group should be be created with the NIC.
+            - If this flag set to C(True) and no C(security_group) set, a default security group will be created.
         type: bool
         version_added: 2.6
         default: True
