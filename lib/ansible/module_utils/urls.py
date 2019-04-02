@@ -1399,6 +1399,18 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         try:
             # Lowercase keys, to conform to py2 behavior, so that py3 and py2 are predictable
             info.update(dict((k.lower(), v) for k, v in e.info().items()))
+            # Don't be lossy, append header values for duplicate headers
+            # In Py2 there is nothing that needs done, py2 does this for us
+            if PY3:
+                temp_headers = {}
+                for name, value in e.headers.items():
+                    # The same as above, lower case keys to match py2 behavior, and create more consistent results
+                    name = name.lower()
+                    if name in temp_headers:
+                        temp_headers[name] = ', '.join((temp_headers[name], value))
+                    else:
+                        temp_headers[name] = value
+                info.update(temp_headers)
         except Exception:
             pass
 
