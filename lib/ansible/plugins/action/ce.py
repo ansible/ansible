@@ -19,7 +19,7 @@ from ansible.utils.display import Display
 
 display = Display()
 
-CLI_SUPPORTED_MODULES = ['ce_config', 'ce_command']
+CLI_SUPPORTED_MODULES = ['ce_config', 'ce_command', 'ce_facts']
 
 
 class ActionModule(ActionNetworkModule):
