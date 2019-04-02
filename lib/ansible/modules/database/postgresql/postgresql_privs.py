@@ -20,7 +20,7 @@ description:
 - Grant or revoke privileges on PostgreSQL database objects.
 - This module is basically a wrapper around most of the functionality of
   PostgreSQL's GRANT and REVOKE statements with detection of changes
-  (GRANT/REVOKE I(privs) ON I(type) I(objs) TO/FROM I(roles))
+  (GRANT/REVOKE I(privs) ON I(type) I(objs) TO/FROM I(roles)).
 options:
   database:
     description:
@@ -374,6 +374,15 @@ EXAMPLES = r'''
     target_roles: librarian
 '''
 
+RETURN = r'''
+queries:
+  description: List of executed queries.
+  returned: always
+  type: list
+  sample: ['REVOKE GRANT OPTION FOR INSERT ON TABLE "books" FROM "reader";']
+  version_added: '2.8'
+'''
+
 import traceback
 
 PSYCOPG2_IMP_ERR = None
@@ -397,6 +406,8 @@ VALID_DEFAULT_OBJS = {'TABLES': ('ALL', 'SELECT', 'INSERT', 'UPDATE', 'DELETE', 
                       'SEQUENCES': ('ALL', 'SELECT', 'UPDATE', 'USAGE'),
                       'FUNCTIONS': ('ALL', 'EXECUTE'),
                       'TYPES': ('ALL', 'USAGE')}
+
+executed_queries = []
 
 
 class Error(Exception):
@@ -729,6 +740,7 @@ class Connection(object):
             .for_objs(objs) \
             .build()
 
+        executed_queries.append(query)
         self.cursor.execute(query)
         status_after = get_status(objs)
         return status_before != status_after
@@ -860,41 +872,44 @@ class QueryBuilder(object):
 
 
 def main():
+    argument_spec = postgres_common_argument_spec()
+    argument_spec.update(
+        database=dict(required=True, aliases=['db', 'login_db']),
+        state=dict(default='present', choices=['present', 'absent']),
+        privs=dict(required=False, aliases=['priv']),
+        type=dict(default='table',
+                  choices=['table',
+                           'sequence',
+                           'function',
+                           'database',
+                           'schema',
+                           'language',
+                           'tablespace',
+                           'group',
+                           'default_privs',
+                           'foreign_data_wrapper',
+                           'foreign_server']),
+        objs=dict(required=False, aliases=['obj']),
+        schema=dict(required=False),
+        roles=dict(required=True, aliases=['role']),
+        session_role=dict(required=False),
+        target_roles=dict(required=False),
+        grant_option=dict(required=False, type='bool',
+                          aliases=['admin_option']),
+        host=dict(default='', aliases=['login_host']),
+        port=dict(type='int', default=5432, aliases=['login_port']),
+        unix_socket=dict(default='', aliases=['login_unix_socket']),
+        login=dict(default='postgres', aliases=['login_user']),
+        password=dict(default='', aliases=['login_password'], no_log=True),
+        ssl_mode=dict(default="prefer",
+                      choices=['allow', 'disable', 'prefer', 'require', 'verify-ca', 'verify-full']),
+        ca_cert=dict(default=None, aliases=['ssl_rootcert']),
+        fail_on_role=dict(type='bool', default=True),
+    )
+
     module = AnsibleModule(
-        argument_spec=dict(
-            database=dict(required=True, aliases=['db', 'login_db']),
-            state=dict(default='present', choices=['present', 'absent']),
-            privs=dict(required=False, aliases=['priv']),
-            type=dict(default='table',
-                      choices=['table',
-                               'sequence',
-                               'function',
-                               'database',
-                               'schema',
-                               'language',
-                               'tablespace',
-                               'group',
-                               'default_privs',
-                               'foreign_data_wrapper',
-                               'foreign_server']),
-            objs=dict(required=False, aliases=['obj']),
-            schema=dict(required=False),
-            roles=dict(required=True, aliases=['role']),
-            session_role=dict(required=False),
-            target_roles=dict(required=False),
-            grant_option=dict(required=False, type='bool',
-                              aliases=['admin_option']),
-            host=dict(default='', aliases=['login_host']),
-            port=dict(type='int', default=5432, aliases=['login_port']),
-            unix_socket=dict(default='', aliases=['login_unix_socket']),
-            login=dict(default='postgres', aliases=['login_user']),
-            password=dict(default='', aliases=['login_password'], no_log=True),
-            ssl_mode=dict(default="prefer",
-                          choices=['allow', 'disable', 'prefer', 'require', 'verify-ca', 'verify-full']),
-            ca_cert=dict(default=None, aliases=['ssl_rootcert']),
-            fail_on_role=dict(type='bool', default=True),
-        ),
-        supports_check_mode=True
+        argument_spec=argument_spec,
+        supports_check_mode=True,
     )
 
     fail_on_role = module.params['fail_on_role']
@@ -1031,7 +1046,7 @@ def main():
         conn.rollback()
     else:
         conn.commit()
-    module.exit_json(changed=changed)
+    module.exit_json(changed=changed, queries=executed_queries)
 
 
 if __name__ == '__main__':
