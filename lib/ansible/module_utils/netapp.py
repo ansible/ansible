@@ -367,7 +367,7 @@ class NetAppESeriesModule(object):
                 self.module.fail_json(msg="Failed to retrieve the webservices about information! Array Id [%s]."
                                           " Error [%s]." % (self.ssid, to_native(error)))
 
-            self.module.warn("Web services rest api version met the minimum required version.")
+            self.module.log("Web services rest api version met the minimum required version.")
             self.web_services_validate = True
 
         return self.web_services_validate
@@ -400,19 +400,24 @@ class NetAppESeriesModule(object):
 
         return self.is_embedded_mode
 
-    def request(self, path, data=None, method='GET', ignore_errors=False):
+    def request(self, path, data=None, method='GET', headers=None, ignore_errors=False):
         """Issue an HTTP request to a url, retrieving an optional JSON response.
 
         :param str path: web services rest api endpoint path (Example: storage-systems/1/graph). Note that when the
         full url path is specified then that will be used without supplying the protocol, hostname, port and rest path.
         :param data: data required for the request (data may be json or any python structured data)
         :param str method: request method such as GET, POST, DELETE.
+        :param dict headers: dictionary containing request headers.
         :param bool ignore_errors: forces the request to ignore any raised exceptions.
         """
         if self._is_web_services_valid():
             url = list(urlparse(path.strip("/")))
             if url[2] == "":
                 self.module.fail_json(msg="Web services rest api endpoint path must be specified. Path [%s]." % path)
+
+            # Update headers
+            if headers is None:
+                headers = self.DEFAULT_HEADERS
 
             # if either the protocol or hostname/port are missing then add them.
             if url[0] == "" or url[1] == "":
@@ -425,13 +430,13 @@ class NetAppESeriesModule(object):
                 url[2] = self.DEFAULT_REST_API_PATH + url[2]
 
             # ensure data is json formatted
-            if not isinstance(data, str):
+            if not isinstance(data, str) and headers["Content-Type"] == "application/json":
                 data = json.dumps(data)
 
             if self.log_requests:
                 self.module.log(pformat(dict(url=urlunparse(url), data=data, method=method)))
 
-            return request(url=urlunparse(url), data=data, method=method, headers=self.DEFAULT_HEADERS, use_proxy=True,
+            return request(url=urlunparse(url), data=data, method=method, headers=headers, use_proxy=True,
                            force=False, last_mod_time=None, timeout=self.DEFAULT_TIMEOUT, http_agent=self.HTTP_AGENT,
                            force_basic_auth=True, ignore_errors=ignore_errors, **self.creds)
 
