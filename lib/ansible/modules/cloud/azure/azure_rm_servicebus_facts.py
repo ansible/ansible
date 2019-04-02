@@ -69,18 +69,18 @@ author:
 EXAMPLES = '''
 - name: Get all namespaces under a resource group
   azure_rm_servicebus_facts:
-    resource_group: foo
+    resource_group: myResourceGroup
     type: namespace
 
 - name: Get all topics under a namespace
   azure_rm_servicebus_facts:
-    resource_group: foo
+    resource_group: myResourceGroup
     namespace: bar
     type: topic
 
 - name: Get a single queue with SAS policies
   azure_rm_servicebus_facts:
-    resource_group: foo
+    resource_group: myResourceGroup
     namespace: bar
     type: queue
     name: sbqueue
@@ -88,7 +88,7 @@ EXAMPLES = '''
 
 - name: Get all subscriptions under a resource group
   azure_rm_servicebus_facts:
-    resource_group: foo
+    resource_group: myResourceGroup
     type: subscription
     namespace: bar
     topic: sbtopic
