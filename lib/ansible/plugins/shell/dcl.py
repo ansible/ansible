@@ -56,4 +56,3 @@ class ShellModule(ShModule):
         env = self.env.copy()
         env.update(kwargs)
         return ' '.join(['\n$ %s=%s' % (k, shlex_quote(text_type(v))) for k, v in env.items()])
-        
