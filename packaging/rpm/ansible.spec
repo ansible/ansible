@@ -130,6 +130,7 @@ rm -rf %{buildroot}
 %{python_sitelib}/ansible-*.egg-info
 %{_bindir}/ansible*
 %dir %{_datadir}/ansible
+%{_datadir}/bash-completion/completions/ansible*
 %config(noreplace) %{_sysconfdir}/ansible
 %doc README.rst PKG-INFO COPYING changelogs/CHANGELOG*.rst
 %doc %{_mandir}/man1/ansible*
