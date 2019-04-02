@@ -135,7 +135,8 @@ class AuthorizedSession(object):
                                         "kind": "compute#attachedDisk",
                                         "type": "PERSISTENT",
                                         "mode": "READ_WRITE",
-                                        "source": "https://www.googleapis.com/compute/v1/projects/foo/zones/us-east1-d/disks/gke-devel-default-pool-1b49cc65-lxj4",
+                                        "source": "https://www.googleapis.com/compute/v1/projects/"
+                                                  "foo/zones/us-east1-d/disks/gke-devel-default-pool-1b49cc65-lxj4",
                                         "deviceName": "persistent-disk-0",
                                         "index": 0,
                                         "boot": True,
@@ -149,7 +150,8 @@ class AuthorizedSession(object):
                                         "kind": "compute#attachedDisk",
                                         "type": "PERSISTENT",
                                         "mode": "READ_WRITE",
-                                        "source": "https://www.googleapis.com/compute/v1/projects/foo/zones/us-east1-d/disks/gke-devel-674942a3-dyn-pvc-c643c774-f2b7-11e8-b34a-42010a8e0032",
+                                        "source": "https://www.googleapis.com/compute/v1/projects/foo"
+                                                  "/zones/us-east1-d/disks/gke-devel-674942a3-dyn-pvc-c643c774-f2b7-11e8-b34a-42010a8e0032",
                                         "deviceName": "gke-devel-674942a3-dyn-pvc-c643c774-f2b7-11e8-b34a-42010a8e0032",
                                         "index": 1,
                                         "boot": False,
@@ -171,7 +173,8 @@ class AuthorizedSession(object):
                                         ]
                                     }
                                 ],
-                                "selfLink": "https://www.googleapis.com/compute/v1/projects/foo/zones/us-east1-d/instances/gke-devel-default-pool-1b49cc65-lxj4",
+                                "selfLink": "https://www.googleapis.com/compute/v1/projects/foo"
+                                            "/zones/us-east1-d/instances/gke-devel-default-pool-1b49cc65-lxj4",
                                 "scheduling": {
                                     "onHostMaintenance": "MIGRATE",
                                     "automaticRestart": True,
@@ -222,7 +225,8 @@ class AuthorizedSession(object):
                                         "kind": "compute#attachedDisk",
                                         "type": "PERSISTENT",
                                         "mode": "READ_WRITE",
-                                        "source": "https://www.googleapis.com/compute/v1/projects/foo/zones/us-east1-d/disks/gke-tower-qe-default-pool-0aa0f212-745b",
+                                        "source": "https://www.googleapis.com/compute/v1/projects/foo"
+                                                  "/zones/us-east1-d/disks/gke-tower-qe-default-pool-0aa0f212-745b",
                                         "deviceName": "persistent-disk-0",
                                         "index": 0,
                                         "boot": True,
@@ -248,7 +252,8 @@ class AuthorizedSession(object):
                                         ]
                                     }
                                 ],
-                                "selfLink": "https://www.googleapis.com/compute/v1/projects/foo/zones/us-east1-d/instances/gke-tower-qe-default-pool-0aa0f212-745b",
+                                "selfLink": "https://www.googleapis.com/compute/v1/projects/foo"
+                                            "/zones/us-east1-d/instances/gke-tower-qe-default-pool-0aa0f212-745b",
                                 "scheduling": {
                                     "onHostMaintenance": "MIGRATE",
                                     "automaticRestart": True,
@@ -416,62 +421,68 @@ class AuthorizedSession(object):
 
         if url == "https://www.googleapis.com/compute/v1/projects/foo/aggregated/disks":
             return FakeResponse(
-                {'status_code': 200,
-                'response_data': {
-                    "selfLink": "https://www.googleapis.com/compute/v1/projects/foo/aggregated/disks",
-                    "items": {
-                        "zones/us-east1-d": {
-                            "disks": [
-                                {
-                                    "kind": "compute#disk",
-                                    "id": "2567155990073318467",
-                                    "name": "awx",
-                                    "selfLink": "https://www.googleapis.com/compute/v1/projects/foo/zones/us-east1-d/disks/awx",
-                                    "sourceImage": "https://www.googleapis.com/compute/v1/projects/centos-cloud/global/images/centos-7-v20171025",
-                                    "sourceImageId": "5631027483984767623",
-                                },
-                                {
-                                    "kind": "compute#disk",
-                                    "id": "8859321029010636696",
-                                    "name": "gke-devel-674942a3-dyn-pvc-c643c774-f2b7-11e8-b34a-42010a8e0032",
-                                    "selfLink": "https://www.googleapis.com/compute/v1/projects/foo/zones/us-east1-d/disks/gke-devel-674942a3-dyn-pvc-c643c774-f2b7-11e8-b34a-42010a8e0032",
-                                },
-                                {
-                                    "kind": "compute#disk",
-                                    "id": "5001173527827513827",
-                                    "name": "gke-tower-qe-default-pool-0aa0f212-745b",
-                                    "selfLink": "https://www.googleapis.com/compute/v1/projects/foo/zones/us-east1-d/disks/gke-tower-qe-default-pool-0aa0f212-745b",
-                                    "sourceImage": "https://www.googleapis.com/compute/v1/projects/gke-node-images/global/images/gke-1117-gke12-cos-69-10895-138-0-v190225-pre",
-                                    "sourceImageId": "7072096510453341410",
-                                },
-                                {
-                                    "kind": "compute#disk",
-                                    "id": "1872548568728427264",
-                                    "name": "tower-mockups",
-                                    "selfLink": "https://www.googleapis.com/compute/v1/projects/foo/zones/us-east1-d/disks/tower-mockups",
-                                    "sourceImage": "https://www.googleapis.com/compute/v1/projects/centos-cloud/global/images/centos-7-v20170426",
-                                    "sourceImageId": "5992902547674756879",
-                                },
-                                {
-                                    "kind": "compute#disk",
-                                    "id": "6198992417309653810",
-                                    "name": "towerapi-testing",
-                                    "selfLink": "https://www.googleapis.com/compute/v1/projects/foo/zones/us-east1-d/disks/towerapi-testing",
-                                    "sourceImage": "https://www.googleapis.com/compute/v1/projects/centos-cloud/global/images/centos-7-v20170829",
-                                    "sourceImageId": "4960063913426897282",
-                                },
-                                {
-                                    "kind": "compute#disk",
-                                    "id": "3100958182266127944",
-                                    "creationTimestamp": "2018-11-27T18:08:40.729-08:00",
-                                    "name": "gke-devel-default-pool-1b49cc65-lxj4",
-                                    "selfLink": "https://www.googleapis.com/compute/v1/projects/foo/zones/us-east1-d/disks/gke-devel-default-pool-1b49cc65-lxj4",
-                                    "sourceImage": "https://www.googleapis.com/compute/v1/projects/gke-node-images/global/images/gke-197-gke11-cos-stable-65-10323-99-0-p2-v181110-pre",
-                                    "sourceImageId": "6765926854811116985",
-                                }
-                            ]
-                        },
+                {
+                    'status_code': 200,
+                    'response_data': {
+                        "selfLink": "https://www.googleapis.com/compute/v1/projects/foo/aggregated/disks",
+                        "items": {
+                            "zones/us-east1-d": {
+                                "disks": [
+                                    {
+                                        "kind": "compute#disk",
+                                        "id": "2567155990073318467",
+                                        "name": "awx",
+                                        "selfLink": "https://www.googleapis.com/compute/v1/projects/foo/zones/us-east1-d/disks/awx",
+                                        "sourceImage": "https://www.googleapis.com/compute/v1/projects/centos-cloud/global/images/centos-7-v20171025",
+                                        "sourceImageId": "5631027483984767623",
+                                    },
+                                    {
+                                        "kind": "compute#disk",
+                                        "id": "8859321029010636696",
+                                        "name": "gke-devel-674942a3-dyn-pvc-c643c774-f2b7-11e8-b34a-42010a8e0032",
+                                        "selfLink": "https://www.googleapis.com/compute/v1/projects/foo"
+                                                    "/zones/us-east1-d/disks/gke-devel-674942a3-dyn-pvc-c643c774-f2b7-11e8-b34a-42010a8e0032",
+                                    },
+                                    {
+                                        "kind": "compute#disk",
+                                        "id": "5001173527827513827",
+                                        "name": "gke-tower-qe-default-pool-0aa0f212-745b",
+                                        "selfLink": "https://www.googleapis.com/compute/v1/projects/foo"
+                                                    "/zones/us-east1-d/disks/gke-tower-qe-default-pool-0aa0f212-745b",
+                                        "sourceImage": "https://www.googleapis.com/compute/v1/projects/gke-node-images"
+                                                       "/global/images/gke-1117-gke12-cos-69-10895-138-0-v190225-pre",
+                                        "sourceImageId": "7072096510453341410",
+                                    },
+                                    {
+                                        "kind": "compute#disk",
+                                        "id": "1872548568728427264",
+                                        "name": "tower-mockups",
+                                        "selfLink": "https://www.googleapis.com/compute/v1/projects/foo/zones/us-east1-d/disks/tower-mockups",
+                                        "sourceImage": "https://www.googleapis.com/compute/v1/projects/centos-cloud/global/images/centos-7-v20170426",
+                                        "sourceImageId": "5992902547674756879",
+                                    },
+                                    {
+                                        "kind": "compute#disk",
+                                        "id": "6198992417309653810",
+                                        "name": "towerapi-testing",
+                                        "selfLink": "https://www.googleapis.com/compute/v1/projects/foo/zones/us-east1-d/disks/towerapi-testing",
+                                        "sourceImage": "https://www.googleapis.com/compute/v1/projects/centos-cloud/global/images/centos-7-v20170829",
+                                        "sourceImageId": "4960063913426897282",
+                                    },
+                                    {
+                                        "kind": "compute#disk",
+                                        "id": "3100958182266127944",
+                                        "creationTimestamp": "2018-11-27T18:08:40.729-08:00",
+                                        "name": "gke-devel-default-pool-1b49cc65-lxj4",
+                                        "selfLink": "https://www.googleapis.com/compute/v1/projects/foo"
+                                                    "/zones/us-east1-d/disks/gke-devel-default-pool-1b49cc65-lxj4",
+                                        "sourceImage": "https://www.googleapis.com/compute/v1/projects/gke-node-images"
+                                                       "/global/images/gke-197-gke11-cos-stable-65-10323-99-0-p2-v181110-pre",
+                                        "sourceImageId": "6765926854811116985",
+                                    }
+                                ]
+                            },
+                        }
                     }
                 }
-            }
-        )
+            )

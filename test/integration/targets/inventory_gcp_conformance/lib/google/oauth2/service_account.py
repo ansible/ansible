@@ -1,8 +1,8 @@
 class FakeSigner(object):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, private_key, *args, **kwargs):
         pass
 
-    def with_scopes(*args, **kwargs):
+    def with_scopes(self, scopes, *args, **kwargs):
         return (
             "FAKE_SIGNER_WITH_SCOPES",
             {

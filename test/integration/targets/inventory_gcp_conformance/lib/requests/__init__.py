@@ -1,1 +1,1 @@
-import requests.exceptions as exceptions
+from requests import exceptions

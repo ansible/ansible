@@ -1,5 +1,5 @@
 import abc
-import ansible.module_utils.six as six
+from ansible.module_utils import six
 from google.auth import _helpers
 
 
