@@ -58,8 +58,8 @@ author:
 EXAMPLES = '''
 - name: Query a workspace
   azure_rm_loganalyticsworkspace_facts:
-      resource_group: foo
-      name: bar
+      resource_group: myResourceGroup
+      name: myLogAnalyticsWorkspace
       show_intelligence_packs: true
       show_management_groups: true
       show_shared_keys: true
@@ -71,7 +71,8 @@ id:
     description: Workspace resource path.
     type: str
     returned: success
-    example: "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/foo/providers/Microsoft.OperationalInsights/workspaces/bar"
+    example: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.OperationalInsights/workspaces/m
+              yLogAnalyticsWorkspace"
 location:
     description:
         - Resource location.

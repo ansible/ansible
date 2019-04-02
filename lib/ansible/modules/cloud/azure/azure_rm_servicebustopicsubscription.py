@@ -117,7 +117,7 @@ EXAMPLES = '''
 - name: Create a subscription
   azure_rm_servicebustopicsubscription:
       name: sbsub
-      resource_group: foo
+      resource_group: myResourceGroup
       namespace: bar
       topic: subtopic
 '''
