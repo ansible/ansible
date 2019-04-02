@@ -1,0 +1,104 @@
+- name: Prepare random number
+  set_fact:
+    profile_name: "profile{{ resource_group | hash('md5') | truncate(5, True, '') }}{{ 1000 | random }}"
+    location: eastus
+  run_once: yes
+
+- name: create Azure storage account
+  azure_rm_storageaccount:
+    name: '{{ profile_name }}'
+    resource_group: "{{ resource_group }}"
+    account_type: Standard_LRS
+
+- name: create log profile (idempotence)
+  azure_rm_monitorlogprofile:
+    name: "{{ profile_name }}"
+    location: "{{ location }}"
+    locations:
+      - eastus
+      - westus
+    categories:
+      - Write
+      - Action
+    retention_policy:
+      enabled: False
+      days: 1
+    storage_account:
+      resource_group: "{{ resource_group }}"
+      name: "{{ profile_name }}"
+  check_mode: yes
+  register: output
+
+- name: assert create idempotence
+  assert:
+    that:
+      - output.changed
+
+- name: create log profile
+  azure_rm_monitorlogprofile:
+    name: "{{ profile_name }}"
+    location: "{{ location }}"
+    locations:
+      - eastus
+      - westus
+    categories:
+      - Write
+      - Action
+    retention_policy:
+      enabled: False
+      days: 1
+    storage_account:
+      resource_group: "{{ resource_group }}"
+      name: "{{ profile_name }}"
+  register: output
+
+- name: assert create
+  assert:
+    that:
+      - output.changed
+      - output.id
+
+- name: update log profile (idempotence)
+  azure_rm_monitorlogprofile:
+    name: "{{ profile_name }}"
+    location: "{{ location }}"
+    locations:
+      - eastus
+      - westus
+    categories:
+      - Write
+      - Action
+    retention_policy:
+      enabled: False
+      days: 1
+    storage_account:
+      resource_group: "{{ resource_group }}"
+      name: "{{ storage_name }}"
+  register: output
+
+- name: assert update idempotence
+  assert:
+    that:
+      - output.changed == False
+
+- name: update log profile
+  azure_rm_monitorlogprofile:
+    name: "{{ profile_name }}"
+    location: "{{ location }}"
+    locations:
+      - eastus
+    categories:
+      - Write
+      - Action
+    retention_policy:
+      enabled: False
+      days: 2
+    storage_account:
+      resource_group: "{{ resource_group }}"
+      name: "{{ profile_name }}"
+  register: output
+
+- name: assert update
+  assert:
+    that:
+      - output.changed
