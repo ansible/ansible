@@ -39,8 +39,7 @@ options:
         description:
             - "List of permits which role will have"
             - "Permit 'login' is default and all roles will have it."
-            - "Dictionary can contain following value."
-            - "C(name) - Name of permit."
+            - "List can contain name of permit."
 extends_documentation_fragment: ovirt
 '''
 
