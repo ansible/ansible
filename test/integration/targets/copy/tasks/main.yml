@@ -59,7 +59,7 @@
       remote_user: '{{ remote_unprivileged_user }}'
 
     - import_tasks: acls.yml
-      when: ansible_system == 'Linux' or ansible_system == 'FreeBSD'
+      when: ansible_system == 'Linux'
 
   always:
     - name: Cleaning

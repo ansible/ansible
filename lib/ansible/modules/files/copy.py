@@ -257,20 +257,22 @@ state:
     sample: file
 '''
 
+import errno
+import filecmp
+import grp
 import os
 import os.path
-import shutil
-import filecmp
+import platform
 import pwd
-import grp
+import shutil
 import stat
-import errno
 import tempfile
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils.six import PY3
 
 
 # The AnsibleModule object
@@ -654,26 +656,57 @@ def main():
                             raise
                 module.atomic_move(b_mysrc, dest, unsafe_writes=module.params['unsafe_writes'])
 
-                if not remote_src:
-                    # If not remote_src, then the file was copied from the controller.  In that
-                    # case, any filesystem acls are artifacts of the copy rather than preservation
-                    # of existing attributes.  Get rid of them
+                if PY3 and hasattr(os, 'listxattr') and platform.system == 'Linux' and not remote_src:
+                    # atomic_move used above to copy src into dest might, in some cases,
+                    # use shutil.copy2 which in turn uses shutil.copystat.
+                    # Since Python 3.3, shutil.copystat copies file extended attributes:
+                    # https://docs.python.org/3/library/shutil.html#shutil.copystat
+                    # os.listxattr (along with others) was added to handle the operation.
+
+                    # This means that on Python 3 we are copying the extended attributes which includes
+                    # the ACLs on some systems - further limited to Linux as the documentation above claims
+                    # that the extended attributes are copied only on Linux. Also, os.listxattr is only
+                    # available on Linux.
+
+                    # If not remote_src, then the file was copied from the controller. In that
+                    # case, any filesystem ACLs are artifacts of the copy rather than preservation
+                    # of existing attributes. Get rid of them:
+
                     try:
-                        clear_facls(dest)
-                    except ValueError as e:
-                        if 'setfacl' in to_native(e):
-                            # No setfacl so we're okay.  The controller couldn't have set a facl
-                            # without the setfacl command
+                        src_has_acls = 'system.posix_acl_access' in os.listxattr(src)
+                    except OSError as e:
+                        src_has_acls = True
+
+                    if src_has_acls:
+                        try:
+                            clear_facls(dest)
+                        except ValueError as e:
+                            if 'setfacl' in to_native(e):
+                                # No setfacl so we're okay.  The controller couldn't have set a facl
+                                # without the setfacl command
+                                pass
+                            else:
+                                raise
+                        except RuntimeError as e:
+                            # setfacl failed.
+                            if 'Operation not supported' in to_native(e):
+                                # The file system does not support ACLs.
+                                pass
+                            else:
+                                raise
+
+                        # The default ACLs are not applied because we copied metadata that tells
+                        # what the ACLs are (default ACLs were overridden via copystat).
+                        # However, if the file did not start with any ACLs,
+                        # it will end up with the default ACLs.
+                        try:
+                            dest_dir_has_default_acls = 'system.posix_acl_default' in os.listxattr(os.path.dirname(b_dest))
+                        except OSError as e:
+                            dest_dir_has_default_acls = True
+
+                        if dest_dir_has_default_acls:
+                            # FIXME take care of default ACLs? how?
                             pass
-                        else:
-                            raise
-                    except RuntimeError as e:
-                        # setfacl failed.
-                        if 'Operation not supported' in to_native(e):
-                            # The file system does not support ACLs.
-                            pass
-                        else:
-                            raise
 
             except (IOError, OSError):
                 module.fail_json(msg="failed to copy: %s to %s" % (src, dest), traceback=traceback.format_exc())
