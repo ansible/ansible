@@ -897,13 +897,9 @@ def main():
         grant_option=dict(required=False, type='bool',
                           aliases=['admin_option']),
         host=dict(default='', aliases=['login_host']),
-        port=dict(type='int', default=5432, aliases=['login_port']),
         unix_socket=dict(default='', aliases=['login_unix_socket']),
         login=dict(default='postgres', aliases=['login_user']),
         password=dict(default='', aliases=['login_password'], no_log=True),
-        ssl_mode=dict(default="prefer",
-                      choices=['allow', 'disable', 'prefer', 'require', 'verify-ca', 'verify-full']),
-        ca_cert=dict(default=None, aliases=['ssl_rootcert']),
         fail_on_role=dict(type='bool', default=True),
     )
 
