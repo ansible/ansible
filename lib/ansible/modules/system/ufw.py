@@ -406,8 +406,8 @@ class UFWObj:
                 elif self.pre_rules != rules_dry:
                     self.__setChanged()
 
-    def __setChanged(seld):
-        seld.changed = True
+    def __setChanged(self):
+        self.changed = True
 
     def is_check_mode(self):
         return self.module.check_mode
