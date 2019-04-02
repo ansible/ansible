@@ -320,6 +320,11 @@ namespace Ansible.Basic
                     eventLog.WriteEntry(message, logEntryType, 0);
                 }
                 catch (System.InvalidOperationException) { }  // Ignore permission errors on the Application event log
+                catch (System.Exception e)
+                {
+                    // Cannot call Warn as that calls LogEvent and we get stuck in a loop
+                    warnings.Add(String.Format("Unknown error when creating event log entry: {0}", e.Message));
+                }
             }
         }
 
