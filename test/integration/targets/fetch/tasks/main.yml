@@ -19,7 +19,7 @@
 - name: create a file that we can use to fetch
   copy: content="test" dest={{ remote_tmp_dir }}/orig
 
-- name: fetch the motd
+- name: fetch the test file
   fetch: src={{ remote_tmp_dir }}/orig dest={{ output_dir }}/fetched
   register: fetched
 
