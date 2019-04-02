@@ -328,7 +328,7 @@ options:
         version_added: 2.8
         choices:
             - SystemAssigned
-    win_rm:
+    winrm:
         description:
             - List of Windows Remote Management configurations of the VM.
         version_added: 2.8
@@ -798,7 +798,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             accept_terms=dict(type='bool', default=False),
             license_type=dict(type='str', choices=['Windows_Server', 'Windows_Client', 'None']),
             vm_identity=dict(type='str', choices=['SystemAssigned']),
-            win_rm=dict(type='list')
+            winrm=dict(type='list')
         )
 
         self.resource_group = None
@@ -1172,39 +1172,39 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     if self.vm_identity:
                         vm_resource.identity = self.compute_models.VirtualMachineIdentity(type=self.vm_identity)
 
-                    if self.win_rm:
-                        win_rm_listeners = list()
-                        for win_rm_listener in self.win_rm:
-                            win_rm_listeners.append(self.compute_models.WinRMListener(
-                                protocol=win_rm_listener.get('protocol'),
-                                certificate_url=win_rm_listener.get('certificate_url')
+                    if self.winrm:
+                        winrm_listeners = list()
+                        for winrm_listener in self.winrm:
+                            winrm_listeners.append(self.compute_models.WinRMListener(
+                                protocol=winrm_listener.get('protocol'),
+                                certificate_url=winrm_listener.get('certificate_url')
                             ))
-                            if win_rm_listener.get('source_vault'):
+                            if winrm_listener.get('source_vault'):
                                 if not vm_resource.os_profile.secrets:
                                     vm_resource.os_profile.secrets = list()
 
                                 vm_resource.os_profile.secrets.append(self.compute_models.VaultSecretGroup(
                                     source_vault=self.compute_models.SubResource(
-                                        id=win_rm_listener.get('source_vault')
+                                        id=winrm_listener.get('source_vault')
                                     ),
                                     vault_certificates=[
                                         self.compute_models.VaultCertificate(
-                                            certificate_url=win_rm_listener.get('certificate_url'),
-                                            certificate_store=win_rm_listener.get('certificate_store')
+                                            certificate_url=winrm_listener.get('certificate_url'),
+                                            certificate_store=winrm_listener.get('certificate_store')
                                         ),
                                     ]
                                 ))
 
-                        win_rm = self.compute_models.WinRMConfiguration(
-                            listeners=win_rm_listeners
+                        winrm = self.compute_models.WinRMConfiguration(
+                            listeners=winrm_listeners
                         )
 
                         if not vm_resource.os_profile.windows_configuration:
                             vm_resource.os_profile.windows_configuration = self.compute_models.WindowsConfiguration(
-                                win_rm=win_rm
+                                win_rm=winrm
                             )
                         elif not vm_resource.os_profile.windows_configuration.win_rm:
-                            vm_resource.os_profile.windows_configuration.win_rm = win_rm
+                            vm_resource.os_profile.windows_configuration.win_rm = winrm
 
                     if self.admin_password:
                         vm_resource.os_profile.admin_password = self.admin_password
