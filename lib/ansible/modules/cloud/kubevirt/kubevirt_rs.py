@@ -113,12 +113,6 @@ import traceback
 
 from ansible.module_utils.k8s.common import AUTH_ARG_SPEC
 
-try:
-    from openshift.dynamic.client import ResourceInstance
-except ImportError:
-    # Handled in module_utils
-    pass
-
 from ansible.module_utils.kubevirt import (
     virtdict,
     KubeVirtRawModule,
@@ -143,26 +137,20 @@ class KubeVirtVMIRS(KubeVirtRawModule):
         argument_spec.update(copy.deepcopy(VMIR_ARG_SPEC))
         return argument_spec
 
-    def _read_stream(self, resource, watcher, stream, name, replicas):
+    def wait_for_replicas(self, replicas):
         """ Wait for ready_replicas to equal the requested number of replicas. """
-        if self.params.get('state') == 'absent':
-            # TODO: Wait for absent
-            return
-
+        resource = self.find_supported_resource(KIND)
         return_obj = None
-        for event in stream:
-            if event.get('object'):
-                obj = ResourceInstance(resource, event['object'])
-                if obj.metadata.name == name and hasattr(obj, 'status'):
-                    if replicas == 0:
-                        if not hasattr(obj.status, 'readyReplicas') or not obj.status.readyReplicas:
-                            return_obj = obj
-                            watcher.stop()
-                            break
-                    if hasattr(obj.status, 'readyReplicas') and obj.status.readyReplicas == replicas:
-                        return_obj = obj
-                        watcher.stop()
-                        break
+
+        for event in resource.watch(namespace=self.namespace, timeout=self.params.get('wait_timeout')):
+            entity = event['object']
+            if entity.metadata.name != self.name:
+                continue
+            status = entity.get('status', {})
+            readyReplicas = status.get('readyReplicas', 0)
+            if readyReplicas == replicas:
+                return_obj = entity
+                break
 
         if not return_obj:
             self.fail_json(msg="Error fetching the patched object. Try a higher wait_timeout value.")
@@ -172,16 +160,6 @@ class KubeVirtVMIRS(KubeVirtRawModule):
             self.fail_json(msg="Number of ready replicas is {0}. Failed to reach {1} ready replicas within "
                                "the wait_timeout period.".format(return_obj.status.ready_replicas, replicas))
         return return_obj.to_dict()
-
-    def wait_for_replicas(self):
-        namespace = self.params.get('namespace')
-        wait_timeout = self.params.get('wait_timeout')
-        replicas = self.params.get('replicas')
-        name = self.name
-        resource = self.find_supported_resource(KIND)
-
-        w, stream = self._create_stream(resource, namespace, wait_timeout)
-        return self._read_stream(resource, w, stream, name, replicas)
 
     def execute_module(self):
         # Parse parameters specific for this module:
@@ -202,10 +180,17 @@ class KubeVirtVMIRS(KubeVirtRawModule):
         changed = result_crud['changed']
         result = result_crud.pop('result')
 
-        # Wait for the replicas:
-        wait = self.params.get('wait')
-        if wait:
-            result = self.wait_for_replicas()
+        # When creating a new VMIRS object without specifying `replicas`, assume it's '1' to make the
+        # wait logic work correctly
+        if changed and result_crud['method'] == 'create' and replicas is None:
+            replicas = 1
+
+        # Wait for the new number of ready replicas after a CRUD update
+        # Note1: doesn't work correctly when reducing number of replicas due to how VMIRS works (as of kubevirt 1.5.0)
+        # Note2: not the place to wait for the VMIs to get deleted when deleting the VMIRS object; that *might* be
+        #        achievable in execute_crud(); keywords: orphanDependents, propagationPolicy, DeleteOptions
+        if self.params.get('wait') and replicas is not None and self.params.get('state') == 'present':
+            result = self.wait_for_replicas(replicas)
 
         # Return from the module:
         self.exit_json(**{
