@@ -656,7 +656,7 @@ def main():
                             raise
                 module.atomic_move(b_mysrc, dest, unsafe_writes=module.params['unsafe_writes'])
 
-                if PY3 and hasattr(os, 'listxattr') and platform.system == 'Linux' and not remote_src:
+                if PY3 and hasattr(os, 'listxattr') and platform.system() == 'Linux' and not remote_src:
                     # atomic_move used above to copy src into dest might, in some cases,
                     # use shutil.copy2 which in turn uses shutil.copystat.
                     # Since Python 3.3, shutil.copystat copies file extended attributes:
