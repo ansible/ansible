@@ -118,7 +118,7 @@ options:
        description:
          - Boolean stating if we should wait for the object to
            be deleted when state = absent
-       default: False    
+       default: False
 author:
    - Rui Moreira (@ruimoreira)
 extends_documentation_fragment: aws
