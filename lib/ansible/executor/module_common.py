@@ -944,7 +944,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         )))
         b_module_data = output.getvalue()
 
- elif module_substyle == 'dcl':
+    elif module_substyle == 'dcl':
         # Start of DCL support
         # shebang needs to start with $!....
         shebang = u'$!'
