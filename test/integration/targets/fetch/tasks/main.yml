@@ -143,6 +143,9 @@
 # Set up for some 'become' tests. Like the 'copy' module tests
 # we first need to have an unprivileged user with the same 
 # ssh key as our regular user allowed for login.
+- name: create a file that we can use to fetch using become
+  copy: content="test" owner=root mode=0600 dest={{ remote_tmp_dir }}/orig.root
+
 - name: Create remote unprivileged remote user
   user:
     name: '{{ remote_unprivileged_user }}'
@@ -163,7 +166,23 @@
     remote_src: yes
 
 - file:
-  # output_dir is hardcoded in test/runner/lib/executor.py and created there
-  path: "{{ output_dir }}"
-  state: directory
+    # output_dir is hardcoded in test/runner/lib/executor.py and created there
+    path: "{{ output_dir }}"
+    state: directory
   remote_user: '{{ remote_unprivileged_user }}'
+
+- name: fetch the root-readable test file using 'become'
+  fetch: src={{ remote_tmp_dir }}/orig.root dest={{ output_dir }}/fetched
+  remote_user: '{{ remote_unprivileged_user }}'
+  become: true
+  register: fetched
+
+- debug: var=fetched
+
+- name: Assert that we fetched correctly
+  assert:
+    that:
+      - 'fetched["changed"] == True'
+      - 'fetched["checksum"] == "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"'
+      - 'fetched["remote_checksum"] == "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"'
+      - 'lookup("file", output_dir + "/fetched/" + inventory_hostname + remote_tmp_dir + "/orig.root") == "test"'
