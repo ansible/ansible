@@ -4,7 +4,7 @@ set -eux
 
 source virtualenv.sh
 
-pip install "python-dateutil>=2.1,<2.7.0" jmespath "Jinja2>=2.10" PyYaml cryptography paramiko
+pip install "python-dateutil>=2.1,<2.7.0" jmespath "Jinja2>=2.10"
 
 # create boto3 symlinks
 ln -s "$(pwd)/lib/boto" "$(pwd)/lib/boto3"
