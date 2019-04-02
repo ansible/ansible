@@ -676,7 +676,7 @@
   azure_rm_devtestlabenvironment:
     resource_group: "{{ resource_group }}"
     lab_name: "{{ lab_name }}"
-    user_name: zim
+    user_name: "@me"
     name: myEnvironment
     location: eastus
     deployment_template:
