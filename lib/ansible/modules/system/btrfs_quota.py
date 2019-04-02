@@ -3,8 +3,11 @@
 # Copyright: (c) 2019, Pawel Szatkowski <pszatkowski.byd@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 ANSIBLE_METADATA = {
-    'metadata_version': '2.7',
+    'metadata_version': '1.1',
     'status': ['preview'],
     'supported_by': 'community'
 }
@@ -12,6 +15,11 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: btrfs_quota
+
+author:
+    - Pawel Szatkowski (@pszatkowski) <pszatkowski.byd@gmail.com>
+
+version_added: '2.8'
 
 short_description: Manage btrfs quota
 
@@ -31,18 +39,18 @@ options:
     qgroup:
         description:
             - Qgroup ID (0/257) or subvolume path (@/opt)
+        default: none
         required: false
     max_rfer:
         description:
             - Max reference limit
+        default: none
         required: false
     max_excl:
         description:
             - Max exclusive limit
+        default: none
         required: false
-
-author:
-    - Pawel Szatkowski (pszatkowski.byd@gmail.com)
 '''
 
 EXAMPLES = '''
@@ -58,7 +66,7 @@ EXAMPLES = '''
   btrfs_quota:
     state: enable
     filesystem: /
-    qgroup: @/opt
+    qgroup: '@/opt'
     max_rfer: 15G
     max_excl: none
 
@@ -68,7 +76,7 @@ EXAMPLES = '''
     filesystem: /
 '''
 
-RETURN = ''
+RETURN = ''' # '''
 
 import re
 from ansible.module_utils.basic import AnsibleModule
