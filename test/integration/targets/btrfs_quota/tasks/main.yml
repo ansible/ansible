@@ -1,2 +1,2 @@
-- include: setup.yml
-- include: test.yml
+- include_tasks: setup.yml
+- include_tasks: test.yml
