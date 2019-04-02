@@ -143,24 +143,32 @@
 # Set up for some 'become' tests. Like the 'copy' module tests
 # we first need to have an unprivileged user with the same 
 # ssh key as our regular user allowed for login.
+- name: note the home directory for the Ansible user
+  set_fact: 
+    remote_user_home: "{{ ansible_env.HOME }}"
+
 - name: create a file that we can use to fetch using become
-  copy: content="test" owner=root mode=0600 dest={{ remote_tmp_dir }}/orig.root
   become: true
+  copy: content="test" owner=root mode=0600 dest={{ remote_tmp_dir }}/orig.root
 
 - name: Create remote unprivileged remote user
+  become: true
   user:
     name: '{{ remote_unprivileged_user }}'
   register: user
 
-- file:
+- name: create an `.ssh` directory for holding `authorized_keys`
+  become: true
+  file:
     path: "{{ user.home }}/.ssh"
     owner: '{{ remote_unprivileged_user }}'
     state: directory
     mode: 0700
 
 - name: Duplicate authorized_keys
+  become: true
   copy:
-    src: $HOME/.ssh/authorized_keys
+    src: '{{ remote_user_home }}/.ssh/authorized_keys'
     dest: '{{ user.home }}/.ssh/authorized_keys'
     owner: '{{ remote_unprivileged_user }}'
     mode: 0600
@@ -191,9 +199,9 @@
       - "failed_fetch_root_owned_file.msg"
 
 - name: fetch the root-readable test file using 'become'
+  become: true
   fetch: src={{ remote_tmp_dir }}/orig.root dest={{ output_dir }}/fetched
   remote_user: '{{ remote_unprivileged_user }}'
-  become: true
   register: fetched
 
 - debug: var=fetched
