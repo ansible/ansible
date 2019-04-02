@@ -28,7 +28,7 @@ class ShellModule(ShModule):
     SHELL_FAMILY = 'dcl'
     IS_OPENVMS = True
 
-    #?
+    # This is needed for?
     _SHELL_EMBEDDED_PY_EOL = '\n'
     # The next can be done by prepending command with a few extra lines
     #     $ sts = $STATUS  ! keep status
@@ -36,7 +36,7 @@ class ShellModule(ShModule):
     #     $ DEFINE/USER SYS$ERROR NL:
     #     $ $STATUS = sts  ! restor previous command's status
     # when generating a script the $ prefix is mandatory, when issuing commands they should be left out.
-    _SHELL_REDIRECT_ALLNULL =  '\nsts = $STATUS\nDEFINE/USER SYS$OUTPUT NL:\nDEFINE/USER SYS$ERROR NL:\n$STATUS = sts'
+    _SHELL_REDIRECT_ALLNULL = '\nsts = $STATUS\nDEFINE/USER SYS$OUTPUT NL:\nDEFINE/USER SYS$ERROR NL:\n$STATUS = sts'
     # The next should be prepended to the command
     _SHELL_AND = '\nIF $status THEN '
     # Following are unsupported....
@@ -56,3 +56,4 @@ class ShellModule(ShModule):
         env = self.env.copy()
         env.update(kwargs)
         return ' '.join(['\n$ %s=%s' % (k, shlex_quote(text_type(v))) for k, v in env.items()])
+        

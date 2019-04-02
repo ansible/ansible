@@ -463,7 +463,7 @@ class Connection(ConnectionBase):
             self.always_pipeline_modules = True
             self.module_implementation_preferences = ('.ps1', '.exe', '')
             self.allow_executable = False
-        if getattr(self._shell,"_IS_OPENVMS", False):
+        if getattr(self._shell, "_IS_OPENVMS", False):
             self._shell_type = 'dcl'
             self.has_pipelining = False
             self.always_pipeline_modules = False
@@ -1259,3 +1259,4 @@ class Connection(ConnectionBase):
 
     def close(self):
         self._connected = False
+        
