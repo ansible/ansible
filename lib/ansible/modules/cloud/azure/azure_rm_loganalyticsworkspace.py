@@ -74,8 +74,8 @@ author:
 EXAMPLES = '''
 - name: Create a workspace with backup enabled
   azure_rm_loganalyticsworkspace:
-    resource_group: foo
-    name: bar
+    resource_group: myResourceGroup
+    name: myLogAnalyticsWorkspace
     intelligence_pack:
         Backup: true
 '''
@@ -85,13 +85,14 @@ id:
     description: Workspace resource path.
     type: str
     returned: success
-    example: "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/foo/providers/Microsoft.OperationalInsights/workspaces/bar"
+    example: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.OperationalInsights/workspaces/m
+              yLogAnalyticsWorkspace"
 location:
     description:
         - Resource location.
     type: str
     returned: success
-    example: "eastus"
+    example: eastus
 sku:
     description:
         - The SKU of the workspace
