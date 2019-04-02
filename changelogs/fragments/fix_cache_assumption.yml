@@ -1,0 +1,2 @@
+bugfixes:
+    - use class inheritance vs internal attribute indicator before executing inherited method for inventory plugins.
