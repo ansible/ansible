@@ -320,8 +320,8 @@ class AzureRMMonitorLogprofile(AzureRMModuleBase):
                 location=self.location,
                 locations=self.locations,
                 categories=self.categories,
-                retention_policy=RetentionPolicy(days=self.retention_policy['days'], enabled=self.retention_policy['enabled'])
-                                 if self.retention_policy else None,
+                retention_policy=RetentionPolicy(days=self.retention_policy['days'],
+                                                 enabled=self.retention_policy['enabled']) if self.retention_policy else None,
                 storage_account_id=self.storage_account if self.storage_account else None,
                 service_bus_rule_id=self.service_bus_rule_id if self.service_bus_rule_id else None,
                 tags=self.tags
