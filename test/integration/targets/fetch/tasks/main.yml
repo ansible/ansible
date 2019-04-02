@@ -163,6 +163,7 @@
     remote_src: yes
 
 - file:
-    path: "{{ remote_dir }}"
-    state: directory
+  # output_dir is hardcoded in test/runner/lib/executor.py and created there
+  path: "{{ output_dir }}"
+  state: directory
   remote_user: '{{ remote_unprivileged_user }}'
