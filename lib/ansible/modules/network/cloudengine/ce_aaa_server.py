@@ -20,7 +20,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = r'''
+DOCUMENTATION = '''
 ---
 module: ce_aaa_server
 version_added: "2.4"
@@ -33,62 +33,51 @@ options:
     state:
         description:
             - Specify desired state of the resource.
-        type: str
-        choices: [ absent, present ]
         default: present
+        choices: ['present', 'absent']
     authen_scheme_name:
         description:
             - Name of an authentication scheme.
               The value is a string of 1 to 32 characters.
-        type: str
     first_authen_mode:
         description:
             - Preferred authentication mode.
-        type: str
         choices: ['invalid', 'local', 'hwtacacs', 'radius', 'none']
     author_scheme_name:
         description:
             - Name of an authorization scheme.
               The value is a string of 1 to 32 characters.
-        type: str
     first_author_mode:
         description:
             - Preferred authorization mode.
-        type: str
         choices: ['invalid', 'local', 'hwtacacs', 'if-authenticated', 'none']
     acct_scheme_name:
         description:
             - Accounting scheme name.
               The value is a string of 1 to 32 characters.
-        type: str
     accounting_mode:
         description:
             - Accounting Mode.
-        type: str
         choices: ['invalid', 'hwtacacs', 'radius', 'none']
     domain_name:
         description:
             - Name of a domain.
               The value is a string of 1 to 64 characters.
-        type: str
     radius_server_group:
         description:
             - RADIUS server group's name.
               The value is a string of 1 to 32 case-insensitive characters.
-        type: str
     hwtacas_template:
         description:
             - Name of a HWTACACS template.
               The value is a string of 1 to 32 case-insensitive characters.
-        type: str
     local_user_group:
         description:
             - Name of the user group where the user belongs. The user inherits all the rights of the user group.
               The value is a string of 1 to 32 characters.
-        type: str
 '''
 
-EXAMPLES = r'''
+EXAMPLES = '''
 
 - name: AAA server test
   hosts: cloudengine
@@ -141,7 +130,7 @@ RETURN = '''
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: bool
+    type: boolean
     sample: true
 proposed:
     description: k/v pairs of parameters passed into module
@@ -762,16 +751,15 @@ class AaaServer(object):
         conf_str = CE_GET_AUTHENTICATION_SCHEME
 
         xml_str = self.netconf_get_config(module=module, conf_str=conf_str)
-
         result = list()
 
         if "<data/>" in xml_str:
             return result
         else:
             re_find = re.findall(
-                r'.*<firstAuthenMode>(.*)</firstAuthenMode>.*\s*'
-                r'<secondAuthenMode>(.*)</secondAuthenMode>.*\s*'
-                r'<authenSchemeName>(.*)</authenSchemeName>.*', xml_str)
+                r'.*<authenSchemeName>(.*)</authenSchemeName>.*\s*'
+                r'<firstAuthenMode>(.*)</firstAuthenMode>.*\s*'
+                r'<secondAuthenMode>(.*)</secondAuthenMode>.*\s*', xml_str)
 
             if re_find:
                 return re_find
@@ -947,16 +935,15 @@ class AaaServer(object):
         conf_str = CE_GET_AUTHORIZATION_SCHEME
 
         xml_str = self.netconf_get_config(module=module, conf_str=conf_str)
-
         result = list()
 
         if "<data/>" in xml_str:
             return result
         else:
             re_find = re.findall(
-                r'.*<firstAuthorMode>(.*)</firstAuthorMode>.*\s*'
-                r'<secondAuthorMode>(.*)</secondAuthorMode>.*\s*'
-                r'<authorSchemeName>(.*)</authorSchemeName>.*', xml_str)
+                r'.*<authorSchemeName>(.*)</authorSchemeName>.*\s*'
+                r'<firstAuthorMode>(.*)</firstAuthorMode>.*\s*'
+                r'<secondAuthorMode>(.*)</secondAuthorMode>.*\s*', xml_str)
 
             if re_find:
                 return re_find
@@ -1132,16 +1119,12 @@ class AaaServer(object):
         conf_str = CE_GET_ACCOUNTING_SCHEME
 
         xml_str = self.netconf_get_config(module=module, conf_str=conf_str)
-
         result = list()
 
         if "<data/>" in xml_str:
             return result
         else:
-            re_find = re.findall(
-                r'.*<accountingMode>(.*)</accountingMode>.*\s*'
-                r'<acctSchemeName>(.*)</acctSchemeName>.*', xml_str)
-
+            re_find = re.findall(r'.*<acctSchemeName>(.*)</acctSchemeName>\s*<accountingMode>(.*)</accountingMode>', xml_str)
             if re_find:
                 return re_find
             else:
@@ -1676,25 +1659,20 @@ def check_module_argument(**kwargs):
             module.fail_json(
                 msg='Error: local_user_group %s '
                     'is large than 32.' % local_user_group)
-        check_name(module=module, name=local_user_group,
-                   invalid_char=INVALID_GROUP_CHAR)
+        check_name(module=module, name=local_user_group, invalid_char=INVALID_GROUP_CHAR)
 
 
 def main():
     """ Module main """
 
     argument_spec = dict(
-        state=dict(choices=['present', 'absent'],
-                   default='present'),
+        state=dict(choices=['present', 'absent'], default='present'),
         authen_scheme_name=dict(type='str'),
-        first_authen_mode=dict(choices=['invalid', 'local',
-                                        'hwtacacs', 'radius', 'none']),
+        first_authen_mode=dict(default='local', choices=['invalid', 'local', 'hwtacacs', 'radius', 'none']),
         author_scheme_name=dict(type='str'),
-        first_author_mode=dict(choices=['invalid', 'local',
-                                        'hwtacacs', 'if-authenticated', 'none']),
+        first_author_mode=dict(default='local', choices=['invalid', 'local', 'hwtacacs', 'if-authenticated', 'none']),
         acct_scheme_name=dict(type='str'),
-        accounting_mode=dict(choices=['invalid', 'hwtacacs',
-                                      'radius', 'none']),
+        accounting_mode=dict(default='none', choices=['invalid', 'hwtacacs', 'radius', 'none']),
         domain_name=dict(type='str'),
         radius_server_group=dict(type='str'),
         hwtacas_template=dict(type='str'),
@@ -1758,8 +1736,7 @@ def main():
     if authen_scheme_name:
 
         scheme_exist = ce_aaa_server.get_authentication_scheme(module=module)
-        scheme_new = (first_authen_mode.lower(), "invalid",
-                      authen_scheme_name.lower())
+        scheme_new = (authen_scheme_name.lower(), first_authen_mode.lower(), "invalid")
 
         existing["authentication scheme"] = scheme_exist
 
@@ -1843,8 +1820,7 @@ def main():
     if author_scheme_name:
 
         scheme_exist = ce_aaa_server.get_authorization_scheme(module=module)
-        scheme_new = (first_author_mode.lower(), "invalid",
-                      author_scheme_name.lower())
+        scheme_new = (author_scheme_name.lower(), first_author_mode.lower(), "invalid")
 
         existing["authorization scheme"] = scheme_exist
 
@@ -1925,7 +1901,7 @@ def main():
     if acct_scheme_name:
 
         scheme_exist = ce_aaa_server.get_accounting_scheme(module=module)
-        scheme_new = (accounting_mode.lower(), acct_scheme_name.lower())
+        scheme_new = (acct_scheme_name.lower(), accounting_mode.lower())
 
         existing["accounting scheme"] = scheme_exist
 
