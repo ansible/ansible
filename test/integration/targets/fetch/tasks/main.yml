@@ -139,3 +139,30 @@
     that:
       - "failed_fetch_dest_dir is failed"
       - "failed_fetch_dest_dir.msg"
+
+# Set up for some 'become' tests. Like the 'copy' module tests
+# we first need to have an unprivileged user with the same 
+# ssh key as our regular user allowed for login.
+- name: Create remote unprivileged remote user
+  user:
+    name: '{{ remote_unprivileged_user }}'
+  register: user
+
+- file:
+    path: "{{ user.home }}/.ssh"
+    owner: '{{ remote_unprivileged_user }}'
+    state: directory
+    mode: 0700
+
+- name: Duplicate authorized_keys
+  copy:
+    src: $HOME/.ssh/authorized_keys
+    dest: '{{ user.home }}/.ssh/authorized_keys'
+    owner: '{{ remote_unprivileged_user }}'
+    mode: 0600
+    remote_src: yes
+
+- file:
+    path: "{{ remote_dir }}"
+    state: directory
+  remote_user: '{{ remote_unprivileged_user }}'
