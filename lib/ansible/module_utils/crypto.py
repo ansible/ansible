@@ -343,6 +343,7 @@ class OpenSSLObject(object):
 
 _OID_MAP = {
     # First entry is 'canonical' name
+    "2.5.29.37.0": ('Any Extended Key Usage', 'anyExtendedKeyUsage'),
     "1.3.6.1.5.5.7.1.3": ('qcStatements', ),
     "1.3.6.1.5.5.7.3.10": ('DVCS', 'dvcs'),
     "1.3.6.1.5.5.7.3.7": ('IPSec User', 'ipsecUser'),
@@ -360,6 +361,7 @@ _NORMALIZE_NAMES = {
     'SN': 'surname',
     'GN': 'givenName',
     'UID': 'userId',
+    'userID': 'userId',
     'DC': 'domainComponent',
     'jurisdictionC': 'jurisdictionCountryName',
     'jurisdictionL': 'jurisdictionLocalityName',
@@ -370,7 +372,6 @@ _NORMALIZE_NAMES = {
     'emailProtection': 'E-mail Protection',
     'timeStamping': 'Time Stamping',
     'OCSPSigning': 'OCSP Signing',
-    'anyExtendedKeyUsage': 'Any Extended Key Usage',
 }
 
 for dotted, names in _OID_MAP.items():
@@ -514,7 +515,7 @@ def crpytography_name_to_oid(name):
         return x509.oid.NameOID.DN_QUALIFIER
     if name in ('pseudonym', ):
         return x509.oid.NameOID.PSEUDONYM
-    if name in ('UID', 'userId'):
+    if name in ('UID', 'userId', 'UserID'):
         return x509.oid.NameOID.USER_ID
     if name in ('DC', 'domainComponent'):
         return x509.oid.NameOID.DOMAIN_COMPONENT
@@ -555,9 +556,7 @@ def crpytography_name_to_oid(name):
 def crpytography_oid_to_name(oid):
     dotted_string = oid.dotted_string
     names = _OID_MAP.get(dotted_string)
-    if names:
-        return names[0]
-    name = oid._name
+    name = names[0] if names else oid._name
     return _NORMALIZE_NAMES.get(name, name)
 
 
@@ -596,7 +595,7 @@ def cryptography_get_name_oid(id):
         return x509.oid.NameOID.DN_QUALIFIER
     if id in ('pseudonym', ):
         return x509.oid.NameOID.PSEUDONYM
-    if id in ('UID', 'userId'):
+    if id in ('UID', 'userId', 'userID'):
         return x509.oid.NameOID.USER_ID
     if id in ('DC', 'domainComponent'):
         return x509.oid.NameOID.DOMAIN_COMPONENT
@@ -736,7 +735,7 @@ def cryptography_get_ext_keyusage(usage):
     if usage in ('OCSPSigning', 'OCSP Signing'):
         return x509.oid.ExtendedKeyUsageOID.OCSP_SIGNING
     if usage in ('anyExtendedKeyUsage', 'Any Extended Key Usage'):
-        return x509.oid.ExtendedKeyUsageOID.ANY_EXTENDED_KEY_USAGE
+        return x509.oid.ObjectIdentifier("2.5.29.37.0")
     if usage in ('qcStatements', ):
         return x509.oid.ObjectIdentifier("1.3.6.1.5.5.7.1.3")
     if usage in ('DVCS', 'dvcs'):

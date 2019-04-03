@@ -111,7 +111,7 @@ from distutils.version import LooseVersion
 from ansible.module_utils import crypto as crypto_utils
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils._text import to_native, to_text, to_bytes
 
 MINIMAL_CRYPTOGRAPHY_VERSION = '1.6'
 MINIMAL_PYOPENSSL_VERSION = '0.15'
@@ -122,6 +122,14 @@ try:
     from OpenSSL import crypto
     import ipaddress
     PYOPENSSL_VERSION = LooseVersion(OpenSSL.__version__)
+    if OpenSSL.SSL.OPENSSL_VERSION_NUMBER >= 0x10100000:
+        # OpenSSL 1.1.0 or newer
+        OPENSSL_MUST_STAPLE_NAME = b"tlsfeature"
+        OPENSSL_MUST_STAPLE_VALUE = b"status_request"
+    else:
+        # OpenSSL 1.0.x or older
+        OPENSSL_MUST_STAPLE_NAME = b"1.3.6.1.5.5.7.1.24"
+        OPENSSL_MUST_STAPLE_VALUE = b"DER:30:03:02:01:05"
 except ImportError:
     PYOPENSSL_IMP_ERR = traceback.format_exc()
     PYOPENSSL_FOUND = False
@@ -222,6 +230,14 @@ class CertificateInfo(crypto_utils.OpenSSLObject):
         pass
 
     @abc.abstractmethod
+    def _get_basic_constraints(self):
+        pass
+
+    @abc.abstractmethod
+    def _get_ocsp_must_staple(self):
+        pass
+
+    @abc.abstractmethod
     def _get_subject_alt_name(self):
         pass
 
@@ -251,6 +267,8 @@ class CertificateInfo(crypto_utils.OpenSSLObject):
         result['version'] = self._get_version()
         result['key_usage'], result['key_usage_critical'] = self._get_key_usage()
         result['extended_key_usage'], result['extended_key_usage_critical'] = self._get_extended_key_usage()
+        result['basic_constraints'], result['basic_constraints_critical'] = self._get_basic_constraints()
+        result['ocsp_must_staple'], result['ocsp_must_staple_critical'] = self._get_ocsp_must_staple()
         result['subject_alt_name'], result['subject_alt_name_critical'] = self._get_subject_alt_name()
 
         not_before = self._get_not_before()
@@ -346,6 +364,32 @@ class CertificateInfoCryptography(CertificateInfo):
         except cryptography.x509.ExtensionNotFound:
             return None, False
 
+    def _get_basic_constraints(self):
+        try:
+            ext_keyusage_ext = self.cert.extensions.get_extension_for_class(x509.BasicConstraints)
+            result = []
+            result.append('CA:{0}'.format('TRUE' if ext_keyusage_ext.value.ca else 'FALSE'))
+            if ext_keyusage_ext.value.path_length is not None:
+                result.append('pathlen:{0}'.format(ext_keyusage_ext.value.path_length))
+            return sorted(result), ext_keyusage_ext.critical
+        except cryptography.x509.ExtensionNotFound:
+            return None, False
+
+    def _get_ocsp_must_staple(self):
+        try:
+            try:
+                # This only works with cryptography >= 2.1
+                tlsfeature_ext = self.cert.extensions.get_extension_for_class(x509.TLSFeature)
+                value = cryptography.x509.TLSFeatureType.status_request in tlsfeature_ext.value
+            except AttributeError as dummy:
+                # Fallback for cryptography < 2.1
+                oid = x509.oid.ObjectIdentifier("1.3.6.1.5.5.7.1.24")
+                tlsfeature_ext = self.cert.extensions.get_extension_for_oid(oid)
+                value = tlsfeature_ext.value.value == b"\x30\x03\x02\x01\x05"
+            return value, tlsfeature_ext.critical
+        except cryptography.x509.ExtensionNotFound:
+            return None, False
+
     def _get_subject_alt_name(self):
         try:
             san_ext = self.cert.extensions.get_extension_for_class(x509.SubjectAlternativeName)
@@ -396,25 +440,38 @@ class CertificateInfoPyOpenSSL(CertificateInfo):
         # v1: 0, v2: 1, v3: 2 ...
         return self.cert.get_version() + 1
 
-    def _get_key_usage(self):
+    def _get_extension(self, short_name):
         for extension_idx in range(0, self.cert.get_extension_count()):
             extension = self.cert.get_extension(extension_idx)
-            if extension.get_short_name() == b'keyUsage':
+            if extension.get_short_name() == short_name:
                 result = [
                     crypto_utils.pyopenssl_normalize_name(usage.strip()) for usage in to_text(extension, errors='surrogate_or_strict').split(',')
                 ]
                 return sorted(result), bool(extension.get_critical())
         return None, False
 
+    def _get_key_usage(self):
+        return self._get_extension(b'keyUsage')
+
     def _get_extended_key_usage(self):
-        for extension_idx in range(0, self.cert.get_extension_count()):
-            extension = self.cert.get_extension(extension_idx)
-            if extension.get_short_name() == b'extendedKeyUsage':
-                result = [
-                    crypto_utils.pyopenssl_normalize_name(usage.strip()) for usage in to_text(extension, errors='surrogate_or_strict').split(',')
-                ]
-                return sorted(result), bool(extension.get_critical())
-        return None, False
+        return self._get_extension(b'extendedKeyUsage')
+
+    def _get_basic_constraints(self):
+        return self._get_extension(b'basicConstraints')
+
+    def _get_ocsp_must_staple(self):
+        extensions = [self.cert.get_extension(i) for i in range(0, self.cert.get_extension_count())]
+        oms_ext = [
+            ext for ext in extensions
+            if to_bytes(ext.get_short_name()) == OPENSSL_MUST_STAPLE_NAME and to_bytes(ext) == OPENSSL_MUST_STAPLE_VALUE
+        ]
+        if OpenSSL.SSL.OPENSSL_VERSION_NUMBER < 0x10100000:
+            # Older versions of libssl don't know about OCSP Must Staple
+            oms_ext.extend([ext for ext in extensions if ext.get_short_name() == b'UNDEF' and ext.get_data() == b'\x30\x03\x02\x01\x05'])
+        if oms_ext:
+            return True, bool(oms_ext[0].get_critical())
+        else:
+            return None, False
 
     def _normalize_san(self, san):
         if san.startswith('IP Address:'):
