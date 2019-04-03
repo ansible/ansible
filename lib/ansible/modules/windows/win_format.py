@@ -65,13 +65,13 @@ options:
     type: bool
   force:
     description:
-      - Specify if formatting should be forced for volumes that are not created from new partitions.
-      - Volumes that have been formatted previously or contain data must be force-formatted.
+      - Specify if formatting should be forced for volumes that are not created from new partitions
+        or if the source and target file system are different.
     type: bool
 notes:
   - One of three parameters (I(drive_letter), I(path) and I(label)) are mandatory to identify the target
     volume but more than one cannot be specified at the same time.
-  - This module is not idempotent and always formats the target volume if I(force) is specified.
+  - This module is idempotent if I(force) is not specified and file system labels remain preserved.
   - For more information, see U(https://docs.microsoft.com/en-us/previous-versions/windows/desktop/stormgmt/format-msft-volume)
 seealso:
   - module: win_disk_facts

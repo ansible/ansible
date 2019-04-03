@@ -100,7 +100,7 @@ function Get-AnsibleVolume {
     return $volume
 }
 
-function Get-VolumeParams {
+function Format-AnsibleVolume {
     param(
         $Path,
         $Label,
@@ -130,28 +130,44 @@ function Get-VolumeParams {
         $parameters.Add("FileSystem", $FileSystem)
     }
 
-    return $parameters
+    Format-Volume @parameters -Confirm:$false | Out-Null
+
 }
 
 $ansible_volume = Get-AnsibleVolume -DriveLetter $drive_letter -Path $path -Label $label
+$ansible_file_system = $ansible_volume.FileSystem
+$ansible_volume_size = $ansible_volume.Size
+$ansible_partition_size = (Get-Partition -Volume $ansible_volume).Size
 
-if (-not $force_format) {
-    $ansible_volume_size = $ansible_volume.Size
-    $ansible_partition_size = (Get-Partition -Volume $ansible_volume).Size
-
-    if ($ansible_volume_size -ne 0 -or $ansible_partition_size -eq $ansible_volume_size) {
-        $module.FailJson("You must specify force as a parameter to format non-pristine volumes")
+# Force format is required when source and target file system differ
+if ($null -ne $file_system -and $file_system -ne $ansible_file_system) {
+    if ($force_format) {
+        if (-not $module.CheckMode) {
+            Format-AnsibleVolume -Path $ansible_volume.Path -Full $full_format -Label $new_label -FileSystem $file_system -SetIntegrityStreams $integrity_streams -UseLargeFRS $large_frs -Compress $compress_volume
+        }
+        $module.Result.changed = $true
+    } else {
+        $module.FailJson("Force format must be specified if target file system is different from the current file system of the volume")    
     }
 }
-
-$parameters = Get-VolumeParams -Path $ansible_volume.Path -Full $full_format -Label $new_label -SetIntegrityStreams $integrity_streams -UseLargeFRS $large_frs -Compress $compress_volume
-
-# This is a workaround since the cmdlet does not honor the -WhatIf switch on Windows Server 2016 and 2019
-if (-not $module.CheckMode) {
-    Format-Volume @parameters -Confirm:$false | Out-Null
+if ($ansible_volume_size -ne 0 -or $ansible_partition_size -eq $ansible_volume_size) {
+    # Since this is not a pristine partition, force format is required to make changes
+    if ($force_format) {
+        if (-not $module.CheckMode) {
+            Format-AnsibleVolume -Path $ansible_volume.Path -Full $full_format -Label $new_label -FileSystem $file_system -SetIntegrityStreams $integrity_streams -UseLargeFRS $large_frs -Compress $compress_volume
+        }
+        $module.Result.changed = $true
+    }
+} else {
+    # Seems like it's a pristine partition so force_format is not required
+    # Volume labels can be safely preserved
+    if ($null -eq $new_label -and -not $force_format) {
+        $new_label = $ansible_volume.FileSystemLabel
+    }
+    if (-not $module.CheckMode) {
+        Format-AnsibleVolume -Path $ansible_volume.Path -Full $full_format -Label $new_label -FileSystem $file_system -SetIntegrityStreams $integrity_streams -UseLargeFRS $large_frs -Compress $compress_volume
+    }
+    $module.Result.changed = $true
 }
-
-
-$module.Result.changed = $true
 
 $module.ExitJson()

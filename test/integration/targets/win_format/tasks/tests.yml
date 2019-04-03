@@ -64,13 +64,50 @@
       - ntfs_integrity_streams is failed
       - 'ntfs_integrity_streams.msg == "Integrity streams can be enabled only on ReFS volumes. You specified: ntfs"'
 
-- name: Format volume (not pristine)
+- name: Format volume (require force_format for specifying different file system)
   win_format:
     path: "{{ shell_partition_result.stdout | trim }}"
+    file_system: fat32
   ignore_errors: True
   register: require_force_format
 
 - assert:
     that:
       - require_force_format is failed
-      - 'require_force_format.msg == "You must specify force as a parameter to format non-pristine volumes"'
+      - 'require_force_format.msg == "Force format must be specified if target file system is different from the current file system of the volume"'
+
+- name: Format volume (forced) (check)
+  win_format:
+    path: "{{ shell_partition_result.stdout | trim }}"
+    file_system: refs
+    force: True
+  check_mode: True
+  ignore_errors: True
+  register: not_pristine_forced_check
+
+- name: Format volume (forced)
+  win_format:
+    path: "{{ shell_partition_result.stdout | trim }}"
+    file_system: refs
+    force: True
+  register: not_pristine_forced
+
+- name: Format volume (forced) (idempotence will not work)
+  win_format:
+    path: "{{ shell_partition_result.stdout | trim }}"
+    file_system: refs
+    force: True
+  register: not_pristine_forced_idem_fails
+
+- name: Format volume (idempotence)
+  win_format:
+    path: "{{ shell_partition_result.stdout | trim }}"
+    file_system: refs
+  register: not_pristine_forced_idem
+
+- assert:
+    that:
+      - not_pristine_forced_check is changed
+      - not_pristine_forced is changed
+      - not_pristine_forced_idem_fails is changed
+      - not_pristine_forced_idem is not changed
