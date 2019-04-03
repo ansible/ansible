@@ -775,8 +775,6 @@ def main():
         state=dict(choices=['present', 'absent', 'replace'], default='present')
     )
 
-    argument_spec.update(asa_argument_spec)
-
     required_if = [('group_type', 'port-object', ['protocol']),
                    ('group_type', 'service-object', ['service_cfg'])]
 
