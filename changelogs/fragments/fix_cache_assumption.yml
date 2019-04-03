@@ -1,2 +1,2 @@
 bugfixes:
-    - use class inheritance vs internal attribute indicator before executing inherited method for inventory plugins.
+    - rely on method existing vs loosely related _cache attribute, also fix data persistence issue on plugin reuse across sources.
