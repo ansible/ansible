@@ -80,6 +80,32 @@ from ansible.module_utils._text import to_text
 from ansible.plugins.callback import CallbackBase
 
 
+def build_log(data):
+    """
+    Transform the internal log structure to one accepted by Foreman's
+    config_report API.
+    """
+    for source, msg in data:
+        if 'failed' in msg:
+            level = 'err'
+        elif 'changed' in msg and msg['changed']:
+            level = 'notice'
+        else:
+            level = 'info'
+
+        yield {
+            "log": {
+                'sources': {
+                    'source': source,
+                },
+                'messages': {
+                    'message': json.dumps(msg),
+                },
+                'level': level,
+            }
+        }
+
+
 class CallbackModule(CallbackBase):
     CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'notification'
@@ -163,29 +189,6 @@ class CallbackModule(CallbackBase):
                 self._display.warning(u'Sending facts to Foreman at {url} failed for {host}: {err}'.format(
                     host=host, err=to_text(err), url=self.FOREMAN_URL))
 
-    def _build_log(self, data):
-        logs = []
-        for entry in data:
-            source, msg = entry
-            if 'failed' in msg:
-                level = 'err'
-            elif 'changed' in msg and msg['changed']:
-                level = 'notice'
-            else:
-                level = 'info'
-            logs.append({
-                "log": {
-                    'sources': {
-                        'source': source
-                    },
-                    'messages': {
-                        'message': json.dumps(msg)
-                    },
-                    'level': level
-                }
-            })
-        return logs
-
     def send_reports(self, stats):
         """
         Send reports to Foreman to be parsed by its config report
@@ -200,7 +203,7 @@ class CallbackModule(CallbackBase):
             status["applied"] = total['changed']
             status["failed"] = total['failures'] + total['unreachable']
             status["skipped"] = total['skipped']
-            log = self._build_log(self.items[host])
+            log = list(build_log(self.items[host]))
             metrics["time"] = {"total": int(time.time()) - self.start_time}
             now = datetime.now().strftime(self.TIME_FORMAT)
             report = {
