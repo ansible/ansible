@@ -346,7 +346,7 @@ class KubeVirtVM(KubeVirtRawModule):
 
         template = definition if ephemeral else definition['spec']['template']
         kind = 'VirtualMachineInstance' if ephemeral else 'VirtualMachine'
-        template['labels']['vm.cnv.io/name'] = self.params.get('name')
+        template['metadata']['labels']['vm.cnv.io/name'] = self.params.get('name')
         dummy, definition = self.construct_vm_definition(kind, definition, template)
         definition = dict(self.merge_dicts(processedtemplate, definition))
 
