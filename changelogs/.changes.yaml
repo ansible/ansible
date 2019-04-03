@@ -414,6 +414,25 @@ releases:
     - winrm-send-input-check.yaml
     - zypper-python3.yaml
     release_date: '2019-03-14'
+  2.6.16:
+    codename: Heartbreaker
+    fragments:
+    - 54192-openssl_publickey-openssh-passphrase.yml
+    - v2.6.16_summary.yaml
+    - win_acl-paths.yaml
+    - win_acl_inheritance-paths.yaml
+    - win_certificate_store-paths.yaml
+    - win_chocolatey-update.yaml
+    - win_copy-paths.yaml
+    - win_file-paths.yaml
+    - win_find-paths.yaml
+    - win_mod_utils-paths.yaml
+    - win_owner-paths.yaml
+    - win_slurp-paths.yaml
+    - win_tempfile-path.yaml
+    - win_user_right-output.yaml
+    - winrm-all-timeout-exceptions.yaml
+    release_date: '2019-04-03'
   2.6.2:
     codename: Heartbreaker
     fragments:

@@ -2,6 +2,39 @@
 Ansible 2.6 "Heartbreaker" Release Notes
 ========================================
 
+v2.6.16
+=======
+
+Release Summary
+---------------
+
+| Release Date: 2019-04-03
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- Catch all connection timeout related exceptions and raise AnsibleConnectionError instead
+
+Bugfixes
+--------
+
+- openssl_publickey - fixed crash on Python 3 when OpenSSH private keys were used with passphrases.
+- slurp - Fix issues when using paths on Windows with glob like characters, e.g. ``[``, ``]``
+- win_acl - Fix issues when using paths with glob like characters, e.g. ``[``, ``]``
+- win_acl_inheritance - Fix issues when using paths with glob like characters, e.g. ``[``, ``]``
+- win_certificate_store - Fix issues when using paths with glob like characters, e.g. ``[``, ``]``
+- win_chocolatey - Fix incompatibilities with the latest release of Chocolatey ``v0.10.12+``
+- win_copy - Fix issues when using paths with glob like characters, e.g. ``[``, ``]``
+- win_file - Fix issues when using paths with glob like characters, e.g. ``[``, ``]``
+- win_find - Ensure found files are sorted alphabetically by the path instead of it being random
+- win_find - Fix issues when using paths with glob like characters, e.g. ``[``, ``]``
+- win_owner - Fix issues when using paths with glob like characters, e.g. ``[``, ``]``
+- win_tempfile - Always return the full NTFS absolute path and not a DOS 8.3 path.
+- win_user_right - Fix output containing non json data - https://github.com/ansible/ansible/issues/54413
+- windows - Fixed various module utils that did not work with path that had glob like chars
+
 v2.6.15
 =======
 
