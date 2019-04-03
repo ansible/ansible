@@ -36,6 +36,7 @@ notes:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
           deleting targets for policy packages.
 =======
           deleting just targets for policy packages.
@@ -46,6 +47,9 @@ notes:
 =======
           deleting just targets for policy packages.
 >>>>>>> Added notes and documentation
+=======
+          deleting targets for policy packages.
+>>>>>>> Odd error with shippable. Test was cancelled. Edited docs to re-run.
         - Install mode has been added. Scope_members is no longer taken into account when mode = install.
           Only the existing installation targets on the package will be used. Update installation targets before.
         - Nested folders and packages now work properly. Before they were not.
