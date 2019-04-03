@@ -283,7 +283,7 @@ Since version 2.8, you can have user supplied doc_fragments by using a ``doc_fra
 
 For example, all AWS modules should include:
 
-.. code-block:: yaml+jinja 
+.. code-block:: yaml+jinja
 
     extends_documentation_fragment:
         - aws
