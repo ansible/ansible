@@ -116,7 +116,7 @@ function Present($path, $regexp, $line, $insertafter, $insertbefore, $create, $b
 	}
 
 	# index[0] is the line num where regexp has been found
-	# index[1] is the line num where insertafter/inserbefore has been found
+	# index[1] is the line num where insertafter/insertbefore has been found
 	$index = -1, -1;
 	$lineno = 0;
 
