@@ -3,8 +3,9 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # Testcase 0001: Add Cluster
-- name: add cluster
-  vmware_cluster:
+- &add_cluster
+  name: add cluster
+  vmware_cluster: 
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
@@ -14,15 +15,36 @@
     state: present
   register: cluster_result_0001
 
-- name: get a list of clusters from vcsim after adding cluster
-  uri:
-    url: http://{{ vcenter_hostname }}:5000/govc_find?filter=CCR
-  register: new_ccr_list
-
-- set_fact: new_cluster="{% for ccr in new_ccr_list['json'] %} {{ True if (ccr | basename) == 'test_cluster_0001' else False }} {% endfor %}"
-
-- name: ensure cluster is present
+- &ensure_changed
+  name: ensure cluster is present
   assert:
     that:
         - "{{ cluster_result_0001.changed == true }}"
-        - "{{ 'True' in new_cluster }}"
+
+- <<: *add_cluster
+  name: add cluster (again)
+  
+- &ensure_unchanged
+  name: ensure cluster is unchanged
+  assert:
+    that:
+        - "{{ cluster_result_0001.changed == false }}"
+
+- &del_cluster
+  name: delete cluster
+  vmware_cluster: 
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter_name: "{{ dc1 }}"
+    cluster_name: test_cluster_0001
+    state: absent
+  register: cluster_result_0001
+
+- <<: *ensure_changed
+
+- <<: *del_cluster
+  name: delete cluster (again)
+
+- <<: *ensure_unchanged

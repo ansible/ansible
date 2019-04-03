@@ -1,4 +1,18 @@
 ---
+- name: Remove the datacenter
+  vmware_datacenter:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    datacenter_name: '{{ item }}'
+    state: absent
+    validate_certs: no
+  when: vcsim is not defined
+  with_items:
+    - '{{ dc1 }}'
+    - datacenter_0001
+
 - name: kill vcsim
   uri:
     url: "http://{{ vcsim }}:5000/killall"
+  when: vcsim is defined

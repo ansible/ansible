@@ -3,7 +3,8 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # Testcase 0001: Add Datacenter
-- name: add datacenter
+- &add_dc
+  name: add datacenter
   vmware_datacenter:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
@@ -13,55 +14,35 @@
     state: present
   register: dc_result
 
-- name: get a list of Datacenter from vcsim after adding datacenter
-  uri:
-    url: http://{{ vcenter_hostname }}:5000/govc_find?filter=DC
-  register: new_datacenters
-
+- debug:
+    var: dc_result
 - name: ensure datacenter is present
   assert:
     that:
         - "{{ dc_result.changed == true }}"
-        - "{{ '/datacenter_0001' in new_datacenters['json'] }}"
 
 # Testcase 0002: Try to add same datacenter
-- name: add datacenter again to check idempotent behavior
-  vmware_datacenter:
-    validate_certs: False
-    hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcenter_username }}"
-    password: "{{ vcenter_password }}"
-    datacenter_name: datacenter_0001
-    state: present
-  register: dc_result_two
+- <<: *add_dc
+  name: add datacenter again to check idempotent behavior
 
 - name: ensure datacenter status is not changed
   assert:
     that:
-        - "{{ dc_result_two.changed == false }}"
+        - "{{ dc_result.changed == false }}"
 
-# FIXME: Uncomment this testcase once vcsim supports datacenter delete method
-# Currently, vcsim does not support datacenter delete option,
-# Once this feature is available we can uncomment following testcase
-
-# Testcase 0002: Delete Datacenter
-#- name: add datacenter
-#  vmware_datacenter:
-#    validate_certs: False
-#    hostname: "{{ vcenter_hostname }}"
-#    username: "{{ vcenter_username }}"
-#    password: "{{ vcenter_password }}"
-#    datacenter_name: datacenter_0001
-#    state: absent
-#  register: dc_result_delete
-
-#- name: get a list of Datacenter from vcsim after adding datacenter
-#  uri:
-#    url: http://{{ vcenter_hostname }}:5000/govc_find?filter=DC
-#  register: new_datacenters_delete
-
-#- name: ensure datacenter is absent
-#  assert:
-#    that:
-#        - "{{ dc_result_delete.changed == true }}"
-#        - "{{ '/datacenter_0001' not in new_datacenters_delete['json'] }}
+- when: vcsim is not defined
+  block:
+  - name: add datacenter
+    vmware_datacenter:
+      validate_certs: False
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      datacenter_name: datacenter_0001
+      state: absent
+    register: dc_result_delete
+  
+  - name: ensure datacenter is absent
+    assert:
+      that:
+        - "{{ dc_result_delete.changed == true }}"

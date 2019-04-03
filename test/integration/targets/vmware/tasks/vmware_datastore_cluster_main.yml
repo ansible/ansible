@@ -2,11 +2,6 @@
 # Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- name: store the vcenter container ip
-  set_fact:
-    dc1: "{{ datacenters['json'][0] | basename }}"
-
-
 - name: Add a datastore cluster to datacenter (check-mode)
   vmware_datastore_cluster: &add_datastore_cluster
     hostname: '{{ vcenter_hostname }}'
@@ -55,11 +50,12 @@
     that:
      - delete_dsc_check.changed == true
 
-# TODO: vcsim does not support delete operation on datastore cluster
-#- name: Delete a datastore cluster to datacenter
-#  vmware_datastore_cluster: *delete_datastore_cluster
-#  register: delete_dsc_check
+- when: vcsim is not defined
+  block:
+  - name: Delete a datastore cluster to datacenter
+    vmware_datastore_cluster: *delete_datastore_cluster
+    register: delete_dsc_check
 
-#- assert:
-#    that:
-#     - delete_dsc_check.changed == true
+  - assert:
+      that:
+        - delete_dsc_check.changed == true
