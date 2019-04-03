@@ -56,9 +56,10 @@ options:
     description:
     - A reference to a Topic resource.
     - 'This field represents a link to a Topic resource in GCP. It can be specified
-      in two ways. First, you can place in the name of the resource here as a string
-      Alternatively, you can add `register: name-of-resource` to a gcp_pubsub_topic
-      task and then set this topic field to "{{ name-of-resource }}"'
+      in two ways. First, you can place a dictionary with key ''name'' and value of
+      your resource''s name Alternatively, you can add `register: name-of-resource`
+      to a gcp_pubsub_topic task and then set this topic field to "{{ name-of-resource
+      }}"'
     required: true
   labels:
     description:
@@ -170,7 +171,7 @@ topic:
   description:
   - A reference to a Topic resource.
   returned: success
-  type: str
+  type: dict
 labels:
   description:
   - A set of key/value label pairs to assign to this Subscription.
@@ -266,7 +267,7 @@ def main():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             name=dict(required=True, type='str'),
-            topic=dict(required=True),
+            topic=dict(required=True, type='dict'),
             labels=dict(type='dict'),
             push_config=dict(type='dict', options=dict(push_endpoint=dict(required=True, type='str'), attributes=dict(type='dict'))),
             ack_deadline_seconds=dict(type='int'),

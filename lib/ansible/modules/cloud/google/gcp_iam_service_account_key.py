@@ -67,9 +67,10 @@ options:
     description:
     - The name of the serviceAccount.
     - 'This field represents a link to a ServiceAccount resource in GCP. It can be
-      specified in two ways. First, you can place in the name of the resource here
-      as a string Alternatively, you can add `register: name-of-resource` to a gcp_iam_service_account
-      task and then set this service_account field to "{{ name-of-resource }}"'
+      specified in two ways. First, you can place a dictionary with key ''name'' and
+      value of your resource''s name Alternatively, you can add `register: name-of-resource`
+      to a gcp_iam_service_account task and then set this service_account field to
+      "{{ name-of-resource }}"'
     required: false
   path:
     description:
@@ -142,7 +143,7 @@ serviceAccount:
   description:
   - The name of the serviceAccount.
   returned: success
-  type: str
+  type: dict
 path:
   description:
   - The full name of the file that will hold the service account private key. The
@@ -176,7 +177,7 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             private_key_type=dict(type='str', choices=['TYPE_UNSPECIFIED', 'TYPE_PKCS12_FILE', 'TYPE_GOOGLE_CREDENTIALS_FILE']),
             key_algorithm=dict(type='str', choices=['KEY_ALG_UNSPECIFIED', 'KEY_ALG_RSA_1024', 'KEY_ALG_RSA_2048']),
-            service_account=dict(),
+            service_account=dict(type='dict'),
             path=dict(type='path'),
         )
     )
