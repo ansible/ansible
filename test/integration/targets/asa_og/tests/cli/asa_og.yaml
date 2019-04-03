@@ -1,0 +1,541 @@
+---
+- name: remove test config if any
+  asa_config:
+    lines:
+      - no object-group network ansible_test_0
+      - no object-group network ansible_test_1
+      - no object-group network ansible_test_2
+      - no object-group service ansible_test_3 tcp-udp
+      - no object-group service ansible_test_4
+      - no object-group service ansible_test_5
+  ignore_errors: true
+
+- block:
+
+  - set_fact:
+      name: ansible_test_0
+      host_ip:
+        - 8.8.8.8
+        - 8.8.4.4
+      address:
+        - 10.0.0.0 255.0.0.0
+        - 192.168.0.0 255.255.0.0
+        - 172.16.0.0 255.255.0.0
+      description: th1s_IS-a_D3scrIPt10n_3xaMple-
+      group_object:
+        - aws_commonservices_eu_ie_pci_prv
+        - aws_commonservices_eu_ie_pci_elb_prv
+
+  - name: STAGE 0
+    asa_og: &config
+      name: "{{ name }}"
+      group_type: network-object
+      state: present
+      host_ip: "{{ host_ip }}"
+      ip_mask: "{{ address }}"
+      description: "{{ description }}"
+      group_object: "{{ group_object }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: idempotence check
+    asa_og: *config
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - set_fact:
+      name: ansible_test_0
+      host_ip:
+        - 8.8.9.9
+      address:
+        - 8.8.8.0 255.255.255.0
+      group_object:
+        - test_network_object_1
+
+  - name: STAGE 1
+    asa_og: &config1
+      name: "{{ name }}"
+      group_type: network-object
+      state: present
+      host_ip: "{{ host_ip }}"
+      ip_mask: "{{ address }}"
+      group_object: "{{ group_object }}"
+    register: result
+
+  - assert: *true
+
+  - name: idempotence check
+    asa_og: *config1
+    register: result
+
+  - assert: *false
+
+  - name: STAGE 1/B
+    asa_og:
+      name: "{{ name }}"
+      group_type: network-object
+      state: present
+    register: result
+
+  - assert: *false
+
+  - set_fact:
+      name: ansible_test_1
+      host_ip:
+        - 8.8.9.9
+      address:
+        - 8.8.8.0 255.255.255.0
+      group_object:
+        - test_network_object_1
+
+  - name: STAGE 2
+    asa_og: &config2
+      name: "{{ name }}"
+      group_type: network-object
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: idempotence check
+    asa_og: *config2
+    register: result
+
+  - assert: *false
+
+  - name: STAGE 2b
+    asa_og: &config2b
+      name: "{{ name }}"
+      group_type: network-object
+      state: present
+      host_ip: "{{ host_ip }}"
+      ip_mask: "{{ address }}"
+      group_object: "{{ group_object }}"
+    register: result
+
+  - assert: *true
+
+  - name: idempotence check
+    asa_og: *config2b
+    register: result
+
+  - assert: *false
+
+  - set_fact:
+      name: ansible_test_0
+      host_ip:
+        - 8.8.8.8
+        - 8.8.4.4
+      address:
+        - 10.0.0.0 255.0.0.0
+        - 192.168.0.0 255.255.0.0
+        - 172.16.0.0 255.255.0.0
+      description: th1s_IS-a_D3scrIPt10n_3xaMple-
+      group_object:
+        - aws_commonservices_eu_ie_pci_prv
+        - aws_commonservices_eu_ie_pci_elb_prv
+
+  - name: STAGE 3
+    asa_og: &config3
+      name: "{{ name }}"
+      group_type: network-object
+      state: absent
+      host_ip: "{{ host_ip }}"
+      ip_mask: "{{ address }}"
+      description: "{{ description }}"
+      group_object: "{{ group_object }}"
+    register: result
+
+  - assert: *true
+
+  - name: idempotence check
+    asa_og: *config3
+    register: result
+
+  - assert: *false
+
+  - set_fact:
+      name: ansible_test_2
+      host_ip:
+        - 8.8.8.8
+        - 8.8.4.4
+      address:
+        - 10.0.0.0 255.0.0.0
+        - 192.168.0.0 255.255.0.0
+        - 172.16.0.0 255.255.0.0
+      description: th1s_IS-a_D3scrIPt10n_3xaMple-
+      group_object:
+        - aws_commonservices_eu_ie_pci_prv
+        - aws_commonservices_eu_ie_pci_elb_prv
+
+  - name: STAGE 4
+    asa_og: &config4
+      name: "{{ name }}"
+      group_type: network-object
+      state: replace
+      host_ip: "{{ host_ip }}"
+      ip_mask: "{{ address }}"
+      description: "{{ description }}"
+      group_object: "{{ group_object }}"
+    register: result
+
+  - assert: *true
+
+  - name: idempotence check
+    asa_og: *config4
+    register: result
+
+  - assert: *false
+
+  - set_fact:
+      name: ansible_test_2
+      host_ip:
+        - 8.8.8.8
+      address:
+        - 10.0.0.0 255.0.0.0
+        - 1.0.0.0 255.255.0.0
+      description: th1s_IS-a_D3scrIPt10n_3xaMple-
+      group_object:
+        - aws_commonservices_eu_ie_pci_prv
+
+  - name: STAGE 5
+    asa_og: &config5
+      name: "{{ name }}"
+      group_type: network-object
+      state: replace
+      host_ip: "{{ host_ip }}"
+      ip_mask: "{{ address }}"
+      description: "{{ description }}"
+      group_object: "{{ group_object }}"
+    register: result
+
+  - assert: *true
+
+  - name: idempotence check
+    asa_og: *config5
+    register: result
+
+  - assert: *false
+
+  - set_fact:
+      name: ansible_test_2
+      host_ip:
+        - 9.9.9.9
+        - 8.8.8.8
+      description: th1s_IS-a_D3scrIPt10n_3xaMple-
+      group_object:
+        - test_network_object_1
+
+  - name: STAGE 6
+    asa_og: &config6
+      name: "{{ name }}"
+      group_type: network-object
+      state: replace
+      host_ip: "{{ host_ip }}"
+      ip_mask: "{{ address }}"
+      description: "{{ description }}"
+      group_object: "{{ group_object }}"
+    register: result
+
+  - assert: *true
+
+  - name: idempotence check
+    asa_og: *config6
+    register: result
+
+  - assert: *false
+
+  - set_fact:
+      name: ansible_test_3
+      port_eq:
+        - www
+        - '1024'
+      description: th1s_IS-a_D3scrIPt10n_3xaMple-
+      port_range:
+        - '1024 10024'
+
+  - name: STAGE 7
+    asa_og: &config7
+      name: "{{ name }}"
+      protocol: tcp-udp
+      port_eq: "{{ port_eq }}"
+      port_range: "{{ port_range }}"
+      group_type: port-object
+      state: present
+      description: "{{ description }}"
+    register: result
+
+  - assert: *true
+
+  - name: idempotence check
+    asa_og: *config7
+    register: result
+
+  - assert: *false
+
+  - set_fact:
+      name: ansible_test_3
+      port_eq:
+        - talk
+        - '65535'
+      description: th1s_IS-a_D3scrIPt10n_3xaMple-
+      port_range:
+        - '1 100'
+
+  - name: STAGE 8
+    asa_og: &config8
+      name: "{{ name }}"
+      protocol: tcp-udp
+      port_eq: "{{ port_eq }}"
+      port_range: "{{ port_range }}"
+      group_type: port-object
+      state: present
+      description: "{{ description }}"
+    register: result
+
+  - assert: *true
+
+  - name: idempotence check
+    asa_og: *config8
+    register: result
+
+  - assert: *false
+
+
+  - name: STAGE 9
+    asa_og: &config9
+      name: "{{ name }}"
+      protocol: tcp-udp
+      port_eq: "{{ port_eq }}"
+      port_range: "{{ port_range }}"
+      group_type: port-object
+      state: absent
+      description: "{{ description }}"
+    register: result
+
+  - assert: *true
+
+  - name: idempotence check
+    asa_og: *config9
+    register: result
+
+  - assert: *false
+
+  - set_fact:
+      name: ansible_test_3
+      port_eq:
+        - talk
+        - '65535'
+      description: th1s_IS-a_D3scrIPt10n_3xaMple-
+      port_range:
+        - '1 100'
+
+  - name: STAGE 10
+    asa_og: &config10
+      name: "{{ name }}"
+      protocol: tcp-udp
+      port_eq: "{{ port_eq }}"
+      port_range: "{{ port_range }}"
+      group_type: port-object
+      state: replace
+      description: "{{ description }}"
+    register: result
+
+  - assert: *true
+
+  - name: idempotence check
+    asa_og: *config10
+    register: result
+
+  - assert: *false
+
+  - set_fact:
+      name: ansible_test_3
+      port_eq:
+        - talk
+        - www
+        - kerberos
+      description: th1s_ISWhatitIS
+      port_range:
+        - '1024 1234'
+
+  - name: STAGE 11
+    asa_og: &config11
+      name: "{{ name }}"
+      protocol: tcp-udp
+      port_eq: "{{ port_eq }}"
+      port_range: "{{ port_range }}"
+      group_type: port-object
+      state: replace
+      description: "{{ description }}"
+    register: result
+
+  - assert: *true
+
+  - name: idempotence check
+    asa_og: *config11
+    register: result
+
+  - assert: *false
+
+  - set_fact:
+      name: ansible_test_4
+      service_cfg:
+        - tcp destination eq 8080
+        - tcp destination eq www
+      description: th1s_ISWhatitIS
+
+  - name: STAGE 12
+    asa_og: &config12
+      name: "{{ name }}"
+      service_cfg: "{{ service_cfg }}"
+      group_type: service-object
+      state: present
+      description: "{{ description }}"
+    register: result
+
+  - assert: *true
+
+  - name: idempotence check
+    asa_og: *config12
+    register: result
+
+  - assert: *false
+
+  - set_fact:
+      name: ansible_test_4
+      service_cfg:
+        - tcp destination range 1234 5678
+        - tcp destination range 5678 6789
+      description: th1s_ISWhatitIS
+
+  - name: STAGE 13
+    asa_og: &config13
+      name: "{{ name }}"
+      service_cfg: "{{ service_cfg }}"
+      group_type: service-object
+      state: present
+      description: "{{ description }}"
+    register: result
+
+  - assert: *true
+
+  - name: idempotence check
+    asa_og: *config13
+    register: result
+
+  - assert: *false
+
+  - set_fact:
+      name: ansible_test_4
+      service_cfg:
+        - tcp destination range 1234 5678
+        - tcp destination range 5678 6789
+      description: th1s_ISWhatitIS
+
+  - name: STAGE 14
+    asa_og: &config14
+      name: "{{ name }}"
+      service_cfg: "{{ service_cfg }}"
+      group_type: service-object
+      state: absent
+      description: "{{ description }}"
+    register: result
+
+  - assert: *true
+
+  - name: idempotence check
+    asa_og: *config14
+    register: result
+
+  - assert: *false
+
+  - set_fact:
+      name: ansible_test_5
+      service_cfg:
+        - tcp destination range 1234 5678
+        - tcp destination range 5678 6789
+      description: th1s_ISWhatitIS
+
+  - name: STAGE 15
+    asa_og: &config15
+      name: "{{ name }}"
+      service_cfg: "{{ service_cfg }}"
+      group_type: service-object
+      state: replace
+      description: "{{ description }}"
+    register: result
+
+  - assert: *true
+
+  - name: idempotence check
+    asa_og: *config15
+    register: result
+
+  - assert: *false
+
+  - set_fact:
+      name: ansible_test_5
+      service_cfg:
+        - tcp destination range 1234 5678
+        - tcp destination range 5678 6789
+        - tcp destination eq www
+      description: th1s_ISWhatitIS
+
+  - name: STAGE 16
+    asa_og: &config16
+      name: "{{ name }}"
+      service_cfg: "{{ service_cfg }}"
+      group_type: service-object
+      state: replace
+      description: "{{ description }}"
+    register: result
+
+  - assert: *true
+
+  - name: idempotence check
+    asa_og: *config16
+    register: result
+
+  - assert: *false
+
+  - set_fact:
+      name: ansible_test_5
+      service_cfg:
+        - tcp destination eq 8080
+      description: th1s_ISWhatitIS
+
+  - name: STAGE 17
+    asa_og: &config17
+      name: "{{ name }}"
+      service_cfg: "{{ service_cfg }}"
+      group_type: service-object
+      state: replace
+      description: "{{ description }}"
+    register: result
+
+  - assert: *true
+
+  - name: idempotence check
+    asa_og: *config17
+    register: result
+
+  - assert: *false
+
+  always:
+    - name: remove test config if any
+      asa_config:
+        lines:
+          - no object-group network ansible_test_0
+          - no object-group network ansible_test_1
+          - no object-group network ansible_test_2
+          - no object-group service ansible_test_3 tcp-udp
+          - no object-group service ansible_test_4
+          - no object-group service ansible_test_5
+      ignore_errors: true
