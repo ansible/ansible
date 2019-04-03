@@ -9,58 +9,163 @@ ANSIBLE_METADATA = {
     'supported_by': 'community'
 }
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
-module: my_sample_module
-
-short_description: This is my sample module
-
-version_added: "2.4"
-
+module: aci_interface_policy_cdp
+short_description: Manage CDP interface policies (cdp:IfPol)
 description:
-    - "This is my longer description explaining my sample module"
-
+- Manage CDP interface policies on Cisco ACI fabrics.
+version_added: '2.9'
 options:
-    name:
-        description:
-            - This is the message to send to the sample module
-        required: true
-    new:
-        description:
-            - Control to demo if the result of this module is changed or not
-        required: false
-
-extends_documentation_fragment:
-    - azure
-
-author:
-    - Your Name (@yourhandle)
-'''
-
-EXAMPLES = '''
-# Pass in a message
-- name: Test with a message
-  my_new_test_module:
-    name: hello world
-
-# pass in a message and have changed true
-- name: Test with a message and changed output
-  my_new_test_module:
-    name: hello world
-    new: true
-
-# fail the module
-- name: Test failure of the module
-  my_new_test_module:
-    name: fail me
-'''
-
-RETURN = '''
-original_message:
-    description: The original name param that was passed in
+  cdp_policy:
+    description:
+    - The CDP interface policy name.
     type: str
-message:
-    description: The output message that the sample module generates
+    required: yes
+    aliases: [ name ]
+  description:
+    description:
+    - The description for the CDP interface policy name.
+    type: str
+    aliases: [ descr ]
+  admin_state:
+    description:
+    - Enable or Disable CDP state.
+    - The APIC defaults to C(yes) when unset during creation.
+    type: bool
+  state:
+    description:
+    - Use C(present) or C(absent) for adding or removing.
+    - Use C(query) for listing an object or multiple objects.
+    type: str
+    choices: [ absent, present, query ]
+    default: present
+extends_documentation_fragment: aci
+seealso:
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(cdp:IfPol).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Tim Knipper (@tknipper11)
+'''
+
+# FIXME: Add more, better examples
+EXAMPLES = r'''
+- aci_interface_policy_cdp:
+    host: '{{ hostname }}'
+    username: '{{ username }}'
+    password: '{{ password }}'
+    cdp_policy: '{{ cdp_policy }}'
+    description: '{{ description }}'
+    admin_state: '{{ admin_state }}'
+  delegate_to: localhost
+'''
+
+RETURN = r'''
+current:
+  description: The existing configuration from the APIC after the module has finished
+  returned: success
+  type: list
+  sample:
+    [
+        {
+            "cdpIfPol": {
+                "attributes": {
+                    "adminSt": "disabled",
+                    "annotation": "",
+                    "descr": "Ansible Created CDP Test Policy",
+                    "dn": "uni/infra/cdpIfP-Ansible_CDP_Test_Policy",
+                    "name": "Ansible_CDP_Test_Policy",
+                    "nameAlias": "",
+                    "ownerKey": "",
+                    "ownerTag": ""
+                }
+            }
+        }
+    ]
+error:
+  description: The error information as returned from the APIC
+  returned: failure
+  type: dict
+  sample:
+    {
+        "code": "122",
+        "text": "unknown managed object class foo"
+    }
+raw:
+  description: The raw output returned by the APIC REST API (xml or json)
+  returned: parse error
+  type: str
+  sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
+sent:
+  description: The actual/minimal configuration pushed to the APIC
+  returned: info
+  type: list
+  sample:
+    {
+        "fvTenant": {
+            "attributes": {
+                "descr": "Production environment"
+            }
+        }
+    }
+previous:
+  description: The original configuration from the APIC before the module has started
+  returned: info
+  type: list
+  sample:
+    [
+        {
+            "fvTenant": {
+                "attributes": {
+                    "descr": "Production",
+                    "dn": "uni/tn-production",
+                    "name": "production",
+                    "nameAlias": "",
+                    "ownerKey": "",
+                    "ownerTag": ""
+                }
+            }
+        }
+    ]
+proposed:
+  description: The assembled configuration from the user-provided parameters
+  returned: info
+  type: dict
+  sample:
+    {
+        "fvTenant": {
+            "attributes": {
+                "descr": "Production environment",
+                "name": "production"
+            }
+        }
+    }
+filter_string:
+  description: The filter string used for the request
+  returned: failure or debug
+  type: str
+  sample: ?rsp-prop-include=config-only
+method:
+  description: The HTTP method used for the request to the APIC
+  returned: failure or debug
+  type: str
+  sample: POST
+response:
+  description: The HTTP response from the APIC
+  returned: failure or debug
+  type: str
+  sample: OK (30 bytes)
+status:
+  description: The HTTP status from the APIC
+  returned: failure or debug
+  type: int
+  sample: 200
+url:
+  description: The HTTP url used for the request to the APIC
+  returned: failure or debug
+  type: str
+  sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
