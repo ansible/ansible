@@ -51,8 +51,8 @@ class TestAsaOgModule(TestAsaModule):
     def test_asa_og_idempotent(self):
         set_module_args(dict(
             name='test_nets',
-            host='network-object',
-            have_host_ip=['8.8.8.8'],
+            group_type='network-object',
+            host_ip=['8.8.8.8'],
             ip_mask=['192.168.0.0 255.255.0.0'],
             group_object=['awx_lon'],
             description='ansible_test object-group description',
@@ -64,8 +64,8 @@ class TestAsaOgModule(TestAsaModule):
     def test_asa_og_add(self):
         set_module_args(dict(
             name='test_nets',
-            host='network-object',
-            have_host_ip=['8.8.8.8', '8.8.4.4'],
+            group_type='network-object',
+            host_ip=['8.8.8.8', '8.8.4.4'],
             ip_mask=['192.168.0.0 255.255.0.0', '10.0.0.0 255.255.255.0'],
             group_object=['awx_lon', 'awx_ams'],
             description='ansible_test object-group description',
@@ -82,8 +82,8 @@ class TestAsaOgModule(TestAsaModule):
     def test_asa_og_replace(self):
         set_module_args(dict(
             name='test_nets',
-            host='network-object',
-            have_host_ip=['8.8.4.4'],
+            group_type='network-object',
+            host_ip=['8.8.4.4'],
             ip_mask=['10.0.0.0 255.255.255.0'],
             group_object=['awx_ams'],
             description='ansible_test custom description',
@@ -104,8 +104,8 @@ class TestAsaOgModule(TestAsaModule):
     def test_asa_og_remove(self):
         set_module_args(dict(
             name='test_nets',
-            host='network-object',
-            have_host_ip=['8.8.8.8'],
+            group_type='network-object',
+            host_ip=['8.8.8.8'],
             group_object=['awx_lon'],
             state='absent'
         ))
