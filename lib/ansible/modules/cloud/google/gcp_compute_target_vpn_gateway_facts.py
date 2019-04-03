@@ -99,7 +99,7 @@ items:
       description:
       - The network this VPN gateway is accepting traffic for.
       returned: success
-      type: str
+      type: dict
     tunnels:
       description:
       - A list of references to VpnTunnel resources associated with this VPN gateway.

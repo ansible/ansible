@@ -95,7 +95,7 @@ items:
       - A reference to the UrlMap resource that defines the mapping from URL to the
         BackendService.
       returned: success
-      type: str
+      type: dict
 '''
 
 ################################################################################
