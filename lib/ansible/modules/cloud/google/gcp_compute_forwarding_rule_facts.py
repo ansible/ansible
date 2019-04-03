@@ -123,7 +123,7 @@ items:
       - This is used for internal load balancing.
       - "(not used for external load balancing) ."
       returned: success
-      type: str
+      type: dict
     ipVersion:
       description:
       - The IP Version that will be used by this forwarding rule. Valid options are
@@ -156,7 +156,7 @@ items:
         specified, the default network will be used.
       - This field is not used for external load balancing.
       returned: success
-      type: str
+      type: dict
     portRange:
       description:
       - This field is used along with the target field for TargetHttpProxy, TargetHttpsProxy,
@@ -191,7 +191,7 @@ items:
         if the network is in custom subnet mode, a subnetwork must be specified.
       - This field is not used for external load balancing.
       returned: success
-      type: str
+      type: dict
     target:
       description:
       - A reference to a TargetPool resource to receive the matched traffic.
@@ -201,7 +201,7 @@ items:
         to the target object.
       - This field is not used for internal load balancing.
       returned: success
-      type: str
+      type: dict
     allPorts:
       description:
       - When the load balancing scheme is INTERNAL and protocol is TCP/UDP, omit `port`/`port_range`
