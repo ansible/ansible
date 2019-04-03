@@ -2,8 +2,8 @@
   vmware_guest:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     folder: "/{{ (clusters['json'][0]|basename).split('_')[0] }}/vm"
     name: vbs-Test
     datacenter: "{{ (clusters['json'][0]|basename).split('_')[0] }}"
@@ -37,8 +37,8 @@
   vmware_guest:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     folder: "/{{ (clusters['json'][0]|basename).split('_')[0] }}/vm"
     name: vbs-Test2
     datacenter: "{{ (clusters['json'][0]|basename).split('_')[0] }}"
@@ -71,8 +71,8 @@
   vmware_guest:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     folder: "/{{ (clusters['json'][0]|basename).split('_')[0] }}/vm"
     name: vbs-Test2
     datacenter: "{{ (clusters['json'][0]|basename).split('_')[0] }}"

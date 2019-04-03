@@ -7,8 +7,8 @@
   vmware_guest_disk_facts:
     validate_certs: no
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     name: "{{ guest1 }}"
     datacenter: "{{ (guest1).split('_')[0] }}"
   register: disk_facts
@@ -25,8 +25,8 @@
   vmware_guest_disk_facts:
     validate_certs: no
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     name: "{{ guest1 }}"
     datacenter: "{{ (guest1).split('_')[0] }}"
   register: disk_facts

@@ -8,8 +8,8 @@
   vmware_vm_host_drs_rule:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     drs_rule_name: drs_rule_host_aff_0001
     vm_group_name: DC0_C0_VM_GR1
     host_group_name: DC0_C0_HOST_GR1
@@ -31,8 +31,8 @@
   vmware_vm_host_drs_rule:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     drs_rule_name: drs_rule_host_aff_0001
     vm_group_name: DC0_C0_VM_GR1
     host_group_name: DC0_C0_HOST_GR2

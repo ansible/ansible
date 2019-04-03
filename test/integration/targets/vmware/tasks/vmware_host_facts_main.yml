@@ -2,8 +2,8 @@
   vmware_host_facts:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
   register: facts
 
 - debug: var=facts

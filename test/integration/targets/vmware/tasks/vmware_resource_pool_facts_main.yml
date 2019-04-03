@@ -6,8 +6,8 @@
   vmware_resource_pool_facts:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
   register: resource_result_0001
 
 - name: ensure a resource pool is present

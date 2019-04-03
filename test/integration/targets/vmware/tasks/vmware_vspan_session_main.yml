@@ -6,8 +6,8 @@
   vmware_dvswitch:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     datacenter_name: "{{ item | basename }}"
     state: present
     switch_name: dvswitch_0001
@@ -43,8 +43,8 @@
 - name: Create vlan portgroup with all security and port policies
   vmware_dvs_portgroup:
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: False
     portgroup_name: vlan-123-portrgoup
     switch_name: dvswitch_0001
@@ -79,8 +79,8 @@
 - name: create a session.
   vmware_vspan_session:
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: False
     switch: dvswitch_0001
     name: "session_0001"
@@ -101,8 +101,8 @@
 - name: delete a session.
   vmware_vspan_session:
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: False
     switch: dvswitch_0001
     name: "session_0001"

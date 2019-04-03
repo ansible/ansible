@@ -22,8 +22,8 @@
   vmware_dvs_portgroup:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     switch_name: "{{ switch1 }}"
     portgroup_name: "basic"
     vlan_id: 0
@@ -42,8 +42,8 @@
   vmware_dvs_portgroup:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     switch_name: "{{ switch1 }}"
     portgroup_name: "basic-vlan10"
     vlan_id: 10
@@ -62,8 +62,8 @@
   vmware_dvs_portgroup:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     switch_name: "{{ switch1 }}"
     portgroup_name: "basic-trunk"
     vlan_id: 1-4096
@@ -83,8 +83,8 @@
   vmware_dvs_portgroup:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     switch_name: "{{ switch1 }}"
     portgroup_name: "basic"
     vlan_id: 0
@@ -103,8 +103,8 @@
   vmware_dvs_portgroup:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     switch_name: "{{ switch1 }}"
     portgroup_name: "basic-all-enabled"
     vlan_id: 0
@@ -139,8 +139,8 @@
   vmware_dvs_portgroup:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     switch_name: "{{ switch1 }}"
     portgroup_name: "basic-some-enabled"
     vlan_id: 0
@@ -165,8 +165,8 @@
   vmware_dvs_portgroup:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     switch_name: "{{ switch1 }}"
     portgroup_name: "basic"
     vlan_id: 0
@@ -185,8 +185,8 @@
   vmware_dvs_portgroup:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     switch_name: "{{ new_dvs_0001['json'][0] | basename }}"
     portgroup_name: "basic"
     vlan_id: 0

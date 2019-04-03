@@ -6,8 +6,8 @@
   vmware_drs_rule_facts:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     cluster_name: DC0_C0
   register: drs_rule_0001_results
 
@@ -22,8 +22,8 @@
   vmware_drs_rule_facts:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     datacenter: DC0
   register: drs_rule_0001_results
 

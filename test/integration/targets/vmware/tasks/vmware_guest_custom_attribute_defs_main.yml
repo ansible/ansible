@@ -5,8 +5,8 @@
 - name: list custom attributes
   vmware_guest_custom_attribute_defs:
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: False
     state: list
   register: list_attrib_def
@@ -21,8 +21,8 @@
   vmware_guest_custom_attribute_defs:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     state: present
     attribute_key: sample_5
   register: add_attrib_def
@@ -38,8 +38,8 @@
   vmware_guest_custom_attribute_defs:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     state: list
   register: list_attrib_def
 
@@ -53,8 +53,8 @@
   vmware_guest_custom_attribute_defs:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     state: present
     attribute_key: sample_5
   register: add_attrib_def
@@ -69,8 +69,8 @@
   vmware_guest_custom_attribute_defs:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     state: list
   register: list_attrib_def
 
@@ -84,8 +84,8 @@
   vmware_guest_custom_attribute_defs:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     state: absent
     attribute_key: sample_5
   register: remove_attrib_def
@@ -101,8 +101,8 @@
   vmware_guest_custom_attribute_defs:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     state: absent
     attribute_key: sample_5
   register: remove_attrib_def
@@ -118,8 +118,8 @@
   vmware_guest_custom_attribute_defs:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     state: list
   register: list_attrib_def
 

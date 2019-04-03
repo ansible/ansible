@@ -6,8 +6,8 @@
   vmware_guest_boot_facts:
     validate_certs: no
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     name: "{{ item|basename }}"
   with_items: "{{ vmlist['json'] }}"
   register: boot_d1_c1_f0
@@ -28,8 +28,8 @@
   vmware_guest_boot_facts:
     validate_certs: no
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     name: "{{ item|basename }}"
   with_items: "{{ vmlist['json'] }}"
   check_mode: yes

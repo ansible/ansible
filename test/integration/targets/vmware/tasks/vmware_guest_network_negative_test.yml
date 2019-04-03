@@ -6,8 +6,8 @@
   vmware_guest:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     name: new_vm
     guest_id: centos64Guest
     datacenter: "{{ (vm1 | basename).split('_')[0] }}"
@@ -37,8 +37,8 @@
   vmware_guest:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     name: new_vm
     guest_id: centos64Guest
     datacenter: "{{ (vm1 | basename).split('_')[0] }}"
@@ -70,8 +70,8 @@
   vmware_guest:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     name: new_vm
     guest_id: centos64Guest
     datacenter: "{{ (vm1 | basename).split('_')[0] }}"
@@ -103,8 +103,8 @@
   vmware_guest:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     name: new_vm
     guest_id: centos64Guest
     datacenter: "{{ (vm1 | basename).split('_')[0] }}"
@@ -136,8 +136,8 @@
   vmware_guest:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     name: new_vm
     guest_id: centos64Guest
     datacenter: "{{ (vm1 | basename).split('_')[0] }}"
@@ -169,8 +169,8 @@
   vmware_guest:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     name: new_vm
     guest_id: centos64Guest
     datacenter: "{{ (vm1 | basename).split('_')[0] }}"
@@ -203,8 +203,8 @@
   vmware_guest:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     name: new_vm
     guest_id: centos64Guest
     datacenter: "{{ (vm1 | basename).split('_')[0] }}"
@@ -238,8 +238,8 @@
   vmware_guest:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     name: new_vm
     guest_id: centos64Guest
     datacenter: "{{ (vm1 | basename).split('_')[0] }}"
@@ -274,8 +274,8 @@
   vmware_guest:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     name: new_vm
     guest_id: centos64Guest
     datacenter: "{{ (vm1 | basename).split('_')[0] }}"
@@ -310,8 +310,8 @@
   vmware_guest:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     name: new_vm_no_nw_type
     guest_id: centos64Guest
     datacenter: "{{ (vm1 | basename).split('_')[0] }}"

@@ -8,8 +8,8 @@
   vmware_datastore_facts:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     datacenter: "{{ dc1 }}"
   register: datastore_facts_0001
 
@@ -25,8 +25,8 @@
   vmware_datastore_facts:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     cluster: "{{ ccr1 }}"
   register: datastore_facts_0002
 
@@ -42,8 +42,8 @@
   vmware_datastore_facts:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     datacenter: "{{ dc1 }}"
     name: "{{ ds1 }}"
   register: datastore_facts_0003
@@ -60,8 +60,8 @@
   vmware_datastore_facts:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     datacenter: "{{ dc1 }}"
     name: "{{ ds1 | basename }}"
     gather_nfs_mount_info: True
@@ -80,8 +80,8 @@
   vmware_datastore_facts:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     datacenter: "{{ dc1 }}"
     name: "{{ ds1 | basename }}"
   register: datastore_facts_0005

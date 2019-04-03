@@ -9,8 +9,8 @@
 #  vmware_guest:
 #    validate_certs: False
 #    hostname: "{{ vcenter_hostname }}"
-#    username: "{{ vcsim_instance['json']['username'] }}"
-#    password: "{{ vcsim_instance['json']['password'] }}"
+#    username: "{{ vcenter_username }}"
+#    password: "{{ vcenter_password }}"
 #    name: "{{ 'invalid_vm_' + vm1 | basename }}"
 #    guest_id: "invalid_guest_id"
 #    datacenter: "{{ (vm1|basename).split('_')[0] }}"

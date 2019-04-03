@@ -8,8 +8,8 @@
   vmware_guest_customization_facts:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     spec_name: sample_spec
   register: vm_custom_spec_facts
 

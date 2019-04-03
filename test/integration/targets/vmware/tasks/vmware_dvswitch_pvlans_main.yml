@@ -7,8 +7,8 @@
   vmware_dvswitch:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     datacenter_name: "{{ item | basename }}"
     state: present
     switch_name: dvswitch_0001
@@ -44,8 +44,8 @@
 - name: Configure PVLANs in check mode
   vmware_dvswitch_pvlans:
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     switch: dvswitch_0001
     primary_pvlans:
       - primary_pvlan_id: 1
@@ -72,8 +72,8 @@
 - name: Configure PVLANs
   vmware_dvswitch_pvlans:
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     switch: dvswitch_0001
     primary_pvlans:
       - primary_pvlan_id: 1

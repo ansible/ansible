@@ -7,8 +7,8 @@
   vcenter_folder:
     validate_certs: false
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     datacenter: "{{ dc1 }}"
     folder_name: vm2
     folder_type: vm
@@ -27,8 +27,8 @@
   vmware_guest_move:
     validate_certs: false
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     datacenter: "{{ dc1 }}"
     name: "{{ guest1 }}"
     dest_folder: /F0/DC0/vm/F0
@@ -40,8 +40,8 @@
   vmware_guest_move:
     validate_certs: false
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     datacenter: "{{ dc1 }}"
     name: "{{ guest1 }}"
     dest_folder: /F0/DC0/vm/vm2

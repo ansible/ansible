@@ -12,8 +12,8 @@
   vmware_guest:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     name: "{{ item|basename }}"
     datacenter: "{{ (item|basename).split('_')[0] }}"
     state: poweredoff

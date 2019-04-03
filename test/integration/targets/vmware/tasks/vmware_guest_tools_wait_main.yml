@@ -6,8 +6,8 @@
   vmware_guest:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     name: "{{ vm1|basename }}"
     datacenter: "{{ (vm1|basename).split('_')[0] }}"
     state: poweredon
@@ -19,8 +19,8 @@
 #  vmware_guest_tools_wait:
 #    validate_certs: False
 #    hostname: "{{ vcenter_hostname }}"
-#    username: "{{ vcsim_instance['json']['username'] }}"
-#    password: "{{ vcsim_instance['json']['password'] }}"
+#    username: "{{ vcenter_username }}"
+#    password: "{{ vcenter_password }}"
 #    name: "{{ vm1 | basename }}"
 #    folder: "{{ vm1 | dirname }}"
 #  register: guest_facts_0001
@@ -42,8 +42,8 @@
 #  vmware_guest_tools_wait:
 #    validate_certs: False
 #    hostname: "{{ vcenter_hostname }}"
-#    username: "{{ vcsim_instance['json']['username'] }}"
-#    password: "{{ vcsim_instance['json']['password'] }}"
+#    username: "{{ vcenter_username }}"
+#    password: "{{ vcenter_password }}"
 #    uuid: "{{ vm1_uuid }}"
 #  register: guest_facts_0002
 #

@@ -7,8 +7,8 @@
 - name: Add NTP server to a host
   vmware_host_ntp:
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     esxi_hostname: "{{ host1 }}"
     state: present
     ntp_server:
@@ -21,8 +21,8 @@
 - name: Add another NTP server to a host
   vmware_host_ntp:
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     esxi_hostname: "{{ host1 }}"
     state: present
     ntp_server:
@@ -35,8 +35,8 @@
 - name: Remove NTP server from a host
   vmware_host_ntp:
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     esxi_hostname: "{{ host1 }}"
     state: absent
     ntp_server:
@@ -49,8 +49,8 @@
 - name: Remove NTP server from a host
   vmware_host_ntp:
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     esxi_hostname: "{{ host1 }}"
     state: present
     ntp_server:
@@ -63,8 +63,8 @@
 - name: Add more NTP servers to a host
   vmware_host_ntp:
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     esxi_hostname: "{{ host1 }}"
     state: present
     ntp_server:
@@ -79,8 +79,8 @@
 - name: Remove all NTP servers from a host
   vmware_host_ntp:
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     esxi_hostname: "{{ host1 }}"
     state: absent
     ntp_server:
@@ -98,8 +98,8 @@
 - name: Configure NTP servers for a host
   vmware_host_ntp:
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     esxi_hostname: "{{ host1 }}"
     ntp_server:
       - 0.pool.ntp.org
@@ -113,8 +113,8 @@
 - name: Configure NTP servers for a host
   vmware_host_ntp:
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     esxi_hostname: "{{ host1 }}"
     ntp_server:
       - 3.pool.ntp.org
@@ -129,8 +129,8 @@
 - name: Add NTP server to a host in check mode
   vmware_host_ntp:
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     esxi_hostname: "{{ host1 }}"
     state: present
     ntp_server:
@@ -144,8 +144,8 @@
 - name: Remove NTP server to a host in check mode
   vmware_host_ntp:
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     esxi_hostname: "{{ host1 }}"
     state: absent
     ntp_server:
@@ -159,8 +159,8 @@
 - name: Configure NTP servers for a host in check mode
   vmware_host_ntp:
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     esxi_hostname: "{{ host1 }}"
     ntp_server:
       - 0.pool.ntp.org

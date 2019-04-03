@@ -2,8 +2,8 @@
   vmware_guest:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     folder: "vm"
     name: CDROM-Test
     datacenter: "{{ dc1 }}"
@@ -35,8 +35,8 @@
   vmware_guest:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     folder: "vm"
     name: CDROM-Test
     datacenter: "{{ dc1 }}"
@@ -58,8 +58,8 @@
   vmware_guest:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     folder: vm
     name: CDROM-Test
     datacenter: "{{ dc1 }}"
@@ -80,8 +80,8 @@
   vmware_guest:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     folder: vm
     name: CDROM-Test
     datacenter: "{{ dc1 }}"
@@ -102,8 +102,8 @@
   vmware_guest:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     folder: vm
     name: CDROM-Test-38679
     datacenter: "{{ dc1 }}"
@@ -143,8 +143,8 @@
 #  vmware_guest:
 #    validate_certs: False
 #    hostname: "{{ vcenter_hostname }}"
-#    username: "{{ vcsim_instance['json']['username'] }}"
-#    password: "{{ vcsim_instance['json']['password'] }}"
+#    username: "{{ vcenter_username }}"
+#    password: "{{ vcenter_password }}"
 #    folder: "/{{ (clusters['json'][0]|basename).split('_')[0] }}/vm"
 #    name: CDROM-Test-38679
 #    datacenter: "{{ (clusters['json'][0]|basename).split('_')[0] }}"

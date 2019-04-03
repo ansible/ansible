@@ -14,8 +14,8 @@
 - name: Gather Role facts
   vmware_local_role_facts:
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: no
   register: role_details
 
@@ -29,8 +29,8 @@
 - name: Gather Role facts in check mode
   vmware_local_role_facts:
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: no
   register: role_details
   check_mode: yes

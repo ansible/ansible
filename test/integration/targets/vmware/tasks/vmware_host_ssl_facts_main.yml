@@ -5,8 +5,8 @@
 - name: Gather SSL facts about ESXi machine
   vmware_host_ssl_facts:
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     esxi_hostname: "{{ host1 }}"
     validate_certs: no
   register: ssl_facts
@@ -20,8 +20,8 @@
 - name: Gather facts about all hostsystem in given cluster
   vmware_host_ssl_facts:
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     cluster_name: "{{ ccr1 }}"
     validate_certs: no
   register: ssl_facts
@@ -35,8 +35,8 @@
 - name: Gather SSL facts about ESXi machine in check mode
   vmware_host_ssl_facts:
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     esxi_hostname: "{{ host1 }}"
     validate_certs: no
   check_mode: yes
@@ -51,8 +51,8 @@
 - name: Gather facts about all hostsystem in given cluster in check mode ee
   vmware_host_ssl_facts:
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     cluster_name: "{{ ccr1 }}"
     validate_certs: no
   check_mode: yes

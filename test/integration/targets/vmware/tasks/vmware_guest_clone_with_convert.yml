@@ -6,8 +6,8 @@
   vmware_guest:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     name: "{{ 'thin_' + item|basename }}"
     template: "{{ item|basename }}"
     datacenter: "{{ (item|basename).split('_')[0] }}" 
@@ -28,8 +28,8 @@
   vmware_guest:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     name: "{{ 'thick_' + item|basename }}"
     template: "{{ item|basename }}"
     datacenter: "{{ (item|basename).split('_')[0] }}" 
@@ -50,8 +50,8 @@
   vmware_guest:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     name: "{{ 'eagerzeroedthick_' + item|basename }}"
     template: "{{ item|basename }}"
     datacenter: "{{ (item|basename).split('_')[0] }}" 

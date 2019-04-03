@@ -7,8 +7,8 @@
   vmware_vm_facts:
     validate_certs: false
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
   register: vm_facts_0001
 
 - name: Verify if VM facts exist
@@ -31,8 +31,8 @@
   vmware_vm_facts:
     validate_certs: false
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
   register: vm_facts_0001
   check_mode: yes
 

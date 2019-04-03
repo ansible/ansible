@@ -6,8 +6,8 @@
   vmware_dvswitch:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     datacenter_name: "{{ (vm1 | basename).split('_')[0] }}"
     switch_name: dvSwitch
     uplink_quantity: 2
@@ -21,8 +21,8 @@
   vmware_dvs_portgroup:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     portgroup_name: "portgroup_network"
     switch_name: "{{ dvswitch.switch_name }}"
     vlan_id: "1"
@@ -35,8 +35,8 @@
   vmware_guest:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     name: new_vm_pg
     guest_id: centos64Guest
     datacenter: "{{ (vm1 | basename).split('_')[0] }}"
