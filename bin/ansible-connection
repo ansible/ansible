@@ -136,13 +136,18 @@ class ConnectionProcess(object):
                     data = recv_data(s)
                     if not data:
                         break
-                    self.connection._log_messages("jsonrpc request: %s" % data)
+                    log_messages = self.connection.get_option('persistent_log_messages')
+
+                    if log_messages:
+                        display.display("jsonrpc request: %s" % data, log_only=True)
 
                     signal.alarm(self.connection.get_option('persistent_command_timeout'))
                     resp = self.srv.handle_request(data)
                     signal.alarm(0)
 
-                    self.connection._log_messages("jsonrpc response: %s" % resp)
+                    if log_messages:
+                        display.display("jsonrpc response: %s" % resp, log_only=True)
+
                     send_data(s, to_bytes(resp))
 
                 s.close()
