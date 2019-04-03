@@ -312,6 +312,8 @@ class UFWObj:
             ),
         )
 
+        self.check_mode = self.module.check_mode
+
         self.cmds = []
 
         self.ipv4_regexp = compile_ipv4_regexp()
@@ -389,7 +391,7 @@ class UFWObj:
 
         rules_dry = self.ufw(cmd)
 
-        if self.is_check_mode():
+        if self.check_mode:
 
             nb_skipping_line = len(get_lines_that_contains("Skipping", rules_dry))
 
@@ -399,18 +401,15 @@ class UFWObj:
                 # ufw dry-run doesn't send all rules so have to compare ipv4 or ipv6 rules
                 if self.is_starting_by_ipv4(self.params['from_ip']) or self.is_starting_by_ipv4(self.params['to_ip']):
                     if self.get_lines_that_contains_ipv4(self.pre_rules) != self.get_lines_that_contains_ipv4(rules_dry):
-                        self.__setChanged()
+                        self.set_changed()
                 elif self.is_starting_by_ipv6(self.params['from_ip']) or self.is_starting_by_ipv6(self.params['to_ip']):
                     if self.get_lines_that_contains_ipv6(self.pre_rules) != self.get_lines_that_contains_ipv6(rules_dry):
-                        self.__setChanged()
+                        self.set_changed()
                 elif self.pre_rules != rules_dry:
-                    self.__setChanged()
+                    self.set_changed()
 
-    def __setChanged(self):
+    def set_changed(self):
         self.changed = True
-
-    def is_check_mode(self):
-        return self.module.check_mode
 
     def run(self):
 
@@ -430,7 +429,7 @@ class UFWObj:
                 self.rule(value)
 
         # Get the new state
-        if self.is_check_mode():
+        if self.check_mode:
             return self.module.exit_json(changed=self.changed, commands=self.cmds)
         else:
             post_state = self.get_status_verbose()
@@ -489,10 +488,7 @@ class UFWObj:
 
     def ufw_default(self, value, direction):
 
-        # A TESTER : le type est défini avec choice donc une autre valeur n'est pas posible (TEST U ?)
-        # if params['direction'] not in ['outgoing', 'incoming', 'routed']:
-        #    module.fail_json(msg='For default, direction must be one of "outgoing", "incoming" and "routed".')
-        if self.module.check_mode:
+        if self.check_mode:
             regexp = r'Default: (deny|allow|reject) \(incoming\), (deny|allow|reject) \(outgoing\), (deny|allow|reject|disabled) \(routed\)'
             extract = re.search(regexp, self.pre_state)
             if extract is not None:
@@ -501,9 +497,9 @@ class UFWObj:
                 current_default_values["outgoing"] = extract.group(2)
                 current_default_values["routed"] = extract.group(3)
                 if current_default_values[self.params['direction']] != value:
-                    self.__setChanged()
+                    self.set_changed()
             else:
-                self.__setChanged()
+                self.set_changed()
         else:
             self.ufw([["default"], [value], [self.params['direction']]])
 
@@ -512,13 +508,13 @@ class UFWObj:
                   'reloaded': 'reload', 'reset': 'reset'}
 
         if value in ['reloaded', 'reset']:
-            self.__setChanged()
+            self.set_changed()
 
-        if self.is_check_mode():
+        if self.check_mode:
             # "active" would also match "inactive", hence the space
             ufw_enabled = self.pre_state.find(" active") != -1
             if (value == 'disabled' and ufw_enabled) or (value == 'enabled' and not ufw_enabled):
-                self.__setChanged()
+                self.set_changed()
         else:
             self.ufw([['-f'], [states[value]]])
 
@@ -529,15 +525,15 @@ class UFWObj:
             current_on_off_value = extract.group(1)
             if value != "off":
                 if value != "on" and (value != current_level):
-                    self.__setChanged()
+                    self.set_changed()
                 elif current_on_off_value == "off":
-                    self.__setChanged()
+                    self.set_changed()
             elif current_on_off_value != "off":
-                self.__setChanged()
+                self.set_changed()
         else:
-            self.__setChanged()
+            self.set_changed()
 
-        if not self.is_check_mode():
+        if not self.check_mode:
             self.ufw([["logging"], [value]])
 
     def get_status_verbose(self):
@@ -546,7 +542,7 @@ class UFWObj:
 
     def ufw(self, args, ignore_error=False, skip_check_mode=False):
         cmd = [[self.ufw_bin]]
-        if self.is_check_mode() and not skip_check_mode:
+        if self.check_mode and not skip_check_mode:
             cmd += [['--dry-run']]
         return self.execute(cmd + args, ignore_error)
 
