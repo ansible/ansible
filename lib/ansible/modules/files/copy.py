@@ -239,7 +239,6 @@ import tempfile
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.six import PY3
 
@@ -258,7 +257,7 @@ class AnsibleModuleError(Exception):
 # basic::AnsibleModule() until then but if so, make it a private function so that we don't have to
 # keep it for backwards compatibility later.
 def clear_facls(path):
-    setfacl = get_bin_path('setfacl', True)
+    setfacl = module.get_bin_path('setfacl', True)
     # FIXME "setfacl -b" is available on Linux and FreeBSD. There is "setfacl -D e" on z/OS. Others?
     acl_command = [setfacl, '-b', path]
     b_acl_command = [to_bytes(x) for x in acl_command]
