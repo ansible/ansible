@@ -244,7 +244,7 @@ items:
       - You must provide either this property or the rawDisk.source property but not
         both to create an image.
       returned: success
-      type: str
+      type: dict
     sourceDiskEncryptionKey:
       description:
       - The customer-supplied encryption key of the source disk. Required if the source
