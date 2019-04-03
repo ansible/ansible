@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2013, Patrick Pelletier <pp.pelletier@gmail.com>
+# (c) 2019, Paul Spooren <mail@aparcar.org>
 # Based on pacman (Afterburn) and pkgin (Shaun Zinck) modules
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -31,7 +32,7 @@ options:
     state:
         description:
             - state of the package
-        choices: [ 'present', 'absent' ]
+        choices: [ 'present', 'absent', 'latest' ]
         default: present
     force:
         description:
@@ -71,6 +72,10 @@ EXAMPLES = '''
 
 - opkg:
     name: foo
+    state: latest
+
+- opkg:
+    name: foo
     state: absent
 
 - opkg:
@@ -96,16 +101,20 @@ def update_package_db(module, opkg_path):
         module.fail_json(msg="could not update package db")
 
 
-def query_package(module, opkg_path, name, state="present"):
-    """ Returns whether a package is installed or not. """
+def query_package(module, opkg_path, name, latest=False):
+    """ Returns whether a package is installed|upgradable or not """
 
-    if state == "present":
+    rc, out, err = module.run_command("%s list-installed | grep -q \"^%s \"" % (shlex_quote(opkg_path), shlex_quote(name)), use_unsafe_shell=True)
+    if rc == 0:
+        if latest:
+            # package is installed but may upgradable
+            rc, out, err = module.run_command("%s list-upgradable | grep -q \"^%s \"" % (shlex_quote(opkg_path), shlex_quote(name)), use_unsafe_shell=True)
+            if rc == 0:
+                return False
 
-        rc, out, err = module.run_command("%s list-installed | grep -q \"^%s \"" % (shlex_quote(opkg_path), shlex_quote(name)), use_unsafe_shell=True)
-        if rc == 0:
-            return True
+        return True
 
-        return False
+    return False
 
 
 def remove_packages(module, opkg_path, packages):
@@ -137,8 +146,8 @@ def remove_packages(module, opkg_path, packages):
     module.exit_json(changed=False, msg="package(s) already absent")
 
 
-def install_packages(module, opkg_path, packages):
-    """ Installs one or more packages if not already installed. """
+def install_packages(module, opkg_path, packages, latest=False):
+    """ Installs or upgrade one or more packages if not already installed. """
 
     p = module.params
     force = p["force"]
@@ -148,12 +157,12 @@ def install_packages(module, opkg_path, packages):
     install_c = 0
 
     for package in packages:
-        if query_package(module, opkg_path, package):
+        if query_package(module, opkg_path, package, latest):
             continue
 
         rc, out, err = module.run_command("%s install %s %s" % (opkg_path, force, package))
 
-        if not query_package(module, opkg_path, package):
+        if not query_package(module, opkg_path, package, latest):
             module.fail_json(msg="failed to install %s: %s" % (package, out))
 
         install_c += 1
@@ -168,7 +177,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(aliases=["pkg"], required=True),
-            state=dict(default="present", choices=["present", "installed", "absent", "removed"]),
+            state=dict(default="present", choices=["present", "installed", "absent", "removed", "latest"]),
             force=dict(default="", choices=["", "depends", "maintainer", "reinstall", "overwrite", "downgrade", "space", "postinstall", "remove",
                                             "checksum", "removal-of-dependent-packages"]),
             update_cache=dict(default="no", aliases=["update-cache"], type='bool')
@@ -179,13 +188,13 @@ def main():
 
     p = module.params
 
-    if p["update_cache"]:
+    if p["update_cache"] or p["state"] == "latest":
         update_package_db(module, opkg_path)
 
     pkgs = p["name"].split(",")
 
-    if p["state"] in ["present", "installed"]:
-        install_packages(module, opkg_path, pkgs)
+    if p["state"] in ["present", "installed", "latest"]:
+        install_packages(module, opkg_path, pkgs, p["state"] == "latest")
 
     elif p["state"] in ["absent", "removed"]:
         remove_packages(module, opkg_path, pkgs)
